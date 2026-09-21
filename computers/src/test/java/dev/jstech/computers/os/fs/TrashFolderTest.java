@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.os.fs;
 
+import dev.jstech.computers.os.FilesystemKind;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -132,5 +134,21 @@ class TrashFolderTest {
         assertEquals("Desktop/notes (2).txt",
                 TrashFolder.freePlace("Desktop/notes.txt", Set.of("Desktop/notes.txt")::contains));
         assertEquals("old (2)", TrashFolder.freePlace("old", Set.of("old")::contains));
+    }
+
+    @Test
+    void freePlace_staysAPathTheFilesystemWillTake() {
+        /*
+         * Numbering a name makes it longer, and a long name in a deep folder would make a path longer than
+         * a path may be, which the filesystem refuses: the thing would never come back out of the trash.
+         */
+        final String dir = "a".repeat(FsPaths.MAX_NAME_LENGTH) + "/" + "b".repeat(FsPaths.MAX_NAME_LENGTH);
+        final String original = dir + "/" + "c".repeat(
+                FsPaths.MAX_PATH_LENGTH - dir.length() - 1 - ".txt".length()) + ".txt";
+        assertTrue(FsPaths.isValidPath(original, FilesystemKind.HIERARCHICAL), "the fixture is a real path");
+        final String back = TrashFolder.freePlace(original, Set.of(original)::contains);
+        assertTrue(FsPaths.isValidPath(back, FilesystemKind.HIERARCHICAL),
+                "put back at " + back.length() + " characters, which is not a path");
+        assertTrue(back.endsWith(" (2).txt"), "it should still be numbered; got " + back);
     }
 }

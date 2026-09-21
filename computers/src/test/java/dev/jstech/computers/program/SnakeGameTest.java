@@ -177,6 +177,7 @@ class SnakeGameTest {
          * corner must live. Reading the body before the tail has moved is what used to kill it.
          */
         final SnakeGame open = new SnakeGame(3L, false);
+        final int length = open.length();
         open.turn(Direction.DOWN);
         open.step();
         open.turn(Direction.LEFT);
@@ -184,6 +185,43 @@ class SnakeGameTest {
         open.turn(Direction.UP);
         open.step();
         assertFalse(open.isDead(), "the snake died following its own tail");
+        assertEquals(length, open.length(), "the snake lost a segment following its own tail");
+        assertTrue(open.isBody(open.head() % SnakeGame.COLS, open.head() / SnakeGame.COLS),
+                "the head's own cell read as free afterwards");
+        assertEquals(length, bodyCells(open), "the cells the snake covers no longer match its length");
+    }
+
+    /** How many cells of the whole arena the snake is covering, which must equal how long it is. */
+    private static int bodyCells(final SnakeGame game) {
+        int covered = 0;
+        for (int y = 0; y < SnakeGame.ROWS; y++) {
+            for (int x = 0; x < SnakeGame.COLS; x++) {
+                if (game.isBody(x, y)) {
+                    covered++;
+                }
+            }
+        }
+        return covered;
+    }
+
+    @Test
+    void theSnake_coversExactlyAsManyCellsAsItIsLongThroughoutALongRun() {
+        /*
+         * Walked rather than reasoned about: what the snake covers and how long it says it is are two
+         * different records of the same thing, and a step that moved one without the other left a cell
+         * marked taken for the rest of the game, which food can never land on and the snake dies against.
+         */
+        final SnakeGame open = new SnakeGame(11L, false);
+        final Direction[] circuit = {Direction.DOWN, Direction.LEFT, Direction.UP, Direction.RIGHT};
+        for (int step = 0; step < 200 && !open.isDead(); step++) {
+            open.turn(circuit[(step / 2) % circuit.length]);
+            open.step();
+            assertEquals(open.length(), bodyCells(open),
+                    "after step " + step + " the snake covered " + bodyCells(open)
+                            + " cells and is " + open.length() + " long");
+            assertTrue(open.isBody(open.head() % SnakeGame.COLS, open.head() / SnakeGame.COLS),
+                    "after step " + step + " the head's own cell read as free");
+        }
     }
 
     @Test

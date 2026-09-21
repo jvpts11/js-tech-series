@@ -124,7 +124,7 @@ public record TrashFolder(TrashKind kind, String path) {
         int n = 2;
         String candidate;
         do {
-            candidate = FsPaths.join(dir, fit(stem, " (" + n++ + ")" + ext));
+            candidate = FsPaths.join(dir, fitUnder(dir, stem, " (" + n++ + ")" + ext));
         } while (taken.test(candidate));
         return candidate;
     }
@@ -219,6 +219,21 @@ public record TrashFolder(TrashKind kind, String path) {
     /** A stem and what follows it, the stem cut short so the whole stays a name a path can hold. */
     private static String fit(final String stem, final String tail) {
         final int room = Math.max(1, FsPaths.MAX_NAME_LENGTH - tail.length());
+        return (stem.length() > room ? stem.substring(0, room) : stem) + tail;
+    }
+
+    /**
+     * The same, cut to what is left of a whole path once the folder it goes in is counted.
+     *
+     * <p>Putting a thing back numbers its name, which makes it longer. A name that was already as long as a
+     * name may be, in a folder deep enough, would then make a path longer than a path may be, and the thing
+     * would quietly fail to come back out of the trash at all.
+     */
+    private static String fitUnder(final String dir, final String stem, final String tail) {
+        final int forName = FsPaths.MAX_NAME_LENGTH - tail.length();
+        final int forPath = FsPaths.MAX_PATH_LENGTH - tail.length()
+                - (dir.isEmpty() ? 0 : dir.length() + 1);
+        final int room = Math.max(1, Math.min(forName, forPath));
         return (stem.length() > room ? stem.substring(0, room) : stem) + tail;
     }
 

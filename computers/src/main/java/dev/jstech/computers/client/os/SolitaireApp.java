@@ -51,6 +51,16 @@ public final class SolitaireApp implements IDesktopApp {
 
     private final Panel root = new Panel();
     private final Button newGame;
+    private final Button finish;
+
+    /**
+     * Whether the table is playing itself home.
+     *
+     * <p>Offered only once every card is face up, because from there the game is decided and what is left
+     * is forty clicks in the one order they can be made. One card a frame rather than all at once, so it
+     * is something to watch rather than a table that empties between two frames.
+     */
+    private boolean finishing;
 
     /* The table as it was last drawn, so a click reads the same numbers the drawing did. */
     private int tableX;
@@ -87,11 +97,13 @@ public final class SolitaireApp implements IDesktopApp {
 
     public SolitaireApp() {
         newGame = root.add(new Button("New", this::deal));
+        finish = root.add(new Button("Finish", () -> this.finishing = true));
     }
 
     private void deal() {
         this.game = new SolitaireGame(System.nanoTime());
         this.dragSource = Source.NONE;
+        this.finishing = false;
         this.startedMs = System.currentTimeMillis();
     }
 
@@ -139,6 +151,10 @@ public final class SolitaireApp implements IDesktopApp {
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
         g.fill(x, y, x + width, y + height, skin.windowBg());
         newGame.setBounds(x + MARGIN, y + 2, 34, 12);
+        final int finishW = font.width("Finish") + 8;
+        finish.setBounds(x + MARGIN + 36, y + 2, finishW, 12);
+        playItselfHome();
+        finish.setVisible(!finishing && !game.isWon() && game.canFinishAutomatically());
         root.render(g, ctx);
         drawSeed(g, font, x, y, width);
 
@@ -157,6 +173,13 @@ public final class SolitaireApp implements IDesktopApp {
         drawTableau(g, font, feltBottom);
         drawStatus(g, font, x, feltBottom, width, height);
         drawCarried(g, font);
+    }
+
+    /** Sends one card home a frame while the table is finishing itself, and stops when none will go. */
+    private void playItselfHome() {
+        if (finishing && !game.playOneHome()) {
+            this.finishing = false;
+        }
     }
 
     /** Picks a stacking step that keeps the longest pile inside the felt, however tall the window is. */

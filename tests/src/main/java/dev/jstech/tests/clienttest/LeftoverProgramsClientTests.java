@@ -16,6 +16,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * The eight programs of the closing slice, opened the way a player opens them.
@@ -85,8 +86,7 @@ public final class LeftoverProgramsClientTests {
                             label + " to open a window")
                     .then(SETTLE * 2, () -> ctx.assertTrue(ctx.mc().screen instanceof DesktopScreen,
                             label + " took the desktop down; got " + ctx.mc().screen))
-                    .thenScreenshot(2, "program_" + label.toLowerCase(java.util.Locale.ROOT)
-                            .replace(' ', '_'));
+                    .thenScreenshot(2, "program_" + label.toLowerCase(Locale.ROOT).replace(' ', '_'));
         }
         run.then(SETTLE, () -> ctx.assertTrue(ctx.mc().screen instanceof DesktopScreen,
                 "the desktop should still be up with all eight open"));

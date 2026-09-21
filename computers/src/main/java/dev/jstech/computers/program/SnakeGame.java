@@ -222,15 +222,21 @@ public final class SnakeGame {
         /*
          * The tail leaves as the head arrives, so the cell it is vacating is not a collision. Without this a
          * snake at full stretch dies every time it follows its own tail, which is ordinary play.
+         *
+         * The collision is judged first and the body is moved afterwards, in that order and once. Vacating
+         * the cell before the test and then dropping the tail again below took a second segment every time
+         * the head landed on it, and left the head's own cell marked free and the cell behind it marked
+         * taken for the rest of the game.
          */
         final Integer tail = body.peekLast();
-        if (!eating && tail != null && next == tail) {
-            body.pollLast();
-            occupied[tail] = false;
-        }
-        if (occupied[next]) {
+        final boolean tailLeaves = !eating && tail != null;
+        if (occupied[next] && !(tailLeaves && next == tail)) {
             state = State.DEAD;
             return false;
+        }
+        if (tailLeaves) {
+            body.pollLast();
+            occupied[tail] = false;
         }
         body.addFirst(next);
         occupied[next] = true;
@@ -238,9 +244,6 @@ public final class SnakeGame {
             // Longer snakes are worth more, which is what makes a long run worth keeping rather than restarting.
             score += FOOD_SCORE + body.size() / 2;
             food = placeFood();
-        } else if (tail != null && occupied[tail]) {
-            body.pollLast();
-            occupied[tail] = false;
         }
         return eating;
     }

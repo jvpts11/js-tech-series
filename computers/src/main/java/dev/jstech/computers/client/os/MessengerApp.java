@@ -78,7 +78,9 @@ public final class MessengerApp implements IDesktopApp {
     private int scroll;
 
     /* Where the roster was last drawn, so a click reads the same numbers. */
+    private int rosterLeft;
     private int rosterTop;
+    private int rosterBottom;
     private int rosterRows;
 
     public MessengerApp(final BlockPos host, final BlockPos monitorPos) {
@@ -218,7 +220,9 @@ public final class MessengerApp implements IDesktopApp {
         g.fill(x + ROSTER_W, y, x + ROSTER_W + 1, bottom, skin.edge());
         g.drawString(font, state.service().online() ? "On the network" : "No service",
                 x + MARGIN, y + 2, state.service().online() ? skin.text() : MINE_INK, false);
+        this.rosterLeft = x;
         this.rosterTop = y + TOOLBAR_H;
+        this.rosterBottom = bottom;
         this.rosterRows = Math.max(0, (bottom - rosterTop) / ROW_H);
         final List<String> rows = rosterEntries();
         for (int i = 0; i < rows.size() && i < rosterRows; i++) {
@@ -357,7 +361,12 @@ public final class MessengerApp implements IDesktopApp {
         if (root.mouseClicked(mouseX, mouseY, button)) {
             return;
         }
-        if (button != 0 || mouseY < rosterTop) {
+        /*
+         * Only inside the roster. Judged by the height alone, a click anywhere in the conversation itself
+         * landed on whichever name sat at that height and moved the player into somebody else's window.
+         */
+        if (button != 0 || mouseY < rosterTop || mouseY >= rosterBottom
+                || mouseX < rosterLeft || mouseX >= rosterLeft + ROSTER_W) {
             return;
         }
         final int row = (int) ((mouseY - rosterTop) / ROW_H);

@@ -71,7 +71,10 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
     private static final int TOOL_SIZE = 13;
     private static final int SWATCH = 8;
     private static final int SWATCH_COLS = 16;
+    /** How many rows of the strip are on screen at once; the rest are scrolled to. */
     private static final int SWATCH_ROWS = 2;
+    /** How many rows the whole palette is, which is every colour a picture may hold. */
+    private static final int PALETTE_ROWS = PixImage.COLOURS / SWATCH_COLS;
     private static final int CHECKER_LIGHT = 0xFFBFBFBF;
     private static final int CHECKER_DARK = 0xFFA0A0A0;
     /** How big one square of the chequer under the canvas is, in pixels of the screen. */
@@ -103,6 +106,14 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
     private Tool tool = Tool.PENCIL;
     private int colour = 1;
     private int zoom = 3;
+    /**
+     * The first row of the palette on screen.
+     *
+     * <p>The strip is two rows of sixteen and the palette is two hundred and fifty-six colours, so without
+     * this a player could only ever reach the first thirty-two of them and the rest of the format was
+     * unreachable by hand. The wheel moves the strip through the whole palette.
+     */
+    private int paletteRow;
 
     /* Where the canvas, the tool column and the colour strip were last drawn, so a click agrees with them. */
     private int canvasX;
@@ -114,6 +125,9 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
     /** Where a shape was started, or -1 while nothing is being dragged. */
     private int dragFromX = -1;
     private int dragFromY = -1;
+    /** Where the pencil or the eraser last painted, so a drag is drawn as a line rather than as dots. */
+    private int strokeX = -1;
+    private int strokeY = -1;
     private int hoverX = -1;
     private int hoverY = -1;
 
@@ -452,7 +466,7 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
         this.paletteY = y + 3;
         for (int row = 0; row < SWATCH_ROWS; row++) {
             for (int col = 0; col < SWATCH_COLS; col++) {
-                final int index = row * SWATCH_COLS + col;
+                final int index = (paletteRow + row) * SWATCH_COLS + col;
                 final int sx = stripX + col * SWATCH;
                 final int sy = y + 3 + row * SWATCH;
                 if (sx + SWATCH > x + width - MARGIN) {
@@ -471,6 +485,26 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
                 }
             }
         }
+        drawStripPosition(g, stripX + SWATCH_COLS * SWATCH + 2, y + 3, x + width - MARGIN);
+    }
+
+    /**
+     * How far down the palette the strip is, as a bar beside it.
+     *
+     * <p>Two rows of a sixteen row palette show nothing of where the other fourteen are, so a player who
+     * never turned the wheel would not know there was anything else to reach.
+     */
+    private void drawStripPosition(final GuiGraphics g, final int x, final int y, final int right) {
+        final int width = 3;
+        if (x + width > right) {
+            return; // a window too narrow for the strip has no room to say where it is either
+        }
+        final int height = SWATCH_ROWS * SWATCH;
+        g.fill(x, y, x + width, y + height, skin.fieldBg());
+        final int shown = Math.max(1, height * SWATCH_ROWS / PALETTE_ROWS);
+        final int most = PALETTE_ROWS - SWATCH_ROWS;
+        final int at = most <= 0 ? 0 : (height - shown) * paletteRow / most;
+        g.fill(x, y + at, x + width, y + at + shown, skin.accent());
     }
 
     private void drawStatus(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
@@ -523,10 +557,13 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
         }
         if (tool == Tool.DROPPER) {
             this.colour = image.get(hoverX, hoverY);
+            showColourOnStrip(); // so the swatch it came from is the one marked in the strip
             return;
         }
         pushUndo();
         this.dirty = true;
+        this.strokeX = hoverX; // where a drag of the pencil or the eraser is drawn from
+        this.strokeY = hoverY;
         switch (tool) {
             case PENCIL -> image.set(hoverX, hoverY, button == 1 ? 0 : colour);
             case ERASER -> image.set(hoverX, hoverY, 0);
@@ -572,25 +609,62 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
         if (col < 0 || col >= SWATCH_COLS || row < 0 || row >= SWATCH_ROWS) {
             return -1;
         }
-        return row * SWATCH_COLS + col;
+        return (paletteRow + row) * SWATCH_COLS + col;
+    }
+
+    /**
+     * Turns the wheel over the colour strip, which is how the rest of the palette is reached.
+     *
+     * <p>The wheel is free here: the zoom has a button of its own, and the canvas is drawn whole rather
+     * than scrolled, so nothing else on this window wants it.
+     */
+    @Override
+    public boolean mouseScrolled(final double delta) {
+        final int most = PALETTE_ROWS - SWATCH_ROWS;
+        this.paletteRow = Math.max(0, Math.min(most, paletteRow - (int) Math.signum(delta)));
+        return true;
+    }
+
+    /** Brings the colour in hand onto the strip, for one picked with the dropper from further down it. */
+    private void showColourOnStrip() {
+        final int row = colour / SWATCH_COLS;
+        final int most = PALETTE_ROWS - SWATCH_ROWS;
+        this.paletteRow = Math.max(0, Math.min(most,
+                Math.max(row - SWATCH_ROWS + 1, Math.min(paletteRow, row))));
     }
 
     @Override
     public void mouseDragged(final DesktopWindow window, final double mouseX, final double mouseY,
                              final int button) {
         if (dragFromX >= 0 || hoverX < 0) {
+            this.strokeX = -1;
             return;
         }
-        if (tool == Tool.PENCIL || tool == Tool.ERASER) {
-            this.dirty = true;
-            image.set(hoverX, hoverY, tool == Tool.ERASER || button == 1 ? 0 : colour);
+        if (tool != Tool.PENCIL && tool != Tool.ERASER) {
+            return;
         }
+        this.dirty = true;
+        final int ink = tool == Tool.ERASER || button == 1 ? 0 : colour;
+        /*
+         * Drawn from where the hand was to where it is, not on the one pixel under it. A window is drawn
+         * sixty times a second and a hand crosses a zoomed canvas faster than that, so painting only the
+         * pixel the cursor is on left a dotted line whenever anybody drew at speed.
+         */
+        if (strokeX >= 0) {
+            image.line(strokeX, strokeY, hoverX, hoverY, ink);
+        } else {
+            image.set(hoverX, hoverY, ink);
+        }
+        this.strokeX = hoverX;
+        this.strokeY = hoverY;
     }
 
     @Override
     public void mouseReleased(final DesktopWindow window, final double mouseX, final double mouseY,
                               final int button) {
         root.mouseReleased(mouseX, mouseY, button);
+        this.strokeX = -1; // the next stroke starts where it starts, not where the last one ended
+        this.strokeY = -1;
         if (dragFromX < 0) {
             return;
         }

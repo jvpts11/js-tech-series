@@ -14,6 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Locale;
+
 class SpreadsheetTest {
 
     private Spreadsheet sheet;
@@ -94,6 +96,64 @@ class SpreadsheetTest {
         sheet.set(0, 1, "=C1");
         sheet.set(0, 2, "=A1");
         assertEquals(Spreadsheet.CIRCULAR, sheet.display(0, 0));
+    }
+
+    @Test
+    void aColumnThatReadsTheRowBelowItTwice_isStillOnePassDown() {
+        /*
+         * Each row adds the one under it to itself, so without holding what a cell came to, working out the
+         * top row costs twice what the row below it did, so a column of them is a sheet nobody ever gets an
+         * answer out of. Twenty-six rows is enough to take tens of seconds the old way and no time at all
+         * this way, which is what the second of grace below is measuring.
+         */
+        final int rows = 26;
+        sheet.set(rows, 0, "1");
+        for (int row = rows - 1; row >= 0; row--) {
+            sheet.set(row, 0, "=A" + (row + 2) + "+A" + (row + 2));
+        }
+        final long started = System.nanoTime();
+        final String top = sheet.display(0, 0);
+        final long took = System.nanoTime() - started;
+        assertEquals(number(Math.pow(2, rows)), top);
+        assertTrue(took < 1_000_000_000L, "working the sheet out took " + took / 1_000_000L + " ms");
+    }
+
+    /** The same grouping the sheet writes a whole number with, so the expectation is written once. */
+    private static String number(final double value) {
+        return String.format(Locale.ROOT, "%,d", (long) value);
+    }
+
+    @Test
+    void whatACellCameTo_isForgottenAsSoonAsAnythingIsTyped() {
+        sheet.set(1, 0, "2");
+        sheet.set(0, 0, "=A2*10");
+        assertEquals("20", sheet.display(0, 0));
+        sheet.set(1, 0, "5");
+        assertEquals("50", sheet.display(0, 0), "the sheet answered from what it held before");
+    }
+
+    @Test
+    void whatACellCameTo_isForgottenWhenTheMachineSaysSomethingNew() {
+        sheet.set(0, 0, "=QTY(\"iron_ingot\")");
+        assertEquals("14,208", sheet.display(0, 0));
+        sheet.setFacts(new Spreadsheet.INetworkFacts() {
+
+            @Override
+            public long quantity(final String item) {
+                return 128L;
+            }
+
+            @Override
+            public long free() {
+                return -1L;
+            }
+
+            @Override
+            public long servers() {
+                return -1L;
+            }
+        });
+        assertEquals("128", sheet.display(0, 0), "the sheet answered from what the machine said before");
     }
 
     @Test

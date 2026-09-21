@@ -8,8 +8,12 @@
 package dev.jstech.computers.os.fs;
 
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
@@ -314,7 +318,14 @@ public final class PixImage {
         return x >= 0 && x < width && y >= 0 && y < height;
     }
 
-    /** The first sixteen by hand, and the rest spread evenly so the palette has somewhere between them. */
+    /**
+     * The first sixteen by hand, then a cube of colour, then a ramp of greys to the end.
+     *
+     * <p>No colour is put in twice, which is what makes all two hundred and fifty-six of them worth having:
+     * the cube meets black and white again on two of its corners, and the ramp would have met them and the
+     * cube's own greys as well. A colour the palette already holds is skipped and the next one takes its
+     * place, so every swatch a player can pick is one they can tell from the others.
+     */
     private static int[] buildPalette() {
         final int[] out = new int[COLOURS];
         final int[] first = {
@@ -322,23 +333,41 @@ public final class PixImage {
                 0xFFF6E27A, 0xFFFFFFFF, 0xFF1F6B3A, 0xFF4FA05C, 0xFF9ED97A, 0xFF1C4FA8, 0xFF3A86D6,
                 0xFF7FC4E8, 0xFF5B3A8C,
         };
-        System.arraycopy(first, 0, out, 0, first.length);
-        /*
-         * A six by six by six cube of colour after them, then a ramp of greys, which is how an indexed
-         * palette of this size has always been laid out and what keeps a photograph-like picture possible.
-         */
-        int at = first.length;
+        final Set<Integer> taken = new HashSet<>();
+        int at = 0;
+        for (final int colour : first) {
+            out[at++] = colour;
+            taken.add(colour);
+        }
         for (int r = 0; r < 6 && at < COLOURS; r++) {
             for (int g = 0; g < 6 && at < COLOURS; g++) {
                 for (int b = 0; b < 6 && at < COLOURS; b++) {
-                    out[at++] = 0xFF000000 | (r * 51) << 16 | (g * 51) << 8 | (b * 51);
+                    final int colour = 0xFF000000 | (r * 51) << 16 | (g * 51) << 8 | (b * 51);
+                    if (taken.add(colour)) {
+                        out[at++] = colour;
+                    }
                 }
             }
         }
-        for (int i = 0; at < COLOURS; i++) {
-            final int grey = Math.min(255, i * 255 / Math.max(1, COLOURS - at));
-            out[at++] = 0xFF000000 | grey << 16 | grey << 8 | grey;
+        /*
+         * The greys are chosen out of the levels nobody has taken yet and spread across the whole of that
+         * range, so the ramp runs from very dark to very light however many places are left for it.
+         */
+        final List<Integer> free = new ArrayList<>(COLOURS);
+        for (int level = 0; level < COLOURS; level++) {
+            if (!taken.contains(grey(level))) {
+                free.add(level);
+            }
+        }
+        final int greys = Math.min(COLOURS - at, free.size());
+        for (int i = 0; i < greys; i++) {
+            out[at++] = grey(free.get(greys == 1 ? 0 : i * (free.size() - 1) / (greys - 1)));
         }
         return out;
+    }
+
+    /** The colour of one level of grey, opaque. */
+    private static int grey(final int level) {
+        return 0xFF000000 | level << 16 | level << 8 | level;
     }
 }

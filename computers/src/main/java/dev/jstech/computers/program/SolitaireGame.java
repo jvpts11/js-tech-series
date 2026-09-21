@@ -283,7 +283,8 @@ public final class SolitaireGame {
      * Takes the top card of a foundation back onto a tableau pile.
      *
      * <p>Klondike allows this and a player sometimes needs it, because a card sent home too early can be the
-     * one a run was waiting for. It costs score, so it stays a decision rather than a free undo.
+     * one a run was waiting for. It costs score, so it stays a decision rather than a free undo. A won game
+     * is the one place it is refused, by the same rule that refuses every other move once the game is over.
      */
     public boolean foundationToTableau(final Suit suit, final int pile) {
         final Card card = foundationTop(suit);
@@ -294,7 +295,6 @@ public final class SolitaireGame {
         home.remove(home.size() - 1);
         tableau.get(pile).add(card);
         addScore(SCORE_FROM_FOUNDATION);
-        state = State.PLAYING;
         moves++;
         return true;
     }

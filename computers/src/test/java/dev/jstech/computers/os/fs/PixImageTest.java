@@ -18,6 +18,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 class PixImageTest {
 
@@ -266,6 +268,40 @@ class PixImageTest {
         for (int i = 1; i < PixImage.COLOURS; i++) {
             assertEquals(0xFF, PixImage.colourOf(i) >>> 24, "colour " + i + " is not opaque");
         }
+    }
+
+    @Test
+    void thePalette_spendsEveryOneOfItsPlacesOnADifferentColour() {
+        /*
+         * A colour the palette holds twice is a swatch a player can pick and cannot tell from another one.
+         * The grey ramp at the end used to reach white halfway along and spend its last twelve places on
+         * that same white, and the cube of colour meets black and white again on two of its corners.
+         */
+        final Map<Integer, Integer> firstAt = new HashMap<>();
+        for (int i = 0; i < PixImage.COLOURS; i++) {
+            final Integer already = firstAt.putIfAbsent(PixImage.colourOf(i), i);
+            assertTrue(already == null, "colours " + already + " and " + i + " are the same colour");
+        }
+    }
+
+    @Test
+    void thePalette_keepsARealRampOfGreys() {
+        /*
+         * A picture with any shading in it is mostly greys, so how many different ones the palette holds is
+         * what says whether shading is possible at all. The ramp that saturated held about fifteen.
+         */
+        final Map<Integer, Integer> levels = new HashMap<>();
+        for (int i = 0; i < PixImage.COLOURS; i++) {
+            final int colour = PixImage.colourOf(i);
+            final int red = colour >> 16 & 0xFF;
+            // A grey is an opaque colour whose three parts are the same.
+            if ((colour >>> 24) == 0xFF && (colour >> 8 & 0xFF) == red && (colour & 0xFF) == red) {
+                levels.put(red, i);
+            }
+        }
+        assertTrue(levels.size() >= 24, "the palette holds only " + levels.size() + " greys");
+        assertTrue(levels.containsKey(0) && levels.containsKey(255),
+                "the ramp reaches neither end");
     }
 
     @Test

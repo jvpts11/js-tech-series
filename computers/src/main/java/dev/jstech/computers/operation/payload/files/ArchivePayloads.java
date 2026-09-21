@@ -258,19 +258,36 @@ public final class ArchivePayloads {
             return "No " + payload.entry() + " in the archive";
         }
         /*
+         * A file already sitting where one is going is left exactly as it is. Writing over it would be an
+         * archive quietly destroying whatever somebody had done to their copy since, with nothing to undo
+         * it with, and taking things out of an archive must never be able to lose anything.
+         */
+        int inTheWay = 0;
+        final List<StoredFile> going = new ArrayList<>(wanted.size());
+        for (final StoredFile file : wanted) {
+            if (DiskFilesystem.exists(disk, into(payload.intoDir(), file.path(), kind))) {
+                inTheWay++;
+            } else {
+                going.add(file);
+            }
+        }
+        if (going.isEmpty()) {
+            return inTheWay == 1 ? "That one is already there" : "All " + inTheWay + " are already there";
+        }
+        /*
          * Everything is weighed before anything is written, so a disk that cannot hold the lot refuses the
          * lot instead of unpacking half of it and leaving the player to work out which half.
          */
         long needed = 0L;
-        for (final StoredFile file : wanted) {
+        for (final StoredFile file : going) {
             needed += file.weight(DiskFilesystem.eraOf(disk));
         }
         if (needed > computer.systemDiskFreeWeight()) {
-            return "Not enough free space for " + wanted.size()
-                    + (wanted.size() == 1 ? " file" : " files");
+            return "Not enough free space for " + going.size()
+                    + (going.size() == 1 ? " file" : " files");
         }
         int written = 0;
-        for (final StoredFile file : wanted) {
+        for (final StoredFile file : going) {
             final String target = into(payload.intoDir(), file.path(), kind);
             final DiskFilesystem.WriteResult result = DiskFilesystem.write(disk, target, file.type(),
                     file.content(), computer.systemDiskFreeWeight(), kind, level.getGameTime());
@@ -279,6 +296,10 @@ public final class ArchivePayloads {
             }
         }
         computer.setChanged();
+        if (written > 0 && inTheWay > 0) {
+            return "Took out " + written + (written == 1 ? " file, " : " files, ")
+                    + inTheWay + " already there";
+        }
         if (written == 0) {
             return "Nothing could be written";
         }

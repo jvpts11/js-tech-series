@@ -53,8 +53,12 @@ public final class KnotApp implements IDesktopApp {
     private final BlockPos host;
     private final BlockPos monitorPos;
     private final Panel root = new Panel();
-    private final TextField file = new TextField(120);
-    private final TextField message = new TextField(96);
+    /*
+     * Held to exactly what the request carries, so a window can name any file a disk can hold and can
+     * never be handed more than the packet takes, which refuses by throwing rather than by shortening.
+     */
+    private final TextField file = new TextField(KnotActionPayload.MAX_PATH);
+    private final TextField message = new TextField(KnotActionPayload.MAX_MESSAGE);
     private final Button pushButton;
     private final Button pullButton;
     private final Button refreshButton;
@@ -90,11 +94,25 @@ public final class KnotApp implements IDesktopApp {
             return;
         }
         showing.state = payload;
-        if (showing.picked == 0 && !payload.revisions().isEmpty()) {
-            // Nothing picked yet lands on the newest, which is what somebody opening this wants to see.
+        /*
+         * Nothing picked yet lands on the newest, which is what somebody opening this wants to see. So does
+         * a revision that is no longer there: a repository taken off and put back numbers from one again,
+         * and a window still pointing at the old numbers showed an empty comparison for ever.
+         */
+        if (!payload.revisions().isEmpty() && !showing.hasRevision(showing.picked)) {
             showing.picked = payload.revisions().get(0).number();
             showing.askFor(showing.picked);
         }
+    }
+
+    /** Whether the history the window is showing holds that revision. */
+    private boolean hasRevision(final int number) {
+        for (final KnotStatePayload.Revision revision : state.revisions()) {
+            if (revision.number() == number) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void look() {

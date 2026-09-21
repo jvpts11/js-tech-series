@@ -18,6 +18,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.nio.charset.StandardCharsets;
@@ -75,6 +76,12 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private final List<Tab> tabs = new ArrayList<>();
     private int active;
+    /** The page the machine is writing right now, so its answer marks the right one saved. */
+    @Nullable
+    private Tab saving;
+    /** A page whose close was asked for while it had unsaved changes, and is waiting to be asked again. */
+    @Nullable
+    private Tab closing;
 
     private OsSkin skin = OsSkin.fallback();
     private String status = "Ctrl+S to save";
@@ -106,6 +113,8 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private void edited() {
         current().dirty = true;
+        // Typing again takes back a close that was asked for, so the next one asks afresh.
+        this.closing = null;
     }
 
     private void switchTo(final int index) {
@@ -128,22 +137,35 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
         tab.caretLine = body.document().cursorLine();
     }
 
-    private void newTab(final String path, final String name) {
+    /** Opens another page; answers false when there is no room for one, so a caller can stop. */
+    private boolean newTab(final String path, final String name) {
         if (tabs.size() >= MAX_TABS) {
             this.status = "Only " + MAX_TABS + " files at once";
-            return;
+            return false;
         }
         stash();
         tabs.add(new Tab(path, name));
         this.active = tabs.size() - 1;
         body.setText("");
         root.focus(body);
+        return true;
     }
 
     private void closeTab(final int index) {
         if (index < 0 || index >= tabs.size()) {
             return;
         }
+        /*
+         * A page with unsaved work on it asks once before it goes. One misplaced click on a cross is not a
+         * reason to lose everything typed since the last save, and there is nothing to undo it with.
+         */
+        final Tab asked = tabs.get(index);
+        if (asked.dirty && closing != asked) {
+            this.closing = asked;
+            this.status = "Unsaved changes in " + asked.name + " - close again to discard";
+            return;
+        }
+        this.closing = null;
         if (tabs.size() == 1) {
             // The last one is emptied rather than closed, so the window is never left with no page at all.
             final Tab only = tabs.get(0);
@@ -203,10 +225,16 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
             blank.name = leaf(path);
             blank.dirty = false;
             body.setText(content);
-        } else {
-            newTab(path, leaf(path));
+        } else if (newTab(path, leaf(path))) {
             body.setText(content);
             current().dirty = false;
+        } else {
+            /*
+             * There was no room for another page, and the file is not opened at all. Writing it into the
+             * area anyway put the file somebody asked for over the one they were writing, kept that page's
+             * own name on it, and marked it saved, so the next save wrote it away.
+             */
+            return;
         }
         this.status = exists ? "Opened " + leaf(path) : "New file " + leaf(path);
         root.focus(body);
@@ -252,6 +280,12 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
             return;
         }
         this.status = "Saving...";
+        /*
+         * Which page is being saved is held, not looked up again when the answer comes back: a player who
+         * moves to another tab while the machine is writing would otherwise have that one marked saved and
+         * the one that really was written left showing unsaved changes.
+         */
+        this.saving = tab;
         CodeFileReplies.expectSaved(this);
         PacketDistributor.sendToServer(new SaveFilePayload(host, target, text));
         FilesApps.diskChanged();
@@ -271,9 +305,10 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
     @Override
     public void onSaved(final boolean ok, final String message) {
         this.status = message;
-        if (ok) {
-            current().dirty = false;
+        if (ok && saving != null && tabs.contains(saving)) {
+            saving.dirty = false;
         }
+        this.saving = null;
     }
 
     @Override

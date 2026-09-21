@@ -10,25 +10,32 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - **Solitaire** and **Snake**, the two games these desktops always shipped with. Klondike drawing one card,
   dealt from a number so the same number deals the same game and one player can hand another the deal they
   are stuck on; and a snake in an arena whose walls can be turned off, which takes away the easy way to die
-  and leaves only running into yourself. Both are as light as Minesweeper and run on any desktop.
+  and leaves only running into yourself. Both are as light as Minesweeper and run on any desktop. Once every
+  card in a Klondike is face up and the stock is gone, the table offers to play itself home rather than
+  asking for another forty clicks in the one order they can be made.
 - **67ark**, which packs many files into one that really weighs less. A disk here counts the bytes of what
   is on it, so archiving a folder of logs is how a small disk is made to stretch; text that repeats packs
   hardest, so a log collapses much further than a config does, and the program shows what each one saved.
   Opening an archive lists what is inside it without unpacking anything. It is also on the right button,
   where an archiver belongs: any file or folder, in the explorer or on the desktop, offers to compress into
   an archive beside it, and an archive offers to take everything back out where it stands. Compressing a
-  folder packs what is in it, however deep it goes.
+  folder packs what is in it, however deep it goes. Taking things out never writes over a file that is
+  already there; it leaves that one alone and says how many it left.
 - **Paint**, a real picture rather than a grid of blocks: a canvas up to 128 by 128 in a palette of 256
   colours, every tool the program it is named after had, zoom and undo. What it writes is about a kilobyte
   where a colour per pixel would be twenty-four, which is what makes keeping pictures on a disk possible at
   all. A picture can be hung on the desktop as its wallpaper, so something a player drew ends up on every
   screen of that machine. Its files, like the archiver's, open on a double-click and carry an icon of their
-  own in every listing.
+  own in every listing. All two hundred and fifty-six colours can be reached: the strip shows two rows at a
+  time and the wheel runs it through the rest, the dropper brings whatever it picked up back onto it, and
+  no two of them are the same colour. The pencil draws from where the hand was to where it is, so drawing
+  quickly leaves a line rather than a row of dots.
 - **Exceed**, a sheet of cells. Besides the arithmetic a spreadsheet has always done, a cell can ask the
   network what it is holding: how many of a thing, how much room is left, how many servers there are. Those
   cells are drawn apart from the ones the player typed, so nobody wonders why a number moved by itself, and
   they are worked out from what the machine last said rather than from asking the world. It reads and
   writes the comma separated files the mod already had, so a sheet is a file any other program can open.
+  However many cells read each other, the whole sheet is worked out in one pass down.
 - **Midsoft Messenger** and its **Messenger Service**, the first program here where the other end is
   another player: who is on the network, a window per conversation, and the nudge. The service runs on a
   server mounted in a rack, which is what a server is for, and is reached from any computer on that
@@ -45,8 +52,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   player hands to another, and this is the code before it became one.
 - The editor grew into a real one. It was a name, a text area and a status line; it now has line numbers,
   find and replace, go to line, the line and column in the bar, Open and Save As through the system's own
-  file window, and more than one file open at a time. It stays a text editor: highlighting, completion,
-  projects and a compiler are what tell the five development environments apart, and they stay theirs.
+  file window, and more than one file open at a time. A page with unsaved work on it asks once before it
+  closes, and the page that was saved is the one marked saved even if you moved to another meanwhile. It
+  stays a text editor: highlighting, completion, projects and a compiler are what tell the five development
+  environments apart, and they stay theirs.
 - MC-NET draws the whole monitor, as every other system does. Its interface was a 244 by 230 window with the
   player's inventory under it, throwing away 140 columns of a screen the desktops fill, which is why the one
   interface in the mod that is a whole system read as an inventory panel. It is now the glass: a status bar
@@ -107,6 +116,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   breaking where the others have two.
 
 ### Fixed
+- A file cannot be given a path longer than the machine can then ask about. Each folder and file name was
+  held to sixty-four characters and the path they built to nothing at all, so folders nested deeply enough
+  made a file that existed on the disk and that no window could open, list, copy or pack away again, because
+  every message that carries a path refuses a longer one outright. A whole path is now held to what those
+  messages carry, and a thing put back out of the trash is numbered within that too.
 - A service is listed as running and weighs what it asks for. Every installed service was looked up by the
   bare name of its program while every way of installing one writes down the whole name, so no service ever
   matched: none was listed on the machine it was on and none of the memory they hold was counted against it.

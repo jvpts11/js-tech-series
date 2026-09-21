@@ -93,6 +93,16 @@ public final class Spreadsheet {
      * have changed.
      */
     private final String[][] shown = new String[ROWS][COLUMNS];
+    /**
+     * What each cell worked out to, for the cells that read each other rather than for the drawing.
+     *
+     * <p>Without it a cell is worked out once for every cell that mentions it, and a column where each row
+     * adds the one below it twice doubles the work per row: forty rows of that is a sheet a player can type
+     * in a minute and never get an answer out of. Holding what a cell came to makes the whole sheet one
+     * pass down. Only answers are kept, never failures, because a cell that failed because it is part of a
+     * ring failed as part of that walk rather than in itself.
+     */
+    private final Double[][] value = new Double[ROWS][COLUMNS];
     private INetworkFacts facts = NOTHING_KNOWN;
     /** Why the last cell that could not be worked out failed, which is what that cell then shows. */
     private String lastError = ERROR;
@@ -118,6 +128,9 @@ public final class Spreadsheet {
      */
     public void forget() {
         for (final String[] row : shown) {
+            Arrays.fill(row, null);
+        }
+        for (final Double[] row : value) {
             Arrays.fill(row, null);
         }
     }
@@ -233,6 +246,10 @@ public final class Spreadsheet {
             lastError = ERROR;
             return null;
         }
+        final Double already = value[row][column];
+        if (already != null) {
+            return already;
+        }
         final int key = row * COLUMNS + column;
         if (!visiting.add(key)) {
             lastError = CIRCULAR;
@@ -240,10 +257,13 @@ public final class Spreadsheet {
         }
         try {
             final String text = cells[row][column];
-            if (!text.startsWith("=")) {
-                return plainNumber(text);
+            final Double worked = text.startsWith("=")
+                    ? new Parser(text.substring(1), visiting).parse()
+                    : plainNumber(text);
+            if (worked != null) {
+                value[row][column] = worked;
             }
-            return new Parser(text.substring(1), visiting).parse();
+            return worked;
         } finally {
             visiting.remove(key);
         }
