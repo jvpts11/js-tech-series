@@ -164,6 +164,34 @@ public final class ShellPipelineGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * A command that takes the whole terminal is refused on a line that pipes or redirects, instead of printing
+     * nothing and leaving the file it was sent to empty; and a line that ends in clearing the screen clears it.
+     */
+    @GameTest(template = ARENA)
+    public static void aLine_refusesATerminalTakerAndStillClearsTheScreen(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper, DEBIAN);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    file(helper, computer, "notes.txt", NOTES);
+                    file(helper, computer, "kept.txt", "worth keeping");
+
+                    final List<String> refused = shell(helper, computer, "less notes.txt > kept.txt");
+                    helper.assertTrue(says(refused, "cannot be piped or redirected"),
+                            "a pager given a file takes the terminal, so the line is refused; got " + refused);
+                    helper.assertTrue(says(shell(helper, computer, "cat kept.txt"), "worth keeping"),
+                            "and the file the line named is left as it was");
+
+                    final List<String> paged = shell(helper, computer, "cat notes.txt | less");
+                    helper.assertTrue(says(paged, "oak log"), "fed by a pipe the pager still prints; got " + paged);
+
+                    final ServerCliComputer cli = new ServerCliComputer(computer, helper.getLevel());
+                    helper.assertTrue(CliCommands.shellFor(cli, WIDTH).run("cat notes.txt | clear", cli)
+                            .clearScreen(), "a line ending in clear clears the screen");
+                })
+                .thenSucceed();
+    }
+
     private static List<String> shell(final GameTestHelper helper, final PersonalComputerBlockEntity on,
                                       final String command) {
         final ServerCliComputer computer = new ServerCliComputer(on, helper.getLevel());

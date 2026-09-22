@@ -75,6 +75,19 @@ public final class ShRunner {
      */
     public static CliShell.Response run(final CliShell shell, final ShLine line, final ICliComputer computer,
                                         final CliOutput out) {
+        /*
+         * A command that takes the whole terminal has nothing to hand along a pipe or into a file. Run here it
+         * printed nothing and the terminal stayed where it was, and a redirection then emptied the file it named,
+         * so it is refused before anything on the line runs.
+         */
+        for (final ShLine.Stage stage : line.stages()) {
+            final ICliCommand command = shell.find(stage.word());
+            if (command instanceof CliShell.IHandOver giving && command.available(computer)
+                    && giving.fileOf(computer, stage.args()) != null) {
+                out.error(stage.word() + ": takes the whole terminal, so it cannot be piped or redirected");
+                return new CliShell.Response(out.lines(), false);
+            }
+        }
         List<String> feeding = new ArrayList<>();
         if (!line.from().isEmpty()) {
             final ICliComputer.FsResult read = computer.readFile(line.from());
@@ -85,9 +98,11 @@ public final class ShRunner {
             feeding = linesOf(read.message());
         }
         List<CliLine> printed = List.of();
+        ICliCommand last = null;
         for (int i = 0; i < line.stages().size(); i++) {
             final ShLine.Stage stage = line.stages().get(i);
             final ICliCommand command = shell.find(stage.word());
+            last = command;
             if (command == null || !command.available(computer)) {
                 out.error("command not found: " + stage.word());
                 return new CliShell.Response(out.lines(), false);
@@ -108,7 +123,8 @@ public final class ShRunner {
         for (final CliLine printedLine : printed) {
             out.line(printedLine);
         }
-        return new CliShell.Response(out.lines(), false);
+        // A line that ends in clearing the screen clears it, piped into or not, as it does on its own.
+        return new CliShell.Response(out.lines(), last instanceof CliShell.IClearMarker);
     }
 
     /** Puts what the last command printed into the file the line named, and says what came of that. */

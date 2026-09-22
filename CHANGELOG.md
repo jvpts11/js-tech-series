@@ -39,6 +39,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Copying or moving a file to another drive, or to another machine's shared folder, no longer writes over a
   file of the same name already there. A copy on the same drive always refused; across drives it was a plain
   write, which replaces, and a move then deleted the original as well.
+- A command that takes the whole terminal, such as `less` given a file, `interac` or an editor, is refused on
+  a line that pipes or redirects, instead of printing nothing and leaving the file it was sent to empty. A
+  line that ends in `clear` or `cls` now clears the screen, as the command does on its own.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 
