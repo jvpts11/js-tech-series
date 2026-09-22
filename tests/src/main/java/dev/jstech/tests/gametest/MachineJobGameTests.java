@@ -118,6 +118,23 @@ public final class MachineJobGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * AT takes a job off only when it is told "AT id /DELETE". The same word inside the command being scheduled is
+     * that command's own, and used to turn the whole line into a delete of a job numbered by the time.
+     */
+    @GameTest(template = ARENA)
+    public static void at_schedulesACommandThatHasTheDeleteWordInIt(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity lab = wire(helper, FRAMES_XP);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final List<String> scheduled = shell(helper, lab, "AT 06:00 DEL OLD.LOG /DELETE");
+                    helper.assertTrue(says(scheduled, "Added a new job"),
+                            "a command with the word in it is scheduled, not read as a delete; got " + scheduled);
+                    helper.assertTrue(lab.console().jobs().all().size() == 1, "and it is on the list");
+                })
+                .thenSucceed();
+    }
+
     /** What a machine was left with goes with it through a save, or it would be no use leaving anything. */
     @GameTest(template = ARENA)
     public static void whatAMachineWasLeftWith_survivesASave(final GameTestHelper helper) {

@@ -275,11 +275,13 @@ final class JobCommands {
                 list(ctx, true);
                 return;
             }
-            for (int i = 0; i < ctx.argCount(); i++) {
-                if (ctx.arg(i).equalsIgnoreCase("/delete")) {
-                    stop(ctx, ctx.arg(0), true);
-                    return;
-                }
+            /*
+             * Only "AT id /DELETE" takes a job off. The same word further along a line that schedules one is the
+             * scheduled command's own, and reading it as a delete took the time for the job's number.
+             */
+            if (ctx.argCount() == 2 && ctx.arg(1).equalsIgnoreCase("/delete")) {
+                stop(ctx, ctx.arg(0), true);
+                return;
             }
             final int hour = JobWhen.hourOf(ctx.arg(0));
             if (hour < 0) {

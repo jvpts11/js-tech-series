@@ -67,6 +67,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A terminal reopened on a tab that is no longer there, the Craft tab after the last Crafting Computer left
   or the Patterns tab after the card came out, opens on Network for the player too. Only the server moved,
   so the screen showed an empty tab the server was no longer filling.
+- `AT` schedules a command that has `/DELETE` among its own words. The word anywhere on the line made it
+  a delete, which then looked for a job numbered by the time.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 
