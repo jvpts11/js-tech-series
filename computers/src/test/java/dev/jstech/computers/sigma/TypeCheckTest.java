@@ -416,6 +416,44 @@ class TypeCheckTest {
     }
 
     @Test
+    void check_countsASwitchWhoseEverySectionGivesTheValue() {
+        assertClean(check("""
+                class C {
+                    bool Find(int key, out int value) {
+                        switch (key) {
+                            case 1: value = 1; break;
+                            default: value = 0; break;
+                        }
+                        return true;
+                    }
+                }
+                """));
+        // Without a default no section may run at all, so the switch cannot be counted on.
+        assertReports("S3037", check("""
+                class C {
+                    bool Find(int key, out int value) {
+                        switch (key) {
+                            case 1: value = 1; break;
+                        }
+                        return true;
+                    }
+                }
+                """));
+        // And one section that does not give it is a way through the switch without it.
+        assertReports("S3037", check("""
+                class C {
+                    bool Find(int key, out int value) {
+                        switch (key) {
+                            case 1: value = 1; break;
+                            default: break;
+                        }
+                        return true;
+                    }
+                }
+                """));
+    }
+
+    @Test
     void check_countsPassingItOnAsGivingItAValue() {
         assertClean(check("""
                 class C {

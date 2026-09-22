@@ -46,6 +46,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   its folder, and the next install found the folder there and gave up as if the system had no folders.
 - Erasing a system disk forgets the programs a player installed from the Mirror, which lived on it; the desktop
   went on showing icons for programs whose files were gone.
+- An `out` parameter given a value in every section of a `switch` that has a `default` counts as given. The
+  compiler threw away what each section did and refused a correct program.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

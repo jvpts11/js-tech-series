@@ -69,13 +69,21 @@ final class DefiniteAssignment {
             case IStmt.For loop -> this.aside(loop.body(), name, assigned);
             case IStmt.ForEach loop -> this.aside(loop.body(), name, assigned);
             case IStmt.Switch choice -> {
+                final boolean before = assigned || writesTo(choice.value(), name);
+                /*
+                 * A switch gives the value when one of its sections is sure to run, which takes a default, and every
+                 * section has given it by its end. Otherwise it is only as given as it was before the switch, and a
+                 * way out inside a section is still checked either way.
+                 */
+                boolean everySection = choice.sections().stream().anyMatch(IStmt.SwitchSection::fallback);
                 for (final IStmt.SwitchSection section : choice.sections()) {
-                    boolean now = assigned;
+                    boolean now = before;
                     for (final IStmt inner : section.statements()) {
                         now = this.assignedBy(inner, name, now);
                     }
+                    everySection &= now;
                 }
-                yield assigned;
+                yield before || everySection;
             }
             default -> assigned;
         };
