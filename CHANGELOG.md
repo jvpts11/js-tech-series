@@ -69,6 +69,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   so the screen showed an empty tab the server was no longer filling.
 - `AT` schedules a command that has `/DELETE` among its own words. The word anywhere on the line made it
   a delete, which then looked for a job numbered by the time.
+- A Linux installed by hand is only offered software its hardware era runs, as every other way of installing
+  already was; a Vintage machine could be given a desktop that needs Legacy hardware while it was being built.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

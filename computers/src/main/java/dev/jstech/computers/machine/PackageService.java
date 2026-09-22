@@ -178,8 +178,12 @@ public final class PackageService {
     @Nullable
     public MirrorPackage whileInstalling(final String typed, final boolean hasATree) {
         for (final ProgramSpec spec : OsRegistry.programs()) {
+            /*
+             * The hardware is the one thing that is already true of a machine still being built by hand, so the era
+             * rule every other way of installing keeps is kept here too.
+             */
             if (spec.installable() && spec.kind() != ProgramKind.SERVICE && spec.platforms().contains(Platform.LINUX)
-                    && named(typed, spec, hasATree) && this.wrongMachine(spec) == null) {
+                    && named(typed, spec, hasATree) && this.wrongMachine(spec) == null && this.eraGate(spec) == null) {
                 return SourceChains.packageOf(spec);
             }
         }
