@@ -18,6 +18,7 @@ import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.SystemWelcome;
 import dev.jstech.computers.os.boot.WelcomeFacts;
+import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -92,6 +93,23 @@ public final class FirstBootGameTests {
         helper.assertTrue(computer.formatDisk(0), "the disk is erased");
         helper.assertTrue(computer.installOs(DEBIAN), "and takes the system again");
         helper.assertFalse(computer.systemWelcome().seen(), "which the machine is meeting for the first time");
+        helper.succeed();
+    }
+
+    /**
+     * Erasing the system disk forgets the programs a player installed from the Mirror, which lived on it. They
+     * used to be kept, so the desktop went on showing icons for programs whose files were gone.
+     */
+    @GameTest(template = ARENA)
+    public static void erasingTheDisk_forgetsThePlayersOwnPrograms(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = legacy(helper);
+        helper.assertTrue(computer.installOs(DEBIAN), "Debian installs on the machine");
+        computer.console().addCommunity(new ComputerConsoleState.Community("stockwatch", "1.0.0", "jvpts11",
+                "bell", "PROGRAMS/stockwatch/stockwatch.asm"));
+        helper.assertTrue(computer.console().communityProgram("stockwatch") != null, "a player's program is in");
+
+        helper.assertTrue(computer.formatDisk(0), "the disk is erased");
+        helper.assertTrue(computer.console().community().isEmpty(), "and the machine no longer has it");
         helper.succeed();
     }
 

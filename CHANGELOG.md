@@ -44,6 +44,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   line that ends in `clear` or `cls` now clears the screen, as the command does on its own.
 - A player's package taken off a machine can be installed on it again. Removing it deleted its files but left
   its folder, and the next install found the folder there and gave up as if the system had no folders.
+- Erasing a system disk forgets the programs a player installed from the Mirror, which lived on it; the desktop
+  went on showing icons for programs whose files were gone.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

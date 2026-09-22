@@ -315,6 +315,9 @@ public final class ComputerConsoleState {
         sessions.clear();
         terminalDrive = 'C';
         installed.clear();
+        // What a player installed from the Mirror, and which version of each program, were on that disk too.
+        installedVersions.clear();
+        community.clear();
         // Whatever was being built went with the system it was being built for.
         foreground.clear();
     }
