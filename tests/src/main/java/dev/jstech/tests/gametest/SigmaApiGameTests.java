@@ -578,6 +578,10 @@ public final class SigmaApiGameTests {
                             "and the machine forgets it");
                     helper.assertFalse(shell.readFile("PROGRAMS/stockwatch/stockwatch.asm").ok(),
                             "taking its files with it");
+                    // Its folder went too, which used to stay behind and refuse the next install.
+                    final var again = shell.packageInstall("stockwatch", false);
+                    helper.assertTrue(again.ok(), "it installs again: " + again.message());
+                    helper.assertTrue(shell.packageRemove("stockwatch").ok(), "and comes off again");
 
                     helper.assertTrue(shell.unpublishPackage("stockwatch").ok(), "it comes back off");
                     helper.assertTrue(wired.mainframe().shelvedPackage("stockwatch") == null,

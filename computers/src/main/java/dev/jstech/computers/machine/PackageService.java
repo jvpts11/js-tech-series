@@ -334,7 +334,8 @@ public final class PackageService {
         // Its own folder, made before anything is written into it.
         final String folder = COMMUNITY_DIR + "/" + wanted;
         this.files.makeDir(COMMUNITY_DIR);
-        if (!this.files.makeDir(folder).ok() && this.files.listDisk(folder).entries().isEmpty()) {
+        // A folder already there is as good as one made now: it is where the files go either way.
+        if (!this.files.makeDir(folder).ok() && !this.files.folderExists(folder)) {
             return ICliComputer.OpResult.fail(wanted + ": this system has no folders to install into");
         }
         for (final var file : packed.files().entrySet()) {
@@ -666,6 +667,8 @@ public final class PackageService {
                 // The listing's name is the whole last segment, extension and all.
                 this.files.deleteFile(COMMUNITY_DIR + "/" + wanted + "/" + file.name());
             }
+            // And the folder it was installed into, which was its own: left behind, it stood in a reinstall's way.
+            this.files.removeDir(COMMUNITY_DIR + "/" + wanted);
             theirs.removeCommunity(wanted);
             machine.setChanged();
             return ICliComputer.OpResult.ok("removed " + wanted);

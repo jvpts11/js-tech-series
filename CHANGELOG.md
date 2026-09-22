@@ -42,6 +42,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A command that takes the whole terminal, such as `less` given a file, `interac` or an editor, is refused on
   a line that pipes or redirects, instead of printing nothing and leaving the file it was sent to empty. A
   line that ends in `clear` or `cls` now clears the screen, as the command does on its own.
+- A player's package taken off a machine can be installed on it again. Removing it deleted its files but left
+  its folder, and the next install found the folder there and gave up as if the system had no folders.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

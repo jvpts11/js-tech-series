@@ -643,6 +643,12 @@ public final class FileService {
         return this.readFile(path).ok();
     }
 
+    /** Whether there is a folder at that path on one of this machine's own drives. */
+    public boolean folderExists(final String path) {
+        final Resolved r = this.resolve(path);
+        return unready(r) == null && DriveTable.dirExists(this.osHost(), r.drive(), r.path());
+    }
+
     /** What the file at that path holds, or why it could not be read. */
     public ICliComputer.FsResult read(final String path) {
         return this.readFile(path);
