@@ -60,7 +60,19 @@ final class StatementParser {
         return new IStmt.Block(statements, start.line(), start.column());
     }
 
+    /* Blocks and the statements that hold statements read themselves a level down, so each counts once. */
     private IStmt parseStatement() {
+        if (!this.cursor.descend()) {
+            return null;
+        }
+        try {
+            return this.statement();
+        } finally {
+            this.cursor.ascend();
+        }
+    }
+
+    private IStmt statement() {
         final Token start = this.cursor.peek();
         switch (start.kind()) {
             case LEFT_BRACE:

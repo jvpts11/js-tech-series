@@ -45,7 +45,12 @@ public final class Parser {
     private final ExpressionParser expressions;
 
     public Parser(final List<Token> tokens, final DiagnosticBag diagnostics) {
-        this.cursor = new TokenCursor(tokens, diagnostics);
+        this(tokens, diagnostics, 0);
+    }
+
+    /** One that starts that deep already, for a piece read on its own inside a construct another is reading. */
+    Parser(final List<Token> tokens, final DiagnosticBag diagnostics, final int depth) {
+        this.cursor = new TokenCursor(tokens, diagnostics, depth);
         this.diagnostics = diagnostics;
         final TypeParser types = new TypeParser(this.cursor, diagnostics);
         this.expressions = new ExpressionParser(this.cursor, diagnostics, types);

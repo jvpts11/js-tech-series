@@ -30,10 +30,64 @@ final class TokenCursor {
     private final List<Token> tokens;
     private final DiagnosticBag diagnostics;
     private int position;
+    /** How many constructs the one being read sits inside. */
+    private int depth;
+    /**
+     * Whether the file was refused as too deep. Every construct still open then finds the end where its closing
+     * token should be, and saying so for each of them would bury the one thing worth saying under hundreds of lines.
+     */
+    private boolean refused;
+
+    /**
+     * How deep one construct may sit inside others before a file is refused as too deep to read.
+     *
+     * <p>Far past anything written by hand, and low enough that the deepest reading of all, brackets inside
+     * brackets, which passes through every level of operator precedence each time, stays well inside a thread's
+     * stack; the stages after this one walk the tree it builds, which is never deeper.
+     */
+    static final int MAX_DEPTH = 128;
 
     TokenCursor(final List<Token> tokens, final DiagnosticBag diagnostics) {
+        this(tokens, diagnostics, 0);
+    }
+
+    /** One that starts that deep already, for a piece of a file read on its own inside another construct. */
+    TokenCursor(final List<Token> tokens, final DiagnosticBag diagnostics, final int depth) {
         this.tokens = new ArrayList<>(tokens);
         this.diagnostics = diagnostics;
+        this.depth = depth;
+    }
+
+    /** How deep the reading is, for a piece read on its own to start from. */
+    int depth() {
+        return this.depth;
+    }
+
+    /**
+     * Goes one construct deeper, or refuses to.
+     *
+     * <p>The grammar is read by methods calling each other as deep as the file nests, so a file of a few thousand
+     * opening brackets took the reading past the end of its stack, which is a crash rather than a mistake to point
+     * at. Past the limit the file is said to be too deep, once, and the reading jumps to the end, where every
+     * construct being read stops; the caller hands back nothing for what it was about to read.
+     */
+    boolean descend() {
+        if (this.depth >= MAX_DEPTH) {
+            if (this.position < this.tokens.size() - 1) {
+                final Token here = this.peek();
+                this.diagnostics.error(here.line(), here.column(), SigmaError.NESTING_TOO_DEEP, MAX_DEPTH);
+                this.position = this.tokens.size() - 1;
+                this.refused = true;
+            }
+            return false;
+        }
+        this.depth++;
+        return true;
+    }
+
+    /** Comes back out of a construct {@link #descend()} went into. */
+    void ascend() {
+        this.depth--;
     }
 
     /** Where the reading has got to, for the scans that look ahead by index. */
@@ -99,8 +153,10 @@ final class TokenCursor {
             return true;
         }
         final Token found = this.peek();
-        this.diagnostics.error(found.line(), found.column(),
-                SigmaError.EXPECTED_TOKEN, kind.describe(), found.describe());
+        if (!this.refused) {
+            this.diagnostics.error(found.line(), found.column(),
+                    SigmaError.EXPECTED_TOKEN, kind.describe(), found.describe());
+        }
         return false;
     }
 
@@ -109,8 +165,10 @@ final class TokenCursor {
             return this.advance().text();
         }
         final Token found = this.peek();
-        this.diagnostics.error(found.line(), found.column(),
-                SigmaError.EXPECTED_TOKEN, TokenKind.IDENTIFIER.describe(), found.describe());
+        if (!this.refused) {
+            this.diagnostics.error(found.line(), found.column(),
+                    SigmaError.EXPECTED_TOKEN, TokenKind.IDENTIFIER.describe(), found.describe());
+        }
         return found.text();
     }
 

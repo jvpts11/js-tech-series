@@ -59,7 +59,19 @@ final class TypeParser {
         return this.parseTypeRef();
     }
 
+    /* Type arguments read themselves a level down, so a type nested in type arguments counts against the limit. */
     TypeRef parseTypeRef() {
+        if (!this.cursor.descend()) {
+            return null;
+        }
+        try {
+            return this.typeRef();
+        } finally {
+            this.cursor.ascend();
+        }
+    }
+
+    private TypeRef typeRef() {
         final Token start = this.cursor.peek();
         if (!this.isTypeStart(start.kind())) {
             this.diagnostics.error(start.line(), start.column(), SigmaError.EXPECTED_TYPE, start.describe());

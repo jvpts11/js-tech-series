@@ -52,6 +52,38 @@ class ParserTest {
     }
 
     @Test
+    void parse_refusesAFileNestedDeeperThanItReads() {
+        final int deep = 5000;
+        final String parens = "(".repeat(deep) + "1" + ")".repeat(deep);
+        final String[] sources = {
+            "class C { int M() { return " + parens + "; } }",
+            "class C { bool M(bool b) { return " + "!".repeat(deep) + "b; } }",
+            "class C { void M() { " + "{".repeat(deep) + "}".repeat(deep) + " } }",
+            "class C { " + "List<".repeat(deep) + "int" + ">".repeat(deep) + " field; }",
+        };
+        for (final String source : sources) {
+            final SigmaFrontEnd.Result result = parse(source);
+            assertTrue(codes(result).contains("S2013"),
+                    "a file nested too deep is said to be, not read until the stack runs out; got " + codes(result));
+        }
+    }
+
+    @Test
+    void compile_takesAProgramNestedJustShortOfTheLimit() {
+        /*
+         * The limit only helps if what is under it still gets through every stage, since the checker, the
+         * lowering and the writer all walk the tree as deep as the parser built it.
+         */
+        final int deep = 60;
+        final String source = PRELUDE + "class Monitor : IScript { int M() { int x = 1; " + "{".repeat(deep)
+                + "x = " + "(".repeat(deep) + "x + 1" + ")".repeat(deep) + ";" + "}".repeat(deep)
+                + " return x; } public void OnInit() { } public void OnTick() { } public void OnDestroy() { } }";
+        final SigmaCompiler.Result compiled =
+                SigmaCompiler.compile(List.of(new SourceFile("Test.sgs", source)));
+        assertTrue(compiled.ok(), () -> String.join("\n", compiled.lines()));
+    }
+
+    @Test
     void parse_readsAClassWithEveryMemberKind() {
         final SigmaFrontEnd.Result result = parse("""
                 class Monitor : IScript {

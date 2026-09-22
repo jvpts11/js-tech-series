@@ -39,6 +39,8 @@ public enum SigmaError {
     NAMESPACE_REQUIRED("S2011", "every type is in a namespace: put 'namespace Name;' at the top of the file"),
     USING_NEEDS_STAR("S2012", "'%s' names a namespace; write 'using %s.*;' to bring in everything in it, or "
             + "name one of its types"),
+    NESTING_TOO_DEEP("S2013", "this is nested more than %s levels deep, which is more than the compiler reads; "
+            + "the rest of the file was not read"),
 
     UNKNOWN_NAME("S3001", "'%s' does not name anything here"),
     DUPLICATE_DECLARATION("S3002", "'%s' is already declared here"),

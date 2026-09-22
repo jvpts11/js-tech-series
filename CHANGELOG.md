@@ -48,6 +48,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   went on showing icons for programs whose files were gone.
 - An `out` parameter given a value in every section of a `switch` that has a `default` counts as given. The
   compiler threw away what each section did and refused a correct program.
+- A source nested more deeply than anyone writes, a few thousand brackets, blocks or operators inside each
+  other, is refused with an error saying so instead of crashing the compiler with a stack overflow.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

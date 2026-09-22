@@ -77,7 +77,14 @@ final class ExpressionParser {
     }
 
     IExpr parseExpression() {
-        return this.parseAssignment();
+        if (!this.cursor.descend()) {
+            return null;
+        }
+        try {
+            return this.parseAssignment();
+        } finally {
+            this.cursor.ascend();
+        }
     }
 
     /** Reads one expression standing on its own, as a hole in an interpolated string holds one. */
@@ -233,22 +240,22 @@ final class ExpressionParser {
         switch (start.kind()) {
             case NOT:
                 this.cursor.advance();
-                return new IExpr.Unary(Operator.NOT, this.parseUnary(), false, start.line(), start.column());
+                return new IExpr.Unary(Operator.NOT, this.operand(), false, start.line(), start.column());
             case MINUS:
                 this.cursor.advance();
-                return new IExpr.Unary(Operator.NEGATE, this.parseUnary(), false, start.line(), start.column());
+                return new IExpr.Unary(Operator.NEGATE, this.operand(), false, start.line(), start.column());
             case PLUS:
                 this.cursor.advance();
-                return new IExpr.Unary(Operator.PLUS, this.parseUnary(), false, start.line(), start.column());
+                return new IExpr.Unary(Operator.PLUS, this.operand(), false, start.line(), start.column());
             case TILDE:
                 this.cursor.advance();
-                return new IExpr.Unary(Operator.COMPLEMENT, this.parseUnary(), false, start.line(), start.column());
+                return new IExpr.Unary(Operator.COMPLEMENT, this.operand(), false, start.line(), start.column());
             case PLUS_PLUS:
                 this.cursor.advance();
-                return new IExpr.Unary(Operator.INCREMENT, this.parseUnary(), false, start.line(), start.column());
+                return new IExpr.Unary(Operator.INCREMENT, this.operand(), false, start.line(), start.column());
             case MINUS_MINUS:
                 this.cursor.advance();
-                return new IExpr.Unary(Operator.DECREMENT, this.parseUnary(), false, start.line(), start.column());
+                return new IExpr.Unary(Operator.DECREMENT, this.operand(), false, start.line(), start.column());
             default:
                 break;
         }
@@ -256,9 +263,21 @@ final class ExpressionParser {
             this.cursor.advance();
             final TypeRef type = this.types.parseTypeRef();
             this.cursor.expect(TokenKind.RIGHT_PAREN);
-            return new IExpr.Cast(type, this.parseUnary(), start.line(), start.column());
+            return new IExpr.Cast(type, this.operand(), start.line(), start.column());
         }
         return this.parsePostfix();
+    }
+
+    /* What a unary operator or a cast applies to sits a level inside it, so a chain of them counts too. */
+    private IExpr operand() {
+        if (!this.cursor.descend()) {
+            return null;
+        }
+        try {
+            return this.parseUnary();
+        } finally {
+            this.cursor.ascend();
+        }
     }
 
     /*
@@ -387,7 +406,8 @@ final class ExpressionParser {
         final String padded = "\n".repeat(Math.max(0, hole.line() - 1)) + " ".repeat(Math.max(0, hole.column() - 1))
                 + hole.code();
         final Lexer lexer = new Lexer(new SourceFile("", padded), this.diagnostics);
-        return new Parser(lexer.tokenize(), this.diagnostics).parseLoneExpression();
+        // The hole is read as deep as the string it sits in, so holes nested in holes still meet the limit.
+        return new Parser(lexer.tokenize(), this.diagnostics, this.cursor.depth()).parseLoneExpression();
     }
 
     private IExpr parsePrimary() {
