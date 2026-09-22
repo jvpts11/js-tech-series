@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.sigma.SigmaCompiler;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.hardware.DiskSize;
@@ -17,11 +18,13 @@ import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -510,6 +513,23 @@ public final class SigmaApiGameTests {
                             "the script is woken once, when it crosses; got " + said);
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * What a Gateway spent on a machine's behalf is still owed after a save, program or no program. The save
+     * left the programs out when there were none, and the debt with them, while the tick went on paying it down.
+     */
+    @GameTest(template = ARENA)
+    public static void owed_isKeptThroughASaveWithNoProgramRunning(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = TestWorldBuilder.forGameTest(helper)
+                .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        helper.assertTrue(computer.programs().isEmpty(), "the machine runs no program");
+        computer.programs().owe(5_000);
+
+        final var registries = helper.getLevel().registryAccess();
+        final CompoundTag saved = computer.saveWithoutMetadata(registries);
+        helper.assertTrue(saved.contains("Σ#"), "the debt goes into the save although nothing is running");
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)

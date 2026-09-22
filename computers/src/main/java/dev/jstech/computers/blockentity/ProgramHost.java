@@ -164,7 +164,8 @@ final class ProgramHost {
     }
 
     void save(final CompoundTag tag) {
-        if (this.programs.isEmpty()) {
+        // What a Gateway spent on this machine's behalf is owed with or without a program running, as the tick has it.
+        if (this.programs.isEmpty() && this.programs.owed() == 0) {
             return;
         }
         final CompoundTag sigma = new CompoundTag();

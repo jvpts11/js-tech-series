@@ -57,6 +57,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A guided installer's progress follows the disk the system goes on. Picking another disk, or erasing one to
   install over it, timed the copy for that disk but left the steps on the page, and when they unlock, sharing
   out the time of the first disk the installer had suggested.
+- What a Gateway spent on a machine's behalf is still owed after a save when the machine runs no program;
+  the save left it out, so a reload wiped the debt the machine was still paying down.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 
