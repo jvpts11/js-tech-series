@@ -31,6 +31,7 @@ import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -483,20 +484,52 @@ public final class IqlService {
         if (!read.ok()) {
             return read;
         }
-        final IqlParseResult parsed = IqlParser.tryParse(read.message().trim());
-        if (!parsed.ok()) {
-            return ICliComputer.FsResult.fail(path + ": syntax error: " + parsed.error());
-        }
-        final IqlOperation op = parsed.operation();
         /*
-         * QUERY/COUNT are read operations that produce rows, not timed operations; they cannot be
-         * dispatched via execute(). The caller should use 'operation' for those.
+         * The whole file is read before any of it runs, so a mistake on the third line stops the run before the
+         * first two have moved anything.
          */
-        if (op.verb() == IqlVerb.QUERY || op.verb() == IqlVerb.COUNT) {
-            return ICliComputer.FsResult.fail(path
-                    + ": QUERY/COUNT are not supported by 'run', use 'operation' instead");
+        final List<IqlOperation> operations = new ArrayList<>();
+        for (final String statement : statementsOf(read.message())) {
+            final IqlParseResult parsed = IqlParser.tryParse(statement);
+            if (!parsed.ok()) {
+                return ICliComputer.FsResult.fail(path + ": syntax error in '" + statement + "': " + parsed.error());
+            }
+            /*
+             * QUERY/COUNT are read operations that produce rows, not timed operations; they cannot be
+             * dispatched via execute(). The caller should use 'operation' for those.
+             */
+            if (parsed.operation().verb() == IqlVerb.QUERY || parsed.operation().verb() == IqlVerb.COUNT) {
+                return ICliComputer.FsResult.fail(path
+                        + ": QUERY/COUNT are not supported by 'run', use 'operation' instead");
+            }
+            operations.add(parsed.operation());
         }
-        return ICliComputer.FsResult.iqlResult(this.execute(op));
+        if (operations.isEmpty()) {
+            return ICliComputer.FsResult.fail(path + ": nothing to run");
+        }
+        ICliComputer.OpResult last = null;
+        for (final IqlOperation operation : operations) {
+            last = this.execute(operation);
+            if (!last.ok()) {
+                break;
+            }
+        }
+        return ICliComputer.FsResult.iqlResult(last);
+    }
+
+    /**
+     * The statements a file holds, one a line, the way the studio saves them: blank lines and lines starting with
+     * {@code --} are left out. A file run at the prompt and one run by a program are read by this one rule.
+     */
+    private static List<String> statementsOf(final String text) {
+        final List<String> statements = new ArrayList<>();
+        for (final String line : text.split("\\r?\\n")) {
+            final String statement = line.strip();
+            if (!statement.isEmpty() && !statement.startsWith("--")) {
+                statements.add(statement);
+            }
+        }
+        return statements;
     }
 
     /** The lowercase extension of a path (after the last dot), or {@code ""} when it has none. */
@@ -511,11 +544,8 @@ public final class IqlService {
      */
     public static IqlEngine.Outcome runEach(final IqlEngine engine, final String text) {
         IqlEngine.Outcome last = new IqlEngine.Outcome(true, "nothing to run", List.of());
-        for (final String each : text.split("\\r?\\n")) {
-            if (each.isBlank() || each.strip().startsWith("--")) {
-                continue;
-            }
-            last = engine.run(each.strip());
+        for (final String statement : statementsOf(text)) {
+            last = engine.run(statement);
             if (!last.ok()) {
                 break;
             }

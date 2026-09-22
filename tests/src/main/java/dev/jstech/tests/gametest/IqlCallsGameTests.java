@@ -9,8 +9,13 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.machine.IqlService;
 import dev.jstech.computers.machine.MachineServices;
+import dev.jstech.computers.os.FilesystemKind;
+import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IWorldCall;
 import dev.jstech.computers.vm.program.IWorldFunction;
@@ -22,6 +27,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -118,6 +124,38 @@ public final class IqlCallsGameTests {
                     final IqlService iql = pc.services().iql();
                     helper.assertTrue(iql != null && iql.engine() != null && iql.engine() == iql.engine(),
                             "one engine serves every statement while the network's Mainframe stays the same");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A file of statements run at the prompt is read the way the studio writes it: one statement a line, with
+     * comments and blank lines left out. It used to be read as one statement, so any file of two failed.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void iql_runsEveryStatementOfAFileRunAtThePrompt(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = cabled(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    if (helper.getBlockEntity(new BlockPos(2, 2, 1)) instanceof ServerRackBlockEntity rack) {
+                        rack.getServerStorage(0).insert(Items.COBBLESTONE, 64);
+                    }
+                })
+                .thenExecuteAfter(PROPAGATE, () -> {
+                    DiskFilesystem.write(pc.systemDisk(), "hold.iql", FileType.IQL,
+                            "-- keep some stone back\nLOCK 10 cobblestone\n\nUNLOCK cobblestone\n",
+                            Long.MAX_VALUE, FilesystemKind.HIERARCHICAL);
+                    final IqlService iql = pc.services().iql();
+                    helper.assertTrue(iql != null, "the computer reaches its Mainframe's engine");
+                    final ICliComputer.FsResult ran = iql.runFile("hold.iql");
+                    helper.assertTrue(ran.ok(), "both statements run, the comment and the blank line left out; got "
+                            + ran.message());
+
+                    DiskFilesystem.write(pc.systemDisk(), "broken.iql", FileType.IQL,
+                            "LOCK 10 cobblestone\nnot a statement\n", Long.MAX_VALUE, FilesystemKind.HIERARCHICAL);
+                    final ICliComputer.FsResult refused = iql.runFile("broken.iql");
+                    helper.assertTrue(!refused.ok() && refused.message().contains("not a statement"),
+                            "a line that is not a statement is named; got " + refused.message());
                 })
                 .thenSucceed();
     }

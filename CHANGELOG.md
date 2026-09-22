@@ -30,6 +30,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   is stored leaves the machine now, and the rest waits in it until there is room.
 - Switching a machine off and on while it stood at a failed self-test no longer brings it back standing at the
   old failure, which outlived the power cycle and could send the machine past the new self-test it owed.
+- A file of IQL statements run at the prompt with `run` runs every statement in it. It was read as one
+  statement, so any file of two, or one with a comment line, failed as a syntax error, although the same file
+  run by a program worked. Both now read a file the one way the studio writes it: a statement a line, with
+  blank lines and `--` comments left out, and the whole file is checked before any of it runs.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 
