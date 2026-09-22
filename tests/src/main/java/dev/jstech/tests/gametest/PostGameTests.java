@@ -152,6 +152,40 @@ public final class PostGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * A bay whose self-test found nothing to boot goes on by itself once a system is on its drive.
+     *
+     * <p>It stands at its failure asking now and then rather than every tick, because a rack of empty servers
+     * asking every tick was half of what an idle base cost; so what is checked here is that the asking still
+     * happens, and soon enough that a player who has just installed a system never notices the wait.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 600)
+    public static void post_ofABayWithNothingToBoot_goesOnOnceASystemArrives(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos, ComputingModule.SERVER_RACK.get());
+        if (!(helper.getBlockEntity(pos) instanceof ServerRackBlockEntity rack)) {
+            helper.fail("no rack at " + pos);
+            return;
+        }
+        TestWorldBuilder.mountDefaultServer(rack, 0);
+        final IOsHost unit = rack.unitHost(0);
+        helper.startSequence()
+                .thenExecuteAfter(PAST_THE_POST, () -> {
+                    helper.assertTrue(unit.haltedAtPost(),
+                            "with nothing on its drives the bay stops at its failure");
+                    helper.assertTrue(unit.installOs(DEBIAN, 0),
+                            "and its drive takes a system while it stands there");
+                })
+                // A second to notice, and a couple of ticks to be sure.
+                .thenExecuteAfter(22, () -> {
+                    helper.assertFalse(unit.haltedAtPost(),
+                            "the bay stops standing at a failure that is not true any more");
+                    helper.assertTrue(unit.atBootMenu() || unit.booting(),
+                            "and goes on to the system it now has");
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA)
     public static void post_ofAnEarlierMachine_takesLonger(final GameTestHelper helper) {
         final PersonalComputerBlockEntity modern =

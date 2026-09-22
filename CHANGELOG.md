@@ -6,6 +6,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 
 ## [Unreleased]
 
+### Fixed
+- A server with nothing to boot no longer costs its rack time on every tick. A machine whose self-test found
+  no system stands at that failure and goes on by itself once one is installed, and to notice that it was
+  asking about its disks, and about every drive it is cabled to, twenty times a second; a datacenter of
+  servers kept only for storage spent half of an idle tick on the question. It now asks once a second, each
+  machine on its own tick of that second. The rack itself also answers questions about its bays without
+  working out afresh, each time, which units are mounted in it.
+
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 
 Codename: Beryllium.

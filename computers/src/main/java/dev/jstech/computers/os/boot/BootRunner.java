@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -45,6 +46,9 @@ public final class BootRunner {
 
     /** Where in its family the one edition sits that greets with a notice instead of a window. */
     private static final int BALLOON_GREETER_RANK = 2;
+
+    /** How often a machine standing at its failure asks again whether it has somewhere to go: once a second. */
+    private static final int HALT_RECHECK_TICKS = 20;
 
     private BootRunner() {
     }
@@ -229,15 +233,23 @@ public final class BootRunner {
             return;
         }
         /*
-         * A machine standing at a wrecked system stays there. What is on its disk is not whole, so there is
-         * nothing to go on to, and the test below cannot see that: a wrecked machine still has a system
-         * installed, which is the very reason it was found and refused. Putting a medium in is what gives it
-         * somewhere to go, and that is how such a machine is repaired.
+         * Nothing the answer below depends on changes by itself: a disk goes in, a medium goes into a drive the
+         * machine reaches, a player installs over the system. So a machine standing here asks once a second
+         * rather than every tick, which for a rack of servers with no system on them was half of what an idle
+         * base cost. Each machine asks on its own tick of the second, taken from where it stands, so a whole
+         * datacenter that halted together does not ask together again.
          */
-        if (!SystemIntegrity.check(machine).whole() && !machine.hasBootableMedium()) {
+        if (Math.floorMod(level.getGameTime() + Mth.getSeed(pos), HALT_RECHECK_TICKS) != 0) {
             return;
         }
-        if (!machine.hasOs() && !machine.hasBootableMedium()) {
+        /*
+         * Somewhere to go is a system that is there and whole, or a medium to start from instead. A machine
+         * standing at a wrecked system stays there: what is on its disk is not whole, although the disk still
+         * says a system is installed, which is the very reason it was found and refused. Putting a medium in is
+         * what gives it somewhere to go, and that is how such a machine is repaired. The system is asked about
+         * first because the medium means walking every drive the machine is cabled to.
+         */
+        if (!(machine.hasOs() && SystemIntegrity.check(machine).whole()) && !machine.hasBootableMedium()) {
             return;
         }
         phases.resume();

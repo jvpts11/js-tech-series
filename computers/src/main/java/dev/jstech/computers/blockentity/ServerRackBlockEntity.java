@@ -328,6 +328,7 @@ public class ServerRackBlockEntity extends BlockEntity
              */
             unitStates.remove(slot);
             buildCached[slot] = false;
+            mountedCache = null;
             markStorageChanged(slot);
             setChanged();
             updateBayVisuals();
@@ -677,6 +678,15 @@ public class ServerRackBlockEntity extends BlockEntity
     private final boolean[] buildCached = new boolean[CAPACITY_U];
 
     /*
+     * The units mounted in the cabinet, worked out when one goes in or out rather than every time they are
+     * asked for. Nearly every question about a bay walks them (which front slot is whose drive, which disk a
+     * machine starts from), and the tick asks those for every unit several times over, so building them afresh
+     * on each ask made a rack of eight allocate dozens of lists a tick. Null while they need working out.
+     */
+    @Nullable
+    private List<RackLayout.Unit> mountedCache;
+
+    /*
      * The bay capacity each unit registers, kept until its storage mod count moves (a drive or the machine
      * itself went in or out): the tick asks for it for every unit, every tick, and computing it walks the
      * chassis, the mounted units and the whole front panel.
@@ -781,7 +791,10 @@ public class ServerRackBlockEntity extends BlockEntity
 
     /** The occupancy and front-slot budgets of every mounted chassis. */
     public List<RackLayout.Unit> mountedUnits() {
-        return mountedUnitsExcept(-1);
+        if (mountedCache == null) {
+            mountedCache = List.copyOf(mountedUnitsExcept(-1));
+        }
+        return mountedCache;
     }
 
     private List<RackLayout.Unit> mountedUnitsExcept(final int exceptSlot) {
@@ -2122,6 +2135,9 @@ public class ServerRackBlockEntity extends BlockEntity
         super.loadAdditional(tag, registries);
         servers.deserializeNBT(registries, tag.getCompound("Servers"));
         resizeAfterLoad(servers, CAPACITY_U);
+        // Loading replaces the units without telling the handler's change hook, so what was kept of them goes.
+        mountedCache = null;
+        Arrays.fill(buildCached, false);
         frontSlots.deserializeNBT(registries, tag.getCompound("FrontSlots"));
         resizeAfterLoad(frontSlots, CAPACITY_U * RackLayout.SLOTS_PER_U);
         linkedPeripherals.clear();
