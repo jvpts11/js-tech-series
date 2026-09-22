@@ -52,6 +52,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   other, is refused with an error saying so instead of crashing the compiler with a stack overflow.
 - A package keeps a file whose text has a line starting with `--- `. That line was read as the start of
   another file, so the package came back from the Mirror with the file cut in two.
+- A rack's KVM switch keeps the machine it was switched to through a save. It came back from every reload
+  showing the first machine in the rack.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

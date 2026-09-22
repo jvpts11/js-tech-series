@@ -2147,6 +2147,8 @@ public class ServerRackBlockEntity extends BlockEntity
         }
         bayPowerOff = tag.getInt("BayPowerOff");
         servicePanelOff = tag.getBoolean("ServicePanelOff");
+        // The machine the monitor was switched to; activeChannel() still falls back if that row is empty now.
+        activeChannel = tag.getInt("ActiveChannel");
         arrays.load(tag);
     }
 
@@ -2182,6 +2184,7 @@ public class ServerRackBlockEntity extends BlockEntity
         tag.putLongArray("Peripherals", new ArrayList<>(linkedPeripherals));
         tag.putInt("BayPowerOff", bayPowerOff);
         tag.putBoolean("ServicePanelOff", servicePanelOff);
+        tag.putInt("ActiveChannel", activeChannel);
         arrays.save(tag);
     }
 

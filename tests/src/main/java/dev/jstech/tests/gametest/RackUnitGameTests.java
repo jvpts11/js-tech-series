@@ -25,6 +25,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -401,6 +402,14 @@ public final class RackUnitGameTests {
                     rack.setActiveChannel(5);
                     helper.assertTrue(rack.soleComputerSlot() == 2,
                             "an empty row is not a channel, so the selection stands");
+
+                    // And the switch keeps its channel through a save, as the physical one would.
+                    final var registries = helper.getLevel().registryAccess();
+                    final CompoundTag saved = rack.saveWithoutMetadata(registries);
+                    rack.setActiveChannel(0);
+                    rack.loadWithComponents(saved, registries);
+                    helper.assertTrue(rack.soleComputerSlot() == 2,
+                            "the channel comes back from a save; got " + rack.soleComputerSlot());
                 })
                 .thenSucceed();
     }
