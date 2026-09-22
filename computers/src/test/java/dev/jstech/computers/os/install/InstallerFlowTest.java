@@ -308,6 +308,23 @@ class InstallerFlowTest {
                 "as much sooner as the disk is faster, with neither end at a clamp");
     }
 
+    /**
+     * The steps the page shows, and what they unlock, follow the disk chosen, whether it was picked or erased to
+     * be installed over. They used to keep the length of the first disk the installer had suggested.
+     */
+    @Test
+    void steps_followTheDiskChosenOrErased() {
+        final InstallerFlow picked = timedXp(List.of(EMPTY_500, EMPTY_SLOW));
+        picked.select(EMPTY_SLOW.slot());
+        assertEquals(picked.copyTicks(), picked.ticksTotal(), "the steps share out the slower disk's copy");
+
+        final InstallerFlow erased = timedXp(List.of(EMPTY_500, FULL_WITH_UBUNTU));
+        erased.askErase(FULL_WITH_UBUNTU.slot());
+        erased.confirmErase();
+        assertEquals(48 * SetupTiming.TICKS_PER_SECOND, erased.copyTicks(), "the erased disk's copy is timed");
+        assertEquals(erased.copyTicks(), erased.ticksTotal(), "and the steps share out that copy");
+    }
+
     /** A disk the machine has nothing in leaves the time exactly where the last real choice left it. */
     @Test
     void select_aSlotWithNoDisk_changesNothing() {

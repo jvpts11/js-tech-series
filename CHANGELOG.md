@@ -54,6 +54,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   another file, so the package came back from the Mirror with the file cut in two.
 - A rack's KVM switch keeps the machine it was switched to through a save. It came back from every reload
   showing the first machine in the rack.
+- A guided installer's progress follows the disk the system goes on. Picking another disk, or erasing one to
+  install over it, timed the copy for that disk but left the steps on the page, and when they unlock, sharing
+  out the time of the first disk the installer had suggested.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

@@ -481,6 +481,8 @@ public final class InstallerFlow {
         if (disk != null) {
             this.targetSlot = slot;
             this.timeTheCopy(disk);
+            // The steps are what the page shows and what unlocks it, so they share out the copy's new length.
+            this.rebuildSteps();
         }
     }
 
@@ -508,6 +510,12 @@ public final class InstallerFlow {
             this.eraseSlot = this.erasePrompt;
             this.targetSlot = this.erasePrompt;
             this.erasePrompt = NO_DISK;
+            // Erasing a disk is choosing it, and a disk chosen is a copy timed for that disk.
+            final Disk disk = this.diskAt(this.targetSlot);
+            if (disk != null) {
+                this.timeTheCopy(disk);
+                this.rebuildSteps();
+            }
         }
     }
 
