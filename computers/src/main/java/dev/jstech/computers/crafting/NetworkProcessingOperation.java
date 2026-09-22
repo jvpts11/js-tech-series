@@ -174,14 +174,25 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
             if (inMachine <= 0) {
                 continue;
             }
-            final long pulled = outPort.extract(out.key(), inMachine, false);
-            if (pulled > 0) {
-                final long stored = writeBack(out.key(), pulled);
-                if (out.key().equals(resultKey)) {
-                    produced += stored;
-                }
-                progressed = true;
+            /*
+             * Only what the sink takes leaves the machine. Pulling everything and then storing it voided whatever
+             * a full network refused; asking the machine for exactly what was stored leaves the rest where it was
+             * made, and the machine waits, full, until there is room again.
+             */
+            final long offered = outPort.extract(out.key(), inMachine, true);
+            final long stored = offered > 0 ? writeBack(out.key(), offered) : 0L;
+            if (stored <= 0) {
+                continue;
             }
+            final long pulled = outPort.extract(out.key(), stored, false);
+            if (pulled < stored) {
+                // The machine gave less than it offered a moment ago: what it kept must not be counted twice.
+                io.select(out.key(), stored - pulled, (key, amount, simulate) -> amount);
+            }
+            if (out.key().equals(resultKey)) {
+                produced += pulled;
+            }
+            progressed = true;
         }
         if (produced >= requested) {
             status = OperationRecord.STATUS_COMPLETED;

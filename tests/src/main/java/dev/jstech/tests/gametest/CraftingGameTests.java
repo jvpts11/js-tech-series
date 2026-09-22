@@ -1317,6 +1317,45 @@ public final class CraftingGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * A machine's output waits in the machine while the network has no room for it. It used to be pulled out
+     * whole and stored as far as it fitted, and whatever a full network refused was simply gone.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 300)
+    public static void processing_leavesTheOutputInTheMachineWhenTheNetworkIsFull(final GameTestHelper helper) {
+        final Network net = buildCraftingNetwork(helper);
+        final BlockPos cable = new BlockPos(5, 2, 3);
+        final BlockPos sw = new BlockPos(5, 2, 4);
+        final BlockPos machine = new BlockPos(5, 2, 5);
+        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
+        helper.setBlock(machine, dev.jstech.industrial.IndustrialModule.COMPRESSOR.get());
+        final String machineType = BuiltInRegistries.BLOCK.getKey(
+                dev.jstech.industrial.IndustrialModule.COMPRESSOR.get()).toString();
+        final long[] before = new long[1];
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    net.seed(helper, Items.COBBLESTONE, 32);
+                    // Every byte the drives have left goes to dirt, so there is no room for what the machine makes.
+                    net.rack().getServerStorage(0).insert(Items.DIRT, Long.MAX_VALUE / 4);
+                    if (helper.getBlockEntity(machine)
+                            instanceof dev.jstech.industrial.blockentity.CompressorBlockEntity compressor) {
+                        compressor.getInventory().setStackInSlot(1, new ItemStack(Items.STONE, 16));
+                    }
+                    before[0] = totalOf(helper, net, machine, Items.COBBLESTONE)
+                            + totalOf(helper, net, machine, Items.STONE);
+                })
+                .thenExecuteAfter(SETTLE + 2, () ->
+                        net.mainframe.submitNetworkProcessing(cobblePattern(machineType), 8, "full"))
+                .thenExecuteAfter(40, () -> {
+                    final long after = totalOf(helper, net, machine, Items.COBBLESTONE)
+                            + totalOf(helper, net, machine, Items.STONE);
+                    helper.assertTrue(after == before[0],
+                            "nothing the machine made is lost to a full network: " + before[0] + " -> " + after);
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 300)
     public static void processing_conservesItemsThroughPowerCycle(final GameTestHelper helper) {
         final Network net = buildCraftingNetwork(helper);

@@ -25,6 +25,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A Mainframe whose system disk is erased or taken out while it runs lets go of the Operations it was carrying,
   as switching it off does: items are conserved and every hold on the storage is released. They used to stand
   frozen, holding the storage, for as long as the Mainframe went without a system.
+- A machine's output is no longer lost when the network has no room for it. A machine step pulled everything
+  finished out of the machine and stored what fitted, and whatever a full network refused was gone. Only what
+  is stored leaves the machine now, and the rest waits in it until there is room.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 
