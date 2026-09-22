@@ -81,6 +81,7 @@ Every development cycle has a codename, and every release that brings more than 
 | 2     | Helium    | 0.2.0a  |                        |
 | 3     | Lithium   | 0.3.0a  | The Programming Update |
 | 4     | Beryllium | 0.4.0a  | The Booting Update     |
+| 5     | Boron     | 0.5.0a  |                        |
 
 ## Cutting a release
 
