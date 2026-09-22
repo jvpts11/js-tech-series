@@ -22,6 +22,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A server rack's screen shows how far the cabinet is throttling even when the rack is not on a data network.
   The reading was only written for servers registered on a network, so a rack off the network, and every
   supercomputer rack, showed a cabinet running free however hot it ran.
+- A Mainframe whose system disk is erased or taken out while it runs lets go of the Operations it was carrying,
+  as switching it off does: items are conserved and every hold on the storage is released. They used to stand
+  frozen, holding the storage, for as long as the Mainframe went without a system.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

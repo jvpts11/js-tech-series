@@ -478,7 +478,13 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
              * UUID and topology but skips the dispatcher, index, Operation processing, and the IQL job
              * agent. Any submitted Operations remain PENDING until an OS is installed; on the tick when
              * the OS becomes present the dispatcher picks them up automatically (self-healing).
+             *
+             * A system that goes away while the network runs is the software that was carrying the work
+             * going away, which is a power cut to that work: what was in flight is settled and let go of,
+             * items conserved and every hold released, as switching off does. Left alone it stood frozen
+             * with its holds on the storage for as long as the Mainframe went without a system.
              */
+            closeDispatch();
             return;
         }
         runDispatch();

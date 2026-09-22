@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.operation.NetworkSelectOperation;
+import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.event.IOperationLifecycleEvent;
@@ -129,6 +130,47 @@ public final class OperationLifecycleGameTests {
                     final IOperationLifecycleEvent last = seen.isEmpty() ? null : seen.get(seen.size() - 1);
                     helper.assertTrue(last instanceof IOperationLifecycleEvent.Discarded d
                             && d.operationId().equals(op[0].operationId()), "Discarded closes a cancelled life; seen=" + seen);
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A Mainframe whose system goes away while it runs lets go of the work it was carrying, the way a power cut
+     * does: the pull in flight is settled, nothing is lost, and nothing is left holding the storage.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void events_anOperationInFlightIsSettledWhenTheSystemGoesAway(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = OperationSchedulingGameTests.storageNetwork(helper);
+        final ItemStackHandler dest = new ItemStackHandler(9);
+        final NetworkSelectOperation[] op = new NetworkSelectOperation[1];
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> OperationSchedulingGameTests.rack(helper)
+                        .getServerStorage(0).insert(Items.COBBLESTONE, 100))
+                .thenExecuteAfter(2, () -> {
+                    op[0] = mainframe.submitNetworkSelect(Items.COBBLESTONE, 30,
+                            OperationSchedulingGameTests.port(dest), "system gone");
+                    helper.assertTrue(op[0] != null, "the pull is accepted");
+                })
+                .thenExecuteAfter(2, () -> {
+                    int bay = -1;
+                    for (int i = 0; i < mainframe.diskSlots() && bay < 0; i++) {
+                        if (OsDisks.systemOn(mainframe.diskInSlot(i)) != null) {
+                            bay = i;
+                        }
+                    }
+                    helper.assertTrue(bay >= 0 && mainframe.formatDisk(bay),
+                            "the system disk is erased mid-pull");
+                    helper.assertFalse(mainframe.hasOs(), "the Mainframe has no system left");
+                    helper.assertTrue(mainframe.isRunning(), "while it stays switched on");
+                })
+                .thenExecuteAfter(2, () -> {
+                    helper.assertTrue(op[0].isDone(), "the pull in flight is settled, not frozen");
+                    helper.assertTrue(mainframe.activeOperationRecords().isEmpty(), "nothing is left running");
+                    final long left = OperationSchedulingGameTests.rack(helper).getServerStorage(0)
+                            .count(Items.COBBLESTONE);
+                    helper.assertTrue(left + OperationSchedulingGameTests.count(dest) == 100,
+                            "and not an item is lost; stored " + left + ", delivered "
+                                    + OperationSchedulingGameTests.count(dest));
                 })
                 .thenSucceed();
     }
