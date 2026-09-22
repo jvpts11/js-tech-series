@@ -19,6 +19,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Breaking a router in the same tick it was placed no longer throws. What carries the network is put in the
   network's map when it first loads, which comes after it is placed, and breaking a router before that asked
   the map to take out something it never had. Cables already allowed for it; all three now ask the same way.
+- A server rack's screen shows how far the cabinet is throttling even when the rack is not on a data network.
+  The reading was only written for servers registered on a network, so a rack off the network, and every
+  supercomputer rack, showed a cabinet running free however hot it ran.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

@@ -20,6 +20,7 @@ import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -112,6 +113,25 @@ public final class RackUnitGameTests {
                     helper.assertTrue(rack.getServers().getStackInSlot(0).getItem() instanceof ServerItem
                                     && player.getItemInHand(InteractionHand.MAIN_HAND).isEmpty(),
                             "from the side the 2U chassis takes the top row");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * How hot a cabinet runs belongs to the cabinet, cabled or not. The screen's reading used to be written only
+     * for a server registered on a data network, so a rack off the network (and every supercomputer rack, which
+     * is never on one directly) read nothing, which the screen shows as running free.
+     */
+    @GameTest(template = ARENA)
+    public static void throttle_isReportedForARackOffTheNetwork(final GameTestHelper helper) {
+        final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2));
+        TestWorldBuilder.mountDefaultServer(rack, 0);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final int shown = rack.getDataAccess().get(ServerRackBlockEntity.DATA_THROTTLE);
+                    helper.assertTrue(shown > 0 && shown == rack.thermalThrottlePercent(),
+                            "the screen reads the cabinet's own throttle, " + rack.thermalThrottlePercent()
+                                    + "%, with no network; it read " + shown);
                 })
                 .thenSucceed();
     }

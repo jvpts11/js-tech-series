@@ -983,6 +983,8 @@ public class ServerRackBlockEntity extends BlockEntity
         final NetworkUuid network = adjacentNetwork(level, system);
         data.set(DATA_LINKED, network != null || fabricLinked ? 1 : 0);
         data.set(DATA_BAY_POWER, ~bayPowerOff & 0xFF);
+        // How hot the cabinet runs is the cabinet's, cabled or not: a rack off the network still throttles.
+        data.set(DATA_THROTTLE, thermalThrottlePercent());
         arrays.tick();
         for (int slot = 0; slot < CAPACITY_U; slot++) {
             data.set(DATA_REBUILD_0 + slot, raidRebuildPermille(slot));
@@ -1026,7 +1028,6 @@ public class ServerRackBlockEntity extends BlockEntity
             // Storage capacity comes from the bay drives this unit claims, not from the item.
             system.registerServer(new ServerNode(new NodeUuid(node), network, bayStorageItems(i)),
                     worldPosition.asLong(), i);
-            data.set(DATA_THROTTLE, thermalThrottlePercent());
             registered.put(node, network);
         }
 
