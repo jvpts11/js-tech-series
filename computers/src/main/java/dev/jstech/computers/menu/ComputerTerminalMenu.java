@@ -188,21 +188,12 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
         this.spaceId = spaceId;
         this.systemName = systemName == null ? "" : systemName;
         /*
-         * Open on the player's last-used tab; fall back to Network, and never land on the
-         * Mainframe-only Tasks view when the host is a plain computer.
+         * Open on the tab the server worked out before the window opened (openingTab), which is the one the
+         * client was sent too. A server building the menu works it out again, which changes nothing; a client
+         * cannot see the network, so it only keeps the tab in range.
          */
-        int tab = initialTab >= TAB_LOCAL && initialTab <= TAB_LAST ? initialTab : TAB_NETWORK;
-        if ((tab == TAB_TASKS || tab == TAB_MAINTENANCE) && (host == null || !host.isMainframeHost())) {
-            tab = TAB_NETWORK;
-        }
-        if (tab == TAB_CRAFT && craftComputerCount() <= 0 && !level.isClientSide) {
-            tab = TAB_NETWORK; // the Craft tab vanished since last session (computer removed)
-        }
-        if (tab == TAB_PATTERNS && !level.isClientSide
-                && !(host instanceof CraftingComputerBlockEntity cc && cc.craftingCardFactor() > 0.0)) {
-            tab = TAB_NETWORK; // the card came out, or this was never a machine that could be taught
-        }
-        this.activeTab = tab;
+        final int inRange = initialTab >= TAB_LOCAL && initialTab <= TAB_LAST ? initialTab : TAB_NETWORK;
+        this.activeTab = level instanceof ServerLevel server ? openingTab(host, server, inRange) : inRange;
 
         /*
          * The Storage tab is now a disk-backed quantity view (like the Network tab), not vanilla
@@ -336,6 +327,31 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
      */
     public boolean patternsAvailable() {
         return data.get(DATA_PATTERNS_HOST) > 0;
+    }
+
+    /**
+     * The tab a terminal opens on: the player's last one, unless it is not there for this host any more.
+     *
+     * <p>Worked out on the server before the window opens, and handed to both the menu the server keeps and the
+     * message the client builds its own from, so the two start on the same tab. Worked out only inside the menu,
+     * the client, which cannot see the network, kept a tab the server had already left for Network.
+     */
+    public static int openingTab(final IComputerTerminalHost host, final ServerLevel level, final int asked) {
+        int tab = asked >= TAB_LOCAL && asked <= TAB_LAST ? asked : TAB_NETWORK;
+        // The Mainframe-only views are not there on a plain computer.
+        if ((tab == TAB_TASKS || tab == TAB_MAINTENANCE) && (host == null || !host.isMainframeHost())) {
+            tab = TAB_NETWORK;
+        }
+        // The Craft tab went with the last Crafting Computer on the network.
+        if (tab == TAB_CRAFT && (host == null || host.networkUuid() == null
+                || NetworkSystem.get(level).craftingComputersOf(host.networkUuid()).isEmpty())) {
+            tab = TAB_NETWORK;
+        }
+        // The Patterns tab went with the card, or this was never a machine that could be taught.
+        if (tab == TAB_PATTERNS && !(host instanceof CraftingComputerBlockEntity cc && cc.craftingCardFactor() > 0.0)) {
+            tab = TAB_NETWORK;
+        }
+        return tab;
     }
 
     private int craftComputerCount() {

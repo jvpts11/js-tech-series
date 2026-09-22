@@ -8,6 +8,8 @@
 package dev.jstech.tests.gametest;
 
 import com.mojang.authlib.GameProfile;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -64,6 +66,23 @@ public final class MonitorSessionGameTests {
                                 final MonitorSessionMenu.Phase phase) {
         player.containerMenu = new MonitorSessionMenu(1, player.getInventory(), host, host,
                 HardwareEra.STANDARD, phase);
+    }
+
+    /**
+     * The tab a terminal reopens on is settled on the server before the window opens, so a tab that is not there
+     * any more is left for Network on both sides at once. The client used to keep it while the server moved on.
+     */
+    @GameTest(template = ARENA)
+    public static void openingTab_leavesATabThatIsNotThereAnyMore(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = TestWorldBuilder.forGameTest(helper)
+                .placeRunningPersonalComputer(new BlockPos(4, 2, 4));
+        helper.assertTrue(ComputerTerminalMenu.openingTab(computer, helper.getLevel(), ComputerTerminalMenu.TAB_CRAFT)
+                        == ComputerTerminalMenu.TAB_NETWORK,
+                "with no Crafting Computer on its network the Craft tab is not there, so it opens on Network");
+        helper.assertTrue(ComputerTerminalMenu.openingTab(computer, helper.getLevel(), ComputerTerminalMenu.TAB_LOCAL)
+                        == ComputerTerminalMenu.TAB_LOCAL,
+                "while a tab that is there is kept");
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)

@@ -681,10 +681,14 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final BlockEntity ownerBe = level.getBlockEntity(owner);
         if (ownerBe instanceof IComputerTerminalHost host) {
             final Component title = level.getBlockState(owner).getBlock().getName();
-            // Reopen on the tab the player last used here (persisted on the Monitor).
-            final int initialTab =
-                    level.getBlockEntity(monitorPos) instanceof MonitorBlockEntity monitor
-                            ? monitor.lastTab() : ComputerTerminalMenu.TAB_NETWORK;
+            /*
+             * Reopen on the tab the player last used here (persisted on the Monitor), unless it is not there any
+             * more. Settled here, once, so the menu the server keeps and the one the client is told to build agree.
+             */
+            final int lastTab = level.getBlockEntity(monitorPos) instanceof MonitorBlockEntity monitor
+                    ? monitor.lastTab() : ComputerTerminalMenu.TAB_NETWORK;
+            final int initialTab = level instanceof ServerLevel server
+                    ? ComputerTerminalMenu.openingTab(host, server, lastTab) : lastTab;
             /*
              * Which space is drawing goes with the window, because the console that knows it never leaves
              * the server. A machine that is not a network machine at all sends none and gets the terminal

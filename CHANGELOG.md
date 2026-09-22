@@ -64,6 +64,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The server reads no more text from a client than each message is meant to carry. An automation job's
   fields, a terminal's server names, the program to uninstall and the name help is asked for were read at
   whatever length a client sent, where the messages beside them were already held to a size.
+- A terminal reopened on a tab that is no longer there, the Craft tab after the last Crafting Computer left
+  or the Patterns tab after the card came out, opens on Network for the player too. Only the server moved,
+  so the screen showed an empty tab the server was no longer filling.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 
