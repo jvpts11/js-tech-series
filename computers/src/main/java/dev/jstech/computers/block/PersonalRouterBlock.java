@@ -68,7 +68,7 @@ public class PersonalRouterBlock extends HorizontalDirectionalBlock
     protected void onRemove(final BlockState state, final Level level, final BlockPos pos,
                             final BlockState newState, final boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel) {
-            NetworkSystem.get(serverLevel).connectivity().onCableRemoved(pos.asLong());
+            NetworkSystem.get(serverLevel).connectivity().onCableRemovedIfRegistered(pos.asLong());
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }

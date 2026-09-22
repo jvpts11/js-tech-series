@@ -97,7 +97,7 @@ public class ServerRouterBlock extends HorizontalDirectionalBlock
             if (serverLevel.getBlockEntity(pos) instanceof ServerRouterBlockEntity router) {
                 router.onBroken(serverLevel);
             }
-            NetworkSystem.get(serverLevel).connectivity().onCableRemoved(pos.asLong());
+            NetworkSystem.get(serverLevel).connectivity().onCableRemovedIfRegistered(pos.asLong());
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }

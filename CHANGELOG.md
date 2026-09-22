@@ -16,6 +16,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A `break` out of a `switch` no longer lets go of a lock the switch sits inside. Written in a loop, inside a
   `lock`, it let go of the lock at the break and again where the lock ends, and the second letting go halted
   the program for giving up a lock it did not hold. It now lets go only of the locks taken inside the switch.
+- Breaking a router in the same tick it was placed no longer throws. What carries the network is put in the
+  network's map when it first loads, which comes after it is placed, and breaking a router before that asked
+  the map to take out something it never had. Cables already allowed for it; all three now ask the same way.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

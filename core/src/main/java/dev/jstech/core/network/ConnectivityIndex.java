@@ -281,6 +281,19 @@ public final class ConnectivityIndex {
         }
     }
 
+    /**
+     * Takes out a block that carries the network, if it was ever put in.
+     *
+     * <p>What carries the network is put in when it first loads, which comes after it is placed, so a block
+     * placed and broken again within the same tick is gone before it was ever here. Every block that carries
+     * the network is removed through this, so that race is answered in one place and not once per block.
+     */
+    public void onCableRemovedIfRegistered(long encodedPos) {
+        if (posToId.containsKey(encodedPos)) {
+            onCableRemoved(encodedPos);
+        }
+    }
+
     public RemovalResult onCableRemoved(long encodedPos) {
         if (!posToId.containsKey(encodedPos)) {
             throw new IllegalStateException(

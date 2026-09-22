@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -212,6 +213,17 @@ class ConnectivityIndexTest {
     void removeUnregisteredCable_throws() {
         assertThrows(IllegalStateException.class,
                 () -> index.onCableRemoved(pos(0, 0, 0)));
+    }
+
+    @Test
+    void removeIfRegistered_ignoresABlockThatWasNeverPutIn() {
+        index.onCablePlaced(pos(1, 0, 0), Set.of());
+        assertDoesNotThrow(() -> index.onCableRemovedIfRegistered(pos(0, 0, 0)));
+        assertEquals(1, index.size());
+
+        index.onCableRemovedIfRegistered(pos(1, 0, 0));
+        assertFalse(index.contains(pos(1, 0, 0)));
+        assertEquals(0, index.size());
     }
 
     @Test

@@ -292,14 +292,8 @@ public class DataCableBlock extends PipeBlock implements EntityBlock {
                 // Never void real items the parts are buffering, on any removal path.
                 cable.dropAllBuffers(serverLevel);
             }
-            /*
-             * A cable removed before its lazy onLoad registered it (placed and broken the same tick) has
-             * nothing in the index; calling onCableRemoved would throw "Position not registered".
-             */
-            final var connectivity = NetworkSystem.get(serverLevel).connectivity();
-            if (connectivity.contains(pos.asLong())) {
-                connectivity.onCableRemoved(pos.asLong());
-            }
+            // A cable placed and broken within one tick was never put in the index; this asks first.
+            NetworkSystem.get(serverLevel).connectivity().onCableRemovedIfRegistered(pos.asLong());
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
