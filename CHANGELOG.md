@@ -59,6 +59,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   out the time of the first disk the installer had suggested.
 - What a Gateway spent on a machine's behalf is still owed after a save when the machine runs no program;
   the save left it out, so a reload wiped the debt the machine was still paying down.
+- The compiler catches two `switch` labels that pick the same value written two ways, such as `65` and `'A'`
+  in a numeric switch. They were compared as written and both accepted.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

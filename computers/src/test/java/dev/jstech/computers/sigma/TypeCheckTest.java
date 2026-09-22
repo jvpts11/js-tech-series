@@ -189,6 +189,9 @@ class TypeCheckTest {
         assertClean(body("string s = \"a\"; switch (s) { case \"a\": break; case \"b\": break; }"));
         assertReports("S3003", body("int n = 1; switch (n) { case \"a\": break; }"));
         assertReports("S3029", body("int n = 1; switch (n) { case 1: break; case 1: break; }"));
+        // A character in a numeric switch is its code, so 'A' and 65 are the same label written two ways.
+        assertReports("S3029", body("int n = 1; switch (n) { case 65: break; case 'A': break; }"));
+        assertClean(body("int n = 1; switch (n) { case 65: break; case 'B': break; }"));
     }
 
     @Test

@@ -11,6 +11,7 @@ import dev.jstech.computers.sigma.SigmaError;
 import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.ast.IStmt;
 import dev.jstech.computers.sigma.ast.TypeRef;
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -187,7 +188,7 @@ final class StatementChecker {
                 if (!this.scope.rules().isAssignable(labelType, value)) {
                     this.scope.report(label.line(), label.column(),
                             SigmaError.CANNOT_CONVERT, labelType.describe(), value.describe());
-                } else if (label instanceof IExpr.Literal literal && !seen.add(String.valueOf(literal.value()))) {
+                } else if (label instanceof IExpr.Literal literal && !seen.add(labelKey(literal.value()))) {
                     this.scope.report(label.line(), label.column(), SigmaError.DUPLICATE_SWITCH_LABEL);
                 }
             }
@@ -199,6 +200,20 @@ final class StatementChecker {
             this.scope.scope(saved);
         }
         this.scope.leaveChoice();
+    }
+
+    /*
+     * Two labels are the same label when they pick the same value. A character in a numeric switch picks its code,
+     * and 1 and 1.0 pick the same number, so numbers and characters are compared by value, not by how they were
+     * written; anything else is compared as written, kept apart by its kind.
+     */
+    private static String labelKey(final Object value) {
+        return switch (value) {
+            case null -> "null";
+            case Character character -> "number:" + (int) character;
+            case Number number -> "number:" + new BigDecimal(number.toString()).stripTrailingZeros().toPlainString();
+            default -> value.getClass().getSimpleName() + ":" + value;
+        };
     }
 
     private void checkReturn(final IStmt.Return give) {
