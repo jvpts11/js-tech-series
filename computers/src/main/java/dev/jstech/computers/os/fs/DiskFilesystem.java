@@ -90,7 +90,7 @@ public final class DiskFilesystem {
     public enum WriteResult {
         /** The file was written (created or overwritten) successfully. */
         OK,
-        /** The path is syntactically invalid for the given {@link FilesystemKind}. */
+        /** The path is syntactically invalid for the given {@link FilesystemKind}, or already names a folder. */
         INVALID_PATH,
         /** The file's size would exceed the available free-weight budget. */
         DISK_FULL,
@@ -246,6 +246,9 @@ public final class DiskFilesystem {
         }
         final FilesystemContents current = disk.getOrDefault(
                 ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+        if (namesAFolder(current, path)) {
+            return WriteResult.INVALID_PATH;
+        }
         final FilesystemContents updated = current.with(new StoredFile(path, type, content, now));
         disk.set(ComputingModule.FILESYSTEM.get(), updated);
         return WriteResult.OK;
@@ -272,6 +275,9 @@ public final class DiskFilesystem {
         final StoredFile had = current.files().get(path);
         if (had != null && had.type().virtualProjection()) {
             return WriteResult.READ_ONLY;
+        }
+        if (namesAFolder(current, path)) {
+            return WriteResult.INVALID_PATH;
         }
         final int held = had == null ? 0 : had.byteSize();
         final int added = addition.getBytes(StandardCharsets.UTF_8).length;
@@ -535,6 +541,16 @@ public final class DiskFilesystem {
     }
 
     /**
+     * Whether {@code path} is a folder: one made on its own, or one that exists because files sit inside it.
+     *
+     * <p>A file is never put at such a path. The disk would then hold a file and a folder of the same name, which
+     * a listing shows twice and nothing can tell apart.
+     */
+    private static boolean namesAFolder(final FilesystemContents fs, final String path) {
+        return fs.hasDir(path) || fs.files().keySet().stream().anyMatch(p -> FsPaths.isUnder(path, p));
+    }
+
+    /**
      * Re-keys a file or directory from {@code src} to the full path {@code dest}.
      *
      * <p>Returns {@code false}, without mutation, when the kind is not hierarchical, the
@@ -556,7 +572,7 @@ public final class DiskFilesystem {
         // File: re-key the single stored file.
         final StoredFile file = fs.files().get(src);
         if (file != null) {
-            if (file.type().virtualProjection() || fs.files().containsKey(dest)) {
+            if (file.type().virtualProjection() || fs.files().containsKey(dest) || namesAFolder(fs, dest)) {
                 return false;
             }
             /*
@@ -628,7 +644,7 @@ public final class DiskFilesystem {
         // File: duplicate the single stored file at the new path.
         final StoredFile file = fs.files().get(src);
         if (file != null) {
-            if (file.type().virtualProjection() || fs.files().containsKey(dest)) {
+            if (file.type().virtualProjection() || fs.files().containsKey(dest) || namesAFolder(fs, dest)) {
                 return false;
             }
             if (file.weight(eraOf(disk)) > freeWeight) {

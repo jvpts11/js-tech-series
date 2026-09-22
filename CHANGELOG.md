@@ -34,6 +34,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   statement, so any file of two, or one with a comment line, failed as a syntax error, although the same file
   run by a program worked. Both now read a file the one way the studio writes it: a statement a line, with
   blank lines and `--` comments left out, and the whole file is checked before any of it runs.
+- A file can no longer be written, renamed or copied onto the name of a folder. The disk then held a file and
+  a folder of the same name, which a listing showed twice and nothing could tell apart.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

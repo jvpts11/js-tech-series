@@ -191,6 +191,30 @@ public final class OsFilesystemGameTests {
     /**
      * A write followed by a read must return the same content (FLAT filesystem).
      */
+    /**
+     * A file never takes the name of a folder, whether the folder was made on its own or exists because files
+     * sit in it. Writing, renaming or copying onto one used to leave a file and a folder of the same name.
+     */
+    @GameTest(template = ARENA)
+    public static void fs_aFileIsNeverPutWhereAFolderIs(final GameTestHelper helper) {
+        final ItemStack disk = new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1));
+        final FilesystemKind kind = FilesystemKind.HIERARCHICAL;
+        helper.assertTrue(DiskFilesystem.mkdir(disk, "Reports", kind), "a folder is made");
+        DiskFilesystem.write(disk, "Docs/notes.txt", FileType.TXT, "inside", Long.MAX_VALUE, kind);
+        DiskFilesystem.write(disk, "summary.txt", FileType.TXT, "the summary", Long.MAX_VALUE, kind);
+
+        helper.assertTrue(DiskFilesystem.write(disk, "Reports", FileType.TXT, "x", Long.MAX_VALUE, kind)
+                        == DiskFilesystem.WriteResult.INVALID_PATH, "a file is not written over a folder");
+        helper.assertTrue(DiskFilesystem.write(disk, "Docs", FileType.TXT, "x", Long.MAX_VALUE, kind)
+                        == DiskFilesystem.WriteResult.INVALID_PATH, "nor over one that holds files");
+        helper.assertFalse(DiskFilesystem.rename(disk, "summary.txt", "Reports", kind),
+                "a file is not renamed onto a folder");
+        helper.assertFalse(DiskFilesystem.copy(disk, "summary.txt", "Docs", Long.MAX_VALUE, kind),
+                "nor copied onto one");
+        helper.assertTrue(DiskFilesystem.exists(disk, "summary.txt"), "and the file it would have been is untouched");
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void fs_writeThenReadRoundTrips(final GameTestHelper helper) {
         final ItemStack disk = new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1));
