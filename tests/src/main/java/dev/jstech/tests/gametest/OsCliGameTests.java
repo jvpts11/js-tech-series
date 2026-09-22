@@ -629,6 +629,32 @@ public final class OsCliGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * A copy or a move to another drive does not write over a file already there, as one on the same drive never
+     * did: across drives the copy is a write, and a write replaces, so D:'s file used to be lost without a word.
+     */
+    @GameTest(template = ARENA)
+    public static void cliDrives_crossDriveCopyAndMoveLeaveAFileAlreadyThere(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = placeMainframeWithMcDos(helper, pos);
+        mainframe.getInventory().setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START + 1,
+                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
+                    helper.assertTrue(cli.writeFile("D:\\backup.txt", "the one on D").ok(), "D: holds a backup");
+                    helper.assertTrue(cli.writeFile("backup.txt", "the one on C").ok(), "and so does C:");
+
+                    helper.assertFalse(cli.copyPath("backup.txt", "D:\\backup.txt").ok(),
+                            "copying onto it is refused");
+                    helper.assertFalse(cli.movePath("backup.txt", "D:\\").ok(), "and so is moving onto it");
+                    helper.assertTrue(cli.readFile("D:\\backup.txt").message().equals("the one on D"),
+                            "D:'s file is still its own");
+                    helper.assertTrue(cli.readFile("backup.txt").ok(), "and the one on C: was not moved away");
+                })
+                .thenSucceed();
+    }
+
     // Settings store and the config command
 
     /** setConfig routes to the name, the settings store (clamping), and the disk's network share. */

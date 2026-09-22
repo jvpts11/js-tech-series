@@ -36,6 +36,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   blank lines and `--` comments left out, and the whole file is checked before any of it runs.
 - A file can no longer be written, renamed or copied onto the name of a folder. The disk then held a file and
   a folder of the same name, which a listing showed twice and nothing could tell apart.
+- Copying or moving a file to another drive, or to another machine's shared folder, no longer writes over a
+  file of the same name already there. A copy on the same drive always refused; across drives it was a plain
+  write, which replaces, and a move then deleted the original as well.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

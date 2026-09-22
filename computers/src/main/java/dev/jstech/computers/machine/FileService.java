@@ -395,6 +395,10 @@ public final class FileService {
         if (content.isEmpty()) {
             return ICliComputer.FsResult.fail(src + ": file not found (cross-drive copy supports files only)");
         }
+        // Writing replaces what is there, so a file already of that name is refused as the same drive refuses it.
+        if (DiskFilesystem.exists(d.drive().disk(), realDest)) {
+            return alreadyThere(dest);
+        }
         final FileType type = FileType.of(extensionOf(realDest));
         final DiskFilesystem.WriteResult wr = DiskFilesystem.write(d.drive().disk(), realDest, type, content.get(),
                 DriveTable.freeWeightOf(d.drive().disk()), d.drive().kind(), this.level.getGameTime());
@@ -433,8 +437,20 @@ public final class FileService {
                 target = d.letter() + ":\\" + FsPaths.join(d.path(), name).replace('/', '\\');
             }
         }
+        if (this.exists(target)) {
+            return alreadyThere(target);
+        }
         final ICliComputer.FsResult written = this.writeFile(target, content.message());
         return written.ok() ? ICliComputer.FsResult.ok("        1 file(s) copied.") : written;
+    }
+
+    /**
+     * What a copy or a move says when a file of that name is already where it would go. Copying on one drive has
+     * always refused rather than write over it; across drives and across machines the copy is a write, which
+     * replaces, so each of those asks first and says the same.
+     */
+    private static ICliComputer.FsResult alreadyThere(final String where) {
+        return ICliComputer.FsResult.fail(where + ": a file of that name is already there");
     }
 
     /** Moves a file, or a whole folder on one drive, into the folder it is told. */
@@ -469,6 +485,9 @@ public final class FileService {
             return ICliComputer.FsResult.fail(src + ": file not found (cross-drive move supports files only)");
         }
         final String destPath = FsPaths.join(d.path(), FsPaths.fileName(s.path()));
+        if (DiskFilesystem.exists(d.drive().disk(), destPath)) {
+            return alreadyThere(destDir);
+        }
         final FileType type = FileType.of(extensionOf(destPath));
         final DiskFilesystem.WriteResult wr = DiskFilesystem.write(d.drive().disk(), destPath, type, content.get(),
                 DriveTable.freeWeightOf(d.drive().disk()), d.drive().kind(), this.level.getGameTime());
