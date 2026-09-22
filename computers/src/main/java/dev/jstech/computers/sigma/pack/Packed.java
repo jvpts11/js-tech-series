@@ -28,6 +28,13 @@ public record Packed(Manifest manifest, Map<String, String> files) {
     /** The line that starts each file inside it. */
     private static final String MARK = "--- ";
 
+    /**
+     * What a line of a file is written with when it would otherwise be read as something else: a line that
+     * starts like the one that starts each file, or like this. It is taken off again when the package is read,
+     * so a file comes back exactly as it went in, and a player reading the package still reads every line.
+     */
+    private static final String ESCAPE = "\\";
+
     /** The extension a built package is written under. */
     public static final String EXTENSION = ".cpk";
 
@@ -46,12 +53,31 @@ public record Packed(Manifest manifest, Map<String, String> files) {
         text.append(this.manifest.write());
         for (final Map.Entry<String, String> file : this.files.entrySet()) {
             text.append(MARK).append(file.getKey()).append('\n');
-            text.append(file.getValue());
+            text.append(escaped(file.getValue()));
             if (!file.getValue().endsWith("\n")) {
                 text.append('\n');
             }
         }
         return text.toString();
+    }
+
+    /** A file's text with every line that could be mistaken for the start of another file marked as its own. */
+    private static String escaped(final String content) {
+        final StringBuilder out = new StringBuilder(content.length());
+        int start = 0;
+        while (true) {
+            final int end = content.indexOf('\n', start);
+            final String line = content.substring(start, end < 0 ? content.length() : end);
+            if (line.startsWith(MARK) || line.startsWith(ESCAPE)) {
+                out.append(ESCAPE);
+            }
+            out.append(line);
+            if (end < 0) {
+                return out.toString();
+            }
+            out.append('\n');
+            start = end + 1;
+        }
     }
 
     /** Reads one back, or null when the text is not a package at all. */
@@ -83,7 +109,7 @@ public record Packed(Manifest manifest, Map<String, String> files) {
             if (name == null) {
                 head.append(line).append('\n');
             } else {
-                body.append(line).append('\n');
+                body.append(line.startsWith(ESCAPE) ? line.substring(ESCAPE.length()) : line).append('\n');
             }
         }
         if (name != null) {

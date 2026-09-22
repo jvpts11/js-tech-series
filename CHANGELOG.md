@@ -50,6 +50,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   compiler threw away what each section did and refused a correct program.
 - A source nested more deeply than anyone writes, a few thousand brackets, blocks or operators inside each
   other, is refused with an error saying so instead of crashing the compiler with a stack overflow.
+- A package keeps a file whose text has a line starting with `--- `. That line was read as the start of
+  another file, so the package came back from the Mirror with the file cut in two.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

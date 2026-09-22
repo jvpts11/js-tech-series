@@ -47,6 +47,20 @@ class PackedTest {
     }
 
     @Test
+    void write_thenRead_keepsALineThatLooksLikeTheStartOfAFile() {
+        final Map<String, String> files = new LinkedHashMap<>();
+        files.put("stockwatch.asm", ".asm 1\n.start Watcher script\n");
+        files.put("readme.txt", "Watches the iron.\n--- how it works\n\\n is a new line\n---\n");
+        final Manifest manifest = new Manifest("stockwatch", "1.2.0", "jvpts11", "stockwatch.asm",
+                "bell", 2, List.of("stockwatch.asm", "readme.txt"), "Tells you when the iron runs low");
+        final Packed before = new Packed(manifest, files);
+
+        final Packed after = Packed.read(before.write());
+        assertEquals(before.files(), after.files());
+        assertTrue(after.problems().isEmpty(), () -> String.join("\n", after.problems()));
+    }
+
+    @Test
     void write_putsThePackageInOnePieceOfReadableText() {
         final String text = built().write();
         assertTrue(text.startsWith(".pkg 1\n"), text);
