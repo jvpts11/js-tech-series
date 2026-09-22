@@ -29,34 +29,51 @@ public record CreateAutomationJobPayload(BlockPos host, BlockPos monitorPos, int
     /** Runs a stored .iql script (its name in {@code item}) every {@code interval}. */
     public static final int TYPE_IQL_SCRIPT = 3;
 
+    /*
+     * What each field may hold. They arrive from a client and are kept in a job every viewer is sent again, so
+     * each is held to a size a form fills in: a name, an item or script, a bus or server, and a period.
+     */
+    private static final int NAME_MOST = 64;
+    private static final int ITEM_MOST = 128;
+    private static final int PLACE_MOST = 64;
+    private static final int INTERVAL_MOST = 32;
+
     public static final CustomPacketPayload.Type<CreateAutomationJobPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "create_automation_job"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, CreateAutomationJobPayload> STREAM_CODEC =
             StreamCodec.of(CreateAutomationJobPayload::encode, CreateAutomationJobPayload::decode);
 
+    public CreateAutomationJobPayload {
+        name = PayloadText.clip(name, NAME_MOST);
+        item = PayloadText.clip(item, ITEM_MOST);
+        from = PayloadText.clip(from, PLACE_MOST);
+        to = PayloadText.clip(to, PLACE_MOST);
+        interval = PayloadText.clip(interval, INTERVAL_MOST);
+    }
+
     private static void encode(final RegistryFriendlyByteBuf buf, final CreateAutomationJobPayload p) {
         BlockPos.STREAM_CODEC.encode(buf, p.host);
         BlockPos.STREAM_CODEC.encode(buf, p.monitorPos);
         buf.writeVarInt(p.jobType);
-        buf.writeUtf(p.name);
-        buf.writeUtf(p.item);
+        buf.writeUtf(p.name, NAME_MOST);
+        buf.writeUtf(p.item, ITEM_MOST);
         buf.writeVarLong(p.amount);
-        buf.writeUtf(p.from);
-        buf.writeUtf(p.to);
-        buf.writeUtf(p.interval);
+        buf.writeUtf(p.from, PLACE_MOST);
+        buf.writeUtf(p.to, PLACE_MOST);
+        buf.writeUtf(p.interval, INTERVAL_MOST);
     }
 
     private static CreateAutomationJobPayload decode(final RegistryFriendlyByteBuf buf) {
         final BlockPos host = BlockPos.STREAM_CODEC.decode(buf);
         final BlockPos monitorPos = BlockPos.STREAM_CODEC.decode(buf);
         final int type = buf.readVarInt();
-        final String name = buf.readUtf();
-        final String item = buf.readUtf();
+        final String name = buf.readUtf(NAME_MOST);
+        final String item = buf.readUtf(ITEM_MOST);
         final long amount = buf.readVarLong();
-        final String from = buf.readUtf();
-        final String to = buf.readUtf();
-        final String interval = buf.readUtf();
+        final String from = buf.readUtf(PLACE_MOST);
+        final String to = buf.readUtf(PLACE_MOST);
+        final String interval = buf.readUtf(INTERVAL_MOST);
         return new CreateAutomationJobPayload(host, monitorPos, type, name, item, amount, from, to, interval);
     }
 

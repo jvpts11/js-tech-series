@@ -8,9 +8,14 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.operation.payload.CraftManagerStatePayload;
+import dev.jstech.computers.operation.payload.CreateAutomationJobPayload;
 import dev.jstech.computers.operation.payload.PatternStudioEditPayload;
 import dev.jstech.computers.operation.payload.PatternStudioStatePayload;
+import dev.jstech.computers.operation.payload.RequestHelpPayload;
 import dev.jstech.computers.operation.payload.SetMachineConfigPayload;
+import dev.jstech.computers.operation.payload.TerminalSelectPayload;
+import dev.jstech.computers.operation.payload.UninstallProgramPayload;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
@@ -19,6 +24,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -50,6 +56,32 @@ public final class MachinePayloadGameTests {
         final CraftManagerStatePayload payload = new CraftManagerStatePayload(
                 "media:42", "Floppy (A:)", List.of("alpha.craft", "beta.craft"), rom, true, "Loaded 2", machines);
         assertRoundTrip(helper, CraftManagerStatePayload.STREAM_CODEC, payload);
+        helper.succeed();
+    }
+
+    /**
+     * Text a client sends is held to what each message carries: made with far more, a message is cut to its caps,
+     * still writes, and reads back as what it was cut to. These carried whatever length a client chose.
+     */
+    @GameTest(template = ARENA)
+    public static void clientText_isHeldToWhatEachMessageCarries(final GameTestHelper helper) {
+        final String flood = "x".repeat(20_000);
+        final BlockPos at = new BlockPos(1, 2, 3);
+
+        final CreateAutomationJobPayload job = new CreateAutomationJobPayload(at, at,
+                CreateAutomationJobPayload.TYPE_PERIODIC_MOVE, flood, flood, 64, flood, flood, flood);
+        helper.assertTrue(job.name().length() == 64 && job.item().length() == 128 && job.interval().length() == 32,
+                "a job's fields are cut to what the form holds");
+        assertRoundTrip(helper, CreateAutomationJobPayload.STREAM_CODEC, job);
+
+        final TerminalSelectPayload select = new TerminalSelectPayload(at, at, StorageKey.of(Items.DIRT), 1L,
+                List.of(flood, flood), TerminalSelectPayload.DEST_SERVER, flood);
+        helper.assertTrue(select.serverKeys().getFirst().length() == 64 && select.destServer().length() == 64,
+                "a terminal's server names are cut to the desktop's own limit");
+        assertRoundTrip(helper, TerminalSelectPayload.STREAM_CODEC, select);
+
+        assertRoundTrip(helper, UninstallProgramPayload.STREAM_CODEC, new UninstallProgramPayload(at, flood));
+        assertRoundTrip(helper, RequestHelpPayload.STREAM_CODEC, new RequestHelpPayload(at, flood));
         helper.succeed();
     }
 

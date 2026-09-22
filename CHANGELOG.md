@@ -61,6 +61,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the save left it out, so a reload wiped the debt the machine was still paying down.
 - The compiler catches two `switch` labels that pick the same value written two ways, such as `65` and `'A'`
   in a numeric switch. They were compared as written and both accepted.
+- The server reads no more text from a client than each message is meant to carry. An automation job's
+  fields, a terminal's server names, the program to uninstall and the name help is asked for were read at
+  whatever length a client sent, where the messages beside them were already held to a size.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

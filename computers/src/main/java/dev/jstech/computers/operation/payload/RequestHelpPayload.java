@@ -24,14 +24,21 @@ import net.minecraft.resources.ResourceLocation;
  */
 public record RequestHelpPayload(BlockPos hostPos, String name) implements CustomPacketPayload {
 
+    /** The longest name help is asked for by, the same as a program id. */
+    private static final int NAME_MOST = 64;
+
     public static final CustomPacketPayload.Type<RequestHelpPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "request_help"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, RequestHelpPayload> STREAM_CODEC =
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC, RequestHelpPayload::hostPos,
-                    ByteBufCodecs.STRING_UTF8, RequestHelpPayload::name,
+                    ByteBufCodecs.stringUtf8(NAME_MOST), RequestHelpPayload::name,
                     RequestHelpPayload::new);
+
+    public RequestHelpPayload {
+        name = PayloadText.clip(name, NAME_MOST);
+    }
 
     @Override
     public CustomPacketPayload.Type<RequestHelpPayload> type() {
