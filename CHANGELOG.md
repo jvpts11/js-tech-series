@@ -28,6 +28,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A machine's output is no longer lost when the network has no room for it. A machine step pulled everything
   finished out of the machine and stored what fitted, and whatever a full network refused was gone. Only what
   is stored leaves the machine now, and the rest waits in it until there is room.
+- Switching a machine off and on while it stood at a failed self-test no longer brings it back standing at the
+  old failure, which outlived the power cycle and could send the machine past the new self-test it owed.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

@@ -244,6 +244,11 @@ public final class BootPhases {
      * and a machine coming on owes a self-test before anything else.
      */
     public void powered(final boolean on) {
+        /*
+         * Standing at a failure is part of what was under way too. Kept across a power cycle, it outlived the
+         * self-test that found it and could send a machine that was just switched on past its new one.
+         */
+        this.halted = false;
         endDown();
         endMenu();
         endBoot();

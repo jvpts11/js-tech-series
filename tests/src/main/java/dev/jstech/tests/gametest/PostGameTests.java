@@ -186,6 +186,27 @@ public final class PostGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * A machine switched off while it stood at a failed self-test comes back on owing a new one, not standing
+     * at the old failure: the failure belonged to the self-test that found it.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void post_aPowerCycleLeavesNoFailureBehind(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(WHERE);
+        helper.assertTrue(computer.formatDisk(0), "its disk is erased, so its self-test will find nothing");
+        helper.startSequence()
+                .thenExecuteAfter(PAST_THE_POST, () -> {
+                    helper.assertTrue(computer.haltedAtPost(), "the self-test stops at its failure");
+                    computer.setPowered(false);
+                    computer.setPowered(true);
+                    helper.assertFalse(computer.haltedAtPost(), "switching off and on again leaves no failure");
+                    helper.assertTrue(computer.needsPost(), "and the machine owes a self-test of its own");
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA)
     public static void post_ofAnEarlierMachine_takesLonger(final GameTestHelper helper) {
         final PersonalComputerBlockEntity modern =
