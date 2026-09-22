@@ -57,8 +57,13 @@ public final class Lowerer {
     private final TypeRules rules;
     /** What a method's lambdas keep hold of, which is a question about the tree and is answered here. */
     private final CaptureFinder finder;
-    /** How many locks are held where the statement being reduced was written. */
+    /** How many locks were held where each loop around the statement being reduced began. */
     private final Deque<Integer> loopLocks = new ArrayDeque<>();
+    /**
+     * The same for whatever a break leaves, which is the nearest loop or switch: a break inside a switch ends the
+     * switch and stays inside the loop, so only the locks taken since the switch began are behind it.
+     */
+    private final Deque<Integer> breakLocks = new ArrayDeque<>();
     /**
      * What each method's statements came to, by the declaration they were written in.
      *
@@ -103,6 +108,7 @@ public final class Lowerer {
     private IrStmt body(final IStmt.Block block) {
         this.locksOpen = 0;
         this.loopLocks.clear();
+        this.breakLocks.clear();
         return this.statements(block);
     }
 
@@ -133,8 +139,8 @@ public final class Lowerer {
             case IStmt.ForEach loop -> this.walked(loop);
             case IStmt.Switch chosen -> this.chosen(chosen);
             case IStmt.Lock held -> this.held(held);
-            case IStmt.Break ignored -> new IrStmt.Break(false, this.leavingTheLoop());
-            case IStmt.Continue ignored -> new IrStmt.Break(true, this.leavingTheLoop());
+            case IStmt.Break ignored -> new IrStmt.Break(false, this.leaving(this.breakLocks));
+            case IStmt.Continue ignored -> new IrStmt.Break(true, this.leaving(this.loopLocks));
             case IStmt.Return give -> new IrStmt.Return(give.value(), this.locksOpen);
             default -> new IrStmt.Source(statement);
         };
@@ -150,10 +156,12 @@ public final class Lowerer {
 
     private IrStmt chosen(final IStmt.Switch choice) {
         final List<IrStmt.Switch.Section> sections = new ArrayList<>(choice.sections().size());
+        this.breakLocks.push(this.locksOpen);
         for (final IStmt.SwitchSection section : choice.sections()) {
             sections.add(new IrStmt.Switch.Section(section.labels(), this.each(section.statements()),
                     section.fallback()));
         }
+        this.breakLocks.pop();
         return new IrStmt.Switch(choice.value(), sections);
     }
 
@@ -173,14 +181,16 @@ public final class Lowerer {
     /** A loop body, remembering how many locks were held when the loop began. */
     private IrStmt inLoop(final IStmt body) {
         this.loopLocks.push(this.locksOpen);
+        this.breakLocks.push(this.locksOpen);
         final IrStmt made = this.reduce(body);
+        this.breakLocks.pop();
         this.loopLocks.pop();
         return made;
     }
 
-    /** How many locks a break or a continue lets go of: the ones taken inside the loop it is leaving. */
-    private int leavingTheLoop() {
-        return this.loopLocks.isEmpty() ? 0 : this.locksOpen - this.loopLocks.peek();
+    /** How many locks a break or a continue lets go of: the ones taken inside what it is leaving. */
+    private int leaving(final Deque<Integer> boundaries) {
+        return boundaries.isEmpty() ? 0 : this.locksOpen - boundaries.peek();
     }
 
     /**

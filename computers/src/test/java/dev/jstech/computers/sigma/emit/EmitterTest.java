@@ -310,6 +310,23 @@ class EmitterTest {
         assertTrue(broken.get(entered + 3).startsWith("br "), broken.get(entered + 3));
     }
 
+    @Test
+    void emit_aBreakOutOfASwitchLetsGoOfNoLockTheSwitchIsInside() {
+        /*
+         * The break leaves the switch, not the loop, so the lock taken between the two is still held after it
+         * and is let go of once, where the lock ends. Counting from the loop let go of it at the break as well,
+         * and the second letting go halted the program.
+         */
+        final List<String> broken = bodyOf(compile("    void M() { object o = null; int x = 1;"
+                + " while (true) { lock (o) { switch (x) { case 1: break; } } } }\n"), "M");
+        assertEquals(1, broken.stream().filter("monitor.exit"::equals).count(), String.join("\n", broken));
+
+        // A continue does leave the lock, on its way back to the loop, and so lets go of it on that way out too.
+        final List<String> continued = bodyOf(compile("    void M() { object o = null; int x = 1;"
+                + " while (true) { lock (o) { switch (x) { case 1: continue; } } } }\n"), "M");
+        assertEquals(2, continued.stream().filter("monitor.exit"::equals).count(), String.join("\n", continued));
+    }
+
     /** How many times the listing calls that method anywhere in it. */
     private static int callsTo(final String listing, final String name) {
         int found = 0;

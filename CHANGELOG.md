@@ -13,6 +13,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   servers kept only for storage spent half of an idle tick on the question. It now asks once a second, each
   machine on its own tick of that second. The rack itself also answers questions about its bays without
   working out afresh, each time, which units are mounted in it.
+- A `break` out of a `switch` no longer lets go of a lock the switch sits inside. Written in a loop, inside a
+  `lock`, it let go of the lock at the break and again where the lock ends, and the second letting go halted
+  the program for giving up a lock it did not hold. It now lets go only of the locks taken inside the switch.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 
