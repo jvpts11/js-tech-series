@@ -349,7 +349,7 @@ public final class FilePayloads {
                 return Optional.empty();
             }
             final ICliComputer.FsResult read = shell.readFile(netDos(path));
-            return read.ok() ? Optional.of(read.message()) : Optional.empty();
+            return read.ok() ? Optional.of(read.message().english()) : Optional.empty();
         }
         final boolean media = path.startsWith("media:");
         final ItemStack vol =

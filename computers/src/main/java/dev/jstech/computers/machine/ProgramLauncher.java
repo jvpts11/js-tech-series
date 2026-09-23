@@ -73,7 +73,7 @@ public final class ProgramLauncher {
         }
         final ICliComputer.FsResult file = reader.apply(path);
         if (!file.ok()) {
-            return new Launch(0, name, Refusal.UNREADABLE, file.message(), 0, 0);
+            return new Launch(0, name, Refusal.UNREADABLE, file.message().english(), 0, 0);
         }
         final int room = heapMb <= 0 ? MachinePrograms.DEFAULT_HEAP_MB : Math.min(heapMb, MachinePrograms.MAX_HEAP_MB);
         final RamLedger ledger = machine.ramLedger();
@@ -81,7 +81,7 @@ public final class ProgramLauncher {
             return new Launch(0, name, Refusal.NO_MEMORY, "", room, ledger.freeMb());
         }
         final MachinePrograms.Started started =
-                machine.programs().start(name, file.message(), room, machine, args, parent, priority);
+                machine.programs().start(name, file.message().english(), room, machine, args, parent, priority);
         if (!started.ok()) {
             return new Launch(0, name, Refusal.NOT_STARTED, started.message(), room, 0);
         }

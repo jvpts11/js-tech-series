@@ -487,7 +487,7 @@ public final class IqlService {
          * first two have moved anything.
          */
         final List<IqlOperation> operations = new ArrayList<>();
-        for (final String statement : statementsOf(read.message())) {
+        for (final String statement : statementsOf(read.message().english())) {
             final IqlParseResult parsed = IqlParser.tryParse(statement);
             if (!parsed.ok()) {
                 return ICliComputer.FsResult.fail(path + ": syntax error in '" + statement + "': " + parsed.error());

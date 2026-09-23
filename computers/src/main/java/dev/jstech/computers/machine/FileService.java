@@ -441,7 +441,7 @@ public final class FileService {
         if (this.exists(target)) {
             return alreadyThere(target);
         }
-        final ICliComputer.FsResult written = this.writeFile(target, content.message());
+        final ICliComputer.FsResult written = this.writeFile(target, content.message().english());
         return written.ok() ? ICliComputer.FsResult.ok("        1 file(s) copied.") : written;
     }
 

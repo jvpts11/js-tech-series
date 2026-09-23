@@ -9,6 +9,7 @@ package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.computers.program.tty.ITtyProcess;
+import dev.jstech.core.text.Text;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,7 @@ public interface ICliPackages {
             return this.said.ok();
         }
 
-        public String message() {
+        public Text message() {
             return this.said.message();
         }
     }

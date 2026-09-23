@@ -24,7 +24,7 @@ class ScreenfetchLogosTest {
         for (final String system : SYSTEMS) {
             for (final List<CliSpan> row : ScreenfetchLogos.of(system).rows()) {
                 for (final CliSpan run : row) {
-                    assertFalse(run.text().contains("${c"), system + " kept a marker in " + run.text());
+                    assertFalse(run.english().contains("${c"), system + " kept a marker in " + run.english());
                 }
             }
         }
@@ -36,7 +36,7 @@ class ScreenfetchLogosTest {
         assertTrue(freebsd.oneColour());
         assertEquals(CliStyle.RED, freebsd.title());
         assertEquals(15, freebsd.rows().size());
-        assertEquals("   ```                        `", freebsd.rows().getFirst().getFirst().text());
+        assertEquals("   ```                        `", freebsd.rows().getFirst().getFirst().english());
     }
 
     @Test
@@ -71,7 +71,7 @@ class ScreenfetchLogosTest {
     private static String text(final List<CliSpan> row) {
         final StringBuilder out = new StringBuilder();
         for (final CliSpan run : row) {
-            out.append(run.text());
+            out.append(run.english());
         }
         return out.toString();
     }

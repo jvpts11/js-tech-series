@@ -151,7 +151,7 @@ final class NetFileCommands {
                 ctx.out().error(result.message());
                 return;
             }
-            final String content = result.message();
+            final String content = result.message().english();
             if (content.isEmpty()) {
                 ctx.out().dim("that file is empty");
                 return;

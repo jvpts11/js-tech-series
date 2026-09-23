@@ -76,7 +76,7 @@ final class DosFileCommands {
                 return;
             }
             final ICliComputer.OpResult result = ctx.computer().formatDrive(drive);
-            for (final String line : result.message().split("\n", -1)) {
+            for (final String line : result.message().english().split("\n", -1)) {
                 ctx.out().styled(line, result.ok() ? CliStyle.OK : CliStyle.ERROR);
             }
         }
@@ -162,7 +162,7 @@ final class DosFileCommands {
                 return;
             }
             // Print each line of the file content as a plain output line.
-            final String content = result.message();
+            final String content = result.message().english();
             if (content.isEmpty()) {
                 ctx.out().dim("(empty file)");
                 return;

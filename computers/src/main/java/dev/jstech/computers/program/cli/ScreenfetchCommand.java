@@ -118,7 +118,7 @@ final class ScreenfetchCommand implements ICliCommand {
     /* A row as the one-colour logos have always printed it: all of it in the logo's colour. */
     private static CliLine oneColour(final List<CliSpan> left, final int start, final String right,
                                      final CliStyle colour) {
-        final String art = left.isEmpty() ? "" : left.getFirst().text();
+        final String art = left.isEmpty() ? "" : left.getFirst().english();
         final String padded = art + " ".repeat(Math.max(0, start - art.length()));
         return new CliLine((padded + right).stripTrailing(), colour);
     }
@@ -142,7 +142,10 @@ final class ScreenfetchCommand implements ICliCommand {
         return line.done();
     }
 
-    /* The row cut at the terminal's edge instead of wrapped under itself, and nothing trailing after the art. */
+    /*
+     * The row cut at the terminal's edge instead of wrapped under itself, and nothing trailing after the art. What
+     * screenfetch prints is art and figures, the same in every language, so it is measured as it is written.
+     */
     private static CliLine clipped(final CliLine line, final int width) {
         final List<CliSpan> kept = new ArrayList<>();
         int used = 0;
@@ -151,11 +154,12 @@ final class ScreenfetchCommand implements ICliCommand {
             if (room <= 0) {
                 break;
             }
-            final String text = span.text().length() > room ? span.text().substring(0, room) : span.text();
+            final String words = span.english();
+            final String text = words.length() > room ? words.substring(0, room) : words;
             kept.add(new CliSpan(text, span.style()));
             used += text.length();
         }
-        while (!kept.isEmpty() && kept.getLast().text().isBlank()) {
+        while (!kept.isEmpty() && kept.getLast().english().isBlank()) {
             kept.removeLast();
         }
         return kept.isEmpty() ? new CliLine("", line.style()) : new CliLine(kept);

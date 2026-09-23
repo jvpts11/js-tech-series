@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import dev.jstech.computers.program.cli.CliSpan;
+import dev.jstech.computers.program.cli.CliRun;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +24,7 @@ class TermSelectionTest {
             row("minecraft:oak_log stored    3,322"));
 
     private static TermRow row(final String text) {
-        return new TermRow(List.of(CliSpan.plain(text)));
+        return new TermRow(List.of(CliRun.plain(text)));
     }
 
     @Test

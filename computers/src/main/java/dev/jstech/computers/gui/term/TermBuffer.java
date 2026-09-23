@@ -8,7 +8,9 @@
 package dev.jstech.computers.gui.term;
 
 import dev.jstech.computers.program.cli.CliLine;
-import dev.jstech.computers.program.cli.CliSpan;
+import dev.jstech.computers.program.cli.CliRun;
+import dev.jstech.computers.program.cli.CliStyle;
+import dev.jstech.core.text.ITextLanguage;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -24,13 +26,15 @@ import java.util.List;
  *
  * <p>The lines are kept as they arrived and the rows are made from them, because two things need the line
  * rather than its rows: a line redrawn in place replaces every row the old one took, however many that was,
- * and a window dragged wider wraps everything again at the new width.
+ * and a window dragged wider wraps everything again at the new width. The rows are in the language the buffer
+ * was made for, the reader's, since that is what decides how long each line is.
  */
 public final class TermBuffer {
 
     private final Deque<Kept> lines = new ArrayDeque<>();
     private final List<TermRow> rows = new ArrayList<>();
     private final int most;
+    private final ITextLanguage language;
     private int columns;
     private int generation;
 
@@ -50,17 +54,19 @@ public final class TermBuffer {
     private static final int TAB = 8;
 
     /**
-     * @param most    how many lines are kept before the oldest scrolls away for good
-     * @param columns how many cells wide the glass is
+     * @param most     how many lines are kept before the oldest scrolls away for good
+     * @param columns  how many cells wide the glass is
+     * @param language the language the lines are read in
      */
-    public TermBuffer(final int most, final int columns) {
+    public TermBuffer(final int most, final int columns, final ITextLanguage language) {
         this.most = Math.max(1, most);
         this.columns = Math.max(8, columns);
+        this.language = language;
     }
 
     /** Adds a line below everything else. */
     public void push(final CliLine line) {
-        final List<TermRow> made = wrap(line, this.columns);
+        final List<TermRow> made = wrap(line.resolve(this.language), this.columns);
         this.lines.addLast(new Kept(line, made.size()));
         this.rows.addAll(made);
         while (this.lines.size() > this.most) {
@@ -100,7 +106,7 @@ public final class TermBuffer {
         final List<Kept> again = new ArrayList<>(this.lines);
         this.lines.clear();
         for (final Kept kept : again) {
-            final List<TermRow> made = wrap(kept.line(), wanted);
+            final List<TermRow> made = wrap(kept.line().resolve(this.language), wanted);
             this.lines.addLast(new Kept(kept.line(), made.size()));
             this.rows.addAll(made);
         }
@@ -141,7 +147,7 @@ public final class TermBuffer {
      * reads best, and cut where the row ends when there is not: a path or a long flag is one word and has to
      * be cut somewhere.
      */
-    static List<TermRow> wrap(final CliLine line, final int columns) {
+    static List<TermRow> wrap(final List<CliRun> line, final int columns) {
         final List<Cell> cells = cellsOf(line);
         final List<TermRow> out = new ArrayList<>(1);
         int from = 0;
@@ -166,19 +172,19 @@ public final class TermBuffer {
         return out;
     }
 
-    /** The line a cell at a time, its tabs opened out to the next stop. */
-    static List<Cell> cellsOf(final CliLine line) {
+    /** The line, already in a language, a cell at a time, its tabs opened out to the next stop. */
+    static List<Cell> cellsOf(final List<CliRun> line) {
         final List<Cell> cells = new ArrayList<>();
-        for (final CliSpan span : line.spans()) {
-            final String text = span.text();
+        for (final CliRun run : line) {
+            final String text = run.text();
             for (int i = 0; i < text.length(); i++) {
                 final char ch = text.charAt(i);
                 if (ch == '\t') {
                     do {
-                        cells.add(new Cell(' ', span));
+                        cells.add(new Cell(' ', run.style()));
                     } while (cells.size() % TAB != 0);
                 } else if (ch != '\r' && ch != '\n') {
-                    cells.add(new Cell(ch, span));
+                    cells.add(new Cell(ch, run.style()));
                 }
             }
         }
@@ -187,20 +193,20 @@ public final class TermBuffer {
 
     /** The cells from one to another as a row, runs of one colour joined back together. */
     static TermRow rowOf(final List<Cell> cells, final int from, final int to) {
-        final List<CliSpan> runs = new ArrayList<>();
+        final List<CliRun> runs = new ArrayList<>();
         final StringBuilder run = new StringBuilder();
-        CliSpan of = null;
+        CliStyle of = null;
         for (int i = from; i < to; i++) {
             final Cell cell = cells.get(i);
-            if (of != null && cell.of().style() != of.style()) {
-                runs.add(new CliSpan(run.toString(), of.style()));
+            if (of != null && cell.style() != of) {
+                runs.add(new CliRun(run.toString(), of));
                 run.setLength(0);
             }
-            of = cell.of();
+            of = cell.style();
             run.append(cell.ch());
         }
         if (of != null) {
-            runs.add(new CliSpan(run.toString(), of.style()));
+            runs.add(new CliRun(run.toString(), of));
         }
         return new TermRow(runs);
     }
@@ -209,7 +215,7 @@ public final class TermBuffer {
     private record Kept(CliLine line, int rows) {
     }
 
-    /** One character and the run it came out of, which is where its colour is. */
-    record Cell(char ch, CliSpan of) {
+    /** One character and the colour of the run it came out of. */
+    record Cell(char ch, CliStyle style) {
     }
 }

@@ -83,7 +83,7 @@ public final class FileEditPayloads {
                 final ICliComputer.FsResult written =
                         shell == null ? null : shell.writeFile(netDos(path), payload.content());
                 PacketDistributor.sendToPlayer(player, new FileSavedPayload(written != null && written.ok(),
-                        written == null ? "No shell" : written.ok() ? "Saved " + path : written.message()));
+                        written == null ? "No shell" : written.ok() ? "Saved " + path : written.message().english()));
                 return;
             }
             final boolean media = path.startsWith("media:");

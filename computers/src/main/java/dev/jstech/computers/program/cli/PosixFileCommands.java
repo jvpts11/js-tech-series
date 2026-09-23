@@ -149,7 +149,7 @@ final class PosixFileCommands {
                     ctx.out().error("cat: " + result.message());
                     continue;
                 }
-                for (final String line : result.message().split("\n", -1)) {
+                for (final String line : result.message().english().split("\n", -1)) {
                     ctx.out().line(line);
                 }
             }
@@ -320,7 +320,7 @@ final class PosixFileCommands {
             final ICliComputer.FsResult result = ctx.computer().writeFile(dos(ctx, ctx.arg(0)), ctx.rest(1));
             if (!result.ok()) {
                 ctx.out().error("write: " + result.message());
-            } else if (!result.message().isEmpty()) {
+            } else if (!result.message().english().isEmpty()) {
                 ctx.out().ok(result.message());
             }
         }
@@ -353,7 +353,7 @@ final class PosixFileCommands {
                 } else {
                     ctx.out().error(result.opResult().message());
                 }
-            } else if (!result.message().isEmpty()) {
+            } else if (!result.message().english().isEmpty()) {
                 ctx.out().line(result.message());
             }
         }

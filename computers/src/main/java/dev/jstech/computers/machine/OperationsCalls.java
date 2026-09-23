@@ -80,7 +80,8 @@ final class OperationsCalls {
     private static Values.Obj asked(final ICliComputer.OpResult result) {
         final Values.Obj made = new Values.Obj("AskResult");
         made.set("Ok", result.ok());
-        made.set("Message", result.message());
+        // A program reads in the machine's language, and keeps only strings on its heap.
+        made.set("Message", result.message().english());
         return made;
     }
 

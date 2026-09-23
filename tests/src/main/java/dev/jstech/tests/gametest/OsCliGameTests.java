@@ -172,7 +172,7 @@ public final class OsCliGameTests {
 
                     helper.assertTrue(result.ok(),
                             "readFile must succeed for an existing .iql file; got: " + result.message());
-                    helper.assertTrue(expected.equals(result.message()),
+                    helper.assertTrue(expected.equals(result.message().english()),
                             "readFile must return the written content; got: " + result.message());
                 })
                 .thenSucceed();
@@ -280,7 +280,7 @@ public final class OsCliGameTests {
                      */
                     final boolean parsedOk = result.ok()
                             || (result.opResult() != null)
-                            || (!result.ok() && result.message().contains("Mainframe"));
+                            || (!result.ok() && result.message().english().contains("Mainframe"));
                     helper.assertTrue(parsedOk,
                             "runScript must reach dispatch (not fail on missing file / syntax); got: "
                                     + result.message());
@@ -306,7 +306,7 @@ public final class OsCliGameTests {
                     final ICliComputer.FsResult result = cli.runScript("notes.txt");
                     helper.assertFalse(result.ok(),
                             "runScript on a .txt file must fail");
-                    helper.assertTrue(result.message().contains("iql"),
+                    helper.assertTrue(result.message().english().contains("iql"),
                             "error message must mention .iql; got: " + result.message());
                 })
                 .thenSucceed();
@@ -350,7 +350,7 @@ public final class OsCliGameTests {
                             "writeFile must succeed for a .txt file; got: " + write.message());
 
                     final ICliComputer.FsResult read = cli.readFile("notes.txt");
-                    helper.assertTrue(read.ok() && content.equals(read.message()),
+                    helper.assertTrue(read.ok() && content.equals(read.message().english()),
                             "readFile must return the written content; got: " + read.message());
                 })
                 .thenSucceed();
@@ -390,7 +390,7 @@ public final class OsCliGameTests {
                     final ICliComputer.FsResult write = cli.writeFile("thing.fk", "made by a program");
                     helper.assertTrue(write.ok(), "writeFile takes a .fk; got: " + write.message());
                     final ICliComputer.FsResult read = cli.readFile("thing.fk");
-                    helper.assertTrue(read.ok() && "made by a program".equals(read.message()),
+                    helper.assertTrue(read.ok() && "made by a program".equals(read.message().english()),
                             "and reads it back; got: " + read.message());
                 })
                 .thenSucceed();
@@ -434,7 +434,7 @@ public final class OsCliGameTests {
                             .filter(one -> "notes.fk".equals(one.path())).findFirst().orElse(null);
                     helper.assertTrue(entry != null && entry.type() == dev.jstech.computers.os.fs.FileType.OTHER,
                             "it is a file of a kind the machine does not know; got " + entry);
-                    helper.assertTrue("hi".equals(cli.readFile("notes.fk").message()), "with what it held");
+                    helper.assertTrue("hi".equals(cli.readFile("notes.fk").message().english()), "with what it held");
                 })
                 .thenSucceed();
     }
@@ -532,7 +532,7 @@ public final class OsCliGameTests {
                     helper.assertTrue(cli.copyPath("a.txt", "b.txt").ok(), "copy a.txt b.txt must succeed");
                     helper.assertTrue(cli.readFile("a.txt").ok(), "source must still exist after copy");
                     final ICliComputer.FsResult copy = cli.readFile("b.txt");
-                    helper.assertTrue(copy.ok() && copy.message().equals("payload"),
+                    helper.assertTrue(copy.ok() && copy.message().english().equals("payload"),
                             "copy must contain the source content");
                 })
                 .thenSucceed();
@@ -612,7 +612,7 @@ public final class OsCliGameTests {
                             "current drive must be D after switching; got " + cli.currentLocation().dosPath());
                     helper.assertTrue(cli.writeFile("note.txt", "on-d").ok(), "write on D: must succeed");
                     final ICliComputer.FsResult readD = cli.readFile("note.txt");
-                    helper.assertTrue(readD.ok() && readD.message().equals("on-d"),
+                    helper.assertTrue(readD.ok() && readD.message().english().equals("on-d"),
                             "read on D: must return the D: content");
                     // Back to C:; the D: file must not be visible there.
                     helper.assertTrue(cli.changeDrive('C').ok(), "switching back to C: must succeed");
@@ -623,7 +623,7 @@ public final class OsCliGameTests {
                     helper.assertTrue(cli.copyPath("src.txt", "D:\\copy.txt").ok(),
                             "cross-drive copy C: -> D: must succeed");
                     final ICliComputer.FsResult copied = cli.readFile("D:\\copy.txt");
-                    helper.assertTrue(copied.ok() && copied.message().equals("payload"),
+                    helper.assertTrue(copied.ok() && copied.message().english().equals("payload"),
                             "the cross-drive copy on D: must hold the source content");
                     // An unmapped drive letter fails cleanly.
                     helper.assertFalse(cli.changeDrive('Z').ok(), "switching to an unmapped drive must fail");
@@ -650,7 +650,7 @@ public final class OsCliGameTests {
                     helper.assertFalse(cli.copyPath("backup.txt", "D:\\backup.txt").ok(),
                             "copying onto it is refused");
                     helper.assertFalse(cli.movePath("backup.txt", "D:\\").ok(), "and so is moving onto it");
-                    helper.assertTrue(cli.readFile("D:\\backup.txt").message().equals("the one on D"),
+                    helper.assertTrue(cli.readFile("D:\\backup.txt").message().english().equals("the one on D"),
                             "D:'s file is still its own");
                     helper.assertTrue(cli.readFile("backup.txt").ok(), "and the one on C: was not moved away");
                 })
@@ -1568,10 +1568,10 @@ public final class OsCliGameTests {
                             "dir lists the projected disc: " + names);
                     helper.assertTrue(supportIsDir, "the disc's folder lists as a folder");
                     final ICliComputer.FsResult readme = cli.readFile("README.TXT");
-                    helper.assertTrue(readme.ok() && readme.message().contains("Crafting Manager"),
+                    helper.assertTrue(readme.ok() && readme.message().english().contains("Crafting Manager"),
                             "type reads the readme's generated text: " + readme.message());
                     final ICliComputer.FsResult licence = cli.readFile("LICENSE.TXT");
-                    helper.assertTrue(licence.ok() && licence.message().contains("licensed"),
+                    helper.assertTrue(licence.ok() && licence.message().english().contains("licensed"),
                             "type reads the licence's generated text: " + licence.message());
                     helper.assertTrue(cli.changeDir("SUPPORT").ok(), "a projected folder can be entered");
                     helper.assertTrue(cli.changeDir("\\").ok(), "and left again");

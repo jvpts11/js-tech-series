@@ -168,7 +168,7 @@ public final class IqlEngine {
             return Outcome.rows(computer.queryObject(operation.item(), operation.where(), "", limit));
         }
         final ICliComputer.OpResult result = computer.execute(operation);
-        return new Outcome(result.ok(), result.message(), List.of());
+        return new Outcome(result.ok(), result.message().english(), List.of());
     }
 
     private static String typeName(final IqlDefinition.ObjectType type) {

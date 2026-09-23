@@ -235,14 +235,16 @@ public final class SetupGameTests {
                     final ServerCliComputer cli = new ServerCliComputer(mainframe, helper.getLevel());
                     final ICliComputer.OpResult result = cli.install("minesweeper");
                     helper.assertTrue(result.ok(), "install is accepted: " + result.message());
-                    helper.assertTrue(result.message().contains("Setting up") && result.message().contains("floppy"),
-                            "the prompt says what it is doing and from where: " + result.message());
+                    final String said = result.message().english();
+                    helper.assertTrue(said.contains("Setting up") && said.contains("floppy"),
+                            "the prompt says what it is doing and from where: " + said);
                     helper.assertTrue(mainframe.console().setup() != null, "a job is running");
                     helper.assertFalse(mainframe.console().isInstalled(MINESWEEPER.toString()),
                             "the program is not there the instant it was asked for");
                     final ICliComputer.OpResult again = cli.install("minesweeper");
                     helper.assertFalse(again.ok(), "a second install while one runs is refused");
-                    helper.assertTrue(again.message().contains("still setting up"), "and says why: " + again.message());
+                    helper.assertTrue(again.message().english().contains("still setting up"),
+                            "and says why: " + again.message());
                 })
                 .thenSucceed();
     }

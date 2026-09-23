@@ -123,7 +123,7 @@ final class SoftwareCommands {
                 return;
             }
             // A manager speaks in several lines; the last of them is the one that says it went well.
-            final String[] parts = result.message().split("\n");
+            final String[] parts = result.message().english().split("\n");
             for (int i = 0; i < parts.length; i++) {
                 if (i == parts.length - 1) {
                     ctx.out().ok(parts[i]);

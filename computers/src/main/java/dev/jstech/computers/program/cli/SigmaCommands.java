@@ -180,7 +180,7 @@ public final class SigmaCommands {
                     ctx.out().error(this.verb + ": " + read.message());
                     return;
                 }
-                sources.add(new SourceFile(leaf(path), read.message()));
+                sources.add(new SourceFile(leaf(path), read.message().english()));
             }
 
             final SigmaCompiler.Result built = SigmaCompiler.compile(sources, architecture, this.level);
@@ -463,7 +463,7 @@ public final class SigmaCommands {
                 ctx.out().error("no " + Manifest.FILE + " here; run 'sgpack init' first");
                 return;
             }
-            final Manifest manifest = Manifest.read(read.message());
+            final Manifest manifest = Manifest.read(read.message().english());
             final Map<String, String> files = new LinkedHashMap<>();
             for (final String named : manifest.files()) {
                 final ICliComputer.FsResult file = computer.readFile(named);
@@ -471,7 +471,7 @@ public final class SigmaCommands {
                     ctx.out().error("sgpack: " + named + " is named in the manifest but not here");
                     return;
                 }
-                files.put(named, file.message());
+                files.put(named, file.message().english());
             }
             final Packed packed = new Packed(manifest, files);
             final List<String> wrong = packed.problems();
@@ -505,7 +505,7 @@ public final class SigmaCommands {
                     ctx.out().error("name the package to publish, or run this beside a " + Manifest.FILE);
                     return;
                 }
-                final Manifest manifest = Manifest.read(read.message());
+                final Manifest manifest = Manifest.read(read.message().english());
                 file = new Packed(manifest, Map.of()).fileName();
             }
             final ICliComputer.OpResult published = ctx.computer().publishPackage(file);

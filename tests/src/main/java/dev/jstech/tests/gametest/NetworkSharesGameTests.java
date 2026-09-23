@@ -70,7 +70,7 @@ public final class NetworkSharesGameTests {
                             "the file is on the computer: " + lab.writeFile("C:\\pub\\note.txt", "hi").message());
                     final ICliComputer.OpResult shared = lab.setConfig("share", "C:\\pub write");
                     helper.assertTrue(shared.ok(), "the folder is shared: " + shared.message());
-                    helper.assertTrue(shared.message().contains("\\\\lab\\pub"),
+                    helper.assertTrue(shared.message().english().contains("\\\\lab\\pub"),
                             "and named for the folder; got " + shared.message());
 
                     final ServerCliComputer main = new ServerCliComputer(pair.mainframe(), helper.getLevel());
@@ -80,18 +80,19 @@ public final class NetworkSharesGameTests {
                             "the host lists its share; got " + main.listDisk("\\\\lab").message());
                     helper.assertTrue(lists(main.listDisk("\\\\lab\\pub"), "note.txt"),
                             "the share lists its files; got " + main.listDisk("\\\\lab\\pub").message());
-                    helper.assertTrue("hi".equals(main.readFile("\\\\lab\\pub\\note.txt").message()),
+                    helper.assertTrue("hi".equals(main.readFile("\\\\lab\\pub\\note.txt").message().english()),
                             "and the file reads across; got " + main.readFile("\\\\lab\\pub\\note.txt").message());
-                    helper.assertTrue("hi".equals(main.readFile("/net/lab/pub/note.txt").message()),
+                    helper.assertTrue("hi".equals(main.readFile("/net/lab/pub/note.txt").message().english()),
                             "in the Linux spelling too");
 
                     helper.assertTrue(main.writeFile("\\\\lab\\pub\\new.txt", "x").ok(),
                             "a writable share takes a write; got " + main.writeFile("\\\\lab\\pub\\new.txt", "x").message());
-                    helper.assertTrue("x".equals(lab.readFile("C:\\pub\\new.txt").message()),
+                    helper.assertTrue("x".equals(lab.readFile("C:\\pub\\new.txt").message().english()),
                             "which landed on the computer's own disk");
                     final ICliComputer.FsResult copied = main.copyPath("\\\\lab\\pub\\note.txt", "\\\\lab\\pub\\copy.txt");
                     helper.assertTrue(copied.ok(), "a copy goes across the network; got " + copied.message());
-                    helper.assertTrue("hi".equals(lab.readFile("C:\\pub\\copy.txt").message()), "and lands whole");
+                    helper.assertTrue("hi".equals(lab.readFile("C:\\pub\\copy.txt").message().english()),
+                            "and lands whole");
                     helper.assertTrue(main.makeDir("\\\\lab\\pub\\more").ok(), "a folder can be made in a writable share");
                     helper.assertTrue(main.deleteFile("\\\\lab\\pub\\copy.txt").ok(), "and a file deleted from it");
                     helper.assertTrue(!lab.readFile("C:\\pub\\copy.txt").ok(), "for real");
@@ -149,7 +150,7 @@ public final class NetworkSharesGameTests {
                     final List<String> said = programs.byId(started.id()).process().console();
                     helper.assertTrue(said.equals(List.of("read hi", "there false", "wrote true")),
                             "a program reaches the share like any file; got " + said);
-                    helper.assertTrue("hello".equals(lab.readFile("C:\\pub\\from-main.txt").message()),
+                    helper.assertTrue("hello".equals(lab.readFile("C:\\pub\\from-main.txt").message().english()),
                             "and what it wrote is on the other machine");
                 })
                 .thenSucceed();

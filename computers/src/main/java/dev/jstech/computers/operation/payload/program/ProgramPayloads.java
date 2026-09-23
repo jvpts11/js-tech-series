@@ -178,7 +178,7 @@ public final class ProgramPayloads {
         final List<WireLine> wire = new ArrayList<>();
         final Function<String, ICliComputer.FsResult> disk =
                 path -> readDiskFile(level, computer, path)
-                        .map(ICliComputer.FsResult::ok)
+                        .map(ICliComputer.FsResult::content)
                         .orElse(ICliComputer.FsResult.fail("file not found"));
         final var launch = ProgramLauncher.launch(computer, payload.path(), disk,
                 List.of(), IProgramParent.NONE,

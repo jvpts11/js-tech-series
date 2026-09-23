@@ -173,7 +173,7 @@ public final class MachineConfigService {
         if (!folder.ok()) {
             return folder;
         }
-        final String dos = folder.message();
+        final String dos = folder.message().english();
         if (!console.settings().share(dos, writable)) {
             return ICliComputer.OpResult.fail("this computer already shares "
                     + ComputerSettings.MAX_SHARES + " folders");

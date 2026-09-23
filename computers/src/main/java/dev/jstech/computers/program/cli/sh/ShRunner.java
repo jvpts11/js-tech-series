@@ -95,7 +95,7 @@ public final class ShRunner {
                 out.error(read.message());
                 return new CliShell.Response(out.lines(), false);
             }
-            feeding = linesOf(read.message());
+            feeding = linesOf(read.message().english());
         }
         List<CliLine> printed = List.of();
         ICliCommand last = null;

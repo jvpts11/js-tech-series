@@ -234,7 +234,7 @@ public final class InteracView {
         }
         final String what = state.action().substring(0, state.action().length() - 1);
         if ("put".equals(what)) {
-            return computer.storeFromHand(Math.max(0L, state.amount())).message();
+            return computer.storeFromHand(Math.max(0L, state.amount())).message().english();
         }
         final List<InteracScreen.Row> rows = rowsOf(computer, state);
         if (rows.isEmpty()) {
@@ -251,14 +251,14 @@ public final class InteracView {
         final String id = found.get(0).id();
         final long many = Math.max(1L, state.amount());
         return switch (what) {
-            case "get" -> computer.takeToHand(id, many).message();
-            case "local" -> computer.select(id, many).message();
-            case "craft" -> computer.craft(id, many).message();
-            case "lock" -> computer.lock(id, many).message();
-            case "unlock" -> computer.unlock(id).message();
+            case "get" -> computer.takeToHand(id, many).message().english();
+            case "local" -> computer.select(id, many).message().english();
+            case "craft" -> computer.craft(id, many).message().english();
+            case "lock" -> computer.lock(id, many).message().english();
+            case "unlock" -> computer.unlock(id).message().english();
             case "fav" -> computer.setConfig(
                     computer.favourites().contains("item|" + id) ? "unfavourite" : "favourite",
-                    "item|" + id).message();
+                    "item|" + id).message().english();
             default -> "";
         };
     }
@@ -284,7 +284,7 @@ public final class InteracView {
         if (picked < 0) {
             return "nothing is in flight";
         }
-        return computer.cancelOperation(kept.get(picked).id()).message();
+        return computer.cancelOperation(kept.get(picked).id()).message().english();
     }
 
     private static boolean matches(final String text, final String search) {

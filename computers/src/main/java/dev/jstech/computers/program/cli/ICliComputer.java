@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 
 /**
@@ -81,11 +83,11 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
     final class FsResult {
 
         private final boolean ok;
-        private final String message;
+        private final Text message;
         private final List<FsEntry> entries;
         private final OpResult opResult;
 
-        private FsResult(final boolean ok, final String message, final List<FsEntry> entries,
+        private FsResult(final boolean ok, final Text message, final List<FsEntry> entries,
                          final OpResult opResult) {
             this.ok = ok;
             this.message = message;
@@ -95,17 +97,22 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
 
         /** A listing result carrying one or more directory entries. */
         public static FsResult listing(final List<FsEntry> entries) {
-            return new FsResult(true, "", entries, null);
+            return new FsResult(true, Text.EMPTY, entries, null);
         }
 
-        /** A text-content result (for {@code type} / {@code cat}). */
+        /** A text-content result (for {@code type} / {@code cat}): the file's own words, which are data. */
         public static FsResult content(final String text) {
-            return new FsResult(true, text, null, null);
+            return new FsResult(true, Text.literal(text), null, null);
         }
 
         /** A simple confirmation message (for {@code del}). */
-        public static FsResult ok(final String message) {
+        public static FsResult ok(final Text message) {
             return new FsResult(true, message, null, null);
+        }
+
+        /** A confirmation whose words are data, the same in every language. */
+        public static FsResult ok(final String message) {
+            return ok(Text.literal(message));
         }
 
         /** An IQL execution result forwarded from the dispatcher. */
@@ -114,17 +121,22 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
         }
 
         /** A standard failure with a human-readable message. */
-        public static FsResult fail(final String message) {
+        public static FsResult fail(final Text message) {
             return new FsResult(false, message, null, null);
+        }
+
+        /** A failure the machine read somewhere as English words, which travel as they are. */
+        public static FsResult fail(final String message) {
+            return fail(Text.literal(message));
         }
 
         /** Returned when no OS or system disk is present. */
         public static FsResult noOs() {
-            return fail("no system disk or OS installed");
+            return fail(CliTexts.NO_SYSTEM.text());
         }
 
         public boolean ok() { return ok; }
-        public String message() { return message; }
+        public Text message() { return message; }
         public List<FsEntry> entries() { return entries; }
         /** The forwarded IQL result when this is an {@link #iqlResult}, or {@code null} otherwise. */
         public OpResult opResult() { return opResult; }
@@ -254,15 +266,40 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
     record ServiceStatus(String name, String state) {
     }
 
-    /** The outcome of an effecting command: whether it was accepted, and a message to print. */
-    record OpResult(boolean ok, String message) {
+    /**
+     * The outcome of an effecting command: whether it was accepted, and a message to print, in whatever language
+     * whoever reads it reads.
+     */
+    record OpResult(boolean ok, Text message) {
 
-        public static OpResult ok(final String message) {
+        public OpResult {
+            message = message == null ? Text.EMPTY : message;
+        }
+
+        public static OpResult ok(final Text message) {
             return new OpResult(true, message);
         }
 
-        public static OpResult fail(final String message) {
+        public static OpResult ok(final TextKey message) {
+            return new OpResult(true, message.text());
+        }
+
+        public static OpResult fail(final Text message) {
             return new OpResult(false, message);
+        }
+
+        public static OpResult fail(final TextKey message) {
+            return new OpResult(false, message.text());
+        }
+
+        /** An outcome whose words are data, the same in every language: a name, a figure, a line of a file. */
+        public static OpResult ok(final String message) {
+            return ok(Text.literal(message));
+        }
+
+        /** A failure whose words are data, or English that came from somewhere that has only English. */
+        public static OpResult fail(final String message) {
+            return fail(Text.literal(message));
         }
     }
 }

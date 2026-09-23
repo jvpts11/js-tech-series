@@ -98,7 +98,7 @@ public final class MirrorService {
         if (!read.ok()) {
             return ICliComputer.OpResult.fail(read.message());
         }
-        final Packed packed = Packed.read(read.message());
+        final Packed packed = Packed.read(read.message().english());
         if (packed == null) {
             return ICliComputer.OpResult.fail(path + ": this is not a package (build one with 'sgpack build')");
         }
@@ -108,7 +108,7 @@ public final class MirrorService {
         }
         final String name = packed.manifest().name();
         final boolean replacing = mirror.shelvedPackage(name) != null;
-        if (!mirror.shelve(name, read.message())) {
+        if (!mirror.shelve(name, read.message().english())) {
             return ICliComputer.OpResult.fail("the Mirror is full ("
                     + MainframeBlockEntity.SHELF_MAX + " packages)");
         }

@@ -7,16 +7,16 @@
  */
 package dev.jstech.computers.gui.term;
 
-import dev.jstech.computers.program.cli.CliSpan;
+import dev.jstech.computers.program.cli.CliRun;
 import java.util.List;
 
 /**
  * One row of a terminal's glass: runs of one colour each, no wider together than the glass is.
  *
- * <p>A row and not a line. A line is what a tool printed; a row is what is left of it once the glass has had
- * its say about how wide it is, and a long line is several of these.
+ * <p>A row and not a line. A line is what a tool printed; a row is what is left of it once it has been put in the
+ * reader's language and the glass has had its say about how wide it is, and a long line is several of these.
  */
-public record TermRow(List<CliSpan> runs) {
+public record TermRow(List<CliRun> runs) {
 
     public TermRow {
         runs = List.copyOf(runs);
@@ -25,7 +25,7 @@ public record TermRow(List<CliSpan> runs) {
     /** How many cells the row fills. */
     public int length() {
         int cells = 0;
-        for (final CliSpan run : this.runs) {
+        for (final CliRun run : this.runs) {
             cells += run.text().length();
         }
         return cells;
@@ -34,7 +34,7 @@ public record TermRow(List<CliSpan> runs) {
     /** What the row says, colours aside. */
     public String text() {
         final StringBuilder out = new StringBuilder();
-        for (final CliSpan run : this.runs) {
+        for (final CliRun run : this.runs) {
             out.append(run.text());
         }
         return out.toString();

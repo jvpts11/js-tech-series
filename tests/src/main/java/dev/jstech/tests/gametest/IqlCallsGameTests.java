@@ -154,7 +154,7 @@ public final class IqlCallsGameTests {
                     DiskFilesystem.write(pc.systemDisk(), "broken.iql", FileType.IQL,
                             "LOCK 10 cobblestone\nnot a statement\n", Long.MAX_VALUE, FilesystemKind.HIERARCHICAL);
                     final ICliComputer.FsResult refused = iql.runFile("broken.iql");
-                    helper.assertTrue(!refused.ok() && refused.message().contains("not a statement"),
+                    helper.assertTrue(!refused.ok() && refused.message().english().contains("not a statement"),
                             "a line that is not a statement is named; got " + refused.message());
                 })
                 .thenSucceed();

@@ -258,7 +258,7 @@ final class ScreenfetchLogos {
         static int columns(final List<CliSpan> row) {
             int count = 0;
             for (final CliSpan span : row) {
-                count += span.text().length();
+                count += span.english().length();
             }
             return count;
         }

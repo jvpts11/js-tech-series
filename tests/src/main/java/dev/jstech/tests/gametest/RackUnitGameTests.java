@@ -640,7 +640,7 @@ public final class RackUnitGameTests {
                     helper.assertTrue(shown.startsWith("[vault] "),
                             "and the prompt says where the lines are going; got '" + shown + "'");
 
-                    helper.assertTrue(cli.sshConnect("nowhere").message().contains("host not found"),
+                    helper.assertTrue(cli.sshConnect("nowhere").message().english().contains("host not found"),
                             "an unknown host is reported, not silently ignored");
 
                     helper.assertTrue(cli.sshDisconnect().ok(), "exit closes the session");

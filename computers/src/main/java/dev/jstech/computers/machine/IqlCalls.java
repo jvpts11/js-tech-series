@@ -59,9 +59,9 @@ final class IqlCalls {
         iql(bindings, "RunFile", (iql, engine, call, arguments, line) -> {
             final ICliComputer.FsResult read = iql.read(text(arguments, 0));
             if (!read.ok()) {
-                throw new Halt(Halt.Reason.NO_OBJECT, line, read.message());
+                throw new Halt(Halt.Reason.NO_OBJECT, line, read.message().english());
             }
-            return result(call, IqlService.runEach(engine, read.message()));
+            return result(call, IqlService.runEach(engine, read.message().english()));
         }, STRING);
     }
 

@@ -10,6 +10,7 @@ package dev.jstech.computers.gui.term;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliSpan;
 import dev.jstech.computers.program.cli.CliStyle;
+import dev.jstech.core.text.ITextLanguage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -26,7 +27,7 @@ class TermBufferTest {
 
     @BeforeEach
     void setUp() {
-        this.glass = new TermBuffer(4, COLUMNS);
+        this.glass = new TermBuffer(4, COLUMNS, ITextLanguage.ENGLISH);
     }
 
     private List<String> shown() {

@@ -327,6 +327,7 @@
   "item.jsc.vintage_server": "Vintage Server",
   "item.jsc.vintage_server_case": "Vintage Server Case",
   "itemGroup.jsc.computing": "J's Computers",
+  "jsc.cli.no_system": "no system disk or OS installed",
   "jsc.file_type.bin": "Installer data",
   "jsc.file_type.cfg": "Configuration",
   "jsc.file_type.cmd": "Shell script",

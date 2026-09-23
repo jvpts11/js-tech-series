@@ -9,7 +9,7 @@ package dev.jstech.computers.client.term;
 
 import dev.jstech.computers.gui.term.TermRow;
 import dev.jstech.computers.gui.term.TermSelection;
-import dev.jstech.computers.program.cli.CliSpan;
+import dev.jstech.computers.program.cli.CliRun;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.gui.TextShadow;
 import java.util.ArrayList;
@@ -152,7 +152,7 @@ public final class TermPainter {
         final StringBuilder run = new StringBuilder();
         int cell = 0;
         int runAt = 0;
-        for (final CliSpan span : row.runs()) {
+        for (final CliRun span : row.runs()) {
             final String text = span.text();
             for (int i = 0; i < text.length(); i++) {
                 final char ch = text.charAt(i);

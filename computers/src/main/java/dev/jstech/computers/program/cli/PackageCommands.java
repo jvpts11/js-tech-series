@@ -173,9 +173,9 @@ final class PackageCommands {
                 ctx.out().dim("Resolving mirror://mainframe ...");
             }
             if (result.ok()) {
-                lines(ctx, result.message());
+                lines(ctx, result.message().english());
             } else {
-                ctx.out().error(refusal(result.message()));
+                ctx.out().error(refusal(result.message().english()));
             }
         }
 
@@ -187,9 +187,9 @@ final class PackageCommands {
             final String name = pkg.trim().split("\\s+")[0];
             final ICliComputer.OpResult result = ctx.computer().packageRemove(name);
             if (result.ok()) {
-                lines(ctx, result.message());
+                lines(ctx, result.message().english());
             } else {
-                ctx.out().error(refusal(result.message()));
+                ctx.out().error(refusal(result.message().english()));
             }
         }
 

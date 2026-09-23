@@ -40,6 +40,7 @@ import dev.jstech.computers.program.cli.ConsoleGreeting;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.gui.LineHistory;
 import dev.jstech.core.gui.Phosphor;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.HashMap;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -161,7 +162,8 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         this.inventoryLabelY = -10000;
         final Kept had = KEPT.get(menu.hostPos());
         final Kept kept = had != null && had.session() == menu.session()
-                ? had : new Kept(menu.session(), new TermBuffer(MAX_SCROLLBACK, TermBuffer.MONITOR_COLUMNS));
+                ? had : new Kept(menu.session(),
+                        new TermBuffer(MAX_SCROLLBACK, TermBuffer.MONITOR_COLUMNS, GameText.LOADED));
         KEPT.put(menu.hostPos(), kept);
         this.scrollback = kept.glass();
         // A screen that still has its lines has already said whose it is.
@@ -524,7 +526,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         final boolean shown = input != null && !unseen;
         return TermInput.lay(before(), shown ? input.getValue() : "", CliStyle.PROMPT,
                 shown ? input.getCursorPosition() : 0, shown ? markOf(input) : 0,
-                scrollback.columns());
+                scrollback.columns(), GameText.LOADED);
     }
 
     /**

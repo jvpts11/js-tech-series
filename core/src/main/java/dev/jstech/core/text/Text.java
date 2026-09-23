@@ -47,6 +47,15 @@ public sealed interface Text permits Text.Literal, Text.Translated {
     /** What it says in that language, with everything put into it. */
     String resolve(ITextLanguage language);
 
+    /**
+     * What it says in the English it was declared with: the language a machine keeps what it writes down in (a
+     * file, a pipe, a log). Not the language the game has loaded, which on a server run inside a client is that
+     * player's own.
+     */
+    default String english() {
+        return resolve(ITextLanguage.ENGLISH);
+    }
+
     /** Words that are data, the same in every language. */
     record Literal(String value) implements Text {
 
@@ -56,6 +65,12 @@ public sealed interface Text permits Text.Literal, Text.Translated {
 
         @Override
         public String resolve(final ITextLanguage language) {
+            return this.value;
+        }
+
+        /** The words themselves, so text joined into a string by mistake still reads as what it says. */
+        @Override
+        public String toString() {
             return this.value;
         }
     }
@@ -81,6 +96,12 @@ public sealed interface Text permits Text.Literal, Text.Translated {
                 resolved.add(arg.resolve(language));
             }
             return TextFormat.apply(pattern != null ? pattern : this.key.english(), resolved);
+        }
+
+        /** The sentence in English, so text joined into a string by mistake still reads as what it says. */
+        @Override
+        public String toString() {
+            return english();
         }
     }
 }

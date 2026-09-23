@@ -30,16 +30,18 @@ final class FileCalls {
         file(bindings, "Exists", (files, call, target, arguments, line) -> files.exists(path(arguments)), STRING);
         file(bindings, "Read", (files, call, target, arguments, line) -> {
             final ICliComputer.FsResult read = files.read(path(arguments));
+            // A program reads in the machine's language: the file's own words, or why there were none.
             if (!read.ok()) {
-                throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, read.message());
+                throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, read.message().english());
             }
-            call.moved(FileService.bytesOf(read.message()));
-            return read.message();
+            final String found = read.message().english();
+            call.moved(FileService.bytesOf(found));
+            return found;
         }, STRING);
         file(bindings, "TryRead", (files, call, target, arguments, line) -> {
             // What was found is filled in beside the answer, and is empty when nothing was.
             final ICliComputer.FsResult read = files.read(path(arguments));
-            final String found = read.ok() ? read.message() : "";
+            final String found = read.ok() ? read.message().english() : "";
             call.moved(FileService.bytesOf(found));
             arguments[1] = found;
             return read.ok();

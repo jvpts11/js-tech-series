@@ -145,7 +145,7 @@ final class PortsCommands {
             ctx.out().start(result.tool());
             return;
         }
-        for (final String line : result.message().split("\n", -1)) {
+        for (final String line : result.message().english().split("\n", -1)) {
             if (result.ok()) {
                 ctx.out().line(line);
             } else {

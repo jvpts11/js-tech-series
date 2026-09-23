@@ -29,6 +29,7 @@ import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.List;
 import java.util.Locale;
@@ -78,7 +79,8 @@ public final class ShellView extends Panel {
      * <p>The window is freely resized, and the glass wraps everything again when its width changes and at no
      * other time, so a console nobody types into costs nothing a frame.
      */
-    private final TermBuffer scrollback = new TermBuffer(MAX_SCROLLBACK, TermBuffer.MONITOR_COLUMNS);
+    private final TermBuffer scrollback = new TermBuffer(MAX_SCROLLBACK, TermBuffer.MONITOR_COLUMNS,
+            GameText.LOADED);
 
     /**
      * How many columns this window's glass holds, as the last drawing of it worked out.
