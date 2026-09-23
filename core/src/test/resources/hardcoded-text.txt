@@ -178,8 +178,6 @@ computers/src/main/java/dev/jstech/computers/item/PhiCoprocessorItem.java 4
 computers/src/main/java/dev/jstech/computers/item/PsuItem.java 2
 computers/src/main/java/dev/jstech/computers/item/RamItem.java 2
 computers/src/main/java/dev/jstech/computers/machine/CommunityPackages.java 7
-computers/src/main/java/dev/jstech/computers/machine/DriveTable.java 2
-computers/src/main/java/dev/jstech/computers/machine/FileService.java 53
 computers/src/main/java/dev/jstech/computers/machine/GatewayCalls.java 3
 computers/src/main/java/dev/jstech/computers/machine/InstallGates.java 5
 computers/src/main/java/dev/jstech/computers/machine/InstallService.java 12
@@ -192,7 +190,6 @@ computers/src/main/java/dev/jstech/computers/machine/MachinePrograms.java 8
 computers/src/main/java/dev/jstech/computers/machine/MainframeCalls.java 1
 computers/src/main/java/dev/jstech/computers/machine/MirrorService.java 20
 computers/src/main/java/dev/jstech/computers/machine/NetworkCalls.java 1
-computers/src/main/java/dev/jstech/computers/machine/NetworkPathResolver.java 6
 computers/src/main/java/dev/jstech/computers/machine/OperationsCalls.java 1
 computers/src/main/java/dev/jstech/computers/machine/OperationsService.java 70
 computers/src/main/java/dev/jstech/computers/machine/PackageService.java 24

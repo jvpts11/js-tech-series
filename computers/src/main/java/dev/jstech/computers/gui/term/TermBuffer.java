@@ -145,11 +145,39 @@ public final class TermBuffer {
      *
      * <p>Broken at the last space when there is one reasonably far in, the way a terminal's own wrapping
      * reads best, and cut where the row ends when there is not: a path or a long flag is one word and has to
-     * be cut somewhere.
+     * be cut somewhere. A line whose words carry a line break of their own, a sentence a translator wrote over
+     * two lines, starts a row at each break.
      */
     static List<TermRow> wrap(final List<CliRun> line, final int columns) {
-        final List<Cell> cells = cellsOf(line);
         final List<TermRow> out = new ArrayList<>(1);
+        for (final List<CliRun> part : brokenAtNewlines(line)) {
+            wrapInto(out, cellsOf(part), columns);
+        }
+        return out;
+    }
+
+    /** The runs of a line split where their words break onto a new line, each part keeping its colours. */
+    static List<List<CliRun>> brokenAtNewlines(final List<CliRun> line) {
+        final List<List<CliRun>> parts = new ArrayList<>(1);
+        List<CliRun> part = new ArrayList<>();
+        for (final CliRun run : line) {
+            final String[] pieces = run.text().split("\r?\n", -1);
+            for (int i = 0; i < pieces.length; i++) {
+                if (i > 0) {
+                    parts.add(part);
+                    part = new ArrayList<>();
+                }
+                if (!pieces[i].isEmpty()) {
+                    part.add(new CliRun(pieces[i], run.style()));
+                }
+            }
+        }
+        parts.add(part);
+        return parts;
+    }
+
+    /** One line with no breaks in it, cut into rows of that many cells and added to {@code out}. */
+    private static void wrapInto(final List<TermRow> out, final List<Cell> cells, final int columns) {
         int from = 0;
         while (cells.size() - from > columns) {
             int cut = from + columns;
@@ -169,7 +197,6 @@ public final class TermBuffer {
             }
         }
         out.add(rowOf(cells, from, cells.size()));
-        return out;
     }
 
     /** The line, already in a language, a cell at a time, its tabs opened out to the next stop. */

@@ -11,6 +11,9 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.NetPath;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -29,13 +32,14 @@ import net.minecraft.world.level.block.entity.BlockEntity;
  * nobody opened under that name each say so; a share opened for reading only refuses a write the way its owner's
  * prompt would.
  */
+@TextHolder
 public final class NetworkPathResolver {
 
     /** Where a network path leads: the other machine's shell, the share, and the path on that machine. */
     public record Reached(ServerCliComputer remote, ICliComputer.ShareInfo share, String path,
                           ICliComputer.FsResult error) {
 
-        static Reached failed(final String message) {
+        static Reached failed(final Text message) {
             return new Reached(null, null, "", ICliComputer.FsResult.fail(message));
         }
 
@@ -50,6 +54,16 @@ public final class NetworkPathResolver {
     private final Function<String, Map<String, BlockEntity>> machinesNamed;
     /** Every folder the other running machines of the network share. */
     private final Supplier<List<ICliComputer.NetworkShare>> networkShares;
+
+    private static final TextKey SHARE_UNNAMED =
+            TextKey.of("jsc.service.share.unnamed", "%s: a share has to be named (\\\\host\\share)");
+    private static final TextKey HOST_NOT_FOUND =
+            TextKey.of("jsc.service.share.host_not_found", "\\\\%s: host not found on this network");
+    private static final TextKey HOST_AMBIGUOUS = TextKey.of("jsc.service.share.host_ambiguous",
+            "\\\\%s matches %s machines (%s) - use the host name or node id");
+    private static final TextKey HOST_OFF = TextKey.of("jsc.service.share.host_off", "\\\\%s: machine is powered off");
+    private static final TextKey NO_SUCH_SHARE =
+            TextKey.of("jsc.service.share.no_such_share", "\\\\%1$s\\%2$s: no such share on %1$s");
 
     public NetworkPathResolver(final ServerLevel level,
                                final Function<String, Map<String, BlockEntity>> machinesNamed,
@@ -67,27 +81,27 @@ public final class NetworkPathResolver {
      */
     public Reached reach(final NetPath net) {
         if (net.isNetwork() || net.isHost()) {
-            return Reached.failed(net.display() + ": a share has to be named (\\\\host\\share)");
+            return Reached.failed(SHARE_UNNAMED.with(net.display()));
         }
         final Map<String, BlockEntity> matches = this.machinesNamed.apply(net.host());
         if (matches.isEmpty()) {
-            return Reached.failed("\\\\" + net.host() + ": host not found on this network");
+            return Reached.failed(HOST_NOT_FOUND.with(net.host()));
         }
         if (matches.size() > 1) {
-            return Reached.failed("\\\\" + net.host() + " matches " + matches.size() + " machines ("
-                    + String.join(", ", matches.keySet()) + ") - use the host name or node id");
+            return Reached.failed(HOST_AMBIGUOUS.with(net.host(), String.valueOf(matches.size()),
+                    String.join(", ", matches.keySet())));
         }
         final BlockEntity target = matches.values().iterator().next();
         final ServerCliComputer remote = new ServerCliComputer((IComputerTerminalHost) target, this.level);
         if (!remote.running()) {
-            return Reached.failed("\\\\" + net.host() + ": machine is powered off");
+            return Reached.failed(HOST_OFF.with(net.host()));
         }
         for (final ICliComputer.ShareInfo share : remote.shares()) {
             if (share.name().equalsIgnoreCase(net.share())) {
                 return new Reached(remote, share, net.remotePath(share.path()), null);
             }
         }
-        return Reached.failed("\\\\" + net.host() + "\\" + net.share() + ": no such share on " + net.host());
+        return Reached.failed(NO_SUCH_SHARE.with(net.host(), net.share()));
     }
 
     /** Lists what a network path holds: the hosts sharing something, a host's shares, or a shared folder. */
@@ -113,7 +127,7 @@ public final class NetworkPathResolver {
                 }
             }
             if (!found && this.machinesNamed.apply(net.host()).isEmpty()) {
-                return ICliComputer.FsResult.fail("\\\\" + net.host() + ": host not found on this network");
+                return ICliComputer.FsResult.fail(HOST_NOT_FOUND.with(net.host()));
             }
             return ICliComputer.FsResult.listing(entries);
         }

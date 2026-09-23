@@ -19,11 +19,14 @@ import dev.jstech.computers.os.fs.InstallerLayout;
 import dev.jstech.computers.os.fs.ProgramFilesProjection;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.InstallerProjection;
+import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.DosPath;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.NetPath;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -45,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
  * one is the file the other opens. A path is read against the folder the caller stands in, which the shell keeps for
  * its window, and a path on another machine of the network is followed on that machine.
  */
+@TextHolder
 public final class FileService {
 
     private final BlockEntity machine;
@@ -53,6 +57,54 @@ public final class FileService {
     private final NetworkPathResolver network;
     /** The folder the caller stands in, asked for at the moment a path is read. */
     private final Supplier<DosPath.Location> where;
+
+    private static final TextKey SHARED_READ_ONLY =
+            TextKey.of("jsc.service.file.shared_read_only", "%s: %s is shared read-only");
+    private static final TextKey DAT_READ_ONLY = TextKey.of("jsc.service.file.dat_read_only",
+            "%s: .dat files are read-only (use the Network Interactor to access items)");
+    private static final TextKey NOT_FOUND = TextKey.of("jsc.service.file.not_found", "%s: file not found");
+    private static final TextKey NOT_EDITABLE =
+            TextKey.of("jsc.service.file.not_editable", "%s: .%s files cannot be edited");
+    private static final TextKey WROTE = TextKey.of("jsc.service.file.wrote", "wrote %s");
+    private static final TextKey INVALID_NAME =
+            TextKey.of("jsc.service.file.invalid_name", "%s: invalid file name for this filesystem");
+    private static final TextKey DISK_FULL =
+            TextKey.of("jsc.service.file.disk_full", "%s: not enough free space on the disk");
+    private static final TextKey TYPE_READ_ONLY = TextKey.of("jsc.service.file.type_read_only", "%s: .%s is read-only");
+    private static final TextKey DAT_UNDELETABLE = TextKey.of("jsc.service.file.dat_undeletable",
+            "%s: .dat files cannot be deleted (use the Network Interactor)");
+    private static final TextKey DELETED = TextKey.of("jsc.service.file.deleted", "deleted %s");
+    private static final TextKey NO_FOLDERS =
+            TextKey.of("jsc.service.file.no_folders", "Directories are not supported on this drive.");
+    private static final TextKey ALREADY_EXISTS =
+            TextKey.of("jsc.service.file.already_exists", "A subdirectory or file %s already exists.");
+    private static final TextKey CANNOT_MAKE_FOLDER =
+            TextKey.of("jsc.service.file.cannot_make_folder", "%s: unable to create directory");
+    private static final TextKey FOLDER_IN_USE = TextKey.of("jsc.service.file.folder_in_use",
+            "The process cannot access the directory because it is in use.");
+    private static final TextKey FOLDER_NOT_EMPTY =
+            TextKey.of("jsc.service.file.folder_not_empty", "The directory is not empty.");
+    private static final TextKey COPIED = TextKey.of("jsc.service.file.copied", "        1 file(s) copied.");
+    private static final TextKey MOVED = TextKey.of("jsc.service.file.moved", "        1 file(s) moved.");
+    private static final TextKey CROSS_COPY_FILES_ONLY = TextKey.of("jsc.service.file.cross_copy_files_only",
+            "%s: file not found (cross-drive copy supports files only)");
+    private static final TextKey CROSS_MOVE_FILES_ONLY = TextKey.of("jsc.service.file.cross_move_files_only",
+            "%s: file not found (cross-drive move supports files only)");
+    private static final TextKey DESTINATION_READ_ONLY =
+            TextKey.of("jsc.service.file.destination_read_only", "%s: the destination is read-only");
+    private static final TextKey NAME_TAKEN =
+            TextKey.of("jsc.service.file.name_taken", "%s: a file of that name is already there");
+    private static final TextKey NO_NETWORK_MOVE = TextKey.of("jsc.service.file.no_network_move",
+            "a file on another machine is copied, not moved: copy it and delete the original");
+    private static final TextKey FORMAT_NOT_READY =
+            TextKey.of("jsc.service.file.format_not_ready", "format: drive %s: drive not ready");
+    private static final TextKey FORMAT_SYSTEM_DRIVE = TextKey.of("jsc.service.file.format_system_drive",
+            "format: cannot format drive C: - the running system lives on it");
+    private static final TextKey FORMATTED = TextKey.of("jsc.service.file.formatted",
+            "Formatting drive %s: ... done\nAll data on the volume was erased.");
+    private static final TextKey FORMAT_NO_DRIVE =
+            TextKey.of("jsc.service.file.format_no_drive", "format: drive %s: not found");
+    private static final TextKey NO_SUCH_FOLDER = TextKey.of("jsc.service.file.no_such_folder", "%s: no such folder");
 
     public FileService(final BlockEntity machine, final ServerLevel level, final NetworkPathResolver network,
                        final Supplier<DosPath.Location> where) {
@@ -96,7 +148,7 @@ public final class FileService {
             return reached.error();
         }
         if (!reached.share().writable()) {
-            return ICliComputer.FsResult.fail(net.display() + ": " + net.share() + " is shared read-only");
+            return ICliComputer.FsResult.fail(SHARED_READ_ONLY.with(net.display(), net.share()));
         }
         return null;
     }
@@ -183,10 +235,9 @@ public final class FileService {
                     DiskFilesystem.list(drive.disk(), FsPaths.parentDir(real), drive.kind());
             final boolean isDat = all.stream().anyMatch(e -> e.path().equals(real) && e.readOnly());
             if (isDat) {
-                return ICliComputer.FsResult.fail(
-                        path + ": .dat files are read-only (use the Network Interactor to access items)");
+                return ICliComputer.FsResult.fail(DAT_READ_ONLY.with(path));
             }
-            return ICliComputer.FsResult.fail(path + ": file not found");
+            return ICliComputer.FsResult.fail(NOT_FOUND.with(path));
         }
         return ICliComputer.FsResult.content(content.get());
     }
@@ -209,7 +260,7 @@ public final class FileService {
         // Any extension will do: a kind the machine does not know is kept as text under the name it was given.
         final FileType type = FileType.of(extensionOf(path));
         if (!type.userEditable()) {
-            return ICliComputer.FsResult.fail(path + ": ." + type.extension() + " files cannot be edited");
+            return ICliComputer.FsResult.fail(NOT_EDITABLE.with(path, type.extension()));
         }
         // Free space available, crediting back the file being overwritten so a same-size rewrite fits.
         final long oldWeight = DiskFilesystem.read(drive.disk(), real)
@@ -240,7 +291,7 @@ public final class FileService {
         final DriveTable.Drive drive = r.drive();
         final FileType type = FileType.of(extensionOf(path));
         if (!type.userEditable()) {
-            return ICliComputer.FsResult.fail(path + ": ." + type.extension() + " files cannot be edited");
+            return ICliComputer.FsResult.fail(NOT_EDITABLE.with(path, type.extension()));
         }
         final DiskFilesystem.WriteResult result = DiskFilesystem.append(drive.disk(), r.path(), type, content,
                 DriveTable.freeWeightOf(drive.disk()), drive.kind(), this.level.getGameTime());
@@ -253,11 +304,11 @@ public final class FileService {
         return switch (result) {
             case OK -> {
                 drive.commit().run();
-                yield ICliComputer.FsResult.ok("wrote " + path);
+                yield ICliComputer.FsResult.ok(WROTE.with(path));
             }
-            case INVALID_PATH -> ICliComputer.FsResult.fail(path + ": invalid file name for this filesystem");
-            case DISK_FULL -> ICliComputer.FsResult.fail(path + ": not enough free space on the disk");
-            case READ_ONLY -> ICliComputer.FsResult.fail(path + ": ." + type.extension() + " is read-only");
+            case INVALID_PATH -> ICliComputer.FsResult.fail(INVALID_NAME.with(path));
+            case DISK_FULL -> ICliComputer.FsResult.fail(DISK_FULL.with(path));
+            case READ_ONLY -> ICliComputer.FsResult.fail(TYPE_READ_ONLY.with(path, type.extension()));
         };
     }
 
@@ -281,20 +332,20 @@ public final class FileService {
                 DiskFilesystem.list(drive.disk(), FsPaths.parentDir(real), drive.kind());
         final boolean isDat = all.stream().anyMatch(e -> e.path().equals(real) && e.readOnly());
         if (isDat) {
-            return ICliComputer.FsResult.fail(path + ": .dat files cannot be deleted (use the Network Interactor)");
+            return ICliComputer.FsResult.fail(DAT_UNDELETABLE.with(path));
         }
         if (!DiskFilesystem.delete(drive.disk(), real)) {
-            return ICliComputer.FsResult.fail(path + ": file not found");
+            return ICliComputer.FsResult.fail(NOT_FOUND.with(path));
         }
         // The delete changed what the drive's stack carries; the owner keeps it.
         drive.commit().run();
-        return ICliComputer.FsResult.ok("deleted " + path);
+        return ICliComputer.FsResult.ok(DELETED.with(path));
     }
 
     /** Makes a folder at that path. */
     public ICliComputer.FsResult makeDir(final String path) {
         if (path == null || path.isBlank()) {
-            return ICliComputer.FsResult.fail("The syntax of the command is incorrect.");
+            return ICliComputer.FsResult.fail(CliTexts.BAD_SYNTAX.text());
         }
         final NetPath net = NetPath.parse(path);
         if (net != null) {
@@ -310,19 +361,19 @@ public final class FileService {
         final DriveTable.Drive drive = r.drive();
         final String real = r.path();
         if (drive.kind() != FilesystemKind.HIERARCHICAL) {
-            return ICliComputer.FsResult.fail("Directories are not supported on this drive.");
+            return ICliComputer.FsResult.fail(NO_FOLDERS.text());
         }
         if (real.isEmpty()) {
-            return ICliComputer.FsResult.fail("The syntax of the command is incorrect.");
+            return ICliComputer.FsResult.fail(CliTexts.BAD_SYNTAX.text());
         }
         if (DriveTable.dirExists(this.osHost(), drive, real) || DiskFilesystem.exists(drive.disk(), real)) {
-            return ICliComputer.FsResult.fail("A subdirectory or file " + path + " already exists.");
+            return ICliComputer.FsResult.fail(ALREADY_EXISTS.with(path));
         }
         if (DiskFilesystem.mkdir(drive.disk(), real, drive.kind())) {
             drive.commit().run();
             return ICliComputer.FsResult.ok("");
         }
-        return ICliComputer.FsResult.fail(path + ": unable to create directory");
+        return ICliComputer.FsResult.fail(CANNOT_MAKE_FOLDER.with(path));
     }
 
     /** Removes the folder at that path, which has to be empty and cannot be the one the caller stands in. */
@@ -335,29 +386,29 @@ public final class FileService {
         final DriveTable.Drive drive = r.drive();
         final String real = r.path();
         if (drive.kind() != FilesystemKind.HIERARCHICAL) {
-            return ICliComputer.FsResult.fail("Directories are not supported on this drive.");
+            return ICliComputer.FsResult.fail(NO_FOLDERS.text());
         }
         if (real.isEmpty()) {
-            return ICliComputer.FsResult.fail("The syntax of the command is incorrect.");
+            return ICliComputer.FsResult.fail(CliTexts.BAD_SYNTAX.text());
         }
         final DosPath.Location cwd = this.where.get();
         if (r.letter() == cwd.drive() && real.equals(cwd.storagePath())) {
-            return ICliComputer.FsResult.fail("The process cannot access the directory because it is in use.");
+            return ICliComputer.FsResult.fail(FOLDER_IN_USE.text());
         }
         if (!DriveTable.dirExists(this.osHost(), drive, real)) {
-            return ICliComputer.FsResult.fail("The system cannot find the path specified.");
+            return ICliComputer.FsResult.fail(CliTexts.PATH_NOT_FOUND.text());
         }
         // DOS 'rd' refuses a non-empty directory; there is no implicit recursive delete.
         final boolean hasChildren = !DiskFilesystem.listDirs(drive.disk(), real, drive.kind()).isEmpty()
                 || !DiskFilesystem.list(drive.disk(), real, drive.kind()).isEmpty();
         if (hasChildren) {
-            return ICliComputer.FsResult.fail("The directory is not empty.");
+            return ICliComputer.FsResult.fail(FOLDER_NOT_EMPTY.text());
         }
         if (DiskFilesystem.rmdir(drive.disk(), real, drive.kind())) {
             drive.commit().run();
             return ICliComputer.FsResult.ok("");
         }
-        return ICliComputer.FsResult.fail("The system cannot find the path specified.");
+        return ICliComputer.FsResult.fail(CliTexts.PATH_NOT_FOUND.text());
     }
 
     /** Copies a file, or a whole folder on one drive, to where it is told. */
@@ -387,14 +438,14 @@ public final class FileService {
             if (DiskFilesystem.copy(s.drive().disk(), s.path(), realDest,
                     DriveTable.freeWeightOf(d.drive().disk()), s.drive().kind())) {
                 s.drive().commit().run();
-                return ICliComputer.FsResult.ok("        1 file(s) copied.");
+                return ICliComputer.FsResult.ok(COPIED.text());
             }
-            return ICliComputer.FsResult.fail("The system cannot find the file specified.");
+            return ICliComputer.FsResult.fail(CliTexts.FILE_NOT_FOUND.text());
         }
         // Cross-drive: copy a single file by reading the source and writing it to the destination drive.
         final Optional<String> content = DiskFilesystem.read(s.drive().disk(), s.path());
         if (content.isEmpty()) {
-            return ICliComputer.FsResult.fail(src + ": file not found (cross-drive copy supports files only)");
+            return ICliComputer.FsResult.fail(CROSS_COPY_FILES_ONLY.with(src));
         }
         // Writing replaces what is there, so a file already of that name is refused as the same drive refuses it.
         if (DiskFilesystem.exists(d.drive().disk(), realDest)) {
@@ -406,11 +457,11 @@ public final class FileService {
         return switch (wr) {
             case OK -> {
                 d.drive().commit().run();
-                yield ICliComputer.FsResult.ok("        1 file(s) copied.");
+                yield ICliComputer.FsResult.ok(COPIED.text());
             }
-            case DISK_FULL -> ICliComputer.FsResult.fail(dest + ": not enough free space on the disk");
-            case INVALID_PATH -> ICliComputer.FsResult.fail(dest + ": invalid file name for this filesystem");
-            case READ_ONLY -> ICliComputer.FsResult.fail(dest + ": the destination is read-only");
+            case DISK_FULL -> ICliComputer.FsResult.fail(DISK_FULL.with(dest));
+            case INVALID_PATH -> ICliComputer.FsResult.fail(INVALID_NAME.with(dest));
+            case READ_ONLY -> ICliComputer.FsResult.fail(DESTINATION_READ_ONLY.with(dest));
         };
     }
 
@@ -442,7 +493,7 @@ public final class FileService {
             return alreadyThere(target);
         }
         final ICliComputer.FsResult written = this.writeFile(target, content.message().english());
-        return written.ok() ? ICliComputer.FsResult.ok("        1 file(s) copied.") : written;
+        return written.ok() ? ICliComputer.FsResult.ok(COPIED.text()) : written;
     }
 
     /**
@@ -451,14 +502,13 @@ public final class FileService {
      * replaces, so each of those asks first and says the same.
      */
     private static ICliComputer.FsResult alreadyThere(final String where) {
-        return ICliComputer.FsResult.fail(where + ": a file of that name is already there");
+        return ICliComputer.FsResult.fail(NAME_TAKEN.with(where));
     }
 
     /** Moves a file, or a whole folder on one drive, into the folder it is told. */
     public ICliComputer.FsResult movePath(final String src, final String destDir) {
         if (NetPath.looksLike(src) || NetPath.looksLike(destDir)) {
-            return ICliComputer.FsResult.fail(
-                    "a file on another machine is copied, not moved: copy it and delete the original");
+            return ICliComputer.FsResult.fail(NO_NETWORK_MOVE.text());
         }
         final Resolved s = this.resolve(src);
         final ICliComputer.FsResult sourceUnready = unready(s);
@@ -471,19 +521,19 @@ public final class FileService {
             return destUnready;
         }
         if (!d.path().isEmpty() && !DriveTable.dirExists(this.osHost(), d.drive(), d.path())) {
-            return ICliComputer.FsResult.fail("The system cannot find the path specified.");
+            return ICliComputer.FsResult.fail(CliTexts.PATH_NOT_FOUND.text());
         }
         if (s.letter() == d.letter()) {
             if (DiskFilesystem.move(s.drive().disk(), s.path(), d.path(), s.drive().kind())) {
                 s.drive().commit().run();
-                return ICliComputer.FsResult.ok("        1 file(s) moved.");
+                return ICliComputer.FsResult.ok(MOVED.text());
             }
-            return ICliComputer.FsResult.fail("The system cannot find the file specified.");
+            return ICliComputer.FsResult.fail(CliTexts.FILE_NOT_FOUND.text());
         }
         // Cross-drive move = copy the file onto the destination drive, then delete the source.
         final Optional<String> content = DiskFilesystem.read(s.drive().disk(), s.path());
         if (content.isEmpty()) {
-            return ICliComputer.FsResult.fail(src + ": file not found (cross-drive move supports files only)");
+            return ICliComputer.FsResult.fail(CROSS_MOVE_FILES_ONLY.with(src));
         }
         final String destPath = FsPaths.join(d.path(), FsPaths.fileName(s.path()));
         if (DiskFilesystem.exists(d.drive().disk(), destPath)) {
@@ -494,22 +544,22 @@ public final class FileService {
                 DriveTable.freeWeightOf(d.drive().disk()), d.drive().kind(), this.level.getGameTime());
         if (wr != DiskFilesystem.WriteResult.OK) {
             return switch (wr) {
-                case DISK_FULL -> ICliComputer.FsResult.fail(destDir + ": not enough free space on the disk");
-                case INVALID_PATH -> ICliComputer.FsResult.fail(destDir + ": invalid file name for this filesystem");
-                case READ_ONLY -> ICliComputer.FsResult.fail(destDir + ": the destination is read-only");
+                case DISK_FULL -> ICliComputer.FsResult.fail(DISK_FULL.with(destDir));
+                case INVALID_PATH -> ICliComputer.FsResult.fail(INVALID_NAME.with(destDir));
+                case READ_ONLY -> ICliComputer.FsResult.fail(DESTINATION_READ_ONLY.with(destDir));
                 case OK -> ICliComputer.FsResult.ok("");
             };
         }
         DiskFilesystem.delete(s.drive().disk(), s.path());
         s.drive().commit().run();
         d.drive().commit().run();
-        return ICliComputer.FsResult.ok("        1 file(s) moved.");
+        return ICliComputer.FsResult.ok(MOVED.text());
     }
 
     /** Renames a file or folder, which stays where it is. */
     public ICliComputer.FsResult renamePath(final String src, final String newName) {
         if (newName == null || newName.isBlank() || newName.contains("/") || newName.contains("\\")) {
-            return ICliComputer.FsResult.fail("The syntax of the command is incorrect.");
+            return ICliComputer.FsResult.fail(CliTexts.BAD_SYNTAX.text());
         }
         final Resolved s = this.resolve(src);
         final ICliComputer.FsResult unready = unready(s);
@@ -522,7 +572,7 @@ public final class FileService {
             drive.commit().run();
             return ICliComputer.FsResult.ok("");
         }
-        return ICliComputer.FsResult.fail("The system cannot find the file specified.");
+        return ICliComputer.FsResult.fail(CliTexts.FILE_NOT_FOUND.text());
     }
 
     /** Whether the drive with that letter carries an installed system, which formatting it would erase. */
@@ -548,12 +598,11 @@ public final class FileService {
             }
             final ItemStack target = drive.disk();
             if (target.isEmpty()) {
-                return ICliComputer.OpResult.fail("format: drive " + letter + ": drive not ready");
+                return ICliComputer.OpResult.fail(FORMAT_NOT_READY.with(String.valueOf(letter)));
             }
             final IOsHost host = this.osHost();
             if (letter == 'C' && host != null && host.hasOs()) {
-                return ICliComputer.OpResult.fail(
-                        "format: cannot format drive C: - the running system lives on it");
+                return ICliComputer.OpResult.fail(FORMAT_SYSTEM_DRIVE);
             }
             target.remove(ComputingComponents.DISK_SYSTEMS.get());
             target.remove(ComputingComponents.FILESYSTEM.get());
@@ -563,10 +612,9 @@ public final class FileService {
             target.remove(ComputingComponents.MEDIA_PAYLOAD.get());
             target.remove(ComputingComponents.MEDIA_DATA.get());
             drive.commit().run();
-            return ICliComputer.OpResult.ok(
-                    "Formatting drive " + letter + ": ... done\nAll data on the volume was erased.");
+            return ICliComputer.OpResult.ok(FORMATTED.with(String.valueOf(letter)));
         }
-        return ICliComputer.OpResult.fail("format: drive " + letter + ": not found");
+        return ICliComputer.OpResult.fail(FORMAT_NO_DRIVE.with(String.valueOf(letter)));
     }
 
     /** Every drive the machine can see, the system disk first, as {@code df} shows them. */
@@ -606,7 +654,7 @@ public final class FileService {
             return DriveTable.notReady(target.drive());
         }
         if (!DriveTable.dirExists(this.osHost(), drive, target.storagePath())) {
-            return ICliComputer.FsResult.fail("The system cannot find the path specified.");
+            return ICliComputer.FsResult.fail(CliTexts.PATH_NOT_FOUND.text());
         }
         moveTo.accept(target);
         return ICliComputer.FsResult.ok("");
@@ -645,7 +693,7 @@ public final class FileService {
             return ICliComputer.OpResult.fail(unready.message());
         }
         if (!r.path().isEmpty() && !DriveTable.dirExists(this.osHost(), r.drive(), r.path())) {
-            return ICliComputer.OpResult.fail(path + ": no such folder");
+            return ICliComputer.OpResult.fail(NO_SUCH_FOLDER.with(path));
         }
         return ICliComputer.OpResult.ok(r.letter() + ":\\" + r.path().replace('/', '\\'));
     }

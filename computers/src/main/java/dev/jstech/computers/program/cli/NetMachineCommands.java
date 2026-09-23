@@ -307,9 +307,7 @@ final class NetMachineCommands {
                 return;
             }
             final ICliComputer.OpResult result = ctx.computer().formatDrive(drive);
-            for (final String line : result.message().english().split("\n", -1)) {
-                ctx.out().styled(line, result.ok() ? CliStyle.OK : CliStyle.ERROR);
-            }
+            ctx.out().styled(result.message(), result.ok() ? CliStyle.OK : CliStyle.ERROR);
         }
     }
 

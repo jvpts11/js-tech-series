@@ -11,6 +11,7 @@ import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliSpan;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.text.ITextLanguage;
+import dev.jstech.core.text.TextKey;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -51,6 +52,22 @@ class TermBufferTest {
     void push_oneLongWord_isCutWhereTheRowEnds() {
         this.glass.push(CliLine.plain("/var/tmp/portage/sys-kernel/gentoo-sources"));
         assertEquals(List.of("/var/tmp/portage/sys", "-kernel/gentoo-sourc", "es"), shown());
+    }
+
+    /** A sentence written over two lines, as a translator may write it, starts a row at the break. */
+    @Test
+    void push_wordsWithALineBreak_startARowAtTheBreak() {
+        this.glass.push(CliLine.of(new CliSpan("done\nAll", CliStyle.OK), new CliSpan(" erased", CliStyle.OK)));
+        assertEquals(List.of("done", "All erased"), shown());
+        assertEquals(CliStyle.OK, this.glass.rows().get(1).runs().get(0).style());
+    }
+
+    /** A sentence in the reader's language is laid out as that language has it, not as the English has it. */
+    @Test
+    void push_aDeclaredSentence_isLaidOutInTheBuffersLanguage() {
+        final TermBuffer other = new TermBuffer(4, COLUMNS, key -> "jsc.test.gone".equals(key) ? "Apagado" : null);
+        other.push(CliLine.of(TextKey.of("jsc.test.gone", "Erased"), CliStyle.OK));
+        assertEquals("Apagado", other.rows().get(0).text());
     }
 
     @Test

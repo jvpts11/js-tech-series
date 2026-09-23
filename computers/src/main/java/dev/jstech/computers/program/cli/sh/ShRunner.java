@@ -172,14 +172,19 @@ public final class ShRunner {
         return named;
     }
 
-    /** What a command printed, as plain lines, which is what the next one is handed. */
+    /**
+     * What a command printed, as plain lines in the machine's language, which is what the next one is handed. A line
+     * whose words break over several lines is several lines, as it is on the glass.
+     */
     private static List<String> textOf(final List<CliLine> lines) {
         final List<String> text = new ArrayList<>(Math.min(lines.size(), MOST_PIPED_LINES));
         for (final CliLine line : lines) {
-            if (text.size() >= MOST_PIPED_LINES) {
-                break;
+            for (final String one : line.text().split("\r?\n", -1)) {
+                if (text.size() >= MOST_PIPED_LINES) {
+                    return text;
+                }
+                text.add(one);
             }
-            text.add(line.text());
         }
         return text;
     }

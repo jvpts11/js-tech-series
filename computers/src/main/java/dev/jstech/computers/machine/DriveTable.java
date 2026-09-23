@@ -25,6 +25,8 @@ import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -45,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>A table is made for one operation and let go of: a disk can be pulled or a medium swapped between any two, and
  * making one costs a short list and a look at each linked reader.
  */
+@TextHolder
 public final class DriveTable {
 
     /**
@@ -59,6 +62,11 @@ public final class DriveTable {
     }
 
     private static final DriveTable NONE = new DriveTable(List.of());
+
+    private static final TextKey DRIVE_MISSING =
+            TextKey.of("jsc.service.drive.missing", "%s:\\ The system cannot find the drive specified.");
+    private static final TextKey NOT_READY =
+            TextKey.of("jsc.service.drive.not_ready", "%s:\\ The device is not ready.");
 
     private final List<Drive> drives;
 
@@ -156,13 +164,12 @@ public final class DriveTable {
         if (Character.toUpperCase(drive) == 'C') {
             return ICliComputer.FsResult.noOs();
         }
-        return ICliComputer.FsResult.fail(
-                Character.toUpperCase(drive) + ":\\ The system cannot find the drive specified.");
+        return ICliComputer.FsResult.fail(DRIVE_MISSING.with(String.valueOf(Character.toUpperCase(drive))));
     }
 
     /** What a drive with nothing in it answers: a media reader with no medium inserted. */
     public static ICliComputer.FsResult notReady(final char drive) {
-        return ICliComputer.FsResult.fail(Character.toUpperCase(drive) + ":\\ The device is not ready.");
+        return ICliComputer.FsResult.fail(NOT_READY.with(String.valueOf(Character.toUpperCase(drive))));
     }
 
     /** Free space in mB-equivalents on a disk or medium: its capacity less the items, files and system it holds. */
