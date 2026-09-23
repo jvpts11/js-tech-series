@@ -69,7 +69,10 @@ a build that is not the tagged release carries a `-SNAPSHOT.<commit>` suffix. Us
 ## Contributing
 
 If you want to make a contribution, read [docs/CODE_STYLE.md](docs/CODE_STYLE.md) before opening a pull request, and
-[AI_POLICY.md](AI_POLICY.md) if you work with an AI assistant. Bug reports and ideas go in the issues.
+[AI_POLICY.md](AI_POLICY.md) if you work with an AI assistant. Every asset of the mods is listed in
+[ASSET_REGISTRY.md](ASSET_REGISTRY.md), with where it came from and who made it, and a pull request that brings an
+asset records it there. Most of the art the mods ship today is AI-generated and temporary, waiting for hand-made art
+to replace it; if you draw, model or record, that is a good place to start. Bug reports and ideas go in the issues.
 
 ## License
 

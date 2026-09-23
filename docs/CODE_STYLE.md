@@ -73,6 +73,13 @@ A game test checks every declared block and item of every mod: that it was decla
 has its block state and models (and that no model is left over for an item that is gone), a name, a place in a
 creative tab, the drop it declares, a tool that mines it when it needs one, and a block entity that accepts it.
 
+## Assets
+
+Every texture, model, animation and sound has an entry in [ASSET_REGISTRY.md](../ASSET_REGISTRY.md): where it is,
+what it is, where and how it is used, where it came from and who made it. Add, replace or remove an asset and its
+entry changes in the same commit. A test fails on an asset no entry covers, on one two entries both claim, on an
+entry without its origin or author, and on an entry whose assets are gone.
+
 ## Colours
 
 A colour belongs to a palette, not to the code that paints with it.
