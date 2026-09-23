@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.block.part.InputBusPart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
@@ -229,6 +230,48 @@ public final class OperationCancelGameTests {
                     helper.assertTrue(NetworkStorage.of(helper.getLevel(), mainframe.networkUuid())
                             .count(Items.COBBLESTONE) == 200, "nothing left the network");
                 })
+                .thenSucceed();
+    }
+
+    /**
+     * An Operation saved with the Mainframe and resumed after the reload is still the one who asked for it: who asked
+     * is kept in its saved state, so what it earns when it settles is theirs and not the machine operator's.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void resume_aSavedOperationIsStillAskedForByWhoeverAskedForIt(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = furnaceRig(helper, world);
+        final CompoundTag[] snapshot = new CompoundTag[1];
+        final UUID[] runId = new UUID[1];
+        final UUID asker = UUID.randomUUID();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    wireFurnaceBuses(world);
+                    net.seed(Items.RAW_IRON, 32);
+                })
+                .thenExecuteAfter(SETTLE + 2, () -> Acting.as(asker, () -> {
+                    final NetworkProcessingOperation run =
+                            net.mainframe().submitNetworkProcessing(smeltIron(), 16, "asked");
+                    helper.assertTrue(run != null, "the processing operation is accepted");
+                    runId[0] = run.operationId();
+                }))
+                .thenExecuteAfter(20, () -> {
+                    helper.assertTrue(asker.equals(net.mainframe().operationRequestedBy(runId[0]).orElse(null)),
+                            "the Mainframe knows who asked for it");
+                    snapshot[0] = net.mainframe().saveWithoutMetadata(helper.getLevel().registryAccess());
+                    world.setBlock(MAINFRAME, Blocks.AIR);
+                })
+                .thenExecuteAfter(SETTLE, () -> {
+                    world.setBlock(MAINFRAME, ComputingModule.MAINFRAME.get());
+                    world.blockEntity(MAINFRAME, MainframeBlockEntity.class)
+                            .loadWithComponents(snapshot[0], helper.getLevel().registryAccess());
+                })
+                .thenWaitUntil(() -> helper.assertTrue(world.blockEntity(MAINFRAME, MainframeBlockEntity.class)
+                                .operationRequestedBy(runId[0]).isPresent(),
+                        "the saved operation has not resumed yet"))
+                .thenExecute(() -> helper.assertTrue(asker.equals(world.blockEntity(MAINFRAME,
+                                MainframeBlockEntity.class).operationRequestedBy(runId[0]).orElse(null)),
+                        "and resumed, it is still asked for by the same player"))
                 .thenSucceed();
     }
 

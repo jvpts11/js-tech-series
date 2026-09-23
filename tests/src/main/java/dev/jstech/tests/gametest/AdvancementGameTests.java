@@ -16,6 +16,7 @@ import dev.jstech.computers.advancement.JscEventTrigger;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.advancement.OperationMilestones;
+import dev.jstech.computers.advancement.PendingAwards;
 import dev.jstech.computers.advancement.ProgramTravels;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
@@ -205,6 +206,48 @@ public final class AdvancementGameTests {
         helper.succeed();
     }
 
+    /**
+     * An Operation finishing while whoever asked for it is away is theirs all the same: what it earned waits with the
+     * world and is handed over when they join, once.
+     */
+    @GameTest(template = ARENA)
+    public static void operationSettled_anAskerWhoIsAwayGetsItOnJoining(final GameTestHelper helper) {
+        final UUID away = UUID.randomUUID();
+        final PersonalComputerBlockEntity mainframe = legacy(helper);
+        OperationMilestones.report(mainframe, away, ComputingOperations.SELECT,
+                new OperationRecord(OperationRecord.TYPE_SELECT, StorageKey.of(new ItemStack(Items.OAK_LOG)), 64L,
+                        64L, OperationRecord.STATUS_COMPLETED, List.of()));
+        final PendingAwards pending = PendingAwards.of(helper.getLevel().getServer());
+        helper.assertTrue(pending.waitingFor(away).contains(new PendingAwards.Award(JscEvents.SELECT_DONE, "")),
+                "what a player away earned waits for them; got " + pending.waitingFor(away));
+        final ServerPlayer player = join(helper, away);
+        try {
+            pending.deliver(player);
+            helper.assertTrue(done(player, "networks/select_from_chest"), "joining, they are given it");
+            helper.assertTrue(pending.waitingFor(away).isEmpty(), "and it is not kept to be given twice");
+        } finally {
+            leave(player);
+        }
+        helper.succeed();
+    }
+
+    /** A machine's operator who is away when it does something is given it on joining too. */
+    @GameTest(template = ARENA)
+    public static void awardOperator_anOperatorWhoIsAwayGetsItOnJoining(final GameTestHelper helper) {
+        final UUID away = UUID.randomUUID();
+        final PersonalComputerBlockEntity computer = legacy(helper);
+        MachineOperators.note(computer, away);
+        JscEvents.awardOperator(computer, JscEvents.DATACENTER_FORMED);
+        final ServerPlayer player = join(helper, away);
+        try {
+            PendingAwards.of(helper.getLevel().getServer()).deliver(player);
+            helper.assertTrue(done(player, "hardware/someone_elses_computer"), "the operator earns it on joining");
+        } finally {
+            leave(player);
+        }
+        helper.succeed();
+    }
+
     /** The same program on a second computer earns Works on My Machine; again on the first does not. */
     @GameTest(template = ARENA)
     public static void ran_onlyASecondComputerCounts(final GameTestHelper helper) {
@@ -258,9 +301,13 @@ public final class AdvancementGameTests {
      * need to find whoever works a machine, and taken out again by leave.
      */
     private static ServerPlayer join(final GameTestHelper helper) {
+        return join(helper, UUID.randomUUID());
+    }
+
+    private static ServerPlayer join(final GameTestHelper helper, final UUID id) {
         final ServerLevel level = helper.getLevel();
         final ServerPlayer player = new ServerPlayer(level.getServer(), level,
-                new GameProfile(UUID.randomUUID(), "advancer"), ClientInformation.createDefault());
+                new GameProfile(id, "advancer"), ClientInformation.createDefault());
         lookup(level.getServer().getPlayerList()).put(player.getUUID(), player);
         return player;
     }

@@ -8,6 +8,7 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.MainframeStructure;
 import dev.jstech.computers.crafting.CraftPlanner;
@@ -57,6 +58,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -1042,81 +1044,34 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         final boolean expired = expiry > 0L && savedAt > 0L && level.getGameTime() - savedAt >= expiry;
         final int liveBefore = scheduler.liveCount();
         final HolderLookup.Provider registries = level.registryAccess();
-        final Map<UUID, INetworkOperation>
-                byId = new HashMap<>();
-        final Set<UUID> completedStages = new HashSet<>();
-        final List<NetworkMultiStageOperation>
-                pipelines = new ArrayList<>();
+        final Restored restored = new Restored(new HashMap<>(), new HashSet<>(), new ArrayList<>(), new ArrayList<>());
         /*
-         * Crafts that had machine steps in flight re-plan only once every operation is back, so the steps they
-         * were running can be found by id and their output counted before the remaining demand is planned.
+         * Each is taken on again in the name of whoever asked for it, since the save kept that with it, so what it
+         * earns when it settles is still theirs.
          */
-        final List<CompoundTag> craftsOnMachines = new ArrayList<>();
         for (int i = 0; i < saved.size(); i++) {
             final CompoundTag tag = saved.getCompound(i);
-            final UUID savedId = tag.hasUUID(
-                    IPersistentOperation.ID_KEY)
-                    ? tag.getUUID(IPersistentOperation.ID_KEY)
-                    : UUID.randomUUID();
-            switch (tag.getString(IPersistentOperation.KIND_KEY)) {
-                case NetworkProcessingOperation.KIND -> {
-                    final var op = NetworkProcessingOperation
-                            .restore(tag, level, networkUuid(), craftingComputerPositions(), registries);
-                    if (op != null) {
-                        track(op);
-                        byId.put(savedId, op);
-                    }
-                }
-                case NetworkCraftOperation.KIND -> {
-                    /*
-                     * An expired craft is not re-planned after its machine steps: it hands its pool back now and
-                     * is discarded with the rest, so it takes the plain restore path below.
-                     */
-                    if (!expired && !NetworkCraftOperation
-                            .savedMachineSteps(tag).isEmpty()) {
-                        craftsOnMachines.add(tag);
-                        continue;
-                    }
-                    // submitNetworkCraft already registers the re-planned craft in activeOperations.
-                    final var restored = NetworkCraftOperation
-                            .restore(tag, this, level, networkUuid(), registries);
-                    if (restored.operation() != null) {
-                        byId.put(savedId, restored.operation());
-                    } else if (restored.complete()) {
-                        completedStages.add(savedId);
-                    }
-                }
-                case NetworkMultiStageOperation.KIND -> {
-                    final var op = NetworkMultiStageOperation
-                            .restore(tag, this, registries);
-                    if (op != null) {
-                        track(op);
-                        pipelines.add(op);
-                        byId.put(savedId, op);
-                    }
-                }
-                default -> { }
-            }
+            Acting.as(MainframeScheduler.askerIn(tag), () -> restoreSaved(tag, level, registries, expired, restored));
         }
-        for (final CompoundTag tag : craftsOnMachines) {
+        for (final CompoundTag tag : restored.craftsOnMachines()) {
             final List<NetworkProcessingOperation> steps =
                     new ArrayList<>();
             for (final UUID stepId : NetworkCraftOperation
                     .savedMachineSteps(tag)) {
-                if (byId.get(stepId)
+                if (restored.byId().get(stepId)
                         instanceof NetworkProcessingOperation proc) {
                     steps.add(proc);
                 }
             }
-            NetworkCraftOperation
-                    .restore(tag, this, level, networkUuid(), registries, steps);
+            Acting.as(MainframeScheduler.askerIn(tag), () -> NetworkCraftOperation
+                    .restore(tag, this, level, networkUuid(), registries, steps));
         }
-        for (final var pipeline : pipelines) {
+        for (final var pipeline : restored.pipelines()) {
             final UUID stageId = pipeline.pendingStageId();
-            if (stageId != null && completedStages.contains(stageId)) {
+            if (stageId != null && restored.completedStages().contains(stageId)) {
                 pipeline.skipCompletedStage();
             } else {
-                pipeline.adoptStage(stageId == null ? null : byId.get(stageId));
+                pipeline.adoptStage(stageId == null ? null : restored.byId().get(stageId));
             }
         }
         if (expired) {
@@ -1125,6 +1080,64 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             }
         }
         setChanged();
+    }
+
+    /**
+     * What restoring the saved Operations has found so far: each by the id it was saved under, the stages that had
+     * already finished, the pipelines to reconnect to their stages, and the crafts that had machine steps in flight.
+     * Those crafts re-plan only once every Operation is back, so the steps they were running can be found by id and
+     * their output counted before the remaining demand is planned.
+     */
+    private record Restored(Map<UUID, INetworkOperation> byId, Set<UUID> completedStages,
+                            List<NetworkMultiStageOperation> pipelines, List<CompoundTag> craftsOnMachines) {
+    }
+
+    /** Restores one saved Operation into what {@code restored} gathers. */
+    private void restoreSaved(final CompoundTag tag, final ServerLevel level, final HolderLookup.Provider registries,
+                              final boolean expired, final Restored restored) {
+        final UUID savedId = tag.hasUUID(IPersistentOperation.ID_KEY)
+                ? tag.getUUID(IPersistentOperation.ID_KEY) : UUID.randomUUID();
+        switch (tag.getString(IPersistentOperation.KIND_KEY)) {
+            case NetworkProcessingOperation.KIND -> {
+                final var op = NetworkProcessingOperation
+                        .restore(tag, level, networkUuid(), craftingComputerPositions(), registries);
+                if (op != null) {
+                    track(op);
+                    restored.byId().put(savedId, op);
+                }
+            }
+            case NetworkCraftOperation.KIND -> {
+                /*
+                 * An expired craft is not re-planned after its machine steps: it hands its pool back now and is
+                 * discarded with the rest, so it takes the plain restore path below.
+                 */
+                if (!expired && !NetworkCraftOperation.savedMachineSteps(tag).isEmpty()) {
+                    restored.craftsOnMachines().add(tag);
+                    return;
+                }
+                // submitNetworkCraft already registers the re-planned craft in activeOperations.
+                final var craft = NetworkCraftOperation.restore(tag, this, level, networkUuid(), registries);
+                if (craft.operation() != null) {
+                    restored.byId().put(savedId, craft.operation());
+                } else if (craft.complete()) {
+                    restored.completedStages().add(savedId);
+                }
+            }
+            case NetworkMultiStageOperation.KIND -> {
+                final var op = NetworkMultiStageOperation.restore(tag, this, registries);
+                if (op != null) {
+                    track(op);
+                    restored.pipelines().add(op);
+                    restored.byId().put(savedId, op);
+                }
+            }
+            default -> { }
+        }
+    }
+
+    /** Who asked for the Operation with that id, when it is in flight and somebody did. */
+    public Optional<UUID> operationRequestedBy(final UUID operationId) {
+        return scheduler.askedBy(operationId);
     }
 
     /**
@@ -1542,7 +1555,9 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
                  * A craft's machine steps read and write its in-memory pool, which does not survive a reload, so
                  * they are not persisted; the parent craft re-plans and re-creates them from the handed-back pool.
                  */
-                inFlight.add(persistent.saveState(registries));
+                final CompoundTag state = persistent.saveState(registries);
+                scheduler.stampAsker(operation, state);
+                inFlight.add(state);
             }
         }
         if (pendingOperations != null) {

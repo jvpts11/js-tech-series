@@ -17,7 +17,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - An advancement goes to the player who caused it. What a machine does on its own, such as a self-test ending,
   a job firing or an Operation finishing, goes to whoever works that machine: the last player to place it,
   open its screen or build it, which the machine keeps across restarts. An Operation typed at a terminal goes
-  to the player who typed it, however long it takes to finish.
+  to the player who typed it, however long it takes to finish and across a restart of the world. What a player
+  earns while they are away is given to them the next time they join.
 - Logos and icons for the series and for each mod. The mods list shows each mod's logo over the series logo,
   mod list screens that show an icon show each mod's own, and the READMEs carry the logos.
 - screenfetch on Frames 95, XP and 11: a package of Frames' own manager, run at the Command Prompt, drawing the

@@ -11,7 +11,9 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.RackUnitHost;
 import dev.jstech.computers.os.IOsHost;
 import net.minecraft.core.BlockPos;
+import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -118,15 +120,30 @@ public final class JscEvents {
     /** The same, with a detail. */
     public static void awardOperator(@Nullable final BlockEntity machine, final String event,
                                      @Nullable final String detail) {
-        MachineOperators.of(machine).ifPresent(player -> award(player, event, detail));
+        if (machine != null && machine.getLevel() instanceof ServerLevel level) {
+            MachineOperators.idOf(machine).ifPresent(id -> award(level.getServer(), id, event, detail));
+        }
     }
 
     /** Reports an event caused by whoever is acting in the current {@link Acting} scope, if anybody is. */
     public static void awardActing(@Nullable final Level level, final String event, @Nullable final String detail) {
         final MinecraftServer server = level == null ? null : level.getServer();
         if (server != null) {
-            Acting.current().map(id -> server.getPlayerList().getPlayer(id))
-                    .ifPresent(player -> award(player, event, detail));
+            Acting.current().ifPresent(id -> award(server, id, event, detail));
+        }
+    }
+
+    /**
+     * Reports that the player with that id caused an event: given at once when they are here, and kept for their
+     * next login when they are not, since what a machine finishes on its own often finishes while they are away.
+     */
+    public static void award(final MinecraftServer server, final UUID player, final String event,
+                             @Nullable final String detail) {
+        final ServerPlayer here = server.getPlayerList().getPlayer(player);
+        if (here != null) {
+            award(here, event, detail);
+        } else {
+            PendingAwards.of(server).keep(player, event, detail == null ? "" : detail);
         }
     }
 

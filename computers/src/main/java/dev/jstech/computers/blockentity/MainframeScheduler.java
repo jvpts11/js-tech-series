@@ -27,11 +27,13 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -57,6 +59,9 @@ final class MainframeScheduler {
     private static final int WAITED = 0;
     private static final int RAN = 1;
 
+    /** Where an Operation's saved state keeps who asked for it. */
+    private static final String REQUESTED_BY = "RequestedBy";
+
     private final MainframeBlockEntity mainframe;
 
     /** What the network is carrying out right now, in the order it was taken on. */
@@ -77,7 +82,10 @@ final class MainframeScheduler {
     /** Per in-flight Operation: ticks spent waiting (queued or on a lock) and ticks spent running. */
     private final Map<INetworkOperation, int[]> timing = new IdentityHashMap<>();
 
-    /* Who asked for each Operation, when somebody was acting as it was taken on; the advancements credit them. */
+    /*
+     * Who asked for each Operation, when somebody was acting as it was taken on; the advancements credit them. It
+     * goes into the Operation's saved state (stampAsker), and a resume takes the Operation on in their name again.
+     */
     private final Map<INetworkOperation, UUID> askedBy = new IdentityHashMap<>();
 
     /** The last hour of settled Operations by type, and the day's peak concurrency; RAM only. */
@@ -103,6 +111,33 @@ final class MainframeScheduler {
         Acting.current().ifPresent(player -> askedBy.put(operation, player));
         post(net -> new IOperationLifecycleEvent.Created(
                 net, operation.operationId(), operation.typeId()));
+    }
+
+    /** Who asked for the Operation with that id, when it is in flight and somebody did. */
+    Optional<UUID> askedBy(final UUID operationId) {
+        for (final INetworkOperation operation : inFlight) {
+            if (operation.operationId().equals(operationId)) {
+                return Optional.ofNullable(askedBy.get(operation));
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Writes who asked for an Operation into the state it is saved as, so that when it resumes after a reload it is
+     * taken on in their name again, see {@link #askerIn}.
+     */
+    void stampAsker(final INetworkOperation operation, final CompoundTag state) {
+        final UUID asker = askedBy.get(operation);
+        if (asker != null) {
+            state.putUUID(REQUESTED_BY, asker);
+        }
+    }
+
+    /** Who asked for the Operation saved as {@code state}, or null when nobody did. */
+    @Nullable
+    static UUID askerIn(final CompoundTag state) {
+        return state.hasUUID(REQUESTED_BY) ? state.getUUID(REQUESTED_BY) : null;
     }
 
     /** Runs {@code work} on the next tick, after the storage index has caught up with this one. */

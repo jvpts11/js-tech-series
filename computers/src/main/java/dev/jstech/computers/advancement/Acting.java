@@ -9,6 +9,7 @@ package dev.jstech.computers.advancement;
 
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.neoforged.neoforge.common.util.FakePlayer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
@@ -35,9 +36,17 @@ public final class Acting {
     private Acting() {
     }
 
-    /** Runs {@code work} with {@code player} acting. */
+    /** Runs {@code work} with {@code player} acting; a machine acting as a player is nobody. */
     public static void as(@Nullable final Player player, final Runnable work) {
-        run(player == null ? NOBODY : player.getUUID(), work);
+        run(player == null || player instanceof FakePlayer ? NOBODY : player.getUUID(), work);
+    }
+
+    /**
+     * Runs {@code work} with the player of that id acting, whether or not they are here: a saved Operation resuming
+     * after a restart is still asked for by whoever asked for it.
+     */
+    public static void as(@Nullable final UUID player, final Runnable work) {
+        run(player == null ? NOBODY : player, work);
     }
 
     /** Runs {@code work} with the operator of {@code machine} acting, or nobody when it has none. */

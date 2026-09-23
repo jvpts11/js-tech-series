@@ -81,6 +81,12 @@ public final class MachineOperators {
         note(level.getBlockEntity(pos), player);
     }
 
+    /** Who works the machine, online or not, when anybody does. */
+    public static Optional<UUID> idOf(@Nullable final BlockEntity machine) {
+        final UUID id = machine == null ? null : machine.getExistingDataOrNull(OPERATOR);
+        return id == null || NOBODY.equals(id) ? Optional.empty() : Optional.of(id);
+    }
+
     /** The machine's operator, when there is one and they are online to be told. */
     public static Optional<ServerPlayer> of(@Nullable final BlockEntity machine) {
         if (machine == null || !(machine.getLevel() instanceof ServerLevel level)) {
