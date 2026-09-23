@@ -7,103 +7,64 @@
  */
 package dev.jstech.computers.client.os;
 
-import dev.jstech.computers.gui.CdePalette;
-import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Paints the desktop wallpaper for each Frames OS, evoking the real Windows background of that era
- * instead of a flat colour fill: Frames 95 a deep teal with a soft vertical shade, Frames XP a
- * Bliss-style sky over a rolling green hill, and Frames 11 a deep-blue gradient with a soft central
- * bloom. Drawn in desktop-local coordinates within the already-active scissor.
+ * Paints the desktop wallpapers, each evoking the real background of its desktop instead of a flat colour
+ * fill: Frames 95 a deep teal with a soft vertical shade, Frames XP a Bliss-style sky over a rolling green
+ * hill, Frames 11 a deep-blue gradient with a soft central bloom, and the Unix desktops their own gradients.
+ * Drawn in desktop-local coordinates within the already-active scissor. Which of them a desktop hangs is
+ * {@link WallpaperStyle}'s table.
  */
 final class WallpaperPainter {
 
     private WallpaperPainter() {
     }
 
-    /** The wallpaper styles a player can pick, cycled by the desktop's Personalize action. */
-    static final String[] STYLES = {"", "win95", "winxp", "win11", "breeze", "adwaita", "minty"};
-
     /**
      * Fills the desktop glass {@code (0,0)-(w,h)} with a wallpaper. The player's {@code choice}
-     * overrides the OS default when set; an empty choice falls back to the OS's own look.
+     * overrides the desktop's own when set; an empty choice falls back to what the desktop ships with.
      *
-     * @param g      the graphics context (pose already translated to the desktop origin)
-     * @param w      desktop width in pixels
-     * @param h      desktop height in pixels
-     * @param osId   the installed OS id (the default look)
-     * @param era    the host hardware era (reserved for future era-specific tints)
-     * @param choice the player's chosen style id, or empty for the OS default
+     * @param g         the graphics context (pose already translated to the desktop origin)
+     * @param w         desktop width in pixels
+     * @param h         desktop height in pixels
+     * @param desktopId the desktop drawn, whose look names the wallpaper it ships with
+     * @param era       the host hardware era (reserved for future era-specific tints)
+     * @param choice    the player's chosen style id, or empty for the desktop's own
      */
-    static void paint(final GuiGraphics g, final int w, final int h, final ResourceLocation osId,
+    static void paint(final GuiGraphics g, final int w, final int h, final ResourceLocation desktopId,
                       final HardwareEra era, final String choice) {
-        final String style = choice != null && !choice.isEmpty() ? choice : defaultStyle(osId);
-        switch (style) {
-            case "winxp" -> paintXp(g, w, h);
-            case "win11" -> paintEleven(g, w, h);
-            case "breeze" -> paintBreeze(g, w, h);
-            case "adwaita" -> paintAdwaita(g, w, h);
-            case "minty" -> paintMintY(g, w, h);
-            // CDE has no picture to hang: its backdrop is a pattern in two colours of its palette.
-            case "cde" -> MotifChrome.backdrop(g, w, h, CdePalette.DEFAULT, CdeStyle.DEFAULT.backdrop(0));
-            default -> paintNineFive(g, w, h);
-        }
-    }
-
-    /** A friendly label for a style id, for the Personalize menu. */
-    static String styleLabel(final String style) {
-        return switch (style) {
-            case "win95" -> "Teal (95)";
-            case "winxp" -> "Bliss (XP)";
-            case "win11" -> "Bloom (11)";
-            case "breeze" -> "Breeze (KDE)";
-            case "adwaita" -> "Adwaita (GNOME)";
-            case "minty" -> "Mint-Y (Cinnamon)";
-            default -> "Default";
-        };
-    }
-
-    /** The wallpaper a desktop environment ships with (the Frames editions' id doubles as their desktop id). */
-    private static String defaultStyle(final ResourceLocation desktopId) {
-        return switch (desktopId.getPath()) {
-            case "frames_xp" -> "winxp";
-            case "frames_11" -> "win11";
-            case "kde_plasma" -> "breeze";
-            case "gnome" -> "adwaita";
-            case "cinnamon" -> "minty";
-            case "cde" -> "cde";
-            default -> "win95";
-        };
+        final WallpaperStyle chosen = WallpaperStyle.byId(choice);
+        (chosen != null ? chosen : DesktopLook.of(desktopId).wallpaper()).paint(g, w, h);
     }
 
     /** KDE Breeze: a deep blue field with a lighter glow high on the left. */
-    private static void paintBreeze(final GuiGraphics g, final int w, final int h) {
+    static void paintBreeze(final GuiGraphics g, final int w, final int h) {
         g.fillGradient(0, 0, w, h, 0xFF1D6FB8, 0xFF072747);
         g.fillGradient(0, 0, w * 2 / 3, h / 2, 0x552A8FE6, 0x00072747);
     }
 
     /** GNOME Adwaita: the blue-to-violet dusk gradient. */
-    private static void paintAdwaita(final GuiGraphics g, final int w, final int h) {
+    static void paintAdwaita(final GuiGraphics g, final int w, final int h) {
         g.fillGradient(0, 0, w, h, 0xFF3B3F8F, 0xFF5A2D7A);
         g.fillGradient(0, h / 2, w, h, 0x00000000, 0x661D1F3A);
     }
 
     /** Cinnamon Mint-Y: a green-teal sweep brightening toward the bottom right. */
-    private static void paintMintY(final GuiGraphics g, final int w, final int h) {
+    static void paintMintY(final GuiGraphics g, final int w, final int h) {
         g.fillGradient(0, 0, w, h, 0xFF1B5E4A, 0xFF2B8A6E);
         g.fillGradient(w / 2, h / 2, w, h, 0x0069B03B, 0x666FB98F);
     }
 
     /** Frames 95: the classic teal, lifted from flat by a subtle top-to-bottom shade. */
-    private static void paintNineFive(final GuiGraphics g, final int w, final int h) {
+    static void paintNineFive(final GuiGraphics g, final int w, final int h) {
         g.fillGradient(0, 0, w, h, 0xFF1F8A8A, 0xFF135E5E);
     }
 
     /** Frames XP: a Bliss-style sky fading to the horizon over a rolling green hill. */
-    private static void paintXp(final GuiGraphics g, final int w, final int h) {
+    static void paintXp(final GuiGraphics g, final int w, final int h) {
         final int horizon = (int) (h * 0.60);
         // Sky: deep blue overhead fading to a pale band at the horizon, with soft clouds drifting in it.
         g.fillGradient(0, 0, w, horizon, 0xFF1F5FC0, 0xFFC4DFF6);
@@ -176,7 +137,7 @@ final class WallpaperPainter {
     }
 
     /** Frames 11: a deep-blue gradient with a soft central bloom. */
-    private static void paintEleven(final GuiGraphics g, final int w, final int h) {
+    static void paintEleven(final GuiGraphics g, final int w, final int h) {
         g.fillGradient(0, 0, w, h, 0xFF1E3E74, 0xFF0B1530);
         // Soft central bloom: a few translucent light-blue bands, brightest in the middle.
         final int cx = w / 2;

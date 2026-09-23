@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.os.PanelStyle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.AbstractTexture;
@@ -83,17 +84,17 @@ public final class SplashLogos {
     private SplashLogos() {
     }
 
-    /** The mark of that edition, by the id its desktop and its registry go by. */
-    public static ResourceLocation markOf(final String edition) {
+    /** The mark of that edition, by the chrome its desktop draws; the newest one's for anything else. */
+    public static ResourceLocation markOf(final PanelStyle edition) {
         return switch (edition) {
-            case "frames_95" -> FRAMES_95_MARK;
-            case "frames_xp" -> FRAMES_XP_MARK;
+            case FRAMES_95 -> FRAMES_95_MARK;
+            case FRAMES_XP -> FRAMES_XP_MARK;
             default -> FRAMES_11_MARK;
         };
     }
 
     /** Draws an edition's mark at {@code (x, y)}, {@code size} on a side. */
-    public static void mark(final GuiGraphics g, final String edition, final int x, final int y,
+    public static void mark(final GuiGraphics g, final PanelStyle edition, final int x, final int y,
                             final int size) {
         final int side = Math.max(1, size);
         final ResourceLocation mark = markOf(edition);

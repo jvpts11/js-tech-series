@@ -13,6 +13,8 @@ import dev.jstech.computers.operation.payload.RequestSettingsPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload.DiskUse;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload.RamUse;
+import dev.jstech.computers.os.DesktopEnvironmentDef;
+import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.RamLedger;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
@@ -82,14 +84,18 @@ public final class TaskManagerApp implements IDesktopApp {
         PacketDistributor.sendToServer(new RequestSettingsPayload(host));
     }
 
+    /** The shape the window takes on that desktop, by the family of chrome the desktop declares. */
     private static Form formOf(@Nullable final ResourceLocation desktopId) {
-        final String path = desktopId == null ? "" : desktopId.getPath();
-        return switch (path) {
-            case "frames_95" -> Form.CLOSE_BOX;
-            case "frames_11" -> Form.MODERN;
-            case "kde_plasma" -> Form.PLASMA;
-            case "gnome", "cinnamon" -> Form.GNOME;
-            default -> Form.LUNA;
+        final DesktopEnvironmentDef desktop = desktopId == null ? null : OsRegistry.getDesktop(desktopId);
+        if (desktop == null) {
+            return Form.LUNA;
+        }
+        return switch (desktop.panelStyle()) {
+            case FRAMES_95 -> Form.CLOSE_BOX;
+            case FRAMES_11 -> Form.MODERN;
+            case KDE -> Form.PLASMA;
+            case GNOME, CINNAMON -> Form.GNOME;
+            case FRAMES_XP, CDE -> Form.LUNA;
         };
     }
 

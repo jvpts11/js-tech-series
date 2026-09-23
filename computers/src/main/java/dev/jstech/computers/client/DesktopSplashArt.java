@@ -7,12 +7,18 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.client.os.CdeSplashArt;
 import dev.jstech.computers.gui.CdeStyle;
+import dev.jstech.computers.os.DesktopEnvironmentDef;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The picture a desktop puts up between its system's last line and the desktop itself.
@@ -29,9 +35,6 @@ public final class DesktopSplashArt {
 
     /** How far into the wait the desktop takes over from the system's own lines, in hundredths. */
     public static final int FROM = 68;
-
-    /** CDE by the last part of its id. */
-    private static final String CDE = "cde";
 
     /** How many pieces the older desktops reported starting, one square each. */
     private static final int STEPS = 5;
@@ -99,10 +102,8 @@ public final class DesktopSplashArt {
      * @param desktopId the desktop by the last part of its id, or empty when none is installed
      */
     public static boolean has(final String desktopId) {
-        return switch (desktopId) {
-            case "kde_plasma", "gnome", "cinnamon", CDE -> true;
-            default -> false;
-        };
+        final PanelStyle style = styleOf(desktopId);
+        return style != null && style.unixLike();
     }
 
     /**
@@ -119,10 +120,11 @@ public final class DesktopSplashArt {
                             final int progress) {
         final boolean old = era != null && era.compareTo(HardwareEra.STANDARD) < 0;
         final String systemName = who.systemName();
-        switch (who.desktopId()) {
+        final PanelStyle style = styleOf(who.desktopId());
+        switch (style == null ? PanelStyle.GNOME : style) {
             // CDE never changed its face, so it has one look, drawn where the rest of CDE is drawn.
             case CDE -> CdeSplashArt.draw(g, font, who.hostName(), CdeStyle.parse(who.look()), x, y, w, h);
-            case "kde_plasma" -> {
+            case KDE -> {
                 if (old) {
                     oldBox(g, font, x, y, w, h, progress, KDE_OLD_GROUND, BOX_FACE, "KDE",
                             "K Desktop Environment", KDE_BAND_TOP, KDE_BAND_MID, KDE_BAND_LOW);
@@ -130,7 +132,7 @@ public final class DesktopSplashArt {
                     kdePlasma(g, font, x, y, w, h, progress);
                 }
             }
-            case "cinnamon" -> cinnamon(g, font, x, y, w, h, ticks, systemName);
+            case CINNAMON -> cinnamon(g, font, x, y, w, h, ticks, systemName);
             /* Only GNOME is left to reach here; {@link #has} is what keeps anything else from asking. */
             default -> {
                 if (old) {
@@ -312,5 +314,16 @@ public final class DesktopSplashArt {
         final int a = from >> shift & 0xFF;
         final int b = to >> shift & 0xFF;
         return (int) (a + (b - a) * t);
+    }
+
+    /** The chrome the desktop under that last part of an id declares, or null when there is no such desktop. */
+    @Nullable
+    private static PanelStyle styleOf(final String desktopId) {
+        if (desktopId == null || desktopId.isEmpty()) {
+            return null;
+        }
+        final DesktopEnvironmentDef desktop =
+                OsRegistry.getDesktop(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, desktopId));
+        return desktop == null ? null : desktop.panelStyle();
     }
 }

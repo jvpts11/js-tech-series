@@ -41,17 +41,17 @@ final class FramesPanels {
      * button, the row of named window buttons, and the notification area, each in the edition's own dress.
      */
     void renderClassic(final GuiGraphics g, final int tbY, final int sw, final int sh,
-                       final int lmx, final int lmy, final String system) {
-        final boolean xp = system.equals("frames_xp");
+                       final int lmx, final int lmy) {
+        final boolean xp = desktop.isPanel(PanelStyle.FRAMES_XP);
         drawBand(g, tbY, sw, sh, xp);
-        drawStart(g, tbY, sh, system, xp);
+        drawStart(g, tbY, sh, xp);
 
         final DesktopScreen.TaskStrip strip = desktop.taskButtons(sw);
         if (xp) {
             drawQuickLaunch(g, strip, tbY, sh, lmx, lmy);
         }
-        drawTasks(g, strip, tbY, sh, system, xp);
-        drawNotificationArea(g, tbY, sw, sh, system, xp);
+        drawTasks(g, strip, tbY, sh, xp);
+        drawNotificationArea(g, tbY, sw, sh, xp);
     }
 
     /**
@@ -127,8 +127,7 @@ final class FramesPanels {
     }
 
     /** The Start button, which each Frames version draws its own way and with its own mark. */
-    private void drawStart(final GuiGraphics g, final int tbY, final int sh, final String system,
-                           final boolean xp) {
+    private void drawStart(final GuiGraphics g, final int tbY, final int sh, final boolean xp) {
         if (xp) {
             drawXpStart(g, tbY, sh);
             return;
@@ -137,7 +136,7 @@ final class FramesPanels {
         g.fill(4, tbY + 3, 4 + sbW, sh - 3, desktop.themeColours().startButton());
         bevel(g, 4, tbY + 3, sbW, DesktopScreen.TASKBAR_H - 6, 0xFFFFFFFF, 0xFF808080);
         // The edition's own mark, the same one its setup and its boot screen wear.
-        FramesEmblem.draw(g, 8, tbY + 8, 7, system);
+        FramesEmblem.draw(g, 8, tbY + 8, 7, desktop.panelStyle());
         g.drawString(desktop.textFont(), "Start", 18, tbY + 8, 0xFF000000, false);
     }
 
@@ -147,7 +146,7 @@ final class FramesPanels {
      * and paler, so it reads as "on the panel only".
      */
     private void drawTasks(final GuiGraphics g, final DesktopScreen.TaskStrip strip, final int tbY,
-                           final int sh, final String system, final boolean xp) {
+                           final int sh, final boolean xp) {
         for (int i = 0; i < strip.entries().size(); i++) {
             final TaskbarGroups.Entry entry = strip.entries().get(i);
             final int bx = strip.x()[i];
@@ -160,7 +159,7 @@ final class FramesPanels {
             }
             final boolean active = entry.state() == TaskbarGroups.State.ACTIVE;
             final boolean minimized = entry.state() == TaskbarGroups.State.MINIMIZED;
-            taskButton(g, bx, tbY + 3, btnW, DesktopScreen.TASKBAR_H - 6, system, active);
+            taskButton(g, bx, tbY + 3, btnW, DesktopScreen.TASKBAR_H - 6, active);
             if (minimized) {
                 g.fill(bx + 1, tbY + 4, bx + btnW - 1, sh - 4, xp ? 0x38FFFFFF : 0x30FFFFFF);
             }
@@ -184,7 +183,7 @@ final class FramesPanels {
 
     /** The notification area, dressed in each version's own frame: XP inset in blue, 95 sunken in grey. */
     private void drawNotificationArea(final GuiGraphics g, final int tbY, final int sw, final int sh,
-                                      final String system, final boolean xp) {
+                                      final boolean xp) {
         final int trayX = desktop.tray().left(sw);
         if (xp) {
             g.fillGradient(trayX, tbY + 2, sw, sh - 2, 0xFF1A53C4, 0xFF0D3590);
@@ -193,7 +192,7 @@ final class FramesPanels {
             desktop.tray().draw(g, tbY, sw, 0xFFFFFFFF);
             return;
         }
-        if (system.equals("frames_95")) {
+        if (desktop.isPanel(PanelStyle.FRAMES_95)) {
             g.fill(trayX, tbY + 3, sw - 2, sh - 3, desktop.themeColours().taskbar());
             bevel(g, trayX, tbY + 3, sw - 2 - trayX, DesktopScreen.TASKBAR_H - 6, 0xFF808080, 0xFFFFFFFF);
         }
@@ -228,9 +227,9 @@ final class FramesPanels {
 
     /** Draws a taskbar window button in the system's style (95 bevelled, XP gradient, 11 flat). */
     private void taskButton(final GuiGraphics g, final int x, final int y, final int w, final int h,
-                            final String system, final boolean active) {
-        switch (system) {
-            case "frames_xp" -> {
+                            final boolean active) {
+        switch (desktop.panelStyle()) {
+            case FRAMES_XP -> {
                 if (active) {
                     // Pushed in: the gradient runs the other way, with a shadow along the top edge.
                     g.fillGradient(x, y, x + w, y + h, 0xFF1E4FBC, 0xFF3670DC);
@@ -241,7 +240,7 @@ final class FramesPanels {
                 }
                 desktop.drawOutline(g, x, y, w, h, 0xFF1A4CBF);
             }
-            case "frames_11" -> g.fill(x, y, x + w, y + h, 0xFFE3E5EE);
+            case FRAMES_11 -> g.fill(x, y, x + w, y + h, 0xFFE3E5EE);
             default -> {
                 g.fill(x, y, x + w, y + h, desktop.themeColours().taskButton());
                 // The classic bevel inverts when the button is pressed: dark on top, light underneath.
@@ -274,7 +273,7 @@ final class FramesPanels {
          */
         final int fx = 7;
         final int fy = tbY + 8;
-        final int[] panes = FramesEmblem.panesOf("frames_xp");
+        final int[] panes = FramesEmblem.panesOf(PanelStyle.FRAMES_XP);
         g.fill(fx, fy + 1, fx + 4, fy + 4, panes[0]);
         g.fill(fx + 5, fy, fx + 9, fy + 3, panes[1]);
         g.fill(fx, fy + 5, fx + 4, fy + 8, panes[2]);
@@ -297,7 +296,7 @@ final class FramesPanels {
 
     /** The Frames 11 Start glyph: four solid blue panes with a thin gap. */
     private static void drawModernStart(final GuiGraphics g, final int x, final int y) {
-        final int c = FramesEmblem.panesOf("frames_11")[0];
+        final int c = FramesEmblem.panesOf(PanelStyle.FRAMES_11)[0];
         g.fill(x, y, x + 5, y + 5, c);
         g.fill(x + 6, y, x + 11, y + 5, c);
         g.fill(x, y + 6, x + 5, y + 11, c);

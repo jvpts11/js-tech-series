@@ -121,7 +121,6 @@ computers/src/main/java/dev/jstech/computers/client/os/TtyEditor.java 2
 computers/src/main/java/dev/jstech/computers/client/os/VimKeys.java 5
 computers/src/main/java/dev/jstech/computers/client/os/VirtualStudioApp.java 118
 computers/src/main/java/dev/jstech/computers/client/os/VirtualStudioCodeApp.java 86
-computers/src/main/java/dev/jstech/computers/client/os/WallpaperPainter.java 3
 computers/src/main/java/dev/jstech/computers/client/os/WelcomeApp.java 24
 computers/src/main/java/dev/jstech/computers/client/os/WorkstationInfoApp.java 1
 computers/src/main/java/dev/jstech/computers/client/theme/MonitorFrameStyle.java 1

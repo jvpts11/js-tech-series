@@ -1416,11 +1416,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         this.ramTotalMb = menu.ramTotalMb();
         this.ramReservedMb = menu.ramReservedMb();
         this.chrome = OsRegistry.getDesktop(desktopId);
-        this.panel = chrome != null ? chrome.panelStyle() : switch (desktopId.getPath()) {
-            case "frames_xp" -> PanelStyle.FRAMES_XP;
-            case "frames_11" -> PanelStyle.FRAMES_11;
-            default -> PanelStyle.FRAMES_95;
-        };
+        // A desktop nobody registered is drawn as the first Frames edition, as its look is.
+        this.panel = chrome != null ? chrome.panelStyle() : PanelStyle.FRAMES_95;
         final OsDef os =
                 OsRegistry.getOs(osId);
         this.desktopDir = SystemLayout.desktopDirFor(os, os == null ? null
@@ -2623,7 +2620,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         } else if (linuxDesktop()) {
             renderLinuxPanel(g, tbY, sw, sh, lmx, lmy);
         } else {
-            framesPanels.renderClassic(g, tbY, sw, sh, lmx, lmy, desktopId.getPath());
+            framesPanels.renderClassic(g, tbY, sw, sh, lmx, lmy);
         }
         g.pose().popPose();
 
@@ -3591,29 +3588,19 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
              */
             return Math.max(4, launchers.size()) * MENU_ITEM_H + 8;
         }
-        switch (panel) {
-            case KDE -> {
-                return KDE_HEADER_H + Math.max(6, launchers.size()) * KDE_ROW_H + KDE_FOOTER_H + 8;
-            }
-            case GNOME -> {
-                return sh() - TASKBAR_H; // the overview covers the whole desktop below the top bar
-            }
-            case CINNAMON -> {
-                return CIN_HEADER_H + Math.max(5, launchers.size()) * CIN_ROW_H + 10;
-            }
-            default -> {
-            }
-        }
-        return switch (desktopId.getPath()) {
+        return switch (panel) {
+            case KDE -> KDE_HEADER_H + Math.max(6, launchers.size()) * KDE_ROW_H + KDE_FOOTER_H + 8;
+            case GNOME -> sh() - TASKBAR_H; // the overview covers the whole desktop below the top bar
+            case CINNAMON -> CIN_HEADER_H + Math.max(5, launchers.size()) * CIN_ROW_H + 10;
             // Two columns: the taller of programs (left) and places (right) sets the body height.
-            case "frames_xp" -> XP_HEADER_H + XP_ORANGE_H
+            case FRAMES_XP -> XP_HEADER_H + XP_ORANGE_H
                     + Math.max(xpLeftColumnH(), xpRightLaunchers().size() * XP_ROW_H)
                     + XP_FOOTER_H + 6;
             /*
              * A pinned grid sized to the full app set (so the panel does not resize as the search filters it).
              * Layout: 6 top pad + search + 5 + 9 (Pinned label) + rows + 5 + footer + 5 bottom pad.
              */
-            case "frames_11" -> {
+            case FRAMES_11 -> {
                 final int gridRows = Math.max(1, (launchers.size() + W11_COLS - 1) / W11_COLS);
                 yield 6 + W11_SEARCH_H + 5 + 9 + gridRows * W11_TILE_H + 5 + W11_FOOTER_H + 5;
             }

@@ -7,11 +7,16 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.os.DesktopEnvironmentDef;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.InstallerPage;
 import dev.jstech.computers.os.install.InstallerStyle;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * The shapes the installers are drawn in: the whole screen of text, the grey window with its title in a tab, the
@@ -153,7 +158,7 @@ final class InstallerFrames {
         final int railTop = dy + TITLE_BAR + 8;
         final int railBottom = dy + dh - 30;
         bevel(g, dx + 6, railTop, railW, railBottom - railTop, 0xFF008080, false);
-        emblem(g, dx + 6 + (railW - 20) / 2, railTop + (railBottom - railTop - 20) / 2, 20, flow.style());
+        emblem(g, dx + 6 + (railW - 20) / 2, railTop + (railBottom - railTop - 20) / 2, 20, flow);
 
         // The groove above the buttons, which is two lines and not one: that is what makes it look pressed in.
         g.fill(dx + 6, dy + dh - 24, dx + dw - 6, dy + dh - 23, 0xFF808080);
@@ -244,7 +249,7 @@ final class InstallerFrames {
         g.fill(cx, cy, cx + cw, cy + ch, 0xFFFAFAFE);
         outline(g, cx, cy, cw, ch, 0xFFC0C4D2);
 
-        emblem(g, cx + 8, cy + 6, 8, flow.style());
+        emblem(g, cx + 8, cy + 6, 8, flow);
         g.drawString(font, flow.style().title(flow.systemName()), cx + 20, cy + 6, 0xFF6B7488, false);
         g.fill(cx + 1, cy + 19, cx + cw - 1, cy + 20, 0xFFE3E5EE);
         g.drawString(font, flow.style().heading(flow.page(), flow.systemName()), cx + 10, cy + 27, 0xFF202434,
@@ -273,8 +278,17 @@ final class InstallerFrames {
      * <p>A picture rather than four filled squares: the mark is a window with an edge and a lean to it, and
      * four flat squares are the words of it without the thing itself.
      */
-    static void emblem(final GuiGraphics g, final int x, final int y, final int size, final InstallerStyle style) {
-        SplashLogos.mark(g, style.serializedName(), x, y, size);
+    static void emblem(final GuiGraphics g, final int x, final int y, final int size, final InstallerFlow flow) {
+        SplashLogos.mark(g, editionOf(flow), x, y, size);
+    }
+
+    /** The edition being installed, by the chrome of the desktop it comes with; the newest for any other. */
+    private static PanelStyle editionOf(final InstallerFlow flow) {
+        final ResourceLocation id = ResourceLocation.tryParse(flow.systemId());
+        final OsDef system = id == null ? null : OsRegistry.getOs(id);
+        final DesktopEnvironmentDef desktop = system == null ? null
+                : system.bundledDesktop().map(OsRegistry::getDesktop).orElse(null);
+        return desktop == null ? PanelStyle.FRAMES_11 : desktop.panelStyle();
     }
 
     /** A raised or sunken bevel in the manner of the grey machines: light one way, dark the other. */

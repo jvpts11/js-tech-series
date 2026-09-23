@@ -125,22 +125,22 @@ public final class OsSkin implements ISkin {
     }
 
     // Frames 95: classic grey bevel, solid navy title, square corners.
-    private static final OsSkin FRAMES_95 = new OsSkin(
-            DesktopTheme.forOs(ResourceLocation.fromNamespaceAndPath("jsc", "frames_95")),
+    static final OsSkin FRAMES_95 = new OsSkin(
+            DesktopTheme.WIN95,
             Form.BEVEL, 0, 0, 0xFFFFFFFF, false, 0xFFC0C0C0, 0xFF000000,
             0xFF000080, 0xFF000000, 0xFF505050, 0xFFFFFFFF,
             0xFF000080, 0xFFFFFFFF, 0xFFD4D0C8, false);
 
     // Frames XP: Luna blue gradients, white title, cream client; ONLY the top corners are rounded.
-    private static final OsSkin FRAMES_XP = new OsSkin(
-            DesktopTheme.forOs(ResourceLocation.fromNamespaceAndPath("jsc", "frames_xp")),
+    static final OsSkin FRAMES_XP = new OsSkin(
+            DesktopTheme.XP,
             Form.LUNA, 2, 0, 0xFFFFFFFF, true, 0xFFECECF6, 0xFF0831D9,
             0xFF2C66BD, 0xFF10203A, 0xFF5A6B85, 0xFFFFFFFF,
             0xFF2C66BD, 0xFFFFFFFF, 0xFFD8E4FB, false);
 
     // Frames 11: flat light chrome with DARK title text and a thin accent; all corners rounded.
-    private static final OsSkin FRAMES_11 = new OsSkin(
-            DesktopTheme.forOs(ResourceLocation.fromNamespaceAndPath("jsc", "frames_11")),
+    static final OsSkin FRAMES_11 = new OsSkin(
+            DesktopTheme.WIN11,
             Form.FLAT, 2, 2, 0xFF202434, false, 0xFFFAFAFE, 0xFFC0C4D2,
             0xFF3A6AE0, 0xFF202434, 0xFF6B7488, 0xFFFFFFFF,
             0xFFE7EEFC, 0xFF1D4ED8, 0xFFF0F1F7, false);
@@ -150,7 +150,7 @@ public final class OsSkin implements ISkin {
      * accent keeps contrast on the dark ground; the flat chrome branches key off the dark flag.
      */
     private static final OsSkin FRAMES_11_DARK = new OsSkin(
-            DesktopTheme.forOs(ResourceLocation.fromNamespaceAndPath("jsc", "frames_11")),
+            DesktopTheme.WIN11,
             Form.FLAT, 2, 2, 0xFFE7E9EF, false, 0xFF1E212A, 0xFF3A4150,
             0xFF5B84F0, 0xFFE7E9EF, 0xFF9AA2B2, 0xFF14171F,
             0xFF2A3A63, 0xFFDCE7FF, 0xFF262B36, true);
@@ -159,22 +159,22 @@ public final class OsSkin implements ISkin {
      * The Linux desktop environments: flat chrome like Frames 11, each in its own palette and accent.
      * KDE Plasma (Breeze): light grey window, sky-blue accent.
      */
-    private static final OsSkin KDE_PLASMA = new OsSkin(
-            DesktopTheme.forDesktop(ResourceLocation.fromNamespaceAndPath("jsc", "kde_plasma")),
+    static final OsSkin KDE_PLASMA = new OsSkin(
+            DesktopTheme.KDE,
             Form.FLAT, 2, 2, 0xFF232629, false, 0xFFEFF0F1, 0xFFB9BFC8,
             0xFF3DAEE9, 0xFF232629, 0xFF6E7680, 0xFFFCFCFC,
             0xFFD6ECF7, 0xFF1F6F9A, 0xFFE6EBEF, false, "kde_plasma");
 
     // GNOME (Adwaita): warm light window, GNOME blue accent, rounded.
-    private static final OsSkin GNOME = new OsSkin(
-            DesktopTheme.forDesktop(ResourceLocation.fromNamespaceAndPath("jsc", "gnome")),
+    static final OsSkin GNOME = new OsSkin(
+            DesktopTheme.GNOME,
             Form.FLAT, 3, 3, 0xFF2E3436, false, 0xFFF6F5F4, 0xFFC0BFBC,
             0xFF3584E4, 0xFF2E3436, 0xFF77767B, 0xFFFFFFFF,
             0xFFDCE8FA, 0xFF1C5FB4, 0xFFEBEBEA, false, "gnome");
 
     // Cinnamon (Mint-Y): light grey window, Mint green accent.
-    private static final OsSkin CINNAMON = new OsSkin(
-            DesktopTheme.forDesktop(ResourceLocation.fromNamespaceAndPath("jsc", "cinnamon")),
+    static final OsSkin CINNAMON = new OsSkin(
+            DesktopTheme.CINNAMON,
             Form.FLAT, 2, 2, 0xFF2B2B2B, false, 0xFFF7F7F7, 0xFFB0B0B0,
             0xFF69B03B, 0xFF2B2B2B, 0xFF6E6E6E, 0xFFFFFFFF,
             0xFFDFF0D4, 0xFF3C6E1E, 0xFFEBEBEB, false, "cinnamon");
@@ -186,58 +186,30 @@ public final class OsSkin implements ISkin {
      * with a thick frame and a centred title, since a separate window manager drew its decoration.
      */
 
-    private static final OsSkin KDE_PLASMA_LEGACY = new OsSkin(
-            DesktopTheme.forDesktop(ResourceLocation.fromNamespaceAndPath("jsc", "kde_plasma")),
+    static final OsSkin KDE_PLASMA_LEGACY = new OsSkin(
+            DesktopTheme.KDE,
             Form.KDE2, 0, 0, 0xFFFFFFFF, true, 0xFFD6D2CD, 0xFF6F6A64,
             0xFF1D4C80, 0xFF1A1A1A, 0xFF5F5A54, 0xFFFFFFFF,
             0xFF33679F, 0xFFFFFFFF, 0xFFC7C2BB, false, "kde_plasma");
 
-    private static final OsSkin GNOME_LEGACY = new OsSkin(
-            DesktopTheme.forDesktop(ResourceLocation.fromNamespaceAndPath("jsc", "gnome")),
+    static final OsSkin GNOME_LEGACY = new OsSkin(
+            DesktopTheme.GNOME,
             Form.GNOME1, 0, 0, 0xFFFFFFFF, true, 0xFFD6D2C8, 0xFFB0AA9C,
             0xFF6D5A78, 0xFF1A1A1A, 0xFF5C574E, 0xFFFFFFFF,
             0xFF6D5A78, 0xFFFFFFFF, 0xFFC4BFB2, false, "gnome");
 
     /* CDE in the palette it ships with; the Style Manager's choice builds another from the same factory. */
-    private static final OsSkin CDE = motif(CdePalette.DEFAULT);
+    static final OsSkin CDE = motif(CdePalette.DEFAULT);
 
-    /** The skin for an installed OS id; Frames 95 is the fallback. Kept for the Frames editions (id = desktop). */
-    public static OsSkin forOs(final ResourceLocation osId) {
-        return forDesktop(osId);
-    }
-
-    /**
-     * The skin for a desktop as it looks on hardware of {@code era}. The Frames editions already ARE
-     * their era (95 is Legacy, 11 is Standard). Of the Linux desktops only KDE and GNOME get a period
-     * variant, because only those two install on Legacy hardware at all, since Cinnamon is a later desktop
-     * and requires a Standard machine, so it has no older self to wear.
-     */
+    /** The skin for a desktop as it looks on hardware of {@code era}, as its look says. */
     public static OsSkin forDesktop(final ResourceLocation desktopId,
                                     final HardwareEra era) {
-        if (era != null && era.isAtMost(HardwareEra.LEGACY)) {
-            switch (desktopId.getPath()) {
-                case "kde_plasma":
-                    return KDE_PLASMA_LEGACY;
-                case "gnome":
-                    return GNOME_LEGACY;
-                default:
-                    break;
-            }
-        }
-        return forDesktop(desktopId);
+        return DesktopLook.of(desktopId).skinOn(era);
     }
 
-    /** The skin for a desktop environment id (the Frames editions, KDE Plasma, GNOME, Cinnamon); Frames 95 fallback. */
+    /** The skin of the desktop under that id, as its look names it. */
     public static OsSkin forDesktop(final ResourceLocation desktopId) {
-        return switch (desktopId.getPath()) {
-            case "frames_xp" -> FRAMES_XP;
-            case "frames_11" -> FRAMES_11;
-            case "kde_plasma" -> KDE_PLASMA;
-            case "gnome" -> GNOME;
-            case "cinnamon" -> CINNAMON;
-            case "cde" -> CDE;
-            default -> FRAMES_95;
-        };
+        return DesktopLook.of(desktopId).skin();
     }
 
     /**

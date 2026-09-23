@@ -124,7 +124,7 @@ public final class SettingsApp implements IDesktopApp {
         @Override
         public void render(final GuiGraphics g, final UiContext ctx) {
             if (style != null) {
-                wallpaperSwatch(g, x(), y(), width(), height(), style);
+                WallpaperStyle.swatch(g, x(), y(), width(), height(), style);
                 if (on.getAsBoolean()) {
                     Draw.outline(g, x() - 1, y() - 1, width() + 2, height() + 2, ctx.skin().accent());
                 } else {
@@ -301,8 +301,14 @@ public final class SettingsApp implements IDesktopApp {
         y += 10;
         final int tw = 34;
         final int th = 21;
-        for (int i = 0; i < WallpaperPainter.STYLES.length; i++) {
-            final String style = WallpaperPainter.STYLES[i];
+        // The desktop's own wallpaper first, then every style a player may hang instead.
+        final List<String> styles = new ArrayList<>();
+        styles.add("");
+        for (final WallpaperStyle offered : WallpaperStyle.offered()) {
+            styles.add(offered.id());
+        }
+        for (int i = 0; i < styles.size(); i++) {
+            final String style = styles.get(i);
             pagePanel.add(new Swatch(style, 0, () -> style.equals(d.wallpaper()), () -> set("wallpaper", style)))
                     .setBounds(x + i * (tw + 4), y, tw, th);
         }
@@ -646,20 +652,6 @@ public final class SettingsApp implements IDesktopApp {
 
     private static String group(final long n) {
         return String.format(Locale.ROOT, "%,d", n);
-    }
-
-    /** A representative wallpaper preview that always fits the thumbnail (the real painter overflows small sizes). */
-    private static void wallpaperSwatch(final GuiGraphics g, final int x, final int y, final int w, final int h,
-                                        final String style) {
-        switch (style) {
-            case "win95" -> g.fill(x, y, x + w, y + h, 0xFF1C7C7C);
-            case "winxp" -> g.fillGradient(x, y, x + w, y + h, 0xFF5B95DD, 0xFF2C5FA8);
-            case "win11" -> {
-                g.fillGradient(x, y, x + w, y + h, 0xFF2C3C68, 0xFF141C33);
-                g.fill(x + w / 2 - 3, y + h / 2 - 3, x + w / 2 + 3, y + h / 2 + 3, 0x55FFFFFF);
-            }
-            default -> g.fill(x, y, x + w, y + h, 0xFF3A6A9A);
-        }
     }
 
     // input

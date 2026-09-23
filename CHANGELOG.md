@@ -60,6 +60,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Settings, the System Monitor and the Network Manager call a machine's system by its name. A Linux, FreeBSD or
   UNIX system was shown by its id, `ubuntu` rather than Ubuntu, and the System Monitor showed every system that
   way, the Frames editions included.
+- The Personalize page shows the Breeze, Adwaita and Mint-Y wallpapers as themselves. Their three thumbnails
+  were the same plain blue, so nothing told them apart until one was hung.
 - screenfetch draws every logo as neofetch draws it. Ubuntu's was another, older logo copied with mistakes, and
   Debian's had a stray quote. Each was printed in one colour, readout included; now the art is in its own
   colours (Ubuntu red and white, Debian white with a red centre, Gentoo magenta and white) and the user, host

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.os.PanelStyle;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
@@ -28,9 +29,10 @@ public final class FramesEmblem {
      * Draws the emblem of that edition.
      *
      * @param size    how wide and tall the whole mark is, gap included
-     * @param edition the edition's id path, as the desktop and the registry name it
+     * @param edition the edition, by the chrome its desktop draws
      */
-    public static void draw(final GuiGraphics g, final int x, final int y, final int size, final String edition) {
+    public static void draw(final GuiGraphics g, final int x, final int y, final int size,
+                            final PanelStyle edition) {
         final int gap = Math.max(1, size / 10);
         final int half = (size - gap) / 2;
         final int[] panes = panesOf(edition);
@@ -45,10 +47,10 @@ public final class FramesEmblem {
      *
      * <p>An edition nobody here knows wears the newest one's, which is the plainest of the three.
      */
-    public static int[] panesOf(final String edition) {
+    public static int[] panesOf(final PanelStyle edition) {
         return switch (edition) {
-            case "frames_95" -> new int[]{0xFF000080, 0xFF1F8A8A, 0xFF5FC3C3, 0xFF3A4FA8};
-            case "frames_xp" -> new int[]{0xFF2C66BD, 0xFF6F9FE0, 0xFF9BD164, 0xFF4E8B26};
+            case FRAMES_95 -> new int[]{0xFF000080, 0xFF1F8A8A, 0xFF5FC3C3, 0xFF3A4FA8};
+            case FRAMES_XP -> new int[]{0xFF2C66BD, 0xFF6F9FE0, 0xFF9BD164, 0xFF4E8B26};
             default -> new int[]{0xFF5B84F0, 0xFF5B84F0, 0xFF5B84F0, 0xFF5B84F0};
         };
     }
