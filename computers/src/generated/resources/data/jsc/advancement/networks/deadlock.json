@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:networks/select_from_chest",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "operation_locked"
+      },
+      "trigger": "jsc:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.networks.deadlock.description"
+    },
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "minecraft:chain"
+    },
+    "title": {
+      "translate": "advancements.jsc.networks.deadlock.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:systems/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "remote_control"
+      },
+      "trigger": "jsc:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.im_in.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:ender_eye"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.im_in.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

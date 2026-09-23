@@ -1,3 +1,5 @@
+<p align="center"><img src="../docs/brand/core.png" alt="J's Core" width="440"></p>
+
 # J's Core
 
 The shared library of the [J's Tech Series](../README.md); its id is `jscore`. Every mod of the series

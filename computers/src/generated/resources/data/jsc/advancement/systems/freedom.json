@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:systems/universal",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "os": "jsc:fedora"
+      },
+      "trigger": "jsc:os_first_boot"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.freedom.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:dvd_rom"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.freedom.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

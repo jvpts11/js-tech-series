@@ -1,0 +1,46 @@
+{
+  "criteria": {
+    "done": {
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "jsc:personal_computer",
+              "jsc:vintage_personal_computer",
+              "jsc:legacy_personal_computer",
+              "jsc:mainframe",
+              "jsc:vintage_mainframe",
+              "jsc:legacy_mainframe",
+              "jsc:crafting_computer",
+              "jsc:vintage_crafting_computer",
+              "jsc:legacy_crafting_computer",
+              "jsc:cluster_management_computer",
+              "jsc:vintage_cluster_management_computer",
+              "jsc:legacy_cluster_management_computer"
+            ]
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "background": "minecraft:textures/block/iron_block.png",
+    "description": {
+      "translate": "advancements.jsc.hardware.root.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:personal_computer"
+    },
+    "title": {
+      "translate": "advancements.jsc.hardware.root.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

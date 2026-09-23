@@ -18,7 +18,7 @@ import java.util.List;
  */
 public record ProgramEntry<R extends IProgramRuntime>(int id, String file, String binary, int heapMb, R process,
                                                       IProgramParent parent, List<String> args,
-                                                      ProgramPriority priority) {
+                                                      ProgramPriority priority, long startedAt) {
 
     /**
      * What a program is listed as when it gave itself no name: the runtime that runs it, the way an interpreted program
@@ -26,10 +26,24 @@ public record ProgramEntry<R extends IProgramRuntime>(int id, String file, Strin
      */
     public static final String RUNTIME_NAME = "sigma";
 
+    /** The start of a program nobody knows the start of: one read from a save that never said. */
+    public static final long STARTED_UNKNOWN = -1L;
+
     public ProgramEntry {
         parent = parent == null ? IProgramParent.NONE : parent;
         args = args == null ? List.of() : List.copyOf(args);
         priority = priority == null ? ProgramPriority.MEDIUM : priority;
+    }
+
+    /** The same, for a program whose start is not known. */
+    public ProgramEntry(final int id, final String file, final String binary, final int heapMb, final R process,
+                        final IProgramParent parent, final List<String> args, final ProgramPriority priority) {
+        this(id, file, binary, heapMb, process, parent, args, priority, STARTED_UNKNOWN);
+    }
+
+    /** Whether it has run without stopping for at least {@code ticks} by the game tick {@code now}. */
+    public boolean upFor(final long now, final long ticks) {
+        return this.startedAt != STARTED_UNKNOWN && now - this.startedAt >= ticks;
     }
 
     /** What the machine lists it as: the name the program gave itself, or the runtime's that runs it. */

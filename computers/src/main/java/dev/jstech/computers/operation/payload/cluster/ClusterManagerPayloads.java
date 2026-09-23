@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.cluster;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -111,6 +112,12 @@ public final class ClusterManagerPayloads {
         } else {
             final var node = new ClusterManagementComputerBlockEntity
                     .NodeRef(BlockPos.of(payload.rackPos()), payload.row());
+            // Running a cluster is sending the whole of it one order: power it all on, or install on it all.
+            if (payload.action() == ClusterManagerActionPayload.ACTION_POWER_ALL_ON
+                    || payload.action() == ClusterManagerActionPayload.ACTION_INSTALL_SYSTEM_ALL
+                    || payload.action() == ClusterManagerActionPayload.ACTION_INSTALL_PROGRAM_ALL) {
+                JscEvents.award(player, JscEvents.CLUSTER_RUN);
+            }
             status = switch (payload.action()) {
                 case ClusterManagerActionPayload.ACTION_INSTALL_SYSTEM_ALL -> cmc.startJob(ref,
                         ClusterManagementComputerBlockEntity.JobKind.SYSTEM);

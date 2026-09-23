@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.Platform;
 import java.util.ArrayList;
@@ -258,6 +259,7 @@ final class PosixSystemCommands {
                 ctx.out().error("screenfetch: no operating system installed");
                 return;
             }
+            ctx.computer().report(JscEvents.SCREENFETCH, info.distroId());
             final String[] logo = LOGOS.getOrDefault(info.distroId(), DEFAULT_LOGO);
             final CliStyle color = COLORS.getOrDefault(
                     info.distroId(), CliStyle.ACCENT);

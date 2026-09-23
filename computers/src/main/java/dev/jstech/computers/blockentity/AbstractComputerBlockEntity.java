@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.advancement.Acting;
+import dev.jstech.computers.advancement.HardwareMilestones;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.block.IEraChassisBlock;
 import dev.jstech.computers.crafting.PatternWorkbench;
@@ -29,6 +32,7 @@ import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootRunner;
@@ -109,6 +113,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     private final DiskConsole diskConsole = new DiskConsole(this);
     /** The programs it is running and what they reach through it. */
     private final ProgramHost host = new ProgramHost(this);
+    /** The program tick, made once rather than on every tick it is run inside its operator's scope. */
+    private final Runnable sigmaTick = this::tickSigma;
     /** The players with this computer's console on screen. */
     private final Viewers viewers = new Viewers(this.worldPosition);
     /** What it sends them: the windows its programs have open, and what those programs print. */
@@ -137,6 +143,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     void hardwareChanged() {
         power.hardwareChanged(buildValid());
         setChanged();
+        HardwareMilestones.report(this);
     }
 
     // Hardware assembly
@@ -1025,7 +1032,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         tickTerminal(level);
         tickBootPhases(level);
         OsInstallRunner.tick(this, level, worldPosition);
-        tickSigma();
+        // What the machine's programs and jobs ask the network for is the doing of whoever works it.
+        Acting.asOperatorOf(this, sigmaTick);
         SetupRunner.tick(this, level, worldPosition);
         attachment.tick(level);
     }
@@ -1141,8 +1149,14 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
             return;
         }
         final ServerCliComputer computer = new ServerCliComputer(terminal, server);
+        // A schedule kept by UNIX on the oldest machines there are: whoever set it up earns it when it runs.
+        final boolean clockwork = displayEra() == HardwareEra.VINTAGE && installedOs() != null
+                && installedOs().platform() == Platform.UNIX;
         for (final MachineJobs.Job job : due) {
             CliCommands.shellFor(computer, TermBuffer.MONITOR_COLUMNS).run(job.line(), computer);
+            if (clockwork && !job.when().once()) {
+                JscEvents.awardOperator(this, JscEvents.CLOCKWORK);
+            }
         }
         setChanged();
     }

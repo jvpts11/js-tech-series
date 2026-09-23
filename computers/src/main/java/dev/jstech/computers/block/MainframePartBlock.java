@@ -8,6 +8,7 @@
 package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
+import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.MainframePartBlockEntity;
 import dev.jstech.computers.menu.MainframeMenu;
@@ -100,6 +101,7 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
                 && part.controllerPos() != null
                 && level.getBlockEntity(part.controllerPos()) instanceof MainframeBlockEntity controller) {
             final BlockPos controllerPos = part.controllerPos();
+            MachineOperators.note(controller, player);
             /*
              * Sneaking anywhere on the cabinet takes its service panel off, the same as on the
              * controller: a player has no way to tell which of the twelve blocks they are looking at.

@@ -1,0 +1,66 @@
+{
+  "parent": "jsc:systems/recompile",
+  "criteria": {
+    "arch": {
+      "conditions": {
+        "os": "jsc:arch"
+      },
+      "trigger": "jsc:os_first_boot"
+    },
+    "debian": {
+      "conditions": {
+        "os": "jsc:debian"
+      },
+      "trigger": "jsc:os_first_boot"
+    },
+    "fedora": {
+      "conditions": {
+        "os": "jsc:fedora"
+      },
+      "trigger": "jsc:os_first_boot"
+    },
+    "gentoo": {
+      "conditions": {
+        "os": "jsc:gentoo"
+      },
+      "trigger": "jsc:os_first_boot"
+    },
+    "ubuntu": {
+      "conditions": {
+        "os": "jsc:ubuntu"
+      },
+      "trigger": "jsc:os_first_boot"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.distro_hopper.description"
+    },
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:rabbit_foot"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.distro_hopper.title"
+    }
+  },
+  "requirements": [
+    [
+      "ubuntu"
+    ],
+    [
+      "debian"
+    ],
+    [
+      "fedora"
+    ],
+    [
+      "arch"
+    ],
+    [
+      "gentoo"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

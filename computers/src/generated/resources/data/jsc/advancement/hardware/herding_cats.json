@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:hardware/someone_elses_computer",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "cluster_run"
+      },
+      "trigger": "jsc:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.hardware.herding_cats.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "jsc:cluster_management_computer"
+    },
+    "title": {
+      "translate": "advancements.jsc.hardware.herding_cats.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

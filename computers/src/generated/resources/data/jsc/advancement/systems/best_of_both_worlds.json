@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:systems/press_del",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "dual_boot"
+      },
+      "trigger": "jsc:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.best_of_both_worlds.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "jsc:disk_vaultis_trench_20m"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.best_of_both_worlds.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

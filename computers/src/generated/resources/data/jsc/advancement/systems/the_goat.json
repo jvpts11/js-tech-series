@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:systems/start_me_up",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "os": "jsc:frames_xp"
+      },
+      "trigger": "jsc:os_first_boot"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.the_goat.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:dvd_rom"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.the_goat.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

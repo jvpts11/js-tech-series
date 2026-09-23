@@ -1,0 +1,36 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "computercraft"
+    }
+  ],
+  "parent": "jsc:networks/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "computercraft_message"
+      },
+      "trigger": "jsc:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.networks.talking_to_the_neighbours.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "jsc:network_gateway"
+    },
+    "title": {
+      "translate": "advancements.jsc.networks.talking_to_the_neighbours.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

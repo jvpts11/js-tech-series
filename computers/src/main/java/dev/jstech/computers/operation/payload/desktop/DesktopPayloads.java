@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.desktop;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
@@ -251,6 +252,7 @@ public final class DesktopPayloads {
         if (level.getBlockEntity(payload.hostPos())
                 instanceof AbstractComputerBlockEntity computer
                 && computer.programs().stop(payload.id())) {
+            JscEvents.award(player, JscEvents.TASK_ENDED);
             computer.setChanged();
             PacketDistributor.sendToPlayer(player, buildSettingsSnapshot(
                     (IOsHost) computer, payload.hostPos()));

@@ -31,12 +31,12 @@ final class OperationsCalls {
     }
 
     static void bind(final Map<MemberId, MachineCalls.Binding<?>> bindings) {
-        operations(bindings, "Pull", (ops, call, target, arguments, line) ->
-                asked(ops.pull(item(arguments), amount(arguments), MoveLabels.sigma(call.caller()))), STRING, LONG);
-        operations(bindings, "Push", (ops, call, target, arguments, line) ->
-                asked(ops.push(item(arguments), amount(arguments), MoveLabels.sigma(call.caller()))), STRING, LONG);
-        operations(bindings, "Craft", (ops, call, target, arguments, line) ->
-                asked(ops.craft(item(arguments), amount(arguments), MoveLabels.sigma(call.caller()))), STRING, LONG);
+        operations(bindings, "Pull", (ops, call, target, arguments, line) -> started(ops,
+                ops.pull(item(arguments), amount(arguments), MoveLabels.sigma(call.caller()))), STRING, LONG);
+        operations(bindings, "Push", (ops, call, target, arguments, line) -> started(ops,
+                ops.push(item(arguments), amount(arguments), MoveLabels.sigma(call.caller()))), STRING, LONG);
+        operations(bindings, "Craft", (ops, call, target, arguments, line) -> started(ops,
+                ops.craft(item(arguments), amount(arguments), MoveLabels.sigma(call.caller()))), STRING, LONG);
         operations(bindings, "Cancel",
                 (ops, call, target, arguments, line) -> asked(ops.cancel(item(arguments))), STRING);
         operations(bindings, "Reprioritise", (ops, call, target, arguments, line) -> asked(ops.reprioritise(
@@ -66,6 +66,14 @@ final class OperationsCalls {
                     }
                     return function.call(ops, call, target, arguments, line);
                 }, parameters);
+    }
+
+    /* The answer to a call that sets an Operation going, which is what a program running one has earned. */
+    private static Values.Obj started(final OperationsService ops, final ICliComputer.OpResult result) {
+        if (result.ok()) {
+            ops.creditProgram();
+        }
+        return asked(result);
     }
 
     /** What came of asking: whether the network took it, and why not when it did not. */

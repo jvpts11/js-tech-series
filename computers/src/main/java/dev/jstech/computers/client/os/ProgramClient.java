@@ -82,7 +82,7 @@ public final class ProgramClient {
         register(rl("pattern_studio"), (host, mon, os) -> new PatternStudioApp(host, mon));
         register(rl("cluster_manager"), (host, mon, os) -> new ClusterManagerApp(host));
         register(rl("gateway_manager"), (host, mon, os) -> new GatewayManagerApp(host));
-        register(rl("minesweeper"), (host, mon, os) -> new MinesweeperApp());
+        register(rl("minesweeper"), (host, mon, os) -> new MinesweeperApp(host));
         register(rl("solitaire"), (host, mon, os) -> new SolitaireApp());
         register(rl("snake"), (host, mon, os) -> new SnakeApp());
         register(rl("ark"), (host, mon, os) -> new ArchiverApp(host));

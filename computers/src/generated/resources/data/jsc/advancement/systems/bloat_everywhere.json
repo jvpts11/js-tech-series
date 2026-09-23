@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:systems/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "os": "jsc:ubuntu"
+      },
+      "trigger": "jsc:os_first_boot"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.bloat_everywhere.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:dvd_rom"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.bloat_everywhere.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

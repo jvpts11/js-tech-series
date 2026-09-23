@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os.boot;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.hardware.ComputerBuild;
@@ -152,6 +153,7 @@ public final class BootRunner {
             return;
         }
         machine.setNeedsPost(false);
+        JscEvents.awardOperatorAt(level, pos, JscEvents.POST_PASSED);
         /*
          * The self-test is the moment the machine settles what it is running, which is what makes a desktop
          * installed a moment ago wait for a restart instead of turning up on the next look at the monitor.

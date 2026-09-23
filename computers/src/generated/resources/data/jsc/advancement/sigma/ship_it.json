@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:sigma/erm_what_the_sigma",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "sigma_published"
+      },
+      "trigger": "jsc:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.sigma.ship_it.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:minecart"
+    },
+    "title": {
+      "translate": "advancements.jsc.sigma.ship_it.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

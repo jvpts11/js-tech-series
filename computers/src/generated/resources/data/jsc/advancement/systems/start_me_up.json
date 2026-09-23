@@ -1,29 +1,28 @@
 {
-  "parent": "jsc:computing/root",
+  "parent": "jsc:systems/root",
   "criteria": {
-    "boot_gentoo": {
+    "done": {
       "conditions": {
-        "os": "jsc:gentoo"
+        "os": "jsc:frames_95"
       },
       "trigger": "jsc:os_first_boot"
     }
   },
   "display": {
     "description": {
-      "translate": "advancements.jsc.computing.recompile.description"
+      "translate": "advancements.jsc.systems.start_me_up.description"
     },
-    "frame": "challenge",
     "icon": {
       "count": 1,
       "id": "jsc:cd_rom"
     },
     "title": {
-      "translate": "advancements.jsc.computing.recompile.title"
+      "translate": "advancements.jsc.systems.start_me_up.title"
     }
   },
   "requirements": [
     [
-      "boot_gentoo"
+      "done"
     ]
   ],
   "sends_telemetry_event": true

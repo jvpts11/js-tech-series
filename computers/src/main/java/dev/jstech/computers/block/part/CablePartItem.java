@@ -7,14 +7,19 @@
  */
 package dev.jstech.computers.block.part;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
@@ -104,6 +109,10 @@ public class CablePartItem extends Item {
         }
         if (!level.isClientSide()) {
             cable.addPart(face, type.create());
+            if (level instanceof ServerLevel server && context.getPlayer() != null
+                    && (type == CablePartType.IMPORT || type == CablePartType.EXPORT)) {
+                reportPair(server, cable, context.getPlayer());
+            }
             level.playSound(null, cable.getBlockPos(), SoundType.METAL.getPlaceSound(),
                     SoundSource.BLOCKS, 1.0F, 0.8F);
             if (context.getPlayer() != null && !context.getPlayer().getAbilities().instabuild) {
@@ -145,5 +154,26 @@ public class CablePartItem extends Item {
             return clicked;
         }
         return firstFree;
+    }
+
+    /* An Import Bus and an Export Bus on one network: items now come in and go out on their own. */
+    private void reportPair(final ServerLevel level, final DataCableBlockEntity placedOn, final Player player) {
+        final CablePartType other = type == CablePartType.IMPORT ? CablePartType.EXPORT : CablePartType.IMPORT;
+        final NetworkSystem system = NetworkSystem.get(level);
+        final NetworkUuid network = system.connectivity().networkOf(placedOn.getBlockPos().asLong()).orElse(null);
+        if (network == null) {
+            return;
+        }
+        for (final long encoded : system.connectivity().positionsOf(network)) {
+            if (level.getBlockEntity(BlockPos.of(encoded)) instanceof DataCableBlockEntity cable) {
+                for (final Direction face : Direction.values()) {
+                    final ICablePart part = cable.getPart(face);
+                    if (part != null && part.type() == other) {
+                        JscEvents.award(player, JscEvents.BUSES_PAIRED);
+                        return;
+                    }
+                }
+            }
+        }
     }
 }

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.desktop;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.client.os.HelpViewerApp;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -63,6 +64,9 @@ public final class HelpPayloads {
             }
         }
         final List<String> lines = opening == null ? List.of() : ManPage.lines(opening, true);
+        if (opening != null) {
+            JscEvents.award(player, JscEvents.MAN_PAGE);
+        }
         PacketDistributor.sendToPlayer(player, new HelpPayload(payload.hostPos(), entries,
                 opening == null ? "" : opening.name(), lines));
     }

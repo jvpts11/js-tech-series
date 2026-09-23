@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:systems/bloat_everywhere",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "os": "jsc:debian"
+      },
+      "trigger": "jsc:os_first_boot"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.universal.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:dvd_rom"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.universal.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -8,11 +8,13 @@
 package dev.jstech.computers.machine;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.computers.vm.program.IHost;
 import dev.jstech.computers.vm.program.IWorldFunction;
+import dev.jstech.computers.vm.program.ProgramMilestone;
 import dev.jstech.computers.vm.system.MemberId;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -86,6 +88,19 @@ public final class MachineServices implements IHost {
 
     public MachineServices(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
+    }
+
+    /* What a program did, as the advancement it earns whoever works this machine. */
+    @Override
+    public void reached(final ProgramMilestone milestone) {
+        switch (milestone) {
+            case STACK_OVERFLOW -> JscEvents.awardOperator(this.machine, JscEvents.SIGMA_HALTED, JscEvents.HALT_STACK);
+            case DIVIDE_BY_ZERO ->
+                    JscEvents.awardOperator(this.machine, JscEvents.SIGMA_HALTED, JscEvents.HALT_DIVIDE);
+            case THREAD_STARTED -> JscEvents.awardOperator(this.machine, JscEvents.SIGMA_THREAD);
+            case WINDOW_OPENED -> JscEvents.awardOperator(this.machine, JscEvents.SIGMA_WINDOW);
+            case WATCH_FIRED -> JscEvents.awardOperator(this.machine, JscEvents.SIGMA_WATCH);
+        }
     }
 
     @Override

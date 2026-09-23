@@ -1,0 +1,30 @@
+{
+  "criteria": {
+    "done": {
+      "conditions": {
+        "detail": "sgsc",
+        "event": "program_installed"
+      },
+      "trigger": "jsc:event"
+    }
+  },
+  "display": {
+    "background": "minecraft:textures/block/purpur_block.png",
+    "description": {
+      "translate": "advancements.jsc.sigma.root.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:writable_book"
+    },
+    "title": {
+      "translate": "advancements.jsc.sigma.root.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

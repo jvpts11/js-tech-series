@@ -1,3 +1,5 @@
+<p align="center"><img src="../docs/brand/computers.png" alt="J's Computers" width="720"></p>
+
 # J's Computers
 
 Computers for Minecraft that do the logistics of your base. You build the hardware, install a system on

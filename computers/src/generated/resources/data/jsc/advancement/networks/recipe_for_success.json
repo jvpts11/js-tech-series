@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:networks/series_of_tubes",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "pattern_encoded"
+      },
+      "trigger": "jsc:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.networks.recipe_for_success.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:pattern_encoder"
+    },
+    "title": {
+      "translate": "advancements.jsc.networks.recipe_for_success.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

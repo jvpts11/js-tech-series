@@ -1,3 +1,5 @@
+<p align="center"><img src="../docs/brand/industrial.png" alt="J's Industrial" width="680"></p>
+
 # J's Industrial
 
 Energy, machines and the processing chains that feed the network and the other mods.

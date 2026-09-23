@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.gateway.GatewayManager;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
@@ -48,6 +49,10 @@ final class ProgramHost {
      * a Gateway was spoken to still looks once; a Gateway sets it again whenever it is spoken to.
      */
     private boolean gatewayMail = true;
+
+    /* Seven game days of a program never stopping, looked for once a minute rather than every tick. */
+    private static final long FIVE_NINES_TICKS = 7L * 24_000L;
+    private static final long UPTIME_CHECK_TICKS = 1_200L;
 
     ProgramHost(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
@@ -133,6 +138,10 @@ final class ProgramHost {
                 ? ServerTickDeadline.shared().claim(server, this.machine.getBlockPos())
                 : Long.MAX_VALUE;
         this.programs.tick(credits(), deadline, this.stockLookup, this.parentWaiting);
+        if (level != null && level.getGameTime() % UPTIME_CHECK_TICKS == 0
+                && this.programs.anyUpFor(level.getGameTime(), FIVE_NINES_TICKS)) {
+            JscEvents.awardOperator(this.machine, JscEvents.SIGMA_UPTIME);
+        }
         return true;
     }
 

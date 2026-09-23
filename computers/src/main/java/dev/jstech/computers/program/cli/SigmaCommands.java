@@ -7,8 +7,10 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.hardware.ArchitectureSpec;
 import dev.jstech.computers.hardware.Architectures;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.sigma.SigmaCompiler;
 import dev.jstech.computers.sigma.Diagnostic;
@@ -192,6 +194,7 @@ public final class SigmaCommands {
                 }
             }
             if (assembly == null) {
+                ctx.computer().report(JscEvents.SIGMA_COMPILE_ERROR, "");
                 final long errors = diagnostics.stream().filter(Diagnostic::isError).count();
                 ctx.out().error(this.verb + ": " + errors + (errors == 1 ? " error" : " errors")
                         + ", nothing was written");
@@ -204,6 +207,9 @@ public final class SigmaCommands {
                 return;
             }
             ctx.out().ok(this.verb + ": wrote " + target);
+            if (this.level == LanguageLevel.SIGMA && ctx.computer().platform() == Platform.MC_DOS) {
+                ctx.computer().report(JscEvents.SIGMA_ON_DOS, "");
+            }
             // Compiling is not running, and the prompt is the place to say how the second is done.
             ctx.out().dim("run it with: sigma run " + target);
         }
@@ -502,7 +508,11 @@ public final class SigmaCommands {
                 final Manifest manifest = Manifest.read(read.message());
                 file = new Packed(manifest, Map.of()).fileName();
             }
-            report(ctx, ctx.computer().publishPackage(file));
+            final ICliComputer.OpResult published = ctx.computer().publishPackage(file);
+            if (published.ok()) {
+                ctx.computer().report(JscEvents.SIGMA_PUBLISHED, "");
+            }
+            report(ctx, published);
         }
 
         private void unpublish(final CliContext ctx) {

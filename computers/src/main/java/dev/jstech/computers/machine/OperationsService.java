@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.machine;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.DataHandoff;
 import dev.jstech.computers.operation.INetworkOperation;
@@ -55,6 +56,13 @@ public final class OperationsService {
     }
 
     /** Whether the machine is on a network at all. */
+    /** Credits whoever works this machine with a program of theirs having set an Operation going. */
+    public void creditProgram() {
+        if (this.terminal instanceof BlockEntity machine) {
+            JscEvents.awardOperator(machine, JscEvents.SIGMA_OPERATION);
+        }
+    }
+
     public boolean onNetwork() {
         return this.network.onNetwork();
     }

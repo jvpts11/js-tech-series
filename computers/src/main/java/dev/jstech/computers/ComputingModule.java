@@ -9,6 +9,8 @@ package dev.jstech.computers;
 
 import com.mojang.serialization.Codec;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.advancement.JscEventTrigger;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.OsFirstBootTrigger;
 import dev.jstech.computers.block.ClusterManagementComputerBlock;
 import dev.jstech.computers.block.CraftingComputerBlock;
@@ -180,6 +182,9 @@ public final class ComputingModule {
             OsFirstBootTrigger> OS_FIRST_BOOT =
             TRIGGERS.register("os_first_boot",
                     OsFirstBootTrigger::new);
+    /** Every other advancement's event: see {@link JscEventTrigger} and the ids in {@link JscEvents}. */
+    public static final DeferredHolder<CriterionTrigger<?>, JscEventTrigger> EVENT =
+            TRIGGERS.register("event", JscEventTrigger::new);
 
     public static final DeferredRegister<MenuType<?>> MENUS =
             DeferredRegister.create(Registries.MENU, JsComputers.MODID);

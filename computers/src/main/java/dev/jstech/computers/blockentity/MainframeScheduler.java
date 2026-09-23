@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.advancement.Acting;
+import dev.jstech.computers.advancement.OperationMilestones;
 import dev.jstech.computers.crafting.NetworkProcessingOperation;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.payload.OperationRecord;
@@ -75,6 +77,9 @@ final class MainframeScheduler {
     /** Per in-flight Operation: ticks spent waiting (queued or on a lock) and ticks spent running. */
     private final Map<INetworkOperation, int[]> timing = new IdentityHashMap<>();
 
+    /* Who asked for each Operation, when somebody was acting as it was taken on; the advancements credit them. */
+    private final Map<INetworkOperation, UUID> askedBy = new IdentityHashMap<>();
+
     /** The last hour of settled Operations by type, and the day's peak concurrency; RAM only. */
     private final OperationStatistics statistics = new OperationStatistics();
 
@@ -95,6 +100,7 @@ final class MainframeScheduler {
      */
     void track(final INetworkOperation operation) {
         inFlight.add(operation);
+        Acting.current().ifPresent(player -> askedBy.put(operation, player));
         post(net -> new IOperationLifecycleEvent.Created(
                 net, operation.operationId(), operation.typeId()));
     }
@@ -254,6 +260,7 @@ final class MainframeScheduler {
         inFlight.clear();
         timing.clear();
         deferredTicks.clear();
+        askedBy.clear();
         lastGranted = Set.of();
     }
 
@@ -361,6 +368,7 @@ final class MainframeScheduler {
                 continue;
             }
             deferredTicks.remove(operation);
+            final UUID asker = askedBy.remove(operation);
             final int[] counted = timing.remove(operation);
             final int waited = counted == null ? 0 : counted[WAITED];
             final int ran = counted == null ? 0 : counted[RAN];
@@ -379,6 +387,7 @@ final class MainframeScheduler {
                     completedTotal++; // network Operations count toward the lifetime tally too
                 }
                 postSettled(operation, record);
+                OperationMilestones.report(mainframe, asker, operation.typeId(), record);
             }
             it.remove();
         }

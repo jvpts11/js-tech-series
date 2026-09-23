@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.operation.payload.GameWonPayload;
+import dev.jstech.computers.operation.payload.desktop.GamePayloads;
 import dev.jstech.computers.program.MinesweeperGame;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Panel;
@@ -14,6 +16,8 @@ import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.BlockPos;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.EnumMap;
 import java.util.Locale;
@@ -41,6 +45,7 @@ public final class MinesweeperApp implements IDesktopApp {
     };
     private static final int PANEL_H = 24;
 
+    private final BlockPos host;
     private OsSkin skin = OsSkin.fallback();
     private MinesweeperGame.Difficulty difficulty = MinesweeperGame.Difficulty.BEGINNER;
     private MinesweeperGame game = new MinesweeperGame(difficulty, System.nanoTime());
@@ -128,12 +133,17 @@ public final class MinesweeperApp implements IDesktopApp {
             }
             if (game.isFinished()) {
                 frozenSeconds = timing ? Math.min(999, (System.currentTimeMillis() - startMs) / 1000) : 0;
+                if (game.state() == MinesweeperGame.State.WON) {
+                    PacketDistributor.sendToServer(new GameWonPayload(host, GamePayloads.MINESWEEPER,
+                            difficulty.name().toLowerCase(Locale.ROOT)));
+                }
             }
             return true;
         }
     }
 
-    public MinesweeperApp() {
+    public MinesweeperApp(final BlockPos host) {
+        this.host = host;
         for (final MinesweeperGame.Difficulty d : MinesweeperGame.Difficulty.values()) {
             difficultyButtons.put(d, root.add(new Button(shortLabel(d), () -> newGame(d))));
         }

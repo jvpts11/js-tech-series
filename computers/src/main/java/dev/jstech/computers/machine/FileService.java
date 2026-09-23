@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FsPaths;
@@ -522,6 +523,17 @@ public final class FileService {
             return ICliComputer.FsResult.ok("");
         }
         return ICliComputer.FsResult.fail("The system cannot find the file specified.");
+    }
+
+    /** Whether the drive with that letter carries an installed system, which formatting it would erase. */
+    public boolean holdsSystem(final char letterRaw) {
+        final char letter = Character.toUpperCase(letterRaw);
+        for (final DriveTable.Drive drive : DriveTable.of(this.machine, this.level).all()) {
+            if (drive.drive() == letter) {
+                return !OsDisks.systemsOn(drive.disk()).ids().isEmpty();
+            }
+        }
+        return false;
     }
 
     /**

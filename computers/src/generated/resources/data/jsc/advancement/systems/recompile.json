@@ -1,29 +1,29 @@
 {
-  "parent": "jsc:computing/root",
+  "parent": "jsc:systems/i_use_arch_btw",
   "criteria": {
-    "boot_arch": {
+    "done": {
       "conditions": {
-        "os": "jsc:arch"
+        "os": "jsc:gentoo"
       },
       "trigger": "jsc:os_first_boot"
     }
   },
   "display": {
     "description": {
-      "translate": "advancements.jsc.computing.i_use_arch_btw.description"
+      "translate": "advancements.jsc.systems.recompile.description"
     },
     "frame": "challenge",
     "icon": {
       "count": 1,
-      "id": "jsc:usb_flash_drive"
+      "id": "jsc:cd_rom"
     },
     "title": {
-      "translate": "advancements.jsc.computing.i_use_arch_btw.title"
+      "translate": "advancements.jsc.systems.recompile.title"
     }
   },
   "requirements": [
     [
-      "boot_arch"
+      "done"
     ]
   ],
   "sends_telemetry_event": true

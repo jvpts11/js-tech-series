@@ -9,11 +9,13 @@ package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.menu.ServerRackMenu;
 import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
 import dev.jstech.core.multiblock.IMultiblockGeometry;
 import dev.jstech.core.multiblock.MultiblockPatternGeometry;
@@ -232,6 +234,7 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
              */
             if (servers.getStackInSlot(aimed).isEmpty() && servers.isItemValid(aimed, stack)) {
                 servers.setStackInSlot(aimed, stack.split(1));
+                reportFull(rack, player);
             } else {
                 tell(player, "block.jsc.rack.row_taken");
             }
@@ -240,10 +243,18 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
         for (int i = 0; i < servers.getSlots(); i++) {
             if (servers.getStackInSlot(i).isEmpty() && servers.isItemValid(i, stack)) {
                 servers.setStackInSlot(i, stack.split(1));
+                reportFull(rack, player);
                 return ItemInteractionResult.sidedSuccess(false);
             }
         }
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    }
+
+    /* The unit that takes the cabinet's last free row fills the rack. */
+    private static void reportFull(final ServerRackBlockEntity rack, final Player player) {
+        if (RackLayout.usedU(rack.mountedUnits()) >= ServerRackBlockEntity.CAPACITY_U) {
+            JscEvents.award(player, JscEvents.RACK_FILLED);
+        }
     }
 
     /** The rack row under the crosshair when the hit lands on the cabinet's front face, else -1. */

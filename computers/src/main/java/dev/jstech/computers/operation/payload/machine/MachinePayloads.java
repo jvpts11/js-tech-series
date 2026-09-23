@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload.machine;
 
+import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.block.IKvmScreenOpener;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
@@ -132,6 +134,8 @@ public final class MachinePayloads {
             monitor.setRemoteSession(target);
         }
         player.closeContainer();
+        MachineOperators.note(level, target, player);
+        JscEvents.award(player, JscEvents.REMOTE_CONTROL);
         MonitorBlock.bootOrPost(
                 player, level, payload.monitorPos(), target);
     }
@@ -175,6 +179,7 @@ public final class MachinePayloads {
             case MachinePowerPayload.ACTION_RESTART -> {
                 computer.setPowered(false);
                 computer.setPowered(true);
+                JscEvents.award(player, JscEvents.POWER_CYCLED);
                 MonitorBlock.openPost(
                         player, level, payload.monitorPos(), payload.hostPos());
             }

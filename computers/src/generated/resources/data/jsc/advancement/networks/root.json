@@ -1,0 +1,29 @@
+{
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "mainframe_network"
+      },
+      "trigger": "jsc:event"
+    }
+  },
+  "display": {
+    "background": "minecraft:textures/block/polished_deepslate.png",
+    "description": {
+      "translate": "advancements.jsc.networks.root.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:mainframe"
+    },
+    "title": {
+      "translate": "advancements.jsc.networks.root.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

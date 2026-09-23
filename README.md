@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/brand/series.png" alt="J's Tech Series" width="720"></p>
+
 # J's Tech Series
 
 A series of technology mods for Minecraft 1.21.1 on NeoForge, one mod per area, on top of a shared core library.

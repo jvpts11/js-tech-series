@@ -13,6 +13,13 @@ authors = "${mod_authors}"
 description = '''
 ${mod_description}
 '''
+# The mark the mods list shows at the head of this mod's page: its own logo over the series logo.
+logoFile = "${mod_id}_logo.png"
+logoBlur = true
+
+# The square icon, for mod-list screens that show one.
+[modproperties.${mod_id}]
+catalogueImageIcon = "${mod_id}_icon.png"
 
 # Mixin config. The mixins array stays empty until the first mixin is added
 # under the dev.jstech.computers.mixin package.

@@ -190,4 +190,11 @@ public interface ICliMachine {
     default boolean rebootRequested() {
         return false;
     }
+
+    /**
+     * Tells the game a command did something worth an advancement, named by one of the stable event ids; the one
+     * typing earns it, or whoever works the machine when nobody is. A computer made for a test lets it go.
+     */
+    default void report(final String event, final String detail) {
+    }
 }

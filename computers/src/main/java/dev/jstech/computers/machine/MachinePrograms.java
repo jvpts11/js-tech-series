@@ -101,6 +101,16 @@ public final class MachinePrograms {
         this.remoteEnded = remoteEnded;
     }
 
+    /** Whether any of the programs has run without stopping for at least {@code ticks} by the game tick {@code now}. */
+    public boolean anyUpFor(final long now, final long ticks) {
+        for (final ProgramEntry<IMachineRuntime> one : this.table.running()) {
+            if (one.upFor(now, ticks)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Every program the machine lists, in the order they started, as screens read them: a list of its own, built
      * when asked, whose programs cannot be reached through it.
@@ -289,7 +299,8 @@ public final class MachinePrograms {
         }
         final int id = this.table.takeId();
         process.identify(id);
-        this.table.add(new ProgramEntry<>(id, name, runnable, room, process, parent, args, priority));
+        final long now = machine.getLevel() == null ? ProgramEntry.STARTED_UNKNOWN : machine.getLevel().getGameTime();
+        this.table.add(new ProgramEntry<>(id, name, runnable, room, process, parent, args, priority, now));
         return new Started(id, name + " started as " + id);
     }
 
@@ -473,6 +484,7 @@ public final class MachinePrograms {
     private static final String NODE = "node";
     private static final String ARGS = "args";
     private static final String PRIORITY = "priority";
+    private static final String STARTED = "started";
 
     /**
      * Writes every running program down.
@@ -514,6 +526,7 @@ public final class MachinePrograms {
             }
             each.put(ARGS, args);
             each.putString(PRIORITY, one.priority().serializedName());
+            each.putLong(STARTED, one.startedAt());
             final CompoundTag state = new CompoundTag();
             one.process().save(state);
             each.put(STATE, state);
@@ -573,7 +586,8 @@ public final class MachinePrograms {
                 process.identify(each.getInt(ID));
                 this.table.add(new ProgramEntry<>(each.getInt(ID), name, binary,
                         each.getInt(HEAP), process, parentOf(each), args,
-                        ProgramPriority.named(each.getString(PRIORITY))));
+                        ProgramPriority.named(each.getString(PRIORITY)),
+                        each.contains(STARTED) ? each.getLong(STARTED) : ProgramEntry.STARTED_UNKNOWN));
             }
         }
         // The program the terminal held may not have come back, and the terminal cannot stay pointed at nothing.

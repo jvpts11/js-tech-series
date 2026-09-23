@@ -9,6 +9,7 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.block.ServerRouterBlock;
 import dev.jstech.computers.datacenter.DatacenterSection;
@@ -223,6 +224,9 @@ public class ServerRouterBlockEntity extends BlockEntity {
             }
         }
 
+        if (this.sections.isEmpty() && !found.isEmpty()) {
+            JscEvents.awardOperator(this, JscEvents.DATACENTER_FORMED);
+        }
         this.sections = List.copyOf(found);
         this.unmanagedRacks = Set.copyOf(unmanaged);
         this.inputFace = uplink;

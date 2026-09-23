@@ -8,6 +8,7 @@
 package dev.jstech.computers.datagen;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.datagen.advancement.ConditionalAdvancementProvider;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -42,5 +43,7 @@ public final class JscDataGenerators {
                 new JscRecipeMachinesProvider(output));
         generator.addProvider(event.includeServer(),
                 new JscAdvancementProvider(output, event.getLookupProvider(), existingFiles));
+        generator.addProvider(event.includeServer(),
+                new ConditionalAdvancementProvider(output, event.getLookupProvider()));
     }
 }

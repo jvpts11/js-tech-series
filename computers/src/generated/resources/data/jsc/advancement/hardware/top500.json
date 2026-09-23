@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:hardware/herding_cats",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "supercomputer_online"
+      },
+      "trigger": "jsc:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.hardware.top500.description"
+    },
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "jsc:supercomputer_rack"
+    },
+    "title": {
+      "translate": "advancements.jsc.hardware.top500.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

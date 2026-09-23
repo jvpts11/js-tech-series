@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:systems/where_it_all_started",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "clockwork"
+      },
+      "trigger": "jsc:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.clockwork.description"
+    },
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:clock"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.clockwork.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:systems/the_goat",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "os": "jsc:frames_11"
+      },
+      "trigger": "jsc:os_first_boot"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.bloat_11.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:usb_flash_drive"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.bloat_11.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

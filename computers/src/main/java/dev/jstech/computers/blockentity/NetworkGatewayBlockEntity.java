@@ -9,6 +9,7 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.NetworkGatewayBlock;
 import dev.jstech.computers.gateway.GatewayLog;
 import dev.jstech.computers.gateway.GatewayName;
@@ -327,6 +328,7 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
 
     /** Takes what a ComputerCraft computer said to this side, for the host machine's programs to read. */
     public void said(final int from, final String text, final long tick) {
+        JscEvents.awardOperator(this, JscEvents.COMPUTERCRAFT_MESSAGE);
         while (messages.size() >= MESSAGES_KEPT) {
             messages.removeFirst();
         }

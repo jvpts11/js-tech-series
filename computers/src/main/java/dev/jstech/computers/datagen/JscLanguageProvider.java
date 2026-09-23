@@ -10,6 +10,7 @@ package dev.jstech.computers.datagen;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.datagen.advancement.JscAdvancementTabs;
 import dev.jstech.computers.os.OsBootstrap;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.ProgramSpec;
@@ -167,13 +168,8 @@ public class JscLanguageProvider extends LanguageProvider {
         add("jsc.gui.storage.private", "%s%% private");
         add("jsc.gui.storage.always_public", "Public - network storage");
         add("jsc.gui.storage.no_disk", "no disk");
-        // Advancements: the computing branch and its two hard-way Linux challenges.
-        add("advancements.jsc.computing.root.title", "Computers");
-        add("advancements.jsc.computing.root.description", "Boot a computer into an operating system");
-        add("advancements.jsc.computing.i_use_arch_btw.title", "I Use Arch BTW");
-        add("advancements.jsc.computing.i_use_arch_btw.description", "Install Arch Linux by hand from the live medium and boot it");
-        add("advancements.jsc.computing.recompile.title", "Didn't Like It? Recompile!");
-        add("advancements.jsc.computing.recompile.description", "Build Gentoo from source and boot it");
+        // Advancements: every tab hands over its own words, kept beside the advancements they name.
+        JscAdvancementTabs.translations(this::add);
         add("jsc.gui.storage.disk", "Disk %s");
         // Expansion card bus-family mismatch: shown when a card cannot enter a slot due to incompatible bus.
         add("jsc.gui.computer.slot.bus_mismatch", "Wrong slot type: this card requires a %s slot");

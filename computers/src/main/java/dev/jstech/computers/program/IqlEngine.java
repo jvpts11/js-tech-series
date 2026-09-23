@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.program;
 
+import dev.jstech.computers.advancement.Acting;
+import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.iql.IIqlCondition;
@@ -84,7 +87,12 @@ public final class IqlEngine {
     }
 
     public Outcome run(final String statement) {
-        return run(statement, 0);
+        final Outcome outcome = run(statement, 0);
+        // Somebody's statement, not a job firing on its own: those run with nobody acting.
+        if (outcome.ok()) {
+            JscEvents.awardActing(mainframe.getLevel(), JscEvents.IQL_QUERY, "");
+        }
+        return outcome;
     }
 
     private Outcome run(final String statement, final int depth) {
@@ -115,6 +123,10 @@ public final class IqlEngine {
     private Outcome create(final IqlDefinition definition) {
         mainframe.iqlCatalog().put(IqlSavedObject.from(definition));
         mainframe.markIqlCatalogChanged();
+        // A job fires later with nobody at the keyboard; it is credited to whoever set it up.
+        if (definition.objectType() == IqlDefinition.ObjectType.JOB) {
+            Acting.current().ifPresent(player -> MachineOperators.note(mainframe, player));
+        }
         return Outcome.ok(typeName(definition.objectType()) + " " + definition.name() + " created");
     }
 

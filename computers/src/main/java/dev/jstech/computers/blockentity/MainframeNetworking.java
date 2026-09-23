@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.block.MainframeStructure;
 import dev.jstech.core.network.ConnectivityIndex;
@@ -228,6 +229,9 @@ final class MainframeNetworking {
         system.registerMainframe(new MainframeNode(mainframe.nodeUuid(), effective, mainframe.capacity(),
                 FailoverRole.NONE, Optional.empty(), 0L));
         system.recordMainframePosition(effective, here);
+        if (mainframe.networkAttachment().registered() == null) {
+            JscEvents.awardOperator(mainframe, JscEvents.MAINFRAME_NETWORK);
+        }
         mainframe.networkAttachment().registeredAs(effective);
     }
 
@@ -356,6 +360,9 @@ final class MainframeNetworking {
 
     /** Says so in chat when a conflict starts and when it clears, since nothing else would show it. */
     private void setConflict(final ServerLevel level, final boolean conflict) {
+        if (conflict && !conflicted) {
+            JscEvents.awardOperator(mainframe, JscEvents.MAINFRAME_CONFLICT);
+        }
         if (conflict != conflicted && level.getServer() != null) {
             final String where = mainframe.getBlockPos().toShortString();
             final String message = conflict

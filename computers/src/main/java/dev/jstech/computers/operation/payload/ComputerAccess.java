@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.DesktopMenu;
@@ -114,7 +115,8 @@ public final class ComputerAccess {
                                                                             @Nullable final IRefusal<P> refusal) {
         return (payload, context) -> context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player && gate.admits(player, payload)) {
-                handler.handle(payload, player, player.serverLevel());
+                // Whatever this sets going on the network is the sender's doing, however late it finishes.
+                Acting.as(player, () -> handler.handle(payload, player, player.serverLevel()));
                 return;
             }
             refused(context.player(), type);

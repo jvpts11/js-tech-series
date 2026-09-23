@@ -1,0 +1,81 @@
+{
+  "parent": "jsc:systems/distro_hopper",
+  "criteria": {
+    "arch": {
+      "conditions": {
+        "detail": "arch",
+        "event": "screenfetch"
+      },
+      "trigger": "jsc:event"
+    },
+    "debian": {
+      "conditions": {
+        "detail": "debian",
+        "event": "screenfetch"
+      },
+      "trigger": "jsc:event"
+    },
+    "fedora": {
+      "conditions": {
+        "detail": "fedora",
+        "event": "screenfetch"
+      },
+      "trigger": "jsc:event"
+    },
+    "freebsd": {
+      "conditions": {
+        "detail": "freebsd",
+        "event": "screenfetch"
+      },
+      "trigger": "jsc:event"
+    },
+    "gentoo": {
+      "conditions": {
+        "detail": "gentoo",
+        "event": "screenfetch"
+      },
+      "trigger": "jsc:event"
+    },
+    "ubuntu": {
+      "conditions": {
+        "detail": "ubuntu",
+        "event": "screenfetch"
+      },
+      "trigger": "jsc:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.professional_larper.description"
+    },
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:painting"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.professional_larper.title"
+    }
+  },
+  "requirements": [
+    [
+      "ubuntu"
+    ],
+    [
+      "debian"
+    ],
+    [
+      "fedora"
+    ],
+    [
+      "arch"
+    ],
+    [
+      "gentoo"
+    ],
+    [
+      "freebsd"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

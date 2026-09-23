@@ -10,6 +10,8 @@ package dev.jstech.computers.block;
 import com.mojang.serialization.MapCodec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
+import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.item.ServerItem;
@@ -167,6 +169,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
              * screen was holding ends here.
              */
             monitor.setRemoteSession(null);
+            MachineOperators.note(level, owner, player);
             bootOrPost(serverPlayer, level, pos, owner);
         }
         return InteractionResult.SUCCESS;
@@ -574,6 +577,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
     /** Opens the firmware setup on the monitor regardless of an installed OS (a restart into setup). */
     public static void openFirmware(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                     final BlockPos owner) {
+        JscEvents.award(player, JscEvents.FIRMWARE_SETUP);
         openFirmwareUi(player, level, monitorPos, owner, level.getBlockEntity(owner));
     }
 

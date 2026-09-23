@@ -8,6 +8,7 @@
 package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
+import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
 import dev.jstech.computers.menu.ServerRackMenu;
@@ -128,6 +129,7 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IRearFaci
                 && part.controllerPos() != null
                 && level.getBlockEntity(part.controllerPos()) instanceof ServerRackBlockEntity rack) {
             final BlockPos controllerPos = part.controllerPos();
+            MachineOperators.note(rack, player);
             serverPlayer.openMenu(new SimpleMenuProvider(
                     (id, inv, p) -> new ServerRackMenu(id, inv, rack),
                     // The cabinet names itself; every era and the compute cabinet have their own.

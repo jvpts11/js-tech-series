@@ -6,6 +6,25 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 
 ## [Unreleased]
 
+### Added
+- Sixty-six advancements in four tabs. Hardware follows the machines, from the first self-test and the eras a
+  computer can be built in up to racks, datacenters, clusters and supercomputers. Operating Systems has one
+  for the first install of each system, the prompts and desktops, and challenges for installing every
+  distribution and running screenfetch on every system that takes it. Networks & Operations covers joining a
+  Mainframe, Operations, IQL, autocrafting and the ways a network goes wrong, and Sigma goes from installing the
+  compiler to a program that stays up for a week. Some stay hidden until earned, and the one for hearing a
+  ComputerCraft computer through a Network Gateway exists only when ComputerCraft is installed.
+- An advancement goes to the player who caused it. What a machine does on its own, such as a self-test ending,
+  a job firing or an Operation finishing, goes to whoever works that machine: the last player to place it,
+  open its screen or build it, which the machine keeps across restarts. An Operation typed at a terminal goes
+  to the player who typed it, however long it takes to finish.
+- Logos and icons for the series and for each mod. The mods list shows each mod's logo over the series logo,
+  mod list screens that show an icon show each mod's own, and the READMEs carry the logos.
+
+### Changed
+- The three advancements of the old Computers tab moved into the Operating Systems tab, so a world that had
+  earned them shows them unearned there.
+
 ### Fixed
 - A server with nothing to boot no longer costs its rack time on every tick. A machine whose self-test found
   no system stands at that failure and goes on by itself once one is installed, and to notice that it was

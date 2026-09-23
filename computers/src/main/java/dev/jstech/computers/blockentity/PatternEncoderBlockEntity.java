@@ -9,6 +9,9 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
+import dev.jstech.computers.advancement.Acting;
+import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.block.PatternEncoderBlock;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.DiskFilesystem;
@@ -272,6 +275,8 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
             return false;
         }
         queue.addLast(new BurnRequest(fileName, content));
+        // The burn finishes on its own later; whoever asked for it is the one it is credited to.
+        Acting.current().ifPresent(player -> MachineOperators.note(this, player));
         setChanged();
         sync();
         return true;
@@ -444,6 +449,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
                     final Optional<String> back = hasMedia() ? DiskFilesystem.read(mediaStack(), path) : Optional.empty();
                     if (back.isPresent()) {
                         completed++;
+                        JscEvents.awardOperator(this, JscEvents.PATTERN_ENCODED);
                         enter(Phase.DONE, HOLD_TICKS);
                     } else {
                         enter(Phase.ERROR, HOLD_TICKS);

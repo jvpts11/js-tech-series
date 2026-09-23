@@ -8,6 +8,7 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.hardware.PhiCoprocessorSpec;
 import dev.jstech.computers.item.PhiCoprocessorItem;
@@ -96,6 +97,7 @@ public class HbwInterfaceBlockEntity extends BlockEntity {
     }
 
     private void tickCluster(final ServerLevel serverLevel) {
+        final boolean wasOnline = clusterOnline();
         survey(serverLevel);
         final NetworkSystem system = NetworkSystem.get(serverLevel);
         /*
@@ -115,6 +117,9 @@ public class HbwInterfaceBlockEntity extends BlockEntity {
             system.registerSupercomputer(new NetworkSystem.SupercomputerNode(
                     nodeUuid(), resolved, parallelCrafts, worldPosition.asLong()));
             registeredNetwork = resolved;
+        }
+        if (!wasOnline && clusterOnline()) {
+            JscEvents.awardOperator(this, JscEvents.SUPERCOMPUTER_ONLINE);
         }
     }
 

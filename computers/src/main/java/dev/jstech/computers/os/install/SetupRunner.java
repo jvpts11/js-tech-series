@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os.install;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.DesktopMenu;
@@ -178,6 +179,10 @@ public final class SetupRunner {
         }
         console.install(id);
         console.setInstalledVersion(id, ProgramVersions.of(id));
+        JscEvents.awardHost(host, JscEvents.PROGRAM_INSTALLED, path);
+        if (SOURCE_NETWORK.equals(job.source())) {
+            JscEvents.awardHost(host, JscEvents.MIRROR_INSTALL, path);
+        }
     }
 
     private static String sourceName(final MediaFormat medium) {

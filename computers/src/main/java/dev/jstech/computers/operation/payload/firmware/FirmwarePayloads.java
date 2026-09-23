@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.firmware;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.IBootMenuScreenOpener;
@@ -363,6 +364,10 @@ public final class FirmwarePayloads {
                      */
                     machine.setBootOnce((int) payload.ref(),
                             ResourceLocation.tryParse(payload.osId()));
+                    // Picking one of the systems that share a disk, rather than one disk over another.
+                    if (OsDisks.systemsOn(machine.diskInSlot((int) payload.ref())).ids().size() >= 2) {
+                        JscEvents.award(player, JscEvents.DUAL_BOOT);
+                    }
                     /*
                      * Chosen at the boot manager, the system still has to come up: the machine leaves the menu and
                      * starts loading, and puts the player in front of that. Chosen anywhere else there is nothing
@@ -384,7 +389,13 @@ public final class FirmwarePayloads {
                     rack.setRaidMode(rack.soleComputerSlot(), mode);
                 }
             }
-            case FirmwareActionPayload.ACTION_FORMAT -> computer.formatDisk((int) payload.ref());
+            case FirmwareActionPayload.ACTION_FORMAT -> {
+                final boolean heldSystem = !OsDisks.systemsOn(computer.diskInSlot((int) payload.ref())).ids()
+                        .isEmpty();
+                if (computer.formatDisk((int) payload.ref()) && heldSystem) {
+                    JscEvents.award(player, JscEvents.SYSTEM_ERASED);
+                }
+            }
             case FirmwareActionPayload.ACTION_INSTALL -> {
                 /*
                  * The setup does not run an installation; it restarts the machine into one. A computer put

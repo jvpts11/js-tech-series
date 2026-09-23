@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.program;
 
+import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.advancement.ProgramTravels;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
@@ -34,6 +36,7 @@ import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.RamLedger;
+import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.program.job.JobWhen;
 import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.computers.os.KernelDef;
@@ -110,6 +113,15 @@ public final class ServerCliComputer implements ICliComputer {
         this.hostBlock = (BlockEntity) host;
         this.level = level;
         this.typist = typist;
+    }
+
+    @Override
+    public void report(final String event, final String detail) {
+        if (typist != null) {
+            JscEvents.award(typist, event, detail);
+        } else {
+            JscEvents.awardOperator(hostBlock, event, detail);
+        }
     }
 
     @Override
@@ -567,7 +579,12 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public OpResult formatDrive(final char letterRaw) {
-        return files().formatDrive(letterRaw);
+        final boolean heldSystem = files().holdsSystem(letterRaw);
+        final OpResult result = files().formatDrive(letterRaw);
+        if (heldSystem && result.ok()) {
+            report(JscEvents.SYSTEM_ERASED, "");
+        }
+        return result;
     }
 
     @Override
@@ -982,8 +999,15 @@ public final class ServerCliComputer implements ICliComputer {
     @Override
     public OpResult startSigma(final String path, final int heapMb, final List<String> arguments) {
         final ProgramService running = sigma();
-        return running == null ? OpResult.fail("sigma: this machine cannot run programs")
+        final OpResult started = running == null ? OpResult.fail("sigma: this machine cannot run programs")
                 : running.startAtTerminal(path, heapMb, arguments);
+        if (started.ok()) {
+            report(JscEvents.SIGMA_RUN, "");
+            if (typist != null) {
+                ProgramTravels.ran(typist, FsPaths.fileName(path), hostBlock.getBlockPos().asLong());
+            }
+        }
+        return started;
     }
 
     @Override

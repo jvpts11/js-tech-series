@@ -8,6 +8,8 @@
 package dev.jstech.computers;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.computers.advancement.MachineOperators;
+import dev.jstech.computers.advancement.ProgramTravels;
 import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.integration.mekanism.MekanismIntegration;
@@ -57,6 +59,8 @@ public class JsComputers {
         modEventBus.addListener(FMLLoadCompleteEvent.class, event -> event.enqueueWork(OsRegistry::freeze));
 
         ComputingModule.register(modEventBus);
+        MachineOperators.register(modEventBus);
+        ProgramTravels.register(modEventBus);
         JscCreativeModeTabs.register(modEventBus);
 
         // Soft integrations: each one checks for its mod and stays a no-op without it.

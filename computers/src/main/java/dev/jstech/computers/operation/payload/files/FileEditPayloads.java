@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload.files;
 
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.client.os.CodeFileReplies;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -114,6 +116,9 @@ public final class FileEditPayloads {
                 switch (result) {
                     case OK -> {
                         if (media) {
+                            if (vol.is(ComputingModule.FLOPPY_DISK.get())) {
+                                JscEvents.award(player, JscEvents.FLOPPY_SAVED);
+                            }
                             commitMedia(level, computer, path);
                         } else {
                             computer.setChanged();

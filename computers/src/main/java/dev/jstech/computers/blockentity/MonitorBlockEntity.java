@@ -9,6 +9,7 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.os.IOsHost;
@@ -37,6 +38,7 @@ import java.util.Optional;
 public class MonitorBlockEntity extends BlockEntity implements IPeripheralEndpoint {
 
     private static final int BOOT_DELAY = 20;
+    private static final int BATTLESTATION_MONITORS = 4;
 
     @Nullable
     private Long linkedOwner;
@@ -121,13 +123,33 @@ public class MonitorBlockEntity extends BlockEntity implements IPeripheralEndpoi
         }
     }
 
+    /* A fourth monitor on one computer is a battlestation, earned by whoever put this one up. */
+    private void reportBattlestation(final ServerLevel level) {
+        if (!(level.getBlockEntity(BlockPos.of(linkedOwner)) instanceof IPeripheralOwner owner)) {
+            return;
+        }
+        int monitors = 0;
+        for (final long endpoint : owner.linkedEndpoints()) {
+            if (level.getBlockEntity(BlockPos.of(endpoint)) instanceof MonitorBlockEntity) {
+                monitors++;
+            }
+        }
+        if (monitors >= BATTLESTATION_MONITORS) {
+            JscEvents.awardOperator(this, JscEvents.BATTLESTATION);
+        }
+    }
+
     private void tick(final ServerLevel level) {
         final long self = worldPosition.asLong();
         final PeripheralLinkValidator validator = PeripheralLinks.validator(level);
         if (linkedOwner == null) {
             // Find a reachable computer and link to it (the validator notifies both sides).
-            PeripheralLinks.discoverOwner(level, self)
-                    .ifPresent(ownerPos -> validator.tryEstablishLink(ownerPos, self));
+            PeripheralLinks.discoverOwner(level, self).ifPresent(ownerPos -> {
+                validator.tryEstablishLink(ownerPos, self);
+                if (linkedOwner != null) {
+                    reportBattlestation(level);
+                }
+            });
         } else {
             // Drop the link if the computer is gone or the cable path is broken.
             final boolean ownerPresent =

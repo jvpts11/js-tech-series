@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.program.iql.IIqlCondition;
@@ -68,6 +69,7 @@ public final class IqlJobAgent {
                     engine = new IqlEngine(mainframe, new ServerCliComputer(mainframe, level), QUERY_ROW_LIMIT);
                 }
                 engine.run(job.body());
+                JscEvents.awardOperator(mainframe, JscEvents.IQL_JOB);
             }
         }
     }

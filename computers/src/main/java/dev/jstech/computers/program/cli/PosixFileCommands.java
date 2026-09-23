@@ -8,6 +8,7 @@
 package dev.jstech.computers.program.cli;
 
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.program.cli.man.ManPage;
 import java.util.List;
 import java.util.Locale;
@@ -398,6 +399,7 @@ final class PosixFileCommands {
             for (final String line : ManPage.lines(command, true)) {
                 ctx.out().line(line);
             }
+            ctx.computer().report(JscEvents.MAN_PAGE, command.name());
         }
     }
 

@@ -8,6 +8,7 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -397,6 +398,7 @@ public final class PackageService {
                  */
                 console.setInstalledVersion(id, ProgramVersions.of(id));
                 machine.setChanged();
+                reportInstalled(machine, spec);
             })));
         }
         return ICliPackages.Installing.said(this.installAtOnce(spec));
@@ -488,6 +490,12 @@ public final class PackageService {
                 host.systemDiskFreeMb());
     }
 
+    /* A package the Mirror handed over, installed without the timed setup that reports its own. */
+    private static void reportInstalled(final BlockEntity machine, final ProgramSpec spec) {
+        JscEvents.awardOperator(machine, JscEvents.PROGRAM_INSTALLED, spec.id().getPath());
+        JscEvents.awardOperator(machine, JscEvents.MIRROR_INSTALL, spec.id().getPath());
+    }
+
     /** Installs a program the way a manager that ships built packages does, answering at once. */
     private ICliComputer.OpResult installAtOnce(final ProgramSpec spec) {
         final PackageManagerKind manager = this.manager();
@@ -513,6 +521,9 @@ public final class PackageService {
             }
             final boolean done = switchedOn || listed;
             machine.setChanged();
+            if (done) {
+                reportInstalled(machine, spec);
+            }
             return done ? ICliComputer.OpResult.ok("Setting up " + spec.commandName() + " ... done")
                     : ICliComputer.OpResult.fail(spec.commandName() + " could not be set up");
         }

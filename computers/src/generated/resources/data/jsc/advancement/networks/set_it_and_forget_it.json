@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:networks/drop_database",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "iql_job"
+      },
+      "trigger": "jsc:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.networks.set_it_and_forget_it.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:repeater"
+    },
+    "title": {
+      "translate": "advancements.jsc.networks.set_it_and_forget_it.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

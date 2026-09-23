@@ -72,6 +72,13 @@ public interface IHost {
     default void programEnded(final int program) {
     }
 
+    /**
+     * Told when a program does something worth more than what it prints, such as halting on a deep call or opening
+     * a window. The host decides what that is worth; a host with no world around it lets it go.
+     */
+    default void reached(final ProgramMilestone milestone) {
+    }
+
     /** A host for a program that has no world around it, whose clock never moves. */
     static IHost still() {
         return new IHost() {

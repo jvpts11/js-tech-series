@@ -173,6 +173,8 @@ final class ProgramEvents {
         if (!this.offer(watch.handler(), EVENT_BYTES,
                 () -> List.of(this.stockEvent(watch.item(), before, now, first)))) {
             this.callbacks.drop();
+        } else {
+            this.process.reached(ProgramMilestone.WATCH_FIRED);
         }
     }
 

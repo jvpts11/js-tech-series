@@ -775,6 +775,12 @@ public final class Process {
             throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "this computer has no desktop to open a window on");
         }
         this.windows.open(window, line);
+        this.host.reached(ProgramMilestone.WINDOW_OPENED);
+    }
+
+    /** Passes on to the host something the program did that is worth more than what it prints. */
+    void reached(final ProgramMilestone milestone) {
+        this.host.reached(milestone);
     }
 
     /** Closes a window, which takes it off the desktop; closing one that is not open is nothing at all. */
@@ -835,6 +841,7 @@ public final class Process {
                     "there is no " + bound.method() + " to run on the thread");
         }
         final ProgramThread made = this.scheduler.start();
+        this.host.reached(ProgramMilestone.THREAD_STARTED);
         made.frames.push(new Frame(method, bound.target()));
         this.charge(START_COST);
         return this.tokenFor(made, line);
@@ -1012,6 +1019,11 @@ public final class Process {
     void halt(final Halt halt) {
         this.identity.halt(halt.getMessage());
         this.console.write(halt.getMessage());
+        if (halt.reason() == Halt.Reason.STACK_DEPTH) {
+            this.host.reached(ProgramMilestone.STACK_OVERFLOW);
+        } else if (halt.reason() == Halt.Reason.DIVIDE_BY_ZERO) {
+            this.host.reached(ProgramMilestone.DIVIDE_BY_ZERO);
+        }
         for (final ProgramThread thread : this.scheduler.threads()) {
             thread.frames.clear();
         }

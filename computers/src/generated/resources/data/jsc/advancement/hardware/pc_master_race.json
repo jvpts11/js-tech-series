@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:hardware/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "post_passed"
+      },
+      "trigger": "jsc:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.hardware.pc_master_race.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:monitor"
+    },
+    "title": {
+      "translate": "advancements.jsc.hardware.pc_master_race.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

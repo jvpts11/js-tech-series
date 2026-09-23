@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.NetworkSystem;
@@ -122,6 +123,12 @@ final class NetworkAttachment {
         if (resolved != null) {
             this.machine.registerNode(system, resolved);
             this.registered = resolved;
+        }
+        if (!wasAttached && resolved != null && system.mainframeOf(resolved).isPresent()) {
+            JscEvents.awardOperator(this.machine, JscEvents.COMPUTER_JOINED);
+        } else if (wasAttached && resolved == null && this.machine.isRunning()) {
+            // A running machine that just lost its last way to the Mainframe: somebody pulled the cable.
+            JscEvents.awardOperator(this.machine, JscEvents.MAINFRAME_CUT);
         }
         if (wasAttached != (resolved != null)) {
             /*

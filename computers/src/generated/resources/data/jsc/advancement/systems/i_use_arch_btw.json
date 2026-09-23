@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:systems/freedom",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "os": "jsc:arch"
+      },
+      "trigger": "jsc:os_first_boot"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.i_use_arch_btw.description"
+    },
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "jsc:usb_flash_drive"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.i_use_arch_btw.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

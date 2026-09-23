@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:networks/series_of_tubes",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "select_done"
+      },
+      "trigger": "jsc:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.networks.select_from_chest.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:chest"
+    },
+    "title": {
+      "translate": "advancements.jsc.networks.select_from_chest.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}
