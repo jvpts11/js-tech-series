@@ -388,7 +388,7 @@ public final class ThisPcApp implements IDesktopApp {
     }
 
     private boolean linux() {
-        return !skin.osPath().startsWith("frames_");
+        return skin.unixLike();
     }
 
     // state readers

@@ -89,6 +89,8 @@ final class PosixSystemCommands {
 
         @Override public String name() { return "hostname"; }
 
+        @Override public CommandGroup group() { return CommandGroup.MACHINE; }
+
         @Override public String summary() { return "print this computer's host name"; }
 
         @Override public void run(final CliContext ctx) {

@@ -38,7 +38,7 @@ import java.util.Optional;
  *                       empty when the OS is provisioned programmatically (e.g. server auto-provision)
  * @param platform       the platform (family) this OS is, which programs are gated against
  * @param displayName    the human name (English), the value datagen writes to {@link #titleKey()}
- * @param shellId        the interactive shell this OS ships ({@code cmd}, {@code bash}, {@code zsh}); it
+ * @param shell          the interactive shell this OS ships ({@code cmd}, {@code bash}, {@code zsh}); it
  *                       flavours the prompt, while the command syntax comes from the kernel's shell family
  * @param packageManager the package manager the OS installs programs with ({@link PackageManagerKind#NONE}
  *                       for media-installed platforms)
@@ -62,7 +62,7 @@ public record OsDef(
         Optional<ResourceLocation> installMediaId,
         Platform platform,
         String displayName,
-        String shellId,
+        ShellKind shell,
         PackageManagerKind packageManager,
         InstallMode installMode,
         Optional<ResourceLocation> bundledDesktop,
@@ -81,7 +81,7 @@ public record OsDef(
             ResourceLocation.CODEC.optionalFieldOf("install_media").forGetter(OsDef::installMediaId),
             StableCodecs.byName(Platform.class).fieldOf("platform").forGetter(OsDef::platform),
             Codec.STRING.optionalFieldOf("display_name", "").forGetter(OsDef::displayName),
-            Codec.STRING.optionalFieldOf("shell", "cmd").forGetter(OsDef::shellId),
+            StableCodecs.byName(ShellKind.class).optionalFieldOf("shell", ShellKind.CMD).forGetter(OsDef::shell),
             StableCodecs.byName(PackageManagerKind.class).optionalFieldOf("package_manager", PackageManagerKind.NONE)
                     .forGetter(OsDef::packageManager),
             StableCodecs.byName(InstallMode.class).optionalFieldOf("install_mode", InstallMode.GUIDED)
@@ -109,7 +109,7 @@ public record OsDef(
          * takes its programs from a disc in a linked drive.
          */
         return new OsDef(id, capability, minEra, kernelId, footprintMb, Optional.empty(), platform,
-                displayName, "cmd",
+                displayName, ShellKind.CMD,
                 platform == Platform.FRAMES ? PackageManagerKind.PCKMGR : PackageManagerKind.NONE,
                 InstallMode.GUIDED, bundledDesktop, house, 0,
                 InstallerStyle.PLAIN, 0);
@@ -117,10 +117,10 @@ public record OsDef(
 
     /** A Linux distribution: TTY capability on the Linux kernel, no bundled desktop, installable from the Legacy era. */
     public static OsDef linuxDistro(final ResourceLocation id, final int footprintMb, final String displayName,
-                                    final String shellId, final PackageManagerKind packageManager,
+                                    final ShellKind shell, final PackageManagerKind packageManager,
                                     final InstallMode installMode, final SoftwareHouse house) {
         return terminalSystem(id, ResourceLocation.fromNamespaceAndPath("jsc", "linux"), Platform.LINUX,
-                HardwareEra.LEGACY, footprintMb, displayName, shellId, packageManager, installMode, house);
+                HardwareEra.LEGACY, footprintMb, displayName, shell, packageManager, installMode, house);
     }
 
     /**
@@ -130,18 +130,18 @@ public record OsDef(
      */
     public static OsDef terminalSystem(final ResourceLocation id, final ResourceLocation kernelId,
                                        final Platform platform, final HardwareEra minEra, final int footprintMb,
-                                       final String displayName, final String shellId,
+                                       final String displayName, final ShellKind shell,
                                        final PackageManagerKind packageManager, final InstallMode installMode,
                                        final SoftwareHouse house) {
         return new OsDef(id, OsCapability.TERMINAL_ONLY, minEra, kernelId, footprintMb, Optional.empty(), platform,
-                displayName, shellId, packageManager, installMode, Optional.empty(), house, 0,
+                displayName, shell, packageManager, installMode, Optional.empty(), house, 0,
                 InstallerStyle.PLAIN, 0);
     }
 
     /** The same system, holding {@code megabytes} of RAM for itself while it runs. */
     public OsDef withRam(final int megabytes) {
         return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
-                shellId, packageManager, installMode, bundledDesktop, house, megabytes, installerStyle,
+                shell, packageManager, installMode, bundledDesktop, house, megabytes, installerStyle,
                 familyRank);
     }
 
@@ -156,7 +156,7 @@ public record OsDef(
      */
     public OsDef withRank(final int rank) {
         return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
-                shellId, packageManager, installMode, bundledDesktop, house, ramMb, installerStyle, rank);
+                shell, packageManager, installMode, bundledDesktop, house, ramMb, installerStyle, rank);
     }
 
     /**
@@ -167,7 +167,7 @@ public record OsDef(
      */
     public OsDef withInstaller(final InstallerStyle style) {
         return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
-                shellId, packageManager, installMode, bundledDesktop, house, ramMb, style, familyRank);
+                shell, packageManager, installMode, bundledDesktop, house, ramMb, style, familyRank);
     }
 
     public OsDef {
@@ -177,8 +177,8 @@ public record OsDef(
         if (displayName == null || displayName.isBlank()) {
             displayName = id.getPath();
         }
-        if (shellId == null || shellId.isBlank()) {
-            shellId = "cmd";
+        if (shell == null) {
+            shell = ShellKind.CMD;
         }
         if (packageManager == null) {
             packageManager = PackageManagerKind.NONE;

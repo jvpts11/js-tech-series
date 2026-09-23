@@ -42,6 +42,7 @@ import dev.jstech.computers.os.CdeAppGroup;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.MachineMemory;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
@@ -50,6 +51,7 @@ import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.SchedulerKind;
 import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.computers.os.fs.Archive;
 import dev.jstech.computers.os.fs.FileOpeners;
@@ -941,7 +943,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     void openFolder(final String dir) {
         String label = "Files";
         for (final Launcher launcher : launchers) {
-            if (launcher.programId() != null && launcher.programId().getPath().equals("files")) {
+            if (Programs.FILES.equals(launcher.programId())) {
                 label = launcher.label();
                 break;
             }
@@ -1467,9 +1469,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         return ramReservedMb + windowsRamMb();
     }
 
-    /** A cooperative kernel (Frames 95) has no memory protection: overloading it crashes the whole desktop. */
+    /** A cooperative kernel (Frames 95's) has no memory protection: overloading it crashes the whole desktop. */
     private boolean isCooperative() {
-        return osId.getPath().equals("frames_95");
+        final OsDef os = OsRegistry.getOs(osId);
+        final KernelDef kernel = os == null ? null : OsRegistry.getKernel(os.kernelId());
+        return kernel != null && kernel.scheduler() == SchedulerKind.COOPERATIVE;
     }
 
     /**
@@ -2339,7 +2343,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         if (chrome != null) {
             return chrome.launcherLabel(spec); // the rule the server resolves a window back to its program with
         }
-        if (spec.id().getPath().equals("command_prompt")
+        if (Programs.COMMAND_PROMPT.equals(spec.id())
                 && is(PanelStyle.FRAMES_11)) {
             return "Megashell";
         }
@@ -4639,7 +4643,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     /** "All Programs": the page that lists everything installed on this machine, services included. */
     private void openAllPrograms() {
         for (final Launcher l : launchers) {
-            if (l.programId().getPath().equals("settings")) {
+            if (Programs.SETTINGS.equals(l.programId())) {
                 runLauncher(l);
                 return;
             }

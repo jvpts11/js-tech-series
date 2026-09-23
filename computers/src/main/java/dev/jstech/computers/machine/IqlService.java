@@ -439,9 +439,7 @@ public final class IqlService {
             case MOVE -> this.move(op);
             case LOCK -> this.operations.lock(op.item(), op.quantity());
             case UNLOCK -> this.operations.unlock(op.item());
-            case ANALYZE -> this.operations.maintenance("analyze");
-            case VACUUM -> this.operations.maintenance("vacuum");
-            case REINDEX -> this.operations.maintenance("reindex");
+            case ANALYZE, VACUUM, REINDEX -> this.operations.maintenance(op.verb());
             case QUERY, COUNT -> ICliComputer.OpResult.fail("a read does not run as an operation");
         };
     }

@@ -55,13 +55,13 @@ public final class KernelNames {
      * The version a Frames system gives for itself, which is not a kernel with a name of its own the way a Unix
      * one is: the line a system report shows where a Unix system names its kernel.
      *
-     * @param system the path of the system's id, such as {@code frames_xp}
+     * @param familyRank where the edition sits in the Frames line, counting from one
      */
-    public static String frames(final String system) {
-        return switch (system) {
-            case "frames_95" -> "Frames 4.00.950";
-            case "frames_xp" -> "Frames NT 5.1";
-            case "frames_11" -> "Frames NT 10.0";
+    public static String frames(final int familyRank) {
+        return switch (familyRank) {
+            case 1 -> "Frames 4.00.950";
+            case 2 -> "Frames NT 5.1";
+            case 3 -> "Frames NT 10.0";
             default -> "Frames";
         };
     }

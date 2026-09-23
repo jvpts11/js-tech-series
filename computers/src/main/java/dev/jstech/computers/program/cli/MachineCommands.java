@@ -29,6 +29,10 @@ final class MachineCommands {
             return "status";
         }
 
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
+        }
+
         @Override public List<String> aliases() {
             return List.of("stat");
         }
@@ -53,6 +57,8 @@ final class MachineCommands {
         }
 
         @Override public String name() { return "config"; }
+
+        @Override public CommandGroup group() { return CommandGroup.MACHINE; }
 
         @Override public String summary() { return "show or change this computer's settings"; }
 
@@ -88,6 +94,8 @@ final class MachineCommands {
 
         @Override public String name() { return "reboot"; }
 
+        @Override public CommandGroup group() { return CommandGroup.MACHINE; }
+
         @Override public List<String> aliases() { return List.of("restart"); }
 
         @Override public String summary() { return "restart the computer (--firmware: into the firmware setup)"; }
@@ -114,6 +122,10 @@ final class MachineCommands {
 
         @Override public String name() {
             return "devices";
+        }
+
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
         }
 
         @Override public List<String> aliases() {

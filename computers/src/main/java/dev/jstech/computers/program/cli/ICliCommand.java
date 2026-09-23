@@ -60,6 +60,11 @@ public interface ICliCommand {
         return List.of();
     }
 
+    /** What the command is for, the heading a listing of everything a machine can run puts it under. */
+    default CommandGroup group() {
+        return CommandGroup.SOFTWARE;
+    }
+
     /**
      * One switch and what it does.
      *

@@ -12,6 +12,7 @@ import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.Programs;
+import dev.jstech.computers.program.iql.IqlVerb;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -353,9 +354,9 @@ final class SoftwareCommands {
     static final class Maint implements ICliCommand {
 
         private final String verb;
-        private final String action;
+        private final IqlVerb action;
 
-        Maint(final String verb, final String action) {
+        Maint(final String verb, final IqlVerb action) {
             this.verb = verb;
             this.action = action;
         }

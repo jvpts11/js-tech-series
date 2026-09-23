@@ -9,6 +9,7 @@ package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.program.iql.IqlOperation;
+import dev.jstech.computers.program.iql.IqlVerb;
 import java.util.List;
 
 /**
@@ -130,11 +131,12 @@ public interface ICliOperations {
     }
 
     /**
-     * Run an index-maintenance action (analyze / reindex / vacuum) on the Mainframe.
+     * Run an index-maintenance action ({@link IqlVerb#ANALYZE}, {@link IqlVerb#REINDEX} or {@link IqlVerb#VACUUM})
+     * on the Mainframe.
      *
      * @return a result whose message describes the outcome, or a failure when this computer is not a Mainframe
      */
-    default ICliComputer.OpResult maintenance(final String action) {
+    default ICliComputer.OpResult maintenance(final IqlVerb action) {
         return ICliComputer.OpResult.fail("this machine cannot reach the network");
     }
 

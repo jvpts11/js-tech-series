@@ -34,6 +34,11 @@ public final class ClusterCommand implements ICliCommand {
     }
 
     @Override
+    public CommandGroup group() {
+        return CommandGroup.NETWORK;
+    }
+
+    @Override
     public String summary() {
         return "manage the supercomputers and datacenters on the network (Cluster Management Computer)";
     }

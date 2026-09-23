@@ -306,6 +306,8 @@ final class PosixFileCommands {
 
         @Override public String name() { return "write"; }
 
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
+
         @Override public String summary() { return "create or overwrite a file with the given text"; }
 
         @Override public String usage() { return "<file> <text...>"; }
@@ -364,6 +366,8 @@ final class PosixFileCommands {
         }
 
         @Override public String name() { return "clear"; }
+
+        @Override public CommandGroup group() { return CommandGroup.MACHINE; }
 
         @Override public String summary() { return "clear the terminal"; }
 

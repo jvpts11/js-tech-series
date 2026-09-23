@@ -9,6 +9,7 @@ package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.program.iql.IqlVerb;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -150,7 +151,7 @@ class CliShellTest {
     @Test
     void run_maintenanceDelegatesToTheComputer() {
         joined("vacuum");
-        assertEquals("maintenance(vacuum)", computer.lastCall);
+        assertEquals("maintenance(VACUUM)", computer.lastCall);
     }
 
     @Test
@@ -247,7 +248,7 @@ class CliShellTest {
             return object.equalsIgnoreCase("items") ? query(where, server, limit) : List.of();
         }
 
-        @Override public OpResult maintenance(final String action) {
+        @Override public OpResult maintenance(final IqlVerb action) {
             lastCall = "maintenance(" + action + ")";
             return OpResult.ok("done");
         }

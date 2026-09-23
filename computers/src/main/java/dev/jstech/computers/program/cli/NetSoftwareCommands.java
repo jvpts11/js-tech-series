@@ -9,9 +9,8 @@ package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.program.job.JobWhen;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
-import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -29,9 +28,6 @@ final class NetSoftwareCommands {
 
     /** Software on the appliance, which wherever a package comes from needs the network to come from it. */
     private static final CommandScope NET_ANY = CommandScope.on(CommandScope.NET_SYSTEMS);
-
-    /** What the groups of {@code showcommands} are called, in the order a person meets them. */
-    private static final String[] GROUPS = {"FILES", "TEXT", "MACHINE", "NETWORK", "SOFTWARE"};
 
     private NetSoftwareCommands() {
     }
@@ -211,40 +207,22 @@ final class NetSoftwareCommands {
         }
 
         @Override public void run(final CliContext ctx) {
-            final Map<String, List<String>> byGroup = new LinkedHashMap<>();
-            for (final String group : GROUPS) {
+            final Map<CommandGroup, List<String>> byGroup = new EnumMap<>(CommandGroup.class);
+            for (final CommandGroup group : CommandGroup.values()) {
                 byGroup.put(group, new ArrayList<>());
             }
             for (final ICliCommand command : ctx.shell().commands()) {
-                if (!command.available(ctx.computer())) {
-                    continue;
+                if (command.available(ctx.computer())) {
+                    byGroup.get(command.group()).add(command.name());
                 }
-                byGroup.get(groupOf(command.name())).add(command.name());
             }
-            for (final Map.Entry<String, List<String>> group : byGroup.entrySet()) {
+            for (final Map.Entry<CommandGroup, List<String>> group : byGroup.entrySet()) {
                 if (group.getValue().isEmpty()) {
                     continue;
                 }
                 group.getValue().sort(String::compareTo);
-                ctx.out().row(group.getKey(), String.join("  ", group.getValue()));
+                ctx.out().row(group.getKey().name(), String.join("  ", group.getValue()));
             }
-        }
-
-        /**
-         * Which heading a word belongs under.
-         *
-         * <p>By the word itself rather than by where its class lives: a command an add-on registered has no
-         * class of ours to be grouped by, and the player reading this has only the word either way.
-         */
-        private static String groupOf(final String name) {
-            return switch (name.toLowerCase(Locale.ROOT)) {
-                case "listfiles", "seefile", "read", "delete", "copy", "rename", "write", "format" -> "FILES";
-                case "findtext", "sortlines" -> "TEXT";
-                case "memory", "tasklist", "end", "worldtime", "clear", "findcommand", "status", "reboot",
-                        "hostname", "whoami", "devices", "config" -> "MACHINE";
-                case "interac", "iql", "net", "ssh", "exit", "gateway", "cluster" -> "NETWORK";
-                default -> "SOFTWARE";
-            };
         }
     }
 }

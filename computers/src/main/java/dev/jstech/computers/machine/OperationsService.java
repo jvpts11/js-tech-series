@@ -16,6 +16,7 @@ import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.ICliNetwork;
+import dev.jstech.computers.program.iql.IqlVerb;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
@@ -329,7 +330,7 @@ public final class OperationsService {
      *
      * <p>Only the Mainframe runs these, because they are what it keeps.
      */
-    public ICliComputer.OpResult maintenance(final String action) {
+    public ICliComputer.OpResult maintenance(final IqlVerb action) {
         if (!this.terminal.isMainframeHost()) {
             return ICliComputer.OpResult.fail("maintenance runs on the Mainframe only");
         }
@@ -340,16 +341,16 @@ public final class OperationsService {
         }
         final var index = mainframe.networkIndex();
         return switch (action) {
-            case "analyze" -> {
+            case ANALYZE -> {
                 index.analyzeIncremental(this.level, net);
                 yield ICliComputer.OpResult.ok("ANALYZE complete - " + index.catalogSize() + " types reconciled");
             }
-            case "reindex" -> {
+            case REINDEX -> {
                 // The disks are read now; the catalog is built off the tick and swapped in a tick or two later.
                 mainframe.reindexAsync(null);
                 yield ICliComputer.OpResult.ok("REINDEX started - rebuilding the catalog from disks");
             }
-            case "vacuum" -> {
+            case VACUUM -> {
                 final int freed = index.vacuum(this.level, net);
                 yield ICliComputer.OpResult.ok("VACUUM freed " + freed
                         + (freed == 1 ? " ghost entry" : " ghost entries"));

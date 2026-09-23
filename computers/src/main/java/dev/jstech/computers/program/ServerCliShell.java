@@ -268,10 +268,10 @@ abstract class ServerCliShell implements ICliComputer {
                 os.displayName(),
                 shellFamily() == ShellFamily.POSIX
                         ? KernelNames.kernel(os.platform(), computer.processorBits())
-                        : os.platform() == Platform.FRAMES ? KernelNames.frames(os.id().getPath())
+                        : os.platform() == Platform.FRAMES ? KernelNames.frames(os.familyRank())
                         : "JSC " + os.id().getPath(),
                 hostname(),
-                os.shellId(),
+                os.shell().serializedName(),
                 chrome != null ? chrome.displayName()
                         : "none (" + KernelNames.terminal(os.platform()) + ")",
                 computer.maxCpuMhz() + " MHz",

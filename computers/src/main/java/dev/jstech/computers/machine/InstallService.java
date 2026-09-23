@@ -18,7 +18,6 @@ import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.fs.StoredFile;
-import dev.jstech.computers.os.install.SetupJob;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.os.install.SetupTiming;
 import dev.jstech.computers.config.ComputersServerConfig;
@@ -137,7 +136,7 @@ public final class InstallService {
             return ICliComputer.OpResult.fail("this computer cannot store installed programs");
         }
         final Optional<String> refusal = SetupRunner.begin(machine, this.level,
-                ((BlockEntity) this.terminal).getBlockPos(), program, medium, false, SetupJob.VIA_INSTALL);
+                ((BlockEntity) this.terminal).getBlockPos(), program, medium, false);
         return refusal.map(ICliComputer.OpResult::fail)
                 .orElseGet(() -> ICliComputer.OpResult.ok("Setting up " + program.commandName() + " from "
                         + driveName(medium) + " ..."));

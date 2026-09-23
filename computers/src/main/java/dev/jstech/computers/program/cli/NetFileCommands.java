@@ -57,6 +57,10 @@ final class NetFileCommands {
             return "listfiles";
         }
 
+        @Override public CommandGroup group() {
+            return CommandGroup.FILES;
+        }
+
         @Override public String summary() {
             return "everything on this machine's disk";
         }
@@ -116,6 +120,10 @@ final class NetFileCommands {
             return "seefile";
         }
 
+        @Override public CommandGroup group() {
+            return CommandGroup.FILES;
+        }
+
         @Override public String summary() {
             return "put a file on the glass";
         }
@@ -164,6 +172,10 @@ final class NetFileCommands {
             return "delete";
         }
 
+        @Override public CommandGroup group() {
+            return CommandGroup.FILES;
+        }
+
         @Override public String summary() {
             return "take a file off the disk";
         }
@@ -190,6 +202,10 @@ final class NetFileCommands {
 
         @Override public String name() {
             return "copy";
+        }
+
+        @Override public CommandGroup group() {
+            return CommandGroup.FILES;
         }
 
         @Override public String summary() {
@@ -223,6 +239,10 @@ final class NetFileCommands {
             return "rename";
         }
 
+        @Override public CommandGroup group() {
+            return CommandGroup.FILES;
+        }
+
         @Override public String summary() {
             return "give a file another name";
         }
@@ -252,6 +272,10 @@ final class NetFileCommands {
 
         @Override public String name() {
             return "write";
+        }
+
+        @Override public CommandGroup group() {
+            return CommandGroup.FILES;
         }
 
         @Override public String summary() {

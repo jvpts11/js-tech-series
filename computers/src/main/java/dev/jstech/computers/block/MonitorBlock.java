@@ -640,7 +640,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
             final ConsoleIdentity console;
             if (live != null) {
                 // A booted live medium: a root shell on the installer, named after the medium.
-                console = new ConsoleIdentity(ConsoleIdentity.LIVE, live.hostname(),
+                console = new ConsoleIdentity(null, true, live.hostname(),
                         (live.distro() == LiveInstallState.Distro.ARCH ? "Arch Linux" : "Gentoo") + " live",
                         Platform.LINUX, host.processorBits());
             } else {
@@ -650,7 +650,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                         ? new ServerCliComputer(terminalHost, serverLevel)
                                 .hostname()
                         : "";
-                console = new ConsoleIdentity(posix && os != null ? os.shellId() : "", hostname,
+                console = new ConsoleIdentity(posix && os != null ? os.shell() : null, false, hostname,
                         os == null ? "" : os.displayName(), os == null ? null : os.platform(),
                         host.processorBits());
             }

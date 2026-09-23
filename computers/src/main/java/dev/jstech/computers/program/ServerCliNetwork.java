@@ -10,6 +10,7 @@ package dev.jstech.computers.program;
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.program.iql.IIqlCondition;
 import dev.jstech.computers.program.iql.IqlOperation;
+import dev.jstech.computers.program.iql.IqlVerb;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.peripheral.IPeripheralOwnerSupport;
@@ -221,7 +222,7 @@ abstract class ServerCliNetwork extends ServerCliFiles {
     }
 
     @Override
-    public OpResult maintenance(final String action) {
+    public OpResult maintenance(final IqlVerb action) {
         return operations().maintenance(action);
     }
 

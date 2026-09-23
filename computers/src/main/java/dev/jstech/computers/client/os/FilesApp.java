@@ -95,7 +95,6 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     private static final int BAND_EDGE = 0xCC4C84F0;
 
     private OsSkin skin = OsSkin.fallback();
-    private String os = "frames_95";
 
     private final BlockPos host;
     /*
@@ -263,7 +262,6 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     public FilesApp(final BlockPos host, final String os, final String initialDir, @Nullable final BlockPos monitorPos) {
         this.host = host;
         this.monitorPos = monitorPos;
-        this.os = os;
         this.skin = OsSkin.forDesktop(ResourceLocation.fromNamespaceAndPath("jsc", os));
 
         backButton = root.add(new Button("<", this::goBack));
@@ -327,7 +325,6 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     @Override
     public void applySkin(final OsSkin osSkin) {
         this.skin = osSkin;
-        this.os = osSkin.osPath();
     }
 
     /** Takes a listing of the folder this explorer is on. */
@@ -760,7 +757,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     }
 
     private boolean linux() {
-        return !os.startsWith("frames_");
+        return skin.unixLike();
     }
 
     private boolean isSelected(final int index) {

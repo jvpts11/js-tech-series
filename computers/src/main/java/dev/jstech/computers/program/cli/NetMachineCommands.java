@@ -47,6 +47,10 @@ final class NetMachineCommands {
             return "clear";
         }
 
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
+        }
+
         @Override public String summary() {
             return "wipe the glass";
         }
@@ -64,6 +68,10 @@ final class NetMachineCommands {
 
         @Override public String name() {
             return "memory";
+        }
+
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
         }
 
         @Override public String summary() {
@@ -99,6 +107,10 @@ final class NetMachineCommands {
             return "tasklist";
         }
 
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
+        }
+
         @Override public String summary() {
             return "what this machine is running";
         }
@@ -125,6 +137,10 @@ final class NetMachineCommands {
 
         @Override public String name() {
             return "end";
+        }
+
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
         }
 
         @Override public String summary() {
@@ -180,6 +196,10 @@ final class NetMachineCommands {
             return "findcommand";
         }
 
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
+        }
+
         @Override public String summary() {
             return "say where a command comes from";
         }
@@ -216,6 +236,10 @@ final class NetMachineCommands {
             return "worldtime";
         }
 
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
+        }
+
         @Override public String summary() {
             return "the day and hour of the world";
         }
@@ -242,6 +266,10 @@ final class NetMachineCommands {
 
         @Override public String name() {
             return "format";
+        }
+
+        @Override public CommandGroup group() {
+            return CommandGroup.FILES;
         }
 
         @Override public String summary() {

@@ -294,8 +294,9 @@ public final class ProgramFilesProjection {
         return null;
     }
 
+    /** The desktop shell a Frames edition starts: the first edition's own, and the one every edition after it has. */
     private static String shellOf(final OsDef os) {
-        return os.id().getPath().equals("frames_95") ? "explorer.exe" : "frames.exe";
+        return os.familyRank() == 1 ? "explorer.exe" : "frames.exe";
     }
 
     /**

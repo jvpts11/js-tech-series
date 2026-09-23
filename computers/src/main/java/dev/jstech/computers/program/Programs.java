@@ -31,6 +31,14 @@ public final class Programs {
     public static final ResourceLocation TASK_MANAGER =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "task_manager");
 
+    /** The file manager every desktop ships, under whatever name that desktop gives it. */
+    public static final ResourceLocation FILES =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "files");
+
+    /** Settings: the machine's own knobs, and the list of everything installed on it. */
+    public static final ResourceLocation SETTINGS =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "settings");
+
     /** Network Management Studio: an SSMS-style operations console, installed by the player. */
     public static final ResourceLocation NMS =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "nms");

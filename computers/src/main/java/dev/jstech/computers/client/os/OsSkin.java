@@ -7,7 +7,10 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.CdePalette;
+import dev.jstech.computers.os.DesktopEnvironmentDef;
+import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.core.client.gui.skin.ISkin;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.Font;
@@ -286,6 +289,17 @@ public final class OsSkin implements ISkin {
     /** The desktop environment id path this skin represents (frames_95/xp/11, kde_plasma, gnome, cinnamon). */
     public String osPath() {
         return desktopPath;
+    }
+
+    /**
+     * Whether the desktop this skin draws stands on a Unix family, which sees one tree from {@code /} rather
+     * than lettered drives. The desktop says so through its panel style, so a program asks here instead of
+     * keeping a list of desktop names that the next desktop is missing from.
+     */
+    public boolean unixLike() {
+        final DesktopEnvironmentDef desktop =
+                OsRegistry.getDesktop(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, desktopPath));
+        return desktop != null && desktop.panelStyle().unixLike();
     }
 
     /**

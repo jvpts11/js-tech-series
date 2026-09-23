@@ -12,6 +12,7 @@ import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.HardwareTooltip;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
+import dev.jstech.computers.operation.payload.machine.MachineLabels;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
@@ -45,8 +46,7 @@ final class SettingsSnapshots {
         final int netshare = DiskItem.publicPermille(sysDisk);
         final int cpuCount = computer.installedCpus();
         final String cpuLabel = cpuCount + (cpuCount == 1 ? " CPU" : " CPUs");
-        final ResourceLocation osId = computer.installedOsId();
-        final String osLabel = osId == null ? "none" : osId.getPath();
+        final String osLabel = MachineLabels.osLabelOf(computer.installedOsId());
         final OsDef os = computer.installedOs();
         final String platform = os == null ? "-" : os.platform().label();
         final List<String> installed = new ArrayList<>(console.installed());

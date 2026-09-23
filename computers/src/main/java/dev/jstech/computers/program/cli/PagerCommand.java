@@ -41,6 +41,11 @@ final class PagerCommand implements ICliCommand, CliShell.IHandOver {
     }
 
     @Override
+    public CommandGroup group() {
+        return CommandGroup.FILES;
+    }
+
+    @Override
     public String summary() {
         return "read a file a page at a time";
     }

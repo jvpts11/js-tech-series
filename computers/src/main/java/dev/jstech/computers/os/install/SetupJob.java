@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.os.install;
 
+import dev.jstech.computers.os.PackageManagerKind;
+
 /**
  * One program being set up on one machine: what it is, where it comes from, how it was asked for,
  * and how far along it is.
@@ -17,13 +19,6 @@ package dev.jstech.computers.os.install;
  */
 public final class SetupJob {
 
-    /** Asked for with the disc's setup program, This PC, or the prompt's {@code install}. */
-    public static final String VIA_SETUP = "setup";
-    /** Asked for with the prompt's {@code install} verb, from a disc in a linked drive. */
-    public static final String VIA_INSTALL = "install";
-    /** Asked for with the Frames package manager, from the Mirror. */
-    public static final String VIA_PCKMGR = "pckmgr";
-
     private final String programId;
     private final String name;
     private final String house;
@@ -32,8 +27,11 @@ public final class SetupJob {
     private final boolean removing;
     private final int ticksTotal;
     private int ticksLeft;
-    /** How it was asked for: a setup program, the install verb, or a package manager's command word. */
-    private final String via;
+    /**
+     * The package manager that was asked for it, whose way of drawing a bar and closing lines the prompt
+     * copies; {@link PackageManagerKind#NONE} when it was a disc's setup program or the plain install verb.
+     */
+    private final PackageManagerKind manager;
     /** The package's short name, the word the prompt and the managers use for it. */
     private final String packageName;
     /** Whether a prompt has drawn the bar once; not saved, a prompt can draw it again from scratch. */
@@ -48,12 +46,12 @@ public final class SetupJob {
      * @param removing    taking it off rather than putting it on
      * @param ticksTotal  how long the whole thing takes
      * @param ticksLeft   how much of that is still to go
-     * @param via         how it was asked for, which decides what the prompt prints
+     * @param manager     the package manager that was asked for it, which decides what the prompt prints
      * @param packageName the package's short name
      */
     public SetupJob(final String programId, final String name, final String house, final int sizeMb,
                     final String source, final boolean removing, final int ticksTotal, final int ticksLeft,
-                    final String via, final String packageName) {
+                    final PackageManagerKind manager, final String packageName) {
         this.programId = programId;
         this.name = name;
         this.house = house;
@@ -62,27 +60,27 @@ public final class SetupJob {
         this.removing = removing;
         this.ticksTotal = Math.max(1, ticksTotal);
         this.ticksLeft = Math.max(0, Math.min(ticksLeft, this.ticksTotal));
-        this.via = via == null || via.isEmpty() ? VIA_SETUP : via;
+        this.manager = manager == null ? PackageManagerKind.NONE : manager;
         this.packageName = packageName == null || packageName.isEmpty() ? pathOf(programId) : packageName;
     }
 
     /** A job part way through, asked for with a setup program. */
     public SetupJob(final String programId, final String name, final String house, final int sizeMb,
                     final String source, final boolean removing, final int ticksTotal, final int ticksLeft) {
-        this(programId, name, house, sizeMb, source, removing, ticksTotal, ticksLeft, VIA_SETUP, "");
+        this(programId, name, house, sizeMb, source, removing, ticksTotal, ticksLeft, PackageManagerKind.NONE, "");
     }
 
     /** A job at its start, asked for with a setup program. */
     public SetupJob(final String programId, final String name, final String house, final int sizeMb,
                     final String source, final boolean removing, final int ticksTotal) {
-        this(programId, name, house, sizeMb, source, removing, ticksTotal, ticksTotal, VIA_SETUP, "");
+        this(programId, name, house, sizeMb, source, removing, ticksTotal, ticksTotal, PackageManagerKind.NONE, "");
     }
 
-    /** A job at its start, asked for that way. */
+    /** A job at its start, asked for from that package manager. */
     public SetupJob(final String programId, final String name, final String house, final int sizeMb,
-                    final String source, final boolean removing, final int ticksTotal, final String via,
-                    final String packageName) {
-        this(programId, name, house, sizeMb, source, removing, ticksTotal, ticksTotal, via, packageName);
+                    final String source, final boolean removing, final int ticksTotal,
+                    final PackageManagerKind manager, final String packageName) {
+        this(programId, name, house, sizeMb, source, removing, ticksTotal, ticksTotal, manager, packageName);
     }
 
     private static String pathOf(final String id) {
@@ -122,9 +120,9 @@ public final class SetupJob {
         return this.ticksLeft;
     }
 
-    /** How it was asked for: {@link #VIA_SETUP}, {@link #VIA_INSTALL}, or a package manager's command word. */
-    public String via() {
-        return this.via;
+    /** The package manager that was asked for it, or {@link PackageManagerKind#NONE} for a setup program. */
+    public PackageManagerKind manager() {
+        return this.manager;
     }
 
     /** The package's short name, the word the prompt and the managers use for it. */

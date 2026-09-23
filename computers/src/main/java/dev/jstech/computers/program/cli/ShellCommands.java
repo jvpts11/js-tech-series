@@ -156,6 +156,10 @@ final class ShellCommands {
             return "whoami";
         }
 
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
+        }
+
         @Override public String summary() {
             return "show this computer's name and id";
         }
@@ -176,6 +180,11 @@ final class ShellCommands {
 
         @Override public String name() {
             return "exit";
+        }
+
+        /** It leaves a shell on another machine, so it stands with the ways of reaching one. */
+        @Override public CommandGroup group() {
+            return CommandGroup.NETWORK;
         }
 
         @Override public List<String> aliases() {

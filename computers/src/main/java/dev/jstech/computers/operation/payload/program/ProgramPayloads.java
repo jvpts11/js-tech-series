@@ -12,7 +12,6 @@ import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.machine.ProgramLauncher;
-import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
@@ -20,7 +19,6 @@ import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.OpenComputerUiPayload;
 import dev.jstech.computers.operation.payload.WireLine;
-import dev.jstech.computers.operation.payload.OpenProgramPayload;
 import dev.jstech.computers.operation.payload.ProcessActionPayload;
 import dev.jstech.computers.operation.payload.ProcessListPayload;
 import dev.jstech.computers.operation.payload.RunProgramPayload;
@@ -28,9 +26,7 @@ import dev.jstech.computers.operation.payload.UiEventPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.operation.payload.UninstallProgramPayload;
 import dev.jstech.computers.os.FirmwareKind;
-import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.fs.FsPaths;
-import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.program.cli.ICliComputer;
@@ -39,16 +35,11 @@ import dev.jstech.computers.program.iql.IqlSavedObject;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramPriority;
-import dev.jstech.core.peripheral.IPeripheralOwner;
-import dev.jstech.core.tier.HardwareEra;
 import java.util.function.Function;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -56,7 +47,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static dev.jstech.computers.operation.payload.files.FilePayloads.readDiskFile;
-import static dev.jstech.computers.operation.payload.program.ConsolePayloads.launchProgram;
 
 /**
  * The payloads that open and run programs on a computer, carry their windows and window events, list and act on its
@@ -75,8 +65,6 @@ public final class ProgramPayloads {
                 ClientPayloadHandlers.onMainThread(ProgramPayloads::handleUiWindow));
         ComputerAccess.accept(registrar, UiEventPayload.TYPE, UiEventPayload.STREAM_CODEC,
                 ComputerAccess.machine(UiEventPayload::hostPos), ProgramPayloads::handleUiEvent);
-        ComputerAccess.accept(registrar, OpenProgramPayload.TYPE, OpenProgramPayload.STREAM_CODEC,
-                ComputerAccess.machine(OpenProgramPayload::hostPos), ProgramPayloads::handleOpenProgram);
         registrar.playToClient(ProcessListPayload.TYPE, ProcessListPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(ProgramPayloads::handleProcessList));
         ComputerAccess.accept(registrar, ProcessActionPayload.TYPE, ProcessActionPayload.STREAM_CODEC,
@@ -156,59 +144,6 @@ public final class ProgramPayloads {
                 payload.host(), payload.monitorPos(),
                 FirmwareKind.byId(payload.firmwareKind()),
                 payload.name());
-    }
-
-    private static void handleOpenProgram(final OpenProgramPayload payload, final ServerPlayer player,
-                                          final ServerLevel level) {
-        if (!(level.getBlockEntity(payload.hostPos())
-                instanceof IComputerTerminalHost terminalHost)) {
-            return;
-        }
-        /*
-         * Anti-spoof: either this host's terminal menu is open, or the player is within reach of the
-         * monitor they used (the desktop shell is a client-only screen with no server-side menu, so a
-         * program opened from it cannot be validated against an open container).
-         */
-        final boolean viaTerminal = player.containerMenu instanceof ComputerTerminalMenu terminal
-                && terminal.hostPos().equals(payload.hostPos());
-        /*
-         * The desktop path is only valid when the monitor is actually a linked peripheral of this host,
-         * so a player near any monitor cannot open a program bound to a foreign computer.
-         */
-        final boolean nearMonitor = player.distanceToSqr(
-                Vec3.atCenterOf(payload.monitorPos())) <= 64.0
-                && terminalHost instanceof IPeripheralOwner owner
-                && owner.linkedEndpoints().contains(payload.monitorPos().asLong());
-        if (!viaTerminal && !nearMonitor) {
-            return;
-        }
-        final String id = payload.programId();
-        if (id.equals(Programs.COMMAND_PROMPT.toString())
-                || id.equals("command_prompt")) {
-            final Component title =
-                    player.level().getBlockState(payload.hostPos()).getBlock().getName();
-            /*
-             * The host's board-derived era drives the prompt's GUI skin; capture it at open time. It is
-             * not re-synced afterwards because the board is only swapped in the computer's own assembly
-             * GUI, never from the running prompt.
-             */
-            final IOsHost opened = player.level().getBlockEntity(payload.hostPos())
-                    instanceof IOsHost host ? host : null;
-            final HardwareEra hostEra = opened == null ? null : opened.displayEra();
-            // Which run of the machine this terminal belongs to, so its lines are not another run's.
-            final long session = opened == null || opened.console() == null ? 0L : opened.console().session();
-            player.openMenu(new SimpleMenuProvider(
-                    (windowId, inv, p) -> new CommandPromptMenu(
-                            windowId, inv, payload.monitorPos(), payload.hostPos(), hostEra, session), title),
-                    buf -> CommandPromptMenu.writeOpenBuffer(
-                            buf, payload.monitorPos(), payload.hostPos(), hostEra, session));
-        } else {
-            /*
-             * The NMS and other windowed programs open through the shared launcher, which checks they
-             * are installed and (for the NMS) that the IQL Engine is running on the network's Mainframe.
-             */
-            launchProgram(player, terminalHost, payload.monitorPos(), payload.hostPos(), id);
-        }
     }
 
     private static void handleUiWindow(final UiWindowPayload payload, final Player player) {

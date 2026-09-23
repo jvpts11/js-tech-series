@@ -13,6 +13,7 @@ import dev.jstech.computers.blockentity.IWatchedConsole;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.ShellKind;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
@@ -53,12 +54,6 @@ public class CommandPromptMenu extends AbstractContainerMenu {
     /** The longest a shell's or a family's name travels at, and the longest a machine's or a system's does. */
     private static final int SHORT_NAME = 16;
     private static final int LONG_NAME = 48;
-
-    public CommandPromptMenu(final int containerId, final Inventory playerInventory,
-                             final BlockPos monitorPos, final BlockPos hostPos,
-                             @Nullable final HardwareEra era, final long session) {
-        this(containerId, playerInventory, monitorPos, hostPos, era, ConsoleIdentity.NONE, session);
-    }
 
     public CommandPromptMenu(final int containerId, final Inventory playerInventory,
                              final BlockPos monitorPos, final BlockPos hostPos,
@@ -107,23 +102,20 @@ public class CommandPromptMenu extends AbstractContainerMenu {
         final BlockPos monitor = buf.readBlockPos();
         final BlockPos host = buf.readBlockPos();
         final HardwareEra era = HardwareEra.find(buf.readVarInt());
-        final String shellId = buf.readUtf(SHORT_NAME);
+        final String shell = buf.readUtf(SHORT_NAME);
+        final boolean live = buf.readBoolean();
         final String hostname = buf.readUtf(LONG_NAME);
         final String osLabel = buf.readUtf(LONG_NAME);
         final String platform = buf.readUtf(SHORT_NAME);
-        final ConsoleIdentity console = ConsoleIdentity.ofWire(shellId, hostname, osLabel, platform,
+        final ConsoleIdentity console = ConsoleIdentity.ofWire(shell, live, hostname, osLabel, platform,
                 buf.readVarInt());
         return new OpenData(monitor, host, era, console, buf.readVarLong());
     }
 
-    /** Writes the open buffer the client reconstructs from: the two positions plus the host era's id (-1 if none). */
-    public static void writeOpenBuffer(final RegistryFriendlyByteBuf buf, final BlockPos monitorPos,
-                                       final BlockPos hostPos, @Nullable final HardwareEra era,
-                                       final long session) {
-        writeOpenBuffer(buf, monitorPos, hostPos, era, ConsoleIdentity.NONE, session);
-    }
-
-    /** The full open buffer, including who the console says it is (nothing at all for a DOS-family OS). */
+    /**
+     * Writes the open buffer the client reconstructs from: the two positions, the host era's id (-1 if none), and
+     * who the console says it is (nothing at all for a DOS-family OS).
+     */
     public static void writeOpenBuffer(final RegistryFriendlyByteBuf buf, final BlockPos monitorPos,
                                        final BlockPos hostPos, @Nullable final HardwareEra era,
                                        final ConsoleIdentity console, final long session) {
@@ -131,7 +123,8 @@ public class CommandPromptMenu extends AbstractContainerMenu {
         buf.writeBlockPos(hostPos);
         buf.writeVarInt(era == null ? -1 : era.id());
         // Cut to what the wire takes rather than refused by it: a machine may be named at any length.
-        buf.writeUtf(cut(console.shellId(), SHORT_NAME), SHORT_NAME);
+        buf.writeUtf(console.shellName(), SHORT_NAME);
+        buf.writeBoolean(console.live());
         buf.writeUtf(cut(console.hostname(), LONG_NAME), LONG_NAME);
         buf.writeUtf(cut(console.osLabel(), LONG_NAME), LONG_NAME);
         buf.writeUtf(console.platformName(), SHORT_NAME);
@@ -154,9 +147,10 @@ public class CommandPromptMenu extends AbstractContainerMenu {
         return this.console.posix();
     }
 
-    /** The installed shell id ({@code bash}, {@code zsh}, {@code sh}), or {@code ""} for a DOS-family OS. */
-    public String shellId() {
-        return this.console.shellId();
+    /** The installed shell ({@code bash}, {@code zsh}, {@code sh}), or null for a DOS-family OS. */
+    @Nullable
+    public ShellKind shell() {
+        return this.console.shell();
     }
 
     /** The POSIX host name, or {@code ""} for a DOS-family OS. */

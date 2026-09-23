@@ -7,11 +7,13 @@
  */
 package dev.jstech.computers.program;
 
+import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.SetupJob;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.program.job.JobStorage;
 import dev.jstech.computers.program.job.MachineJobs;
+import dev.jstech.core.id.StableNames;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -86,6 +88,8 @@ public final class ComputerConsoleState {
     private Long sshTarget;
 
     public static final int MAX_HISTORY = 100;
+
+    private static final StableNames<PackageManagerKind> MANAGERS = StableNames.of(PackageManagerKind.class);
 
     /**
      * A program written by a player and installed from the Mirror.
@@ -318,7 +322,7 @@ public final class ComputerConsoleState {
             job.putBoolean("Removing", setup.removing());
             job.putInt("Total", setup.ticksTotal());
             job.putInt("Left", setup.ticksLeft());
-            job.putString("Via", setup.via());
+            job.putString("Via", setup.manager().serializedName());
             job.putString("Package", setup.packageName());
             tag.put("Setup", job);
         }
@@ -363,7 +367,7 @@ public final class ComputerConsoleState {
             setup = new SetupJob(job.getString("Program"), job.getString("Name"),
                     job.getString("House"), job.getInt("SizeMb"), job.getString("Source"),
                     job.getBoolean("Removing"), job.getInt("Total"), job.getInt("Left"),
-                    job.getString("Via"), job.getString("Package"));
+                    MANAGERS.find(job.getString("Via")), job.getString("Package"));
         }
         liveInstall = tag.contains("LiveInstall")
                 ? LiveInstallState.deserialize(tag.getString("LiveInstall"))

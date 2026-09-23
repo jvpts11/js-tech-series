@@ -196,6 +196,22 @@ public final class OsRegistry {
     }
 
     /**
+     * Whether {@code os} is the newest of its family: it has a place in the family's order, and nothing of its
+     * platform is placed after it. A family with no order has no newest.
+     */
+    public static boolean newestOfFamily(final OsDef os) {
+        if (os.familyRank() == 0) {
+            return false;
+        }
+        for (final OsDef other : oses()) {
+            if (other.platform() == os.platform() && other.familyRank() > os.familyRank()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * The name of the system at that place in its family's order, for a message saying what is needed.
      *
      * <p>Falls back to words rather than a name where nothing answers to that rank, which is what happens if a

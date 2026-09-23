@@ -38,6 +38,12 @@ final class DeskTrash {
 
     private static final String CONFIRM = "Confirm File Delete";
 
+    /** The trash's two pictures, which are also what its icon on the wallpaper is known by. */
+    private static final ResourceLocation EMPTY_ICON =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "trash");
+    private static final ResourceLocation FULL_ICON =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "trash_full");
+
     DeskTrash(final DesktopScreen desktop) {
         this.desktop = desktop;
     }
@@ -110,7 +116,7 @@ final class DeskTrash {
 
     /** The trash's picture, full or empty. */
     ResourceLocation icon() {
-        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, this.full ? "trash_full" : "trash");
+        return this.full ? FULL_ICON : EMPTY_ICON;
     }
 
     /** The trash as an icon on the wallpaper. */
@@ -120,7 +126,8 @@ final class DeskTrash {
 
     /** Whether a launcher is the trash's own. */
     boolean is(final DesktopScreen.Launcher launcher) {
-        return launcher.label().equals(title()) && launcher.programId().getPath().startsWith("trash");
+        final ResourceLocation id = launcher.programId();
+        return (EMPTY_ICON.equals(id) || FULL_ICON.equals(id)) && launcher.label().equals(title());
     }
 
     /** A new trash window for this desktop. */

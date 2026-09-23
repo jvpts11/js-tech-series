@@ -8,6 +8,7 @@
 package dev.jstech.computers.os;
 
 import dev.jstech.computers.api.ComputersRegisterEvent;
+import dev.jstech.computers.program.Programs;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
@@ -62,7 +63,7 @@ public record DesktopEnvironmentDef(
      * program with the same rule.
      */
     public String launcherLabel(final ProgramSpec program) {
-        if (panelStyle == PanelStyle.FRAMES_11 && program.id().getPath().equals("command_prompt")) {
+        if (panelStyle == PanelStyle.FRAMES_11 && Programs.COMMAND_PROMPT.equals(program.id())) {
             return "Megashell";
         }
         return nameOf(program);

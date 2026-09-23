@@ -12,6 +12,7 @@ import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.program.cli.CliText;
+import dev.jstech.computers.program.cli.CommandGroup;
 import dev.jstech.computers.program.cli.CommandScope;
 import dev.jstech.computers.program.cli.ICliCommand;
 import dev.jstech.computers.program.cli.ICliComputer;
@@ -49,6 +50,11 @@ public final class InteracCommand implements ICliCommand, CliShell.IHandOver {
     @Override
     public String name() {
         return "interac";
+    }
+
+    @Override
+    public CommandGroup group() {
+        return CommandGroup.NETWORK;
     }
 
     @Override

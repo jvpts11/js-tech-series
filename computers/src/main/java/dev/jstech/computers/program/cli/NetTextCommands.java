@@ -42,6 +42,10 @@ final class NetTextCommands {
             return "findtext";
         }
 
+        @Override public CommandGroup group() {
+            return CommandGroup.TEXT;
+        }
+
         @Override public String summary() {
             return "the lines that hold some text";
         }
@@ -89,6 +93,10 @@ final class NetTextCommands {
 
         @Override public String name() {
             return "sortlines";
+        }
+
+        @Override public CommandGroup group() {
+            return CommandGroup.TEXT;
         }
 
         @Override public String summary() {

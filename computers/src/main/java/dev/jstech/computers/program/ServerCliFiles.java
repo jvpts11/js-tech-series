@@ -51,7 +51,7 @@ abstract class ServerCliFiles extends ServerCliShell {
             return currentLocation().dosPath() + ">";
         }
         final OsDef os = hostBlock instanceof IOsHost c ? c.installedOs() : null;
-        return ConsoleIdentity.promptOf(os == null ? null : os.platform(), os == null ? "" : os.shellId(),
+        return ConsoleIdentity.promptOf(os == null ? null : os.platform(), os == null ? null : os.shell(),
                 hostname(), PosixPath.renderForPrompt(tree(), currentLocation()));
     }
 
@@ -64,7 +64,7 @@ abstract class ServerCliFiles extends ServerCliShell {
         }
         final OsDef os = hostBlock instanceof IOsHost c ? c.installedOs() : null;
         if (shellFamily() == ShellFamily.POSIX && os != null) {
-            return ConsoleIdentity.promptLineOf(os.platform(), os.shellId(), hostname(),
+            return ConsoleIdentity.promptLineOf(os.platform(), os.shell(), hostname(),
                     PosixPath.renderForPrompt(tree(), currentLocation()));
         }
         return new CliLine(prompt(), CliStyle.ACCENT);

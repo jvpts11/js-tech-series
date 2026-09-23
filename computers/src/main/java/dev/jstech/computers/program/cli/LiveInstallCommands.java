@@ -101,6 +101,8 @@ public final class LiveInstallCommands {
 
         @Override public String name() { return "clear"; }
 
+        @Override public CommandGroup group() { return CommandGroup.MACHINE; }
+
         @Override public String summary() { return "clear the terminal"; }
 
         @Override public void run(final CliContext ctx) {

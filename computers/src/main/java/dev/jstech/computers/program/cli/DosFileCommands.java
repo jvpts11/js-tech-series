@@ -45,6 +45,10 @@ final class DosFileCommands {
             return "format";
         }
 
+        @Override public CommandGroup group() {
+            return CommandGroup.FILES;
+        }
+
         @Override public String summary() {
             return "erase everything on a drive";
         }
@@ -211,6 +215,8 @@ final class DosFileCommands {
 
         @Override public String name() { return "write"; }
 
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
+
         @Override public List<String> aliases() { return List.of("save"); }
 
         @Override public String summary() { return "create or overwrite a file on the system disk"; }
@@ -354,6 +360,8 @@ final class DosFileCommands {
         }
 
         @Override public String name() { return "copy"; }
+
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
 
         @Override public String summary() { return "copy a file to another location"; }
 

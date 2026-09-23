@@ -219,6 +219,10 @@ final class MachineToolCommands {
             return "tasklist";
         }
 
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
+        }
+
         @Override public String summary() {
             return "list the tasks this computer is running";
         }

@@ -18,6 +18,7 @@ import dev.jstech.computers.operation.payload.SetupProgressPayload;
 import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ProgramVersions;
@@ -64,19 +65,20 @@ public final class SetupRunner {
                                          final ProgramSpec spec, @Nullable final MediaFormat medium,
                                          final boolean removing) {
         return begin(host, level, pos, spec, medium, removing,
-                medium == null ? SetupJob.VIA_PCKMGR : SetupJob.VIA_SETUP);
+                medium == null ? PackageManagerKind.PCKMGR : PackageManagerKind.NONE);
     }
 
     /**
      * Starts installing (or removing) {@code spec} on {@code host}, or says why it cannot.
      *
-     * @param medium the disc it comes from, or null for the network
-     * @param via    how it was asked for: a setup program, the install verb, or a package manager's word
+     * @param medium  the disc it comes from, or null for the network
+     * @param manager the package manager that was asked, or {@link PackageManagerKind#NONE} for a setup
+     *                program or the install verb
      * @return the refusal, which was also shown at the machine's windows, or empty when the job began
      */
     public static Optional<String> begin(final IOsHost host, final ServerLevel level, final BlockPos pos,
                                          final ProgramSpec spec, @Nullable final MediaFormat medium,
-                                         final boolean removing, final String via) {
+                                         final boolean removing, final PackageManagerKind manager) {
         final ComputerConsoleState console = host.console();
         if (console == null) {
             return Optional.of("This computer cannot hold installed programs.");
@@ -95,7 +97,7 @@ public final class SetupRunner {
         final int ticks = medium == null ? SetupTiming.networkTicks(spec.minDiskMb(), removing, factor)
                 : SetupTiming.ticks(spec.minDiskMb(), medium, removing, factor);
         final SetupJob job = new SetupJob(spec.id().toString(), spec.displayName(),
-                spec.houseOr(SoftwareHouse.MIDSOFT).name(), spec.minDiskMb(), source, removing, ticks, via,
+                spec.houseOr(SoftwareHouse.MIDSOFT).name(), spec.minDiskMb(), source, removing, ticks, manager,
                 spec.commandName());
         console.beginSetup(job);
         host.setChanged();
@@ -202,12 +204,12 @@ public final class SetupRunner {
         final int pct = job.permille() / 10;
         final String pkg = job.packageName();
         final String ver = ProgramVersions.of(job.programId());
-        return switch (job.via()) {
-            case "apt" -> "Progress: [" + pad3(pct) + "%] [" + cells(job.permille(), 40, '#', '.') + "]";
-            case "dnf" -> pkg + "-" + ver + "  " + rate(job) + " MB/s | " + doneMb(job) + " MB  " + clock(job);
-            case "pacman" -> " " + pkg + "-" + ver + "  " + job.sizeMb() + ".0 MiB  " + rate(job) + " MiB/s "
+        return switch (job.manager()) {
+            case APT -> "Progress: [" + pad3(pct) + "%] [" + cells(job.permille(), 40, '#', '.') + "]";
+            case DNF -> pkg + "-" + ver + "  " + rate(job) + " MB/s | " + doneMb(job) + " MB  " + clock(job);
+            case PACMAN -> " " + pkg + "-" + ver + "  " + job.sizeMb() + ".0 MiB  " + rate(job) + " MiB/s "
                     + clock(job) + " [" + cells(job.permille(), 20, '#', '-') + "] " + pad3(pct) + "%";
-            case SetupJob.VIA_PCKMGR -> (job.removing() ? "Removing " : "Downloading ") + pkg + " " + ver
+            case PCKMGR -> (job.removing() ? "Removing " : "Downloading ") + pkg + " " + ver
                     + "  [" + cells(job.permille(), 20, '#', '.') + "]  " + pct + "%";
             default -> "[" + cells(job.permille(), 20, '#', '.') + "]  " + pct + "%";
         };
@@ -218,8 +220,8 @@ public final class SetupRunner {
         final String pkg = job.packageName();
         final String ver = ProgramVersions.of(job.programId());
         final List<WireLine> out = new ArrayList<>();
-        switch (job.via()) {
-            case "apt" -> {
+        switch (job.manager()) {
+            case APT -> {
                 if (job.removing()) {
                     out.add(line("Removing " + pkg + " (" + ver + ") ...", CliStyle.PLAIN));
                     out.add(line("Processing triggers for " + pkg + " ...", CliStyle.OK));
@@ -231,7 +233,7 @@ public final class SetupRunner {
                     out.add(line("Setting up " + pkg + " (" + ver + ") ...", CliStyle.OK));
                 }
             }
-            case "dnf" -> {
+            case DNF -> {
                 out.add(line("Running transaction", CliStyle.PLAIN));
                 out.add(line("  " + (job.removing() ? "Erasing          : " : "Installing       : ") + pkg + "-" + ver
                         + "   1/1", CliStyle.PLAIN));
@@ -239,7 +241,7 @@ public final class SetupRunner {
                 out.add(line("  " + pkg + "-" + ver, CliStyle.PLAIN));
                 out.add(line("Complete!", CliStyle.OK));
             }
-            case "pacman" -> {
+            case PACMAN -> {
                 if (job.removing()) {
                     out.add(line("(1/1) removing " + pkg, CliStyle.OK));
                 } else {
@@ -248,7 +250,7 @@ public final class SetupRunner {
                     out.add(line("(1/1) installing " + pkg, CliStyle.OK));
                 }
             }
-            case SetupJob.VIA_PCKMGR -> out.add(line(job.name() + " " + ver
+            case PCKMGR -> out.add(line(job.name() + " " + ver
                     + (job.removing() ? " removed." : " installed."), CliStyle.OK));
             default -> out.add(line(job.name() + (job.removing() ? " removed." : " installed."), CliStyle.OK));
         }

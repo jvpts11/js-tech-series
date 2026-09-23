@@ -277,9 +277,8 @@ public final class PackageService {
         }
         final ProgramSpec removing = spec;
         final PackageManagerKind manager = this.manager();
-        final String via = manager == PackageManagerKind.NONE ? "uninstall" : manager.command();
         final Optional<String> refusal = SetupRunner.begin(host, this.level, machine.getBlockPos(), removing, null,
-                true, via);
+                true, manager);
         return refusal.map(ICliComputer.OpResult::fail).orElseGet(() -> ICliComputer.OpResult.ok(
                 PackageManagerVoices.remove(manager, removing.commandName(), ProgramVersions.of(removing.id()),
                         removing.minDiskMb())));
@@ -415,7 +414,7 @@ public final class PackageService {
             return ICliComputer.OpResult.fail("this computer cannot store installed programs");
         }
         final Optional<String> refusal = SetupRunner.begin(host, this.level, machine.getBlockPos(), spec, null,
-                false, manager.command());
+                false, manager);
         return refusal.map(ICliComputer.OpResult::fail).orElseGet(() -> ICliComputer.OpResult.ok(
                 PackageManagerVoices.fetch(manager, spec.commandName(), ProgramVersions.of(spec.id()),
                         spec.minDiskMb(), this.mirror.hostname())));

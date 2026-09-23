@@ -129,23 +129,24 @@ public final class OsBootstrap {
              * A distribution's own share is its base system at the TTY; the desktop package it installs
              * weighs on top of it (the desktop environments below say how much).
              */
-            OsDef.linuxDistro(rl("ubuntu"), 8_192, "Ubuntu", "bash", PackageManagerKind.APT, InstallMode.GUIDED,
-                    SoftwareHouse.AXIOMATIC).withRam(48).withInstaller(InstallerStyle.UBUNTU),
-            OsDef.linuxDistro(rl("debian"), 4_096, "Debian", "bash", PackageManagerKind.APT, InstallMode.GUIDED,
-                    SoftwareHouse.DEBIAN_CIRCLE).withRam(24).withInstaller(InstallerStyle.DEBIAN),
-            OsDef.linuxDistro(rl("fedora"), 8_192, "Fedora", "bash", PackageManagerKind.DNF, InstallMode.GUIDED,
-                    SoftwareHouse.RED_CAP).withRam(48).withInstaller(InstallerStyle.FEDORA),
-            OsDef.linuxDistro(rl("arch"), 2_048, "Arch Linux", "zsh", PackageManagerKind.PACMAN, InstallMode.LIVE_MANUAL,
-                    SoftwareHouse.ARCH_COLLECTIVE).withRam(12),
-            OsDef.linuxDistro(rl("gentoo"), 4_096, "Gentoo", "bash", PackageManagerKind.EMERGE, InstallMode.SOURCE,
-                    SoftwareHouse.GENTOO_FOUNDRY).withRam(12),
+            OsDef.linuxDistro(rl("ubuntu"), 8_192, "Ubuntu", ShellKind.BASH, PackageManagerKind.APT,
+                    InstallMode.GUIDED, SoftwareHouse.AXIOMATIC).withRam(48).withInstaller(InstallerStyle.UBUNTU),
+            OsDef.linuxDistro(rl("debian"), 4_096, "Debian", ShellKind.BASH, PackageManagerKind.APT,
+                    InstallMode.GUIDED, SoftwareHouse.DEBIAN_CIRCLE).withRam(24).withInstaller(InstallerStyle.DEBIAN),
+            OsDef.linuxDistro(rl("fedora"), 8_192, "Fedora", ShellKind.BASH, PackageManagerKind.DNF,
+                    InstallMode.GUIDED, SoftwareHouse.RED_CAP).withRam(48).withInstaller(InstallerStyle.FEDORA),
+            OsDef.linuxDistro(rl("arch"), 2_048, "Arch Linux", ShellKind.ZSH, PackageManagerKind.PACMAN,
+                    InstallMode.LIVE_MANUAL, SoftwareHouse.ARCH_COLLECTIVE).withRam(12),
+            OsDef.linuxDistro(rl("gentoo"), 4_096, "Gentoo", ShellKind.BASH, PackageManagerKind.EMERGE,
+                    InstallMode.SOURCE, SoftwareHouse.GENTOO_FOUNDRY).withRam(12),
             /*
              * FreeBSD: the solid server and the lean daily driver. It asks for a machine of the Legacy age at
              * least and runs on every one after, it takes less memory than any distribution so the same
              * machine keeps more for its programs, and it comes up at a terminal until a desktop is installed.
              */
             OsDef.terminalSystem(rl("freebsd"), rl("freebsd"), Platform.FREEBSD, HardwareEra.LEGACY, 2_048,
-                    "FreeBSD", "sh", PackageManagerKind.PKG, InstallMode.GUIDED, SoftwareHouse.DAEMON_FOUNDATION)
+                    "FreeBSD", ShellKind.SH, PackageManagerKind.PKG, InstallMode.GUIDED,
+                    SoftwareHouse.DAEMON_FOUNDATION)
                     .withRam(16),
             /*
              * UNIX System V: the one system of the first age that runs several programs at once, in ten
@@ -153,7 +154,8 @@ public final class OsBootstrap {
              * price of what it can do on a machine that small.
              */
             OsDef.terminalSystem(rl("unix"), rl("unix"), Platform.UNIX, HardwareEra.VINTAGE, 10,
-                    "UNIX System V", "sh", PackageManagerKind.NONE, InstallMode.GUIDED, SoftwareHouse.BELLWETHER_LABS)
+                    "UNIX System V", ShellKind.SH, PackageManagerKind.NONE, InstallMode.GUIDED,
+                    SoftwareHouse.BELLWETHER_LABS)
                     .withRam(2)
             /*
              * OS case (c): PDA/Tablet/Smartphone portables ship with a factory mobile OS. Those item/block

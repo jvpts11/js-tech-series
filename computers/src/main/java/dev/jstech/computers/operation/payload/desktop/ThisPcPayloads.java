@@ -36,9 +36,9 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.MinSpecTooltip;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.fs.DiskFilesystem;
-import dev.jstech.computers.os.install.SetupJob;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
@@ -341,7 +341,7 @@ public final class ThisPcPayloads {
          * when the program was already there, which is what made the disc's setup look inert.
          */
         SetupRunner.begin(computer, level, payload.hostPos(), spec,
-                reader.insertedFormat(), false, SetupJob.VIA_SETUP);
+                reader.insertedFormat(), false, PackageManagerKind.NONE);
     }
 
     /** A machine telling a desktop how its setup is going: the desktop's Setup window is a view of it. */

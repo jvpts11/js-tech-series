@@ -20,19 +20,16 @@ public final class MachineLabels {
     private MachineLabels() {
     }
 
-    /** A short, friendly label for an installed OS id, or {@code none} when no OS is installed. */
+    /**
+     * The name the system under an installed OS id goes by, or {@code none} when no OS is installed. An id the
+     * registry does not know shows as itself, which is all there is to say about it.
+     */
     public static String osLabelOf(final ResourceLocation osId) {
         if (osId == null) {
             return "none";
         }
-        return switch (osId.getPath()) {
-            case "frames_95" -> "Frames 95";
-            case "frames_xp" -> "Frames XP";
-            case "frames_11" -> "Frames 11";
-            case "mc_dos" -> "MC-DOS";
-            case "mc_net" -> "MC-NET";
-            default -> osId.getPath();
-        };
+        final OsDef os = OsRegistry.getOs(osId);
+        return os == null ? osId.getPath() : os.displayName();
     }
 
     public static String osLabel(final IOsHost host) {

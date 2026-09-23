@@ -99,7 +99,7 @@ computers/src/main/java/dev/jstech/computers/client/os/PaintApp.java 12
 computers/src/main/java/dev/jstech/computers/client/os/PanelTray.java 2
 computers/src/main/java/dev/jstech/computers/client/os/PatternStudioApp.java 30
 computers/src/main/java/dev/jstech/computers/client/os/RemoteControlApp.java 4
-computers/src/main/java/dev/jstech/computers/client/os/SettingsApp.java 20
+computers/src/main/java/dev/jstech/computers/client/os/SettingsApp.java 19
 computers/src/main/java/dev/jstech/computers/client/os/SetupApp.java 9
 computers/src/main/java/dev/jstech/computers/client/os/ShellApp.java 1
 computers/src/main/java/dev/jstech/computers/client/os/ShellView.java 4
@@ -226,7 +226,6 @@ computers/src/main/java/dev/jstech/computers/operation/payload/files/TrashPayloa
 computers/src/main/java/dev/jstech/computers/operation/payload/firmware/FirmwarePayloads.java 10
 computers/src/main/java/dev/jstech/computers/operation/payload/interactor/NetworkInteractorPayloads.java 1
 computers/src/main/java/dev/jstech/computers/operation/payload/iql/IqlPayloads.java 8
-computers/src/main/java/dev/jstech/computers/operation/payload/machine/MachineLabels.java 1
 computers/src/main/java/dev/jstech/computers/operation/payload/program/ConsolePayloads.java 10
 computers/src/main/java/dev/jstech/computers/operation/payload/program/DesktopShellPayloads.java 2
 computers/src/main/java/dev/jstech/computers/operation/payload/program/ProgramPayloads.java 5

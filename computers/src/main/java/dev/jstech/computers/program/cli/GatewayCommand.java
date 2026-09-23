@@ -46,6 +46,11 @@ public final class GatewayCommand implements ICliCommand {
     }
 
     @Override
+    public CommandGroup group() {
+        return CommandGroup.NETWORK;
+    }
+
+    @Override
     public String summary() {
         return "manage the Network Gateways on this computer's ports (the bridge to ComputerCraft)";
     }

@@ -38,6 +38,10 @@ final class NetworkCommands {
             return "net";
         }
 
+        @Override public CommandGroup group() {
+            return CommandGroup.NETWORK;
+        }
+
         @Override public List<String> aliases() {
             return List.of("network");
         }
@@ -72,6 +76,10 @@ final class NetworkCommands {
         /** The language's own name. The words it was typed as before still reach it, as a shell's old names do. */
         @Override public String name() {
             return "iql";
+        }
+
+        @Override public CommandGroup group() {
+            return CommandGroup.NETWORK;
         }
 
         @Override public List<String> aliases() {
@@ -132,6 +140,10 @@ final class NetworkCommands {
 
         @Override public String name() {
             return "ssh";
+        }
+
+        @Override public CommandGroup group() {
+            return CommandGroup.NETWORK;
         }
 
         @Override public String summary() {

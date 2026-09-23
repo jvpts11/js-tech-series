@@ -107,7 +107,7 @@ public final class BootLines {
 
     /** Whether this is the newest edition coming up for the first time, which is the one start that greets. */
     private static boolean firstTime(final IOsHost machine, final OsDef system) {
-        return "frames_11".equals(system.id().getPath()) && !machine.systemWelcome().seen();
+        return OsRegistry.newestOfFamily(system) && !machine.systemWelcome().seen();
     }
 
     /**

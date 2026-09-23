@@ -372,7 +372,7 @@ public final class SettingsApp implements IDesktopApp {
         if (d.vramMb() > 0) {
             y = specRow(x, y, w, "Graphics", d.vramMb() + " MB VRAM");
         }
-        y = specRow(x, y, w, "System", prettyOs(d.osLabel()));
+        y = specRow(x, y, w, "System", d.osLabel());
         y = specRow(x, y, w, "Platform", d.platform());
         // Restart into the firmware setup (the boot manager): the way to reach it once an OS is installed.
         final BlockPos monitor = monitorPos;
@@ -660,17 +660,6 @@ public final class SettingsApp implements IDesktopApp {
             }
             default -> g.fill(x, y, x + w, y + h, 0xFF3A6A9A);
         }
-    }
-
-    private static String prettyOs(final String path) {
-        return switch (path) {
-            case "frames_95" -> "Frames 95";
-            case "frames_xp" -> "Frames XP";
-            case "frames_11" -> "Frames 11";
-            case "mc_dos" -> "MC-DOS";
-            case "mc_net" -> "MC-NET";
-            default -> path;
-        };
     }
 
     // input

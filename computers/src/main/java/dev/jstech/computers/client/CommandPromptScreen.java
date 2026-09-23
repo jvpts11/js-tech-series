@@ -917,7 +917,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         if (menu.console().live()) {
             return new CliLine("", CliStyle.ACCENT);
         }
-        return ConsoleIdentity.promptLineOf(menu.platform(), menu.shellId(), menu.hostname(), "~");
+        return ConsoleIdentity.promptLineOf(menu.platform(), menu.shell(), menu.hostname(), "~");
     }
 
     /**
