@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.os.DiskSystems;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.hardware.DiskSize;
@@ -82,7 +83,7 @@ public final class DiskEraGameTests {
                         + dos.footprintItemsOn(HardwareEra.VINTAGE) + " / " + dos.footprintItemsOn(HardwareEra.STANDARD));
         // Installed on a 100 MB vintage drive, Frames 95 (48 MB) leaves 52 items' worth of room.
         final ItemStack trench = new ItemStack(HardwareItems.DISK_TRENCH_100M.get());
-        trench.set(ComputingModule.DISK_SYSTEMS.get(), DiskSystems.of(os("frames_95").id()));
+        trench.set(ComputingComponents.DISK_SYSTEMS.get(), DiskSystems.of(os("frames_95").id()));
         final long free = OsDisks.systemDiskFreeWeight(trench);
         helper.assertTrue(free == 52L * StorageKey.MB_EQ_PER_ITEM, "52 000 mB-eq free; got " + free);
         helper.succeed();

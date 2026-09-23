@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.files;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.KernelDef;
@@ -132,7 +132,7 @@ public final class FileAccess {
          * FILESYSTEM). Ignoring MEDIA_DATA let the player write files past the medium's real capacity.
          */
         final long dataUsed = media.getOrDefault(
-                        ComputingModule.MEDIA_DATA.get(),
+                        ComputingComponents.MEDIA_DATA.get(),
                         ServerStorageContents.EMPTY)
                 .usedWeight();
         return Math.max(0L, capWeight - fsUsed - dataUsed);

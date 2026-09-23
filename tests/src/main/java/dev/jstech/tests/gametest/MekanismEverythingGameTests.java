@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest;
 
 import com.mojang.logging.LogUtils;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.MultiStagePattern;
@@ -91,7 +92,7 @@ public final class MekanismEverythingGameTests {
             helper.setBlock(rackPos, ComputingModule.SUPERCOMPUTER_RACK.get());
             if (helper.getBlockEntity(rackPos)
                     instanceof dev.jstech.computers.blockentity.ServerRackBlockEntity rack) {
-                rack.getServers().setStackInSlot(0, ComputingModule.defaultSupercomputerNode());
+                rack.getServers().setStackInSlot(0, ServerStacks.defaultSupercomputerNode());
             }
         }
     }

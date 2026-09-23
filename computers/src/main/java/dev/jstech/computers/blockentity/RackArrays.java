@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.item.RackGadgetItem;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.rack.RackChassis;
@@ -101,7 +101,7 @@ final class RackArrays {
         }
         final ItemStack stack = rack.frontSlot(controller);
         RackGadgetItem.setRaidMode(stack, mode);
-        stack.set(ComputingModule.RAID_MEMBERS.get(), mode == RaidMode.NONE ? 0 : drives);
+        stack.set(ComputingComponents.RAID_MEMBERS.get(), mode == RaidMode.NONE ? 0 : drives);
         rack.markStorageChanged(serverSlot);
         rack.setChanged();
         return true;
@@ -113,7 +113,7 @@ final class RackArrays {
         if (controller < 0) {
             return 0;
         }
-        final Integer members = rack.frontSlot(controller).get(ComputingModule.RAID_MEMBERS.get());
+        final Integer members = rack.frontSlot(controller).get(ComputingComponents.RAID_MEMBERS.get());
         return members == null ? 0 : members;
     }
 

@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.MainframePartBlock;
 import dev.jstech.computers.block.MainframeStructure;
@@ -512,19 +513,19 @@ public final class NetworkGameTests {
     @GameTest(template = ARENA)
     public static void standardPc_rightClickOpensAndKeepsMenu(final GameTestHelper helper) {
         assertPcMenuOpens(helper, ComputingModule.PERSONAL_COMPUTER.get(),
-                ComputingModule.PERSONAL_COMPUTER_ITEM.get());
+                ComputingModule.PERSONAL_COMPUTER.item());
     }
 
     @GameTest(template = ARENA)
     public static void vintagePc_rightClickOpensAndKeepsMenu(final GameTestHelper helper) {
         assertPcMenuOpens(helper, ComputingModule.VINTAGE_PERSONAL_COMPUTER.get(),
-                ComputingModule.VINTAGE_PERSONAL_COMPUTER_ITEM.get());
+                ComputingModule.VINTAGE_PERSONAL_COMPUTER.item());
     }
 
     @GameTest(template = ARENA)
     public static void legacyPc_rightClickOpensAndKeepsMenu(final GameTestHelper helper) {
         assertPcMenuOpens(helper, ComputingModule.LEGACY_PERSONAL_COMPUTER.get(),
-                ComputingModule.LEGACY_PERSONAL_COMPUTER_ITEM.get());
+                ComputingModule.LEGACY_PERSONAL_COMPUTER.item());
     }
 
     /**
@@ -889,8 +890,8 @@ public final class NetworkGameTests {
                             || !(helper.getBlockEntity(scRack) instanceof ServerRackBlockEntity sc)) {
                         throw new IllegalStateException("a cabinet is missing its block entity");
                     }
-                    final ItemStack node = ComputingModule.defaultSupercomputerNode();
-                    final ItemStack plainServer = ComputingModule.defaultServer();
+                    final ItemStack node = ServerStacks.defaultSupercomputerNode();
+                    final ItemStack plainServer = ServerStacks.defaultServer();
                     final ItemStack kvm = new ItemStack(ComputingModule.KVM_SWITCH.get());
                     helper.assertTrue(sc.rackType()
                                     == dev.jstech.computers.rack.RackChassis.RackType.SUPERCOMPUTER,
@@ -922,8 +923,8 @@ public final class NetworkGameTests {
         helper.setBlock(cable, ComputingModule.HPC_CABLE.get());
         helper.setBlock(rackPos, ComputingModule.SUPERCOMPUTER_RACK.get());
         if (helper.getBlockEntity(rackPos) instanceof ServerRackBlockEntity rack) {
-            rack.getServers().setStackInSlot(0, ComputingModule.defaultSupercomputerNode());
-            rack.getServers().setStackInSlot(2, ComputingModule.defaultSupercomputerNode());
+            rack.getServers().setStackInSlot(0, ServerStacks.defaultSupercomputerNode());
+            rack.getServers().setStackInSlot(2, ServerStacks.defaultSupercomputerNode());
         } else {
             helper.fail("no Supercomputer Rack block entity placed");
             return;
@@ -1145,7 +1146,7 @@ public final class NetworkGameTests {
             helper.fail("no server rack");
             return;
         }
-        rackBe.getServers().setStackInSlot(0, ComputingModule.defaultServer());
+        rackBe.getServers().setStackInSlot(0, ServerStacks.defaultServer());
         rackBe.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
@@ -1179,7 +1180,7 @@ public final class NetworkGameTests {
             helper.fail("no server rack");
             return;
         }
-        rackBe.getServers().setStackInSlot(0, ComputingModule.defaultServer());
+        rackBe.getServers().setStackInSlot(0, ServerStacks.defaultServer());
         final ItemStack drive = new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500));
         rackBe.insertDrive(0, drive);
         helper.startSequence()
@@ -2086,7 +2087,7 @@ public final class NetworkGameTests {
             helper.fail("no server rack");
             return;
         }
-        rackBe.getServers().setStackInSlot(0, ComputingModule.defaultServer());
+        rackBe.getServers().setStackInSlot(0, ServerStacks.defaultServer());
         rackBe.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_8)));
         rackBe.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_8)));
 
@@ -2503,7 +2504,7 @@ public final class NetworkGameTests {
             helper.fail("no server rack");
             return;
         }
-        rackBe.getServers().setStackInSlot(0, ComputingModule.cpulessServer());
+        rackBe.getServers().setStackInSlot(0, ServerStacks.cpulessServer());
 
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 6, () -> rackBe.getServerStorage(0).insert(Items.COBBLESTONE, 20))
@@ -2820,7 +2821,7 @@ public final class NetworkGameTests {
             helper.setBlock(cable, ComputingModule.HPC_CABLE.get());
             helper.setBlock(rackPos, ComputingModule.SUPERCOMPUTER_RACK.get());
             if (helper.getBlockEntity(rackPos) instanceof ServerRackBlockEntity rack) {
-                rack.getServers().setStackInSlot(0, ComputingModule.defaultSupercomputerNode());
+                rack.getServers().setStackInSlot(0, ServerStacks.defaultSupercomputerNode());
             }
         }
         helper.startSequence()
@@ -2875,7 +2876,7 @@ public final class NetworkGameTests {
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.EAST)); // rear faces the fabric cable to the west
         if (helper.getBlockEntity(scRack) instanceof ServerRackBlockEntity sc) {
-            sc.getServers().setStackInSlot(0, ComputingModule.defaultSupercomputerNode());
+            sc.getServers().setStackInSlot(0, ServerStacks.defaultSupercomputerNode());
         }
         helper.setBlock(hbwSouth, ComputingModule.HBW_CABLE.get());
         helper.setBlock(rackSouth, ComputingModule.SERVER_RACK.get().defaultBlockState()

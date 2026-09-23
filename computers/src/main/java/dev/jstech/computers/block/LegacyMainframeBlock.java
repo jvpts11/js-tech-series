@@ -37,6 +37,6 @@ public class LegacyMainframeBlock extends MainframeBlock {
 
     @Override
     protected Item blockItem() {
-        return ComputingModule.LEGACY_MAINFRAME_ITEM.get();
+        return ComputingModule.LEGACY_MAINFRAME.item();
     }
 }

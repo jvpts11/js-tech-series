@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os;
 
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.api.ComputersRegisterEvent;
@@ -33,6 +34,8 @@ import java.util.Set;
  * @param id           unique registry key (e.g. {@code jsc:nms})
  * @param commandName  the short word the Command Prompt's {@code run}/{@code programs} verbs use
  * @param displayName  the human name (English), the value datagen writes to {@link #titleKey()}
+ * @param description  what it does, in one line of English, the value datagen writes to {@link #descriptionKey()}:
+ *                     shown on its install disc, in the package manager and in the installed-programs list
  * @param preinstalled whether every compatible computer ships with it (no install step)
  * @param platforms    the OS platforms it supports (runs on any one of them)
  * @param minCpuMhz    minimum CPU clock in MHz (checked against the best installed CPU)
@@ -57,6 +60,7 @@ public record ProgramSpec(
         ResourceLocation id,
         String commandName,
         String displayName,
+        String description,
         boolean preinstalled,
         Set<Platform> platforms,
         int minCpuMhz,
@@ -72,10 +76,16 @@ public record ProgramSpec(
         int ramMb
 ) {
 
+    /*
+     * A codec takes sixteen fields at most, so the name and the description travel as one pair of fields, written
+     * side by side in the same object as the rest.
+     */
     public static final Codec<ProgramSpec> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             ResourceLocation.CODEC.fieldOf("id").forGetter(ProgramSpec::id),
             Codec.STRING.optionalFieldOf("command_name", "").forGetter(ProgramSpec::commandName),
-            Codec.STRING.optionalFieldOf("display_name", "").forGetter(ProgramSpec::displayName),
+            Codec.mapPair(Codec.STRING.optionalFieldOf("display_name", ""),
+                            Codec.STRING.optionalFieldOf("description", ""))
+                    .forGetter(spec -> Pair.of(spec.displayName(), spec.description())),
             Codec.BOOL.optionalFieldOf("preinstalled", false).forGetter(ProgramSpec::preinstalled),
             StableCodecs.byName(Platform.class).listOf().xmap(Set::copyOf, List::copyOf)
                     .fieldOf("platforms").forGetter(ProgramSpec::platforms),
@@ -96,7 +106,10 @@ public record ProgramSpec(
                     .forGetter(ProgramSpec::era),
             SoftwareHouse.CODEC.optionalFieldOf("house", SoftwareHouse.BUNDLED).forGetter(ProgramSpec::house),
             Codec.INT.optionalFieldOf("ram_mb", 0).forGetter(ProgramSpec::ramMb)
-    ).apply(inst, ProgramSpec::new));
+    ).apply(inst, (id, commandName, names, preinstalled, platforms, minCpuMhz, minVramMb, minDiskMb, kind,
+                   minOsRank, hostScope, iconId, minEra, era, house, ramMb) -> new ProgramSpec(id, commandName,
+            names.getFirst(), names.getSecond(), preinstalled, platforms, minCpuMhz, minVramMb, minDiskMb, kind,
+            minOsRank, hostScope, iconId, minEra, era, house, ramMb)));
 
     /**
      * Compact constructor: fills sensible defaults from the id (command name and display name from the
@@ -111,6 +124,9 @@ public record ProgramSpec(
         }
         if (displayName == null || displayName.isBlank()) {
             displayName = titleCase(id.getPath());
+        }
+        if (description == null) {
+            description = "";
         }
         if (kind == null) {
             kind = ProgramKind.APP;
@@ -153,14 +169,27 @@ public record ProgramSpec(
 
     /**
      * Convenience factory for the common case: no CPU/VRAM minimum and the icon derived from the id. Keeps
-     * the built-in registrations readable while the canonical constructor stays available for the rest.
+     * the built-in registrations readable while the canonical constructor stays available for the rest. The name
+     * and what the program does are said with {@link #named} and {@link #described}.
      */
-    public static ProgramSpec of(final ResourceLocation id, final String commandName, final String displayName,
-                                 final boolean preinstalled, final Set<Platform> platforms, final int minDiskMb,
-                                 final ProgramKind kind, final int minOsRank, final HostScope hostScope) {
-        return new ProgramSpec(id, commandName, displayName, preinstalled, platforms, 0, 0, minDiskMb,
+    public static ProgramSpec of(final ResourceLocation id, final String commandName, final boolean preinstalled,
+                                 final Set<Platform> platforms, final int minDiskMb, final ProgramKind kind,
+                                 final int minOsRank, final HostScope hostScope) {
+        return new ProgramSpec(id, commandName, "", "", preinstalled, platforms, 0, 0, minDiskMb,
                 kind, minOsRank, hostScope, id, HardwareEra.VINTAGE, null,
                 SoftwareHouse.BUNDLED, 0);
+    }
+
+    /** The same program, called this in English. */
+    public ProgramSpec named(final String english) {
+        return new ProgramSpec(id, commandName, english, description, preinstalled, platforms, minCpuMhz,
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, house, ramMb);
+    }
+
+    /** The same program, saying what it does in one line of English. */
+    public ProgramSpec described(final String english) {
+        return new ProgramSpec(id, commandName, displayName, english, preinstalled, platforms, minCpuMhz,
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, house, ramMb);
     }
 
     /**
@@ -169,8 +198,8 @@ public record ProgramSpec(
      * running on a machine of the 1990s.
      */
     public ProgramSpec withMinEra(final HardwareEra oldest) {
-        return new ProgramSpec(id, commandName, displayName, preinstalled, platforms, minCpuMhz, minVramMb,
-                minDiskMb, kind, minOsRank, hostScope, iconId, oldest, era, house, ramMb);
+        return new ProgramSpec(id, commandName, displayName, description, preinstalled, platforms, minCpuMhz,
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, oldest, era, house, ramMb);
     }
 
     /**
@@ -178,20 +207,20 @@ public record ProgramSpec(
      * the year on its banner; it never gates where it installs, which stays {@link #minEra()}'s job.
      */
     public ProgramSpec withEra(final HardwareEra generation) {
-        return new ProgramSpec(id, commandName, displayName, preinstalled, platforms, minCpuMhz, minVramMb,
-                minDiskMb, kind, minOsRank, hostScope, iconId, minEra, generation, house, ramMb);
+        return new ProgramSpec(id, commandName, displayName, description, preinstalled, platforms, minCpuMhz,
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, generation, house, ramMb);
     }
 
     /** The same program, credited to {@code maker}: the name on its disc, its banner and its about line. */
     public ProgramSpec withHouse(final SoftwareHouse maker) {
-        return new ProgramSpec(id, commandName, displayName, preinstalled, platforms, minCpuMhz, minVramMb,
-                minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, maker, ramMb);
+        return new ProgramSpec(id, commandName, displayName, description, preinstalled, platforms, minCpuMhz,
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, maker, ramMb);
     }
 
     /** The same program, holding {@code megabytes} of RAM while it runs. */
     public ProgramSpec withRam(final int megabytes) {
-        return new ProgramSpec(id, commandName, displayName, preinstalled, platforms, minCpuMhz, minVramMb,
-                minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, house, megabytes);
+        return new ProgramSpec(id, commandName, displayName, description, preinstalled, platforms, minCpuMhz,
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, house, megabytes);
     }
 
     /**
@@ -222,6 +251,11 @@ public record ProgramSpec(
     /** The translation key for this program's display name, in vanilla {@code program.<ns>.<path>} form. */
     public String titleKey() {
         return "program." + id.getNamespace() + "." + id.getPath();
+    }
+
+    /** The translation key for what this program does, beside its name's: {@code program.<ns>.<path>.desc}. */
+    public String descriptionKey() {
+        return titleKey() + ".desc";
     }
 
     /** Whether a player installs this program (true) or it ships with the computer (false). */

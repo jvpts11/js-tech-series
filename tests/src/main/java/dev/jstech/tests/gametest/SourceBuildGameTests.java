@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -135,8 +136,8 @@ public final class SourceBuildGameTests {
                     fourJobs.installMirror();
                     final ItemStack disk = fourJobs.systemDisk();
                     final FilesystemContents was =
-                            disk.getOrDefault(ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
-                    disk.set(ComputingModule.FILESYSTEM.get(), was.withDir("/etc").withDir("/etc/portage")
+                            disk.getOrDefault(ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                    disk.set(ComputingComponents.FILESYSTEM.get(), was.withDir("/etc").withDir("/etc/portage")
                             .with(new StoredFile(MakeOpts.PATH, FileType.CFG, "MAKEOPTS=\"-j4\"")));
                     slow.type("emerge mines");
                     quick.type("emerge mines");
@@ -168,8 +169,8 @@ public final class SourceBuildGameTests {
                     // Every core it has, or the test sits through two minutes of one of them compiling a toolkit.
                     final ItemStack disk = machine.systemDisk();
                     final FilesystemContents was =
-                            disk.getOrDefault(ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
-                    disk.set(ComputingModule.FILESYSTEM.get(), was.withDir("/etc").withDir("/etc/portage")
+                            disk.getOrDefault(ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                    disk.set(ComputingComponents.FILESYSTEM.get(), was.withDir("/etc").withDir("/etc/portage")
                             .with(new StoredFile(MakeOpts.PATH, FileType.CFG, "MAKEOPTS=\"-j6\"")));
                     helper.assertTrue(term.type("emerge no-such-category/no-such-thing").contains("unable to locate"),
                             "a name the tree does not have is not found");

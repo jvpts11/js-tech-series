@@ -13,6 +13,7 @@ import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.operation.NetworkIndex;
+import dev.jstech.computers.operation.NetworkSelectOperation;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.IPersistentOperation;
 import dev.jstech.computers.operation.index.Allocation;
@@ -23,6 +24,8 @@ import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.persistence.SavedValue;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.HashSet;
@@ -50,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A multi-tick CRAFT: executes a {@link CraftPlanner.Plan} on a Crafting Computer.
  */
+@TextHolder
 public final class NetworkCraftOperation implements IPersistentOperation {
 
     public static final String KIND = "craft";
@@ -219,11 +223,9 @@ public final class NetworkCraftOperation implements IPersistentOperation {
 
     private static final String MACHINE_STEPS_KEY = "MachineSteps";
 
-    /** Waited as long as it was allowed to for ingredients another Operation was holding. */
-    private static final String HELD_BY_ANOTHER = "jsc.operation.failure.held_by_another";
-
     /** Made as many as the ingredients in the network stretched to, which was fewer than asked for. */
-    private static final String NOT_ENOUGH_INGREDIENTS = "jsc.operation.failure.not_enough_ingredients";
+    private static final TextKey NOT_ENOUGH_INGREDIENTS = TextKey.of("jsc.operation.failure.not_enough_ingredients",
+            "the ingredients for the %s ran out");
 
     private static final int STALL_LIMIT = 100;
 
@@ -885,7 +887,8 @@ public final class NetworkCraftOperation implements IPersistentOperation {
                 : timedOut ? OperationRecord.STATUS_RESOURCE_LOCKED
                 : deliveredResult > 0 ? OperationRecord.STATUS_PARTIAL : OperationRecord.STATUS_FAILED;
         if (timedOut) {
-            cause = OperationFailure.of(HELD_BY_ANOTHER, resultKey.displayName().getString());
+            // Waited as long as it was allowed to for ingredients another Operation was holding.
+            cause = OperationFailure.of(NetworkSelectOperation.HELD_BY_ANOTHER, resultKey.displayName().getString());
         } else if (status == OperationRecord.STATUS_PARTIAL || status == OperationRecord.STATUS_FAILED) {
             cause = OperationFailure.of(NOT_ENOUGH_INGREDIENTS, resultKey.displayName().getString());
         }

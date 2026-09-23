@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
@@ -25,7 +25,7 @@ public class LinuxTtyMenu extends CommandPromptMenu {
     public LinuxTtyMenu(final int containerId, final Inventory playerInventory, final BlockPos monitorPos,
                         final BlockPos hostPos, @Nullable final HardwareEra era, final ConsoleIdentity console,
                         final long session) {
-        super(ComputingModule.LINUX_TTY_MENU.get(), containerId, playerInventory, monitorPos, hostPos,
+        super(ComputingMenus.LINUX_TTY_MENU.get(), containerId, playerInventory, monitorPos, hostPos,
                 era, console, session);
     }
 

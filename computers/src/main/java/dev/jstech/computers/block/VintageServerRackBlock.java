@@ -36,6 +36,6 @@ public class VintageServerRackBlock extends ServerRackBlock {
 
     @Override
     protected Item blockItem() {
-        return ComputingModule.VINTAGE_SERVER_RACK_ITEM.get();
+        return ComputingModule.VINTAGE_SERVER_RACK.item();
     }
 }

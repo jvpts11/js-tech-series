@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.item;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.rack.RackChassis;
 import java.util.Set;
@@ -62,7 +62,7 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
         if (!writable()) {
             return; // the Server left the hand (picked up); ignore the write
         }
-        held().set(ComputingModule.SERVER_HARDWARE.get(), ItemContainerContents.fromItems(items));
+        held().set(ComputingComponents.SERVER_HARDWARE.get(), ItemContainerContents.fromItems(items));
     }
 
     private NonNullList<ItemStack> snapshot() {

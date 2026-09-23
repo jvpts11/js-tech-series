@@ -254,13 +254,13 @@ public final class EraMachineGameTests {
     @GameTest(template = ARENA)
     public static void vintageCrafting_break_dropsVintageItem(final GameTestHelper helper) {
         assertBreakDropsItem(helper, ComputingModule.VINTAGE_CRAFTING_COMPUTER.get(),
-                ComputingModule.VINTAGE_CRAFTING_COMPUTER_ITEM.get());
+                ComputingModule.VINTAGE_CRAFTING_COMPUTER.item());
     }
 
     @GameTest(template = ARENA)
     public static void legacyCrafting_break_dropsLegacyItem(final GameTestHelper helper) {
         assertBreakDropsItem(helper, ComputingModule.LEGACY_CRAFTING_COMPUTER.get(),
-                ComputingModule.LEGACY_CRAFTING_COMPUTER_ITEM.get());
+                ComputingModule.LEGACY_CRAFTING_COMPUTER.item());
     }
 
     private static void assertBreakDropsItem(final GameTestHelper helper, final Block block, final Item expected) {

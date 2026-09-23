@@ -9,7 +9,6 @@ package dev.jstech.computers.advancement;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.jstech.computers.ComputingModule;
 import net.minecraft.advancements.Criterion;
 import net.minecraft.advancements.critereon.ContextAwarePredicate;
 import net.minecraft.advancements.critereon.EntityPredicate;
@@ -40,12 +39,12 @@ public class JscEventTrigger extends SimpleCriterionTrigger<JscEventTrigger.Inst
 
     /** A criterion met by the event, whatever its detail. */
     public static Criterion<Instance> on(final String event) {
-        return ComputingModule.EVENT.get().createCriterion(new Instance(Optional.empty(), event, Optional.empty()));
+        return JscTriggers.EVENT.get().createCriterion(new Instance(Optional.empty(), event, Optional.empty()));
     }
 
     /** A criterion met by the event with exactly that detail: one of those an "all of them" advancement asks for. */
     public static Criterion<Instance> on(final String event, final String detail) {
-        return ComputingModule.EVENT.get().createCriterion(
+        return JscTriggers.EVENT.get().createCriterion(
                 new Instance(Optional.empty(), event, Optional.of(detail)));
     }
 

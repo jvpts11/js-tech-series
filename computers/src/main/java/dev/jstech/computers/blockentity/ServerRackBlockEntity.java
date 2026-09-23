@@ -8,6 +8,7 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRackPartBlock;
@@ -409,7 +410,7 @@ public class ServerRackBlockEntity extends BlockEntity
             final UnitState state = new UnitState();
             final ItemStack stack = servers.getStackInSlot(s);
             final CompoundTag saved =
-                    stack.get(ComputingModule.SERVER_CONSOLE.get());
+                    stack.get(ComputingComponents.SERVER_CONSOLE.get());
             if (saved != null) {
                 state.console.load(saved);
                 // Absent keys mean a machine that was never brought up, which still needs POST.
@@ -573,7 +574,7 @@ public class ServerRackBlockEntity extends BlockEntity
             state.studio.save(studioTag, getLevel().registryAccess());
             tag.put("Studio", studioTag);
         }
-        stack.set(ComputingModule.SERVER_CONSOLE.get(), tag);
+        stack.set(ComputingComponents.SERVER_CONSOLE.get(), tag);
     }
 
     private void flushConsoles() {
@@ -1045,7 +1046,7 @@ public class ServerRackBlockEntity extends BlockEntity
         UUID node = ServerItem.nodeUuid(stack);
         if (node == null) {
             node = UUID.randomUUID();
-            stack.set(ComputingModule.SERVER_NODE_UUID.get(), node);
+            stack.set(ComputingComponents.SERVER_NODE_UUID.get(), node);
             setChanged();
         }
         return node;

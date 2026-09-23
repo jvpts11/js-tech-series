@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.block.ClusterManagementComputerBlock;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.gui.layout.ClusterManagementComputerLayout;
@@ -37,7 +37,7 @@ public class ClusterManagementComputerMenu extends AbstractComputerMenu {
 
     public ClusterManagementComputerMenu(final int containerId, final Inventory playerInventory,
                                          final ClusterManagementComputerBlockEntity be) {
-        super(ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_MENU.get(), containerId);
+        super(ComputingMenus.CLUSTER_MANAGEMENT_COMPUTER_MENU.get(), containerId);
         this.blockEntity = be;
         this.data = be.getDataAccess();
         this.access = ContainerLevelAccess.create(be.getLevel(), be.getBlockPos());

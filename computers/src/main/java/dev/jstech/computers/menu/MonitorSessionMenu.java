@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.core.id.IStableId;
@@ -50,7 +50,7 @@ public class MonitorSessionMenu extends AbstractContainerMenu {
 
     public MonitorSessionMenu(final int containerId, final Inventory playerInventory, final BlockPos monitorPos,
                               final BlockPos hostPos, @Nullable final HardwareEra era, final Phase phase) {
-        super(ComputingModule.MONITOR_SESSION_MENU.get(), containerId);
+        super(ComputingMenus.MONITOR_SESSION_MENU.get(), containerId);
         this.monitorPos = monitorPos;
         this.hostPos = hostPos;
         this.era = era;

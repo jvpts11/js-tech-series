@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
@@ -69,7 +70,7 @@ public final class OperationSchedulingGameTests {
         world.setBlock(RACK, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.EAST)); // cables attach through the rear
         final ServerRackBlockEntity rack = world.blockEntity(RACK, ServerRackBlockEntity.class);
-        rack.getServers().setStackInSlot(0, ComputingModule.defaultServer());
+        rack.getServers().setStackInSlot(0, ServerStacks.defaultServer());
         rack.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         rack.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         return mainframe;

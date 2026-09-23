@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.block.PersonalComputerBlock;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.core.tier.HardwareEra;
@@ -38,7 +38,7 @@ public class PersonalComputerMenu extends AbstractComputerMenu {
 
     public PersonalComputerMenu(final int containerId, final Inventory playerInventory,
                                 final PersonalComputerBlockEntity be) {
-        super(ComputingModule.PERSONAL_COMPUTER_MENU.get(), containerId);
+        super(ComputingMenus.PERSONAL_COMPUTER_MENU.get(), containerId);
         this.blockEntity = be;
         this.data = be.getDataAccess();
         this.access = ContainerLevelAccess.create(be.getLevel(), be.getBlockPos());

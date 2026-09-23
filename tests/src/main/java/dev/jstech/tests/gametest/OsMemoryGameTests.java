@@ -220,9 +220,9 @@ public final class OsMemoryGameTests {
         helper.assertTrue(nms != null && nms.ramMbOn(framesXp) == 128,
                 "an installable weighs what it declared wherever it runs");
 
-        final ProgramSpec unstated = ProgramSpec.of(id("addon_tool"), "tool", "Addon Tool", false,
+        final ProgramSpec unstated = ProgramSpec.of(id("addon_tool"), "tool", false,
                         Set.of(Platform.FRAMES), 8, ProgramKind.APP, 0, HostScope.ANY)
-                .withEra(HardwareEra.STANDARD);
+                .named("Addon Tool").withEra(HardwareEra.STANDARD);
         helper.assertTrue(unstated.ramMbOn(framesXp) == 96,
                 "an installable that said nothing weighs by its generation; got " + unstated.ramMbOn(framesXp));
         helper.succeed();

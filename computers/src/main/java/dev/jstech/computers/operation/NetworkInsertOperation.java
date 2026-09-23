@@ -18,6 +18,8 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.operation.ILatencyScheduler;
 import dev.jstech.core.operation.OperationFailure;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;
@@ -33,10 +35,12 @@ import java.util.UUID;
 /**
  * A multi-tick INSERT: writes an item into the network's servers over time, the inverse of a SELECT. It fills the fastest-tier servers first, up to each server's free space.
  */
+@TextHolder
 public final class NetworkInsertOperation extends AbstractTransferOperation {
 
     /** Wrote as much of it as would go, and the servers had no room for the rest. */
-    private static final String NO_ROOM = "jsc.operation.failure.no_room";
+    private static final TextKey NO_ROOM = TextKey.of("jsc.operation.failure.no_room",
+            "the network had no room left for the %s");
 
     private final String sourceLabel;
     private final UUID operationId = UUID.randomUUID();

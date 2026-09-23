@@ -9,7 +9,6 @@ package dev.jstech.computers.advancement;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.jstech.computers.ComputingModule;
 import net.minecraft.advancements.Criterion;
 import net.minecraft.advancements.critereon.ContextAwarePredicate;
 import net.minecraft.advancements.critereon.EntityPredicate;
@@ -39,7 +38,7 @@ public class OsFirstBootTrigger extends SimpleCriterionTrigger<OsFirstBootTrigge
 
     /** A criterion satisfied by booting the given OS (or any OS when empty). */
     public static Criterion<Instance> booted(final Optional<ResourceLocation> osId) {
-        return ComputingModule.OS_FIRST_BOOT.get().createCriterion(new Instance(Optional.empty(), osId));
+        return JscTriggers.OS_FIRST_BOOT.get().createCriterion(new Instance(Optional.empty(), osId));
     }
 
     public record Instance(Optional<ContextAwarePredicate> player, Optional<ResourceLocation> os)

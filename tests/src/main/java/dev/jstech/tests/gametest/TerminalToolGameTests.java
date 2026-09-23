@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
@@ -160,7 +161,7 @@ public final class TerminalToolGameTests {
         if (!(helper.getBlockEntity(WHERE) instanceof ServerRackBlockEntity rack)) {
             throw new IllegalStateException("no rack at " + WHERE);
         }
-        rack.getServers().setStackInSlot(0, ComputingModule.defaultServer());
+        rack.getServers().setStackInSlot(0, ServerStacks.defaultServer());
         rack.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1)));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {

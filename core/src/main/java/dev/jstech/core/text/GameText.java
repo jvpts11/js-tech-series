@@ -10,6 +10,7 @@ package dev.jstech.core.text;
 import java.util.List;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 
 /**
  * Text as the game holds it: resolved in the language this side of the game has loaded, and turned into the game's
@@ -35,8 +36,8 @@ public final class GameText {
         return text.resolve(LOADED);
     }
 
-    /** The game's component for it, for a screen or a message that takes one. */
-    public static Component component(final Text text) {
+    /** The game's component for it, for a screen or a message that takes one, ready to be styled. */
+    public static MutableComponent component(final Text text) {
         return switch (text) {
             case Text.Literal literal -> Component.literal(literal.value());
             case Text.Translated translated -> Component.translatableWithFallback(translated.key().key(),
@@ -44,8 +45,8 @@ public final class GameText {
         };
     }
 
-    /** The game's component for a sentence with nothing put into it. */
-    public static Component component(final TextKey key) {
+    /** The game's component for a sentence with nothing put into it, ready to be styled. */
+    public static MutableComponent component(final TextKey key) {
         return component(key.text());
     }
 

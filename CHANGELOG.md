@@ -49,6 +49,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The Macerator, Electric Furnace, Compressor and Coal Generator can be mined in survival. They need the right
   tool to come away, but no tool counted as right for them, so breaking one gave nothing back and took a long
   time doing it. A pickaxe is now their tool: it mines them at a pickaxe's pace, and they drop themselves.
+- A Mainframe of any era is mined at a pickaxe's pace. It needs the right tool too, and no tool counted, so taking
+  one down in survival took far longer than a block of metal should.
+- The Import, Export, Crafting Input and Crafting Receiving Buses, the Supercomputer Node and the HBW Interface
+  say in their tooltip what they are for, like the rest of the network and rack equipment. The words were written
+  but never shown.
+- Every program says what it does on its install disc, in the package manager and in the installed-programs list.
+  CDE, Cluster Manager, Emacs, Exposure, Gateway Manager, Help Viewer, Vim, Virtual Studio, Virtual Studio Code and
+  Workstation Info had nothing to say there.
 - screenfetch draws every logo as neofetch draws it. Ubuntu's was another, older logo copied with mistakes, and
   Debian's had a stray quote. Each was printed in one colour, readout included; now the art is in its own
   colours (Ubuntu red and white, Debian white with a red centre, Gentoo magenta and white) and the user, host

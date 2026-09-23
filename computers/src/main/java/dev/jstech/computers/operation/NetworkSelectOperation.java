@@ -16,6 +16,8 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.ILatencyScheduler;
 import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.operation.OperationFailure;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.server.level.ServerLevel;
@@ -32,17 +34,20 @@ import java.util.function.BooleanSupplier;
 /**
  * A multi-tick SELECT: pulls an item out of the network's servers into a destination over time. It reserves the items first and, if another Operation already holds them LOCKed, waits (holding nothing) until they free up.
  */
+@TextHolder
 public final class NetworkSelectOperation extends AbstractTransferOperation {
 
     /** The design default of the WAITING timeout; the live value comes from the balance config. */
     public static final int DEFAULT_WAIT_TIMEOUT_TICKS =
             OperationBalance.DEFAULT_WAITING_TIMEOUT_TICKS;
 
-    /** Waited as long as it was allowed to for something another Operation was holding. */
-    private static final String HELD_BY_ANOTHER = "jsc.operation.failure.held_by_another";
+    /** Waited as long as it was allowed to for something another Operation was holding; a craft says it too. */
+    public static final TextKey HELD_BY_ANOTHER = TextKey.of("jsc.operation.failure.held_by_another",
+            "another Operation was holding the %s it needed");
 
     /** Took everything of it the network had, which was less than was asked for. */
-    private static final String NOT_ENOUGH_STORED = "jsc.operation.failure.not_enough_stored";
+    private static final TextKey NOT_ENOUGH_STORED = TextKey.of("jsc.operation.failure.not_enough_stored",
+            "the network was not holding enough %s");
 
     private final IDataSink destination;
     private final String destinationLabel;

@@ -8,6 +8,8 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity.ClusterRef;
@@ -152,7 +154,7 @@ public final class ClusterManagerGameTests {
         helper.setBlock(NODE_RACK, ComputingModule.SUPERCOMPUTER_RACK.get());
         final ServerRackBlockEntity rack = rackAt(helper, NODE_RACK);
         for (final int row : new int[] {0, 2}) {
-            rack.getServers().setStackInSlot(row, ComputingModule.defaultSupercomputerNode());
+            rack.getServers().setStackInSlot(row, ServerStacks.defaultSupercomputerNode());
             if (!rack.insertDrive(row, new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1)))) {
                 throw new IllegalStateException("the node in row " + row + " took no drive");
             }
@@ -217,7 +219,7 @@ public final class ClusterManagerGameTests {
             parts.set(i, current.getStackInSlot(i).copy());
         }
         parts.set(ServerHardwareHandler.GPU_START, ItemStack.EMPTY);
-        node.set(ComputingModule.SERVER_HARDWARE.get(), ItemContainerContents.fromItems(parts));
+        node.set(ComputingComponents.SERVER_HARDWARE.get(), ItemContainerContents.fromItems(parts));
         rack.setChanged();
     }
 
@@ -385,7 +387,7 @@ public final class ClusterManagerGameTests {
         helper.setBlock(SERVER_RACK, ComputingModule.SUPERCOMPUTER_RACK.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.EAST));
         final ServerRackBlockEntity onData = rackAt(helper, SERVER_RACK);
-        onData.getServers().setStackInSlot(0, ComputingModule.defaultSupercomputerNode());
+        onData.getServers().setStackInSlot(0, ServerStacks.defaultSupercomputerNode());
         // And the real thing: a cabinet on the fabric behind an interface.
         final ServerRackBlockEntity onFabric = placeSupercomputer(helper);
         helper.startSequence()

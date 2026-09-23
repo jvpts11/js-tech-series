@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -866,7 +867,7 @@ public final class OsCliGameTests {
                             "the Linux kernel must give the shell the POSIX family");
                     helper.assertTrue("player@ubuntu:~$".equals(cli.prompt()),
                             "the bash prompt must start in the home directory; got " + cli.prompt());
-                    final var fs = mainframe.systemDisk().get(ComputingModule.FILESYSTEM.get());
+                    final var fs = mainframe.systemDisk().get(ComputingComponents.FILESYSTEM.get());
                     helper.assertTrue(fs != null && fs.hasDir("home/player") && fs.hasDir("etc"),
                             "the install must lay down the Unix tree (/home/player, /etc)");
 

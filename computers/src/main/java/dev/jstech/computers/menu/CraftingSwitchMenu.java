@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.block.CraftingSwitchBlock;
 import dev.jstech.computers.gui.layout.CraftingSwitchLayout;
 import net.minecraft.core.BlockPos;
@@ -31,7 +31,7 @@ public class CraftingSwitchMenu extends AbstractComputerMenu {
 
     public CraftingSwitchMenu(final int containerId, final Inventory playerInventory,
                               final Level level, final BlockPos switchPos) {
-        super(ComputingModule.CRAFTING_SWITCH_MENU.get(), containerId);
+        super(ComputingMenus.CRAFTING_SWITCH_MENU.get(), containerId);
         this.access = ContainerLevelAccess.create(level, switchPos);
         this.switchPos = switchPos;
         addPlayerInventory(playerInventory, CraftingSwitchLayout.INV_X, CraftingSwitchLayout.INV_Y);

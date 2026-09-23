@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
@@ -20,8 +20,6 @@ import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.media.LiveMedium;
-import dev.jstech.computers.os.media.MediaKind;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.storage.StorageKey;
@@ -480,7 +478,7 @@ final class OsSession {
              * uninstall it, rather than pull the disk physically and risk losing the files on it.
              */
             final ItemStack updated = stack.copy();
-            updated.remove(ComputingModule.DISK_SYSTEMS.get());
+            updated.remove(ComputingComponents.DISK_SYSTEMS.get());
             putDisk(updated, i);
             tellClients();
             return;

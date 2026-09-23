@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.block.CraftingComputerBlock;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.gui.layout.CraftingComputerLayout;
@@ -39,7 +39,7 @@ public class CraftingComputerMenu extends AbstractComputerMenu {
 
     public CraftingComputerMenu(final int containerId, final Inventory playerInventory,
                                 final CraftingComputerBlockEntity be) {
-        super(ComputingModule.CRAFTING_COMPUTER_MENU.get(), containerId);
+        super(ComputingMenus.CRAFTING_COMPUTER_MENU.get(), containerId);
         this.blockEntity = be;
         this.data = be.getDataAccess();
         this.access = ContainerLevelAccess.create(be.getLevel(), be.getBlockPos());

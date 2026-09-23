@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.blockentity.IWatchedConsole;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.gui.layout.NetworkInteractorLayout;
@@ -71,7 +71,7 @@ public class DesktopMenu extends AbstractContainerMenu {
     public DesktopMenu(final int containerId, final Inventory playerInventory, final BlockPos monitorPos,
                        final BlockPos hostPos, final ResourceLocation osId, final ResourceLocation desktopId,
                        final String name, final int ramTotalMb, final int ramReservedMb) {
-        super(ComputingModule.DESKTOP_MENU.get(), containerId);
+        super(ComputingMenus.DESKTOP_MENU.get(), containerId);
         this.playerInventory = playerInventory;
         this.monitorPos = monitorPos;
         this.hostPos = hostPos;

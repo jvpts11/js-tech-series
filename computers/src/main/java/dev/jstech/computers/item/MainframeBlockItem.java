@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.item;
 
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
@@ -19,6 +22,7 @@ import java.util.List;
 /**
  * Block item for the Mainframe: the cabinet's own model in the slot, plus the machine's tooltip.
  */
+@TextHolder
 public class MainframeBlockItem extends CabinetBlockItem {
 
     /**
@@ -28,6 +32,9 @@ public class MainframeBlockItem extends CabinetBlockItem {
      */
     private static final Fit MAINFRAME_FIT = new Fit(48.0F, 0.0F, -1.0F, -0.5F);
 
+    private static final TextKey TOOLTIP =
+            TextKey.of("item.jsc.mainframe.tooltip", "Forms a 3x2x2 structure when placed");
+
     public MainframeBlockItem(final Block block, final Item.Properties properties, final String model) {
         super(block, properties, "mainframe", model, "mainframe", MAINFRAME_FIT);
     }
@@ -35,8 +42,7 @@ public class MainframeBlockItem extends CabinetBlockItem {
     @Override
     public void appendHoverText(final ItemStack stack, final Item.TooltipContext context,
                                 final List<Component> tooltip, final TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.jsc.mainframe.tooltip")
-                .withStyle(ChatFormatting.GRAY));
+        tooltip.add(GameText.component(TOOLTIP).withStyle(ChatFormatting.GRAY));
         super.appendHoverText(stack, context, tooltip, flag);
     }
 }

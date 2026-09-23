@@ -311,7 +311,7 @@ public final class TestWorldBuilder {
      * fixture that needs network storage must populate the bay too.
      */
     public static void mountDefaultServer(final ServerRackBlockEntity rack, final int slot) {
-        rack.getServers().setStackInSlot(slot, ComputingModule.defaultServer());
+        rack.getServers().setStackInSlot(slot, ServerStacks.defaultServer());
         rack.insertDrive(slot, new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1)));
         rack.insertDrive(slot, new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1)));
     }

@@ -7,7 +7,8 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.gui.layout.ServerRackLayout;
@@ -50,7 +51,7 @@ public class ServerRackMenu extends AbstractComputerMenu {
 
     public ServerRackMenu(final int containerId, final Inventory playerInventory,
                           final ServerRackBlockEntity be) {
-        super(ComputingModule.SERVER_RACK_MENU.get(), containerId);
+        super(ComputingMenus.SERVER_RACK_MENU.get(), containerId);
         this.rack = be;
         this.access = ContainerLevelAccess.create(be.getLevel(), be.getBlockPos());
         this.data = be.getDataAccess();
@@ -187,7 +188,7 @@ public class ServerRackMenu extends AbstractComputerMenu {
         }
         int members = 0;
         for (final int index : claimedSlots(topRow, RackLayout.SlotRole.GADGET)) {
-            final Integer stored = frontSlotStack(index).get(ComputingModule.RAID_MEMBERS.get());
+            final Integer stored = frontSlotStack(index).get(ComputingComponents.RAID_MEMBERS.get());
             if (stored != null) {
                 members = stored;
             }

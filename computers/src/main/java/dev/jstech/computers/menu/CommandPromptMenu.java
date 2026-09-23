@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.IWatchedConsole;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
@@ -63,7 +63,7 @@ public class CommandPromptMenu extends AbstractContainerMenu {
     public CommandPromptMenu(final int containerId, final Inventory playerInventory,
                              final BlockPos monitorPos, final BlockPos hostPos,
                              @Nullable final HardwareEra era, final ConsoleIdentity console, final long session) {
-        this(ComputingModule.COMMAND_PROMPT_MENU.get(), containerId, playerInventory, monitorPos, hostPos,
+        this(ComputingMenus.COMMAND_PROMPT_MENU.get(), containerId, playerInventory, monitorPos, hostPos,
                 era, console, session);
     }
 

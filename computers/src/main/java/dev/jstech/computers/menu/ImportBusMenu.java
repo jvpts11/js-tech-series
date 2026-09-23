@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.block.part.ImportBusPart;
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -23,7 +23,7 @@ public class ImportBusMenu extends AbstractBusMenu {
 
     public ImportBusMenu(final int containerId, final Inventory playerInventory, final ImportBusPart part,
                          final Level level, final BlockPos cablePos, final Direction face, final String busName) {
-        super(ComputingModule.IMPORT_BUS_MENU.get(), containerId, playerInventory, part, level, cablePos, face, busName);
+        super(ComputingMenus.IMPORT_BUS_MENU.get(), containerId, playerInventory, part, level, cablePos, face, busName);
     }
 
     public static ImportBusMenu create(final int containerId, final Inventory playerInventory,

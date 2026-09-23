@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.core.network.FailoverRole;
@@ -36,7 +36,7 @@ public class MainframeMenu extends AbstractComputerMenu {
 
     public MainframeMenu(final int containerId, final Inventory playerInventory,
                          final MainframeBlockEntity be) {
-        super(ComputingModule.MAINFRAME_MENU.get(), containerId);
+        super(ComputingMenus.MAINFRAME_MENU.get(), containerId);
         this.blockEntity = be;
         this.data = be.getDataAccess();
         this.access = ContainerLevelAccess.create(be.getLevel(), be.getBlockPos());

@@ -21,6 +21,9 @@ import dev.jstech.core.multiblock.IMultiblockGeometry;
 import dev.jstech.core.multiblock.MultiblockPatternGeometry;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.IRearFacingDataPort;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
@@ -28,7 +31,6 @@ import java.util.EnumSet;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -60,6 +62,7 @@ import java.util.List;
 /**
  * The Server Rack: a 2-wide, 3-tall, 2-deep multiblock cabinet that is logically a single rack.
  */
+@TextHolder
 public class ServerRackBlock extends AbstractMultiblockControllerBlock
         implements IRearFacingDataPort {
 
@@ -67,6 +70,11 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
 
     public static final IntegerProperty BAYS =
             IntegerProperty.create("bays", 0, 3);
+
+    private static final TextKey WRONG_CHASSIS =
+            TextKey.of("block.jsc.rack.wrong_chassis", "This chassis belongs in a different rack");
+    private static final TextKey ROW_TAKEN =
+            TextKey.of("block.jsc.rack.row_taken", "That rack unit is taken or too small for this");
 
     public ServerRackBlock(final Properties properties) {
         super(properties);
@@ -109,7 +117,7 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
      * so dismantling a Supercomputer Rack never hands the player a Server Rack.
      */
     protected Item blockItem() {
-        return ComputingModule.SERVER_RACK_ITEM.get();
+        return ComputingModule.SERVER_RACK.item();
     }
 
     @Override
@@ -222,7 +230,7 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
         }
         // A chassis that belongs in another cabinet is refused with the reason, not ignored.
         if (!rack.acceptsChassis(stack)) {
-            tell(player, "block.jsc.rack.wrong_chassis");
+            tell(player, WRONG_CHASSIS);
             return ItemInteractionResult.sidedSuccess(false);
         }
         final ItemStackHandler servers = rack.getServers();
@@ -236,7 +244,7 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
                 servers.setStackInSlot(aimed, stack.split(1));
                 reportFull(rack, player);
             } else {
-                tell(player, "block.jsc.rack.row_taken");
+                tell(player, ROW_TAKEN);
             }
             return ItemInteractionResult.sidedSuccess(false);
         }
@@ -317,9 +325,9 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
                 : super.getCloneItemStack(state, target, level, pos, player);
     }
 
-    private static void tell(final Player player, final String key) {
+    private static void tell(final Player player, final TextKey sentence) {
         if (player instanceof ServerPlayer serverPlayer) {
-            serverPlayer.displayClientMessage(Component.translatable(key), true);
+            serverPlayer.displayClientMessage(GameText.component(sentence), true);
         }
     }
 

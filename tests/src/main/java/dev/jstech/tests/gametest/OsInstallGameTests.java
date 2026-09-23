@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.MonitorBlock;
@@ -356,7 +357,7 @@ public final class OsInstallGameTests {
                     helper.assertTrue(!unit.hasOs(), "and nothing is on its drive yet");
 
                     final CompoundTag onItem = rack.getServers().getStackInSlot(0)
-                            .get(ComputingModule.SERVER_CONSOLE.get());
+                            .get(ComputingComponents.SERVER_CONSOLE.get());
                     helper.assertTrue(onItem != null && onItem.contains("Installing"),
                             "the copy is flushed onto the Server item, so a save keeps it");
 
@@ -415,13 +416,15 @@ public final class OsInstallGameTests {
                     final IOsHost unit = rack.unitHost(0);
                     unit.setPendingInstallSlot(0);
                     helper.assertTrue(unit.pendingInstallSlot() == 0, "the unit remembers its pending reboot");
-                    final CompoundTag onItem = rack.getServers().getStackInSlot(0).get(ComputingModule.SERVER_CONSOLE.get());
+                    final CompoundTag onItem =
+                            rack.getServers().getStackInSlot(0).get(ComputingComponents.SERVER_CONSOLE.get());
                     helper.assertTrue(onItem != null && onItem.getInt("PendingInstall") == 0,
                             "the pending reboot is flushed onto the Server item with the rest of its session");
                     rack.toggleBayPower(0); // the bay switch is this machine's power button
                     helper.assertTrue(unit.pendingInstallSlot() == IOsHost.NO_PENDING_INSTALL,
                             "switching the bay off drops the installer session");
-                    final CompoundTag after = rack.getServers().getStackInSlot(0).get(ComputingModule.SERVER_CONSOLE.get());
+                    final CompoundTag after =
+                            rack.getServers().getStackInSlot(0).get(ComputingComponents.SERVER_CONSOLE.get());
                     helper.assertTrue(after == null || !after.contains("PendingInstall"),
                             "and the item no longer carries it");
                 })

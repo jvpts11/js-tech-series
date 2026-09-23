@@ -8,6 +8,9 @@
 package dev.jstech.computers.item;
 
 import dev.jstech.computers.rack.IMountableRackUnit;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
@@ -23,6 +26,7 @@ import java.util.List;
  * cooling that buys a dense rack its thermal headroom. Rack units spend the same rack-unit budget
  * the servers do, which is what makes filling a cabinet a set of real trade-offs.
  */
+@TextHolder
 public class RackUnitItem extends Item implements IMountableRackUnit {
 
     /** What a rack unit does for the cabinet. */
@@ -53,6 +57,15 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
 
     private final Kind kind;
 
+    private static final TextKey KVM_TOOLTIP = TextKey.of("item.jsc.kvm_switch.tooltip",
+            "Lets one monitor address every machine in the rack");
+    private static final TextKey UPS_TOOLTIP = TextKey.of("item.jsc.rack_ups.tooltip",
+            "Carries the whole rack through a power outage");
+    private static final TextKey COOLING_TOOLTIP = TextKey.of("item.jsc.cooling_unit.tooltip",
+            "Active cooling: raises the rack's thermal budget");
+    private static final TextKey EQUIPMENT = TextKey.of("item.jsc.rack_unit.equipment",
+            "%sU - rack equipment, not a computer");
+
     public RackUnitItem(final Properties properties, final Kind kind) {
         super(properties.stacksTo(1));
         this.kind = kind;
@@ -81,9 +94,12 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
     @Override
     public void appendHoverText(final ItemStack stack, final TooltipContext context,
                                 final List<Component> tooltip, final TooltipFlag flag) {
-        tooltip.add(Component.translatable("item." + "jsc." + kind.id() + ".tooltip")
-                .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.literal(kind.heightU() + "U - rack equipment, not a computer")
-                .withStyle(ChatFormatting.DARK_GRAY));
+        final TextKey what = switch (kind) {
+            case KVM_SWITCH -> KVM_TOOLTIP;
+            case RACK_UPS -> UPS_TOOLTIP;
+            case COOLING_UNIT -> COOLING_TOOLTIP;
+        };
+        tooltip.add(GameText.component(what).withStyle(ChatFormatting.GRAY));
+        tooltip.add(GameText.component(EQUIPMENT.with(kind.heightU())).withStyle(ChatFormatting.DARK_GRAY));
     }
 }

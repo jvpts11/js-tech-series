@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.os.media;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.MinSpecTooltip;
 import dev.jstech.computers.os.OsDef;
@@ -73,7 +73,7 @@ public class FormattedMediaItem extends MediaItem {
          * show for a medium with no files of its own.
          */
         final FilesystemContents fs = stack.getOrDefault(
-                ComputingModule.FILESYSTEM.get(),
+                ComputingComponents.FILESYSTEM.get(),
                 FilesystemContents.EMPTY);
         if (!fs.files().isEmpty()) {
             FilesystemTooltip.append(fs, tooltip);

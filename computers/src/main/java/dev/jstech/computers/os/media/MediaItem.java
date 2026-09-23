@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.os.media;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.storage.ServerStorageContents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
@@ -49,13 +49,13 @@ public class MediaItem extends Item {
      * media.
      */
     public static MediaKind kind(final ItemStack stack) {
-        final MediaKind stored = stack.get(ComputingModule.MEDIA_KIND.get());
+        final MediaKind stored = stack.get(ComputingComponents.MEDIA_KIND.get());
         return stored != null ? stored : MediaKind.OS_INSTALL;
     }
 
     /** Stamps the given kind onto a media stack in-place. */
     public static void setKind(final ItemStack stack, final MediaKind kind) {
-        stack.set(ComputingModule.MEDIA_KIND.get(), kind);
+        stack.set(ComputingComponents.MEDIA_KIND.get(), kind);
     }
 
     // ─── Installer payload (OS_INSTALL / PROGRAM_INSTALL) ────────────────────
@@ -66,7 +66,7 @@ public class MediaItem extends Item {
      */
     @Nullable
     public static ResourceLocation payload(final ItemStack stack) {
-        return stack.get(ComputingModule.MEDIA_PAYLOAD.get());
+        return stack.get(ComputingComponents.MEDIA_PAYLOAD.get());
     }
 
     /**
@@ -76,7 +76,7 @@ public class MediaItem extends Item {
      * @param payload the OS or program id to encode
      */
     public static void setPayload(final ItemStack stack, final ResourceLocation payload) {
-        stack.set(ComputingModule.MEDIA_PAYLOAD.get(), payload);
+        stack.set(ComputingComponents.MEDIA_PAYLOAD.get(), payload);
     }
 
     // ─── Data contents (DATA) ────────────────────────────────────────────────
@@ -86,7 +86,7 @@ public class MediaItem extends Item {
      * when the component is absent.
      */
     public static ServerStorageContents data(final ItemStack stack) {
-        final ServerStorageContents stored = stack.get(ComputingModule.MEDIA_DATA.get());
+        final ServerStorageContents stored = stack.get(ComputingComponents.MEDIA_DATA.get());
         return stored != null ? stored : ServerStorageContents.EMPTY;
     }
 
@@ -97,7 +97,7 @@ public class MediaItem extends Item {
      * @param contents the item/fluid snapshot to encode
      */
     public static void setData(final ItemStack stack, final ServerStorageContents contents) {
-        stack.set(ComputingModule.MEDIA_DATA.get(), contents);
+        stack.set(ComputingComponents.MEDIA_DATA.get(), contents);
     }
 
     // ─── Capacity ────────────────────────────────────────────────────────────
@@ -107,7 +107,7 @@ public class MediaItem extends Item {
      * {@link #DEFAULT_CAPACITY} when the component is absent.
      */
     public static int capacity(final ItemStack stack) {
-        final Integer stored = stack.get(ComputingModule.MEDIA_CAPACITY.get());
+        final Integer stored = stack.get(ComputingComponents.MEDIA_CAPACITY.get());
         return stored != null ? stored : DEFAULT_CAPACITY;
     }
 
@@ -118,6 +118,6 @@ public class MediaItem extends Item {
      * @param capacity the maximum number of item-equivalent units this medium can store
      */
     public static void setCapacity(final ItemStack stack, final int capacity) {
-        stack.set(ComputingModule.MEDIA_CAPACITY.get(), capacity);
+        stack.set(ComputingComponents.MEDIA_CAPACITY.get(), capacity);
     }
 }

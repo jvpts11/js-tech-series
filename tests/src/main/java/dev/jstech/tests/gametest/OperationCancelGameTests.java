@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.block.part.InputBusPart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
@@ -191,7 +192,7 @@ public final class OperationCancelGameTests {
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
         final ServerRackBlockEntity rackBe = world.blockEntity(rack, ServerRackBlockEntity.class);
         // HDD drives: the ten-tick seek keeps the pull in flight long enough to list and cancel it.
-        rackBe.getServers().setStackInSlot(0, ComputingModule.defaultServer());
+        rackBe.getServers().setStackInSlot(0, ServerStacks.defaultServer());
         rackBe.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         rackBe.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         final String[] shortId = new String[1];

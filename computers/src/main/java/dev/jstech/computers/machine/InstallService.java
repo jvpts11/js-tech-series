@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.machine;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
@@ -295,8 +295,9 @@ public final class InstallService {
         if (!(disk.getItem() instanceof DiskItem)) {
             return;
         }
-        final FilesystemContents was = disk.getOrDefault(ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
-        disk.set(ComputingModule.FILESYSTEM.get(),
+        final FilesystemContents was =
+                disk.getOrDefault(ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
+        disk.set(ComputingComponents.FILESYSTEM.get(),
                 was.withDir("/etc").withDir(dir).with(new StoredFile(path, FileType.CFG, content)));
     }
 

@@ -82,7 +82,7 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
      * broken or pick-blocked Mainframe yields the matching era's item.
      */
     protected Item blockItem() {
-        return ComputingModule.MAINFRAME_ITEM.get();
+        return ComputingModule.MAINFRAME.item();
     }
 
     @Override

@@ -150,7 +150,7 @@ public final class EraComputerGameTests {
                  */
                 .thenExecute(() -> helper.getLevel().destroyBlock(helper.absolutePos(pos), true))
                 .thenExecuteAfter(SETTLE, () -> helper.assertItemEntityPresent(
-                        ComputingModule.VINTAGE_PERSONAL_COMPUTER_ITEM.get(), pos, 3.0))
+                        ComputingModule.VINTAGE_PERSONAL_COMPUTER.item(), pos, 3.0))
                 .thenSucceed();
     }
 
@@ -165,7 +165,7 @@ public final class EraComputerGameTests {
                  */
                 .thenExecute(() -> helper.getLevel().destroyBlock(helper.absolutePos(pos), true))
                 .thenExecuteAfter(SETTLE, () -> helper.assertItemEntityPresent(
-                        ComputingModule.LEGACY_PERSONAL_COMPUTER_ITEM.get(), pos, 3.0))
+                        ComputingModule.LEGACY_PERSONAL_COMPUTER.item(), pos, 3.0))
                 .thenSucceed();
     }
 }

@@ -12,7 +12,12 @@ import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NetworkUuid;
+import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -21,6 +26,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
@@ -29,13 +36,39 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A part item: right-clicking a data cable attaches an {@link ICablePart} of this item's type to one of the cable's faces, like an AE2 bus snapping onto a cable.
  */
+@TextHolder
 public class CablePartItem extends Item {
 
     private final CablePartType type;
 
+    private static final TextKey IMPORT_TOOLTIP = TextKey.of("item.jsc.import_bus.tooltip",
+            "Right-click a data cable to attach; pulls items into the network");
+    private static final TextKey EXPORT_TOOLTIP = TextKey.of("item.jsc.export_bus.tooltip",
+            "Right-click a data cable to attach; pushes the filtered item out");
+    private static final TextKey INPUT_TOOLTIP = TextKey.of("item.jsc.input_bus.tooltip",
+            "Right-click a crafting cable to attach; marks the face machine crafts deliver inputs through");
+    private static final TextKey RECEIVING_TOOLTIP = TextKey.of("item.jsc.receiving_bus.tooltip",
+            "Right-click a crafting cable to attach; marks the face machine crafts collect outputs from");
+    private static final TextKey ON_CRAFTING_CABLES = TextKey.of("item.jsc.bus.on_crafting_cables",
+            "Crafting buses mount on crafting cables");
+    private static final TextKey ON_DATA_CABLES = TextKey.of("item.jsc.bus.on_data_cables",
+            "Storage buses mount on data cables");
+
     public CablePartItem(final Properties properties, final CablePartType type) {
         super(properties);
         this.type = type;
+    }
+
+    @Override
+    public void appendHoverText(final ItemStack stack, final TooltipContext context,
+                                final List<Component> tooltip, final TooltipFlag flag) {
+        final TextKey what = switch (type) {
+            case IMPORT -> IMPORT_TOOLTIP;
+            case EXPORT -> EXPORT_TOOLTIP;
+            case INPUT -> INPUT_TOOLTIP;
+            case RECEIVING -> RECEIVING_TOOLTIP;
+        };
+        tooltip.add(GameText.component(what).withStyle(ChatFormatting.GRAY));
     }
 
     @Override
@@ -101,9 +134,8 @@ public class CablePartItem extends Item {
                 cable.tier() == DataTier.CRAFTING;
         if (craftingPart != craftingCable) {
             if (!level.isClientSide() && context.getPlayer() != null) {
-                context.getPlayer().displayClientMessage(Component.literal(
-                        craftingPart ? "Crafting buses mount on crafting cables"
-                                : "Storage buses mount on data cables"), true);
+                context.getPlayer().displayClientMessage(
+                        GameText.component(craftingPart ? ON_CRAFTING_CABLES : ON_DATA_CABLES), true);
             }
             return InteractionResult.FAIL;
         }

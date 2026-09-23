@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.advancement;
 
-import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.RackUnitHost;
 import dev.jstech.computers.os.IOsHost;
 import net.minecraft.core.BlockPos;
@@ -108,7 +107,7 @@ public final class JscEvents {
     /** The same, with the detail that tells apart the criteria of an advancement asking for all of something. */
     public static void award(@Nullable final Player player, final String event, @Nullable final String detail) {
         if (player instanceof ServerPlayer server && !(player instanceof FakePlayer)) {
-            ComputingModule.EVENT.get().trigger(server, event, detail == null ? "" : detail);
+            JscTriggers.EVENT.get().trigger(server, event, detail == null ? "" : detail);
         }
     }
 

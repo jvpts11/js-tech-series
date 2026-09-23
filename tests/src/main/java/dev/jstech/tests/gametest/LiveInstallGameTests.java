@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -132,7 +133,7 @@ public final class LiveInstallGameTests {
                     "the machine keeps the name it was given: " + mainframe.console().computerName());
             helper.assertTrue("player@workshop ~ %".equals(term.prompt()),
                     "which is the name its own prompt now shows: " + term.prompt());
-            final FilesystemContents disk = mainframe.diskInSlot(0).get(ComputingModule.FILESYSTEM.get());
+            final FilesystemContents disk = mainframe.diskInSlot(0).get(ComputingComponents.FILESYSTEM.get());
             helper.assertTrue(disk != null && disk.files().get("/etc/fstab") != null
                             && disk.files().get("/etc/fstab").content().contains("# /dev/sda2"),
                     "and the table it wrote is on the disk it describes");
@@ -219,7 +220,7 @@ public final class LiveInstallGameTests {
             helper.assertTrue(osId("gentoo").equals(mainframe.installedOsId()),
                     "and the machine boots what was built: " + mainframe.installedOsId());
             // The build options are the system's and not the install's: every later build is built by them.
-            final FilesystemContents disk = mainframe.diskInSlot(0).get(ComputingModule.FILESYSTEM.get());
+            final FilesystemContents disk = mainframe.diskInSlot(0).get(ComputingComponents.FILESYSTEM.get());
             helper.assertTrue(disk != null && disk.files().get(MakeOpts.PATH) != null
                             && disk.files().get(MakeOpts.PATH).content().contains("-j64"),
                     "and the build options written on the way are on the disk it installed to");

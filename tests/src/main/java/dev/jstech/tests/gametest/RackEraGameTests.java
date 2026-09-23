@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.item.ServerHardwareHandler;
@@ -141,7 +142,7 @@ public final class RackEraGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final ItemStackHandler rows = rack.getServers();
-                    rows.setStackInSlot(0, ComputingModule.defaultServer().copy());   // a Standard 1U in row 0
+                    rows.setStackInSlot(0, ServerStacks.defaultServer().copy());   // a Standard 1U in row 0
                     rows.setStackInSlot(1, stack(ComputingModule.STORAGE_SERVER.get()));   // 2U: rows 1 and 2
                     rows.setStackInSlot(3, stack(ComputingModule.LEGACY_SERVER.get()));
                     rows.setStackInSlot(5, stack(ComputingModule.VINTAGE_SERVER.get()));
@@ -188,7 +189,7 @@ public final class RackEraGameTests {
                     helper.assertFalse(cabinet.servicePanelOff(), "and puts it back");
                     rack.toggleServicePanel();
                     helper.assertFalse(rack.servicePanelOff(), "a server rack has no panel to take off");
-                    cabinet.getServers().setStackInSlot(2, ComputingModule.defaultSupercomputerNode());
+                    cabinet.getServers().setStackInSlot(2, ServerStacks.defaultSupercomputerNode());
                     helper.assertTrue(cabinet.unitCodeAt(2) == ServerRackBlockEntity.UNIT_NODE_2U
                                     && cabinet.unitCodeAt(3) == ServerRackBlockEntity.UNIT_NONE,
                             "a seated node reports its start row for the chassis bands");

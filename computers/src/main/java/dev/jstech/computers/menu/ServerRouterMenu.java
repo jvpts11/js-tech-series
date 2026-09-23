@@ -8,6 +8,7 @@
 package dev.jstech.computers.menu;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
 import dev.jstech.computers.datacenter.LoadBalanceMode;
 import net.minecraft.core.BlockPos;
@@ -34,7 +35,7 @@ public class ServerRouterMenu extends AbstractContainerMenu {
 
     public ServerRouterMenu(final int containerId, final Inventory playerInventory,
                             final ServerRouterBlockEntity be, final String initialName) {
-        super(ComputingModule.SERVER_ROUTER_MENU.get(), containerId);
+        super(ComputingMenus.SERVER_ROUTER_MENU.get(), containerId);
         this.blockEntity = be;
         this.data = be.getDataAccess();
         this.access = ContainerLevelAccess.create(be.getLevel(), be.getBlockPos());

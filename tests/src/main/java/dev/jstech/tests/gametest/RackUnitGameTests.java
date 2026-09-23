@@ -8,6 +8,8 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
@@ -91,14 +93,14 @@ public final class RackUnitGameTests {
                      * Half a block up the controller's front is texel 16: the second rack unit from the
                      * bottom, which is row 6 counted from the top.
                      */
-                    player.setItemInHand(InteractionHand.MAIN_HAND, ComputingModule.defaultServer());
+                    player.setItemInHand(InteractionHand.MAIN_HAND, ServerStacks.defaultServer());
                     helper.useBlock(pos, player, hitOn(helper, pos, Direction.NORTH, 0.5));
                     helper.assertTrue(rack.getServers().getStackInSlot(6).getItem() instanceof ServerItem,
                             "the server seats in the row under the crosshair");
                     helper.assertTrue(player.getItemInHand(InteractionHand.MAIN_HAND).isEmpty(),
                             "the hand is empty: the server went in");
                     // The same row again is refused; nothing sneaks into another row.
-                    player.setItemInHand(InteractionHand.MAIN_HAND, ComputingModule.defaultServer());
+                    player.setItemInHand(InteractionHand.MAIN_HAND, ServerStacks.defaultServer());
                     helper.useBlock(pos, player, hitOn(helper, pos, Direction.NORTH, 0.5));
                     helper.assertTrue(mountedServers(rack) == 1
                                     && !player.getItemInHand(InteractionHand.MAIN_HAND).isEmpty(),
@@ -140,7 +142,7 @@ public final class RackUnitGameTests {
     @GameTest(template = ARENA)
     public static void frontSlots_roleGatesDriveInsertion(final GameTestHelper helper) {
         final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2));
-        rack.getServers().setStackInSlot(0, ComputingModule.defaultServer());
+        rack.getServers().setStackInSlot(0, ServerStacks.defaultServer());
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     // The 1U server chassis cables 3 drive slots and 1 gadget slot in its row.
@@ -160,7 +162,7 @@ public final class RackUnitGameTests {
     @GameTest(template = ARENA)
     public static void pullingServer_leavesDrivesAndDataInBay(final GameTestHelper helper) {
         final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2));
-        final ItemStack server = ComputingModule.defaultServer();
+        final ItemStack server = ServerStacks.defaultServer();
         rack.getServers().setStackInSlot(0, server);
         helper.assertTrue(rack.insertDrive(0, nvmeDrive()), "the bay must take the first drive");
         helper.assertTrue(rack.insertDrive(0, nvmeDrive()), "the bay must take the second drive");
@@ -178,7 +180,7 @@ public final class RackUnitGameTests {
                             "an empty rack unit claims no drives, so it reads no storage");
 
                     // Mount a chassis over the same rows again: it inherits the drives and the data.
-                    rack.getServers().setStackInSlot(0, ComputingModule.defaultServer());
+                    rack.getServers().setStackInSlot(0, ServerStacks.defaultServer());
                     final long recovered = rack.getServerStorage(0).count(Items.COBBLESTONE);
                     helper.assertTrue(recovered == 100L,
                             "the next chassis must inherit the bay data; got " + recovered);
@@ -249,7 +251,7 @@ public final class RackUnitGameTests {
     @GameTest(template = ARENA)
     public static void rackHost_bootsFirmwareThenInstalledOs(final GameTestHelper helper) {
         final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2));
-        rack.getServers().setStackInSlot(0, ComputingModule.defaultServer());
+        rack.getServers().setStackInSlot(0, ServerStacks.defaultServer());
         rack.insertDrive(0, nvmeDrive());
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
@@ -267,7 +269,7 @@ public final class RackUnitGameTests {
                     helper.assertTrue(mcNet.equals(rack.installedOsId()),
                             "the installed OS id reads back from the bay drive");
                     helper.assertTrue(rack.getFrontSlots().getStackInSlot(0)
-                                    .get(ComputingModule.DISK_SYSTEMS.get()) != null,
+                                    .get(ComputingComponents.DISK_SYSTEMS.get()) != null,
                             "the DISK_SYSTEMS component lives on the drive itself");
                     helper.assertTrue(dev.jstech.computers.os.boot.BootController
                                     .targetForComputer(rack)
@@ -280,7 +282,7 @@ public final class RackUnitGameTests {
     @GameTest(template = ARENA)
     public static void rackHost_sessionDiesWhenOsDrivePulled(final GameTestHelper helper) {
         final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2));
-        rack.getServers().setStackInSlot(0, ComputingModule.defaultServer());
+        rack.getServers().setStackInSlot(0, ServerStacks.defaultServer());
         rack.insertDrive(0, nvmeDrive());
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
@@ -289,7 +291,7 @@ public final class RackUnitGameTests {
                     helper.assertTrue(rack.validateOsSession(), "an installed system validates the session");
                     // Hotswap the OS drive out: the system travels with it and the session dies.
                     final ItemStack pulled = rack.getFrontSlots().extractItem(0, 1, false);
-                    helper.assertTrue(pulled.get(ComputingModule.DISK_SYSTEMS.get()) != null,
+                    helper.assertTrue(pulled.get(ComputingComponents.DISK_SYSTEMS.get()) != null,
                             "the pulled drive carries the installed system with it");
                     helper.assertTrue(!rack.validateOsSession(),
                             "pulling the OS drive kills the machine's session");
@@ -302,13 +304,13 @@ public final class RackUnitGameTests {
     public static void rackHost_consoleTravelsWithTheServer(final GameTestHelper helper) {
         final ServerRackBlockEntity rackA = placeRack(helper, new BlockPos(1, 2, 1));
         final ServerRackBlockEntity rackB = placeRack(helper, new BlockPos(4, 2, 4));
-        rackA.getServers().setStackInSlot(0, ComputingModule.defaultServer());
+        rackA.getServers().setStackInSlot(0, ServerStacks.defaultServer());
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     rackA.console().pushHistory("uname -a");
                     // Pulling the server flushes the live console onto the item.
                     final ItemStack moved = rackA.getServers().extractItem(0, 1, false);
-                    helper.assertTrue(moved.get(ComputingModule.SERVER_CONSOLE.get()) != null,
+                    helper.assertTrue(moved.get(ComputingComponents.SERVER_CONSOLE.get()) != null,
                             "the extracted server carries its console state");
                     rackB.getServers().setStackInSlot(0, moved);
                     helper.assertTrue(rackB.console().history().contains("uname -a"),
@@ -361,8 +363,8 @@ public final class RackUnitGameTests {
     @GameTest(template = ARENA)
     public static void rackWithTwoComputers_hostGoesDark(final GameTestHelper helper) {
         final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2));
-        rack.getServers().setStackInSlot(0, ComputingModule.defaultServer());
-        rack.getServers().setStackInSlot(2, ComputingModule.defaultServer());
+        rack.getServers().setStackInSlot(0, ServerStacks.defaultServer());
+        rack.getServers().setStackInSlot(2, ServerStacks.defaultServer());
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     // Two computers need a KVM switch for monitor access; the direct host is dark.
@@ -377,8 +379,8 @@ public final class RackUnitGameTests {
     @GameTest(template = ARENA)
     public static void kvmSwitch_letsTheMonitorAddressEachMachine(final GameTestHelper helper) {
         final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2));
-        rack.getServers().setStackInSlot(0, ComputingModule.defaultServer());
-        rack.getServers().setStackInSlot(2, ComputingModule.defaultServer());
+        rack.getServers().setStackInSlot(0, ServerStacks.defaultServer());
+        rack.getServers().setStackInSlot(2, ServerStacks.defaultServer());
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     helper.assertTrue(!rack.hasKvmSwitch(), "no switch is mounted yet");
@@ -701,7 +703,7 @@ public final class RackUnitGameTests {
                     helper.assertTrue(rack.installedEra() == null,
                             "an unassembled machine reports no era instead of throwing");
 
-                    rack.getServers().setStackInSlot(0, ComputingModule.defaultServer());
+                    rack.getServers().setStackInSlot(0, ServerStacks.defaultServer());
                     helper.assertTrue(rack.installedEra() != null,
                             "an assembled machine reports the era of its board");
 
@@ -709,7 +711,7 @@ public final class RackUnitGameTests {
                      * Two machines and no KVM: the monitor cannot say which one it means, so there is
                      * no channel to read an era from.
                      */
-                    rack.getServers().setStackInSlot(1, ComputingModule.defaultServer());
+                    rack.getServers().setStackInSlot(1, ServerStacks.defaultServer());
                     helper.assertTrue(rack.installedEra() == null,
                             "two machines without a KVM switch address none");
 
@@ -766,7 +768,7 @@ public final class RackUnitGameTests {
 
     /** A server carrying accelerators: the hot machine a dense rack is actually built out of. */
     private static ItemStack hotServer() {
-        final ItemStack server = ComputingModule.defaultServer();
+        final ItemStack server = ServerStacks.defaultServer();
         final net.minecraft.core.NonNullList<ItemStack> hw = net.minecraft.core.NonNullList.withSize(
                 dev.jstech.computers.item.ServerHardwareHandler.SLOTS, ItemStack.EMPTY);
         final var existing = dev.jstech.computers.item.ServerItem.hardware(server);
@@ -776,7 +778,7 @@ public final class RackUnitGameTests {
         // One accelerator: enough to make the machine hot, still inside the 650W supply.
         hw.set(dev.jstech.computers.item.ServerHardwareHandler.GPU_START,
                 new ItemStack(ComputingModule.GPU_HD_7970.get()));
-        server.set(ComputingModule.SERVER_HARDWARE.get(),
+        server.set(ComputingComponents.SERVER_HARDWARE.get(),
                 net.minecraft.world.item.component.ItemContainerContents.fromItems(hw));
         return server;
     }
@@ -884,9 +886,9 @@ public final class RackUnitGameTests {
                                 chassis + (server ? " belongs in the Server Rack"
                                         : " belongs in the Supercomputer Rack"));
                     }
-                    helper.assertTrue(!rack.acceptsChassis(ComputingModule.defaultSupercomputerNode()),
+                    helper.assertTrue(!rack.acceptsChassis(ServerStacks.defaultSupercomputerNode()),
                             "a node is refused by the general cabinet");
-                    helper.assertTrue(rack.acceptsChassis(ComputingModule.defaultServer()),
+                    helper.assertTrue(rack.acceptsChassis(ServerStacks.defaultServer()),
                             "a server chassis fits its own cabinet");
                     // Rack equipment fits every cabinet, whatever its type.
                     helper.assertTrue(rack.acceptsChassis(new ItemStack(ComputingModule.KVM_SWITCH.get())),
@@ -898,7 +900,7 @@ public final class RackUnitGameTests {
     @GameTest(template = ARENA)
     public static void bayGadgets_onlyFitGadgetSlots(final GameTestHelper helper) {
         final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2));
-        rack.getServers().setStackInSlot(0, ComputingModule.defaultServer());
+        rack.getServers().setStackInSlot(0, ServerStacks.defaultServer());
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final ItemStack controller = new ItemStack(ComputingModule.RAID_CONTROLLER.get());
@@ -918,7 +920,7 @@ public final class RackUnitGameTests {
     @GameTest(template = ARENA)
     public static void bayStorage_capacityComesFromClaimedDrives(final GameTestHelper helper) {
         final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2));
-        rack.getServers().setStackInSlot(0, ComputingModule.defaultServer());
+        rack.getServers().setStackInSlot(0, ServerStacks.defaultServer());
         final ItemStack drive = nvmeDrive();
         final long perDrive = ((DiskItem) drive.getItem()).spec().capacityItems();
         rack.insertDrive(0, drive.copy());

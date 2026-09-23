@@ -12,10 +12,19 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.DataTier;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.BlockEntityTickers;
+import java.util.List;
 import java.util.Set;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -28,9 +37,13 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The HBW Interface: the single point where a Supercomputer cluster meets the network.
  */
+@TextHolder
 public class HbwInterfaceBlock extends Block implements EntityBlock, IDataNetworkConnectable {
 
     public static final MapCodec<HbwInterfaceBlock> CODEC = simpleCodec(HbwInterfaceBlock::new);
+
+    private static final TextKey TOOLTIP =
+            TextKey.of("item.jsc.hbw_interface.tooltip", "Uplinks a node cluster to the HBW backbone");
 
     public HbwInterfaceBlock(final Properties properties) {
         super(properties);
@@ -39,6 +52,12 @@ public class HbwInterfaceBlock extends Block implements EntityBlock, IDataNetwor
     @Override
     protected MapCodec<HbwInterfaceBlock> codec() {
         return CODEC;
+    }
+
+    @Override
+    public void appendHoverText(final ItemStack stack, final Item.TooltipContext context,
+                                final List<Component> tooltip, final TooltipFlag flag) {
+        tooltip.add(GameText.component(TOOLTIP).withStyle(ChatFormatting.GRAY));
     }
 
     @Override

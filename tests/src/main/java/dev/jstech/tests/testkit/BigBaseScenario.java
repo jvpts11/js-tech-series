@@ -377,7 +377,7 @@ public final class BigBaseScenario {
                     for (int slot = 0; slot < params.serversPerRack(); slot++) {
                         final int row = params.chassis() == Chassis.STORAGE ? slot * 2 : slot;
                         rack.getServers().setStackInSlot(row, params.chassis() == Chassis.STORAGE
-                                ? ComputingModule.defaultStorageServer() : ComputingModule.defaultServer());
+                                ? ServerStacks.defaultStorageServer() : ServerStacks.defaultServer());
                         for (int drive = 0; drive < params.drivesPerServer(); drive++) {
                             rack.insertDrive(row, new ItemStack(ComputingModule.disk(StorageTier.NVME, params.driveSize())));
                         }
@@ -442,7 +442,7 @@ public final class BigBaseScenario {
     private static void seatNodes(final ServerRackBlockEntity rack) {
         for (int node = 0; node < NODES_PER_RACK; node++) {
             final int row = node * 2;
-            rack.getServers().setStackInSlot(row, ComputingModule.defaultSupercomputerNode());
+            rack.getServers().setStackInSlot(row, ServerStacks.defaultSupercomputerNode());
             rack.insertDrive(row, new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1)));
         }
     }

@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.machine;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
@@ -555,13 +555,13 @@ public final class FileService {
                 return ICliComputer.OpResult.fail(
                         "format: cannot format drive C: - the running system lives on it");
             }
-            target.remove(ComputingModule.DISK_SYSTEMS.get());
-            target.remove(ComputingModule.FILESYSTEM.get());
+            target.remove(ComputingComponents.DISK_SYSTEMS.get());
+            target.remove(ComputingComponents.FILESYSTEM.get());
             DriveVolumes.erase(target);
-            target.remove(ComputingModule.DISK_PUBLIC_PERMILLE.get());
-            target.remove(ComputingModule.MEDIA_KIND.get());
-            target.remove(ComputingModule.MEDIA_PAYLOAD.get());
-            target.remove(ComputingModule.MEDIA_DATA.get());
+            target.remove(ComputingComponents.DISK_PUBLIC_PERMILLE.get());
+            target.remove(ComputingComponents.MEDIA_KIND.get());
+            target.remove(ComputingComponents.MEDIA_PAYLOAD.get());
+            target.remove(ComputingComponents.MEDIA_DATA.get());
             drive.commit().run();
             return ICliComputer.OpResult.ok(
                     "Formatting drive " + letter + ": ... done\nAll data on the volume was erased.");

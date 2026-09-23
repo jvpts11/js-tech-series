@@ -24,6 +24,8 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.persistence.SavedValue;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.Sizes;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
@@ -49,10 +51,12 @@ import java.util.UUID;
  * only guided the plan, never the runtime). If nothing progresses within the pattern's timeout, it settles
  * partial/failed. Items and fluids feed in the same way; collecting a fluid back into the network is a follow-up.
  */
+@TextHolder
 public final class NetworkProcessingOperation implements IPersistentOperation {
 
     /** The machine stopped taking what it was being fed, so the run was given up on where it stood. */
-    private static final String MACHINE_STOPPED = "jsc.operation.failure.machine_stopped";
+    private static final TextKey MACHINE_STOPPED = TextKey.of("jsc.operation.failure.machine_stopped",
+            "the machine making the %s stopped taking anything");
 
     private static final int FEED_INTERVAL = 4;
     /** How long a machine that has run dry of a gas or a fluid sits still before it is given another lot of it. */

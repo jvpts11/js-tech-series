@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
@@ -179,7 +179,7 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
                                 @Nullable final IComputerTerminalHost host,
                                 final BlockPos hostPos, final BlockPos monitorPos, final int initialTab,
                                 @Nullable final ResourceLocation spaceId, final String systemName) {
-        super(ComputingModule.COMPUTER_TERMINAL_MENU.get(), containerId);
+        super(ComputingMenus.COMPUTER_TERMINAL_MENU.get(), containerId);
         this.level = playerInventory.player.level();
         this.serverPlayer = playerInventory.player instanceof ServerPlayer sp ? sp : null;
         this.host = host;

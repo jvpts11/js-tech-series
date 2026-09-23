@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.item;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
@@ -49,7 +49,7 @@ public class DiskItem extends SpecItem<DiskSpec> {
         if (!(stack.getItem() instanceof DiskItem)) {
             return DEFAULT_PUBLIC_PERMILLE;
         }
-        final Integer stored = stack.get(ComputingModule.DISK_PUBLIC_PERMILLE.get());
+        final Integer stored = stack.get(ComputingComponents.DISK_PUBLIC_PERMILLE.get());
         return stored == null ? DEFAULT_PUBLIC_PERMILLE
                 : DiskPrivacy.clampPermille(stored);
     }
@@ -57,7 +57,7 @@ public class DiskItem extends SpecItem<DiskSpec> {
     /** Writes a clamped public-share permille onto a disk stack (a no-op for a non-disk stack). */
     public static void setPublicPermille(final ItemStack stack, final int permille) {
         if (stack.getItem() instanceof DiskItem) {
-            stack.set(ComputingModule.DISK_PUBLIC_PERMILLE.get(),
+            stack.set(ComputingComponents.DISK_PUBLIC_PERMILLE.get(),
                     DiskPrivacy.clampPermille(permille));
         }
     }
@@ -84,7 +84,7 @@ public class DiskItem extends SpecItem<DiskSpec> {
          * item/fluid storage listed below.
          */
         final FilesystemContents fs = stack.getOrDefault(
-                ComputingModule.FILESYSTEM.get(),
+                ComputingComponents.FILESYSTEM.get(),
                 FilesystemContents.EMPTY);
         FilesystemTooltip.append(fs, tooltip);
         appendContents(stack, tooltip, spec.capacityItems());
@@ -106,7 +106,7 @@ public class DiskItem extends SpecItem<DiskSpec> {
         tooltip.add(Component.literal("System: " + (os != null ? os.displayName() : osId.getPath()))
                 .withStyle(ChatFormatting.AQUA));
 
-        final CompoundTag software = stack.get(ComputingModule.DISK_CONSOLE.get());
+        final CompoundTag software = stack.get(ComputingComponents.DISK_CONSOLE.get());
         if (software == null) {
             return;
         }

@@ -43,7 +43,7 @@ public final class SigmaAdvancements extends AdvancementTab {
                 "Open a window from a program", on(JscEvents.SIGMA_WINDOW));
         this.task("stonks", "erm_what_the_sigma", Items.GOLD_INGOT, "Stonks",
                 "Have a program woken by a watch on network stock", on(JscEvents.SIGMA_WATCH));
-        this.task("works_on_my_machine", "erm_what_the_sigma", ComputingModule.PERSONAL_COMPUTER_ITEM.get(),
+        this.task("works_on_my_machine", "erm_what_the_sigma", ComputingModule.PERSONAL_COMPUTER.item(),
                 "Works on My Machine", "Run the same program on two computers", on(JscEvents.SIGMA_TWO_MACHINES));
         this.goal("ship_it", "erm_what_the_sigma", Items.MINECART, "Ship It",
                 "Pack a program with sgpack and publish it to the Mirror", on(JscEvents.SIGMA_PUBLISHED));

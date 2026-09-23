@@ -42,7 +42,7 @@ public class SupercomputerRackBlock extends ServerRackBlock {
 
     @Override
     protected Item blockItem() {
-        return ComputingModule.SUPERCOMPUTER_RACK_ITEM.get();
+        return ComputingModule.SUPERCOMPUTER_RACK.item();
     }
 
     @Override

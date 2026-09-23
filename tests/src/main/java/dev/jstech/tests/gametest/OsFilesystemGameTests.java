@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.DiskSystems;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
@@ -63,12 +64,12 @@ public final class OsFilesystemGameTests {
         // Stamp it with a FILESYSTEM containing one IQL file.
         final StoredFile file = new StoredFile("a.iql", FileType.IQL, "SELECT *");
         final FilesystemContents fs = new FilesystemContents(Map.of("a.iql", file));
-        stack.set(ComputingModule.FILESYSTEM.get(), fs);
+        stack.set(ComputingComponents.FILESYSTEM.get(), fs);
 
         // Stamp it with the systems component identifying mc_net.
         final ResourceLocation osId =
                 ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_net");
-        stack.set(ComputingModule.DISK_SYSTEMS.get(), DiskSystems.of(osId));
+        stack.set(ComputingComponents.DISK_SYSTEMS.get(), DiskSystems.of(osId));
 
         /*
          * copy() exercises the DataComponent codec path (the components are serialised and
@@ -79,7 +80,7 @@ public final class OsFilesystemGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final FilesystemContents recovered =
-                            copy.get(ComputingModule.FILESYSTEM.get());
+                            copy.get(ComputingComponents.FILESYSTEM.get());
                     helper.assertTrue(recovered != null,
                             "FILESYSTEM component must survive stack.copy()");
 
@@ -683,7 +684,7 @@ public final class OsFilesystemGameTests {
                     helper.assertTrue(mainframe.installOs(framesXp), "installOs(frames_xp) must succeed");
                     final ItemStack disk = mainframe.systemDisk();
                     helper.assertFalse(disk.isEmpty(), "system disk must be present");
-                    final FilesystemContents fs = disk.get(ComputingModule.FILESYSTEM.get());
+                    final FilesystemContents fs = disk.get(ComputingComponents.FILESYSTEM.get());
                     helper.assertTrue(fs != null,
                             "FILESYSTEM component must be present after a desktop install");
                     helper.assertTrue(fs.hasDir("Program Files"), "Program Files must be seeded");

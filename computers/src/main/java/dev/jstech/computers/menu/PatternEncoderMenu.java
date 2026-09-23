@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.block.PatternEncoderBlock;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.gui.layout.PatternEncoderLayout;
@@ -38,7 +38,7 @@ public class PatternEncoderMenu extends AbstractComputerMenu {
 
     public PatternEncoderMenu(final int containerId, final Inventory playerInventory,
                               final PatternEncoderBlockEntity be) {
-        super(ComputingModule.PATTERN_ENCODER_MENU.get(), containerId);
+        super(ComputingMenus.PATTERN_ENCODER_MENU.get(), containerId);
         this.blockEntity = be;
         this.access = ContainerLevelAccess.create(be.getLevel(), be.getBlockPos());
 

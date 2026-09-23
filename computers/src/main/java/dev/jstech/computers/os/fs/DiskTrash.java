@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.os.fs;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
@@ -251,6 +251,6 @@ public final class DiskTrash {
     }
 
     private static FilesystemContents contents(final ItemStack disk) {
-        return disk.getOrDefault(ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+        return disk.getOrDefault(ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
     }
 }

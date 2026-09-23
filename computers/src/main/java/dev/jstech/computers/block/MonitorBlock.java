@@ -11,6 +11,7 @@ import com.mojang.serialization.MapCodec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
 import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.advancement.JscTriggers;
 import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
@@ -30,7 +31,6 @@ import dev.jstech.computers.operation.payload.OpenKvmPayload;
 import dev.jstech.computers.operation.payload.OpenPostPayload;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
 import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
-import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.IOsHost;
@@ -53,6 +53,7 @@ import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
 import dev.jstech.core.peripheral.IPeripheralOwner;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockEntityTickers;
 import java.util.ArrayList;
@@ -190,14 +191,12 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                 instanceof ServerRackBlockEntity rack) {
             final List<Integer> computers = rack.computerSlots();
             if (computers.isEmpty()) {
-                player.displayClientMessage(
-                        Component.translatable("block.jsc.monitor.rack_empty"), true);
+                player.displayClientMessage(GameText.component(MonitorTexts.RACK_EMPTY), true);
                 return;
             }
             if (computers.size() > 1) {
                 if (!rack.hasKvmSwitch()) {
-                    player.displayClientMessage(
-                            Component.translatable("block.jsc.monitor.needs_kvm"), true);
+                    player.displayClientMessage(GameText.component(MonitorTexts.NEEDS_KVM), true);
                     return;
                 }
                 openKvmChannels(player, rack, monitorPos);
@@ -305,7 +304,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         if (level.getBlockEntity(owner) instanceof IOsHost computer) {
             switch (entryFor(computer)) {
                 case NO_POWER -> {
-                    player.displayClientMessage(Component.translatable("block.jsc.monitor.no_power"), true);
+                    player.displayClientMessage(GameText.component(MonitorTexts.NO_POWER), true);
                     return;
                 }
                 case POST -> {
@@ -532,7 +531,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
          */
         if (ownerBe instanceof IOsHost gate) {
             if (!gate.isRunning()) {
-                player.displayClientMessage(Component.translatable("block.jsc.monitor.no_power"), true);
+                player.displayClientMessage(GameText.component(MonitorTexts.NO_POWER), true);
                 return;
             }
             /*
@@ -569,7 +568,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                 && (c.console() == null || c.console().liveInstall() == null)
                 && !c.systemWelcome().seen()) {
             c.setSystemWelcome(c.systemWelcome().met());
-            ComputingModule.OS_FIRST_BOOT.get()
+            JscTriggers.OS_FIRST_BOOT.get()
                     .trigger(player, c.installedOsId());
         }
     }
@@ -717,22 +716,22 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
 
     private static Component diagnoseUnlinked(final Level level, final BlockPos monitorPos) {
         if (!(level instanceof ServerLevel serverLevel)) {
-            return Component.translatable("block.jsc.monitor.unlinked");
+            return GameText.component(MonitorTexts.UNLINKED);
         }
         final OptionalLong host =
                 PeripheralLinks.discoverOwner(serverLevel, monitorPos.asLong());
         if (host.isEmpty()) {
-            return Component.translatable("block.jsc.monitor.no_computer");
+            return GameText.component(MonitorTexts.NO_COMPUTER);
         }
         if (serverLevel.getBlockEntity(BlockPos.of(host.getAsLong())) instanceof IPeripheralOwner owner) {
             if (owner.maxEndpoints() <= 0) {
-                return Component.translatable("block.jsc.monitor.no_gpu");
+                return GameText.component(MonitorTexts.NO_GPU);
             }
             if (owner.linkedEndpoints().size() >= owner.maxEndpoints()) {
-                return Component.translatable("block.jsc.monitor.at_capacity");
+                return GameText.component(MonitorTexts.AT_CAPACITY);
             }
         }
-        return Component.translatable("block.jsc.monitor.unlinked");
+        return GameText.component(MonitorTexts.UNLINKED);
     }
 
     @Override

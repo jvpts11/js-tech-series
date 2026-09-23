@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.item.MotherboardItem;
@@ -40,7 +40,7 @@ public class ServerAssemblyMenu extends AbstractComputerMenu {
 
     public ServerAssemblyMenu(final int containerId, final Inventory playerInventory,
                               final InteractionHand hand) {
-        super(ComputingModule.SERVER_ASSEMBLY_MENU.get(), containerId);
+        super(ComputingMenus.SERVER_ASSEMBLY_MENU.get(), containerId);
         this.owner = playerInventory.player;
         this.hand = hand;
         this.hw = new ServerHardwareHandler(owner, hand);

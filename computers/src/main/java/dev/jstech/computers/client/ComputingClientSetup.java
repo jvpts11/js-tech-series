@@ -23,6 +23,7 @@ import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
+import dev.jstech.computers.registry.ComputingMenus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -103,7 +104,7 @@ public final class ComputingClientSetup {
          * Every session on a monitor that is not a system shares one menu, so which screen it opens is read
          * off the phase it carries rather than off a menu type of its own.
          */
-        event.register(ComputingModule.MONITOR_SESSION_MENU.get(),
+        event.register(ComputingMenus.MONITOR_SESSION_MENU.get(),
                 (final MonitorSessionMenu menu, final Inventory inv, final Component title) ->
                         switch (menu.phase()) {
                             case POST -> new BootSequenceScreen(menu, inv, title);
@@ -114,30 +115,30 @@ public final class ComputingClientSetup {
                             case KVM -> new KvmChannelScreen(menu, inv, title);
                             default -> new SystemBootScreen(menu, inv, title);
                         });
-        event.register(ComputingModule.DESKTOP_MENU.get(), DesktopScreen::new);
-        event.register(ComputingModule.MAINFRAME_MENU.get(), MainframeScreen::new);
-        event.register(ComputingModule.PERSONAL_COMPUTER_MENU.get(), PersonalComputerScreen::new);
-        event.register(ComputingModule.CRAFTING_COMPUTER_MENU.get(), CraftingComputerScreen::new);
-        event.register(ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_MENU.get(), ClusterManagementComputerScreen::new);
-        event.register(ComputingModule.PATTERN_ENCODER_MENU.get(), PatternEncoderScreen::new);
-        event.register(ComputingModule.NETWORK_GATEWAY_MENU.get(), NetworkGatewayScreen::new);
-        event.register(ComputingModule.COMMAND_PROMPT_MENU.get(),
+        event.register(ComputingMenus.DESKTOP_MENU.get(), DesktopScreen::new);
+        event.register(ComputingMenus.MAINFRAME_MENU.get(), MainframeScreen::new);
+        event.register(ComputingMenus.PERSONAL_COMPUTER_MENU.get(), PersonalComputerScreen::new);
+        event.register(ComputingMenus.CRAFTING_COMPUTER_MENU.get(), CraftingComputerScreen::new);
+        event.register(ComputingMenus.CLUSTER_MANAGEMENT_COMPUTER_MENU.get(), ClusterManagementComputerScreen::new);
+        event.register(ComputingMenus.PATTERN_ENCODER_MENU.get(), PatternEncoderScreen::new);
+        event.register(ComputingMenus.NETWORK_GATEWAY_MENU.get(), NetworkGatewayScreen::new);
+        event.register(ComputingMenus.COMMAND_PROMPT_MENU.get(),
                 (final CommandPromptMenu menu,
                  final Inventory inv,
                  final Component title) -> new CommandPromptScreen<>(menu, inv, title));
-        event.register(ComputingModule.DOS_TERMINAL_MENU.get(), DosTerminalScreen::new);
-        event.register(ComputingModule.LINUX_TTY_MENU.get(), LinuxTtyScreen::new);
-        event.register(ComputingModule.NET_TERMINAL_MENU.get(), NetTerminalScreen::new);
-        event.register(ComputingModule.SERVER_RACK_MENU.get(), ServerRackScreen::new);
-        event.register(ComputingModule.SERVER_ROUTER_MENU.get(), ServerRouterScreen::new);
-        event.register(ComputingModule.SERVER_ASSEMBLY_MENU.get(), ServerAssemblyScreen::new);
+        event.register(ComputingMenus.DOS_TERMINAL_MENU.get(), DosTerminalScreen::new);
+        event.register(ComputingMenus.LINUX_TTY_MENU.get(), LinuxTtyScreen::new);
+        event.register(ComputingMenus.NET_TERMINAL_MENU.get(), NetTerminalScreen::new);
+        event.register(ComputingMenus.SERVER_RACK_MENU.get(), ServerRackScreen::new);
+        event.register(ComputingMenus.SERVER_ROUTER_MENU.get(), ServerRouterScreen::new);
+        event.register(ComputingMenus.SERVER_ASSEMBLY_MENU.get(), ServerAssemblyScreen::new);
         /*
          * The one place an operating space is chosen. The mod's own is registered through the same door an
          * addon uses, so it is the API's first client rather than a special case behind it; a machine whose
          * space nobody draws falls back to the Interactor, never to a blank screen.
          */
         OperatingSpaceScreens.register(INTERACTOR, ComputerTerminalScreen::new);
-        event.register(ComputingModule.COMPUTER_TERMINAL_MENU.get(),
+        event.register(ComputingMenus.COMPUTER_TERMINAL_MENU.get(),
                 (final ComputerTerminalMenu menu,
                  final Inventory inv,
                  final Component title) -> {
@@ -145,11 +146,11 @@ public final class ComputingClientSetup {
                     return space != null ? space.open(menu, inv, title)
                             : new ComputerTerminalScreen(menu, inv, title);
                 });
-        event.register(ComputingModule.EXPORT_BUS_MENU.get(), ExportBusScreen::new);
-        event.register(ComputingModule.IMPORT_BUS_MENU.get(), ImportBusScreen::new);
-        event.register(ComputingModule.CRAFTING_SWITCH_MENU.get(), CraftingSwitchScreen::new);
-        event.register(ComputingModule.INPUT_BUS_MENU.get(), InputBusScreen::new);
-        event.register(ComputingModule.RECEIVING_BUS_MENU.get(), ReceivingBusScreen::new);
+        event.register(ComputingMenus.EXPORT_BUS_MENU.get(), ExportBusScreen::new);
+        event.register(ComputingMenus.IMPORT_BUS_MENU.get(), ImportBusScreen::new);
+        event.register(ComputingMenus.CRAFTING_SWITCH_MENU.get(), CraftingSwitchScreen::new);
+        event.register(ComputingMenus.INPUT_BUS_MENU.get(), InputBusScreen::new);
+        event.register(ComputingMenus.RECEIVING_BUS_MENU.get(), ReceivingBusScreen::new);
     }
 
     @SubscribeEvent

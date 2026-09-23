@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.os.fs;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.media.FormattedMediaItem;
@@ -54,7 +54,7 @@ public final class DiskFilesystem {
 
     /** The weight of every file on {@code volume}, in mB-equivalents at the volume's own era. */
     public static long filesWeight(final ItemStack volume) {
-        return volume.getOrDefault(ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY)
+        return volume.getOrDefault(ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY)
                 .usedWeight(eraOf(volume));
     }
 
@@ -139,7 +139,7 @@ public final class DiskFilesystem {
         }
 
         final FilesystemContents fs = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         final HardwareEra era = eraOf(disk);
 
         final List<FileEntry> result = new ArrayList<>();
@@ -185,7 +185,7 @@ public final class DiskFilesystem {
      */
     public static Optional<String> read(final ItemStack disk, final String path) {
         final FilesystemContents fs = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         final StoredFile file = fs.files().get(path);
         if (file == null || file.type().virtualProjection()) {
             return Optional.empty();
@@ -245,12 +245,12 @@ public final class DiskFilesystem {
             return WriteResult.DISK_FULL;
         }
         final FilesystemContents current = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         if (namesAFolder(current, path)) {
             return WriteResult.INVALID_PATH;
         }
         final FilesystemContents updated = current.with(new StoredFile(path, type, content, now));
-        disk.set(ComputingModule.FILESYSTEM.get(), updated);
+        disk.set(ComputingComponents.FILESYSTEM.get(), updated);
         return WriteResult.OK;
     }
 
@@ -271,7 +271,7 @@ public final class DiskFilesystem {
             return WriteResult.READ_ONLY;
         }
         final FilesystemContents current = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         final StoredFile had = current.files().get(path);
         if (had != null && had.type().virtualProjection()) {
             return WriteResult.READ_ONLY;
@@ -286,7 +286,7 @@ public final class DiskFilesystem {
             return WriteResult.DISK_FULL;
         }
         final String content = had == null ? addition : had.content() + addition;
-        disk.set(ComputingModule.FILESYSTEM.get(), current.with(new StoredFile(path, type, content, now)));
+        disk.set(ComputingComponents.FILESYSTEM.get(), current.with(new StoredFile(path, type, content, now)));
         return WriteResult.OK;
     }
 
@@ -323,13 +323,13 @@ public final class DiskFilesystem {
             return false;
         }
         final FilesystemContents fs = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         final StoredFile file = fs.files().get(path);
         // Guard: never delete a .dat entry (virtual projection) or a missing file.
         if (file == null || file.type().virtualProjection()) {
             return false;
         }
-        disk.set(ComputingModule.FILESYSTEM.get(), fs.without(path));
+        disk.set(ComputingComponents.FILESYSTEM.get(), fs.without(path));
         return true;
     }
 
@@ -347,7 +347,7 @@ public final class DiskFilesystem {
      */
     public static boolean exists(final ItemStack disk, final String path) {
         final FilesystemContents fs = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         return fs.files().containsKey(path);
     }
 
@@ -387,11 +387,11 @@ public final class DiskFilesystem {
             return false;
         }
         final FilesystemContents fs = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         if (fs.files().containsKey(path) || fs.hasDir(path)) {
             return false;
         }
-        disk.set(ComputingModule.FILESYSTEM.get(), fs.withDir(path));
+        disk.set(ComputingComponents.FILESYSTEM.get(), fs.withDir(path));
         return true;
     }
 
@@ -414,7 +414,7 @@ public final class DiskFilesystem {
             return List.of();
         }
         final FilesystemContents fs = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         final Set<String> dirs = new LinkedHashSet<>();
         // Explicit directories whose immediate parent is `dir`.
         for (final String d : fs.directories()) {
@@ -465,7 +465,7 @@ public final class DiskFilesystem {
             return false;
         }
         final FilesystemContents fs = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         FilesystemContents updated = fs;
         boolean changed = false;
         if (updated.hasDir(path)) {
@@ -485,7 +485,7 @@ public final class DiskFilesystem {
             }
         }
         if (changed) {
-            disk.set(ComputingModule.FILESYSTEM.get(), updated);
+            disk.set(ComputingComponents.FILESYSTEM.get(), updated);
         }
         return changed;
     }
@@ -564,7 +564,7 @@ public final class DiskFilesystem {
             return false;
         }
         final FilesystemContents fs = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         if (dest.equals(src) || !FsPaths.isValidPath(dest, kind)) {
             return false;
         }
@@ -585,7 +585,7 @@ public final class DiskFilesystem {
             if (newType.virtualProjection()) {
                 return false;
             }
-            disk.set(ComputingModule.FILESYSTEM.get(),
+            disk.set(ComputingComponents.FILESYSTEM.get(),
                     fs.without(src).with(new StoredFile(dest, newType, file.content(), file.modified())));
             return true;
         }
@@ -622,7 +622,7 @@ public final class DiskFilesystem {
                         .with(new StoredFile(dest + f.substring(src.length()), sf.type(), sf.content(), sf.modified()));
             }
         }
-        disk.set(ComputingModule.FILESYSTEM.get(), updated);
+        disk.set(ComputingComponents.FILESYSTEM.get(), updated);
         return true;
     }
 
@@ -639,7 +639,7 @@ public final class DiskFilesystem {
             return false;
         }
         final FilesystemContents fs = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
 
         // File: duplicate the single stored file at the new path.
         final StoredFile file = fs.files().get(src);
@@ -650,7 +650,7 @@ public final class DiskFilesystem {
             if (file.weight(eraOf(disk)) > freeWeight) {
                 return false;
             }
-            disk.set(ComputingModule.FILESYSTEM.get(),
+            disk.set(ComputingComponents.FILESYSTEM.get(),
                     fs.with(new StoredFile(dest, file.type(), file.content(), file.modified())));
             return true;
         }
@@ -687,7 +687,7 @@ public final class DiskFilesystem {
                 updated = updated.with(new StoredFile(dest + f.substring(src.length()), sf.type(), sf.content(), sf.modified()));
             }
         }
-        disk.set(ComputingModule.FILESYSTEM.get(), updated);
+        disk.set(ComputingComponents.FILESYSTEM.get(), updated);
         return true;
     }
 }

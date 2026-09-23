@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.block.NetworkGatewayBlock;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.gui.layout.NetworkGatewayLayout;
@@ -32,7 +32,7 @@ public class NetworkGatewayMenu extends AbstractComputerMenu {
 
     public NetworkGatewayMenu(final int containerId, final Inventory playerInventory,
                               final NetworkGatewayBlockEntity be) {
-        super(ComputingModule.NETWORK_GATEWAY_MENU.get(), containerId);
+        super(ComputingMenus.NETWORK_GATEWAY_MENU.get(), containerId);
         this.blockEntity = be;
         this.access = ContainerLevelAccess.create(be.getLevel(), be.getBlockPos());
         for (int i = 0; i < NetworkGatewayBlockEntity.BUFFER_SLOTS; i++) {

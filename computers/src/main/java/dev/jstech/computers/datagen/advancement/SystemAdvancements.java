@@ -38,7 +38,7 @@ public final class SystemAdvancements extends AdvancementTab {
 
         this.task("abort_retry_fail", "root", ComputingModule.FLOPPY_DISK.get(), "Abort, Retry, Fail?",
                 "Install MC-DOS and boot it", booted("mc_dos"));
-        this.task("feels_like_the_old_days", "abort_retry_fail", ComputingModule.ETHERNET_CABLE_ITEM.get(),
+        this.task("feels_like_the_old_days", "abort_retry_fail", ComputingModule.ETHERNET_CABLE.item(),
                 "Feels like the old days", "Install MC-NET and boot it", booted("mc_net"));
 
         this.task("start_me_up", "root", ComputingModule.CD_ROM.get(), "Start Me Up",
@@ -48,9 +48,9 @@ public final class SystemAdvancements extends AdvancementTab {
         this.task("bloat_11", "the_goat", ComputingModule.USB_FLASH_DRIVE.get(), "More like, Bloat 11",
                 "Install Frames 11 and boot it", booted("frames_11"));
 
-        this.task("where_it_all_started", "root", ComputingModule.VINTAGE_PERSONAL_COMPUTER_ITEM.get(),
+        this.task("where_it_all_started", "root", ComputingModule.VINTAGE_PERSONAL_COMPUTER.item(),
                 "Where it all started long ago...", "Install UNIX and boot it", booted("unix"));
-        this.task("not_linux", "where_it_all_started", ComputingModule.LEGACY_PERSONAL_COMPUTER_ITEM.get(),
+        this.task("not_linux", "where_it_all_started", ComputingModule.LEGACY_PERSONAL_COMPUTER.item(),
                 "It's Not Linux, Stop Asking", "Install FreeBSD and boot it", booted("freebsd"));
         this.challenge("built_from_ports", "not_linux", Items.CRAFTING_TABLE, "Built from Ports",
                 "Build a program from FreeBSD's ports tree and install it", on(JscEvents.BUILT_FROM_PORTS));

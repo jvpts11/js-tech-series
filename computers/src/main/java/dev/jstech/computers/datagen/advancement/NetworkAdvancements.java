@@ -22,10 +22,10 @@ public final class NetworkAdvancements extends AdvancementTab {
 
     public NetworkAdvancements() {
         super("networks", ResourceLocation.withDefaultNamespace("textures/block/polished_deepslate.png"));
-        this.root(ComputingModule.MAINFRAME_ITEM.get(), "Networks & Operations", "Bring a Mainframe onto a network",
+        this.root(ComputingModule.MAINFRAME.item(), "Networks & Operations", "Bring a Mainframe onto a network",
                 on(JscEvents.MAINFRAME_NETWORK));
 
-        this.task("series_of_tubes", "root", ComputingModule.ETHERNET_CABLE_ITEM.get(), "Series of Tubes",
+        this.task("series_of_tubes", "root", ComputingModule.ETHERNET_CABLE.item(), "Series of Tubes",
                 "Join a computer to a Mainframe's network", on(JscEvents.COMPUTER_JOINED));
         this.task("select_from_chest", "series_of_tubes", Items.CHEST, "SELECT * FROM chest",
                 "Take items out of network storage with an Operation", on(JscEvents.SELECT_DONE));
@@ -38,9 +38,9 @@ public final class NetworkAdvancements extends AdvancementTab {
         this.secret("deadlock", "select_from_chest", Items.CHAIN, "Deadlock",
                 "Have an Operation give up waiting on a locked resource", on(JscEvents.OPERATION_LOCKED));
 
-        this.task("recipe_for_success", "series_of_tubes", ComputingModule.PATTERN_ENCODER_ITEM.get(),
+        this.task("recipe_for_success", "series_of_tubes", ComputingModule.PATTERN_ENCODER.item(),
                 "Recipe for Success", "Encode a crafting pattern", on(JscEvents.PATTERN_ENCODED));
-        this.task("the_factory_must_grow", "recipe_for_success", ComputingModule.CRAFTING_COMPUTER_ITEM.get(),
+        this.task("the_factory_must_grow", "recipe_for_success", ComputingModule.CRAFTING_COMPUTER.item(),
                 "The Factory Must Grow", "Finish an autocraft", on(JscEvents.AUTOCRAFT_DONE));
         this.goal("machine_learning", "the_factory_must_grow", Items.FURNACE, "Machine Learning",
                 "Finish an autocraft through a machine", on(JscEvents.MACHINE_AUTOCRAFT));
@@ -51,10 +51,10 @@ public final class NetworkAdvancements extends AdvancementTab {
         this.secret("who_unplugged_the_server", "series_of_tubes", Items.SHEARS, "Who Unplugged the Server?",
                 "Cut the last cable between a running computer and its Mainframe", on(JscEvents.MAINFRAME_CUT));
 
-        this.secret("there_can_be_only_one", "root", ComputingModule.MAINFRAME_ITEM.get(), "There Can Be Only One",
+        this.secret("there_can_be_only_one", "root", ComputingModule.MAINFRAME.item(), "There Can Be Only One",
                 "Put two Mainframes on one network", on(JscEvents.MAINFRAME_CONFLICT));
         this.goalWith(COMPUTERCRAFT, "talking_to_the_neighbours", "root",
-                ComputingModule.NETWORK_GATEWAY_ITEM.get(), "Talking to the Neighbours",
+                ComputingModule.NETWORK_GATEWAY.item(), "Talking to the Neighbours",
                 "Hear a ComputerCraft computer through a Network Gateway", on(JscEvents.COMPUTERCRAFT_MESSAGE));
     }
 }

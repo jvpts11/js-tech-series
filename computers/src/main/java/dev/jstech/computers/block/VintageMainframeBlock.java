@@ -37,6 +37,6 @@ public class VintageMainframeBlock extends MainframeBlock {
 
     @Override
     protected Item blockItem() {
-        return ComputingModule.VINTAGE_MAINFRAME_ITEM.get();
+        return ComputingModule.VINTAGE_MAINFRAME.item();
     }
 }

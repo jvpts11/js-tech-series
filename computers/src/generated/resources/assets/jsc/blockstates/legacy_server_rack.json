@@ -1,51 +1,6 @@
 {
   "variants": {
-    "bays=0,facing=east": {
-      "model": "jsc:block/rack"
-    },
-    "bays=0,facing=north": {
-      "model": "jsc:block/rack"
-    },
-    "bays=0,facing=south": {
-      "model": "jsc:block/rack"
-    },
-    "bays=0,facing=west": {
-      "model": "jsc:block/rack"
-    },
-    "bays=1,facing=east": {
-      "model": "jsc:block/rack"
-    },
-    "bays=1,facing=north": {
-      "model": "jsc:block/rack"
-    },
-    "bays=1,facing=south": {
-      "model": "jsc:block/rack"
-    },
-    "bays=1,facing=west": {
-      "model": "jsc:block/rack"
-    },
-    "bays=2,facing=east": {
-      "model": "jsc:block/rack"
-    },
-    "bays=2,facing=north": {
-      "model": "jsc:block/rack"
-    },
-    "bays=2,facing=south": {
-      "model": "jsc:block/rack"
-    },
-    "bays=2,facing=west": {
-      "model": "jsc:block/rack"
-    },
-    "bays=3,facing=east": {
-      "model": "jsc:block/rack"
-    },
-    "bays=3,facing=north": {
-      "model": "jsc:block/rack"
-    },
-    "bays=3,facing=south": {
-      "model": "jsc:block/rack"
-    },
-    "bays=3,facing=west": {
+    "": {
       "model": "jsc:block/rack"
     }
   }

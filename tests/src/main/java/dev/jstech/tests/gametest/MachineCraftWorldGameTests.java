@@ -35,7 +35,7 @@ public final class MachineCraftWorldGameTests {
         helper.startSequence()
                 .thenExecute(() -> helper.getLevel().destroyBlock(helper.absolutePos(pos), true))
                 .thenExecuteAfter(2, () -> helper.assertItemEntityPresent(
-                        ComputingModule.CRAFTING_SWITCH_ITEM.get(), pos, 2.0))
+                        ComputingModule.CRAFTING_SWITCH.item(), pos, 2.0))
                 .thenSucceed();
     }
 
@@ -46,7 +46,7 @@ public final class MachineCraftWorldGameTests {
         helper.startSequence()
                 .thenExecute(() -> helper.getLevel().destroyBlock(helper.absolutePos(pos), true))
                 .thenExecuteAfter(2, () -> helper.assertItemEntityPresent(
-                        ComputingModule.CRAFTING_CABLE_ITEM.get(), pos, 2.0))
+                        ComputingModule.CRAFTING_CABLE.item(), pos, 2.0))
                 .thenSucceed();
     }
 }

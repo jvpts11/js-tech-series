@@ -1,7 +1,5 @@
-computers/src/main/java/dev/jstech/computers/HardwareItems.java 59
-computers/src/main/java/dev/jstech/computers/block/MonitorBlock.java 7
+computers/src/main/java/dev/jstech/computers/block/MonitorBlock.java 3
 computers/src/main/java/dev/jstech/computers/block/PatternEncoderBlock.java 7
-computers/src/main/java/dev/jstech/computers/block/part/CablePartItem.java 2
 computers/src/main/java/dev/jstech/computers/block/part/ExportBusPart.java 1
 computers/src/main/java/dev/jstech/computers/block/part/ImportBusPart.java 3
 computers/src/main/java/dev/jstech/computers/blockentity/ClusterManagementComputerBlockEntity.java 17
@@ -134,7 +132,6 @@ computers/src/main/java/dev/jstech/computers/crafting/NetworkProcessingOperation
 computers/src/main/java/dev/jstech/computers/crafting/PatternWorkbench.java 1
 computers/src/main/java/dev/jstech/computers/crafting/RecipeChoice.java 3
 computers/src/main/java/dev/jstech/computers/crafting/RecipeDifferences.java 11
-computers/src/main/java/dev/jstech/computers/datagen/JscLanguageProvider.java 157
 computers/src/main/java/dev/jstech/computers/datagen/JscRecipeMachinesProvider.java 1
 computers/src/main/java/dev/jstech/computers/datagen/advancement/ConditionalAdvancementProvider.java 1
 computers/src/main/java/dev/jstech/computers/datagen/advancement/HardwareAdvancements.java 25
@@ -180,10 +177,7 @@ computers/src/main/java/dev/jstech/computers/item/GpuItem.java 5
 computers/src/main/java/dev/jstech/computers/item/MotherboardItem.java 5
 computers/src/main/java/dev/jstech/computers/item/PhiCoprocessorItem.java 4
 computers/src/main/java/dev/jstech/computers/item/PsuItem.java 2
-computers/src/main/java/dev/jstech/computers/item/RackGadgetItem.java 4
-computers/src/main/java/dev/jstech/computers/item/RackUnitItem.java 1
 computers/src/main/java/dev/jstech/computers/item/RamItem.java 2
-computers/src/main/java/dev/jstech/computers/item/ServerItem.java 4
 computers/src/main/java/dev/jstech/computers/machine/CommunityPackages.java 7
 computers/src/main/java/dev/jstech/computers/machine/DriveTable.java 2
 computers/src/main/java/dev/jstech/computers/machine/FileService.java 53
@@ -241,7 +235,7 @@ computers/src/main/java/dev/jstech/computers/operation/payload/terminal/Terminal
 computers/src/main/java/dev/jstech/computers/os/Branding.java 2
 computers/src/main/java/dev/jstech/computers/os/KernelNames.java 3
 computers/src/main/java/dev/jstech/computers/os/MinSpecTooltip.java 14
-computers/src/main/java/dev/jstech/computers/os/OsBootstrap.java 44
+computers/src/main/java/dev/jstech/computers/os/OsBootstrap.java 17
 computers/src/main/java/dev/jstech/computers/os/OsRegistry.java 3
 computers/src/main/java/dev/jstech/computers/os/ProgramVersions.java 49
 computers/src/main/java/dev/jstech/computers/os/SoftwareHouse.java 31

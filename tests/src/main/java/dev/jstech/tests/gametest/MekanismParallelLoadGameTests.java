@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.block.part.InputBusPart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
@@ -101,7 +102,7 @@ public final class MekanismParallelLoadGameTests {
         world.setBlock(NODE_RACK, ComputingModule.SUPERCOMPUTER_RACK.get());
         final var rack = world.blockEntity(NODE_RACK,
                 dev.jstech.computers.blockentity.ServerRackBlockEntity.class);
-        rack.getServers().setStackInSlot(0, ComputingModule.defaultSupercomputerNode());
+        rack.getServers().setStackInSlot(0, ServerStacks.defaultSupercomputerNode());
         rack.toggleBayPower(0); // bays start on; the offline fixture wants the node dark
     }
 

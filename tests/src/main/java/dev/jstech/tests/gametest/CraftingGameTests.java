@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
@@ -334,9 +335,9 @@ public final class CraftingGameTests {
                      * Each visual bay block covers two rack-unit rows (bay b = rows 2b and 2b+1),
                      * so servers in U0, U2 and U4 light the controller, second column and upper bay.
                      */
-                    rackBe.getServers().setStackInSlot(0, ComputingModule.defaultServer());
-                    rackBe.getServers().setStackInSlot(2, ComputingModule.defaultServer());
-                    rackBe.getServers().setStackInSlot(4, ComputingModule.defaultServer());
+                    rackBe.getServers().setStackInSlot(0, ServerStacks.defaultServer());
+                    rackBe.getServers().setStackInSlot(2, ServerStacks.defaultServer());
+                    rackBe.getServers().setStackInSlot(4, ServerStacks.defaultServer());
                 })
                 .thenExecuteAfter(SETTLE, () -> {
                     final var bays = dev.jstech.computers.block.ServerRackBlock.BAYS;
@@ -536,7 +537,7 @@ public final class CraftingGameTests {
             helper.setBlock(rackPos, ComputingModule.SUPERCOMPUTER_RACK.get());
             if (helper.getBlockEntity(rackPos)
                     instanceof dev.jstech.computers.blockentity.ServerRackBlockEntity rack) {
-                rack.getServers().setStackInSlot(0, ComputingModule.defaultSupercomputerNode());
+                rack.getServers().setStackInSlot(0, ServerStacks.defaultSupercomputerNode());
             }
         }
     }

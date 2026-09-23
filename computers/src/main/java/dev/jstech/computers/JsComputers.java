@@ -17,7 +17,6 @@ import dev.jstech.computers.machine.MachineListing;
 import dev.jstech.computers.machine.SigmaLanguage;
 import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.os.OsRegistry;
-import dev.jstech.computers.registry.JscCreativeModeTabs;
 import dev.jstech.core.api.CoreRegisterEvent;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -61,7 +60,6 @@ public class JsComputers {
         ComputingModule.register(modEventBus);
         MachineOperators.register(modEventBus);
         ProgramTravels.register(modEventBus);
-        JscCreativeModeTabs.register(modEventBus);
 
         // Soft integrations: each one checks for its mod and stays a no-op without it.
         MekanismIntegration.bootstrap();

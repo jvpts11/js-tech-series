@@ -1,15 +1,6 @@
 {
   "variants": {
-    "facing=east": {
-      "model": "jsc:block/pattern_encoder_body"
-    },
-    "facing=north": {
-      "model": "jsc:block/pattern_encoder_body"
-    },
-    "facing=south": {
-      "model": "jsc:block/pattern_encoder_body"
-    },
-    "facing=west": {
+    "": {
       "model": "jsc:block/pattern_encoder_body"
     }
   }

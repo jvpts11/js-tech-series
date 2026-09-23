@@ -17,6 +17,8 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.persistence.SavedValue;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -35,18 +37,22 @@ import java.util.UUID;
  * stage pulls it back, so the chain flows through shared network storage. If a stage fails, the whole craft
  * fails. The stages themselves are real network operations the Mainframe ticks; this just sequences them.
  */
+@TextHolder
 public final class NetworkMultiStageOperation implements IPersistentOperation {
 
     public static final String KIND = "multi";
 
     /** A pipeline with nothing in it, which is a pattern that was saved wrong. */
-    private static final String NO_STAGES = "jsc.operation.failure.no_stages";
+    private static final TextKey NO_STAGES = TextKey.of("jsc.operation.failure.no_stages",
+            "the pattern has no stages in it");
 
     /** A stage that could not be started at all: nothing is set up to carry it out. */
-    private static final String STAGE_WOULD_NOT_START = "jsc.operation.failure.stage_would_not_start";
+    private static final TextKey STAGE_WOULD_NOT_START = TextKey.of("jsc.operation.failure.stage_would_not_start",
+            "stage %s of %s could not be started");
 
     /** A stage that ran and failed without saying why. */
-    private static final String STAGE_FAILED = "jsc.operation.failure.stage_failed";
+    private static final TextKey STAGE_FAILED = TextKey.of("jsc.operation.failure.stage_failed",
+            "stage %s of %s failed");
 
     private final MainframeBlockEntity mainframe;
     private final MultiStagePattern pattern;

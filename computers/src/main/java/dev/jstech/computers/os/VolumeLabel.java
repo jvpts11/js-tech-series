@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.os;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -28,7 +28,7 @@ public final class VolumeLabel {
         if (stack.isEmpty()) {
             return fallback;
         }
-        final String label = stack.get(ComputingModule.VOLUME_LABEL.get());
+        final String label = stack.get(ComputingComponents.VOLUME_LABEL.get());
         return label != null && !label.isBlank() ? label : fallback;
     }
 
@@ -39,9 +39,9 @@ public final class VolumeLabel {
         }
         final String trimmed = label == null ? "" : label.trim();
         if (trimmed.isEmpty()) {
-            stack.remove(ComputingModule.VOLUME_LABEL.get());
+            stack.remove(ComputingComponents.VOLUME_LABEL.get());
         } else {
-            stack.set(ComputingModule.VOLUME_LABEL.get(),
+            stack.set(ComputingComponents.VOLUME_LABEL.get(),
                     trimmed.length() > MAX_LENGTH ? trimmed.substring(0, MAX_LENGTH) : trimmed);
         }
     }

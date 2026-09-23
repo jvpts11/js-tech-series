@@ -8,6 +8,7 @@
 package dev.jstech.tests.clienttest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
@@ -191,7 +192,7 @@ public final class FullJourneyClientTests {
                 .thenTeleport(SETTLE, new BlockPos(9, 2, 2), Direction.WEST)
                 .then(SETTLE, () -> ctx.selectHotbar(0))
                 .thenPlace(1, CRAFTING_COMPUTER)
-                .thenGive(2, new ItemStack(ComputingModule.SERVER_RACK_ITEM.get()))
+                .thenGive(2, new ItemStack(ComputingModule.SERVER_RACK.item()))
                 .thenTeleport(SETTLE, new BlockPos(4, 2, 7), Direction.NORTH)
                 .then(SETTLE, () -> ctx.selectHotbar(0))
                 .thenPlace(1, RACK)
@@ -276,7 +277,7 @@ public final class FullJourneyClientTests {
                 .thenAwaitNoScreen(SCREEN_WAIT);
 
         // 4. A server in the rack, through the rack GUI.
-        ctx.thenGive(0, ComputingModule.defaultServer())
+        ctx.thenGive(0, ServerStacks.defaultServer())
                 .thenTeleport(SETTLE, new BlockPos(4, 2, 7), Direction.NORTH)
                 .then(SETTLE, () -> ctx.selectHotbar(8))
                 .thenRightClick(1, RACK)

@@ -36,6 +36,6 @@ public class LegacyServerRackBlock extends ServerRackBlock {
 
     @Override
     protected Item blockItem() {
-        return ComputingModule.LEGACY_SERVER_RACK_ITEM.get();
+        return ComputingModule.LEGACY_SERVER_RACK.item();
     }
 }
