@@ -206,6 +206,8 @@ public final class OsBootstrap {
      */
     private static final Set<Platform> LINUX_AND_FREEBSD = Set.of(Platform.LINUX, Platform.FREEBSD);
     private static final Set<Platform> FRAMES_ONLY = Set.of(Platform.FRAMES);
+    /** Where screenfetch installs: the systems at a Unix prompt that take packages, and Frames. */
+    private static final Set<Platform> SCREENFETCH_SYSTEMS = Set.of(Platform.LINUX, Platform.FREEBSD, Platform.FRAMES);
 
     /** The nine built-in desktop apps every desktop environment can bundle, in rail order. */
     private static final List<ResourceLocation> BUILTIN_APPS = List.of(
@@ -459,10 +461,12 @@ public final class OsBootstrap {
             ProgramSpec.of(rl("mirror"), "mirror", "Mirror", false, ALL_PLATFORMS, 64, ProgramKind.SERVICE, 0, HostScope.MAINFRAME)
                     .withEra(STANDARD).withHouse(SoftwareHouse.JSC).withRam(32),
             /*
-             * screenfetch: the little system-identity tool, a package the Mirror serves to any Linux (its
-             * absence teaching the package manager: 'command not found' until you apt/dnf/pacman/emerge it).
+             * screenfetch: the little system-identity tool, a package the Mirror serves to any Linux, to FreeBSD
+             * and to Frames, where it runs at the Command Prompt (its absence teaching the package manager:
+             * 'command not found' until it is installed).
              */
-            ProgramSpec.of(rl("screenfetch"), "screenfetch", "screenfetch", false, LINUX_AND_FREEBSD, 4, ProgramKind.APP, 0, HostScope.ANY)
+            ProgramSpec.of(rl("screenfetch"), "screenfetch", "screenfetch", false, SCREENFETCH_SYSTEMS, 4,
+                            ProgramKind.APP, 0, HostScope.ANY)
                     .withEra(LEGACY).withHouse(SoftwareHouse.ARCH_COLLECTIVE).withRam(1),
             /*
              * The Σ# toolchain: the compiler and the runtime, two packages the Mirror serves to any

@@ -12,6 +12,7 @@ import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.os.FirmwareKind;
@@ -233,7 +234,8 @@ public final class FreeBsdGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final ServerCliComputer cli = new ServerCliComputer(mainframe, helper.getLevel());
-                    final CliShell shell = CliCommands.shellFor(cli, 52);
+                    // As wide as a monitor's terminal: screenfetch cuts what passes the edge rather than wrap it.
+                    final CliShell shell = CliCommands.shellFor(cli, TermBuffer.MONITOR_COLUMNS);
                     helper.assertTrue(text(shell.run("screenfetch", cli)).contains("not found"),
                             "screenfetch is a package, absent on a fresh install");
                     mainframe.installMirror();

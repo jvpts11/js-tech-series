@@ -68,11 +68,13 @@ public final class TermPalette {
             case DIM -> 0xFF7D8A9C;            // dim gray for hints and secondary output
             // The extended palette: brand-tinted terminal colours (screenfetch logos and the like).
             case ORANGE -> 0xFFE95420;
-            case MAGENTA -> 0xFFE0447C;
+            case MAGENTA -> 0xFFDB5FDB;        // a terminal's magenta, the one Gentoo's logo is drawn in
             case BLUE -> 0xFF5A8FD6;
             case CYAN -> 0xFF2FA6E8;
             case PURPLE -> 0xFF9E8FD6;
             case RED -> 0xFFD8332C;
+            case GREEN -> 0xFF5FD35F;
+            case YELLOW -> 0xFFE8D23C;
             case BRIGHT -> 0xFFFFFFFF;         // the terminal's bold: what a tool wants read first
             default -> 0xFFCDD6E2;             // plain = light gray
         };
@@ -88,11 +90,13 @@ public final class TermPalette {
             case INFO -> 0xFF14508F;           // deep blue for informational output
             case DIM -> 0xFF5C5A52;            // warm gray for hints and secondary output
             case ORANGE -> 0xFF9C3A10;
-            case MAGENTA -> 0xFF9A1F55;
+            case MAGENTA -> 0xFF8A2A8A;
             case BLUE -> 0xFF2A4F9A;
             case CYAN -> 0xFF0F5C86;
             case PURPLE -> 0xFF5A3F9E;
             case RED -> 0xFFB0201A;
+            case GREEN -> 0xFF2A6B1A;
+            case YELLOW -> 0xFF6B5800;
             case BRIGHT -> 0xFF000000;         // bold on paper is the blackest ink there is
             default -> 0xFF111111;             // plain and the echoed command line = near black
         };

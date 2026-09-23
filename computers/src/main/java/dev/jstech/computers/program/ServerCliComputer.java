@@ -612,6 +612,7 @@ public final class ServerCliComputer implements ICliComputer {
                 os.displayName(),
                 shellFamily() == ShellFamily.POSIX
                         ? KernelNames.kernel(os.platform(), computer.processorBits())
+                        : os.platform() == Platform.FRAMES ? KernelNames.frames(os.id().getPath())
                         : "JSC " + os.id().getPath(),
                 hostname(),
                 os.shellId(),

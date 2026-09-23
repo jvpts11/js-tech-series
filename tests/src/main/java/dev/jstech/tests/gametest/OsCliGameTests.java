@@ -12,6 +12,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.payload.ConsoleInitPayload;
@@ -1405,7 +1406,9 @@ public final class OsCliGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
-                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
+                    // As wide as a monitor's terminal: screenfetch cuts what passes the edge rather than wrap it.
+                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli,
+                            TermBuffer.MONITOR_COLUMNS);
                     // A package the Mirror serves, not a built-in: a fresh system does not have it.
                     helper.assertTrue(text(shell.run("screenfetch", cli)).contains("command not found"),
                             "screenfetch is a package, absent on a fresh install");

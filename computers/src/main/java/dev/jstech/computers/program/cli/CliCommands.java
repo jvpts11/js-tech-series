@@ -65,7 +65,10 @@ public final class CliCommands {
             commands.addAll(EXTRA);
             return commands;
         }
-        return all();
+        final List<ICliCommand> commands = all();
+        // screenfetch is a Frames package as well as a Unix one, and says for itself it is not MC-DOS's.
+        commands.add(new ScreenfetchCommand());
+        return commands;
     }
 
     /** A shell speaking the given family's command set. */

@@ -27,9 +27,9 @@ import java.util.function.Supplier;
 public final class SystemAdvancements extends AdvancementTab {
 
     private static final List<String> DISTRIBUTIONS = List.of("ubuntu", "debian", "fedora", "arch", "gentoo");
-    /* Where screenfetch installs: every distribution and FreeBSD. UNIX has no package for it. */
-    private static final List<String> SCREENFETCH_SYSTEMS =
-            List.of("ubuntu", "debian", "fedora", "arch", "gentoo", "freebsd");
+    /* Where screenfetch installs: every distribution, FreeBSD and the three Frames. UNIX has no package for it. */
+    private static final List<String> SCREENFETCH_SYSTEMS = List.of("ubuntu", "debian", "fedora", "arch", "gentoo",
+            "freebsd", "frames_95", "frames_xp", "frames_11");
 
     public SystemAdvancements() {
         super("systems", ResourceLocation.withDefaultNamespace("textures/block/deepslate_tiles.png"));

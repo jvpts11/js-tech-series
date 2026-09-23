@@ -20,12 +20,21 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   to the player who typed it, however long it takes to finish.
 - Logos and icons for the series and for each mod. The mods list shows each mod's logo over the series logo,
   mod list screens that show an icon show each mod's own, and the READMEs carry the logos.
+- screenfetch on Frames 95, XP and 11: a package of Frames' own manager, run at the Command Prompt, drawing the
+  Frames flag with the version each gives for itself. Professional Larper now asks for all nine systems it
+  installs on.
 
 ### Changed
 - The three advancements of the old Computers tab moved into the Operating Systems tab, so a world that had
   earned them shows them unearned there.
 
 ### Fixed
+- screenfetch draws every logo as neofetch draws it. Ubuntu's was another, older logo copied with mistakes, and
+  Debian's had a stray quote. Each was printed in one colour, readout included; now the art is in its own
+  colours (Ubuntu red and white, Debian white with a red centre, Gentoo magenta and white) and the user, host
+  and labels in the logo's. In a terminal narrower than the logo and its readout the rows used to wrap, which
+  broke the logo in two with the readout pushed into it; they are now cut at the edge, as neofetch does.
+  FreeBSD's is unchanged. The art is neofetch's, credited in THIRD_PARTY_NOTICES.md.
 - A server with nothing to boot no longer costs its rack time on every tick. A machine whose self-test found
   no system stands at that failure and goes on by itself once one is installed, and to notice that it was
   asking about its disks, and about every drive it is cabled to, twenty times a second; a datacenter of

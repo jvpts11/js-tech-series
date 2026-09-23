@@ -59,7 +59,7 @@ public final class PosixCommands {
                 new PosixSystemCommands.Hostname(),
                 new PosixFileCommands.Df(),
                 new PosixFileCommands.Mkfs(),
-                new PosixSystemCommands.Screenfetch(),
+                new ScreenfetchCommand(),
                 // One package manager per distribution family; each is only available on the OS that ships it.
                 new PackageCommands.PackageManagerCommand(PackageManagerKind.APT),
                 new PackageCommands.PackageManagerCommand(PackageManagerKind.DNF),
