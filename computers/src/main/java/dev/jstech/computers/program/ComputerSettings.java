@@ -233,7 +233,7 @@ public final class ComputerSettings {
     }
 
     /** A program id as the pinned list keeps it: its path, lower-case, without a {@code jsc:} namespace. */
-    private static String normalizeId(final String id) {
+    static String normalizeId(final String id) {
         if (id == null) {
             return "";
         }
@@ -463,165 +463,31 @@ public final class ComputerSettings {
 
     /**
      * Applies one {@code key=value} setting, clamping as needed. Returns {@code true} when the key is
-     * one this class owns and the value parsed; {@code false} for an unknown key or an unparseable
-     * value (so the caller can route the key elsewhere or report an error).
-     *
-     * <p>Keys handled here: {@code clock} ({@code 12h}/{@code 24h}), {@code theme}, {@code taskbar}
-     * ({@code center}/{@code left}), {@code darkmode} ({@code on}/{@code off}), {@code guiscale},
-     * {@code brightness}, {@code savedrive}, {@code autoopen} ({@code on}/{@code off}), {@code accent}
-     * (six hex digits), {@code pin}/{@code unpin} (a program id), and {@code defaultapp:<ext>}. The
-     * computer name, wallpaper, and network share are owned elsewhere and are not handled here.
+     * one this store takes and the value parsed; {@code false} for an unknown key or an unparseable
+     * value (so the caller can route the key elsewhere or report an error). The keys are {@link SettingKey}'s;
+     * the computer name, wallpaper, and network share are owned elsewhere and are not handled here.
      *
      * @param key   the setting key (case-insensitive)
      * @param value the raw value
-     * @return true if this class recognised and applied the key
+     * @return true if the key was one this store takes and it was applied
      */
     public boolean applySetting(final String key, final String value) {
-        if (key == null) {
-            return false;
-        }
-        final String k = key.toLowerCase(Locale.ROOT).trim();
-        final String v = value == null ? "" : value.trim();
-        if (k.startsWith("defaultapp:")) {
-            setDefaultApp(k.substring("defaultapp:".length()), v);
-            return true;
-        }
-        switch (k) {
-            case "clock" -> {
-                if (v.equalsIgnoreCase("12h") || v.equals("12")) {
-                    setClock12h(true);
-                } else if (v.equalsIgnoreCase("24h") || v.equals("24")) {
-                    setClock12h(false);
-                } else {
-                    return false;
-                }
-                return true;
-            }
-            case "theme" -> {
-                setThemePreset(v.equalsIgnoreCase("system") ? "" : v);
-                return true;
-            }
-            case "taskbar" -> {
-                if (v.equalsIgnoreCase("center") || v.equalsIgnoreCase("centre") || v.equalsIgnoreCase("centered")) {
-                    setTaskbarCentered(true);
-                } else if (v.equalsIgnoreCase("left")) {
-                    setTaskbarCentered(false);
-                } else {
-                    return false;
-                }
-                return true;
-            }
-            case "darkmode" -> {
-                if (v.equalsIgnoreCase("on") || v.equalsIgnoreCase("true") || v.equalsIgnoreCase("dark")) {
-                    setDarkMode(true);
-                } else if (v.equalsIgnoreCase("off") || v.equalsIgnoreCase("false") || v.equalsIgnoreCase("light")) {
-                    setDarkMode(false);
-                } else {
-                    return false;
-                }
-                return true;
-            }
-            case "guiscale" -> {
-                final Integer n = parseInt(v);
-                if (n == null) {
-                    return false;
-                }
-                setGuiScale(n);
-                return true;
-            }
-            case "brightness" -> {
-                final Integer n = parseInt(v);
-                if (n == null) {
-                    return false;
-                }
-                setBrightness(n);
-                return true;
-            }
-            case "savedrive" -> {
-                if (v.isEmpty() || !Character.isLetter(v.charAt(0))) {
-                    return false;
-                }
-                setDefaultSaveDrive(v.charAt(0));
-                return true;
-            }
-            case "autoopen" -> {
-                if (v.equalsIgnoreCase("on") || v.equalsIgnoreCase("true")) {
-                    setRemovableAutoOpen(true);
-                } else if (v.equalsIgnoreCase("off") || v.equalsIgnoreCase("false")) {
-                    setRemovableAutoOpen(false);
-                } else {
-                    return false;
-                }
-                return true;
-            }
-            case "remote" -> {
-                if (v.equalsIgnoreCase("on") || v.equalsIgnoreCase("true")) {
-                    setRemoteAllowed(true);
-                } else if (v.equalsIgnoreCase("off") || v.equalsIgnoreCase("false")) {
-                    setRemoteAllowed(false);
-                } else {
-                    return false;
-                }
-                return true;
-            }
-            case "accent" -> {
-                final Integer argb = parseAccent(v);
-                if (argb == null) {
-                    return false;
-                }
-                setAccent(argb);
-                return true;
-            }
-            case "pin" -> {
-                /*
-                 * Pinning what is pinned already is not a mistake worth refusing: the panel asks for the
-                 * state it wants, and either way the program ends up pinned.
-                 */
-                return !normalizeId(v).isEmpty() && (isPinned(v) || pin(v));
-            }
-            case "unpin" -> {
-                unpin(v);
-                return !normalizeId(v).isEmpty();
-            }
-            case "favourite" -> {
-                // Starring what is starred already asks for the state it wants, and either way it is starred.
-                return !v.isEmpty() && (isFavourite(v) || favourite(v));
-            }
-            case "unfavourite" -> {
-                unfavourite(v);
-                return !v.isEmpty();
-            }
-            case "recipe" -> {
-                // "<data id>=<index>": which recipe to open the craft of that item on; a negative index forgets.
-                final int eq = v.lastIndexOf('=');
-                if (eq <= 0) {
-                    return false;
-                }
-                final Integer index = parseInt(v.substring(eq + 1));
-                if (index == null) {
-                    return false;
-                }
-                setRecipeChoice(v.substring(0, eq), index);
-                return true;
-            }
-            default -> {
-                return false;
-            }
-        }
+        return SettingKey.apply(this, key, value);
     }
 
     /** Human-readable {@code key   value} lines for the {@code config} command's listing. */
     public List<String> summaryLines() {
         final List<String> lines = new ArrayList<>();
-        lines.add(pad("clock") + (clock12h ? "12h" : "24h"));
-        lines.add(pad("theme") + (themePreset.isEmpty() ? "system" : themePreset));
-        lines.add(pad("taskbar") + (taskbarCentered ? "center" : "left"));
-        lines.add(pad("darkmode") + (darkMode ? "on" : "off"));
-        lines.add(pad("guiscale") + (guiScale == 0 ? "75% (default)" : guiScale + "%"));
-        lines.add(pad("brightness") + brightness + "%");
-        lines.add(pad("savedrive") + defaultSaveDrive + ":");
-        lines.add(pad("autoopen") + (removableAutoOpen ? "on" : "off"));
-        lines.add(pad("accent") + (accent == 0 ? "default" : String.format(Locale.ROOT, "#%06X", accent & 0xFFFFFF)));
+        lines.add(pad(SettingKey.CLOCK) + (clock12h ? "12h" : "24h"));
+        lines.add(pad(SettingKey.THEME) + (themePreset.isEmpty() ? ThemePreset.SYSTEM.id() : themePreset));
+        lines.add(pad(SettingKey.TASKBAR) + (taskbarCentered ? "center" : "left"));
+        lines.add(pad(SettingKey.DARKMODE) + (darkMode ? "on" : "off"));
+        lines.add(pad(SettingKey.GUISCALE) + (guiScale == 0 ? "75% (default)" : guiScale + "%"));
+        lines.add(pad(SettingKey.BRIGHTNESS) + brightness + "%");
+        lines.add(pad(SettingKey.SAVEDRIVE) + defaultSaveDrive + ":");
+        lines.add(pad(SettingKey.AUTOOPEN) + (removableAutoOpen ? "on" : "off"));
+        lines.add(pad(SettingKey.ACCENT)
+                + (accent == 0 ? "default" : String.format(Locale.ROOT, "#%06X", accent & 0xFFFFFF)));
         lines.add(pad("pinned") + (pinned.isEmpty() ? "none" : String.join(", ", pinned)));
         lines.add(pad("favourites") + (favourites.isEmpty() ? "none" : favourites.size() + " starred"));
         final List<String> shared = new ArrayList<>();
@@ -629,33 +495,16 @@ public final class ComputerSettings {
             shared.add(share.name() + (share.writable() ? " (read and write)" : " (read only)"));
         }
         lines.add(pad("shares") + (shared.isEmpty() ? "none" : String.join(", ", shared)));
-        lines.add(pad("remote") + (remoteAllowed ? "on (other computers may run programs here)" : "off"));
+        lines.add(pad(SettingKey.REMOTE) + (remoteAllowed ? "on (other computers may run programs here)" : "off"));
         return lines;
+    }
+
+    private static String pad(final SettingKey key) {
+        return pad(key.key());
     }
 
     private static String pad(final String key) {
         return String.format(Locale.ROOT, "  %-12s", key);
-    }
-
-    private static Integer parseInt(final String v) {
-        try {
-            return Integer.parseInt(v.trim());
-        } catch (final NumberFormatException e) {
-            return null;
-        }
-    }
-
-    /** Parses six hex digits (optionally {@code #}-prefixed) into an opaque ARGB int, or null. */
-    private static Integer parseAccent(final String v) {
-        String hex = v.startsWith("#") ? v.substring(1) : v;
-        if (hex.length() != 6) {
-            return null;
-        }
-        try {
-            return 0xFF000000 | Integer.parseInt(hex, 16);
-        } catch (final NumberFormatException e) {
-            return null;
-        }
     }
 
     private static int clamp(final int value, final int lo, final int hi) {

@@ -15,6 +15,7 @@ import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.UninstallProgramPayload;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.program.ThemePreset;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Label;
@@ -58,7 +59,6 @@ public final class SettingsApp implements IDesktopApp {
 
     private static final int[] ACCENTS = {
             0xFF3A6AE0, 0xFF12A26F, 0xFFD1633F, 0xFF7B52C9, 0xFFC93D6A, 0xFFC98320};
-    private static final String[] THEMES = {"system", "ocean", "slate"};
 
     private final BlockPos host;
     private OsSkin skin = OsSkin.fallback();
@@ -327,10 +327,12 @@ public final class SettingsApp implements IDesktopApp {
             caption("Theme", x, y, w);
             y += 10;
             int tx = x;
-            final String current = d.themePreset().isEmpty() ? "system" : d.themePreset();
-            for (final String theme : THEMES) {
+            final ThemePreset current = ThemePreset.byId(d.themePreset());
+            for (final ThemePreset preset : ThemePreset.values()) {
+                final String theme = preset.id();
                 final int bw = font.width(theme) + 12;
-                pagePanel.add(new Button(theme, () -> set("theme", theme)).setPrimary(theme.equals(current))).setBounds(tx, y, bw, BTN_H);
+                pagePanel.add(new Button(theme, () -> set("theme", theme)).setPrimary(preset == current))
+                        .setBounds(tx, y, bw, BTN_H);
                 tx += bw + 4;
             }
             y += 19;

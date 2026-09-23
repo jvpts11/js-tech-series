@@ -11,6 +11,7 @@ import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ComputerSettings;
+import dev.jstech.computers.program.ThemePreset;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import java.util.ArrayList;
@@ -89,22 +90,9 @@ public final class MachineConfigService {
             }
             case "theme" -> {
                 // A theme preset bundles an accent and a wallpaper, so picking one restyles the desktop.
-                final String preset = value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
-                console.settings().setThemePreset(preset.equals("system") ? "" : preset);
-                switch (preset) {
-                    case "ocean" -> {
-                        console.settings().setAccent(0xFF12A26F);
-                        console.desktop().setWallpaper("winxp");
-                    }
-                    case "slate" -> {
-                        console.settings().setAccent(0xFF7B52C9);
-                        console.desktop().setWallpaper("win11");
-                    }
-                    default -> {
-                        console.settings().setAccent(0);
-                        console.desktop().setWallpaper("");
-                    }
-                }
+                final ThemePreset preset = ThemePreset.byId(value);
+                preset.applyTo(console.settings());
+                console.desktop().setWallpaper(preset.wallpaper());
                 machine.setChanged();
                 return ICliComputer.OpResult.ok("theme set");
             }
