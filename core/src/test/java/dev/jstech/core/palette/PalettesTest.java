@@ -14,6 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
 
 class PalettesTest {
@@ -64,6 +66,26 @@ class PalettesTest {
         Palettes.load(palette, Map.of("text", 10, "accent", 20, "edge", 30));
         Palettes.reset(palette);
         assertSame(palette.declared(), palette.get());
+    }
+
+    @Test
+    void derive_worksTheColoursOutOnceUntilAPaletteChanges() {
+        final Palette<Swatch> palette = Palettes.declare(MOD, "derived", new Swatch(1, 2, 3));
+        final AtomicInteger worked = new AtomicInteger();
+        final Supplier<Integer> sum = Palettes.derive(() -> {
+            worked.incrementAndGet();
+            final Swatch now = palette.get();
+            return now.text() + now.accent() + now.edge();
+        });
+        assertEquals(6, sum.get());
+        assertEquals(6, sum.get());
+        assertEquals(1, worked.get());
+        Palettes.load(palette, Map.of("edge", 30));
+        assertEquals(33, sum.get());
+        assertEquals(2, worked.get());
+        Palettes.reset(palette);
+        assertEquals(6, sum.get());
+        assertEquals(3, worked.get());
     }
 
     @Test

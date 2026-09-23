@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.gui.CdeBackdrop;
-import dev.jstech.computers.gui.CdePalette;
+import dev.jstech.computers.gui.CdeScheme;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.core.gui.layout.GuiLayout;
 import org.junit.jupiter.api.Test;
@@ -24,7 +24,7 @@ class CdeStyleLayoutTest {
     @Test
     void everyWindow_isCleanWithEverythingItLists() {
         assertClean(CdeStyleLayout.stripLayout(2));
-        assertClean(CdeStyleLayout.colorLayout(CdePalette.ALL.size()));
+        assertClean(CdeStyleLayout.colorLayout(CdeScheme.ALL.size()));
         assertClean(CdeStyleLayout.backdropLayout(CdeBackdrop.values().length));
     }
 
@@ -37,15 +37,15 @@ class CdeStyleLayoutTest {
 
     @Test
     void lists_endAboveTheButtonsAndKeepEveryLineInside() {
-        final Rect colors = CdeStyleLayout.list(true, CdePalette.ALL.size());
+        final Rect colors = CdeStyleLayout.list(true, CdeScheme.ALL.size());
         assertTrue(colors.y() + colors.h() < CdeStyleLayout.button(true, 0).y() - 2);
-        final Rect last = CdeStyleLayout.row(true, CdePalette.ALL.size() - 1);
+        final Rect last = CdeStyleLayout.row(true, CdeScheme.ALL.size() - 1);
         assertTrue(last.y() + last.h() <= colors.y() + colors.h());
     }
 
     @Test
     void rowAt_findsEveryLineAtItsMiddleAndNoneBelowTheLast() {
-        final int count = CdePalette.ALL.size();
+        final int count = CdeScheme.ALL.size();
         for (int i = 0; i < count; i++) {
             final Rect r = CdeStyleLayout.row(true, i);
             assertEquals(i, CdeStyleLayout.rowAt(true, r.x() + r.w() / 2.0, r.y() + r.h() / 2.0, count));

@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
-import dev.jstech.computers.gui.CdePalette;
+import dev.jstech.computers.gui.CdeScheme;
 import dev.jstech.computers.gui.CdeStyle;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +50,8 @@ public enum WallpaperStyle {
      * no other desktop offers it.
      */
     MOTIF("cde", false,
-            (g, w, h) -> MotifChrome.backdrop(g, w, h, CdePalette.DEFAULT, CdeStyle.DEFAULT.backdrop(0)), null);
+            (g, w, h) -> MotifChrome.backdrop(g, w, h, CdeScheme.DEFAULT.colours(), CdeStyle.DEFAULT.backdrop(0)),
+            null);
 
     /** The colour a thumbnail of "whatever the desktop comes with" is shown in. */
     private static final int DEFAULT_SWATCH = 0xFF3A6A9A;

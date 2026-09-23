@@ -12,6 +12,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 /**
  * Every palette the series and its addons declare, by id.
@@ -24,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class Palettes {
 
     private static final Map<String, Palette<?>> BY_ID = new ConcurrentHashMap<>();
+    private static final AtomicInteger GENERATION = new AtomicInteger();
 
     private Palettes() {
     }
@@ -62,13 +65,31 @@ public final class Palettes {
         return out;
     }
 
+    /**
+     * Colours worked out from declared palettes, such as a skin made from a scheme's handful of colours. They are
+     * worked out on the first ask and again only after a pack has changed a palette, so what reads them each time
+     * it paints costs one comparison, and still never paints with colours a pack has since replaced.
+     *
+     * @param working how the colours are worked out; it may read any palettes, and nothing else that changes
+     */
+    public static <P> Supplier<P> derive(final Supplier<P> working) {
+        return new DerivedPalette<>(working);
+    }
+
     /** Gives a palette the colours a pack holds for it, over its declared ones. */
     public static void load(final Palette<?> palette, final Map<String, Integer> overrides) {
         palette.load(overrides);
+        GENERATION.incrementAndGet();
     }
 
     /** Puts a palette back to its declared colours. */
     public static void reset(final Palette<?> palette) {
         palette.reset();
+        GENERATION.incrementAndGet();
+    }
+
+    /** How many times a palette has been given colours since the game started, which is what derived ones watch. */
+    static int generation() {
+        return GENERATION.get();
     }
 }

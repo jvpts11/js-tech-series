@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.CdePalette;
+import dev.jstech.computers.gui.CdeScheme;
 import dev.jstech.computers.gui.TrashItem;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.gui.layout.TrashLayout;
@@ -172,7 +173,7 @@ final class TrashCdeLook implements ITrashLook {
 
     private CdePalette palette() {
         final DesktopScreen desktop = DesktopScreen.current();
-        return desktop == null ? CdePalette.DEFAULT : desktop.cdePalette();
+        return desktop == null ? CdeScheme.DEFAULT.colours() : desktop.cdePalette();
     }
 
     private static Font font() {

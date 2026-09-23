@@ -35,11 +35,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   memory while it runs, a lesser processor, and less free disk to install. That goes for a port on FreeBSD and
   for everything Gentoo builds. The machine remembers which of its programs it built until the program is removed
   or the disk it was on is formatted; the same program installed again as a package asks what a package asks.
-- A resource pack can recolour the computing screens. The colours of each hardware era's skin and of the Network
-  Management Studio are files, under `assets/jscore/palettes/era/` and `assets/jsc/palettes/nms/`: a colour for each
-  named role (`text`, `accent`, `panel` and so on), written `#AARRGGBB`. A pack's file may name only the roles it
-  changes, and the others keep the colours the mod ships; a file that cannot be read is logged, and its screens keep
-  those colours too.
+- A resource pack can recolour the computing screens. The colours of each hardware era's skin, of the Network
+  Management Studio, of each desktop's panel and launcher, and of CDE's eight colour schemes are files under
+  `assets/jscore/palettes/` and `assets/jsc/palettes/`: a colour for each named role (`text`, `accent`, `panel` and so
+  on), written `#AARRGGBB`. A pack's file may name only the roles it changes, and the others keep the colours the mod
+  ships; a file that cannot be read is logged, and its screens keep those colours too. A change of pack reaches a
+  screen that is already open.
 
 ### Changed
 - The three advancements of the old Computers tab moved into the Operating Systems tab, so a world that had

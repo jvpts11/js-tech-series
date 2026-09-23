@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test;
 class CdeStyleTest {
 
     @Test
-    void default_wearsTheDefaultPaletteAndADifferentBackdropOnEachWorkspace() {
-        assertEquals(CdePalette.DEFAULT, CdeStyle.DEFAULT.colours());
+    void default_wearsTheDefaultSchemeAndADifferentBackdropOnEachWorkspace() {
+        assertEquals(CdeScheme.DEFAULT, CdeStyle.DEFAULT.scheme());
         assertEquals(4, new HashSet<>(CdeStyle.DEFAULT.backdrops()).size());
     }
 
@@ -81,9 +81,9 @@ class CdeStyleTest {
 
     @Test
     void encoded_neverRunsPastWhatIsKeptForIt() {
-        for (final CdePalette palette : CdePalette.ALL) {
+        for (final CdeScheme scheme : CdeScheme.ALL) {
             for (final CdeBackdrop backdrop : CdeBackdrop.values()) {
-                final CdeStyle style = new CdeStyle(palette.name(), List.of(backdrop, backdrop, backdrop, backdrop));
+                final CdeStyle style = new CdeStyle(scheme.label(), List.of(backdrop, backdrop, backdrop, backdrop));
                 assertTrue(style.encoded().length() <= CdeStyle.MOST_LETTERS, style.encoded());
             }
         }

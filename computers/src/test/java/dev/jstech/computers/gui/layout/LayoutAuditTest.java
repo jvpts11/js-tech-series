@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.gui.CdeBackdrop;
-import dev.jstech.computers.gui.CdePalette;
+import dev.jstech.computers.gui.CdeScheme;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.core.gui.layout.GuiLayout;
@@ -155,7 +155,7 @@ class LayoutAuditTest {
         c.add(new AuditCase("CdeAppManagerLayout(group)", CdeAppManagerLayout.layout(8, true, 292, 128), true));
         // CDE's Style Manager: the strip of pages, and each page with everything it lists.
         c.add(new AuditCase("CdeStyleLayout(strip)", CdeStyleLayout.stripLayout(2), true));
-        c.add(new AuditCase("CdeStyleLayout(color)", CdeStyleLayout.colorLayout(CdePalette.ALL.size()), true));
+        c.add(new AuditCase("CdeStyleLayout(color)", CdeStyleLayout.colorLayout(CdeScheme.ALL.size()), true));
         c.add(new AuditCase("CdeStyleLayout(backdrop)",
                 CdeStyleLayout.backdropLayout(CdeBackdrop.values().length), true));
         c.add(new AuditCase("WorkstationInfoLayout", WorkstationInfoLayout.layout(), true));

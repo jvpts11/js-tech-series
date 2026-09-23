@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.CdePalette;
+import dev.jstech.computers.gui.CdeScheme;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.gui.layout.CdeStyleLayout;
 import java.util.ArrayList;
@@ -102,10 +103,11 @@ final class CdeColorPage implements IDesktopApp {
         if (this.skin == null) {
             return;
         }
-        final CdePalette shown = CdePalette.named(this.picked);
+        final CdeScheme scheme = CdeScheme.named(this.picked);
+        final CdePalette shown = scheme.colours();
         CdeStylePages.list(g, font, this.skin, shown, x, y, true, NAMES, NAMES.indexOf(this.picked));
         final Rect name = CdeStyleLayout.colorName();
-        g.drawString(font, shown.name(), x + name.x(), y + name.y(), this.skin.text(), false);
+        g.drawString(font, scheme.label(), x + name.x(), y + name.y(), this.skin.text(), false);
         final int[] colours = {shown.active(), shown.window(), shown.inset(), shown.light(), shown.shade(),
             shown.backdropA(), shown.backdropB(), shown.ink()};
         for (int i = 0; i < CdeStyleLayout.SWATCHES; i++) {
@@ -193,9 +195,9 @@ final class CdeColorPage implements IDesktopApp {
     }
 
     private static List<String> names() {
-        final List<String> out = new ArrayList<>(CdePalette.ALL.size());
-        for (final CdePalette each : CdePalette.ALL) {
-            out.add(each.name());
+        final List<String> out = new ArrayList<>(CdeScheme.ALL.size());
+        for (final CdeScheme each : CdeScheme.ALL) {
+            out.add(each.label());
         }
         return List.copyOf(out);
     }

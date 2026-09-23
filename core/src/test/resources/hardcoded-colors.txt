@@ -46,7 +46,7 @@ computers/src/main/java/dev/jstech/computers/client/os/DesktopIcons.java 24
 computers/src/main/java/dev/jstech/computers/client/os/DesktopItems.java 1
 computers/src/main/java/dev/jstech/computers/client/os/DesktopPopup.java 4
 computers/src/main/java/dev/jstech/computers/client/os/DesktopScreen.java 38
-computers/src/main/java/dev/jstech/computers/client/os/DesktopTheme.java 85
+computers/src/main/java/dev/jstech/computers/client/os/DesktopTheme.java 1
 computers/src/main/java/dev/jstech/computers/client/os/DesktopWindow.java 1
 computers/src/main/java/dev/jstech/computers/client/os/ExceedApp.java 2
 computers/src/main/java/dev/jstech/computers/client/os/ExposureApp.java 1
@@ -96,7 +96,6 @@ computers/src/main/java/dev/jstech/computers/client/os/WorkstationInfoApp.java 1
 computers/src/main/java/dev/jstech/computers/client/term/TermPalette.java 36
 computers/src/main/java/dev/jstech/computers/client/theme/MonitorFrameStyle.java 18
 computers/src/main/java/dev/jstech/computers/client/theme/NmsThemes.java 1
-computers/src/main/java/dev/jstech/computers/gui/CdePalette.java 65
 computers/src/main/java/dev/jstech/computers/integration/mekanism/MekanismChemicalBridge.java 1
 computers/src/main/java/dev/jstech/computers/os/edit/InkPalette.java 36
 computers/src/main/java/dev/jstech/computers/os/fs/PixImage.java 18

@@ -455,7 +455,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
          * its own era, instead of a modern flat theme on a machine from another decade.
          */
         // CDE is drawn out of the palette the machine keeps, which is a choice and not a fact of its era.
-        OsSkin base = is(PanelStyle.CDE) ? OsSkin.motif(cdePalette()) : OsSkin.forDesktop(desktopId, era());
+        OsSkin base = is(PanelStyle.CDE) ? OsSkin.motif(cdeStyle.scheme()) : OsSkin.forDesktop(desktopId, era());
         if (desktopDarkMode) {
             base = base.darkVariant();
         }

@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.CdePalette;
+import dev.jstech.computers.gui.CdeScheme;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.core.client.gui.skin.ISkin;
@@ -198,8 +199,8 @@ public final class OsSkin implements ISkin {
             0xFF6D5A78, 0xFF1A1A1A, 0xFF5C574E, 0xFFFFFFFF,
             0xFF6D5A78, 0xFFFFFFFF, 0xFFC4BFB2, false, "gnome");
 
-    /* CDE in the palette it ships with; the Style Manager's choice builds another from the same factory. */
-    static final OsSkin CDE = motif(CdePalette.DEFAULT);
+    /* CDE in the scheme it ships with; the Style Manager's choice builds another from the same factory. */
+    static final OsSkin CDE = motif(CdeScheme.DEFAULT);
 
     /** The skin for a desktop as it looks on hardware of {@code era}, as its look says. */
     public static OsSkin forDesktop(final ResourceLocation desktopId,
@@ -213,11 +214,12 @@ public final class OsSkin implements ISkin {
     }
 
     /**
-     * CDE drawn from that palette. Everything such a skin answers, the frames, the text, the wells and what is
-     * picked out in a list, is one of the palette's colours, so choosing another palette changes all of it.
+     * CDE drawn from that scheme. Everything such a skin answers, the frames, the text, the wells and what is
+     * picked out in a list, is one of the scheme's colours, so choosing another scheme changes all of it.
      */
-    public static OsSkin motif(final CdePalette palette) {
-        return new OsSkin(DesktopTheme.cde(palette), Form.MOTIF, 0, 0, palette.activeInk(), false,
+    public static OsSkin motif(final CdeScheme scheme) {
+        final CdePalette palette = scheme.colours();
+        return new OsSkin(DesktopTheme.cde(scheme), Form.MOTIF, 0, 0, palette.activeInk(), false,
                 palette.window(), palette.shade(), palette.active(), palette.ink(), palette.shade(),
                 palette.inset(), palette.active(), palette.activeInk(), palette.inset(), false, "cde", palette);
     }
