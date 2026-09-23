@@ -32,7 +32,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   they do on FreeBSD. Building a port earns the new Built from Ports advancement.
 - A program built from source on the machine that runs it asks ten percent less of it than the package does: less
   memory while it runs, a lesser processor, and less free disk to install. That goes for a port on FreeBSD and
-  for everything Gentoo builds, and the machine remembers which of its programs it built.
+  for everything Gentoo builds. The machine remembers which of its programs it built until the program is removed
+  or the disk it was on is formatted; the same program installed again as a package asks what a package asks.
 
 ### Changed
 - The three advancements of the old Computers tab moved into the Operating Systems tab, so a world that had

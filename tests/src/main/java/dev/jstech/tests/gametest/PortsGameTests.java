@@ -51,6 +51,7 @@ public final class PortsGameTests {
     private static final int A_WHOLE_BUILD = 1_600;
 
     private static final String SCREENFETCH = "jsc:screenfetch";
+    private static final String VIM = "jsc:vim";
     private static final String PORT = "usr/ports/sysutils/screenfetch";
 
     private PortsGameTests() {
@@ -221,6 +222,46 @@ public final class PortsGameTests {
         helper.assertTrue(loaded.builtFromSource("jsc:vim"), "it comes back from a save");
         loaded.uninstall("jsc:vim");
         helper.assertFalse(loaded.builtFromSource("jsc:vim"), "and goes with the program");
+        helper.succeed();
+    }
+
+    /**
+     * Formatting the system disk takes what was built on it with it: the same program installed again afterwards as a
+     * package is a package, and asks what a package asks.
+     */
+    @GameTest(template = ARENA)
+    public static void format_takesTheBuildsWithTheSystem(final GameTestHelper helper) {
+        final MainframeBlockEntity machine = freebsd(helper, WHERE);
+        final ComputerConsoleState console = machine.console();
+        console.install(VIM);
+        console.markBuiltFromSource(VIM);
+        helper.assertTrue(console.builtFromSource(VIM), "vim is recorded as built here");
+        helper.assertTrue(machine.formatDisk(0), "the system disk formats");
+        helper.assertFalse(console.isInstalled(VIM), "the format took the program");
+        helper.assertFalse(console.builtFromSource(VIM), "and the build with it");
+        helper.assertTrue(machine.installOs(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "freebsd")),
+                "a system goes back on the disk");
+        console.install(VIM);
+        helper.assertFalse(console.builtFromSource(VIM), "vim installed again as a package is a package");
+        helper.succeed();
+    }
+
+    /** A program installed afresh arrives as a package, whatever an older copy of it was. */
+    @GameTest(template = ARENA)
+    public static void install_aFreshCopyIsAPackageWhateverTheOldOneWas(final GameTestHelper helper) {
+        final ComputerConsoleState state = new ComputerConsoleState();
+        state.install(VIM);
+        state.markBuiltFromSource(VIM);
+        helper.assertFalse(state.install(VIM), "installing what is there changes nothing");
+        helper.assertTrue(state.builtFromSource(VIM), "and keeps the build it has");
+        final CompoundTag stale = new CompoundTag();
+        state.save(stale);
+        stale.remove("Installed");
+        final ComputerConsoleState reloaded = new ComputerConsoleState();
+        reloaded.load(stale);
+        reloaded.install(VIM);
+        helper.assertFalse(reloaded.builtFromSource(VIM),
+                "a mark left over from a copy that is gone does not carry to the new one");
         helper.succeed();
     }
 

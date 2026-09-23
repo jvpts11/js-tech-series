@@ -108,9 +108,19 @@ public final class ComputerConsoleState {
         return installed.contains(programId);
     }
 
-    /** Installs a program by id; returns false if it was already installed. */
+    /**
+     * Installs a program by id; returns false if it was already installed.
+     *
+     * <p>A program that was not installed arrives as a package, whatever a mark left from an earlier copy says: the
+     * mark that it was built here is set after this, by the build that built it, and never outlives the copy it was
+     * set for.
+     */
     public boolean install(final String programId) {
-        return installed.add(programId);
+        final boolean added = installed.add(programId);
+        if (added) {
+            builtFromSource.remove(programId);
+        }
+        return added;
     }
 
     /*
@@ -340,8 +350,10 @@ public final class ComputerConsoleState {
         sessions.clear();
         terminalDrive = 'C';
         installed.clear();
-        // What a player installed from the Mirror, and which version of each program, were on that disk too.
+        // What a player installed from the Mirror, which version of each program, and which were built here, were
+        // on that disk too.
         installedVersions.clear();
+        builtFromSource.clear();
         community.clear();
         // Whatever was being built went with the system it was being built for.
         foreground.clear();
