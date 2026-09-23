@@ -14,6 +14,8 @@ import dev.jstech.computers.datagen.advancement.JscAdvancementTabs;
 import dev.jstech.computers.os.OsBootstrap;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.core.datagen.DeclaredTexts;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.data.PackOutput;
 import net.neoforged.neoforge.common.data.LanguageProvider;
 
@@ -28,6 +30,10 @@ public class JscLanguageProvider extends LanguageProvider {
 
     @Override
     protected void addTranslations() {
+        // Every sentence the mod declares beside the code that says it.
+        for (final TextKey key : DeclaredTexts.of(JsComputers.MODID)) {
+            add(key.key(), key.english());
+        }
         add("itemGroup.jsc.computing", "J's Computers");
         addBlock(ComputingModule.ETHERNET_CABLE, "Ethernet Cable");
         addBlock(ComputingModule.HBW_CABLE, "HBW Cable");

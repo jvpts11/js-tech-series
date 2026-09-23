@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.operation;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.Map;
@@ -25,6 +27,7 @@ import java.util.function.Supplier;
 /**
  * The Operation dispatcher: runs CPU-bound Operation work on virtual threads while keeping every world mutation on the main (server) thread. A task does its computation on a virtual thread and uses its {@link IOperationContext} to bounce world reads/writes back to the main thread and to wait on whole game ticks, so disk latency and throughput are paced deterministically by ticks, never by a wall clock. Multiple disks (one task per server) therefore process in parallel without ever touching the world off-thread.
  */
+@TextHolder
 public final class OperationDispatch implements AutoCloseable, ILatencyScheduler {
 
     private record PendingOp(UUID id, IOperationTask task, OperationPriority priority, long sequence) {
@@ -37,13 +40,16 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
     private static final int MAX_TERMINAL_HISTORY = 256;
 
     /** An Operation that ran to the end and then answered with nothing at all, which is a mistake in its code. */
-    private static final String NO_RESULT = "jscore.operation.failure.no_result";
+    private static final TextKey NO_RESULT = TextKey.of("jscore.operation.failure.no_result",
+            "the Operation finished without saying what it did");
 
     /** An Operation given up on because the machine running it stopped. */
-    private static final String CANCELLED = "jscore.operation.failure.cancelled";
+    private static final TextKey CANCELLED = TextKey.of("jscore.operation.failure.cancelled",
+            "the machine running it stopped");
 
     /** An Operation that threw: the type of what was thrown, then what it said. */
-    private static final String CRASHED = "jscore.operation.failure.crashed";
+    private static final TextKey CRASHED = TextKey.of("jscore.operation.failure.crashed",
+            "the Operation ran into a problem: %s (%s)");
 
     /*
      * Not final: the lane count follows the Mainframe's GPU count, which the player can change at runtime by
@@ -198,17 +204,17 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
             try {
                 result = op.task().run(context);
                 if (result == null) {
-                    result = IOperationResult.failure(NO_RESULT);
+                    result = IOperationResult.failure(NO_RESULT.key());
                 }
             } catch (final OperationCancelledException cancelled) {
-                result = IOperationResult.failure(CANCELLED);
+                result = IOperationResult.failure(CANCELLED.key());
             } catch (final Throwable throwable) {
                 /*
                  * The type and the message both, because a player reads the line and whoever is asked about it
                  * afterwards reads the same line: an exception with no message says nothing without its type,
                  * and a message with no type rarely says where it came from.
                  */
-                result = IOperationResult.failure(CRASHED,
+                result = IOperationResult.failure(CRASHED.key(),
                         throwable.getClass().getSimpleName(),
                         String.valueOf(throwable.getMessage()));
             }
@@ -364,7 +370,7 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
 
     private void discard(final UUID id) {
         statuses.put(id, OperationStatus.DISCARDED);
-        failures.put(id, OperationFailure.of(CANCELLED));
+        failures.put(id, OperationFailure.of(CANCELLED.key()));
         rememberTerminal(id);
     }
 

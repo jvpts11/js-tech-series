@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.gui.screen;
 
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -40,13 +41,13 @@ public final class ModalDialog extends Screen {
         final int buttonsY = this.height / 2 + 20;
 
         addRenderableWidget(Button.builder(
-                        Component.translatable("gui.jscore.confirm"),
+                        GameText.component(DialogTexts.CONFIRM),
                         b -> resolve(true))
                 .bounds(centerX - 105, buttonsY, 100, 20)
                 .build());
 
         addRenderableWidget(Button.builder(
-                        Component.translatable("gui.jscore.cancel"),
+                        GameText.component(DialogTexts.CANCEL),
                         b -> resolve(false))
                 .bounds(centerX + 5, buttonsY, 100, 20)
                 .build());

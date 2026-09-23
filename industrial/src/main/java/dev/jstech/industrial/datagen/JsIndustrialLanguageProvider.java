@@ -7,13 +7,16 @@
  */
 package dev.jstech.industrial.datagen;
 
+import dev.jstech.core.datagen.DeclaredTexts;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.JsIndustrial;
 import net.minecraft.data.PackOutput;
 import net.neoforged.neoforge.common.data.LanguageProvider;
 
 /**
- * Generates the English names of the industrial mod.
+ * Generates the English of the industrial mod: every sentence it declares beside the code that says it, and the
+ * names of its blocks.
  */
 public class JsIndustrialLanguageProvider extends LanguageProvider {
 
@@ -23,6 +26,9 @@ public class JsIndustrialLanguageProvider extends LanguageProvider {
 
     @Override
     protected void addTranslations() {
+        for (final TextKey key : DeclaredTexts.of(JsIndustrial.MODID)) {
+            add(key.key(), key.english());
+        }
         add("itemGroup.jsindustrial.industrial", "J's Industrial");
         addBlock(IndustrialModule.MACERATOR, "Macerator");
         addBlock(IndustrialModule.COAL_GENERATOR, "Coal Generator");

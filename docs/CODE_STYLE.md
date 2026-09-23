@@ -41,6 +41,26 @@ Computers or J's Industrial.
   `jsc.gui.operation.pending`.
 - Enum constants read as what they are: `OperationStatus.PENDING`, `OperationStatus.COMPLETED_PARTIAL`.
 
+## Text a player reads
+
+Every sentence a player reads is translatable, the terminals included, and is written once, beside the code that
+says it:
+
+- Declare it as a `static final TextKey` field, with its key and its English, in a class marked `@TextHolder`:
+  `private static final TextKey NO_SNAPSHOT = TextKey.of("jsc.ports.no_snapshot", "No snapshot available");`
+  The English language file is generated from these declarations by `runData`; there is no language provider to
+  edit. Every such class is loaded to be read, on a dedicated server too, so a class that exists only on a client
+  (a screen) keeps its sentences in a small class of constants beside it.
+- Put arguments in with `%s` (or `%1$s`, `%2$s`) and `key.with(...)`, which gives a `Text`. Words that are data
+  (a file name, a path, a number, what the player typed) go in as `Text.literal(...)`, which is never translated.
+- A `Text` is resolved where it is read: a screen in its player's language, the server in English, which is also
+  the language of anything a machine writes down (a file, a pipe).
+- Commands, flags, paths, code and brand names are not translated.
+
+The build holds this in place. A test counts the fixed words a player reads in every source file, and a file may
+never have more than it had: fixed prose added anywhere fails the build. Every translation must carry every key of
+the English file and nothing else, so a missing sentence in any language fails it too.
+
 ## Imports and layout
 
 - No unused imports, no wildcard imports.

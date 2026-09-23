@@ -11,14 +11,15 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.material.MaterialForm;
 import dev.jstech.core.material.MaterialItems;
 import dev.jstech.core.material.ModMaterial;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.data.PackOutput;
 import net.neoforged.neoforge.common.data.LanguageProvider;
 
 import java.util.Locale;
 
 /**
- * Generates the English text of the core: the names of the material catalogue and the words of the GUI
- * toolkit. A material name is the material followed by the form, both capitalised ("Iron Dust",
+ * Generates the English text of the core: every sentence it declares beside the code that says it, and the names of
+ * the material catalogue. A material name is the material followed by the form, both capitalised ("Iron Dust",
  * "Copper Plate"), so a newly activated form is named without a line here.
  */
 public class JsCoreLanguageProvider extends LanguageProvider {
@@ -29,16 +30,10 @@ public class JsCoreLanguageProvider extends LanguageProvider {
 
     @Override
     protected void addTranslations() {
-        // The toolkit's modal dialog.
-        add("gui.jscore.confirm", "Confirm");
-        add("gui.jscore.cancel", "Cancel");
-
-        // Why an Operation failed, as a terminal shows it.
-        add("jscore.operation.failure.no_result", "the Operation finished without saying what it did");
-        add("jscore.operation.failure.cancelled", "the machine running it stopped");
-        add("jscore.operation.failure.crashed", "the Operation ran into a problem: %s (%s)");
-        add("jscore.operation.failure.self_test", "the self-test ran past what its numbers can hold");
-
+        // Every sentence the core declares beside the code that says it.
+        for (final TextKey key : DeclaredTexts.of(JsCore.MODID)) {
+            add(key.key(), key.english());
+        }
         for (final ModMaterial material : ModMaterial.values()) {
             for (final MaterialForm form : material.activeModForms()) {
                 add(MaterialItems.get(material, form).get(),

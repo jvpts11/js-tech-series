@@ -7,10 +7,17 @@
  */
 package dev.jstech.core.operation;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+
 /**
  * A diagnostic Operation that does a bounded amount of deterministic CPU-bound work on its virtual thread and then succeeds.
  */
+@TextHolder
 public record SelfTestOperationTask(int workUnits) implements IOperationTask {
+
+    private static final TextKey OVERFLOWED = TextKey.of("jscore.operation.failure.self_test",
+            "the self-test ran past what its numbers can hold");
 
     public SelfTestOperationTask {
         if (workUnits < 0) {
@@ -30,7 +37,7 @@ public record SelfTestOperationTask(int workUnits) implements IOperationTask {
         }
         // Reference the result so the loop cannot be optimized away.
         return accumulator == Long.MIN_VALUE
-                ? IOperationResult.failure("jscore.operation.failure.self_test")
+                ? IOperationResult.failure(OVERFLOWED.key())
                 : IOperationResult.success();
     }
 }
