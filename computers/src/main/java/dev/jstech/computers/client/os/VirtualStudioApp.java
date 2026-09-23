@@ -130,6 +130,13 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private record Node(int depth, String label, NodeKind kind, String project, String path) {
     }
 
+    /** What a line of the Output pane reports, which is the colour it is drawn in. */
+    private enum Tone { PLAIN, SUCCEEDED, FAILED }
+
+    /** One line of the Output pane: its words, and what it reports. */
+    private record OutputLine(String text, Tone tone) {
+    }
+
     private final BlockPos host;
     private final CodeWorkspace workspace;
     private OsSkin skin = OsSkin.fallback();
@@ -153,7 +160,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private final Deque<String> foldersToRead = new ArrayDeque<>();
     private final Map<String, String> sourceTexts = new LinkedHashMap<>();
     private final Map<String, List<IProgrammingLanguage.Complaint>> buildErrors = new LinkedHashMap<>();
-    private final List<String> output = new ArrayList<>();
+    private final List<OutputLine> output = new ArrayList<>();
 
     /* The window */
     private final Panel root = new Panel();
@@ -162,7 +169,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private final TabStrip tabs;
     private final TabStrip dockTabs;
     private final ListView<ProblemReport.Row> errors;
-    private final ListView<String> outputList;
+    private final ListView<OutputLine> outputList;
     private final Button start;
     private final CodeCompletions completions = new CodeCompletions().withCosts(true);
     private final CommandPalette palette = new CommandPalette();
@@ -385,7 +392,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     /** What the Output pane says, one line after another. */
     public List<String> outputLines() {
-        return List.copyOf(this.output);
+        return this.output.stream().map(OutputLine::text).toList();
     }
 
     /** Whether the window is on its Start Window. */
@@ -792,13 +799,26 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         }
     }
 
-    private void drawOutputRow(final GuiGraphics g, final UiContext ctx, final String line, final int index,
+    private void drawOutputRow(final GuiGraphics g, final UiContext ctx, final OutputLine line, final int index,
                                final int x, final int y, final int width, final int height,
                                final boolean hovered, final boolean selected) {
         ctx.skin().listRow(g, x, y, width, height, hovered, selected);
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(line, width - 4), x + 2, y + 1,
-                line.startsWith("Build succeeded") ? 0xFF1E8449 : line.contains("error") ? 0xFFC0392B
-                        : ctx.skin().text(), false);
+        final int ink = switch (line.tone()) {
+            case SUCCEEDED -> 0xFF1E8449;
+            case FAILED -> 0xFFC0392B;
+            case PLAIN -> ctx.skin().text();
+        };
+        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(line.text(), width - 4), x + 2, y + 1, ink, false);
+    }
+
+    /** A line of the Output pane, as it is worded. */
+    private void print(final String text) {
+        print(text, Tone.PLAIN);
+    }
+
+    /** A line of the Output pane, in the colour of what it reports. */
+    private void print(final String text, final Tone tone) {
+        this.output.add(new OutputLine(text, tone));
     }
 
     /* Building */
@@ -811,7 +831,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         }
         this.output.clear();
         this.buildErrors.clear();
-        this.output.add("Build started: " + this.solution.name());
+        print("Build started: " + this.solution.name());
         this.buildQueue.clear();
         for (final ProjectFile project : this.projects.values()) {
             if (project.buildsAListing()) {
@@ -825,7 +845,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private void buildProject(final String name) {
         this.output.clear();
         this.buildErrors.clear();
-        this.output.add("Build started: " + name);
+        print("Build started: " + name);
         this.buildQueue.clear();
         this.buildQueue.add(name);
         this.dockTabs.setSelected(DOCK_OUTPUT);
@@ -838,12 +858,12 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         this.output.clear();
         this.buildErrors.clear();
         if (doc == null) {
-            this.output.add("Nothing to build");
+            print("Nothing to build");
             return;
         }
         final IProgrammingLanguage language = CodeWorkspace.languageOf(doc.path());
         if (language == null) {
-            this.output.add(doc.name() + ": no language claims this file");
+            print(doc.name() + ": no language claims this file");
             return;
         }
         final IProgrammingLanguage.CompileResult result = language.compile(
@@ -912,7 +932,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         final IProgrammingLanguage language = JsCore.languages().get(
                 ResourceLocation.tryParse(project.language()));
         if (language == null) {
-            this.output.add(project.name() + ": no language called " + project.language());
+            print(project.name() + ": no language called " + project.language());
             buildNext();
             return;
         }
@@ -936,7 +956,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             }
         }
         if (sources.isEmpty()) {
-            this.output.add(project.name() + ": no sources to build");
+            print(project.name() + ": no sources to build");
             buildNext();
             return;
         }
@@ -970,15 +990,15 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
                              final Map<String, String> names) {
         if (result.ok()) {
             final int lines = result.binary().split("\n", -1).length;
-            this.output.add(what + " -> " + outputPath + "  (" + lines + " lines)");
-            this.output.add("Build succeeded: " + what);
+            print(what + " -> " + outputPath + "  (" + lines + " lines)");
+            print("Build succeeded: " + what, Tone.SUCCEEDED);
             PacketDistributor.sendToServer(new SaveFilePayload(this.host, outputPath, result.binary()));
             FilesApps.diskChanged();
             this.workspace.say("Build succeeded");
             return;
         }
         for (final IProgrammingLanguage.Complaint complaint : result.complaints()) {
-            this.output.add(what + ": " + complaint.format());
+            print(what + ": " + complaint.format(), Tone.FAILED);
             // The complaint names the source as the compiler saw it; the row needs the path on the disk.
             String path = complaint.file();
             for (final Map.Entry<String, String> entry : names.entrySet()) {
@@ -988,7 +1008,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             }
             this.buildErrors.computeIfAbsent(path, p -> new ArrayList<>()).add(complaint);
         }
-        this.output.add("Build failed: " + what + ", " + result.complaints().size() + " error(s)");
+        print("Build failed: " + what + ", " + result.complaints().size() + " error(s)", Tone.FAILED);
         this.workspace.say("Build failed");
         this.dockTabs.setSelected(DOCK_ERRORS);
         this.buildQueue.clear();
@@ -1007,7 +1027,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         }
         final String startup = startupName();
         if (startup.isEmpty()) {
-            this.output.add("No project to start: none builds a listing");
+            print("No project to start: none builds a listing");
             return;
         }
         this.runAfterBuild = true;
@@ -1038,7 +1058,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             if (project.buildsAListing()) {
                 PacketDistributor.sendToServer(new DeleteFilePayload(this.host,
                         join(projectDir(project.name()), project.entry())));
-                this.output.add("Deleted " + project.entry() + " of " + project.name());
+                print("Deleted " + project.entry() + " of " + project.name());
             }
         }
         FilesApps.diskChanged();
@@ -1049,7 +1069,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private void packageStartup() {
         final ProjectFile project = this.projects.get(startupName());
         if (project == null) {
-            this.output.add("No project to package");
+            print("No project to package");
             return;
         }
         runInTerminal(List.of(
@@ -2009,7 +2029,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         if (node.kind() == NodeKind.SOURCE && project != null) {
             saveProject(project.withoutSource(relativeSource(project, node.path())));
         }
-        this.output.add("Deleted " + shortName(node.path()));
+        print("Deleted " + shortName(node.path()));
         FilesApps.diskChanged();
         this.workspace.refresh();
     }

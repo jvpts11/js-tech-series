@@ -208,7 +208,8 @@ public final class PayloadRoundTripGameTests {
         final GatewayManagerStatePayload.WireLog entry =
                 new GatewayManagerStatePayload.WireLog("12:00", "desk", "link", "ok", 0);
         final GatewayManagerStatePayload.Detail detail = new GatewayManagerStatePayload.Detail(123L, "gateway-1",
-                "adjacent", 4000, 1, true, 750, false, 0, 0, 12, 3, "jsc_gateway_gateway_1", 5, buffer, List.of(entry),
+                "adjacent", true, 4000, 1, true, 750, false, 0, 0, 12, 3, "jsc_gateway_gateway_1", 5, buffer,
+                List.of(entry),
                 true, true, 2, 2, List.of(new GatewayManagerStatePayload.WireComputer(5, "turtle", true, false, "now")),
                 List.of(entry));
         roundTrip(helper, GatewayManagerStatePayload.STREAM_CODEC, new GatewayManagerStatePayload(

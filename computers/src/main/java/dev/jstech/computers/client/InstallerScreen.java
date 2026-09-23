@@ -625,18 +625,20 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         final FirmwareStatePayload.Machine machine = this.state == null ? null : this.state.machine();
         final InstallerFlow.Disk disk = this.flow.target();
         final String unknown = "reading ...";
+        final String noRoom = "no disk with room";
         final String[][] rows = {
                 {"Generation", machine == null || machine.eraLabel().isEmpty() ? unknown : machine.eraLabel()},
                 {"Processor", machine == null || machine.cpuName().isEmpty() ? unknown : machine.cpuName()},
                 {"Memory", machine == null ? unknown : size(machine.ramMb())},
                 {"Disk " + (disk == null ? "-" : Integer.toString(disk.slot())),
-                        disk == null ? "no disk with room" : size(this.flow.freeOn(disk)) + " free"},
+                        disk == null ? noRoom : size(this.flow.freeOn(disk)) + " free"},
                 {"Installation medium", this.flow.systemName()},
         };
         final int step = this.row();
         int ty = f.y();
         for (final String[] line : rows) {
-            final boolean good = !unknown.equals(line[1]) && !"no disk with room".equals(line[1]);
+            // A row is ticked when it holds an answer: not the one still being read, not the refusal.
+            final boolean good = !unknown.equals(line[1]) && !noRoom.equals(line[1]);
             final String label = line[0] + " ";
             this.say(g, label, f.x(), ty, p.text());
             /*

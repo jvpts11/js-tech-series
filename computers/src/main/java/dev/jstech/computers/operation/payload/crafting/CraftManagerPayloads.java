@@ -225,7 +225,7 @@ public final class CraftManagerPayloads {
         } else {
             status = parsed > 0 ? "Already loaded" : "Nothing to load";
         }
-        PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level, status));
+        PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level, status, romFull));
     }
 
     /**
@@ -337,11 +337,16 @@ public final class CraftManagerPayloads {
      */
     public static CraftManagerStatePayload buildCraftManagerState(final CraftingComputerBlockEntity cc,
                                                                    final ServerLevel level) {
-        return buildCraftManagerState(cc, level, "");
+        return buildCraftManagerState(cc, level, "", false);
     }
 
+    /**
+     * The same, carrying a status line, and whether that line warns: something the player has to act on
+     * before the next load can do more.
+     */
     private static CraftManagerStatePayload buildCraftManagerState(final CraftingComputerBlockEntity cc,
-                                                                    final ServerLevel level, final String status) {
+                                                                    final ServerLevel level, final String status,
+                                                                    final boolean warns) {
         String mediaVolumeKey = "";
         String mediaLabel = "";
         List<String> mediaFiles = List.of();
@@ -425,7 +430,7 @@ public final class CraftManagerPayloads {
                     perMachine.locked(), perMachine.feedMax(), typeMaxJobs));
         }
         return new CraftManagerStatePayload(mediaVolumeKey, mediaLabel, mediaFiles, romEntries,
-                cc.craftingCardFactor() > 0.0, wire(status, 96), machines);
+                cc.craftingCardFactor() > 0.0, wire(status, 96), warns, machines);
     }
 
     /** Computes the remaining free weight on a removable medium (filesystem component only). */

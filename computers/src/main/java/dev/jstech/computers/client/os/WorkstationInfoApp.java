@@ -193,7 +193,7 @@ public final class WorkstationInfoApp implements IDesktopApp {
                     LABEL_INK);
             Texts.small(g, font, fit(font, row.value(), WorkstationInfoLayout.valueWidth()),
                     this.left + WorkstationInfoLayout.VALUE_X, rowY, p.ink());
-            if (row.label().equals(WorkstationFacts.MEMORY_IN_USE)) {
+            if (row.meter()) {
                 meter(g, WorkstationInfoLayout.meter(index, r), p);
             }
         }

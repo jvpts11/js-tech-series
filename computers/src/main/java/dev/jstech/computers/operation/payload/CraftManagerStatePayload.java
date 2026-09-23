@@ -30,6 +30,7 @@ import java.util.List;
  * @param romEntries     recipe ROM entries (up to 50)
  * @param hasCard        true when the computer has a Crafting Card installed (actions are enabled)
  * @param status         a short status line for the manager
+ * @param statusWarns    whether that line reports something the player has to act on, such as a full ROM
  * @param machines       the routed machines with their concurrency config (the Machines tab)
  */
 public record CraftManagerStatePayload(
@@ -39,6 +40,7 @@ public record CraftManagerStatePayload(
         List<WireRomEntry> romEntries,
         boolean hasCard,
         String status,
+        boolean statusWarns,
         List<WireMachine> machines) implements CustomPacketPayload {
 
     public static final int MAX_MEDIA_FILES = 64;
@@ -117,15 +119,24 @@ public record CraftManagerStatePayload(
         }
     }
 
+    // The status line and whether it warns, travelling as one field so the Wire stays within the composite limit.
+    private record StatusLine(String text, boolean warns) {
+        static final StreamCodec<RegistryFriendlyByteBuf, StatusLine> STREAM_CODEC =
+                StreamCodec.composite(
+                        ByteBufCodecs.stringUtf8(96), StatusLine::text,
+                        ByteBufCodecs.BOOL, StatusLine::warns,
+                        StatusLine::new);
+    }
+
     // Wire record holds the serialized form; .map() converts to/from the flat public record.
-    private record Wire(MediaBlock media, List<WireRomEntry> rom, boolean hasCard, String status,
+    private record Wire(MediaBlock media, List<WireRomEntry> rom, boolean hasCard, StatusLine status,
                         List<WireMachine> machines) {
         static final StreamCodec<RegistryFriendlyByteBuf, Wire> STREAM_CODEC =
                 StreamCodec.composite(
                         MediaBlock.STREAM_CODEC, Wire::media,
                         WireRomEntry.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ROM_ENTRIES)), Wire::rom,
                         ByteBufCodecs.BOOL, Wire::hasCard,
-                        ByteBufCodecs.stringUtf8(96), Wire::status,
+                        StatusLine.STREAM_CODEC, Wire::status,
                         WireMachine.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_MACHINES)), Wire::machines,
                         Wire::new);
 
@@ -141,11 +152,12 @@ public record CraftManagerStatePayload(
                     w -> new CraftManagerStatePayload(
                             w.media().key(), w.media().label(),
                             w.media().files().stream().map(FileName::value).toList(),
-                            w.rom(), w.hasCard(), w.status(), w.machines()),
+                            w.rom(), w.hasCard(), w.status().text(), w.status().warns(), w.machines()),
                     p -> new Wire(
                             new MediaBlock(p.mediaVolumeKey(), p.mediaLabel(),
                                     p.mediaFiles().stream().map(FileName::new).toList()),
-                            p.romEntries(), p.hasCard(), p.status(), p.machines()));
+                            p.romEntries(), p.hasCard(), new StatusLine(p.status(), p.statusWarns()),
+                            p.machines()));
 
     /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
     public CraftManagerStatePayload {

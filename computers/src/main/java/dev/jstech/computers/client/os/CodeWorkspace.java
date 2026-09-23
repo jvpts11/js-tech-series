@@ -17,6 +17,7 @@ import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.os.edit.CodeRuns;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.os.edit.ProblemReport;
+import dev.jstech.computers.sigma.SigmaError;
 import dev.jstech.computers.sigma.SigmaFrontEnd;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.sigma.ast.IDecl;
@@ -34,8 +35,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -633,10 +632,6 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         return this.folderTexts.get(path);
     }
 
-    /** What the compiler says when a class leaves an interface's method out, with the three names in it. */
-    private static final Pattern MISSING_MEMBER =
-            Pattern.compile("'([^']+)' says it is a '([^']+)' but does not have '([^']+)'");
-
     /**
      * Writes into {@code doc} every method its classes promised an interface and left out, the way
      * a studio's "Implement interface" does; false when there was nothing to write.
@@ -650,11 +645,9 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         final Map<Integer, String> indentByClassLine = new HashMap<>();
         final TextDocument text = doc.area.document();
         for (final IProgrammingLanguage.Complaint complaint : doc.complaints) {
-            if (!"S3018".equals(complaint.code())) {
-                continue;
-            }
-            final Matcher m = MISSING_MEMBER.matcher(complaint.message());
-            if (!m.find()) {
+            // The class, the interface and the missing method, in the order the complaint names them.
+            final List<String> names = complaint.arguments();
+            if (!SigmaError.MISSING_INTERFACE_MEMBER.code().equals(complaint.code()) || names.size() < 3) {
                 continue;
             }
             final int classLine = complaint.line() - 1;
@@ -665,7 +658,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
             final String indent = " ".repeat(classText.length() - classText.stripLeading().length());
             indentByClassLine.put(classLine, indent);
             stubsByClassLine.computeIfAbsent(classLine, k -> new ArrayList<>())
-                    .add(stubFor(m.group(2), m.group(3), indent + " ".repeat(doc.area.tabSize())));
+                    .add(stubFor(names.get(1), names.get(2), indent + " ".repeat(doc.area.tabSize())));
         }
         if (stubsByClassLine.isEmpty()) {
             return false;

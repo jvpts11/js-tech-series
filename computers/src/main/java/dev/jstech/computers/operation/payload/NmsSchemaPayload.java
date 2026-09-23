@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.id.IStableId;
+import dev.jstech.core.id.StableCodecs;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -50,15 +52,40 @@ public record NmsSchemaPayload(String networkLabel, List<String> servers, int it
         return TYPE;
     }
 
+    /** How the network's IQL Engine stands, and the word the studio shows for it. */
+    public enum EngineState implements IStableId {
+        NOT_INSTALLED(0, "not installed"),
+        RUNNING(1, "running"),
+        STOPPED(2, "stopped");
+
+        private final int id;
+        private final String word;
+
+        EngineState(final int id, final String word) {
+            this.id = id;
+            this.word = word;
+        }
+
+        @Override
+        public int id() {
+            return this.id;
+        }
+
+        /** What the studio calls it. */
+        public String word() {
+            return this.word;
+        }
+    }
+
     /** The IQL Engine's state, saved objects (for the Object Explorer's Engine branch), and the persisted editor script (restored into the studio on open). */
-    public record EngineSnapshot(String state, List<String> views, List<String> procedures, List<String> jobs,
+    public record EngineSnapshot(EngineState state, List<String> views, List<String> procedures, List<String> jobs,
                                  String script) {
 
         public static final int MAX_SCRIPT = 8192;
 
         public static final StreamCodec<RegistryFriendlyByteBuf, EngineSnapshot> STREAM_CODEC =
                 StreamCodec.composite(
-                        ByteBufCodecs.stringUtf8(32), EngineSnapshot::state,
+                        StableCodecs.byId(EngineState.class, EngineState.NOT_INSTALLED), EngineSnapshot::state,
                         ByteBufCodecs.stringUtf8(64).apply(ByteBufCodecs.list(MAX_OBJECTS)), EngineSnapshot::views,
                         ByteBufCodecs.stringUtf8(64).apply(ByteBufCodecs.list(MAX_OBJECTS)),
                         EngineSnapshot::procedures,
@@ -74,7 +101,7 @@ public record NmsSchemaPayload(String networkLabel, List<String> servers, int it
         }
 
         public static EngineSnapshot offline() {
-            return new EngineSnapshot("not installed", List.of(), List.of(), List.of(), "");
+            return new EngineSnapshot(EngineState.NOT_INSTALLED, List.of(), List.of(), List.of(), "");
         }
     }
 }

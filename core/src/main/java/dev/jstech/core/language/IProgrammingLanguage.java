@@ -54,10 +54,22 @@ public interface IProgrammingLanguage {
     /**
      * One thing wrong with a program, where it is and what to say about it.
      *
-     * @param line   the line it is on, counting from one
-     * @param column the column, counting from one
+     * @param line      the line it is on, counting from one
+     * @param column    the column, counting from one
+     * @param arguments the names and values the message was written around, in the order it names them, so a
+     *                  tool that acts on a complaint reads them here rather than taking the sentence apart
      */
-    record Complaint(String file, int line, int column, String code, String message) {
+    record Complaint(String file, int line, int column, String code, String message, List<String> arguments) {
+
+        public Complaint {
+            arguments = arguments == null ? List.of() : List.copyOf(arguments);
+        }
+
+        /** A complaint whose message stands on its own, with nothing a tool would need to read out of it. */
+        public Complaint(final String file, final int line, final int column, final String code,
+                         final String message) {
+            this(file, line, column, code, message, List.of());
+        }
 
         /** How a person reads it: {@code file(line,col): error CODE: message}. */
         public String format() {

@@ -343,8 +343,11 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
                 JsTechTheme.textS(g, font, "REBUILD " + rebuild / 10 + "%",
                         ServerRackLayout.STATUS_X, top + 6, JsTechTheme.amber());
             } else if (raid != null && build != null) {
-                final int raidColor = raid.endsWith("FAILED") ? JsTechTheme.red()
-                        : raid.endsWith("DEGRADED") ? JsTechTheme.amber() : JsTechTheme.green();
+                final int raidColor = switch (menu.raidHealth(row)) {
+                    case FAILED -> JsTechTheme.red();
+                    case DEGRADED -> JsTechTheme.amber();
+                    case NONE, HEALTHY -> JsTechTheme.green();
+                };
                 JsTechTheme.textS(g, font, raid, ServerRackLayout.STATUS_X, top + 6, raidColor);
             } else {
                 JsTechTheme.textS(g, font, state, ServerRackLayout.STATUS_X, top + 6, color);

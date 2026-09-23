@@ -375,7 +375,7 @@ public final class GatewayManagerApp implements IDesktopApp {
         if (detail() == null || state == null) {
             return "";
         }
-        return detail().link().startsWith("not") ? "Not linked" : "Linked to " + state.head().hostName();
+        return !detail().linked() ? "Not linked" : "Linked to " + state.head().hostName();
     }
 
     private String ccBigText() {
@@ -479,7 +479,7 @@ public final class GatewayManagerApp implements IDesktopApp {
             skin.panel(g, dx + cardW + PAD, cardY, cardW, CARD_H);
             g.fill(dx + cardW + PAD, cardY, dx + cardW * 2 + PAD, cardY + 2, CC_EDGE);
             final int lit = jsBig.y() + 2;
-            g.fill(dx + PAD, lit, dx + PAD + 4, lit + 4, detail().link().startsWith("not") ? RED : GREEN);
+            g.fill(dx + PAD, lit, dx + PAD + 4, lit + 4, detail().linked() ? GREEN : RED);
             g.fill(dx + cardW + PAD * 2, lit, dx + cardW + PAD * 2 + 4, lit + 4,
                     !ccInstalled() ? RED : detail().ccOnline() ? GREEN : AMBER);
         }

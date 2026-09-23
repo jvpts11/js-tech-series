@@ -56,6 +56,24 @@ public final class BootLines {
     private static final String MARK_STAR = " *";
     private static final String MARK_DONE = "[ ok ]";
 
+    /**
+     * Each step of a Linux machine stopping, in the two inits' own words: systemd's, which reaches targets, then
+     * OpenRC's, which stops services.
+     *
+     * <p>Borrowing systemd's sentences for a machine running OpenRC was the thing that made the two look like
+     * one system in two colours, when the whole reason a player can tell those distributions apart on sight is
+     * that they do not say the same words.
+     */
+    private static final String[][] LINUX_STOP = {
+            {"Stopped target Graphical Interface.", "Stopping display manager ..."},
+            {"Stopped target Network is Online.", "Bringing down interface eth0 ..."},
+            {"Stopped target Network.", "Stopping netmount ..."},
+            {"Unmounted /boot/efi.", "Unmounting /boot ..."},
+            {"Reached target Unmount All Filesystems.", "Unmounting filesystems ..."},
+            {"Reached target System Shutdown.", "Saving the system clock ..."},
+            {"Reached target Late Shutdown Services.", "Stopping local ..."},
+    };
+
     private BootLines() {
     }
 
@@ -270,44 +288,16 @@ public final class BootLines {
     private static BootSequence linuxDown(final OsDef system, final boolean restarting) {
         final boolean openRc = system.packageManager() == PackageManagerKind.EMERGE;
         final BootSequence.Builder out = new BootSequence.Builder().title("").subtitle("");
-        final String[] steps = {
-                "Stopped target Graphical Interface.",
-                "Stopped target Network is Online.",
-                "Stopped target Network.",
-                "Unmounted /boot/efi.",
-                "Reached target Unmount All Filesystems.",
-                "Reached target System Shutdown.",
-                "Reached target Late Shutdown Services.",
-        };
-        for (final String step : steps) {
+        for (final String[] step : LINUX_STOP) {
             if (openRc) {
-                out.marked(MARK_STAR, openRcWording(step), MARK_DONE, true);
+                out.marked(MARK_STAR, step[1], MARK_DONE, true);
             } else {
-                out.marked(MARK_OK, step, true);
+                out.marked(MARK_OK, step[0], true);
             }
         }
-        out.marked(stamp(steps.length + 1),
+        out.marked(stamp(LINUX_STOP.length + 1),
                 restarting ? "reboot: Restarting system" : "reboot: Power down", false);
         return out.build();
-    }
-
-    /**
-     * The same step in the other init's words, which stops services rather than reaching targets.
-     *
-     * <p>Borrowing systemd's sentences for a machine running OpenRC was the thing that made the two look like
-     * one system in two colours, when the whole reason a player can tell those distributions apart on sight is
-     * that they do not say the same words.
-     */
-    private static String openRcWording(final String step) {
-        return switch (step) {
-            case "Stopped target Graphical Interface." -> "Stopping display manager ...";
-            case "Stopped target Network is Online." -> "Bringing down interface eth0 ...";
-            case "Stopped target Network." -> "Stopping netmount ...";
-            case "Unmounted /boot/efi." -> "Unmounting /boot ...";
-            case "Reached target Unmount All Filesystems." -> "Unmounting filesystems ...";
-            case "Reached target System Shutdown." -> "Saving the system clock ...";
-            default -> "Stopping local ...";
-        };
     }
 
     /**

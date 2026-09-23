@@ -83,13 +83,14 @@ public final class ProgramPayloads {
                 && mainframe.isIqlEngineInstalled()) {
             final boolean running = mainframe.isIqlEngineRunning();
             lines.add(new ProcessListPayload.ProcessLine(ProcessListPayload.KIND_SERVICE, "IQL Engine",
-                    running ? "running" : "stopped",
+                    running ? ProcessListPayload.ProcessState.RUNNING : ProcessListPayload.ProcessState.STOPPED,
                     running ? "the network's query and job engine" : "stopped, start it to run jobs"));
             for (final IqlSavedObject job
                     : mainframe.iqlCatalog().ofType(
                             IqlDefinition.ObjectType.JOB)) {
                 final boolean paused = mainframe.isJobPaused(job.name());
-                final String state = paused ? "paused" : running ? "active" : "idle";
+                final ProcessListPayload.ProcessState state = paused ? ProcessListPayload.ProcessState.PAUSED
+                        : running ? ProcessListPayload.ProcessState.ACTIVE : ProcessListPayload.ProcessState.IDLE;
                 lines.add(new ProcessListPayload.ProcessLine(ProcessListPayload.KIND_JOB, job.name(),
                         state, jobDetail(job)));
             }

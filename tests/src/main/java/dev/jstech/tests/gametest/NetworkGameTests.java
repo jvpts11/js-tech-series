@@ -30,6 +30,7 @@ import dev.jstech.computers.datacenter.LoadBalancer;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.operation.payload.NmsSchemaPayload;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
@@ -1431,7 +1432,7 @@ public final class NetworkGameTests {
                                     (dev.jstech.computers.terminal.IComputerTerminalHost) computer);
                     helper.assertTrue(schema.engine().views().contains("stock"),
                             "the NMS Object Explorer must list the created view");
-                    helper.assertTrue("running".equals(schema.engine().state()),
+                    helper.assertTrue(schema.engine().state() == NmsSchemaPayload.EngineState.RUNNING,
                             "the NMS must show the Engine as running");
 
                     final var query = engine.run("QUERY stock");

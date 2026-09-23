@@ -8,6 +8,7 @@
 package dev.jstech.computers.sigma;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -59,7 +60,7 @@ public final class DiagnosticBag {
             return;
         }
         this.diagnostics.add(new Diagnostic(this.file, line, column, severity,
-                error.code(), error.message(arguments)));
+                error.code(), error.message(arguments), Arrays.stream(arguments).map(String::valueOf).toList()));
     }
 
     /** Whether anything recorded here stops the compilation. */

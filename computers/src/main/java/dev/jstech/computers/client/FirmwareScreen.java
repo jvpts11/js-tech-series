@@ -742,7 +742,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         for (final String[] pair : kv) {
             g.drawString(font, InstallerFrames.clip(font, pair[0], valueAt - 6), x, ty, keyColor, false);
             g.drawString(font, InstallerFrames.clip(font, pair[1], room), x + valueAt, ty,
-                    pair[1].startsWith("detecting") ? dimColor : valueColor, false);
+                    detecting.equals(pair[1]) ? dimColor : valueColor, false);
             ty += lh;
         }
     }
@@ -772,8 +772,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             }
             return;
         }
-        final String health = raid.members() == 0 ? "unconfigured"
-                : raid.drives() < raid.members() ? "degraded" : "healthy";
+        final boolean degraded = raid.members() > 0 && raid.drives() < raid.members();
+        final String health = raid.members() == 0 ? "unconfigured" : degraded ? "degraded" : "healthy";
         g.drawString(font, "Controller", x, ty, keyColor, false);
         g.drawString(font, "RAID Controller", x + 110, ty, valueColor, false);
         ty += lh;
@@ -782,7 +782,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 x + 110, ty, valueColor, false);
         ty += lh;
         g.drawString(font, "Array state", x, ty, keyColor, false);
-        g.drawString(font, health, x + 110, ty, "degraded".equals(health) ? 0xFFF0B23A : valueColor, false);
+        g.drawString(font, health, x + 110, ty, degraded ? 0xFFF0B23A : valueColor, false);
         ty += lh + 4;
         g.drawString(font, "ARRAY MODE", x, ty, dimColor, false);
         ty += lh;

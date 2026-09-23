@@ -40,15 +40,19 @@ public record WorkstationFacts(String userName, String hostName, String network,
     public record Group(String title, List<Row> rows) {
     }
 
-    /** One fact: what it is and what it reads. */
-    public record Row(String label, String value) {
+    /**
+     * One fact: what it is, what it reads, and whether a meter beside the value shows how much of a whole it is.
+     */
+    public record Row(String label, String value, boolean meter) {
+
+        /** A fact read as it is, with no meter. */
+        public Row(final String label, final String value) {
+            this(label, value, false);
+        }
     }
 
     /** What the window says of a machine that is on no data network. */
     public static final String NO_NETWORK = "Not on a network";
-
-    /** The label of the one row that carries a meter beside its value. */
-    public static final String MEMORY_IN_USE = "Memory in Use";
 
     public WorkstationFacts {
         userName = orNothing(userName);
@@ -80,7 +84,7 @@ public record WorkstationFacts(String userName, String hostName, String network,
                 new Group("Hardware", List.of(
                         new Row("Processor", processorText()),
                         new Row("Physical Memory", this.memoryMb + " MB"),
-                        new Row(MEMORY_IN_USE, this.memoryUsedMb + " MB"),
+                        new Row("Memory in Use", this.memoryUsedMb + " MB", true),
                         new Row("Video Memory", this.videoMb + " MB"),
                         new Row("System Disk", DiskSpec.sizeLabel(this.diskMb) + ", "
                                 + DiskSpec.sizeLabel(this.diskUsedMb) + " used"))));

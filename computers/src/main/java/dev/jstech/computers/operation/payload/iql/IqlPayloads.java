@@ -181,7 +181,8 @@ public final class IqlPayloads {
             return NmsSchemaPayload.EngineSnapshot.offline();
         }
         final var catalog = mainframe.iqlCatalog();
-        return new NmsSchemaPayload.EngineSnapshot(mainframe.isIqlEngineRunning() ? "running" : "stopped",
+        return new NmsSchemaPayload.EngineSnapshot(mainframe.isIqlEngineRunning()
+                        ? NmsSchemaPayload.EngineState.RUNNING : NmsSchemaPayload.EngineState.STOPPED,
                 objectNames(catalog.ofType(
                         IqlDefinition.ObjectType.VIEW)),
                 objectNames(catalog.ofType(

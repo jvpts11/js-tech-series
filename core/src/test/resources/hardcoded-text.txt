@@ -23,11 +23,11 @@ computers/src/main/java/dev/jstech/computers/client/CraftingSwitchScreen.java 15
 computers/src/main/java/dev/jstech/computers/client/DesktopSplashArt.java 7
 computers/src/main/java/dev/jstech/computers/client/ExportBusScreen.java 2
 computers/src/main/java/dev/jstech/computers/client/FirmwareBootMenus.java 7
-computers/src/main/java/dev/jstech/computers/client/FirmwareScreen.java 58
+computers/src/main/java/dev/jstech/computers/client/FirmwareScreen.java 56
 computers/src/main/java/dev/jstech/computers/client/ImportBusScreen.java 2
 computers/src/main/java/dev/jstech/computers/client/InputBusScreen.java 2
 computers/src/main/java/dev/jstech/computers/client/InstallerFrames.java 6
-computers/src/main/java/dev/jstech/computers/client/InstallerScreen.java 59
+computers/src/main/java/dev/jstech/computers/client/InstallerScreen.java 58
 computers/src/main/java/dev/jstech/computers/client/KvmChannelScreen.java 2
 computers/src/main/java/dev/jstech/computers/client/LoaderMenuPainter.java 2
 computers/src/main/java/dev/jstech/computers/client/LocalTerminalTab.java 15
@@ -64,13 +64,13 @@ computers/src/main/java/dev/jstech/computers/client/os/CdeLaunchers.java 1
 computers/src/main/java/dev/jstech/computers/client/os/CdeSplashArt.java 3
 computers/src/main/java/dev/jstech/computers/client/os/CdeWindowMenu.java 2
 computers/src/main/java/dev/jstech/computers/client/os/ClusterManagerApp.java 43
-computers/src/main/java/dev/jstech/computers/client/os/CodeWorkspace.java 6
+computers/src/main/java/dev/jstech/computers/client/os/CodeWorkspace.java 5
 computers/src/main/java/dev/jstech/computers/client/os/CommandPalette.java 1
 computers/src/main/java/dev/jstech/computers/client/os/CraftPlannerApp.java 9
 computers/src/main/java/dev/jstech/computers/client/os/CraftingManagerApp.java 10
 computers/src/main/java/dev/jstech/computers/client/os/DeskFiles.java 4
 computers/src/main/java/dev/jstech/computers/client/os/DeskTrash.java 11
-computers/src/main/java/dev/jstech/computers/client/os/DesktopScreen.java 54
+computers/src/main/java/dev/jstech/computers/client/os/DesktopScreen.java 51
 computers/src/main/java/dev/jstech/computers/client/os/EditorApp.java 16
 computers/src/main/java/dev/jstech/computers/client/os/EditorFindBar.java 2
 computers/src/main/java/dev/jstech/computers/client/os/EmacsKeys.java 12
@@ -119,7 +119,7 @@ computers/src/main/java/dev/jstech/computers/client/os/TrashLinuxLook.java 5
 computers/src/main/java/dev/jstech/computers/client/os/TtyChrome.java 1
 computers/src/main/java/dev/jstech/computers/client/os/TtyEditor.java 2
 computers/src/main/java/dev/jstech/computers/client/os/VimKeys.java 5
-computers/src/main/java/dev/jstech/computers/client/os/VirtualStudioApp.java 118
+computers/src/main/java/dev/jstech/computers/client/os/VirtualStudioApp.java 116
 computers/src/main/java/dev/jstech/computers/client/os/VirtualStudioCodeApp.java 86
 computers/src/main/java/dev/jstech/computers/client/os/WelcomeApp.java 24
 computers/src/main/java/dev/jstech/computers/client/os/WorkstationInfoApp.java 1
@@ -238,7 +238,7 @@ computers/src/main/java/dev/jstech/computers/os/OsRegistry.java 3
 computers/src/main/java/dev/jstech/computers/os/ProgramVersions.java 49
 computers/src/main/java/dev/jstech/computers/os/SoftwareHouse.java 31
 computers/src/main/java/dev/jstech/computers/os/WorkstationFacts.java 9
-computers/src/main/java/dev/jstech/computers/os/boot/BootLines.java 78
+computers/src/main/java/dev/jstech/computers/os/boot/BootLines.java 72
 computers/src/main/java/dev/jstech/computers/os/boot/BootManager.java 7
 computers/src/main/java/dev/jstech/computers/os/boot/BootRunner.java 4
 computers/src/main/java/dev/jstech/computers/os/boot/BsdBootLines.java 26

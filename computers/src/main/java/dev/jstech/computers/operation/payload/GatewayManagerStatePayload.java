@@ -80,7 +80,8 @@ public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, 
      * (network, what was served), the names, the buffer, the last requests, the permissions, and the
      * two tables.
      */
-    public record Detail(long pos, String name, String link, int types, int servers, boolean mainframeOnline,
+    public record Detail(long pos, String name, String link, boolean linked, int types, int servers,
+                         boolean mainframeOnline,
                          int budgetPermille, boolean ccOnline, int wiredComputers, int wiredDevices,
                          int calls, int operations, String peripheralName, int rednetId,
                          List<ItemStack> buffer, List<WireLog> recent, boolean read, boolean operationsAllowed,
@@ -88,7 +89,7 @@ public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, 
 
         public static final StreamCodec<RegistryFriendlyByteBuf, Detail> STREAM_CODEC = StreamCodec.of(
                 (buf, d) -> {
-                    buf.writeVarLong(d.pos()).writeUtf(d.name(), 32).writeUtf(d.link(), 48)
+                    buf.writeVarLong(d.pos()).writeUtf(d.name(), 32).writeUtf(d.link(), 48).writeBoolean(d.linked())
                             .writeVarInt(d.types()).writeVarInt(d.servers()).writeBoolean(d.mainframeOnline())
                             .writeVarInt(d.budgetPermille()).writeBoolean(d.ccOnline())
                             .writeVarInt(d.wiredComputers()).writeVarInt(d.wiredDevices())
@@ -105,6 +106,7 @@ public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, 
                     final long pos = buf.readVarLong();
                     final String name = buf.readUtf(32);
                     final String link = buf.readUtf(48);
+                    final boolean linked = buf.readBoolean();
                     final int types = buf.readVarInt();
                     final int servers = buf.readVarInt();
                     final boolean mainframeOnline = buf.readBoolean();
@@ -126,14 +128,15 @@ public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, 
                     final List<WireComputer> computers =
                             WireComputer.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ROWS)).decode(buf);
                     final List<WireLog> log = WireLog.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ROWS)).decode(buf);
-                    return new Detail(pos, name, link, types, servers, mainframeOnline, budget, ccOnline, wiredComputers,
+                    return new Detail(pos, name, link, linked, types, servers, mainframeOnline, budget, ccOnline,
+                            wiredComputers,
                             wiredDevices, calls, operations, peripheralName, rednetId, buffer,
                             recent, read, operationsAllowed, ceiling, cap, computers, log);
                 });
 
         /** No Gateway selected. */
         public static Detail none() {
-            return new Detail(0L, "", "", 0, 0, false, 0, false, 0, 0, 0, 0, "", -1, emptyBuffer(),
+            return new Detail(0L, "", "", false, 0, 0, false, 0, false, 0, 0, 0, 0, "", -1, emptyBuffer(),
                     List.of(), true, true, 1, 1, List.of(), List.of());
         }
 

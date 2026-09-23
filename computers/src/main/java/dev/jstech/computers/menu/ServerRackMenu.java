@@ -40,6 +40,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ServerRackMenu extends AbstractComputerMenu {
 
+    /** How a unit's drive array stands, which is what the rack's rows colour it by. */
+    public enum ArrayHealth { NONE, HEALTHY, DEGRADED, FAILED }
+
     private static final int RACK_SLOTS = ServerRackBlockEntity.CAPACITY_U;
     private static final RackLayout LAYOUT = new RackLayout(RACK_SLOTS);
     private static final int FRONT_SLOTS = RACK_SLOTS * RackLayout.SLOTS_PER_U;
@@ -182,9 +185,20 @@ public class ServerRackMenu extends AbstractComputerMenu {
      */
     @Nullable
     public String raidLabel(final int topRow) {
+        final String mode = raidModeAt(topRow).name();
+        return switch (raidHealth(topRow)) {
+            case NONE -> null;
+            case HEALTHY -> mode;
+            case DEGRADED -> mode + " DEGRADED";
+            case FAILED -> mode + " FAILED";
+        };
+    }
+
+    /** How the unit's array stands: whole, short of a drive it can do without, or lost. */
+    public ArrayHealth raidHealth(final int topRow) {
         final RaidMode mode = raidModeAt(topRow);
         if (mode == RaidMode.NONE) {
-            return null;
+            return ArrayHealth.NONE;
         }
         int members = 0;
         for (final int index : claimedSlots(topRow, RackLayout.SlotRole.GADGET)) {
@@ -201,12 +215,9 @@ public class ServerRackMenu extends AbstractComputerMenu {
             }
         }
         if (members > 0 && !mode.survives(members, present)) {
-            return mode.name() + " FAILED";
+            return ArrayHealth.FAILED;
         }
-        if (members > present) {
-            return mode.name() + " DEGRADED";
-        }
-        return mode.name();
+        return members > present ? ArrayHealth.DEGRADED : ArrayHealth.HEALTHY;
     }
 
     @Nullable

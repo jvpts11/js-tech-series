@@ -76,6 +76,8 @@ public final class NmsApp implements IDesktopApp {
     private static final int MIN_GRID_H = 22;
 
     private static final String[] MENU = {"File", "Edit", "View", "Query", "Tools", "Window", "Help"};
+    /** Which of those opens the File menu, the first of them. */
+    private static final int FILE_MENU = 0;
     private static final int TAB_W = 82;
     private static final int EDITOR_LINE_H = 10;
 
@@ -426,7 +428,7 @@ public final class NmsApp implements IDesktopApp {
     }
 
     private Node engineInfo() {
-        return new Node(DB, "engine: " + liveEngine.state(), null, List.of());
+        return new Node(DB, "engine: " + liveEngine.state().word(), null, List.of());
     }
 
     private Node objectBranch(final int leafIcon, final String label, final List<String> names) {
@@ -715,18 +717,22 @@ public final class NmsApp implements IDesktopApp {
         final int w = viewW;
         int mx = 6;
         fileMenuLabelX = mx;
-        for (final String item : MENU) {
-            final int color = (item.equals("File") && fileMenuOpen) ? JsTechTheme.accent2() : JsTechTheme.text();
+        for (int i = 0; i < MENU.length; i++) {
+            final String item = MENU[i];
+            final int color = i == FILE_MENU && fileMenuOpen ? JsTechTheme.accent2() : JsTechTheme.text();
             JsTechTheme.textS(g, font, item, mx, NmsLayout.MENU_Y + 2, color);
             mx += JsTechTheme.widthS(font, item) + 8;
         }
         JsTechTheme.textS(g, font, "Execute", EXEC_X + 12, NmsLayout.TOOLBAR_Y + 5, JsTechTheme.text());
         JsTechTheme.textS(g, font, "network: " + networkLabel, EXEC_X + EXEC_W + 8, NmsLayout.TOOLBAR_Y + 5,
                 JsTechTheme.accent2());
-        final String engineState = liveEngine.state();
-        final int engineColor = "running".equals(engineState) ? JsTechTheme.green()
-                : "stopped".equals(engineState) ? JsTechTheme.amber() : JsTechTheme.red();
-        JsTechTheme.textSRight(g, font, "engine: " + engineState, w - 6, NmsLayout.TOOLBAR_Y + 5, engineColor);
+        final int engineColor = switch (liveEngine.state()) {
+            case RUNNING -> JsTechTheme.green();
+            case STOPPED -> JsTechTheme.amber();
+            case NOT_INSTALLED -> JsTechTheme.red();
+        };
+        JsTechTheme.textSRight(g, font, "engine: " + liveEngine.state().word(), w - 6, NmsLayout.TOOLBAR_Y + 5,
+                engineColor);
 
         JsTechTheme.textS(g, font, fit("OBJECT EXPLORER", explorerW - 8), 6, NmsLayout.BODY_Y + 2, JsTechTheme.dim());
         drawTree(g, mlx, mly);

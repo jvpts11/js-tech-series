@@ -123,7 +123,7 @@ public final class GatewayManager {
             computers.add(new WireComputer(c.id(), "", true, false, ago(now, c.lastSeen())));
         }
         final GatewayPermissions perms = g.permissions();
-        return new Detail(g.getBlockPos().asLong(), g.name(), g.linkKind(),
+        return new Detail(g.getBlockPos().asLong(), g.name(), g.linkKind(), g.online(),
                 net == null ? 0 : net.indexedTypes(), net == null ? 0 : net.servers(),
                 mainframe != null && mainframe.isRunning(), g.budgetPermille(),
                 g.ccOnline(), bridge == null ? 0 : bridge.computersOnWire(), bridge == null ? 0 : bridge.devicesOnWire(),

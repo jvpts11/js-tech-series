@@ -1369,10 +1369,25 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private static final int DESK_CTX_W = 88;
     private static final int DESK_CTX_ITEM_H = 11;
     /**
-     * The panel's own menu. Right-clicking a taskbar opens this on every desktop these imitate, and the Task
-     * Manager is one entry on it rather than the click's whole meaning. A separator sits before that entry.
+     * The panel's own menu, top to bottom. Right-clicking a taskbar opens this on every desktop these imitate, and
+     * the Task Manager is one entry on it rather than the click's whole meaning. A separator sits before that entry.
      */
-    private static final String[] PANEL_CTX = {"Cascade Windows", "Show the Desktop", "-", "Task Manager"};
+    private enum PanelRow {
+        CASCADE("Cascade Windows"),
+        SHOW_DESKTOP("Show the Desktop"),
+        SEPARATOR(""),
+        TASK_MANAGER("Task Manager");
+
+        private final String label;
+
+        PanelRow(final String label) {
+            this.label = label;
+        }
+    }
+
+    /** The rows in the order the menu shows them, which is a place on the screen and nothing more. */
+    private static final List<PanelRow> PANEL_CTX =
+            List.of(PanelRow.CASCADE, PanelRow.SHOW_DESKTOP, PanelRow.SEPARATOR, PanelRow.TASK_MANAGER);
     private static final int PANEL_CTX_W = 104;
 
     /** A desktop/start-menu entry that opens an app when clicked. */
@@ -1711,8 +1726,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         if (!panelCtxOpen) {
             return null;
         }
-        for (int i = 0; i < PANEL_CTX.length; i++) {
-            if (PANEL_CTX[i].equals(label)) {
+        for (int i = 0; i < PANEL_CTX.size(); i++) {
+            if (PANEL_CTX.get(i) != PanelRow.SEPARATOR && PANEL_CTX.get(i).label.equals(label)) {
                 return new int[] {sx(panelCtxX + PANEL_CTX_W / 2),
                         sy(panelCtxY + 1 + i * DESK_CTX_ITEM_H + DESK_CTX_ITEM_H / 2)};
             }
@@ -3316,7 +3331,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private void renderPanelContext(final GuiGraphics g, final int hoverMx, final int hoverMy) {
         final int mx = panelCtxX;
         final int my = panelCtxY;
-        final int mh = PANEL_CTX.length * DESK_CTX_ITEM_H + 2;
+        final int mh = PANEL_CTX.size() * DESK_CTX_ITEM_H + 2;
         final boolean light = luminance(skin.text()) > 140;
         final int bg = light ? 0xFF262B36 : 0xFFE8E8EC;
         final int fg = light ? 0xFFE7E9EF : 0xFF1A2230;
@@ -3325,15 +3340,15 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         g.fill(mx, my, mx + PANEL_CTX_W, my + 1, light ? 0xFF3A4150 : 0xFFFFFFFF);
         final int hover = panelCtxItemAt(hoverMx, hoverMy);
         int iy = my + 1;
-        for (int k = 0; k < PANEL_CTX.length; k++) {
-            if ("-".equals(PANEL_CTX[k])) {
+        for (int k = 0; k < PANEL_CTX.size(); k++) {
+            if (PANEL_CTX.get(k) == PanelRow.SEPARATOR) {
                 g.fill(mx + 4, iy + DESK_CTX_ITEM_H / 2, mx + PANEL_CTX_W - 4,
                         iy + DESK_CTX_ITEM_H / 2 + 1, light ? 0xFF3A4150 : 0xFFB6BAC4);
             } else {
                 if (k == hover) {
                     g.fill(mx + 1, iy, mx + PANEL_CTX_W - 1, iy + DESK_CTX_ITEM_H, skin.accent());
                 }
-                g.drawString(font, PANEL_CTX[k], mx + 4, iy + 2, k == hover ? 0xFFFFFFFF : fg, false);
+                g.drawString(font, PANEL_CTX.get(k).label, mx + 4, iy + 2, k == hover ? 0xFFFFFFFF : fg, false);
             }
             iy += DESK_CTX_ITEM_H;
         }
@@ -3345,7 +3360,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             return -1;
         }
         final int rel = (int) Math.floor((my - (panelCtxY + 1)) / (double) DESK_CTX_ITEM_H);
-        if (rel < 0 || rel >= PANEL_CTX.length || "-".equals(PANEL_CTX[rel])) {
+        if (rel < 0 || rel >= PANEL_CTX.size() || PANEL_CTX.get(rel) == PanelRow.SEPARATOR) {
             return -1;
         }
         return rel;
@@ -3353,7 +3368,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
 
     /** Raises the panel's menu at a point, clamped so it stays on the desktop. */
     private void openPanelMenu(final int atX, final int panelY) {
-        final int mh = PANEL_CTX.length * DESK_CTX_ITEM_H + 2;
+        final int mh = PANEL_CTX.size() * DESK_CTX_ITEM_H + 2;
         panelCtxOpen = true;
         panelCtxX = Math.max(2, Math.min(sw() - PANEL_CTX_W - 2, atX));
         // Above a bottom panel, below a top one: the menu never covers the bar it came from.
@@ -3362,15 +3377,15 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
 
     /** Runs a panel-menu entry. Every one of them does something: none is there for decoration. */
     private void runPanelMenu(final int index) {
-        switch (PANEL_CTX[index]) {
-            case "Cascade Windows" -> cascadeWindows();
-            case "Show the Desktop" -> {
+        switch (PANEL_CTX.get(index)) {
+            case CASCADE -> cascadeWindows();
+            case SHOW_DESKTOP -> {
                 for (final DesktopWindow w : windows) {
                     w.setMinimized(true);
                 }
             }
-            case "Task Manager" -> openTaskManager();
-            default -> {
+            case TASK_MANAGER -> openTaskManager();
+            case SEPARATOR -> {
             }
         }
     }

@@ -59,6 +59,9 @@ public final class HelpViewerApp implements IDesktopApp {
 
     private static final String TITLE = "Help Viewer";
 
+    /** Which of the buttons walks back, the first of them. */
+    private static final int BACKTRACK = 0;
+
     public HelpViewerApp(final BlockPos host) {
         this.host = host;
         OPEN.add(this);
@@ -145,8 +148,9 @@ public final class HelpViewerApp implements IDesktopApp {
 
         // The three buttons that viewer always had, the first greyed until there is somewhere to go back to.
         int bx = x + HelpViewerLayout.PAD;
-        for (final String button : HelpViewerLayout.BUTTONS) {
-            final boolean on = !button.equals("Backtrack") || !this.back.isEmpty();
+        for (int i = 0; i < HelpViewerLayout.BUTTONS.size(); i++) {
+            final String button = HelpViewerLayout.BUTTONS.get(i);
+            final boolean on = i != BACKTRACK || !this.back.isEmpty();
             this.skin.button(g, font, bx, y + HelpViewerLayout.BUTTON_Y, HelpViewerLayout.BUTTON_W,
                     HelpViewerLayout.BUTTON_H, "", false, false, false);
             Draw.text(g, font, button, bx + 4, y + HelpViewerLayout.BUTTON_Y + 3, on ? ink : dim,
@@ -244,7 +248,7 @@ public final class HelpViewerApp implements IDesktopApp {
 
     /** One of the three buttons: back to where we were, the pages we have read, or the whole list. */
     private void pressed(final int which) {
-        if (which == 0 && !this.back.isEmpty()) {
+        if (which == BACKTRACK && !this.back.isEmpty()) {
             final String was = this.back.remove(this.back.size() - 1);
             ask(was);
             return;

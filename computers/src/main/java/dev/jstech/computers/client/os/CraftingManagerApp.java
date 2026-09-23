@@ -74,6 +74,8 @@ public final class CraftingManagerApp implements IDesktopApp {
     private boolean hasCard;
     private boolean loaded;
     private String status = "";
+    /** Whether the status line reports something the player has to act on, which is drawn as a warning. */
+    private boolean statusWarns;
     private List<WireMachine> machines = List.of();
     private int tab; // 0 = Recipes, 1 = Machines
 
@@ -129,7 +131,7 @@ public final class CraftingManagerApp implements IDesktopApp {
                 .setPadding(1)
                 .setOnClick((index, button, mx, my) -> toggle(selectedRom, index, romEntries.size())));
         romEmpty = root.add(new Label("No recipes loaded", Label.Tone.DIM));
-        statusLabel = root.add(new Label(() -> status).setColor(() -> status.contains("full") ? WARN_TEXT : skin.dim()));
+        statusLabel = root.add(new Label(() -> status).setColor(() -> statusWarns ? WARN_TEXT : skin.dim()));
         // Short labels: four buttons share the bar, and the narrowest default window leaves ~55px each.
         actions[0] = root.add(new Button("Load →", this::loadSelected));
         actions[1] = root.add(new Button("Load all", this::loadAll));
@@ -169,6 +171,7 @@ public final class CraftingManagerApp implements IDesktopApp {
         active.hasCard = payload.hasCard();
         if (!payload.status().isEmpty()) {
             active.status = payload.status();
+            active.statusWarns = payload.statusWarns();
         }
         active.loaded = true;
         active.selectedMedia.removeIf(i -> i >= active.mediaFiles.size());

@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.id.IStableId;
+import dev.jstech.core.id.StableCodecs;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -49,14 +51,51 @@ public record ProcessListPayload(List<ProcessLine> processes) implements CustomP
         return TYPE;
     }
 
+    /** How a process stands, and the word the tab shows for it. */
+    public enum ProcessState implements IStableId {
+        /** A service that is serving. */
+        RUNNING(0, "running"),
+        /** A service that was stopped. */
+        STOPPED(1, "stopped"),
+        /** A job whose service is running, so it fires when its moment comes. */
+        ACTIVE(2, "active"),
+        /** A job the player paused. */
+        PAUSED(3, "paused"),
+        /** A job whose service is stopped, so nothing fires it. */
+        IDLE(4, "idle");
+
+        private final int id;
+        private final String word;
+
+        ProcessState(final int id, final String word) {
+            this.id = id;
+            this.word = word;
+        }
+
+        @Override
+        public int id() {
+            return this.id;
+        }
+
+        /** What the tab calls it. */
+        public String word() {
+            return this.word;
+        }
+
+        /** Whether the process is doing its work right now, which is what Stop, rather than Start, acts on. */
+        public boolean running() {
+            return this == RUNNING || this == ACTIVE;
+        }
+    }
+
     /** One process: its kind, display name, current state, and a short detail line. */
-    public record ProcessLine(int kind, String name, String state, String detail) {
+    public record ProcessLine(int kind, String name, ProcessState state, String detail) {
 
         public static final StreamCodec<RegistryFriendlyByteBuf, ProcessLine> STREAM_CODEC =
                 StreamCodec.composite(
                         ByteBufCodecs.VAR_INT, ProcessLine::kind,
                         ByteBufCodecs.stringUtf8(48), ProcessLine::name,
-                        ByteBufCodecs.stringUtf8(24), ProcessLine::state,
+                        StableCodecs.byId(ProcessState.class, ProcessState.STOPPED), ProcessLine::state,
                         ByteBufCodecs.stringUtf8(64), ProcessLine::detail,
                         ProcessLine::new);
     }

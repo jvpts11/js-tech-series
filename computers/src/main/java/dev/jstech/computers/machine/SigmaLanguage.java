@@ -114,7 +114,8 @@ public final class SigmaLanguage implements IProgrammingLanguage {
         }
         final List<Complaint> complaints = new ArrayList<>();
         for (final Diagnostic one : built.diagnostics()) {
-            complaints.add(new Complaint(one.file(), one.line(), one.column(), one.code(), one.message()));
+            complaints.add(new Complaint(one.file(), one.line(), one.column(), one.code(), one.message(),
+                    one.arguments()));
         }
         return CompileResult.failed(complaints);
     }
