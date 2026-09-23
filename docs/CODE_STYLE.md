@@ -78,8 +78,9 @@ creative tab, the drop it declares, a tool that mines it when it needs one, and 
 A colour belongs to a palette, not to the code that paints with it.
 
 - A palette is a record whose every component is one colour, named for what it colours (`text`, `accent`, `edge`).
-- Declare it once with the core's `Palettes.declare(id, colours)`, as a `static final` in a class marked
-  `@PaletteHolder`. The id says whose it is and what it colours, such as `jsc:desktop/frames_xp`.
+- Declare it once with the core's `Palettes.declare(mod, path, colours)`, as a `static final` in a class marked
+  `@PaletteHolder`. The mod and the path say whose it is and what it colours, such as `jsc` and
+  `desktop/frames_xp`.
 - `runData` writes each palette to `assets/<mod>/palettes/<path>.json`, as `#AARRGGBB` per role. A resource pack
   replaces that file to recolour the screens; a role its file leaves out keeps the declared colour.
 - Paint with `palette.get()` each time; never keep a copy of the colours, or a change of pack will not reach it.

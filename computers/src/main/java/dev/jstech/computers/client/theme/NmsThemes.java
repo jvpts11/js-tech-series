@@ -51,14 +51,15 @@ public final class NmsThemes {
      * the editor track) stay fixed; structure and the flat style are unchanged.
      */
     public static EraTheme forOs(final OsSkin skin) {
-        final EraPalette base = NmsPalette.SSMS_LIGHT;
+        final EraPalette base = NmsPalette.SSMS_LIGHT.get();
         final EraPalette p = new EraPalette(
                 skin.windowBg(), skin.fieldBg(), skin.panelBg(), skin.panelBg(), skin.edge(), base.track(),
                 skin.fieldBg(), skin.edge(),
                 skin.accent(), skin.accent(),
                 base.green(), base.amber(), base.red(),
                 skin.text(), skin.dim(),
-                skin.accent(), 0xFFFFFFFF, skin.listHover());
-        return new EraTheme(p, EraStyle.flat(0.75f));
+                skin.accent(), 0xFFFFFFFF, skin.listHover(),
+                0, 0, 0, 0);
+        return new EraTheme(() -> p, EraStyle.flat(0.75f));
     }
 }

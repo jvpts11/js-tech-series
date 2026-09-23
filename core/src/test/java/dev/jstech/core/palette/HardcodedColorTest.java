@@ -88,7 +88,7 @@ class HardcodedColorTest {
     void theScannerCountsColoursOutsideADeclaration() {
         final String source = """
                 class A {
-                    static final Palette<Swatch> MINE = Palettes.declare(id("mine"),
+                    static final Palette<Swatch> MINE = Palettes.declare(MOD, id("mine"),
                             new Swatch(0xFF000000, 0xFF3A6AE0));
                     void f() {
                         g.fill(0, 0, 4, 4, 0xFF1E1F23);

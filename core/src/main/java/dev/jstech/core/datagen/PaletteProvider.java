@@ -44,7 +44,7 @@ public final class PaletteProvider implements DataProvider {
         PaletteHolders.load(this.modid);
         final List<CompletableFuture<?>> written = new ArrayList<>();
         final List<Palette<?>> palettes = new ArrayList<>(Palettes.of(this.modid));
-        palettes.sort(Comparator.comparing(palette -> palette.id().toString()));
+        palettes.sort(Comparator.comparing(palette -> palette.id()));
         for (final Palette<?> palette : palettes) {
             final JsonObject file = new JsonObject();
             PaletteRoles.read(palette.declared()).forEach((role, colour) ->

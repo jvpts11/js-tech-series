@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
  */
 class NmsPaletteTest {
 
-    private static final EraPalette P = NmsPalette.SSMS_LIGHT;
+    private static final EraPalette P = NmsPalette.SSMS_LIGHT.declared();
     private static final int WHITE = 0xFFFFFFFF;
     private static final double BODY = 4.5;       // readable body text
     private static final double SECONDARY = 3.0;  // labels / accent / status text

@@ -95,7 +95,6 @@ computers/src/main/java/dev/jstech/computers/client/os/WallpaperStyle.java 6
 computers/src/main/java/dev/jstech/computers/client/os/WorkstationInfoApp.java 1
 computers/src/main/java/dev/jstech/computers/client/term/TermPalette.java 36
 computers/src/main/java/dev/jstech/computers/client/theme/MonitorFrameStyle.java 18
-computers/src/main/java/dev/jstech/computers/client/theme/NmsPalette.java 18
 computers/src/main/java/dev/jstech/computers/client/theme/NmsThemes.java 1
 computers/src/main/java/dev/jstech/computers/gui/CdePalette.java 65
 computers/src/main/java/dev/jstech/computers/integration/mekanism/MekanismChemicalBridge.java 1
@@ -119,7 +118,6 @@ core/src/main/java/dev/jstech/core/client/gui/hud/ToastData.java 4
 core/src/main/java/dev/jstech/core/client/gui/screen/CoreContainerScreen.java 1
 core/src/main/java/dev/jstech/core/client/gui/screen/ModalDialog.java 3
 core/src/main/java/dev/jstech/core/client/gui/screen/TabbedScreen.java 3
-core/src/main/java/dev/jstech/core/client/gui/theme/EraThemes.java 57
 core/src/main/java/dev/jstech/core/client/gui/widget/DataTableWidget.java 4
 core/src/main/java/dev/jstech/core/client/gui/widget/GraphPanelWidget.java 1
 core/src/main/java/dev/jstech/core/client/gui/widget/RadialMenuWidget.java 2

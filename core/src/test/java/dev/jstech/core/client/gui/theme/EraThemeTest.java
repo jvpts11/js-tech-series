@@ -7,7 +7,11 @@
  */
 package dev.jstech.core.client.gui.theme;
 
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -59,14 +63,15 @@ class EraThemeTest {
 
     @Test
     void of_standard_hasNoOverlays() {
-        final EraStyle s = EraThemes.of(HardwareEra.STANDARD).style();
+        final EraTheme t = EraThemes.of(HardwareEra.STANDARD);
+        final EraStyle s = t.style();
         assertEquals(false, s.scanlines());
         assertEquals(false, s.doubleBevel());
         assertEquals(false, s.glowAccent());
-        assertEquals(0, s.scanlineColor());
-        assertEquals(0, s.bevelLight());
-        assertEquals(0, s.bevelDark());
-        assertEquals(0, s.glowColor());
+        assertEquals(0, t.palette().scanline());
+        assertEquals(0, t.palette().bevelLight());
+        assertEquals(0, t.palette().bevelDark());
+        assertEquals(0, t.palette().glow());
     }
 
     @Test
@@ -81,9 +86,20 @@ class EraThemeTest {
 
     @Test
     void of_vintage_enablesScanlinesWithAColor() {
-        final EraStyle s = EraThemes.of(HardwareEra.VINTAGE).style();
-        assertEquals(true, s.scanlines());
-        assertNotEquals(0, s.scanlineColor());
+        final EraTheme vintage = EraThemes.of(HardwareEra.VINTAGE);
+        assertEquals(true, vintage.style().scanlines());
+        assertNotEquals(0, vintage.palette().scanline());
+    }
+
+    @Test
+    void everySkin_isColouredByADeclaredPalette() {
+        // Reading a skin loads the class that declares the palettes, before the declared ones are asked for.
+        assertSame(EraThemes.STANDARD_COLOURS.get(), EraThemes.STANDARD.palette());
+        final Set<String> eras = Palettes.of("jscore").stream()
+                .map(Palette::id)
+                .filter(id -> id.startsWith("jscore:era/"))
+                .collect(Collectors.toSet());
+        assertEquals(Set.of("jscore:era/standard", "jscore:era/vintage", "jscore:era/legacy"), eras);
     }
 
     @Test
