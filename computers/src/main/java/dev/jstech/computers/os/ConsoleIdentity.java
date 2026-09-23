@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.id.StableNames;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +36,9 @@ public record ConsoleIdentity(String shellId, String hostname, String osLabel, @
     /** The shell id an installer medium's console goes by. */
     public static final String LIVE = "live";
 
+    /** Who a FreeBSD prompt says is logged in, before the machine's name. */
+    private static final String ROOT = "root@";
+
     private static final StableNames<Platform> PLATFORMS = StableNames.of(Platform.class);
 
     public ConsoleIdentity {
@@ -53,16 +58,33 @@ public record ConsoleIdentity(String shellId, String hostname, String osLabel, @
      * The prompt that shell stands at in that directory, for whoever is logged in on that machine.
      *
      * <p>Each shell has a shape of its own: zsh ends in a percent sign with spaces about the path, bash runs the
-     * path up against its dollar sign, and FreeBSD's sh, as its home directory sets it up, leaves a space
-     * before the dollar. Said once here because the machine writes it on every line and the screen writes it
-     * once before the machine has answered, and the two must not differ.
+     * path up against its dollar sign, and System V's sh leaves a space before the dollar. FreeBSD is met as
+     * root, as a machine fresh from its installer is: its sh stands at root's hash. Said once here because the
+     * machine writes it on every line and the screen writes it once before the machine has answered, and the two
+     * must not differ.
      */
-    public static String promptOf(final String shellId, final String hostname, final String cwd) {
+    public static String promptOf(@Nullable final Platform platform, final String shellId, final String hostname,
+                                  final String cwd) {
+        if (platform == Platform.FREEBSD) {
+            return ROOT + hostname + ":" + cwd + " #";
+        }
         return switch (shellId) {
             case "zsh" -> "player@" + hostname + " " + cwd + " %";
             case "sh" -> "player@" + hostname + ":" + cwd + " $";
             default -> "player@" + hostname + ":" + cwd + "$";
         };
+    }
+
+    /**
+     * The same prompt as the glass shows it. FreeBSD's has root and the machine's name in red and the rest in a
+     * prompt's ink; every other one is in the one colour a terminal gives a prompt.
+     */
+    public static CliLine promptLineOf(@Nullable final Platform platform, final String shellId,
+                                       final String hostname, final String cwd) {
+        if (platform == Platform.FREEBSD) {
+            return CliLine.build().add(ROOT + hostname, CliStyle.RED).add(":" + cwd + " #", CliStyle.PROMPT).done();
+        }
+        return new CliLine(promptOf(platform, shellId, hostname, cwd), CliStyle.ACCENT);
     }
 
     /** The family's name for the wire, empty when there is no system. */

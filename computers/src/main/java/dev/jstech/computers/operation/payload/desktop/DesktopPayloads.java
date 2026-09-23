@@ -120,6 +120,7 @@ public final class DesktopPayloads {
         // accent override (0=none), brightness, clock12h (0/1), taskbar centered (1) vs left (0), dark (0/1), scale (%)
         final int[] deskPrefs = {0, 100, 0, 1, 0, 0};
         final List<String> programs = new ArrayList<>();
+        final List<String> sourceBuilt = new ArrayList<>();
         final List<DesktopFilesPayload.WireIconCell> iconCells = new ArrayList<>();
         final List<String> pinned = new ArrayList<>();
         final Map<String, String> defaultApps = new LinkedHashMap<>();
@@ -154,6 +155,12 @@ public final class DesktopPayloads {
                         && hostOs != null && spec.platforms().contains(hostOs.platform())
                         && installedAndAllowed(computer, spec.id())) {
                     programs.add(spec.id().getPath());
+                }
+            }
+            for (final String id : computer.console().builtFromSource()) {
+                final ResourceLocation built = ResourceLocation.tryParse(id);
+                if (built != null) {
+                    sourceBuilt.add(built.getPath());
                 }
             }
             /*
@@ -225,7 +232,7 @@ public final class DesktopPayloads {
             }
         }
         PacketDistributor.sendToPlayer(player, new DesktopFilesPayload(wire, prefs[0], prefs[2], prefs[1], programs,
-                iconCells,
+                sourceBuilt, iconCells,
                 new DesktopFilesPayload.Prefs(deskPrefs[0], deskPrefs[1], deskPrefs[2] != 0,
                         deskPrefs[3] != 0, deskPrefs[4] != 0, deskPrefs[5]), community, pinned, defaultApps,
                 trashFull));
@@ -373,8 +380,8 @@ public final class DesktopPayloads {
                 && computer.console().isInstalled(progId.toString())
                 && hostScopeAllows(OsRegistry.getProgram(progId),
                         computer)
-                && OsRegistry.canRunProgram(
-                        computer.installedOsId(), progId, computer.maxCpuMhz(), computer.totalVramMb());
+                && OsRegistry.canRunProgram(computer.installedOsId(), progId, computer.maxCpuMhz(),
+                        computer.totalVramMb(), computer.console().builtFromSource(progId.toString()));
     }
 
     /** Whether a program's host scope permits it on this computer (a null spec places no restriction). */

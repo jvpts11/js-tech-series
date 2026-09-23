@@ -209,6 +209,11 @@ public record ProgramSpec(
         return RamLedger.eraWeightMb(era, kind);
     }
 
+    /** The same, for a copy the machine may have built from source, which holds a little less (SourceAdvantage). */
+    public int ramMbOn(final OsDef system, final boolean builtHere) {
+        return SourceAdvantage.of(this.ramMbOn(system), builtHere);
+    }
+
     /** Who to credit where the program is shown: its own house, or {@code shipper} when it is bundled. */
     public SoftwareHouse houseOr(final SoftwareHouse shipper) {
         return house.or(shipper);

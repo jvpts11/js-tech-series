@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.IWatchedConsole;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.os.ConsoleIdentity;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
@@ -161,6 +162,12 @@ public class CommandPromptMenu extends AbstractContainerMenu {
     /** The POSIX host name, or {@code ""} for a DOS-family OS. */
     public String hostname() {
         return this.console.hostname();
+    }
+
+    /** The family of the host's system, or null when it has none. */
+    @Nullable
+    public Platform platform() {
+        return this.console.platform();
     }
 
     /** The installed OS display name, or {@code ""} when unknown. */

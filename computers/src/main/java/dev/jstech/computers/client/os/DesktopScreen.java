@@ -126,6 +126,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private int shownWorkspace;
     private final List<Launcher> launchers = new ArrayList<>();
     private final List<String> installedPrograms = new ArrayList<>();
+    /** The installed programs the machine built from source, by id path, whose windows hold a little less. */
+    private final Set<String> sourceBuilt = new HashSet<>();
 
     /** The archiver, by the id the desktop knows it under; nothing of its is offered without it installed. */
     private static final String ARCHIVER = "ark";
@@ -1444,7 +1446,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     /** The megabytes a window opened under {@code key} holds: its program's weight under the running system. */
     private int windowRamMb(final String key) {
         final OsDef os = OsRegistry.getOs(osId);
-        return os == null ? 0 : IOsHost.windowRamMb(key, os, chrome);
+        return os == null ? 0
+                : IOsHost.windowRamMb(key, os, chrome, spec -> sourceBuilt.contains(spec.id().getPath()));
     }
 
     /** What the open windows hold together; a dialog is part of its program, not another copy of it. */
@@ -2419,6 +2422,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         final List<CommunityLauncher> theirsBefore = List.copyOf(active.communityPrograms);
         active.installedPrograms.clear();
         active.installedPrograms.addAll(payload.programs());
+        active.sourceBuilt.clear();
+        active.sourceBuilt.addAll(payload.sourceBuilt());
         active.communityPrograms.clear();
         for (final DesktopFilesPayload.WireCommunity one : payload.community()) {
             active.communityPrograms.add(new CommunityLauncher(one.name(), one.icon(), one.entry()));

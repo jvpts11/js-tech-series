@@ -65,7 +65,10 @@ public final class PosixCommands {
                 new PackageCommands.PackageManagerCommand(PackageManagerKind.DNF),
                 new PackageCommands.PackageManagerCommand(PackageManagerKind.PACMAN),
                 new PackageCommands.PackageManagerCommand(PackageManagerKind.EMERGE),
-                new PackageCommands.PackageManagerCommand(PackageManagerKind.PKG));
+                new PackageCommands.PackageManagerCommand(PackageManagerKind.PKG),
+                // FreeBSD's other way of installing: the ports tree and the builds made from it.
+                new PortsCommands.Portsnap(),
+                new PortsCommands.Make());
     }
 
 }

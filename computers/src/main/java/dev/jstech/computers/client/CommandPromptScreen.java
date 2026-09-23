@@ -913,11 +913,11 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
      * installed shell's style. A live medium's is not guessed at, since each has a prompt of its own in
      * colours of its own and the machine says which a tick after the terminal opens.
      */
-    private String initialPosixPrompt() {
+    private CliLine initialPosixPrompt() {
         if (menu.console().live()) {
-            return "";
+            return new CliLine("", CliStyle.ACCENT);
         }
-        return ConsoleIdentity.promptOf(menu.shellId(), menu.hostname(), "~");
+        return ConsoleIdentity.promptLineOf(menu.platform(), menu.shellId(), menu.hostname(), "~");
     }
 
     /**
@@ -946,8 +946,11 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
          */
         final boolean unsaid = dosPrompt.equals("C:\\>");
         final String words;
+        if (menu.posixShell() && unsaid) {
+            return initialPosixPrompt();
+        }
         if (menu.posixShell()) {
-            words = unsaid ? initialPosixPrompt() : dosPrompt;
+            words = dosPrompt;
         } else if (dosStyle()) {
             words = dosPrompt;
         } else if (netStyle()) {

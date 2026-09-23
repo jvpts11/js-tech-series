@@ -229,7 +229,9 @@ public final class ConsolePayloads {
                 && osLevel.getBlockEntity(hostPos) instanceof IOsHost osComputer
                 && !OsRegistry.canRunProgram(
                         osComputer.installedOsId(), program.id(),
-                        osComputer.maxCpuMhz(), osComputer.totalVramMb())) {
+                        osComputer.maxCpuMhz(), osComputer.totalVramMb(),
+                        osComputer.console() != null
+                                && osComputer.console().builtFromSource(program.id().toString()))) {
             sendConsoleLine(player, program.commandName()
                     + " cannot run on this computer's OS or hardware", OperationRecord.STATUS_FAILED);
             player.displayClientMessage(Component.literal(

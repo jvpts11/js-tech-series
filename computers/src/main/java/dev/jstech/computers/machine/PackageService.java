@@ -388,18 +388,9 @@ public final class PackageService {
         final ComputerConsoleState console = this.terminal.console();
         if (this.manager().compilesFromSource() && machine instanceof IOsHost builder && console != null
                 && !(machine instanceof MainframeBlockEntity && spec.kind() == ProgramKind.SERVICE)
-                && this.fits(builder, spec)) {
-            final String id = spec.id().toString();
-            return ICliPackages.Installing.running(new TtyScriptProcess(SourceBuild.of(spec, builder, ask, () -> {
-                console.install(id);
-                /*
-                 * And at the version it was built at, like every other way of installing it. Without this a
-                 * package built from source was listed as outdated the moment it finished building.
-                 */
-                console.setInstalledVersion(id, ProgramVersions.of(id));
-                machine.setChanged();
-                reportInstalled(machine, spec);
-            })));
+                && this.fits(builder, spec, true)) {
+            return ICliPackages.Installing.running(new TtyScriptProcess(SourceBuild.of(spec, builder, ask,
+                    () -> builtHere(machine, console, spec))));
         }
         return ICliPackages.Installing.said(this.installAtOnce(spec));
     }
@@ -447,7 +438,7 @@ public final class PackageService {
 
     /** Why a program made for another kind of machine does not install on this one, or null when it does. */
     @Nullable
-    private ICliComputer.OpResult wrongMachine(final ProgramSpec spec) {
+    ICliComputer.OpResult wrongMachine(final ProgramSpec spec) {
         final BlockEntity machine = (BlockEntity) this.terminal;
         if (spec.hostScope() == HostScope.MAINFRAME && !(machine instanceof MainframeBlockEntity)) {
             return ICliComputer.OpResult.fail(spec.commandName() + " only installs on the Mainframe");
@@ -463,9 +454,23 @@ public final class PackageService {
         return null;
     }
 
+    /**
+     * What a program built on this machine from source means to it once the build ends: installed, at the version
+     * it was built at like every other way of installing it (without that it was listed as outdated the moment it
+     * finished building), and recorded as built here, which is what lets it ask a little less of the machine.
+     */
+    static void builtHere(final BlockEntity machine, final ComputerConsoleState console, final ProgramSpec spec) {
+        final String id = spec.id().toString();
+        console.install(id);
+        console.setInstalledVersion(id, ProgramVersions.of(id));
+        console.markBuiltFromSource(id);
+        machine.setChanged();
+        reportInstalled(machine, spec);
+    }
+
     /** Why that program is not installed on this machine, or null when nothing stands in its way. */
     @Nullable
-    private ICliComputer.OpResult whyNotHere(final ProgramSpec spec) {
+    ICliComputer.OpResult whyNotHere(final ProgramSpec spec) {
         final ICliComputer.OpResult tooOld = this.eraGate(spec);
         if (tooOld != null) {
             return tooOld;
@@ -484,10 +489,14 @@ public final class PackageService {
         return null;
     }
 
-    /** Whether that machine meets what the program asks of its hardware and has the room for it. */
-    private boolean fits(final IOsHost host, final ProgramSpec spec) {
+    /**
+     * Whether that machine meets what the program asks of its hardware and has the room for it.
+     *
+     * @param fromSource whether it is about to be built there from source, which asks a little less of both
+     */
+    boolean fits(final IOsHost host, final ProgramSpec spec, final boolean fromSource) {
         return OsRegistry.canInstallProgram(host.installedOsId(), spec.id(), host.maxCpuMhz(), host.totalVramMb(),
-                host.systemDiskFreeMb());
+                host.systemDiskFreeMb(), fromSource);
     }
 
     /* A package the Mirror handed over, installed without the timed setup that reports its own. */
@@ -527,7 +536,7 @@ public final class PackageService {
             return done ? ICliComputer.OpResult.ok("Setting up " + spec.commandName() + " ... done")
                     : ICliComputer.OpResult.fail(spec.commandName() + " could not be set up");
         }
-        if (machine instanceof IOsHost oc && !this.fits(oc, spec)) {
+        if (machine instanceof IOsHost oc && !this.fits(oc, spec, false)) {
             return ICliComputer.OpResult.fail(spec.commandName()
                     + ": unmet requirements (hardware or free disk space)");
         }

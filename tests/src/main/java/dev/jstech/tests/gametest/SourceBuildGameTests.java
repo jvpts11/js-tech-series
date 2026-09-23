@@ -72,6 +72,8 @@ public final class SourceBuildGameTests {
                 .thenWaitUntil(() -> helper.assertFalse(term.busy(), "the build is still running"))
                 .thenExecute(() -> {
                     helper.assertTrue(machine.console().isInstalled(MINESWEEPER), "the program is there at the end");
+                    helper.assertTrue(machine.console().builtFromSource(MINESWEEPER),
+                            "recorded as built on this machine, which is what lets it ask a little less of it");
                     helper.assertTrue(term.type("emerge mines").contains("already the newest version"),
                             "and asking for it again says it is there");
                     helper.assertFalse(term.busy(), "without building anything");

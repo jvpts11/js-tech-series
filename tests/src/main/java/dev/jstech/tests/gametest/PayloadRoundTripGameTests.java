@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.operation.payload.ClusterManagerStatePayload;
 import dev.jstech.computers.operation.payload.CreateAutomationJobPayload;
+import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload;
@@ -22,6 +23,8 @@ import dev.jstech.computers.operation.payload.OperationsLogPayload;
 import dev.jstech.computers.operation.payload.TerminalSelectPayload;
 import dev.jstech.computers.operation.payload.ThisPcPayload;
 import dev.jstech.computers.operation.payload.UiEventPayload;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
@@ -31,6 +34,7 @@ import io.netty.buffer.Unpooled;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -75,6 +79,24 @@ public final class PayloadRoundTripGameTests {
                 true, "Frames 11", 2021, "jsc:frames_11", "", 0L, 2);
         roundTrip(helper, ThisPcPayload.STREAM_CODEC,
                 new ThisPcPayload(machine, List.of(disk), List.of(media), List.of("jsc:nms")));
+        helper.succeed();
+    }
+
+    /**
+     * A desktop with every program there is installed on it still gets its desktop. The list of them used to be
+     * refused whole past sixteen, which took the desktop away from a machine with a seventeenth program on it.
+     */
+    @GameTest(template = ARENA)
+    public static void desktop_filesRoundTripsWithEveryProgramInstalled(final GameTestHelper helper) {
+        final List<String> programs = new ArrayList<>();
+        for (final ProgramSpec spec : OsRegistry.programs()) {
+            programs.add(spec.id().getPath());
+        }
+        helper.assertTrue(programs.size() > 16, "there are more programs than the old cap; got " + programs.size());
+        roundTrip(helper, DesktopFilesPayload.STREAM_CODEC, new DesktopFilesPayload(List.of(), "", "", "Desk",
+                programs, List.of("screenfetch", "vim"), List.of(),
+                new DesktopFilesPayload.Prefs(0, 100, false, true, false, 100), List.of(), List.of(), Map.of(),
+                false));
         helper.succeed();
     }
 

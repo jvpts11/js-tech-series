@@ -151,6 +151,17 @@ public final class OsRegistry {
      */
     public static boolean canRunProgram(ResourceLocation osId, ResourceLocation progId,
                                         int cpuMhz, int vramMb) {
+        return canRunProgram(osId, progId, cpuMhz, vramMb, false);
+    }
+
+    /**
+     * The same, for a copy the computer may have built from source, which asks for a little less of a processor
+     * ({@link SourceAdvantage}).
+     *
+     * @param builtHere whether the computer built the program from source rather than installing a built package
+     */
+    public static boolean canRunProgram(final ResourceLocation osId, final ResourceLocation progId,
+                                        final int cpuMhz, final int vramMb, final boolean builtHere) {
         final ProgramSpec prog = getProgram(progId);
         if (prog == null) {
             return true;
@@ -166,7 +177,7 @@ public final class OsRegistry {
         final int rank = osVersionRank(osId);
         return (rank == 0 || rank >= prog.minOsRank())
                 && OsGating.canRunProgram(os.platform(), prog.platforms(), cpuMhz, vramMb,
-                prog.minCpuMhz(), prog.minVramMb());
+                SourceAdvantage.of(prog.minCpuMhz(), builtHere), prog.minVramMb());
     }
 
     /**
@@ -212,6 +223,18 @@ public final class OsRegistry {
      */
     public static boolean canInstallProgram(ResourceLocation osId, ResourceLocation progId,
                                             int cpuMhz, int vramMb, long freeDiskMb) {
+        return canInstallProgram(osId, progId, cpuMhz, vramMb, freeDiskMb, false);
+    }
+
+    /**
+     * The same, for a program about to be built from source on the computer, which asks for a little less of a
+     * processor and of the disk ({@link SourceAdvantage}).
+     *
+     * @param fromSource whether the program is being built from source rather than installed as a built package
+     */
+    public static boolean canInstallProgram(final ResourceLocation osId, final ResourceLocation progId,
+                                            final int cpuMhz, final int vramMb, final long freeDiskMb,
+                                            final boolean fromSource) {
         final ProgramSpec prog = getProgram(progId);
         if (prog == null) {
             return true;
@@ -223,7 +246,8 @@ public final class OsRegistry {
         final int rank = osVersionRank(osId);
         return (rank == 0 || rank >= prog.minOsRank())
                 && OsGating.canInstallProgram(os.platform(), prog.platforms(), cpuMhz, vramMb, freeDiskMb,
-                prog.minCpuMhz(), prog.minVramMb(), prog.minDiskMb());
+                SourceAdvantage.of(prog.minCpuMhz(), fromSource), prog.minVramMb(),
+                SourceAdvantage.of(prog.minDiskMb(), fromSource));
     }
 
     // Listing

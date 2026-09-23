@@ -253,7 +253,8 @@ public final class TrashGameTests {
         helper.assertTrue(TrashActionPayload.STREAM_CODEC.decode(buf).equals(act), "and so does an action");
 
         final DesktopFilesPayload desk = new DesktopFilesPayload(List.of(), "", "", "Desk", List.of(), List.of(),
-                new DesktopFilesPayload.Prefs(0, 100, false, true, false, 100), List.of(), List.of(), Map.of(), true);
+                List.of(), new DesktopFilesPayload.Prefs(0, 100, false, true, false, 100), List.of(), List.of(),
+                Map.of(), true);
         DesktopFilesPayload.STREAM_CODEC.encode(buf, desk);
         helper.assertTrue(DesktopFilesPayload.STREAM_CODEC.decode(buf).trashFull(),
                 "the desktop hears that its trash is full");

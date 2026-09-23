@@ -133,6 +133,30 @@ public final class ComputerConsoleState {
         }
     }
 
+    /*
+     * The installed programs this machine built from source rather than installed as a built package, which is
+     * what lets each of them ask a little less of it (SourceAdvantage). Forgotten with the program, so the same
+     * program installed again as a package asks what a package asks.
+     */
+    private final Set<String> builtFromSource = new LinkedHashSet<>();
+
+    /** Whether that installed program was built on this machine from source. */
+    public boolean builtFromSource(final String programId) {
+        return builtFromSource.contains(programId);
+    }
+
+    /** Every installed program built on this machine from source. */
+    public Set<String> builtFromSource() {
+        return Set.copyOf(builtFromSource);
+    }
+
+    /** Records that an installed program was built here from source; a program not installed is not recorded. */
+    public void markBuiltFromSource(final String programId) {
+        if (installed.contains(programId)) {
+            builtFromSource.add(programId);
+        }
+    }
+
     /**
      * Every installed package behind the version this build ships for it.
      *
@@ -152,6 +176,7 @@ public final class ComputerConsoleState {
     }
 
     public boolean uninstall(final String programId) {
+        builtFromSource.remove(programId);
         return installed.remove(programId);
     }
 
@@ -448,6 +473,13 @@ public final class ComputerConsoleState {
             installedVersions.forEach(versions::putString);
             tag.put("InstalledVersions", versions);
         }
+        if (!builtFromSource.isEmpty()) {
+            final ListTag built = new ListTag();
+            for (final String id : builtFromSource) {
+                built.add(StringTag.valueOf(id));
+            }
+            tag.put("BuiltFromSource", built);
+        }
         if (!community.isEmpty()) {
             final ListTag written = new ListTag();
             for (final Community one : community.values()) {
@@ -586,6 +618,10 @@ public final class ComputerConsoleState {
             for (final String id : versions.getAllKeys()) {
                 installedVersions.put(id, versions.getString(id));
             }
+        }
+        builtFromSource.clear();
+        for (final Tag entry : tag.getList("BuiltFromSource", Tag.TAG_STRING)) {
+            builtFromSource.add(entry.getAsString());
         }
         liveInstall = tag.contains("LiveInstall")
                 ? LiveInstallState.deserialize(

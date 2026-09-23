@@ -22,6 +22,7 @@ import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.List;
+import java.util.function.Predicate;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -507,17 +508,17 @@ public interface IOsHost extends IPeripheralOwner {
             return ledger;
         }
         ledger.add(os.displayName(), os.ramMb(), RamLedger.Kind.SYSTEM);
+        final ComputerConsoleState console = console();
         final ResourceLocation desktopId = bootedDesktopId();
         final DesktopEnvironmentDef desktop = desktopId != null ? OsRegistry.getDesktop(desktopId) : null;
         if (desktopId != null && !desktopId.equals(os.id())) {
             // A desktop package on a Linux system; a Frames desktop is the system itself and is counted above.
             final ProgramSpec pack = OsRegistry.getProgram(desktopId);
             if (pack != null) {
-                ledger.add(desktop != null ? desktop.displayName() : pack.displayName(), pack.ramMbOn(os),
-                        RamLedger.Kind.DESKTOP);
+                ledger.add(desktop != null ? desktop.displayName() : pack.displayName(),
+                        pack.ramMbOn(os, builtHere(console, pack)), RamLedger.Kind.DESKTOP);
             }
         }
-        final ComputerConsoleState console = console();
         if (console != null) {
             for (final ProgramSpec spec : OsRegistry.programs()) {
                 /*
@@ -527,7 +528,8 @@ public interface IOsHost extends IPeripheralOwner {
                  */
                 if (spec.kind() == ProgramKind.SERVICE && console.isInstalled(spec.id().toString())
                         && serviceRunning(spec)) {
-                    ledger.add(spec.displayName(), spec.ramMbOn(os), RamLedger.Kind.SERVICE);
+                    ledger.add(spec.displayName(), spec.ramMbOn(os, builtHere(console, spec)),
+                            RamLedger.Kind.SERVICE);
                 }
             }
         }
@@ -538,7 +540,8 @@ public interface IOsHost extends IPeripheralOwner {
             }
         }
         for (final OpenWindow window : openWindows()) {
-            ledger.add(window.key(), windowRamMb(window.key(), os, desktop), RamLedger.Kind.WINDOW);
+            ledger.add(window.key(), windowRamMb(window.key(), os, desktop, spec -> builtHere(console, spec)),
+                    RamLedger.Kind.WINDOW);
         }
         return ledger;
     }
@@ -560,7 +563,9 @@ public interface IOsHost extends IPeripheralOwner {
         }
         final ResourceLocation desktopId = bootedDesktopId();
         final DesktopEnvironmentDef desktop = desktopId != null ? OsRegistry.getDesktop(desktopId) : null;
-        return RamLedger.withinBudget(windows, window -> windowRamMb(window.key(), os, desktop),
+        final ComputerConsoleState console = console();
+        return RamLedger.withinBudget(windows,
+                window -> windowRamMb(window.key(), os, desktop, spec -> builtHere(console, spec)),
                 ramTotalMb() - ramReservedMb());
     }
 
@@ -568,8 +573,11 @@ public interface IOsHost extends IPeripheralOwner {
      * The megabytes a window opened under {@code key} holds: its program's weight under {@code os}, found by
      * the label the desktop gives the program, else by the program's own name; a window no program answers to
      * weighs what a bundled program of that system does.
+     *
+     * @param builtHere which programs the machine built from source, which hold a little less
      */
-    static int windowRamMb(final String key, final OsDef os, @Nullable final DesktopEnvironmentDef desktop) {
+    static int windowRamMb(final String key, final OsDef os, @Nullable final DesktopEnvironmentDef desktop,
+                           final Predicate<ProgramSpec> builtHere) {
         ProgramSpec spec = desktop != null ? desktop.programFor(key) : null;
         if (spec == null) {
             for (final ProgramSpec candidate : OsRegistry.programs()) {
@@ -579,6 +587,11 @@ public interface IOsHost extends IPeripheralOwner {
                 }
             }
         }
-        return spec != null ? spec.ramMbOn(os) : RamLedger.bundledWeightMb(os.ramMb());
+        return spec != null ? spec.ramMbOn(os, builtHere.test(spec)) : RamLedger.bundledWeightMb(os.ramMb());
+    }
+
+    /** Whether the machine whose console that is built that program from source; nothing is, with no console. */
+    private static boolean builtHere(@Nullable final ComputerConsoleState console, final ProgramSpec spec) {
+        return console != null && console.builtFromSource(spec.id().toString());
     }
 }

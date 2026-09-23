@@ -102,6 +102,27 @@ public interface ICliPackages {
         return ICliComputer.OpResult.fail("could not resolve mirror://");
     }
 
+    /**
+     * FreeBSD's portsnap: fetches the ports tree from the network's Mirror as one snapshot, lays it out under
+     * {@code /usr/ports}, or brings a tree already there up to date, as the commands ask, leaving the work running
+     * in front of the terminal.
+     *
+     * @param commands {@code fetch}, {@code extract}, {@code update} or {@code auto}, in the order typed
+     */
+    default Installing portsnap(final List<String> commands) {
+        return Installing.said(ICliComputer.OpResult.fail("portsnap: this system keeps no ports tree"));
+    }
+
+    /**
+     * make, in the folder the shell stands in: in a port's folder, builds the port on this machine and installs,
+     * cleans or removes it as the targets ask; anywhere else, there is nothing to make.
+     *
+     * @param targets what make was asked to make, in the order typed; none means build
+     */
+    default Installing makePort(final List<String> targets) {
+        return Installing.said(ICliComputer.OpResult.fail("make: no target to make."));
+    }
+
     /** Whether a network mirror is reachable from this computer right now. */
     default boolean mirrorReachable() {
         return false;

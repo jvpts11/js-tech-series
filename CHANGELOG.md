@@ -23,6 +23,16 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - screenfetch on Frames 95, XP and 11: a package of Frames' own manager, run at the Command Prompt, drawing the
   Frames flag with the version each gives for itself. Professional Larper now asks for all nine systems it
   installs on.
+- The ports tree on FreeBSD. `portsnap fetch extract` brings the tree from the network's Mirror and lays it out
+  under `/usr/ports`, a folder for every program the Mirror serves, filed by category, as real files that take
+  room on the disk; `portsnap fetch update` brings it up to date. In a port's folder, `make install clean`
+  fetches the program's source from the Mirror and builds it on the machine, for as long as its processor
+  takes with all of its cores, then installs it and cleans up. `make` on its own builds, a later `make install`
+  finds that build instead of making it again, and `make clean`, `make reinstall` and `make deinstall` do what
+  they do on FreeBSD. Building a port earns the new Built from Ports advancement.
+- A program built from source on the machine that runs it asks ten percent less of it than the package does: less
+  memory while it runs, a lesser processor, and less free disk to install. That goes for a port on FreeBSD and
+  for everything Gentoo builds, and the machine remembers which of its programs it built.
 
 ### Changed
 - The three advancements of the old Computers tab moved into the Operating Systems tab, so a world that had
@@ -30,6 +40,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A desktop's terminal window opens eighty columns by twenty-four rows, as terminals do, and smaller only when
   the desktop has no room for that. Its rows, and those of the terminal inside an editor, are as far apart as
   the full-screen terminal's, so what is drawn in characters keeps its shape instead of being squashed flat.
+- FreeBSD's prompt is root's, as a machine fresh from its installer stands at: `root@host:~ #`, with `root@host`
+  in red and the rest in the prompt's own colour.
 
 ### Fixed
 - screenfetch draws every logo as neofetch draws it. Ubuntu's was another, older logo copied with mistakes, and
@@ -102,6 +114,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   a delete, which then looked for a job numbered by the time.
 - A Linux installed by hand is only offered software its hardware era runs, as every other way of installing
   already was; a Vintage machine could be given a desktop that needs Legacy hardware while it was being built.
+- A desktop opens on a machine with more than sixteen programs installed. The list of them it is sent was
+  capped at sixteen and refused whole past that, so installing a seventeenth took the desktop away.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

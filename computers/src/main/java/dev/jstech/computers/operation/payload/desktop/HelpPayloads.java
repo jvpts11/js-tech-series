@@ -87,8 +87,8 @@ public final class HelpPayloads {
                 "du", "df", "tree", "ren", "mkfs", "format").contains(name)) {
             return "Files";
         }
-        if (List.of("apt", "dnf", "pacman", "emerge", "pkg", "pckmgr", "installpkg", "programs", "install",
-                "uninstall", "store", "mirror", "services").contains(name)) {
+        if (List.of("apt", "dnf", "pacman", "emerge", "pkg", "portsnap", "make", "pckmgr", "installpkg", "programs",
+                "install", "uninstall", "store", "mirror", "services").contains(name)) {
             return "Software";
         }
         if (List.of("vim", "emacs", "nano", "sgsc", "scc", "sigma", "sgpack").contains(name)) {

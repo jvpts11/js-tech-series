@@ -30,6 +30,7 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
+import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -177,8 +178,11 @@ public final class FreeBsdGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     final ServerCliComputer cli = new ServerCliComputer(mainframe, helper.getLevel());
                     helper.assertTrue(cli.shellFamily() == ShellFamily.POSIX, "its kernel gives the shell Unix verbs");
-                    helper.assertTrue("player@freebsd:~ $".equals(cli.prompt()),
-                            "sh stands at the prompt its home directory sets up; got " + cli.prompt());
+                    helper.assertTrue("root@freebsd:~ #".equals(cli.prompt()),
+                            "sh stands at root's prompt, as a machine fresh from its installer does; got "
+                                    + cli.prompt());
+                    helper.assertTrue(cli.promptLine().style() == CliStyle.RED,
+                            "with root and the machine's name in red; got " + cli.promptLine().spans());
                     final CliShell shell = CliCommands.newShell(cli.shellFamily(), 52);
                     helper.assertTrue("FreeBSD".equals(text(shell.run("uname", cli)).trim()),
                             "asked nothing, it names the kernel; got " + text(shell.run("uname", cli)));

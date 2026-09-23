@@ -128,6 +128,22 @@ public final class AdvancementGameTests {
         helper.succeed();
     }
 
+    /** A port built and installed earns Built from Ports for whoever works the machine that built it. */
+    @GameTest(template = ARENA)
+    public static void builtFromPorts_isEarnedByWhoeverWorksTheMachine(final GameTestHelper helper) {
+        final ServerPlayer player = join(helper);
+        try {
+            final PersonalComputerBlockEntity computer = legacy(helper);
+            MachineOperators.note(computer, player);
+            helper.assertFalse(done(player, "systems/built_from_ports"), "nothing is built yet");
+            JscEvents.awardOperator(computer, JscEvents.BUILT_FROM_PORTS, "screenfetch");
+            helper.assertTrue(done(player, "systems/built_from_ports"), "a port installed earns it");
+        } finally {
+            leave(player);
+        }
+        helper.succeed();
+    }
+
     /** Putting a working build together earns the era it belongs to, for whoever is building it. */
     @GameTest(template = ARENA)
     public static void hardwareChanged_aWorkingLegacyBuildEarnsItsEra(final GameTestHelper helper) {

@@ -37,8 +37,8 @@ public interface ICliFiles {
 
     /**
      * The same prompt as the glass shows it, a run at a time, for a shell whose prompt is in more than one
-     * colour: a root prompt with the machine's name in red and where it stands in blue. By default it is all in
-     * the one colour a terminal gives a prompt.
+     * colour: a root prompt with the user and the machine in red and the rest in the prompt's own ink. By default
+     * it is all in the one colour a terminal gives a prompt.
      */
     default CliLine promptLine() {
         return new CliLine(prompt(), CliStyle.ACCENT);

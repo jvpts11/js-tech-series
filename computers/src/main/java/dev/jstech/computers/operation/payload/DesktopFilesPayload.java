@@ -32,16 +32,22 @@ import java.util.Map;
  * the order they sit there. {@code defaultApps} holds the program chosen with Always for each extension.
  * {@code cdeStyle} is CDE's palette and backdrops as the machine keeps them, which only CDE reads.
  * {@code trashFull} says whether anything is in the desktop's trash, which is the picture its icon wears.
+ * {@code sourceBuilt} names, by program id path, the installed programs the machine built from source, whose
+ * windows hold a little less memory, so the desktop weighs a window the way the machine does.
  */
 public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String wallpaper, String cdeStyle,
-                                  String computerName, List<String> programs,
+                                  String computerName, List<String> programs, List<String> sourceBuilt,
                                   List<WireIconCell> iconCells, Prefs prefs,
                                   List<WireCommunity> community, List<String> pinned,
                                   Map<String, String> defaultApps, boolean trashFull)
         implements CustomPacketPayload {
 
     public static final int MAX_FILES = 256;
-    public static final int MAX_PROGRAMS = 16;
+    /*
+     * Room for every program there is. It was sixteen, and a list is refused whole when it is longer than its
+     * cap, so the seventeenth installed program took the machine's desktop away from it.
+     */
+    public static final int MAX_PROGRAMS = 128;
     public static final int MAX_ICON_CELLS = 256;
     public static final int MAX_PINNED = ComputerSettings.MAX_PINNED;
     public static final int MAX_DEFAULT_APPS = ComputerSettings.MAX_DEFAULT_APPS;
@@ -90,7 +96,7 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "desktop_files"));
 
     /*
-     * Written out by hand: composite takes six pairs and this carries eleven things. The alternative was
+     * Written out by hand: composite takes six pairs and this carries twelve things. The alternative was
      * to bundle two of them into a record nobody else wants, which would have cost a reader more than
      * these two short methods do.
      */
@@ -110,6 +116,7 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
         buf.writeUtf(clip(payload.computerName, InstallerFlow.MOST_NAME_LETTERS),
                 InstallerFlow.MOST_NAME_LETTERS);
         ByteBufCodecs.stringUtf8(32).apply(ByteBufCodecs.list(MAX_PROGRAMS)).encode(buf, payload.programs);
+        ByteBufCodecs.stringUtf8(32).apply(ByteBufCodecs.list(MAX_PROGRAMS)).encode(buf, payload.sourceBuilt);
         WireIconCell.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ICON_CELLS)).encode(buf, payload.iconCells);
         Prefs.STREAM_CODEC.encode(buf, payload.prefs);
         buf.writeVarInt(Math.min(payload.community.size(), MAX_COMMUNITY));
@@ -146,6 +153,8 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
         final String computerName = buf.readUtf(InstallerFlow.MOST_NAME_LETTERS);
         final List<String> programs =
                 ByteBufCodecs.stringUtf8(32).apply(ByteBufCodecs.list(MAX_PROGRAMS)).decode(buf);
+        final List<String> sourceBuilt =
+                ByteBufCodecs.stringUtf8(32).apply(ByteBufCodecs.list(MAX_PROGRAMS)).decode(buf);
         final List<WireIconCell> cells =
                 WireIconCell.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ICON_CELLS)).decode(buf);
         final Prefs prefs = Prefs.STREAM_CODEC.decode(buf);
@@ -161,14 +170,15 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             defaultApps.put(buf.readUtf(32), buf.readUtf(64));
         }
         final boolean trashFull = buf.readBoolean();
-        return new DesktopFilesPayload(files, wallpaper, cdeStyle, computerName, programs, cells, prefs, community,
-                pinned, defaultApps, trashFull);
+        return new DesktopFilesPayload(files, wallpaper, cdeStyle, computerName, programs, sourceBuilt, cells, prefs,
+                community, pinned, defaultApps, trashFull);
     }
 
     /* Copied on the way in, so what the desktop is handed cannot change under it after it arrives. */
     public DesktopFilesPayload {
         files = List.copyOf(files);
         programs = List.copyOf(programs);
+        sourceBuilt = List.copyOf(sourceBuilt);
         iconCells = List.copyOf(iconCells);
         community = List.copyOf(community);
         pinned = List.copyOf(pinned);

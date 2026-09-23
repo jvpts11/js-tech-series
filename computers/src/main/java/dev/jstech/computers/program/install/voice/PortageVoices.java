@@ -362,11 +362,18 @@ public final class PortageVoices {
                 .say(Tint.line(Tint.arrows(), " Test phase [not enabled]: " + merge.full()));
     }
 
+    /**
+     * The source file compiled at a place in a build, worked out from the place alone, so a build that is looked
+     * at twice names the same files. Shared with the ports tree, which compiles the same kind of program.
+     */
+    static String sourceAt(final int index) {
+        return SOURCES[Math.floorMod(spread(index), SOURCES.length)];
+    }
+
     /** The compiler's line for the file at a place in the build, worked out from the place alone. */
     private static CliLine compiled(final int index, final String library) {
-        int hash = index * 0x9E3779B1;
-        hash ^= hash >>> 15;
-        final String file = SOURCES[Math.floorMod(hash, SOURCES.length)];
+        final int hash = spread(index);
+        final String file = sourceAt(index);
         /* A Sigma source goes in and the listing a machine runs comes out, which is this world's object file. */
         return CliLine.plain(Math.floorMod(hash >>> 8, 6) != 0
                 ? "x86_64-pc-linux-gnu-scc -DHAVE_CONFIG -I. -O2 -pipe -march=native -c -o " + file + ".asm "
@@ -377,5 +384,11 @@ public final class PortageVoices {
 
     private static CliLine star(final String text) {
         return Tint.line(Tint.star(), text);
+    }
+
+    /** A place in a build scattered over the whole range, so neighbouring places name unrelated files. */
+    private static int spread(final int index) {
+        final int hash = index * 0x9E3779B1;
+        return hash ^ hash >>> 15;
     }
 }

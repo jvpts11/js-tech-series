@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:systems/not_linux",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "built_from_ports"
+      },
+      "trigger": "jsc:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.built_from_ports.description"
+    },
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:crafting_table"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.built_from_ports.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

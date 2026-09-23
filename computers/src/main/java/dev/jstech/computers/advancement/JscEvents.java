@@ -56,6 +56,8 @@ public final class JscEvents {
     public static final String MINESWEEPER_EXPERT = "minesweeper_expert";
     /** Detail: the path of the id of the system it ran on, such as {@code ubuntu}. */
     public static final String SCREENFETCH = "screenfetch";
+    /** Detail: the path of the id of the program the port installed. */
+    public static final String BUILT_FROM_PORTS = "built_from_ports";
 
     // Networks and Operations
     public static final String MAINFRAME_NETWORK = "mainframe_network";

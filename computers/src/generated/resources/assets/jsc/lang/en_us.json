@@ -91,6 +91,8 @@
   "advancements.jsc.systems.bloat_11.title": "More like, Bloat 11",
   "advancements.jsc.systems.bloat_everywhere.description": "Install Ubuntu and boot it",
   "advancements.jsc.systems.bloat_everywhere.title": "Bloat everywhere, but linux",
+  "advancements.jsc.systems.built_from_ports.description": "Build a program from FreeBSD's ports tree and install it",
+  "advancements.jsc.systems.built_from_ports.title": "Built from Ports",
   "advancements.jsc.systems.clockwork.description": "Have cron run a job on UNIX on Vintage hardware",
   "advancements.jsc.systems.clockwork.title": "Clockwork",
   "advancements.jsc.systems.distro_hopper.description": "Install and boot all five distributions",

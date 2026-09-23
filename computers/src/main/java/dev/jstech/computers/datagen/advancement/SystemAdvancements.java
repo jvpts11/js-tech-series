@@ -52,6 +52,8 @@ public final class SystemAdvancements extends AdvancementTab {
                 "Where it all started long ago...", "Install UNIX and boot it", booted("unix"));
         this.task("not_linux", "where_it_all_started", ComputingModule.LEGACY_PERSONAL_COMPUTER_ITEM.get(),
                 "It's Not Linux, Stop Asking", "Install FreeBSD and boot it", booted("freebsd"));
+        this.challenge("built_from_ports", "not_linux", Items.CRAFTING_TABLE, "Built from Ports",
+                "Build a program from FreeBSD's ports tree and install it", on(JscEvents.BUILT_FROM_PORTS));
         this.challenge("clockwork", "where_it_all_started", Items.CLOCK, "Clockwork",
                 "Have cron run a job on UNIX on Vintage hardware", on(JscEvents.CLOCKWORK));
 

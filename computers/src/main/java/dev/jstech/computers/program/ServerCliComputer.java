@@ -26,6 +26,7 @@ import dev.jstech.computers.machine.NetworkPathResolver;
 import dev.jstech.computers.machine.NetworkReadService;
 import dev.jstech.computers.machine.OperationsService;
 import dev.jstech.computers.machine.PackageService;
+import dev.jstech.computers.machine.PortsService;
 import dev.jstech.computers.machine.ProgramService;
 import dev.jstech.computers.machine.RemoteComputerService;
 import dev.jstech.computers.operation.MoveLabels;
@@ -578,6 +579,16 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     @Override
+    public Installing portsnap(final List<String> commands) {
+        return ports().snapshot(commands);
+    }
+
+    @Override
+    public Installing makePort(final List<String> targets) {
+        return ports().make(currentLocation(), PosixPath.render(tree(), currentLocation()), targets);
+    }
+
+    @Override
     public OpResult formatDrive(final char letterRaw) {
         final boolean heldSystem = files().holdsSystem(letterRaw);
         final OpResult result = files().formatDrive(letterRaw);
@@ -664,16 +675,24 @@ public final class ServerCliComputer implements ICliComputer {
         if (shellFamily() != ShellFamily.POSIX) {
             return currentLocation().dosPath() + ">";
         }
-        final String cwd = PosixPath.renderForPrompt(tree(), currentLocation());
         final OsDef os = hostBlock instanceof IOsHost c ? c.installedOs() : null;
-        return ConsoleIdentity.promptOf(os == null ? "" : os.shellId(), hostname(), cwd);
+        return ConsoleIdentity.promptOf(os == null ? null : os.platform(), os == null ? "" : os.shellId(),
+                hostname(), PosixPath.renderForPrompt(tree(), currentLocation()));
     }
 
-    /** A live medium's prompt is in its shell's own colours; every other prompt here is in one. */
+    /** A live medium's prompt is in its shell's own colours, and so is FreeBSD's; every other one is in one. */
     @Override
     public CliLine promptLine() {
         final LiveInstallState live = liveInstall();
-        return live != null ? live.promptLine() : new CliLine(prompt(), CliStyle.ACCENT);
+        if (live != null) {
+            return live.promptLine();
+        }
+        final OsDef os = hostBlock instanceof IOsHost c ? c.installedOs() : null;
+        if (shellFamily() == ShellFamily.POSIX && os != null) {
+            return ConsoleIdentity.promptLineOf(os.platform(), os.shellId(), hostname(),
+                    PosixPath.renderForPrompt(tree(), currentLocation()));
+        }
+        return new CliLine(prompt(), CliStyle.ACCENT);
     }
 
     @Override
@@ -925,6 +944,11 @@ public final class ServerCliComputer implements ICliComputer {
     /** The packages this machine installs over its network's Mirror, as this shell reaches them. */
     private PackageService packages() {
         return new PackageService(host, level, files(), iql());
+    }
+
+    /** The ports tree on this machine and the ports built from it, as this shell reaches them. */
+    private PortsService ports() {
+        return new PortsService(host, level, packages());
     }
 
     /** The network's own language, as this shell speaks it. */
