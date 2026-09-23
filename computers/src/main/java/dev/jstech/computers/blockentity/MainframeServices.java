@@ -8,6 +8,7 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.program.IqlJobAgent;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.iql.IqlCatalog;
 import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.computers.program.iql.IqlSavedObject;
@@ -16,10 +17,12 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,8 +74,23 @@ final class MainframeServices {
     /** The last script the editor held, kept so it survives closing and reopening the studio. */
     private String savedScript = "";
 
+    /** Each service by the program that installs it. */
+    private final Map<ResourceLocation, IMainframeService> byProgram = Map.of(
+            Programs.IQL_ENGINE, new Service(this::iqlEngineInstalled, this::iqlEngineActive,
+                    this::installIqlEngine, this::uninstallIqlEngine),
+            Programs.AUTOMATION_ENGINE, new Service(this::automationEngineInstalled, this::automationEngineActive,
+                    this::installAutomationEngine, this::uninstallAutomationEngine),
+            Programs.MIRROR, new Service(this::mirrorInstalled, this::mirrorActive,
+                    this::installMirror, this::uninstallMirror));
+
     MainframeServices(final MainframeBlockEntity mainframe) {
         this.mainframe = mainframe;
+    }
+
+    /** The service that program installs, or {@code null} when it is not one a Mainframe runs. */
+    @Nullable
+    IMainframeService service(final ResourceLocation programId) {
+        return byProgram.get(programId);
     }
 
     IqlCatalog catalog() {
@@ -255,9 +273,7 @@ final class MainframeServices {
      * if the same services are installed again, the way the files on a second disk would be.
      */
     void eraseInstalls() {
-        uninstallMirror();
-        uninstallIqlEngine();
-        uninstallAutomationEngine();
+        byProgram.values().forEach(IMainframeService::uninstall);
     }
 
     void save(final CompoundTag tag) {
@@ -325,5 +341,30 @@ final class MainframeServices {
             pausedJobs.add(paused.getString(i));
         }
         savedScript = tag.getString("IqlScript");
+    }
+
+    /** One service's four answers, read off the flags this class keeps for it. */
+    private record Service(BooleanSupplier isInstalled, BooleanSupplier isActive, BooleanSupplier installer,
+                           BooleanSupplier uninstaller) implements IMainframeService {
+
+        @Override
+        public boolean installed() {
+            return isInstalled.getAsBoolean();
+        }
+
+        @Override
+        public boolean active() {
+            return isActive.getAsBoolean();
+        }
+
+        @Override
+        public boolean install() {
+            return installer.getAsBoolean();
+        }
+
+        @Override
+        public boolean uninstall() {
+            return uninstaller.getAsBoolean();
+        }
     }
 }

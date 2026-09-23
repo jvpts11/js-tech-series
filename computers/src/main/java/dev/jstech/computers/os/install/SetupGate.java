@@ -9,6 +9,7 @@ package dev.jstech.computers.os.install;
 
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.blockentity.IMainframeService;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.RackUnitHost;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
@@ -41,28 +42,6 @@ public final class SetupGate {
      *
      * @param hasMedium whether the program's disc is in a linked drive, or it comes over the network
      */
-    /**
-     * Whether {@code spec} is on the machine already.
-     *
-     * <p>A Mainframe's services are flags on the Mainframe: one switched on with its own verb, as the
-     * Mirror is with {@code mirror install}, is installed whether or not the console lists it, and
-     * removing it has to be allowed on the strength of the flag.
-     */
-    private static boolean installed(final IOsHost host, final ComputerConsoleState console, final ProgramSpec spec) {
-        if (console.isInstalled(spec.id().toString())) {
-            return true;
-        }
-        if (host instanceof MainframeBlockEntity mainframe) {
-            return switch (spec.id().getPath()) {
-                case "iqlengine" -> mainframe.isIqlEngineInstalled();
-                case "automation_engine" -> mainframe.isAutomationEngineInstalled();
-                case "mirror" -> mainframe.isMirrorInstalled();
-                default -> false;
-            };
-        }
-        return false;
-    }
-
     public static Optional<String> refusal(final IOsHost host, final ProgramSpec spec, final boolean removing,
                                            final boolean hasMedium) {
         final ComputerConsoleState console = host.console();
@@ -123,6 +102,24 @@ public final class SetupGate {
             return Optional.of(name + " cannot install on this computer's system or hardware.");
         }
         return Optional.empty();
+    }
+
+    /**
+     * Whether {@code spec} is on the machine already.
+     *
+     * <p>A Mainframe's services live on the Mainframe: one switched on with its own verb, as the
+     * Mirror is with {@code mirror install}, is installed whether or not the console lists it, and
+     * removing it has to be allowed on the strength of the service.
+     */
+    private static boolean installed(final IOsHost host, final ComputerConsoleState console, final ProgramSpec spec) {
+        if (console.isInstalled(spec.id().toString())) {
+            return true;
+        }
+        if (host instanceof MainframeBlockEntity mainframe) {
+            final IMainframeService service = mainframe.service(spec.id());
+            return service != null && service.installed();
+        }
+        return false;
     }
 
     /** A program bound to one kind of machine refuses every other kind by name. */

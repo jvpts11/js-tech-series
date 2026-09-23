@@ -11,6 +11,7 @@ import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,14 +46,14 @@ public final class ServerServices {
     }
 
     /**
-     * The first machine on {@code network} running {@code programPath}, or null when none is.
+     * The first machine on {@code network} running {@code program}, or null when none is.
      *
      * <p>Null is the answer a window is shown as "no service on this network", which is the truth a player
      * can act on: mount a server, install the software, switch it on.
      */
     @Nullable
     public static Host find(final ServerLevel level, @Nullable final NetworkUuid network,
-                            final String programPath) {
+                            final ResourceLocation program) {
         if (network == null) {
             return null;
         }
@@ -65,7 +66,7 @@ public final class ServerServices {
             if (!(level.getBlockEntity(BlockPos.of(where.rackPos())) instanceof ServerRackBlockEntity rack)) {
                 continue;
             }
-            if (rack.hasService(where.slot(), programPath) && rack.unitRunning(where.slot())) {
+            if (rack.hasService(where.slot(), program) && rack.unitRunning(where.slot())) {
                 return new Host(rack, where.slot());
             }
         }

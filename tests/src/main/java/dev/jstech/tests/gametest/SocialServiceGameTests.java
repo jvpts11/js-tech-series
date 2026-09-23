@@ -17,6 +17,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.install.SetupGate;
 import dev.jstech.computers.program.KnotRepository;
 import dev.jstech.computers.program.MessengerLog;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -27,6 +28,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import java.util.List;
 
 /**
  * The two services whose cost follows how much they are used, on the machines that really run them.
@@ -43,15 +46,15 @@ public final class SocialServiceGameTests {
     private static final String ARENA = "empty";
     private static final int SETTLE = 6;
 
-    private static final String MESSENGER = "messenger_service";
-    private static final String KNOTHUB = "knothub";
+    private static final ResourceLocation MESSENGER = Programs.MESSENGER_SERVICE;
+    private static final ResourceLocation KNOTHUB = Programs.KNOT_HUB;
 
     /** A Mainframe, a cable and a rack with one server in row 0, all on one network. */
     private record Base(MainframeBlockEntity mainframe, ServerRackBlockEntity rack) {
 
-        /** The service the network offers under that name, or null when no machine on it runs one. */
-        private ServerServices.Host serving(final GameTestHelper helper, final String programPath) {
-            return ServerServices.find(helper.getLevel(), mainframe.networkUuid(), programPath);
+        /** Where the network finds that program running, or null when no machine on it runs one. */
+        private ServerServices.Host serving(final GameTestHelper helper, final ResourceLocation program) {
+            return ServerServices.find(helper.getLevel(), mainframe.networkUuid(), program);
         }
     }
 
@@ -74,7 +77,7 @@ public final class SocialServiceGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     helper.assertTrue(base.serving(helper, MESSENGER) == null,
                             "a network with nothing installed offers no messenger");
-                    base.rack().consoleOf(0).install("jsc:" + MESSENGER);
+                    base.rack().consoleOf(0).install(MESSENGER.toString());
                     helper.assertTrue(base.rack().hasService(0, MESSENGER),
                             "the server should be running it now");
                     helper.assertTrue(base.serving(helper, MESSENGER) != null,
@@ -88,7 +91,7 @@ public final class SocialServiceGameTests {
         final Base base = base(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    base.rack().consoleOf(0).install("jsc:" + MESSENGER);
+                    base.rack().consoleOf(0).install(MESSENGER.toString());
                     helper.assertTrue(base.rack().unitRunning(0), "the seeded server comes up running");
                     base.rack().toggleBayPower(0);
                     helper.assertFalse(base.rack().unitRunning(0),
@@ -104,7 +107,7 @@ public final class SocialServiceGameTests {
         final Base base = base(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    base.rack().consoleOf(0).install("jsc:" + MESSENGER);
+                    base.rack().consoleOf(0).install(MESSENGER.toString());
                     final MessengerLog log = base.rack().messengerAt(0);
                     helper.assertTrue(log != null, "a mounted server holds a messenger log");
                     final long before = log.historyBytes();
@@ -126,7 +129,7 @@ public final class SocialServiceGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final ServerRackBlockEntity rack = base.rack();
-                    rack.consoleOf(0).install("jsc:" + MESSENGER);
+                    rack.consoleOf(0).install(MESSENGER.toString());
                     rack.messengerAt(0).say("smelter", "ada", "bay three again",
                             helper.getLevel().getGameTime(), false);
                     rack.flushServices(0);
@@ -156,10 +159,10 @@ public final class SocialServiceGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final ServerRackBlockEntity rack = base.rack();
-                    rack.consoleOf(0).install("jsc:" + MESSENGER);
+                    rack.consoleOf(0).install(MESSENGER.toString());
                     rack.messengerAt(0).say("lobby", "ada", "hello",
                             helper.getLevel().getGameTime(), false);
-                    rack.consoleOf(0).uninstall("jsc:" + MESSENGER);
+                    rack.consoleOf(0).uninstall(MESSENGER.toString());
                     rack.serviceUninstalled(0, MESSENGER);
                     helper.assertTrue(rack.messengerAt(0).size() == 0,
                             "a service nobody can reach keeps nothing");
@@ -178,7 +181,7 @@ public final class SocialServiceGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     helper.assertTrue(base.serving(helper, KNOTHUB) == null,
                             "a network with nothing installed keeps no source");
-                    base.rack().consoleOf(0).install("jsc:" + KNOTHUB);
+                    base.rack().consoleOf(0).install(KNOTHUB.toString());
                     helper.assertTrue(base.serving(helper, KNOTHUB) != null,
                             "the network should find it on that server");
                 })
@@ -190,7 +193,7 @@ public final class SocialServiceGameTests {
         final Base base = base(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    base.rack().consoleOf(0).install("jsc:" + KNOTHUB);
+                    base.rack().consoleOf(0).install(KNOTHUB.toString());
                     final KnotRepository repository = base.rack().knotAt(0);
                     helper.assertTrue(repository != null, "a mounted server holds a repository");
                     final long before = repository.bytes();
@@ -209,7 +212,7 @@ public final class SocialServiceGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final ServerRackBlockEntity rack = base.rack();
-                    rack.consoleOf(0).install("jsc:" + KNOTHUB);
+                    rack.consoleOf(0).install(KNOTHUB.toString());
                     rack.knotAt(0).commit("plant.sgs", "ada", "first pass",
                             "int floor = 8000;", helper.getLevel().getGameTime());
                     rack.knotAt(0).commit("plant.sgs", "grace", "raise it",
@@ -238,10 +241,10 @@ public final class SocialServiceGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final ServerRackBlockEntity rack = base.rack();
-                    rack.consoleOf(0).install("jsc:" + KNOTHUB);
+                    rack.consoleOf(0).install(KNOTHUB.toString());
                     rack.knotAt(0).commit("a.sgs", "ada", "one", "1",
                             helper.getLevel().getGameTime());
-                    rack.consoleOf(0).uninstall("jsc:" + KNOTHUB);
+                    rack.consoleOf(0).uninstall(KNOTHUB.toString());
                     rack.serviceUninstalled(0, KNOTHUB);
                     helper.assertTrue(rack.knotAt(0).files().isEmpty(),
                             "a service nobody can reach keeps nothing");
@@ -258,9 +261,9 @@ public final class SocialServiceGameTests {
         final Base base = base(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    for (final String path : new String[] {MESSENGER, KNOTHUB}) {
-                        final ProgramSpec spec = OsRegistry.getProgram(
-                                ResourceLocation.fromNamespaceAndPath("jsc", path));
+                    for (final ResourceLocation program : List.of(MESSENGER, KNOTHUB)) {
+                        final String path = program.getPath();
+                        final ProgramSpec spec = OsRegistry.getProgram(program);
                         helper.assertTrue(spec != null, path + " should be a registered program");
                         helper.assertTrue(spec.hostScope() == HostScope.SERVER,
                                 path + " belongs on a server in a rack");

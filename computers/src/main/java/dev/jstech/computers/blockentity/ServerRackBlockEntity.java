@@ -43,6 +43,7 @@ import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.KnotRepository;
 import dev.jstech.computers.program.MessengerLog;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackChassis;
@@ -388,6 +389,19 @@ public class ServerRackBlockEntity extends BlockEntity
             // A machine that has just been mounted has never tested itself, so it owes one before anything else.
             phases.setNeedsPost(true);
         }
+
+        /** Lets go of what {@code program} was keeping on this machine; false when it keeps nothing of its own. */
+        boolean forget(final ResourceLocation program) {
+            if (Programs.MESSENGER_SERVICE.equals(program)) {
+                messenger.clear();
+                return true;
+            }
+            if (Programs.KNOT_HUB.equals(program)) {
+                knot.clear();
+                return true;
+            }
+            return false;
+        }
     }
 
     private final Map<Integer, UnitState> unitStates = new HashMap<>();
@@ -461,9 +475,9 @@ public class ServerRackBlockEntity extends BlockEntity
      * Whether the machine at {@code slot} runs the given server service. Services are what give a
      * server its role: the hardware decides what it can do, the software decides what it does.
      */
-    public boolean hasService(final int slot, final String programPath) {
+    public boolean hasService(final int slot, final ResourceLocation program) {
         final ComputerConsoleState console = consoleOf(slot);
-        return console != null && console.isInstalled("jsc:" + programPath);
+        return console != null && console.isInstalled(program.toString());
     }
 
     /** Whether the machine at {@code slot} is switched on and its hardware can run at all. */
@@ -472,15 +486,15 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     /**
-     * The row of the first machine in this rack that is running {@code programPath}, or {@code -1}.
+     * The row of the first machine in this rack that is running {@code program}, or {@code -1}.
      *
      * <p>A service only answers on a machine that is up: a server somebody switched off is as good as one
      * that never had the software, which is the whole reason the service lives on a machine rather than on
      * the network.
      */
-    public int serviceSlot(final String programPath) {
+    public int serviceSlot(final ResourceLocation program) {
         for (int slot = 0; slot < CAPACITY_U; slot++) {
-            if (hasService(slot, programPath) && unitRunning(slot)) {
+            if (hasService(slot, program) && unitRunning(slot)) {
                 return slot;
             }
         }
@@ -506,24 +520,16 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     /** Lets go of whatever the service taken off the machine at {@code slot} was keeping. */
-    public void serviceUninstalled(final int slot, final String programPath) {
-        if (consoleOf(slot) == null) {
-            return;
+    public void serviceUninstalled(final int slot, final ResourceLocation program) {
+        // Every other service keeps nothing of its own, so there is nothing to write back for it.
+        if (consoleOf(slot) != null && unitState(slot).forget(program)) {
+            flushServices(slot);
         }
-        final UnitState state = unitState(slot);
-        switch (programPath) {
-            case "messenger_service" -> state.messenger.clear();
-            case "knothub" -> state.knot.clear();
-            default -> {
-                return; // every other service keeps nothing of its own, so there is nothing to let go of
-            }
-        }
-        flushServices(slot);
     }
 
     @Override
-    public void serviceUninstalled(final String programPath) {
-        serviceUninstalled(soleComputerSlot(), programPath);
+    public void serviceUninstalled(final ResourceLocation program) {
+        serviceUninstalled(soleComputerSlot(), program);
     }
 
     /** Writes the in-memory console of the unit at {@code slot} back onto its Server item. */

@@ -23,8 +23,10 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.program.KnotRepository;
 import dev.jstech.computers.program.MessengerLog;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -53,10 +55,6 @@ public final class SocialPayloads {
     /** The longest line of a comparison that travels, which is what the payload's own cap allows. */
     private static final int MAX_DIFF_LINE = 240;
 
-    /** The services these two windows talk to, by the path each is installed under. */
-    private static final String MESSENGER_SERVICE = "messenger_service";
-    private static final String KNOT_SERVICE = "knothub";
-
     private SocialPayloads() {
     }
 
@@ -77,7 +75,7 @@ public final class SocialPayloads {
     private static void handleMessenger(final MessengerActionPayload payload, final ServerPlayer player,
                                         final ServerLevel level) {
         final ServerServices.Host host = serviceFor(player, level,
-                payload.hostPos(), payload.monitorPos(), MESSENGER_SERVICE);
+                payload.hostPos(), payload.monitorPos(), Programs.MESSENGER_SERVICE);
         if (host == null) {
             /*
              * No server on this network is running it. The window is told so rather than left waiting, and
@@ -181,7 +179,7 @@ public final class SocialPayloads {
     private static void handleKnot(final KnotActionPayload payload, final ServerPlayer player,
                                    final ServerLevel level) {
         final ServerServices.Host host = serviceFor(player, level,
-                payload.hostPos(), payload.monitorPos(), KNOT_SERVICE);
+                payload.hostPos(), payload.monitorPos(), Programs.KNOT_HUB);
         final KnotRepository repository = host == null ? null : host.rack().knotAt(host.slot());
         if (repository == null) {
             PacketDistributor.sendToPlayer(player, new KnotStatePayload(
@@ -306,7 +304,7 @@ public final class SocialPayloads {
     /* Shared */
 
     /**
-     * The server on the player's network that is running {@code programPath}, or null when none is.
+     * The server on the player's network that is running {@code program}, or null when none is.
      *
      * <p>The service runs somewhere else than the computer in front of the player, which is what makes it
      * worth having: two players at two different machines reach the same one. Null is a complete answer,
@@ -315,10 +313,10 @@ public final class SocialPayloads {
     @Nullable
     private static ServerServices.Host serviceFor(final ServerPlayer player, final ServerLevel level,
                                                   final BlockPos hostPos, final BlockPos monitorPos,
-                                                  final String programPath) {
+                                                  final ResourceLocation program) {
         final IComputerTerminalHost terminal = niHost(player, level, hostPos, monitorPos);
         return terminal == null ? null
-                : ServerServices.find(level, terminal.networkUuid(), programPath);
+                : ServerServices.find(level, terminal.networkUuid(), program);
     }
 
     private static FileType typeOf(final String path) {

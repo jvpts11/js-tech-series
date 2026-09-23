@@ -16,6 +16,7 @@ import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.computers.storage.DriveVolumes;
@@ -831,7 +832,7 @@ public final class RackUnitGameTests {
                 net.minecraft.core.Direction.EAST);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    helper.assertTrue(!rack.hasService(0, "load_balancer"),
+                    helper.assertTrue(!rack.hasService(0, Programs.LOAD_BALANCER),
                             "a fresh server runs no services");
 
                     /*

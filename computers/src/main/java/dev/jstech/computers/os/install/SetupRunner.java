@@ -8,6 +8,7 @@
 package dev.jstech.computers.os.install;
 
 import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.blockentity.IMainframeService;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.DesktopMenu;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -145,37 +147,30 @@ public final class SetupRunner {
     /**
      * The install itself, on the last tick.
      *
-     * <p>The Mainframe's services are flags on the Mainframe as well as entries in its console; they
-     * used to be flipped by each install path separately, which is how a Mirror installed from its disc
-     * once ended up listed but not serving.
+     * <p>The Mainframe's services live on the Mainframe as well as in its console; they used to be
+     * switched on by each install path separately, which is how a Mirror installed from its disc once
+     * ended up listed but not serving.
      */
     private static void finish(final IOsHost host, final ComputerConsoleState console, final SetupJob job) {
         final String id = job.programId();
-        final String path = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
+        final ResourceLocation program = ResourceLocation.parse(id);
+        final String path = program.getPath();
+        final IMainframeService service = host instanceof MainframeBlockEntity mainframe
+                ? mainframe.service(program) : null;
         if (job.removing()) {
             console.uninstall(id);
-            if (host instanceof MainframeBlockEntity mainframe) {
-                switch (path) {
-                    case "iqlengine" -> mainframe.uninstallIqlEngine();
-                    case "automation_engine" -> mainframe.uninstallAutomationEngine();
-                    case "mirror" -> mainframe.uninstallMirror();
-                    default -> { }
-                }
+            if (service != null) {
+                service.uninstall();
             }
             /*
              * Whatever the service was keeping goes with it. A machine that kept a conversation nobody can
              * reach any more, and went on paying for it in disk space, would be keeping a ghost.
              */
-            host.serviceUninstalled(path);
+            host.serviceUninstalled(program);
             return;
         }
-        if (host instanceof MainframeBlockEntity mainframe) {
-            switch (path) {
-                case "iqlengine" -> mainframe.installIqlEngine();
-                case "automation_engine" -> mainframe.installAutomationEngine();
-                case "mirror" -> mainframe.installMirror();
-                default -> { }
-            }
+        if (service != null) {
+            service.install();
         }
         console.install(id);
         console.setInstalledVersion(id, ProgramVersions.of(id));

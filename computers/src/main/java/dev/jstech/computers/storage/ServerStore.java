@@ -9,6 +9,7 @@ package dev.jstech.computers.storage;
 
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.rack.RaidMode;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -55,7 +56,7 @@ public final class ServerStore implements IWeightedStore {
              */
             rack.markStorageChanged(serverSlot);
             rack.setChanged();
-        }, rack.hasService(serverSlot, "load_balancer"));
+        }, rack.hasService(serverSlot, Programs.LOAD_BALANCER));
     }
 
     public long capacity() {

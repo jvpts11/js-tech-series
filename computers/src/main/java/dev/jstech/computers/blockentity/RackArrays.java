@@ -10,6 +10,7 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.item.RackGadgetItem;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RaidMode;
@@ -273,7 +274,8 @@ final class RackArrays {
      * learns to doubt it. A fragmented index still wants a vacuum by hand.
      */
     private void notifyHotPull(final int topRow) {
-        if (!(rack.getLevel() instanceof ServerLevel serverLevel) || rack.hasService(topRow, "integrity_monitor")) {
+        if (!(rack.getLevel() instanceof ServerLevel serverLevel)
+                || rack.hasService(topRow, Programs.INTEGRITY_MONITOR)) {
             return;
         }
         final ItemStack stack = rack.serverSlot(topRow);

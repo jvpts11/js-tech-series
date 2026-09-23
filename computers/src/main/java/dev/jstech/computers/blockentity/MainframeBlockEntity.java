@@ -69,6 +69,7 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.Item;
@@ -1601,12 +1602,14 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
      */
     @Override
     public boolean serviceRunning(final ProgramSpec service) {
-        return switch (service.id().getPath()) {
-            case "iqlengine" -> isIqlEngineActive();
-            case "automation_engine" -> isAutomationEngineActive();
-            case "mirror" -> isMirrorActive();
-            default -> super.serviceRunning(service);
-        };
+        final IMainframeService own = service(service.id());
+        return own != null ? own.active() : super.serviceRunning(service);
+    }
+
+    /** The service that program installs on a Mainframe, or {@code null} when it is not one. */
+    @Nullable
+    public IMainframeService service(final ResourceLocation programId) {
+        return services.service(programId);
     }
 
     public IqlCatalog iqlCatalog() {

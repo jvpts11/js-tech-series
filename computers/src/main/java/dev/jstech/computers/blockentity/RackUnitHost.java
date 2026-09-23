@@ -50,8 +50,8 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
-    public void serviceUninstalled(final String programPath) {
-        rack.serviceUninstalled(row, programPath);
+    public void serviceUninstalled(final ResourceLocation program) {
+        rack.serviceUninstalled(row, program);
     }
 
     @Override

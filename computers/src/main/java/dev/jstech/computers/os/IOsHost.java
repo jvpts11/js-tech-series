@@ -312,9 +312,9 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
      * of it: what it kept is unreachable the moment the software is gone, and a machine still paying disk
      * space for it would be keeping something nobody can ever read again.
      *
-     * @param programPath the program's path, without its namespace
+     * @param program the program that was taken off
      */
-    default void serviceUninstalled(final String programPath) {
+    default void serviceUninstalled(final ResourceLocation program) {
     }
 
     /** This machine's memory ledger, see {@link MachineMemory#ledgerOf}. */

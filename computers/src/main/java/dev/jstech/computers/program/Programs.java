@@ -78,6 +78,30 @@ public final class Programs {
     public static final ResourceLocation AUTOMATION_MANAGER =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "automation_manager");
 
+    /** The Mirror: the Mainframe service every package manager on the network installs from. */
+    public static final ResourceLocation MIRROR =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mirror");
+
+    /** The Messenger Service: keeps the network's conversations, on a server in a rack. */
+    public static final ResourceLocation MESSENGER_SERVICE =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "messenger_service");
+
+    /** KnotHub: keeps the source a network is working on, revision by revision, on a server in a rack. */
+    public static final ResourceLocation KNOT_HUB =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "knothub");
+
+    /** Predictive Cache: a server service that keeps its bay's most-wanted items staged, so reads come back sooner. */
+    public static final ResourceLocation PREDICTIVE_CACHE =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "predictive_cache");
+
+    /** Load Balancer: a server service that spreads writes over the bay's drives instead of filling them in turn. */
+    public static final ResourceLocation LOAD_BALANCER =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "load_balancer");
+
+    /** Integrity Monitor: a server service that re-reads its own bay after a drive is pulled while it runs. */
+    public static final ResourceLocation INTEGRITY_MONITOR =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "integrity_monitor");
+
     private Programs() {
     }
 

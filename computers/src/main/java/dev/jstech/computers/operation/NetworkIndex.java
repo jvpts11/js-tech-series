@@ -19,6 +19,7 @@ import dev.jstech.computers.operation.index.IndexHealth;
 import dev.jstech.computers.operation.index.ItemLocation;
 import dev.jstech.computers.operation.index.StorageAllocator;
 import dev.jstech.computers.operation.index.StorageLockTable;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.network.NetworkSystem;
@@ -281,7 +282,7 @@ public final class NetworkIndex {
         if (rack.hasCacheCard(slot)) {
             cut += RackGadgetItem.CACHE_LATENCY_CUT_PERCENT;
         }
-        if (rack.hasService(slot, "predictive_cache")) {
+        if (rack.hasService(slot, Programs.PREDICTIVE_CACHE)) {
             cut += PREDICTIVE_CACHE_CUT_PERCENT;
         }
         return cut <= 0 ? tier.latencyTicks()

@@ -10,6 +10,7 @@ package dev.jstech.computers.machine;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.blockentity.IMainframeService;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
@@ -83,20 +84,8 @@ public final class PackageService {
     /** Whether the named program is on this machine: installed at its console, or a service flag on a Mainframe. */
     public boolean has(final ProgramSpec spec) {
         final BlockEntity machine = (BlockEntity) this.terminal;
-        if (machine instanceof MainframeBlockEntity mf) {
-            switch (spec.id().getPath()) {
-                case "iqlengine" -> {
-                    return mf.isIqlEngineInstalled();
-                }
-                case "automation_engine" -> {
-                    return mf.isAutomationEngineInstalled();
-                }
-                case "mirror" -> {
-                    return mf.isMirrorInstalled();
-                }
-                default -> {
-                }
-            }
+        if (machine instanceof MainframeBlockEntity mf && mf.service(spec.id()) != null) {
+            return mf.service(spec.id()).installed();
         }
         final ComputerConsoleState console = this.terminal.console();
         return console != null && console.isInstalled(spec.id().toString());
@@ -391,12 +380,8 @@ public final class PackageService {
         final ComputerConsoleState console = this.terminal.console();
         // A Mainframe service switches its flag on directly (a prebuilt daemon, so no source build either).
         if (machine instanceof MainframeBlockEntity mf && spec.kind() == ProgramKind.SERVICE) {
-            final boolean switchedOn = switch (spec.id().getPath()) {
-                case "iqlengine" -> mf.installIqlEngine();
-                case "automation_engine" -> mf.installAutomationEngine();
-                case "mirror" -> mf.installMirror();
-                default -> false;
-            };
+            final IMainframeService service = mf.service(spec.id());
+            final boolean switchedOn = service != null && service.install();
             /*
              * And listed in the console as well as switched on, which is what the disc's setup does. Only
              * the flag was set here, so a service installed from a package manager was serving while the
