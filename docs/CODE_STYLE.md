@@ -61,6 +61,18 @@ The build holds this in place. A test counts the fixed words a player reads in e
 never have more than it had: fixed prose added anywhere fails the build. Every translation must carry every key of
 the English file and nothing else, so a missing sentence in any language fails it too.
 
+## Blocks and items
+
+A block or an item is declared once, through its mod's content (the core's `ModContent`), with everything about
+it: what it is made from, its English name, how it and its item look, what it drops, the creative tab section that
+shows it, the block tags it belongs to (such as the tool that mines it). Its block entity is registered with every
+block that makes it. Nothing else lists it: the block state, the models, the English, the loot table and the tags are
+generated from the declaration by `runData`.
+
+A game test checks every declared block and item of every mod: that it was declared rather than registered by hand,
+has its block state and models (and that no model is left over for an item that is gone), a name, a place in a
+creative tab, the drop it declares, a tool that mines it when it needs one, and a block entity that accepts it.
+
 ## Imports and layout
 
 - No unused imports, no wildcard imports.

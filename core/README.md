@@ -22,6 +22,10 @@ The things two or more mods of the series need, or that define the language they
 - Multiblock shapes and validation, the configuration system, the series' internal event bus, persistence
   helpers, the unit formatter, and the GUI toolkit the screens of every mod are drawn with, including the
   [components](../docs/UI_COMPONENTS.md) desktop programs are composed from.
+- The way every mod declares its blocks and items: once each, with its name, look, drops, creative tab
+  section and tags, from which the data generation writes the block state, the models, the English, the loot
+  and the tags, so none of them is a list kept by hand. The same goes for text: a sentence a player reads is
+  declared once beside the code that says it, and the English file is made from those declarations.
 
 ## Configuration
 
