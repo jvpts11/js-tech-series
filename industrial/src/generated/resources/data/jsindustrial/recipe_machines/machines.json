@@ -1,0 +1,11 @@
+{
+  "jsindustrial:compressing": [
+    "jsindustrial:compressor"
+  ],
+  "jsindustrial:macerating": [
+    "jsindustrial:macerator"
+  ],
+  "minecraft:smelting": [
+    "jsindustrial:electric_furnace"
+  ]
+}

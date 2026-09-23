@@ -7,16 +7,16 @@
  */
 package dev.jstech.industrial.datagen;
 
+import dev.jstech.core.datagen.ContentData;
+import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.JsIndustrial;
-import net.minecraft.data.DataGenerator;
-import net.minecraft.data.PackOutput;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 /**
- * Entry point for the industrial mod's data generation, run via {@code ./gradlew :industrial:runData}.
+ * Entry point for the industrial mod's data generation, run via {@code ./gradlew :industrial:runData}: what its
+ * declared machines need, and its recipes.
  */
 @EventBusSubscriber(modid = JsIndustrial.MODID)
 public final class JsIndustrialDataGenerators {
@@ -26,19 +26,7 @@ public final class JsIndustrialDataGenerators {
 
     @SubscribeEvent
     public static void onGatherData(final GatherDataEvent event) {
-        final DataGenerator generator = event.getGenerator();
-        final PackOutput output = generator.getPackOutput();
-        final ExistingFileHelper existingFiles = event.getExistingFileHelper();
-
-        generator.addProvider(event.includeClient(),
-                new JsIndustrialBlockStateProvider(output, existingFiles));
-        generator.addProvider(event.includeClient(),
-                new JsIndustrialItemModelProvider(output, existingFiles));
-        generator.addProvider(event.includeClient(),
-                new JsIndustrialLanguageProvider(output));
-        generator.addProvider(event.includeServer(),
-                new JsIndustrialLootTableProvider(output, event.getLookupProvider()));
-        generator.addProvider(event.includeServer(),
-                new JsIndustrialRecipeProvider(output, event.getLookupProvider()));
+        final ContentData data = ContentData.gather(event, IndustrialModule.CONTENT);
+        data.server(new JsIndustrialRecipeProvider(data.output(), data.lookup()));
     }
 }

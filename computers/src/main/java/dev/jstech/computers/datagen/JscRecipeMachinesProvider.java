@@ -10,7 +10,7 @@ package dev.jstech.computers.datagen;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.crafting.RecipeMachines;
+import dev.jstech.core.content.RecipeMachineFiles;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
@@ -59,7 +59,7 @@ public final class JscRecipeMachinesProvider implements DataProvider {
             root.add(type, machines);
         });
         final Path path = output.getOutputFolder(PackOutput.Target.DATA_PACK)
-                .resolve(JsComputers.MODID).resolve(RecipeMachines.FOLDER).resolve("vanilla.json");
+                .resolve(JsComputers.MODID).resolve(RecipeMachineFiles.FOLDER).resolve("vanilla.json");
         return DataProvider.saveStable(cache, root, path);
     }
 }

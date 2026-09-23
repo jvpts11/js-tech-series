@@ -429,4 +429,3 @@ industrial/src/main/java/dev/jstech/industrial/client/CoalGeneratorScreen.java 1
 industrial/src/main/java/dev/jstech/industrial/client/CompressorScreen.java 1
 industrial/src/main/java/dev/jstech/industrial/client/ElectricFurnaceScreen.java 1
 industrial/src/main/java/dev/jstech/industrial/client/MaceratorScreen.java 1
-industrial/src/main/java/dev/jstech/industrial/datagen/JsIndustrialLanguageProvider.java 2

@@ -46,6 +46,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   in red and the rest in the prompt's own colour.
 
 ### Fixed
+- The Macerator, Electric Furnace, Compressor and Coal Generator can be mined in survival. They need the right
+  tool to come away, but no tool counted as right for them, so breaking one gave nothing back and took a long
+  time doing it. A pickaxe is now their tool: it mines them at a pickaxe's pace, and they drop themselves.
 - screenfetch draws every logo as neofetch draws it. Ubuntu's was another, older logo copied with mistakes, and
   Debian's had a stray quote. Each was printed in one colour, readout included; now the art is in its own
   colours (Ubuntu red and white, Debian white with a red centre, Gentoo magenta and white) and the user, host
