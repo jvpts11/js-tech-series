@@ -73,6 +73,21 @@ A game test checks every declared block and item of every mod: that it was decla
 has its block state and models (and that no model is left over for an item that is gone), a name, a place in a
 creative tab, the drop it declares, a tool that mines it when it needs one, and a block entity that accepts it.
 
+## Colours
+
+A colour belongs to a palette, not to the code that paints with it.
+
+- A palette is a record whose every component is one colour, named for what it colours (`text`, `accent`, `edge`).
+- Declare it once with the core's `Palettes.declare(id, colours)`, as a `static final` in a class marked
+  `@PaletteHolder`. The id says whose it is and what it colours, such as `jsc:desktop/frames_xp`.
+- `runData` writes each palette to `assets/<mod>/palettes/<path>.json`, as `#AARRGGBB` per role. A resource pack
+  replaces that file to recolour the screens; a role its file leaves out keeps the declared colour.
+- Paint with `palette.get()` each time; never keep a copy of the colours, or a change of pack will not reach it.
+- A palette holder is loaded only on a client, so it can be a client class.
+
+The build holds this in place as it does text: a test counts the colours written into each source file as numbers
+(`0xAARRGGBB`, outside a palette declaration), and a file may never have more than it had.
+
 ## Imports and layout
 
 - No unused imports, no wildcard imports.
