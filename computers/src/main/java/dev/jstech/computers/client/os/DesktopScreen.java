@@ -42,6 +42,7 @@ import dev.jstech.computers.os.CdeAppGroup;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.MachineMemory;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
@@ -1447,7 +1448,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private int windowRamMb(final String key) {
         final OsDef os = OsRegistry.getOs(osId);
         return os == null ? 0
-                : IOsHost.windowRamMb(key, os, chrome, spec -> sourceBuilt.contains(spec.id().getPath()));
+                : MachineMemory.windowRamMb(key, os, chrome, spec -> sourceBuilt.contains(spec.id().getPath()));
     }
 
     /** What the open windows hold together; a dialog is part of its program, not another copy of it. */

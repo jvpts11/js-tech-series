@@ -12,7 +12,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
-import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.MachineMemory;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
@@ -201,8 +201,8 @@ public final class PortsGameTests {
         final int asPackage = kde.ramMbOn(os);
         helper.assertTrue(kde.ramMbOn(os, true) == SourceAdvantage.of(asPackage) && kde.ramMbOn(os, true) < asPackage,
                 "built here it holds a tenth less; package " + asPackage + ", built " + kde.ramMbOn(os, true));
-        final int window = IOsHost.windowRamMb("Network Management Studio", os, null, spec -> false);
-        final int builtWindow = IOsHost.windowRamMb("Network Management Studio", os, null, spec -> true);
+        final int window = MachineMemory.windowRamMb("Network Management Studio", os, null, spec -> false);
+        final int builtWindow = MachineMemory.windowRamMb("Network Management Studio", os, null, spec -> true);
         helper.assertTrue(builtWindow < window, "and so does its window; " + window + " against " + builtWindow);
         helper.succeed();
     }

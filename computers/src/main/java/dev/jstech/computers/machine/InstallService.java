@@ -213,7 +213,7 @@ public final class InstallService {
         final boolean everyStep = state.distro() == LiveInstallState.Distro.ARCH
                 ? ComputersServerConfig.archEveryStep() : ComputersServerConfig.gentooEveryStep();
         final LiveTurn result = state.run(line, new LiveInstallState.Env(
-                devices, this.packages.reachable(), this.level.getGameTime(), computer.cpuCores(),
+                devices, this.packages.mirror().reachable(), this.level.getGameTime(), computer.cpuCores(),
                 computer.maxCpuMhz(), SetupTiming.eraFactor(era),
                 uefi, this.level.getDayTime(), everyStep, this.packages::whileInstalling));
         machine.setChanged();

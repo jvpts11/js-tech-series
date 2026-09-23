@@ -22,6 +22,7 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.fs.StoredFile;
+import dev.jstech.computers.program.DesktopLayout;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
@@ -703,7 +704,7 @@ public final class OsFilesystemGameTests {
                     final dev.jstech.computers.program.ComputerConsoleState state =
                             new dev.jstech.computers.program.ComputerConsoleState();
                     state.install("jsc:nms");
-                    state.setWallpaper("winxp");
+                    state.desktop().setWallpaper("winxp");
                     state.setComputerName("HAL");
                     final net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
                     state.save(tag);
@@ -713,8 +714,8 @@ public final class OsFilesystemGameTests {
                     loaded.load(tag);
                     helper.assertTrue(loaded.isInstalled("jsc:nms"),
                             "an installed program must persist across a reload");
-                    helper.assertTrue("winxp".equals(loaded.wallpaper()),
-                            "the chosen wallpaper must persist; got " + loaded.wallpaper());
+                    helper.assertTrue("winxp".equals(loaded.desktop().wallpaper()),
+                            "the chosen wallpaper must persist; got " + loaded.desktop().wallpaper());
                     helper.assertTrue("HAL".equals(loaded.computerName()),
                             "the computer name must persist; got " + loaded.computerName());
                 })
@@ -731,29 +732,21 @@ public final class OsFilesystemGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     final dev.jstech.computers.program.ComputerConsoleState state =
                             new dev.jstech.computers.program.ComputerConsoleState();
-                    final int cell =
-                            dev.jstech.computers.program.ComputerConsoleState.packCell(2, 3);
-                    state.setIconCell("file:Notes.txt", cell);
-                    state.setIconCell("app:Network",
-                            dev.jstech.computers.program.ComputerConsoleState.packCell(1, 0));
+                    final int cell = DesktopLayout.packCell(2, 3);
+                    state.desktop().setIconCell("file:Notes.txt", cell);
+                    state.desktop().setIconCell("app:Network", DesktopLayout.packCell(1, 0));
                     final net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
                     state.save(tag);
 
                     final dev.jstech.computers.program.ComputerConsoleState loaded =
                             new dev.jstech.computers.program.ComputerConsoleState();
                     loaded.load(tag);
-                    final Integer back = loaded.iconCells().get("file:Notes.txt");
+                    final Integer back = loaded.desktop().iconCells().get("file:Notes.txt");
                     helper.assertTrue(back != null && back == cell,
                             "a pinned icon's cell must persist; got " + back);
-                    helper.assertTrue(
-                            dev.jstech.computers.program.ComputerConsoleState
-                                    .cellColumn(back) == 2,
-                            "the persisted column must be 2");
-                    helper.assertTrue(
-                            dev.jstech.computers.program.ComputerConsoleState
-                                    .cellRow(back) == 3,
-                            "the persisted row must be 3");
-                    helper.assertTrue(loaded.iconCells().containsKey("app:Network"),
+                    helper.assertTrue(DesktopLayout.cellColumn(back) == 2, "the persisted column must be 2");
+                    helper.assertTrue(DesktopLayout.cellRow(back) == 3, "the persisted row must be 3");
+                    helper.assertTrue(loaded.desktop().iconCells().containsKey("app:Network"),
                             "a pinned launcher's cell must persist too");
                 })
                 .thenSucceed();

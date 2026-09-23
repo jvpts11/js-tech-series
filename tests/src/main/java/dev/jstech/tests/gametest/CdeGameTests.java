@@ -234,16 +234,16 @@ public final class CdeGameTests {
         final CdeStyle chosen = CdeStyle.DEFAULT.withPalette("Desert").withBackdrop(1, CdeBackdrop.DOTS);
         final ServerCliComputer cli = new ServerCliComputer(machine, helper.getLevel());
         final String said = text(CliCommands.shellFor(cli, 52).run("config cdestyle " + chosen.encoded(), cli));
-        helper.assertTrue(machine.console().cdeStyle().equals(chosen), "the setting takes the style; got "
-                + machine.console().cdeStyle() + " after " + said);
+        helper.assertTrue(machine.console().desktop().cdeStyle().equals(chosen), "the setting takes the style; got "
+                + machine.console().desktop().cdeStyle() + " after " + said);
 
         final CompoundTag saved = machine.saveWithoutMetadata(helper.getLevel().registryAccess());
-        machine.console().setCdeStyle(CdeStyle.DEFAULT);
+        machine.console().desktop().setCdeStyle(CdeStyle.DEFAULT);
         machine.loadWithComponents(saved, helper.getLevel().registryAccess());
-        helper.assertTrue(machine.console().cdeStyle().equals(chosen), "and it comes back from a save");
+        helper.assertTrue(machine.console().desktop().cdeStyle().equals(chosen), "and it comes back from a save");
 
         CliCommands.shellFor(cli, 52).run("config cdestyle Nobody;no,such", cli);
-        helper.assertTrue(machine.console().cdeStyle().equals(CdeStyle.DEFAULT),
+        helper.assertTrue(machine.console().desktop().cdeStyle().equals(CdeStyle.DEFAULT),
                 "a style nobody could draw is kept as the one a workstation starts with");
         helper.succeed();
     }

@@ -77,13 +77,13 @@ public final class MachineConfigService {
                 return ICliComputer.OpResult.ok("name set");
             }
             case "wallpaper" -> {
-                console.setWallpaper(value == null ? "" : value.trim());
+                console.desktop().setWallpaper(value == null ? "" : value.trim());
                 machine.setChanged();
                 return ICliComputer.OpResult.ok("wallpaper set");
             }
             case "cdestyle" -> {
                 // Read forgivingly and kept as read, so a style nobody could draw is never what is stored.
-                console.setCdeStyle(CdeStyle.parse(value));
+                console.desktop().setCdeStyle(CdeStyle.parse(value));
                 machine.setChanged();
                 return ICliComputer.OpResult.ok("cdestyle set");
             }
@@ -94,15 +94,15 @@ public final class MachineConfigService {
                 switch (preset) {
                     case "ocean" -> {
                         console.settings().setAccent(0xFF12A26F);
-                        console.setWallpaper("winxp");
+                        console.desktop().setWallpaper("winxp");
                     }
                     case "slate" -> {
                         console.settings().setAccent(0xFF7B52C9);
-                        console.setWallpaper("win11");
+                        console.desktop().setWallpaper("win11");
                     }
                     default -> {
                         console.settings().setAccent(0);
-                        console.setWallpaper("");
+                        console.desktop().setWallpaper("");
                     }
                 }
                 machine.setChanged();

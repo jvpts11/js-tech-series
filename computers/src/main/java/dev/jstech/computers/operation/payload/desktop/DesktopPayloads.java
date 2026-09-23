@@ -8,26 +8,16 @@
 package dev.jstech.computers.operation.payload.desktop;
 
 import dev.jstech.computers.advancement.JscEvents;
-import dev.jstech.computers.os.OsDisks;
-import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
-import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
-import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.SettingsApp;
 import dev.jstech.computers.client.os.SystemMonitorApp;
 import dev.jstech.computers.client.os.TaskManagerApp;
-import dev.jstech.computers.hardware.ComputerBuild;
-import dev.jstech.computers.item.DiskItem;
-import dev.jstech.computers.item.HardwareTooltip;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.DesktopBalloonPayload;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
-import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.EndProcessPayload;
 import dev.jstech.computers.operation.payload.RequestDesktopFilesPayload;
 import dev.jstech.computers.operation.payload.RequestSettingsPayload;
@@ -35,46 +25,21 @@ import dev.jstech.computers.operation.payload.SetDesktopPrefsPayload;
 import dev.jstech.computers.operation.payload.SetIconPositionPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
-import dev.jstech.computers.operation.payload.files.TrashPayloads;
-import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
-import dev.jstech.computers.os.OsDef;
-import dev.jstech.computers.os.OsRegistry;
-import dev.jstech.computers.os.ProgramKind;
-import dev.jstech.computers.os.ProgramSpec;
-import dev.jstech.computers.os.RamLedger;
-import dev.jstech.computers.os.fs.DiskFilesystem;
-import dev.jstech.computers.os.fs.DiskTrash;
-import dev.jstech.computers.os.fs.SystemLayout;
-import dev.jstech.computers.os.fs.TrashFolder;
-import dev.jstech.computers.program.ComputerConsoleState;
-import dev.jstech.computers.program.ComputerSettings;
-import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.ServerCliComputer;
-import dev.jstech.computers.storage.DriveVolumes;
-import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import java.util.List;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.DirectionalPayloadHandler;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static dev.jstech.computers.operation.payload.files.FileAccess.filesystemKindOf;
-
 /**
- * The desktop's payloads: its files and icons, its preferences and settings, and the windows it leaves open.
+ * The desktop's payloads: its files and icons, its preferences and settings, and the windows it leaves open. What
+ * a desktop is handed when it opens is put together by {@link DesktopListings}, and what the Settings windows read
+ * by {@link SettingsSnapshots}.
  */
 public final class DesktopPayloads {
 
@@ -114,134 +79,22 @@ public final class DesktopPayloads {
 
     private static void handleRequestDesktopFiles(final RequestDesktopFilesPayload payload, final ServerPlayer player,
                                                   final ServerLevel level) {
-        final List<DiskFilesPayload.WireFile> wire = new ArrayList<>();
-        // wallpaper, computer name, CDE's style
-        final String[] prefs = {"", "", ""};
-        // accent override (0=none), brightness, clock12h (0/1), taskbar centered (1) vs left (0), dark (0/1), scale (%)
-        final int[] deskPrefs = {0, 100, 0, 1, 0, 0};
-        final List<String> programs = new ArrayList<>();
-        final List<String> sourceBuilt = new ArrayList<>();
-        final List<DesktopFilesPayload.WireIconCell> iconCells = new ArrayList<>();
-        final List<String> pinned = new ArrayList<>();
-        final Map<String, String> defaultApps = new LinkedHashMap<>();
-        boolean trashFull = false;
-        if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
-            final ItemStack disk = computer.systemDisk();
-            final TrashFolder trash = TrashPayloads.trashOf(computer);
-            trashFull = trash != null && !disk.isEmpty() && DiskTrash.holdsAnything(disk, trash);
-            final FilesystemKind kind =
-                    filesystemKindOf(computer);
-            prefs[0] = computer.console().wallpaper();
-            prefs[1] = computer.console().computerName();
-            prefs[2] = computer.console().cdeStyle().encoded();
-            pinned.addAll(computer.console().settings().pinned());
-            defaultApps.putAll(computer.console().settings().defaultApps());
-            deskPrefs[0] = computer.console().settings().accent();
-            deskPrefs[1] = computer.console().settings().brightness();
-            deskPrefs[2] = computer.console().settings().clock12h() ? 1 : 0;
-            deskPrefs[3] = computer.console().settings().taskbarCentered() ? 1 : 0;
-            deskPrefs[4] = computer.console().settings().darkMode() ? 1 : 0;
-            deskPrefs[5] = computer.console().settings().guiScale();
-            /*
-             * Installed programs that open as their own desktop window (vs. the always-present built-in
-             * apps). Each is gated by the installed OS, hardware and host scope; the built-in apps are
-             * added on the client, so only installable desktop apps flow through this list.
-             */
-            for (final ProgramSpec spec
-                    : OsRegistry.programs()) {
-                final OsDef hostOs = computer.installedOs();
-                if (spec.installable()
-                        && spec.kind() == ProgramKind.APP
-                        && hostOs != null && spec.platforms().contains(hostOs.platform())
-                        && installedAndAllowed(computer, spec.id())) {
-                    programs.add(spec.id().getPath());
-                }
-            }
-            for (final String id : computer.console().builtFromSource()) {
-                final ResourceLocation built = ResourceLocation.tryParse(id);
-                if (built != null) {
-                    sourceBuilt.add(built.getPath());
-                }
-            }
-            /*
-             * The desktop folder only exists on a hierarchical (desktop OS) disk; a POSIX kernel keeps it
-             * under the home directory, the DOS family under Users/Public.
-             */
-            if (!disk.isEmpty()
-                    && kind == FilesystemKind.HIERARCHICAL) {
-                final OsDef osDef = computer.installedOs();
-                final String desktopDir = SystemLayout.desktopDirFor(osDef,
-                        osDef == null ? null : OsRegistry.getKernel(
-                                osDef.kernelId()));
-                for (final String d
-                        : DiskFilesystem.listDirs(
-                                disk, desktopDir, kind)) {
-                    wire.add(new DiskFilesPayload.WireFile(d, "", 0L, false, true));
-                }
-                for (final DiskFilesystem.FileEntry e
-                        : DiskFilesystem.list(
-                                disk, desktopDir, kind)) {
-                    wire.add(new DiskFilesPayload.WireFile(
-                            e.path(), e.type().extension(), e.weight(), e.readOnly(), false));
-                }
-            }
-            /*
-             * Pinned icon cells. A "file:" pin whose desktop file no longer exists is dropped here and
-             * forgotten from the console state too, so a stale position never haunts a later file that
-             * happens to take the same name (self-healing). "app:" launcher pins are always kept.
-             */
-            final Set<String> desktopNames = new HashSet<>();
-            for (final DiskFilesPayload.WireFile f : wire) {
-                desktopNames.add(baseNameOf(f.path()));
-            }
-            boolean prunedAnyPin = false;
-            for (final Map.Entry<String, Integer> e
-                    : new ArrayList<>(computer.console().iconCells().entrySet())) {
-                final String key = e.getKey();
-                if (key.startsWith("file:") && !desktopNames.contains(key.substring("file:".length()))) {
-                    computer.console().clearIconCell(key);
-                    prunedAnyPin = true;
-                    continue;
-                }
-                iconCells.add(new DesktopFilesPayload.WireIconCell(key, e.getValue()));
-            }
-            if (prunedAnyPin) {
-                computer.setChanged();
-            }
-        }
+        final IOsHost shown = level.getBlockEntity(payload.hostPos()) instanceof IOsHost machine ? machine : null;
         /*
          * The machine's open windows travel with the desktop listing, so the desktop that is opening
          * restores them from the machine and not from a cache in this client.
          */
-        final IOsHost shown = level.getBlockEntity(payload.hostPos()) instanceof IOsHost machine ? machine : null;
         PacketDistributor.sendToPlayer(player, DesktopWindowsPayload.of(payload.hostPos(),
                 shown == null ? List.of() : shown.openWindows(), shown == null ? 0 : shown.desktopWorkspace()));
-        /*
-         * Programs the player installed from the Mirror get a launcher of their own, so the icon on
-         * the desktop is not only for what came with the machines.
-         */
-        final List<DesktopFilesPayload.WireCommunity> community = new ArrayList<>();
-        if (level.getBlockEntity(payload.hostPos())
-                instanceof IComputerTerminalHost terminal) {
-            final var console = terminal.console();
-            if (console != null) {
-                for (final var one : console.community()) {
-                    community.add(new DesktopFilesPayload.WireCommunity(
-                            one.name(), one.icon(), one.entry()));
-                }
-            }
-        }
-        PacketDistributor.sendToPlayer(player, new DesktopFilesPayload(wire, prefs[0], prefs[2], prefs[1], programs,
-                sourceBuilt, iconCells,
-                new DesktopFilesPayload.Prefs(deskPrefs[0], deskPrefs[1], deskPrefs[2] != 0,
-                        deskPrefs[3] != 0, deskPrefs[4] != 0, deskPrefs[5]), community, pinned, defaultApps,
-                trashFull));
+        final IComputerTerminalHost terminal =
+                level.getBlockEntity(payload.hostPos()) instanceof IComputerTerminalHost host ? host : null;
+        PacketDistributor.sendToPlayer(player, DesktopListings.of(shown, terminal));
     }
 
     private static void handleSetDesktopPrefs(final SetDesktopPrefsPayload payload, final ServerPlayer player,
                                               final ServerLevel level) {
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
-            computer.console().setWallpaper(payload.wallpaper());
+            computer.console().desktop().setWallpaper(payload.wallpaper());
             computer.console().setComputerName(payload.computerName());
             computer.setChanged();
         }
@@ -250,7 +103,7 @@ public final class DesktopPayloads {
     private static void handleRequestSettings(final RequestSettingsPayload payload, final ServerPlayer player,
                                               final ServerLevel level) {
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
-            PacketDistributor.sendToPlayer(player, buildSettingsSnapshot(computer, payload.hostPos()));
+            PacketDistributor.sendToPlayer(player, SettingsSnapshots.of(computer, payload.hostPos()));
         }
     }
 
@@ -261,8 +114,7 @@ public final class DesktopPayloads {
                 && computer.programs().stop(payload.id())) {
             JscEvents.award(player, JscEvents.TASK_ENDED);
             computer.setChanged();
-            PacketDistributor.sendToPlayer(player, buildSettingsSnapshot(
-                    (IOsHost) computer, payload.hostPos()));
+            PacketDistributor.sendToPlayer(player, SettingsSnapshots.of((IOsHost) computer, payload.hostPos()));
         }
     }
 
@@ -276,7 +128,7 @@ public final class DesktopPayloads {
              */
             new ServerCliComputer(host, level)
                     .setConfig(payload.key(), payload.value());
-            PacketDistributor.sendToPlayer(player, buildSettingsSnapshot(computer, payload.hostPos()));
+            PacketDistributor.sendToPlayer(player, SettingsSnapshots.of(computer, payload.hostPos()));
         }
     }
 
@@ -286,126 +138,16 @@ public final class DesktopPayloads {
         TaskManagerApp.accept(payload);
     }
 
-    /** Reads the full Settings snapshot (editable knobs + read-only specs, disks and programs) from a computer. */
-    private static SettingsSnapshotPayload buildSettingsSnapshot(
-            final IOsHost computer,
-            final BlockPos pos) {
-        final ComputerConsoleState console = computer.console();
-        final ComputerSettings st = console.settings();
-        final ItemStack sysDisk = computer.systemDisk();
-        final int netshare = DiskItem.publicPermille(sysDisk);
-        final int cpuCount = computer.installedCpus();
-        final String cpuLabel = cpuCount + (cpuCount == 1 ? " CPU" : " CPUs");
-        final ResourceLocation osId = computer.installedOsId();
-        final String osLabel = osId == null ? "none" : osId.getPath();
-        final OsDef os = computer.installedOs();
-        final String platform = os == null ? "-" : os.platform().label();
-        final List<String> installed = new ArrayList<>(console.installed());
-        final List<SettingsSnapshotPayload.DiskUse> disks = new ArrayList<>();
-        for (final ItemStack stack : computer.diskStacks()) {
-            if (stack.getItem() instanceof DiskItem diskItem) {
-                disks.add(new SettingsSnapshotPayload.DiskUse(stack.getHoverName().getString(),
-                        diskItem.spec().capacityMb(), usedMb(stack), stack == sysDisk));
-            }
-        }
-        // The memory ledger: what the system, its desktop, its services and its windows hold right now.
-        final RamLedger ledger = computer.ramLedger();
-        final List<SettingsSnapshotPayload.RamUse> ramUses = new ArrayList<>();
-        for (final RamLedger.Entry entry : ledger.entries()) {
-            ramUses.add(new SettingsSnapshotPayload.RamUse(
-                    entry.name(), entry.mb(), entry.heldBytes(), entry.kind().serializedName(), entry.id()));
-        }
-        final List<SettingsSnapshotPayload.ShareRow> shares = new ArrayList<>();
-        for (final ComputerSettings.Share share : st.shares()) {
-            shares.add(new SettingsSnapshotPayload.ShareRow(share.name(), share.path(), share.writable()));
-        }
-        return new SettingsSnapshotPayload(pos, console.wallpaper(), console.computerName(),
-                st.accent(), st.clock12h(), st.guiScale(), st.brightness(),
-                String.valueOf(st.defaultSaveDrive()), st.removableAutoOpen(), st.themePreset(),
-                st.taskbarCentered(), st.darkMode(),
-                netshare, cpuLabel, computer.maxCpuMhz(), architectureOf(computer),
-                computer.ramTotalMb(), computer.totalVramMb(),
-                osLabel, platform, installed, disks, ledger.usedMb(), ramUses, shares, st.remoteAllowed());
-    }
-
-    /**
-     * How many megabytes of a disk are taken: what is stored on it, its files, and the room a system on it keeps
-     * for itself. Megabytes follow the disk's own era, since what an item costs there is what its usage is worth.
-     */
-    static long usedMb(final ItemStack stack) {
-        if (!(stack.getItem() instanceof DiskItem diskItem)) {
-            return 0L;
-        }
-        final long mbEq = StorageKey.MB_EQ_PER_ITEM;
-        final long mbPerItem = diskItem.spec().era().mbPerItem();
-        final ResourceLocation systemId = OsDisks.systemOn(stack);
-        final OsDef system = systemId != null ? OsRegistry.getOs(systemId) : null;
-        final long reserved = system != null ? system.footprintItemsOn(diskItem.spec().era()) * mbEq : 0L;
-        return (DriveVolumes.usedWeight(stack) + DiskFilesystem.filesWeight(stack) + reserved) * mbPerItem / mbEq;
-    }
-
-    /** How the machine's architecture reads on a screen, or empty when it has no processor to read it from. */
-    private static String architectureOf(final IOsHost computer) {
-        if (!(computer instanceof AbstractComputerBlockEntity machine)) {
-            return "";
-        }
-        final ComputerBuild build = machine.currentBuild();
-        return build == null || build.cpus().isEmpty() ? ""
-                : HardwareTooltip.architecture(build.cpus().getFirst());
-    }
-
-    /** The last path segment (after the final {@code /}), or the whole path when it has no slash. */
-    private static String baseNameOf(final String path) {
-        final int slash = path.lastIndexOf('/');
-        return slash >= 0 && slash < path.length() - 1 ? path.substring(slash + 1) : path;
-    }
-
     private static void handleSetIconPosition(final SetIconPositionPayload payload, final ServerPlayer player,
                                               final ServerLevel level) {
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
-            computer.console().setIconCell(payload.iconKey(), payload.cell());
+            computer.console().desktop().setIconCell(payload.iconKey(), payload.cell());
             computer.setChanged();
         }
     }
 
     private static void handleDesktopFiles(final DesktopFilesPayload payload, final Player player) {
         DesktopScreen.acceptDesktop(payload);
-    }
-
-    /** Whether {@code progId} is installed on the computer AND runnable on its current OS (version + specs). */
-    private static boolean installedAndAllowed(
-            final IOsHost computer,
-            final ResourceLocation progId) {
-        return computer.console() != null
-                && computer.console().isInstalled(progId.toString())
-                && hostScopeAllows(OsRegistry.getProgram(progId),
-                        computer)
-                && OsRegistry.canRunProgram(computer.installedOsId(), progId, computer.maxCpuMhz(),
-                        computer.totalVramMb(), computer.console().builtFromSource(progId.toString()));
-    }
-
-    /** Whether a program's host scope permits it on this computer (a null spec places no restriction). */
-    private static boolean hostScopeAllows(
-            final ProgramSpec spec,
-            final IOsHost computer) {
-        if (spec == null) {
-            return true;
-        }
-        return switch (spec.hostScope()) {
-            case ANY -> true;
-            case MAINFRAME -> computer
-                    instanceof MainframeBlockEntity;
-            case CRAFTING_COMPUTER -> computer
-                    instanceof CraftingComputerBlockEntity;
-            /*
-             * A rack answers as the machine it is showing, so scoping to SERVER means "this session
-             * is a rack server", which is exactly where the headless server services belong.
-             */
-            case SERVER -> computer
-                    instanceof ServerRackBlockEntity;
-            case CLUSTER_MANAGEMENT_COMPUTER -> computer
-                    instanceof ClusterManagementComputerBlockEntity;
-        };
     }
 
     /** A player left the monitor: the layout they left behind becomes the machine's. */

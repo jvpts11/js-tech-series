@@ -177,7 +177,7 @@ public final class PortsService {
         }
         final boolean building = (build || installing) && !DiskFilesystem.exists(system.disk(),
                 PortsTree.buildCookie(port));
-        if (building && this.packages.mirrorMainframe() == null) {
+        if (building && !this.packages.mirror().reachable()) {
             return refused(unfetchable(port) + stoppedIn(shown));
         }
         return ICliPackages.Installing.running(new TtyScriptProcess(PortsVoices.make(this.voiceOf(port),
@@ -190,7 +190,7 @@ public final class PortsService {
     @Nullable
     private String snapshotRefusal(final ItemStack disk, final boolean fetch, final boolean extract,
                                    final boolean update, final boolean treeThere) {
-        if (fetch && this.packages.mirrorMainframe() == null) {
+        if (fetch && !this.packages.mirror().reachable()) {
             return "Looking up the Mirror for the ports tree... none found.\nNo mirrors remaining, giving up.";
         }
         if ((extract || update) && !fetch && !DiskFilesystem.exists(disk, PortsTree.SNAPSHOT_TAG)) {
@@ -212,8 +212,8 @@ public final class PortsService {
                     + "      You may wish to ``make deinstall'' and install this port again\n"
                     + "      by ``make reinstall'' to upgrade it properly.";
         }
-        final ICliComputer.OpResult tooOld = this.packages.eraGate(port);
-        final ICliComputer.OpResult elsewhere = this.packages.wrongMachine(port);
+        final ICliComputer.OpResult tooOld = this.packages.gates().era(port);
+        final ICliComputer.OpResult elsewhere = this.packages.gates().machine(port);
         final ICliComputer.OpResult broken = tooOld != null ? tooOld : elsewhere;
         if (broken != null) {
             return "===>  " + pkg + " is marked as broken: " + broken.message() + ".";
@@ -226,7 +226,7 @@ public final class PortsService {
         if (!(machine instanceof IOsHost host) || this.terminal.console() == null) {
             return "===>  " + pkg + " cannot install: this computer cannot store installed programs.";
         }
-        if (!this.packages.fits(host, port, true)) {
+        if (!InstallGates.fits(host, port, true)) {
             return "===>  " + pkg + " cannot install: this machine is short of the processor or the free disk"
                     + " space it needs.";
         }

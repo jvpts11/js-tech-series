@@ -11,10 +11,8 @@ import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.NetworkReadService;
-import dev.jstech.computers.os.boot.BootSequence;
-import dev.jstech.computers.os.boot.SystemWelcome;
-import dev.jstech.computers.os.install.InstallerFlow;
-import dev.jstech.computers.os.install.OsInstallJob;
+import dev.jstech.computers.os.boot.IBootingMachine;
+import dev.jstech.computers.os.install.IInstallingMachine;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.peripheral.IPeripheralOwner;
@@ -22,7 +20,6 @@ import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.List;
-import java.util.function.Predicate;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +30,11 @@ import org.jetbrains.annotations.Nullable;
  * it directly on their block entities; a rack implements it by delegating to the server mounted in
  * it, so every access route (a directly linked monitor, a KVM channel, ssh, remote control)
  * converges on one pipeline instead of duplicating it per machine shape.
+ *
+ * <p>Its phases on the way up and down are {@link IBootingMachine}'s, installing a system on it is
+ * {@link IInstallingMachine}'s, and what its memory holds is worked out by {@link MachineMemory}.
  */
-public interface IOsHost extends IPeripheralOwner {
+public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingMachine {
 
     /** Whether the machine is powered on with a valid build. */
     boolean isRunning();
@@ -45,42 +45,6 @@ public interface IOsHost extends IPeripheralOwner {
      * network, and still holding whatever was open.
      */
     void setPowered(boolean on);
-
-    /** Whether the next session must run POST before handing over to the boot manager. */
-    boolean needsPost();
-
-    void setNeedsPost(boolean value);
-
-    /**
-     * Starts the machine over, letting whatever is running say goodbye first.
-     *
-     * <p>Different from asking for a self-test outright: a running system closes its programs and shows what
-     * it shows while it does, and the self-test begins when it has finished. A host with nothing to show, or
-     * nothing running, starts over at once, which is what the plain form does.
-     */
-    default void restart() {
-        setNeedsPost(true);
-    }
-
-    /**
-     * Whether the machine is closing its system down on its way to starting over.
-     *
-     * <p>A phase of its own, and a monitor opened during it has to find the machine in it: without this, a
-     * player who looked away mid-restart came back to the desktop of a system that was being closed.
-     */
-    default boolean goingDown() {
-        return false;
-    }
-
-    /** How long that closing-down takes in all, so a screen joining it knows how far along it is. */
-    default int downTotal() {
-        return 0;
-    }
-
-    /** The ticks it still has to run, so a monitor opened part way through joins it where it is. */
-    default int downRemaining() {
-        return 0;
-    }
 
     /**
      * Whether an installation is waiting for this machine to finish testing itself.
@@ -95,35 +59,6 @@ public interface IOsHost extends IPeripheralOwner {
         return installer() != null || installing() != null
                 || (console() != null && console().liveInstall() != null);
     }
-
-    /**
-     * Whether this machine is standing at the end of a self-test that found nothing to boot.
-     *
-     * <p>A machine that answers yes is waiting for a key at its own failure, and a monitor opened on it shows
-     * that rather than its setup. A host with no self-test to stand at answers no.
-     */
-    default boolean haltedAtPost() {
-        return false;
-    }
-
-    /** A key was pressed at that failure: the machine stops standing there. */
-    default void resumeFromHalt() {
-    }
-
-    /** The value of {@link #pendingInstallSlot()} when no installation is waiting for its reboot. */
-    int NO_PENDING_INSTALL = -2;
-
-    /**
-     * The disk slot a guided installer has just written a system to ({@code -1} for the default
-     * disk), while the machine still sits in that installer waiting for the reboot that will boot
-     * it; {@link #NO_PENDING_INSTALL} otherwise. A real machine does not become the new system the
-     * moment the files are on the disk: until it restarts, the installer is what is running, so
-     * leaving the monitor and coming back must find the installer's "reboot" prompt, not a booted
-     * desktop. Any restart or power change clears it.
-     */
-    int pendingInstallSlot();
-
-    void setPendingInstallSlot(int slot);
 
     /**
      * The desktop environment this machine actually booted, or {@code null} when it booted to a shell.
@@ -196,14 +131,8 @@ public interface IOsHost extends IPeripheralOwner {
     /** Sets the firmware's preferred boot disk slot ({@code -1} = the first disk with a system). */
     void setBootDiskSlot(int slot);
 
-    /** The disk slot a guided OS install targets by default. */
-    int defaultInstallSlot();
-
     /** Erases everything the disk in {@code slot} carries; returns whether anything was formatted. */
     boolean formatDisk(int slot);
-
-    /** Installs the given OS onto {@code preferredSlot} (or the default target); true on success. */
-    boolean installOs(ResourceLocation osId, int preferredSlot);
 
     /** Whether a bootable system disk is present. */
     boolean hasOs();
@@ -267,36 +196,6 @@ public interface IOsHost extends IPeripheralOwner {
     }
 
     /**
-     * A system being copied onto this machine's disks right now, or nothing.
-     *
-     * <p>A machine that cannot hold one answers nothing and is installed the moment it is asked, which is what
-     * a host with nowhere to keep the work has to do.
-     */
-    @Nullable
-    default OsInstallJob installing() {
-        return null;
-    }
-
-    /** Starts, replaces or ends the copy this machine is doing; a host that keeps none does nothing. */
-    default void setInstalling(@Nullable final OsInstallJob job) {
-    }
-
-    /** The installer this machine is in: the page it is on and what has been answered so far. */
-    @Nullable
-    default InstallerFlow installer() {
-        return null;
-    }
-
-    /** Puts the machine in an installer, or takes it out of one. */
-    default void setInstaller(@Nullable final InstallerFlow flow) {
-    }
-
-    /** Whether this machine can hold a copy of its own rather than being written to there and then. */
-    default boolean keepsInstalls() {
-        return false;
-    }
-
-    /**
      * Whether a monitor watching this machine's block is showing THIS machine right now.
      *
      * <p>Every machine in a rack shares the rack's position, and its monitor shows one of them at a time, so a
@@ -308,76 +207,6 @@ public interface IOsHost extends IPeripheralOwner {
 
     /** Tells the world this machine's state changed, so it is written with the block that holds it. */
     default void markChanged() {
-    }
-
-    /**
-     * What the system this machine boots remembers about being greeted, and whether its welcome comes back.
-     *
-     * <p>A host that does not keep it answers that nobody has met its system, which is what a machine with no
-     * disk of its own means anyway.
-     */
-    default SystemWelcome systemWelcome() {
-        return SystemWelcome.UNSEEN;
-    }
-
-    /** Writes the greeting back onto the disk the system is on; a host that cannot keep it does nothing. */
-    default void setSystemWelcome(final SystemWelcome welcome) {
-    }
-
-    /*
-     * Where the machine is on its way up. A host that runs no phases of its own answers that it is past all of
-     * them, which is what a machine reached through something other than its own power amounts to: whoever asks
-     * is told there is nothing to watch rather than being shown a self-test that will never end.
-     */
-
-    /** The ticks the self-test still has to run, for a monitor opened while it is under way. */
-    default int postRemaining() {
-        return 0;
-    }
-
-    /** Whether the machine is stopped at its boot manager, waiting to be told what to start. */
-    default boolean atBootMenu() {
-        return false;
-    }
-
-    /** The ticks left before the menu boots its first entry by itself, or zero once a key has stopped it. */
-    default int menuRemaining() {
-        return 0;
-    }
-
-    /** A key was pressed at the menu: the machine waits there for a choice. */
-    default void holdBootMenu() {
-    }
-
-    /** Leaves the menu and brings the chosen system up. */
-    default void leaveBootMenu() {
-    }
-
-    /**
-     * Leaves the menu to start the machine over from its self-test, which is what a boot manager's own Reboot
-     * is for. No system is up yet to say goodbye, so nothing is shown closing: the machine simply starts again.
-     */
-    default void restartFromBootMenu() {
-    }
-
-    /** Whether the system is coming up on this machine right now. */
-    default boolean booting() {
-        return false;
-    }
-
-    /** The ticks the system still needs, for a monitor opened while it comes up. */
-    default int bootRemaining() {
-        return 0;
-    }
-
-    /** How long the coming-up under way takes in all, for the bar on the screen watching it. */
-    default int bootTotal() {
-        return 0;
-    }
-
-    /** What this machine's system shows while it comes up, which is nothing at all for a machine with none. */
-    default BootSequence bootSequence() {
-        return BootSequence.NONE;
     }
 
     /** The parts this machine is built from right now, or nothing when it is not built from parts. */
@@ -393,11 +222,6 @@ public interface IOsHost extends IPeripheralOwner {
     default int processorBits() {
         final ComputerBuild build = this.currentBuild();
         return build == null || build.cpus().isEmpty() ? 64 : build.cpus().getFirst().architecture().bits();
-    }
-
-    /** Whether a drive this machine reaches holds something it could boot instead of one of its own disks. */
-    default boolean hasBootableMedium() {
-        return false;
     }
 
     /**
@@ -428,9 +252,6 @@ public interface IOsHost extends IPeripheralOwner {
 
     /** The disk footprint the installed OS reserves, in item-equivalents. */
     long reservedByOs();
-
-    /** Installs the given OS onto the default target slot; true on success. */
-    boolean installOs(ResourceLocation osId);
 
     /** Marks the machine's persistent state dirty after a mutation. */
     void setChanged();
@@ -496,102 +317,18 @@ public interface IOsHost extends IPeripheralOwner {
     default void serviceUninstalled(final String programPath) {
     }
 
-    /**
-     * This machine's memory ledger: the running system's own share, the desktop package it booted, the
-     * services it is running, the programs it is running and the windows it has open, each weighed under the
-     * installed system. A machine that is off or has no system holds nothing.
-     */
+    /** This machine's memory ledger, see {@link MachineMemory#ledgerOf}. */
     default RamLedger ramLedger() {
-        final RamLedger ledger = new RamLedger(ramTotalMb());
-        final OsDef os = installedOs();
-        if (os == null || !isRunning()) {
-            return ledger;
-        }
-        ledger.add(os.displayName(), os.ramMb(), RamLedger.Kind.SYSTEM);
-        final ComputerConsoleState console = console();
-        final ResourceLocation desktopId = bootedDesktopId();
-        final DesktopEnvironmentDef desktop = desktopId != null ? OsRegistry.getDesktop(desktopId) : null;
-        if (desktopId != null && !desktopId.equals(os.id())) {
-            // A desktop package on a Linux system; a Frames desktop is the system itself and is counted above.
-            final ProgramSpec pack = OsRegistry.getProgram(desktopId);
-            if (pack != null) {
-                ledger.add(desktop != null ? desktop.displayName() : pack.displayName(),
-                        pack.ramMbOn(os, builtHere(console, pack)), RamLedger.Kind.DESKTOP);
-            }
-        }
-        if (console != null) {
-            for (final ProgramSpec spec : OsRegistry.programs()) {
-                /*
-                 * By the whole id, which is how every install path writes it down. Asking by the path alone
-                 * matched nothing, so no service ever weighed anything here and none of them was listed as
-                 * running, whatever the player had installed.
-                 */
-                if (spec.kind() == ProgramKind.SERVICE && console.isInstalled(spec.id().toString())
-                        && serviceRunning(spec)) {
-                    ledger.add(spec.displayName(), spec.ramMbOn(os, builtHere(console, spec)),
-                            RamLedger.Kind.SERVICE);
-                }
-            }
-        }
-        final MachinePrograms scripts = programs();
-        if (scripts != null) {
-            for (final var one : scripts.view()) {
-                ledger.add(one.name(), one.heapMb(), one.heldBytes(), RamLedger.Kind.PROCESS, one.id());
-            }
-        }
-        for (final OpenWindow window : openWindows()) {
-            ledger.add(window.key(), windowRamMb(window.key(), os, desktop, spec -> builtHere(console, spec)),
-                    RamLedger.Kind.WINDOW);
-        }
-        return ledger;
+        return MachineMemory.ledgerOf(this);
     }
 
     /** Everything the session holds before the player opens a window: the system, its desktop, its services. */
     default int ramReservedMb() {
-        final RamLedger ledger = ramLedger();
-        return ledger.usedMb() - ledger.usedMb(RamLedger.Kind.WINDOW);
+        return MachineMemory.reservedMb(this);
     }
 
-    /**
-     * The leading windows of {@code windows} that fit beside everything else this machine holds, in order;
-     * the first past the budget and everything after it are dropped, so the oldest windows survive.
-     */
+    /** The leading windows that fit beside everything else this machine holds, see {@link MachineMemory}. */
     default List<OpenWindow> windowsWithinBudget(final List<OpenWindow> windows) {
-        final OsDef os = installedOs();
-        if (os == null) {
-            return windows;
-        }
-        final ResourceLocation desktopId = bootedDesktopId();
-        final DesktopEnvironmentDef desktop = desktopId != null ? OsRegistry.getDesktop(desktopId) : null;
-        final ComputerConsoleState console = console();
-        return RamLedger.withinBudget(windows,
-                window -> windowRamMb(window.key(), os, desktop, spec -> builtHere(console, spec)),
-                ramTotalMb() - ramReservedMb());
-    }
-
-    /**
-     * The megabytes a window opened under {@code key} holds: its program's weight under {@code os}, found by
-     * the label the desktop gives the program, else by the program's own name; a window no program answers to
-     * weighs what a bundled program of that system does.
-     *
-     * @param builtHere which programs the machine built from source, which hold a little less
-     */
-    static int windowRamMb(final String key, final OsDef os, @Nullable final DesktopEnvironmentDef desktop,
-                           final Predicate<ProgramSpec> builtHere) {
-        ProgramSpec spec = desktop != null ? desktop.programFor(key) : null;
-        if (spec == null) {
-            for (final ProgramSpec candidate : OsRegistry.programs()) {
-                if (candidate.displayName().equals(key)) {
-                    spec = candidate;
-                    break;
-                }
-            }
-        }
-        return spec != null ? spec.ramMbOn(os, builtHere.test(spec)) : RamLedger.bundledWeightMb(os.ramMb());
-    }
-
-    /** Whether the machine whose console that is built that program from source; nothing is, with no console. */
-    private static boolean builtHere(@Nullable final ComputerConsoleState console, final ProgramSpec spec) {
-        return console != null && console.builtFromSource(spec.id().toString());
+        return MachineMemory.withinBudget(this, windows);
     }
 }

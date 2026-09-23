@@ -61,7 +61,7 @@ public final class WorkstationInfoPayloads {
                 network == null ? "" : network.value().toString(), systemOf(system),
                 KernelNames.architecture(platform, computer.processorBits()), windowSystemOf(computer),
                 WelcomePayloads.cpuName(computer), computer.maxCpuMhz(), computer.ramTotalMb(),
-                computer.ramLedger().usedMb(), computer.totalVramMb(), diskMb, DesktopPayloads.usedMb(disk));
+                computer.ramLedger().usedMb(), computer.totalVramMb(), diskMb, SettingsSnapshots.usedMb(disk));
     }
 
     private static void handle(final RequestWorkstationInfoPayload payload, final ServerPlayer player,

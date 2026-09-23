@@ -769,12 +769,12 @@ public final class OsCliGameTests {
                     helper.assertTrue(cli.setConfig("theme", "ocean").ok(), "config theme ocean must succeed");
                     helper.assertTrue(mainframe.console().settings().accent() == 0xFF12A26F,
                             "ocean must set the teal accent");
-                    helper.assertTrue(mainframe.console().wallpaper().equals("winxp"),
+                    helper.assertTrue(mainframe.console().desktop().wallpaper().equals("winxp"),
                             "ocean must set the winxp wallpaper");
                     helper.assertTrue(cli.setConfig("theme", "system").ok(), "config theme system must succeed");
                     helper.assertTrue(mainframe.console().settings().accent() == 0,
                             "system must clear the accent");
-                    helper.assertTrue(mainframe.console().wallpaper().isEmpty(),
+                    helper.assertTrue(mainframe.console().desktop().wallpaper().isEmpty(),
                             "system must clear the wallpaper");
                 })
                 .thenSucceed();
