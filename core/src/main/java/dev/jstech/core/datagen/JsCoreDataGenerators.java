@@ -8,16 +8,14 @@
 package dev.jstech.core.datagen;
 
 import dev.jstech.core.JsCore;
-import net.minecraft.data.DataGenerator;
-import net.minecraft.data.PackOutput;
+import dev.jstech.core.registry.CoreItems;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 /**
- * Entry point for the core's data generation, run via {@code ./gradlew :core:runData}: the material items'
- * models, names and common tags.
+ * Entry point for the core's data generation, run via {@code ./gradlew :core:runData}: what its declared content
+ * needs, and the common tags of the materials.
  */
 @EventBusSubscriber(modid = JsCore.MODID)
 public final class JsCoreDataGenerators {
@@ -27,15 +25,7 @@ public final class JsCoreDataGenerators {
 
     @SubscribeEvent
     public static void onGatherData(final GatherDataEvent event) {
-        final DataGenerator generator = event.getGenerator();
-        final PackOutput output = generator.getPackOutput();
-        final ExistingFileHelper existingFiles = event.getExistingFileHelper();
-
-        generator.addProvider(event.includeClient(),
-                new JsCoreItemModelProvider(output, existingFiles));
-        generator.addProvider(event.includeClient(),
-                new JsCoreLanguageProvider(output));
-        generator.addProvider(event.includeServer(),
-                new JsCoreItemTagsProvider(output, event.getLookupProvider(), existingFiles));
+        final ContentData data = ContentData.gather(event, CoreItems.CONTENT);
+        data.server(new JsCoreItemTagsProvider(data.output(), data.lookup(), data.existingFiles()));
     }
 }

@@ -38,7 +38,8 @@ import org.junit.jupiter.api.Test;
  * <p>What counts is a string literal with a letter in it that is either handed to something that puts words in
  * front of a player (a screen drawing, a message, a terminal line, the answer a command gives), or reads as a
  * sentence, two words or more. What does not count is what is not for a player, or is data on purpose: a log line,
- * an exception's message, an annotation, a sentence's own English where it is declared, and words wrapped in
+ * an exception's message, an annotation, a sentence's own English where it is declared (a {@code TextKey}, or the
+ * name a block or an item is declared with, {@code .named(...)} in its builder), and words wrapped in
  * {@code Text.literal}, which is how data is marked so it can be found.
  */
 class HardcodedTextTest {
@@ -117,6 +118,8 @@ class HardcodedTextTest {
                         drawString(font, "Power", 1, 2);
                         // "a comment with words"
                         KEY = TextKey.of("jsc.key", "the English itself");
+                        BLOCK = CONTENT.block("x", X::new)
+                                .named("Electric Furnace").register();
                     }
                     @Deprecated(since = "the annotation text")
                     void g() { }
@@ -143,6 +146,8 @@ class HardcodedTextTest {
                             && (this.name.endsWith("Exception") || this.name.endsWith("Error")))
                     || ("TextKey".equals(this.receiver) && "of".equals(this.name))
                     || (this.constructor && "TextKey".equals(this.name))
+                    // A declaration's name, chained on its builder: the English the language file is made from.
+                    || ("named".equals(this.name) && this.receiver == null)
                     || ("Text".equals(this.receiver) && "literal".equals(this.name));
         }
 

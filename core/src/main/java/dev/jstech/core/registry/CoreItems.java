@@ -8,9 +8,9 @@
 package dev.jstech.core.registry;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.content.ModContent;
 import dev.jstech.core.material.MaterialItems;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
  * The items the core registers: the material catalogue (the dusts, plates and other forms the mods of the
@@ -19,17 +19,17 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  */
 public final class CoreItems {
 
-    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(JsCore.MODID);
+    public static final ModContent CONTENT = new ModContent(JsCore.MODID);
 
     static {
         // Fills the material catalogue as soon as this class loads, before anything can look an item up.
-        MaterialItems.register(ITEMS);
+        MaterialItems.register(CONTENT);
     }
 
     private CoreItems() {
     }
 
     public static void register(final IEventBus modEventBus) {
-        ITEMS.register(modEventBus);
+        CONTENT.register(modEventBus);
     }
 }

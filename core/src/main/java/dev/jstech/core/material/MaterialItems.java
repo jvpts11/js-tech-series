@@ -7,19 +7,18 @@
  */
 package dev.jstech.core.material;
 
+import dev.jstech.core.content.ModContent;
 import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.registries.DeferredItem;
-import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.EnumMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
- * Registers one {@link DeferredItem} for every (material, form) pair where
- * {@link ModMaterial#activeModForms()} is non-empty.
+ * Declares one item for every (material, form) pair where {@link ModMaterial#activeModForms()} is non-empty.
  *
- * <p>Call {@link #register(DeferredRegister.Items)} exactly once, immediately after declaring
- * the {@code DeferredRegister.Items} in the module class. Retrieve items via
+ * <p>Call {@link #register(ModContent)} exactly once, with the content that owns the catalogue. Retrieve items via
  * {@link #get(ModMaterial, MaterialForm)}.
  */
 public final class MaterialItems {
@@ -30,17 +29,18 @@ public final class MaterialItems {
     private MaterialItems() {}
 
     /**
-     * Iterates every active (material × mod-form) pair and registers a plain {@code Item} for each.
-     * Must be called before any field that calls {@link #get}.
+     * Declares a plain item for every active (material × mod-form) pair, named after the material and the form
+     * ("Iron Dust", "Copper Plate"), so activating a form is enough to have its item named. Must be called before any
+     * field that calls {@link #get}.
      */
-    public static void register(final DeferredRegister.Items items) {
+    public static void register(final ModContent content) {
         for (final ModMaterial mat : ModMaterial.values()) {
             if (mat.activeModForms().isEmpty()) continue;
             final EnumMap<MaterialForm, DeferredItem<Item>> formMap = new EnumMap<>(MaterialForm.class);
             for (final MaterialForm form : mat.activeModForms()) {
-                formMap.put(form, items.register(
-                        form.itemKey(mat.materialName()),
-                        () -> new Item(new Item.Properties())));
+                formMap.put(form, content.item(form.itemKey(mat.materialName()), Item::new)
+                        .named(capitalise(mat.materialName()) + " " + capitalise(form.name()))
+                        .register());
             }
             REGISTRY.put(mat, formMap);
         }
@@ -60,5 +60,10 @@ public final class MaterialItems {
                     + ". Check activeModForms or call MaterialItems.register() first");
         }
         return formMap.get(form);
+    }
+
+    private static String capitalise(final String word) {
+        final String lower = word.toLowerCase(Locale.ROOT);
+        return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
     }
 }
