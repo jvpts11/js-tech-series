@@ -65,7 +65,6 @@ computers/src/main/java/dev/jstech/computers/client/os/MotifMenu.java 1
 computers/src/main/java/dev/jstech/computers/client/os/NetworkInteractorApp.java 17
 computers/src/main/java/dev/jstech/computers/client/os/NetworkManagerApp.java 15
 computers/src/main/java/dev/jstech/computers/client/os/OpenWithPopup.java 1
-computers/src/main/java/dev/jstech/computers/client/os/OsSkin.java 259
 computers/src/main/java/dev/jstech/computers/client/os/PaintApp.java 3
 computers/src/main/java/dev/jstech/computers/client/os/PanelTray.java 20
 computers/src/main/java/dev/jstech/computers/client/os/PatternStudioApp.java 1

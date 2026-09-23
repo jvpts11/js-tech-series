@@ -13,27 +13,36 @@ import dev.jstech.computers.gui.CdeScheme;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.core.client.gui.skin.ISkin;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.function.Supplier;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * The one drawing framework every desktop program paints through, so a program looks like the OS it runs on
- * rather than carrying its own hardcoded chrome. A skin is resolved from the installed OS id ({@code frames_95
- * / frames_xp / frames_11}). Each skin is a <em>distinct design</em>, not a recolour of one layout: every skin
- * holds its own palette and its own {@link Form} shape language, faithful to the approved style guide. It is
- * the core's {@link ISkin}, so the core's components paint through it as well.
+ * rather than carrying its own hardcoded chrome. A skin is resolved from the installed desktop. Each skin is a
+ * <em>distinct design</em>, not a recolour of one layout: its {@link Form} is drawn by a chrome of its own, and the
+ * skin adds the colours that are its alone. It is the core's {@link ISkin}, so the core's components paint through
+ * it as well.
  *
  * <ul>
- *   <li>{@link Form#BEVEL} (Frames 95): raised/sunken 3D bevels, solid navy title, grey chrome, square.</li>
+ *   <li>{@link Form#BEVEL} (Frames 95): raised/sunken 3D bevels, a navy title, grey chrome, square.</li>
  *   <li>{@link Form#LUNA} (Frames XP): blue gradients, white title text, green active tab; only the TOP
  *       window corners are rounded (XP kept square bottom corners).</li>
- *   <li>{@link Form#FLAT} (Frames 11): light chrome with DARK title text, flat fills, a thin accent line,
- *       all four window corners gently rounded.</li>
+ *   <li>{@link Form#FLAT} (Frames 11 and the modern Linux desktops): light chrome with DARK title text, flat
+ *       fills, a thin accent line, all four window corners gently rounded.</li>
  * </ul>
+ *
+ * <p>Every colour is a declared palette, which a resource pack can recolour: each skin's own,
+ * {@code jsc:skin/<skin>}, and each form's chrome, {@code jsc:chrome/<form>}. They are asked for each time something
+ * is painted, so a change of pack reaches a program that is already open.
  */
+@PaletteHolder
 public final class OsSkin implements ISkin {
 
     /**
@@ -56,129 +65,63 @@ public final class OsSkin implements ISkin {
         MINIMIZE, MAXIMIZE, RESTORE, CLOSE
     }
 
-    private final DesktopTheme theme;
-    private final Form form;
+    private final IFormChrome chrome;
+    private final Supplier<SkinColours> colours;
+    /** The accent chosen for this computer in Settings, over the skin's own, or {@code 0} for none. */
+    private final int accentOverride;
     private final int topRadius;
     private final int bottomRadius;
-    private final int titleText;
     private final boolean titleShadow;
-    private final int windowBg;
-    private final int windowBorder;
-    private final int accent;
-    private final int text;
-    private final int dim;
-    private final int fieldBg;
-    private final int listSelectBg;
-    private final int listSelectText;
-    private final int listHoverBg;
-    /** Whether this is a dark-theme variant (only the flat Frames 11 skin has one); flips the flat chrome. */
-    private final boolean dark;
     /** The desktop environment id path this skin belongs to (the icon set and wallpaper key). */
     private final String desktopPath;
-    /** The palette a Motif skin is drawn from, and null for every other form. */
-    @Nullable
-    private final CdePalette motif;
 
-    private OsSkin(final DesktopTheme theme, final Form form, final int topRadius, final int bottomRadius,
-                   final int titleText, final boolean titleShadow, final int windowBg, final int windowBorder,
-                   final int accent, final int text, final int dim, final int fieldBg,
-                   final int listSelectBg, final int listSelectText, final int listHoverBg, final boolean dark) {
-        this(theme, form, topRadius, bottomRadius, titleText, titleShadow, windowBg, windowBorder, accent, text,
-                dim, fieldBg, listSelectBg, listSelectText, listHoverBg, dark, switch (form) {
-                    case LUNA -> "frames_xp";
-                    case FLAT -> "frames_11";
-                    default -> "frames_95";
-                });
-    }
-
-    private OsSkin(final DesktopTheme theme, final Form form, final int topRadius, final int bottomRadius,
-                   final int titleText, final boolean titleShadow, final int windowBg, final int windowBorder,
-                   final int accent, final int text, final int dim, final int fieldBg,
-                   final int listSelectBg, final int listSelectText, final int listHoverBg, final boolean dark,
-                   final String desktopPath) {
-        this(theme, form, topRadius, bottomRadius, titleText, titleShadow, windowBg, windowBorder, accent, text,
-                dim, fieldBg, listSelectBg, listSelectText, listHoverBg, dark, desktopPath, null);
-    }
-
-    private OsSkin(final DesktopTheme theme, final Form form, final int topRadius, final int bottomRadius,
-                   final int titleText, final boolean titleShadow, final int windowBg, final int windowBorder,
-                   final int accent, final int text, final int dim, final int fieldBg,
-                   final int listSelectBg, final int listSelectText, final int listHoverBg, final boolean dark,
-                   final String desktopPath, @Nullable final CdePalette motif) {
-        this.motif = motif;
-        this.desktopPath = desktopPath;
-        this.theme = theme;
-        this.form = form;
-        this.topRadius = topRadius;
-        this.bottomRadius = bottomRadius;
-        this.titleText = titleText;
-        this.titleShadow = titleShadow;
-        this.windowBg = windowBg;
-        this.windowBorder = windowBorder;
-        this.accent = accent;
-        this.text = text;
-        this.dim = dim;
-        this.fieldBg = fieldBg;
-        this.listSelectBg = listSelectBg;
-        this.listSelectText = listSelectText;
-        this.listHoverBg = listHoverBg;
-        this.dark = dark;
-    }
-
-    // Frames 95: classic grey bevel, solid navy title, square corners.
-    static final OsSkin FRAMES_95 = new OsSkin(
-            DesktopTheme.WIN95,
-            Form.BEVEL, 0, 0, 0xFFFFFFFF, false, 0xFFC0C0C0, 0xFF000000,
-            0xFF000080, 0xFF000000, 0xFF505050, 0xFFFFFFFF,
-            0xFF000080, 0xFFFFFFFF, 0xFFD4D0C8, false);
+    // Frames 95: classic grey bevel, navy title, square corners.
+    static final OsSkin FRAMES_95 = new OsSkin(BevelChrome.INSTANCE, 0, 0, false, "frames_95",
+            Palettes.declare(JsComputers.MODID, "skin/frames_95", new SkinColours(
+                    0xFFFFFFFF, 0xFFC0C0C0, 0xFF000000, 0xFF000080, 0xFF000000, 0xFF505050, 0xFFFFFFFF,
+                    0xFF000080, 0xFFFFFFFF, 0xFFD4D0C8)));
 
     // Frames XP: Luna blue gradients, white title, cream client; ONLY the top corners are rounded.
-    static final OsSkin FRAMES_XP = new OsSkin(
-            DesktopTheme.XP,
-            Form.LUNA, 2, 0, 0xFFFFFFFF, true, 0xFFECECF6, 0xFF0831D9,
-            0xFF2C66BD, 0xFF10203A, 0xFF5A6B85, 0xFFFFFFFF,
-            0xFF2C66BD, 0xFFFFFFFF, 0xFFD8E4FB, false);
+    static final OsSkin FRAMES_XP = new OsSkin(LunaChrome.INSTANCE, 2, 0, true, "frames_xp",
+            Palettes.declare(JsComputers.MODID, "skin/frames_xp", new SkinColours(
+                    0xFFFFFFFF, 0xFFECECF6, 0xFF0831D9, 0xFF2C66BD, 0xFF10203A, 0xFF5A6B85, 0xFFFFFFFF,
+                    0xFF2C66BD, 0xFFFFFFFF, 0xFFD8E4FB)));
 
     // Frames 11: flat light chrome with DARK title text and a thin accent; all corners rounded.
-    static final OsSkin FRAMES_11 = new OsSkin(
-            DesktopTheme.WIN11,
-            Form.FLAT, 2, 2, 0xFF202434, false, 0xFFFAFAFE, 0xFFC0C4D2,
-            0xFF3A6AE0, 0xFF202434, 0xFF6B7488, 0xFFFFFFFF,
-            0xFFE7EEFC, 0xFF1D4ED8, 0xFFF0F1F7, false);
+    static final OsSkin FRAMES_11 = new OsSkin(FlatChrome.LIGHT, 2, 2, false, "frames_11",
+            Palettes.declare(JsComputers.MODID, "skin/frames_11", new SkinColours(
+                    0xFF202434, 0xFFFAFAFE, 0xFFC0C4D2, 0xFF3A6AE0, 0xFF202434, 0xFF6B7488, 0xFFFFFFFF,
+                    0xFFE7EEFC, 0xFF1D4ED8, 0xFFF0F1F7)));
 
     /*
      * Frames 11 (dark): the same flat shape language on a dark slate palette, chosen in Settings. A brighter
-     * accent keeps contrast on the dark ground; the flat chrome branches key off the dark flag.
+     * accent keeps contrast on the dark ground.
      */
-    private static final OsSkin FRAMES_11_DARK = new OsSkin(
-            DesktopTheme.WIN11,
-            Form.FLAT, 2, 2, 0xFFE7E9EF, false, 0xFF1E212A, 0xFF3A4150,
-            0xFF5B84F0, 0xFFE7E9EF, 0xFF9AA2B2, 0xFF14171F,
-            0xFF2A3A63, 0xFFDCE7FF, 0xFF262B36, true);
+    private static final OsSkin FRAMES_11_DARK = new OsSkin(FlatChrome.DARK, 2, 2, false, "frames_11",
+            Palettes.declare(JsComputers.MODID, "skin/frames_11_dark", new SkinColours(
+                    0xFFE7E9EF, 0xFF1E212A, 0xFF3A4150, 0xFF5B84F0, 0xFFE7E9EF, 0xFF9AA2B2, 0xFF14171F,
+                    0xFF2A3A63, 0xFFDCE7FF, 0xFF262B36)));
 
     /*
      * The Linux desktop environments: flat chrome like Frames 11, each in its own palette and accent.
      * KDE Plasma (Breeze): light grey window, sky-blue accent.
      */
-    static final OsSkin KDE_PLASMA = new OsSkin(
-            DesktopTheme.KDE,
-            Form.FLAT, 2, 2, 0xFF232629, false, 0xFFEFF0F1, 0xFFB9BFC8,
-            0xFF3DAEE9, 0xFF232629, 0xFF6E7680, 0xFFFCFCFC,
-            0xFFD6ECF7, 0xFF1F6F9A, 0xFFE6EBEF, false, "kde_plasma");
+    static final OsSkin KDE_PLASMA = new OsSkin(FlatChrome.LIGHT, 2, 2, false, "kde_plasma",
+            Palettes.declare(JsComputers.MODID, "skin/kde_plasma", new SkinColours(
+                    0xFF232629, 0xFFEFF0F1, 0xFFB9BFC8, 0xFF3DAEE9, 0xFF232629, 0xFF6E7680, 0xFFFCFCFC,
+                    0xFFD6ECF7, 0xFF1F6F9A, 0xFFE6EBEF)));
 
     // GNOME (Adwaita): warm light window, GNOME blue accent, rounded.
-    static final OsSkin GNOME = new OsSkin(
-            DesktopTheme.GNOME,
-            Form.FLAT, 3, 3, 0xFF2E3436, false, 0xFFF6F5F4, 0xFFC0BFBC,
-            0xFF3584E4, 0xFF2E3436, 0xFF77767B, 0xFFFFFFFF,
-            0xFFDCE8FA, 0xFF1C5FB4, 0xFFEBEBEA, false, "gnome");
+    static final OsSkin GNOME = new OsSkin(FlatChrome.LIGHT, 3, 3, false, "gnome",
+            Palettes.declare(JsComputers.MODID, "skin/gnome", new SkinColours(
+                    0xFF2E3436, 0xFFF6F5F4, 0xFFC0BFBC, 0xFF3584E4, 0xFF2E3436, 0xFF77767B, 0xFFFFFFFF,
+                    0xFFDCE8FA, 0xFF1C5FB4, 0xFFEBEBEA)));
 
     // Cinnamon (Mint-Y): light grey window, Mint green accent.
-    static final OsSkin CINNAMON = new OsSkin(
-            DesktopTheme.CINNAMON,
-            Form.FLAT, 2, 2, 0xFF2B2B2B, false, 0xFFF7F7F7, 0xFFB0B0B0,
-            0xFF69B03B, 0xFF2B2B2B, 0xFF6E6E6E, 0xFFFFFFFF,
-            0xFFDFF0D4, 0xFF3C6E1E, 0xFFEBEBEB, false, "cinnamon");
+    static final OsSkin CINNAMON = new OsSkin(FlatChrome.LIGHT, 2, 2, false, "cinnamon",
+            Palettes.declare(JsComputers.MODID, "skin/cinnamon", new SkinColours(
+                    0xFF2B2B2B, 0xFFF7F7F7, 0xFFB0B0B0, 0xFF69B03B, 0xFF2B2B2B, 0xFF6E6E6E, 0xFFFFFFFF,
+                    0xFFDFF0D4, 0xFF3C6E1E, 0xFFEBEBEB)));
 
     /*
      * The same desktops as they looked on Legacy-era hardware. These are not the modern skins in older
@@ -187,24 +130,40 @@ public final class OsSkin implements ISkin {
      * with a thick frame and a centred title, since a separate window manager drew its decoration.
      */
 
-    static final OsSkin KDE_PLASMA_LEGACY = new OsSkin(
-            DesktopTheme.KDE,
-            Form.KDE2, 0, 0, 0xFFFFFFFF, true, 0xFFD6D2CD, 0xFF6F6A64,
-            0xFF1D4C80, 0xFF1A1A1A, 0xFF5F5A54, 0xFFFFFFFF,
-            0xFF33679F, 0xFFFFFFFF, 0xFFC7C2BB, false, "kde_plasma");
+    static final OsSkin KDE_PLASMA_LEGACY = new OsSkin(Kde2Chrome.INSTANCE, 0, 0, true, "kde_plasma",
+            Palettes.declare(JsComputers.MODID, "skin/kde_plasma_legacy", new SkinColours(
+                    0xFFFFFFFF, 0xFFD6D2CD, 0xFF6F6A64, 0xFF1D4C80, 0xFF1A1A1A, 0xFF5F5A54, 0xFFFFFFFF,
+                    0xFF33679F, 0xFFFFFFFF, 0xFFC7C2BB)));
 
-    static final OsSkin GNOME_LEGACY = new OsSkin(
-            DesktopTheme.GNOME,
-            Form.GNOME1, 0, 0, 0xFFFFFFFF, true, 0xFFD6D2C8, 0xFFB0AA9C,
-            0xFF6D5A78, 0xFF1A1A1A, 0xFF5C574E, 0xFFFFFFFF,
-            0xFF6D5A78, 0xFFFFFFFF, 0xFFC4BFB2, false, "gnome");
+    static final OsSkin GNOME_LEGACY = new OsSkin(Gnome1Chrome.INSTANCE, 0, 0, true, "gnome",
+            Palettes.declare(JsComputers.MODID, "skin/gnome_legacy", new SkinColours(
+                    0xFFFFFFFF, 0xFFD6D2C8, 0xFFB0AA9C, 0xFF6D5A78, 0xFF1A1A1A, 0xFF5C574E, 0xFFFFFFFF,
+                    0xFF6D5A78, 0xFFFFFFFF, 0xFFC4BFB2)));
 
-    /* CDE in the scheme it ships with; the Style Manager's choice builds another from the same factory. */
+    /** CDE in each of its schemes, made once, so choosing one in the Style Manager builds nothing. */
+    private static final Map<CdeScheme, OsSkin> MOTIF = motifSkins();
+
+    /* CDE in the scheme it ships with; the Style Manager's choice is another of the same. */
     static final OsSkin CDE = motif(CdeScheme.DEFAULT);
 
+    private OsSkin(final IFormChrome chrome, final int topRadius, final int bottomRadius, final boolean titleShadow,
+                   final String desktopPath, final Supplier<SkinColours> colours) {
+        this(chrome, topRadius, bottomRadius, titleShadow, desktopPath, colours, 0);
+    }
+
+    private OsSkin(final IFormChrome chrome, final int topRadius, final int bottomRadius, final boolean titleShadow,
+                   final String desktopPath, final Supplier<SkinColours> colours, final int accentOverride) {
+        this.chrome = chrome;
+        this.topRadius = topRadius;
+        this.bottomRadius = bottomRadius;
+        this.titleShadow = titleShadow;
+        this.desktopPath = desktopPath;
+        this.colours = colours;
+        this.accentOverride = accentOverride;
+    }
+
     /** The skin for a desktop as it looks on hardware of {@code era}, as its look says. */
-    public static OsSkin forDesktop(final ResourceLocation desktopId,
-                                    final HardwareEra era) {
+    public static OsSkin forDesktop(final ResourceLocation desktopId, final HardwareEra era) {
         return DesktopLook.of(desktopId).skinOn(era);
     }
 
@@ -218,10 +177,7 @@ public final class OsSkin implements ISkin {
      * picked out in a list, is one of the scheme's colours, so choosing another scheme changes all of it.
      */
     public static OsSkin motif(final CdeScheme scheme) {
-        final CdePalette palette = scheme.colours();
-        return new OsSkin(DesktopTheme.cde(scheme), Form.MOTIF, 0, 0, palette.activeInk(), false,
-                palette.window(), palette.shade(), palette.active(), palette.ink(), palette.shade(),
-                palette.inset(), palette.active(), palette.activeInk(), palette.inset(), false, "cde", palette);
+        return MOTIF.get(scheme);
     }
 
     /** A safe default skin (Frames 95) for a field that needs a non-null value before the first render. */
@@ -239,12 +195,11 @@ public final class OsSkin implements ISkin {
      * @return a skin using the override accent, or {@code this}
      */
     public OsSkin withAccent(final int argb) {
-        // A Motif skin has no accent of its own to override: its colours are its palette's, all of them.
-        if (argb == 0 || argb == accent || form == Form.MOTIF) {
+        // A Motif skin has no accent of its own to override: its colours are its scheme's, all of them.
+        if (argb == 0 || argb == accent() || form() == Form.MOTIF) {
             return this;
         }
-        return new OsSkin(theme, form, topRadius, bottomRadius, titleText, titleShadow, windowBg, windowBorder,
-                argb, text, dim, fieldBg, listSelectBg, listSelectText, listHoverBg, dark, desktopPath);
+        return new OsSkin(chrome, topRadius, bottomRadius, titleShadow, desktopPath, colours, argb);
     }
 
     /**
@@ -252,12 +207,12 @@ public final class OsSkin implements ISkin {
      * Frames 11 skin defines one; the earlier editions have no historical dark mode, so they are returned as-is.
      */
     public OsSkin darkVariant() {
-        return form == Form.FLAT ? FRAMES_11_DARK : this;
+        return form() == Form.FLAT ? FRAMES_11_DARK : this;
     }
 
     /** Whether this is the dark-theme variant. */
     public boolean isDark() {
-        return dark;
+        return chrome.dark();
     }
 
     /** The desktop environment id path this skin represents (frames_95/xp/11, kde_plasma, gnome, cinnamon). */
@@ -281,45 +236,41 @@ public final class OsSkin implements ISkin {
      * Unix desktops, which have artwork of their own age.
      */
     public String iconSet() {
-        return form == Form.KDE2 || form == Form.GNOME1
+        return form() == Form.KDE2 || form() == Form.GNOME1
                 ? desktopPath + ProgramIcons.PERIOD_SUFFIX
                 : desktopPath;
     }
 
-    public DesktopTheme theme() {
-        return theme;
-    }
-
     public Form form() {
-        return form;
+        return chrome.form();
     }
 
     @Override
     public int accent() {
-        return accent;
+        return accentOverride != 0 ? accentOverride : colours.get().accent();
     }
 
     @Override
     public int text() {
-        return text;
+        return colours.get().text();
     }
 
     @Override
     public int dim() {
-        return dim;
+        return colours.get().dim();
     }
 
     @Override
     public int windowBg() {
-        return windowBg;
+        return colours.get().windowBg();
     }
 
     public int windowBorder() {
-        return windowBorder;
+        return colours.get().windowBorder();
     }
 
     public int titleText() {
-        return titleText;
+        return colours.get().titleText();
     }
 
     public boolean textShadow() {
@@ -329,61 +280,41 @@ public final class OsSkin implements ISkin {
     /** The fill of a content panel (grey 95 / cream XP / white 11). */
     @Override
     public int panelBg() {
-        return panelFill();
+        return chrome.panelFill(this);
     }
 
     /** The fill of a text field. */
     @Override
     public int fieldBg() {
-        return fieldBg;
+        return colours.get().fieldBg();
     }
 
     /** A 1px border/separator colour for panels and bands, per skin. */
     @Override
     public int edge() {
-        return switch (form) {
-            case BEVEL -> 0xFF808080;
-            case LUNA -> 0xFFB9C4DA;
-            case FLAT -> dark ? 0xFF333A48 : 0xFFE3E5EE;
-            case KDE2 -> 0xFF8B857E;
-            case GNOME1 -> 0xFFA49E8F;
-            case MOTIF -> windowBorder;
-        };
+        return chrome.edge(this);
     }
 
     /** The hover-row background. */
     @Override
     public int listHover() {
-        return listHoverBg;
+        return colours.get().listHover();
     }
 
     /** The selected-row background, which is what the text of a selected row is written on. */
     public int listSelect() {
-        return listSelectBg;
+        return colours.get().listSelect();
     }
 
     // window chrome
 
     /**
-     * The window body background and 1px outer border, with the skin's per-corner rounding (XP rounds only the
+     * The window body background and its outer border, with the skin's per-corner rounding (XP rounds only the
      * top; 11 rounds all four; 95 none). Rounded corner pixels are left unpainted, so they show what is behind.
      */
     @Override
     public void windowFrame(final GuiGraphics g, final int x, final int y, final int w, final int h) {
-        if (motif != null) {
-            MotifChrome.windowFrame(g, x, y, w, h, motif);
-            return;
-        }
-        final int t = frameThickness();
-        roundedRect(g, x - t, y - t, w + t * 2, h + t * 2, windowBorder, topRadius, bottomRadius);
-        if (form == Form.GNOME1) {
-            /*
-             * The thick period frame is relief, not a flat band: a separate window manager drew it, and
-             * a plain slab of colour at this width just looks like a mistake.
-             */
-            bevelDouble(g, x - t, y - t, w + t * 2, h + t * 2, true);
-        }
-        roundedRect(g, x, y, w, h, windowBg, topRadius, bottomRadius);
+        chrome.windowFrame(g, this, x, y, w, h);
     }
 
     /** The title bar fill (solid navy / Luna gradient / flat light), rounding only the top corners. */
@@ -409,74 +340,15 @@ public final class OsSkin implements ISkin {
      */
     public void titleBar(final GuiGraphics g, final int x, final int y, final int w, final int titleH,
                          final boolean active, final int left, final int right) {
-        if (motif != null) {
-            MotifChrome.titleBar(g, x, y, w, titleH, active, left, right, motif);
-            return;
-        }
-        if (!active) {
-            switch (form) {
-                case BEVEL -> hGradient(g, x, y, w, titleH, 0xFF7F7F7F, 0xFFB0B0B0);
-                case LUNA -> {
-                    roundedRect(g, x, y, w, titleH, 0xFF8FA8C4, topRadius, 0);
-                    g.fillGradient(x, y + topRadius, x + w, y + titleH, 0xFF9DB2C9, 0xFF7E93AC);
-                }
-                case FLAT -> {
-                    roundedRect(g, x, y, w, titleH, flat(0xFFEDEEF2, 0xFF1B2029), topRadius, 0);
-                    g.fill(x + topRadius, y + titleH - 1, x + w - topRadius, y + titleH, edge());
-                }
-                /*
-                 * Both period forms desaturate rather than dim: an inactive window of that age kept its
-                 * gradient and lost its colour.
-                 */
-                case KDE2 -> {
-                    g.fillGradient(x, y, x + w, y + titleH / 2, 0xFFB4B0AA, 0xFF98938C);
-                    g.fillGradient(x, y + titleH / 2, x + w, y + titleH, 0xFF938E87, 0xFF7E7972);
-                    g.fill(x, y + titleH - 1, x + w, y + titleH, 0xFF6F6A64);
-                }
-                case GNOME1 -> {
-                    g.fillGradient(x, y, x + w, y + titleH / 2, 0xFFAFAAA0, 0xFF938E84);
-                    g.fillGradient(x, y + titleH / 2, x + w, y + titleH, 0xFF8C877D, 0xFF767168);
-                }
-            }
-            return;
-        }
-        switch (form) {
-            case BEVEL -> {
-                // Classic active-title gradient: deep navy on the left brightening to blue on the right.
-                hGradient(g, x, y, w, titleH, 0xFF000080, 0xFF1084D0);
-            }
-            case LUNA -> {
-                // A smooth two-stop vertical gradient with a bright top gloss line, closer to the Luna glass.
-                roundedRect(g, x, y, w, titleH, 0xFF3F7FD6, topRadius, 0);
-                g.fillGradient(x, y + topRadius, x + w, y + titleH / 2, 0xFF4B91E2, 0xFF2F6FC6);
-                g.fillGradient(x, y + titleH / 2, x + w, y + titleH, 0xFF2C66BD, 0xFF1C4D9C);
-                g.fill(x + topRadius, y + 1, x + w - topRadius, y + 2, 0x66FFFFFF); // top gloss
-                g.fill(x, y + titleH - 1, x + w, y + titleH, 0xFF16407F); // bottom shade
-            }
-            case FLAT -> {
-                roundedRect(g, x, y, w, titleH, windowBg, topRadius, 0); // light bar, dark title text
-                g.fill(x + topRadius, y + titleH - 1, x + w - topRadius, y + titleH, edge()); // hairline
-            }
-            case KDE2 -> {
-                // Vertical three-stop blue: light crown, mid body, dark base, closed by a border line.
-                g.fillGradient(x, y, x + w, y + titleH / 2, 0xFF6F9FD0, 0xFF33679F);
-                g.fillGradient(x, y + titleH / 2, x + w, y + titleH, 0xFF2E5F95, 0xFF1D4C80);
-                g.fill(x, y + titleH - 1, x + w, y + titleH, 0xFF6F6A64);
-            }
-            case GNOME1 -> {
-                // Muted purple, the colour that separated a GNOME box from a KDE one across the room.
-                g.fillGradient(x, y, x + w, y + titleH / 2, 0xFF8F7D99, 0xFF6D5A78);
-                g.fillGradient(x, y + titleH / 2, x + w, y + titleH, 0xFF63506E, 0xFF55455F);
-            }
-        }
+        chrome.titleBar(g, this, x, y, w, titleH, active, left, right);
     }
 
     /**
-     * Whether this skin centres a window title. Only the GNOME form does, which is exactly why it reads
-     * as a different desktop rather than a repainted one, and nothing else in the mod centres a title.
+     * Whether this skin centres a window title. Only the GNOME and Motif forms do, which is exactly why they
+     * read as different desktops rather than repainted ones.
      */
     public boolean titleCentered() {
-        return form == Form.GNOME1 || form == Form.MOTIF;
+        return chrome.titleCentered();
     }
 
     /**
@@ -484,87 +356,18 @@ public final class OsSkin implements ISkin {
      * minimise and maximise alone at the right. Every other form keeps all three at the right.
      */
     public boolean menuAtLeft() {
-        return form == Form.MOTIF;
+        return chrome.menuAtLeft();
     }
 
     /** The thickness of the window frame in pixels; the GNOME and Motif forms draw a chunky border. */
     public int frameThickness() {
-        return form == Form.MOTIF ? MotifChrome.FRAME : form == Form.GNOME1 ? 3 : 1;
+        return chrome.frameThickness();
     }
 
     /** One title-bar control, shaped per skin, with a real pressed state so a click reads. */
     public void windowControl(final GuiGraphics g, final Font font, final int x, final int y, final int bw,
                               final int bh, final Control control, final boolean hovered, final boolean pressed) {
-        if (motif != null) {
-            // Its marks are relief like everything else in it, not letters, so it draws them itself.
-            MotifChrome.control(g, x, y, bw, bh, control, pressed, motif);
-            return;
-        }
-        final boolean isClose = control == Control.CLOSE;
-        int nudge = 0;
-        switch (form) {
-            case BEVEL -> {
-                g.fill(x, y, x + bw, y + bh, 0xFFC0C0C0);
-                bevelDouble(g, x, y, bw, bh, !pressed); // pressed → sunken
-                nudge = pressed ? 1 : 0;
-            }
-            case LUNA -> {
-                final int top = isClose ? 0xFFE58A6F : 0xFF6F9FE0;
-                final int bottom = isClose ? 0xFFC5341A : 0xFF2F63B8;
-                if (pressed) {
-                    g.fillGradient(x, y, x + bw, y + bh, bottom, top); // inverted = pushed-in
-                } else {
-                    g.fillGradient(x, y, x + bw, y + bh, hovered ? lighten(top) : top, bottom);
-                }
-                outline(g, x, y, bw, bh, isClose ? 0xFF8E2010 : 0xFF15448E);
-                nudge = pressed ? 1 : 0;
-            }
-            case FLAT -> {
-                if (pressed) {
-                    g.fill(x, y, x + bw, y + bh, isClose ? 0xFFC5341A : flat(0xFFD0D3DC, 0xFF3A4150));
-                } else if (isClose && hovered) {
-                    g.fill(x, y, x + bw, y + bh, 0xFFE5413A);
-                } else if (hovered) {
-                    g.fill(x, y, x + bw, y + bh, flat(0xFFE6E8F0, 0xFF2C3340));
-                }
-            }
-            case KDE2 -> {
-                // A small pale stud with a hairline border, not a bevelled block.
-                if (pressed) {
-                    g.fillGradient(x, y, x + bw, y + bh, 0xFFC9C4BE, 0xFFF2F1EF);
-                } else {
-                    g.fillGradient(x, y, x + bw, y + bh, hovered ? 0xFFFFFFFF : 0xFFF2F1EF, 0xFFC9C4BE);
-                }
-                outline(g, x, y, bw, bh, 0xFF6F6A64);
-                nudge = pressed ? 1 : 0;
-            }
-            case GNOME1 -> {
-                g.fill(x, y, x + bw, y + bh, hovered ? 0xFFE2DED4 : 0xFFD6D2C8);
-                bevelDouble(g, x, y, bw, bh, !pressed);
-                nudge = pressed ? 1 : 0;
-            }
-        }
-        glyph(g, font, control, x + nudge, y + nudge, bw, bh, hovered, pressed);
-    }
-
-    private void glyph(final GuiGraphics g, final Font font, final Control control, final int x, final int y,
-                       final int bw, final int bh, final boolean hovered, final boolean pressed) {
-        final boolean closeLit = control == Control.CLOSE && (pressed || (form == Form.FLAT && hovered));
-        final int color = switch (form) {
-            case BEVEL -> 0xFF000000;
-            case LUNA -> 0xFFFFFFFF;
-            case FLAT -> closeLit ? 0xFFFFFFFF : flat(0xFF3A4256, 0xFFC4CAD6);
-            case KDE2 -> 0xFF17324F;
-            case GNOME1 -> 0xFF2A2A2A;
-            case MOTIF -> text;
-        };
-        final String s = switch (control) {
-            case MINIMIZE -> "_";
-            case MAXIMIZE -> "□";
-            case RESTORE -> "❐";
-            case CLOSE -> "✕";
-        };
-        g.drawString(font, s, x + (bw - font.width(s)) / 2, y + (bh - 7) / 2, color, false);
+        chrome.control(g, font, this, x, y, bw, bh, control, hovered, pressed);
     }
 
     // widgets (used by the programs' content)
@@ -572,128 +375,33 @@ public final class OsSkin implements ISkin {
     /** A group panel/box: sunken bevel (95), soft border (XP), or hairline (11). */
     @Override
     public void panel(final GuiGraphics g, final int x, final int y, final int w, final int h) {
-        g.fill(x, y, x + w, y + h, panelFill());
-        switch (form) {
-            case BEVEL -> bevelDouble(g, x, y, w, h, false); // sunken well
-            case LUNA -> outline(g, x, y, w, h, edge());
-            case FLAT -> outline(g, x, y, w, h, edge());
-            case KDE2 -> outline(g, x, y, w, h, edge());
-            case GNOME1 -> bevelDouble(g, x, y, w, h, false); // sunken well, warm
-            case MOTIF -> MotifChrome.sunken(g, x, y, w, h, panelFill(), motif);
-        }
+        chrome.panel(g, this, x, y, w, h);
     }
 
     /** A push button, optionally the primary/default one, with a pressed state. */
     @Override
     public void button(final GuiGraphics g, final Font font, final int x, final int y, final int w, final int h,
                        final String label, final boolean hovered, final boolean pressed, final boolean primary) {
-        switch (form) {
-            case BEVEL -> {
-                g.fill(x, y, x + w, y + h, 0xFFC0C0C0);
-                bevelDouble(g, x, y, w, h, !pressed);
-                // The default (primary) button carries the classic dotted focus rectangle just inside its face.
-                if (primary && !pressed) {
-                    dottedRect(g, x + 3, y + 3, w - 6, h - 6, 0xFF000000);
-                }
-            }
-            case LUNA -> {
-                // A glossier vertical sheen: bright top third, then the blue-tinted body.
-                final int a = hovered ? 0xFFFFFFFF : 0xFFFDFDFF;
-                g.fillGradient(x, y, x + w, y + h / 2, pressed ? 0xFFD0DBEF : a, pressed ? 0xFFE6EDF9 : 0xFFEAF0FB);
-                g.fillGradient(x, y + h / 2, x + w, y + h, pressed ? 0xFFE6EDF9 : 0xFFDDE7F6, pressed ? a : 0xFFCBD9F0);
-                g.fill(x + 1, y + 1, x + w - 1, y + 2, 0x88FFFFFF); // top gloss line
-                outline(g, x, y, w, h, primary ? 0xFF2C66BD : 0xFF7A9BD0);
-            }
-            case FLAT -> {
-                final int base = primary ? (pressed ? darken(accent) : accent)
-                        : (pressed ? flat(0xFFD0D3DC, 0xFF3A4150)
-                                   : (hovered ? flat(0xFFEEF0F6, 0xFF2C3340) : flat(0xFFFBFBFE, 0xFF262B36)));
-                roundedRect(g, x, y, w, h, base, 2, 2);
-                roundedOutline(g, x, y, w, h, primary ? darken(accent) : flat(0xFFCDD1DD, 0xFF3A4150), 2);
-            }
-            case KDE2 -> {
-                if (pressed) {
-                    g.fillGradient(x, y, x + w, y + h, 0xFFC9C4BE, 0xFFF4F2EF);
-                } else {
-                    g.fillGradient(x, y, x + w, y + h, hovered ? 0xFFFFFFFF : 0xFFF4F2EF, 0xFFCEC9C2);
-                }
-                outline(g, x, y, w, h, primary ? 0xFF1D4C80 : 0xFF8B857E);
-            }
-            case GNOME1 -> {
-                g.fill(x, y, x + w, y + h, hovered ? 0xFFE2DED4 : 0xFFD6D2C8);
-                bevelDouble(g, x, y, w, h, !pressed);
-                if (primary && !pressed) {
-                    dottedRect(g, x + 3, y + 3, w - 6, h - 6, 0xFF2A2A2A);
-                }
-            }
-            case MOTIF -> MotifChrome.button(g, x, y, w, h, pressed, primary, motif);
-        }
-        final int tc = (form == Form.FLAT && primary) ? 0xFFFFFFFF : text;
-        g.drawString(font, label, x + (w - font.width(label)) / 2, y + (h - 7) / 2 + (pressed ? 1 : 0), tc, false);
+        chrome.button(g, this, x, y, w, h, hovered, pressed, primary);
+        g.drawString(font, label, x + (w - font.width(label)) / 2, y + (h - 7) / 2 + (pressed ? 1 : 0),
+                chrome.buttonText(this, primary), false);
     }
 
     /** A text input field. */
     @Override
     public void field(final GuiGraphics g, final int x, final int y, final int w, final int h,
                       final boolean focused) {
-        g.fill(x, y, x + w, y + h, fieldBg);
-        switch (form) {
-            case BEVEL -> bevelDouble(g, x, y, w, h, false); // sunken well
-            case LUNA -> outline(g, x, y, w, h, focused ? 0xFF2C66BD : 0xFF7F9DB9);
-            case FLAT -> {
-                outline(g, x, y, w, h, focused ? accent : flat(0xFFCDD1DD, 0xFF3A4150));
-                g.fill(x + 1, y + h - 2, x + w - 1, y + h, focused ? accent : flat(0xFFCDD1DD, 0xFF3A4150));
-            }
-            case KDE2 -> outline(g, x, y, w, h, focused ? 0xFF1D4C80 : 0xFF8B857E);
-            case GNOME1 -> bevelDouble(g, x, y, w, h, false); // sunken well
-            case MOTIF -> MotifChrome.sunken(g, x, y, w, h, fieldBg, motif);
-        }
+        g.fill(x, y, x + w, y + h, fieldBg());
+        chrome.field(g, this, x, y, w, h, focused);
     }
 
     /** A tab in a tab strip. */
     @Override
     public void tab(final GuiGraphics g, final Font font, final int x, final int y, final int w, final int h,
                     final String label, final boolean active) {
-        switch (form) {
-            case BEVEL -> {
-                g.fill(x, y, x + w, y + h + (active ? 2 : 0), 0xFFC0C0C0);
-                bevelDouble(g, x, y, w, h + (active ? 2 : 0), true);
-            }
-            case LUNA -> {
-                if (active) {
-                    g.fillGradient(x, y, x + w, y + h, 0xFFFFFFFF, 0xFFDFEECB);
-                    g.fill(x, y, x + w, y + 2, 0xFF8FD14F);
-                    outline(g, x, y, w, h, 0xFF7FA83F);
-                } else {
-                    g.fillGradient(x, y, x + w, y + h, 0xFFF4F7FD, 0xFFCDD9EE);
-                    outline(g, x, y, w, h, 0xFF93A9CC);
-                }
-            }
-            case FLAT -> {
-                if (active) {
-                    g.fill(x, y + h - 2, x + w, y + h, accent); // underline only
-                }
-            }
-            case KDE2 -> {
-                if (active) {
-                    g.fillGradient(x, y, x + w, y + h, 0xFFF4F2EF, 0xFFD6D2CD);
-                } else {
-                    g.fillGradient(x, y, x + w, y + h, 0xFFDCD8D2, 0xFFC2BDB6);
-                }
-                outline(g, x, y, w, h, 0xFF8B857E);
-            }
-            case GNOME1 -> {
-                g.fill(x, y, x + w, y + h + (active ? 2 : 0), active ? 0xFFD6D2C8 : 0xFFC4BFB2);
-                bevelDouble(g, x, y, w, h + (active ? 2 : 0), true);
-            }
-            case MOTIF -> MotifChrome.tab(g, x, y, w, h, active, motif);
-        }
-        final int tc = switch (form) {
-            case LUNA -> active ? 0xFF2B5A16 : 0xFF22324D;
-            case FLAT -> active ? accent : dim;
-            default -> text;
-        };
-        g.drawString(font, label, x + (w - font.width(label)) / 2, y + (h - 7) / 2, tc, false);
+        chrome.tab(g, this, x, y, w, h, active);
+        g.drawString(font, label, x + (w - font.width(label)) / 2, y + (h - 7) / 2, chrome.tabText(this, active),
+                false);
     }
 
     /** A list/grid row background for the hover and selection states. */
@@ -701,170 +409,40 @@ public final class OsSkin implements ISkin {
     public void listRow(final GuiGraphics g, final int x, final int y, final int w, final int h,
                         final boolean hovered, final boolean selected) {
         if (selected) {
-            g.fill(x, y, x + w, y + h, listSelectBg);
-            if (form == Form.FLAT) {
-                g.fill(x, y, x + 3, y + h, accent); // accent bar on the left
+            g.fill(x, y, x + w, y + h, listSelect());
+            if (chrome.selectionBar()) {
+                g.fill(x, y, x + 3, y + h, accent());
             }
         } else if (hovered) {
-            g.fill(x, y, x + w, y + h, listHoverBg);
+            g.fill(x, y, x + w, y + h, listHover());
         }
     }
 
     /** The text colour for a list row, given its selection state. */
     @Override
     public int listRowText(final boolean selected) {
-        return selected ? listSelectText : text;
+        return selected ? colours.get().listSelectText() : text();
     }
 
     /** A scrollbar thumb. */
     @Override
     public void scrollThumb(final GuiGraphics g, final int x, final int y, final int w, final int h) {
-        switch (form) {
-            case BEVEL -> {
-                g.fill(x, y, x + w, y + h, 0xFFC0C0C0);
-                bevelDouble(g, x, y, w, h, true);
-            }
-            case LUNA -> {
-                g.fillGradient(x, y, x + w, y + h, 0xFFFDFDFF, 0xFFC2D2EE);
-                outline(g, x, y, w, h, 0xFF93A9CC);
-            }
-            case FLAT -> roundedRect(g, x + 1, y, w - 2, h, flat(0xFFC8CDDA, 0xFF3E4653), 2, 2);
-            case KDE2 -> {
-                g.fillGradient(x, y, x + w, y + h, 0xFFF4F2EF, 0xFFCEC9C2);
-                outline(g, x, y, w, h, 0xFF8B857E);
-            }
-            case GNOME1 -> {
-                g.fill(x, y, x + w, y + h, 0xFFD6D2C8);
-                bevelDouble(g, x, y, w, h, true);
-            }
-            case MOTIF -> MotifChrome.raised(g, x, y, w, h, windowBg, motif);
-        }
+        chrome.scrollThumb(g, this, x, y, w, h);
     }
 
     /** A status/footer bar background. */
     @Override
     public void statusBar(final GuiGraphics g, final int x, final int y, final int w, final int h) {
-        switch (form) {
-            case BEVEL -> {
-                g.fill(x, y, x + w, y + h, 0xFFC0C0C0);
-                g.fill(x, y, x + w, y + 1, 0xFF808080); // top shadow line only (a status bar is not a raised box)
-                g.fill(x, y + 1, x + w, y + 2, 0xFFFFFFFF);
-            }
-            case LUNA -> {
-                g.fill(x, y, x + w, y + h, 0xFFECECF6);
-                g.fill(x, y, x + w, y + 1, 0xFFB9C4DA);
-            }
-            case FLAT -> {
-                g.fill(x, y, x + w, y + h, panelFill() == 0xFFFFFFFF ? 0xFFF1F2F6 : panelFill());
-                g.fill(x, y, x + w, y + 1, edge());
-            }
-            case KDE2 -> {
-                g.fillGradient(x, y, x + w, y + h, 0xFFE2DED8, 0xFFBFBAB3);
-                g.fill(x, y, x + w, y + 1, 0xFF6F6A64);
-            }
-            case GNOME1 -> {
-                g.fill(x, y, x + w, y + h, 0xFFCDC8BC);
-                g.fill(x, y, x + w, y + 1, 0xFF85806F);
-                g.fill(x, y + 1, x + w, y + 2, 0xFFF0EDE6);
-            }
-            case MOTIF -> MotifChrome.statusBar(g, x, y, w, h, motif);
-        }
-    }
-
-    private int panelFill() {
-        return switch (form) {
-            case BEVEL -> 0xFFC0C0C0;
-            case LUNA -> 0xFFF4F6FC;
-            case FLAT -> dark ? 0xFF242833 : 0xFFFFFFFF;
-            case KDE2 -> 0xFFD6D2CD;
-            case GNOME1 -> 0xFFCDC8BC;
-            case MOTIF -> fieldBg;
-        };
-    }
-
-    /** A flat-chrome fill for the given light colour, darkened when this is the dark Frames 11 variant. */
-    private int flat(final int light, final int darkColor) {
-        return dark ? darkColor : light;
-    }
-
-    // primitives
-
-    /** A filled rectangle whose TOP corners are rounded by {@code rTop}px and BOTTOM by {@code rBottom}px. */
-    public static void roundedRect(final GuiGraphics g, final int x, final int y, final int w, final int h,
-                                   final int color, final int rTop, final int rBottom) {
-        final int top = Math.max(0, rTop);
-        final int bottom = Math.max(0, rBottom);
-        g.fill(x, y + top, x + w, y + h - bottom, color);
-        for (int i = 0; i < top; i++) {
-            final int inset = top - i;
-            g.fill(x + inset, y + i, x + w - inset, y + i + 1, color);
-        }
-        for (int i = 0; i < bottom; i++) {
-            final int inset = bottom - i;
-            g.fill(x + inset, y + h - i - 1, x + w - inset, y + h - i, color);
-        }
-    }
-
-    /** A raised (light top-left, dark bottom-right) or sunken (inverted) 1px bevel border. */
-    public static void bevel(final GuiGraphics g, final int x, final int y, final int w, final int h,
-                             final boolean raised) {
-        final int light = raised ? 0xFFFFFFFF : 0xFF404040;
-        final int dark = raised ? 0xFF404040 : 0xFFFFFFFF;
-        g.fill(x, y, x + w, y + 1, light);
-        g.fill(x, y, x + 1, y + h, light);
-        g.fill(x, y + h - 1, x + w, y + h, dark);
-        g.fill(x + w - 1, y, x + w, y + h, dark);
-    }
-
-    /**
-     * The authentic Windows 95 two-tone 3D border: an outer ring (white/black) over an inner ring
-     * (light-grey/dark-grey), giving the classic raised button or sunken well look that a single 1px bevel
-     * only approximates. {@code raised} is a button/tab face; not raised is a field/well.
-     */
-    public static void bevelDouble(final GuiGraphics g, final int x, final int y, final int w, final int h,
-                                   final boolean raised) {
-        final int outerLight = raised ? 0xFFFFFFFF : 0xFF808080;
-        final int outerDark = raised ? 0xFF000000 : 0xFFFFFFFF;
-        final int innerLight = raised ? 0xFFDFDFDF : 0xFF000000;
-        final int innerDark = raised ? 0xFF808080 : 0xFFDFDFDF;
-        // Outer ring.
-        g.fill(x, y, x + w, y + 1, outerLight);
-        g.fill(x, y, x + 1, y + h, outerLight);
-        g.fill(x, y + h - 1, x + w, y + h, outerDark);
-        g.fill(x + w - 1, y, x + w, y + h, outerDark);
-        // Inner ring, inset by one pixel.
-        g.fill(x + 1, y + 1, x + w - 1, y + 2, innerLight);
-        g.fill(x + 1, y + 1, x + 2, y + h - 1, innerLight);
-        g.fill(x + 1, y + h - 2, x + w - 1, y + h - 1, innerDark);
-        g.fill(x + w - 2, y + 1, x + w - 1, y + h - 1, innerDark);
-    }
-
-    /** A left-to-right gradient fill (GuiGraphics.fillGradient is vertical only), stepped in 2px columns. */
-    public static void hGradient(final GuiGraphics g, final int x, final int y, final int w, final int h,
-                                 final int left, final int right) {
-        final int lr = left >> 16 & 0xFF;
-        final int lg = left >> 8 & 0xFF;
-        final int lb = left & 0xFF;
-        final int rr = right >> 16 & 0xFF;
-        final int rg = right >> 8 & 0xFF;
-        final int rb = right & 0xFF;
-        for (int i = 0; i < w; i += 2) {
-            final float t = w <= 1 ? 0f : i / (float) (w - 1);
-            final int cr = (int) (lr + (rr - lr) * t);
-            final int cg = (int) (lg + (rg - lg) * t);
-            final int cb = (int) (lb + (rb - lb) * t);
-            g.fill(x + i, y, x + Math.min(w, i + 2), y + h, 0xFF000000 | cr << 16 | cg << 8 | cb);
-        }
+        chrome.statusBar(g, this, x, y, w, h);
     }
 
     /**
      * A soft drop shadow behind a window, so it lifts off the wallpaper. Drawn just before the window frame at
-     * the same depth: the offset fringe stays visible while the opaque body covers the rest. Skipped for the
-     * flat 95 look would feel wrong, so all three skins get a shadow (subtler on 95).
+     * the same depth: the offset fringe stays visible while the opaque body covers the rest.
      */
     public void windowShadow(final GuiGraphics g, final int x, final int y, final int w, final int h) {
-        final int spread = form == Form.BEVEL ? 3 : 5;
-        final int base = form == Form.BEVEL ? 0x0E : 0x12;
+        final int spread = chrome.shadowSpread();
+        final int base = chrome.shadowStrength();
         /*
          * Farther layers are lighter; nearer layers stack on top, so the fringe just outside the window is
          * darkest and it fades out toward the edge.
@@ -875,48 +453,26 @@ public final class OsSkin implements ISkin {
         }
     }
 
-    /** A 1px outline of a single colour. */
-    public static void outline(final GuiGraphics g, final int x, final int y, final int w, final int h,
-                               final int color) {
-        g.fill(x, y, x + w, y + 1, color);
-        g.fill(x, y + h - 1, x + w, y + h, color);
-        g.fill(x, y, x + 1, y + h, color);
-        g.fill(x + w - 1, y, x + w, y + h, color);
+    int topRadius() {
+        return topRadius;
     }
 
-    /** A 1px outline that skips the corner pixels, to match a rounded fill of radius {@code r}. */
-    public static void roundedOutline(final GuiGraphics g, final int x, final int y, final int w, final int h,
-                                      final int color, final int r) {
-        g.fill(x + r, y, x + w - r, y + 1, color);
-        g.fill(x + r, y + h - 1, x + w - r, y + h, color);
-        g.fill(x, y + r, x + 1, y + h - r, color);
-        g.fill(x + w - 1, y + r, x + w, y + h - r, color);
+    int bottomRadius() {
+        return bottomRadius;
     }
 
-    /** A 1px dotted rectangle (every other pixel), used for the classic 95 focus ring. */
-    public static void dottedRect(final GuiGraphics g, final int x, final int y, final int w, final int h,
-                                  final int color) {
-        for (int i = 0; i < w; i += 2) {
-            g.fill(x + i, y, x + i + 1, y + 1, color);
-            g.fill(x + i, y + h - 1, x + i + 1, y + h, color);
+    private static Map<CdeScheme, OsSkin> motifSkins() {
+        final Map<CdeScheme, OsSkin> out = new EnumMap<>(CdeScheme.class);
+        for (final CdeScheme scheme : CdeScheme.ALL) {
+            out.put(scheme, new OsSkin(new MotifFormChrome(scheme), 0, 0, false, "cde",
+                    Palettes.derive(() -> fromCde(scheme.colours()))));
         }
-        for (int i = 0; i < h; i += 2) {
-            g.fill(x, y + i, x + 1, y + i + 1, color);
-            g.fill(x + w - 1, y + i, x + w, y + i + 1, color);
-        }
+        return out;
     }
 
-    private static int lighten(final int argb) {
-        final int r = Math.min(255, (argb >> 16 & 0xFF) + 24);
-        final int gg = Math.min(255, (argb >> 8 & 0xFF) + 24);
-        final int b = Math.min(255, (argb & 0xFF) + 24);
-        return 0xFF000000 | r << 16 | gg << 8 | b;
-    }
-
-    private static int darken(final int argb) {
-        final int r = Math.max(0, (argb >> 16 & 0xFF) - 28);
-        final int gg = Math.max(0, (argb >> 8 & 0xFF) - 28);
-        final int b = Math.max(0, (argb & 0xFF) - 28);
-        return 0xFF000000 | r << 16 | gg << 8 | b;
+    /** The skin's colours out of a CDE scheme, each one of the scheme's own. */
+    private static SkinColours fromCde(final CdePalette p) {
+        return new SkinColours(p.activeInk(), p.window(), p.shade(), p.active(), p.ink(), p.shade(), p.inset(),
+                p.active(), p.activeInk(), p.inset());
     }
 }

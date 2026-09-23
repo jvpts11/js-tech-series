@@ -488,7 +488,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
                 final int cx = bx + BAND_PAD + c * CELL;
                 final int cy = by + BAND_PAD + rowYOffset(r);
                 g.fill(cx, cy, cx + CELL - 2, cy + CELL - 2, skin.fieldBg());
-                OsSkin.outline(g, cx, cy, CELL - 2, CELL - 2, skin.edge());
+                ChromeShapes.outline(g, cx, cy, CELL - 2, CELL - 2, skin.edge());
             }
         }
     }

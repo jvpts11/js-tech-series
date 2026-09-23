@@ -328,7 +328,7 @@ final class TaskPopup {
             final int tx = card[0] + 3;
             final int ty = card[1] + CARD_TITLE_H + 1;
             final int tw = CARD_W - 6;
-            OsSkin.outline(g, tx - 1, ty - 1, tw + 2, THUMB_H + 2, skin.edge());
+            ChromeShapes.outline(g, tx - 1, ty - 1, tw + 2, THUMB_H + 2, skin.edge());
             g.fill(tx, ty, tx + tw, ty + THUMB_H, skin.fieldBg());
             w.renderThumbnail(g, desktop.textFont(), skin, tx, ty, tw, THUMB_H, sw, sh,
                     desktop.panelReserve(), desktop.workAreaTop());

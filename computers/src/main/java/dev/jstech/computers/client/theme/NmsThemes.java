@@ -12,6 +12,7 @@ import dev.jstech.core.client.gui.theme.EraPalette;
 import dev.jstech.core.client.gui.theme.EraStyle;
 import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.EraThemes;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.tier.HardwareEra;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,11 +49,16 @@ public final class NmsThemes {
     /**
      * The Studio skin for the installed OS: the SSMS layout kept, but the palette re-derived from the OS skin so
      * the Studio follows Frames 95/XP/11 like every other program. The semantic colours (green/amber/red status,
-     * the editor track) stay fixed; structure and the flat style are unchanged.
+     * the editor track) stay the Studio's own; structure and the flat style are unchanged. The colours are worked
+     * out again whenever a resource pack changes the skin's or the Studio's.
      */
     public static EraTheme forOs(final OsSkin skin) {
+        return new EraTheme(Palettes.derive(() -> fromSkin(skin)), EraStyle.flat(0.75f));
+    }
+
+    private static EraPalette fromSkin(final OsSkin skin) {
         final EraPalette base = NmsPalette.SSMS_LIGHT.get();
-        final EraPalette p = new EraPalette(
+        return new EraPalette(
                 skin.windowBg(), skin.fieldBg(), skin.panelBg(), skin.panelBg(), skin.edge(), base.track(),
                 skin.fieldBg(), skin.edge(),
                 skin.accent(), skin.accent(),
@@ -60,6 +66,5 @@ public final class NmsThemes {
                 skin.text(), skin.dim(),
                 skin.accent(), 0xFFFFFFFF, skin.listHover(),
                 0, 0, 0, 0);
-        return new EraTheme(() -> p, EraStyle.flat(0.75f));
     }
 }

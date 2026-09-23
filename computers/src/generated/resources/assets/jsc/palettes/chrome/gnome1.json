@@ -1,0 +1,23 @@
+{
+  "baseFrom": "#FF63506E",
+  "baseTo": "#FF55455F",
+  "crownFrom": "#FF8F7D99",
+  "crownTo": "#FF6D5A78",
+  "darkShadow": "#FF000000",
+  "edge": "#FFA49E8F",
+  "face": "#FFD6D2C8",
+  "focus": "#FF2A2A2A",
+  "glyph": "#FF2A2A2A",
+  "highlight": "#FFFFFFFF",
+  "hover": "#FFE2DED4",
+  "idleBaseFrom": "#FF8C877D",
+  "idleBaseTo": "#FF767168",
+  "idleCrownFrom": "#FFAFAAA0",
+  "idleCrownTo": "#FF938E84",
+  "idleTab": "#FFC4BFB2",
+  "light": "#FFDFDFDF",
+  "panel": "#FFCDC8BC",
+  "shadow": "#FF808080",
+  "statusLight": "#FFF0EDE6",
+  "statusShadow": "#FF85806F"
+}

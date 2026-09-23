@@ -1,0 +1,17 @@
+{
+  "button": "#FF262B36",
+  "buttonHover": "#FF2C3340",
+  "closeGlyph": "#FFFFFFFF",
+  "closeHover": "#FFE5413A",
+  "closePressed": "#FFC5341A",
+  "controlHover": "#FF2C3340",
+  "edge": "#FF333A48",
+  "glyph": "#FFC4CAD6",
+  "idleTitle": "#FF1B2029",
+  "panel": "#FF242833",
+  "pressed": "#FF3A4150",
+  "primaryText": "#FFFFFFFF",
+  "rim": "#FF3A4150",
+  "statusBar": "#FF242833",
+  "thumb": "#FF3E4653"
+}
