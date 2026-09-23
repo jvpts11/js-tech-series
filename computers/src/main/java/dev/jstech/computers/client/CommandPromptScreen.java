@@ -68,9 +68,6 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
     private static final int CONSOLE = 0xFF070A0E;
 
-    /** What a raw console is written on: the whole glass, with no program window around it. */
-    private static final int BARE_GLASS = 0xFF000000;
-
     /** Where a network system stands before it has said so itself: at the machine, since it has no path. */
     private static final String NET_PROMPT = "SYSTEM:>";
     private static final int MAX_SCROLLBACK = 512;
@@ -436,7 +433,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         MonitorFrame.renderBody(g, x, y, imageWidth, imageHeight, screenEra(), font);
         if (bareTerminal()) {
             // A raw console: the whole glass is the terminal, no program window around it.
-            g.fill(x, y, x + imageWidth, y + imageHeight, BARE_GLASS);
+            g.fill(x, y, x + imageWidth, y + imageHeight, bareGlass());
             return;
         }
         JsTechTheme.window(g, x, y, imageWidth, imageHeight);
@@ -581,12 +578,17 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
     /** What the scrollback is written on, which is what the shadow under it is worked out against. */
     private int glass() {
-        return bareTerminal() ? BARE_GLASS : CONSOLE;
+        return bareTerminal() ? bareGlass() : CONSOLE;
     }
 
     /** What the line being typed is written on: the glass of a raw console, the input strip of a window. */
     private int typingGround() {
-        return bareTerminal() ? BARE_GLASS : JsTechTheme.panel();
+        return bareTerminal() ? bareGlass() : JsTechTheme.panel();
+    }
+
+    /** What a raw console is written on: the whole glass, with no program window around it. */
+    private static int bareGlass() {
+        return TermPalette.GLASS.get().ground();
     }
 
     private int colorOf(final CliStyle style) {
@@ -848,7 +850,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             g.pose().translate(leftPos + 8, topPos + 8, 0);
             g.pose().scale(textScale, textScale, 1.0f);
             this.editor.render(g, font, 0, 0, Math.round((imageWidth - 16) / textScale),
-                    Math.round((imageHeight - 16) / textScale), InkPalette.GLASS);
+                    Math.round((imageHeight - 16) / textScale), InkPalette.GLASS.get());
             g.pose().popPose();
         }
     }

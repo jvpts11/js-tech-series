@@ -1015,7 +1015,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     /** The Welcome page: the three ways to begin, what was opened lately, and where to read. */
     private void drawWelcome(final GuiGraphics g, final Font font, final int x, final int y,
                              final int width, final int height) {
-        final InkPalette palette = InkPalette.forGround(this.skin.isDark());
+        final InkPalette palette = InkPalette.forGround(this.skin.isDark()).get();
         g.fill(x, y, x + width, y + height, palette.ground());
         Draw.pushScissor(g, x, y, x + width, y + height);
         this.links.clear();
@@ -1065,7 +1065,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
 
     private void drawEmpty(final GuiGraphics g, final Font font, final int x, final int y,
                            final int width, final int height) {
-        final InkPalette palette = InkPalette.forGround(this.skin.isDark());
+        final InkPalette palette = InkPalette.forGround(this.skin.isDark()).get();
         g.fill(x, y, x + width, y + height, palette.ground());
         Draw.pushScissor(g, x, y, x + width, y + height);
         g.drawString(font, "Pick a file in the Explorer, or Ctrl+P", x + 6, y + 6, palette.gutterText(), false);

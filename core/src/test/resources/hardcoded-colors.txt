@@ -4,7 +4,7 @@ computers/src/main/java/dev/jstech/computers/client/BootSequenceScreen.java 17
 computers/src/main/java/dev/jstech/computers/client/BootSplashArt.java 28
 computers/src/main/java/dev/jstech/computers/client/ChemicalSprite.java 2
 computers/src/main/java/dev/jstech/computers/client/ClusterManagementComputerScreen.java 2
-computers/src/main/java/dev/jstech/computers/client/CommandPromptScreen.java 2
+computers/src/main/java/dev/jstech/computers/client/CommandPromptScreen.java 1
 computers/src/main/java/dev/jstech/computers/client/ComputerTerminalScreen.java 3
 computers/src/main/java/dev/jstech/computers/client/CraftingComputerScreen.java 2
 computers/src/main/java/dev/jstech/computers/client/CraftingSwitchScreen.java 9
@@ -72,7 +72,6 @@ computers/src/main/java/dev/jstech/computers/client/os/PixWallpaper.java 1
 computers/src/main/java/dev/jstech/computers/client/os/PlayingCards.java 11
 computers/src/main/java/dev/jstech/computers/client/os/QuestionPopup.java 8
 computers/src/main/java/dev/jstech/computers/client/os/RemoteControlApp.java 2
-computers/src/main/java/dev/jstech/computers/client/os/SettingsApp.java 6
 computers/src/main/java/dev/jstech/computers/client/os/SetupApp.java 7
 computers/src/main/java/dev/jstech/computers/client/os/ShellView.java 7
 computers/src/main/java/dev/jstech/computers/client/os/SigmaWindowApp.java 1
@@ -92,15 +91,12 @@ computers/src/main/java/dev/jstech/computers/client/os/VirtualStudioCodeApp.java
 computers/src/main/java/dev/jstech/computers/client/os/WallpaperPainter.java 29
 computers/src/main/java/dev/jstech/computers/client/os/WallpaperStyle.java 6
 computers/src/main/java/dev/jstech/computers/client/os/WorkstationInfoApp.java 1
-computers/src/main/java/dev/jstech/computers/client/term/TermPalette.java 36
 computers/src/main/java/dev/jstech/computers/client/theme/MonitorFrameStyle.java 18
 computers/src/main/java/dev/jstech/computers/client/theme/NmsThemes.java 1
 computers/src/main/java/dev/jstech/computers/integration/mekanism/MekanismChemicalBridge.java 1
-computers/src/main/java/dev/jstech/computers/os/edit/InkPalette.java 36
 computers/src/main/java/dev/jstech/computers/os/fs/PixImage.java 18
 computers/src/main/java/dev/jstech/computers/program/OperationPalette.java 5
 computers/src/main/java/dev/jstech/computers/program/SettingKey.java 1
-computers/src/main/java/dev/jstech/computers/program/ThemePreset.java 2
 computers/src/main/java/dev/jstech/computers/program/install/voice/KernelVoices.java 2
 computers/src/main/java/dev/jstech/computers/program/install/voice/PortageVoices.java 1
 computers/src/main/java/dev/jstech/computers/storage/ChemicalBridges.java 1

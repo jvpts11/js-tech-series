@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -96,7 +97,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
     private final List<Doc> docs = new ArrayList<>();
     private int current = -1;
     private String status = "";
-    private InkPalette palette = InkPalette.LIGHT;
+    private Supplier<InkPalette> palette = InkPalette.LIGHT;
 
     /*
      * The folder the workspace is on. It starts on the machine's own, and an editor that works in
@@ -404,7 +405,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
     /* What it looks like and what is wrong with it */
 
     /** The colours to paint code in, which follow the window's own ground. */
-    public void setPalette(final InkPalette value) {
+    public void setPalette(final Supplier<InkPalette> value) {
         this.palette = value;
         for (final Doc doc : this.docs) {
             doc.area.setPalette(value);

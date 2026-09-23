@@ -2323,7 +2323,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     /** The Start Window: what was opened lately on the left, the ways to begin on the right. */
     private void drawStartWindow(final GuiGraphics g, final Font font, final int x, final int y,
                                  final int width, final int height) {
-        final InkPalette palette = InkPalette.forGround(this.skin.isDark());
+        final InkPalette palette = InkPalette.forGround(this.skin.isDark()).get();
         this.links.clear();
         // The recent list needs less room than the cards, whose titles are whole sentences.
         final int half = width * 2 / 5;
@@ -2377,7 +2377,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     private void drawEmpty(final GuiGraphics g, final Font font, final int x, final int y,
                            final int width, final int height) {
-        final InkPalette palette = InkPalette.forGround(this.skin.isDark());
+        final InkPalette palette = InkPalette.forGround(this.skin.isDark()).get();
         g.fill(x, y, x + width, y + height, palette.ground());
         Draw.pushScissor(g, x, y, x + width, y + height);
         g.drawString(font, this.solution == null ? "Open a file from the folder"

@@ -15,6 +15,7 @@ import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.UninstallProgramPayload;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.program.Accents;
 import dev.jstech.computers.program.ThemePreset;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Draw;
@@ -56,9 +57,6 @@ public final class SettingsApp implements IDesktopApp {
     private static final int NAV_ROW_H = 15;
     private static final int BTN_H = 13;
     private static final int NAME_MAX = 24;
-
-    private static final int[] ACCENTS = {
-            0xFF3A6AE0, 0xFF12A26F, 0xFFD1633F, 0xFF7B52C9, 0xFFC93D6A, 0xFFC98320};
 
     private final BlockPos host;
     private OsSkin skin = OsSkin.fallback();
@@ -318,8 +316,10 @@ public final class SettingsApp implements IDesktopApp {
         if (skin.form() != OsSkin.Form.BEVEL) {
             caption("Accent", x, y, w);
             y += 10;
-            for (int i = 0; i < ACCENTS.length; i++) {
-                final int argb = ACCENTS[i];
+            // Each swatch offers the colour it shows, which is the one a resource pack gives it.
+            final List<Integer> accents = Accents.PALETTE.get().all();
+            for (int i = 0; i < accents.size(); i++) {
+                final int argb = accents.get(i);
                 pagePanel.add(new Swatch(null, argb, () -> (d.accent() & 0xFFFFFF) == (argb & 0xFFFFFF),
                         () -> set("accent", String.format(Locale.ROOT, "%06X", argb & 0xFFFFFF)))).setBounds(x + i * 18, y, 14, 14);
             }

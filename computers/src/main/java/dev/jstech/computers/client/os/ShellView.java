@@ -403,7 +403,9 @@ public final class ShellView extends Panel {
         if (this.ownGround != 0) {
             return this.ownGround;
         }
-        return this.ownWindow && this.osSkin.form() == OsSkin.Form.MOTIF ? TermPalette.PAPER : groundOf(this.osSkin);
+        return this.ownWindow && this.osSkin.form() == OsSkin.Form.MOTIF
+                ? TermPalette.PAPER.get().ground()
+                : groundOf(this.osSkin);
     }
 
     /** The console ground, kept dark like a real terminal, tinted to the system it runs on. */
@@ -429,7 +431,7 @@ public final class ShellView extends Panel {
         if (this.editor != null) {
             // The editor has the glass: no scrollback, no prompt, exactly as at a real terminal.
             this.editor.render(g, ctx.font(), x(), y(), width(), height(),
-                    InkPalette.forGround(!TermPalette.lightGround(ground)));
+                    InkPalette.forGround(!TermPalette.lightGround(ground)).get());
             return;
         }
         g.fill(x(), y(), right(), bottom(), ground);

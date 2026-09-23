@@ -7,6 +7,11 @@
  */
 package dev.jstech.computers.os.edit;
 
+import dev.jstech.computers.JsComputers;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+
 /**
  * The colours a piece of source is painted in, one set for a light window and one for a dark one.
  *
@@ -15,31 +20,34 @@ package dev.jstech.computers.os.edit;
  * derived from the other by arithmetic, which is how the unreadable middle greys got shipped before.
  * Every colour here is checked against its own ground by a test, so a change that makes a comment
  * disappear fails before anyone opens a monitor.
+ *
+ * <p>Each set is a declared palette, {@code jsc:ink/<set>}, which a resource pack can recolour.
  */
+@PaletteHolder
 public record InkPalette(int ground, int gutter, int gutterText, int caret, int currentLine,
                          int plain, int keyword, int name, int text, int number, int comment, int symbol) {
 
     /** For a window with a light client area: the Frames editions and every Linux desktop but a dark one. */
-    public static final InkPalette LIGHT = new InkPalette(
+    public static final Palette<InkPalette> LIGHT = Palettes.declare(JsComputers.MODID, "ink/light", new InkPalette(
             0xFFFFFFFF, 0xFFF2F3F6, 0xFF8A8F9C, 0xFF1B2437, 0xFFF6F7FB,
-            0xFF1B2437, 0xFF0033B0, 0xFF1B2437, 0xFF9B1C1C, 0xFF8A4B00, 0xFF2F7A3F, 0xFF505A6B);
+            0xFF1B2437, 0xFF0033B0, 0xFF1B2437, 0xFF9B1C1C, 0xFF8A4B00, 0xFF2F7A3F, 0xFF505A6B));
 
     /** For a window with a dark client area: Frames 11 in its dark palette, and a terminal in a window. */
-    public static final InkPalette DARK = new InkPalette(
+    public static final Palette<InkPalette> DARK = Palettes.declare(JsComputers.MODID, "ink/dark", new InkPalette(
             0xFF1E212A, 0xFF1A1D25, 0xFF7B8494, 0xFFE7E9EF, 0xFF242833,
-            0xFFD5DAE4, 0xFF8FA9F5, 0xFFD5DAE4, 0xFFDB9A72, 0xFFD3B475, 0xFF89939F, 0xFF9AA3B2);
+            0xFFD5DAE4, 0xFF8FA9F5, 0xFFD5DAE4, 0xFFDB9A72, 0xFFD3B475, 0xFF89939F, 0xFF9AA3B2));
 
     /**
      * For the bare glass of a monitor, where a terminal is the whole screen: black, as that glass is, so an
      * editor that takes the terminal over is on the same ground the prompt was and not on a slate panel laid
      * over it. The inks are the dark window's, which were picked for a ground darker than they are.
      */
-    public static final InkPalette GLASS = new InkPalette(
+    public static final Palette<InkPalette> GLASS = Palettes.declare(JsComputers.MODID, "ink/glass", new InkPalette(
             0xFF000000, 0xFF0C0E13, 0xFF7B8494, 0xFFE7E9EF, 0xFF0C0E13,
-            0xFFD5DAE4, 0xFF8FA9F5, 0xFFD5DAE4, 0xFFDB9A72, 0xFFD3B475, 0xFF89939F, 0xFF9AA3B2);
+            0xFFD5DAE4, 0xFF8FA9F5, 0xFFD5DAE4, 0xFFDB9A72, 0xFFD3B475, 0xFF89939F, 0xFF9AA3B2));
 
     /** The palette for a window whose client area is {@code dark}. */
-    public static InkPalette forGround(final boolean dark) {
+    public static Palette<InkPalette> forGround(final boolean dark) {
         return dark ? DARK : LIGHT;
     }
 

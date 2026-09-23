@@ -8,6 +8,7 @@
 package dev.jstech.computers.program;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -21,11 +22,22 @@ class ThemePresetTest {
     }
 
     @Test
-    void applyTo_keepsTheNameAndSetsTheAccent() {
+    void applyTo_keepsTheNameAndSetsTheAccentTheModDeclares() {
         final ComputerSettings settings = new ComputerSettings();
         ThemePreset.SLATE.applyTo(settings);
         assertEquals("slate", settings.themePreset());
-        assertEquals(0xFF7B52C9, settings.accent());
+        assertEquals(Accents.PALETTE.declared().violet(), settings.accent());
+    }
+
+    @Test
+    void applyTo_everyPresetWearsAnAccentSettingsOffers() {
+        final Accents accents = Accents.PALETTE.declared();
+        for (final ThemePreset preset : ThemePreset.values()) {
+            final ComputerSettings settings = new ComputerSettings();
+            preset.applyTo(settings);
+            assertTrue(settings.accent() == 0 || accents.all().contains(settings.accent()),
+                    preset + " wears an accent Settings does not offer");
+        }
     }
 
     @Test

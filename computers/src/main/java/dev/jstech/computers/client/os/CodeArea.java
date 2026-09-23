@@ -15,6 +15,7 @@ import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.logic.TextDocument;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -86,7 +87,8 @@ public final class CodeArea extends UiComponent {
     private final TextDocument doc = new TextDocument();
     private IColouring colouring = lines -> List.of();
     private List<Mark> marks = List.of();
-    private InkPalette palette = InkPalette.LIGHT;
+    /** The inks, asked for each time a row is painted, since a resource pack can change them. */
+    private Supplier<InkPalette> palette = InkPalette.LIGHT;
     private Runnable onEdit = () -> { };
     /*
      * A code area is used on its own, with no panel to hand the keyboard around, so it keeps its own
@@ -155,7 +157,7 @@ public final class CodeArea extends UiComponent {
     }
 
     /** What is drawn on: the colours follow the window's own ground. */
-    public CodeArea setPalette(final InkPalette value) {
+    public CodeArea setPalette(final Supplier<InkPalette> value) {
         this.palette = value == null ? InkPalette.LIGHT : value;
         return this;
     }
@@ -280,8 +282,9 @@ public final class CodeArea extends UiComponent {
         final Font font = ctx.font();
         followCaretAcross(font);
         final int gutter = gutterWidth(font);
-        g.fill(x(), y(), right(), bottom(), this.palette.ground());
-        g.fill(x(), y(), x() + Math.round(gutter * this.scale), bottom(), this.palette.gutter());
+        final InkPalette ink = this.palette.get();
+        g.fill(x(), y(), right(), bottom(), ink.ground());
+        g.fill(x(), y(), x() + Math.round(gutter * this.scale), bottom(), ink.gutter());
         final List<List<CodeRuns.Run>> runs = runs();
         final int visible = visibleLines();
         final TextDocument.Spot from = this.doc.selectionStart();
@@ -305,7 +308,7 @@ public final class CodeArea extends UiComponent {
             final String line = this.doc.line(i);
             final int textX = gutter + INSET - this.shift;
             if (i == this.doc.cursorLine() && focused && !selected) {
-                g.fill(gutter, ry, innerRight, ry + LINE_H, this.palette.currentLine());
+                g.fill(gutter, ry, innerRight, ry + LINE_H, ink.currentLine());
             }
             if (selected && i >= from.line() && i <= to.line()) {
                 final int startCol = i == from.line() ? Math.min(from.col(), line.length()) : 0;
@@ -321,7 +324,7 @@ public final class CodeArea extends UiComponent {
             if (focused && i == this.doc.cursorLine()) {
                 final int col = Math.min(this.doc.cursorCol(), line.length());
                 final int cx = textX + font.width(line.substring(0, col));
-                g.fill(cx, ry, cx + 1, ry + LINE_H, this.palette.caret());
+                g.fill(cx, ry, cx + 1, ry + LINE_H, ink.caret());
             }
             ry += LINE_H;
         }
@@ -337,7 +340,7 @@ public final class CodeArea extends UiComponent {
             drawMark(g, i, ry);
             final String number = String.valueOf(i + 1);
             g.drawString(font, number, gutter - GUTTER_PAD - font.width(number), ry + 1,
-                    this.palette.gutterText(), false);
+                    ink.gutterText(), false);
             ry += LINE_H;
         }
         g.pose().popPose();
@@ -421,8 +424,9 @@ public final class CodeArea extends UiComponent {
     /** One row, run by run, each stretch in the colour its piece of source asked for. */
     private void drawLine(final GuiGraphics g, final Font font, final String line,
                           final List<CodeRuns.Run> runs, final int startX, final int textY) {
+        final InkPalette ink = this.palette.get();
         if (runs.isEmpty()) {
-            g.drawString(font, line, startX, textY, this.palette.plain(), false);
+            g.drawString(font, line, startX, textY, ink.plain(), false);
             return;
         }
         int rx = startX;
@@ -433,7 +437,7 @@ public final class CodeArea extends UiComponent {
                 continue;
             }
             final String piece = line.substring(from, to);
-            g.drawString(font, piece, rx, textY, this.palette.of(run.ink()), false);
+            g.drawString(font, piece, rx, textY, ink.of(run.ink()), false);
             rx += font.width(piece);
         }
     }
