@@ -27,6 +27,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ### Changed
 - The three advancements of the old Computers tab moved into the Operating Systems tab, so a world that had
   earned them shows them unearned there.
+- A desktop's terminal window opens eighty columns by twenty-four rows, as terminals do, and smaller only when
+  the desktop has no room for that. Its rows, and those of the terminal inside an editor, are as far apart as
+  the full-screen terminal's, so what is drawn in characters keeps its shape instead of being squashed flat.
 
 ### Fixed
 - screenfetch draws every logo as neofetch draws it. Ubuntu's was another, older logo copied with mistakes, and

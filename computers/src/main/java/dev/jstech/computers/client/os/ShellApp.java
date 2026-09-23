@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.operation.payload.RunProgramPayload;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
@@ -38,6 +39,9 @@ public final class ShellApp implements IDesktopApp {
     /** What a window's frame takes round its content: the border, and the title bar above. */
     private static final int FRAME_W = 8;
     private static final int FRAME_H = DesktopWindow.TITLE_H + 8;
+
+    /** The rows a terminal opens with. */
+    private static final int ROWS = 24;
 
     private final ShellView view;
     private OsSkin skin = OsSkin.fallback();
@@ -147,14 +151,15 @@ public final class ShellApp implements IDesktopApp {
         return this.title;
     }
 
+    /* A terminal opens eighty columns by twenty-four rows, as terminals do; a desktop too small for that shrinks it. */
     @Override
     public int defaultWidth() {
-        return 286;
+        return ShellView.widthFor(TermBuffer.MONITOR_COLUMNS) + FRAME_W;
     }
 
     @Override
     public int defaultHeight() {
-        return 176;
+        return ShellView.heightFor(ROWS) + FRAME_H;
     }
 
     @Override

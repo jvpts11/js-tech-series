@@ -49,7 +49,11 @@ import org.lwjgl.glfw.GLFW;
  */
 public final class ShellView extends Panel {
 
-    private static final int LINE_H = 9;
+    /*
+     * How far apart the rows are: twice a cell's width, as at the full-screen terminal and at any real one. A
+     * shorter pitch squashed everything drawn in characters, a round logo into a flat one.
+     */
+    private static final int LINE_H = 2 * TermPainter.CELL;
     private static final int PAD = 3;
     private static final int MAX_SCROLLBACK = 256;
     private static final int TAG_COLOR = 0xFF5A6678;
@@ -188,6 +192,16 @@ public final class ShellView extends Panel {
         ShellViews.register(this);
         // Sync the real prompt (and any pending build notices) before the player types anything.
         PacketDistributor.sendToServer(new DesktopShellRunPayload(host, "", this.session));
+    }
+
+    /** How wide a view has to be to hold that many columns. */
+    public static int widthFor(final int columns) {
+        return columns * TermPainter.CELL + PAD * 2 + 2;
+    }
+
+    /** How tall a view has to be to show that many rows of scrollback above the line being typed. */
+    public static int heightFor(final int rows) {
+        return rows * LINE_H + PAD + LINE_H + 2;
     }
 
     /** The shell session this window is on the machine. */
