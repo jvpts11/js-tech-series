@@ -77,7 +77,7 @@ computers/src/main/java/dev/jstech/computers/client/os/EmacsKeys.java 12
 computers/src/main/java/dev/jstech/computers/client/os/ExceedApp.java 11
 computers/src/main/java/dev/jstech/computers/client/os/ExposureApp.java 34
 computers/src/main/java/dev/jstech/computers/client/os/FileDialog.java 23
-computers/src/main/java/dev/jstech/computers/client/os/FilesApp.java 32
+computers/src/main/java/dev/jstech/computers/client/os/FilesApp.java 23
 computers/src/main/java/dev/jstech/computers/client/os/FramesLaunchers.java 8
 computers/src/main/java/dev/jstech/computers/client/os/FramesPanels.java 2
 computers/src/main/java/dev/jstech/computers/client/os/GatewayManagerApp.java 45

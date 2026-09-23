@@ -44,6 +44,8 @@ import dev.jstech.core.client.gui.component.SearchField;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -691,30 +693,12 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /** What a file is called in the Type column, by its extension, for any window that lists files the same way. */
     public static String typeLabel(final DiskFilesPayload.WireFile f) {
-        return switch (f.ext().toLowerCase(Locale.ROOT)) {
-            case "iql" -> "IQL script";
-            case "txt" -> "Text";
-            case "log" -> "Log";
-            case "cfg" -> "Configuration";
-            case "csv" -> "Table";
-            case "cmd" -> "Shell script";
-            case "craft" -> "Craft pattern";
-            case "dat" -> "Stored item";
-            case "exe" -> "Installer";
-            case "sh" -> "Install script";
-            case "pkg" -> "Package manifest";
-            case "inf" -> "Setup information";
-            case "bin" -> "Installer data";
-            case "cpk" -> "Program package";
-            case "sln" -> "Solution";
-            case "sgsproj" -> "Σ# project";
-            case "sgproj" -> "Σ project";
-            /*
-             * A language names its own files. Whatever is registered gets this for nothing, and the
-             * explorer stops needing to know which language the machines happen to speak.
-             */
-            default -> languageLabel(f.ext());
-        };
+        final TextKey name = FileType.of(f.ext()).typeName();
+        /*
+         * A language names its own files. Whatever is registered gets this for nothing, and the
+         * explorer stops needing to know which language the machines happen to speak.
+         */
+        return name != null ? GameText.resolve(name.text()) : languageLabel(f.ext());
     }
 
     private static String sizeLabel(final DiskFilesPayload.WireFile f) {

@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.layout.FilesLayout;
 import dev.jstech.computers.machine.MachineListing;
+import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Draw;
 import java.util.Locale;
@@ -43,20 +44,21 @@ public final class FileIcons {
         if (language != null) {
             return language.sourceExtensions().contains(lower) ? Kind.SOURCE : Kind.PROGRAM;
         }
-        return switch (lower) {
-            case "iql" -> Kind.IQL;
-            case "dat" -> Kind.DAT;
-            case "exe", "sh" -> Kind.EXE;
-            case "pkg" -> Kind.PKG;
-            case "inf", "ini" -> Kind.INF;
-            case "bin", "sys", "fon" -> Kind.BIN;
-            case "cfg" -> Kind.CFG;
-            case "log" -> Kind.LOG;
-            case "craft" -> Kind.CRAFT;
+        // Every kind of file is named here, so a new one cannot be added without its icon being chosen.
+        return switch (FileType.of(lower)) {
+            case IQL -> Kind.IQL;
+            case DAT -> Kind.DAT;
+            case EXE, SH -> Kind.EXE;
+            case PKG -> Kind.PKG;
+            case INF, INI -> Kind.INF;
+            case BIN, SYS, FON -> Kind.BIN;
+            case CFG -> Kind.CFG;
+            case LOG -> Kind.LOG;
+            case CRAFT -> Kind.CRAFT;
             // An archive is a thing with other things inside it, which is what the parcel already stands for.
-            case "cpk", "sln", "sgsproj", "sgproj", "ark" -> Kind.BUNDLE;
-            case "pix" -> Kind.IMAGE;
-            default -> Kind.DOC;
+            case CPK, SLN, SGSPROJ, SGPROJ, ARK -> Kind.BUNDLE;
+            case PIX -> Kind.IMAGE;
+            case TXT, CSV, CMD, SGS, SG, ASM, OTHER -> Kind.DOC;
         };
     }
 

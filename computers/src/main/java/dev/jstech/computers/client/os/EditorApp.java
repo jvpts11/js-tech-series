@@ -9,6 +9,8 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
+import dev.jstech.computers.os.fs.FileOpeners;
+import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextArea;
@@ -264,7 +266,7 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
             return;
         }
         // A .dat is a read-only projection of stored items; it can never be created or written by hand.
-        if (target.toLowerCase(Locale.ROOT).endsWith(".dat")) {
+        if (FileType.of(FileOpeners.extensionOf(target)) == FileType.DAT) {
             this.status = "Cannot save a .dat file";
             DesktopScreen.showDatLockedError();
             return;

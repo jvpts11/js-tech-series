@@ -9,12 +9,12 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.layout.DesktopIconLayout;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
+import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.core.client.gui.component.Texts;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import net.minecraft.client.gui.GuiGraphics;
@@ -385,9 +385,9 @@ final class DesktopIcons {
         }
         final int fill;
         final int edge;
-        switch (f.ext().toLowerCase(Locale.ROOT)) {
-            case "iql" -> { fill = 0xFFA9D4FF; edge = 0xFF3A72B0; }
-            case "dat" -> { fill = 0xFFBDEEC0; edge = 0xFF4F9B53; }
+        switch (FileType.of(f.ext())) {
+            case IQL -> { fill = 0xFFA9D4FF; edge = 0xFF3A72B0; }
+            case DAT -> { fill = 0xFFBDEEC0; edge = 0xFF4F9B53; }
             default -> { fill = 0xFFEDEFF3; edge = 0xFF8A93A6; }
         }
         g.fill(x + 4, y + 1, x + 21, y + 21, fill);        // sheet
