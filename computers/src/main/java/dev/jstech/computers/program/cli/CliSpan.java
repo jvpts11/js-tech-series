@@ -62,7 +62,15 @@ public record CliSpan(Text text, CliStyle style, @Nullable Fill fill) {
 
     /** The dots that carry what follows them to that column; see {@link Fill}. */
     public static CliSpan fill(final int column, final boolean closing) {
-        return new CliSpan(Text.EMPTY, CliStyle.PLAIN, new Fill(column, closing));
+        return new CliSpan(Text.EMPTY, CliStyle.PLAIN, new Fill(column, closing, false));
+    }
+
+    /**
+     * Blank room that makes what follows begin at that column: how a table's cell is padded once its words are in
+     * the reader's language, so a translated cell that is longer or shorter still leaves the next column in line.
+     */
+    public static CliSpan pad(final int column) {
+        return new CliSpan(Text.EMPTY, CliStyle.PLAIN, new Fill(column, false, true));
     }
 
     /** The run in English, the machine's language; a fill reads as nothing until it is laid out in a line. */
@@ -71,24 +79,31 @@ public record CliSpan(Text text, CliStyle style, @Nullable Fill fill) {
     }
 
     /**
-     * Dots that line up what follows them, laid out once the words on either side are in a language.
+     * Room that lines up what follows it, laid out once the words on either side are in a language.
      *
      * <p>Two ways of lining up. A closing fill pushes what follows it to end at {@code column}, which is how a figure
      * is read off a listing, right against the edge. An opening one makes what follows it begin at {@code column},
      * which is how a list of names and what each does keeps every description starting in the same place.
      *
+     * <p>The room is dots, the way a listing leads the eye from a label to its value, or blank, the way a table's
+     * columns are simply spaced.
+     *
      * @param column  where what follows ends (closing) or begins (opening)
      * @param closing whether what follows ends at the column rather than begins at it
+     * @param blank   whether the room is spaces rather than dots
      */
-    public record Fill(int column, boolean closing) {
+    public record Fill(int column, boolean closing, boolean blank) {
 
         /**
-         * The dots, with a space either side, given how much of the line comes before them and after them. A line
-         * with no room for dots keeps the words apart all the same: two spaces before a figure, one before a
-         * description, so each still reads as two things rather than one.
+         * The room, given how much of the line comes before it and after it. Dots get a space either side. A line
+         * with no room left keeps the words apart all the same: two spaces before a figure, one before anything
+         * else, so each still reads as two things rather than one.
          */
         public String render(final int before, final int after) {
             final int room = this.closing ? this.column - before - after : this.column - before;
+            if (this.blank) {
+                return " ".repeat(Math.max(1, room));
+            }
             if (room < 2) {
                 return this.closing ? "  " : " ";
             }

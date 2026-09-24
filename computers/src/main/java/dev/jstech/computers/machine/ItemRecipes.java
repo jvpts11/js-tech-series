@@ -12,6 +12,8 @@ import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +24,13 @@ import java.util.List;
  * knows. The graphical Network Interactor asks them of its details panel and a terminal asks them of
  * {@code info}, and both get the same words, because they are the same question about the same network.
  */
+@TextHolder
 public final class ItemRecipes {
+
+    private static final TextKey PROCESSING = TextKey.of("jsc.service.recipes.processing", "%s · processing · %s");
+    private static final TextKey MULTI_STAGE = TextKey.of("jsc.service.recipes.multi_stage", "%s · multi-stage · %s");
+    private static final TextKey AT_THE_BENCH = TextKey.of("jsc.service.recipes.at_the_bench", "%s · bench");
+    private static final TextKey BENCH_STAGE = TextKey.of("jsc.service.recipes.bench_stage", "Bench");
 
     private ItemRecipes() {
     }
@@ -62,22 +70,25 @@ public final class ItemRecipes {
         return names;
     }
 
-    /** "Blast &#183; processing &#183; Blast Furnace": one way of making a thing, in one line. */
+    /**
+     * "Blast &#183; processing &#183; Blast Furnace": one way of making a thing, in one line. The payload that carries
+     * it holds plain words, so the line is in the English the machine keeps.
+     */
     public static String line(final NetworkRecipe recipe) {
         if (recipe.proc().isPresent()) {
-            return recipe.displayName() + " · processing · "
-                    + MachineCategory.label(recipe.proc().get().machineType());
+            return PROCESSING.with(recipe.displayName(), MachineCategory.label(recipe.proc().get().machineType()))
+                    .english();
         }
         if (recipe.multi().isPresent()) {
             final List<String> machines = new ArrayList<>();
             for (final var stage : recipe.multi().get().stages()) {
                 machines.add(stage.proc().isPresent()
                         ? MachineCategory.label(stage.proc().get().machineType())
-                        : "Bench");
+                        : BENCH_STAGE.text().english());
             }
-            return recipe.displayName() + " · multi-stage · " + String.join(" -> ", machines);
+            return MULTI_STAGE.with(recipe.displayName(), String.join(" -> ", machines)).english();
         }
-        return recipe.displayName() + " · bench";
+        return AT_THE_BENCH.with(recipe.displayName()).english();
     }
 
     /** Whether a recipe takes that thing in, at any of its stages. */

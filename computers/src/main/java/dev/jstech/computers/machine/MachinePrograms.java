@@ -8,6 +8,7 @@
 package dev.jstech.computers.machine;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramEntry;
 import dev.jstech.computers.vm.program.ProgramImage;
@@ -18,6 +19,9 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.language.ILanguageProcess;
 import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -48,10 +52,25 @@ import org.slf4j.Logger;
  * language that runs its extension. So a program that came back after a reload is the program that was running even
  * if the file has been deleted or edited since.
  */
+@TextHolder
 public final class MachinePrograms {
 
     /** What a program gets when it did not ask for a size of its own. */
     public static final int DEFAULT_HEAP_MB = 1;
+
+    /** What starting a file nothing installed runs says, whoever asked to start it. */
+    static final TextKey NOTHING_RUNS =
+            TextKey.of("jsc.service.programs.nothing_runs", "%s: nothing installed runs a .%s");
+
+    private static final TextKey DOES_NOT_COMPILE =
+            TextKey.of("jsc.service.programs.does_not_compile", "%s does not compile");
+    private static final TextKey AND_MORE = TextKey.of("jsc.service.programs.and_more", "%s (and %s more)");
+    private static final TextKey NOT_A_LISTING = TextKey.of("jsc.service.programs.not_a_listing", "this is not a %s");
+    private static final TextKey CANNOT_RUN =
+            TextKey.of("jsc.service.programs.cannot_run", "this is not something %s can run");
+    private static final TextKey STARTED_AS = TextKey.of("jsc.service.programs.started_as", "%s started as %s");
+    private static final TextKey NOT_BROUGHT_BACK = TextKey.of("jsc.service.programs.not_brought_back",
+            "the programs that were running could not be brought back from the save");
 
     /** The most a program may ask for, because a script is not what a machine's memory is for. */
     public static final int MAX_HEAP_MB = 64;
@@ -67,14 +86,23 @@ public final class MachinePrograms {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    /** What came of asking for a program to start: its number, or why it did not. */
-    public record Started(int id, String message) {
+    /**
+     * What came of asking for a program to start: its number, or why it did not.
+     *
+     * @param said what the machine says about it, to be put in the reader's language
+     */
+    public record Started(int id, Text said) {
 
         public boolean ok() {
             return this.id > 0;
         }
 
-        static Started failed(final String why) {
+        /** What was said, in the English the machine keeps it in. */
+        public String message() {
+            return this.said.english();
+        }
+
+        static Started failed(final Text why) {
             return new Started(0, why);
         }
     }
@@ -255,7 +283,7 @@ public final class MachinePrograms {
         final IProgrammingLanguage runner = listing ? null : JsCore.languages().runnerOf(extension);
         final IProgrammingLanguage compiler = listing || runner != null ? null : compilerOnly(extension);
         if (!listing && runner == null && compiler == null) {
-            return Started.failed(name + ": nothing installed runs a ." + extension);
+            return Started.failed(NOTHING_RUNS.with(name, extension));
         }
         /*
          * A file of source is compiled here, on the way in, under the file's own name so the program's errors quote
@@ -271,9 +299,13 @@ public final class MachinePrograms {
             final IProgrammingLanguage.CompileResult built = writtenIn.compile(sources);
             if (!built.ok()) {
                 final List<IProgrammingLanguage.Complaint> complaints = built.complaints();
-                return Started.failed(complaints.isEmpty() ? name + " does not compile"
-                        : complaints.getFirst().format() + (complaints.size() > 1
-                        ? " (and " + (complaints.size() - 1) + " more)" : ""));
+                if (complaints.isEmpty()) {
+                    return Started.failed(DOES_NOT_COMPILE.with(name));
+                }
+                // The compiler's own line is quoted as it said it; how many more there are is the machine's to say.
+                final String first = complaints.getFirst().format();
+                return Started.failed(complaints.size() > 1 ? AND_MORE.with(first, complaints.size() - 1)
+                        : Text.literal(first));
             }
             runnable = built.binary();
         }
@@ -286,14 +318,14 @@ public final class MachinePrograms {
             if (process == null) {
                 // A listing that says what is wrong with it is worth more than being told it is not one.
                 final var problem = MachineListing.firstProblem(runnable, machine);
-                return Started.failed(name + ": "
-                        + (problem == null ? "this is not a " + MachineListing.LABEL : problem.format()));
+                return Started.failed(CliTexts.SAID_BY.with(name, problem == null
+                        ? NOT_A_LISTING.with(MachineListing.LABEL) : Text.literal(problem.format())));
             }
         } else {
             final HostedView view = new HostedView(machine, heapBytes);
             final ILanguageProcess started = runner.start(runnable, view, given);
             if (started == null) {
-                return Started.failed(name + ": this is not something " + runner.displayName() + " can run");
+                return Started.failed(CliTexts.SAID_BY.with(name, CANNOT_RUN.with(runner.displayName())));
             }
             process = runtimeOf(started, view, runner);
         }
@@ -301,7 +333,7 @@ public final class MachinePrograms {
         process.identify(id);
         final long now = machine.getLevel() == null ? ProgramEntry.STARTED_UNKNOWN : machine.getLevel().getGameTime();
         this.table.add(new ProgramEntry<>(id, name, runnable, room, process, parent, args, priority, now));
-        return new Started(id, name + " started as " + id);
+        return new Started(id, STARTED_AS.with(name, id));
     }
 
     /**
@@ -659,7 +691,8 @@ public final class MachinePrograms {
         this.ticker.load(new CompoundTag());
         LOGGER.warn("The programs saved on the machine at {} were left out: the save is not in a form this version "
                 + "reads", where(machine));
-        this.notices.add("the programs that were running could not be brought back from the save");
+        // Said in English until the terminal's notices carry text a player reads in their own language.
+        this.notices.add(NOT_BROUGHT_BACK.text().english());
     }
 
     /** Where a machine is, for the log. */

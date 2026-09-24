@@ -12,8 +12,11 @@ import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ComputerSettings;
 import dev.jstech.computers.program.ThemePreset;
+import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -28,12 +31,37 @@ import org.jetbrains.annotations.Nullable;
  * <p>Most of it belongs to the machine's own settings store, which this asks; what is here are the few keys with
  * rules of their own, and the folder sharing, which has to check the folder is really there before opening it.
  */
+@TextHolder
 public final class MachineConfigService {
 
     private final IComputerTerminalHost terminal;
     private final ServerLevel level;
     /** The machine's drives, for the system disk and for checking a folder before it is shared. */
     private final FileService files;
+
+    private static final TextKey UNNAMED = TextKey.of("jsc.service.config.unnamed", "(unnamed)");
+    private static final TextKey SHARE_HINT = TextKey.of("jsc.service.config.share_hint",
+            "'config share <folder> [read|write]' opens a folder to the network as \\\\%s\\<name>; "
+                    + "'config unshare <name>' closes it");
+    private static final TextKey NO_STORE =
+            TextKey.of("jsc.service.config.no_store", "this computer has no settings store");
+    private static final TextKey SET = TextKey.of("jsc.service.config.set", "%s set");
+    private static final TextKey NETSHARE_NUMBER =
+            TextKey.of("jsc.service.config.netshare_number", "netshare needs a number from 0 to 1000");
+    private static final TextKey NO_SYSTEM_DISK =
+            TextKey.of("jsc.service.config.no_system_disk", "no system disk to share");
+    private static final TextKey NOTHING_SHARED =
+            TextKey.of("jsc.service.config.nothing_shared", "nothing is shared as %s");
+    private static final TextKey UNSHARED = TextKey.of("jsc.service.config.unshared", "no longer shared: %s");
+    private static final TextKey UNKNOWN = TextKey.of("jsc.service.config.unknown", "unknown setting: %s");
+    private static final TextKey SHARE_USAGE =
+            TextKey.of("jsc.service.config.share_usage", "<folder> [read|write]");
+    private static final TextKey TOO_MANY_SHARES =
+            TextKey.of("jsc.service.config.too_many_shares", "this computer already shares %s folders");
+    private static final TextKey SHARED_READ_ONLY =
+            TextKey.of("jsc.service.config.shared_read_only", "shared %s as \\\\%s\\%s (read only)");
+    private static final TextKey SHARED_READ_WRITE =
+            TextKey.of("jsc.service.config.shared_read_write", "shared %s as \\\\%s\\%s (read and write)");
 
     public MachineConfigService(final IComputerTerminalHost terminal, final ServerLevel level,
                                 final FileService files) {
@@ -42,7 +70,10 @@ public final class MachineConfigService {
         this.files = files;
     }
 
-    /** The settings as the {@code config} command prints them, and the two lines telling how to share a folder. */
+    /**
+     * The settings as the {@code config} command prints them, and the two lines telling how to share a folder. They
+     * travel on as words, so they are in English, the machine's language.
+     */
     public List<String> summary() {
         final ComputerConsoleState console = this.terminal.console();
         if (console == null) {
@@ -50,11 +81,10 @@ public final class MachineConfigService {
         }
         final List<String> lines = new ArrayList<>();
         final String name = console.computerName();
-        lines.add(String.format(Locale.ROOT, "  %-12s%s", "name", name.isEmpty() ? "(unnamed)" : name));
+        lines.add(String.format(Locale.ROOT, "  %-12s%s", "name", name.isEmpty() ? UNNAMED.text().english() : name));
         lines.add(String.format(Locale.ROOT, "  %-12s%d permille", "netshare", this.diskPermille()));
         lines.addAll(console.settings().summaryLines());
-        lines.add("  'config share <folder> [read|write]' opens a folder to the network as \\\\"
-                + this.terminal.hostname() + "\\<name>; 'config unshare <name>' closes it");
+        lines.add("  " + SHARE_HINT.with(this.terminal.hostname()).english());
         return lines;
     }
 
@@ -67,7 +97,7 @@ public final class MachineConfigService {
     public ICliComputer.OpResult set(final String key, final String value) {
         final ComputerConsoleState console = this.terminal.console();
         if (console == null) {
-            return ICliComputer.OpResult.fail("this computer has no settings store");
+            return ICliComputer.OpResult.fail(NO_STORE);
         }
         final BlockEntity machine = (BlockEntity) this.terminal;
         final String k = key == null ? "" : key.toLowerCase(Locale.ROOT).trim();
@@ -75,18 +105,18 @@ public final class MachineConfigService {
             case "name" -> {
                 console.setComputerName(value == null ? "" : value.trim());
                 machine.setChanged();
-                return ICliComputer.OpResult.ok("name set");
+                return ICliComputer.OpResult.ok(SET.with(k));
             }
             case "wallpaper" -> {
                 console.desktop().setWallpaper(value == null ? "" : value.trim());
                 machine.setChanged();
-                return ICliComputer.OpResult.ok("wallpaper set");
+                return ICliComputer.OpResult.ok(SET.with(k));
             }
             case "cdestyle" -> {
                 // Read forgivingly and kept as read, so a style nobody could draw is never what is stored.
                 console.desktop().setCdeStyle(CdeStyle.parse(value));
                 machine.setChanged();
-                return ICliComputer.OpResult.ok("cdestyle set");
+                return ICliComputer.OpResult.ok(SET.with(k));
             }
             case "theme" -> {
                 // A theme preset bundles an accent and a wallpaper, so picking one restyles the desktop.
@@ -94,18 +124,18 @@ public final class MachineConfigService {
                 preset.applyTo(console.settings());
                 console.desktop().setWallpaper(preset.wallpaper());
                 machine.setChanged();
-                return ICliComputer.OpResult.ok("theme set");
+                return ICliComputer.OpResult.ok(SET.with(k));
             }
             case "netshare" -> {
                 final Integer permille = tryInt(value);
                 if (permille == null) {
-                    return ICliComputer.OpResult.fail("netshare needs a number from 0 to 1000");
+                    return ICliComputer.OpResult.fail(NETSHARE_NUMBER);
                 }
                 if (!this.setDiskPermille(permille)) {
-                    return ICliComputer.OpResult.fail("no system disk to share");
+                    return ICliComputer.OpResult.fail(NO_SYSTEM_DISK);
                 }
                 machine.setChanged();
-                return ICliComputer.OpResult.ok("netshare set");
+                return ICliComputer.OpResult.ok(SET.with(k));
             }
             case "share" -> {
                 return this.share(console, value);
@@ -113,17 +143,17 @@ public final class MachineConfigService {
             case "unshare" -> {
                 final String wanted = value == null ? "" : value.trim();
                 if (!console.settings().unshare(wanted)) {
-                    return ICliComputer.OpResult.fail("nothing is shared as " + wanted);
+                    return ICliComputer.OpResult.fail(NOTHING_SHARED.with(wanted));
                 }
                 machine.setChanged();
-                return ICliComputer.OpResult.ok("no longer shared: " + wanted);
+                return ICliComputer.OpResult.ok(UNSHARED.with(wanted));
             }
             default -> {
                 if (console.settings().applySetting(k, value)) {
                     machine.setChanged();
-                    return ICliComputer.OpResult.ok(k + " set");
+                    return ICliComputer.OpResult.ok(SET.with(k));
                 }
-                return ICliComputer.OpResult.fail("unknown setting: " + k);
+                return ICliComputer.OpResult.fail(UNKNOWN.with(k));
             }
         }
     }
@@ -167,7 +197,7 @@ public final class MachineConfigService {
             }
         }
         if (path.isEmpty()) {
-            return ICliComputer.OpResult.fail("usage: config share <folder> [read|write]");
+            return ICliComputer.OpResult.fail(CliTexts.USAGE.with("config share", SHARE_USAGE));
         }
         final ICliComputer.OpResult folder = this.files.folderForShare(path);
         if (!folder.ok()) {
@@ -175,13 +205,12 @@ public final class MachineConfigService {
         }
         final String dos = folder.message().english();
         if (!console.settings().share(dos, writable)) {
-            return ICliComputer.OpResult.fail("this computer already shares "
-                    + ComputerSettings.MAX_SHARES + " folders");
+            return ICliComputer.OpResult.fail(TOO_MANY_SHARES.with(ComputerSettings.MAX_SHARES));
         }
         ((BlockEntity) this.terminal).setChanged();
         final String name = ComputerSettings.shareNameOf(dos);
-        return ICliComputer.OpResult.ok("shared " + dos + " as \\\\" + this.terminal.hostname() + "\\" + name
-                + (writable ? " (read and write)" : " (read only)"));
+        return ICliComputer.OpResult.ok((writable ? SHARED_READ_WRITE : SHARED_READ_ONLY)
+                .with(dos, this.terminal.hostname(), name));
     }
 
     /** The system disk's public-share permille, or 0 when there is no system disk. */

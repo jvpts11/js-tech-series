@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.program.cli.interac;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.Locale;
 
 /**
@@ -27,17 +29,25 @@ import java.util.Locale;
  * @param columns  how wide the glass asking for it is, since the machine draws the screen and not the glass
  * @param rows     how many rows that glass holds, for the same reason
  */
+@TextHolder
 public record InteracState(int tab, int selected, String search, String action, long amount, int columns,
                            int rows) {
+
+    private static final TextKey TAB_NETWORK_NAME = TextKey.of("jsc.cli.interac.tab.network", "Network");
+    private static final TextKey TAB_SERVERS_NAME = TextKey.of("jsc.cli.interac.tab.servers", "Servers");
+    private static final TextKey TAB_LOCKED_NAME = TextKey.of("jsc.cli.interac.tab.locked", "Locked");
+    private static final TextKey TAB_OPS_NAME = TextKey.of("jsc.cli.interac.tab.ops", "Ops");
+    private static final TextKey TAB_STARRED_NAME = TextKey.of("jsc.cli.interac.tab.starred", "Starred");
 
     /**
      * The tabs, in the order they are read left to right.
      *
      * <p>Each one is something the machine can answer for outright, which is why the graphical program's
      * status page is not among them: what it says stands in the bar along the top of every tab instead, where
-     * it is read without leaving the list.
+     * it is read without leaving the list. They are in English, the language the machine draws the screen in.
      */
-    public static final String[] TABS = {"Network", "Servers", "Locked", "Ops", "Starred"};
+    public static final String[] TABS = {TAB_NETWORK_NAME.text().english(), TAB_SERVERS_NAME.text().english(),
+            TAB_LOCKED_NAME.text().english(), TAB_OPS_NAME.text().english(), TAB_STARRED_NAME.text().english()};
 
     /** Everything the network holds. */
     public static final int TAB_NETWORK = 0;

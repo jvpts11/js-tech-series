@@ -8,7 +8,11 @@
 package dev.jstech.computers.program.cli.interac;
 
 import dev.jstech.computers.program.cli.CliText;
+import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -19,11 +23,45 @@ import java.util.Locale;
  * <p>The machine draws the screen and the terminal only shows it, which is how the view at a monitor, in a
  * window on a desktop, and over a session opened on another machine is one and the same view. It is also what
  * keeps the network out of the terminal: nothing of it is held there between one key and the next.
+ *
+ * <p>The screen travels as the rows of a file, so its words are put in English, the machine's language, until it
+ * travels as words still to be put in the reader's.
  */
+@TextHolder
 public final class InteracView {
 
     /** What marks an action as one to carry out rather than one still being typed. */
     public static final String NOW = "!";
+
+    private static final TextKey NO_NETWORK = TextKey.of("jsc.cli.interac.view.no_network", "no network");
+    private static final TextKey HELD = TextKey.of("jsc.cli.interac.view.held", "%s held");
+    private static final TextKey SERVERS_SHORT = TextKey.of("jsc.cli.interac.view.servers_short", "%s srv");
+    private static final TextKey OPS_ONE_SHORT = TextKey.of("jsc.cli.interac.view.ops_one_short", "%s op");
+    private static final TextKey OPS_MANY_SHORT = TextKey.of("jsc.cli.interac.view.ops_many_short", "%s ops");
+    private static final TextKey SERVERS_WIDE = TextKey.of("jsc.cli.interac.view.servers_wide", "%s servers");
+    private static final TextKey IN_FLIGHT = TextKey.of("jsc.cli.interac.view.in_flight", "%s in flight");
+    private static final TextKey MAINFRAME_UP = TextKey.of("jsc.cli.interac.view.mainframe_up", "Mainframe up");
+    private static final TextKey NO_MAINFRAME = TextKey.of("jsc.cli.interac.view.no_mainframe", "no Mainframe");
+    private static final TextKey PERCENT_FULL = TextKey.of("jsc.cli.interac.view.percent_full", "%s%% full");
+    private static final TextKey STARRED = TextKey.of("jsc.cli.interac.view.starred", "starred");
+    private static final TextKey NOTHING_HERE = TextKey.of("jsc.cli.interac.view.nothing_here", "nothing here");
+    private static final TextKey HOLDING = TextKey.of("jsc.cli.interac.view.holding", "holding");
+    private static final TextKey FILLED = TextKey.of("jsc.cli.interac.view.filled", "filled");
+    private static final TextKey HELD_BY = TextKey.of("jsc.cli.interac.view.held_by", "Held by");
+    private static final TextKey ASK_GET =
+            TextKey.of("jsc.cli.interac.view.ask_get", "Into your hands, how many %s? %s_");
+    private static final TextKey ASK_LOCAL =
+            TextKey.of("jsc.cli.interac.view.ask_local", "Into this computer, how many %s? %s_");
+    private static final TextKey ASK_CRAFT = TextKey.of("jsc.cli.interac.view.ask_craft", "Make how many %s? %s_");
+    private static final TextKey ASK_LOCK = TextKey.of("jsc.cli.interac.view.ask_lock", "Hold back how many %s? %s_");
+    private static final TextKey NOTHING_TO_ACT_ON =
+            TextKey.of("jsc.cli.interac.view.nothing_to_act_on", "there is nothing here to do that to");
+    private static final TextKey NOT_CALLED =
+            TextKey.of("jsc.cli.interac.view.not_called", "nothing here is called %s");
+    private static final TextKey ONLY_OPERATIONS =
+            TextKey.of("jsc.cli.interac.view.only_operations", "only an operation can be called off");
+    private static final TextKey NOTHING_IN_FLIGHT =
+            TextKey.of("jsc.cli.interac.view.nothing_in_flight", "nothing is in flight");
 
     /** How many rows a tab gathers before it stops, which is far more than a glass holds. */
     private static final int MOST_ROWS = 256;
@@ -67,16 +105,17 @@ public final class InteracView {
     private static String glance(final ICliComputer computer, final InteracState state) {
         final ICliComputer.NetSummary net = computer.network();
         if (!net.linked()) {
-            return "no network";
+            return english(NO_NETWORK.text());
         }
         final int ops = computer.activeOps().size();
-        final String held = CliText.group(computer.networkUse().stored()) + " held";
+        final String held = english(HELD.with(CliText.group(computer.networkUse().stored())));
         if (!InteracScreen.showsPanel(state.columns())) {
-            return net.servers() + " srv  " + held + "  " + ops + (ops == 1 ? " op" : " ops")
-                    + (net.mainframePresent() ? "" : "  no Mainframe");
+            return english(SERVERS_SHORT.with(net.servers())) + "  " + held + "  "
+                    + english((ops == 1 ? OPS_ONE_SHORT : OPS_MANY_SHORT).with(ops))
+                    + (net.mainframePresent() ? "" : "  " + english(NO_MAINFRAME.text()));
         }
-        return net.servers() + " servers  " + held + "  " + ops + " in flight  "
-                + (net.mainframePresent() ? "Mainframe up" : "no Mainframe");
+        return english(SERVERS_WIDE.with(net.servers())) + "  " + held + "  " + english(IN_FLIGHT.with(ops)) + "  "
+                + english((net.mainframePresent() ? MAINFRAME_UP : NO_MAINFRAME).text());
     }
 
     /** The rows of the tab that is up, narrowed by what is being searched for. */
@@ -107,7 +146,7 @@ public final class InteracView {
             }
             final long room = Math.max(1L, use.capacity());
             rows.add(new InteracScreen.Row(use.name(), CliText.group(use.stored()),
-                    Math.round(100.0 * use.stored() / room) + "% full"));
+                    english(PERCENT_FULL.with(Math.round(100.0 * use.stored() / room)))));
         }
         return rows;
     }
@@ -141,7 +180,7 @@ public final class InteracView {
                 continue;
             }
             rows.add(new InteracScreen.Row(name,
-                    found.isEmpty() ? "-" : CliText.group(found.get(0).quantity()), "starred"));
+                    found.isEmpty() ? "-" : CliText.group(found.get(0).quantity()), english(STARRED.text())));
         }
         return rows;
     }
@@ -160,12 +199,12 @@ public final class InteracView {
             return List.of();
         }
         if (rows.isEmpty()) {
-            return List.of("nothing here");
+            return List.of(english(NOTHING_HERE.text()));
         }
         final InteracScreen.Row row = rows.get(picked);
         if (state.tab() == InteracState.TAB_SERVERS) {
-            return List.of(row.name(), "", CliText.pad("holding", ASIDE_NAME_W)
-                    + CliText.padLeft(row.count(), ASIDE_COUNT_W), CliText.pad("filled", ASIDE_NAME_W)
+            return List.of(row.name(), "", CliText.pad(english(HOLDING.text()), ASIDE_NAME_W)
+                    + CliText.padLeft(row.count(), ASIDE_COUNT_W), CliText.pad(english(FILLED.text()), ASIDE_NAME_W)
                     + CliText.padLeft(row.detail(), ASIDE_COUNT_W));
         }
         final String named = state.tab() == InteracState.TAB_OPS
@@ -183,24 +222,24 @@ public final class InteracView {
         out.add(detail.name().isEmpty() ? named : detail.name());
         out.add(detail.id());
         out.add("");
-        out.add(CliText.pad("Held by", ASIDE_NAME_W) + CliText.padLeft(CliText.group(detail.stored()),
-                ASIDE_COUNT_W));
+        out.add(CliText.pad(english(HELD_BY.text()), ASIDE_NAME_W)
+                + CliText.padLeft(CliText.group(detail.stored()), ASIDE_COUNT_W));
         for (final ICliComputer.Holding holding : detail.where()) {
             out.add(CliText.pad("  " + holding.server(), ASIDE_NAME_W)
                     + CliText.padLeft(CliText.group(holding.quantity()), ASIDE_COUNT_W));
         }
-        added(out, "Made from", detail.madeBy());
-        added(out, "Used in", detail.usedIn());
+        added(out, InteracCommand.MADE_FROM, detail.madeBy());
+        added(out, InteracCommand.USED_IN, detail.usedIn());
         return out;
     }
 
     /** One of a detail's lists under its heading, and nothing at all when it is empty. */
-    private static void added(final List<String> out, final String heading, final List<String> lines) {
+    private static void added(final List<String> out, final TextKey heading, final List<String> lines) {
         if (lines.isEmpty()) {
             return;
         }
         out.add("");
-        out.add(heading);
+        out.add(english(heading.text()));
         for (int i = 0; i < lines.size() && i < 3; i++) {
             out.add("  " + lines.get(i));
         }
@@ -214,10 +253,10 @@ public final class InteracView {
         }
         final String name = rows.get(picked).name();
         return switch (state.action()) {
-            case "get" -> "Into your hands, how many " + name + "? " + state.amount() + "_";
-            case "local" -> "Into this computer, how many " + name + "? " + state.amount() + "_";
-            case "craft" -> "Make how many " + name + "? " + state.amount() + "_";
-            case "lock" -> "Hold back how many " + name + "? " + state.amount() + "_";
+            case "get" -> english(ASK_GET.with(name, state.amount()));
+            case "local" -> english(ASK_LOCAL.with(name, state.amount()));
+            case "craft" -> english(ASK_CRAFT.with(name, state.amount()));
+            case "lock" -> english(ASK_LOCK.with(name, state.amount()));
             default -> "";
         };
     }
@@ -238,7 +277,7 @@ public final class InteracView {
         }
         final List<InteracScreen.Row> rows = rowsOf(computer, state);
         if (rows.isEmpty()) {
-            return "there is nothing here to do that to";
+            return english(NOTHING_TO_ACT_ON.text());
         }
         if ("stop".equals(what)) {
             return stop(computer, state, rows.size());
@@ -246,7 +285,7 @@ public final class InteracView {
         final String name = rows.get(Math.min(state.selected(), rows.size() - 1)).name();
         final List<ICliComputer.ItemMatch> found = computer.matching(name);
         if (found.isEmpty()) {
-            return "interac: nothing here is called " + name;
+            return english(CliTexts.SAID_BY.with("interac", NOT_CALLED.with(name)));
         }
         final String id = found.get(0).id();
         final long many = Math.max(1L, state.amount());
@@ -272,7 +311,7 @@ public final class InteracView {
      */
     private static String stop(final ICliComputer computer, final InteracState state, final int rowCount) {
         if (state.tab() != InteracState.TAB_OPS) {
-            return "only an operation can be called off";
+            return english(ONLY_OPERATIONS.text());
         }
         final List<ICliComputer.ActiveOp> kept = new ArrayList<>();
         for (final ICliComputer.ActiveOp op : computer.activeOps()) {
@@ -282,12 +321,17 @@ public final class InteracView {
         }
         final int picked = Math.min(state.selected(), Math.min(rowCount, kept.size()) - 1);
         if (picked < 0) {
-            return "nothing is in flight";
+            return english(NOTHING_IN_FLIGHT.text());
         }
         return computer.cancelOperation(kept.get(picked).id()).message().english();
     }
 
     private static boolean matches(final String text, final String search) {
         return search.isEmpty() || text.toLowerCase(Locale.ROOT).contains(search.toLowerCase(Locale.ROOT));
+    }
+
+    /** Words for the screen, which is drawn here and travels as a file's rows, so in the machine's language. */
+    private static String english(final Text text) {
+        return text.english();
     }
 }

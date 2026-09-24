@@ -25,6 +25,12 @@ public final class CliTexts {
     /** How a command is typed, said when it was typed some other way: its name, then its usage. */
     public static final TextKey USAGE = TextKey.of("jsc.cli.usage", "usage: %s %s");
 
+    /** A word no command answers to, said alike by the prompt and by a script the shell runs. */
+    public static final TextKey NOT_FOUND = TextKey.of("jsc.cli.shell.not_found", "command not found: %s");
+
+    /** A command that broke instead of answering, said alike by the prompt and by a script. */
+    public static final TextKey FAILED = TextKey.of("jsc.cli.shell.failed", "error running '%s': %s");
+
     /* The system messages of the DOS prompt, which every command that reaches a drive answers with alike. */
     public static final TextKey BAD_SYNTAX =
             TextKey.of("jsc.cli.dos.bad_syntax", "The syntax of the command is incorrect.");

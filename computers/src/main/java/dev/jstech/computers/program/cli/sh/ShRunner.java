@@ -12,8 +12,11 @@ import dev.jstech.computers.program.cli.CliContext;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliOutput;
 import dev.jstech.computers.program.cli.CliShell;
+import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliCommand;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,10 +30,14 @@ import java.util.Map;
  * two of them were written with a pipe between them is the shell's business, which is exactly how it has always
  * been and why every command works in a pipeline without being taught to.
  */
+@TextHolder
 public final class ShRunner {
 
     /** How many lines one stage may hand to the next, so a pipeline cannot be made to fill a machine. */
     private static final int MOST_PIPED_LINES = 4096;
+
+    private static final TextKey WHOLE_TERMINAL = TextKey.of("jsc.cli.sh.whole_terminal",
+            "takes the whole terminal, so it cannot be piped or redirected");
 
     private ShRunner() {
     }
@@ -84,7 +91,7 @@ public final class ShRunner {
             final ICliCommand command = shell.find(stage.word());
             if (command instanceof CliShell.IHandOver giving && command.available(computer)
                     && giving.fileOf(computer, stage.args()) != null) {
-                out.error(stage.word() + ": takes the whole terminal, so it cannot be piped or redirected");
+                out.error(CliTexts.SAID_BY.with(stage.word(), WHOLE_TERMINAL));
                 return new CliShell.Response(out.lines(), false);
             }
         }
@@ -104,14 +111,14 @@ public final class ShRunner {
             final ICliCommand command = shell.find(stage.word());
             last = command;
             if (command == null || !command.available(computer)) {
-                out.error("command not found: " + stage.word());
+                out.error(CliTexts.NOT_FOUND.with(stage.word()));
                 return new CliShell.Response(out.lines(), false);
             }
             final CliOutput page = new CliOutput(out.width());
             try {
                 command.run(new CliContext(stage.args(), computer, page, shell, feeding));
             } catch (final RuntimeException unexpected) {
-                out.error("error running '" + stage.word() + "': " + unexpected.getMessage());
+                out.error(CliTexts.FAILED.with(stage.word(), String.valueOf(unexpected.getMessage())));
                 return new CliShell.Response(out.lines(), false);
             }
             printed = page.lines();

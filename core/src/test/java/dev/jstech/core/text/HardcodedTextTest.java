@@ -149,14 +149,20 @@ class HardcodedTextTest {
                     || (this.constructor && "TextKey".equals(this.name))
                     // A declaration's name or description, chained on it: the English the language file is made from.
                     || (("named".equals(this.name) || "described".equals(this.name)) && this.receiver == null)
-                    || ("Text".equals(this.receiver) && "literal".equals(this.name));
+                    || ("Text".equals(this.receiver) && "literal".equals(this.name))
+                    // A command's example line or switch in its manual: what a player types, which is data.
+                    || (this.constructor && ("Example".equals(this.name) || "Option".equals(this.name)));
         }
 
         boolean shows() {
             if (this.name == null || this.constructor) {
                 return false;
             }
-            return "literal".equals(this.name) ? "Component".equals(this.receiver) : SINKS.contains(this.name);
+            if ("literal".equals(this.name)) {
+                return "Component".equals(this.receiver);
+            }
+            // Map.entry builds a table, not a line on a terminal, whatever the two share in name.
+            return SINKS.contains(this.name) && !("entry".equals(this.name) && "Map".equals(this.receiver));
         }
     }
 

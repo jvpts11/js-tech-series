@@ -21,7 +21,9 @@ import dev.jstech.computers.program.iql.IqlParseResult;
 import dev.jstech.computers.program.iql.IqlParser;
 import dev.jstech.computers.program.iql.IqlSavedObject;
 import dev.jstech.computers.program.iql.IqlVerb;
-
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.Locale;
 
@@ -32,13 +34,32 @@ import java.util.Locale;
  * first error (the chosen default); a QUERY whose object is a view name runs the saved query. Touching the
  * catalog requires the Engine to be installed and running on the Mainframe; ad-hoc actions do not.
  */
+@TextHolder
 public final class IqlEngine {
-
-    private static final int RECURSION_GUARD = 32;
 
     private final MainframeBlockEntity mainframe;
     private final IIqlView computer;
     private final int queryRowLimit;
+
+    private static final int RECURSION_GUARD = 32;
+
+    private static final TextKey TOO_DEEP = TextKey.of("jsc.service.iql.too_deep",
+            "IQL recursion too deep (a procedure or view referencing itself?)");
+    private static final TextKey SYNTAX = TextKey.of("jsc.service.iql.syntax", "syntax: %s");
+    private static final TextKey ENGINE_NOT_RUNNING = TextKey.of("jsc.service.iql.engine_not_running",
+            "the IQL Engine is not running on the Mainframe, install and start it first");
+    private static final TextKey CREATED = TextKey.of("jsc.service.iql.created", "%s %s created");
+    private static final TextKey NO_SUCH_OBJECT = TextKey.of("jsc.service.iql.no_such_object", "no %s named %s");
+    private static final TextKey DROPPED = TextKey.of("jsc.service.iql.dropped", "%s %s dropped");
+    private static final TextKey NO_PROCEDURE = TextKey.of("jsc.service.iql.no_procedure", "no procedure named %s");
+    private static final TextKey PROCEDURE_STOPPED = TextKey.of("jsc.service.iql.procedure_stopped",
+            "procedure %s stopped at statement %s: %s");
+    private static final TextKey PROCEDURE_RAN_ONE =
+            TextKey.of("jsc.service.iql.procedure_ran_one", "procedure %s ran %s statement");
+    private static final TextKey PROCEDURE_RAN_MANY =
+            TextKey.of("jsc.service.iql.procedure_ran_many", "procedure %s ran %s statements");
+    private static final TextKey ROWS_ONE = TextKey.of("jsc.service.iql.rows_one", "%s row");
+    private static final TextKey ROWS_MANY = TextKey.of("jsc.service.iql.rows_many", "%s rows");
 
     public IqlEngine(final MainframeBlockEntity mainframe, final IIqlView computer,
                      final int queryRowLimit) {
@@ -70,19 +91,28 @@ public final class IqlEngine {
         };
     }
 
-    /** The result of running a statement: a status, a message, and (for a read) the result rows. */
-    public record Outcome(boolean ok, String message, List<ICliComputer.StoredItem> rows) {
+    /**
+     * The result of running a statement: a status, what it says, and (for a read) the result rows.
+     *
+     * @param said what it says, in whatever language its reader reads
+     */
+    public record Outcome(boolean ok, Text said, List<ICliComputer.StoredItem> rows) {
 
-        static Outcome ok(final String message) {
+        /** What it says in English, the machine's language: what a program is handed and a log keeps. */
+        public String message() {
+            return this.said.english();
+        }
+
+        static Outcome ok(final Text message) {
             return new Outcome(true, message, List.of());
         }
 
-        static Outcome fail(final String message) {
+        static Outcome fail(final Text message) {
             return new Outcome(false, message, List.of());
         }
 
         static Outcome rows(final List<ICliComputer.StoredItem> rows) {
-            return new Outcome(true, rows.size() + (rows.size() == 1 ? " row" : " rows"), rows);
+            return new Outcome(true, (rows.size() == 1 ? ROWS_ONE : ROWS_MANY).with(rows.size()), rows);
         }
     }
 
@@ -97,11 +127,11 @@ public final class IqlEngine {
 
     private Outcome run(final String statement, final int depth) {
         if (depth > RECURSION_GUARD) {
-            return Outcome.fail("IQL recursion too deep (a procedure or view referencing itself?)");
+            return Outcome.fail(TOO_DEEP.text());
         }
         final IqlParseResult parsed = IqlParser.tryParse(statement);
         if (!parsed.ok()) {
-            return Outcome.fail("syntax: " + parsed.error());
+            return Outcome.fail(SYNTAX.with(parsed.error()));
         }
         if (parsed.isDefinition()) {
             return runDefinition(parsed.definition(), depth);
@@ -111,7 +141,7 @@ public final class IqlEngine {
 
     private Outcome runDefinition(final IqlDefinition definition, final int depth) {
         if (!mainframe.isIqlEngineActive()) {
-            return Outcome.fail("the IQL Engine is not running on the Mainframe, install and start it first");
+            return Outcome.fail(ENGINE_NOT_RUNNING.text());
         }
         return switch (definition.verb()) {
             case CREATE -> create(definition);
@@ -127,33 +157,32 @@ public final class IqlEngine {
         if (definition.objectType() == IqlDefinition.ObjectType.JOB) {
             Acting.current().ifPresent(player -> MachineOperators.note(mainframe, player));
         }
-        return Outcome.ok(typeName(definition.objectType()) + " " + definition.name() + " created");
+        return Outcome.ok(CREATED.with(typeName(definition.objectType()), definition.name()));
     }
 
     private Outcome drop(final IqlDefinition definition) {
         if (!mainframe.iqlCatalog().remove(definition.objectType(), definition.name())) {
-            return Outcome.fail("no " + typeName(definition.objectType()) + " named " + definition.name());
+            return Outcome.fail(NO_SUCH_OBJECT.with(typeName(definition.objectType()), definition.name()));
         }
         mainframe.markIqlCatalogChanged();
-        return Outcome.ok(typeName(definition.objectType()) + " " + definition.name() + " dropped");
+        return Outcome.ok(DROPPED.with(typeName(definition.objectType()), definition.name()));
     }
 
     private Outcome runProcedure(final String name, final int depth) {
         final IqlSavedObject procedure = mainframe.iqlCatalog().get(IqlDefinition.ObjectType.PROCEDURE, name);
         if (procedure == null) {
-            return Outcome.fail("no procedure named " + name);
+            return Outcome.fail(NO_PROCEDURE.with(name));
         }
         final List<String> statements = IqlDefinitionParser.splitBody(procedure.body());
         int ran = 0;
         for (final String statement : statements) {
             final Outcome result = run(statement, depth + 1);
             if (!result.ok()) {
-                return Outcome.fail("procedure " + name + " stopped at statement " + (ran + 1) + ": "
-                        + result.message());
+                return Outcome.fail(PROCEDURE_STOPPED.with(name, ran + 1, result.said()));
             }
             ran++;
         }
-        return Outcome.ok("procedure " + name + " ran " + ran + (ran == 1 ? " statement" : " statements"));
+        return Outcome.ok((ran == 1 ? PROCEDURE_RAN_ONE : PROCEDURE_RAN_MANY).with(name, ran));
     }
 
     private Outcome runOperation(final IqlOperation operation, final int depth) {
@@ -168,7 +197,7 @@ public final class IqlEngine {
             return Outcome.rows(computer.queryObject(operation.item(), operation.where(), "", limit));
         }
         final ICliComputer.OpResult result = computer.execute(operation);
-        return new Outcome(result.ok(), result.message().english(), List.of());
+        return new Outcome(result.ok(), result.message(), List.of());
     }
 
     private static String typeName(final IqlDefinition.ObjectType type) {

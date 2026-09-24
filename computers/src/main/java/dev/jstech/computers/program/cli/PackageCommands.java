@@ -12,6 +12,7 @@ import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -22,6 +23,22 @@ import java.util.Locale;
 final class PackageCommands {
 
     private PackageCommands() {
+    }
+
+    /**
+     * What a package manager said when it did what it was asked, a line to a row: the last line is the one that
+     * says it went well, so it alone is coloured so. The lines are the ones the answer was put together from, not
+     * its English cut apart, so each is read in its reader's language.
+     */
+    static void done(final CliContext ctx, final Text said) {
+        final List<Text> rows = ICliPackages.rows(said);
+        for (int i = 0; i < rows.size(); i++) {
+            if (i == rows.size() - 1) {
+                ctx.out().ok(rows.get(i));
+            } else {
+                ctx.out().line(rows.get(i));
+            }
+        }
     }
 
     /**
@@ -219,7 +236,7 @@ final class PackageCommands {
                 ctx.out().dim(RESOLVING);
             }
             if (result.ok()) {
-                lines(ctx, result.message().english());
+                done(ctx, result.message());
             } else {
                 ctx.out().error(refusal(result.message()));
             }
@@ -233,21 +250,9 @@ final class PackageCommands {
             final String name = pkg.trim().split("\\s+")[0];
             final ICliComputer.OpResult result = ctx.computer().packageRemove(name);
             if (result.ok()) {
-                lines(ctx, result.message().english());
+                done(ctx, result.message());
             } else {
                 ctx.out().error(refusal(result.message()));
-            }
-        }
-
-        /** A manager speaks in several lines; the last of them is the one that says it went well. */
-        private static void lines(final CliContext ctx, final String message) {
-            final String[] parts = message.split("\n");
-            for (int i = 0; i < parts.length; i++) {
-                if (i == parts.length - 1) {
-                    ctx.out().ok(parts[i]);
-                } else {
-                    ctx.out().line(parts[i]);
-                }
             }
         }
 

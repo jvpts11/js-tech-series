@@ -17,12 +17,16 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramPriority;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -43,10 +47,42 @@ import org.jetbrains.annotations.Nullable;
  * programs listed. Everything runs on the other computer, out of its own budget and under its own name; whether it
  * takes any of this at all is the other computer's to say.
  */
+@TextHolder
 public final class RemoteComputerService {
 
     private final IComputerTerminalHost terminal;
     private final ServerLevel level;
+
+    private static final TextKey NO_SESSION =
+            TextKey.of("jsc.service.remote.no_session", "this terminal keeps no session");
+    private static final TextKey HOST_NOT_FOUND =
+            TextKey.of("jsc.service.remote.host_not_found", "%s: host not found on this network");
+    private static final TextKey AMBIGUOUS = TextKey.of("jsc.service.remote.ambiguous",
+            "%s matches %s machines (%s) - use the host name or node id");
+    private static final TextKey POWERED_OFF =
+            TextKey.of("jsc.service.remote.powered_off", "connect to host %s: machine is powered off");
+    private static final TextKey CONNECTED =
+            TextKey.of("jsc.service.remote.connected", "Connected to %s. Type exit to return.");
+    private static final TextKey NOT_CONNECTED = TextKey.of("jsc.service.remote.not_connected",
+            "not connected - close the window to leave this terminal");
+    private static final TextKey CLOSED = TextKey.of("jsc.service.remote.closed", "Connection closed.");
+
+    /** The commands that open and close a session, whose names its messages begin with. */
+    private static final String SSH = "ssh";
+    private static final String EXIT = "exit";
+
+    /*
+     * What kind of computer a machine is. The list of machines travels on as words (to the prompt's host list and
+     * to a Gateway's caller), so there these are handed over in English, the machine's language.
+     */
+    private static final TextKey TYPE_MAINFRAME = TextKey.of("jsc.service.remote.type.mainframe", "Mainframe");
+    private static final TextKey TYPE_COMPUTER = TextKey.of("jsc.service.remote.type.computer", "Computer");
+    private static final TextKey TYPE_CRAFTING =
+            TextKey.of("jsc.service.remote.type.crafting", "Crafting Computer");
+    private static final TextKey TYPE_PERSONAL =
+            TextKey.of("jsc.service.remote.type.personal", "Personal Computer");
+    private static final TextKey TYPE_CLUSTER =
+            TextKey.of("jsc.service.remote.type.cluster", "Cluster Management Computer");
 
     public RemoteComputerService(final IComputerTerminalHost terminal, final ServerLevel level) {
         this.terminal = terminal;
@@ -101,7 +137,7 @@ public final class RemoteComputerService {
         this.machines().forEach((hostname, machine) -> {
             final OsDef os = machine instanceof IOsHost computer ? computer.installedOs() : null;
             hosts.add(new ICliComputer.RemoteHost(hostname, nameOf(machine), nodeIdOf(machine),
-                    os == null ? "" : os.displayName(), typeOf(machine),
+                    os == null ? "" : os.displayName(), typeOf(machine).english(),
                     machine instanceof IComputerTerminalHost host && host.computerRunning()));
         });
         return hosts;
@@ -150,32 +186,32 @@ public final class RemoteComputerService {
     public ICliComputer.OpResult connect(final String hostname) {
         final ComputerConsoleState console = this.terminal.console();
         if (console == null) {
-            return ICliComputer.OpResult.fail("ssh: this terminal keeps no session");
+            return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with(SSH, NO_SESSION));
         }
         final Map<String, BlockEntity> matches = this.matching(hostname);
         if (matches.isEmpty()) {
-            return ICliComputer.OpResult.fail("ssh: " + hostname + ": host not found on this network");
+            return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with(SSH, HOST_NOT_FOUND.with(hostname)));
         }
         if (matches.size() > 1) {
-            return ICliComputer.OpResult.fail("ssh: " + hostname + " matches " + matches.size() + " machines ("
-                    + String.join(", ", matches.keySet()) + ") - use the host name or node id");
+            return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with(SSH,
+                    AMBIGUOUS.with(hostname, matches.size(), String.join(", ", matches.keySet()))));
         }
         final BlockEntity target = matches.values().iterator().next();
         if (!(target instanceof IComputerTerminalHost remote) || !remote.computerRunning()) {
-            return ICliComputer.OpResult.fail("ssh: connect to host " + hostname + ": machine is powered off");
+            return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with(SSH, POWERED_OFF.with(hostname)));
         }
         console.setSshTarget(target.getBlockPos().asLong());
-        return ICliComputer.OpResult.ok("Connected to " + hostname + ". Type exit to return.");
+        return ICliComputer.OpResult.ok(CONNECTED.with(hostname));
     }
 
     /** Closes the session and returns to the local machine; fails when there is none open. */
     public ICliComputer.OpResult disconnect() {
         final ComputerConsoleState console = this.terminal.console();
         if (console == null || console.sshTarget() == null) {
-            return ICliComputer.OpResult.fail("exit: not connected - close the window to leave this terminal");
+            return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with(EXIT, NOT_CONNECTED));
         }
         console.setSshTarget(null);
-        return ICliComputer.OpResult.ok("Connection closed.");
+        return ICliComputer.OpResult.ok(CLOSED);
     }
 
     /**
@@ -227,26 +263,26 @@ public final class RemoteComputerService {
                 : IProgramParent.NONE;
     }
 
+    /** What kind of computer a machine is, in the words the terminal shows. */
+    public static Text typeOf(final Object machine) {
+        if (machine instanceof MainframeBlockEntity) {
+            return TYPE_MAINFRAME.text();
+        }
+        if (machine instanceof CraftingComputerBlockEntity) {
+            return TYPE_CRAFTING.text();
+        }
+        if (machine instanceof PersonalComputerBlockEntity) {
+            return TYPE_PERSONAL.text();
+        }
+        if (machine instanceof ClusterManagementComputerBlockEntity) {
+            return TYPE_CLUSTER.text();
+        }
+        return TYPE_COMPUTER.text();
+    }
+
     /** The name a machine's owner gave it, or {@code ""} when it has none. */
     private static String nameOf(final BlockEntity machine) {
         return machine instanceof IOsHost computer ? computer.customName() : "";
-    }
-
-    /** What kind of computer a machine is, in the words the terminal shows. */
-    private static String typeOf(final BlockEntity machine) {
-        if (machine instanceof MainframeBlockEntity) {
-            return "Mainframe";
-        }
-        if (machine instanceof CraftingComputerBlockEntity) {
-            return "Crafting Computer";
-        }
-        if (machine instanceof PersonalComputerBlockEntity) {
-            return "Personal Computer";
-        }
-        if (machine instanceof ClusterManagementComputerBlockEntity) {
-            return "Cluster Management Computer";
-        }
-        return "Computer";
     }
 
     /** The short form of a machine's node id, or the dashes a machine with no node shows. */

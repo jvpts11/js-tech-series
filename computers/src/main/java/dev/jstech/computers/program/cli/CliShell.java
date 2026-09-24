@@ -32,9 +32,7 @@ public final class CliShell {
     private final Map<String, ICliCommand> lookup = new LinkedHashMap<>();
     private final int width;
 
-    private static final TextKey NOT_FOUND = TextKey.of("jsc.cli.shell.not_found", "command not found: %s");
     private static final TextKey TRY_HELP = TextKey.of("jsc.cli.shell.try_help", "type 'help' to list commands");
-    private static final TextKey FAILED = TextKey.of("jsc.cli.shell.failed", "error running '%s': %s");
     private static final TextKey NO_JOB_MEMORY =
             TextKey.of("jsc.cli.shell.no_job_memory", "the machine has no memory left for another job");
     private static final TextKey NO_JOBS = TextKey.of("jsc.cli.shell.no_jobs", "this machine keeps no jobs");
@@ -130,7 +128,7 @@ public final class CliShell {
          * uninstalled program's verbs) does not exist here, exactly like an unknown word.
          */
         if (command == null || !command.available(computer)) {
-            out.error(NOT_FOUND.with(word));
+            out.error(CliTexts.NOT_FOUND.with(word));
             out.dim(TRY_HELP);
             return new Response(out.lines(), false);
         }
@@ -159,7 +157,7 @@ public final class CliShell {
              * A command must not throw for ordinary errors; if one does anyway, the shell stays alive
              * and reports it rather than tearing down the session.
              */
-            out.error(FAILED.with(word, String.valueOf(unexpected.getMessage())));
+            out.error(CliTexts.FAILED.with(word, String.valueOf(unexpected.getMessage())));
         }
         final boolean clear = command instanceof IClearMarker;
         /*

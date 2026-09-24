@@ -10,6 +10,9 @@ package dev.jstech.computers.program.cli;
 import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.computers.program.tty.ITtyProcess;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+import java.util.ArrayList;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +22,17 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Every member answers as a computer with no Mirror in reach would.
  */
+@TextHolder
 public interface ICliPackages {
+
+    /** What a package manager says when no Mirror answers, in the words a real one uses. */
+    TextKey NO_MIRROR = TextKey.of("jsc.cli.packages.no_mirror", "could not resolve mirror://");
+    TextKey UNABLE_TO_LOCATE = TextKey.of("jsc.cli.packages.unable_to_locate", "unable to locate package %s");
+    TextKey NO_PORTS_TREE = TextKey.of("jsc.cli.packages.no_ports_tree", "this system keeps no ports tree");
+    TextKey NO_TARGET = TextKey.of("jsc.cli.packages.no_target", "make: no target to make.");
+    TextKey NO_MAINFRAME = TextKey.of("jsc.cli.packages.no_mainframe", "the network has no Mainframe");
+    /** Two lines of a package manager's answer as one, the first over the second. */
+    TextKey LINES = TextKey.of("jsc.cli.packages.lines", "%s\n%s");
 
     /**
      * What came of asking for a package.
@@ -68,7 +81,7 @@ public interface ICliPackages {
      * @param ask whether the manager was told to list what it would do and ask before doing it
      */
     default Installing packageInstall(final String name, final boolean ask) {
-        return Installing.said(ICliComputer.OpResult.fail("could not resolve mirror://"));
+        return Installing.said(ICliComputer.OpResult.fail(NO_MIRROR));
     }
 
     /**
@@ -77,7 +90,7 @@ public interface ICliPackages {
      * environment drops the computer back to the TTY on its next boot.
      */
     default ICliComputer.OpResult packageRemove(final String name) {
-        return ICliComputer.OpResult.fail("unable to locate package " + name);
+        return ICliComputer.OpResult.fail(UNABLE_TO_LOCATE.with(name));
     }
 
     /**
@@ -86,7 +99,7 @@ public interface ICliPackages {
      * without the machine; it never installs anything new.
      */
     default ICliComputer.OpResult packageUpdate() {
-        return ICliComputer.OpResult.fail("could not resolve mirror://");
+        return ICliComputer.OpResult.fail(NO_MIRROR);
     }
 
     /**
@@ -95,12 +108,12 @@ public interface ICliPackages {
      * @param path the package file on this computer's disk
      */
     default ICliComputer.OpResult publishPackage(final String path) {
-        return ICliComputer.OpResult.fail("could not resolve mirror://");
+        return ICliComputer.OpResult.fail(NO_MIRROR);
     }
 
     /** Takes one back off the Mirror. */
     default ICliComputer.OpResult unpublishPackage(final String name) {
-        return ICliComputer.OpResult.fail("could not resolve mirror://");
+        return ICliComputer.OpResult.fail(NO_MIRROR);
     }
 
     /**
@@ -111,7 +124,8 @@ public interface ICliPackages {
      * @param commands {@code fetch}, {@code extract}, {@code update} or {@code auto}, in the order typed
      */
     default Installing portsnap(final List<String> commands) {
-        return Installing.said(ICliComputer.OpResult.fail("portsnap: this system keeps no ports tree"));
+        return Installing.said(
+                ICliComputer.OpResult.fail(CliTexts.SAID_BY.with(Text.literal("portsnap"), NO_PORTS_TREE)));
     }
 
     /**
@@ -121,7 +135,7 @@ public interface ICliPackages {
      * @param targets what make was asked to make, in the order typed; none means build
      */
     default Installing makePort(final List<String> targets) {
-        return Installing.said(ICliComputer.OpResult.fail("make: no target to make."));
+        return Installing.said(ICliComputer.OpResult.fail(NO_TARGET));
     }
 
     /** Whether a network mirror is reachable from this computer right now. */
@@ -131,7 +145,7 @@ public interface ICliPackages {
 
     /** Controls the Mirror service on the network's Mainframe: {@code install|status}. */
     default ICliComputer.OpResult mirrorControl(final String action) {
-        return ICliComputer.OpResult.fail("the network has no Mainframe");
+        return ICliComputer.OpResult.fail(NO_MAINFRAME);
     }
 
     /**
@@ -140,5 +154,47 @@ public interface ICliPackages {
      */
     default List<String> drainNotices() {
         return List.of();
+    }
+
+    /**
+     * A package manager's lines as one answer, one under the next. They are paired off down a balanced tree rather
+     * than one inside the next, so an answer of many lines stays a shallow sentence that still travels whole to a
+     * player's screen.
+     */
+    static Text lines(final List<Text> lines) {
+        if (lines.isEmpty()) {
+            return Text.EMPTY;
+        }
+        if (lines.size() == 1) {
+            return lines.getFirst();
+        }
+        final int half = lines.size() / 2;
+        return LINES.with(lines(lines.subList(0, half)), lines(lines.subList(half, lines.size())));
+    }
+
+    /**
+     * The lines an answer was put together from, in order, so the command that prints it can colour the last one,
+     * which is the line that says it went well. Words that are data are broken at their own line breaks too; a
+     * declared sentence stays one line, however many rows a translator gives it.
+     */
+    static List<Text> rows(final Text said) {
+        final List<Text> out = new ArrayList<>();
+        rowsInto(out, said);
+        return out;
+    }
+
+    private static void rowsInto(final List<Text> out, final Text said) {
+        if (said instanceof Text.Translated sentence && sentence.key().key().equals(LINES.key())) {
+            for (final Text part : sentence.args()) {
+                rowsInto(out, part);
+            }
+        } else if (said instanceof Text.Literal words && words.value().indexOf('\n') >= 0) {
+            // Split the way the lines were always split, so a trailing break adds no empty line.
+            for (final String row : words.value().split("\n")) {
+                out.add(Text.literal(row));
+            }
+        } else {
+            out.add(said);
+        }
     }
 }

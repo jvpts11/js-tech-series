@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 
 /**
@@ -29,7 +31,7 @@ public interface ICliProcesses {
      * @param heapMb how much room to give it, or 0 for what the computer decides
      */
     default ICliComputer.OpResult startSigma(final String path, final int heapMb) {
-        return ICliComputer.OpResult.fail("sigma: not installed");
+        return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with("sigma", ProcessWords.NOT_INSTALLED));
     }
 
     /** The same, with what the program is started with, as its {@code Program.Args} will read them. */
@@ -39,6 +41,16 @@ public interface ICliProcesses {
 
     /** Stops one of the Σ# programs running here. */
     default ICliComputer.OpResult stopSigma(final int id) {
-        return ICliComputer.OpResult.fail("sigma: not installed");
+        return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with("sigma", ProcessWords.NOT_INSTALLED));
+    }
+
+    /** What a computer with no Σ# runtime answers. */
+    @TextHolder
+    final class ProcessWords {
+
+        static final TextKey NOT_INSTALLED = TextKey.of("jsc.cli.processes.not_installed", "not installed");
+
+        private ProcessWords() {
+        }
     }
 }

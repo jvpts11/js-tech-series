@@ -78,6 +78,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   in the Help Viewer, with the lines they wrap onto set in under the first, instead of breaking at fixed places.
   The Help Viewer files every command under what the command says it is for, so each command sits under the same
   heading wherever it is listed.
+- What the terminal says is text a language file can translate: every command's manual and messages, and what
+  the machine answers from behind them about Operations, IQL, packages, ports, the Mirror, installs, programs, the
+  Network Gateway, remote computers, jobs and clusters. What is typed, names, paths and code stay as they are, and
+  what goes down a pipe or into a file is written in English, the machine's own language. The columns of a table,
+  such as `cluster list`, stay in line under their headings whatever length the words come out in.
 
 ### Fixed
 - The Macerator, Electric Furnace, Compressor and Coal Generator can be mined in survival. They need the right

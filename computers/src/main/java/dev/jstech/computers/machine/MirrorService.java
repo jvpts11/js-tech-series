@@ -8,10 +8,15 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.cli.ICliPackages;
 import dev.jstech.computers.sigma.pack.Packed;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * network installs from that one. Besides what it serves, it keeps a shelf of the packages players have published
  * for anyone on the network to install.
  */
+@TextHolder
 public final class MirrorService {
 
     private final IComputerTerminalHost terminal;
@@ -35,6 +41,28 @@ public final class MirrorService {
     private final FileService files;
     /** The network's own language, for the row its engine fills in the list of services. */
     private final IqlService iql;
+
+    /** What every way of installing from the Mirror says when there is none in reach, and what to do about it. */
+    static final TextKey NO_MIRROR_SERVICE = TextKey.of("jsc.service.mirror.no_mirror_service",
+            "could not resolve mirror:// - connect this computer to a network whose Mainframe runs the Mirror service");
+
+    private static final TextKey NO_MAINFRAME =
+            TextKey.of("jsc.service.mirror.no_mainframe", "the network has no running Mainframe to host the Mirror");
+    private static final TextKey INSTALLED =
+            TextKey.of("jsc.service.mirror.installed", "Mirror installed on the Mainframe and serving packages");
+    private static final TextKey ALREADY = TextKey.of("jsc.service.mirror.already", "the Mirror is already installed");
+    private static final TextKey STATUS = TextKey.of("jsc.service.mirror.status", "Mirror: %s");
+    private static final TextKey NOT_INSTALLED = TextKey.of("jsc.service.mirror.not_installed", "not installed");
+    private static final TextKey SERVING = TextKey.of("jsc.service.mirror.serving", "serving");
+    private static final TextKey OFF = TextKey.of("jsc.service.mirror.off", "installed (Mainframe off)");
+    private static final TextKey NOT_A_PACKAGE =
+            TextKey.of("jsc.service.mirror.not_a_package", "this is not a package (build one with '%s')");
+    private static final TextKey FULL = TextKey.of("jsc.service.mirror.full", "the Mirror is full (%s packages)");
+    private static final TextKey PUBLISHED = TextKey.of("jsc.service.mirror.published", "published %s on the Mirror");
+    private static final TextKey REPLACED = TextKey.of("jsc.service.mirror.replaced", "replaced %s on the Mirror");
+    private static final TextKey NOT_SERVING =
+            TextKey.of("jsc.service.mirror.not_serving", "the Mirror is not serving %s");
+    private static final TextKey TOOK = TextKey.of("jsc.service.mirror.took", "took %s off the Mirror");
 
     public MirrorService(final IComputerTerminalHost terminal, final ServerLevel level, final FileService files,
                          final IqlService iql) {
@@ -48,24 +76,25 @@ public final class MirrorService {
     public ICliComputer.OpResult control(final String action) {
         final MainframeBlockEntity mainframe = this.mainframe();
         if (mainframe == null) {
-            return ICliComputer.OpResult.fail("the network has no running Mainframe to host the Mirror");
+            return ICliComputer.OpResult.fail(NO_MAINFRAME);
         }
         return switch (action == null ? "" : action.toLowerCase(Locale.ROOT)) {
             case "install" -> mainframe.installMirror()
-                    ? ICliComputer.OpResult.ok("Mirror installed on the Mainframe and serving packages")
-                    : ICliComputer.OpResult.fail("the Mirror is already installed");
-            case "status", "" -> ICliComputer.OpResult.ok("Mirror: " + this.state());
-            default -> ICliComputer.OpResult.fail("usage: mirror install|status");
+                    ? ICliComputer.OpResult.ok(INSTALLED)
+                    : ICliComputer.OpResult.fail(ALREADY);
+            case "status", "" -> ICliComputer.OpResult.ok(STATUS.with(this.state()));
+            default -> ICliComputer.OpResult.fail(CliTexts.USAGE.with(Text.literal("mirror"),
+                    Text.literal("install|status")));
         };
     }
 
     /** How the Mirror stands on the network's Mainframe, in the words every view shows. */
-    public String state() {
+    public Text state() {
         final MainframeBlockEntity mainframe = this.mainframe();
         if (mainframe == null || !mainframe.isMirrorInstalled()) {
-            return "not installed";
+            return NOT_INSTALLED.text();
         }
-        return mainframe.isMirrorActive() ? "serving" : "installed (Mainframe off)";
+        return mainframe.isMirrorActive() ? SERVING.text() : OFF.text();
     }
 
     /** Whether a Mirror is serving this machine right now. */
@@ -91,8 +120,7 @@ public final class MirrorService {
     public ICliComputer.OpResult publish(final String path) {
         final MainframeBlockEntity mirror = this.serving();
         if (mirror == null) {
-            return ICliComputer.OpResult.fail("could not resolve mirror:// - connect this computer to a network whose"
-                    + " Mainframe runs the Mirror service");
+            return ICliComputer.OpResult.fail(NO_MIRROR_SERVICE);
         }
         final ICliComputer.FsResult read = this.files.readFile(path);
         if (!read.ok()) {
@@ -100,32 +128,31 @@ public final class MirrorService {
         }
         final Packed packed = Packed.read(read.message().english());
         if (packed == null) {
-            return ICliComputer.OpResult.fail(path + ": this is not a package (build one with 'sgpack build')");
+            return ICliComputer.OpResult.fail(
+                    CliTexts.SAID_BY.with(path, NOT_A_PACKAGE.with(Text.literal("sgpack build"))));
         }
         final List<String> wrong = packed.problems();
         if (!wrong.isEmpty()) {
-            return ICliComputer.OpResult.fail(path + ": " + wrong.getFirst());
+            return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with(path, wrong.getFirst()));
         }
         final String name = packed.manifest().name();
         final boolean replacing = mirror.shelvedPackage(name) != null;
         if (!mirror.shelve(name, read.message().english())) {
-            return ICliComputer.OpResult.fail("the Mirror is full ("
-                    + MainframeBlockEntity.SHELF_MAX + " packages)");
+            return ICliComputer.OpResult.fail(FULL.with(MainframeBlockEntity.SHELF_MAX));
         }
-        return ICliComputer.OpResult.ok((replacing ? "replaced " : "published ") + packed.manifest().label()
-                + " on the Mirror");
+        return ICliComputer.OpResult.ok((replacing ? REPLACED : PUBLISHED).with(packed.manifest().label()));
     }
 
     /** Takes one back off the Mirror. */
     public ICliComputer.OpResult unpublish(final String name) {
         final MainframeBlockEntity mirror = this.serving();
         if (mirror == null) {
-            return ICliComputer.OpResult.fail("could not resolve mirror://");
+            return ICliComputer.OpResult.fail(ICliPackages.NO_MIRROR);
         }
         if (!mirror.unshelve(name == null ? "" : name.trim())) {
-            return ICliComputer.OpResult.fail("the Mirror is not serving " + name);
+            return ICliComputer.OpResult.fail(NOT_SERVING.with(String.valueOf(name)));
         }
-        return ICliComputer.OpResult.ok("took " + name + " off the Mirror");
+        return ICliComputer.OpResult.ok(TOOK.with(name));
     }
 
     /**
@@ -159,8 +186,9 @@ public final class MirrorService {
         if (this.mainframe() == null) {
             return List.of();
         }
+        // A service's state travels as the English the machine keeps until the listing carries words to translate.
         return List.of(new ICliComputer.ServiceStatus("IQL Engine", this.iql.state()),
-                new ICliComputer.ServiceStatus("Mirror", this.state()));
+                new ICliComputer.ServiceStatus("Mirror", this.state().english()));
     }
 
     /** The Mainframe of the machine's network, or null when it is on none, or none is running. */

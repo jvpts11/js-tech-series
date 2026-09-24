@@ -19,6 +19,7 @@ import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.install.SetupTiming;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.DosPath;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.ICliPackages;
@@ -28,6 +29,9 @@ import dev.jstech.computers.program.tty.TtyScript;
 import dev.jstech.computers.program.tty.TtyScriptProcess;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -54,6 +58,7 @@ import org.jetbrains.annotations.Nullable;
  * the port's work folder until it is cleaned. So the tree takes room on the disk, a build without {@code clean}
  * keeps its work folder, and a later {@code make install} finds the build already done.
  */
+@TextHolder
 public final class PortsService {
 
     private final IComputerTerminalHost terminal;
@@ -61,7 +66,47 @@ public final class PortsService {
     /** The Mirror, the gates every way of installing keeps, and what the Mirror serves this system. */
     private final PackageService packages;
 
-    private static final String USAGE = "usage: portsnap fetch | extract | update | auto ...";
+    /** The commands portsnap takes, which are typed as they are in every language. */
+    private static final Text USAGE =
+            CliTexts.USAGE.with("portsnap", Text.literal("fetch | extract | update | auto ..."));
+
+    private static final TextKey NO_SYSTEM_DISK =
+            TextKey.of("jsc.service.ports.no_system_disk", "this computer has no system disk");
+    private static final TextKey NO_MIRRORS = TextKey.of("jsc.service.ports.no_mirrors",
+            "Looking up the Mirror for the ports tree... none found.\nNo mirrors remaining, giving up.");
+    private static final TextKey NO_SNAPSHOT =
+            TextKey.of("jsc.service.ports.no_snapshot", "No snapshot available.  Try running\n%s");
+    private static final TextKey NOT_BY_PORTSNAP = TextKey.of("jsc.service.ports.not_by_portsnap",
+            "%s was not created by portsnap.\nYou must run '%s' before running '%s'.");
+    private static final TextKey ALREADY_INSTALLED = TextKey.of("jsc.service.ports.already_installed",
+            "===>  %s is already installed\n"
+                    + "      You may wish to ``make deinstall'' and install this port again\n"
+                    + "      by ``make reinstall'' to upgrade it properly.");
+    private static final TextKey BROKEN = TextKey.of("jsc.service.ports.broken", "===>  %s is marked as broken: %s.");
+    private static final TextKey PREBUILT = TextKey.of("jsc.service.ports.prebuilt",
+            "===>  %s cannot install: a Mainframe's services come prebuilt; use %s.");
+    private static final TextKey NO_STORE = TextKey.of("jsc.service.ports.no_store",
+            "===>  %s cannot install: this computer cannot store installed programs.");
+    private static final TextKey TOO_SMALL = TextKey.of("jsc.service.ports.too_small",
+            "===>  %s cannot install: this machine is short of the processor or the free disk space it needs.");
+    private static final TextKey ERROR_STOP =
+            TextKey.of("jsc.service.ports.error_stop", "%s\n*** Error code 1\n\nStop.");
+    private static final TextKey DEINSTALLED = TextKey.of("jsc.service.ports.deinstalled",
+            "===>  Deinstalling for %1$s\n===>   Deinstalling %2$s\n%3$s%4$s");
+    private static final TextKey NOT_INSTALLED = TextKey.of("jsc.service.ports.not_installed",
+            "===>  Deinstalling for %1$s\n===>   %1$s not installed, skipping%2$s");
+    private static final TextKey CLEANING = TextKey.of("jsc.service.ports.cleaning", "\n===>  Cleaning for %s");
+    private static final TextKey UNFETCHABLE = TextKey.of("jsc.service.ports.unfetchable",
+            "=> %1$s doesn't seem to exist in /usr/ports/distfiles/.\n"
+                    + "=> Attempting to fetch from the Mirror.\n"
+                    + "fetch: mirror://mainframe/distfiles/%1$s: No address record\n"
+                    + "=> Couldn't fetch it - please try to retrieve this\n"
+                    + "=> port manually into /usr/ports/distfiles/ and try again.\n"
+                    + "*** Error code 1\n\nStop.");
+    private static final TextKey DONT_KNOW =
+            TextKey.of("jsc.service.ports.dont_know", "make: don't know how to make %s. Stop");
+    private static final TextKey STOPPED_IN =
+            TextKey.of("jsc.service.ports.stopped_in", "%s\n\nmake: stopped in %s");
 
     /** How long laying out one port's folder takes, and the least the whole tree takes. */
     private static final int TICKS_PER_PORT = 2;
@@ -99,7 +144,7 @@ public final class PortsService {
         }
         final DriveTable.Drive system = this.systemDrive();
         if (commands.isEmpty() || system == null) {
-            return refused(system == null ? "portsnap: this computer has no system disk" : USAGE);
+            return refused(system == null ? CliTexts.SAID_BY.with("portsnap", NO_SYSTEM_DISK) : USAGE);
         }
         final boolean treeThere = DiskFilesystem.exists(system.disk(), PortsTree.INDEX);
         // An update of a tree that is not there is what auto turns into an extract.
@@ -107,7 +152,7 @@ public final class PortsService {
             update = false;
             extract = true;
         }
-        final String refusal = this.snapshotRefusal(system.disk(), fetch, extract, update, treeThere);
+        final Text refusal = this.snapshotRefusal(system.disk(), fetch, extract, update, treeThere);
         if (refusal != null) {
             return refused(refusal);
         }
@@ -148,7 +193,7 @@ public final class PortsService {
         final ProgramSpec port = system == null ? null : PortsTree.at(this.packages.offered(), where);
         final String first = targets.isEmpty() ? "" : targets.getFirst();
         if (port == null || !DiskFilesystem.exists(system.disk(), PortsTree.dir(port) + "/Makefile")) {
-            return refused((first.isEmpty() ? "make: no target to make." : dontKnow(first)) + stoppedIn(shown));
+            return refused(STOPPED_IN.with(first.isEmpty() ? ICliPackages.NO_TARGET : DONT_KNOW.with(first), shown));
         }
         boolean build = targets.isEmpty();
         boolean install = false;
@@ -163,7 +208,7 @@ public final class PortsService {
                 case "deinstall" -> deinstall = true;
                 case "clean" -> clean = true;
                 default -> {
-                    return refused(dontKnow(target) + stoppedIn(shown));
+                    return refused(STOPPED_IN.with(DONT_KNOW.with(target), shown));
                 }
             }
         }
@@ -171,14 +216,14 @@ public final class PortsService {
         if (deinstall && !installing) {
             return this.deinstall(port, clean);
         }
-        final String barred = installing ? this.barred(port, reinstall) : null;
+        final Text barred = installing ? this.barred(port, reinstall) : null;
         if (barred != null) {
-            return refused(barred + "\n*** Error code 1\n\nStop." + stoppedIn(shown));
+            return refused(STOPPED_IN.with(ERROR_STOP.with(barred), shown));
         }
         final boolean building = (build || installing) && !DiskFilesystem.exists(system.disk(),
                 PortsTree.buildCookie(port));
         if (building && !this.packages.mirror().reachable()) {
-            return refused(unfetchable(port) + stoppedIn(shown));
+            return refused(STOPPED_IN.with(UNFETCHABLE.with(PortsTree.distfile(port)), shown));
         }
         return ICliPackages.Installing.running(new TtyScriptProcess(PortsVoices.make(this.voiceOf(port),
                 building ? () -> this.markBuilt(port) : null,
@@ -188,47 +233,43 @@ public final class PortsService {
 
     /** Why portsnap will not do that, in its own words, or null when it will. */
     @Nullable
-    private String snapshotRefusal(final ItemStack disk, final boolean fetch, final boolean extract,
-                                   final boolean update, final boolean treeThere) {
+    private Text snapshotRefusal(final ItemStack disk, final boolean fetch, final boolean extract,
+                                 final boolean update, final boolean treeThere) {
         if (fetch && !this.packages.mirror().reachable()) {
-            return "Looking up the Mirror for the ports tree... none found.\nNo mirrors remaining, giving up.";
+            return NO_MIRRORS.text();
         }
         if ((extract || update) && !fetch && !DiskFilesystem.exists(disk, PortsTree.SNAPSHOT_TAG)) {
-            return "No snapshot available.  Try running\nportsnap fetch";
+            return NO_SNAPSHOT.with(Text.literal("portsnap fetch"));
         }
         if (update && !extract && !treeThere) {
-            return "/usr/ports was not created by portsnap.\n"
-                    + "You must run 'portsnap extract' before running 'portsnap update'.";
+            return NOT_BY_PORTSNAP.with(Text.literal("/usr/ports"), Text.literal("portsnap extract"),
+                    Text.literal("portsnap update"));
         }
         return null;
     }
 
     /** What stands in the way of installing that port on this machine, in the ports' words, or null when nothing. */
     @Nullable
-    private String barred(final ProgramSpec port, final boolean reinstall) {
+    private Text barred(final ProgramSpec port, final boolean reinstall) {
         final String pkg = PortsTree.pkgName(port);
         if (!reinstall && this.packages.has(port)) {
-            return "===>  " + pkg + " is already installed\n"
-                    + "      You may wish to ``make deinstall'' and install this port again\n"
-                    + "      by ``make reinstall'' to upgrade it properly.";
+            return ALREADY_INSTALLED.with(pkg);
         }
         final ICliComputer.OpResult tooOld = this.packages.gates().era(port);
         final ICliComputer.OpResult elsewhere = this.packages.gates().machine(port);
         final ICliComputer.OpResult broken = tooOld != null ? tooOld : elsewhere;
         if (broken != null) {
-            return "===>  " + pkg + " is marked as broken: " + broken.message() + ".";
+            return BROKEN.with(pkg, broken.message());
         }
         final BlockEntity machine = (BlockEntity) this.terminal;
         if (machine instanceof MainframeBlockEntity && port.kind() == ProgramKind.SERVICE) {
-            return "===>  " + pkg + " cannot install: a Mainframe's services come prebuilt; use pkg install "
-                    + PortsTree.name(port) + ".";
+            return PREBUILT.with(pkg, Text.literal("pkg install " + PortsTree.name(port)));
         }
         if (!(machine instanceof IOsHost host) || this.terminal.console() == null) {
-            return "===>  " + pkg + " cannot install: this computer cannot store installed programs.";
+            return NO_STORE.with(pkg);
         }
         if (!InstallGates.fits(host, port, true)) {
-            return "===>  " + pkg + " cannot install: this machine is short of the processor or the free disk"
-                    + " space it needs.";
+            return TOO_SMALL.with(pkg);
         }
         return null;
     }
@@ -236,17 +277,15 @@ public final class PortsService {
     /** make deinstall: the package the port installed taken off, the way pkg takes it off. */
     private ICliPackages.Installing deinstall(final ProgramSpec port, final boolean clean) {
         final String name = PortsTree.name(port);
-        final String cleaned = clean ? "\n===>  Cleaning for " + PortsTree.pkgName(port) : "";
+        final Text cleaned = clean ? CLEANING.with(PortsTree.pkgName(port)) : Text.EMPTY;
         if (clean) {
             this.clean(port);
         }
         if (!this.packages.has(port)) {
-            return ICliPackages.Installing.said(ICliComputer.OpResult.ok("===>  Deinstalling for " + name + "\n"
-                    + "===>   " + name + " not installed, skipping" + cleaned));
+            return ICliPackages.Installing.said(ICliComputer.OpResult.ok(NOT_INSTALLED.with(name, cleaned)));
         }
         final ICliComputer.OpResult removed = this.packages.remove(name);
-        final String said = "===>  Deinstalling for " + name + "\n===>   Deinstalling " + PortsTree.pkgName(port)
-                + "\n" + removed.message() + cleaned;
+        final Text said = DEINSTALLED.with(name, PortsTree.pkgName(port), removed.message(), cleaned);
         return ICliPackages.Installing.said(removed.ok() ? ICliComputer.OpResult.ok(said)
                 : ICliComputer.OpResult.fail(said));
     }
@@ -387,26 +426,7 @@ public final class PortsService {
                 : Math.round(megabytes) + " MB";
     }
 
-    /** What make says when the Mirror is not there to fetch a port's source from. */
-    private static String unfetchable(final ProgramSpec port) {
-        final String distfile = PortsTree.distfile(port);
-        return "=> " + distfile + " doesn't seem to exist in /usr/ports/distfiles/.\n"
-                + "=> Attempting to fetch from the Mirror.\n"
-                + "fetch: mirror://mainframe/distfiles/" + distfile + ": No address record\n"
-                + "=> Couldn't fetch it - please try to retrieve this\n"
-                + "=> port manually into /usr/ports/distfiles/ and try again.\n"
-                + "*** Error code 1\n\nStop.";
-    }
-
-    private static String dontKnow(final String target) {
-        return "make: don't know how to make " + target + ". Stop";
-    }
-
-    private static String stoppedIn(final String shown) {
-        return "\n\nmake: stopped in " + shown;
-    }
-
-    private static ICliPackages.Installing refused(final String message) {
+    private static ICliPackages.Installing refused(final Text message) {
         return ICliPackages.Installing.said(ICliComputer.OpResult.fail(message));
     }
 }

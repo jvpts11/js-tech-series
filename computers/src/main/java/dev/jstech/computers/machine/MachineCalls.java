@@ -14,6 +14,8 @@ import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.MemberId;
 import dev.jstech.computers.vm.system.MemberKind;
 import dev.jstech.computers.vm.system.SystemApi;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,8 +28,18 @@ import java.util.function.Function;
  * call the system declares as the world's, and that is checked when the bindings are made, so what the machine answers
  * cannot drift from what the compiler lets a program write. A binding says which of the machine's services answers the
  * call, and the Java answering it sees nothing more of the machine than that service.
+ *
+ * <p>Why a program was stopped is the program's to read, so it is handed over in English, the machine's language.
  */
+@TextHolder
 final class MachineCalls {
+
+    /** Why a call that needs the network stops a program on a machine that is on none. */
+    static final TextKey NOT_ON_NETWORK =
+            TextKey.of("jsc.service.machine.not_on_network", "this computer is not on a network");
+
+    private static final TextKey CANNOT_REACH =
+            TextKey.of("jsc.service.machine.cannot_reach", "this machine cannot reach %s");
 
     /** The Java that answers a call with one of the machine's services. */
     @FunctionalInterface
@@ -49,8 +61,7 @@ final class MachineCalls {
             return (call, target, arguments, line) -> {
                 final S reached = this.service.apply(services);
                 if (reached == null) {
-                    throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line,
-                            "this machine cannot reach " + this.id.owner());
+                    throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, CANNOT_REACH.with(this.id.owner()).english());
                 }
                 return this.function.call(reached, call, target, arguments, line);
             };

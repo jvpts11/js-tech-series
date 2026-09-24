@@ -20,13 +20,18 @@ import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.fs.FsPaths;
+import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.cli.ICliMachine;
 import dev.jstech.computers.program.cli.PosixPath;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.program.install.LiveTurn;
 import dev.jstech.computers.program.job.JobWhen;
 import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -45,7 +50,15 @@ import org.jetbrains.annotations.Nullable;
  * its files ({@link ServerCliFiles}), its network and the work it asks of it ({@link ServerCliNetwork}), and here its
  * software, its settings, its jobs and the programs it runs.
  */
+@TextHolder
 public final class ServerCliComputer extends ServerCliNetwork {
+
+    /** The word the program runner is typed as, which is also what its complaints open with. */
+    private static final String SIGMA = "sigma";
+
+    private static final TextKey FORGOTTEN =TextKey.of("jsc.cli.variable.forgotten", "%s is forgotten");
+    private static final TextKey CANNOT_RUN =
+            TextKey.of("jsc.cli.sigma.cannot_run", "this machine cannot run programs");
 
     public ServerCliComputer(final IComputerTerminalHost host, final ServerLevel level) {
         this(host, level, null);
@@ -197,13 +210,14 @@ public final class ServerCliComputer extends ServerCliNetwork {
     @Override
     public OpResult setShellVariable(final String name, final String value) {
         if (host.console() == null) {
-            return OpResult.fail("this machine keeps no names");
+            return OpResult.fail(ICliMachine.MachineWords.NO_NAMES);
         }
         host.console().settings().setVariable(name, value);
         hostBlock.setChanged();
-        return OpResult.ok(value == null || value.isEmpty()
-                ? name.toUpperCase(Locale.ROOT) + " is forgotten"
-                : name.toUpperCase(Locale.ROOT) + "=" + value);
+        final String upper = name.toUpperCase(Locale.ROOT);
+        return value == null || value.isEmpty()
+                ? OpResult.ok(FORGOTTEN.with(upper))
+                : OpResult.ok(Text.literal(upper + "=" + value));
     }
 
     @Override
@@ -250,7 +264,7 @@ public final class ServerCliComputer extends ServerCliNetwork {
     @Override
     public OpResult startSigma(final String path, final int heapMb, final List<String> arguments) {
         final ProgramService running = sigma();
-        final OpResult started = running == null ? OpResult.fail("sigma: this machine cannot run programs")
+        final OpResult started = running == null ? OpResult.fail(CliTexts.SAID_BY.with(SIGMA, CANNOT_RUN))
                 : running.startAtTerminal(path, heapMb, arguments);
         if (started.ok()) {
             report(JscEvents.SIGMA_RUN, "");
@@ -264,7 +278,7 @@ public final class ServerCliComputer extends ServerCliNetwork {
     @Override
     public OpResult stopSigma(final int id) {
         final ProgramService running = sigma();
-        return running == null ? OpResult.fail("sigma: this machine cannot run programs") : running.stop(id);
+        return running == null ? OpResult.fail(CliTexts.SAID_BY.with(SIGMA, CANNOT_RUN)) : running.stop(id);
     }
 
     @Override

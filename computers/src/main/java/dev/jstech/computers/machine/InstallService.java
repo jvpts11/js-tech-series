@@ -29,8 +29,13 @@ import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.Programs;
+import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.cli.ICliInstallation;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
  * or a live medium walks the player through installing the system by hand. What a machine has is read the same way
  * whichever way it got there.
  */
+@TextHolder
 public final class InstallService {
 
     private final IComputerTerminalHost terminal;
@@ -58,6 +64,19 @@ public final class InstallService {
     private final PackageService packages;
     /** The network's own language, since its engine is installed on the Mainframe rather than here. */
     private final IqlService iql;
+
+    private static final TextKey NO_SUCH = TextKey.of("jsc.service.install.no_such", "no such program: %s");
+    private static final TextKey NEEDS_DISC =
+            TextKey.of("jsc.service.install.needs_disc", "%s needs its install disc in a linked drive");
+    private static final TextKey SETTING_UP = TextKey.of("jsc.service.install.setting_up", "Setting up %s from %s ...");
+    private static final TextKey FLOPPY = TextKey.of("jsc.service.install.floppy", "the floppy");
+    private static final TextKey CD = TextKey.of("jsc.service.install.cd", "the CD");
+    private static final TextKey DVD = TextKey.of("jsc.service.install.dvd", "the DVD");
+    private static final TextKey USB = TextKey.of("jsc.service.install.usb", "the USB drive");
+    private static final TextKey NOT_WRITTEN = TextKey.of("jsc.service.install.not_written",
+            "The installation could not be written to the disk (no space or no disk).");
+    private static final TextKey REBOOTING =
+            TextKey.of("jsc.service.install.rebooting", "Installation complete. Rebooting into the new system ...");
 
     public InstallService(final IComputerTerminalHost terminal, final ServerLevel level,
                           final PackageService packages, final IqlService iql) {
@@ -121,7 +140,7 @@ public final class InstallService {
                         : "jsc:" + programId.toLowerCase(Locale.ROOT));
         final ProgramSpec program = location == null ? null : Programs.get(location);
         if (program == null) {
-            return ICliComputer.OpResult.fail("no such program: " + programId);
+            return ICliComputer.OpResult.fail(NO_SUCH.with(programId));
         }
         if (program.id().equals(Programs.IQL_ENGINE)) {
             // The Engine is a service on the Mainframe, not a console-local app, so install it there.
@@ -129,17 +148,16 @@ public final class InstallService {
         }
         final MediaFormat medium = this.installMediumFor(program.id());
         if (medium == null) {
-            return ICliComputer.OpResult.fail(program.commandName() + " needs its install disc in a linked drive");
+            return ICliComputer.OpResult.fail(NEEDS_DISC.with(program.commandName()));
         }
         final IOsHost machine = this.osHost();
         if (machine == null) {
-            return ICliComputer.OpResult.fail("this computer cannot store installed programs");
+            return ICliComputer.OpResult.fail(PackageService.NO_STORE);
         }
         final Optional<String> refusal = SetupRunner.begin(machine, this.level,
                 ((BlockEntity) this.terminal).getBlockPos(), program, medium, false);
         return refusal.map(ICliComputer.OpResult::fail)
-                .orElseGet(() -> ICliComputer.OpResult.ok("Setting up " + program.commandName() + " from "
-                        + driveName(medium) + " ..."));
+                .orElseGet(() -> ICliComputer.OpResult.ok(SETTING_UP.with(program.commandName(), driveName(medium))));
     }
 
     /** The machine as the thing that installs programs, whichever of the two the prompt is held by. */
@@ -152,12 +170,12 @@ public final class InstallService {
     }
 
     /** What the disc a program comes from is called at a prompt. */
-    private static String driveName(final MediaFormat medium) {
+    private static TextKey driveName(final MediaFormat medium) {
         return switch (medium) {
-            case FLOPPY -> "the floppy";
-            case CD -> "the CD";
-            case DVD -> "the DVD";
-            case USB -> "the USB drive";
+            case FLOPPY -> FLOPPY;
+            case CD -> CD;
+            case DVD -> DVD;
+            case USB -> USB;
         };
     }
 
@@ -182,7 +200,8 @@ public final class InstallService {
         final LiveInstallState state = console == null ? null : console.liveInstall();
         final BlockEntity machine = (BlockEntity) this.terminal;
         if (state == null || !(machine instanceof IOsHost computer)) {
-            return LiveTurn.refused("no live medium is booted");
+            return new LiveTurn(false, List.of(new CliLine(ICliInstallation.NO_LIVE_MEDIUM.text(), CliStyle.ERROR)),
+                    null, false);
         }
         /*
          * The devices the live system sees: every installed disk, in slot order (sda, sdb, ...), with the size
@@ -224,8 +243,8 @@ public final class InstallService {
                 state.distro() == LiveInstallState.Distro.ARCH ? "arch" : "gentoo");
         final int target = state.targetIndex();
         if (!computer.installOs(osId, target)) {
-            return LiveTurn.refused(result.text(),
-                    "The installation could not be written to the disk (no space or no disk).");
+            return new LiveTurn(false, followedBy(result, new CliLine(NOT_WRITTEN.text(), CliStyle.ERROR)), null,
+                    false);
         }
         computer.setBootDiskSlot(target);
         carryOver(computer, state, target);
@@ -238,7 +257,14 @@ public final class InstallService {
         this.terminal.console().clearLiveInstall();
         machine.setChanged();
         reboot.run();
-        return LiveTurn.said(result.text(), "Installation complete. Rebooting into the new system ...");
+        return LiveTurn.said(followedBy(result, CliLine.plain(REBOOTING.text())));
+    }
+
+    /** What the installer printed for the last step, and one more line under it. */
+    private static List<CliLine> followedBy(final LiveTurn result, final CliLine last) {
+        final List<CliLine> out = new ArrayList<>(result.lines());
+        out.add(last);
+        return out;
     }
 
     /**

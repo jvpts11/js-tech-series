@@ -64,6 +64,20 @@ class CliLineTest {
     }
 
     @Test
+    void resolve_aPad_startsTheNextCellAtItsColumnInEveryLanguage() {
+        final CliLine row = CliLine.of(CliSpan.plain(MEMORY.text()), CliSpan.pad(16), CliSpan.plain("online"),
+                CliSpan.pad(26), CliSpan.plain("3"));
+        assertEquals("Memory          online    3", row.text());
+        assertEquals("Memoria livre   online    3", row.text(LONGER));
+    }
+
+    @Test
+    void resolve_aPadWithNoRoom_stillKeepsTheCellsApart() {
+        final CliLine row = CliLine.of(CliSpan.plain(MEMORY.text()), CliSpan.pad(4), CliSpan.plain("online"));
+        assertEquals("Memory online", row.text());
+    }
+
+    @Test
     void resolve_leavesOutRunsThatComeToNothing() {
         final CliLine line = CliLine.of(CliSpan.plain(""), CliSpan.plain("x"));
         assertEquals(List.of(CliRun.plain("x")), line.resolve(ITextLanguage.ENGLISH));

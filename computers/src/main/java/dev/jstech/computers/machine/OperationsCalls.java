@@ -12,6 +12,8 @@ import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.vm.system.MemberId;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.Locale;
 import java.util.Map;
 
@@ -22,10 +24,15 @@ import java.util.Map;
  * base's programs to go and look at. Asking is dear, and deliberately so: it is the network's time being spent. A
  * refusal is answered rather than thrown, so a script can carry on and try something else.
  */
+@TextHolder
 final class OperationsCalls {
 
     private static final String STRING = "string";
     private static final String LONG = "long";
+
+    /** Why a program is stopped: it is said in English, the language a program's run keeps what stopped it in. */
+    private static final TextKey NO_NETWORK =
+            TextKey.of("jsc.service.operations.calls.no_network", "this computer is not on a network");
 
     private OperationsCalls() {
     }
@@ -62,7 +69,7 @@ final class OperationsCalls {
         MachineCalls.bind(bindings, MachineServices::operations, "Operations", name,
                 (ops, call, target, arguments, line) -> {
                     if (!ops.onNetwork()) {
-                        throw new Halt(Halt.Reason.NO_NETWORK, line, "this computer is not on a network");
+                        throw new Halt(Halt.Reason.NO_NETWORK, line, NO_NETWORK.text().english());
                     }
                     return function.call(ops, call, target, arguments, line);
                 }, parameters);

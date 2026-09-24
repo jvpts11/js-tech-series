@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 
 /**
@@ -219,6 +221,16 @@ public interface ICliFiles {
      * storage on it. Refuses the drive the running system lives on.
      */
     default ICliComputer.OpResult formatDrive(final char letter) {
-        return ICliComputer.OpResult.fail("format: drive not found");
+        return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with("format", FileWords.NO_DRIVE));
+    }
+
+    /** What a computer with no drives answers. */
+    @TextHolder
+    final class FileWords {
+
+        static final TextKey NO_DRIVE = TextKey.of("jsc.cli.files.no_drive", "drive not found");
+
+        private FileWords() {
+        }
     }
 }

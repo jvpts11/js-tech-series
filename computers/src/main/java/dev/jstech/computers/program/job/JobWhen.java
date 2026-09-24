@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.program.job;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -24,7 +27,11 @@ import java.util.Locale;
  * @param hour     the hour of the day it runs at, or {@code -1} for a job that runs once, at once
  * @param days     the days of the week it runs on, from 0 for the first; empty means every day
  */
+@TextHolder
 public record JobWhen(int hour, List<Integer> days) {
+
+    /** What a job left running says in place of an hour. */
+    private static final TextKey RUNNING = TextKey.of("jsc.cli.job.running", "running");
 
     /** Ticks in a day of this world, daylight and dark together. */
     public static final int DAY_TICKS = 24000;
@@ -88,13 +95,18 @@ public record JobWhen(int hour, List<Integer> days) {
         return (to - from) / HOUR_TICKS;
     }
 
-    /** How a person reads it. */
-    public String label() {
+    /** How a person reads it: the word for a job left running, or the hour and the days, which are data. */
+    public Text shown() {
         if (once()) {
-            return "running";
+            return RUNNING.text();
         }
         final String when = String.format(Locale.ROOT, "%02d:00", this.hour);
-        return this.days.isEmpty() ? when : when + " " + dayNames();
+        return Text.literal(this.days.isEmpty() ? when : when + " " + dayNames());
+    }
+
+    /** The same in English, the language a machine writes it down in. */
+    public String label() {
+        return shown().english();
     }
 
     /** The days as the letters a schedule is written with. */

@@ -65,7 +65,7 @@ public record WireLine(List<Span> spans, boolean over) {
 
     /** A line of words that are data, in one colour. */
     public WireLine(final String text, final int style) {
-        this(List.of(new Span(Text.literal(text), style, NO_FILL, false)), false);
+        this(List.of(new Span(Text.literal(text), style, NO_FILL, false, false)), false);
     }
 
     /** The line a command wrote, as it goes on the wire. */
@@ -102,7 +102,7 @@ public record WireLine(List<Span> spans, boolean over) {
         for (final CliSpan span : line.spans()) {
             final CliSpan.Fill fill = span.fill();
             out.add(new Span(span.text(), span.style().id(), fill == null ? NO_FILL : fill.column(),
-                    fill != null && fill.closing()));
+                    fill != null && fill.closing(), fill != null && fill.blank()));
         }
         return out;
     }
@@ -127,7 +127,7 @@ public record WireLine(List<Span> spans, boolean over) {
                         : literal.value().substring(0, room);
                 room -= kept.length();
                 out.add(kept.equals(literal.value()) ? span
-                        : new Span(Text.literal(kept), span.style(), span.fillColumn(), span.closing()));
+                        : new Span(Text.literal(kept), span.style(), span.fillColumn(), span.closing(), span.blank()));
             } else {
                 out.add(span);
             }
@@ -136,13 +136,14 @@ public record WireLine(List<Span> spans, boolean over) {
     }
 
     /**
-     * One run: its words, the id of the {@code CliStyle} that colours it, and, for the dots between a label and its
-     * value, the column they carry what follows to.
+     * One run: its words, the id of the {@code CliStyle} that colours it, and, for the room between a label and its
+     * value or between two cells, the column it carries what follows to.
      *
      * @param fillColumn the column of a fill, or {@code -1} for a run of words
      * @param closing    whether what follows a fill ends at its column rather than begins at it
+     * @param blank      whether a fill is spaces rather than dots
      */
-    public record Span(Text text, int style, int fillColumn, boolean closing) {
+    public record Span(Text text, int style, int fillColumn, boolean closing, boolean blank) {
 
         public static final StreamCodec<RegistryFriendlyByteBuf, Span> STREAM_CODEC =
                 StreamCodec.composite(
@@ -150,12 +151,13 @@ public record WireLine(List<Span> spans, boolean over) {
                         ByteBufCodecs.VAR_INT, Span::style,
                         ByteBufCodecs.VAR_INT.map(column -> column - 1, column -> column + 1), Span::fillColumn,
                         ByteBufCodecs.BOOL, Span::closing,
+                        ByteBufCodecs.BOOL, Span::blank,
                         Span::new);
 
-        /** The dots this run stands for, or null for a run of words. */
+        /** The room this run stands for, or null for a run of words. */
         @Nullable
         public CliSpan.Fill fill() {
-            return this.fillColumn < 0 ? null : new CliSpan.Fill(this.fillColumn, this.closing);
+            return this.fillColumn < 0 ? null : new CliSpan.Fill(this.fillColumn, this.closing, this.blank);
         }
     }
 }

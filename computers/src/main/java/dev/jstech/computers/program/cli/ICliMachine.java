@@ -13,6 +13,9 @@ import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.UnixTree;
 import dev.jstech.computers.program.job.JobWhen;
 import dev.jstech.computers.program.job.MachineJobs;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
@@ -113,8 +116,8 @@ public interface ICliMachine {
      * <p>There is one clock here and everything is timed by it: a job on a schedule, a line in a log, the hour
      * on a file. A machine that cannot see it says so rather than making an hour up.
      */
-    default String worldTime() {
-        return "the clock is not set";
+    default Text worldTime() {
+        return MachineWords.NO_CLOCK.text();
     }
 
     /** What this machine's memory is spent on: what it has, what it promised, and what is really in it. */
@@ -136,7 +139,7 @@ public interface ICliMachine {
 
     /** Gives a name a value on this machine, or forgets it when the value is blank. */
     default ICliComputer.OpResult setShellVariable(final String name, final String value) {
-        return ICliComputer.OpResult.fail("this machine keeps no names");
+        return ICliComputer.OpResult.fail(MachineWords.NO_NAMES);
     }
 
     /** The work this machine does with nobody at it: lines left running and lines waiting for an hour. */
@@ -196,5 +199,19 @@ public interface ICliMachine {
      * typing earns it, or whoever works the machine when nobody is. A computer made for a test lets it go.
      */
     default void report(final String event, final String detail) {
+    }
+
+    /**
+     * What a computer that says nothing about itself answers. Named apart from the other parts' words, since a
+     * computer is every one of these parts at once.
+     */
+    @TextHolder
+    final class MachineWords {
+
+        static final TextKey NO_CLOCK = TextKey.of("jsc.cli.machine.no_clock", "the clock is not set");
+        public static final TextKey NO_NAMES = TextKey.of("jsc.cli.machine.no_names", "this machine keeps no names");
+
+        private MachineWords() {
+        }
     }
 }

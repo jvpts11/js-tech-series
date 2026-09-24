@@ -19,6 +19,7 @@ import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
@@ -28,6 +29,8 @@ import dev.jstech.computers.vm.system.CallCost;
 import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.peripheral.IPeripheralOwner;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayList;
@@ -56,7 +59,11 @@ import org.jetbrains.annotations.Nullable;
  * <p>Names follow ComputerCraft's habit: an item is its registry id ({@code minecraft:iron_ingot}, the
  * namespace optional for vanilla), a fluid is {@code fluid/} and its id, a chemical {@code chemical/} and
  * its id. An operation is named by its id; a prefix of the id is enough where it is unambiguous.
+ *
+ * <p>Why a request was refused is declared here and handed on in English, the machine's language: the other side
+ * is another machine that reads it as data, and the Gateway's log keeps it as it was written.
  */
+@TextHolder
 public final class GatewayService {
 
     /** Queued on a computer that watches a name when its total changes: name, total, previous. */
@@ -74,6 +81,30 @@ public final class GatewayService {
 
     /** A list the other side asks for, priced as a program's read is, by how many rows it brings back. */
     private static final CallCost ROWS = CallCost.perRow(SigmaCosts.READ);
+
+    private static final TextKey COULD_NOT_START =
+            TextKey.of("jsc.service.gateway.could_not_start", "could not start the %s");
+    private static final TextKey BUFFER_HOLDS_NONE =
+            TextKey.of("jsc.service.gateway.buffer_holds_none", "the buffer holds no %s");
+    private static final TextKey NO_PATTERN = TextKey.of("jsc.service.gateway.no_pattern", "no pattern crafts %s");
+    private static final TextKey WOULD_NOT_STOP = TextKey.of("jsc.service.gateway.would_not_stop", "would not stop");
+    private static final TextKey NOT_RUNNING = TextKey.of("jsc.service.gateway.not_running", "not running");
+    private static final TextKey NO_SUCH_COMPUTER =
+            TextKey.of("jsc.service.gateway.no_such_computer", "%s: no such computer on this network");
+    private static final TextKey POWERED_OFF = TextKey.of("jsc.service.gateway.powered_off", "%s is powered off");
+    private static final TextKey NO_REMOTE_PROGRAMS = TextKey.of("jsc.service.gateway.no_remote_programs",
+            "%s does not take programs from other computers");
+    private static final TextKey CANNOT_RUN =
+            TextKey.of("jsc.service.gateway.cannot_run", "%s cannot run programs");
+    private static final TextKey NO_RUNNER =
+            TextKey.of("jsc.service.gateway.no_runner", "%s: nothing installed runs a program of this kind");
+    private static final TextKey NO_MEMORY =
+            TextKey.of("jsc.service.gateway.no_memory", "%s: %s MB will not fit in %s MB of free memory");
+    private static final TextKey BUSY = TextKey.of("jsc.service.gateway.busy", "busy: %s calls a tick");
+    private static final TextKey READING_OFF =
+            TextKey.of("jsc.service.gateway.reading_off", "denied: reading the network is off");
+    private static final TextKey OPERATIONS_OFF =
+            TextKey.of("jsc.service.gateway.operations_off", "denied: operations are off");
 
     /** Who is asking, from the other side: a ComputerCraft computer by its id. */
     public record Caller(int id) {
@@ -244,7 +275,7 @@ public final class GatewayService {
         final NetworkSelectOperation op = mainframe().submitNetworkSelect(key, demand(quantity),
                 new BufferSink(gateway.buffer()), label(caller));
         if (op == null) {
-            throw denied(caller, what, "could not start the SELECT");
+            throw denied(caller, what, COULD_NOT_START.with("SELECT").english());
         }
         op.setPriority(priorityOf(priority));
         op.abortWhen(gateway::isRemoved);
@@ -269,12 +300,12 @@ public final class GatewayService {
             }
         }
         if (taken == 0L) {
-            throw denied(caller, what, "the buffer holds no " + name);
+            throw denied(caller, what, BUFFER_HOLDS_NONE.with(name).english());
         }
         final NetworkInsertOperation op = mainframe().submitNetworkInsert(key, taken, label(caller));
         if (op == null) {
             returnToBuffer(key, taken);
-            throw denied(caller, what, "could not start the INSERT");
+            throw denied(caller, what, COULD_NOT_START.with("INSERT").english());
         }
         op.setPriority(priorityOf(priority));
         op.onSettle(() -> {
@@ -297,7 +328,7 @@ public final class GatewayService {
             }
         });
         if (op == null) {
-            throw denied(caller, what, "no pattern crafts " + name);
+            throw denied(caller, what, NO_PATTERN.with(name).english());
         }
         made[0] = op;
         op.setPriority(priorityOf(priority));
@@ -343,12 +374,12 @@ public final class GatewayService {
         for (final INetworkOperation live : mainframe.liveOperations()) {
             if (matches(live.operationId(), id)) {
                 final boolean stopped = mainframe.cancelOperation(live.operationId());
-                gateway.logged(caller.label(), what, stopped ? "stopped" : "would not stop",
+                gateway.logged(caller.label(), what, stopped ? "stopped" : WOULD_NOT_STOP.text().english(),
                         stopped ? GatewayLog.Tone.OK : GatewayLog.Tone.BUSY);
                 return stopped;
             }
         }
-        gateway.logged(caller.label(), what, "not running", GatewayLog.Tone.BUSY);
+        gateway.logged(caller.label(), what, NOT_RUNNING.text().english(), GatewayLog.Tone.BUSY);
         return false;
     }
 
@@ -359,25 +390,24 @@ public final class GatewayService {
         operations(caller, what);
         final ServerCliComputer remote = shell.remoteShell(computer);
         if (remote == null) {
-            throw denied(caller, what, computer + ": no such computer on this network");
+            throw denied(caller, what, NO_SUCH_COMPUTER.with(computer).english());
         }
         if (!remote.running()) {
-            throw denied(caller, what, computer + " is powered off");
+            throw denied(caller, what, POWERED_OFF.with(computer).english());
         }
         if (!remote.remoteAllowed()) {
-            throw denied(caller, what, computer + " does not take programs from other computers");
+            throw denied(caller, what, NO_REMOTE_PROGRAMS.with(computer).english());
         }
         if (!(remote.machine() instanceof AbstractComputerBlockEntity machine)) {
-            throw denied(caller, what, computer + " cannot run programs");
+            throw denied(caller, what, CANNOT_RUN.with(computer).english());
         }
         final ProgramLauncher.Launch launch = ProgramLauncher.launch(machine, program, remote::readFile,
                 new ArrayList<>(args), IProgramParent.NONE, ProgramPriority.named(priority), 0);
         if (!launch.ok()) {
             throw denied(caller, what, switch (launch.refusal()) {
-                case NO_RUNNER -> program + ": nothing installed runs a program of this kind";
-                case NO_MEMORY -> computer + ": " + launch.roomMb() + " MB will not fit in " + launch.freeMb()
-                        + " MB of free memory";
-                case UNREADABLE, NOT_STARTED -> computer + ": " + launch.message();
+                case NO_RUNNER -> NO_RUNNER.with(program).english();
+                case NO_MEMORY -> NO_MEMORY.with(computer, launch.roomMb(), launch.freeMb()).english();
+                case UNREADABLE, NOT_STARTED -> CliTexts.SAID_BY.with(computer, launch.message()).english();
             });
         }
         gateway.stats().count(GatewayStats.Kind.OPERATION, now());
@@ -423,21 +453,21 @@ public final class GatewayService {
     /** Counts the call against the cap; refused once the tick's calls are spent. */
     private void admit(final Caller caller, final String what) throws GatewayRefusedException {
         if (!gateway.admit()) {
-            throw denied(caller, what, "busy: " + gateway.permissions().callCap() + " calls a tick");
+            throw denied(caller, what, BUSY.with(gateway.permissions().callCap()).english());
         }
     }
 
     private void read(final Caller caller, final String what) throws GatewayRefusedException {
         admit(caller, what);
         if (!gateway.permissions().read()) {
-            throw denied(caller, what, "denied: reading the network is off");
+            throw denied(caller, what, READING_OFF.text().english());
         }
     }
 
     private void operations(final Caller caller, final String what) throws GatewayRefusedException {
         admit(caller, what);
         if (!gateway.permissions().operations()) {
-            throw denied(caller, what, "denied: operations are off");
+            throw denied(caller, what, OPERATIONS_OFF.text().english());
         }
     }
 

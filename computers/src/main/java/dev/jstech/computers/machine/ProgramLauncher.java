@@ -12,6 +12,7 @@ import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramPriority;
+import dev.jstech.core.text.Text;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Function;
@@ -43,12 +44,19 @@ public final class ProgramLauncher {
      * What came of a start: the number the program runs under and the name it is listed by, or why it did not start,
      * with what that needs to be told (the reader's or the language's message, the memory asked for and the memory
      * free).
+     *
+     * @param said what the start said, for whoever shows it to a player in that player's language
      */
-    public record Launch(int id, String name, Refusal refusal, String message, int roomMb, int freeMb) {
+    public record Launch(int id, String name, Refusal refusal, Text said, int roomMb, int freeMb) {
 
         /** Whether the program is running. */
         public boolean ok() {
             return this.refusal == null;
+        }
+
+        /** What the start said, in the English the machine keeps, for whatever writes it down or compares it. */
+        public String message() {
+            return this.said.english();
         }
     }
 
@@ -69,23 +77,23 @@ public final class ProgramLauncher {
         final int dot = path.lastIndexOf('.');
         final String extension = dot < 0 ? "" : path.substring(dot + 1).toLowerCase(Locale.ROOT);
         if (!MachinePrograms.runs(extension)) {
-            return new Launch(0, name, Refusal.NO_RUNNER, name + ": nothing installed runs a ." + extension, 0, 0);
+            return new Launch(0, name, Refusal.NO_RUNNER, MachinePrograms.NOTHING_RUNS.with(name, extension), 0, 0);
         }
         final ICliComputer.FsResult file = reader.apply(path);
         if (!file.ok()) {
-            return new Launch(0, name, Refusal.UNREADABLE, file.message().english(), 0, 0);
+            return new Launch(0, name, Refusal.UNREADABLE, file.message(), 0, 0);
         }
         final int room = heapMb <= 0 ? MachinePrograms.DEFAULT_HEAP_MB : Math.min(heapMb, MachinePrograms.MAX_HEAP_MB);
         final RamLedger ledger = machine.ramLedger();
         if (!ledger.fits(room)) {
-            return new Launch(0, name, Refusal.NO_MEMORY, "", room, ledger.freeMb());
+            return new Launch(0, name, Refusal.NO_MEMORY, Text.EMPTY, room, ledger.freeMb());
         }
         final MachinePrograms.Started started =
                 machine.programs().start(name, file.message().english(), room, machine, args, parent, priority);
         if (!started.ok()) {
-            return new Launch(0, name, Refusal.NOT_STARTED, started.message(), room, 0);
+            return new Launch(0, name, Refusal.NOT_STARTED, started.said(), room, 0);
         }
         machine.setChanged();
-        return new Launch(started.id(), name, null, started.message(), room, 0);
+        return new Launch(started.id(), name, null, started.said(), room, 0);
     }
 }

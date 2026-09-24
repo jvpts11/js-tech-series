@@ -12,6 +12,8 @@ import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IWorldCall;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.vm.system.MemberId;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.Map;
 
 /**
@@ -20,11 +22,20 @@ import java.util.Map;
  *
  * <p>Every call is made on the computer the program holds, by the host name it carries. The other computer being gone,
  * switched off, or set not to take programs from other computers each stops the program with a reason of its own.
+ * The reason is the program's to read, so it is handed over in English, the machine's language.
  */
+@TextHolder
 final class RemoteComputerCalls {
 
     private static final String STRING = "string";
     private static final String STRINGS = "List<string>";
+
+    private static final TextKey CANNOT_RUN = TextKey.of("jsc.service.remote.cannot_run", "%s cannot run programs");
+    private static final TextKey NO_SUCH_COMPUTER =
+            TextKey.of("jsc.service.remote.no_such_computer", "%s: no such computer on this network");
+    private static final TextKey HOST_OFF = TextKey.of("jsc.service.remote.host_off", "%s is powered off");
+    private static final TextKey NO_REMOTE_PROGRAMS = TextKey.of("jsc.service.remote.no_remote_programs",
+            "%s does not take programs from other computers");
 
     /** The Java that answers a call with the other computer in hand. */
     @FunctionalInterface
@@ -42,7 +53,7 @@ final class RemoteComputerCalls {
             final ProgramLauncher.Launch launch = remotes.start(remote, path, ProgramCalls.strings(arguments, 1),
                     remotes.parentOf(call.callerId()), ProgramCalls.priority(arguments));
             if (launch == null) {
-                throw new Halt(Halt.Reason.CANNOT_START, line, host + " cannot run programs");
+                throw new Halt(Halt.Reason.CANNOT_START, line, CANNOT_RUN.with(host).english());
             }
             if (!launch.ok()) {
                 throw new Halt(Halt.Reason.CANNOT_START, line, ProgramCalls.refusal(path, host, launch));
@@ -77,14 +88,13 @@ final class RemoteComputerCalls {
                             ? named : "";
                     final ServerCliComputer remote = remotes.find(host);
                     if (remote == null) {
-                        throw new Halt(Halt.Reason.NO_OBJECT, line, host + ": no such computer on this network");
+                        throw new Halt(Halt.Reason.NO_OBJECT, line, NO_SUCH_COMPUTER.with(host).english());
                     }
                     if (!remote.running()) {
-                        throw new Halt(Halt.Reason.REFUSED, line, host + " is powered off");
+                        throw new Halt(Halt.Reason.REFUSED, line, HOST_OFF.with(host).english());
                     }
                     if (!remote.remoteAllowed()) {
-                        throw new Halt(Halt.Reason.REFUSED, line,
-                                host + " does not take programs from other computers");
+                        throw new Halt(Halt.Reason.REFUSED, line, NO_REMOTE_PROGRAMS.with(host).english());
                     }
                     return function.call(remotes, remote, host, call, arguments, line);
                 }, parameters);

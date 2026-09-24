@@ -7,11 +7,15 @@
  */
 package dev.jstech.computers.machine;
 
+import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramPriority;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.vm.system.MemberId;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,10 +28,14 @@ import java.util.Map;
  * its output for the parent to read, and runs on if the parent goes first. A handle names the machine its program is
  * on, so a program another computer runs is asked after the same way.
  */
+@TextHolder
 final class ProgramCalls {
 
     private static final String STRING = "string";
     private static final String STRINGS = "List<string>";
+
+    /** What a program is told when it asks after a process through something that is none. */
+    private static final TextKey NO_PROCESS = TextKey.of("jsc.service.programs.no_process", "there is no process here");
 
     private ProgramCalls() {
     }
@@ -89,15 +97,19 @@ final class ProgramCalls {
         return made;
     }
 
-    /** Why a program could not be started, from this machine or, when a host is named, on that one. */
+    /**
+     * Why a program could not be started, from this machine or, when a host is named, on that one. It goes into the
+     * program that asked, as what its halt says, so it is in the English the machine keeps.
+     */
     static String refusal(final String path, final String host, final ProgramLauncher.Launch launch) {
         final String where = host.isEmpty() ? path : host;
-        return switch (launch.refusal()) {
-            case NO_RUNNER -> path + ": nothing installed runs a program of this kind (compile a source file first)";
-            case NO_MEMORY -> where + ": " + launch.roomMb() + " MB will not fit in " + launch.freeMb()
-                    + " MB of free memory";
-            case UNREADABLE, NOT_STARTED -> host.isEmpty() ? launch.message() : host + ": " + launch.message();
+        final Text why = switch (launch.refusal()) {
+            case NO_RUNNER -> ProgramService.NO_RUNNER.with(path);
+            case NO_MEMORY -> ProgramService.NO_ROOM.with(where, launch.roomMb(), launch.freeMb());
+            case UNREADABLE, NOT_STARTED -> host.isEmpty() ? launch.said()
+                    : CliTexts.SAID_BY.with(host, launch.said());
         };
+        return why.english();
     }
 
     /** The priority a start asked for, as its third argument names it, or the default one when it names none. */
@@ -130,7 +142,7 @@ final class ProgramCalls {
         if (target instanceof Values.Obj handle && handle.get("Id") instanceof Integer id) {
             return id;
         }
-        throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no process here");
+        throw new Halt(Halt.Reason.NO_OBJECT, line, NO_PROCESS.text().english());
     }
 
     /** The machine a handle's program is on: what its {@code Host} says, or this one when it says nothing. */

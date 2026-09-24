@@ -16,6 +16,7 @@ import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.program.IqlEngine;
+import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.iql.IIqlCondition;
 import dev.jstech.computers.program.iql.IIqlView;
@@ -29,6 +30,9 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayList;
@@ -47,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
  * studio. A statement of the network's second layer (a view, a procedure, a job) needs the engine installed there; a
  * plain one needs only a Mainframe.
  */
+@TextHolder
 public final class IqlService {
 
     /** How many rows one query may bring back, the same as the studio's default page. */
@@ -54,6 +59,72 @@ public final class IqlService {
 
     /** Safety cap on how many item types a single {@code *} statement expands to. */
     private static final int MAX_WILDCARD_TYPES = 256;
+
+    private static final TextKey TYPES_ONE = TextKey.of("jsc.service.iql.types_one", "%s item type");
+    private static final TextKey TYPES_MANY = TextKey.of("jsc.service.iql.types_many", "%s item types");
+    /** How much of what: a count, or the word for all, and the item's name. */
+    private static final TextKey AMOUNT = TextKey.of("jsc.service.iql.amount", "%s %s");
+    private static final TextKey NO_SERVER = TextKey.of("jsc.service.iql.no_server", "no server named '%s'");
+    private static final TextKey NOTHING_TO_SELECT =
+            TextKey.of("jsc.service.iql.nothing_to_select", "nothing to select");
+    private static final TextKey SELECT_QUEUED =
+            TextKey.of("jsc.service.iql.select_queued", "SELECT queued: %s -> local storage");
+    private static final TextKey SELECT_QUEUED_FROM =
+            TextKey.of("jsc.service.iql.select_queued_from", "SELECT queued: %s from %s -> local storage");
+    private static final TextKey NO_BUS = TextKey.of("jsc.service.iql.no_bus", "no bus named '%s'");
+    /** Nothing for a verb to do, the verb written the way the statement wrote it, in small letters. */
+    private static final TextKey NOTHING_TO = TextKey.of("jsc.service.iql.nothing_to", "nothing to %s");
+    private static final TextKey QUEUED = TextKey.of("jsc.service.iql.queued", "%s queued: %s");
+    private static final TextKey NO_HOST = TextKey.of("jsc.service.iql.no_host",
+            "the network has no running Mainframe to host the IQL Engine");
+    private static final TextKey INSTALLED =
+            TextKey.of("jsc.service.iql.installed", "IQL Engine installed on the Mainframe and started");
+    private static final TextKey ALREADY_INSTALLED =
+            TextKey.of("jsc.service.iql.already_installed", "the IQL Engine is already installed");
+    private static final TextKey STARTED = TextKey.of("jsc.service.iql.started", "IQL Engine started");
+    private static final TextKey ALREADY_RUNNING =
+            TextKey.of("jsc.service.iql.already_running", "the IQL Engine is already running");
+    private static final TextKey NOT_INSTALLED =
+            TextKey.of("jsc.service.iql.not_installed", "the IQL Engine is not installed");
+    private static final TextKey STOPPED = TextKey.of("jsc.service.iql.stopped", "IQL Engine stopped");
+    private static final TextKey ALREADY_STOPPED =
+            TextKey.of("jsc.service.iql.already_stopped", "the IQL Engine is already stopped");
+    private static final TextKey STATUS = TextKey.of("jsc.service.iql.status", "IQL Engine: %s");
+    private static final TextKey STATE_NOT_INSTALLED =
+            TextKey.of("jsc.service.iql.state.not_installed", "not installed");
+    private static final TextKey STATE_RUNNING = TextKey.of("jsc.service.iql.state.running", "running");
+    private static final TextKey STATE_STOPPED = TextKey.of("jsc.service.iql.state.stopped", "stopped");
+    private static final TextKey NO_SERVER_OR_BUS =
+            TextKey.of("jsc.service.iql.no_server_or_bus", "no server or bus named '%s'");
+    private static final TextKey DESTINATION_UNAVAILABLE =
+            TextKey.of("jsc.service.iql.destination_unavailable", "the destination server is unavailable");
+    private static final TextKey MOVE_FAILED = TextKey.of("jsc.service.iql.move_failed", "could not start the MOVE");
+    private static final TextKey MOVE_QUEUED = TextKey.of("jsc.service.iql.move_queued", "MOVE queued: %s %s -> %s");
+    private static final TextKey BUS_TOUCHES_NOTHING =
+            TextKey.of("jsc.service.iql.bus_touches_nothing", "the bus '%s' touches no inventory");
+    private static final TextKey NOTHING_TO_MOVE = TextKey.of("jsc.service.iql.nothing_to_move", "nothing to move");
+    private static final TextKey NOTHING_TO_IMPORT =
+            TextKey.of("jsc.service.iql.nothing_to_import", "nothing to import");
+    private static final TextKey NOTHING_TO_MOVE_TO =
+            TextKey.of("jsc.service.iql.nothing_to_move_to", "nothing to move to %s");
+    private static final TextKey MOVE_TO_BUS_QUEUED =
+            TextKey.of("jsc.service.iql.move_to_bus_queued", "MOVE queued: %s -> %s");
+    private static final TextKey NOTHING_TO_IMPORT_FROM =
+            TextKey.of("jsc.service.iql.nothing_to_import_from", "nothing to import from %s");
+    private static final TextKey IMPORT_QUEUED =
+            TextKey.of("jsc.service.iql.import_queued", "MOVE queued: import from %s");
+    private static final TextKey READ_IS_NO_OPERATION =
+            TextKey.of("jsc.service.iql.read_is_no_operation", "a read does not run as an operation");
+    private static final TextKey ONLY_IQL =
+            TextKey.of("jsc.service.iql.only_iql", "%s: only .iql files can be run (got .%s)");
+    private static final TextKey NO_EXTENSION = TextKey.of("jsc.service.iql.no_extension", "<none>");
+    private static final TextKey SYNTAX_ERROR =
+            TextKey.of("jsc.service.iql.syntax_error", "%s: syntax error in '%s': %s");
+    private static final TextKey NO_READS_IN_RUN = TextKey.of("jsc.service.iql.no_reads_in_run",
+            "%s: QUERY/COUNT are not supported by 'run', use 'operation' instead");
+    private static final TextKey NOTHING_TO_RUN_IN =
+            TextKey.of("jsc.service.iql.nothing_to_run_in", "%s: nothing to run");
+    private static final TextKey NOTHING_TO_RUN = TextKey.of("jsc.service.iql.nothing_to_run", "nothing to run");
 
     private final IComputerTerminalHost terminal;
     private final ServerLevel level;
@@ -100,11 +171,11 @@ public final class IqlService {
     }
 
     /** How a statement reads back: "N item types" for a {@code *}, else "qty item". */
-    public static String describe(final IqlOperation op, final List<StorageKey> keys) {
+    public static Text describe(final IqlOperation op, final List<StorageKey> keys) {
         if (op.isAnyItem()) {
-            return keys.size() + (keys.size() == 1 ? " item type" : " item types");
+            return (keys.size() == 1 ? TYPES_ONE : TYPES_MANY).with(keys.size());
         }
-        return OperationsService.qtyLabel(op.quantity()) + " " + keys.get(0).displayName().getString();
+        return AMOUNT.with(OperationsService.qtyLabel(op.quantity()), keys.get(0).displayName().getString());
     }
 
     /** Applies the statement's {@code PRIORITY} to a freshly submitted Operation; a null submission passes through. */
@@ -125,19 +196,19 @@ public final class IqlService {
         final NetworkUuid net = this.terminal.networkUuid();
         final MainframeBlockEntity mainframe = this.mainframe();
         if (mainframe == null || net == null) {
-            return ICliComputer.OpResult.fail("the network has no running Mainframe");
+            return ICliComputer.OpResult.fail(OperationsService.NO_MAINFRAME);
         }
         NodeUuid from = null;
         if (op.hasFrom()) {
             from = this.network.serverNamed(net, op.from());
             if (from == null) {
-                return ICliComputer.OpResult.fail("no server named '" + op.from() + "'");
+                return ICliComputer.OpResult.fail(NO_SERVER.with(op.from()));
             }
         }
         final List<StorageKey> keys = this.keysFor(op.item(), from);
         if (keys.isEmpty()) {
-            return op.isAnyItem() ? ICliComputer.OpResult.fail("nothing to select")
-                    : ICliComputer.OpResult.fail("unknown item: " + op.item());
+            return op.isAnyItem() ? ICliComputer.OpResult.fail(NOTHING_TO_SELECT)
+                    : ICliComputer.OpResult.fail(OperationsService.UNKNOWN_ITEM.with(op.item()));
         }
         int queued = 0;
         for (final StorageKey key : keys) {
@@ -153,10 +224,10 @@ public final class IqlService {
             }
         }
         if (queued == 0) {
-            return ICliComputer.OpResult.fail("could not start the SELECT");
+            return ICliComputer.OpResult.fail(OperationsService.SELECT_FAILED);
         }
-        return ICliComputer.OpResult.ok("SELECT queued: " + describe(op, keys)
-                + (from == null ? "" : " from " + op.from()) + " -> local storage");
+        return ICliComputer.OpResult.ok(from == null ? SELECT_QUEUED.with(describe(op, keys))
+                : SELECT_QUEUED_FROM.with(describe(op, keys), op.from()));
     }
 
     /**
@@ -168,21 +239,21 @@ public final class IqlService {
     public ICliComputer.OpResult destroy(final IqlOperation op, final String verb) {
         final MainframeBlockEntity mainframe = this.mainframe();
         if (mainframe == null) {
-            return ICliComputer.OpResult.fail("the network has no running Mainframe");
+            return ICliComputer.OpResult.fail(OperationsService.NO_MAINFRAME);
         }
         IDataSink target = (k, amount, simulate) -> amount;
         if ("DELETE".equals(verb) && op.to() != null && !op.to().isBlank()) {
             final NamedBus.Located bus = NamedBus.find(this.level, this.terminal.networkUuid(), op.to());
             if (bus == null) {
-                return ICliComputer.OpResult.fail("no bus named '" + op.to() + "'");
+                return ICliComputer.OpResult.fail(NO_BUS.with(op.to()));
             }
             target = bus.port();
         }
         final List<StorageKey> keys = this.keysFor(op.item(), null);
         if (keys.isEmpty()) {
             return op.isAnyItem()
-                    ? ICliComputer.OpResult.ok("nothing to " + verb.toLowerCase(Locale.ROOT))
-                    : ICliComputer.OpResult.fail("unknown item: " + op.item());
+                    ? ICliComputer.OpResult.ok(NOTHING_TO.with(verb.toLowerCase(Locale.ROOT)))
+                    : ICliComputer.OpResult.fail(OperationsService.UNKNOWN_ITEM.with(op.item()));
         }
         /*
          * Only act on items the network actually holds, so a repeating job's DROP/DELETE becomes a quiet
@@ -199,8 +270,8 @@ public final class IqlService {
                 queued++;
             }
         }
-        return queued == 0 ? ICliComputer.OpResult.ok("nothing to " + verb.toLowerCase(Locale.ROOT))
-                : ICliComputer.OpResult.ok(verb + " queued: " + describe(op, keys));
+        return queued == 0 ? ICliComputer.OpResult.ok(NOTHING_TO.with(verb.toLowerCase(Locale.ROOT)))
+                : ICliComputer.OpResult.ok(QUEUED.with(verb, describe(op, keys)));
     }
 
     /** The Mainframe of the machine's network, or null when it is on none, or none is running. */
@@ -224,22 +295,22 @@ public final class IqlService {
     public ICliComputer.OpResult control(final String action) {
         final MainframeBlockEntity mainframe = this.mainframe();
         if (mainframe == null) {
-            return ICliComputer.OpResult.fail("the network has no running Mainframe to host the IQL Engine");
+            return ICliComputer.OpResult.fail(NO_HOST);
         }
         return switch (action.toLowerCase(Locale.ROOT)) {
             case "install" -> mainframe.installIqlEngine()
-                    ? ICliComputer.OpResult.ok("IQL Engine installed on the Mainframe and started")
-                    : ICliComputer.OpResult.fail("the IQL Engine is already installed");
+                    ? ICliComputer.OpResult.ok(INSTALLED)
+                    : ICliComputer.OpResult.fail(ALREADY_INSTALLED);
             case "start" -> mainframe.setIqlEngineRunning(true)
-                    ? ICliComputer.OpResult.ok("IQL Engine started")
-                    : ICliComputer.OpResult.fail(mainframe.isIqlEngineInstalled()
-                            ? "the IQL Engine is already running" : "the IQL Engine is not installed");
+                    ? ICliComputer.OpResult.ok(STARTED)
+                    : ICliComputer.OpResult.fail(mainframe.isIqlEngineInstalled() ? ALREADY_RUNNING : NOT_INSTALLED);
             case "stop" -> mainframe.setIqlEngineRunning(false)
-                    ? ICliComputer.OpResult.ok("IQL Engine stopped")
-                    : ICliComputer.OpResult.fail(mainframe.isIqlEngineInstalled()
-                            ? "the IQL Engine is already stopped" : "the IQL Engine is not installed");
-            case "status", "" -> ICliComputer.OpResult.ok("IQL Engine: " + this.state());
-            default -> ICliComputer.OpResult.fail("usage: iqlengine install|start|stop|status");
+                    ? ICliComputer.OpResult.ok(STOPPED)
+                    : ICliComputer.OpResult.fail(mainframe.isIqlEngineInstalled() ? ALREADY_STOPPED : NOT_INSTALLED);
+            case "status", "" -> ICliComputer.OpResult.ok(STATUS.with(this.stateText()));
+            // The verbs are what is typed, so they are written as typed in every language.
+            default -> ICliComputer.OpResult.fail(
+                    CliTexts.USAGE.with("iqlengine", Text.literal("install|start|stop|status")));
         };
     }
 
@@ -250,12 +321,17 @@ public final class IqlService {
     }
 
     /** How the engine stands on the network's Mainframe, in the words every view shows. */
-    public String state() {
+    public Text stateText() {
         final MainframeBlockEntity mainframe = this.mainframe();
         if (mainframe == null || !mainframe.isIqlEngineInstalled()) {
-            return "not installed";
+            return STATE_NOT_INSTALLED.text();
         }
-        return mainframe.isIqlEngineRunning() ? "running" : "stopped";
+        return (mainframe.isIqlEngineRunning() ? STATE_RUNNING : STATE_STOPPED).text();
+    }
+
+    /** The same in English, for a listing that still carries its states as words. */
+    public String state() {
+        return this.stateText().english();
     }
 
     /**
@@ -304,7 +380,7 @@ public final class IqlService {
         final NetworkUuid net = this.terminal.networkUuid();
         final MainframeBlockEntity mainframe = this.mainframe();
         if (mainframe == null || net == null) {
-            return ICliComputer.OpResult.fail("the network has no running Mainframe");
+            return ICliComputer.OpResult.fail(OperationsService.NO_MAINFRAME);
         }
         final NamedBus.Located toBus = NamedBus.find(this.level, net, op.to());
         if (toBus != null) {
@@ -317,19 +393,19 @@ public final class IqlService {
         final NodeUuid source = this.network.serverNamed(net, op.from());
         final NodeUuid dest = this.network.serverNamed(net, op.to());
         if (source == null) {
-            return ICliComputer.OpResult.fail("no server or bus named '" + op.from() + "'");
+            return ICliComputer.OpResult.fail(NO_SERVER_OR_BUS.with(op.from()));
         }
         if (dest == null) {
-            return ICliComputer.OpResult.fail("no server or bus named '" + op.to() + "'");
+            return ICliComputer.OpResult.fail(NO_SERVER_OR_BUS.with(op.to()));
         }
         final IDataSink destSink = this.serverSink(dest);
         if (destSink == null) {
-            return ICliComputer.OpResult.fail("the destination server is unavailable");
+            return ICliComputer.OpResult.fail(DESTINATION_UNAVAILABLE);
         }
         final List<StorageKey> keys = this.keysFor(op.item(), source);
         if (keys.isEmpty()) {
-            return op.isAnyItem() ? ICliComputer.OpResult.fail("nothing to move")
-                    : ICliComputer.OpResult.fail("unknown item: " + op.item());
+            return op.isAnyItem() ? ICliComputer.OpResult.fail(NOTHING_TO_MOVE)
+                    : ICliComputer.OpResult.fail(OperationsService.UNKNOWN_ITEM.with(op.item()));
         }
         int queued = 0;
         for (final StorageKey key : keys) {
@@ -338,21 +414,21 @@ public final class IqlService {
                 queued++;
             }
         }
-        return queued == 0 ? ICliComputer.OpResult.fail("could not start the MOVE")
-                : ICliComputer.OpResult.ok("MOVE queued: " + describe(op, keys)
-                        + " " + op.from() + " -> " + NetworkLookup.serverLabel(this.level, dest));
+        return queued == 0 ? ICliComputer.OpResult.fail(MOVE_FAILED)
+                : ICliComputer.OpResult.ok(MOVE_QUEUED.with(describe(op, keys), op.from(),
+                        NetworkLookup.serverLabel(this.level, dest)));
     }
 
     /** Network to a named bus's external inventory: a timed export, the same path the Export Bus uses. */
     private ICliComputer.OpResult moveToBus(final IqlOperation op, final MainframeBlockEntity mainframe,
                                             final ExternalDataPort port) {
         if (port.isEmpty()) {
-            return ICliComputer.OpResult.fail("the bus '" + op.to() + "' touches no inventory");
+            return ICliComputer.OpResult.fail(BUS_TOUCHES_NOTHING.with(op.to()));
         }
         final List<StorageKey> keys = this.keysFor(op.item(), null);
         if (keys.isEmpty()) {
-            return op.isAnyItem() ? ICliComputer.OpResult.ok("nothing to move")
-                    : ICliComputer.OpResult.fail("unknown item: " + op.item());
+            return op.isAnyItem() ? ICliComputer.OpResult.ok(NOTHING_TO_MOVE)
+                    : ICliComputer.OpResult.fail(OperationsService.UNKNOWN_ITEM.with(op.item()));
         }
         final Map<StorageKey, Long> stock = NetworkStorage.of(this.level, this.terminal.networkUuid()).query();
         int queued = 0;
@@ -365,8 +441,8 @@ public final class IqlService {
                 queued++;
             }
         }
-        return queued == 0 ? ICliComputer.OpResult.ok("nothing to move to " + op.to())
-                : ICliComputer.OpResult.ok("MOVE queued: " + describe(op, keys) + " -> " + op.to());
+        return queued == 0 ? ICliComputer.OpResult.ok(NOTHING_TO_MOVE_TO.with(op.to()))
+                : ICliComputer.OpResult.ok(MOVE_TO_BUS_QUEUED.with(describe(op, keys), op.to()));
     }
 
     /**
@@ -376,12 +452,12 @@ public final class IqlService {
     private ICliComputer.OpResult moveFromBus(final IqlOperation op, final MainframeBlockEntity mainframe,
                                               final ExternalDataPort port) {
         if (port.isEmpty()) {
-            return ICliComputer.OpResult.fail("the bus '" + op.from() + "' touches no inventory");
+            return ICliComputer.OpResult.fail(BUS_TOUCHES_NOTHING.with(op.from()));
         }
         final List<StorageKey> keys = op.isAnyItem() ? port.available() : this.keysFor(op.item(), null);
         if (keys.isEmpty()) {
-            return op.isAnyItem() ? ICliComputer.OpResult.ok("nothing to import")
-                    : ICliComputer.OpResult.fail("unknown item: " + op.item());
+            return op.isAnyItem() ? ICliComputer.OpResult.ok(NOTHING_TO_IMPORT)
+                    : ICliComputer.OpResult.fail(OperationsService.UNKNOWN_ITEM.with(op.item()));
         }
         final long perKey = OperationsService.demand(op.quantity());
         int queued = 0;
@@ -408,8 +484,8 @@ public final class IqlService {
                 port.insert(key, pulled, false); // dispatch failed (engine off): put it back, lose nothing
             }
         }
-        return queued == 0 ? ICliComputer.OpResult.ok("nothing to import from " + op.from())
-                : ICliComputer.OpResult.ok("MOVE queued: import from " + op.from());
+        return queued == 0 ? ICliComputer.OpResult.ok(NOTHING_TO_IMPORT_FROM.with(op.from()))
+                : ICliComputer.OpResult.ok(IMPORT_QUEUED.with(op.from()));
     }
 
     /** Where a server's own storage takes what is moved into it, or null when that server cannot be reached. */
@@ -440,7 +516,7 @@ public final class IqlService {
             case LOCK -> this.operations.lock(op.item(), op.quantity());
             case UNLOCK -> this.operations.unlock(op.item());
             case ANALYZE, VACUUM, REINDEX -> this.operations.maintenance(op.verb());
-            case QUERY, COUNT -> ICliComputer.OpResult.fail("a read does not run as an operation");
+            case QUERY, COUNT -> ICliComputer.OpResult.fail(READ_IS_NO_OPERATION);
         };
     }
 
@@ -475,8 +551,7 @@ public final class IqlService {
     public ICliComputer.FsResult runFile(final String path) {
         final String ext = extensionOf(path);
         if (!"iql".equalsIgnoreCase(ext)) {
-            return ICliComputer.FsResult.fail(path + ": only .iql files can be run (got ."
-                    + (ext.isEmpty() ? "<none>" : ext) + ")");
+            return ICliComputer.FsResult.fail(ONLY_IQL.with(path, ext.isEmpty() ? NO_EXTENSION : ext));
         }
         final ICliComputer.FsResult read = this.files.readFile(path);
         if (!read.ok()) {
@@ -490,20 +565,19 @@ public final class IqlService {
         for (final String statement : statementsOf(read.message().english())) {
             final IqlParseResult parsed = IqlParser.tryParse(statement);
             if (!parsed.ok()) {
-                return ICliComputer.FsResult.fail(path + ": syntax error in '" + statement + "': " + parsed.error());
+                return ICliComputer.FsResult.fail(SYNTAX_ERROR.with(path, statement, parsed.error()));
             }
             /*
              * QUERY/COUNT are read operations that produce rows, not timed operations; they cannot be
              * dispatched via execute(). The caller should use 'operation' for those.
              */
             if (parsed.operation().verb() == IqlVerb.QUERY || parsed.operation().verb() == IqlVerb.COUNT) {
-                return ICliComputer.FsResult.fail(path
-                        + ": QUERY/COUNT are not supported by 'run', use 'operation' instead");
+                return ICliComputer.FsResult.fail(NO_READS_IN_RUN.with(path));
             }
             operations.add(parsed.operation());
         }
         if (operations.isEmpty()) {
-            return ICliComputer.FsResult.fail(path + ": nothing to run");
+            return ICliComputer.FsResult.fail(NOTHING_TO_RUN_IN.with(path));
         }
         ICliComputer.OpResult last = null;
         for (final IqlOperation operation : operations) {
@@ -541,7 +615,7 @@ public final class IqlService {
      * {@code --} are skipped, the first refusal ends the run, and what the last statement run answered is the answer.
      */
     public static IqlEngine.Outcome runEach(final IqlEngine engine, final String text) {
-        IqlEngine.Outcome last = new IqlEngine.Outcome(true, "nothing to run", List.of());
+        IqlEngine.Outcome last = new IqlEngine.Outcome(true, NOTHING_TO_RUN.text(), List.of());
         for (final String statement : statementsOf(text)) {
             last = engine.run(statement);
             if (!last.ok()) {

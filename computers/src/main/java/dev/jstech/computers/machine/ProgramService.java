@@ -13,10 +13,14 @@ import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
+import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramEntry;
 import dev.jstech.computers.vm.program.ProgramPriority;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.server.level.ServerLevel;
@@ -30,10 +34,8 @@ import org.jetbrains.annotations.Nullable;
  * machine's list of programs is the only place any of this lives, so what is started here shows in the Task Manager
  * like anything started at the prompt.
  */
+@TextHolder
 public final class ProgramService {
-
-    /** How wide a prompt is taken to be for a line run there. */
-    private static final int SHELL_WIDTH = 80;
 
     private final AbstractComputerBlockEntity machine;
     private final IComputerTerminalHost terminal;
@@ -42,6 +44,19 @@ public final class ProgramService {
     private final FileService files;
     /** The other computers of the network, for a program asked after by the machine it runs on. */
     private final RemoteComputerService remotes;
+
+    /** Why a program did not start, said alike at the prompt and to a program that asked for another. */
+    static final TextKey NO_RUNNER = TextKey.of("jsc.service.programs.no_runner",
+            "%s: nothing installed runs a program of this kind (compile a source file first)");
+    static final TextKey NO_ROOM =
+            TextKey.of("jsc.service.programs.no_room", "%s: %s MB will not fit in %s MB of free memory");
+
+    private static final TextKey NOTHING_RUNNING_AS =
+            TextKey.of("jsc.service.programs.nothing_running_as", "nothing is running as %s");
+    private static final TextKey STOPPED = TextKey.of("jsc.service.programs.stopped", "stopped %s");
+
+    /** How wide a prompt is taken to be for a line run there. */
+    private static final int SHELL_WIDTH = 80;
 
     public ProgramService(final AbstractComputerBlockEntity machine, final IComputerTerminalHost terminal,
                           final ServerLevel level, final FileService files, final RemoteComputerService remotes) {
@@ -128,11 +143,9 @@ public final class ProgramService {
                 arguments, IProgramParent.NONE, ProgramPriority.MEDIUM, heapMb);
         if (!launch.ok()) {
             return ICliComputer.OpResult.fail(switch (launch.refusal()) {
-                case NO_RUNNER -> path + ": nothing installed runs a program of this kind"
-                        + " (compile a source file first)";
-                case NO_MEMORY -> "sigma: " + launch.roomMb() + " MB will not fit in " + launch.freeMb()
-                        + " MB of free memory";
-                case UNREADABLE, NOT_STARTED -> launch.message();
+                case NO_RUNNER -> NO_RUNNER.with(path);
+                case NO_MEMORY -> NO_ROOM.with(Text.literal("sigma"), launch.roomMb(), launch.freeMb());
+                case UNREADABLE, NOT_STARTED -> launch.said();
             });
         }
         final ProgramEntry<IMachineRuntime> one = this.machine.programs().byId(launch.id());
@@ -140,16 +153,17 @@ public final class ProgramService {
             this.machine.programs().hold(launch.id());
             return ICliComputer.OpResult.ok("");
         }
-        return ICliComputer.OpResult.ok(launch.message());
+        return ICliComputer.OpResult.ok(launch.said());
     }
 
     /** Stops the program under that number, in the words the prompt answers with. */
     public ICliComputer.OpResult stop(final int id) {
         if (!this.machine.programs().stop(id)) {
-            return ICliComputer.OpResult.fail("sigma: nothing is running as " + id);
+            return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with(Text.literal("sigma"),
+                    NOTHING_RUNNING_AS.with(id)));
         }
         this.machine.setChanged();
-        return ICliComputer.OpResult.ok("stopped " + id);
+        return ICliComputer.OpResult.ok(STOPPED.with(id));
     }
 
     /** Every program running on this machine, as a prompt lists them. */

@@ -14,6 +14,8 @@ import dev.jstech.computers.gateway.IGatewayBridge;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.vm.system.MemberId;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,8 +29,17 @@ import java.util.Map;
  * Gateway is online and what the machine's Gateways are called can be asked of any machine; everything else stops the
  * program on a machine without that Gateway, and everything that reaches across stops it on a Gateway with no
  * ComputerCraft side. A call on something out on the wire is written into that Gateway's log, answered or refused.
+ * Why a program was stopped is the program's to read, so it is handed over in English, the machine's language.
  */
+@TextHolder
 final class GatewayCalls {
+
+    private static final TextKey NO_CC_SIDE = TextKey.of("jsc.service.gateway.no_cc_side",
+            "%s has no ComputerCraft side (is ComputerCraft installed?)");
+    private static final TextKey NO_GATEWAY =
+            TextKey.of("jsc.service.gateway.no_gateway", "this computer has no Gateway");
+    private static final TextKey NO_GATEWAY_CALLED =
+            TextKey.of("jsc.service.gateway.no_gateway_called", "this computer has no Gateway called %s");
 
     private static final String STRING = "string";
     private static final String OBJECT = "object";
@@ -115,8 +126,7 @@ final class GatewayCalls {
         chosen(bindings, name, (gateway, arguments, line) -> {
             final IGatewayBridge bridge = gateway.bridge();
             if (bridge == null) {
-                throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line,
-                        gateway.name() + " has no ComputerCraft side (is ComputerCraft installed?)");
+                throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, NO_CC_SIDE.with(gateway.name()).english());
             }
             return function.call(gateway, bridge, arguments, line);
         }, parameters);
@@ -128,7 +138,7 @@ final class GatewayCalls {
         final NetworkGatewayBlockEntity gateway = gateways.pick(chosen);
         if (gateway == null) {
             throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, chosen.isEmpty()
-                    ? "this computer has no Gateway" : "this computer has no Gateway called " + chosen);
+                    ? NO_GATEWAY.text().english() : NO_GATEWAY_CALLED.with(chosen).english());
         }
         return gateway;
     }

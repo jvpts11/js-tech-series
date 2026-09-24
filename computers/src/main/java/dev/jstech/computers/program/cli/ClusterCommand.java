@@ -29,9 +29,8 @@ import java.util.Locale;
  * The shell's way into the clusters, for players who prefer a prompt or run a system with no desktop:
  * the same actions as the Cluster Manager, on the same machine only.
  *
- * <p>Its listings are tables whose columns are padded by counting characters, so a word that stands in a padded
- * column goes in in the machine's language, the one it keeps what it writes down in; the words in the last
- * column, which nothing after it has to line up with, are the reader's.
+ * <p>Its listings are tables whose columns are spaced where the line is read, once every cell is in the reader's
+ * language, so a translated word that is longer or shorter still leaves the next column in line.
  */
 @TextHolder
 public final class ClusterCommand implements ICliCommand {
@@ -62,11 +61,24 @@ public final class ClusterCommand implements ICliCommand {
     private static final TextKey NO_CLUSTER = TextKey.of("jsc.cli.cluster.no_cluster", "no cluster named %s");
     private static final TextKey NO_NODE = TextKey.of("jsc.cli.cluster.no_node", "no node at %s");
 
-    /* The headings line up with the columns written under them, so a translation keeps their spacing. */
-    private static final TextKey LIST_HEADER = TextKey.of("jsc.cli.cluster.list_header",
-            "KIND           NAME                   STATE    LOAD");
-    private static final TextKey NODES_HEADER = TextKey.of("jsc.cli.cluster.nodes_header",
-            "RACK U   NODE               SYSTEM         POWER");
+    private static final TextKey COL_KIND = TextKey.of("jsc.cli.cluster.col.kind", "KIND");
+    private static final TextKey COL_NAME = TextKey.of("jsc.cli.cluster.col.name", "NAME");
+    private static final TextKey COL_STATE = TextKey.of("jsc.cli.cluster.col.state", "STATE");
+    private static final TextKey COL_LOAD = TextKey.of("jsc.cli.cluster.col.load", "LOAD");
+    private static final TextKey COL_RACK = TextKey.of("jsc.cli.cluster.col.rack", "RACK");
+    private static final TextKey COL_UNIT = TextKey.of("jsc.cli.cluster.col.unit", "U");
+    private static final TextKey COL_NODE = TextKey.of("jsc.cli.cluster.col.node", "NODE");
+    private static final TextKey COL_SYSTEM = TextKey.of("jsc.cli.cluster.col.system", "SYSTEM");
+    private static final TextKey COL_POWER = TextKey.of("jsc.cli.cluster.col.power", "POWER");
+
+    /* Where each column of the two listings begins. */
+    private static final int LIST_NAME_AT = 15;
+    private static final int LIST_STATE_AT = 38;
+    private static final int LIST_LOAD_AT = 47;
+    private static final int NODES_UNIT_AT = 5;
+    private static final int NODES_NODE_AT = 10;
+    private static final int NODES_SYSTEM_AT = 29;
+    private static final int NODES_POWER_AT = 44;
 
     private static final TextKey SUPERCOMPUTER = TextKey.of("jsc.cli.cluster.supercomputer", "supercomputer");
     private static final TextKey DATACENTER = TextKey.of("jsc.cli.cluster.datacenter", "datacenter");
@@ -179,12 +191,16 @@ public final class ClusterCommand implements ICliCommand {
             ctx.out().dim(NONE_REACHED);
             return;
         }
-        ctx.out().header(LIST_HEADER);
+        ctx.out().line(CliLine.of(CliSpan.of(COL_KIND, CliStyle.HEADER), CliSpan.pad(LIST_NAME_AT),
+                CliSpan.of(COL_NAME, CliStyle.HEADER), CliSpan.pad(LIST_STATE_AT),
+                CliSpan.of(COL_STATE, CliStyle.HEADER), CliSpan.pad(LIST_LOAD_AT),
+                CliSpan.of(COL_LOAD, CliStyle.HEADER)));
         for (final Named c : all) {
             final Text kind = c.ref().kind() == RackChassis.RackType.SUPERCOMPUTER
                     ? SUPERCOMPUTER.text() : DATACENTER.text();
-            final CliLine.Builder row = CliLine.build().plain(Text.literal(String.format(Locale.ROOT,
-                    "%-14s %-22s %-8s ", kind.english(), c.name(), c.state().english()))).plain(c.load());
+            final CliLine.Builder row = CliLine.build().add(CliLine.of(CliSpan.plain(kind),
+                    CliSpan.pad(LIST_NAME_AT), CliSpan.plain(c.name()), CliSpan.pad(LIST_STATE_AT),
+                    CliSpan.plain(c.state()), CliSpan.pad(LIST_LOAD_AT), CliSpan.plain(c.load())));
             if (!cmc.reaches(c.ref().kind())) {
                 row.plain(OUT_OF_REACH.text());
             }
@@ -195,10 +211,14 @@ public final class ClusterCommand implements ICliCommand {
     private static void nodes(final CliContext ctx, final ClusterManagementComputerBlockEntity cmc, final String name) {
         final Named c = find(cmc, name);
         if (c == null) {
-            ctx.out().error(CliTexts.SAID_BY.with(NAME,NO_CLUSTER.with(name)));
+            ctx.out().error(CliTexts.SAID_BY.with(NAME, NO_CLUSTER.with(name)));
             return;
         }
-        ctx.out().header(NODES_HEADER);
+        ctx.out().line(CliLine.of(CliSpan.of(COL_RACK, CliStyle.HEADER), CliSpan.pad(NODES_UNIT_AT),
+                CliSpan.of(COL_UNIT, CliStyle.HEADER), CliSpan.pad(NODES_NODE_AT),
+                CliSpan.of(COL_NODE, CliStyle.HEADER), CliSpan.pad(NODES_SYSTEM_AT),
+                CliSpan.of(COL_SYSTEM, CliStyle.HEADER), CliSpan.pad(NODES_POWER_AT),
+                CliSpan.of(COL_POWER, CliStyle.HEADER)));
         int rackIndex = 0;
         BlockPos lastRack = null;
         for (final ClusterManagementComputerBlockEntity.NodeRef node : cmc.nodesOf(c.ref())) {
@@ -212,23 +232,28 @@ public final class ClusterCommand implements ICliCommand {
             final IOsHost host = rack.unitHost(node.row());
             final ResourceLocation osId = host.installedOsId();
             final OsDef os = osId == null ? null : OsRegistry.getOs(osId);
-            ctx.out().line(CliLine.build().plain(Text.literal(String.format(Locale.ROOT, "R%-2d U%-4d %-18s %-14s ",
-                    rackIndex, node.row() + 1, ClusterManagementComputerBlockEntity.nodeName(rack, node.row()),
-                    os == null ? NO_SYSTEM.text().english() : os.displayName())))
-                    .plain(rack.bayPowerOn(node.row()) ? ON.text() : OFF.text()).done());
+            /* The rack and the unit are figures, the same in every language, so they keep their fixed widths. */
+            ctx.out().line(CliLine.of(
+                    CliSpan.plain(Text.literal(String.format(Locale.ROOT, "R%-2d U%-4d ", rackIndex, node.row() + 1))),
+                    CliSpan.plain(ClusterManagementComputerBlockEntity.nodeName(rack, node.row())),
+                    CliSpan.pad(NODES_SYSTEM_AT),
+                    CliSpan.plain(os == null ? NO_SYSTEM.text() : Text.literal(os.displayName())),
+                    CliSpan.pad(NODES_POWER_AT),
+                    CliSpan.plain(rack.bayPowerOn(node.row()) ? ON.text() : OFF.text())));
         }
     }
 
     private static void power(final CliContext ctx, final ClusterManagementComputerBlockEntity cmc) {
         final Named c = find(cmc, ctx.arg(1));
         if (c == null) {
-            ctx.out().error(CliTexts.SAID_BY.with(NAME,NO_CLUSTER.with(ctx.arg(1))));
+            ctx.out().error(CliTexts.SAID_BY.with(NAME, NO_CLUSTER.with(ctx.arg(1))));
             return;
         }
         final String last = ctx.arg(ctx.argCount() - 1).toLowerCase(Locale.ROOT);
         final boolean on = last.equals("on");
+        final Text switched = on ? ON.text() : OFF.text();
         if (!on && !last.equals("off")) {
-            ctx.out().error(CliTexts.USAGE.with(NAME,POWER_USAGE));
+            ctx.out().error(CliTexts.USAGE.with(NAME, POWER_USAGE));
             return;
         }
         if (ctx.argCount() >= 4) {
@@ -245,30 +270,31 @@ public final class ClusterCommand implements ICliCommand {
                         lastRack = node.rack();
                     }
                     if (index == rackIndex && node.row() == row) {
-                        final ServerRackBlockEntity rack = (ServerRackBlockEntity) cmc.getLevel().getBlockEntity(node.rack());
+                        final ServerRackBlockEntity rack =
+                                (ServerRackBlockEntity) cmc.getLevel().getBlockEntity(node.rack());
                         if (rack != null && rack.bayPowerOn(row) != on && cmc.toggleNode(node.rack(), row)) {
                             ctx.out().ok(BAY_SWITCHED.with(ClusterManagementComputerBlockEntity.nodeName(rack, row),
-                                    last));
+                                    switched));
                         } else {
-                            ctx.out().dim(ALREADY.with(last));
+                            ctx.out().dim(ALREADY.with(switched));
                         }
                         return;
                     }
                 }
-                ctx.out().error(CliTexts.SAID_BY.with(NAME,NO_NODE.with(ctx.arg(2))));
+                ctx.out().error(CliTexts.SAID_BY.with(NAME, NO_NODE.with(ctx.arg(2))));
             } catch (final RuntimeException badAddress) {
-                ctx.out().error(CliTexts.USAGE.with(NAME,POWER_NODE_USAGE));
+                ctx.out().error(CliTexts.USAGE.with(NAME, POWER_NODE_USAGE));
             }
             return;
         }
         final int changed = cmc.powerAll(c.ref(), on);
-        ctx.out().ok(changed == 1 ? BAY_SWITCHED.with(changed, last) : BAYS_SWITCHED.with(changed, last));
+        ctx.out().ok(changed == 1 ? BAY_SWITCHED.with(changed, switched) : BAYS_SWITCHED.with(changed, switched));
     }
 
     private static void install(final CliContext ctx, final ClusterManagementComputerBlockEntity cmc) {
         final Named c = find(cmc, ctx.arg(1));
         if (c == null) {
-            ctx.out().error(CliTexts.SAID_BY.with(NAME,NO_CLUSTER.with(ctx.arg(1))));
+            ctx.out().error(CliTexts.SAID_BY.with(NAME, NO_CLUSTER.with(ctx.arg(1))));
             return;
         }
         final String what = ctx.arg(2).toLowerCase(Locale.ROOT);
@@ -278,7 +304,7 @@ public final class ClusterCommand implements ICliCommand {
         } else if (what.equals("program")) {
             kind = ClusterManagementComputerBlockEntity.JobKind.PROGRAM;
         } else {
-            ctx.out().error(CliTexts.USAGE.with(NAME,INSTALL_USAGE));
+            ctx.out().error(CliTexts.USAGE.with(NAME, INSTALL_USAGE));
             return;
         }
         final String result = cmc.startJob(c.ref(), kind);
@@ -300,11 +326,6 @@ public final class ClusterCommand implements ICliCommand {
         for (final ClusterManagementComputerBlockEntity.Lane lane : job.lanes()) {
             ctx.out().line("  " + lane.name() + " ... " + (lane.permille() / 10) + "%");
         }
-    }
-
-    /** The card's reach, for the shell's own messages. */
-    static String reachWord(final ClusterManagementComputerBlockEntity cmc) {
-        return cmc.clusterCard() == null ? "none" : cmc.clusterCard().reach().name().toLowerCase(Locale.ROOT);
     }
 
 }

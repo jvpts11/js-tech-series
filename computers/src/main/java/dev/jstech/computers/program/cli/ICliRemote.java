@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 
 /**
@@ -28,16 +30,28 @@ public interface ICliRemote {
      * security module.
      */
     default ICliComputer.OpResult sshConnect(final String hostname) {
-        return ICliComputer.OpResult.fail("ssh: not supported on this computer");
+        return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with("ssh", RemoteWords.NOT_SUPPORTED));
     }
 
     /** Closes the remote shell and returns to the local one; fails when there is no session. */
     default ICliComputer.OpResult sshDisconnect() {
-        return ICliComputer.OpResult.fail("exit: not connected");
+        return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with("exit", RemoteWords.NOT_CONNECTED));
     }
 
     /** The host name of the machine this session is connected to, or {@code ""} when local. */
     default String sshSession() {
         return "";
+    }
+
+    /** What a computer that cannot open a remote shell answers. */
+    @TextHolder
+    final class RemoteWords {
+
+        static final TextKey NOT_SUPPORTED =
+                TextKey.of("jsc.cli.remote.not_supported", "not supported on this computer");
+        static final TextKey NOT_CONNECTED = TextKey.of("jsc.cli.remote.not_connected", "not connected");
+
+        private RemoteWords() {
+        }
     }
 }

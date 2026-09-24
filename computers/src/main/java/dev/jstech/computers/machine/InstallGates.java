@@ -17,6 +17,8 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.Locale;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -27,9 +29,18 @@ import org.jetbrains.annotations.Nullable;
  * machine it is, and whether its hardware and its disk have room for the program. The same gates for a package and
  * for a port; only what they say differs, and that is the caller's to word.
  */
+@TextHolder
 final class InstallGates {
 
     private final IComputerTerminalHost terminal;
+
+    private static final TextKey NEEDS_ERA = TextKey.of("jsc.service.gates.needs_era", "%s needs %s hardware or later");
+    private static final TextKey MAINFRAME_ONLY =
+            TextKey.of("jsc.service.gates.mainframe_only", "%s only installs on the Mainframe");
+    private static final TextKey SERVER_ONLY =
+            TextKey.of("jsc.service.gates.server_only", "%s only installs on a server in a rack");
+    private static final TextKey CLUSTER_ONLY =
+            TextKey.of("jsc.service.gates.cluster_only", "%s only installs on a Cluster Management Computer");
 
     InstallGates(final IComputerTerminalHost terminal) {
         this.terminal = terminal;
@@ -59,9 +70,8 @@ final class InstallGates {
             return null;
         }
         final String needed = spec.minEra().name();
-        return ICliComputer.OpResult.fail(spec.commandName() + " needs "
-                + (needed.charAt(0) + needed.substring(1).toLowerCase(Locale.ROOT))
-                + " hardware or later");
+        return ICliComputer.OpResult.fail(NEEDS_ERA.with(spec.commandName(),
+                needed.charAt(0) + needed.substring(1).toLowerCase(Locale.ROOT)));
     }
 
     /** Why a program made for another kind of machine does not install on this one, or null when it does. */
@@ -69,15 +79,14 @@ final class InstallGates {
     ICliComputer.OpResult machine(final ProgramSpec spec) {
         final BlockEntity machine = (BlockEntity) this.terminal;
         if (spec.hostScope() == HostScope.MAINFRAME && !(machine instanceof MainframeBlockEntity)) {
-            return ICliComputer.OpResult.fail(spec.commandName() + " only installs on the Mainframe");
+            return ICliComputer.OpResult.fail(MAINFRAME_ONLY.with(spec.commandName()));
         }
         if (spec.hostScope() == HostScope.SERVER && !(machine instanceof ServerRackBlockEntity)) {
-            return ICliComputer.OpResult.fail(spec.commandName() + " only installs on a server in a rack");
+            return ICliComputer.OpResult.fail(SERVER_ONLY.with(spec.commandName()));
         }
         if (spec.hostScope() == HostScope.CLUSTER_MANAGEMENT_COMPUTER
                 && !(machine instanceof ClusterManagementComputerBlockEntity)) {
-            return ICliComputer.OpResult.fail(spec.commandName()
-                    + " only installs on a Cluster Management Computer");
+            return ICliComputer.OpResult.fail(CLUSTER_ONLY.with(spec.commandName()));
         }
         return null;
     }

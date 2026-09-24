@@ -125,8 +125,9 @@ public final class InteracCommand implements ICliCommand, CliShell.IHandOver {
     private static final TextKey IN_ALL = TextKey.of("jsc.cli.interac.in_all", "in all");
     private static final TextKey NO_SERVER = TextKey.of("jsc.cli.interac.no_server", "no server holds any");
     private static final TextKey STORED_COUNT = TextKey.of("jsc.cli.interac.stored_count", "%s stored");
-    private static final TextKey MADE_FROM = TextKey.of("jsc.cli.interac.made_from", "Made from");
-    private static final TextKey USED_IN = TextKey.of("jsc.cli.interac.used_in", "Used in");
+    /* The two headings of an item's detail, which the full-screen view writes the same way beside its list. */
+    static final TextKey MADE_FROM = TextKey.of("jsc.cli.interac.made_from", "Made from");
+    static final TextKey USED_IN = TextKey.of("jsc.cli.interac.used_in", "Used in");
     private static final TextKey NO_RECIPE =
             TextKey.of("jsc.cli.interac.no_recipe", "the network knows no recipe for it");
     private static final TextKey NOTHING_IN_FLIGHT =

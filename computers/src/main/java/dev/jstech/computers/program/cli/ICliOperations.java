@@ -10,6 +10,8 @@ package dev.jstech.computers.program.cli;
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.program.iql.IqlOperation;
 import dev.jstech.computers.program.iql.IqlVerb;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 
 /**
@@ -23,17 +25,17 @@ public interface ICliOperations {
 
     /** Pull items from the network into this computer's local storage. */
     default ICliComputer.OpResult select(final String item, final long quantity) {
-        return ICliComputer.OpResult.fail("this machine cannot reach the network");
+        return ICliComputer.OpResult.fail(Refusals.UNREACHABLE);
     }
 
     /** Push items from this computer's local storage into the network. */
     default ICliComputer.OpResult insert(final String item, final long quantity) {
-        return ICliComputer.OpResult.fail("this machine cannot reach the network");
+        return ICliComputer.OpResult.fail(Refusals.UNREACHABLE);
     }
 
     /** Ask the network to craft the named item. */
     default ICliComputer.OpResult craft(final String item, final long quantity) {
-        return ICliComputer.OpResult.fail("this machine cannot reach the network");
+        return ICliComputer.OpResult.fail(Refusals.UNREACHABLE);
     }
 
     /**
@@ -66,7 +68,7 @@ public interface ICliOperations {
      * there is nowhere to put anything and this says so rather than reaching across the world.
      */
     default ICliComputer.OpResult takeToHand(final String item, final long quantity) {
-        return ICliComputer.OpResult.fail("this machine cannot reach the network");
+        return ICliComputer.OpResult.fail(Refusals.UNREACHABLE);
     }
 
     /**
@@ -75,22 +77,22 @@ public interface ICliOperations {
      * @param quantity how many of the held stack to hand over; everything held when it is not less
      */
     default ICliComputer.OpResult storeFromHand(final long quantity) {
-        return ICliComputer.OpResult.fail("this machine cannot reach the network");
+        return ICliComputer.OpResult.fail(Refusals.UNREACHABLE);
     }
 
     /** Fills the container the player is holding with a fluid or chemical the network has. */
     default ICliComputer.OpResult fillHeld(final String item) {
-        return ICliComputer.OpResult.fail("this machine cannot reach the network");
+        return ICliComputer.OpResult.fail(Refusals.UNREACHABLE);
     }
 
     /** Place a standing hold on the named item so concurrent operations WAIT on it. */
     default ICliComputer.OpResult lock(final String item, final long quantity) {
-        return ICliComputer.OpResult.fail("this machine cannot reach the network");
+        return ICliComputer.OpResult.fail(Refusals.UNREACHABLE);
     }
 
     /** Release the standing hold on the named item. */
     default ICliComputer.OpResult unlock(final String item) {
-        return ICliComputer.OpResult.fail("this machine cannot reach the network");
+        return ICliComputer.OpResult.fail(Refusals.UNREACHABLE);
     }
 
     /** The item types currently held by a manual lock, and how much each holds. */
@@ -105,7 +107,7 @@ public interface ICliOperations {
 
     /** Stops the in-flight operation with this short id (as listed by {@code ops}). */
     default ICliComputer.OpResult cancelOperation(final String id) {
-        return ICliComputer.OpResult.fail("this computer cannot cancel network operations");
+        return ICliComputer.OpResult.fail(Refusals.CANNOT_CANCEL);
     }
 
     /**
@@ -117,7 +119,7 @@ public interface ICliOperations {
      * @param priority the name of an {@code OperationPriority}
      */
     default ICliComputer.OpResult repriorityOperation(final String id, final String priority) {
-        return ICliComputer.OpResult.fail("this machine cannot reach the network");
+        return ICliComputer.OpResult.fail(Refusals.UNREACHABLE);
     }
 
     /** The network's operation statistics for the last hour, empty off a network. */
@@ -137,17 +139,17 @@ public interface ICliOperations {
      * @return a result whose message describes the outcome, or a failure when this computer is not a Mainframe
      */
     default ICliComputer.OpResult maintenance(final IqlVerb action) {
-        return ICliComputer.OpResult.fail("this machine cannot reach the network");
+        return ICliComputer.OpResult.fail(Refusals.UNREACHABLE);
     }
 
     /** Runs a parsed effecting IQL statement (SELECT/INSERT/MOVE/CRAFT/DELETE/DROP/LOCK/...) against the network. */
     default ICliComputer.OpResult execute(final IqlOperation operation) {
-        return ICliComputer.OpResult.fail("this machine cannot reach the network");
+        return ICliComputer.OpResult.fail(Refusals.UNREACHABLE);
     }
 
     /** Controls the network's IQL Engine service: {@code install}/{@code start}/{@code stop}/{@code status}. */
     default ICliComputer.OpResult engineControl(final String action) {
-        return ICliComputer.OpResult.fail("the IQL Engine can only be controlled from a networked computer");
+        return ICliComputer.OpResult.fail(Refusals.ENGINE_OFF_NETWORK);
     }
 
     /** The services the network exposes (the IQL Engine, and any future service) with their current state. */
@@ -158,5 +160,20 @@ public interface ICliOperations {
     /** Whether the network's IQL Engine is installed, which gates the Engine's own commands in the prompt. */
     default boolean iqlEngineInstalled() {
         return false;
+    }
+
+    /** What a computer that cannot reach the network answers, kept apart since an interface has no private words. */
+    @TextHolder
+    final class Refusals {
+
+        static final TextKey UNREACHABLE =
+                TextKey.of("jsc.cli.operations.unreachable", "this machine cannot reach the network");
+        static final TextKey CANNOT_CANCEL =
+                TextKey.of("jsc.cli.operations.cannot_cancel", "this computer cannot cancel network operations");
+        static final TextKey ENGINE_OFF_NETWORK = TextKey.of("jsc.cli.operations.engine_off_network",
+                "the IQL Engine can only be controlled from a networked computer");
+
+        private Refusals() {
+        }
     }
 }

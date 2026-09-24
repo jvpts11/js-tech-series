@@ -45,9 +45,14 @@ final class JobCommands {
     private static final TextKey NO_JOBS = TextKey.of("jsc.cli.job.no_jobs", "no jobs");
     private static final TextKey DOS_NO_JOBS = TextKey.of("jsc.cli.job.dos.no_jobs",
             "There are no entries in the list.");
-    /* The headings of the list; the spaces line them up over the columns of the rows below. */
-    private static final TextKey HEADER = TextKey.of("jsc.cli.job.header", "  ID  WHEN            COMMAND");
-    private static final TextKey DOS_HEADER = TextKey.of("jsc.cli.job.dos.header", "ID    WHEN            COMMAND");
+    /* The heads of the list's columns, laid out over the rows once they are in the reader's language. */
+    private static final TextKey COL_ID = TextKey.of("jsc.cli.job.col.id", "ID");
+    private static final TextKey COL_WHEN = TextKey.of("jsc.cli.job.col.when", "WHEN");
+    private static final TextKey COL_COMMAND = TextKey.of("jsc.cli.job.col.command", "COMMAND");
+
+    /** Where the list's columns start: the job's number, when it runs, and the line it runs. */
+    private static final int WHEN_AT = 6;
+    private static final int COMMAND_AT = 22;
     private static final TextKey NO_SUCH = TextKey.of("jsc.cli.job.no_such", "no such job: %s");
     private static final TextKey DOS_NO_SUCH = TextKey.of("jsc.cli.job.dos.no_such", "The job ID does not exist.");
     private static final TextKey DONE = TextKey.of("jsc.cli.job.done", "[%s] done");
@@ -90,10 +95,11 @@ final class JobCommands {
             ctx.out().ok(dosStyle
                     ? DOS_STARTED.with(job.id(), line)
                     : Text.literal("[" + job.id() + "] " + line));
+        } else if (dosStyle) {
+            ctx.out().ok(DOS_ADDED.with(job.id()));
         } else {
-            ctx.out().ok(dosStyle
-                    ? DOS_ADDED.with(job.id())
-                    : Text.literal("[" + job.id() + "] " + when.label() + "  " + line));
+            ctx.out().line(CliLine.of(new CliSpan("[" + job.id() + "] ", CliStyle.OK),
+                    new CliSpan(when.shown(), CliStyle.OK), new CliSpan("  " + line, CliStyle.OK)));
         }
     }
 
@@ -104,10 +110,13 @@ final class JobCommands {
             ctx.out().dim(dosStyle ? DOS_NO_JOBS : NO_JOBS);
             return;
         }
-        ctx.out().header(dosStyle ? DOS_HEADER : HEADER);
+        ctx.out().line(CliLine.of(new CliSpan(Text.literal(dosStyle ? "" : "  "), CliStyle.HEADER),
+                new CliSpan(COL_ID.text(), CliStyle.HEADER), CliSpan.pad(WHEN_AT),
+                new CliSpan(COL_WHEN.text(), CliStyle.HEADER), CliSpan.pad(COMMAND_AT),
+                new CliSpan(COL_COMMAND.text(), CliStyle.HEADER)));
         for (final MachineJobs.Job job : jobs) {
-            ctx.out().line(CliText.pad(String.valueOf(job.id()), 6)
-                    + CliText.pad(job.when().label(), 16) + job.line());
+            ctx.out().line(CliLine.of(CliSpan.plain(String.valueOf(job.id())), CliSpan.pad(WHEN_AT),
+                    CliSpan.plain(job.when().shown()), CliSpan.pad(COMMAND_AT), CliSpan.plain(job.line())));
         }
     }
 

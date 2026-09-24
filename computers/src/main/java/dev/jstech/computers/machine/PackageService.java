@@ -22,6 +22,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.ICliPackages;
 import dev.jstech.computers.program.cli.SigmaCommands;
@@ -29,6 +30,9 @@ import dev.jstech.computers.program.install.MirrorPackage;
 import dev.jstech.computers.program.install.voice.PackageManagerVoices;
 import dev.jstech.computers.program.tty.TtyScriptProcess;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -46,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
  * publish on it are installed by {@link CommunityPackages}. A machine that cannot reach a serving Mirror is told so
  * in the words its own package manager would use, because that is what a player reads at the prompt.
  */
+@TextHolder
 public final class PackageService {
 
     private final IComputerTerminalHost terminal;
@@ -53,6 +58,31 @@ public final class PackageService {
     private final MirrorService mirror;
     private final CommunityPackages community;
     private final InstallGates gates;
+
+    /** What every way of installing says on a machine that has nowhere to keep what it installs. */
+    static final TextKey NO_STORE =
+            TextKey.of("jsc.service.package.no_store", "this computer cannot store installed programs");
+
+    private static final TextKey NO_MANAGER = TextKey.of("jsc.service.package.no_manager",
+            "this system installs programs from install media, not a package manager");
+    private static final TextKey UP_TO_DATE =
+            TextKey.of("jsc.service.package.up_to_date", "All packages are up to date.");
+    private static final TextKey SETTING_UP_VERSION =
+            TextKey.of("jsc.service.package.setting_up_version", "Setting up %s (%s) ...");
+    private static final TextKey UPDATED_ONE = TextKey.of("jsc.service.package.updated_one", "Updated %s package.");
+    private static final TextKey UPDATED_MANY =
+            TextKey.of("jsc.service.package.updated_many", "Updated %s packages.");
+    private static final TextKey ALREADY_NEWEST =
+            TextKey.of("jsc.service.package.already_newest", "%s is already the newest version");
+    /* pkg's two lines for a package already there, kept apart so the second can be coloured as the outcome. */
+    private static final TextKey INTEGRITY_CHECKED = TextKey.of("jsc.service.package.integrity_checked",
+            "Checking integrity... done (0 conflicting)");
+    private static final TextKey NEWEST_INSTALLED = TextKey.of("jsc.service.package.newest_installed",
+            "The most recent versions of packages are already installed");
+    private static final TextKey SET_UP = TextKey.of("jsc.service.package.set_up", "Setting up %s ... done");
+    private static final TextKey NOT_SET_UP = TextKey.of("jsc.service.package.not_set_up", "%s could not be set up");
+    private static final TextKey UNMET =
+            TextKey.of("jsc.service.package.unmet", "unmet requirements (hardware or free disk space)");
 
     public PackageService(final IComputerTerminalHost terminal, final ServerLevel level, final FileService files,
                           final IqlService iql) {
@@ -187,7 +217,7 @@ public final class PackageService {
         }
         final ProgramSpec spec = this.offeredAs(wanted);
         if (spec == null) {
-            return ICliPackages.Installing.said(ICliComputer.OpResult.fail("unable to locate package " + wanted));
+            return ICliPackages.Installing.said(ICliComputer.OpResult.fail(ICliPackages.UNABLE_TO_LOCATE.with(wanted)));
         }
         final ICliComputer.OpResult stopped = this.whyNotHere(spec);
         if (stopped != null) {
@@ -216,16 +246,14 @@ public final class PackageService {
     public ICliComputer.OpResult update() {
         final PackageManagerKind manager = this.manager();
         if (manager == PackageManagerKind.NONE) {
-            return ICliComputer.OpResult.fail(
-                    "this system installs programs from install media, not a package manager");
+            return ICliComputer.OpResult.fail(NO_MANAGER);
         }
         final ComputerConsoleState console = this.terminal.console();
         if (console == null) {
-            return ICliComputer.OpResult.fail("this computer cannot store installed programs");
+            return ICliComputer.OpResult.fail(NO_STORE);
         }
         if (!this.mirror.reachable()) {
-            return ICliComputer.OpResult.fail("could not resolve mirror:// - connect this computer to a network whose"
-                    + " Mainframe runs the Mirror service");
+            return ICliComputer.OpResult.fail(MirrorService.NO_MIRROR_SERVICE);
         }
         /*
          * Each package has a version of its own, and one installed at an older one is what an update
@@ -234,18 +262,18 @@ public final class PackageService {
          */
         final List<String> outdated = console.outdatedPackages();
         if (outdated.isEmpty()) {
-            return ICliComputer.OpResult.ok("All packages are up to date.");
+            return ICliComputer.OpResult.ok(UP_TO_DATE);
         }
-        final StringBuilder lines = new StringBuilder();
+        final List<Text> lines = new ArrayList<>(outdated.size() + 1);
         for (final String id : outdated) {
             final String version = ProgramVersions.of(id);
             console.setInstalledVersion(id, version);
             final String path = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
-            lines.append("Setting up ").append(path).append(" (").append(version).append(") ...\n");
+            lines.add(SETTING_UP_VERSION.with(path, version));
         }
+        lines.add((outdated.size() == 1 ? UPDATED_ONE : UPDATED_MANY).with(outdated.size()));
         ((BlockEntity) this.terminal).setChanged();
-        return ICliComputer.OpResult.ok(lines + "Updated " + outdated.size() + " package"
-                + (outdated.size() == 1 ? "" : "s") + ".");
+        return ICliComputer.OpResult.ok(ICliPackages.lines(lines));
     }
 
     /** Takes a package off this machine, whether it is a player's or one the Mirror serves. */
@@ -265,7 +293,7 @@ public final class PackageService {
             }
         }
         if (spec == null) {
-            return ICliComputer.OpResult.fail("unable to locate package " + wanted);
+            return ICliComputer.OpResult.fail(ICliPackages.UNABLE_TO_LOCATE.with(wanted));
         }
         /*
          * Removing is the same job as installing, run backwards and quicker; a Mainframe service also
@@ -273,7 +301,7 @@ public final class PackageService {
          */
         final BlockEntity machine = (BlockEntity) this.terminal;
         if (!(machine instanceof IOsHost host)) {
-            return ICliComputer.OpResult.fail("this computer cannot store installed programs");
+            return ICliComputer.OpResult.fail(NO_STORE);
         }
         final ProgramSpec removing = spec;
         final PackageManagerKind manager = this.manager();
@@ -302,16 +330,14 @@ public final class PackageService {
     @Nullable
     private ICliComputer.OpResult beforeTheMirror(final String wanted) {
         if (this.manager() == PackageManagerKind.NONE) {
-            return ICliComputer.OpResult.fail(
-                    "this system installs programs from install media, not a package manager");
+            return ICliComputer.OpResult.fail(NO_MANAGER);
         }
         final ICliComputer.OpResult theirs = this.community.install(wanted);
         if (theirs != null) {
             return theirs;
         }
         if (!this.mirror.reachable()) {
-            return ICliComputer.OpResult.fail("could not resolve mirror:// - connect this computer to a network whose"
-                    + " Mainframe runs the Mirror service");
+            return ICliComputer.OpResult.fail(MirrorService.NO_MIRROR_SERVICE);
         }
         return null;
     }
@@ -353,9 +379,8 @@ public final class PackageService {
         if (this.has(spec)) {
             // Said the way the manager asked says it: pkg checks and finds nothing to do, the others report a version.
             return ICliComputer.OpResult.ok(this.manager() == PackageManagerKind.PKG
-                    ? "Checking integrity... done (0 conflicting)\n"
-                            + "The most recent versions of packages are already installed"
-                    : spec.commandName() + " is already the newest version");
+                    ? ICliPackages.lines(List.of(INTEGRITY_CHECKED.text(), NEWEST_INSTALLED.text()))
+                    : ALREADY_NEWEST.with(spec.commandName()));
         }
         return null;
     }
@@ -396,22 +421,21 @@ public final class PackageService {
             if (done) {
                 reportInstalled(machine, spec);
             }
-            return done ? ICliComputer.OpResult.ok("Setting up " + spec.commandName() + " ... done")
-                    : ICliComputer.OpResult.fail(spec.commandName() + " could not be set up");
+            return done ? ICliComputer.OpResult.ok(SET_UP.with(spec.commandName()))
+                    : ICliComputer.OpResult.fail(NOT_SET_UP.with(spec.commandName()));
         }
         if (machine instanceof IOsHost oc && !InstallGates.fits(oc, spec, false)) {
-            return ICliComputer.OpResult.fail(spec.commandName()
-                    + ": unmet requirements (hardware or free disk space)");
+            return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with(spec.commandName(), UNMET));
         }
         if (console == null) {
-            return ICliComputer.OpResult.fail("this computer cannot store installed programs");
+            return ICliComputer.OpResult.fail(NO_STORE);
         }
         /*
          * A package from the Mirror is fetched over the network and set up over time, the way the same
          * program from a disc is; the manager's own gates above have already said it may.
          */
         if (!(machine instanceof IOsHost host)) {
-            return ICliComputer.OpResult.fail("this computer cannot store installed programs");
+            return ICliComputer.OpResult.fail(NO_STORE);
         }
         final Optional<String> refusal = SetupRunner.begin(host, this.level, machine.getBlockPos(), spec, null,
                 false, manager);

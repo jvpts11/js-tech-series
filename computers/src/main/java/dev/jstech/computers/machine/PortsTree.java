@@ -12,6 +12,8 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.program.cli.DosPath;
 import dev.jstech.computers.program.install.MirrorPackage.Piece;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -32,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
  * been far bigger on a disk than the text in it, and bigger again on a disk of a later generation, whose blocks are
  * bigger.
  */
+@TextHolder
 final class PortsTree {
 
     /** Where the tree is kept, as a path on the system disk. */
@@ -46,6 +49,9 @@ final class PortsTree {
 
     /** How much of a program's installed size its source comes to, the usual kind of estimate. */
     private static final double SOURCE_SHARE = 0.25;
+
+    private static final TextKey DESCRIPTION =
+            TextKey.of("jsc.service.ports.description", "%s, built from its source on the machine that runs it.");
 
     /**
      * The programs the real tree has ports of, filed where it files them and under the licence it names. Anything
@@ -201,8 +207,9 @@ final class PortsTree {
                 + "SIZE (" + distfile(port) + ") = " + Math.round(sourceMb(port) * 1024 * 1024) + "\n";
     }
 
+    /** The port's description file, which is a file on the disk and so in the English the machine keeps. */
     private static String descr(final ProgramSpec port) {
-        return port.displayName() + ", built from its source on the machine that runs it.\n"
+        return DESCRIPTION.with(port.displayName()).english() + "\n"
                 + "\n"
                 + "WWW: mirror://mainframe/ports/" + origin(port) + "/\n";
     }

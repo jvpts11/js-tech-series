@@ -13,6 +13,8 @@ import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IWorldCall;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.vm.system.MemberId;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.Map;
 
 /**
@@ -22,9 +24,14 @@ import java.util.Map;
  * answers comes back as rows a program can walk, and every row it brings back adds to what the statement costs,
  * whether the rows are the answer or are held in the record that is.
  */
+@TextHolder
 final class IqlCalls {
 
     private static final String STRING = "string";
+
+    /** Why a program is stopped: it is said in English, the language a program's run keeps what stopped it in. */
+    private static final TextKey NO_MAINFRAME =
+            TextKey.of("jsc.service.iql.calls.no_mainframe", "this computer is not on a network with a Mainframe");
 
     /** The Java that answers a call with the engine on the network's Mainframe in hand. */
     @FunctionalInterface
@@ -71,7 +78,7 @@ final class IqlCalls {
         MachineCalls.bind(bindings, MachineServices::iql, "Iql", name, (iql, call, target, arguments, line) -> {
             final IqlEngine engine = iql.engine();
             if (engine == null) {
-                throw new Halt(Halt.Reason.NO_NETWORK, line, "this computer is not on a network with a Mainframe");
+                throw new Halt(Halt.Reason.NO_NETWORK, line, NO_MAINFRAME.text().english());
             }
             return function.call(iql, engine, call, arguments, line);
         }, parameters);

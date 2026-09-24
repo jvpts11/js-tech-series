@@ -12,7 +12,6 @@ import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.item.DiskItem;
@@ -45,6 +44,9 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.peripheral.IPeripheralOwner;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -62,7 +64,12 @@ import org.jetbrains.annotations.Nullable;
  * is typing. The first layer of {@link ServerCliComputer}, which the files, the network and the software are each
  * laid over in a layer of their own.
  */
+@TextHolder
 abstract class ServerCliShell implements ICliComputer {
+
+    private static final TextKey WORLD_TIME = TextKey.of("jsc.cli.machine.world_time", "Day %s, %s");
+    /* A system with no desktop says what it has instead, which is its own terminal. */
+    private static final TextKey NO_DESKTOP = TextKey.of("jsc.cli.machine.no_desktop", "none (%s)");
 
     protected final IComputerTerminalHost host;
     protected final BlockEntity hostBlock;
@@ -122,19 +129,7 @@ abstract class ServerCliShell implements ICliComputer {
 
     @Override
     public String type() {
-        if (hostBlock instanceof MainframeBlockEntity) {
-            return "Mainframe";
-        }
-        if (hostBlock instanceof CraftingComputerBlockEntity) {
-            return "Crafting Computer";
-        }
-        if (hostBlock instanceof PersonalComputerBlockEntity) {
-            return "Personal Computer";
-        }
-        if (hostBlock instanceof ClusterManagementComputerBlockEntity) {
-            return "Cluster Management Computer";
-        }
-        return "Computer";
+        return RemoteComputerService.typeOf(hostBlock).english();
     }
 
     @Override
@@ -273,7 +268,7 @@ abstract class ServerCliShell implements ICliComputer {
                 hostname(),
                 os.shell().serializedName(),
                 chrome != null ? chrome.displayName()
-                        : "none (" + KernelNames.terminal(os.platform()) + ")",
+                        : NO_DESKTOP.with(KernelNames.terminal(os.platform())).english(),
                 computer.maxCpuMhz() + " MHz",
                 (int) Math.min(Integer.MAX_VALUE, computer.ramBuffer()),
                 Math.max(0L, totalMb - freeMb),
@@ -283,7 +278,7 @@ abstract class ServerCliShell implements ICliComputer {
     }
 
     @Override
-    public String worldTime() {
+    public Text worldTime() {
         /*
          * The world's own clock, read the way the game reads it: day one is the first day, and the hours run
          * from six in the morning, which is when a day starts here.
@@ -291,7 +286,7 @@ abstract class ServerCliShell implements ICliComputer {
         final long time = level.getDayTime();
         final long day = time / 24000L + 1L;
         final long minutes = (time % 24000L) * 60L / 1000L + 6L * 60L;
-        return String.format(Locale.ROOT, "Day %d, %02d:%02d", day, minutes / 60L % 24L, minutes % 60L);
+        return WORLD_TIME.with(day, String.format(Locale.ROOT, "%02d:%02d", minutes / 60L % 24L, minutes % 60L));
     }
 
     @Override

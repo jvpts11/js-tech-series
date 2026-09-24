@@ -28,9 +28,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
  * The shell's way into the Network Gateways on this computer's ports, for players at a prompt or on a
  * system with no desktop: the same five views and the same actions as the Gateway Manager.
  *
- * <p>Its listings are tables whose columns are padded by counting characters, so a word that stands in a padded
- * column goes in in the machine's language, the one it keeps what it writes down in; everything else is the
- * reader's.
+ * <p>Its listings are tables whose columns are spaced where the line is read, once every cell is in the reader's
+ * language, so a translated word that is longer or shorter still leaves the next column in line. The log's cells
+ * are what the gateway wrote down, in the machine's language, so they keep the fixed widths they were written to.
  */
 @TextHolder
 public final class GatewayCommand implements ICliCommand {
@@ -61,13 +61,31 @@ public final class GatewayCommand implements ICliCommand {
             "CC: Tweaked is not installed: the ComputerCraft side never comes up");
     private static final TextKey DONE = TextKey.of("jsc.cli.gateway.done", "done");
 
-    /* The headings line up with the columns written under them, so a translation keeps their spacing. */
-    private static final TextKey LIST_HEADER =
-            TextKey.of("jsc.cli.gateway.list_header", "NAME             LINK   CC     WHERE");
-    private static final TextKey COMPUTERS_HEADER = TextKey.of("jsc.cli.gateway.computers_header",
-            "ID    LABEL            STATE  AGENT      LAST SEEN");
-    private static final TextKey LOG_HEADER = TextKey.of("jsc.cli.gateway.log_header",
-            "WHEN      WHO            WHAT                           RESULT");
+    private static final TextKey COL_NAME = TextKey.of("jsc.cli.gateway.col.name", "NAME");
+    private static final TextKey COL_LINK = TextKey.of("jsc.cli.gateway.col.link", "LINK");
+    private static final TextKey COL_CC = TextKey.of("jsc.cli.gateway.col.cc", "CC");
+    private static final TextKey COL_WHERE = TextKey.of("jsc.cli.gateway.col.where", "WHERE");
+    private static final TextKey COL_ID = TextKey.of("jsc.cli.gateway.col.id", "ID");
+    private static final TextKey COL_LABEL = TextKey.of("jsc.cli.gateway.col.label", "LABEL");
+    private static final TextKey COL_STATE = TextKey.of("jsc.cli.gateway.col.state", "STATE");
+    private static final TextKey COL_AGENT = TextKey.of("jsc.cli.gateway.col.agent", "AGENT");
+    private static final TextKey COL_LAST_SEEN = TextKey.of("jsc.cli.gateway.col.last_seen", "LAST SEEN");
+    private static final TextKey COL_WHEN = TextKey.of("jsc.cli.gateway.col.when", "WHEN");
+    private static final TextKey COL_WHO = TextKey.of("jsc.cli.gateway.col.who", "WHO");
+    private static final TextKey COL_WHAT = TextKey.of("jsc.cli.gateway.col.what", "WHAT");
+    private static final TextKey COL_RESULT = TextKey.of("jsc.cli.gateway.col.result", "RESULT");
+
+    /* Where each column of the three listings begins. */
+    private static final int LIST_LINK_AT = 17;
+    private static final int LIST_CC_AT = 24;
+    private static final int LIST_WHERE_AT = 31;
+    private static final int COMPUTERS_LABEL_AT = 6;
+    private static final int COMPUTERS_STATE_AT = 23;
+    private static final int COMPUTERS_AGENT_AT = 30;
+    private static final int COMPUTERS_SEEN_AT = 41;
+    private static final int LOG_WHO_AT = 10;
+    private static final int LOG_WHAT_AT = 25;
+    private static final int LOG_RESULT_AT = 56;
 
     private static final TextKey UP = TextKey.of("jsc.cli.gateway.up", "up");
     private static final TextKey DOWN = TextKey.of("jsc.cli.gateway.down", "down");
@@ -192,11 +210,15 @@ public final class GatewayCommand implements ICliCommand {
             ctx.out().dim(NONE);
             return;
         }
-        ctx.out().header(LIST_HEADER);
+        ctx.out().line(CliLine.of(CliSpan.of(COL_NAME, CliStyle.HEADER), CliSpan.pad(LIST_LINK_AT),
+                CliSpan.of(COL_LINK, CliStyle.HEADER), CliSpan.pad(LIST_CC_AT),
+                CliSpan.of(COL_CC, CliStyle.HEADER), CliSpan.pad(LIST_WHERE_AT),
+                CliSpan.of(COL_WHERE, CliStyle.HEADER)));
         for (final WireGateway g : state.gateways()) {
-            ctx.out().line(Text.literal(String.format(Locale.ROOT, "%-16s %-6s %-6s %s", g.name(),
-                    (g.linked() ? UP : DOWN).text().english(), (g.ccLinked() ? UP : DOWN).text().english(),
-                    g.where())));
+            ctx.out().line(CliLine.of(CliSpan.plain(g.name()), CliSpan.pad(LIST_LINK_AT),
+                    CliSpan.of(g.linked() ? UP : DOWN, CliStyle.PLAIN), CliSpan.pad(LIST_CC_AT),
+                    CliSpan.of(g.ccLinked() ? UP : DOWN, CliStyle.PLAIN), CliSpan.pad(LIST_WHERE_AT),
+                    CliSpan.plain(g.where())));
         }
         if (!state.head().ccInstalled()) {
             ctx.out().dim(NO_CC);
@@ -253,11 +275,17 @@ public final class GatewayCommand implements ICliCommand {
             ctx.out().dim(NO_COMPUTER.with(d.name()));
             return;
         }
-        ctx.out().header(COMPUTERS_HEADER);
+        ctx.out().line(CliLine.of(CliSpan.of(COL_ID, CliStyle.HEADER), CliSpan.pad(COMPUTERS_LABEL_AT),
+                CliSpan.of(COL_LABEL, CliStyle.HEADER), CliSpan.pad(COMPUTERS_STATE_AT),
+                CliSpan.of(COL_STATE, CliStyle.HEADER), CliSpan.pad(COMPUTERS_AGENT_AT),
+                CliSpan.of(COL_AGENT, CliStyle.HEADER), CliSpan.pad(COMPUTERS_SEEN_AT),
+                CliSpan.of(COL_LAST_SEEN, CliStyle.HEADER)));
         for (final WireComputer c : rows) {
-            ctx.out().line(Text.literal(String.format(Locale.ROOT, "%-5d %-16s %-6s %-10s %s", c.id(),
-                    c.label().isEmpty() ? NO_LABEL.text().english() : c.label(), (c.on() ? ON : OFF).text().english(),
-                    (c.agent() ? ANSWERING : NO_AGENT).text().english(), c.lastSeen())));
+            ctx.out().line(CliLine.of(CliSpan.plain(String.valueOf(c.id())), CliSpan.pad(COMPUTERS_LABEL_AT),
+                    CliSpan.plain(c.label().isEmpty() ? NO_LABEL.text() : Text.literal(c.label())),
+                    CliSpan.pad(COMPUTERS_STATE_AT), CliSpan.of(c.on() ? ON : OFF, CliStyle.PLAIN),
+                    CliSpan.pad(COMPUTERS_AGENT_AT), CliSpan.of(c.agent() ? ANSWERING : NO_AGENT, CliStyle.PLAIN),
+                    CliSpan.pad(COMPUTERS_SEEN_AT), CliSpan.plain(c.lastSeen())));
         }
     }
 
@@ -267,7 +295,10 @@ public final class GatewayCommand implements ICliCommand {
             ctx.out().dim(NOTHING_DONE.with(d.name()));
             return;
         }
-        ctx.out().header(LOG_HEADER);
+        ctx.out().line(CliLine.of(CliSpan.of(COL_WHEN, CliStyle.HEADER), CliSpan.pad(LOG_WHO_AT),
+                CliSpan.of(COL_WHO, CliStyle.HEADER), CliSpan.pad(LOG_WHAT_AT),
+                CliSpan.of(COL_WHAT, CliStyle.HEADER), CliSpan.pad(LOG_RESULT_AT),
+                CliSpan.of(COL_RESULT, CliStyle.HEADER)));
         /*
          * Oldest first here, which is the other way round from the table in the manager: a terminal is
          * read from the bottom, so the newest line belongs against the prompt, where the eye already is.
