@@ -7,6 +7,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### Added
+- Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
+  blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
+  products and makers, the commands a player types and the files on a virtual disk stay as they are.
 - Sixty-six advancements in four tabs. Hardware follows the machines, from the first self-test and the eras a
   computer can be built in up to racks, datacenters, clusters and supercomputers. Operating Systems has one
   for the first install of each system, the prompts and desktops, and challenges for installing every
