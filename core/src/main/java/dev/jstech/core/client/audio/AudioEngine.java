@@ -58,6 +58,11 @@ public final class AudioEngine {
         sink.stop(sound);
     }
 
+    /** Starts a sound the engine's own parts made, the director's running sounds, through the same sink. */
+    static void play(final SoundInstance sound) {
+        sink.play(sound);
+    }
+
     /** Sends everything to that sink instead of the game's, for a test; {@link #restoreSink()} puts the game's back. */
     public static void useSink(final IAudioSink testSink) {
         sink = testSink;

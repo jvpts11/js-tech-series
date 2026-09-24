@@ -20,24 +20,25 @@ import net.minecraft.sounds.SoundSource;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A sound as the game asked for it, played at a share of its volume: the volume the player gave its channel. It is
- * the sound in every other respect, where it comes from and what it plays included, so the game cannot tell it apart
- * from the one it asked for except by how loud it is.
+ * A sound as the game asked for it, played at the volume the player gives its channel, read each time the game asks
+ * how loud it is, so turning a channel down reaches the sounds already running. It is the sound in every other
+ * respect, where it comes from and what it plays included, so the game cannot tell it apart from the one it asked for
+ * except by how loud it is.
  */
 class ScaledSoundInstance implements SoundInstance {
 
     private final SoundInstance sound;
-    private final float share;
+    private final String channel;
 
-    ScaledSoundInstance(final SoundInstance sound, final float share) {
+    ScaledSoundInstance(final SoundInstance sound, final String channel) {
         this.sound = sound;
-        this.share = share;
+        this.channel = channel;
     }
 
-    /** The same sound at that share of its volume, still ticking when the one asked for ticks. */
-    static SoundInstance of(final SoundInstance sound, final float share) {
+    /** The same sound mixed in that channel, still ticking when the one asked for ticks. */
+    static SoundInstance of(final SoundInstance sound, final String channel) {
         return sound instanceof TickableSoundInstance ticking
-                ? new Ticking(ticking, share) : new ScaledSoundInstance(sound, share);
+                ? new Ticking(ticking, channel) : new ScaledSoundInstance(sound, channel);
     }
 
     /** The sound the game asked for. */
@@ -83,7 +84,7 @@ class ScaledSoundInstance implements SoundInstance {
 
     @Override
     public float getVolume() {
-        return sound.getVolume() * share;
+        return sound.getVolume() * AudioPrefsStore.prefs().volume(channel);
     }
 
     @Override
@@ -132,8 +133,8 @@ class ScaledSoundInstance implements SoundInstance {
 
         private final TickableSoundInstance ticking;
 
-        Ticking(final TickableSoundInstance ticking, final float share) {
-            super(ticking, share);
+        Ticking(final TickableSoundInstance ticking, final String channel) {
+            super(ticking, channel);
             this.ticking = ticking;
         }
 

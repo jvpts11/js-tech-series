@@ -8,7 +8,6 @@
 package dev.jstech.core.client.audio;
 
 import dev.jstech.core.JsCore;
-import dev.jstech.core.audio.AudioPrefs;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.audio.SoundKeys;
 import net.minecraft.client.resources.sounds.SoundInstance;
@@ -43,14 +42,13 @@ public final class AudioMixer {
     }
 
     /**
-     * The sound as it should be heard: nothing when the player turned it off, a share of its volume when it is the
-     * series' and its channel is turned down, and the sound itself otherwise.
+     * The sound as it should be heard: nothing when the player turned it off, played at its channel's volume when it
+     * is the series', and the sound itself otherwise.
      */
     @Nullable
     public static SoundInstance mix(final SoundInstance sound) {
         final ResourceLocation id = sound.getLocation();
-        final AudioPrefs prefs = AudioPrefsStore.prefs();
-        if (prefs.isMuted(id.toString())) {
+        if (AudioPrefsStore.prefs().isMuted(id.toString())) {
             return null;
         }
         lastHeard = id;
@@ -58,11 +56,7 @@ public final class AudioMixer {
             return sound;
         }
         final SoundKey key = SoundKeys.find(id);
-        if (key == null) {
-            return sound;
-        }
-        final float share = prefs.volume(key.spec().channel().id().toString());
-        return share >= 1.0F ? sound : ScaledSoundInstance.of(sound, share);
+        return key == null ? sound : ScaledSoundInstance.of(sound, key.spec().channel().id().toString());
     }
 
     /** The last sound let through, which is the one a player means when they ask to turn off what they just heard. */

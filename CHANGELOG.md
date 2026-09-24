@@ -13,6 +13,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   devices, interface, alerts, ambience, music, voice) with a volume each, and any sound of the game, not only the
   series', can be turned off in `config/jstech-audio.json`. The same sound from the same place plays once in a
   short while, however many times it is asked for. Nothing in the mods makes a sound yet.
+- The sound system keeps the world's running sounds: a machine says what it wants heard (a fan, a disk) at the
+  volume and pitch its state calls for, and the client starts, retunes, fades and stops the sounds to match. It
+  keeps to a share of the game's sound channels, the sounds that matter most and are nearest first; many machines
+  of one kind close together are heard as one room, louder the more there are; and walls between a sound and the
+  listener muffle it, which the player may turn off.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.
