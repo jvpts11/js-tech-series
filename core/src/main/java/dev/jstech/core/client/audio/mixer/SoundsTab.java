@@ -8,15 +8,14 @@
 package dev.jstech.core.client.audio.mixer;
 
 import dev.jstech.core.audio.SoundMixerTexts;
+import dev.jstech.core.client.GameLocale;
 import dev.jstech.core.client.audio.AudioMixer;
 import dev.jstech.core.client.audio.AudioPrefsStore;
 import dev.jstech.core.gui.layout.SoundMixerLayout;
 import dev.jstech.core.text.GameText;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
@@ -146,12 +145,9 @@ final class SoundsTab implements Tab {
         counted();
     }
 
-    /* Numbers grouped the way the language the player picked in the game groups them. */
     private void counted() {
-        final String language = Minecraft.getInstance().getLanguageManager().getSelected();
-        final NumberFormat numbers = NumberFormat.getIntegerInstance(Locale.forLanguageTag(language.replace('_', '-')));
         count.setMessage(GameText.component(SoundMixerTexts.TURNED_OFF_COUNT.with(
-                numbers.format(AudioPrefsStore.prefs().mutedSounds().size()), numbers.format(everything.size()))));
+                GameLocale.count(AudioPrefsStore.prefs().mutedSounds().size()), GameLocale.count(everything.size()))));
     }
 
     private void turnAllBackOn() {

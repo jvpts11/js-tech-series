@@ -28,4 +28,15 @@ public final class Occlusion {
         }
         return Math.max(FLOOR, (float) Math.pow(THROUGH_ONE_BLOCK, solidBlocks));
     }
+
+    /**
+     * How many solid blocks let that share of a sound through: the other way round from {@link #factor}, 0 for a
+     * whole sound. At the floor it is the fewest blocks that reach it, since any more let through no less.
+     */
+    public static int walls(final float share) {
+        if (share >= 1.0F) {
+            return 0;
+        }
+        return Math.max(1, (int) Math.ceil(Math.log(Math.max(FLOOR, share)) / Math.log(THROUGH_ONE_BLOCK) - 1e-4));
+    }
 }

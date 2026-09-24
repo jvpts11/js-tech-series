@@ -62,4 +62,9 @@ public final class DuckEnvelope {
     public float factor() {
         return factor;
     }
+
+    /** How many ticks the other channels take from here to come back to full, once no alert plays. */
+    public int ticksToWhole() {
+        return (int) Math.ceil((1.0F - factor) / upStep - 1e-4);
+    }
 }

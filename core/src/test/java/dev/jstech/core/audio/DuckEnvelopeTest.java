@@ -42,6 +42,18 @@ class DuckEnvelopeTest {
     }
 
     @Test
+    void ticksToWhole_countsTheWayBackUp() {
+        final DuckEnvelope duck = new DuckEnvelope(0.6F, 4, 20);
+        assertEquals(0, duck.ticksToWhole());
+        for (int i = 0; i < 4; i++) {
+            duck.tick(true);
+        }
+        assertEquals(20, duck.ticksToWhole());
+        duck.tick(false);
+        assertEquals(19, duck.ticksToWhole());
+    }
+
+    @Test
     void tick_staysWholeWithNoAlert() {
         final DuckEnvelope duck = DuckEnvelope.standard();
         for (int i = 0; i < 10; i++) {

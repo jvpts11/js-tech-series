@@ -41,6 +41,16 @@ public final class VoiceBudget {
         this.maxStreaming = maxStreaming;
     }
 
+    /** How many sounds loaded whole it keeps to. */
+    public int maxStatic() {
+        return maxStatic;
+    }
+
+    /** How many sounds read as they play it keeps to. */
+    public int maxStreaming() {
+        return maxStreaming;
+    }
+
     /** The sounds that fit, in the order they were chosen. */
     public List<Candidate> choose(final Collection<Candidate> wanted) {
         final List<Candidate> sorted = new ArrayList<>(wanted);

@@ -43,6 +43,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   once and ON/OFF to turn it off, and Turn All Back On. Its Options tab turns walls muffling sounds, alerts shown on
   screen and the lowering under alerts on and off, and opens the game's controls to pick the Turn Off Last Sound
   key.
+- Alerts on screen: a player who turns them on sees each alert as a sign at the top of the screen, saying what it
+  is and pointing to the side it comes from the way the game's subtitles do; it blinks three times as it comes up
+  and goes after four seconds.
+- The game's debug screen (F3) shows the sound system under Sound Mixer: the running sounds out of their budget,
+  the rooms many machines make, what walls muffle, how far the other channels are lowered under an alert, the last
+  sound heard and how many sounds are turned off.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.

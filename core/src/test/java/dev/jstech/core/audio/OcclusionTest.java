@@ -21,6 +21,15 @@ class OcclusionTest {
     }
 
     @Test
+    void walls_countsTheWallsBackFromTheShareThatGetsThrough() {
+        assertEquals(0, Occlusion.walls(1.0F));
+        for (int blocks = 1; blocks <= 3; blocks++) {
+            assertEquals(blocks, Occlusion.walls(Occlusion.factor(blocks)));
+        }
+        assertEquals(4, Occlusion.walls(Occlusion.factor(9)));
+    }
+
+    @Test
     void factor_fallsWithEveryWallButNeverToNothing() {
         assertEquals(0.6F, Occlusion.factor(1), 0.001F);
         assertTrue(Occlusion.factor(2) < Occlusion.factor(1));

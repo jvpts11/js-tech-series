@@ -7,6 +7,8 @@
  */
 package dev.jstech.tests.clienttest;
 
+import com.mojang.blaze3d.audio.ListenerTransform;
+import dev.jstech.core.audio.AlertSignBoard;
 import dev.jstech.core.audio.AudioChannels;
 import dev.jstech.core.audio.AudioPrefs;
 import dev.jstech.core.audio.CueSoundPayload;
@@ -21,6 +23,8 @@ import dev.jstech.core.audio.pcm.IPcmSource;
 import dev.jstech.core.audio.pcm.PcmFormat;
 import dev.jstech.core.audio.pcm.SynthSource;
 import dev.jstech.core.audio.pcm.Tone;
+import dev.jstech.core.client.audio.AlertSigns;
+import dev.jstech.core.client.audio.AudioDebugLines;
 import dev.jstech.core.client.audio.AudioEngine;
 import dev.jstech.core.client.audio.AudioKeys;
 import dev.jstech.core.client.audio.AudioMixer;
@@ -54,7 +58,8 @@ import org.jetbrains.annotations.Nullable;
  * The sound system on a client: a sound of the screen reaches the speakers through the mixer, at the volume the player
  * gave its channel, and not at all once the player turned it off; a sound of the game itself is turned off the same
  * way. The director keeps the world's running sounds within its budget and makes rooms of many. A sound made as it
- * plays opens into the samples the speakers take, and a cue plays what its file binds it to for its context.
+ * plays opens into the samples the speakers take, and a cue plays what its file binds it to for its context. An
+ * alert shows on screen to a player who asked, and the debug screen says what the sound system keeps.
  */
 public final class AudioClientTests {
 
@@ -287,6 +292,69 @@ public final class AudioClientTests {
                     prefs.setVolume(ALERTS, 1.0F);
                     AudioEngine.restoreSink();
                 });
+    }
+
+    /**
+     * An alert comes up at the top of the screen for a player who asked for alerts on screen, and only for them,
+     * saying what the alert is and pointing to the side it comes from.
+     */
+    @ClientTest(timeoutTicks = 400)
+    public static void signs_showAnAlertOnlyToWhoAskedAndPointWhereItIs(final ClientTestContext ctx) {
+        final CapturingAudioSink sink = new CapturingAudioSink();
+        final AudioPrefs prefs = AudioPrefsStore.prefs();
+        final SoundContext buzzer = SoundContext.EMPTY.with(SoundContext.DEVICE, TestSounds.BUZZER.id());
+        final ResourceLocation bass = ResourceLocation.withDefaultNamespace("block.note_block.bass");
+        ctx.then(0, () -> {
+                    ctx.mc().setScreen(null);
+                    AudioEngine.useSink(sink);
+                    prefs.setVisualCues(false);
+                    final Vec3 at = toTheRight(ctx);
+                    AudioEngine.playCue(TestSounds.ALARM, buzzer, at.x, at.y, at.z, 1.0F, 1.0F);
+                })
+                .thenAssert(0, () -> AlertSigns.showing().isEmpty(), "no sign for a player who did not ask for them")
+                .then(0, () -> {
+                    prefs.setVisualCues(true);
+                    final Vec3 at = toTheRight(ctx);
+                    AudioEngine.playCue(TestSounds.ALARM, buzzer, at.x, at.y, at.z, 1.0F, 1.0F);
+                })
+                .thenAssert(0, () -> {
+                    final List<AlertSignBoard.Sign> up = AlertSigns.showing();
+                    final Component subtitle = ctx.mc().getSoundManager().getSoundEvent(bass).getSubtitle();
+                    final ListenerTransform listener = ctx.mc().getSoundManager().getListenerTransform();
+                    final Vec3 towards = new Vec3(up.getFirst().x(), up.getFirst().y(), up.getFirst().z())
+                            .subtract(listener.position()).normalize();
+                    return up.size() == 1 && subtitle != null && up.getFirst().label().equals(subtitle.getString())
+                            && AlertSignBoard.direction(listener.forward().dot(towards),
+                            listener.right().dot(towards)) == 1;
+                }, "one sign, saying the alert's subtitle, pointing right where the alert is")
+                .thenScreenshot(30, "alert-sign")
+                .then(0, () -> {
+                    prefs.setVisualCues(false);
+                    AudioEngine.restoreSink();
+                });
+    }
+
+    /** The game's debug screen shows the sound system's lines under the Sound Mixer's name. */
+    @ClientTest(timeoutTicks = 400)
+    public static void debug_linesSayWhatTheSoundSystemKeeps(final ClientTestContext ctx) {
+        ctx.then(0, () -> {
+                    ctx.mc().setScreen(null);
+                    ctx.mc().getDebugOverlay().toggleOverlay();
+                })
+                .thenAssert(1, () -> {
+                    final List<String> lines = AudioDebugLines.lines();
+                    return lines.size() == 6 && lines.get(0).startsWith("Running: ")
+                            && lines.get(0).endsWith("/24 short, 0/2 long") && lines.get(3).startsWith("Lowered")
+                            && lines.get(5).startsWith("Turned off: ");
+                }, "six lines: running out of the budget, rooms, muffled, lowering, last heard, turned off")
+                .thenScreenshot(2, "debug")
+                .then(0, () -> ctx.mc().getDebugOverlay().toggleOverlay());
+    }
+
+    /* A point a few blocks to the listener's right. */
+    private static Vec3 toTheRight(final ClientTestContext ctx) {
+        final ListenerTransform listener = ctx.mc().getSoundManager().getListenerTransform();
+        return listener.position().add(listener.right().scale(6));
     }
 
     /* Opens the sound's stream as the game would, and reads what it would queue first: a second of samples. */

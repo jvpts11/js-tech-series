@@ -116,6 +116,18 @@ public final class AudioMixer {
         return ALERTS_CHANNEL.equals(channel) ? 1.0F : DUCK.factor();
     }
 
+    /** Whether an alert is playing now. */
+    public static boolean alerting() {
+        synchronized (ALERTS) {
+            return !ALERTS.isEmpty();
+        }
+    }
+
+    /** How many ticks the other channels take to come back to full from where they are now. */
+    public static int ticksToWhole() {
+        return DUCK.ticksToWhole();
+    }
+
     /**
      * The last sound let through that came from the world around the player, which is the one a player means when
      * they ask to turn off what they just heard: not their own footsteps, not a click of the screen in front of them.
@@ -140,12 +152,16 @@ public final class AudioMixer {
                 minecraft.options.getSoundSourceVolume(SoundSource.BLOCKS));
     }
 
-    /* An alert is kept while it plays, since the other channels stay lowered until the last one ends. */
+    /*
+     * An alert is kept while it plays, since the other channels stay lowered until the last one ends, and shown at the
+     * top of the screen to a player who asked for alerts on screen.
+     */
     private static SoundInstance watched(final ScaledSoundInstance sound) {
         if (ALERTS_CHANNEL.equals(sound.channel())) {
             synchronized (ALERTS) {
                 ALERTS.add(sound);
             }
+            AlertSigns.raise(sound);
         }
         return sound;
     }

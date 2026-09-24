@@ -13,6 +13,7 @@ import dev.jstech.core.audio.AmbientField;
 import dev.jstech.core.audio.AmbientFields;
 import dev.jstech.core.audio.IAudible;
 import dev.jstech.core.audio.LoopRequest;
+import dev.jstech.core.audio.Occlusion;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.audio.VoiceBudget;
 import java.util.ArrayList;
@@ -53,6 +54,8 @@ public final class SoundDirector {
 
     private static final Set<IAudible> SOURCES = Collections.newSetFromMap(new WeakHashMap<>());
     private static final Map<String, LoopSoundInstance> PLAYING = new HashMap<>();
+    /** The rooms made at the last look, for the debug screen. */
+    private static final List<AudioStats.Room> ROOMS = new ArrayList<>();
     private static long ticks;
 
     private SoundDirector() {
@@ -66,6 +69,28 @@ public final class SoundDirector {
     /** Stops listening to a source, whose sounds fade out; a block entity calls it when it is removed. */
     public static synchronized void untrack(final IAudible source) {
         SOURCES.remove(source);
+    }
+
+    /** What the director keeps now, for the game's debug screen: its budget, its rooms and what is muffled. */
+    public static synchronized AudioStats stats() {
+        int shorts = 0;
+        int longs = 0;
+        final List<Integer> walls = new ArrayList<>();
+        for (final LoopSoundInstance sound : PLAYING.values()) {
+            if (sound.leaving()) {
+                continue;
+            }
+            if (sound.sound().spec().stream()) {
+                longs++;
+            } else {
+                shorts++;
+            }
+            if (sound.muffled() < 1.0F) {
+                walls.add(Occlusion.walls(sound.muffled()));
+            }
+        }
+        walls.sort(null);
+        return new AudioStats(shorts, BUDGET.maxStatic(), longs, BUDGET.maxStreaming(), List.copyOf(ROOMS), walls);
     }
 
     /** The running sounds the director is keeping, by what it knows each one as, for a test to look at. */
@@ -101,11 +126,13 @@ public final class SoundDirector {
             PLAYING.values().forEach(LoopSoundInstance::leave);
             PLAYING.clear();
             SOURCES.clear();
+            ROOMS.clear();
         }
     }
 
     private static void update(final boolean lookAtWalls) {
         final Minecraft mc = Minecraft.getInstance();
+        ROOMS.clear();
         if (mc.level == null || mc.player == null) {
             PLAYING.values().forEach(LoopSoundInstance::leave);
             PLAYING.clear();
@@ -182,6 +209,7 @@ public final class SoundDirector {
         rooms.absorbed().forEach(wanted::remove);
         for (final AmbientClusters.Bed bed : rooms.beds()) {
             final SoundKey sound = fields.get(bed.field()).bed();
+            ROOMS.add(new AudioStats.Room(bed.field(), bed.members().size(), bed.volume()));
             if (!AudioPrefsStore.prefs().isMuted(sound.id().toString())) {
                 wanted.put("bed|" + bed.field() + "|" + bed.members().getFirst(),
                         new Wanted(sound, bed.x(), bed.y(), bed.z(), (float) bed.volume(), 1.0F, listener));

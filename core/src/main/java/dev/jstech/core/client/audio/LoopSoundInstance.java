@@ -60,6 +60,11 @@ final class LoopSoundInstance extends AbstractTickableSoundInstance {
         this.leaving = false;
     }
 
+    /** How much of it gets through the walls between it and the listener now. */
+    float muffled() {
+        return muffle;
+    }
+
     /** How much of it gets through the walls between it and the listener. */
     void muffle(final float share) {
         this.muffle = share;
