@@ -356,7 +356,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
          */
         if (keyboard.namesThePrompt()) {
             promptLine = keyboard.standing().toLine();
-            dosPrompt = promptLine.text();
+            dosPrompt = promptLine.text(GameText.LOADED);
         } else if (!payload.prompt().isEmpty()) {
             dosPrompt = payload.prompt();
             promptLine = null;

@@ -298,11 +298,15 @@ public final class ShellView extends Panel {
         return this;
     }
 
-    /** Everything the console has printed here, as one piece of text. */
+    /**
+     * Everything the console has printed here, as one piece of text, in the words the player reads it in. A line
+     * that came from the machine carries its sentences as keys, and their English stays with the machine, so this
+     * side can only read them in the language it has loaded.
+     */
     public String scrollbackText() {
         final StringBuilder text = new StringBuilder();
         for (final CliLine line : this.scrollback.lines()) {
-            text.append(line.text()).append('\n');
+            text.append(line.text(GameText.LOADED)).append('\n');
         }
         return text.toString();
     }
