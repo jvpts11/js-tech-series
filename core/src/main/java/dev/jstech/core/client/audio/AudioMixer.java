@@ -34,7 +34,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The one place every sound passes on its way to the speakers, the game's own included: a sound the player turned off
  * is dropped here, a sound of the series is played at the volume the player gave its channel, and while an alert
- * plays the series' other channels are lowered so it is heard over them.
+ * plays the series' other channels are lowered so it is heard over them. A preview from the Sound Mixer passes as it
+ * is, even a sound turned off.
  *
  * <p>It stands in the game's own path rather than beside the series' calls, so a sound reaches it however it was
  * started: from a machine, from the server's packet, from a command a player typed, from another mod. It also keeps
@@ -92,6 +93,9 @@ public final class AudioMixer {
      */
     @Nullable
     public static SoundInstance mix(final SoundInstance sound) {
+        if (sound instanceof PreviewSoundInstance) {
+            return sound;
+        }
         final ResourceLocation id = sound.getLocation();
         if (AudioPrefsStore.prefs().isMuted(id.toString())) {
             return null;

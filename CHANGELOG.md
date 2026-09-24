@@ -35,6 +35,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   same name. A machine with sound hardware of its own plays cues and tunes from each of its speakers, at its own
   volume, as its device allows: a PC speaker turns every note into a square wave, and a machine with no sound
   hardware stays silent.
+- The Sound Mixer, reached from Sound Mixer... beside Done in the game's Music & Sound Options. Its Channels tab has
+  a slider for each channel (machines, devices, interface, alerts, ambience, music, voice), with a tooltip saying
+  what the channel carries and which of the game's volumes it also follows, and moving one reaches the sounds
+  already playing. Its Sounds tab lists every sound the game knows, the game's own and every mod's, searchable by
+  name or id and filtered to all, recent, the series', the game's or those turned off, each with Play to hear it
+  once and ON/OFF to turn it off, and Turn All Back On. Its Options tab turns walls muffling sounds, alerts shown on
+  screen and the lowering under alerts on and off, and opens the game's controls to pick the Turn Off Last Sound
+  key.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.

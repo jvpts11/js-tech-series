@@ -21,6 +21,7 @@ public final class ClientTestSuite {
 
     private static final List<Class<?>> CLASSES = List.of(
             AudioClientTests.class,
+            SoundMixerClientTests.class,
             SigmaEditorClientTests.class,
             CdeClientTests.class,
             CraftingChainClientTests.class,

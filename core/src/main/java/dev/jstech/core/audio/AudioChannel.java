@@ -18,9 +18,10 @@ import net.minecraft.sounds.SoundSource;
  * volume of its own on top that the player sets apart from every other channel. The series declares its channels in
  * {@link AudioChannels}; an addon may declare more there, which is why this is a value and not a fixed list.
  *
- * @param id     what the channel is known by, in the player's settings and in the data that names it
- * @param source the game's sound category it plays under
- * @param name   what the channel is called where a player sets its volume
+ * @param id          what the channel is known by, in the player's settings and in the data that names it
+ * @param source      the game's sound category it plays under
+ * @param name        what the channel is called where a player sets its volume
+ * @param description what it carries, told to a player who wonders what the slider turns down
  */
-public record AudioChannel(ResourceLocation id, SoundSource source, TextKey name) {
+public record AudioChannel(ResourceLocation id, SoundSource source, TextKey name, TextKey description) {
 }

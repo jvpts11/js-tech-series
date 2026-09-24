@@ -35,16 +35,35 @@ public final class AudioChannels {
     private static final TextKey AMBIENCE_NAME = TextKey.of("jscore.audio_channel.ambience", "Ambience");
     private static final TextKey MUSIC_NAME = TextKey.of("jscore.audio_channel.music", "Music");
     private static final TextKey VOICE_NAME = TextKey.of("jscore.audio_channel.voice", "Voice");
+    private static final TextKey MACHINES_ABOUT = TextKey.of("jscore.audio_channel.machines.about",
+            "Fans, drives, pumps, presses: every machine that runs.");
+    private static final TextKey DEVICES_ABOUT = TextKey.of("jscore.audio_channel.devices.about",
+            "What you work by hand: a drive's tray, a disc going in, a server sliding into its rack.");
+    private static final TextKey INTERFACE_ABOUT = TextKey.of("jscore.audio_channel.interface.about",
+            "What a screen says back to you: its clicks and its chimes.");
+    private static final TextKey ALERTS_ABOUT = TextKey.of("jscore.audio_channel.alerts.about",
+            "Alarms and warnings, which ask to be heard over the rest.");
+    private static final TextKey AMBIENCE_ABOUT = TextKey.of("jscore.audio_channel.ambience.about",
+            "The room itself: the hum of many machines together.");
+    private static final TextKey MUSIC_ABOUT = TextKey.of("jscore.audio_channel.music.about",
+            "Music played by computers and machines.");
+    private static final TextKey VOICE_ABOUT = TextKey.of("jscore.audio_channel.voice.about",
+            "People and radios.");
 
     private static final Map<ResourceLocation, AudioChannel> CHANNELS = new LinkedHashMap<>();
 
-    public static final AudioChannel MACHINES = register(channel("machines", SoundSource.BLOCKS, MACHINES_NAME));
-    public static final AudioChannel DEVICES = register(channel("devices", SoundSource.BLOCKS, DEVICES_NAME));
-    public static final AudioChannel INTERFACE = register(channel("interface", SoundSource.MASTER, INTERFACE_NAME));
-    public static final AudioChannel ALERTS = register(channel("alerts", SoundSource.BLOCKS, ALERTS_NAME));
-    public static final AudioChannel AMBIENCE = register(channel("ambience", SoundSource.AMBIENT, AMBIENCE_NAME));
-    public static final AudioChannel MUSIC = register(channel("music", SoundSource.MUSIC, MUSIC_NAME));
-    public static final AudioChannel VOICE = register(channel("voice", SoundSource.VOICE, VOICE_NAME));
+    public static final AudioChannel MACHINES = register(channel("machines", SoundSource.BLOCKS, MACHINES_NAME,
+            MACHINES_ABOUT));
+    public static final AudioChannel DEVICES = register(channel("devices", SoundSource.BLOCKS, DEVICES_NAME,
+            DEVICES_ABOUT));
+    public static final AudioChannel INTERFACE = register(channel("interface", SoundSource.MASTER, INTERFACE_NAME,
+            INTERFACE_ABOUT));
+    public static final AudioChannel ALERTS = register(channel("alerts", SoundSource.BLOCKS, ALERTS_NAME,
+            ALERTS_ABOUT));
+    public static final AudioChannel AMBIENCE = register(channel("ambience", SoundSource.AMBIENT, AMBIENCE_NAME,
+            AMBIENCE_ABOUT));
+    public static final AudioChannel MUSIC = register(channel("music", SoundSource.MUSIC, MUSIC_NAME, MUSIC_ABOUT));
+    public static final AudioChannel VOICE = register(channel("voice", SoundSource.VOICE, VOICE_NAME, VOICE_ABOUT));
 
     private AudioChannels() {
     }
@@ -71,7 +90,8 @@ public final class AudioChannels {
         return CHANNELS.get(id);
     }
 
-    private static AudioChannel channel(final String path, final SoundSource source, final TextKey name) {
-        return new AudioChannel(ResourceLocation.fromNamespaceAndPath(JsCore.MODID, path), source, name);
+    private static AudioChannel channel(final String path, final SoundSource source, final TextKey name,
+                                        final TextKey about) {
+        return new AudioChannel(ResourceLocation.fromNamespaceAndPath(JsCore.MODID, path), source, name, about);
     }
 }

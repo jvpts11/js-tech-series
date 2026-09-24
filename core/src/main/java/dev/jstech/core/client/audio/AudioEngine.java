@@ -146,6 +146,13 @@ public final class AudioEngine {
         return sound;
     }
 
+    /** Plays a sound once from the player's own screen for them to recognise it, even one they turned off. */
+    public static SoundInstance preview(final ResourceLocation id) {
+        final SoundInstance sound = new PreviewSoundInstance(id);
+        sink.play(sound);
+        return sound;
+    }
+
     /** Stops a sound this engine started. */
     public static void stop(final SoundInstance sound) {
         sink.stop(sound);
