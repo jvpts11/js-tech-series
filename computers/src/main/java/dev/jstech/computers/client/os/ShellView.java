@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.client.term.TermPainter;
 import dev.jstech.computers.client.term.TermPalette;
@@ -29,6 +30,9 @@ import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
@@ -49,6 +53,7 @@ import org.lwjgl.glfw.GLFW;
  * and the terminal panel inside an editor are two of these and both see what the machine said. What
  * one of them types the other watches happen, which is what having a single console means.
  */
+@PaletteHolder
 public final class ShellView extends Panel {
 
     /*
@@ -58,7 +63,12 @@ public final class ShellView extends Panel {
     private static final int LINE_H = 2 * TermPainter.CELL;
     private static final int PAD = 3;
     private static final int MAX_SCROLLBACK = 256;
-    private static final int TAG_COLOR = 0xFF5A6678;
+    /**
+     * The console's own colours, {@code jsc:desktop/shell_view}: the scrolled tag, and the ground under the text on
+     * each system's desktop.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/shell_view",
+            new Colours(0xFF5A6678, 0xFF000000, 0xFF0A1A30, 0xFF1E1F23, 0xFF0C1420, 0xFF1A141E, 0xFF16202A));
     /** The command that opens a program's window from the prompt, a word of the prompt and not of any language. */
     private static final String RUN = "run";
 
@@ -185,7 +195,7 @@ public final class ShellView extends Panel {
         this.output = add(new ListView<TermRow>(this.scrollback::rows, LINE_H, this::renderLine));
         this.scrolledTag = add(new Label(() -> this.scrollOffset > 0
                 ? GameText.resolve(ShellViewTexts.SCROLLED.with(this.scrollOffset)) : "")
-                .setColor(TAG_COLOR).setAlign(Label.Align.RIGHT));
+                .setColor(PALETTE.get().tag()).setAlign(Label.Align.RIGHT));
         /*
          * No prompt is drawn while a program is running, because on a real terminal there is none: the
          * program has the screen until it returns.
@@ -424,18 +434,19 @@ public final class ShellView extends Panel {
 
     /** The console ground, kept dark like a real terminal, tinted to the system it runs on. */
     public static int groundOf(final OsSkin skin) {
+        final Colours c = PALETTE.get();
         return switch (skin.form()) {
-            case BEVEL -> 0xFF000000;
-            case LUNA -> 0xFF0A1A30;
-            case FLAT -> 0xFF1E1F23;
+            case BEVEL -> c.bevelGround();
+            case LUNA -> c.lunaGround();
+            case FLAT -> c.flatGround();
             /*
              * The period Unix terminals were not pure black: xterm-era consoles carried a slight cast
              * from the desktop they ran on.
              */
-            case KDE2 -> 0xFF0C1420;
-            case GNOME1 -> 0xFF1A141E;
+            case KDE2 -> c.kdeGround();
+            case GNOME1 -> c.gnomeGround();
             // A slate with the cast of CDE's own backdrop, for a panel inside another program.
-            case MOTIF -> 0xFF16202A;
+            case MOTIF -> c.motifGround();
         };
     }
 
@@ -635,5 +646,10 @@ public final class ShellView extends Panel {
             return computer.displayEra();
         }
         return HardwareEra.STANDARD;
+    }
+
+    /** The scrolled tag, and the console's ground on the grey, blue, flat, KDE, GNOME and CDE desktops. */
+    private record Colours(int tag, int bevelGround, int lunaGround, int flatGround, int kdeGround, int gnomeGround,
+                           int motifGround) {
     }
 }

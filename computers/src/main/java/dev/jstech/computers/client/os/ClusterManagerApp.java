@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.datacenter.LoadBalanceMode;
 import dev.jstech.computers.operation.payload.ClusterManagerActionPayload;
 import dev.jstech.computers.operation.payload.ClusterManagerStatePayload;
@@ -33,6 +34,9 @@ import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -58,6 +62,7 @@ import java.util.Locale;
  * are components laid out every frame from the window's size; the job panel's lane overlay and the
  * warning bands are drawn by hand around them.
  */
+@PaletteHolder
 public final class ClusterManagerApp implements IDesktopApp {
 
     private static final String[] LADDER = {"x8", "x16", "x32", "x64", "x128", "x256"};
@@ -77,11 +82,12 @@ public final class ClusterManagerApp implements IDesktopApp {
     private static final int SWITCH_W = 18;
     private static final int RENAME_W = 44;
     private static final int REFRESH_TICKS = 40;
-    private static final int GREEN = 0xFF2A9D4A;
-    private static final int AMBER = 0xFFB5781A;
-    private static final int RED = 0xFFC0392B;
-    private static final int WARN_BG = 0xFFFCE3A1;
-    private static final int WARN_TEXT = 0xFF6B4E00;
+    /**
+     * The manager's own colours, {@code jsc:app/cluster_manager}: what is fine, what is busy, what is wrong, and the
+     * band and ink of a warning.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/cluster_manager",
+            new Colours(0xFF2A9D4A, 0xFFB5781A, 0xFFC0392B, 0xFFFCE3A1, 0xFF6B4E00));
 
     private static ClusterManagerApp active;
 
@@ -191,7 +197,8 @@ public final class ClusterManagerApp implements IDesktopApp {
         tabs = root.add(new TabStrip(words(ClusterManagerTexts.SUPERCOMPUTERS_TAB, ClusterManagerTexts.DATACENTERS_TAB,
                 ClusterManagerTexts.AI_TAB)).fitToLabels(14).setOnSelect(this::selectTab));
         loadingLabel = root.add(new Label(GameText.resolve(ClusterManagerTexts.REACHING), Label.Tone.DIM));
-        warnLabel = root.add(new Label(GameText.resolve(ClusterManagerTexts.CARD_REQUIRED)).setColor(WARN_TEXT));
+        warnLabel = root.add(new Label(GameText.resolve(ClusterManagerTexts.CARD_REQUIRED))
+                .setColor(PALETTE.get().warnInk()));
         listHeader = root.add(new Label(this::listHeaderText, Label.Tone.DIM));
         emptyListLabel = root.add(new Label(() -> GameText.resolve(
                 tab == 2 ? ClusterManagerTexts.NONE_YET : ClusterManagerTexts.NONE_ON_NETWORK), Label.Tone.DIM));
@@ -202,11 +209,11 @@ public final class ClusterManagerApp implements IDesktopApp {
         nameLabel = root.add(new Label(() -> detail() == null ? "" : detail().name()));
         pillLabel = root.add(new Label(() -> GameText.resolve(detail() != null && detail().online()
                         ? ClusterManagerTexts.ONLINE : ClusterManagerTexts.OFFLINE))
-                .setColor(() -> detail() != null && detail().online() ? GREEN : RED)
+                .setColor(() -> detail() != null && detail().online() ? PALETTE.get().good() : PALETTE.get().bad())
                 .setAlign(Label.Align.RIGHT));
         renameButton = root.add(new Button(GameText.resolve(ClusterManagerTexts.RENAME), this::openRename));
         subLabel = root.add(new Label(() -> detail() == null ? "" : GameText.resolve(detail().sub()), Label.Tone.DIM));
-        jobLabel = root.add(new Label(this::jobText).setColor(WARN_TEXT));
+        jobLabel = root.add(new Label(this::jobText).setColor(PALETTE.get().warnInk()));
         jobBar = root.add(new ProgressBar(this::jobPercent));
         scSubTabs = root.add(new TabStrip(words(ClusterManagerTexts.NODES_TAB, ClusterManagerTexts.MAP_TAB,
                 ClusterManagerTexts.QUEUE_TAB)).fitToLabels(10).setOnSelect(this::selectSubTab));
@@ -223,7 +230,7 @@ public final class ClusterManagerApp implements IDesktopApp {
         mapColumns = root.add(new ColumnHeader(words(ClusterManagerTexts.SLOT_COLUMN, ClusterManagerTexts.CRAFTS_COLUMN,
                 ClusterManagerTexts.NODE_COLUMN, ClusterManagerTexts.STATE_COLUMN)).setSortable(false));
         slotList = root.add(new ListView<Integer>(() -> List.of(0, 1, 2, 3, 4, 5), ROW_H, this::renderSlotRow));
-        pastLabel = root.add(new Label(this::pastText).setColor(AMBER));
+        pastLabel = root.add(new Label(this::pastText).setColor(PALETTE.get().busy()));
         queueColumns = root.add(new ColumnHeader(words(ClusterManagerTexts.OPERATION_COLUMN,
                 ClusterManagerTexts.BY_COLUMN, ClusterManagerTexts.SLOTS_COLUMN)).setSortable(false));
         queueList = root.add(new ListView<WireCraft>(this::queue, ROW_H, this::renderQueueRow));
@@ -609,13 +616,14 @@ public final class ClusterManagerApp implements IDesktopApp {
         final int top = y + TAB_H;
         if (state != null) {
             if (!state.head().hasCard()) {
-                g.fill(x + 1, top, x + width - 1, top + ROW_H + 2, WARN_BG);
+                g.fill(x + 1, top, x + width - 1, top + ROW_H + 2, PALETTE.get().warnBand());
             }
             // The cluster list's header band and its right edge.
             g.fill(x + LIST_W - 1, top, x + LIST_W, y + height, skin.edge());
             g.fill(x, top, x + LIST_W - 1, top + ROW_H, skin.panelBg());
             if (jobLabel.visible()) {
-                g.fill(jobLabel.x() - PAD, jobLabel.y() - 2, jobLabel.right() + PAD, jobBar.bottom() + 2, WARN_BG);
+                g.fill(jobLabel.x() - PAD, jobLabel.y() - 2, jobLabel.right() + PAD, jobBar.bottom() + 2,
+                        PALETTE.get().warnBand());
             }
         }
         root.render(g, ctx);
@@ -626,7 +634,7 @@ public final class ClusterManagerApp implements IDesktopApp {
             final int laneW = jobBar.width() / Math.max(1, job.total());
             int lx = jobBar.x() + done;
             for (final WireLane lane : job.lanes()) {
-                g.fill(lx, jobBar.y(), lx + laneW * lane.permille() / 1000, jobBar.bottom(), AMBER);
+                g.fill(lx, jobBar.y(), lx + laneW * lane.permille() / 1000, jobBar.bottom(), PALETTE.get().busy());
                 lx += laneW;
             }
         }
@@ -779,7 +787,8 @@ public final class ClusterManagerApp implements IDesktopApp {
         if (sel) {
             g.fill(x, y, x + 2, y + h, ctx.skin().accent());
         }
-        g.fill(x + 5, y + 3, x + 8, y + 6, c.reachable() ? (c.online() ? GREEN : RED) : ctx.skin().dim());
+        g.fill(x + 5, y + 3, x + 8, y + 6, c.reachable()
+                ? (c.online() ? PALETTE.get().good() : PALETTE.get().bad()) : ctx.skin().dim());
         g.drawString(ctx.font(), Texts.clip(ctx.font(), c.name(), w - 16), x + 11, y + 1, ctx.skin().text(), false);
         g.drawString(ctx.font(), Texts.clip(ctx.font(), GameText.resolve(c.sub()), w - 8), x + 5, y + ROW_H + 1,
                 ctx.skin().dim(), false);
@@ -812,7 +821,8 @@ public final class ClusterManagerApp implements IDesktopApp {
         // The bay switch at the row's right edge.
         final int sx = x + w - PAD - SWITCH_W + 2;
         g.fill(sx, ty, sx + 14, ty + 8, ctx.skin().fieldBg());
-        g.fill(sx + (n.bayOn() ? 8 : 1), ty + 1, sx + (n.bayOn() ? 13 : 6), ty + 7, n.bayOn() ? GREEN : ctx.skin().dim());
+        g.fill(sx + (n.bayOn() ? 8 : 1), ty + 1, sx + (n.bayOn() ? 13 : 6), ty + 7,
+                n.bayOn() ? PALETTE.get().good() : ctx.skin().dim());
     }
 
     /** The one word for what a machine is doing, matching the state the server sent. */
@@ -831,11 +841,11 @@ public final class ClusterManagerApp implements IDesktopApp {
 
     private static int stateColor(final int state, final UiContext ctx) {
         return switch (state) {
-            case ClusterManagerStatePayload.STATE_ONLINE -> GREEN;
-            case ClusterManagerStatePayload.STATE_INCOMPLETE -> RED;
+            case ClusterManagerStatePayload.STATE_ONLINE -> PALETTE.get().good();
+            case ClusterManagerStatePayload.STATE_INCOMPLETE -> PALETTE.get().bad();
             case ClusterManagerStatePayload.STATE_INSTALLING -> ctx.skin().accent();
             case ClusterManagerStatePayload.STATE_BAY_OFF, ClusterManagerStatePayload.STATE_UNSLOTTED -> ctx.skin().dim();
-            default -> AMBER;
+            default -> PALETTE.get().busy();
         };
     }
 
@@ -862,7 +872,8 @@ public final class ClusterManagerApp implements IDesktopApp {
         final String st = GameText.resolve(node.code() >= 16 ? ClusterManagerTexts.ONLINE
                 : node.code() == 3 ? ClusterManagerTexts.BAY_OFF : node.code() == 2 ? ClusterManagerTexts.RATING_LOW
                 : node.code() == 1 ? ClusterManagerTexts.NO_PHI_CARD : ClusterManagerTexts.SLOT_NO_NODE);
-        g.drawString(font, st, mapColumns.columnX(3), ty, node.code() >= 16 ? GREEN : AMBER, false);
+        g.drawString(font, st, mapColumns.columnX(3), ty,
+                node.code() >= 16 ? PALETTE.get().good() : PALETTE.get().busy(), false);
     }
 
     private void renderQueueRow(final GuiGraphics g, final UiContext ctx, final WireCraft c, final int index, final int x,
@@ -877,7 +888,7 @@ public final class ClusterManagerApp implements IDesktopApp {
                 c0, ty, col, false);
         g.drawString(font, Texts.clip(font, c.requester(), c2 - c1 - GAP), c1, ty, ctx.skin().dim(), false);
         g.drawString(font, c.waiting() ? GameText.resolve(ClusterManagerTexts.WAITING) : String.valueOf(c.slots()),
-                c2, ty, c.waiting() ? AMBER : ctx.skin().accent(), false);
+                c2, ty, c.waiting() ? PALETTE.get().busy() : ctx.skin().accent(), false);
     }
 
     private void renderInventoryCell(final GuiGraphics g, final UiContext ctx, final int index, final int cx, final int cy,
@@ -1044,5 +1055,9 @@ public final class ClusterManagerApp implements IDesktopApp {
             return String.format(Locale.ROOT, "%.1fk", n / 1000.0);
         }
         return String.valueOf(n);
+    }
+
+    /** The manager's colours, as the palette above names them. */
+    private record Colours(int good, int busy, int bad, int warnBand, int warnInk) {
     }
 }

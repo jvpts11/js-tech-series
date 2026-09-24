@@ -1,0 +1,7 @@
+{
+  "bad": "#FFC0392B",
+  "busy": "#FFB5781A",
+  "good": "#FF2A9D4A",
+  "otherEdge": "#FFE0563A",
+  "ownEdge": "#FF316AC5"
+}

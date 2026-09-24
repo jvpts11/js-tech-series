@@ -1,0 +1,9 @@
+{
+  "failed": "#FFCC2222",
+  "job": "#FFF0A64E",
+  "procedure": "#FFE08A8A",
+  "runHint": "#FFE0ECF8",
+  "statusBad": "#FFFFD2D2",
+  "statusOk": "#FFFFFFFF",
+  "view": "#FFA371F7"
+}

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gateway.GatewayLog;
 import dev.jstech.computers.gateway.GatewayName;
 import dev.jstech.computers.operation.payload.GatewayManagerActionPayload;
@@ -29,6 +30,9 @@ import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -51,6 +55,7 @@ import org.lwjgl.glfw.GLFW;
  * CC computers it knows. Log: the last forty things it did. Every click is an action the server answers
  * with a fresh state; nothing here decides anything on its own.
  */
+@PaletteHolder
 public final class GatewayManagerApp implements IDesktopApp {
 
     public static final String TITLE = "Gateway Manager";
@@ -83,11 +88,12 @@ public final class GatewayManagerApp implements IDesktopApp {
     private static final int POPUP_W = 220;
     private static final int POPUP_H = 62;
     private static final int REFRESH_TICKS = 40;
-    private static final int GREEN = 0xFF2A9D4A;
-    private static final int AMBER = 0xFFB5781A;
-    private static final int RED = 0xFFC0392B;
-    private static final int JSC_EDGE = 0xFF316AC5;
-    private static final int CC_EDGE = 0xFFE0563A;
+    /**
+     * The manager's own colours, {@code jsc:app/gateway_manager}: what is fine, what is busy, what is wrong, and the
+     * edges that tell this mod's side of a bridge from the other side's.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/gateway_manager",
+            new Colours(0xFF2A9D4A, 0xFFB5781A, 0xFFC0392B, 0xFF316AC5, 0xFFE0563A));
 
     private static GatewayManagerApp active;
 
@@ -211,7 +217,8 @@ public final class GatewayManagerApp implements IDesktopApp {
                 .setScale(CARD_SCALE));
         jsLines[2] = root.add(new Label(() -> detail() == null ? "" : GameText.resolve(detail().mainframeOnline()
                 ? GatewayManagerTexts.MAINFRAME_ONLINE : GatewayManagerTexts.MAINFRAME_OFFLINE))
-                .setColor(() -> detail() != null && detail().mainframeOnline() ? skin.text() : AMBER).setScale(CARD_SCALE));
+                .setColor(() -> detail() != null && detail().mainframeOnline() ? skin.text() : PALETTE.get().busy())
+                .setScale(CARD_SCALE));
         jsLines[3] = root.add(new Label(() -> detail() == null ? ""
                 : GameText.resolve(GatewayManagerTexts.BUDGET.with(detail().budgetPermille() / 10)), Label.Tone.DIM)
                 .setScale(CARD_SCALE));
@@ -521,13 +528,15 @@ public final class GatewayManagerApp implements IDesktopApp {
             // The two cards: a panel each, with the side's colour along the top edge.
             final int dx = x + RAIL_W + PAD;
             skin.panel(g, dx, cardY, cardW, CARD_H);
-            g.fill(dx, cardY, dx + cardW, cardY + 2, JSC_EDGE);
+            g.fill(dx, cardY, dx + cardW, cardY + 2, PALETTE.get().ownEdge());
             skin.panel(g, dx + cardW + PAD, cardY, cardW, CARD_H);
-            g.fill(dx + cardW + PAD, cardY, dx + cardW * 2 + PAD, cardY + 2, CC_EDGE);
+            g.fill(dx + cardW + PAD, cardY, dx + cardW * 2 + PAD, cardY + 2, PALETTE.get().otherEdge());
             final int lit = jsBig.y() + 2;
-            g.fill(dx + PAD, lit, dx + PAD + 4, lit + 4, detail().linked() ? GREEN : RED);
+            g.fill(dx + PAD, lit, dx + PAD + 4, lit + 4,
+                    detail().linked() ? PALETTE.get().good() : PALETTE.get().bad());
             g.fill(dx + cardW + PAD * 2, lit, dx + cardW + PAD * 2 + 4, lit + 4,
-                    !ccInstalled() ? RED : detail().ccOnline() ? GREEN : AMBER);
+                    !ccInstalled() ? PALETTE.get().bad()
+                            : detail().ccOnline() ? PALETTE.get().good() : PALETTE.get().busy());
         }
         root.render(g, ctx);
         renderStatusBar(g, font, x, bodyBottom, width);
@@ -546,7 +555,8 @@ public final class GatewayManagerApp implements IDesktopApp {
         final String selection = GameText.resolve(detail() == null ? GatewayManagerTexts.NOTHING_SELECTED.text()
                 : GatewayManagerTexts.SELECTED.with(detail().name()));
         final int ty = y + 2;
-        g.fill(x + PAD, ty + 1, x + PAD + 4, ty + 5, state.head().ccReachable() > 0 ? GREEN : skin.dim());
+        g.fill(x + PAD, ty + 1, x + PAD + 4, ty + 5,
+                state.head().ccReachable() > 0 ? PALETTE.get().good() : skin.dim());
         Texts.scaled(g, font, fleet, x + PAD + 7, ty, CARD_SCALE, skin.text());
         final int loadX = x + PAD + 7 + Texts.smallWidth(font, fleet) + GAP * 2;
         Texts.scaled(g, font, load, loadX, ty, CARD_SCALE, skin.dim());
@@ -743,8 +753,8 @@ public final class GatewayManagerApp implements IDesktopApp {
             g.fill(x, y, x + 2, y + h, ctx.skin().accent());
         }
         final Font font = ctx.font();
-        g.fill(x + w - 14, y + 3, x + w - 10, y + 7, gw.linked() ? GREEN : RED);
-        g.fill(x + w - 8, y + 3, x + w - 4, y + 7, gw.ccLinked() ? GREEN : ctx.skin().dim());
+        g.fill(x + w - 14, y + 3, x + w - 10, y + 7, gw.linked() ? PALETTE.get().good() : PALETTE.get().bad());
+        g.fill(x + w - 8, y + 3, x + w - 4, y + 7, gw.ccLinked() ? PALETTE.get().good() : ctx.skin().dim());
         g.drawString(font, Texts.clip(font, gw.name(), w - 22), x + PAD, y + 2, ctx.skin().text(), false);
         // Where it stands on one line, how it is linked on the next.
         final String place = GameText.resolve(gw.place());
@@ -797,9 +807,9 @@ public final class GatewayManagerApp implements IDesktopApp {
 
     private static int toneColor(final int tone, final UiContext ctx) {
         return switch (GatewayLog.Tone.byId(tone)) {
-            case OK -> GREEN;
-            case BUSY -> AMBER;
-            case DENIED -> RED;
+            case OK -> PALETTE.get().good();
+            case BUSY -> PALETTE.get().busy();
+            case DENIED -> PALETTE.get().bad();
         };
     }
 
@@ -815,11 +825,11 @@ public final class GatewayManagerApp implements IDesktopApp {
                 computerColumns.columnX(2) - computerColumns.columnX(1) - GAP), computerColumns.columnX(1), ty,
                 c.label().isEmpty() ? ctx.skin().dim() : ctx.skin().text(), false);
         final int sx = computerColumns.columnX(2);
-        g.fill(sx, ty + 2, sx + 4, ty + 6, c.on() ? GREEN : RED);
+        g.fill(sx, ty + 2, sx + 4, ty + 6, c.on() ? PALETTE.get().good() : PALETTE.get().bad());
         g.drawString(font, GameText.resolve(c.on() ? GatewayManagerTexts.ON : GatewayManagerTexts.OFF), sx + 6, ty,
                 ctx.skin().text(), false);
         g.drawString(font, GameText.resolve(c.agent() ? GatewayManagerTexts.ANSWERING : GatewayManagerTexts.NONE),
-                computerColumns.columnX(3), ty, c.agent() ? GREEN : ctx.skin().dim(), false);
+                computerColumns.columnX(3), ty, c.agent() ? PALETTE.get().good() : ctx.skin().dim(), false);
         g.drawString(font, GameText.resolve(c.lastSeen()), computerColumns.columnX(4), ty, ctx.skin().dim(), false);
     }
 
@@ -1007,5 +1017,9 @@ public final class GatewayManagerApp implements IDesktopApp {
 
     public int[] testEventCenter() {
         return testEvent.center();
+    }
+
+    /** The manager's colours, as the palette above names them. */
+    private record Colours(int good, int busy, int bad, int ownEdge, int otherEdge) {
     }
 }

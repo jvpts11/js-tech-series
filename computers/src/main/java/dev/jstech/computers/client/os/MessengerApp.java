@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.MessengerActionPayload;
 import dev.jstech.computers.operation.payload.MessengerStatePayload;
 import dev.jstech.computers.program.MessengerLog;
@@ -14,6 +15,9 @@ import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -38,6 +42,7 @@ import java.util.Locale;
  * service really grows on the disk as it keeps what people said and in memory as more of them connect, so
  * a busy chat on a small machine is something the player can watch getting expensive.
  */
+@PaletteHolder
 public final class MessengerApp implements IDesktopApp {
 
     private static final int TOOLBAR_H = 14;
@@ -46,12 +51,12 @@ public final class MessengerApp implements IDesktopApp {
     private static final int COMPOSE_H = 28;
     private static final int STATUS_H = 11;
     private static final int MARGIN = 3;
-    private static final int ONLINE = 0xFF4FA05C;
-    private static final int OFFLINE = 0xFF9A9A9A;
-    private static final int MINE_INK = 0xFFB4231F;
-    private static final int THEIRS_INK = 0xFF1C4FA8;
-    private static final int NUDGE_BG = 0xFFFFF0CC;
-    private static final int NUDGE_INK = 0xFF8A4B00;
+    /**
+     * The Messenger's own colours, {@code jsc:app/messenger}: a contact online and away, the names on my lines and
+     * on theirs, and a nudge's band and words.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/messenger",
+            new Colours(0xFF4FA05C, 0xFF9A9A9A, 0xFFB4231F, 0xFF1C4FA8, 0xFFFFF0CC, 0xFF8A4B00));
     /** How often the window asks again, so a conversation somebody else is having still arrives. */
     private static final long POLL_MS = 2000L;
 
@@ -221,7 +226,7 @@ public final class MessengerApp implements IDesktopApp {
         g.fill(x + ROSTER_W, y, x + ROSTER_W + 1, bottom, skin.edge());
         final boolean serving = state.service().online();
         g.drawString(font, GameText.resolve(serving ? SocialTexts.ON_THE_NETWORK : SocialTexts.NO_SERVICE_HEADING),
-                x + MARGIN, y + 2, serving ? skin.text() : MINE_INK, false);
+                x + MARGIN, y + 2, serving ? skin.text() : PALETTE.get().mine(), false);
         this.rosterLeft = x;
         this.rosterTop = y + TOOLBAR_H;
         this.rosterBottom = bottom;
@@ -238,7 +243,8 @@ public final class MessengerApp implements IDesktopApp {
             }
             final boolean online = !lobby && isOnline(name);
             if (!lobby) {
-                g.fill(x + MARGIN, ry + 3, x + MARGIN + 4, ry + 7, online ? ONLINE : OFFLINE);
+                g.fill(x + MARGIN, ry + 3, x + MARGIN + 4, ry + 7,
+                        online ? PALETTE.get().online() : PALETTE.get().offline());
             }
             final int ink = on ? skin.listRowText(true) : (lobby || online ? skin.text() : skin.dim());
             g.drawString(font, font.plainSubstrByWidth(lobby ? GameText.resolve(SocialTexts.EVERYBODY) : name,
@@ -299,13 +305,14 @@ public final class MessengerApp implements IDesktopApp {
         for (int i = start; i < lines.size() && ry + ROW_H <= bottom; i++) {
             final MessengerStatePayload.Line line = lines.get(i);
             if (line.nudge()) {
-                g.fill(x + MARGIN, ry, right - MARGIN, ry + ROW_H - 1, NUDGE_BG);
+                g.fill(x + MARGIN, ry, right - MARGIN, ry + ROW_H - 1, PALETTE.get().nudge());
                 final String text = GameText.resolve(SocialTexts.SENT_A_NUDGE.with(line.from()));
-                g.drawString(font, text, x + (right - x - font.width(text)) / 2, ry + 1, NUDGE_INK, false);
+                g.drawString(font, text, x + (right - x - font.width(text)) / 2, ry + 1, PALETTE.get().nudgeInk(),
+                        false);
             } else {
                 final String who = line.from() + ":";
                 g.drawString(font, who, x + MARGIN, ry + 1,
-                        line.online() ? THEIRS_INK : OFFLINE, false);
+                        line.online() ? PALETTE.get().theirs() : PALETTE.get().offline(), false);
                 g.drawString(font,
                         font.plainSubstrByWidth(line.text(), right - x - MARGIN * 2 - font.width(who) - 3),
                         x + MARGIN + font.width(who) + 3, ry + 1, skin.text(), false);
@@ -422,5 +429,9 @@ public final class MessengerApp implements IDesktopApp {
     /** The rooms this window is offering, for a test to read. */
     public List<String> rooms() {
         return new ArrayList<>(state.rooms());
+    }
+
+    /** The Messenger's colours, as the palette above names them. */
+    private record Colours(int online, int offline, int mine, int theirs, int nudge, int nudgeInk) {
     }
 }

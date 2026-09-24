@@ -172,6 +172,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   Snake, Solitaire and its cards), the desktop's icons and questions, a system's boot log, the Crafting Switch and
   the Industrial machines' screens draw their colours from palettes a resource pack can recolour (`jsc:app/*`,
   `jsc:game/*`, `jsc:desktop/*`, `jsc:boot/system`, `jsc:screen/crafting_switch`, `jsindustrial:machine/screen`).
+- The NMS, Setup, Messenger, Files, Knot, Storage Insights, the Gateway, Cluster, Automation and Craft Planner
+  managers, the Frames Recycle Bin's task pane, the code editors and their highlighting, the shell view's tags and the Operation
+  types' colours are palettes a resource pack can recolour (`jsc:app/*`, `jsc:editor/*`, `jsc:desktop/shell_view`,
+  `jsc:operation/types`).
 
 ### Fixed
 - Saving an IQL file from the Network Management Studio to a full disk no longer fails to send its answer: the

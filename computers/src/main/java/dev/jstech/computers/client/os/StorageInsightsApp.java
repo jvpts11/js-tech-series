@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.ItemDetailPayload;
 import dev.jstech.computers.operation.payload.ItemDetailPayload.BusRef;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
@@ -25,6 +26,9 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.SearchField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -66,11 +70,16 @@ import static dev.jstech.computers.client.os.StorageInsightsTexts.USED_TO_MAKE;
  * and how full each server is. Clicking a type opens a detail view: where it is stored, what it makes, and
  * which buses filter it. Data is computed server-side; the dashboard re-requests on a slow cadence.
  */
+@PaletteHolder
 public final class StorageInsightsApp implements IDesktopApp {
 
     private static final int REFRESH_FRAMES = 60;
-    private static final int C_CRIT = 0xFFD1495B;
-    private static final int C_PIN = 0xFFE0A020;
+    /**
+     * The window's own colours, {@code jsc:app/storage_insights}: what is critically low, a pinned entry, the wash
+     * behind a low entry's row, and the swatches that stand for a fluid and for a chemical.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/storage_insights",
+            new Colours(0xFFD1495B, 0xFFE0A020, 0x18D1495B, 0xFF3A78C8, 0xFF9A6BC9));
     private static final int TOP_ROW_H = 15;
     private static final int LOW_ROW_H = 13;
     private static final int SERVER_ROW_H = 11;
@@ -141,7 +150,7 @@ public final class StorageInsightsApp implements IDesktopApp {
         totalTile = root.add(new Label(() -> GameText.resolve(TOTAL_TILE.with(
                 JsTechTheme.fmt(data == null ? 0 : data.totalItems()))), Label.Tone.DIM));
         lowTile = root.add(new Label(() -> GameText.resolve(LOW_TILE.with(lowBelowThreshold().size())), Label.Tone.DIM)
-                .setColor(() -> lowBelowThreshold().isEmpty() ? 0 : C_CRIT));
+                .setColor(() -> lowBelowThreshold().isEmpty() ? 0 : PALETTE.get().critical()));
         topHeader = root.add(new Label(GameText.resolve(TOP_ITEMS), Label.Tone.DIM));
         topList = root.add(new ListView<NetworkItemEntry>(this::displayItems, TOP_ROW_H, this::renderTopRow).setOnClick(this::topClicked));
         topEmpty = root.add(new Label(() -> GameText.resolve(search.query().isEmpty() ? LOADING : NO_MATCH),
@@ -391,7 +400,7 @@ public final class StorageInsightsApp implements IDesktopApp {
         }
         final long max = data == null || data.topItems().isEmpty() ? 1 : Math.max(1, data.topItems().get(0).total());
         final boolean pin = pinned.contains(e.key().toString());
-        g.drawString(font, pin ? "*" : "-", x, y + 2, pin ? C_PIN : ctx.skin().dim(), false);
+        g.drawString(font, pin ? "*" : "-", x, y + 2, pin ? PALETTE.get().pinned() : ctx.skin().dim(), false);
         itemIcon(g, e.key(), x + 8, y, 12);
         g.drawString(font, Texts.clip(font, e.key().displayName().getString(), 96 - 24), x + 22, y + 2, ctx.skin().text(), false);
         final int barX = x + 96;
@@ -419,11 +428,11 @@ public final class StorageInsightsApp implements IDesktopApp {
     private void renderLowRow(final GuiGraphics g, final UiContext ctx, final NetworkItemEntry e, final int index, final int x,
                               final int y, final int w, final int h, final boolean hovered, final boolean selected) {
         final Font font = ctx.font();
-        g.fill(x, y, x + w, y + h - 1, 0x18D1495B);
+        g.fill(x, y, x + w, y + h - 1, PALETTE.get().lowRow());
         itemIcon(g, e.key(), x + 1, y, 11);
         g.drawString(font, Texts.clip(font, e.key().displayName().getString(), w - 56), x + 15, y + 2, ctx.skin().text(), false);
         final String s = e.total() + "/" + threshold;
-        g.drawString(font, s, x + w - font.width(s), y + 2, C_CRIT, false);
+        g.drawString(font, s, x + w - font.width(s), y + 2, PALETTE.get().critical(), false);
     }
 
     private void lowClicked(final int index, final int button, final double mx, final double my) {
@@ -516,7 +525,7 @@ public final class StorageInsightsApp implements IDesktopApp {
         if (key.isItem()) {
             itemIcon(g, key.stack(1), x, y, size);
         } else {
-            final int c = key.isFluid() ? 0xFF3A78C8 : 0xFF9A6BC9;
+            final int c = key.isFluid() ? PALETTE.get().fluid() : PALETTE.get().chemical();
             g.fill(x + 1, y + 1, x + size - 1, y + size - 1, c);
             Draw.outline(g, x + 1, y + 1, size - 2, size - 2, skin.edge());
         }
@@ -560,5 +569,9 @@ public final class StorageInsightsApp implements IDesktopApp {
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
         return root.keyPressed(key, scanCode, modifiers);
+    }
+
+    /** The window's colours, as the palette above names them. */
+    private record Colours(int critical, int pinned, int lowRow, int fluid, int chemical) {
     }
 }

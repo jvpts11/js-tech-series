@@ -7,12 +7,16 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.edit.CodeRuns;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.logic.TextDocument;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
@@ -35,14 +39,20 @@ import org.lwjgl.glfw.GLFW;
  * paste through the game's clipboard, undo, a new line that keeps its depth, brackets that close
  * themselves, Tab that pushes a whole selection in, and text that can be made bigger or smaller.
  */
+@PaletteHolder
 public final class CodeArea extends UiComponent {
 
     private static final int LINE_H = 9;
     private static final int INSET = 3;
     private static final int GUTTER_PAD = 4;
     private static final int MARK_W = 5;
-    /** The blue laid over selected text; translucent, so the colours underneath still read. */
-    private static final int SELECTION = 0x663A72B0;
+    /**
+     * The editor's own colours, {@code jsc:editor/code_area}: the blue laid over selected text, a scroll bar's
+     * track and thumb (all translucent, so the code under them still reads), and the marks of an error and of a
+     * warning in the gutter.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "editor/code_area",
+            new Colours(0x663A72B0, 0x30808080, 0xA0909090, 0xFFC0392B, 0xFFD08A1E));
     private static final float MIN_SCALE = 0.75f;
     private static final float MAX_SCALE = 2.0f;
     /** How thick the two scroll bars are, in screen pixels. */
@@ -55,9 +65,6 @@ public final class CodeArea extends UiComponent {
      * is wider than the paint, the way it is in any editor worth typing in.
      */
     private static final int BAR_GRIP = 3;
-    /** The colours of a bar's track and of its thumb, translucent so the code under them still reads. */
-    private static final int BAR_TRACK = 0x30808080;
-    private static final int BAR_THUMB = 0xA0909090;
 
     /** Says how the rows of a document are coloured. */
     @FunctionalInterface
@@ -317,7 +324,7 @@ public final class CodeArea extends UiComponent {
                 // A line wholly inside the selection shows a little past its end, the way editors do.
                 final int ex = i == to.line() ? textX + font.width(line.substring(0, endCol))
                         : textX + font.width(line) + 4;
-                g.fill(sx, ry, Math.max(sx + 1, ex), ry + LINE_H, SELECTION);
+                g.fill(sx, ry, Math.max(sx + 1, ex), ry + LINE_H, PALETTE.get().selection());
             }
             drawLine(g, font, line, i < runs.size() ? runs.get(i) : List.of(), textX, ry + 1);
             drawSquiggles(g, font, i, line, textX, ry);
@@ -357,8 +364,9 @@ public final class CodeArea extends UiComponent {
         final int rows = this.doc.lineCount();
         final int visible = visibleLines();
         if (rows > visible) {
-            g.fill(right() - BAR, y(), right(), y() + height() - BAR, BAR_TRACK);
-            g.fill(right() - BAR, verticalThumbY(), right(), verticalThumbY() + verticalThumbHeight(), BAR_THUMB);
+            g.fill(right() - BAR, y(), right(), y() + height() - BAR, PALETTE.get().track());
+            g.fill(right() - BAR, verticalThumbY(), right(), verticalThumbY() + verticalThumbHeight(),
+                    PALETTE.get().thumb());
         }
         final int room = Math.max(8, codeRoom(font));
         final int widest = widestLine(font) + 4;
@@ -367,8 +375,8 @@ public final class CodeArea extends UiComponent {
             final int trackW = right() - BAR - trackX;
             final int thumbW = Math.max(6, trackW * room / widest);
             final int thumbX = trackX + (trackW - thumbW) * this.shift / Math.max(1, widest - room);
-            g.fill(trackX, bottom() - BAR, trackX + trackW, bottom(), BAR_TRACK);
-            g.fill(thumbX, bottom() - BAR, thumbX + thumbW, bottom(), BAR_THUMB);
+            g.fill(trackX, bottom() - BAR, trackX + trackW, bottom(), PALETTE.get().track());
+            g.fill(thumbX, bottom() - BAR, thumbX + thumbW, bottom(), PALETTE.get().thumb());
         }
     }
 
@@ -475,7 +483,7 @@ public final class CodeArea extends UiComponent {
     }
 
     private static int colourOf(final Mark mark) {
-        return mark.error() ? 0xFFC0392B : 0xFFD08A1E;
+        return mark.error() ? PALETTE.get().error() : PALETTE.get().warning();
     }
 
     /**
@@ -781,5 +789,9 @@ public final class CodeArea extends UiComponent {
         this.scroll = Math.max(0, Math.min(Math.max(0, this.doc.lineCount() - visible),
                 this.scroll - (int) Math.signum(delta) * 3));
         return true;
+    }
+
+    /** The editor's colours, as the palette above names them. */
+    private record Colours(int selection, int track, int thumb, int error, int warning) {
     }
 }

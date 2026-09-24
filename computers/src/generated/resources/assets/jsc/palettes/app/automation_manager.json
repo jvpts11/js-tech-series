@@ -1,0 +1,7 @@
+{
+  "delete": "#FFC0504A",
+  "engineOff": "#22E0A020",
+  "engineOn": "#162EA043",
+  "good": "#FF2EA043",
+  "warn": "#FFE0A020"
+}

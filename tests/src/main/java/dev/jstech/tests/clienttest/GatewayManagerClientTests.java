@@ -36,7 +36,11 @@ public final class GatewayManagerClientTests {
     }
 
     private static final int SETTLE = 4;
-    private static final int SCREEN_WAIT = 80;
+    /*
+     * Every step here waits on the server's answer reaching the window, which on a machine running the GameTests
+     * and three other client windows beside this one has been seen to take more than eighty ticks.
+     */
+    private static final int SCREEN_WAIT = 160;
     private static final int BOOT_WAIT = 400;
 
     private static final BlockPos MONITOR = new BlockPos(6, 2, 2);

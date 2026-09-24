@@ -1,0 +1,7 @@
+{
+  "complaint": "#FFC0392B",
+  "failed": "#FFC0392B",
+  "platformOff": "#FFB35C00",
+  "platformOn": "#FF2E7D32",
+  "succeeded": "#FF1E8449"
+}

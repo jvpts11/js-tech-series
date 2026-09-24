@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.CancelSetupPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
 import dev.jstech.core.client.gui.component.Button;
@@ -14,6 +15,9 @@ import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.ProgressBar;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -30,10 +34,15 @@ import org.jetbrains.annotations.Nullable;
  * desktop it opens on, the way a setup did in each decade: a blue strip beside the text on Frames 95, a
  * white wizard page on XP, a flat card on Frames 11 and the Linux desktops.
  */
+@PaletteHolder
 public final class SetupApp implements IDesktopApp {
 
     /** The window key, one per desktop: a machine sets one thing up at a time. */
     public static final String KEY = "Setup";
+
+    /** Setup's own colours, {@code jsc:app/setup}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/setup",
+            new Colours(0xFF000080, 0xFF1084D0, 0xFFFFFFFF, 0xFFA9B4CC, 0xFF4E5C78, 0xFF8891A2));
 
     /** The box with a disc coming out of it that every setup window wears, whatever it installs. */
     private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath("jsc", "setup");
@@ -208,7 +217,7 @@ public final class SetupApp implements IDesktopApp {
         switch (this.skin.form()) {
             case BEVEL, GNOME1 -> {
                 // The blue strip a setup of the nineties kept beside its text, darker at the top.
-                g.fillGradient(x, y, x + STRIP_W, y + height, 0xFF000080, 0xFF1084D0);
+                g.fillGradient(x, y, x + STRIP_W, y + height, PALETTE.get().stripTop(), PALETTE.get().stripBottom());
                 if (icon != null) {
                     ProgramIcons.draw(g, x + (STRIP_W - 16) / 2, y + 8, 16, 16, icon, this.os);
                 }
@@ -217,8 +226,8 @@ public final class SetupApp implements IDesktopApp {
             }
             case LUNA -> {
                 // The white header band of a wizard page, the icon at its left and the name beside it.
-                g.fill(x, y, x + width, y + HEADER_H, 0xFFFFFFFF);
-                g.fill(x, y + HEADER_H, x + width, y + HEADER_H + 1, 0xFFA9B4CC);
+                g.fill(x, y, x + width, y + HEADER_H, PALETTE.get().header());
+                g.fill(x, y + HEADER_H, x + width, y + HEADER_H + 1, PALETTE.get().headerRule());
                 if (icon != null) {
                     ProgramIcons.draw(g, x + 5, y + 4, 16, 16, icon, this.os);
                 }
@@ -238,14 +247,15 @@ public final class SetupApp implements IDesktopApp {
         if (this.skin.form() == OsSkin.Form.LUNA) {
             // The header carries the headline and the publisher; the body starts below it.
             this.headline.setBounds(x + 26, y + 4, width - 32, 10);
-            g.drawString(font, font.plainSubstrByWidth(subtitle(), width - 32), x + 26, y + 14, 0xFF4E5C78, false);
+            g.drawString(font, font.plainSubstrByWidth(subtitle(), width - 32), x + 26, y + 14,
+                    PALETTE.get().publisher(), false);
         } else if (this.skin.form() == OsSkin.Form.BEVEL || this.skin.form() == OsSkin.Form.GNOME1) {
             this.headline.setBounds(textX, rowY, textW, 10);
             rowY += 12;
         } else {
             this.headline.setBounds(x + 26, y + 6, width - 32, 10);
             g.drawString(font, font.plainSubstrByWidth(subtitle(), width - 32), x + 26, y + 15, this.skin.isDark()
-                    ? 0xFF8891A2 : 0xFF4E5C78, false);
+                    ? PALETTE.get().publisherOnDark() : PALETTE.get().publisher(), false);
         }
         this.line.setBounds(textX, rowY, textW, 10);
         rowY += 11;
@@ -264,5 +274,13 @@ public final class SetupApp implements IDesktopApp {
     @Override
     public void mouseClicked(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
         this.root.mouseClicked(mouseX, mouseY, button);
+    }
+
+    /**
+     * Setup's own colours: the blue strip of the oldest setups from top to bottom, the white header band of a
+     * wizard page and the rule under it, and the publisher's line on a light window and on a dark one.
+     */
+    private record Colours(int stripTop, int stripBottom, int header, int headerRule, int publisher,
+                           int publisherOnDark) {
     }
 }

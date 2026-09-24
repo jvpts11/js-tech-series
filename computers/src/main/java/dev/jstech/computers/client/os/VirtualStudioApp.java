@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.DeleteFilePayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.FolderContentPayload;
@@ -38,6 +39,9 @@ import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -72,6 +76,7 @@ import org.lwjgl.glfw.GLFW;
  * <p>What it has that nothing else does is the price: the list of what can follow a name says what
  * each call will cost the program, before the line is written.
  */
+@PaletteHolder
 public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private static final int TOOLBAR_H = 13;
@@ -92,8 +97,12 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     /** Wide enough for the longest architecture name there is at three quarters of the font. */
     private static final int PLATFORM_BTN_W = 30;
-    private static final int PLATFORM_GREEN = 0xFF2E7D32;
-    private static final int PLATFORM_AMBER = 0xFFB35C00;
+    /**
+     * The studio's own colours, {@code jsc:editor/virtual_studio}: a platform the project builds for and one it
+     * does not, a complaint's code, and a build that succeeded or failed.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "editor/virtual_studio",
+            new Colours(0xFF2E7D32, 0xFFB35C00, 0xFFC0392B, 0xFF1E8449, 0xFFC0392B));
 
     private static final int DOCK_ERRORS = 0;
     private static final int DOCK_OUTPUT = 1;
@@ -809,7 +818,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         // Code, description, file and line, each in its column, the way the real error list lays them out.
         final int fileX = x + width - COL_LINE_W - COL_FILE_W;
         final int descriptionW = fileX - (x + 3 + COL_CODE_W) - 4;
-        g.drawString(ctx.font(), row.complaint().code(), x + 3, y + 1, 0xFFC0392B, false);
+        g.drawString(ctx.font(), row.complaint().code(), x + 3, y + 1, PALETTE.get().complaint(), false);
         g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(row.complaint().message()),
                 descriptionW), x + 3 + COL_CODE_W, y + 1, ctx.skin().listRowText(selected), false);
         g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(row.name(), COL_FILE_W - 4), fileX, y + 1,
@@ -836,8 +845,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
                                final boolean hovered, final boolean selected) {
         ctx.skin().listRow(g, x, y, width, height, hovered, selected);
         final int ink = switch (line.tone()) {
-            case SUCCEEDED -> 0xFF1E8449;
-            case FAILED -> 0xFFC0392B;
+            case SUCCEEDED -> PALETTE.get().succeeded();
+            case FAILED -> PALETTE.get().failed();
             case PLAIN -> ctx.skin().text();
         };
         g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(line.text()), width - 4), x + 2,
@@ -1583,7 +1592,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private int platformHintColor() {
         final ProjectFile project = this.projects.get(this.propertiesOf);
         return project != null && AsmProgram.DEFAULT_ARCHITECTURE.equals(project.platform())
-                ? PLATFORM_GREEN : PLATFORM_AMBER;
+                ? PALETTE.get().platformOn() : PALETTE.get().platformOff();
     }
 
     private void layoutOptions(final Popup p) {
@@ -2820,5 +2829,9 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         if (!message.isEmpty()) {
             g.renderTooltip(font, Component.literal(message), mouseX, mouseY);
         }
+    }
+
+    /** The studio's colours, as the palette above names them. */
+    private record Colours(int platformOn, int platformOff, int complaint, int succeeded, int failed) {
     }
 }

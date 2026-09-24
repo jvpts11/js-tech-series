@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
 import dev.jstech.computers.operation.payload.CraftPlanPayload;
 import dev.jstech.computers.operation.payload.CraftPlannerPayload;
@@ -20,6 +21,9 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.SearchField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -62,12 +66,16 @@ import static dev.jstech.computers.client.os.CraftPlannerTexts.WHEEL_TO_SCROLL;
  * The catalogue and the plan are computed server-side; the Craft button submits the same request the
  * terminal and Network Interactor use.
  */
+@PaletteHolder
 public final class CraftPlannerApp implements IDesktopApp {
 
     private static final int REFRESH_FRAMES = 60;
-    private static final int C_GOOD = 0xFF2EA043;
-    private static final int C_CRIT = 0xFFD1495B;
-    private static final int C_AMBER = 0xFFE0A020;
+    /**
+     * The planner's own colours, {@code jsc:app/craft_planner}: what can be made, what is missing, what wants the
+     * eye, and the pill behind a plan that can run and one that cannot.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/craft_planner",
+            new Colours(0xFF2EA043, 0xFFD1495B, 0xFFE0A020, 0x2E2EA043, 0x33E0A020));
     private static final int CATALOG_ROW_H = 15;
     private static final int STAGE_ROW_H = 10;
     private static final int INGREDIENT_ROW_H = 11;
@@ -131,9 +139,9 @@ public final class CraftPlannerApp implements IDesktopApp {
         qtyLabel = root.add(new Label(() -> String.valueOf(qty)).setAlign(Label.Align.CENTER));
         qtyPlus = root.add(new Button("+", () -> setQty(qty + step())));
         planningLabel = root.add(new Label(GameText.resolve(PLANNING), Label.Tone.DIM));
-        notCraftableLabel = root.add(new Label(GameText.resolve(NOT_CRAFTABLE)).setColor(C_CRIT));
+        notCraftableLabel = root.add(new Label(GameText.resolve(NOT_CRAFTABLE)).setColor(PALETTE.get().missing()));
         pillLabel = root.add(new Label(() -> GameText.resolve(plan != null && plan.feasible() ? CRAFTABLE : PARTIAL))
-                .setColor(() -> plan != null && plan.feasible() ? C_GOOD : C_AMBER));
+                .setColor(() -> plan != null && plan.feasible() ? PALETTE.get().good() : PALETTE.get().amber()));
         summaryLabel = root.add(new Label(() -> plan == null ? ""
                 : GameText.resolve(SUMMARY.with(JsTechTheme.fmt(plan.maxFeasible()), plan.stages().size())),
                 Label.Tone.DIM));
@@ -237,7 +245,8 @@ public final class CraftPlannerApp implements IDesktopApp {
             if (pillLabel.visible()) {
                 final int pillW = font.width(pillLabel.text()) + 8;
                 g.fill(pillLabel.x() - 4, pillLabel.y() - 2, pillLabel.x() - 4 + pillW, pillLabel.y() + 9,
-                        plan != null && plan.feasible() ? 0x2E2EA043 : 0x33E0A020);
+                        plan != null && plan.feasible() ? PALETTE.get().feasiblePill()
+                                : PALETTE.get().infeasiblePill());
                 g.fill(px + leftW, pillLabel.y() + 12, px + leftW + width - 12 - leftW, pillLabel.y() + 13, skin.edge());
             }
         }
@@ -350,7 +359,7 @@ public final class CraftPlannerApp implements IDesktopApp {
         g.drawString(font, Texts.clip(font, r.item().getHoverName().getString(), w - 76), x + 15, y, ctx.skin().text(), false);
         final String s = GameText.resolve(ok ? HAVE.with(JsTechTheme.fmt(r.have()))
                 : SHORT.with(JsTechTheme.fmt(r.need() - r.have())));
-        g.drawString(font, s, x + w - font.width(s), y, ok ? C_GOOD : C_CRIT, false);
+        g.drawString(font, s, x + w - font.width(s), y, ok ? PALETTE.get().good() : PALETTE.get().missing(), false);
     }
 
     /** One node of the recipe dependency tree, flattened in pre-order and drawn indented by depth. */
@@ -464,5 +473,9 @@ public final class CraftPlannerApp implements IDesktopApp {
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
         return root.keyPressed(key, scanCode, modifiers);
+    }
+
+    /** The planner's colours, as the palette above names them. */
+    private record Colours(int good, int missing, int amber, int feasiblePill, int infeasiblePill) {
     }
 }

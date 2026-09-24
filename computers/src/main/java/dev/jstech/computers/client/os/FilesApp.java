@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.layout.FilesLayout;
 import dev.jstech.computers.machine.MachineListing;
 import dev.jstech.computers.operation.payload.ArchiveFilesPayload;
@@ -44,6 +45,9 @@ import dev.jstech.core.client.gui.component.SearchField;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -80,6 +84,7 @@ import java.util.Set;
  * lists' layout rather than draw in it. The geometry lives in {@link FilesLayout}, where a test proves
  * nothing overlaps.
  */
+@PaletteHolder
 public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /** The archiver, by the id the desktop knows it under; nothing is offered without it installed. */
@@ -93,9 +98,12 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     private static final int VOLUME_LABEL_MAX = 32;
     private static final int SEARCH_MAX = 40;
     private static final int PROPERTY_ROWS = 5;
-    private static final int DROP_TARGET_EDGE = 0xFF2E8B2E;
-    private static final int BAND_FILL = 0x334C84F0;
-    private static final int BAND_EDGE = 0xCC4C84F0;
+    /**
+     * The explorer's own colours, {@code jsc:app/files}: the folder a drop would land in, the band a drag selects
+     * with, what dims the window behind Properties, and the label that follows a dragged row with its words.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/files",
+            new Colours(0xFF2E8B2E, 0x334C84F0, 0xCC4C84F0, 0x40000000, 0xD0303848, 0xFFFFFFFF));
 
     private OsSkin skin = OsSkin.fallback();
 
@@ -314,7 +322,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         statusRight = root.add(new Label(this::statusRightText, Label.Tone.DIM).setAlign(Label.Align.RIGHT));
 
         properties = new Popup(GameText.resolve(FilesTexts.PROPERTIES), FilesLayout.PROPS_W, FilesLayout.PROPS_H)
-                .setDim(0x40000000)
+                .setDim(PALETTE.get().propertiesDim())
                 .setLayouter(this::layoutProperties);
         for (int i = 0; i < PROPERTY_ROWS; i++) {
             final int line = i;
@@ -888,16 +896,16 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         // The rubber band, over the rows it is selecting.
         if (bandActive) {
             final int[] b = bandRect();
-            g.fill(b[0], b[1], b[0] + b[2], b[1] + b[3], BAND_FILL);
-            Draw.outline(g, b[0], b[1], b[2], b[3], BAND_EDGE);
+            g.fill(b[0], b[1], b[0] + b[2], b[1] + b[3], PALETTE.get().bandFill());
+            Draw.outline(g, b[0], b[1], b[2], b[3], PALETTE.get().bandEdge());
         }
         if (dragging && dragRow >= 0 && dragRow < rows.size()) {
             final String label = rows.get(dragRow).name();
             final int gw = font.width(label) + 6;
             final int gx = (int) dragMx + 6;
             final int gy = (int) dragMy + 2;
-            g.fill(gx, gy, gx + gw, gy + 11, 0xD0303848);
-            g.drawString(font, label, gx + 3, gy + 2, 0xFFFFFFFF, false);
+            g.fill(gx, gy, gx + gw, gy + 11, PALETTE.get().ghost());
+            g.drawString(font, label, gx + 3, gy + 2, PALETTE.get().ghostInk(), false);
         }
         context.render(g, ctx);
     }
@@ -1032,7 +1040,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         final boolean sel = isSelected(index);
         ctx.skin().listRow(g, x, y, w, h, hovered && index != renaming, sel);
         if (index == dropTarget) {
-            Draw.outline(g, x, y, w, h, DROP_TARGET_EDGE);
+            Draw.outline(g, x, y, w, h, PALETTE.get().dropTarget());
         }
         if (r.item() != null) {
             DesktopItems.item(g, r.item(), x + 2, y);
@@ -2253,5 +2261,9 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     /** Joins a directory and a child name; the root ({@code ""}) yields the bare name. */
     private static String join(final String dir, final String name) {
         return dir.isEmpty() ? name : dir + "/" + name;
+    }
+
+    /** The explorer's colours, as the palette above names them. */
+    private record Colours(int dropTarget, int bandFill, int bandEdge, int propertiesDim, int ghost, int ghostInk) {
     }
 }

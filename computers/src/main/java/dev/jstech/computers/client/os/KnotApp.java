@@ -7,12 +7,16 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.KnotActionPayload;
 import dev.jstech.computers.operation.payload.KnotStatePayload;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -33,6 +37,7 @@ import java.util.Locale;
  * <p>Pushing reads the file off this machine's own disk rather than sending its text, so what the network
  * keeps is what the machine really holds.
  */
+@PaletteHolder
 public final class KnotApp implements IDesktopApp {
 
     private static final int TOOLBAR_H = 15;
@@ -41,11 +46,12 @@ public final class KnotApp implements IDesktopApp {
     private static final int STATUS_H = 11;
     private static final int MARGIN = 3;
     private static final int HISTORY_ROWS = 4;
-    private static final int ADDED_BG = 0xFFDCF5DE;
-    private static final int ADDED_INK = 0xFF16621F;
-    private static final int REMOVED_BG = 0xFFFBDDDB;
-    private static final int REMOVED_INK = 0xFF8A1F18;
-    private static final int OFFLINE_INK = 0xFFB4231F;
+    /**
+     * Knot's own colours, {@code jsc:app/knot}: an added line's band and ink, a removed line's band and ink, and a
+     * repository whose server is away.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/knot",
+            new Colours(0xFFDCF5DE, 0xFF16621F, 0xFFFBDDDB, 0xFF8A1F18, 0xFFB4231F));
 
     /** The one window the network's answers belong to. */
     @Nullable
@@ -241,7 +247,7 @@ public final class KnotApp implements IDesktopApp {
         if (revisions.isEmpty()) {
             g.drawString(font,
                     GameText.resolve(state.service().online() ? SocialTexts.NOTHING_PUSHED : SocialTexts.NO_KNOTHUB),
-                    x + MARGIN + 3, y + 2, state.service().online() ? skin.dim() : OFFLINE_INK, false);
+                    x + MARGIN + 3, y + 2, state.service().online() ? skin.dim() : PALETTE.get().offline(), false);
             return;
         }
         for (int i = 0; i < HISTORY_ROWS && historyScroll + i < revisions.size(); i++) {
@@ -279,16 +285,16 @@ public final class KnotApp implements IDesktopApp {
             final KnotStatePayload.DiffLine line = lines.get(diffScroll + i);
             final int ry = y + i * ROW_H;
             final int background = switch (line.kind()) {
-                case KnotStatePayload.DiffLine.ADDED -> ADDED_BG;
-                case KnotStatePayload.DiffLine.REMOVED -> REMOVED_BG;
+                case KnotStatePayload.DiffLine.ADDED -> PALETTE.get().added();
+                case KnotStatePayload.DiffLine.REMOVED -> PALETTE.get().removed();
                 default -> 0;
             };
             if (background != 0) {
                 g.fill(x + MARGIN, ry, x + width - MARGIN, ry + ROW_H, background);
             }
             final int ink = switch (line.kind()) {
-                case KnotStatePayload.DiffLine.ADDED -> ADDED_INK;
-                case KnotStatePayload.DiffLine.REMOVED -> REMOVED_INK;
+                case KnotStatePayload.DiffLine.ADDED -> PALETTE.get().addedInk();
+                case KnotStatePayload.DiffLine.REMOVED -> PALETTE.get().removedInk();
                 default -> skin.dim();
             };
             final String mark = switch (line.kind()) {
@@ -319,7 +325,7 @@ public final class KnotApp implements IDesktopApp {
         final String right = GameText.resolve((count == 1 ? SocialTexts.ONE_REVISION : SocialTexts.REVISIONS)
                 .with(count)) + "   " + bytes(service.bytes());
         g.drawString(font, font.plainSubstrByWidth(left, width - MARGIN * 2 - font.width(right) - 8),
-                x + MARGIN, y + 2, service.online() ? skin.text() : OFFLINE_INK, false);
+                x + MARGIN, y + 2, service.online() ? skin.text() : PALETTE.get().offline(), false);
         g.drawString(font, right, x + width - MARGIN - font.width(right), y + 2, skin.dim(), false);
     }
 
@@ -377,5 +383,9 @@ public final class KnotApp implements IDesktopApp {
     /** Which revision is being looked at, for a test to read. */
     public int shownRevision() {
         return picked;
+    }
+
+    /** Knot's colours, as the palette above names them. */
+    private record Colours(int added, int addedInk, int removed, int removedInk, int offline) {
     }
 }

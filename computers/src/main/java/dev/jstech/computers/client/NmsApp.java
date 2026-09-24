@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.client.os.IDesktopApp;
 import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.client.os.OsSkin;
@@ -24,6 +25,9 @@ import dev.jstech.computers.operation.payload.SaveIqlFilePayload;
 import dev.jstech.computers.program.ProgramKeybinds;
 import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -52,6 +56,7 @@ import org.lwjgl.glfw.GLFW;
  * no real inventory slots, so it needs no container menu: the payload handlers authenticate by the player's
  * proximity to the host or one of its linked monitors.
  */
+@PaletteHolder
 public final class NmsApp implements IDesktopApp {
 
     private static final int DB = 0;
@@ -62,9 +67,12 @@ public final class NmsApp implements IDesktopApp {
     private static final int PROC = 5;
     private static final int JOB = 6;
     private static final int SERVER = 7;
-    private static final int ICON_VIEW = 0xFFA371F7;
-    private static final int ICON_PROC = 0xFFE08A8A;
-    private static final int ICON_JOB = 0xFFF0A64E;
+    /**
+     * The studio's own colours beside its theme, {@code jsc:app/nms}: the marks of a view, a procedure and a job,
+     * the status bar's words when all is well and when it is not, its run hint, and a message that failed.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/nms",
+            new Colours(0xFFA371F7, 0xFFE08A8A, 0xFFF0A64E, 0xFFFFFFFF, 0xFFFFD2D2, 0xFFE0ECF8, 0xFFCC2222));
 
     private static final int TREE_PITCH = 8;
     private static final int GUTTER_W = 16;
@@ -760,8 +768,9 @@ public final class NmsApp implements IDesktopApp {
             drawGrid(g);
         }
 
-        JsTechTheme.textS(g, font, GameText.resolve(status), 6, statusY() + 5, statusOk ? 0xFFFFFFFF : 0xFFFFD2D2);
-        JsTechTheme.textSRight(g, font, GameText.resolve(NmsTexts.F5_TO_RUN), w - 6, statusY() + 5, 0xFFE0ECF8);
+        final Colours c = PALETTE.get();
+        JsTechTheme.textS(g, font, GameText.resolve(status), 6, statusY() + 5, statusOk ? c.statusOk() : c.statusBad());
+        JsTechTheme.textSRight(g, font, GameText.resolve(NmsTexts.F5_TO_RUN), w - 6, statusY() + 5, c.runHint());
 
         if (fileMenuOpen) {
             for (int i = 0; i < FILE_ITEMS.length; i++) {
@@ -854,9 +863,9 @@ public final class NmsApp implements IDesktopApp {
                 g.fill(x + 1, y + 1, x + s - 1, y + 3, JsTechTheme.amber());
             }
             case COLUMN -> g.fill(x + 1, y + 1, x + s - 1, y + s - 1, JsTechTheme.dim());
-            case VIEW -> g.fill(x, y, x + s, y + s, ICON_VIEW);
-            case PROC -> g.fill(x, y, x + s, y + s, ICON_PROC);
-            case JOB -> g.fill(x, y, x + s, y + s, ICON_JOB);
+            case VIEW -> g.fill(x, y, x + s, y + s, PALETTE.get().view());
+            case PROC -> g.fill(x, y, x + s, y + s, PALETTE.get().procedure());
+            case JOB -> g.fill(x, y, x + s, y + s, PALETTE.get().job());
             case SERVER -> {
                 g.fill(x, y, x + s, y + s, JsTechTheme.dim());
                 g.fill(x + 1, y + 1, x + s - 1, y + 2, JsTechTheme.green());
@@ -898,7 +907,7 @@ public final class NmsApp implements IDesktopApp {
             final MsgLine line = messages.get(start + i);
             JsTechTheme.textS(g, font, fit(GameText.resolve(line.text()), viewW - left - 6), left,
                     top + i * NmsLayout.ROW_H,
-                    line.ok() ? JsTechTheme.text() : 0xFFCC2222);
+                    line.ok() ? JsTechTheme.text() : PALETTE.get().failed());
         }
         if (messages.isEmpty()) {
             JsTechTheme.textS(g, font, GameText.resolve(NmsTexts.NO_MESSAGES), left, top, JsTechTheme.dim());
@@ -1146,4 +1155,7 @@ public final class NmsApp implements IDesktopApp {
         return true;
     }
 
+    /** The studio's colours, as the palette above names them. */
+    private record Colours(int view, int procedure, int job, int statusOk, int statusBad, int runHint, int failed) {
+    }
 }

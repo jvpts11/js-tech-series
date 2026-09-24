@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.TrashItem;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.gui.layout.TrashLayout;
@@ -14,6 +15,9 @@ import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.core.client.gui.component.ContextMenu;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +33,7 @@ import net.minecraft.client.gui.screens.Screen;
  * <p>On XP the pane is the blue task pane of that edition, with its white boxes and blue links; the other editions
  * draw it in their own panel.
  */
+@PaletteHolder
 final class TrashFramesLook implements ITrashLook {
 
     private final TrashApp app;
@@ -43,11 +48,12 @@ final class TrashFramesLook implements ITrashLook {
     private static final int MENU_W = 96;
     private static final long DOUBLE_CLICK_MS = 300L;
     private static final float SMALL = Texts.SMALL;
-    private static final int XP_PANE_TOP = 0xFF7BA2E7;
-    private static final int XP_PANE_FOOT = 0xFF6375D6;
-    private static final int XP_BOX = 0xFFFFFFFF;
-    private static final int XP_LINK = 0xFF215DC6;
-    private static final int XP_LINK_HOVER = 0xFF428EFF;
+    /**
+     * The XP look's own colours, {@code jsc:app/trash_xp}: its task pane from top to foot, the boxes on it, and a
+     * link at rest and under the cursor.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/trash_xp",
+            new Colours(0xFF7BA2E7, 0xFF6375D6, 0xFFFFFFFF, 0xFF215DC6, 0xFF428EFF));
 
     TrashFramesLook(final TrashApp app) {
         this.app = app;
@@ -179,7 +185,8 @@ final class TrashFramesLook implements ITrashLook {
         final int x = this.left;
         final int y = this.top;
         if (xp()) {
-            g.fillGradient(x, y, x + TrashLayout.PANE_W, y + this.height, XP_PANE_TOP, XP_PANE_FOOT);
+            g.fillGradient(x, y, x + TrashLayout.PANE_W, y + this.height, PALETTE.get().paneTop(),
+                    PALETTE.get().paneFoot());
         } else {
             g.fill(x, y, x + TrashLayout.PANE_W, y + this.height, skin.listHover());
             g.fill(x + TrashLayout.PANE_W - 1, y, x + TrashLayout.PANE_W, y + this.height, skin.edge());
@@ -202,13 +209,14 @@ final class TrashFramesLook implements ITrashLook {
         final OsSkin skin = this.app.skin();
         final int x = this.left + r.x();
         final int y = this.top + r.y();
-        final int ground = xp() ? XP_BOX : skin.panelBg();
+        final int ground = xp() ? PALETTE.get().box() : skin.panelBg();
         if (xp()) {
-            g.fill(x, y, x + r.w(), y + r.h(), XP_BOX);
+            g.fill(x, y, x + r.w(), y + r.h(), PALETTE.get().box());
         } else {
             skin.panel(g, x, y, r.w(), r.h());
         }
-        TrashApp.write(g, font, heading, x + 4, y + 3, xp() ? XP_LINK : skin.text(), ground, SMALL);
+        TrashApp.write(g, font, heading, x + 4, y + 3, xp() ? PALETTE.get().link() : skin.text(), ground,
+                SMALL);
         g.fill(x + 3, y + TrashLayout.BOX_HEAD_H - 2, x + r.w() - 3, y + TrashLayout.BOX_HEAD_H - 1, skin.edge());
         return ground;
     }
@@ -218,7 +226,8 @@ final class TrashFramesLook implements ITrashLook {
         final OsSkin skin = this.app.skin();
         final Rect r = TrashLayout.task(index);
         final boolean hover = enabled && r.holds(mouseX - this.left, mouseY - this.top);
-        final int ink = !enabled ? skin.dim() : xp() ? (hover ? XP_LINK_HOVER : XP_LINK) : skin.accent();
+        final int ink = !enabled ? skin.dim()
+                : xp() ? (hover ? PALETTE.get().linkHover() : PALETTE.get().link()) : skin.accent();
         final int x = this.left + r.x();
         final int y = this.top + r.y() + 2;
         TrashApp.write(g, font, label, x, y, ink, ground, SMALL);
@@ -267,5 +276,9 @@ final class TrashFramesLook implements ITrashLook {
             TrashApp.write(g, font, weight, this.left + TrashLayout.sizeRight(this.width) - font.width(weight), ry + 2,
                     ink, ground, 1f);
         }
+    }
+
+    /** The XP look's colours, as the palette above names them. */
+    private record Colours(int paneTop, int paneFoot, int box, int link, int linkHover) {
     }
 }

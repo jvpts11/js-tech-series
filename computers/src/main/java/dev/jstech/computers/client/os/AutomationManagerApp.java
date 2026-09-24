@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.AutomationPayload;
 import dev.jstech.computers.operation.payload.CreateAutomationJobPayload;
 import dev.jstech.computers.operation.payload.JobActionPayload;
@@ -19,6 +20,9 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.Font;
@@ -35,12 +39,16 @@ import java.util.List;
  * (Keep Stock / Batch Craft / Periodic Move / IQL script) that the server compiles into jobs; no IQL is
  * typed here. Requires the Automation Engine (or the IQL Engine) on the Mainframe for jobs to actually run.
  */
+@PaletteHolder
 public final class AutomationManagerApp implements IDesktopApp {
 
     private static final int REFRESH_FRAMES = 40;
-    private static final int C_GOOD = 0xFF2EA043;
-    private static final int C_WARN = 0xFFE0A020;
-    private static final int C_DELETE = 0xFFC0504A;
+    /**
+     * The manager's own colours, {@code jsc:app/automation_manager}: what is running, what wants the eye, the
+     * delete action, and the engine's band when it is on and when it is off.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/automation_manager",
+            new Colours(0xFF2EA043, 0xFFE0A020, 0xFFC0504A, 0x162EA043, 0x22E0A020));
     private static final int JOB_ROW_H = 13;
     private static final int FORM_H = 78;
     private static final int FIELD_MAX = 48;
@@ -118,7 +126,7 @@ public final class AutomationManagerApp implements IDesktopApp {
 
         loadingLabel = root.add(new Label(GameText.resolve(AutomationTexts.CONTACTING), Label.Tone.DIM));
         engineLabel = root.add(new Label(this::engineText)
-                .setColor(() -> data != null && data.engineOnline() ? 0 : C_WARN));
+                .setColor(() -> data != null && data.engineOnline() ? 0 : PALETTE.get().warn()));
         jobsLabel = root.add(new Label(() -> data == null ? ""
                 : GameText.resolve(AutomationTexts.JOBS.with(data.jobs().size())), Label.Tone.DIM)
                 .setAlign(Label.Align.RIGHT));
@@ -234,8 +242,8 @@ public final class AutomationManagerApp implements IDesktopApp {
         if (data != null) {
             // The engine status band and its lamp, and the rule over the form.
             final boolean on = data.engineOnline();
-            g.fill(px, y + 6, px + pw, y + 20, on ? 0x162EA043 : 0x22E0A020);
-            g.fill(px + 4, y + 11, px + 8, y + 15, on ? C_GOOD : C_WARN);
+            g.fill(px, y + 6, px + pw, y + 20, on ? PALETTE.get().engineOn() : PALETTE.get().engineOff());
+            g.fill(px + 4, y + 11, px + 8, y + 15, on ? PALETTE.get().good() : PALETTE.get().warn());
             g.fill(px, newJobLabel.y() - 5, px + pw, newJobLabel.y() - 4, skin.edge());
         }
         root.render(g, ctx);
@@ -363,10 +371,10 @@ public final class AutomationManagerApp implements IDesktopApp {
         g.drawString(font, Texts.clip(font, GameText.resolve(j.type()), triggerX - typeX - 4), typeX, y + 3,
                 ctx.skin().dim(), false);
         g.drawString(font, Texts.clip(font, GameText.resolve(j.trigger()), (x + w - 22) - triggerX - 4), triggerX,
-                y + 3, j.paused() ? C_WARN : C_GOOD, false);
+                y + 3, j.paused() ? PALETTE.get().warn() : PALETTE.get().good(), false);
         // Pause/resume + delete glyphs.
         g.drawString(font, j.paused() ? ">" : "=", x + w - 22, y + 3, ctx.skin().text(), false);
-        g.drawString(font, "x", x + w - 10, y + 3, C_DELETE, false);
+        g.drawString(font, "x", x + w - 10, y + 3, PALETTE.get().delete(), false);
     }
 
     private void jobClicked(final int index, final int button, final double mx, final double my) {
@@ -435,5 +443,9 @@ public final class AutomationManagerApp implements IDesktopApp {
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
         return root.keyPressed(key, scanCode, modifiers);
+    }
+
+    /** The manager's colours, as the palette above names them. */
+    private record Colours(int good, int warn, int delete, int engineOn, int engineOff) {
     }
 }
