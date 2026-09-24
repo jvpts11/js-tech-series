@@ -1,0 +1,16 @@
+{
+  "bandLow": "#FF1D4C80",
+  "bandMid": "#FF33679F",
+  "bandTop": "#FF6F9FD0",
+  "face": "#FFD6D2CD",
+  "ground": "#FF33679F",
+  "nameInk": "#FFFFFFFF",
+  "rule": "#FF6F6A64",
+  "shadow": "#4C000000",
+  "square": "#FFE2DED4",
+  "stepFive": "#FF7D8A9C",
+  "stepFour": "#FF5FE07A",
+  "stepThree": "#FFF0B23A",
+  "text": "#FF1A1A1A",
+  "underInk": "#FFDCE8F6"
+}

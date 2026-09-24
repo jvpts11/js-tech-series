@@ -89,6 +89,7 @@ import static dev.jstech.computers.client.FirmwareScreenTexts.UNCONFIGURED;
 import static dev.jstech.computers.client.FirmwareScreenTexts.WHERE_BUT;
 import static dev.jstech.computers.client.FirmwareScreenTexts.of;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
@@ -100,6 +101,9 @@ import dev.jstech.computers.os.InstallMode;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.rack.RaidMode;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -132,39 +136,24 @@ import java.util.List;
  * medium onto the default disk, then close), which the client journey tests drive through
  * {@link #installButtonCenter()}.
  */
+@PaletteHolder
 public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     private static final int W = MonitorGlass.WIDTH;
     private static final int H = MonitorGlass.HEIGHT;
 
-    // Vintage: green phosphor CLI BIOS
-    private static final int CLI_BG     = 0xFF021207;
-    private static final int CLI_TEXT   = 0xFF35D158;
-    private static final int CLI_BRIGHT = 0xFF87FFAC;
-    private static final int CLI_DIM    = 0xFF1A7C39;
-
-    // Legacy: classic blue BIOS
-    private static final int BLUE_BG     = 0xFF0000A8;
-    private static final int BLUE_TITLE  = 0xFFB9B9B9;
-    private static final int BLUE_BORDER = 0xFF6FB7FF;
-    private static final int BLUE_TEXT   = 0xFFFFFFFF;
-    private static final int BLUE_VALUE  = 0xFF39D6C4;
-    private static final int BLUE_AMBER  = 0xFFFFE14D;
-    private static final int BLUE_DIM    = 0xFFB9C4D6;
-    private static final int BLUE_SELBG  = 0xFFD9D9D9;
-
-    // Standard: modern UEFI
-    private static final int UEFI_BG     = 0xFF1E2030;
-    private static final int UEFI_HEAD   = 0xFF11131F;
-    private static final int UEFI_PANEL  = 0xFF2A2D3E;
-    private static final int UEFI_PH     = 0xFF3A4060;
-    private static final int UEFI_TEXT   = 0xFFE6ECF6;
-    private static final int UEFI_KEY    = 0xFFA8B2C6;
-    private static final int UEFI_ACCENT = 0xFF5FA8D3;
-    private static final int UEFI_AMBER  = 0xFFF0B23A;
-    private static final int UEFI_OK     = 0xFF5FE07A;
-    private static final int UEFI_DIM    = 0xFF8090A8;
-    private static final int UEFI_SEL    = 0xFF23405A;
+    /* The three looks' colours: Vintage's green phosphor, Legacy's classic blue, Standard's modern UEFI. */
+    private static final Palette<Cli> CLI = Palettes.declare(JsComputers.MODID, "firmware/cli",
+            new Cli(0xFF021207, 0xFF35D158, 0xFF87FFAC, 0xFF1A7C39));
+    private static final Palette<Bios> BIOS = Palettes.declare(JsComputers.MODID, "firmware/bios",
+            new Bios(0xFF0000A8, 0xFFB9B9B9, 0xFF6FB7FF, 0xFFFFFFFF, 0xFF39D6C4, 0xFFFFE14D, 0xFFB9C4D6,
+                    0xFFD9D9D9));
+    private static final Palette<Uefi> UEFI = Palettes.declare(JsComputers.MODID, "firmware/uefi",
+            new Uefi(0xFF1E2030, 0xFF11131F, 0xFF2A2D3E, 0xFF3A4060, 0xFFE6ECF6, 0xFFA8B2C6, 0xFF5FA8D3,
+                    0xFFF0B23A, 0xFF5FE07A, 0xFF8090A8, 0xFF23405A, 0xFF0B1018));
+    /** The storage controller's page, whatever look it is in: a degraded array, and the mode in force. */
+    private static final Palette<Storage> STORAGE = Palettes.declare(JsComputers.MODID, "firmware/storage",
+            new Storage(0xFFF0B23A, 0xFF39D6C4));
 
     private static final int PAGE_BOOT = 0;
     private static final int PAGE_ORDER = 1;
@@ -520,39 +509,39 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
     // Vintage: green phosphor CLI BIOS
 
     private void renderCliBios(final GuiGraphics g, final int x, final int y, final int mouseX, final int mouseY) {
-        g.fill(x, y, x + W, y + H, CLI_BG);
-        border(g, x, y, CLI_DIM);
+        g.fill(x, y, x + W, y + H, CLI.get().ground());
+        border(g, x, y, CLI.get().dim());
         final int tx = x + 14;
         int ty = y + 10;
         final String title = Branding.biosBanner(era());
-        g.drawString(font, title, tx, ty, CLI_BRIGHT, false);
+        g.drawString(font, title, tx, ty, CLI.get().bright(), false);
         // The machine's name takes what is left of the line, cut short rather than drawn over the title.
         final int nameRoom = x + W - 14 - (tx + font.width(title) + 10);
         final String name = font.width(machineName) > nameRoom ? trimTo(machineName, nameRoom) : machineName;
-        g.drawString(font, name, x + W - font.width(name) - 14, ty, CLI_DIM, false);
+        g.drawString(font, name, x + W - font.width(name) - 14, ty, CLI.get().dim(), false);
         ty += 11;
         // Page "tabs" as a bracketed menu line.
         int px = tx;
         for (int i = 0; i < PAGES.length; i++) {
             final String label = (i == page ? "[" : " ") + of(PAGES[i]) + (i == page ? "]" : " ");
             tabHits[i] = new int[]{px, ty, font.width(label), 10};
-            g.drawString(font, label, px, ty, i == page ? CLI_BRIGHT : CLI_DIM, false);
+            g.drawString(font, label, px, ty, i == page ? CLI.get().bright() : CLI.get().dim(), false);
             px += font.width(label) + 8;
         }
         ty += 14;
         if (page == PAGE_HARDWARE) {
-            renderHardwareLines(g, tx, ty, 11, CLI_TEXT, CLI_BRIGHT, CLI_DIM, W - 28);
+            renderHardwareLines(g, tx, ty, 11, CLI.get().text(), CLI.get().bright(), CLI.get().dim(), W - 28);
         } else if (page == PAGE_STORAGE) {
-            renderStorageLines(g, tx, ty, 11, CLI_TEXT, CLI_BRIGHT, CLI_DIM, W - 28);
+            renderStorageLines(g, tx, ty, 11, CLI.get().text(), CLI.get().bright(), CLI.get().dim(), W - 28);
         } else {
             g.drawString(font, of(page == PAGE_ORDER ? BOOT_DEVICE_PRIORITY_LIST : BOOT_MENU_LIST), tx, ty,
-                    CLI_TEXT, false);
+                    CLI.get().text(), false);
             ty += 12;
             final List<FirmwareStatePayload.Entry> rows = rows();
             if (state == null) {
-                g.drawString(font, "  " + of(DETECTING_DRIVES_OLD), tx, ty, CLI_DIM, false);
+                g.drawString(font, "  " + of(DETECTING_DRIVES_OLD), tx, ty, CLI.get().dim(), false);
             } else if (rows.isEmpty()) {
-                g.drawString(font, "  " + of(NO_BOOTABLE_FOUND_SENTENCE), tx, ty, CLI_DIM, false);
+                g.drawString(font, "  " + of(NO_BOOTABLE_FOUND_SENTENCE), tx, ty, CLI.get().dim(), false);
             }
             for (int i = 0; i < rows.size(); i++) {
                 final FirmwareStatePayload.Entry e = rows.get(i);
@@ -562,45 +551,48 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 final String line = (sel ? ">" : " ") + mark + (i + 1) + ". "
                         + of(BESIDE.with(e.label(), entryWhere(e)));
                 rowHits.add(new int[]{tx, ty, W - 28, ROW_H});
-                g.drawString(font, line, tx, ty, e.bootable() || page == PAGE_ORDER ? (sel ? CLI_BRIGHT : CLI_TEXT) : CLI_DIM, false);
+                g.drawString(font, line, tx, ty, e.bootable() || page == PAGE_ORDER
+                        ? (sel ? CLI.get().bright() : CLI.get().text()) : CLI.get().dim(), false);
                 ty += ROW_H;
             }
             ty += 4;
             final String boot = " " + of(page == PAGE_ORDER ? SET_FIRST : BOOT) + " ";
             bootHit = new int[]{tx, ty, font.width(boot) + 4, 13};
             g.fill(bootHit[0], bootHit[1], bootHit[0] + bootHit[2], bootHit[1] + bootHit[3],
-                    in(bootHit, mouseX, mouseY) ? CLI_TEXT : CLI_BRIGHT);
-            g.drawString(font, boot, bootHit[0] + 2, bootHit[1] + 3, CLI_BG, false);
+                    in(bootHit, mouseX, mouseY) ? CLI.get().text() : CLI.get().bright());
+            g.drawString(font, boot, bootHit[0] + 2, bootHit[1] + 3, CLI.get().ground(), false);
             final String inst = " " + of(INSTALL_OS) + " ";
             installHit = new int[]{bootHit[0] + bootHit[2] + 8, ty, font.width(inst) + 4, 13};
             g.fill(installHit[0], installHit[1], installHit[0] + installHit[2], installHit[1] + installHit[3],
-                    in(installHit, mouseX, mouseY) ? CLI_TEXT : (hasInstaller() ? CLI_BRIGHT : CLI_DIM));
-            g.drawString(font, inst, installHit[0] + 2, installHit[1] + 3, CLI_BG, false);
+                    in(installHit, mouseX, mouseY) ? CLI.get().text()
+                            : (hasInstaller() ? CLI.get().bright() : CLI.get().dim()));
+            g.drawString(font, inst, installHit[0] + 2, installHit[1] + 3, CLI.get().ground(), false);
         }
-        g.drawString(font, hintText(), tx, y + H - 14, CLI_DIM, false);
+        g.drawString(font, hintText(), tx, y + H - 14, CLI.get().dim(), false);
     }
 
     // Legacy: classic blue BIOS setup utility
 
     private void renderBlueBios(final GuiGraphics g, final int x, final int y, final int mouseX, final int mouseY) {
-        g.fill(x, y, x + W, y + H, BLUE_BG);
-        border(g, x, y, BLUE_BORDER);
-        g.fill(x, y, x + W, y + 14, BLUE_TITLE);
+        g.fill(x, y, x + W, y + H, BIOS.get().ground());
+        border(g, x, y, BIOS.get().border());
+        g.fill(x, y, x + W, y + 14, BIOS.get().title());
         // The house that made the board, not the mod: no screen inside the fiction names the mod.
-        drawCentered(g, of(SETUP_UTILITY.with(Branding.HARDWARE_HOUSE)), x + W / 2, y + 3, BLUE_BG);
+        drawCentered(g, of(SETUP_UTILITY.with(Branding.HARDWARE_HOUSE)), x + W / 2, y + 3, BIOS.get().ground());
         int px = x + 8;
         for (int i = 0; i < PAGES.length; i++) {
             final String name = of(PAGES[i]);
             tabHits[i] = new int[]{px - 3, y + 16, font.width(name) + 6, 12};
             if (i == page) {
-                g.fill(tabHits[i][0], tabHits[i][1], tabHits[i][0] + tabHits[i][2], tabHits[i][1] + tabHits[i][3], BLUE_TITLE);
+                g.fill(tabHits[i][0], tabHits[i][1], tabHits[i][0] + tabHits[i][2], tabHits[i][1] + tabHits[i][3],
+                        BIOS.get().title());
             }
-            g.drawString(font, name, px, y + 18, i == page ? BLUE_BG : BLUE_DIM, false);
+            g.drawString(font, name, px, y + 18, i == page ? BIOS.get().ground() : BIOS.get().dim(), false);
             px += font.width(name) + 14;
         }
         final String exit = of(EXIT);
-        g.drawString(font, exit, x + W - font.width(exit) - 8, y + 18, BLUE_DIM, false);
-        g.fill(x, y + 28, x + W, y + 29, BLUE_BORDER);
+        g.drawString(font, exit, x + W - font.width(exit) - 8, y + 18, BIOS.get().dim(), false);
+        g.fill(x, y + 28, x + W, y + 29, BIOS.get().border());
 
         final int top = y + 34;
         final int boxW = 206;
@@ -611,21 +603,23 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         final String help;
         if (page == PAGE_HARDWARE) {
             drawBox(g, boxX, top, boxW, boxH, of(SYSTEM_INFORMATION));
-            renderHardwareLines(g, boxX + 8, top + 18, 13, BLUE_TEXT, BLUE_VALUE, BLUE_DIM, boxW - 16);
+            renderHardwareLines(g, boxX + 8, top + 18, 13, BIOS.get().text(), BIOS.get().value(), BIOS.get().dim(),
+                    boxW - 16);
             help = of(HARDWARE_HELP);
         } else if (page == PAGE_STORAGE) {
             drawBox(g, boxX, top, boxW, boxH, of(STORAGE_CONTROLLER));
-            renderStorageLines(g, boxX + 8, top + 18, 13, BLUE_TEXT, BLUE_VALUE, BLUE_DIM, boxW - 16);
+            renderStorageLines(g, boxX + 8, top + 18, 13, BIOS.get().text(), BIOS.get().value(), BIOS.get().dim(),
+                    boxW - 16);
             help = of(STORAGE_HELP);
         } else {
             drawBox(g, boxX, top, boxW, boxH, of(page == PAGE_ORDER ? BOOT_DEVICE_PRIORITY : BOOT_MENU));
             int ry = top + 18;
             final List<FirmwareStatePayload.Entry> rows = rows();
             if (state == null) {
-                g.drawString(font, of(DETECTING_DEVICES), boxX + 8, ry, BLUE_DIM, false);
+                g.drawString(font, of(DETECTING_DEVICES), boxX + 8, ry, BIOS.get().dim(), false);
                 ry += ROW_H; // the message occupies a row; the actions below must not land on it
             } else if (rows.isEmpty()) {
-                g.drawString(font, of(NO_BOOTABLE), boxX + 8, ry, BLUE_AMBER, false);
+                g.drawString(font, of(NO_BOOTABLE), boxX + 8, ry, BIOS.get().amber(), false);
                 ry += ROW_H;
             }
             for (int i = 0; i < rows.size(); i++) {
@@ -633,64 +627,69 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 final boolean sel = i == selected;
                 rowHits.add(new int[]{boxX + 2, ry - 2, boxW - 4, ROW_H});
                 if (sel) {
-                    g.fill(boxX + 2, ry - 2, boxX + boxW - 2, ry + ROW_H - 2, BLUE_SELBG);
+                    g.fill(boxX + 2, ry - 2, boxX + boxW - 2, ry + ROW_H - 2, BIOS.get().selection());
                 }
                 final String order = page == PAGE_ORDER
                         ? (state.bootSlot() == e.ref() && e.kind() == FirmwareStatePayload.KIND_DISK
                                 ? of(FIRST) + " " : "    ")
                         : "";
                 g.drawString(font, order + of(e.label()), boxX + 8, ry,
-                        sel ? BLUE_BG : (e.bootable() ? BLUE_TEXT : BLUE_DIM), false);
+                        sel ? BIOS.get().ground() : (e.bootable() ? BIOS.get().text() : BIOS.get().dim()), false);
                 final String right = of(e.kind() == FirmwareStatePayload.KIND_DISK ? DISK.with(e.ref()) : DRIVE.text());
-                g.drawString(font, right, boxX + boxW - font.width(right) - 8, ry, sel ? BLUE_BG : BLUE_VALUE, false);
+                g.drawString(font, right, boxX + boxW - font.width(right) - 8, ry,
+                        sel ? BIOS.get().ground() : BIOS.get().value(), false);
                 ry += ROW_H;
             }
             ry += 6;
             final String bootLabel = "> " + of(page == PAGE_ORDER ? SET_AS_FIRST : BOOT_SELECTED);
             bootHit = new int[]{boxX + 2, ry - 3, boxW - 4, 13};
             if (in(bootHit, mouseX, mouseY)) {
-                g.fill(bootHit[0], bootHit[1], bootHit[0] + bootHit[2], bootHit[1] + bootHit[3], BLUE_SELBG);
+                g.fill(bootHit[0], bootHit[1], bootHit[0] + bootHit[2], bootHit[1] + bootHit[3],
+                        BIOS.get().selection());
             }
-            g.drawString(font, bootLabel, bootHit[0] + 6, bootHit[1] + 3, in(bootHit, mouseX, mouseY) ? BLUE_BG : BLUE_AMBER, false);
+            g.drawString(font, bootLabel, bootHit[0] + 6, bootHit[1] + 3,
+                    in(bootHit, mouseX, mouseY) ? BIOS.get().ground() : BIOS.get().amber(), false);
             ry += 13;
             installHit = new int[]{boxX + 2, ry - 3, boxW - 4, 13};
             if (in(installHit, mouseX, mouseY)) {
-                g.fill(installHit[0], installHit[1], installHit[0] + installHit[2], installHit[1] + installHit[3], BLUE_SELBG);
+                g.fill(installHit[0], installHit[1], installHit[0] + installHit[2], installHit[1] + installHit[3],
+                        BIOS.get().selection());
             }
             g.drawString(font, "> " + of(INSTALL_SYSTEM), installHit[0] + 6, installHit[1] + 3,
-                    in(installHit, mouseX, mouseY) ? BLUE_BG : (hasInstaller() ? BLUE_AMBER : BLUE_DIM), false);
+                    in(installHit, mouseX, mouseY) ? BIOS.get().ground()
+                            : (hasInstaller() ? BIOS.get().amber() : BIOS.get().dim()), false);
             help = of(page == PAGE_ORDER ? ORDER_HELP.text()
                     : BOOT_HELP.with(state == null ? "-" : Integer.toString(state.installTargetSlot())));
         }
         drawBox(g, helpX, top, helpW, boxH, of(ITEM_HELP));
-        drawWrapped(g, help, helpX + 6, top + 18, helpW - 12, BLUE_DIM);
-        g.fill(x, y + H - 16, x + W, y + H, BLUE_TITLE);
-        g.drawString(font, hintText(), x + 8, y + H - 12, BLUE_BG, false);
+        drawWrapped(g, help, helpX + 6, top + 18, helpW - 12, BIOS.get().dim());
+        g.fill(x, y + H - 16, x + W, y + H, BIOS.get().title());
+        g.drawString(font, hintText(), x + 8, y + H - 12, BIOS.get().ground(), false);
     }
 
     private void drawBox(final GuiGraphics g, final int x, final int y, final int w, final int h, final String header) {
-        g.fill(x, y, x + w, y + 1, BLUE_BORDER);
-        g.fill(x, y + h - 1, x + w, y + h, BLUE_BORDER);
-        g.fill(x, y, x + 1, y + h, BLUE_BORDER);
-        g.fill(x + w - 1, y, x + w, y + h, BLUE_BORDER);
-        g.fill(x + 1, y + 1, x + w - 1, y + 12, BLUE_BORDER);
-        g.drawString(font, header, x + 6, y + 3, BLUE_BG, false);
+        g.fill(x, y, x + w, y + 1, BIOS.get().border());
+        g.fill(x, y + h - 1, x + w, y + h, BIOS.get().border());
+        g.fill(x, y, x + 1, y + h, BIOS.get().border());
+        g.fill(x + w - 1, y, x + w, y + h, BIOS.get().border());
+        g.fill(x + 1, y + 1, x + w - 1, y + 12, BIOS.get().border());
+        g.drawString(font, header, x + 6, y + 3, BIOS.get().ground(), false);
     }
 
     // Standard: modern UEFI boot manager
 
     private void renderUefi(final GuiGraphics g, final int x, final int y, final int mouseX, final int mouseY) {
-        g.fill(x, y, x + W, y + H, UEFI_BG);
-        border(g, x, y, UEFI_PH);
-        g.fill(x, y, x + W, y + 20, UEFI_HEAD);
-        g.fill(x, y + 20, x + W, y + 22, UEFI_ACCENT);
-        g.drawString(font, Branding.HARDWARE_HOUSE, x + 10, y + 6, UEFI_TEXT, false);
+        g.fill(x, y, x + W, y + H, UEFI.get().ground());
+        border(g, x, y, UEFI.get().placeholder());
+        g.fill(x, y, x + W, y + 20, UEFI.get().head());
+        g.fill(x, y + 20, x + W, y + 22, UEFI.get().accent());
+        g.drawString(font, Branding.HARDWARE_HOUSE, x + 10, y + 6, UEFI.get().text(), false);
         /*
          * The firmware's own version, from the one place that decides it, so this header and the self-test
          * that ran before it cannot disagree about which firmware the player is looking at.
          */
         final String version = "UEFI " + Branding.biosVersion(era());
-        g.drawString(font, version, x + W - font.width(version) - 10, y + 6, UEFI_DIM, false);
+        g.drawString(font, version, x + W - font.width(version) - 10, y + 6, UEFI.get().dim(), false);
 
         final int top = y + 30;
         final int navX = x + 10;
@@ -698,33 +697,36 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         final int mainX = navX + navW + 8;
         final int mainW = W - navW - 28;
         final int panelH = H - (top - y) - 24;
-        g.fill(navX, top, navX + navW, top + panelH, UEFI_HEAD);
+        g.fill(navX, top, navX + navW, top + panelH, UEFI.get().head());
         int ny = top + 6;
         final TextKey[] navLabels = {BOOT_MANAGER, PAGE_BOOT_ORDER, PAGE_HARDWARE_NAME};
         for (int i = 0; i < navLabels.length; i++) {
             tabHits[i] = new int[]{navX, ny - 2, navW, 14};
             if (i == page) {
-                g.fill(navX, ny - 2, navX + navW, ny + 12, UEFI_ACCENT);
+                g.fill(navX, ny - 2, navX + navW, ny + 12, UEFI.get().accent());
             }
-            g.drawString(font, of(navLabels[i]), navX + 8, ny + 1, i == page ? 0xFF0B1018 : UEFI_KEY, false);
+            g.drawString(font, of(navLabels[i]), navX + 8, ny + 1, i == page ? UEFI.get().onAccent() : UEFI.get().key(),
+                    false);
             ny += 16;
         }
-        g.drawString(font, of(EXIT), navX + 8, top + panelH - 12, UEFI_DIM, false);
+        g.drawString(font, of(EXIT), navX + 8, top + panelH - 12, UEFI.get().dim(), false);
 
         if (page == PAGE_HARDWARE) {
             panel(g, mainX, top, mainW, panelH, of(SYSTEM_INFORMATION));
-            renderHardwareLines(g, mainX + 8, top + 22, 15, UEFI_KEY, UEFI_TEXT, UEFI_DIM, mainW - 16);
+            renderHardwareLines(g, mainX + 8, top + 22, 15, UEFI.get().key(), UEFI.get().text(), UEFI.get().dim(),
+                    mainW - 16);
         } else if (page == PAGE_STORAGE) {
             panel(g, mainX, top, mainW, panelH, of(STORAGE_CONTROLLER));
-            renderStorageLines(g, mainX + 8, top + 22, 15, UEFI_KEY, UEFI_TEXT, UEFI_DIM, mainW - 16);
+            renderStorageLines(g, mainX + 8, top + 22, 15, UEFI.get().key(), UEFI.get().text(), UEFI.get().dim(),
+                    mainW - 16);
         } else {
             panel(g, mainX, top, mainW, panelH, of(page == PAGE_ORDER ? PAGE_BOOT_ORDER : BOOT_MANAGER));
             int ry = top + 20;
             final List<FirmwareStatePayload.Entry> rows = rows();
             if (state == null) {
-                g.drawString(font, of(SCANNING_DEVICES), mainX + 8, ry + 2, UEFI_DIM, false);
+                g.drawString(font, of(SCANNING_DEVICES), mainX + 8, ry + 2, UEFI.get().dim(), false);
             } else if (rows.isEmpty()) {
-                g.drawString(font, of(NO_BOOTABLE), mainX + 8, ry + 2, UEFI_AMBER, false);
+                g.drawString(font, of(NO_BOOTABLE), mainX + 8, ry + 2, UEFI.get().amber(), false);
             }
             /*
              * The action buttons sit at a fixed height at the foot of the panel, so the list has to stop
@@ -735,50 +737,53 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 if (ry + ROW_H + 2 > listBottom) {
                     // Say that the list is cut off; a device silently missing reads as a missing device.
                     final String more = of(MORE.with(rows.size() - i));
-                    g.drawString(font, more, mainX + 20, listBottom - 9, UEFI_DIM, false);
+                    g.drawString(font, more, mainX + 20, listBottom - 9, UEFI.get().dim(), false);
                     break;
                 }
                 final FirmwareStatePayload.Entry e = rows.get(i);
                 final boolean sel = i == selected;
                 rowHits.add(new int[]{mainX + 4, ry, mainW - 8, ROW_H + 2});
-                g.fill(mainX + 4, ry, mainX + mainW - 4, ry + ROW_H + 2, sel ? UEFI_SEL : UEFI_PH);
+                g.fill(mainX + 4, ry, mainX + mainW - 4, ry + ROW_H + 2,
+                        sel ? UEFI.get().selection() : UEFI.get().placeholder());
                 if (sel) {
-                    g.fill(mainX + 4, ry, mainX + 6, ry + ROW_H + 2, UEFI_ACCENT);
+                    g.fill(mainX + 4, ry, mainX + 6, ry + ROW_H + 2, UEFI.get().accent());
                 }
-                final int dot = e.kind() == FirmwareStatePayload.KIND_DISK ? (e.bootable() ? UEFI_OK : UEFI_DIM)
-                        : (e.bootable() ? UEFI_AMBER : UEFI_DIM);
+                final int dot = e.kind() == FirmwareStatePayload.KIND_DISK
+                        ? (e.bootable() ? UEFI.get().ok() : UEFI.get().dim())
+                        : (e.bootable() ? UEFI.get().amber() : UEFI.get().dim());
                 g.fill(mainX + 10, ry + 4, mainX + 15, ry + 9, dot);
                 final String first = page == PAGE_ORDER && state.bootSlot() == e.ref()
                         && e.kind() == FirmwareStatePayload.KIND_DISK ? "  " + of(FIRST_TAG) : "";
                 g.drawString(font, of(e.label()) + first, mainX + 20, ry + 3,
-                        e.bootable() || page == PAGE_ORDER ? UEFI_TEXT : UEFI_DIM, false);
+                        e.bootable() || page == PAGE_ORDER ? UEFI.get().text() : UEFI.get().dim(), false);
                 final String detail = entryWhere(e);
                 final String shown = font.width(detail) > mainW - 130 ? trimTo(detail, mainW - 130) : detail;
-                g.drawString(font, shown, mainX + mainW - font.width(shown) - 8, ry + 3, UEFI_DIM, false);
+                g.drawString(font, shown, mainX + mainW - font.width(shown) - 8, ry + 3, UEFI.get().dim(), false);
                 ry += ROW_H + 4;
             }
             final int by = top + panelH - 26;
             final String bootLabel = of(page == PAGE_ORDER ? SET_FIRST : BOOT);
             bootHit = new int[]{mainX + 8, by, 64, 18};
             g.fill(bootHit[0], bootHit[1], bootHit[0] + bootHit[2], bootHit[1] + bootHit[3],
-                    in(bootHit, mouseX, mouseY) ? UEFI_TEXT : UEFI_ACCENT);
-            drawCentered(g, bootLabel, bootHit[0] + bootHit[2] / 2, by + 5, 0xFF0B1018);
+                    in(bootHit, mouseX, mouseY) ? UEFI.get().text() : UEFI.get().accent());
+            drawCentered(g, bootLabel, bootHit[0] + bootHit[2] / 2, by + 5, UEFI.get().onAccent());
             installHit = new int[]{mainX + 80, by, 100, 18};
             g.fill(installHit[0], installHit[1], installHit[0] + installHit[2], installHit[1] + installHit[3],
-                    in(installHit, mouseX, mouseY) ? UEFI_TEXT : (hasInstaller() ? UEFI_ACCENT : UEFI_PH));
+                    in(installHit, mouseX, mouseY) ? UEFI.get().text()
+                            : (hasInstaller() ? UEFI.get().accent() : UEFI.get().placeholder()));
             drawCentered(g, of(INSTALL_TO_DISK), installHit[0] + installHit[2] / 2, by + 5,
-                    hasInstaller() || in(installHit, mouseX, mouseY) ? 0xFF0B1018 : UEFI_DIM);
+                    hasInstaller() || in(installHit, mouseX, mouseY) ? UEFI.get().onAccent() : UEFI.get().dim());
         }
-        g.fill(x, y + H - 16, x + W, y + H, UEFI_HEAD);
+        g.fill(x, y + H - 16, x + W, y + H, UEFI.get().head());
         final String hint = hintText();
-        g.drawString(font, hint, x + W - font.width(hint) - 10, y + H - 12, UEFI_DIM, false);
+        g.drawString(font, hint, x + W - font.width(hint) - 10, y + H - 12, UEFI.get().dim(), false);
     }
 
     private void panel(final GuiGraphics g, final int x, final int y, final int w, final int h, final String header) {
-        g.fill(x, y, x + w, y + h, UEFI_PANEL);
-        g.fill(x, y, x + w, y + 14, UEFI_PH);
-        g.fill(x, y, x + 3, y + 14, UEFI_ACCENT);
-        g.drawString(font, header, x + 7, y + 3, UEFI_TEXT, false);
+        g.fill(x, y, x + w, y + h, UEFI.get().panel());
+        g.fill(x, y, x + w, y + 14, UEFI.get().placeholder());
+        g.fill(x, y, x + 3, y + 14, UEFI.get().accent());
+        g.drawString(font, header, x + 7, y + 3, UEFI.get().text(), false);
     }
 
     // Shared helpers
@@ -869,7 +874,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                         : Integer.toString(raid.drives()), x + 110, ty, valueColor, false);
         ty += lh;
         g.drawString(font, of(LABEL_ARRAY_STATE), x, ty, keyColor, false);
-        g.drawString(font, health, x + 110, ty, degraded ? 0xFFF0B23A : valueColor, false);
+        g.drawString(font, health, x + 110, ty, degraded ? STORAGE.get().degraded() : valueColor, false);
         ty += lh + 4;
         g.drawString(font, of(ARRAY_MODE), x, ty, dimColor, false);
         ty += lh;
@@ -891,7 +896,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             };
             final String detail = !usable ? of(NEEDS_DRIVES.with(mode.minDrives()))
                     : of(CAPACITY_ITEMS.with(capacity)) + strength;
-            g.drawString(font, label, x, ty, current ? 0xFF39D6C4 : usable ? valueColor : dimColor, false);
+            g.drawString(font, label, x, ty, current ? STORAGE.get().current() : usable ? valueColor : dimColor, false);
             g.drawString(font, detail, x + 130, ty, dimColor, false);
             ty += lh;
             row++;
@@ -1058,5 +1063,29 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    /** Vintage's green phosphor: the ground, its text, the bright lines and the dim ones. */
+    private record Cli(int ground, int text, int bright, int dim) {
+    }
+
+    /**
+     * Legacy's classic blue setup: the ground, the title bar, the frame, the text, a value, what wants the eye, the
+     * quiet lines, and the bar of the chosen line.
+     */
+    private record Bios(int ground, int title, int border, int text, int value, int amber, int dim, int selection) {
+    }
+
+    /**
+     * Standard's graphical boot manager: the ground, the head bar, a panel, a placeholder, the text, the keys, the
+     * accent, what wants the eye, what is fine, the quiet lines, the chosen row, and the words written on the
+     * accent.
+     */
+    private record Uefi(int ground, int head, int panel, int placeholder, int text, int key, int accent, int amber,
+                        int ok, int dim, int selection, int onAccent) {
+    }
+
+    /** The storage controller's page in any look: an array that has lost a drive, and the mode in force. */
+    private record Storage(int degraded, int current) {
     }
 }

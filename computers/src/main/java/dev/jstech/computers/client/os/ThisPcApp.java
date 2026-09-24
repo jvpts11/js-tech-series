@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.layout.ThisPcLayout;
 import dev.jstech.computers.operation.payload.EjectMediaPayload;
 import dev.jstech.computers.operation.payload.InstallFromMediaPayload;
@@ -33,6 +34,9 @@ import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -60,14 +64,18 @@ import java.util.function.Supplier;
  * <p>The card and the page are components; the page is rebuilt from each listing the server sends,
  * a row per drive with its own buttons, and scrolls as one.
  */
+@PaletteHolder
 public final class ThisPcApp implements IDesktopApp {
 
-    /** The usage bar's segments: the system, the items stored, and the files/programs. */
-    private static final int SEG_OS = 0xFF3F77C8;
-    private static final int SEG_STORE = 0xFF5B9E5B;
-    private static final int SEG_FILES = 0xFFD79A3A;
-    private static final int GREEN = 0xFF2E7D32;
-    private static final int AMBER = 0xFFB35C00;
+    /** This PC's own colours, {@code jsc:app/this_pc}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/this_pc",
+            new Colours(0xFF3F77C8, 0xFF5B9E5B, 0xFFD79A3A, 0xFF2E7D32, 0xFFB35C00, 0xFFD7DBE4,
+                    0xFF2E3238, 0xFF1C1F24, 0xFF39D6C4, 0xFFEF6A5A, 0xFF3D434C, 0xFF1C1F24,
+                    0xFF8B93A4, 0xFFC7CDDA, 0xFFEDF0F6, 0xFF49E07A, 0xFF5A6273,
+                    0xFFEEF0F4, 0xFFC2C7D4,
+                    0xFF2E3238, 0xFFB8BEC8, 0xFF1C1F24,
+                    0xFF1C2438, 0xFFB8BEC8, 0xFF0B1220,
+                    0xFFB9C0CE, 0xFFEDF0F6, 0xFF6E7686));
     private static final int RENAME_W = 34;
     private static final int NAME_MAX = 32;
     private static final long DOUBLE_CLICK_MS = 300L;
@@ -204,7 +212,7 @@ public final class ThisPcApp implements IDesktopApp {
                             : ThisPcTexts.SYSTEM_IS.with(prettyOs(disk.osPath())));
                     final int bw = font.width(badge);
                     if (font.width(label) + 6 + bw <= maxW) {
-                        g.drawString(font, badge, tx + maxW - bw, cy + 2, GREEN, false);
+                        g.drawString(font, badge, tx + maxW - bw, cy + 2, PALETTE.get().good(), false);
                     }
                 }
                 /*
@@ -212,10 +220,12 @@ public final class ThisPcApp implements IDesktopApp {
                  * comes with "of what": the system, the items stored on it, or its files.
                  */
                 final int barW = maxW - 70;
-                g.fill(tx, cy + 12, tx + barW, cy + 15, 0xFFD7DBE4);
+                final Colours c = PALETTE.get();
+                g.fill(tx, cy + 12, tx + barW, cy + 15, c.barTrack());
                 final long cap = Math.max(1, disk.capItems());
                 int segX = tx;
-                for (final long[] part : new long[][] {{disk.osItems(), SEG_OS}, {disk.storeItems(), SEG_STORE}, {disk.fileItems(), SEG_FILES}}) {
+                for (final long[] part : new long[][] {{disk.osItems(), c.segmentSystem()},
+                    {disk.storeItems(), c.segmentStored()}, {disk.fileItems(), c.segmentFiles()}}) {
                     final int w = (int) Math.min(tx + barW - segX, barW * part[0] / cap);
                     if (w > 0) {
                         g.fill(segX, cy + 12, segX + w, cy + 15, (int) part[1]);
@@ -236,11 +246,11 @@ public final class ThisPcApp implements IDesktopApp {
                             media.blocksAway()));
                 } else if (media.kind().equals(MediaKind.OS_INSTALL.serializedName())) {
                     detail = installLine(media, ThisPcTexts.INSTALLS, true);
-                    detailColor = AMBER;
+                    detailColor = PALETTE.get().warn();
                 } else if (media.kind().equals(MediaKind.PROGRAM_INSTALL.serializedName())) {
                     detail = installLine(media, media.installable() ? ThisPcTexts.INSTALLS : ThisPcTexts.INSTALLED,
                             false);
-                    detailColor = media.installable() ? GREEN : ctx.skin().dim();
+                    detailColor = media.installable() ? PALETTE.get().good() : ctx.skin().dim();
                 } else {
                     detail = GameText.resolve(ThisPcTexts.DATA_MEDIUM.with(media.stored()));
                 }
@@ -309,7 +319,8 @@ public final class ThisPcApp implements IDesktopApp {
 
         nameLabel = root.add(new Label(this::machineName));
         kindLabel = root.add(new Label(this::kindLine, Label.Tone.DIM));
-        systemLabel = root.add(new Label(this::systemLine).setColor(() -> data.machine().osLabel().isEmpty() ? AMBER : 0)
+        systemLabel = root.add(new Label(this::systemLine)
+                .setColor(() -> data.machine().osLabel().isEmpty() ? PALETTE.get().warn() : 0)
                 .setTone(Label.Tone.DIM));
         renameButton = root.add(new Button(GameText.resolve(ThisPcTexts.RENAME), this::startRename));
         root.add(page);
@@ -322,7 +333,8 @@ public final class ThisPcApp implements IDesktopApp {
             final int line = i;
             hwKeys.add(page.add(new Label(GameText.resolve(keys[i]), Label.Tone.DIM)));
             hwValues.add(page.add(new Label(() -> GameText.resolve(hardwareValue(line)))
-                    .setColor(() -> line == keys.length - 1 ? (data.machine().buildValid() ? GREEN : AMBER) : 0)));
+                    .setColor(() -> line == keys.length - 1
+                            ? (data.machine().buildValid() ? PALETTE.get().good() : PALETTE.get().warn()) : 0)));
         }
         programsHeader = page.add(new SectionHeader(() -> GameText.resolve(ThisPcTexts.INSTALLED_PROGRAMS.with(
                 data.installedPrograms().size()))));
@@ -491,12 +503,13 @@ public final class ThisPcApp implements IDesktopApp {
         final ThisPcPayload.WireMachine m = data.machine();
         final int ix = x + 4;
         final int iy = y + 4;
-        g.fill(ix, iy, ix + ThisPcLayout.CARD_ICON_W, iy + ThisPcLayout.CARD_H - 8, 0xFF2E3238);
-        g.fill(ix + 2, iy + 2, ix + ThisPcLayout.CARD_ICON_W - 2, iy + 7, 0xFF1C1F24);
+        final Colours c = PALETTE.get();
+        g.fill(ix, iy, ix + ThisPcLayout.CARD_ICON_W, iy + ThisPcLayout.CARD_H - 8, c.towerBody());
+        g.fill(ix + 2, iy + 2, ix + ThisPcLayout.CARD_ICON_W - 2, iy + 7, c.towerBay());
         g.fill(ix + ThisPcLayout.CARD_ICON_W - 6, iy + 3, ix + ThisPcLayout.CARD_ICON_W - 4, iy + 5,
-                m.buildValid() ? 0xFF39D6C4 : 0xFFEF6A5A);
-        g.fill(ix + 3, iy + 10, ix + ThisPcLayout.CARD_ICON_W - 3, iy + ThisPcLayout.CARD_H - 11, 0xFF3D434C);
-        Draw.outline(g, ix, iy, ThisPcLayout.CARD_ICON_W, ThisPcLayout.CARD_H - 8, 0xFF1C1F24);
+                m.buildValid() ? c.powerOn() : c.powerOff());
+        g.fill(ix + 3, iy + 10, ix + ThisPcLayout.CARD_ICON_W - 3, iy + ThisPcLayout.CARD_H - 11, c.towerFace());
+        Draw.outline(g, ix, iy, ThisPcLayout.CARD_ICON_W, ThisPcLayout.CARD_H - 8, c.towerEdge());
         g.fill(x, page.y() - 1, x + width, page.y(), skin.edge());
 
         root.render(g, ctx);
@@ -600,33 +613,49 @@ public final class ThisPcApp implements IDesktopApp {
     }
 
     private static void drawDiskIcon(final GuiGraphics g, final int x, final int y) {
-        g.fill(x, y, x + 14, y + 10, 0xFF8B93A4);
-        g.fill(x + 1, y + 1, x + 13, y + 9, 0xFFC7CDDA);
-        g.fill(x + 2, y + 2, x + 12, y + 4, 0xFFEDF0F6);
-        g.fill(x + 9, y + 6, x + 11, y + 8, 0xFF49E07A);
-        Draw.outline(g, x, y, 14, 10, 0xFF5A6273);
+        final Colours c = PALETTE.get();
+        g.fill(x, y, x + 14, y + 10, c.diskFrame());
+        g.fill(x + 1, y + 1, x + 13, y + 9, c.diskFace());
+        g.fill(x + 2, y + 2, x + 12, y + 4, c.diskLight());
+        g.fill(x + 9, y + 6, x + 11, y + 8, c.diskLed());
+        Draw.outline(g, x, y, 14, 10, c.diskEdge());
     }
 
     private static void drawMediaIcon(final GuiGraphics g, final int x, final int y, final WireMedia m) {
+        final Colours c = PALETTE.get();
         if (!m.loaded()) {
-            g.fill(x + 2, y, x + 12, y + 10, 0xFFEEF0F4);
-            Draw.outline(g, x + 2, y, 10, 10, 0xFFC2C7D4);
+            g.fill(x + 2, y, x + 12, y + 10, c.emptyFace());
+            Draw.outline(g, x + 2, y, 10, 10, c.emptyEdge());
             return;
         }
         final MediaDriveType drive = MediaDriveType.find(m.drive());
         if (drive == MediaDriveType.DOCK_STATION) {
-            g.fill(x + 1, y + 1, x + 13, y + 9, 0xFF2E3238);
-            g.fill(x + 9, y + 3, x + 12, y + 7, 0xFFB8BEC8);
-            Draw.outline(g, x + 1, y + 1, 12, 8, 0xFF1C1F24);
+            g.fill(x + 1, y + 1, x + 13, y + 9, c.dockBody());
+            g.fill(x + 9, y + 3, x + 12, y + 7, c.dockLight());
+            Draw.outline(g, x + 1, y + 1, 12, 8, c.dockEdge());
         } else if (drive == MediaDriveType.FLOPPY_DRIVE) {
-            g.fill(x + 1, y, x + 13, y + 10, 0xFF1C2438);
-            g.fill(x + 4, y + 1, x + 10, y + 4, 0xFFB8BEC8);
-            Draw.outline(g, x + 1, y, 12, 10, 0xFF0B1220);
+            g.fill(x + 1, y, x + 13, y + 10, c.floppyBody());
+            g.fill(x + 4, y + 1, x + 10, y + 4, c.floppyShutter());
+            Draw.outline(g, x + 1, y, 12, 10, c.floppyEdge());
         } else {
-            g.fill(x + 2, y, x + 12, y + 10, 0xFFB9C0CE);
-            g.fill(x + 5, y + 3, x + 9, y + 7, 0xFFEDF0F6);
-            Draw.outline(g, x + 2, y, 10, 10, 0xFF6E7686);
+            g.fill(x + 2, y, x + 12, y + 10, c.discBody());
+            g.fill(x + 5, y + 3, x + 9, y + 7, c.discHub());
+            Draw.outline(g, x + 2, y, 10, 10, c.discEdge());
         }
+    }
+
+    /**
+     * This PC's colours: the three kinds of use on a disk's bar, what reads as fine and what as a warning, the bar's
+     * empty track, the machine's tower on the card, and the pictures of a disk, an empty drive, a dock, a floppy and
+     * a disc.
+     */
+    private record Colours(int segmentSystem, int segmentStored, int segmentFiles, int good, int warn, int barTrack,
+                           int towerBody, int towerBay, int powerOn, int powerOff, int towerFace, int towerEdge,
+                           int diskFrame, int diskFace, int diskLight, int diskLed, int diskEdge,
+                           int emptyFace, int emptyEdge,
+                           int dockBody, int dockLight, int dockEdge,
+                           int floppyBody, int floppyShutter, int floppyEdge,
+                           int discBody, int discHub, int discEdge) {
     }
 
     // inspection (client tests; points are content-local, i.e. relative to window.x()+4 / window.y()+18)

@@ -1,0 +1,11 @@
+{
+  "block": "#FF5A8CD8",
+  "ground": "#FF000000",
+  "maker": "#FFFFFFFF",
+  "message": "#FFFFFFFF",
+  "rule": "#A0FFFFFF",
+  "smallPrint": "#FF9AA4B2",
+  "trough": "#FF1B1B1B",
+  "troughEdge": "#FF454545",
+  "welcome": "#FFFFFFFF"
+}

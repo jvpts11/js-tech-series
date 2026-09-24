@@ -163,6 +163,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   `jsc:panel/*`, `jsc:launcher/*`), and the words on those panels and menus (Start, Apps, Menu, Activities, the
   Linux menus' places and categories, their search hints and session buttons) are text a language file can
   translate.
+- The firmware's setup, self-test, boot menus and install screen in each of their looks, the desktops' loading
+  screens, the systems' start and shutdown pictures, the monitor frames of each era, This PC, the terminal's
+  popups and its Maintenance tab, and the installer's own pages are palettes a resource pack can recolour
+  (`jsc:firmware/*`, `jsc:splash/*`, `jsc:boot/*`, `jsc:monitor/*`, `jsc:app/this_pc`, `jsc:terminal/*`,
+  `jsc:installer/page`).
 
 ### Fixed
 - Saving an IQL file from the Network Management Studio to a full disk no longer fails to send its answer: the

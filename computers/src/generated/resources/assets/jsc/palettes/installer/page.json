@@ -1,0 +1,14 @@
+{
+  "alarm": "#FFC42B1C",
+  "barTrough": "#FF000000",
+  "cardTrack": "#FFE3E5EE",
+  "columnRule": "#FFE3E5EE",
+  "dialog": "#FFFAFAFE",
+  "dialogDim": "#FF6B7488",
+  "dialogEdge": "#FFC0C4D2",
+  "dialogInk": "#FF202434",
+  "field": "#FFFFFFFF",
+  "fieldInk": "#FF202434",
+  "hoverWash": "#30FFFFFF",
+  "veil": "#99000000"
+}

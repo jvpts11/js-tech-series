@@ -70,6 +70,7 @@ import static dev.jstech.computers.client.InstallerScreenTexts.TO_QUIT;
 import static dev.jstech.computers.client.InstallerScreenTexts.TO_SET_UP;
 import static dev.jstech.computers.client.InstallerScreenTexts.WILL_BE_DELETED;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
@@ -80,6 +81,9 @@ import dev.jstech.computers.os.install.InstallerChrome;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.InstallerPage;
 import dev.jstech.computers.os.install.InstallerStyle;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
@@ -106,6 +110,7 @@ import java.util.List;
  *
  * <p>What the page looks like belongs to {@link InstallerFrames}; what it says belongs here.
  */
+@PaletteHolder
 public final class InstallerScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     private static final int W = MonitorGlass.WIDTH;
@@ -124,7 +129,10 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     private static final int COLUMN_GAP = 6;
 
     /** The wash laid over the button under the cursor: enough to read as lit, not enough to change its style. */
-    private static final int HOVER_WASH = 0x30FFFFFF;
+    /** The colours the pages draw inside their frame, {@code jsc:installer/page}. */
+    private static final Palette<PageColours> PAGE = Palettes.declare(JsComputers.MODID, "installer/page",
+            new PageColours(0x30FFFFFF, 0xFFE3E5EE, 0xFFFFFFFF, 0xFF202434, 0xFF000000, 0xFFE3E5EE,
+                    0x99000000, 0xFFFAFAFE, 0xFFC42B1C, 0xFFC0C4D2, 0xFF202434, 0xFF6B7488));
 
     /** How long the caret in a name field spends showing, and then hidden, in ticks. */
     private static final int CARET_TICKS = 10;
@@ -423,7 +431,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     private void markHovered(final GuiGraphics g, final int mouseX, final int mouseY) {
         for (final int[] box : new int[][]{this.nextButton, this.backButton, this.cancelButton, this.eraseButton}) {
             if (hit(box, mouseX, mouseY)) {
-                g.fill(box[0], box[1], box[0] + box[2], box[1] + box[3], HOVER_WASH);
+                g.fill(box[0], box[1], box[0] + box[2], box[1] + box[3], PAGE.get().hoverWash());
                 return;
             }
         }
@@ -741,7 +749,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             right(g, of(COLUMN_SIZE), f.x() + f.w() - SIZE_COLUMN, ty, p.dim());
             right(g, of(COLUMN_FREE), f.x() + f.w() - FREE_COLUMN, ty, p.dim());
             right(g, of(COLUMN_HOLDS), f.x() + f.w() - 4, ty, p.dim());
-            g.fill(f.x(), ty + 9, f.x() + f.w(), ty + 10, 0xFFE3E5EE);
+            g.fill(f.x(), ty + 9, f.x() + f.w(), ty + 10, PAGE.get().columnRule());
             ty += 13;
         }
         this.listAt(f.x(), ty, f.w(), this.flow.disks().size());
@@ -804,9 +812,9 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         final int fx = f.x();
         final int fy = ty + step + 2;
         final int fw = Math.min(150, f.w());
-        g.fill(fx, fy, fx + fw, fy + 13, 0xFFFFFFFF);
+        g.fill(fx, fy, fx + fw, fy + 13, PAGE.get().field());
         g.fill(fx, fy + 12, fx + fw, fy + 13, p.accent());
-        this.say(g, this.tailThatFits(fw - 6) + this.caret(), fx + 3, fy + 3, 0xFF202434);
+        this.say(g, this.tailThatFits(fw - 6) + this.caret(), fx + 3, fy + 3, PAGE.get().fieldInk());
     }
 
     /**
@@ -945,7 +953,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         /* The bar itself, sunk into the page the way those installers drew one. */
         final int barH = 9;
         g.fill(f.x() - 1, ty - 1, f.x() + f.w() + 1, ty + barH + 1, p.dim());
-        g.fill(f.x(), ty, f.x() + f.w(), ty + barH, 0xFF000000);
+        g.fill(f.x(), ty, f.x() + f.w(), ty + barH, PAGE.get().barTrough());
         g.fill(f.x(), ty, f.x() + f.w() * this.flow.permille(this.ticksDone) / 1000, ty + barH, p.accent());
         ty += barH + 6;
         this.say(g, of(COMPLETE.with(percent)), f.x(), ty, p.text());
@@ -998,7 +1006,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             ty += ROW;
         }
         ty += 8;
-        g.fill(f.x(), ty, f.x() + f.w(), ty + 6, 0xFFE3E5EE);
+        g.fill(f.x(), ty, f.x() + f.w(), ty + 6, PAGE.get().cardTrack());
         g.fill(f.x(), ty, f.x() + f.w() * this.flow.permille(this.ticksDone) / 1000, ty + 6, p.accent());
         /*
          * Two lines rather than one that runs off the card. The sentence is long, the card is not wide, and a
@@ -1069,19 +1077,30 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         final int bh = 74;
         final int bx = x + (W - bw) / 2;
         final int by = y + (H - bh) / 2;
-        g.fill(x, y, x + W, y + H, 0x99000000);
-        g.fill(bx, by, bx + bw, by + bh, 0xFFFAFAFE);
-        g.fill(bx, by, bx + bw, by + 1, 0xFFC42B1C);
-        g.fill(bx, by + bh - 1, bx + bw, by + bh, 0xFFC0C4D2);
-        g.fill(bx, by, bx + 1, by + bh, 0xFFC0C4D2);
-        g.fill(bx + bw - 1, by, bx + bw, by + bh, 0xFFC0C4D2);
-        g.drawString(font, of(ERASE_ASK.with(disk.slot())), bx + 10, by + 10, 0xFF202434, false);
+        final PageColours c = PAGE.get();
+        g.fill(x, y, x + W, y + H, c.veil());
+        g.fill(bx, by, bx + bw, by + bh, c.dialog());
+        g.fill(bx, by, bx + bw, by + 1, c.alarm());
+        g.fill(bx, by + bh - 1, bx + bw, by + bh, c.dialogEdge());
+        g.fill(bx, by, bx + 1, by + bh, c.dialogEdge());
+        g.fill(bx + bw - 1, by, bx + bw, by + bh, c.dialogEdge());
+        g.drawString(font, of(ERASE_ASK.with(disk.slot())), bx + 10, by + 10, c.dialogInk(), false);
         g.drawString(font, of(disk.hasSystem() ? AND_EVERY_FILE.with(disk.holds()) : EVERY_FILE.text()),
-                bx + 10, by + 26, 0xFF202434, false);
+                bx + 10, by + 26, c.dialogInk(), false);
         g.drawString(font, of(WILL_BE_DELETED.with(InstallerFrames.clip(font, disk.label(), bw - 20))),
-                bx + 10, by + 36, 0xFF202434, false);
-        g.drawString(font, of(CANNOT_UNDO), bx + 10, by + 46, 0xFF6B7488, false);
-        g.drawString(font, of(ERASE_KEYS), bx + 10, by + 60, 0xFFC42B1C, false);
+                bx + 10, by + 36, c.dialogInk(), false);
+        g.drawString(font, of(CANNOT_UNDO), bx + 10, by + 46, c.dialogDim(), false);
+        g.drawString(font, of(ERASE_KEYS), bx + 10, by + 60, c.alarm(), false);
+    }
+
+    /**
+     * What the pages draw inside their frame: the wash over a hovered choice, the rule under the disk table's
+     * heads, the name field and its ink, the trough of a sunken bar and the track of a flat one, and the question
+     * before a disk is erased (the veil behind it, its paper, the alarm along its top and on its keys, its edge,
+     * its words and its quieter line).
+     */
+    private record PageColours(int hoverWash, int columnRule, int field, int fieldInk, int barTrough, int cardTrack,
+                               int veil, int dialog, int alarm, int dialogEdge, int dialogInk, int dialogDim) {
     }
 
     private void right(final GuiGraphics g, final String text, final int rightEdge, final int y, final int colour) {

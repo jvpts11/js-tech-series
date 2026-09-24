@@ -29,6 +29,7 @@ import static dev.jstech.computers.client.FirmwareScreenTexts.THE_MEDIUM;
 import static dev.jstech.computers.client.FirmwareScreenTexts.of;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
@@ -37,6 +38,9 @@ import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.core.gui.Phosphor;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
@@ -61,6 +65,7 @@ import java.util.List;
  * <p>DEL at any point enters the firmware setup instead. When the sequence ends the client reports
  * {@link PostCompletePayload} and the server swaps this screen for whatever boots.
  */
+@PaletteHolder
 public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     private static final int W = MonitorGlass.WIDTH;
@@ -68,6 +73,21 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
 
     /** How long a self-test is drawn for when the machine did not say, which only a stale packet leaves. */
     private static final int FALLBACK_TICKS = 70;
+
+    /*
+     * The self-test in each firmware's look: {@code jsc:firmware/post_cli} (written in greys the Vintage tube's
+     * phosphor lights), {@code jsc:firmware/post_bios} and {@code jsc:firmware/post_uefi}. A Legacy machine posts on
+     * black with the maker's badge, the way the boards of that time did; only its setup was ever blue.
+     */
+    private static final Palette<Post> POST_CLI = Palettes.declare(JsComputers.MODID, "firmware/post_cli",
+            new Post(0xFF000000, 0xFFB8B8B8, 0xFF707070, 0xFFE8E8E8, 0xFFA8B2C6, 0xFF2A2D3E, 0xFF2A2D3E,
+                    0xFF3A4060, 0xFFF0B23A));
+    private static final Palette<Post> POST_BIOS = Palettes.declare(JsComputers.MODID, "firmware/post_bios",
+            new Post(0xFF000000, 0xFFBDBDBD, 0xFF8A8A8A, 0xFFFFFFFF, 0xFFA8B2C6, 0xFF2A2D3E, 0xFF2A2D3E,
+                    0xFF3A4060, 0xFFF0B23A));
+    private static final Palette<Post> POST_UEFI = Palettes.declare(JsComputers.MODID, "firmware/post_uefi",
+            new Post(0xFF10121C, 0xFFE6ECF6, 0xFF8090A8, 0xFF5FA8D3, 0xFFA8B2C6, 0xFF2A2D3E, 0xFF2A2D3E,
+                    0xFF3A4060, 0xFFF0B23A));
 
     /** The self-test the machine last reported, kept until the session that shows it is built. */
     @Nullable
@@ -237,29 +257,17 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
          * A Legacy machine posts on black with the maker's badge, the way the boards of that time did; the
          * setup it opens with DEL is the blue one. The two are different screens and only setup was ever blue.
          */
-        final int bg = switch (kind) {
-            case CLI_BIOS, BLUE_BIOS -> 0xFF000000;
-            case UEFI -> 0xFF10121C;
-        };
+        final Post look = post();
+        final int bg = look.ground();
         /*
          * The Vintage machine posts on a green-phosphor tube, which has exactly one colour: its text is
-         * that green, brighter or dimmer, never the grey-white of a later monitor.
+         * that green, brighter or dimmer, never the grey-white of a later monitor. Its palette is written in
+         * greys, and the phosphor lights them.
          */
-        final int text = switch (kind) {
-            case CLI_BIOS -> Phosphor.green(0xFFB8B8B8);
-            case BLUE_BIOS -> 0xFFBDBDBD;
-            case UEFI -> 0xFFE6ECF6;
-        };
-        final int dim = switch (kind) {
-            case CLI_BIOS -> Phosphor.green(0xFF707070);
-            case BLUE_BIOS -> 0xFF8A8A8A;
-            case UEFI -> 0xFF8090A8;
-        };
-        final int accent = switch (kind) {
-            case CLI_BIOS -> Phosphor.green(0xFFE8E8E8);
-            case BLUE_BIOS -> 0xFFFFFFFF;
-            case UEFI -> 0xFF5FA8D3;
-        };
+        final boolean tube = kind == FirmwareKind.CLI_BIOS;
+        final int text = tube ? Phosphor.green(look.text()) : look.text();
+        final int dim = tube ? Phosphor.green(look.dim()) : look.dim();
+        final int accent = tube ? Phosphor.green(look.accent()) : look.accent();
         g.fill(x, y, x + W, y + H, bg);
 
         if (kind == FirmwareKind.UEFI) {
@@ -418,11 +426,11 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
          */
         final int cx = x + W / 2;
         SplashLogos.draw(g, SplashLogos.JSC, cx, y + H / 2 - 46);
-        wallCentered(g, machineTitle(), cx, y + H / 2 + 8, 0xFFA8B2C6);
+        wallCentered(g, machineTitle(), cx, y + H / 2 + 8, post().subtitle());
         final int barW = 120;
         final int bx = cx - barW / 2;
         final int by = y + H / 2 + 24;
-        g.fill(bx, by, bx + barW, by + 3, 0xFF2A2D3E);
+        g.fill(bx, by, bx + barW, by + 3, post().track());
         final int fill = Math.min(barW, barW * ticks / postTicks);
         g.fill(bx, by, bx + fill, by + 3, accent);
         if (completed && bootingFrom().isEmpty()) {
@@ -461,16 +469,17 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         final int boxH = 16 + Math.max(1, listed) * WALL_ROW + 22;
         final int bx = x + (W - boxW) / 2;
         final int by = y + (H - boxH) / 2;
-        g.fill(bx, by, bx + boxW, by + boxH, 0xFF2A2D3E);
-        g.fill(bx, by, bx + boxW, by + 14, 0xFF3A4060);
-        g.fill(bx, by, bx + 2, by + 14, 0xFFF0B23A);
+        final Post look = post();
+        g.fill(bx, by, bx + boxW, by + boxH, look.box());
+        g.fill(bx, by, bx + boxW, by + 14, look.boxHead());
+        g.fill(bx, by, bx + 2, by + 14, look.alarm());
         /*
          * What is wrong, when the machine knows: "no bootable device" is true of an empty computer and a lie
          * about a wrecked one, whose device is right there and whose system will not start. A player who
          * deleted a file needs to be told which file, not that their disk has gone.
          */
         wall(g, this.complaint.isEmpty() ? of(NO_BOOTABLE) : this.complaint,
-                bx + 7, by + 4, 0xFFF0B23A);
+                bx + 7, by + 4, look.alarm());
         int ly = by + 18;
         if (entries.isEmpty()) {
             wall(g, of(NOTHING_ATTACHED), bx + 8, ly, dim);
@@ -485,5 +494,23 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
             ly += WALL_ROW;
         }
         wall(g, of(INSERT_MEDIA), bx + 8, ly + 4, dim);
+    }
+
+    /* This machine's self-test colours, by the firmware it posts with. */
+    private Post post() {
+        return switch (kind) {
+            case CLI_BIOS -> POST_CLI.get();
+            case BLUE_BIOS -> POST_BIOS.get();
+            case UEFI -> POST_UEFI.get();
+        };
+    }
+
+    /**
+     * A self-test's colours: the ground, the text, the quiet lines and the accent (the tube's are greys its phosphor
+     * lights), the machine's name under the mark and the bar's track, and the box that says nothing will boot
+     * with its head and the alarm along it.
+     */
+    private record Post(int ground, int text, int dim, int accent, int subtitle, int track, int box, int boxHead,
+                        int alarm) {
     }
 }

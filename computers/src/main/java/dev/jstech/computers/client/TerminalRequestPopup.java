@@ -124,12 +124,13 @@ final class TerminalRequestPopup {
         g.pose().translate(0, 0, 350);
         final int left = screen.left();
         final int top = screen.top();
-        g.fill(left, top, left + ComputerTerminalLayout.WIDTH, top + ComputerTerminalLayout.HEIGHT, 0xE0070A0F);
+        final TerminalPopupPalette.Colours c = TerminalPopupPalette.get();
+        g.fill(left, top, left + ComputerTerminalLayout.WIDTH, top + ComputerTerminalLayout.HEIGHT, c.veil());
         final int px = x();
         final int py = y();
         final int ph = height();
         g.fill(px - 1, py - 1, px + POPUP_W + 1, py + ph + 1, JsTechTheme.accent());
-        g.fill(px, py, px + POPUP_W, py + ph, 0xFF0F151C);
+        g.fill(px, py, px + POPUP_W, py + ph, c.panel());
 
         // Header: icon, name and what there is, plus the toggle that opens the question out.
         screen.drawDataIcon(g, picked.key(), -1L, px + 8, py + 5);
@@ -144,23 +145,23 @@ final class TerminalRequestPopup {
         if (!this.local) {
             final boolean advHover = inRect(mouseX, mouseY, px + POPUP_W - 44, py + 5, 36, 12);
             g.fill(px + POPUP_W - 44, py + 5, px + POPUP_W - 8, py + 17,
-                    this.advanced ? JsTechTheme.accent() : (advHover ? 0xFF24323C : 0xFF1A222B));
+                    this.advanced ? JsTechTheme.accent() : (advHover ? c.controlHover() : c.control()));
             g.drawCenteredString(screen.tabFont(), GameText.resolve(TerminalGridTexts.ADVANCED), px + POPUP_W - 26,
-                    py + 7, this.advanced ? 0xFF0F151C : JsTechTheme.dim());
+                    py + 7, this.advanced ? c.onAccent() : JsTechTheme.dim());
         }
 
         // Quantity: the field, drawn here so it sits on the panel, and the button that asks for all of it.
         g.fill(px + 7, py + 29, px + 127, py + 45, JsTechTheme.track());
         this.qty.render(g, mouseX, mouseY, partialTick);
         final boolean maxHover = inRect(mouseX, mouseY, px + POPUP_W - 58, py + 30, 50, 14);
-        g.fill(px + POPUP_W - 58, py + 30, px + POPUP_W - 8, py + 44, maxHover ? 0xFF2BB3A4 : 0xFF1F9488);
+        g.fill(px + POPUP_W - 58, py + 30, px + POPUP_W - 8, py + 44, maxHover ? c.actionHover() : c.action());
         g.drawCenteredString(screen.tabFont(), GameText.resolve(TerminalGridTexts.MAX), px + POPUP_W - 33, py + 33,
-                0xFFFFFFFF);
+                c.actionInk());
 
         for (int i = 0; i < STEP_LABELS.length; i++) {
             final int bx = px + 8 + i * 23;
             final boolean hover = inRect(mouseX, mouseY, bx, py + 48, 22, 14);
-            g.fill(bx, py + 48, bx + 22, py + 62, hover ? 0xFF24323C : 0xFF1A222B);
+            g.fill(bx, py + 48, bx + 22, py + 62, hover ? c.controlHover() : c.control());
             g.drawCenteredString(screen.tabFont(), STEP_LABELS[i], bx + 11, py + 51,
                     STEP_AMOUNTS[i] > 0 ? JsTechTheme.accent() : JsTechTheme.amber());
         }
@@ -384,8 +385,8 @@ final class TerminalRequestPopup {
             final ServerBreakdownPayload.ServerHolding s = servers.get(i);
             final int ry = py + 78 + i * 12;
             final boolean on = !this.deselectedServers.contains(s.key());
-            g.fill(px + 8, ry, px + 18, ry + 10, on ? JsTechTheme.accent() : 0xFF2A3340);
-            g.fill(px + 9, ry + 1, px + 17, ry + 9, on ? JsTechTheme.accent() : 0xFF11161D);
+            g.fill(px + 8, ry, px + 18, ry + 10, on ? JsTechTheme.accent() : TerminalPopupPalette.get().checkEdge());
+            g.fill(px + 9, ry + 1, px + 17, ry + 9, on ? JsTechTheme.accent() : TerminalPopupPalette.get().checkFill());
             g.drawString(screen.tabFont(), screen.tabFont().plainSubstrByWidth(s.label(), 120), px + 22,
                     ry + 1, on ? JsTechTheme.text() : JsTechTheme.dim(), false);
             final String c = ComputerTerminalScreen.fmt(s.count());
@@ -410,9 +411,10 @@ final class TerminalRequestPopup {
                     comp.get(Math.floorMod(this.destServerIndex, comp.size()));
             final boolean lh = inRect(mouseX, mouseY, px + 8, py + 152, 14, 14);
             final boolean rh = inRect(mouseX, mouseY, px + POPUP_W - 22, py + 152, 14, 14);
-            g.fill(px + 8, py + 152, px + 22, py + 166, lh ? 0xFF24323C : 0xFF1A222B);
+            final TerminalPopupPalette.Colours c = TerminalPopupPalette.get();
+            g.fill(px + 8, py + 152, px + 22, py + 166, lh ? c.controlHover() : c.control());
             g.drawCenteredString(screen.tabFont(), "<", px + 15, py + 155, JsTechTheme.accent());
-            g.fill(px + POPUP_W - 22, py + 152, px + POPUP_W - 8, py + 166, rh ? 0xFF24323C : 0xFF1A222B);
+            g.fill(px + POPUP_W - 22, py + 152, px + POPUP_W - 8, py + 166, rh ? c.controlHover() : c.control());
             g.drawCenteredString(screen.tabFont(), ">", px + POPUP_W - 15, py + 155, JsTechTheme.accent());
             final String text = screen.tabFont().plainSubstrByWidth(GameText.resolve(
                     TerminalGridTexts.WITH_FREE.with(target.name(), ComputerTerminalScreen.fmt(target.free()))),
@@ -426,8 +428,9 @@ final class TerminalRequestPopup {
     private void actionButton(final GuiGraphics g, final int mouseX, final int mouseY,
                               final int x, final int y, final int w, final String label) {
         final boolean hover = inRect(mouseX, mouseY, x, y, w, 16);
-        g.fill(x, y, x + w, y + 16, hover ? 0xFF2BB3A4 : 0xFF1F9488);
-        g.drawCenteredString(screen.tabFont(), label, x + w / 2, y + 4, 0xFFFFFFFF);
+        final TerminalPopupPalette.Colours c = TerminalPopupPalette.get();
+        g.fill(x, y, x + w, y + 16, hover ? c.actionHover() : c.action());
+        g.drawCenteredString(screen.tabFont(), label, x + w / 2, y + 4, c.actionInk());
     }
 
     private static boolean inRect(final double mx, final double my, final int x, final int y,

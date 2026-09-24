@@ -7,11 +7,15 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.RequestFirmwarePayload;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.core.gui.Phosphor;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
@@ -35,10 +39,22 @@ import org.jetbrains.annotations.Nullable;
  * cancels cleanly. Arch and Gentoo never come here, since their systems are put on the disk by hand
  * from a live shell, which is their whole point.
  */
+@PaletteHolder
 public final class OsInstallScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     private static final int W = 320;
     private static final int H = 176;
+
+    /* The installer in each firmware's look; the Vintage one is written in greys its phosphor lights. */
+    private static final Palette<Look> CLI = Palettes.declare(JsComputers.MODID, "firmware/install_cli",
+            new Look(0xFF020602, 0xFF141414, 0xFF3A3A3A, 0xFFBEBEBE, 0xFFE8E8E8, 0xFF6A6A6A, 0xFF63C363,
+                    0xFF1E1E1E));
+    private static final Palette<Look> BIOS = Palettes.declare(JsComputers.MODID, "firmware/install_bios",
+            new Look(0xFF06217A, 0xFF0A2C9E, 0xFF6E8BE0, 0xFFD6DEF8, 0xFFFFFFFF, 0xFF9AA9DE, 0xFF9BE29B,
+                    0xFF0A1E5E));
+    private static final Palette<Look> UEFI = Palettes.declare(JsComputers.MODID, "firmware/install_uefi",
+            new Look(0xFF10151B, 0xFF19212B, 0xFF39434F, 0xFFCDD6E2, 0xFF39D6C4, 0xFF7D8A9C, 0xFF5FE07A,
+                    0xFF161D25));
     /** How long the bar is drawn over until the machine says otherwise, which is only the moment before it does. */
     private static final int WORK_TICKS = 70;
 
@@ -215,7 +231,7 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
     protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
         final int x = left();
         final int y = top();
-        final Palette p = Palette.of(kind);
+        final Look p = Look.of(kind);
 
         g.fill(x, y, x + W, y + H, p.back);
         g.fill(x, y, x + W, y + 1, p.edge);
@@ -281,14 +297,14 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
         }
     }
 
-    private void row(final GuiGraphics g, final int x, final int y, final Palette p,
+    private void row(final GuiGraphics g, final int x, final int y, final Look p,
                      final String key, final String value) {
         g.drawString(font, key, x + 10, y, p.dim, false);
         g.drawString(font, value, x + 90, y, p.text, false);
     }
 
     private int[] button(final GuiGraphics g, final int bx, final int by, final int bw, final int bh,
-                         final String label, final Palette p, final boolean strong,
+                         final String label, final Look p, final boolean strong,
                          final int mouseX, final int mouseY) {
         final boolean hovered = mouseX >= bx && mouseX < bx + bw && mouseY >= by && mouseY < by + bh;
         g.fill(bx, by, bx + bw, by + bh, hovered ? p.bar : p.back);
@@ -311,21 +327,26 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
         return Phosphor.green(color);
     }
 
-    /** The three firmware looks, so the installer matches the machine it is installing onto. */
-    private record Palette(int back, int bar, int edge, int text, int bright, int dim, int ok, int trackBg) {
+    /**
+     * The three firmware looks, so the installer matches the machine it is installing onto: its ground, the bar of
+     * a hovered or chosen row, the edges, the text and the bright text, the quiet lines, what went right, and the
+     * progress bar's track.
+     */
+    private record Look(int back, int bar, int edge, int text, int bright, int dim, int ok, int trackBg) {
 
-        static Palette of(final FirmwareKind kind) {
+        static Look of(final FirmwareKind kind) {
             return switch (kind) {
                 /*
-                 * The Vintage tube is monochrome: every one of these is the phosphor, lit to the
-                 * brightness the colour reads at.
+                 * The Vintage tube is monochrome: every one of these but the ground is the phosphor, lit to the
+                 * brightness the grey in its palette reads at.
                  */
-                case CLI_BIOS -> new Palette(0xFF020602, green(0xFF141414), green(0xFF3A3A3A), green(0xFFBEBEBE),
-                        green(0xFFE8E8E8), green(0xFF6A6A6A), green(0xFF63C363), green(0xFF1E1E1E));
-                case BLUE_BIOS -> new Palette(0xFF06217A, 0xFF0A2C9E, 0xFF6E8BE0, 0xFFD6DEF8,
-                        0xFFFFFFFF, 0xFF9AA9DE, 0xFF9BE29B, 0xFF0A1E5E);
-                case UEFI -> new Palette(0xFF10151B, 0xFF19212B, 0xFF39434F, 0xFFCDD6E2,
-                        0xFF39D6C4, 0xFF7D8A9C, 0xFF5FE07A, 0xFF161D25);
+                case CLI_BIOS -> {
+                    final Look grey = CLI.get();
+                    yield new Look(grey.back(), green(grey.bar()), green(grey.edge()), green(grey.text()),
+                            green(grey.bright()), green(grey.dim()), green(grey.ok()), green(grey.trackBg()));
+                }
+                case BLUE_BIOS -> BIOS.get();
+                case UEFI -> UEFI.get();
             };
         }
     }

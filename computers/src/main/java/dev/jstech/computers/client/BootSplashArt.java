@@ -7,7 +7,11 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.boot.BootSplash;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -22,7 +26,10 @@ import net.minecraft.resources.ResourceLocation;
  * and the game's font gets the words right and the thing itself wrong.
  * They are the one thing about starting a machine that nobody reads: a system's picture is what tells you
  * which system it is before a single word of it is on the glass.
+ *
+ * <p>Their colours are the palettes {@code jsc:boot/<edition>}.
  */
+@PaletteHolder
 public final class BootSplashArt {
 
     /** The sky the oldest of the Frames editions came up on, clouds and all, and the size it is made at. */
@@ -36,31 +43,32 @@ public final class BootSplashArt {
     private static final int GROUND_W = 384;
     private static final int GROUND_H = 256;
 
-    /** The band along the foot of that sky, which the bar runs through. */
-    private static final int HORIZON = 0xFF000080;
+    /**
+     * The oldest edition: the band along the foot of its sky, the colours its bar ran through (darkest at the ends
+     * and brightest in the middle), its last screen in black with the one sentence in the amber those machines
+     * wrote it in, and the line it says on its way down.
+     */
+    private static final Palette<Classic> CLASSIC = Palettes.declare(JsComputers.MODID, "boot/frames_95",
+            new Classic(0xFF000080, 0xFF000080, 0xFF1084D0, 0xFF7FCBFF, 0xFF000000, 0xFFE8A33A, 0xFFFFFFFF));
 
-    /** The colours the oldest edition's bar ran through, darkest at the ends and brightest in the middle. */
-    private static final int RUN_DARK = 0xFF000080;
-    private static final int RUN_MID = 0xFF1084D0;
-    private static final int RUN_BRIGHT = 0xFF7FCBFF;
+    /**
+     * The next edition: its black start screen, the trough its blocks run through and the blocks, the rule and the
+     * line on its way down, its small print and maker's name, and the word it welcomes you with.
+     */
+    private static final Palette<Luna> LUNA = Palettes.declare(JsComputers.MODID, "boot/frames_xp",
+            new Luna(0xFF000000, 0xFF1B1B1B, 0xFF454545, 0xFF5A8CD8, 0xA0FFFFFF, 0xFFFFFFFF, 0xFF9AA4B2,
+                    0xFFFFFFFF, 0xFFFFFFFF));
+
+    /** The newest edition: the ground its firmware posts against, its greeting and the lines under it. */
+    private static final Palette<Modern> MODERN = Palettes.declare(JsComputers.MODID, "boot/frames_11",
+            new Modern(0xFF10121C, 0xFFFFFFFF, 0xFFA8B2C6, 0xFFE6ECF6));
 
     /** How wide one pass of that bar is, against the glass, and how long one pass takes in ticks. */
     private static final int RUN_SPAN = 4;
     private static final int RUN_TICKS = 32;
 
-    /** The last screen of that era: black, with the one sentence in the amber those machines wrote it in. */
-    private static final int SAFE_TEXT = 0xFFE8A33A;
-
     /** How much of a going-down that edition spent on that last screen, in hundredths. */
     private static final int SAFE_FROM = 72;
-
-    /** The ground the newest machines post against, which their system comes up on without a flash. */
-    private static final int MODERN_GROUND = 0xFF10121C;
-
-    /** The trough the newer edition's blocks run through, and the blocks themselves. */
-    private static final int TROUGH = 0xFF1B1B1B;
-    private static final int TROUGH_EDGE = 0xFF454545;
-    private static final int BLOCK = 0xFF5A8CD8;
 
     /** How far into the wait that edition put its word up, in hundredths. */
     private static final int WELCOME_FROM = 70;
@@ -111,6 +119,7 @@ public final class BootSplashArt {
     private static void frames95(final GuiGraphics g, final Font font, final int x, final int y, final int w,
                                  final int h, final int ticks, final int total, final boolean endsDark,
                                  final String message) {
+        final Classic c = CLASSIC.get();
         final boolean going = !message.isEmpty();
         /*
          * A machine of that age finished by switching its own power off, and the last thing on the glass was
@@ -119,9 +128,9 @@ public final class BootSplashArt {
          * straight back up never reached it.
          */
         if (going && endsDark && total > 0 && ticks >= total * SAFE_FROM / 100) {
-            g.fill(x, y, x + w, y + h, 0xFF000000);
+            g.fill(x, y, x + w, y + h, c.safeGround());
             g.drawCenteredString(font, GameText.resolve(MonitorScreenTexts.SAFE_TO_TURN_OFF),
-                    x + w / 2, y + h / 2 - 4, SAFE_TEXT);
+                    x + w / 2, y + h / 2 - 4, c.safeText());
             return;
         }
         ground(g, FRAMES_95_SKY, x, y, w, h);
@@ -135,12 +144,12 @@ public final class BootSplashArt {
          * one thing that screen deliberately did not have.
          */
         if (going) {
-            g.drawCenteredString(font, message, x + w / 2, y + h * 71 / 100, 0xFFFFFFFF);
+            g.drawCenteredString(font, message, x + w / 2, y + h * 71 / 100, c.message());
             return;
         }
         final int band = Math.max(6, h / 16);
-        g.fill(x, y + h - band, x + w, y + h, HORIZON);
-        runningBar(g, x, y + h - band + 1, w, band - 2, ticks);
+        g.fill(x, y + h - band, x + w, y + h, c.horizon());
+        runningBar(g, c, x, y + h - band + 1, w, band - 2, ticks);
     }
 
     /**
@@ -149,17 +158,17 @@ public final class BootSplashArt {
      * <p>Drawn as columns: every column takes its colour from where it falls inside the pass, and the whole
      * pass slides along by the tick, so the light runs through the dark and comes round again.
      */
-    private static void runningBar(final GuiGraphics g, final int x, final int y, final int w, final int h,
-                                   final int ticks) {
+    private static void runningBar(final GuiGraphics g, final Classic c, final int x, final int y, final int w,
+                                   final int h, final int ticks) {
         final int span = Math.max(8, w / RUN_SPAN);
         final int offset = ticks * span / RUN_TICKS % span;
         for (int column = 0; column < w; column++) {
             final float at = ((column + span - offset) % span) / (float) span;
             /* Dark at both ends of a pass and brightest in the middle, which is how that band was made. */
             final int shade = at < 0.5f
-                    ? blend(RUN_DARK, RUN_BRIGHT, at * 2.0f)
-                    : blend(RUN_BRIGHT, RUN_DARK, (at - 0.5f) * 2.0f);
-            final int toned = at < 0.25f || at > 0.75f ? blend(shade, RUN_MID, 0.35f) : shade;
+                    ? blend(c.runDark(), c.runBright(), at * 2.0f)
+                    : blend(c.runBright(), c.runDark(), (at - 0.5f) * 2.0f);
+            final int toned = at < 0.25f || at > 0.75f ? blend(shade, c.runMid(), 0.35f) : shade;
             g.fill(x + column, y, x + column + 1, y + h, toned);
         }
     }
@@ -172,12 +181,13 @@ public final class BootSplashArt {
          * to one side and the sentence beside it. It never went down on the black start screen, which is the
          * one screen of the three that only ever belonged to coming up.
          */
+        final Luna c = LUNA.get();
         if (!message.isEmpty()) {
             bands(g, x, y, w, h);
             final int logoY = y + h / 2 - SplashLogos.H / 2;
             SplashLogos.draw(g, SplashLogos.FRAMES_XP, x + w / 4 + 6, logoY);
-            g.fill(x + w * 53 / 100, y + h * 30 / 100, x + w * 53 / 100 + 1, y + h * 70 / 100, 0xA0FFFFFF);
-            g.drawString(font, message, x + w * 57 / 100, y + h / 2 - 4, 0xFFFFFFFF, false);
+            g.fill(x + w * 53 / 100, y + h * 30 / 100, x + w * 53 / 100 + 1, y + h * 70 / 100, c.rule());
+            g.drawString(font, message, x + w * 57 / 100, y + h / 2 - 4, c.message(), false);
             return;
         }
         /*
@@ -188,7 +198,7 @@ public final class BootSplashArt {
             welcome(g, font, x, y, w, h);
             return;
         }
-        g.fill(x, y, x + w, y + h, 0xFF000000);
+        g.fill(x, y, x + w, y + h, c.ground());
 
         final int logoY = y + h / 2 - SplashLogos.H - 4;
         SplashLogos.draw(g, SplashLogos.FRAMES_XP, x + w / 2, logoY);
@@ -201,27 +211,28 @@ public final class BootSplashArt {
         final int troughW = Math.max(60, w / 4);
         final int tx = x + (w - troughW) / 2;
         final int ty = y + h / 2 + 24;
-        g.fill(tx - 1, ty - 1, tx + troughW + 1, ty + 7, TROUGH_EDGE);
-        g.fill(tx, ty, tx + troughW, ty + 6, TROUGH);
+        g.fill(tx - 1, ty - 1, tx + troughW + 1, ty + 7, c.troughEdge());
+        g.fill(tx, ty, tx + troughW, ty + 6, c.trough());
         final int blockW2 = 6;
         final int span = troughW + BLOCKS * (blockW2 + 2);
         for (int i = 0; i < BLOCKS; i++) {
             final int at = (ticks * span / PASS_TICKS + i * (blockW2 + 2)) % span - BLOCKS * (blockW2 + 2);
             final int left = tx + at;
             if (left + blockW2 > tx && left < tx + troughW) {
-                g.fill(Math.max(tx, left), ty + 1, Math.min(tx + troughW, left + blockW2), ty + 5, BLOCK);
+                g.fill(Math.max(tx, left), ty + 1, Math.min(tx + troughW, left + blockW2), ty + 5, c.block());
             }
         }
 
-        g.drawString(font, "(C) 2001 Midsoft Corp.", x + 8, y + h - 12, 0xFF9AA4B2, false);
-        g.drawString(font, "Midsoft", x + w - font.width("Midsoft") - 8, y + h - 12, 0xFFFFFFFF, false);
+        g.drawString(font, "(C) 2001 Midsoft Corp.", x + 8, y + h - 12, c.smallPrint(), false);
+        g.drawString(font, "Midsoft", x + w - font.width("Midsoft") - 8, y + h - 12, c.maker(), false);
     }
 
     /** The blue ground with one word on it, which is how that edition ended every start. */
     private static void welcome(final GuiGraphics g, final Font font, final int x, final int y, final int w,
                                 final int h) {
         bands(g, x, y, w, h);
-        big(g, font, GameText.resolve(MonitorScreenTexts.WELCOME), x + w * 45 / 100, y + h / 2 - 12);
+        big(g, font, GameText.resolve(MonitorScreenTexts.WELCOME), x + w * 45 / 100, y + h / 2 - 12,
+                LUNA.get().welcome());
     }
 
     /**
@@ -242,12 +253,13 @@ public final class BootSplashArt {
      * One word at three times the font's size, which is the only way to write large with the game's own
      * letters. It is a word rather than a lockup, so the font is the right thing to draw it with.
      */
-    private static void big(final GuiGraphics g, final Font font, final String text, final int cx, final int top) {
+    private static void big(final GuiGraphics g, final Font font, final String text, final int cx, final int top,
+                            final int colour) {
         final float scale = 3.0f;
         g.pose().pushPose();
         g.pose().translate(cx - font.width(text) * scale / 2.0f, top, 0);
         g.pose().scale(scale, scale, 1.0f);
-        g.drawString(font, text, 0, 0, 0xFFFFFFFF, false);
+        g.drawString(font, text, 0, 0, colour, false);
         g.pose().popPose();
     }
 
@@ -260,7 +272,8 @@ public final class BootSplashArt {
      */
     private static void frames11(final GuiGraphics g, final Font font, final int x, final int y, final int w,
                                  final int h, final int ticks, final String title, final String subtitle) {
-        g.fill(x, y, x + w, y + h, MODERN_GROUND);
+        final Modern c = MODERN.get();
+        g.fill(x, y, x + w, y + h, c.ground());
 
         final int logoY = y + h / 2 - SplashLogos.H / 2 - 10;
         /*
@@ -270,8 +283,8 @@ public final class BootSplashArt {
         if (title.isEmpty()) {
             SplashLogos.draw(g, SplashLogos.JSC, x + w / 2, logoY);
         } else {
-            big(g, font, title, x + w / 2, logoY + 6);
-            g.drawCenteredString(font, subtitle, x + w / 2, logoY + SplashLogos.H + 2, 0xFFA8B2C6);
+            big(g, font, title, x + w / 2, logoY + 6, c.greeting());
+            g.drawCenteredString(font, subtitle, x + w / 2, logoY + SplashLogos.H + 2, c.subtitle());
         }
 
         /*
@@ -288,12 +301,12 @@ public final class BootSplashArt {
             final int dy = cy + (int) Math.round(Math.sin(angle) * radius);
             final int behind = (head - i + DOTS) % DOTS;
             final int shade = Math.max(0x30, 0xFF - behind * 0x28);
-            g.fill(dx - 1, dy - 1, dx + 1, dy + 1, 0xFF000000 | shade << 16 | shade << 8 | shade);
+            g.fill(dx - 1, dy - 1, dx + 1, dy + 1, 0xFF << 24 | shade << 16 | shade << 8 | shade);
         }
 
         /* The one word this edition puts on its way down, under the mark it came up behind. */
         if (title.isEmpty() && !subtitle.isEmpty()) {
-            g.drawCenteredString(font, subtitle, x + w / 2, cy + 20, 0xFFE6ECF6);
+            g.drawCenteredString(font, subtitle, x + w / 2, cy + 20, c.goodbye());
         }
     }
 
@@ -309,5 +322,19 @@ public final class BootSplashArt {
         final int a = from >> shift & 0xFF;
         final int b = to >> shift & 0xFF;
         return (int) (a + (b - a) * t);
+    }
+
+    /** The oldest edition's colours, as the palette above names them. */
+    private record Classic(int horizon, int runDark, int runMid, int runBright, int safeGround, int safeText,
+                           int message) {
+    }
+
+    /** The next edition's colours, as the palette above names them. */
+    private record Luna(int ground, int trough, int troughEdge, int block, int rule, int message, int smallPrint,
+                        int maker, int welcome) {
+    }
+
+    /** The newest edition's colours, as the palette above names them. */
+    private record Modern(int ground, int greeting, int subtitle, int goodbye) {
     }
 }

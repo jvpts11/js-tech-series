@@ -1,0 +1,9 @@
+{
+  "bezel": "#FFC4C6CC",
+  "highlight": "#FFE0E1E5",
+  "inner": "#00000000",
+  "label": "#FF73757B",
+  "led": "#FF5EE06E",
+  "shadow": "#FF9A9CA2",
+  "vent": "#FF9A9CA2"
+}

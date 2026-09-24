@@ -14,6 +14,9 @@ import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.boot.BootIdentity;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
@@ -32,7 +35,10 @@ import org.jetbrains.annotations.Nullable;
  * <p>Two looks for each, because a desktop of the earlier generation did not look like the one that carries its
  * name now: the older ones put up a bordered box with a coloured band and a row of squares lighting up as each
  * piece started, and the modern ones fill the glass and say almost nothing.
+ *
+ * <p>Their colours are the palettes {@code jsc:splash/<desktop>}, with {@code _classic} for the older looks.
  */
+@PaletteHolder
 public final class DesktopSplashArt {
 
     /** How far into the wait the desktop takes over from the system's own lines, in hundredths. */
@@ -51,20 +57,32 @@ public final class DesktopSplashArt {
     };
 
     /** The launcher's blue, the ground it sits on, and the line at the foot of the modern KDE screen. */
-    private static final int KDE_TOP = 0xFF1D6FB8;
-    private static final int KDE_BOTTOM = 0xFF072747;
-    private static final int KDE_BLUE = 0xFF3DAEE9;
-    private static final int KDE_FOOT = 0xFF9EC3E0;
+    private static final Palette<Plasma> PLASMA = Palettes.declare(JsComputers.MODID, "splash/kde_plasma",
+            new Plasma(0xFF1D6FB8, 0xFF072747, 0xFF3DAEE9, 0xFF9EC3E0, 0xFFFCFCFC, 0x28FFFFFF));
 
     /** The modern GNOME ground, its one light grey, and the quieter grey under it. */
-    private static final int GNOME_GROUND = 0xFF1D1D20;
-    private static final int GNOME_TEXT = 0xFFDEDDDA;
-    private static final int GNOME_FOOT = 0xFF8E8D8A;
+    private static final Palette<Gnome> GNOME = Palettes.declare(JsComputers.MODID, "splash/gnome",
+            new Gnome(0xFF1D1D20, 0xFFDEDDDA, 0xFF8E8D8A));
 
-    /** The greens of that desktop's ground, and the pale one at its foot. */
-    private static final int MINT_TOP = 0xFF1B5E4A;
-    private static final int MINT_BOTTOM = 0xFF2B8A6E;
-    private static final int MINT_FOOT = 0xFFCFE8DA;
+    /** The greens of that desktop's ground, the pale one at its foot, its name, and its running dots. */
+    private static final Palette<Mint> MINT = Palettes.declare(JsComputers.MODID, "splash/cinnamon",
+            new Mint(0xFF1B5E4A, 0xFF2B8A6E, 0xFFCFE8DA, 0xFFFFFFFF, 0xFFFFFFFF, 0x59FFFFFF));
+
+    /**
+     * The two bands that told the older desktops apart across a room, the grounds and faces behind them, and the
+     * box they share: its rule, its dark text, its shadow, the name and line in the band, and the squares.
+     */
+    private static final Palette<OldBox> KDE_CLASSIC = Palettes.declare(JsComputers.MODID, "splash/kde_classic",
+            new OldBox(0xFF33679F, 0xFFD6D2CD, 0xFF6F9FD0, 0xFF33679F, 0xFF1D4C80,
+                    0xFF6F6A64, 0xFF1A1A1A, 0x4C000000, 0xFFFFFFFF, 0xFFDCE8F6, 0xFFE2DED4,
+                    0xFFF0B23A, 0xFF5FE07A, 0xFF7D8A9C));
+    private static final Palette<OldBox> GNOME_CLASSIC = Palettes.declare(JsComputers.MODID, "splash/gnome_classic",
+            new OldBox(0xFF3E3A34, 0xFFD6D2C8, 0xFF8F7D99, 0xFF6D5A78, 0xFF55455F,
+                    0xFF6F6A64, 0xFF1A1A1A, 0x4C000000, 0xFFFFFFFF, 0xFFDCE8F6, 0xFFE2DED4,
+                    0xFFF0B23A, 0xFF5FE07A, 0xFF7D8A9C));
+
+    /** How much of a square's colour is left before its piece has started, as an alpha. */
+    private static final int DIMMED_ALPHA = 0x52;
 
     /** The marks the two desktops come up behind, and the size they are made at. */
     private static final ResourceLocation PLASMA_MARK =
@@ -72,22 +90,6 @@ public final class DesktopSplashArt {
     private static final ResourceLocation CINNAMON_MARK =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/splash/cinnamon_mark.png");
     private static final int MARK = 30;
-
-    /** The older box: its face, its rule, and the dark text on it. */
-    private static final int BOX_FACE = 0xFFD6D2CD;
-    private static final int BOX_RULE = 0xFF6F6A64;
-    private static final int BOX_TEXT = 0xFF1A1A1A;
-
-    /** The two bands that told those two desktops apart across a room, and the grounds behind them. */
-    private static final int KDE_OLD_GROUND = 0xFF33679F;
-    private static final int KDE_BAND_TOP = 0xFF6F9FD0;
-    private static final int KDE_BAND_MID = 0xFF33679F;
-    private static final int KDE_BAND_LOW = 0xFF1D4C80;
-    private static final int GNOME_OLD_GROUND = 0xFF3E3A34;
-    private static final int GNOME_OLD_FACE = 0xFFD6D2C8;
-    private static final int GNOME_BAND_TOP = 0xFF8F7D99;
-    private static final int GNOME_BAND_MID = 0xFF6D5A78;
-    private static final int GNOME_BAND_LOW = 0xFF55455F;
 
     /** How long one turn of the modern spinner takes, and how many dots it is made of. */
     private static final int DOTS = 8;
@@ -134,8 +136,7 @@ public final class DesktopSplashArt {
             case CDE -> CdeSplashArt.draw(g, font, who.hostName(), CdeStyle.parse(who.look()), x, y, w, h);
             case KDE -> {
                 if (old) {
-                    oldBox(g, font, x, y, w, h, progress, KDE_OLD_GROUND, BOX_FACE, "KDE",
-                            "K Desktop Environment", KDE_BAND_TOP, KDE_BAND_MID, KDE_BAND_LOW);
+                    oldBox(g, font, x, y, w, h, progress, KDE_CLASSIC.get(), "KDE", "K Desktop Environment");
                 } else {
                     kdePlasma(g, font, x, y, w, h, progress);
                 }
@@ -144,9 +145,8 @@ public final class DesktopSplashArt {
             /* Only GNOME is left to reach here; {@link #has} is what keeps anything else from asking. */
             default -> {
                 if (old) {
-                    oldBox(g, font, x, y, w, h, progress, GNOME_OLD_GROUND, GNOME_OLD_FACE, "GNOME",
-                            GameText.resolve(MonitorScreenTexts.STARTING_YOUR_DESKTOP), GNOME_BAND_TOP, GNOME_BAND_MID,
-                            GNOME_BAND_LOW);
+                    oldBox(g, font, x, y, w, h, progress, GNOME_CLASSIC.get(), "GNOME",
+                            GameText.resolve(MonitorScreenTexts.STARTING_YOUR_DESKTOP));
                 } else {
                     gnome(g, font, x, y, w, h, ticks, systemName);
                 }
@@ -157,48 +157,51 @@ public final class DesktopSplashArt {
     /** The launcher's mark, the name under it, and a bar that really does say how far along the desktop is. */
     private static void kdePlasma(final GuiGraphics g, final Font font, final int x, final int y, final int w,
                                   final int h, final int progress) {
-        gradient(g, x, y, w, h, KDE_TOP, KDE_BOTTOM);
+        final Plasma c = PLASMA.get();
+        gradient(g, x, y, w, h, c.top(), c.bottom());
         final int cx = x + w / 2;
         final int side = MARK;
         final int top = y + h / 2 - 34;
         g.blit(PLASMA_MARK, cx - side / 2, top, 0.0F, 0.0F, side, side, side, side);
-        big(g, font, "Plasma", cx, top + side + 6, 1.8f, 0xFFFCFCFC);
+        big(g, font, "Plasma", cx, top + side + 6, 1.8f, c.name());
 
         final int barW = 88;
         final int by = top + side + 28;
-        g.fill(cx - barW / 2, by, cx + barW / 2, by + 2, 0x28FFFFFF);
-        g.fill(cx - barW / 2, by, cx - barW / 2 + barW * progress / 100, by + 2, KDE_BLUE);
-        small(g, font, "KDE Plasma · the KDE Guild", cx, y + h - 14, KDE_FOOT);
+        g.fill(cx - barW / 2, by, cx + barW / 2, by + 2, c.track());
+        g.fill(cx - barW / 2, by, cx - barW / 2 + barW * progress / 100, by + 2, c.blue());
+        small(g, font, "KDE Plasma · the KDE Guild", cx, y + h - 14, c.foot());
     }
 
     /** A dark ground, the turning ring, and the desktop's name over the distribution at the foot. */
     private static void gnome(final GuiGraphics g, final Font font, final int x, final int y, final int w,
                               final int h, final int ticks, final String systemName) {
-        g.fill(x, y, x + w, y + h, GNOME_GROUND);
-        spinner(g, x + w / 2, y + h / 2 - 12, ticks, GNOME_TEXT);
-        big(g, font, "GNOME", x + w / 2, y + h - 30, 1.4f, GNOME_TEXT);
+        final Gnome c = GNOME.get();
+        g.fill(x, y, x + w, y + h, c.ground());
+        spinner(g, x + w / 2, y + h / 2 - 12, ticks, c.text());
+        big(g, font, "GNOME", x + w / 2, y + h - 30, 1.4f, c.text());
         small(g, font, systemName.isEmpty() ? "" : GameText.resolve(MonitorScreenTexts.ON_SYSTEM.with(systemName)),
-                x + w / 2, y + h - 14, GNOME_FOOT);
+                x + w / 2, y + h - 14, c.foot());
     }
 
     /** The menu button's mark on the green it wears, its name, and three dots running under it. */
     private static void cinnamon(final GuiGraphics g, final Font font, final int x, final int y, final int w,
                                  final int h, final int ticks, final String systemName) {
-        gradient(g, x, y, w, h, MINT_TOP, MINT_BOTTOM);
+        final Mint c = MINT.get();
+        gradient(g, x, y, w, h, c.top(), c.bottom());
         final int cx = x + w / 2;
         final int side = MARK;
         final int top = y + h / 2 - 32;
         // The menu button's mark: the green plate, the white square in it, and the green one inside that.
         g.blit(CINNAMON_MARK, cx - side / 2, top, 0.0F, 0.0F, side, side, side, side);
-        big(g, font, "Cinnamon", cx, top + side + 8, 1.7f, 0xFFFFFFFF);
+        big(g, font, "Cinnamon", cx, top + side + 8, 1.7f, c.name());
 
         final int dy = top + side + 30;
         final int lit = ticks / PULSE_TICKS % 3;
         for (int i = 0; i < 3; i++) {
             final int dx = cx - 10 + i * 10;
-            g.fill(dx, dy, dx + 4, dy + 4, i == lit ? 0xFFFFFFFF : 0x59FFFFFF);
+            g.fill(dx, dy, dx + 4, dy + 4, i == lit ? c.dotLit() : c.dot());
         }
-        small(g, font, systemName, cx, y + h - 14, MINT_FOOT);
+        small(g, font, systemName, cx, y + h - 14, c.foot());
     }
 
     /**
@@ -209,29 +212,28 @@ public final class DesktopSplashArt {
      * face changed and the shape did not, which is exactly what a player of that age would have seen.
      */
     private static void oldBox(final GuiGraphics g, final Font font, final int x, final int y, final int w,
-                               final int h, final int progress, final int ground, final int face,
-                               final String name, final String under, final int bandTop, final int bandMid,
-                               final int bandLow) {
-        g.fill(x, y, x + w, y + h, ground);
+                               final int h, final int progress, final OldBox c, final String name,
+                               final String under) {
+        g.fill(x, y, x + w, y + h, c.ground());
         final int boxW = w * 68 / 100;
         final int boxH = 100;
         final int bx = x + (w - boxW) / 2;
         final int by = y + (h - boxH) / 2;
-        g.fill(bx + 3, by + 3, bx + boxW + 3, by + boxH + 3, 0x4C000000);
-        g.fill(bx, by, bx + boxW, by + boxH, face);
-        rule(g, bx, by, boxW, boxH, BOX_RULE);
+        g.fill(bx + 3, by + 3, bx + boxW + 3, by + boxH + 3, c.shadow());
+        g.fill(bx, by, bx + boxW, by + boxH, c.face());
+        rule(g, bx, by, boxW, boxH, c.rule());
 
         final int bandH = 51;
         for (int row = 0; row < bandH; row++) {
             final float at = row / (float) (bandH - 1);
             final int shade = at < 0.55f
-                    ? blend(bandTop, bandMid, at / 0.55f)
-                    : blend(bandMid, bandLow, (at - 0.55f) / 0.45f);
+                    ? blend(c.bandTop(), c.bandMid(), at / 0.55f)
+                    : blend(c.bandMid(), c.bandLow(), (at - 0.55f) / 0.45f);
             g.fill(bx + 1, by + 1 + row, bx + boxW - 1, by + 2 + row, shade);
         }
-        g.fill(bx, by + bandH, bx + boxW, by + bandH + 1, BOX_RULE);
-        big(g, font, name, bx + boxW / 2, by + 10, 2.2f, 0xFFFFFFFF);
-        small(g, font, under, bx + boxW / 2, by + 36, 0xFFDCE8F6);
+        g.fill(bx, by + bandH, bx + boxW, by + bandH + 1, c.rule());
+        big(g, font, name, bx + boxW / 2, by + 10, 2.2f, c.nameInk());
+        small(g, font, under, bx + boxW / 2, by + 36, c.underInk());
 
         /* The squares: one per piece, lit in order, so the row fills as the desktop assembles itself. */
         final int side = 19;
@@ -240,16 +242,16 @@ public final class DesktopSplashArt {
         final int sx = bx + (boxW - rowW) / 2;
         final int sy = by + bandH + 10;
         final int done = Math.min(STEPS, Math.max(1, STEPS * progress / 100 + 1));
-        final int[] inner = {bandLow, bandMid, 0xFFF0B23A, 0xFF5FE07A, 0xFF7D8A9C};
+        final int[] inner = {c.bandLow(), c.bandMid(), c.stepThree(), c.stepFour(), c.stepFive()};
         for (int i = 0; i < STEPS; i++) {
             final int px = sx + i * (side + gap);
-            g.fill(px, sy, px + side, sy + side, 0xFFE2DED4);
-            rule(g, px, sy, side, side, BOX_RULE);
+            g.fill(px, sy, px + side, sy + side, c.square());
+            rule(g, px, sy, side, side, c.rule());
             g.fill(px + 5, sy + 5, px + side - 5, sy + side - 5,
                     i < done ? inner[i] : dimmed(inner[i]));
         }
         small(g, font, GameText.resolve(STAGES[Math.min(STAGES.length - 1, done - 1)]), bx + boxW / 2,
-                sy + side + 8, BOX_TEXT);
+                sy + side + 8, c.text());
     }
 
     /** The ring of dots the modern desktops turn, brightest at the head of the turn. */
@@ -297,7 +299,7 @@ public final class DesktopSplashArt {
 
     /** The same colour with the life taken out of it, for a piece that has not started yet. */
     private static int dimmed(final int color) {
-        return 0x52000000 | color & 0xFFFFFF;
+        return DIMMED_ALPHA << 24 | color & 0xFFFFFF;
     }
 
     /** A vertical wash from one colour to the other, a row at a time. */
@@ -331,5 +333,26 @@ public final class DesktopSplashArt {
         final DesktopEnvironmentDef desktop =
                 OsRegistry.getDesktop(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, desktopId));
         return desktop == null ? null : desktop.panelStyle();
+    }
+
+    /** The modern KDE screen: its ground from top to bottom, the bar's blue, the foot, the name and the track. */
+    private record Plasma(int top, int bottom, int blue, int foot, int name, int track) {
+    }
+
+    /** The modern GNOME screen: its ground, its one light grey, and the quieter grey under it. */
+    private record Gnome(int ground, int text, int foot) {
+    }
+
+    /** The Cinnamon screen: its ground from top to bottom, its foot, its name, and a running dot lit and not. */
+    private record Mint(int top, int bottom, int foot, int name, int dotLit, int dot) {
+    }
+
+    /**
+     * The box of an older desktop: the ground behind it, its face, its band from top to bottom, its rule and dark
+     * text, the shadow under it, the name and line in the band, the squares' face, and the last three squares'
+     * colours (the first two are the band's own).
+     */
+    private record OldBox(int ground, int face, int bandTop, int bandMid, int bandLow, int rule, int text, int shadow,
+                          int nameInk, int underInk, int square, int stepThree, int stepFour, int stepFive) {
     }
 }

@@ -1,0 +1,17 @@
+{
+  "action": "#FF1F9488",
+  "actionHover": "#FF2BB3A4",
+  "actionInk": "#FFFFFFFF",
+  "cancelHover": "#FF2A3340",
+  "checkEdge": "#FF2A3340",
+  "checkFill": "#FF11161D",
+  "control": "#FF1A222B",
+  "controlHover": "#FF24323C",
+  "danger": "#FF8A241C",
+  "dangerHover": "#FFB23228",
+  "dangerInk": "#FFFFFFFF",
+  "dangerOff": "#FF3A2420",
+  "onAccent": "#FF0F151C",
+  "panel": "#FF0F151C",
+  "veil": "#E0070A0F"
+}
