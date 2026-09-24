@@ -13,6 +13,7 @@ import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -76,9 +77,9 @@ public final class KnotApp implements IDesktopApp {
     public KnotApp(final BlockPos host, final BlockPos monitorPos) {
         this.host = host;
         this.monitorPos = monitorPos;
-        pushButton = root.add(new Button("Push", this::push));
-        pullButton = root.add(new Button("Pull", this::pull));
-        refreshButton = root.add(new Button("Refresh", this::look));
+        pushButton = root.add(new Button(GameText.resolve(SocialTexts.PUSH), this::push));
+        pullButton = root.add(new Button(GameText.resolve(SocialTexts.PULL), this::pull));
+        refreshButton = root.add(new Button(GameText.resolve(SocialTexts.REFRESH), this::look));
         root.add(file);
         root.add(message);
         file.set("plant.sgs");
@@ -210,13 +211,13 @@ public final class KnotApp implements IDesktopApp {
 
     private void layoutToolbar(final Font font, final int x, final int y, final int width) {
         int bx = x + MARGIN;
-        final int pushW = font.width("Push") + 8;
+        final int pushW = font.width(GameText.resolve(SocialTexts.PUSH)) + 8;
         pushButton.setBounds(bx, y + 1, pushW, 12);
         bx += pushW + 2;
-        final int pullW = font.width("Pull") + 8;
+        final int pullW = font.width(GameText.resolve(SocialTexts.PULL)) + 8;
         pullButton.setBounds(bx, y + 1, pullW, 12);
         bx += pullW + 2;
-        final int refreshW = font.width("Refresh") + 8;
+        final int refreshW = font.width(GameText.resolve(SocialTexts.REFRESH)) + 8;
         refreshButton.setBounds(bx, y + 1, refreshW, 12);
         bx += refreshW + 4;
         message.setBounds(bx, y + 1, Math.max(20, x + width - MARGIN - bx), 12);
@@ -225,20 +226,21 @@ public final class KnotApp implements IDesktopApp {
     }
 
     private void layoutPicker(final Font font, final int x, final int y, final int width) {
-        file.setBounds(x + MARGIN + font.width("File") + 4, y + 1,
+        file.setBounds(x + MARGIN + font.width(GameText.resolve(SocialTexts.FILE)) + 4, y + 1,
                 Math.max(40, width / 2 - MARGIN * 2), 12);
     }
 
     private void drawHistory(final GuiGraphics g, final Font font, final int x, final int y,
                              final int width) {
-        g.drawString(font, "File", x + MARGIN, y - PICK_H + 3, skin.dim(), false);
+        g.drawString(font, GameText.resolve(SocialTexts.FILE), x + MARGIN, y - PICK_H + 3, skin.dim(), false);
         this.historyTop = y;
         g.fill(x + MARGIN, y, x + width - MARGIN, y + HISTORY_ROWS * ROW_H, skin.fieldBg());
         final List<KnotStatePayload.Revision> revisions = state.revisions();
         this.historyScroll = Math.max(0,
                 Math.min(historyScroll, Math.max(0, revisions.size() - HISTORY_ROWS)));
         if (revisions.isEmpty()) {
-            g.drawString(font, state.service().online() ? "Nothing pushed yet" : "No KnotHub on this network",
+            g.drawString(font,
+                    GameText.resolve(state.service().online() ? SocialTexts.NOTHING_PUSHED : SocialTexts.NO_KNOTHUB),
                     x + MARGIN + 3, y + 2, state.service().online() ? skin.dim() : OFFLINE_INK, false);
             return;
         }
@@ -268,7 +270,8 @@ public final class KnotApp implements IDesktopApp {
         final int rows = Math.max(1, (bottom - y) / ROW_H);
         this.diffScroll = Math.max(0, Math.min(diffScroll, Math.max(0, lines.size() - rows)));
         if (lines.isEmpty()) {
-            g.drawString(font, picked > 0 ? "No change in r" + picked : "Pick a revision",
+            g.drawString(font, GameText.resolve(picked > 0 ? SocialTexts.NO_CHANGE.with(picked)
+                            : SocialTexts.PICK_A_REVISION.text()),
                     x + MARGIN + 3, y + 2, skin.dim(), false);
             return;
         }
@@ -307,12 +310,14 @@ public final class KnotApp implements IDesktopApp {
          * What the machine had to say about the last thing asked of it comes first, because a player who
          * pressed Push wants to know what came of it rather than how many revisions there are.
          */
-        final String left = !service.note().isEmpty() ? service.note()
+        final String left = GameText.resolve(!service.note().isEmpty() ? service.note()
                 : service.online()
-                        ? "on " + (service.host().isBlank() ? "the network" : service.host())
-                        : "no service";
+                        ? SocialTexts.ON_HOST.with(service.host().isBlank() ? SocialTexts.THE_NETWORK.text()
+                                : service.host())
+                        : SocialTexts.NO_SERVICE.text());
         final int count = state.revisions().size();
-        final String right = count + (count == 1 ? " revision   " : " revisions   ") + bytes(service.bytes());
+        final String right = GameText.resolve((count == 1 ? SocialTexts.ONE_REVISION : SocialTexts.REVISIONS)
+                .with(count)) + "   " + bytes(service.bytes());
         g.drawString(font, font.plainSubstrByWidth(left, width - MARGIN * 2 - font.width(right) - 8),
                 x + MARGIN, y + 2, service.online() ? skin.text() : OFFLINE_INK, false);
         g.drawString(font, right, x + width - MARGIN - font.width(right), y + 2, skin.dim(), false);

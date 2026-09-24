@@ -188,19 +188,21 @@ public final class PayloadRoundTripGameTests {
     @GameTest(template = ARENA)
     public static void cluster_stateRoundTrips(final GameTestHelper helper) {
         final ClusterManagerStatePayload.Detail detail = new ClusterManagerStatePayload.Detail(0, 0, "Kraken",
-                "8 nodes", true, 50,
+                Text.literal("8 nodes"), true, 50,
                 List.of(new ClusterManagerStatePayload.WireNode(123L, 0, 1, "node-1", "Ubuntu", "sigma", 1, true, 0,
                         0, 1024L, 2048L, 1)),
-                List.of(new ClusterManagerStatePayload.WireCraft("Iron Block x64", "desk", 2, false)));
+                List.of(new ClusterManagerStatePayload.WireCraft(Text.literal("Iron Block x64"), "desk", 2, false)));
         final ClusterManagerStatePayload.WireJob job = new ClusterManagerStatePayload.WireJob(true, 0, "Install Ubuntu",
-                0, 0, 3, 0, 5, 8, 120, false, List.of(new ClusterManagerStatePayload.WireLane("lane 1", 500)), "3 of 8");
+                0, 0, 3, 0, 5, 8, 120, false, List.of(new ClusterManagerStatePayload.WireLane("lane 1", 500)),
+                Text.literal("3 of 8"));
         roundTrip(helper, ClusterManagerStatePayload.STREAM_CODEC, new ClusterManagerStatePayload(
-                new ClusterManagerStatePayload.Head(true, 32, 4, "Frames 11", "Cluster Manager", "ready"),
-                List.of(new ClusterManagerStatePayload.WireCluster(0, 0, "Kraken", true, 8, 3L, 12L, 50, "8 nodes", true)),
+                new ClusterManagerStatePayload.Head(true, 32, 4, "Frames 11", "Cluster Manager", Text.literal("ready")),
+                List.of(new ClusterManagerStatePayload.WireCluster(0, 0, "Kraken", true, 8, 3L, 12L, 50,
+                        Text.literal("8 nodes"), true)),
                 detail, job,
                 List.of(new NetworkItemEntry(logs(), 640L,
                         List.of(new NetworkItemEntry.StorageShare(Text.literal("rack-1"), 640L)))),
-                List.of(new ClusterManagerStatePayload.WireDest(456L, "Vault A"))));
+                List.of(new ClusterManagerStatePayload.WireDest(456L, Text.literal("Vault A")))));
         helper.succeed();
     }
 

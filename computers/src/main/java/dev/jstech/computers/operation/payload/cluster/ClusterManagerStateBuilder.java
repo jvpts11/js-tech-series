@@ -28,6 +28,10 @@ import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -47,7 +51,41 @@ import static dev.jstech.computers.operation.payload.network.NetworkLookup.resol
 /**
  * Builds the state the Cluster Manager shows: the clusters, their racks and nodes, and what each node is doing.
  */
+@TextHolder
 public final class ClusterManagerStateBuilder {
+
+    // The line under a cluster's name, in the list and in its detail.
+    private static final TextKey SUPERCOMPUTER_LINE =
+            TextKey.of("jsc.cluster.state.supercomputer_line", "%s nodes · %s/%s");
+    private static final TextKey SECTION_LINE = TextKey.of("jsc.cluster.state.section_line", "%s racks · %s srv");
+    private static final TextKey SUPERCOMPUTER_DETAIL = TextKey.of("jsc.cluster.state.supercomputer_detail",
+            "HBW Interface at %s, %s, %s · %s · %s/%s crafts");
+    private static final TextKey SECTION_DETAIL =
+            TextKey.of("jsc.cluster.state.section_detail", "%s · %s servers @ %s, %s, %s");
+    private static final TextKey ONE_RACK = TextKey.of("jsc.cluster.state.one_rack", "%s rack");
+    private static final TextKey RACKS = TextKey.of("jsc.cluster.state.racks", "%s racks");
+    /* A craft in the queue: what it makes and how many. */
+    private static final TextKey CRAFT = TextKey.of("jsc.cluster.state.craft", "%s x%s");
+    private static final TextKey MAINFRAME = TextKey.of("jsc.cluster.state.mainframe", "Mainframe");
+
+    // What an action came to, which the manager shows on its status line.
+    static final TextKey SELECT_FIRST = TextKey.of("jsc.cluster.status.select_first", "select a cluster first");
+    static final TextKey BAYS_ON = TextKey.of("jsc.cluster.status.bays_on", "%s bay(s) switched on");
+    static final TextKey BAYS_OFF = TextKey.of("jsc.cluster.status.bays_off", "%s bay(s) switched off");
+    static final TextKey NOT_A_NODE =
+            TextKey.of("jsc.cluster.status.not_a_node", "that row is not a node this card reaches");
+    static final TextKey JOB_CANCELLED =
+            TextKey.of("jsc.cluster.status.job_cancelled", "job cancelled after the nodes being written");
+    static final TextKey SECTION_CLEARED = TextKey.of("jsc.cluster.status.section_cleared", "section name cleared");
+    static final TextKey SECTION_RENAMED = TextKey.of("jsc.cluster.status.section_renamed", "section renamed to %s");
+    static final TextKey SUPERCOMPUTER_CLEARED =
+            TextKey.of("jsc.cluster.status.supercomputer_cleared", "supercomputer name cleared");
+    static final TextKey SUPERCOMPUTER_RENAMED =
+            TextKey.of("jsc.cluster.status.supercomputer_renamed", "supercomputer renamed to %s");
+    static final TextKey MOVING = TextKey.of("jsc.cluster.status.moving", "moving");
+    static final TextKey NO_SERVERS = TextKey.of("jsc.cluster.status.no_servers", "no servers in that section");
+    static final TextKey DEPOSITED = TextKey.of("jsc.cluster.status.deposited", "deposited %s");
+    static final TextKey NO_ROOM = TextKey.of("jsc.cluster.status.no_room", "the section has no room");
 
     private ClusterManagerStateBuilder() {
     }
@@ -55,7 +93,7 @@ public final class ClusterManagerStateBuilder {
     /** Everything the Cluster Manager shows, for one machine and one selected cluster. */
     public static ClusterManagerStatePayload buildClusterManagerState(
             final ClusterManagementComputerBlockEntity cmc,
-            final ServerLevel level, final int selKind, final int selIndex, final String status) {
+            final ServerLevel level, final int selKind, final int selIndex, final Text status) {
         final var card = cmc.clusterCard();
         final var systemDisc = cmc.medium(MediaKind.OS_INSTALL);
         final var program = cmc.medium(MediaKind.PROGRAM_INSTALL);
@@ -71,7 +109,7 @@ public final class ClusterManagerStateBuilder {
                     ClusterManagementComputerBlockEntity
                             .supercomputerName(hub, i),
                     hub.clusterOnline(), nodes, hub.craftSlotsInUse(), hub.parallelCrafts(), 0,
-                    nodes + " nodes · " + hub.craftSlotsInUse() + "/" + hub.parallelCrafts(),
+                    SUPERCOMPUTER_LINE.with(nodes, hub.craftSlotsInUse(), hub.parallelCrafts()),
                     cmc.reaches(RackChassis.RackType.SUPERCOMPUTER)));
         }
         final var sections = cmc.datacenterSections();
@@ -88,7 +126,7 @@ public final class ClusterManagerStateBuilder {
                     : LoadBalanceMode.ROUND_ROBIN.id();
             clusters.add(new ClusterManagerStatePayload.WireCluster(ClusterManagerStatePayload.KIND_DATACENTER, i,
                     ref.label(), ref.section().serverCount() > 0, ref.section().serverCount(), used, total, mode,
-                    ref.section().rackCount() + " racks · " + ref.section().serverCount() + " srv",
+                    SECTION_LINE.with(ref.section().rackCount(), ref.section().serverCount()),
                     cmc.reaches(RackChassis.RackType.SERVER)));
         }
         // The selected cluster in detail.
@@ -131,7 +169,7 @@ public final class ClusterManagerStateBuilder {
                         continue;
                     }
                     final OperationRecord record = craft.liveRecord();
-                    final String label = record.key().displayName().getString() + " x" + record.requested();
+                    final Text label = CRAFT.with(GameText.of(record.key().displayName()), record.requested());
                     final int held0 = held.getOrDefault(craft.operationId(), 0);
                     if (held0 > 0) {
                         queue.add(new ClusterManagerStatePayload.WireCraft(label, craft.requesterLabel(), held0, false));
@@ -145,9 +183,8 @@ public final class ClusterManagerStateBuilder {
             detail = new ClusterManagerStatePayload.Detail(selKind, selIndex,
                     ClusterManagementComputerBlockEntity
                             .supercomputerName(hub, selIndex),
-                    "HBW Interface at " + hp.getX() + ", " + hp.getY() + ", " + hp.getZ() + " · " + rackIndex.size()
-                            + " rack" + (rackIndex.size() == 1 ? "" : "s") + " · " + hub.craftSlotsInUse() + "/"
-                            + hub.parallelCrafts() + " crafts",
+                    SUPERCOMPUTER_DETAIL.with(hp.getX(), hp.getY(), hp.getZ(), racks(rackIndex.size()),
+                            hub.craftSlotsInUse(), hub.parallelCrafts()),
                     hub.clusterOnline(), 0, nodes,
                     queue.size() > ClusterManagerStatePayload.MAX_QUEUE ? queue.subList(0, ClusterManagerStatePayload.MAX_QUEUE) : queue);
         } else if (selKind == ClusterManagerStatePayload.KIND_DATACENTER && selIndex >= 0 && selIndex < sections.size()) {
@@ -183,8 +220,8 @@ public final class ClusterManagerStateBuilder {
                     : LoadBalanceMode.ROUND_ROBIN.id();
             final BlockPos rp = ref.routerPos();
             detail = new ClusterManagerStatePayload.Detail(selKind, selIndex, ref.label(),
-                    ref.section().rackCount() + " rack" + (ref.section().rackCount() == 1 ? "" : "s") + " · "
-                            + ref.section().serverCount() + " servers @ " + rp.getX() + ", " + rp.getY() + ", " + rp.getZ(),
+                    SECTION_DETAIL.with(racks(ref.section().rackCount()), ref.section().serverCount(),
+                            rp.getX(), rp.getY(), rp.getZ()),
                     ref.section().serverCount() > 0, mode, nodes, List.of());
             // The section's inventory, and where a move-out can go: the network's computers with local storage.
             final Map<StorageKey, Long> totals = NetworkStorage
@@ -199,13 +236,13 @@ public final class ClusterManagerStateBuilder {
                         final String name = level.getBlockEntity(BlockPos.of(pc.pos()))
                                 instanceof IOsHost os && !os.customName().isEmpty()
                                 ? os.customName() : "PC-" + pc.nodeUuid().asString().substring(0, 4);
-                        dests.add(new ClusterManagerStatePayload.WireDest(pc.pos(), name));
+                        dests.add(new ClusterManagerStatePayload.WireDest(pc.pos(), Text.literal(name)));
                     }
                 }
                 system.mainframePositionOf(net).ifPresent(mfPos -> {
                     if (level.getBlockEntity(BlockPos.of(mfPos)) instanceof IComputerTerminalHost host
                             && host.localStorageCapacity() > 0L) {
-                        dests.add(new ClusterManagerStatePayload.WireDest(mfPos, "Mainframe"));
+                        dests.add(new ClusterManagerStatePayload.WireDest(mfPos, MAINFRAME.text()));
                     }
                 });
             }
@@ -281,6 +318,11 @@ public final class ClusterManagerStateBuilder {
         }
         return host.installedOsId() == null ? ClusterManagerStatePayload.STATE_NO_SYSTEM
                 : ClusterManagerStatePayload.STATE_ONLINE;
+    }
+
+    /* A count of racks, said as one or as many. */
+    private static Text racks(final int count) {
+        return (count == 1 ? ONE_RACK : RACKS).with(count);
     }
 
     private static String programsLabel(final IOsHost host) {

@@ -1,7 +1,6 @@
 computers/src/main/java/dev/jstech/computers/block/MonitorBlock.java 1
 computers/src/main/java/dev/jstech/computers/block/part/ExportBusPart.java 1
 computers/src/main/java/dev/jstech/computers/block/part/ImportBusPart.java 3
-computers/src/main/java/dev/jstech/computers/blockentity/ClusterManagementComputerBlockEntity.java 17
 computers/src/main/java/dev/jstech/computers/blockentity/CraftingComputerBlockEntity.java 4
 computers/src/main/java/dev/jstech/computers/blockentity/MainframeNetworking.java 2
 computers/src/main/java/dev/jstech/computers/blockentity/MainframeScheduler.java 1
@@ -15,14 +14,14 @@ computers/src/main/java/dev/jstech/computers/client/NmsApp.java 6
 computers/src/main/java/dev/jstech/computers/client/ServerRackScreen.java 1
 computers/src/main/java/dev/jstech/computers/client/os/ApplicationManagerApp.java 1
 computers/src/main/java/dev/jstech/computers/client/os/ArchiverApp.java 27
-computers/src/main/java/dev/jstech/computers/client/os/AutomationManagerApp.java 14
+computers/src/main/java/dev/jstech/computers/client/os/AutomationManagerApp.java 2
 computers/src/main/java/dev/jstech/computers/client/os/CdeBackdropPage.java 2
 computers/src/main/java/dev/jstech/computers/client/os/CdeColorPage.java 1
 computers/src/main/java/dev/jstech/computers/client/os/CdeExitDialog.java 1
 computers/src/main/java/dev/jstech/computers/client/os/CdeLaunchers.java 1
 computers/src/main/java/dev/jstech/computers/client/os/CdeSplashArt.java 3
 computers/src/main/java/dev/jstech/computers/client/os/CdeWindowMenu.java 2
-computers/src/main/java/dev/jstech/computers/client/os/ClusterManagerApp.java 43
+computers/src/main/java/dev/jstech/computers/client/os/ClusterManagerApp.java 5
 computers/src/main/java/dev/jstech/computers/client/os/CodeWorkspace.java 5
 computers/src/main/java/dev/jstech/computers/client/os/CommandPalette.java 1
 computers/src/main/java/dev/jstech/computers/client/os/CraftPlannerApp.java 1
@@ -43,11 +42,10 @@ computers/src/main/java/dev/jstech/computers/client/os/GatewayManagerApp.java 1
 computers/src/main/java/dev/jstech/computers/client/os/HelpViewerApp.java 2
 computers/src/main/java/dev/jstech/computers/client/os/InteracTuiKeys.java 14
 computers/src/main/java/dev/jstech/computers/client/os/ItemCategories.java 2
-computers/src/main/java/dev/jstech/computers/client/os/KnotApp.java 8
+computers/src/main/java/dev/jstech/computers/client/os/KnotApp.java 1
 computers/src/main/java/dev/jstech/computers/client/os/LessKeys.java 2
 computers/src/main/java/dev/jstech/computers/client/os/LinuxLaunchers.java 9
 computers/src/main/java/dev/jstech/computers/client/os/LinuxPanels.java 4
-computers/src/main/java/dev/jstech/computers/client/os/MessengerApp.java 8
 computers/src/main/java/dev/jstech/computers/client/os/NanoKeys.java 1
 computers/src/main/java/dev/jstech/computers/client/os/NetworkInteractorApp.java 1
 computers/src/main/java/dev/jstech/computers/client/os/NetworkManagerApp.java 20
@@ -113,9 +111,6 @@ computers/src/main/java/dev/jstech/computers/operation/MoveLabels.java 1
 computers/src/main/java/dev/jstech/computers/operation/payload/NetworkNodeInfo.java 1
 computers/src/main/java/dev/jstech/computers/operation/payload/OperationRecord.java 1
 computers/src/main/java/dev/jstech/computers/operation/payload/UiWindowPayload.java 1
-computers/src/main/java/dev/jstech/computers/operation/payload/automation/AutomationPayloads.java 12
-computers/src/main/java/dev/jstech/computers/operation/payload/cluster/ClusterManagerPayloads.java 12
-computers/src/main/java/dev/jstech/computers/operation/payload/cluster/ClusterManagerStateBuilder.java 1
 computers/src/main/java/dev/jstech/computers/operation/payload/desktop/ThisPcPayloads.java 7
 computers/src/main/java/dev/jstech/computers/operation/payload/files/ArchivePayloads.java 22
 computers/src/main/java/dev/jstech/computers/operation/payload/files/FileEditPayloads.java 8
@@ -124,7 +119,6 @@ computers/src/main/java/dev/jstech/computers/operation/payload/files/TrashPayloa
 computers/src/main/java/dev/jstech/computers/operation/payload/program/ConsolePayloads.java 10
 computers/src/main/java/dev/jstech/computers/operation/payload/program/DesktopShellPayloads.java 2
 computers/src/main/java/dev/jstech/computers/operation/payload/program/ProgramPayloads.java 1
-computers/src/main/java/dev/jstech/computers/operation/payload/social/SocialPayloads.java 9
 computers/src/main/java/dev/jstech/computers/operation/payload/terminal/TerminalPayloads.java 3
 computers/src/main/java/dev/jstech/computers/os/Branding.java 2
 computers/src/main/java/dev/jstech/computers/os/KernelNames.java 3

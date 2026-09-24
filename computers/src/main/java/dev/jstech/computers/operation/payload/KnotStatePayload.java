@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -22,6 +26,7 @@ import java.util.List;
  * sending two revisions to be compared on the client would cost several times as much for the same
  * picture.
  */
+@TextHolder
 public record KnotStatePayload(Service service, List<String> files, List<Revision> revisions,
                                int shownRevision, List<DiffLine> diff) implements CustomPacketPayload {
 
@@ -37,22 +42,14 @@ public record KnotStatePayload(Service service, List<String> files, List<Revisio
      * <p>Grouped for the same reason the messenger's is: a stream codec is built of at most six pairs, and
      * these three are the service rather than the source it keeps.
      */
-    public record Service(boolean online, String host, long bytes, String note) {
+    public record Service(boolean online, String host, long bytes, Text note) {
 
         /** The longest name of the machine keeping it that travels; a machine may be named far longer. */
         public static final int MAX_HOST = 64;
 
-        /**
-         * The longest thing the machine may say about the last request.
-         *
-         * <p>Worth naming because a note is built out of a file's name, which may be longer than this on
-         * its own, and the codec below refuses what it is handed by throwing rather than by shortening it.
-         */
-        public static final int MAX_NOTE = 128;
-
         /** What the machine has to say about the last thing asked of it, or nothing. */
         public Service(final boolean online, final String host, final long bytes) {
-            this(online, host, bytes, "");
+            this(online, host, bytes, Text.EMPTY);
         }
 
         public static final StreamCodec<RegistryFriendlyByteBuf, Service> STREAM_CODEC =
@@ -60,9 +57,21 @@ public record KnotStatePayload(Service service, List<String> files, List<Revisio
                         ByteBufCodecs.BOOL, Service::online,
                         ByteBufCodecs.stringUtf8(MAX_HOST), Service::host,
                         ByteBufCodecs.VAR_LONG, Service::bytes,
-                        ByteBufCodecs.stringUtf8(MAX_NOTE), Service::note,
+                        TextCodecs.STREAM_CODEC, Service::note,
                         Service::new);
     }
+
+    // What the machine says about a push or a pull; a file's name is data.
+    public static final TextKey NO_COMPUTER = TextKey.of("jsc.knot.note.no_computer", "No computer");
+    public static final TextKey NO_SYSTEM_DISK = TextKey.of("jsc.knot.note.no_system_disk", "No system disk");
+    public static final TextKey NO_SUCH_FILE = TextKey.of("jsc.knot.note.no_such_file", "No %s on this machine");
+    public static final TextKey NOTHING_CHANGED =
+            TextKey.of("jsc.knot.note.nothing_changed", "Nothing changed since the last revision");
+    public static final TextKey PUSHED = TextKey.of("jsc.knot.note.pushed", "Pushed %s");
+    public static final TextKey NO_SUCH_REVISION = TextKey.of("jsc.knot.note.no_such_revision", "No such revision");
+    public static final TextKey NO_ROOM = TextKey.of("jsc.knot.note.no_room", "Not enough free space");
+    public static final TextKey COULD_NOT_WRITE = TextKey.of("jsc.knot.note.could_not_write", "Could not write %s");
+    public static final TextKey WROTE = TextKey.of("jsc.knot.note.wrote", "Wrote r%s to %s");
 
     /** How many revisions the history panel lists. */
     public static final int MAX_REVISIONS = 64;

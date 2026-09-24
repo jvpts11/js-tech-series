@@ -33,6 +33,9 @@ import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -169,7 +172,7 @@ public final class ClusterManagerApp implements IDesktopApp {
     private final class RenamePopup extends Popup {
 
         RenamePopup() {
-            super("RENAME CLUSTER", POPUP_W, POPUP_H);
+            super(GameText.resolve(ClusterManagerTexts.RENAME_TITLE), POPUP_W, POPUP_H);
         }
 
         @Override
@@ -185,75 +188,101 @@ public final class ClusterManagerApp implements IDesktopApp {
     public ClusterManagerApp(final BlockPos host) {
         this.host = host;
 
-        tabs = root.add(new TabStrip(List.of("Supercomputers", "Datacenters", "AI")).fitToLabels(14).setOnSelect(this::selectTab));
-        loadingLabel = root.add(new Label("Reaching the network ...", Label.Tone.DIM));
-        warnLabel = root.add(new Label("A Cluster Interface Card is required.").setColor(WARN_TEXT));
+        tabs = root.add(new TabStrip(words(ClusterManagerTexts.SUPERCOMPUTERS_TAB, ClusterManagerTexts.DATACENTERS_TAB,
+                ClusterManagerTexts.AI_TAB)).fitToLabels(14).setOnSelect(this::selectTab));
+        loadingLabel = root.add(new Label(GameText.resolve(ClusterManagerTexts.REACHING), Label.Tone.DIM));
+        warnLabel = root.add(new Label(GameText.resolve(ClusterManagerTexts.CARD_REQUIRED)).setColor(WARN_TEXT));
         listHeader = root.add(new Label(this::listHeaderText, Label.Tone.DIM));
-        emptyListLabel = root.add(new Label(() -> tab == 2 ? "none yet" : "none on this network", Label.Tone.DIM));
+        emptyListLabel = root.add(new Label(() -> GameText.resolve(
+                tab == 2 ? ClusterManagerTexts.NONE_YET : ClusterManagerTexts.NONE_ON_NETWORK), Label.Tone.DIM));
         clusterList = root.add(new ListView<WireCluster>(this::clustersOfTab, ROW_H * 2, this::renderClusterRow)
                 .setOnClick(this::clusterClicked));
-        placeholder = root.add(new Label(() -> tab == 2 ? "No AI clusters on this network." : "Select a cluster on the left.",
-                Label.Tone.DIM));
+        placeholder = root.add(new Label(() -> GameText.resolve(
+                tab == 2 ? ClusterManagerTexts.NO_AI_CLUSTERS : ClusterManagerTexts.SELECT_ONE), Label.Tone.DIM));
         nameLabel = root.add(new Label(() -> detail() == null ? "" : detail().name()));
-        pillLabel = root.add(new Label(() -> detail() != null && detail().online() ? "ONLINE" : "OFFLINE")
+        pillLabel = root.add(new Label(() -> GameText.resolve(detail() != null && detail().online()
+                        ? ClusterManagerTexts.ONLINE : ClusterManagerTexts.OFFLINE))
                 .setColor(() -> detail() != null && detail().online() ? GREEN : RED)
                 .setAlign(Label.Align.RIGHT));
-        renameButton = root.add(new Button("RENAME", this::openRename));
-        subLabel = root.add(new Label(() -> detail() == null ? "" : detail().sub(), Label.Tone.DIM));
+        renameButton = root.add(new Button(GameText.resolve(ClusterManagerTexts.RENAME), this::openRename));
+        subLabel = root.add(new Label(() -> detail() == null ? "" : GameText.resolve(detail().sub()), Label.Tone.DIM));
         jobLabel = root.add(new Label(this::jobText).setColor(WARN_TEXT));
         jobBar = root.add(new ProgressBar(this::jobPercent));
-        scSubTabs = root.add(new TabStrip(List.of("NODES", "CLUSTER MAP", "QUEUE")).fitToLabels(10).setOnSelect(this::selectSubTab));
-        dcSubTabs = root.add(new TabStrip(List.of("SERVERS", "INVENTORY")).fitToLabels(10).setOnSelect(this::selectSubTab));
-        scNodeColumns = root.add(new ColumnHeader(List.of("RACK/U", "NODE", "SYSTEM", "STATUS", "PHI")).setSortable(false));
-        dcNodeColumns = root.add(new ColumnHeader(List.of("RACK/U", "NODE", "SYSTEM", "STATUS", "USED")).setSortable(false));
+        scSubTabs = root.add(new TabStrip(words(ClusterManagerTexts.NODES_TAB, ClusterManagerTexts.MAP_TAB,
+                ClusterManagerTexts.QUEUE_TAB)).fitToLabels(10).setOnSelect(this::selectSubTab));
+        dcSubTabs = root.add(new TabStrip(words(ClusterManagerTexts.SERVERS_TAB, ClusterManagerTexts.INVENTORY_TAB))
+                .fitToLabels(10).setOnSelect(this::selectSubTab));
+        scNodeColumns = root.add(new ColumnHeader(words(ClusterManagerTexts.RACK_UNIT_COLUMN,
+                ClusterManagerTexts.NODE_COLUMN, ClusterManagerTexts.SYSTEM_COLUMN, ClusterManagerTexts.STATUS_COLUMN,
+                ClusterManagerTexts.PHI_COLUMN)).setSortable(false));
+        dcNodeColumns = root.add(new ColumnHeader(words(ClusterManagerTexts.RACK_UNIT_COLUMN,
+                ClusterManagerTexts.NODE_COLUMN, ClusterManagerTexts.SYSTEM_COLUMN, ClusterManagerTexts.STATUS_COLUMN,
+                ClusterManagerTexts.USED_COLUMN)).setSortable(false));
         nodeList = root.add(new ListView<WireNode>(this::nodes, ROW_H, this::renderNodeRow).setOnClick(this::nodeClicked));
-        noNodesLabel = root.add(new Label("no nodes seated", Label.Tone.DIM));
-        mapColumns = root.add(new ColumnHeader(List.of("SLOT", "CRAFTS", "NODE", "STATE")).setSortable(false));
+        noNodesLabel = root.add(new Label(GameText.resolve(ClusterManagerTexts.NO_NODES), Label.Tone.DIM));
+        mapColumns = root.add(new ColumnHeader(words(ClusterManagerTexts.SLOT_COLUMN, ClusterManagerTexts.CRAFTS_COLUMN,
+                ClusterManagerTexts.NODE_COLUMN, ClusterManagerTexts.STATE_COLUMN)).setSortable(false));
         slotList = root.add(new ListView<Integer>(() -> List.of(0, 1, 2, 3, 4, 5), ROW_H, this::renderSlotRow));
         pastLabel = root.add(new Label(this::pastText).setColor(AMBER));
-        queueColumns = root.add(new ColumnHeader(List.of("OPERATION", "BY", "SLOTS")).setSortable(false));
+        queueColumns = root.add(new ColumnHeader(words(ClusterManagerTexts.OPERATION_COLUMN,
+                ClusterManagerTexts.BY_COLUMN, ClusterManagerTexts.SLOTS_COLUMN)).setSortable(false));
         queueList = root.add(new ListView<WireCraft>(this::queue, ROW_H, this::renderQueueRow));
-        noQueueLabel = root.add(new Label("no crafts in this queue", Label.Tone.DIM));
+        noQueueLabel = root.add(new Label(GameText.resolve(ClusterManagerTexts.NO_CRAFTS), Label.Tone.DIM));
         inventoryHint = root.add(new Label(this::inventoryHintText, Label.Tone.DIM));
         inventoryGrid = root.add(new CellGrid(1, 1, 1, CELL)
                 .setRenderer(this::renderInventoryCell)
                 .setOnClick((index, button, shift) -> openMove(index)));
-        emptyInventoryLabel = root.add(new Label("the section is empty", Label.Tone.DIM));
-        systemAll = root.add(new Button("SYSTEM ALL", () -> act(ClusterManagerActionPayload.ACTION_INSTALL_SYSTEM_ALL)));
-        programAll = root.add(new Button("PROGRAM ALL", () -> act(ClusterManagerActionPayload.ACTION_INSTALL_PROGRAM_ALL)));
-        powerAll = root.add(new Button(() -> allOn() ? "ALL OFF" : "ALL ON",
-                () -> act(allOn() ? ClusterManagerActionPayload.ACTION_POWER_ALL_OFF : ClusterManagerActionPayload.ACTION_POWER_ALL_ON)));
-        cancelJob = root.add(new Button("CANCEL JOB", () -> act(ClusterManagerActionPayload.ACTION_CANCEL_JOB)));
-        balance = root.add(new Button(() -> "BALANCE: " + balanceName(), () -> act(ClusterManagerActionPayload.ACTION_CYCLE_BALANCE)));
+        emptyInventoryLabel = root.add(new Label(GameText.resolve(ClusterManagerTexts.SECTION_EMPTY), Label.Tone.DIM));
+        systemAll = root.add(new Button(GameText.resolve(ClusterManagerTexts.SYSTEM_ALL),
+                () -> act(ClusterManagerActionPayload.ACTION_INSTALL_SYSTEM_ALL)));
+        programAll = root.add(new Button(GameText.resolve(ClusterManagerTexts.PROGRAM_ALL),
+                () -> act(ClusterManagerActionPayload.ACTION_INSTALL_PROGRAM_ALL)));
+        powerAll = root.add(new Button(
+                () -> GameText.resolve(allOn() ? ClusterManagerTexts.ALL_OFF : ClusterManagerTexts.ALL_ON),
+                () -> act(allOn() ? ClusterManagerActionPayload.ACTION_POWER_ALL_OFF
+                        : ClusterManagerActionPayload.ACTION_POWER_ALL_ON)));
+        cancelJob = root.add(new Button(GameText.resolve(ClusterManagerTexts.CANCEL_JOB),
+                () -> act(ClusterManagerActionPayload.ACTION_CANCEL_JOB)));
+        balance = root.add(new Button(() -> GameText.resolve(ClusterManagerTexts.BALANCE.with(balanceName())),
+                () -> act(ClusterManagerActionPayload.ACTION_CYCLE_BALANCE)));
 
         nodePopup = new Popup(this::nodeTitle, POPUP_W, POPUP_H).setLayouter(this::layoutNodePopup);
-        nodeSystem = nodePopup.add(new Label(() -> popupNode == null || popupNode.osLabel().isEmpty() ? "No system installed" : popupNode.osLabel()));
-        nodePrograms = nodePopup.add(new Label(() -> popupNode == null || popupNode.programs().isEmpty() ? "No programs" : popupNode.programs(), Label.Tone.DIM));
-        nodeSlot = nodePopup.add(new Label(() -> popupNode == null ? "" : popupNode.slotIndex() >= 0 ? "Cluster slot " + (popupNode.slotIndex() + 1)
-                : "Bay " + (popupNode.bayOn() ? "on" : "off"), Label.Tone.DIM));
-        nodePower = nodePopup.add(new Button(() -> popupNode != null && popupNode.bayOn() ? "POWER OFF" : "POWER ON",
+        nodeSystem = nodePopup.add(new Label(() -> popupNode == null || popupNode.osLabel().isEmpty()
+                ? GameText.resolve(ClusterManagerTexts.NO_SYSTEM_INSTALLED) : popupNode.osLabel()));
+        nodePrograms = nodePopup.add(new Label(() -> popupNode == null || popupNode.programs().isEmpty()
+                ? GameText.resolve(ClusterManagerTexts.NO_PROGRAMS) : popupNode.programs(), Label.Tone.DIM));
+        nodeSlot = nodePopup.add(new Label(this::nodeSlotText, Label.Tone.DIM));
+        nodePower = nodePopup.add(new Button(() -> GameText.resolve(popupNode != null && popupNode.bayOn()
+                        ? ClusterManagerTexts.POWER_OFF : ClusterManagerTexts.POWER_ON),
                 () -> nodeAction(ClusterManagerActionPayload.ACTION_TOGGLE_NODE)));
-        nodeInstallSystem = nodePopup.add(new Button("SYSTEM", () -> nodeAction(ClusterManagerActionPayload.ACTION_INSTALL_SYSTEM_NODE)));
-        nodeInstallProgram = nodePopup.add(new Button("PROGRAM", () -> nodeAction(ClusterManagerActionPayload.ACTION_INSTALL_PROGRAM_NODE)));
-        nodeClose = nodePopup.add(new Button("CLOSE", nodePopup::close));
+        nodeInstallSystem = nodePopup.add(new Button(GameText.resolve(ClusterManagerTexts.SYSTEM),
+                () -> nodeAction(ClusterManagerActionPayload.ACTION_INSTALL_SYSTEM_NODE)));
+        nodeInstallProgram = nodePopup.add(new Button(GameText.resolve(ClusterManagerTexts.PROGRAM),
+                () -> nodeAction(ClusterManagerActionPayload.ACTION_INSTALL_PROGRAM_NODE)));
+        nodeClose = nodePopup.add(new Button(GameText.resolve(ClusterManagerTexts.CLOSE), nodePopup::close));
 
         movePopup = new Popup(this::moveTitle, POPUP_W, POPUP_H).setLayouter(this::layoutMovePopup);
-        moveQtyLabel = movePopup.add(new Label(() -> moveItem == null ? "" : "QUANTITY  (" + moveItem.total() + " available)", Label.Tone.DIM));
+        moveQtyLabel = movePopup.add(new Label(() -> moveItem == null ? ""
+                : GameText.resolve(ClusterManagerTexts.QUANTITY.with(moveItem.total())), Label.Tone.DIM));
         for (int i = 0; i < PRESETS.length; i++) {
             final int preset = PRESETS[i];
-            presetButtons[i] = movePopup.add(new Button(preset < 0 ? "MAX" : String.valueOf(preset), () -> moveQty = preset));
+            presetButtons[i] = movePopup.add(new Button(
+                    preset < 0 ? GameText.resolve(ClusterManagerTexts.MAX) : String.valueOf(preset),
+                    () -> moveQty = preset));
         }
         prevDest = movePopup.add(new Button("<", () -> cycleDest(-1)));
         destLabel = movePopup.add(new Label(this::destText).setAlign(Label.Align.CENTER));
         nextDest = movePopup.add(new Button(">", () -> cycleDest(1)));
-        moveConfirm = movePopup.add(new Button("MOVE", this::confirmMove).setPrimary(true));
-        moveCancel = movePopup.add(new Button("CANCEL", movePopup::close));
+        moveConfirm = movePopup.add(new Button(GameText.resolve(ClusterManagerTexts.MOVE), this::confirmMove)
+                .setPrimary(true));
+        moveCancel = movePopup.add(new Button(GameText.resolve(ClusterManagerTexts.CANCEL), movePopup::close));
 
         renamePopup = new RenamePopup().setLayouter(this::layoutRenamePopup);
-        renameHint = renamePopup.add(new Label("Type a name; empty goes back to the default.", Label.Tone.DIM));
+        renameHint = renamePopup.add(new Label(GameText.resolve(ClusterManagerTexts.RENAME_HINT), Label.Tone.DIM));
         renameField = renamePopup.add(new TextField(ClusterRenamePayload.MAX_NAME));
-        renameApply = renamePopup.add(new Button("APPLY", this::applyRename).setPrimary(true));
-        renameCancel = renamePopup.add(new Button("CANCEL", renamePopup::close));
+        renameApply = renamePopup.add(new Button(GameText.resolve(ClusterManagerTexts.APPLY), this::applyRename)
+                .setPrimary(true));
+        renameCancel = renamePopup.add(new Button(GameText.resolve(ClusterManagerTexts.CANCEL), renamePopup::close));
 
         active = this;
         request();
@@ -366,7 +395,9 @@ public final class ClusterManagerApp implements IDesktopApp {
     }
 
     private String listHeaderText() {
-        return (tab == 0 ? "SUPERCOMPUTERS" : tab == 1 ? "SECTIONS" : "AI CLUSTERS") + " · " + clustersOfTab().size();
+        final TextKey header = tab == 0 ? ClusterManagerTexts.SUPERCOMPUTERS
+                : tab == 1 ? ClusterManagerTexts.SECTIONS : ClusterManagerTexts.AI_CLUSTERS;
+        return GameText.resolve(header.with(clustersOfTab().size()));
     }
 
     private String jobText() {
@@ -374,10 +405,15 @@ public final class ClusterManagerApp implements IDesktopApp {
             return "";
         }
         final WireJob job = state.job();
-        final String lanes = job.lanes().isEmpty() ? ""
-                : " · " + job.lanes().get(0).name() + " " + (job.lanes().get(0).permille() / 10) + "%";
-        return "Installing " + job.label() + " · " + job.done() + " of " + job.total()
-                + (job.cancelled() ? " · cancelling" : "") + lanes;
+        Text line = ClusterManagerTexts.INSTALLING_JOB.with(job.label(), job.done(), job.total());
+        if (job.cancelled()) {
+            line = ClusterManagerTexts.CANCELLING.with(line);
+        }
+        if (!job.lanes().isEmpty()) {
+            final WireLane first = job.lanes().get(0);
+            line = ClusterManagerTexts.WITH_LANE.with(line, first.name(), first.permille() / 10);
+        }
+        return GameText.resolve(line);
     }
 
     private int jobPercent() {
@@ -389,11 +425,29 @@ public final class ClusterManagerApp implements IDesktopApp {
 
     private String pastText() {
         final int past = Math.max(0, nodes().size() - LADDER.length);
-        return past > 0 ? past + " node(s) past the six slots · inert" : "";
+        return past > 0 ? GameText.resolve(ClusterManagerTexts.PAST_THE_SLOTS.with(past)) : "";
     }
 
     private String inventoryHintText() {
-        return items().size() + " kinds · click to move out · drop a stack to deposit";
+        return GameText.resolve(ClusterManagerTexts.INVENTORY_HINT.with(items().size()));
+    }
+
+    private String nodeSlotText() {
+        if (popupNode == null) {
+            return "";
+        }
+        return GameText.resolve(popupNode.slotIndex() >= 0
+                ? ClusterManagerTexts.CLUSTER_SLOT.with(popupNode.slotIndex() + 1)
+                : (popupNode.bayOn() ? ClusterManagerTexts.BAY_ON_LINE : ClusterManagerTexts.BAY_OFF_LINE).text());
+    }
+
+    /* The words of a strip of tabs or of a table's columns, in the player's language. */
+    private static List<String> words(final TextKey... keys) {
+        final List<String> out = new ArrayList<>(keys.length);
+        for (final TextKey key : keys) {
+            out.add(GameText.resolve(key));
+        }
+        return out;
     }
 
     private boolean allOn() {
@@ -409,10 +463,10 @@ public final class ClusterManagerApp implements IDesktopApp {
         return true;
     }
 
-    private String balanceName() {
+    private Text balanceName() {
         final var mode = detail() == null ? LoadBalanceMode.ROUND_ROBIN
                 : LoadBalanceMode.byId(detail().balance());
-        return mode.label();
+        return mode.text();
     }
 
     // selection
@@ -490,9 +544,10 @@ public final class ClusterManagerApp implements IDesktopApp {
 
     private String destText() {
         if (state == null || state.dests().isEmpty()) {
-            return "no destination";
+            return GameText.resolve(ClusterManagerTexts.NO_DESTINATION);
         }
-        return "TO " + state.dests().get(Math.min(moveDest, state.dests().size() - 1)).name();
+        return GameText.resolve(
+                ClusterManagerTexts.TO.with(state.dests().get(Math.min(moveDest, state.dests().size() - 1)).name()));
     }
 
     private void confirmMove() {
@@ -524,11 +579,13 @@ public final class ClusterManagerApp implements IDesktopApp {
 
     private String nodeTitle() {
         final WireNode n = popupNode;
-        return n == null ? "" : "NODE · " + n.name() + "  R" + n.rackIndex() + " U" + (n.row() + 1);
+        return n == null ? ""
+                : GameText.resolve(ClusterManagerTexts.NODE_TITLE.with(n.name(), n.rackIndex(), n.row() + 1));
     }
 
     private String moveTitle() {
-        return moveItem == null ? "" : "MOVE OUT · " + moveItem.key().displayName().getString();
+        return moveItem == null ? ""
+                : GameText.resolve(ClusterManagerTexts.MOVE_OUT_TITLE.with(GameText.of(moveItem.key().displayName())));
     }
 
     // rendering
@@ -638,7 +695,8 @@ public final class ClusterManagerApp implements IDesktopApp {
         }
 
         int dy = top + PAD;
-        final int pillW = font.width("OFFLINE");
+        final int pillW = Math.max(font.width(GameText.resolve(ClusterManagerTexts.OFFLINE)),
+                font.width(GameText.resolve(ClusterManagerTexts.ONLINE)));
         pillLabel.setBounds(dx + dw - PAD - pillW, dy, pillW, 8);
         renameButton.setBounds(dx + dw - PAD - pillW - 6 - RENAME_W, dy - 1, RENAME_W, 10);
         nameLabel.setBounds(dx + PAD, dy, renameButton.x() - 6 - (dx + PAD), 8);
@@ -665,7 +723,7 @@ public final class ClusterManagerApp implements IDesktopApp {
              */
             final int rightEdge = dx + dw - PAD - SWITCH_W;
             final int metricW = 32;
-            final int statusW = font.width("INSTALLING") + 6;
+            final int statusW = font.width(GameText.resolve(ClusterManagerTexts.INSTALLING)) + 6;
             final int c0 = dx + PAD;
             final int c1 = c0 + font.width("R00 U0") + 8;
             final int c4 = rightEdge - metricW;
@@ -723,7 +781,8 @@ public final class ClusterManagerApp implements IDesktopApp {
         }
         g.fill(x + 5, y + 3, x + 8, y + 6, c.reachable() ? (c.online() ? GREEN : RED) : ctx.skin().dim());
         g.drawString(ctx.font(), Texts.clip(ctx.font(), c.name(), w - 16), x + 11, y + 1, ctx.skin().text(), false);
-        g.drawString(ctx.font(), Texts.clip(ctx.font(), c.sub(), w - 8), x + 5, y + ROW_H + 1, ctx.skin().dim(), false);
+        g.drawString(ctx.font(), Texts.clip(ctx.font(), GameText.resolve(c.sub()), w - 8), x + 5, y + ROW_H + 1,
+                ctx.skin().dim(), false);
     }
 
     private void renderNodeRow(final GuiGraphics g, final UiContext ctx, final WireNode n, final int index, final int x,
@@ -757,16 +816,16 @@ public final class ClusterManagerApp implements IDesktopApp {
 
     /** The one word for what a machine is doing, matching the state the server sent. */
     private static String stateLabel(final int state) {
-        return switch (state) {
-            case ClusterManagerStatePayload.STATE_INCOMPLETE -> "INCOMPLETE";
-            case ClusterManagerStatePayload.STATE_BAY_OFF -> "BAY OFF";
-            case ClusterManagerStatePayload.STATE_INSTALLING -> "INSTALLING";
-            case ClusterManagerStatePayload.STATE_NO_COPROCESSOR -> "NO PHI";
-            case ClusterManagerStatePayload.STATE_UNDER_RATED -> "PHI LOW";
-            case ClusterManagerStatePayload.STATE_UNSLOTTED -> "INERT";
-            case ClusterManagerStatePayload.STATE_NO_SYSTEM -> "NO SYSTEM";
-            default -> "ONLINE";
-        };
+        return GameText.resolve(switch (state) {
+            case ClusterManagerStatePayload.STATE_INCOMPLETE -> ClusterManagerTexts.INCOMPLETE;
+            case ClusterManagerStatePayload.STATE_BAY_OFF -> ClusterManagerTexts.BAY_OFF;
+            case ClusterManagerStatePayload.STATE_INSTALLING -> ClusterManagerTexts.INSTALLING;
+            case ClusterManagerStatePayload.STATE_NO_COPROCESSOR -> ClusterManagerTexts.NO_PHI;
+            case ClusterManagerStatePayload.STATE_UNDER_RATED -> ClusterManagerTexts.PHI_LOW;
+            case ClusterManagerStatePayload.STATE_UNSLOTTED -> ClusterManagerTexts.INERT;
+            case ClusterManagerStatePayload.STATE_NO_SYSTEM -> ClusterManagerTexts.NO_SYSTEM;
+            default -> ClusterManagerTexts.ONLINE;
+        });
     }
 
     private static int stateColor(final int state, final UiContext ctx) {
@@ -792,13 +851,15 @@ public final class ClusterManagerApp implements IDesktopApp {
         g.drawString(font, String.valueOf(slot + 1), mapColumns.columnX(0), ty, ctx.skin().dim(), false);
         g.drawString(font, LADDER[slot], mapColumns.columnX(1), ty, ctx.skin().accent(), false);
         if (node == null) {
-            g.drawString(font, "no node", mapColumns.columnX(2), ty, ctx.skin().dim(), false);
+            g.drawString(font, GameText.resolve(ClusterManagerTexts.NO_NODE), mapColumns.columnX(2), ty,
+                    ctx.skin().dim(), false);
             return;
         }
         g.drawString(font, Texts.clip(font, "R" + node.rackIndex() + " U" + (node.row() + 1) + " " + node.name(),
                 mapColumns.columnX(3) - mapColumns.columnX(2) - GAP), mapColumns.columnX(2), ty, ctx.skin().text(), false);
-        final String st = node.code() >= 16 ? "ONLINE" : node.code() == 3 ? "BAY OFF" : node.code() == 2 ? "RATING LOW"
-                : node.code() == 1 ? "NO PHI CARD" : "NO NODE";
+        final String st = GameText.resolve(node.code() >= 16 ? ClusterManagerTexts.ONLINE
+                : node.code() == 3 ? ClusterManagerTexts.BAY_OFF : node.code() == 2 ? ClusterManagerTexts.RATING_LOW
+                : node.code() == 1 ? ClusterManagerTexts.NO_PHI_CARD : ClusterManagerTexts.SLOT_NO_NODE);
         g.drawString(font, st, mapColumns.columnX(3), ty, node.code() >= 16 ? GREEN : AMBER, false);
     }
 
@@ -810,10 +871,11 @@ public final class ClusterManagerApp implements IDesktopApp {
         final int c0 = queueColumns.columnX(0);
         final int c1 = queueColumns.columnX(1);
         final int c2 = queueColumns.columnX(2);
-        g.drawString(font, Texts.clip(font, "CRAFT " + c.label(), c1 - c0 - GAP), c0, ty, col, false);
+        g.drawString(font, Texts.clip(font, GameText.resolve(ClusterManagerTexts.CRAFT.with(c.label())), c1 - c0 - GAP),
+                c0, ty, col, false);
         g.drawString(font, Texts.clip(font, c.requester(), c2 - c1 - GAP), c1, ty, ctx.skin().dim(), false);
-        g.drawString(font, c.waiting() ? "WAITING" : String.valueOf(c.slots()), c2, ty,
-                c.waiting() ? AMBER : ctx.skin().accent(), false);
+        g.drawString(font, c.waiting() ? GameText.resolve(ClusterManagerTexts.WAITING) : String.valueOf(c.slots()),
+                c2, ty, c.waiting() ? AMBER : ctx.skin().accent(), false);
     }
 
     private void renderInventoryCell(final GuiGraphics g, final UiContext ctx, final int index, final int cx, final int cy,

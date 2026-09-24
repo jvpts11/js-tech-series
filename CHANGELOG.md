@@ -128,6 +128,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   query's results, and in what the prompt lists of the network, travel as the things' own names, so each player
   reads them in their own language, while a search still matches them in English. The query language's own words,
   its keywords, tables and columns, stay as they are typed.
+- The Cluster Manager, the Automation Manager, the Messenger and Knot are text a language file can translate: their
+  tabs, lists, tables, buttons and dialogs, and what the machine answers to them, from a cluster's line and a
+  bulk install's progress and summary to why a job could not be made and what a push or a pull came to. The names
+  of clusters, nodes, people, files and programs stay as they are.
 
 ### Fixed
 - Saving an IQL file from the Network Management Studio to a full disk no longer fails to send its answer: the

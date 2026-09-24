@@ -38,6 +38,7 @@ import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -268,7 +269,8 @@ public final class ClusterManagerGameTests {
                     helper.assertTrue(!manager.reaches(RackChassis.RackType.SUPERCOMPUTER)
                                     && manager.powerAll(ref, false) == 0,
                             "without a card the bays are out of reach");
-                    helper.assertTrue(manager.startJob(ref, JobKind.SYSTEM).equals("no cluster interface card"),
+                    helper.assertTrue(
+                            manager.startJob(ref, JobKind.SYSTEM).english().equals("no cluster interface card"),
                             "a job needs the card first");
                 })
                 .thenSucceed();
@@ -466,7 +468,7 @@ public final class ClusterManagerGameTests {
                 })
                 .thenExecuteAfter(4, () -> {
                     final var state = ClusterManagerStateBuilder.buildClusterManagerState(manager, helper.getLevel(),
-                            ClusterManagerStatePayload.KIND_DATACENTER, 0, "");
+                            ClusterManagerStatePayload.KIND_DATACENTER, 0, Text.EMPTY);
                     final List<ClusterManagerStatePayload.WireNode> nodes = state.detail().nodes();
                     helper.assertTrue(nodes.size() == 2, "both servers are listed; got " + nodes.size());
                     helper.assertTrue(nodes.get(0).state() == ClusterManagerStatePayload.STATE_ONLINE,
@@ -477,7 +479,7 @@ public final class ClusterManagerGameTests {
                 })
                 .thenExecuteAfter(4, () -> {
                     final var state = ClusterManagerStateBuilder.buildClusterManagerState(manager, helper.getLevel(),
-                            ClusterManagerStatePayload.KIND_DATACENTER, 0, "");
+                            ClusterManagerStatePayload.KIND_DATACENTER, 0, Text.EMPTY);
                     helper.assertTrue(state.detail().nodes().get(1).state()
                                     == ClusterManagerStatePayload.STATE_NO_SYSTEM,
                             "switched back on with an empty disk it reads NO SYSTEM; got "
@@ -497,7 +499,7 @@ public final class ClusterManagerGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 6, () -> {
                     final var state = ClusterManagerStateBuilder.buildClusterManagerState(manager, helper.getLevel(),
-                            ClusterManagerStatePayload.KIND_SUPERCOMPUTER, 0, "");
+                            ClusterManagerStatePayload.KIND_SUPERCOMPUTER, 0, Text.EMPTY);
                     final List<ClusterManagerStatePayload.WireNode> nodes = state.detail().nodes();
                     helper.assertTrue(!nodes.isEmpty(), "the cluster lists its nodes");
                     helper.assertTrue(nodes.get(0).state() == ClusterManagerStatePayload.STATE_NO_SYSTEM,
@@ -507,7 +509,7 @@ public final class ClusterManagerGameTests {
                 })
                 .thenExecuteAfter(6, () -> {
                     final var state = ClusterManagerStateBuilder.buildClusterManagerState(manager, helper.getLevel(),
-                            ClusterManagerStatePayload.KIND_SUPERCOMPUTER, 0, "");
+                            ClusterManagerStatePayload.KIND_SUPERCOMPUTER, 0, Text.EMPTY);
                     helper.assertTrue(state.detail().nodes().get(0).state()
                                     == ClusterManagerStatePayload.STATE_NO_COPROCESSOR,
                             "without a coprocessor the node reads NO PHI; got "
@@ -529,10 +531,11 @@ public final class ClusterManagerGameTests {
                     helper.assertTrue(medium != null && medium.id().equals(DEBIAN) && medium.label().equals("Debian"),
                             "the manager reads the system disc from its linked reader");
                     final ClusterRef ref = supercomputerRef(manager);
-                    final String status = manager.startJob(ref, JobKind.SYSTEM);
+                    final String status = manager.startJob(ref, JobKind.SYSTEM).english();
                     helper.assertTrue(status.equals("installing Debian on 2 nodes"), "the job starts; got " + status);
                     helper.assertTrue(manager.job() != null && manager.job().total() == 2, "two nodes to write");
-                    helper.assertTrue(manager.startJob(ref, JobKind.SYSTEM).equals("a job is already running"),
+                    helper.assertTrue(
+                            manager.startJob(ref, JobKind.SYSTEM).english().equals("a job is already running"),
                             "one job at a time");
                 })
                 .thenExecuteAfter(2, () -> {
@@ -554,15 +557,15 @@ public final class ClusterManagerGameTests {
                     helper.assertTrue(DEBIAN.equals(rack.unitHost(0).installedOsId())
                                     && DEBIAN.equals(rack.unitHost(2).installedOsId()),
                             "each node's drive now carries the system");
-                    helper.assertTrue(manager.lastJobSummary().equals("done: Debian on 2 nodes"),
+                    helper.assertTrue(manager.lastJobSummary().english().equals("done: Debian on 2 nodes"),
                             "the summary counts both; got " + manager.lastJobSummary());
                     // A second pass brings the cluster to the system again: nodes already on it are left alone.
-                    helper.assertTrue(manager.startJob(supercomputerRef(manager), JobKind.SYSTEM)
+                    helper.assertTrue(manager.startJob(supercomputerRef(manager), JobKind.SYSTEM).english()
                             .startsWith("installing"), "a second pass starts");
                 })
                 .thenWaitUntil(() -> helper.assertTrue(manager.job() == null, "the second pass finishes"))
                 .thenExecute(() -> helper.assertTrue(
-                        manager.lastJobSummary().equals("done: Debian on 0 nodes, 2 skipped"),
+                        manager.lastJobSummary().english().equals("done: Debian on 0 nodes, 2 skipped"),
                         "nodes already running the system are skipped; got " + manager.lastJobSummary()))
                 .thenSucceed();
     }
@@ -580,7 +583,7 @@ public final class ClusterManagerGameTests {
                             "the program disc is read from the second linked reader");
                     // The system lands on one node by hand; the program must reach it and skip the bare one.
                     helper.assertTrue(rack.unitHost(0).installOs(DEBIAN), "the first node takes the system");
-                    final String status = manager.startJob(supercomputerRef(manager), JobKind.PROGRAM);
+                    final String status = manager.startJob(supercomputerRef(manager), JobKind.PROGRAM).english();
                     helper.assertTrue(status.equals("installing Minesweeper on 2 nodes"), "the job starts; got " + status);
                 })
                 .thenWaitUntil(() -> helper.assertTrue(manager.job() == null, "the job finishes"))
@@ -589,7 +592,8 @@ public final class ClusterManagerGameTests {
                     helper.assertTrue(first.console() != null && first.console().isInstalled(MINESWEEPER.toString()),
                             "the node with a system has the program");
                     helper.assertTrue(rack.unitHost(2).installedOsId() == null, "the bare node is untouched");
-                    helper.assertTrue(manager.lastJobSummary().equals("done: Minesweeper on 1 node, 1 skipped"),
+                    helper.assertTrue(
+                            manager.lastJobSummary().english().equals("done: Minesweeper on 1 node, 1 skipped"),
                             "one written, one skipped for having no system; got " + manager.lastJobSummary());
                 })
                 .thenSucceed();
@@ -604,12 +608,12 @@ public final class ClusterManagerGameTests {
                 .thenExecuteAfter(SETTLE + 6, () -> {
                     final ClusterRef ref = sectionRef(helper);
                     helper.assertTrue(manager.powerAll(ref, false) == 1, "the server's bay goes off");
-                    final String status = manager.startJob(ref, JobKind.SYSTEM);
+                    final String status = manager.startJob(ref, JobKind.SYSTEM).english();
                     helper.assertTrue(status.equals("installing Debian on 1 node"), "the job starts; got " + status);
                 })
                 .thenExecuteAfter(2, () -> {
                     helper.assertTrue(manager.job() == null, "a node with its bay off is skipped at once");
-                    helper.assertTrue(manager.lastJobSummary().equals("done: Debian on 0 nodes, 1 skipped"),
+                    helper.assertTrue(manager.lastJobSummary().english().equals("done: Debian on 0 nodes, 1 skipped"),
                             "the summary says so; got " + manager.lastJobSummary());
                 })
                 .thenSucceed();
@@ -632,7 +636,7 @@ public final class ClusterManagerGameTests {
                     final ClusterRef ref = sectionRef(helper);
                     helper.assertTrue(manager.nodesOf(ref).size() == lanes[0] + 1,
                             "every server registers in the section; got " + manager.nodesOf(ref).size());
-                    final String status = manager.startJob(ref, JobKind.SYSTEM);
+                    final String status = manager.startJob(ref, JobKind.SYSTEM).english();
                     helper.assertTrue(status.startsWith("installing Debian on " + (lanes[0] + 1)),
                             "the job starts; got " + status);
                 })
@@ -648,7 +652,7 @@ public final class ClusterManagerGameTests {
                 .thenExecute(() -> {
                     helper.assertTrue(nodesRunning(rack, lanes[0] + 1, DEBIAN) == lanes[0],
                             "the servers being written got the system; the queued one did not");
-                    helper.assertTrue(manager.lastJobSummary().equals("cancelled: Debian on " + lanes[0]
+                    helper.assertTrue(manager.lastJobSummary().english().equals("cancelled: Debian on " + lanes[0]
                                     + " node" + (lanes[0] == 1 ? "" : "s")),
                             "the summary says cancelled; got " + manager.lastJobSummary());
                     helper.assertTrue(!manager.cancelJob(), "nothing left to cancel");
@@ -705,7 +709,8 @@ public final class ClusterManagerGameTests {
                             "out of the card's reach the bays stay untouched");
                     helper.assertTrue(!manager.toggleNode(helper.absolutePos(NODE_RACK), 0) && rack.bayPowerOn(0),
                             "a single node out of reach does not answer either");
-                    helper.assertTrue(manager.startJob(ref, JobKind.SYSTEM).equals("this card does not reach that cluster"),
+                    helper.assertTrue(manager.startJob(ref, JobKind.SYSTEM).english()
+                                    .equals("this card does not reach that cluster"),
                             "a job on a cluster out of reach is refused up front");
                 })
                 .thenSucceed();

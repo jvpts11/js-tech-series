@@ -307,7 +307,7 @@ public final class ClusterCommand implements ICliCommand {
             ctx.out().error(CliTexts.USAGE.with(NAME, INSTALL_USAGE));
             return;
         }
-        final String result = cmc.startJob(c.ref(), kind);
+        final Text result = cmc.startJob(c.ref(), kind);
         if (cmc.job() != null) {
             ctx.out().ok(STARTED.with(result, cmc.parallelLanes()));
         } else {

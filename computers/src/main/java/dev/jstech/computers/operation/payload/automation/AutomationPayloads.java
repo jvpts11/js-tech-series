@@ -20,9 +20,10 @@ import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.computers.program.iql.IqlDuration;
 import dev.jstech.computers.program.iql.IqlSavedObject;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import java.util.Locale;
 import java.util.Optional;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -72,11 +73,12 @@ public final class AutomationPayloads {
 
     private static AutomationPayload buildAutomation(final MainframeBlockEntity mf) {
         if (mf == null) {
-            return new AutomationPayload(false, "no Mainframe", List.of(), List.of());
+            return new AutomationPayload(false, AutomationPayload.NO_MAINFRAME.text(), List.of(), List.of());
         }
         final boolean online = mf.isAutomationEngineActive() || mf.isIqlEngineActive();
-        final String label = mf.isAutomationEngineInstalled() ? "Automation Engine"
-                : mf.isIqlEngineInstalled() ? "IQL Engine" : "none";
+        // The engines go by their programs' names, which are data.
+        final Text label = mf.isAutomationEngineInstalled() ? Text.literal("Automation Engine")
+                : mf.isIqlEngineInstalled() ? Text.literal("IQL Engine") : AutomationPayload.NO_ENGINE.text();
         final List<AutomationPayload.JobRow> rows = new ArrayList<>();
         for (final var job : mf.iqlCatalog().ofType(
                 IqlDefinition.ObjectType.JOB)) {
@@ -100,25 +102,27 @@ public final class AutomationPayloads {
         return new AutomationPayload(online, label, rows, files);
     }
 
-    private static String inferJobType(final String body,
+    private static Text inferJobType(final String body,
             final IqlDefinition.TriggerKind kind) {
         final String b = body.trim().toUpperCase(Locale.ROOT);
         if (b.startsWith("MOVE")) {
-            return "Periodic Move";
+            return AutomationPayload.PERIODIC_MOVE.text();
         }
         if (b.startsWith("CRAFT")) {
-            return kind == IqlDefinition.TriggerKind.WHEN ? "Keep Stock" : "Batch Craft";
+            return (kind == IqlDefinition.TriggerKind.WHEN ? AutomationPayload.KEEP_STOCK
+                    : AutomationPayload.BATCH_CRAFT).text();
         }
-        return "Custom";
+        return AutomationPayload.CUSTOM.text();
     }
 
-    private static String triggerSummary(
+    /* A trigger is shown as its own clause, which is the query language's words; only "manual" is the game's. */
+    private static Text triggerSummary(
             final IqlDefinition.TriggerKind kind,
             final String spec) {
         return switch (kind) {
-            case EVERY -> "every " + spec;
-            case WHEN -> spec;
-            default -> "manual";
+            case EVERY -> Text.literal("every " + spec);
+            case WHEN -> Text.literal(spec);
+            default -> AutomationPayload.MANUAL.text();
         };
     }
 
@@ -145,7 +149,7 @@ public final class AutomationPayloads {
             final ServerPlayer player, final MainframeBlockEntity mf, final CreateAutomationJobPayload p) {
         final String name = p.name().trim();
         if (name.isEmpty()) {
-            jobError(player, "Give the job a name.");
+            jobError(player, CreateAutomationJobPayload.NEEDS_NAME.text());
             return null;
         }
         final String item = p.item().trim();
@@ -156,7 +160,7 @@ public final class AutomationPayloads {
         switch (p.jobType()) {
             case CreateAutomationJobPayload.TYPE_KEEP_STOCK -> {
                 if (item.isEmpty()) {
-                    jobError(player, "Keep Stock needs an item.");
+                    jobError(player, CreateAutomationJobPayload.KEEP_STOCK_NEEDS_ITEM.text());
                     return null;
                 }
                 return IqlDefinition.create(
@@ -164,7 +168,7 @@ public final class AutomationPayloads {
             }
             case CreateAutomationJobPayload.TYPE_BATCH_CRAFT -> {
                 if (item.isEmpty() || !validInterval(p.interval())) {
-                    jobError(player, "Batch Craft needs an item and a valid interval (e.g. 30s, 5m).");
+                    jobError(player, CreateAutomationJobPayload.BATCH_CRAFT_NEEDS.text());
                     return null;
                 }
                 return IqlDefinition.create(
@@ -174,7 +178,7 @@ public final class AutomationPayloads {
                 final String from = p.from().trim();
                 final String to = p.to().trim();
                 if (from.isEmpty() || to.isEmpty() || !validInterval(p.interval())) {
-                    jobError(player, "Periodic Move needs FROM, TO, and a valid interval (e.g. 30s).");
+                    jobError(player, CreateAutomationJobPayload.PERIODIC_MOVE_NEEDS.text());
                     return null;
                 }
                 final String what = item.isEmpty() ? "*" : amount + " " + item;
@@ -184,14 +188,14 @@ public final class AutomationPayloads {
             case CreateAutomationJobPayload.TYPE_IQL_SCRIPT -> {
                 // The chosen .iql filename rides in the item field; its content becomes the job body.
                 if (item.isEmpty() || !validInterval(p.interval())) {
-                    jobError(player, "An IQL Script job needs a .iql file and a valid interval (e.g. 30s).");
+                    jobError(player, CreateAutomationJobPayload.SCRIPT_JOB_NEEDS.text());
                     return null;
                 }
                 final ItemStack sysDisk = mf.systemDisk();
                 final var content = sysDisk.isEmpty() ? Optional.<String>empty()
                         : DiskFilesystem.read(sysDisk, item);
                 if (content.isEmpty() || content.get().isBlank()) {
-                    jobError(player, "Script not found on the Mainframe disk: " + item);
+                    jobError(player, CreateAutomationJobPayload.SCRIPT_NOT_FOUND.with(item));
                     return null;
                 }
                 return IqlDefinition.create(
@@ -211,8 +215,8 @@ public final class AutomationPayloads {
         }
     }
 
-    private static void jobError(final ServerPlayer player, final String message) {
-        player.displayClientMessage(Component.literal(message), false);
+    private static void jobError(final ServerPlayer player, final Text message) {
+        player.displayClientMessage(GameText.component(message), false);
     }
 
     private static void handleJobAction(final JobActionPayload payload, final ServerPlayer player,

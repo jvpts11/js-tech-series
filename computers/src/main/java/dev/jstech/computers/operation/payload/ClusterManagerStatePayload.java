@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -41,14 +43,14 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
     public static final int KIND_AI = 2;
 
     /** The machine: whether it can manage at all, how far, how wide, and what discs are in. */
-    public record Head(boolean hasCard, int reach, int lanes, String mediumSystem, String mediumProgram, String status) {
+    public record Head(boolean hasCard, int reach, int lanes, String mediumSystem, String mediumProgram, Text status) {
         public static final StreamCodec<RegistryFriendlyByteBuf, Head> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.BOOL, Head::hasCard,
                 ByteBufCodecs.VAR_INT, Head::reach,
                 ByteBufCodecs.VAR_INT, Head::lanes,
                 ByteBufCodecs.stringUtf8(64), Head::mediumSystem,
                 ByteBufCodecs.stringUtf8(64), Head::mediumProgram,
-                ByteBufCodecs.stringUtf8(160), Head::status,
+                TextCodecs.STREAM_CODEC, Head::status,
                 Head::new);
     }
 
@@ -57,16 +59,17 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
      * datacenter they are storage used / total; {@code sub} is the one-line detail under the name.
      */
     public record WireCluster(int kind, int index, String name, boolean online, int nodes, long a, long b,
-                              int balance, String sub, boolean reachable) {
+                              int balance, Text sub, boolean reachable) {
         public static final StreamCodec<RegistryFriendlyByteBuf, WireCluster> STREAM_CODEC = StreamCodec.of(
                 (buf, c) -> {
                     buf.writeVarInt(c.kind()).writeVarInt(c.index()).writeUtf(c.name(), 64).writeBoolean(c.online())
-                            .writeVarInt(c.nodes()).writeVarLong(c.a()).writeVarLong(c.b()).writeVarInt(c.balance())
-                            .writeUtf(c.sub(), 96).writeBoolean(c.reachable());
+                            .writeVarInt(c.nodes()).writeVarLong(c.a()).writeVarLong(c.b()).writeVarInt(c.balance());
+                    TextCodecs.STREAM_CODEC.encode(buf, c.sub());
+                    buf.writeBoolean(c.reachable());
                 },
                 buf -> new WireCluster(buf.readVarInt(), buf.readVarInt(), buf.readUtf(64), buf.readBoolean(),
-                        buf.readVarInt(), buf.readVarLong(), buf.readVarLong(), buf.readVarInt(), buf.readUtf(96),
-                        buf.readBoolean()));
+                        buf.readVarInt(), buf.readVarLong(), buf.readVarLong(), buf.readVarInt(),
+                        TextCodecs.STREAM_CODEC.decode(buf), buf.readBoolean()));
     }
 
     /** One rack row of the selected cluster. */
@@ -105,10 +108,10 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
                         buf.readVarInt(), buf.readVarLong(), buf.readVarLong(), buf.readVarInt()));
     }
 
-    /** One craft in a supercomputer's queue. */
-    public record WireCraft(String label, String requester, int slots, boolean waiting) {
+    /** One craft in a supercomputer's queue: what it makes, read in the player's language, and who asked. */
+    public record WireCraft(Text label, String requester, int slots, boolean waiting) {
         public static final StreamCodec<RegistryFriendlyByteBuf, WireCraft> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.stringUtf8(96), WireCraft::label,
+                TextCodecs.STREAM_CODEC, WireCraft::label,
                 ByteBufCodecs.stringUtf8(48), WireCraft::requester,
                 ByteBufCodecs.VAR_INT, WireCraft::slots,
                 ByteBufCodecs.BOOL, WireCraft::waiting,
@@ -116,12 +119,13 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
     }
 
     /** The selected cluster: which one, its header line, and what it holds. */
-    public record Detail(int kind, int index, String name, String sub, boolean online, int balance,
+    public record Detail(int kind, int index, String name, Text sub, boolean online, int balance,
                          List<WireNode> nodes, List<WireCraft> queue) {
         public static final StreamCodec<RegistryFriendlyByteBuf, Detail> STREAM_CODEC = StreamCodec.of(
                 (buf, d) -> {
-                    buf.writeVarInt(d.kind()).writeVarInt(d.index()).writeUtf(d.name(), 64).writeUtf(d.sub(), 128)
-                            .writeBoolean(d.online()).writeVarInt(d.balance());
+                    buf.writeVarInt(d.kind()).writeVarInt(d.index()).writeUtf(d.name(), 64);
+                    TextCodecs.STREAM_CODEC.encode(buf, d.sub());
+                    buf.writeBoolean(d.online()).writeVarInt(d.balance());
                     buf.writeVarInt(d.nodes().size());
                     for (final WireNode n : d.nodes()) {
                         WireNode.STREAM_CODEC.encode(buf, n);
@@ -135,7 +139,7 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
                     final int kind = buf.readVarInt();
                     final int index = buf.readVarInt();
                     final String name = buf.readUtf(64);
-                    final String sub = buf.readUtf(128);
+                    final Text sub = TextCodecs.STREAM_CODEC.decode(buf);
                     final boolean online = buf.readBoolean();
                     final int balance = buf.readVarInt();
                     final int n = Math.min(MAX_NODES, buf.readVarInt());
@@ -158,7 +162,7 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
         }
 
         public static Detail none() {
-            return new Detail(-1, -1, "", "", false, 0, List.of(), List.of());
+            return new Detail(-1, -1, "", Text.EMPTY, false, 0, List.of(), List.of());
         }
     }
 
@@ -173,7 +177,7 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
     /** The bulk install in flight, or {@link #none()}. */
     public record WireJob(boolean active, int kind, String label, int clusterKind, int clusterIndex, int done,
                           int skipped, int queued, int total, int elapsedTicks, boolean cancelled, List<WireLane> lanes,
-                          String lastSummary) {
+                          Text lastSummary) {
         public static final StreamCodec<RegistryFriendlyByteBuf, WireJob> STREAM_CODEC = StreamCodec.of(
                 (buf, j) -> {
                     buf.writeBoolean(j.active()).writeVarInt(j.kind()).writeUtf(j.label(), 64).writeVarInt(j.clusterKind())
@@ -183,7 +187,7 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
                     for (final WireLane lane : j.lanes()) {
                         WireLane.STREAM_CODEC.encode(buf, lane);
                     }
-                    buf.writeUtf(j.lastSummary(), 160);
+                    TextCodecs.STREAM_CODEC.encode(buf, j.lastSummary());
                 },
                 buf -> {
                     final boolean active = buf.readBoolean();
@@ -202,7 +206,7 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
                     for (int i = 0; i < n; i++) {
                         lanes.add(WireLane.STREAM_CODEC.decode(buf));
                     }
-                    final String last = buf.readUtf(160);
+                    final Text last = TextCodecs.STREAM_CODEC.decode(buf);
                     return new WireJob(active, kind, label, clusterKind, clusterIndex, done, skipped, queued, total,
                             elapsed, cancelled, lanes, last);
                 });
@@ -212,16 +216,16 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
             lanes = List.copyOf(lanes);
         }
 
-        public static WireJob none(final String lastSummary) {
+        public static WireJob none(final Text lastSummary) {
             return new WireJob(false, 0, "", -1, -1, 0, 0, 0, 0, 0, false, List.of(), lastSummary);
         }
     }
 
-    /** A computer a move-out can go to. */
-    public record WireDest(long pos, String name) {
+    /** A computer a move-out can go to, by its name or, with none, by its kind. */
+    public record WireDest(long pos, Text name) {
         public static final StreamCodec<RegistryFriendlyByteBuf, WireDest> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_LONG, WireDest::pos,
-                ByteBufCodecs.stringUtf8(64), WireDest::name,
+                TextCodecs.STREAM_CODEC, WireDest::name,
                 WireDest::new);
     }
 

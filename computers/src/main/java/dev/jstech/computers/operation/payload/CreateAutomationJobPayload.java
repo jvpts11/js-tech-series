@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -19,6 +21,7 @@ import net.minecraft.resources.ResourceLocation;
  * amount item}, Batch Craft becomes {@code EVERY interval AS CRAFT amount item}, and Periodic Move becomes
  * {@code EVERY interval AS MOVE amount item FROM from TO to}. Fields not used by a type are ignored.
  */
+@TextHolder
 public record CreateAutomationJobPayload(BlockPos host, BlockPos monitorPos, int jobType, String name,
                                          String item, long amount, String from, String to, String interval)
         implements CustomPacketPayload {
@@ -28,6 +31,19 @@ public record CreateAutomationJobPayload(BlockPos host, BlockPos monitorPos, int
     public static final int TYPE_PERIODIC_MOVE = 2;
     /** Runs a stored .iql script (its name in {@code item}) every {@code interval}. */
     public static final int TYPE_IQL_SCRIPT = 3;
+
+    // Why a form did not make a job.
+    public static final TextKey NEEDS_NAME = TextKey.of("jsc.automation.error.needs_name", "Give the job a name.");
+    public static final TextKey KEEP_STOCK_NEEDS_ITEM =
+            TextKey.of("jsc.automation.error.keep_stock_needs_item", "Keep Stock needs an item.");
+    public static final TextKey BATCH_CRAFT_NEEDS = TextKey.of("jsc.automation.error.batch_craft_needs",
+            "Batch Craft needs an item and a valid interval (e.g. 30s, 5m).");
+    public static final TextKey PERIODIC_MOVE_NEEDS = TextKey.of("jsc.automation.error.periodic_move_needs",
+            "Periodic Move needs FROM, TO, and a valid interval (e.g. 30s).");
+    public static final TextKey SCRIPT_JOB_NEEDS = TextKey.of("jsc.automation.error.script_job_needs",
+            "An IQL Script job needs a .iql file and a valid interval (e.g. 30s).");
+    public static final TextKey SCRIPT_NOT_FOUND =
+            TextKey.of("jsc.automation.error.script_not_found", "Script not found on the Mainframe disk: %s");
 
     /*
      * What each field may hold. They arrive from a client and are kept in a job every viewer is sent again, so

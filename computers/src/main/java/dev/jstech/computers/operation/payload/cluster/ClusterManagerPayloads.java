@@ -29,6 +29,7 @@ import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.HashSet;
@@ -91,7 +92,8 @@ public final class ClusterManagerPayloads {
                 instanceof ClusterManagementComputerBlockEntity cmc)) {
             return;
         }
-        PacketDistributor.sendToPlayer(player, buildClusterManagerState(cmc, level, payload.selKind(), payload.selIndex(), ""));
+        PacketDistributor.sendToPlayer(player,
+                buildClusterManagerState(cmc, level, payload.selKind(), payload.selIndex(), Text.EMPTY));
     }
 
     private static void handleClusterManagerState(final ClusterManagerStatePayload payload, final Player player) {
@@ -105,10 +107,10 @@ public final class ClusterManagerPayloads {
             return;
         }
         final var ref = clusterRef(cmc, payload.kind(), payload.index());
-        String status = "";
+        Text status = Text.EMPTY;
         if (ref == null && payload.action() != ClusterManagerActionPayload.ACTION_REFRESH
                 && payload.action() != ClusterManagerActionPayload.ACTION_CANCEL_JOB) {
-            status = "select a cluster first";
+            status = ClusterManagerStateBuilder.SELECT_FIRST.text();
         } else {
             final var node = new ClusterManagementComputerBlockEntity
                     .NodeRef(BlockPos.of(payload.rackPos()), payload.row());
@@ -129,20 +131,24 @@ public final class ClusterManagerPayloads {
                 case ClusterManagerActionPayload.ACTION_INSTALL_PROGRAM_NODE -> cmc.startJob(ref,
                         ClusterManagementComputerBlockEntity.JobKind.PROGRAM,
                         List.of(node));
-                case ClusterManagerActionPayload.ACTION_POWER_ALL_ON -> cmc.powerAll(ref, true) + " bay(s) switched on";
-                case ClusterManagerActionPayload.ACTION_POWER_ALL_OFF -> cmc.powerAll(ref, false) + " bay(s) switched off";
+                case ClusterManagerActionPayload.ACTION_POWER_ALL_ON ->
+                        ClusterManagerStateBuilder.BAYS_ON.with(cmc.powerAll(ref, true));
+                case ClusterManagerActionPayload.ACTION_POWER_ALL_OFF ->
+                        ClusterManagerStateBuilder.BAYS_OFF.with(cmc.powerAll(ref, false));
                 case ClusterManagerActionPayload.ACTION_TOGGLE_NODE -> cmc.toggleNode(node.rack(), node.row())
-                        ? "" : "that row is not a node this card reaches";
-                case ClusterManagerActionPayload.ACTION_CANCEL_JOB -> cmc.cancelJob() ? "job cancelled after the nodes being written" : "";
+                        ? Text.EMPTY : ClusterManagerStateBuilder.NOT_A_NODE.text();
+                case ClusterManagerActionPayload.ACTION_CANCEL_JOB ->
+                        cmc.cancelJob() ? ClusterManagerStateBuilder.JOB_CANCELLED.text() : Text.EMPTY;
                 case ClusterManagerActionPayload.ACTION_CYCLE_BALANCE -> {
                     if (ref.face() != null && level.getBlockEntity(ref.anchor()) instanceof ServerRouterBlockEntity router) {
                         router.cycleLoadBalanceMode(ref.face());
                     }
-                    yield "";
+                    yield Text.EMPTY;
                 }
                 case ClusterManagerActionPayload.ACTION_DEPOSIT, ClusterManagerActionPayload.ACTION_DEPOSIT_ONE ->
-                        depositIntoSection(player, cmc, ref, payload.action() == ClusterManagerActionPayload.ACTION_DEPOSIT_ONE);
-                default -> "";
+                        depositIntoSection(player, cmc, ref,
+                                payload.action() == ClusterManagerActionPayload.ACTION_DEPOSIT_ONE);
+                default -> Text.EMPTY;
             };
         }
         PacketDistributor.sendToPlayer(player, buildClusterManagerState(cmc, level, payload.kind(), payload.index(), status));
@@ -155,18 +161,20 @@ public final class ClusterManagerPayloads {
             return;
         }
         final var ref = clusterRef(cmc, payload.kind(), payload.index());
-        String status = "select a cluster first";
+        Text status = ClusterManagerStateBuilder.SELECT_FIRST.text();
         if (ref != null) {
             final String typed = payload.name().strip().replaceAll("\\p{Cntrl}", "");
             final String name = typed.length() > ClusterRenamePayload.MAX_NAME
                     ? typed.substring(0, ClusterRenamePayload.MAX_NAME) : typed;
             if (ref.face() != null && level.getBlockEntity(ref.anchor()) instanceof ServerRouterBlockEntity router) {
                 router.setSectionName(ref.face(), name);
-                status = name.isEmpty() ? "section name cleared" : "section renamed to " + name;
+                status = name.isEmpty() ? ClusterManagerStateBuilder.SECTION_CLEARED.text()
+                        : ClusterManagerStateBuilder.SECTION_RENAMED.with(name);
             } else if (ref.face() == null && cmc.supercomputerAt(ref.anchor())
                     instanceof HbwInterfaceBlockEntity hub) {
                 hub.setCustomName(name);
-                status = name.isEmpty() ? "supercomputer name cleared" : "supercomputer renamed to " + name;
+                status = name.isEmpty() ? ClusterManagerStateBuilder.SUPERCOMPUTER_CLEARED.text()
+                        : ClusterManagerStateBuilder.SUPERCOMPUTER_RENAMED.with(name);
             }
         }
         PacketDistributor.sendToPlayer(player, buildClusterManagerState(cmc, level, payload.kind(), payload.index(), status));
@@ -199,11 +207,11 @@ public final class ClusterManagerPayloads {
         final var op = mainframe.submitNetworkMove(payload.key(), payload.quantity(), dest.localStorage(),
                 cmc.originLabel(MoveLabels.CLUSTER_MANAGER), sources);
         if (op != null) {
-            op.onSettle(() -> PacketDistributor.sendToPlayer(player,
-                    buildClusterManagerState(cmc, level, ClusterManagerStatePayload.KIND_DATACENTER, payload.index(), "")));
+            op.onSettle(() -> PacketDistributor.sendToPlayer(player, buildClusterManagerState(cmc, level,
+                    ClusterManagerStatePayload.KIND_DATACENTER, payload.index(), Text.EMPTY)));
         }
-        PacketDistributor.sendToPlayer(player,
-                buildClusterManagerState(cmc, level, ClusterManagerStatePayload.KIND_DATACENTER, payload.index(), "moving"));
+        PacketDistributor.sendToPlayer(player, buildClusterManagerState(cmc, level,
+                ClusterManagerStatePayload.KIND_DATACENTER, payload.index(), ClusterManagerStateBuilder.MOVING.text()));
     }
 
     /** The cluster a (kind, index) pair names in the state's own order, or null. */
@@ -231,7 +239,7 @@ public final class ClusterManagerPayloads {
     }
 
     /** Puts the stack on the player's cursor into the section's servers, spread by its balance mode. */
-    private static String depositIntoSection(
+    private static Text depositIntoSection(
             final ServerPlayer player,
             final ClusterManagementComputerBlockEntity cmc,
             final ClusterManagementComputerBlockEntity.ClusterRef ref,
@@ -239,11 +247,11 @@ public final class ClusterManagerPayloads {
         final ItemStack cursor = player.containerMenu.getCarried();
         final var section = cmc.sectionAt(ref.anchor(), ref.face());
         if (cursor.isEmpty() || section == null || !(player.level() instanceof ServerLevel level)) {
-            return "";
+            return Text.EMPTY;
         }
         final List<ServerStore> stores = sectionStores(level, section.section().servers());
         if (stores.isEmpty()) {
-            return "no servers in that section";
+            return ClusterManagerStateBuilder.NO_SERVERS.text();
         }
         final ServerRouterBlockEntity router =
                 level.getBlockEntity(ref.anchor()) instanceof ServerRouterBlockEntity r ? r : null;
@@ -263,6 +271,7 @@ public final class ClusterManagerPayloads {
             player.containerMenu.setCarried(cursor.isEmpty() ? ItemStack.EMPTY : cursor);
             player.containerMenu.broadcastChanges();
         }
-        return stored > 0L ? "deposited " + stored : "the section has no room";
+        return stored > 0L ? ClusterManagerStateBuilder.DEPOSITED.with(stored)
+                : ClusterManagerStateBuilder.NO_ROOM.text();
     }
 }

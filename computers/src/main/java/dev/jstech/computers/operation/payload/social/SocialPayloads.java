@@ -25,6 +25,7 @@ import dev.jstech.computers.program.KnotRepository;
 import dev.jstech.computers.program.MessengerLog;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.Text;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -186,10 +187,10 @@ public final class SocialPayloads {
                     new KnotStatePayload.Service(false, "", 0L), List.of(), List.of(), 0, List.of()));
             return;
         }
-        final String note = switch (payload.action()) {
+        final Text note = switch (payload.action()) {
             case KnotActionPayload.PUSH -> push(payload, player, level, host, repository);
             case KnotActionPayload.PULL -> pull(payload, level, repository);
-            default -> "";
+            default -> Text.EMPTY;
         };
         PacketDistributor.sendToPlayer(player,
                 knotStateOf(host, repository, payload.revision(), note));
@@ -201,57 +202,57 @@ public final class SocialPayloads {
      * <p>Answers what to tell them, because every one of these can fail for a reason they can act on and a
      * button that does nothing at all is the worst of the possible answers.
      */
-    private static String push(final KnotActionPayload payload, final ServerPlayer player,
-                               final ServerLevel level, final ServerServices.Host host,
-                               final KnotRepository repository) {
+    private static Text push(final KnotActionPayload payload, final ServerPlayer player,
+                             final ServerLevel level, final ServerServices.Host host,
+                             final KnotRepository repository) {
         if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
-            return "No computer";
+            return KnotStatePayload.NO_COMPUTER.text();
         }
         final ItemStack disk = computer.systemDisk();
         if (disk.isEmpty()) {
-            return "No system disk";
+            return KnotStatePayload.NO_SYSTEM_DISK.text();
         }
         final String content = DiskFilesystem.read(disk, payload.file()).orElse(null);
         if (content == null) {
-            return "No " + payload.file() + " on this machine";
+            return KnotStatePayload.NO_SUCH_FILE.with(payload.file());
         }
         if (repository.commit(payload.file(), player.getGameProfile().getName(),
                 payload.message(), content, level.getGameTime()) == null) {
-            return "Nothing changed since the last revision";
+            return KnotStatePayload.NOTHING_CHANGED.text();
         }
         host.changed();
-        return "Pushed " + payload.file();
+        return KnotStatePayload.PUSHED.with(payload.file());
     }
 
     /** Writes a revision back onto the machine's disk, where the editor can open it. */
-    private static String pull(final KnotActionPayload payload, final ServerLevel level,
-                               final KnotRepository repository) {
+    private static Text pull(final KnotActionPayload payload, final ServerLevel level,
+                             final KnotRepository repository) {
         final KnotRepository.Revision revision = repository.revision(payload.revision());
         final String file = repository.fileOf(payload.revision());
         if (revision == null || file == null) {
-            return "No such revision";
+            return KnotStatePayload.NO_SUCH_REVISION.text();
         }
         if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
-            return "No computer";
+            return KnotStatePayload.NO_COMPUTER.text();
         }
         final ItemStack disk = computer.systemDisk();
         final FilesystemKind kind = FileAccess.filesystemKindOf(computer);
         if (disk.isEmpty() || kind == FilesystemKind.NONE) {
-            return "No system disk";
+            return KnotStatePayload.NO_SYSTEM_DISK.text();
         }
         final DiskFilesystem.WriteResult result = DiskFilesystem.write(disk, file, typeOf(file),
                 revision.content(), computer.systemDiskFreeWeight(), kind, level.getGameTime());
         if (result != DiskFilesystem.WriteResult.OK) {
             return result == DiskFilesystem.WriteResult.DISK_FULL
-                    ? "Not enough free space" : "Could not write " + file;
+                    ? KnotStatePayload.NO_ROOM.text() : KnotStatePayload.COULD_NOT_WRITE.with(file);
         }
         computer.setChanged();
-        return "Wrote r" + revision.number() + " to " + file;
+        return KnotStatePayload.WROTE.with(revision.number(), file);
     }
 
     private static KnotStatePayload knotStateOf(final ServerServices.Host host,
                                                 final KnotRepository repository, final int shown,
-                                                final String note) {
+                                                final Text note) {
         final List<KnotStatePayload.Revision> revisions = new ArrayList<>();
         for (final KnotRepository.Revision revision
                 : repository.recent(KnotStatePayload.MAX_REVISIONS)) {
@@ -261,7 +262,7 @@ public final class SocialPayloads {
         }
         return new KnotStatePayload(
                 new KnotStatePayload.Service(true, cut(host.name(), KnotStatePayload.Service.MAX_HOST),
-                        repository.bytes(), cut(note, KnotStatePayload.Service.MAX_NOTE)),
+                        repository.bytes(), note),
                 clip(repository.files(), KnotStatePayload.MAX_FILES),
                 revisions, shown, diffOf(repository, shown));
     }

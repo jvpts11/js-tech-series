@@ -36,6 +36,8 @@ import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerRouterElement;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
@@ -409,7 +411,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
         final ClusterRef cluster;
         final List<NodeRef> queue;
         final List<Lane> lanes = new ArrayList<>();
-        final List<String> skippedNames = new ArrayList<>();
+        final List<Text> skippedNames = new ArrayList<>();
         int done;
         int total;
         boolean cancelled;
@@ -470,7 +472,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
 
     @Nullable
     private InstallJob job;
-    private String lastJobSummary = "";
+    private Text lastJobSummary = Text.EMPTY;
 
     @Nullable
     public InstallJob job() {
@@ -478,7 +480,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
     }
 
     /** The one-line outcome of the last job, for the status bar and the shell. */
-    public String lastJobSummary() {
+    public Text lastJobSummary() {
         return lastJobSummary;
     }
 
@@ -486,7 +488,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
      * Starts a bulk install on a cluster from the medium in a linked reader. Returns a status line:
      * the job started, or why it did not.
      */
-    public String startJob(final ClusterRef ref, final JobKind kind) {
+    public Text startJob(final ClusterRef ref, final JobKind kind) {
         return startJob(ref, kind, null);
     }
 
@@ -494,38 +496,43 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
      * Starts a bulk install on the given rows of a cluster (every row when {@code only} is null).
      * Returns a status line: the job started, or why it did not.
      */
-    public String startJob(final ClusterRef ref, final JobKind kind, @Nullable final List<NodeRef> only) {
+    public Text startJob(final ClusterRef ref, final JobKind kind, @Nullable final List<NodeRef> only) {
         if (!managerReady()) {
-            return "no cluster interface card";
+            return ClusterJobTexts.NO_CARD.text();
         }
         if (job != null) {
-            return "a job is already running";
+            return ClusterJobTexts.ALREADY_RUNNING.text();
         }
         if (!reaches(ref.kind())) {
-            return "this card does not reach that cluster";
+            return ClusterJobTexts.OUT_OF_REACH.text();
         }
         final Medium medium = medium(kind == JobKind.SYSTEM ? MediaKind.OS_INSTALL : MediaKind.PROGRAM_INSTALL);
         if (medium == null) {
-            return kind == JobKind.SYSTEM ? "no system disc in a linked reader" : "no program disc in a linked reader";
+            return (kind == JobKind.SYSTEM ? ClusterJobTexts.NO_SYSTEM_DISC : ClusterJobTexts.NO_PROGRAM_DISC).text();
         }
         if (kind == JobKind.SYSTEM) {
             final OsDef os = OsRegistry.getOs(medium.id());
             if (os == null || os.installMode() != InstallMode.GUIDED) {
-                return "that system installs by hand from its own shell";
+                return ClusterJobTexts.INSTALLS_BY_HAND.text();
             }
         } else {
             final ProgramSpec program = OsRegistry.getProgram(medium.id());
             if (program == null || program.preinstalled()) {
-                return "that disc carries nothing to install";
+                return ClusterJobTexts.NOTHING_TO_INSTALL.text();
             }
         }
         final List<NodeRef> targets = only != null ? only : nodesOf(ref);
         if (targets.isEmpty()) {
-            return "no nodes in that cluster";
+            return ClusterJobTexts.NO_NODES.text();
         }
         job = new InstallJob(kind, medium, ref, targets);
         setChanged();
-        return "installing " + medium.label() + " on " + targets.size() + " node" + (targets.size() == 1 ? "" : "s");
+        return ClusterJobTexts.INSTALLING.with(medium.label(), nodes(targets.size()));
+    }
+
+    /* A count of nodes, said as one or as many. */
+    private static Text nodes(final int count) {
+        return (count == 1 ? ClusterJobTexts.ONE_NODE : ClusterJobTexts.NODES).with(count);
     }
 
     /** Stops the job after the nodes being written right now; nothing queued is touched. */
@@ -549,14 +556,14 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
             final NodeRef node = j.queue.remove(0);
             final ServerRackBlockEntity rack = rackAt(node.rack());
             if (rack == null) {
-                j.skippedNames.add("missing rack");
+                j.skippedNames.add(ClusterJobTexts.MISSING_RACK.text());
                 continue;
             }
             final IOsHost host = rack.unitHost(node.row());
             final String name = nodeName(rack, node.row());
-            final String skip = skipReason(j, host, rack, node.row());
+            final TextKey skip = skipReason(j, host, rack, node.row());
             if (skip != null) {
-                j.skippedNames.add(name + " (" + skip + ")");
+                j.skippedNames.add(ClusterJobTexts.SKIPPED.with(name, skip));
                 continue;
             }
             j.lanes.add(new Lane(node, name, installTicks(host), installTicks(host)));
@@ -574,12 +581,13 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
             if (rack != null && apply(j, rack.unitHost(lane.node().row()))) {
                 j.done++;
             } else {
-                j.skippedNames.add(lane.name() + " (changed while writing)");
+                j.skippedNames.add(ClusterJobTexts.SKIPPED.with(lane.name(), ClusterJobTexts.CHANGED));
             }
         }
         if (j.finished()) {
-            lastJobSummary = (j.cancelled ? "cancelled: " : "done: ") + j.medium.label() + " on " + j.done
-                    + " node" + (j.done == 1 ? "" : "s") + (j.skipped() > 0 ? ", " + j.skipped() + " skipped" : "");
+            final Text summary = (j.cancelled ? ClusterJobTexts.CANCELLED_ON : ClusterJobTexts.DONE_ON)
+                    .with(j.medium.label(), nodes(j.done));
+            lastJobSummary = j.skipped() > 0 ? ClusterJobTexts.WITH_SKIPPED.with(summary, j.skipped()) : summary;
             job = null;
         }
         setChanged();
@@ -587,31 +595,32 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
 
     /** Why a node is left out of a job, or null when it takes the install. */
     @Nullable
-    private static String skipReason(final InstallJob j, final IOsHost host, final ServerRackBlockEntity rack, final int row) {
+    private static TextKey skipReason(final InstallJob j, final IOsHost host, final ServerRackBlockEntity rack,
+                                      final int row) {
         if (!rack.bayPowerOn(row)) {
-            return "bay off";
+            return ClusterJobTexts.BAY_OFF;
         }
         if (j.kind == JobKind.SYSTEM) {
             // "To all" means bring every node to this system: one already running it is left alone.
-            return j.medium.id().equals(host.installedOsId()) ? "already installed" : null;
+            return j.medium.id().equals(host.installedOsId()) ? ClusterJobTexts.ALREADY_INSTALLED : null;
         }
         final ProgramSpec program = OsRegistry.getProgram(j.medium.id());
         if (program == null) {
-            return "unknown program";
+            return ClusterJobTexts.UNKNOWN_PROGRAM;
         }
         if (host.installedOsId() == null || host.console() == null) {
-            return "no system";
+            return ClusterJobTexts.NO_SYSTEM;
         }
         if (host.console().isInstalled(program.id().toString())) {
-            return "already installed";
+            return ClusterJobTexts.ALREADY_INSTALLED;
         }
         if (!OsRegistry.canInstallProgram(host.installedOsId(), program.id(), host.maxCpuMhz(),
                 host.totalVramMb(), host.systemDiskFreeMb())) {
-            return "does not meet the program's requirements";
+            return ClusterJobTexts.REQUIREMENTS;
         }
         final HardwareEra era = host.displayEra();
         if (program.minEra() != HardwareEra.VINTAGE && (era == null || !OsGating.canInstall(program.minEra(), era))) {
-            return "too old for the program";
+            return ClusterJobTexts.TOO_OLD;
         }
         return null;
     }

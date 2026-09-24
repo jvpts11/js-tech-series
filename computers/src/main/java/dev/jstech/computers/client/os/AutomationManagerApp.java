@@ -19,6 +19,8 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -43,7 +45,8 @@ public final class AutomationManagerApp implements IDesktopApp {
     private static final int FORM_H = 78;
     private static final int FIELD_MAX = 48;
 
-    private static final String[] TYPE_LABELS = {"Keep Stock", "Batch Craft", "Move", "IQL"};
+    private static final TextKey[] TYPE_LABELS =
+            {AutomationTexts.KEEP_STOCK, AutomationTexts.BATCH_CRAFT, AutomationTexts.MOVE, AutomationTexts.IQL};
 
     private final BlockPos host;
     private final BlockPos monitorPos;
@@ -113,39 +116,44 @@ public final class AutomationManagerApp implements IDesktopApp {
         this.host = host;
         this.monitorPos = monitorPos;
 
-        loadingLabel = root.add(new Label("Contacting Mainframe...", Label.Tone.DIM));
-        engineLabel = root.add(new Label(this::engineText).setColor(() -> data != null && data.engineOnline() ? 0 : C_WARN));
-        jobsLabel = root.add(new Label(() -> data == null ? "" : data.jobs().size() + " jobs", Label.Tone.DIM).setAlign(Label.Align.RIGHT));
-        jobColumns = root.add(new ColumnHeader(List.of("JOB", "TYPE", "TRIGGER", "ACT")).setSortable(false));
-        jobList = root.add(new ListView<AutomationPayload.JobRow>(() -> data == null ? List.of() : data.jobs(), JOB_ROW_H, this::renderJobRow)
-                .setOnClick(this::jobClicked));
-        noJobsLabel = root.add(new Label("No jobs yet - create one below.", Label.Tone.DIM));
-        newJobLabel = root.add(new Label("NEW JOB", Label.Tone.DIM));
+        loadingLabel = root.add(new Label(GameText.resolve(AutomationTexts.CONTACTING), Label.Tone.DIM));
+        engineLabel = root.add(new Label(this::engineText)
+                .setColor(() -> data != null && data.engineOnline() ? 0 : C_WARN));
+        jobsLabel = root.add(new Label(() -> data == null ? ""
+                : GameText.resolve(AutomationTexts.JOBS.with(data.jobs().size())), Label.Tone.DIM)
+                .setAlign(Label.Align.RIGHT));
+        jobColumns = root.add(new ColumnHeader(List.of(GameText.resolve(AutomationTexts.JOB_COLUMN),
+                GameText.resolve(AutomationTexts.TYPE_COLUMN), GameText.resolve(AutomationTexts.TRIGGER_COLUMN),
+                GameText.resolve(AutomationTexts.ACT_COLUMN))).setSortable(false));
+        jobList = root.add(new ListView<AutomationPayload.JobRow>(() -> data == null ? List.of() : data.jobs(),
+                JOB_ROW_H, this::renderJobRow).setOnClick(this::jobClicked));
+        noJobsLabel = root.add(new Label(GameText.resolve(AutomationTexts.NO_JOBS), Label.Tone.DIM));
+        newJobLabel = root.add(new Label(GameText.resolve(AutomationTexts.NEW_JOB), Label.Tone.DIM));
         for (int i = 0; i < TYPE_LABELS.length; i++) {
             final int type = i;
-            typeButtons[i] = root.add(new Button(TYPE_LABELS[i], () -> {
+            typeButtons[i] = root.add(new Button(GameText.resolve(TYPE_LABELS[i]), () -> {
                 newType = type;
                 root.focus(null);
             }));
         }
-        nameCaption = root.add(new Label("Name", Label.Tone.DIM));
+        nameCaption = root.add(new Label(GameText.resolve(AutomationTexts.NAME), Label.Tone.DIM));
         nameField = root.add(new TokenField());
-        itemCaption = root.add(new Label(() -> newType == CreateAutomationJobPayload.TYPE_PERIODIC_MOVE ? "Item (blank=all)" : "Item id",
-                Label.Tone.DIM));
+        itemCaption = root.add(new Label(() -> GameText.resolve(newType == CreateAutomationJobPayload.TYPE_PERIODIC_MOVE
+                ? AutomationTexts.ITEM_OR_ALL : AutomationTexts.ITEM_ID), Label.Tone.DIM));
         itemField = root.add(new TokenField());
-        amountCaption = root.add(new Label(() -> newType == CreateAutomationJobPayload.TYPE_KEEP_STOCK ? "Keep at least" : "Amount",
-                Label.Tone.DIM));
+        amountCaption = root.add(new Label(() -> GameText.resolve(newType == CreateAutomationJobPayload.TYPE_KEEP_STOCK
+                ? AutomationTexts.KEEP_AT_LEAST : AutomationTexts.AMOUNT), Label.Tone.DIM));
         amountField = root.add(new DigitField());
-        intervalCaption = root.add(new Label("Every (30s)", Label.Tone.DIM));
+        intervalCaption = root.add(new Label(GameText.resolve(AutomationTexts.EVERY), Label.Tone.DIM));
         intervalField = root.add(new TokenField());
-        fromCaption = root.add(new Label("From", Label.Tone.DIM));
+        fromCaption = root.add(new Label(GameText.resolve(AutomationTexts.FROM), Label.Tone.DIM));
         fromField = root.add(new TokenField());
-        toCaption = root.add(new Label("To", Label.Tone.DIM));
+        toCaption = root.add(new Label(GameText.resolve(AutomationTexts.TO), Label.Tone.DIM));
         toField = root.add(new TokenField());
-        scriptCaption = root.add(new Label("Script (on Mainframe disk):", Label.Tone.DIM));
-        noScriptsLabel = root.add(new Label("no .iql files - save one in the NMS", Label.Tone.DIM));
+        scriptCaption = root.add(new Label(GameText.resolve(AutomationTexts.SCRIPT), Label.Tone.DIM));
+        noScriptsLabel = root.add(new Label(GameText.resolve(AutomationTexts.NO_SCRIPTS), Label.Tone.DIM));
         root.add(scripts);
-        create = root.add(new Button("Create job", this::create).setPrimary(true));
+        create = root.add(new Button(GameText.resolve(AutomationTexts.CREATE), this::create).setPrimary(true));
 
         active = this;
         request();
@@ -202,7 +210,8 @@ public final class AutomationManagerApp implements IDesktopApp {
         if (data == null) {
             return "";
         }
-        return data.engineOnline() ? data.engineLabel() + " online" : "No engine - install the Automation Engine on the Mainframe";
+        return GameText.resolve(data.engineOnline() ? AutomationTexts.ONLINE.with(data.engineLabel())
+                : AutomationTexts.NO_ENGINE.text());
     }
 
     // rendering
@@ -258,7 +267,7 @@ public final class AutomationManagerApp implements IDesktopApp {
         newJobLabel.setBounds(x + 2, fy, 40, 8);
         int sx = x + 44;
         for (int i = 0; i < TYPE_LABELS.length; i++) {
-            final int sw = font.width(TYPE_LABELS[i]) + 10;
+            final int sw = font.width(GameText.resolve(TYPE_LABELS[i])) + 10;
             typeButtons[i].setVisible(ready);
             typeButtons[i].setBounds(sx, fy - 2, sw, 12);
             typeButtons[i].setPrimary(i == newType);
@@ -351,8 +360,10 @@ public final class AutomationManagerApp implements IDesktopApp {
         final int typeX = jobColumns.columnX(1);
         final int triggerX = jobColumns.columnX(2);
         g.drawString(font, Texts.clip(font, j.name(), typeX - x - 6), x + 2, y + 3, j.paused() ? ctx.skin().dim() : ctx.skin().text(), false);
-        g.drawString(font, Texts.clip(font, j.type(), triggerX - typeX - 4), typeX, y + 3, ctx.skin().dim(), false);
-        g.drawString(font, Texts.clip(font, j.trigger(), (x + w - 22) - triggerX - 4), triggerX, y + 3, j.paused() ? C_WARN : C_GOOD, false);
+        g.drawString(font, Texts.clip(font, GameText.resolve(j.type()), triggerX - typeX - 4), typeX, y + 3,
+                ctx.skin().dim(), false);
+        g.drawString(font, Texts.clip(font, GameText.resolve(j.trigger()), (x + w - 22) - triggerX - 4), triggerX,
+                y + 3, j.paused() ? C_WARN : C_GOOD, false);
         // Pause/resume + delete glyphs.
         g.drawString(font, j.paused() ? ">" : "=", x + w - 22, y + 3, ctx.skin().text(), false);
         g.drawString(font, "x", x + w - 10, y + 3, C_DELETE, false);

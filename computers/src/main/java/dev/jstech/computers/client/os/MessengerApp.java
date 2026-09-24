@@ -14,6 +14,7 @@ import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -86,8 +87,8 @@ public final class MessengerApp implements IDesktopApp {
     public MessengerApp(final BlockPos host, final BlockPos monitorPos) {
         this.host = host;
         this.monitorPos = monitorPos;
-        send = root.add(new Button("Send", this::say));
-        nudge = root.add(new Button("Nudge", this::sendNudge));
+        send = root.add(new Button(GameText.resolve(SocialTexts.SEND), this::say));
+        nudge = root.add(new Button(GameText.resolve(SocialTexts.NUDGE), this::sendNudge));
         root.add(compose);
         open = this;
         look();
@@ -218,8 +219,9 @@ public final class MessengerApp implements IDesktopApp {
                             final int bottom) {
         g.fill(x, y, x + ROSTER_W, bottom, skin.fieldBg());
         g.fill(x + ROSTER_W, y, x + ROSTER_W + 1, bottom, skin.edge());
-        g.drawString(font, state.service().online() ? "On the network" : "No service",
-                x + MARGIN, y + 2, state.service().online() ? skin.text() : MINE_INK, false);
+        final boolean serving = state.service().online();
+        g.drawString(font, GameText.resolve(serving ? SocialTexts.ON_THE_NETWORK : SocialTexts.NO_SERVICE_HEADING),
+                x + MARGIN, y + 2, serving ? skin.text() : MINE_INK, false);
         this.rosterLeft = x;
         this.rosterTop = y + TOOLBAR_H;
         this.rosterBottom = bottom;
@@ -239,12 +241,13 @@ public final class MessengerApp implements IDesktopApp {
                 g.fill(x + MARGIN, ry + 3, x + MARGIN + 4, ry + 7, online ? ONLINE : OFFLINE);
             }
             final int ink = on ? skin.listRowText(true) : (lobby || online ? skin.text() : skin.dim());
-            g.drawString(font, font.plainSubstrByWidth(lobby ? "Everybody" : name, ROSTER_W - 14),
+            g.drawString(font, font.plainSubstrByWidth(lobby ? GameText.resolve(SocialTexts.EVERYBODY) : name,
+                            ROSTER_W - 14),
                     x + MARGIN + (lobby ? 0 : 7), ry + 1, ink, false);
         }
         if (rows.size() == 1) {
             final int ry = rosterTop + ROW_H;
-            g.drawString(font, "nobody else", x + MARGIN, ry + 1, skin.dim(), false);
+            g.drawString(font, GameText.resolve(SocialTexts.NOBODY_ELSE), x + MARGIN, ry + 1, skin.dim(), false);
         }
     }
 
@@ -297,7 +300,7 @@ public final class MessengerApp implements IDesktopApp {
             final MessengerStatePayload.Line line = lines.get(i);
             if (line.nudge()) {
                 g.fill(x + MARGIN, ry, right - MARGIN, ry + ROW_H - 1, NUDGE_BG);
-                final String text = line.from() + " sent a nudge";
+                final String text = GameText.resolve(SocialTexts.SENT_A_NUDGE.with(line.from()));
                 g.drawString(font, text, x + (right - x - font.width(text)) / 2, ry + 1, NUDGE_INK, false);
             } else {
                 final String who = line.from() + ":";
@@ -310,16 +313,16 @@ public final class MessengerApp implements IDesktopApp {
             ry += ROW_H;
         }
         if (lines.isEmpty()) {
-            final String empty = state.service().online()
-                    ? "Nothing said yet" : "No Messenger Service on this network";
+            final String empty = GameText.resolve(state.service().online()
+                    ? SocialTexts.NOTHING_SAID : SocialTexts.NO_MESSENGER);
             g.drawString(font, font.plainSubstrByWidth(empty, right - x - MARGIN * 2),
                     x + MARGIN, y + 3, skin.dim(), false);
         }
     }
 
     private void layoutCompose(final Font font, final int x, final int y, final int width) {
-        final int sendW = font.width("Send") + 8;
-        final int nudgeW = font.width("Nudge") + 8;
+        final int sendW = font.width(GameText.resolve(SocialTexts.SEND)) + 8;
+        final int nudgeW = font.width(GameText.resolve(SocialTexts.NUDGE)) + 8;
         compose.setBounds(x + MARGIN, y + 2, Math.max(20, width - MARGIN * 2), 12);
         nudge.setBounds(x + MARGIN, y + 16, nudgeW, 11);
         send.setBounds(x + width - MARGIN - sendW, y + 16, sendW, 11);
@@ -333,9 +336,9 @@ public final class MessengerApp implements IDesktopApp {
     private void drawStatus(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
         g.fill(x, y, x + width, y + STATUS_H, skin.windowBg());
         final MessengerStatePayload.Service service = state.service();
-        final String left = service.online()
-                ? "on " + (service.host().isBlank() ? "the network" : service.host())
-                : "no service";
+        final String left = GameText.resolve(service.online()
+                ? SocialTexts.ON_HOST.with(service.host().isBlank() ? SocialTexts.THE_NETWORK.text() : service.host())
+                : SocialTexts.NO_SERVICE.text());
         /*
          * What it weighs, which is the whole point of the program: the history on the disk and the memory
          * it is holding for the people connected to it right now. Drawn first, because it is the number
@@ -409,7 +412,8 @@ public final class MessengerApp implements IDesktopApp {
     public String conversationText() {
         final StringBuilder out = new StringBuilder();
         for (final MessengerStatePayload.Line line : state.lines()) {
-            out.append(line.nudge() ? line.from() + " sent a nudge" : line.from() + ": " + line.text())
+            out.append(line.nudge() ? GameText.resolve(SocialTexts.SENT_A_NUDGE.with(line.from()))
+                            : line.from() + ": " + line.text())
                     .append('\n');
         }
         return out.toString();
