@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -33,7 +34,7 @@ public abstract class AbstractAssemblyScreen<T extends AbstractContainerMenu> ex
     protected void setupNameBox(final int x, final int y, final int width, final int maxLength,
                                 final Component hint, final String initialValue,
                                 final Consumer<String> responder) {
-        nameBox = new EditBox(font, leftPos + x, topPos + y, width, 11, Component.literal("Name"));
+        nameBox = new EditBox(font, leftPos + x, topPos + y, width, 11, GameText.component(AssemblyTexts.NAME));
         nameBox.setBordered(false);
         nameBox.setMaxLength(maxLength);
         /*

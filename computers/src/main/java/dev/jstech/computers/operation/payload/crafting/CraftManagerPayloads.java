@@ -29,10 +29,11 @@ import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.Text;
 import java.util.Comparator;
-import java.util.Locale;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -216,14 +217,14 @@ public final class CraftManagerPayloads {
             writeCraftToDisk(cc, diskName, content.get());
         }
         cc.setChanged();
-        final String status;
+        final Text status;
         if (romFull) {
-            status = "Loaded " + loaded + " of " + parsed + " - ROM full ("
-                    + cc.romUsed() + "/" + CraftingComputerBlockEntity.RECIPE_ROM_LIMIT + ")";
+            status = CraftTexts.LOADED_ROM_FULL.with(loaded, parsed, cc.romUsed(),
+                    CraftingComputerBlockEntity.RECIPE_ROM_LIMIT);
         } else if (loaded > 0) {
-            status = "Loaded " + loaded + " craft" + (loaded == 1 ? "" : "s");
+            status = (loaded == 1 ? CraftTexts.LOADED_ONE : CraftTexts.LOADED_MANY).with(loaded);
         } else {
-            status = parsed > 0 ? "Already loaded" : "Nothing to load";
+            status = (parsed > 0 ? CraftTexts.ALREADY_LOADED : CraftTexts.NOTHING_TO_LOAD).text();
         }
         PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level, status, romFull));
     }
@@ -337,7 +338,7 @@ public final class CraftManagerPayloads {
      */
     public static CraftManagerStatePayload buildCraftManagerState(final CraftingComputerBlockEntity cc,
                                                                    final ServerLevel level) {
-        return buildCraftManagerState(cc, level, "", false);
+        return buildCraftManagerState(cc, level, Text.EMPTY, false);
     }
 
     /**
@@ -345,10 +346,10 @@ public final class CraftManagerPayloads {
      * before the next load can do more.
      */
     private static CraftManagerStatePayload buildCraftManagerState(final CraftingComputerBlockEntity cc,
-                                                                    final ServerLevel level, final String status,
+                                                                    final ServerLevel level, final Text status,
                                                                     final boolean warns) {
         String mediaVolumeKey = "";
-        String mediaLabel = "";
+        Text mediaLabel = Text.EMPTY;
         List<String> mediaFiles = List.of();
 
         /*
@@ -368,7 +369,8 @@ public final class CraftManagerPayloads {
                 final List<String> files = craftFileListFromMedia(m);
                 if (mediaVolumeKey.isEmpty() || !files.isEmpty()) {
                     mediaVolumeKey = "media:" + endpoint;
-                    mediaLabel = wire(VolumeLabel.of(m, "Removable Drive"), 64);
+                    final String label = VolumeLabel.of(m, "");
+                    mediaLabel = label.isEmpty() ? CraftTexts.REMOVABLE_DRIVE.text() : Text.literal(wire(label, 64));
                     mediaFiles = files;
                 }
                 if (!files.isEmpty()) {
@@ -382,13 +384,9 @@ public final class CraftManagerPayloads {
         final List<CraftingPattern> rom = cc.romPatterns();
         for (int i = 0; i < rom.size() && i < CraftManagerStatePayload.MAX_ROM_ENTRIES; i++) {
             final CraftingPattern p = rom.get(i);
-            /*
-             * Every string below is cut to its wire field: a result renamed to a long name or a modded machine
-             * with a long id must never make the state impossible to send.
-             */
-            final String name = wire(p.displayName(), 64);
             final String fileName = craftFileNameFor(p) + ".craft";
-            romEntries.add(new CraftManagerStatePayload.WireRomEntry(i, name, mediaFileSet.contains(fileName)));
+            romEntries.add(new CraftManagerStatePayload.WireRomEntry(i, p.displayText(),
+                    mediaFileSet.contains(fileName)));
         }
         /*
          * Machine recipes (processing / multi-stage) share the ROM and must be listed too, since an invisible entry
@@ -399,7 +397,8 @@ public final class CraftManagerPayloads {
         for (int i = 0; i < machineRecipes.size()
                 && romEntries.size() < CraftManagerStatePayload.MAX_ROM_ENTRIES; i++) {
             final var r = machineRecipes.get(i);
-            final String name = wire(r.displayName() + (r.multi().isPresent() ? " [multi]" : " [machine]"), 64);
+            final Text name = (r.multi().isPresent() ? CraftTexts.ROM_MULTI : CraftTexts.ROM_MACHINE)
+                    .with(r.displayText());
             romEntries.add(new CraftManagerStatePayload.WireRomEntry(
                     CraftManagerStatePayload.MACHINE_ROM_BASE + i, name, false));
         }
@@ -421,16 +420,32 @@ public final class CraftManagerPayloads {
             final String machineKey = CraftingComputerBlockEntity.machineStateKey(pos);
             final CraftingComputerBlockEntity.MachineConfig perMachine = cc.machineConfig(machineKey);
             final int typeMaxJobs = cc.machineConfig(typeKey).maxJobs();
-            final String face = dm.face() != null
-                    ? dm.face().getName().substring(0, 1).toUpperCase(Locale.ROOT) + " " : "";
-            final String label = !dm.name().isBlank() ? dm.name()
-                    : face + "(" + pos.getX() + ", " + pos.getY() + ", " + pos.getZ() + ")";
+            final Text label;
+            if (!dm.name().isBlank()) {
+                label = Text.literal(wire(dm.name(), 80));
+            } else if (dm.face() != null) {
+                label = CraftTexts.MACHINE_AT_FACE.with(faceInitial(dm.face()), pos.getX(), pos.getY(), pos.getZ());
+            } else {
+                label = CraftTexts.MACHINE_AT.with(pos.getX(), pos.getY(), pos.getZ());
+            }
             machines.add(new CraftManagerStatePayload.WireMachine(
-                    wire(machineKey, 64), wire(typeKey, 48), wire(label, 80),
+                    wire(machineKey, 64), wire(typeKey, 48), label,
                     perMachine.locked(), perMachine.feedMax(), typeMaxJobs));
         }
         return new CraftManagerStatePayload(mediaVolumeKey, mediaLabel, mediaFiles, romEntries,
-                cc.craftingCardFactor() > 0.0, wire(status, 96), warns, machines);
+                cc.craftingCardFactor() > 0.0, status, warns, machines);
+    }
+
+    /** The initial a switch face goes by in a machine's label. */
+    private static Text faceInitial(final Direction face) {
+        return (switch (face) {
+            case DOWN -> CraftTexts.FACE_DOWN;
+            case UP -> CraftTexts.FACE_UP;
+            case NORTH -> CraftTexts.FACE_NORTH;
+            case SOUTH -> CraftTexts.FACE_SOUTH;
+            case WEST -> CraftTexts.FACE_WEST;
+            case EAST -> CraftTexts.FACE_EAST;
+        }).text();
     }
 
     /** Computes the remaining free weight on a removable medium (filesystem component only). */

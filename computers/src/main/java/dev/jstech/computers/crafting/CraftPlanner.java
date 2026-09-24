@@ -8,6 +8,8 @@
 package dev.jstech.computers.crafting;
 
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.util.Sizes;
 
 import org.jetbrains.annotations.Nullable;
@@ -66,8 +68,13 @@ public final class CraftPlanner {
         }
 
         public String resultName() {
+            return resultText().english();
+        }
+
+        /** What the step makes, named in the language of whoever reads it. */
+        public Text resultText() {
             final StorageKey key = resultKey();
-            return key == null ? "?" : key.displayName().getString();
+            return key == null ? Text.literal("?") : GameText.of(key.displayName());
         }
 
         /** Work units one run costs a computer: the ingredients it handles. */

@@ -11,6 +11,7 @@ import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.program.OperationPalette;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.Font;
@@ -55,30 +56,30 @@ final class InteractorOps {
 
     /** The short word a row ends with, which is where an Operation has got to. */
     static String statusShort(final byte status) {
-        return switch (status) {
-            case 0 -> "done";
-            case 1 -> "part";
-            case 2 -> "fail";
-            case 3 -> "run";
-            case 4 -> "wait";
-            case 5 -> "lock";
-            case 6 -> "pend";
-            default -> "drop";
-        };
+        return GameText.resolve(switch (status) {
+            case 0 -> NetworkInteractorTexts.SHORT_DONE;
+            case 1 -> NetworkInteractorTexts.SHORT_PARTIAL;
+            case 2 -> NetworkInteractorTexts.SHORT_FAILED;
+            case 3 -> NetworkInteractorTexts.SHORT_RUNNING;
+            case 4 -> NetworkInteractorTexts.SHORT_WAITING;
+            case 5 -> NetworkInteractorTexts.SHORT_LOCKED;
+            case 6 -> NetworkInteractorTexts.SHORT_PENDING;
+            default -> NetworkInteractorTexts.SHORT_DROPPED;
+        });
     }
 
     /** The same thing written out, for the detail panel where there is room for it. */
     static String statusLong(final byte status) {
-        return switch (status) {
-            case 0 -> "Completed";
-            case 1 -> "Completed (partial)";
-            case 2 -> "Failed";
-            case 3 -> "Processing";
-            case 4 -> "Waiting";
-            case 5 -> "Resource locked";
-            case 6 -> "Pending";
-            default -> "Discarded";
-        };
+        return GameText.resolve(switch (status) {
+            case 0 -> NetworkInteractorTexts.COMPLETED;
+            case 1 -> NetworkInteractorTexts.COMPLETED_PARTIAL;
+            case 2 -> NetworkInteractorTexts.FAILED;
+            case 3 -> NetworkInteractorTexts.PROCESSING;
+            case 4 -> NetworkInteractorTexts.WAITING;
+            case 5 -> NetworkInteractorTexts.RESOURCE_LOCKED;
+            case 6 -> NetworkInteractorTexts.PENDING;
+            default -> NetworkInteractorTexts.DISCARDED;
+        });
     }
 
     /** Green for finished, amber for still going, red for anything that ended badly. */
@@ -93,12 +94,12 @@ final class InteractorOps {
 
     /** Where one machine's share of a distributed Operation has got to. */
     static String subStateLabel(final byte state) {
-        return switch (state) {
-            case 1 -> "reading";
-            case 2 -> "streaming";
-            case 3 -> "done";
-            default -> "queued";
-        };
+        return GameText.resolve(switch (state) {
+            case 1 -> NetworkInteractorTexts.SUB_READING;
+            case 2 -> NetworkInteractorTexts.SUB_STREAMING;
+            case 3 -> NetworkInteractorTexts.SUB_DONE;
+            default -> NetworkInteractorTexts.SUB_QUEUED;
+        });
     }
 
     /** Every Operation the tab lists: the live ones first, then the recent log. */
@@ -140,18 +141,19 @@ final class InteractorOps {
 
     /** What the tab's caption says it is showing. */
     String caption() {
-        return active.size() + " live · " + recent.size() + " recent";
+        return GameText.resolve(NetworkInteractorTexts.OPS_CAPTION.with(active.size(), recent.size()));
     }
 
     /** The strip above the list: a supercomputer's craft capacity, or a word when there is nothing to show. */
     void renderHeader(final GuiGraphics g, final Font font, final int listLeft, final int gridTop) {
         // Supercomputer parallel craft-slot capacity, amber once every slot is taken.
         if (slotsTotal > 0) {
-            Texts.small(g, font, "Supercomputer: " + slotsUsed + " / " + slotsTotal + " parallel crafts",
+            Texts.small(g, font, GameText.resolve(NetworkInteractorTexts.SUPERCOMPUTER_SLOTS.with(slotsUsed, slotsTotal)),
                     listLeft + 2, gridTop - 9, slotsUsed >= slotsTotal ? AMBER : app.panelSkin().dim());
         }
         if (all().isEmpty()) {
-            Texts.small(g, font, "No operations on the network.", listLeft + 2, gridTop + 4, app.panelSkin().dim());
+            Texts.small(g, font, GameText.resolve(NetworkInteractorTexts.NO_OPERATIONS), listLeft + 2, gridTop + 4,
+                    app.panelSkin().dim());
         }
     }
 
@@ -194,26 +196,27 @@ final class InteractorOps {
         final OperationRecord op = all.get(selected);
         int py = app.panelHeaderIn(g, font, dx, dy, dw, op.key(), op.name().getString(),
                 OperationPalette.labelFor(op.type()), OperationPalette.colorFor(op.type()), false);
-        Texts.small(g, font, "moved " + NetworkInteractorApp.formatCount(op.moved())
-                + " / " + NetworkInteractorApp.formatCount(op.requested()), px, py, app.panelSkin().text());
+        Texts.small(g, font, GameText.resolve(NetworkInteractorTexts.MOVED.with(
+                NetworkInteractorApp.formatCount(op.moved()), NetworkInteractorApp.formatCount(op.requested()))),
+                px, py, app.panelSkin().text());
         py += 10;
         Texts.small(g, font, statusLong(op.status()), px, py, statusColor(op.status()));
         py += 12;
         if (!op.subs().isEmpty()) {
-            py = app.sectionRuleIn(g, font, px, py, dw, "SUBOPERATIONS");
+            py = app.sectionRuleIn(g, font, px, py, dw, GameText.resolve(NetworkInteractorTexts.SUBOPERATIONS));
             for (final var sub : op.subs()) {
                 if (py > dy + dh - 9) {
                     break;
                 }
-                Texts.small(g, font, Texts.trim(font, sub.server() + ": " + sub.moved() + "/" + sub.planned()
-                        + " " + subStateLabel(sub.state()), Texts.smallFits(dw - 10)), px, py,
+                Texts.small(g, font, Texts.trim(font, GameText.resolve(NetworkInteractorTexts.SUB_LINE.with(sub.server(),
+                        sub.moved(), sub.planned(), subStateLabel(sub.state()))), Texts.smallFits(dw - 10)), px, py,
                         app.panelSkin().text());
                 py += 9;
             }
             return;
         }
         if (!op.moves().isEmpty()) {
-            py = app.sectionRuleIn(g, font, px, py, dw, "SOURCES");
+            py = app.sectionRuleIn(g, font, px, py, dw, GameText.resolve(NetworkInteractorTexts.SOURCES));
             for (final var mv : op.moves()) {
                 if (py > dy + dh - 9) {
                     break;

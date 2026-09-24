@@ -498,9 +498,9 @@ public final class InteracCommand implements ICliCommand, CliShell.IHandOver {
     }
 
     /** Prints one of a detail's lists under its heading, and nothing at all when it is empty. */
-    private static void row(final CliContext ctx, final TextKey heading, final List<String> lines) {
+    private static void row(final CliContext ctx, final TextKey heading, final List<Text> lines) {
         for (int i = 0; i < lines.size(); i++) {
-            ctx.out().row(i == 0 ? heading.text() : Text.EMPTY, Text.literal(lines.get(i)));
+            ctx.out().row(i == 0 ? heading.text() : Text.EMPTY, lines.get(i));
         }
     }
 

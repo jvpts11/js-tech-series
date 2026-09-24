@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.computers.operation.payload.CraftManagerStatePayload;
 import dev.jstech.computers.operation.payload.CraftManagerStatePayload.WireMachine;
 import dev.jstech.computers.operation.payload.CraftManagerStatePayload.WireRomEntry;
@@ -24,6 +25,8 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -35,6 +38,33 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static dev.jstech.computers.client.os.CraftingManagerTexts.CARD_REQUIRED;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.CARD_REQUIRED_TO_MANAGE;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.DOWNLOAD;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.FEED_COLUMN;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.FILL;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.INSERT_A_DISC;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.JOBS;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.JOBS_AUTO;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.LOAD;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.LOAD_ALL;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.MACHINES;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.MACHINES_TAB;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.MACHINE_COLUMN;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.MEDIA;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.NO_CRAFT_FILES;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.NO_MACHINES;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.NO_RECIPES;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.NO_REMOVABLE_MEDIA;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.ONE_LOT;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.ONE_MACHINE;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.PAUSED;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.RECIPES_TAB;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.REMOVE;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.RUNNING;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.STATE_COLUMN;
+import static dev.jstech.computers.client.os.CraftingManagerTexts.THIS_COMPUTER;
 
 /**
  * The Crafting Manager desktop app: moves {@code .craft} recipe files between a removable medium in a
@@ -68,7 +98,7 @@ public final class CraftingManagerApp implements IDesktopApp {
     private OsSkin skin = OsSkin.fallback();
 
     private String mediaVolumeKey = "";
-    private String mediaLabel = "";
+    private Text mediaLabel = Text.EMPTY;
     private List<String> mediaFiles = List.of();
     private List<WireRomEntry> romEntries = List.of();
     private boolean hasCard;
@@ -118,29 +148,33 @@ public final class CraftingManagerApp implements IDesktopApp {
     public CraftingManagerApp(final BlockPos host) {
         this.host = host;
 
-        tabs = root.add(new TabStrip(List.of("Recipes", "Machines")).setOnSelect(i -> tab = i));
-        warnLabel = root.add(new Label("A Crafting Card is required to manage recipes.").setColor(WARN_TEXT));
-        mediaHeader = root.add(new Label(() -> mediaVolumeKey.isEmpty() ? "Removable media: none" : "Media: " + mediaLabel, Label.Tone.DIM));
-        romHeader = root.add(new Label(() -> "This computer  (" + romEntries.size() + "/50)", Label.Tone.DIM));
+        tabs = root.add(new TabStrip(List.of(GameText.resolve(RECIPES_TAB), GameText.resolve(MACHINES_TAB)))
+                .setOnSelect(i -> tab = i));
+        warnLabel = root.add(new Label(GameText.resolve(CARD_REQUIRED_TO_MANAGE)).setColor(WARN_TEXT));
+        mediaHeader = root.add(new Label(() -> GameText.resolve(mediaVolumeKey.isEmpty() ? NO_REMOVABLE_MEDIA.text()
+                : MEDIA.with(mediaLabel)), Label.Tone.DIM));
+        romHeader = root.add(new Label(() -> GameText.resolve(THIS_COMPUTER.with(romEntries.size(),
+                CraftManagerStatePayload.MAX_ROM_ENTRIES)), Label.Tone.DIM));
         mediaList = root.add(new ListView<String>(() -> mediaFiles, ROW_H, this::renderMediaRow)
                 .setPadding(1)
                 .setOnClick((index, button, mx, my) -> toggle(selectedMedia, index, mediaFiles.size())));
-        mediaEmpty = root.add(new Label(() -> mediaVolumeKey.isEmpty() ? "Insert a disc into a linked drive" : "No .craft files",
+        mediaEmpty = root.add(new Label(() -> GameText.resolve(mediaVolumeKey.isEmpty() ? INSERT_A_DISC : NO_CRAFT_FILES),
                 Label.Tone.DIM));
         romList = root.add(new ListView<WireRomEntry>(() -> romEntries, ROW_H, this::renderRomRow)
                 .setPadding(1)
                 .setOnClick((index, button, mx, my) -> toggle(selectedRom, index, romEntries.size())));
-        romEmpty = root.add(new Label("No recipes loaded", Label.Tone.DIM));
+        romEmpty = root.add(new Label(GameText.resolve(NO_RECIPES), Label.Tone.DIM));
         statusLabel = root.add(new Label(() -> status).setColor(() -> statusWarns ? WARN_TEXT : skin.dim()));
         // Short labels: four buttons share the bar, and the narrowest default window leaves ~55px each.
-        actions[0] = root.add(new Button("Load →", this::loadSelected));
-        actions[1] = root.add(new Button("Load all", this::loadAll));
-        actions[2] = root.add(new Button("← Download", this::downloadSelected));
-        actions[3] = root.add(new Button("Remove", this::removeSelected));
+        actions[0] = root.add(new Button(GameText.resolve(LOAD), this::loadSelected));
+        actions[1] = root.add(new Button(GameText.resolve(LOAD_ALL), this::loadAll));
+        actions[2] = root.add(new Button(GameText.resolve(DOWNLOAD), this::downloadSelected));
+        actions[3] = root.add(new Button(GameText.resolve(REMOVE), this::removeSelected));
 
-        noCardLabel = root.add(new Label("A Crafting Card is required.", Label.Tone.DIM));
-        noMachinesLabel = root.add(new Label("No machines on the crafting network.", Label.Tone.DIM));
-        machineColumns = root.add(new ColumnHeader(List.of("MACHINE", "STATE", "FEED")).setSortable(false));
+        noCardLabel = root.add(new Label(GameText.resolve(CARD_REQUIRED), Label.Tone.DIM));
+        noMachinesLabel = root.add(new Label(GameText.resolve(NO_MACHINES), Label.Tone.DIM));
+        machineColumns = root.add(new ColumnHeader(List.of(GameText.resolve(MACHINE_COLUMN),
+                GameText.resolve(STATE_COLUMN), GameText.resolve(FEED_COLUMN))).setSortable(false));
         machineList = root.add(new ListView<Object>(this::machineDisplay, M_ROW_H, this::renderMachineRow)
                 .setOnClick(this::machineRowClicked));
 
@@ -169,8 +203,9 @@ public final class CraftingManagerApp implements IDesktopApp {
         active.romEntries = payload.romEntries();
         active.machines = payload.machines();
         active.hasCard = payload.hasCard();
-        if (!payload.status().isEmpty()) {
-            active.status = payload.status();
+        final String status = GameText.resolve(payload.status());
+        if (!status.isEmpty()) {
+            active.status = status;
             active.statusWarns = payload.statusWarns();
         }
         active.loaded = true;
@@ -318,7 +353,8 @@ public final class CraftingManagerApp implements IDesktopApp {
 
     private void renderRomRow(final GuiGraphics g, final UiContext ctx, final WireRomEntry entry, final int index, final int x,
                               final int y, final int w, final int h, final boolean hovered, final boolean selected) {
-        renderSelectableRow(g, ctx, (entry.inMedia() ? "= " : "") + entry.name(), selectedRom.contains(index), x, y, w, h, hovered);
+        renderSelectableRow(g, ctx, (entry.inMedia() ? "= " : "") + GameText.resolve(entry.name()),
+                selectedRom.contains(index), x, y, w, h, hovered);
     }
 
     private static void renderSelectableRow(final GuiGraphics g, final UiContext ctx, final String text, final boolean sel,
@@ -406,31 +442,22 @@ public final class CraftingManagerApp implements IDesktopApp {
         return items;
     }
 
-    /** "mekanism:ultimate_infusing_factory" -> "Ultimate Infusing Factory". */
-    private static String prettyType(final String typeKey) {
-        final int colon = typeKey.indexOf(':');
-        final String base = (colon >= 0 ? typeKey.substring(colon + 1) : typeKey).replace('_', ' ');
-        final StringBuilder sb = new StringBuilder();
-        boolean cap = true;
-        for (final char c : base.toCharArray()) {
-            sb.append(cap && c != ' ' ? Character.toUpperCase(c) : c);
-            cap = c == ' ';
-        }
-        return sb.toString();
-    }
-
     private void renderMachineRow(final GuiGraphics g, final UiContext ctx, final Object item, final int index, final int x,
                                   final int y, final int w, final int h, final boolean hovered, final boolean selected) {
         final Font font = ctx.font();
         final int bw = machineButtonW(lastW);
         if (item instanceof MachineGroup grp) {
-            final String head = prettyType(grp.typeKey()) + "  ·  " + grp.count() + (grp.count() == 1 ? " machine" : " machines");
+            // A machine type goes by its block's own name, in this player's language.
+            final String head = GameText.resolve((grp.count() == 1 ? ONE_MACHINE : MACHINES)
+                    .with(MachineCategory.text(grp.typeKey()), grp.count()));
             g.drawString(font, Texts.clip(font, head, lastW / 2 - PAD), x + PAD, y + 3, ctx.skin().accent(), false);
-            rowButton(g, ctx, machineButtonX(x, lastW, 2), y, bw, "Jobs " + (grp.maxJobs() == 0 ? "Auto" : String.valueOf(grp.maxJobs())));
+            rowButton(g, ctx, machineButtonX(x, lastW, 2), y, bw,
+                    GameText.resolve(grp.maxJobs() == 0 ? JOBS_AUTO.text() : JOBS.with(grp.maxJobs())));
         } else if (item instanceof WireMachine m) {
-            g.drawString(font, Texts.clip(font, m.label(), lastW / 2 - PAD * 2 - 6), x + PAD + 6, y + 3, ctx.skin().text(), false);
-            rowButton(g, ctx, machineButtonX(x, lastW, 0), y, bw, m.locked() ? "Paused" : "Running");
-            rowButton(g, ctx, machineButtonX(x, lastW, 1), y, bw, m.feedMax() ? "Fill" : "1 lot");
+            g.drawString(font, Texts.clip(font, GameText.resolve(m.label()), lastW / 2 - PAD * 2 - 6), x + PAD + 6, y + 3,
+                    ctx.skin().text(), false);
+            rowButton(g, ctx, machineButtonX(x, lastW, 0), y, bw, GameText.resolve(m.locked() ? PAUSED : RUNNING));
+            rowButton(g, ctx, machineButtonX(x, lastW, 1), y, bw, GameText.resolve(m.feedMax() ? FILL : ONE_LOT));
         }
     }
 
@@ -527,7 +554,7 @@ public final class CraftingManagerApp implements IDesktopApp {
     public List<String> romNames() {
         final List<String> out = new ArrayList<>();
         for (final WireRomEntry e : romEntries) {
-            out.add(e.name());
+            out.add(GameText.resolve(e.name()));
         }
         return out;
     }

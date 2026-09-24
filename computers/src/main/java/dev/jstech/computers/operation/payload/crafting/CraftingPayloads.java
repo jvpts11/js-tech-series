@@ -34,6 +34,9 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.operation.IOperationResult;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextLists;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -267,7 +270,7 @@ public final class CraftingPayloads {
     }
 
     /** What the network would craft to cover the short rows, one line each, and whether every one is coverable. */
-    private record Cover(List<String> lines, boolean covered) {
+    private record Cover(List<Text> lines, boolean covered) {
     }
 
     /**
@@ -278,29 +281,27 @@ public final class CraftingPayloads {
                                          final List<CraftingPattern> patterns,
                                          final List<ProcessingPattern> machines,
                                          final Map<StorageKey, Long> stock, final boolean treeCovers) {
-        final List<String> lines = new ArrayList<>();
+        final List<Text> lines = new ArrayList<>();
         boolean covered = true;
         for (final CraftPlanPayload.Row row : rows) {
             if (row.satisfied()) {
                 continue;
             }
             final long shortfall = row.need() - row.have();
-            final String name = row.item().getHoverName().getString();
+            final Text name = GameText.of(row.item().getHoverName());
             final var plan = CraftPlanner.plan(
                     StorageKey.of(row.item()), shortfall, patterns, machines, stock);
             if (plan.feasible() && !plan.steps().isEmpty()) {
                 if (lines.size() < CraftPlanPayload.MAX_COVER) {
                     lines.add(treeCovers
-                            ? "Missing " + shortfall + " " + name + " · will be crafted from " + rawSummary(plan)
-                                    + " (" + firstStepName(plan) + " pattern) before the stages start"
-                            : "Missing " + shortfall + " " + name + " · a pipeline runs on stock, craft it first ("
-                                    + firstStepName(plan) + " pattern)");
+                            ? CraftTexts.CRAFTED_BEFORE_STAGES.with(shortfall, name, rawSummary(plan), firstStepName(plan))
+                            : CraftTexts.CRAFT_IT_FIRST.with(shortfall, name, firstStepName(plan)));
                 }
                 covered &= treeCovers;
             } else {
                 covered = false;
                 if (lines.size() < CraftPlanPayload.MAX_COVER) {
-                    lines.add("Missing " + shortfall + " " + name + " · nothing on the network makes it");
+                    lines.add(CraftTexts.NOTHING_MAKES_IT.with(shortfall, name));
                 }
             }
         }
@@ -308,39 +309,33 @@ public final class CraftingPayloads {
     }
 
     /** One line per thing a recursive plan found nothing to make (or not enough of in stock). */
-    private static List<String> unmakeableLines(final CraftPlanner.Plan plan) {
-        final List<String> lines = new ArrayList<>();
+    private static List<Text> unmakeableLines(final CraftPlanner.Plan plan) {
+        final List<Text> lines = new ArrayList<>();
         for (final var missing : plan.missing().entrySet()) {
             if (lines.size() >= CraftPlanPayload.MAX_COVER) {
                 break;
             }
-            lines.add("Missing " + missing.getValue() + " " + missing.getKey().displayName().getString()
-                    + " · nothing on the network makes it");
+            lines.add(CraftTexts.NOTHING_MAKES_IT.with(missing.getValue(), GameText.of(missing.getKey().displayName())));
         }
         return lines;
     }
 
     /** "4 Logs, 2 Coal": the raw stock a plan consumes, at most three named. */
-    private static String rawSummary(final CraftPlanner.Plan plan) {
-        final StringBuilder out = new StringBuilder();
-        int named = 0;
+    private static Text rawSummary(final CraftPlanner.Plan plan) {
+        final List<Text> parts = new ArrayList<>();
         for (final var raw : plan.rawConsumption().entrySet()) {
-            if (named == 3) {
-                out.append(", ...");
+            if (parts.size() == 3) {
+                parts.add(Text.literal("..."));
                 break;
             }
-            if (named > 0) {
-                out.append(", ");
-            }
-            out.append(raw.getValue()).append(' ').append(raw.getKey().displayName().getString());
-            named++;
+            parts.add(CraftTexts.AMOUNT_OF.with(raw.getValue(), GameText.of(raw.getKey().displayName())));
         }
-        return out.length() == 0 ? "stock" : out.toString();
+        return parts.isEmpty() ? CraftTexts.STOCK.text() : TextLists.join(", ", parts);
     }
 
-    private static String firstStepName(final CraftPlanner.Plan plan) {
+    private static Text firstStepName(final CraftPlanner.Plan plan) {
         final var step = plan.steps().get(0);
-        return step.isMachine() ? step.machine().displayName() : step.pattern().displayName();
+        return step.isMachine() ? step.machine().displayText() : step.pattern().displayText();
     }
 
     private static void handleCraftSubmit(final CraftSubmitPayload payload, final ServerPlayer player,

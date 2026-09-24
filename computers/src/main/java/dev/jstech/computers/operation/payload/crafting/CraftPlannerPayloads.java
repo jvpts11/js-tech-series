@@ -95,7 +95,7 @@ public final class CraftPlannerPayloads {
             if (stages.size() >= CraftPlannerPayload.MAX_STAGES) {
                 break;
             }
-            stages.add(new CraftPlannerPayload.Stage(step.resultName(), step.isMachine(), step.runs(),
+            stages.add(new CraftPlannerPayload.Stage(step.resultText(), step.isMachine(), step.runs(),
                     step.produced()));
         }
         final List<CraftPlanPayload.Row> ingredients = new ArrayList<>();

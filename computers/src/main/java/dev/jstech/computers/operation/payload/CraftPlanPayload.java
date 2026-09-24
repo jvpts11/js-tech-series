@@ -8,6 +8,9 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.crafting.RecipeChoice;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -27,7 +30,7 @@ import java.util.List;
  */
 public record CraftPlanPayload(ItemStack result, long quantity, List<Row> rows,
                                boolean feasible, long maxFeasible, int estimateTicks,
-                               int recipe, List<RecipeChoice> options, List<String> cover, int stages)
+                               int recipe, List<RecipeChoice> options, List<Text> cover, int stages)
         implements CustomPacketPayload {
 
     public static final int MAX_ROWS = 64;
@@ -36,6 +39,11 @@ public record CraftPlanPayload(ItemStack result, long quantity, List<Row> rows,
     public static final int MAX_MACHINES = 8;
     public static final int MAX_COVER = 6;
     public static final int MAX_TEXT = 96;
+
+    private static final StreamCodec<ByteBuf, List<Text>> MACHINES_CODEC =
+            TextCodecs.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_MACHINES));
+    private static final StreamCodec<ByteBuf, List<Text>> COVER_CODEC =
+            TextCodecs.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_COVER));
 
     /** A plan with no choice of recipe: what a result with a single recipe gets. */
     public CraftPlanPayload(final ItemStack result, final long quantity, final List<Row> rows,
@@ -59,39 +67,33 @@ public record CraftPlanPayload(ItemStack result, long quantity, List<Row> rows,
 
     public static final StreamCodec<RegistryFriendlyByteBuf, RecipeChoice.Input> INPUT_CODEC =
             StreamCodec.composite(
-                    ByteBufCodecs.stringUtf8(MAX_TEXT), RecipeChoice.Input::name,
+                    TextCodecs.STREAM_CODEC, RecipeChoice.Input::name,
                     ByteBufCodecs.VAR_LONG, RecipeChoice.Input::need,
                     ByteBufCodecs.VAR_LONG, RecipeChoice.Input::have,
                     ByteBufCodecs.BOOL, RecipeChoice.Input::craftable,
                     RecipeChoice.Input::new);
 
     /*
-     * Written out by hand: a choice carries seven things and composite takes six pairs. The strings are cut
-     * to their caps on the way out, never refused, because a cap on writeUtf drops the connection.
+     * Written out by hand: a choice carries seven things and composite takes six pairs. The kind is cut to its
+     * cap on the way out, never refused, because a cap on writeUtf drops the connection; lists are cut to theirs.
      */
     public static final StreamCodec<RegistryFriendlyByteBuf, RecipeChoice> CHOICE_CODEC =
             StreamCodec.of(CraftPlanPayload::encodeChoice, CraftPlanPayload::decodeChoice);
 
     private static void encodeChoice(final RegistryFriendlyByteBuf buf, final RecipeChoice choice) {
-        buf.writeUtf(clip(choice.label()), MAX_TEXT);
+        TextCodecs.STREAM_CODEC.encode(buf, choice.label());
         buf.writeUtf(clip(choice.kind()), MAX_TEXT);
-        ByteBufCodecs.stringUtf8(MAX_TEXT).apply(ByteBufCodecs.list(MAX_MACHINES))
-                .encode(buf, clipAll(choice.machines(), MAX_MACHINES));
+        MACHINES_CODEC.encode(buf, first(choice.machines(), MAX_MACHINES));
         buf.writeVarInt(choice.stages());
         buf.writeVarInt(choice.estimateTicks());
-        final List<RecipeChoice.Input> inputs = new ArrayList<>();
-        for (int i = 0; i < choice.inputs().size() && i < MAX_INPUTS; i++) {
-            final RecipeChoice.Input in = choice.inputs().get(i);
-            inputs.add(new RecipeChoice.Input(clip(in.name()), in.need(), in.have(), in.craftable()));
-        }
-        INPUT_CODEC.apply(ByteBufCodecs.list(MAX_INPUTS)).encode(buf, inputs);
+        INPUT_CODEC.apply(ByteBufCodecs.list(MAX_INPUTS)).encode(buf, first(choice.inputs(), MAX_INPUTS));
         buf.writeBoolean(choice.feasible());
     }
 
     private static RecipeChoice decodeChoice(final RegistryFriendlyByteBuf buf) {
-        final String label = buf.readUtf(MAX_TEXT);
+        final Text label = TextCodecs.STREAM_CODEC.decode(buf);
         final String kind = buf.readUtf(MAX_TEXT);
-        final List<String> machines = ByteBufCodecs.stringUtf8(MAX_TEXT).apply(ByteBufCodecs.list(MAX_MACHINES)).decode(buf);
+        final List<Text> machines = MACHINES_CODEC.decode(buf);
         final int stages = buf.readVarInt();
         final int estimate = buf.readVarInt();
         final List<RecipeChoice.Input> inputs = INPUT_CODEC.apply(ByteBufCodecs.list(MAX_INPUTS)).decode(buf);
@@ -104,12 +106,8 @@ public record CraftPlanPayload(ItemStack result, long quantity, List<Row> rows,
         return s.length() <= MAX_TEXT ? s : s.substring(0, MAX_TEXT);
     }
 
-    private static List<String> clipAll(final List<String> texts, final int max) {
-        final List<String> out = new ArrayList<>();
-        for (int i = 0; i < texts.size() && i < max; i++) {
-            out.add(clip(texts.get(i)));
-        }
-        return out;
+    private static <T> List<T> first(final List<T> items, final int max) {
+        return items.size() <= max ? items : new ArrayList<>(items.subList(0, max));
     }
 
     public static final CustomPacketPayload.Type<CraftPlanPayload> TYPE =
@@ -128,7 +126,7 @@ public record CraftPlanPayload(ItemStack result, long quantity, List<Row> rows,
         buf.writeVarInt(p.estimateTicks);
         buf.writeVarInt(p.recipe);
         CHOICE_CODEC.apply(ByteBufCodecs.list(MAX_OPTIONS)).encode(buf, p.options);
-        ByteBufCodecs.stringUtf8(MAX_TEXT).apply(ByteBufCodecs.list(MAX_COVER)).encode(buf, clipAll(p.cover, MAX_COVER));
+        COVER_CODEC.encode(buf, first(p.cover, MAX_COVER));
         buf.writeVarInt(p.stages);
     }
 
@@ -141,7 +139,7 @@ public record CraftPlanPayload(ItemStack result, long quantity, List<Row> rows,
         final int estimate = buf.readVarInt();
         final int recipe = buf.readVarInt();
         final List<RecipeChoice> options = CHOICE_CODEC.apply(ByteBufCodecs.list(MAX_OPTIONS)).decode(buf);
-        final List<String> cover = ByteBufCodecs.stringUtf8(MAX_TEXT).apply(ByteBufCodecs.list(MAX_COVER)).decode(buf);
+        final List<Text> cover = COVER_CODEC.decode(buf);
         final int stages = buf.readVarInt();
         return new CraftPlanPayload(result, quantity, rows, feasible, maxFeasible, estimate, recipe, options, cover, stages);
     }

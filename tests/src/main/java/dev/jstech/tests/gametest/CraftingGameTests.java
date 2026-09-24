@@ -1592,7 +1592,7 @@ public final class CraftingGameTests {
                             .anyMatch(m -> m.machineType().equals("minecraft:furnace"));
                     helper.assertTrue(found, "the switch must discover the remote furnace through its buses");
                     helper.assertTrue(swBe.busMachineLines().stream()
-                                    .anyMatch(l -> l.blockName().contains("Furnace")
+                                    .anyMatch(l -> l.blockName().english().contains("Furnace")
                                             && l.machinePos().equals(helper.absolutePos(furnace))
                                             && l.switchFace() == Direction.SOUTH.get3DDataValue()),
                             "the discovered machine must carry its position and the switch face it hangs from");

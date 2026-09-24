@@ -18,6 +18,8 @@ import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.crafting.RecipeChoice;
 import dev.jstech.computers.operation.payload.CraftPlanPayload;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.util.Sizes;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -53,7 +55,7 @@ public final class CraftPlanMath {
                 break;
             }
             final String kind;
-            final List<String> machineNames = new ArrayList<>();
+            final List<Text> machineNames = new ArrayList<>();
             final List<CraftPlanPayload.Row> rows;
             final int estimate;
             final int stages;
@@ -69,13 +71,13 @@ public final class CraftPlanMath {
                 feasible = plan.feasible();
                 if (recipe.proc().isPresent()) {
                     kind = RecipeChoice.KIND_PROCESSING;
-                    machineNames.add(MachineCategory.label(recipe.proc().get().machineType()));
+                    machineNames.add(MachineCategory.text(recipe.proc().get().machineType()));
                 } else {
                     kind = RecipeChoice.KIND_MULTI_STAGE;
                     for (final var stage : recipe.multi().get().stages()) {
                         machineNames.add(stage.proc().isPresent()
-                                ? MachineCategory.label(stage.proc().get().machineType())
-                                : "Bench");
+                                ? MachineCategory.text(stage.proc().get().machineType())
+                                : RecipeChoice.BENCH.text());
                     }
                 }
             } else {
@@ -106,14 +108,14 @@ public final class CraftPlanMath {
                     shortCraftable = false;
                 }
                 inputs.add(new RecipeChoice.Input(
-                        row.item().getHoverName().getString(), row.need(), stock.getOrDefault(inputKey, 0L), craftable));
+                        GameText.of(row.item().getHoverName()), row.need(), stock.getOrDefault(inputKey, 0L), craftable));
             }
             // A processing run whose short inputs something makes runs as one tree, so it is feasible after all.
             if (!feasible && recipe.proc().isPresent() && shortCraftable) {
                 feasible = CraftPlanner
                         .plan(key, quantity, mainframe.networkPatterns(), machines, stock).feasible();
             }
-            out.add(new RecipeChoice(recipe.displayName(), kind, machineNames, stages,
+            out.add(new RecipeChoice(recipe.displayText(), kind, machineNames, stages,
                     estimate, inputs, feasible));
         }
         return out;

@@ -398,7 +398,7 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
 
     private void labelLists(final GuiGraphics g) {
         final List<String> files = mediaFiles();
-        final String label = manager == null || manager.mediaLabel().isEmpty()
+        final String label = manager == null || manager.mediaVolumeKey().isEmpty()
                 ? GameText.resolve(NO_MEDIUM_IN_DRIVE) : GameText.resolve(MEDIUM.with(manager.mediaLabel()));
         g.drawString(font(), font().plainSubstrByWidth(label, PANE_X - GRID_X - 12), GRID_X, SPLIT_Y + 6,
                 files.isEmpty() ? DIM() : TEXT(), false);
@@ -421,7 +421,7 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
         g.drawString(font(), count, PANE_X + PANE_W - font().width(count), SPLIT_Y + 6, ACCENT(), false);
         for (int i = 0; i < LIST_ROWS && i + romScroll < rom.size(); i++) {
             final CraftManagerStatePayload.WireRomEntry entry = rom.get(i + romScroll);
-            g.drawString(font(), font().plainSubstrByWidth(entry.name(), PANE_W - 10),
+            g.drawString(font(), font().plainSubstrByWidth(GameText.resolve(entry.name()), PANE_W - 10),
                     PANE_X + 4, LIST_Y + i * ROW_H + 2, i + romScroll == pickedRom ? ACCENT() : TEXT(), false);
         }
         if (rom.isEmpty()) {

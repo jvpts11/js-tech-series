@@ -135,11 +135,11 @@ public final class CraftingManagerMediaGameTests {
                     final CraftManagerStatePayload decoded = CraftManagerStatePayload.STREAM_CODEC.decode(buf);
                     helper.assertTrue(decoded.mediaFiles().contains(longName),
                             "the long file name travels whole; got " + decoded.mediaFiles());
-                    boolean clamped = false;
+                    boolean whole = false;
                     for (final CraftManagerStatePayload.WireRomEntry entry : decoded.romEntries()) {
-                        clamped |= entry.name().length() == 64 && entry.name().startsWith("nnnn");
+                        whole |= "n".repeat(70).equals(entry.name().english());
                     }
-                    helper.assertTrue(clamped, "the long result name is cut to its field; got " + decoded.romEntries());
+                    helper.assertTrue(whole, "the long result name travels whole; got " + decoded.romEntries());
                 })
                 .thenSucceed();
     }

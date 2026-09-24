@@ -12,8 +12,11 @@ import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.text.TextLists;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,8 +39,8 @@ public final class ItemRecipes {
     }
 
     /** The ways the network can make that thing, one line each, newest knowledge first. */
-    public static List<String> madeBy(final MainframeBlockEntity mainframe, final StorageKey key, final int most) {
-        final List<String> lines = new ArrayList<>();
+    public static List<Text> madeBy(final MainframeBlockEntity mainframe, final StorageKey key, final int most) {
+        final List<Text> lines = new ArrayList<>();
         if (mainframe == null) {
             return lines;
         }
@@ -51,44 +54,43 @@ public final class ItemRecipes {
     }
 
     /** The things the network's recipes take that thing for, by name, each named once. */
-    public static List<String> usedIn(final MainframeBlockEntity mainframe, final StorageKey key, final int most) {
-        final List<String> names = new ArrayList<>();
+    public static List<Text> usedIn(final MainframeBlockEntity mainframe, final StorageKey key, final int most) {
+        final List<Text> names = new ArrayList<>();
         if (mainframe == null) {
             return names;
         }
         for (final CraftingPattern pattern : mainframe.networkPatterns()) {
             if (pattern.ingredientTotals().containsKey(key)) {
-                add(names, pattern.result().getHoverName().getString(), most);
+                add(names, GameText.of(pattern.result().getHoverName()), most);
             }
         }
         for (final NetworkRecipe recipe : mainframe.networkMachineRecipes()) {
             if (consumes(recipe, key)) {
                 final StorageKey made = recipe.resultKey();
-                add(names, made == null ? recipe.displayName() : made.displayName().getString(), most);
+                add(names, made == null ? recipe.displayText() : GameText.of(made.displayName()), most);
             }
         }
         return names;
     }
 
     /**
-     * "Blast &#183; processing &#183; Blast Furnace": one way of making a thing, in one line. The payload that carries
-     * it holds plain words, so the line is in the English the machine keeps.
+     * "Blast &#183; processing &#183; Blast Furnace": one way of making a thing, in one line, each name in the
+     * language of whoever reads it.
      */
-    public static String line(final NetworkRecipe recipe) {
+    public static Text line(final NetworkRecipe recipe) {
         if (recipe.proc().isPresent()) {
-            return PROCESSING.with(recipe.displayName(), MachineCategory.label(recipe.proc().get().machineType()))
-                    .english();
+            return PROCESSING.with(recipe.displayText(), MachineCategory.text(recipe.proc().get().machineType()));
         }
         if (recipe.multi().isPresent()) {
-            final List<String> machines = new ArrayList<>();
+            final List<Text> machines = new ArrayList<>();
             for (final var stage : recipe.multi().get().stages()) {
                 machines.add(stage.proc().isPresent()
-                        ? MachineCategory.label(stage.proc().get().machineType())
-                        : BENCH_STAGE.text().english());
+                        ? MachineCategory.text(stage.proc().get().machineType())
+                        : BENCH_STAGE.text());
             }
-            return MULTI_STAGE.with(recipe.displayName(), String.join(" -> ", machines)).english();
+            return MULTI_STAGE.with(recipe.displayText(), TextLists.join(" -> ", machines));
         }
-        return AT_THE_BENCH.with(recipe.displayName()).english();
+        return AT_THE_BENCH.with(recipe.displayText());
     }
 
     /** Whether a recipe takes that thing in, at any of its stages. */
@@ -109,7 +111,7 @@ public final class ItemRecipes {
         return false;
     }
 
-    private static void add(final List<String> names, final String name, final int most) {
+    private static void add(final List<Text> names, final Text name, final int most) {
         if (names.size() < most && !names.contains(name)) {
             names.add(name);
         }

@@ -14,6 +14,9 @@ import dev.jstech.computers.block.part.CablePartType;
 import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.IDataNetworkConnectable;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextTags;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -84,7 +87,7 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
      * A machine discovered over the cables: its block name, the bus's name, where both sit, and the switch
      * face whose cable run reaches it, and the GUI lists the machine ON that face row.
      */
-    public record BusMachineLine(String blockName, String busName, BlockPos machinePos,
+    public record BusMachineLine(Text blockName, String busName, BlockPos machinePos,
                                  BlockPos cablePos, int busFace, int switchFace) {
     }
 
@@ -317,7 +320,7 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
                             || !declared.add(machinePos) || level.getBlockEntity(machinePos) == null) {
                         continue;
                     }
-                    lines.add(new BusMachineLine(machineBlock.getName().getString(),
+                    lines.add(new BusMachineLine(GameText.of(machineBlock.getName()),
                             bus.name() == null ? "" : bus.name(), machinePos, current,
                             face.get3DDataValue(), from.get3DDataValue()));
                 }
@@ -356,7 +359,7 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
             final List<BusMachineLine> parsed = new ArrayList<>(lines.size());
             for (int i = 0; i < lines.size(); i++) {
                 final CompoundTag entry = lines.getCompound(i);
-                parsed.add(new BusMachineLine(entry.getString("Block"), entry.getString("Bus"),
+                parsed.add(new BusMachineLine(TextTags.read(entry.getCompound("Block")), entry.getString("Bus"),
                         BlockPos.of(entry.getLong("MPos")), BlockPos.of(entry.getLong("CPos")),
                         entry.getInt("Face"), entry.getInt("SFace")));
             }
@@ -406,7 +409,7 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
         for (int i = 0; i < busMachineLines.size() && i < 8; i++) {
             final BusMachineLine line = busMachineLines.get(i);
             final CompoundTag entry = new CompoundTag();
-            entry.putString("Block", line.blockName());
+            entry.put("Block", TextTags.write(line.blockName()));
             entry.putString("Bus", line.busName());
             entry.putLong("MPos", line.machinePos().asLong());
             entry.putLong("CPos", line.cablePos().asLong());

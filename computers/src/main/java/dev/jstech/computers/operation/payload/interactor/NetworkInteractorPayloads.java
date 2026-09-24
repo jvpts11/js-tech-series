@@ -31,6 +31,7 @@ import dev.jstech.computers.storage.DataContainers;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;
@@ -212,14 +213,14 @@ public final class NetworkInteractorPayloads {
 
     /** A human label for a storage node in the details panel's per-server breakdown, such as a server's rack position
      *  and slot, or a generic label for a published Personal Computer (which has no rack location). */
-    private static String serverLabel(final NetworkSystem system,
-                                      final NodeUuid node) {
+    private static Text serverLabel(final NetworkSystem system,
+                                    final NodeUuid node) {
         return system.locationOf(node)
                 .map(loc -> {
                     final BlockPos p = BlockPos.of(loc.rackPos());
-                    return "Server " + p.getX() + ", " + p.getY() + ", " + p.getZ() + " #" + (loc.slot() + 1);
+                    return InteractorTexts.SERVER_AT.with(p.getX(), p.getY(), p.getZ(), loc.slot() + 1);
                 })
-                .orElse("Published PC");
+                .orElse(InteractorTexts.PUBLISHED_PC.text());
     }
 
     private static void handleNiShiftInsert(final NiShiftInsertPayload payload, final ServerPlayer player,

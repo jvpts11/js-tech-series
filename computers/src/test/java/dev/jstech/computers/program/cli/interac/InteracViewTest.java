@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.iql.IIqlCondition;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -199,7 +200,8 @@ class InteracViewTest {
                 if (idOf(row.name()).equals(id)) {
                     return new ItemDetail(row.name(), id, row.quantity(),
                             List.of(new Holding(row.detail(), row.quantity())),
-                            List.of("Stone, smelted"), List.of("Furnace", "Stone Bricks"));
+                            List.of(Text.literal("Stone, smelted")),
+                            List.of(Text.literal("Furnace"), Text.literal("Stone Bricks")));
                 }
             }
             return new ItemDetail("", id, 0L, List.of(), List.of(), List.of());

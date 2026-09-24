@@ -8,6 +8,8 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.os.fs.FsPaths;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -25,7 +27,7 @@ import java.util.List;
  * with their per-machine concurrency config (the Machines tab).
  *
  * @param mediaVolumeKey the {@code media:<readerPos>} key of the medium, or {@code ""} when none
- * @param mediaLabel     the display label of the medium (e.g. "Floppy (A:)"), or {@code ""} when none
+ * @param mediaLabel     the display label of the medium (e.g. "Floppy (A:)"), or empty when none
  * @param mediaFiles     file names of {@code .craft} files on the medium (up to 64)
  * @param romEntries     recipe ROM entries (up to 50)
  * @param hasCard        true when the computer has a Crafting Card installed (actions are enabled)
@@ -35,11 +37,11 @@ import java.util.List;
  */
 public record CraftManagerStatePayload(
         String mediaVolumeKey,
-        String mediaLabel,
+        Text mediaLabel,
         List<String> mediaFiles,
         List<WireRomEntry> romEntries,
         boolean hasCard,
-        String status,
+        Text status,
         boolean statusWarns,
         List<WireMachine> machines) implements CustomPacketPayload {
 
@@ -62,11 +64,11 @@ public record CraftManagerStatePayload(
      * @param name    the display name of the result item (e.g. "Diamond Sword")
      * @param inMedia true when a {@code .craft} file for this pattern already exists on the medium
      */
-    public record WireRomEntry(int index, String name, boolean inMedia) {
+    public record WireRomEntry(int index, Text name, boolean inMedia) {
         public static final StreamCodec<RegistryFriendlyByteBuf, WireRomEntry> STREAM_CODEC =
                 StreamCodec.composite(
                         ByteBufCodecs.VAR_INT, WireRomEntry::index,
-                        ByteBufCodecs.stringUtf8(64), WireRomEntry::name,
+                        TextCodecs.STREAM_CODEC, WireRomEntry::name,
                         ByteBufCodecs.BOOL, WireRomEntry::inMedia,
                         WireRomEntry::new);
     }
@@ -83,13 +85,13 @@ public record CraftManagerStatePayload(
      * {@code label} distinguishes it within the type (its switch face + position). {@code typeMaxJobs} is the
      * type's shared Max Jobs.
      */
-    public record WireMachine(String machineKey, String typeKey, String label,
+    public record WireMachine(String machineKey, String typeKey, Text label,
                               boolean locked, boolean feedMax, int typeMaxJobs) {
         public static final StreamCodec<RegistryFriendlyByteBuf, WireMachine> STREAM_CODEC =
                 StreamCodec.composite(
                         ByteBufCodecs.stringUtf8(48), WireMachine::machineKey,
                         ByteBufCodecs.stringUtf8(80), WireMachine::typeKey,
-                        ByteBufCodecs.stringUtf8(64), WireMachine::label,
+                        TextCodecs.STREAM_CODEC, WireMachine::label,
                         ByteBufCodecs.BOOL, WireMachine::locked,
                         ByteBufCodecs.BOOL, WireMachine::feedMax,
                         ByteBufCodecs.VAR_INT, WireMachine::typeMaxJobs,
@@ -105,11 +107,11 @@ public record CraftManagerStatePayload(
     }
 
     // Groups the medium fields so the top-level Wire stays within the 6-pair composite limit.
-    private record MediaBlock(String key, String label, List<FileName> files) {
+    private record MediaBlock(String key, Text label, List<FileName> files) {
         static final StreamCodec<RegistryFriendlyByteBuf, MediaBlock> STREAM_CODEC =
                 StreamCodec.composite(
                         ByteBufCodecs.stringUtf8(64), MediaBlock::key,
-                        ByteBufCodecs.stringUtf8(64), MediaBlock::label,
+                        TextCodecs.STREAM_CODEC, MediaBlock::label,
                         FileName.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_MEDIA_FILES)), MediaBlock::files,
                         MediaBlock::new);
 
@@ -120,10 +122,10 @@ public record CraftManagerStatePayload(
     }
 
     // The status line and whether it warns, travelling as one field so the Wire stays within the composite limit.
-    private record StatusLine(String text, boolean warns) {
+    private record StatusLine(Text text, boolean warns) {
         static final StreamCodec<RegistryFriendlyByteBuf, StatusLine> STREAM_CODEC =
                 StreamCodec.composite(
-                        ByteBufCodecs.stringUtf8(96), StatusLine::text,
+                        TextCodecs.STREAM_CODEC, StatusLine::text,
                         ByteBufCodecs.BOOL, StatusLine::warns,
                         StatusLine::new);
     }

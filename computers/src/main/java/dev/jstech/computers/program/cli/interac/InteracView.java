@@ -234,14 +234,14 @@ public final class InteracView {
     }
 
     /** One of a detail's lists under its heading, and nothing at all when it is empty. */
-    private static void added(final List<String> out, final TextKey heading, final List<String> lines) {
+    private static void added(final List<String> out, final TextKey heading, final List<Text> lines) {
         if (lines.isEmpty()) {
             return;
         }
         out.add("");
         out.add(english(heading.text()));
         for (int i = 0; i < lines.size() && i < 3; i++) {
-            out.add("  " + lines.get(i));
+            out.add("  " + english(lines.get(i)));
         }
     }
 

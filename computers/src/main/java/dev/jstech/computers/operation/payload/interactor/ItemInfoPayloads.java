@@ -8,7 +8,6 @@
 package dev.jstech.computers.operation.payload.interactor;
 
 import dev.jstech.computers.block.part.AbstractBusPart;
-import dev.jstech.computers.block.part.CablePartType;
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
@@ -26,9 +25,9 @@ import dev.jstech.computers.operation.payload.RequestItemRecipesPayload;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -42,7 +41,6 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import java.util.ArrayList;
 import java.util.List;
 
-import static dev.jstech.computers.operation.payload.WireStrings.wire;
 import static dev.jstech.computers.operation.payload.network.NetworkLookup.resolveMainframe;
 import static dev.jstech.computers.operation.payload.network.NetworkLookup.serverLabel;
 import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.niHost;
@@ -103,7 +101,7 @@ public final class ItemInfoPayloads {
                             ? rack.getServerStorage(loc.slot()).count(key) : 0L)
                     .orElse(0L);
             if (held > 0) {
-                stored.add(new NetworkItemEntry.StorageShare(serverLabel(level, server.nodeUuid()), held));
+                stored.add(new NetworkItemEntry.StorageShare(Text.literal(serverLabel(level, server.nodeUuid())), held));
             }
         }
 
@@ -149,16 +147,11 @@ public final class ItemInfoPayloads {
                 if (cable.getPart(dir)
                         instanceof AbstractBusPart bus
                         && key.equals(bus.filterKey())) {
-                    buses.add(new ItemDetailPayload.BusRef(bus.name(), busKind(bus.type())));
+                    buses.add(new ItemDetailPayload.BusRef(bus.name(), bus.type().text()));
                 }
             }
         }
         return new ItemDetailPayload(key.stack(1), total, stored, uses, buses);
-    }
-
-    private static String busKind(final CablePartType type) {
-        final String name = type.name();
-        return name.charAt(0) + name.substring(1).toLowerCase(Locale.ROOT).replace('_', ' ');
     }
 
     /** Answers the details panel: what makes the item on this network, and what uses it. */
@@ -169,14 +162,8 @@ public final class ItemInfoPayloads {
             return;
         }
         final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
-        final List<String> madeBy = new ArrayList<>();
-        final List<String> usedIn = new ArrayList<>();
-        for (final String line : ItemRecipes.madeBy(mainframe, payload.key(), ItemRecipesPayload.MAX_LINES)) {
-            madeBy.add(wire(line, ItemRecipesPayload.MAX_TEXT));
-        }
-        for (final String name : ItemRecipes.usedIn(mainframe, payload.key(), ItemRecipesPayload.MAX_LINES)) {
-            usedIn.add(wire(name, ItemRecipesPayload.MAX_TEXT));
-        }
-        PacketDistributor.sendToPlayer(player, new ItemRecipesPayload(payload.key(), madeBy, usedIn));
+        PacketDistributor.sendToPlayer(player, new ItemRecipesPayload(payload.key(),
+                ItemRecipes.madeBy(mainframe, payload.key(), ItemRecipesPayload.MAX_LINES),
+                ItemRecipes.usedIn(mainframe, payload.key(), ItemRecipesPayload.MAX_LINES)));
     }
 }

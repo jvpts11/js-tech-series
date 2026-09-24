@@ -15,5 +15,11 @@
   "jscore.operation.failure.cancelled": "the machine running it stopped",
   "jscore.operation.failure.crashed": "the Operation ran into a problem: %s (%s)",
   "jscore.operation.failure.no_result": "the Operation finished without saying what it did",
-  "jscore.operation.failure.self_test": "the self-test ran past what its numbers can hold"
+  "jscore.operation.failure.self_test": "the self-test ran past what its numbers can hold",
+  "jscore.priority.high": "HIGH",
+  "jscore.priority.low": "LOW",
+  "jscore.priority.medium": "MED",
+  "jscore.priority.medium_high": "MED+",
+  "jscore.priority.medium_low": "MED-",
+  "jscore.text.joined": "%s%s%s"
 }

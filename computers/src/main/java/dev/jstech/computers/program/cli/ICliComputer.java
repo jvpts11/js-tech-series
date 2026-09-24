@@ -224,8 +224,8 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
      * @param madeBy  one line per way of making it, as the Network Interactor words them
      * @param usedIn  one line per thing it goes into
      */
-    record ItemDetail(String name, String id, long stored, List<Holding> where, List<String> madeBy,
-                      List<String> usedIn) {
+    record ItemDetail(String name, String id, long stored, List<Holding> where, List<Text> madeBy,
+                      List<Text> usedIn) {
 
         public ItemDetail {
             where = List.copyOf(where);

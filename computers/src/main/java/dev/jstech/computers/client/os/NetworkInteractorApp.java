@@ -47,6 +47,9 @@ import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.gui.layout.DesktopZ;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import java.util.function.Supplier;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
@@ -74,6 +77,121 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ADVANCED;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ALL_SOURCES;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ANY_CATEGORY;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ANY_MOD;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.AVAILABLE;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.CATEGORY;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.CHEMICAL;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.CLOSE;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.COMPONENTS;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.CRAFT;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.CRAFTABLE;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.CRAFTABLE_CAPTION;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.CRAFTING_TAB;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.CRAFT_ITEM;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.DURABILITY;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ESTIMATE;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ESTIMATE_STAGES;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.FAVOURITES;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.FAVOURITES_CAPTION;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.FAVOURITES_TAB;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.FLUID;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.HELD;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.HINT;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ID;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.INPUT_IN_STOCK;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.INVENTORY;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.IN_THE_NETWORK;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.IN_THE_NETWORK_ON;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ITEM;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ITEMS;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ITEMS_AND_ROOM;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ITEMS_EXACT;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ITEMS_SELECTED;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ITEM_TYPES;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.KIND;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.KIND_AND_MACHINES;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.LIVE;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.LOCAL_STORAGE;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.LOCAL_TAB;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.MADE_BY;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.MAINFRAME_OFFLINE;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.MAINFRAME_ONLINE;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.MAX;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.MAX_FEASIBLE;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.MILLIBUCKETS;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.MINECRAFT;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.MOD;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.MORE;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.NETWORK_STORAGE;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.NETWORK_TAB;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.NONE;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.NOTHING_LOCAL;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.NOTHING_MATCHES;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.NOTHING_ON_NETWORK;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.NOTHING_STARRED;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.NOT_IN_STOCK;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.NOT_IN_STOCK_CRAFTABLE;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.NO_CRAFTS_MATCH;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.NO_ESTIMATE;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.NO_FAVOURITES_MATCH;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.NO_PATTERNS;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.OF;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.OF_ITEMS;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ONE_ITEM_EXACT;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ONE_RECIPE;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ONE_SERVER;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ONE_STAGE;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ONE_STAGE_TIMED;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ON_THE_NETWORK;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.OPERATIONS;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.OPERATIONS_CAPTION;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.OPERATIONS_TAB;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.PARTIAL;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.PLANNING;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.PLAN_RAW;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.PLAN_WITH;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.PRIORITY;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.PRIORITY_BUTTON;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.PULL_FROM;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.QUANTITY;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.QUANTITY_EACH;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.RECIPES;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.RECIPE_CHOICES;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.RECIPE_CHOICES_MORE;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.REQUEST;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.REQUEST_ITEMS;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.ROOM;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.RUNNING;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.SELECTED;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.SELECT_AN_ITEM;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.SEND;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.SEND_TO;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.SERVERS;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.SERVERS_COUNT;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.SORT_A_Z;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.SORT_LEAST;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.SORT_MOST;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.STAGES;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.STAGES_TIMED;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.STARRED;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.STATUS_TAB;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.STORAGE;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.STORED;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.TAGS;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.THIS_COMPUTER;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.THIS_NETWORK;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.TOGETHER;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.TO_INVENTORY;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.TO_NETWORK;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.TYPES;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.TYPES_AND_SIZE;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.USED;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.USED_IN;
+import static dev.jstech.computers.client.os.NetworkInteractorTexts.USED_OF;
+
 /**
  * The Network Interactor desktop window: the graphical face of the data network for a Frames computer,
  * with the same capabilities as the MC-NET terminal: extract from the network into local storage,
@@ -100,7 +218,8 @@ import java.util.TreeSet;
 public final class NetworkInteractorApp implements IInventoryBandApp {
 
     // Labels kept short so all the tabs fit the strip; "Local"/"Network" abbreviate the longer mock names.
-    private static final List<String> BASE_TABS = List.of("Status", "Local", "Network", "Crafting", "Operations");
+    private static final List<TextKey> BASE_TABS = List.of(STATUS_TAB, LOCAL_TAB, NETWORK_TAB, CRAFTING_TAB,
+            OPERATIONS_TAB);
     private static final int TAB_STATUS = 0;
     private static final int TAB_LOCAL = 1;
     private static final int TAB_NETWORK = 2;
@@ -122,7 +241,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     private static final int INV_ROWS = NetworkInteractorLayout.INV_ROWS;
 
     private static final int SORT_MODES = 3;
-    private static final String[] SORT_LABELS = {"A-Z", "MOST", "LEAST"};
+    private static final TextKey[] SORT_LABELS = {SORT_A_Z, SORT_MOST, SORT_LEAST};
     private static final int OP_ROW_H = 12;
     private static final int ONLINE_GREEN = 0xFF2E8B45;
     private static final int OFFLINE_RED = 0xFF9A4A4A;
@@ -131,9 +250,6 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     private static final int STAR_GOLD = 0xFFE0A800;
     private static final int SHORT_RED = 0xFFB23A3A;
     private static final int SCROLLBAR_W = 3;
-    private static final String ANY_MOD = "Any mod";
-    private static final String ANY_CATEGORY = "Any category";
-    private static final String HINT = "Arrows move  ·  Enter request  ·  C craft  ·  F favourite  ·  / search";
 
     /*
      * Request/storage popup (MC-NET style): clicking an item with an empty cursor opens a quantity dialog
@@ -330,8 +446,9 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         opList = root.add(new ListView<OperationRecord>(ops::all, OP_ROW_H, ops::renderRow)
                 .setOnClick(ops::clicked));
         hintLabel = root.add(new Label(this::hintText, Label.Tone.DIM).setScale(Texts.SMALL));
-        detailRequest = root.add(new Button("Request", this::detailRequestPressed).setLabelScale(Texts.SMALL));
-        detailCraft = root.add(new Button("Craft", this::detailCraftPressed).setLabelScale(Texts.SMALL));
+        detailRequest = root.add(new Button(GameText.resolve(REQUEST), this::detailRequestPressed)
+                .setLabelScale(Texts.SMALL));
+        detailCraft = root.add(new Button(GameText.resolve(CRAFT), this::detailCraftPressed).setLabelScale(Texts.SMALL));
         detailStar = root.add(new Button(STAR, this::detailStarPressed).setLabelScale(Texts.SMALL));
         requestPopup = new RequestPopup();
         craftPopup = new CraftPopup();
@@ -585,8 +702,11 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     }
 
     private List<String> tabLabels() {
-        final List<String> out = new ArrayList<>(BASE_TABS);
-        out.add(contentW >= FAV_LABEL_MIN_W ? STAR + " Favourites" : STAR);
+        final List<String> out = new ArrayList<>();
+        for (final TextKey label : BASE_TABS) {
+            out.add(GameText.resolve(label));
+        }
+        out.add(contentW >= FAV_LABEL_MIN_W ? GameText.resolve(FAVOURITES_TAB.with(STAR)) : STAR);
         return out;
     }
 
@@ -713,23 +833,20 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     /** What the well says when the active tab has nothing to list, or null when it has. */
     @Nullable
     private String emptyMessage() {
-        return switch (tab) {
+        final TextKey message = switch (tab) {
             case TAB_CRAFTING -> filteredCrafts().isEmpty()
-                    ? (!search.query().isEmpty() || filtering()
-                            ? "No crafts match the search and filters."
-                            : "No patterns on the network. Load .craft files on a Crafting Computer.")
+                    ? (!search.query().isEmpty() || filtering() ? NO_CRAFTS_MATCH : NO_PATTERNS)
                     : null;
             case TAB_FAV -> gridEntries().isEmpty()
-                    ? (favourites.isEmpty()
-                            ? "Nothing starred yet. Press F on an item, or its star in the details."
-                            : "No favourites match the search and filters.")
+                    ? (favourites.isEmpty() ? NOTHING_STARRED : NO_FAVOURITES_MATCH)
                     : null;
             case TAB_NETWORK, TAB_LOCAL -> gridEntries().isEmpty()
-                    ? (!search.query().isEmpty() || filtering() ? "Nothing matches the search and filters."
-                            : (tab == TAB_LOCAL ? "Nothing on this computer's disks." : "Nothing on the network."))
+                    ? (!search.query().isEmpty() || filtering() ? NOTHING_MATCHES
+                            : (tab == TAB_LOCAL ? NOTHING_LOCAL : NOTHING_ON_NETWORK))
                     : null;
             default -> null;
         };
+        return message == null ? null : GameText.resolve(message);
     }
 
     /** The caption strip over the well: what the tab lists and how much of it. */
@@ -744,23 +861,23 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     /** The caption's left side: the tab's name for what it lists. */
     private String gridCaptionText() {
-        return switch (tab) {
-            case TAB_LOCAL -> "LOCAL STORAGE";
-            case TAB_CRAFTING -> "CRAFTABLE";
-            case TAB_FAV -> "FAVOURITES";
-            case TAB_OPS -> "OPERATIONS";
-            default -> "NETWORK STORAGE";
-        };
+        return GameText.resolve(switch (tab) {
+            case TAB_LOCAL -> LOCAL_STORAGE;
+            case TAB_CRAFTING -> CRAFTABLE_CAPTION;
+            case TAB_FAV -> FAVOURITES_CAPTION;
+            case TAB_OPS -> OPERATIONS_CAPTION;
+            default -> NETWORK_STORAGE;
+        });
     }
 
     /** The caption's right side: the count of what the tab lists. */
     private String captionCount() {
         return switch (tab) {
-            case TAB_LOCAL -> localItems.size() + " types";
-            case TAB_CRAFTING -> crafts.size() + (crafts.size() == 1 ? " recipe" : " recipes");
-            case TAB_FAV -> favourites.size() + " starred";
+            case TAB_LOCAL -> GameText.resolve(TYPES.with(localItems.size()));
+            case TAB_CRAFTING -> GameText.resolve((crafts.size() == 1 ? ONE_RECIPE : RECIPES).with(crafts.size()));
+            case TAB_FAV -> GameText.resolve(STARRED.with(favourites.size()));
             case TAB_OPS -> ops.caption();
-            default -> networkItems.size() + " types · " + DiskSpec.sizeLabel(usedMb);
+            default -> GameText.resolve(TYPES_AND_SIZE.with(networkItems.size(), DiskSpec.sizeLabel(usedMb)));
         };
     }
 
@@ -770,14 +887,15 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         skin.statusBar(g, x, y, width, h);
         final int ty = y + 2;
         int sx = x + 3;
-        sx = statusSegment(g, font, sx, ty, online ? "● Mainframe online" : "○ Mainframe offline",
+        sx = statusSegment(g, font, sx, ty, GameText.resolve(online ? MAINFRAME_ONLINE : MAINFRAME_OFFLINE),
                 online ? ONLINE_GREEN : OFFLINE_RED, y, h);
-        sx = statusSegment(g, font, sx, ty, networkItems.size() + " types", skin.text(), y, h);
-        statusSegment(g, font, sx, ty, serverCount + (serverCount == 1 ? " server" : " servers"), skin.text(), y, h);
+        sx = statusSegment(g, font, sx, ty, GameText.resolve(TYPES.with(networkItems.size())), skin.text(), y, h);
+        statusSegment(g, font, sx, ty, GameText.resolve((serverCount == 1 ? ONE_SERVER : SERVERS_COUNT).with(serverCount)),
+                skin.text(), y, h);
         // The storage gauge, right: a small bar and the figures.
-        final String figures = capacityItems > 0
-                ? DiskSpec.sizeLabel(usedMb) + " / " + DiskSpec.sizeLabel(capacityMb)
-                : DiskSpec.sizeLabel(usedMb) + " stored";
+        final String figures = GameText.resolve(capacityItems > 0
+                ? USED_OF.with(DiskSpec.sizeLabel(usedMb), DiskSpec.sizeLabel(capacityMb))
+                : STORED.with(DiskSpec.sizeLabel(usedMb)));
         final int fw = Texts.smallWidth(font, figures);
         final int fx = x + width - 3 - fw;
         Texts.small(g, font, figures, fx, ty, skin.dim());
@@ -863,7 +981,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     private String sortLabel() {
         // The button always names the order it is in, so the player can see the mode without clicking it.
-        return SORT_LABELS[sortMode];
+        return GameText.resolve(SORT_LABELS[sortMode]);
     }
 
     private void cycleSort() {
@@ -872,7 +990,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     }
 
     private String hintText() {
-        return gridTab() ? HINT : "";
+        return gridTab() ? GameText.resolve(HINT) : "";
     }
 
     // filters
@@ -882,12 +1000,12 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     }
 
     private String modLabel() {
-        final String text = modFilter.isEmpty() ? "Mod" : modName(modFilter);
+        final String text = modFilter.isEmpty() ? GameText.resolve(MOD) : modName(modFilter);
         return lastFont == null ? text : Texts.clip(lastFont, text, Texts.smallFits(NetworkInteractorLayout.MOD_W - 4));
     }
 
     private String categoryLabel() {
-        final String text = categoryFilter.isEmpty() ? "Category" : categoryFilter;
+        final String text = categoryFilter.isEmpty() ? GameText.resolve(CATEGORY) : categoryFilter;
         return lastFont == null ? text : Texts.clip(lastFont, text, Texts.smallFits(NetworkInteractorLayout.CAT_W - 4));
     }
 
@@ -940,7 +1058,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     private void openModFilter() {
         final List<ContextMenu.Item> items = new ArrayList<>();
-        items.add(new ContextMenu.Item(ANY_MOD, true, () -> setModFilter("")));
+        items.add(new ContextMenu.Item(GameText.resolve(ANY_MOD), true, () -> setModFilter("")));
         for (final String ns : modOptions()) {
             items.add(new ContextMenu.Item(modName(ns), true, () -> setModFilter(ns)));
         }
@@ -949,7 +1067,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     private void openCategoryFilter() {
         final List<ContextMenu.Item> items = new ArrayList<>();
-        items.add(new ContextMenu.Item(ANY_CATEGORY, true, () -> setCategoryFilter("")));
+        items.add(new ContextMenu.Item(GameText.resolve(ANY_CATEGORY), true, () -> setCategoryFilter("")));
         for (final String category : categoryOptions()) {
             items.add(new ContextMenu.Item(category, true, () -> setCategoryFilter(category)));
         }
@@ -1304,7 +1422,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                              final NetworkInteractorLayout.Zones z) {
         // The horizontal grip strip: the well's caption at the left, the grip mark in the middle.
         final int sy = y + z.gripY();
-        Texts.small(g, font, "INVENTORY", x + z.invBandX() + 1, sy + 1, skin.dim());
+        Texts.small(g, font, GameText.resolve(INVENTORY), x + z.invBandX() + 1, sy + 1, skin.dim());
         final int hx = x + z.invBandX() + z.invBandW() / 2 - 10;
         final int hover = dragGrip == 2 || NetworkInteractorLayout.onHorizontalGrip(lastMouseX - x, lastMouseY - y, z)
                 ? skin.accent() : skin.edge();
@@ -1381,9 +1499,10 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                                    final int dh) {
         cardShown = true;
         final int px = dx + 5;
-        int py = panelHeader(g, font, dx, dy, dw, null, "This network",
-                online ? "● Mainframe online" : "○ Mainframe offline", online ? ONLINE_GREEN : OFFLINE_RED, false);
-        py = sectionRule(g, font, px, py, dw, "STORAGE");
+        int py = panelHeader(g, font, dx, dy, dw, null, GameText.resolve(THIS_NETWORK),
+                GameText.resolve(online ? MAINFRAME_ONLINE : MAINFRAME_OFFLINE), online ? ONLINE_GREEN : OFFLINE_RED,
+                false);
+        py = sectionRule(g, font, px, py, dw, GameText.resolve(STORAGE));
         final int gw = dw - 12;
         g.fill(px, py, px + gw, py + 5, skin.fieldBg());
         Draw.outline(g, px, py, gw, 5, skin.edge());
@@ -1392,20 +1511,21 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             g.fill(px + 1, py + 1, px + 1 + fill, py + 4, gaugeColor());
         }
         py += 8;
-        py = cardRow(g, font, px, py, dw, "used", capacityItems > 0
-                ? DiskSpec.sizeLabel(usedMb) + " of " + DiskSpec.sizeLabel(capacityMb)
+        py = cardRow(g, font, px, py, dw, GameText.resolve(USED), capacityItems > 0
+                ? GameText.resolve(OF.with(DiskSpec.sizeLabel(usedMb), DiskSpec.sizeLabel(capacityMb)))
                 : DiskSpec.sizeLabel(usedMb));
-        py = cardRow(g, font, px, py, dw, "held", formatCount(usedItems)
-                + (capacityItems > 0 ? " of " + formatCount(capacityItems) + " items" : " items"));
-        py = sectionRule(g, font, px, py + 2, dw, "ON THE NETWORK");
-        py = cardRow(g, font, px, py, dw, "Item types", Integer.toString(networkItems.size()));
-        py = cardRow(g, font, px, py, dw, "Servers", Integer.toString(serverCount));
-        py = cardRow(g, font, px, py, dw, "Craftable", Integer.toString(crafts.size()));
-        py = cardRow(g, font, px, py, dw, "Favourites", Integer.toString(favourites.size()));
-        py = sectionRule(g, font, px, py + 2, dw, "RUNNING");
-        py = cardRow(g, font, px, py, dw, "Operations", ops.liveCount() + " live");
+        py = cardRow(g, font, px, py, dw, GameText.resolve(HELD), GameText.resolve(capacityItems > 0
+                ? OF_ITEMS.with(formatCount(usedItems), formatCount(capacityItems))
+                : ITEMS.with(formatCount(usedItems))));
+        py = sectionRule(g, font, px, py + 2, dw, GameText.resolve(ON_THE_NETWORK));
+        py = cardRow(g, font, px, py, dw, GameText.resolve(ITEM_TYPES), Integer.toString(networkItems.size()));
+        py = cardRow(g, font, px, py, dw, GameText.resolve(SERVERS), Integer.toString(serverCount));
+        py = cardRow(g, font, px, py, dw, GameText.resolve(CRAFTABLE), Integer.toString(crafts.size()));
+        py = cardRow(g, font, px, py, dw, GameText.resolve(FAVOURITES), Integer.toString(favourites.size()));
+        py = sectionRule(g, font, px, py + 2, dw, GameText.resolve(RUNNING));
+        py = cardRow(g, font, px, py, dw, GameText.resolve(OPERATIONS), GameText.resolve(LIVE.with(ops.liveCount())));
         if (py + 10 < dy + dh) {
-            Texts.small(g, font, "Select an item to see its details.", px, py + 4, skin.dim());
+            Texts.small(g, font, GameText.resolve(SELECT_AN_ITEM), px, py + 4, skin.dim());
         }
     }
 
@@ -1481,8 +1601,10 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         Texts.small(g, font, Texts.clip(font, storedLine(e), Texts.smallFits(dw - 10)), px, py, skin.dim());
         py += 10;
         final ItemRecipesPayload known = recipesFor(key);
-        py = detailList(g, font, px, py, dw, "MADE BY", known == null ? List.of("...") : known.madeBy());
-        py = detailList(g, font, px, py, dw, "USED IN", known == null ? List.of("...") : known.usedIn());
+        py = detailList(g, font, px, py, dw, GameText.resolve(MADE_BY), known == null ? List.of("...")
+                : resolveAll(known.madeBy()));
+        py = detailList(g, font, px, py, dw, GameText.resolve(USED_IN), known == null ? List.of("...")
+                : resolveAll(known.usedIn()));
         if (withButtons) {
             final int bw = Math.max(30, (dw - 10 - 8 - 14) / 2);
             detailRequest.setBounds(px, py, bw, 12);
@@ -1496,16 +1618,17 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             detailStar.setPrimary(starred);
             py += 16;
         }
-        py = detail(g, font, px, py, dw, "ID", id.toString());
-        py = detail(g, font, px, py, dw, "KIND", key.isItem() ? "Item" : key.isFluid() ? "Fluid" : "Chemical");
-        py = detail(g, font, px, py, dw, "ROOM", weightLabel(key.weight(e.total())));
+        py = detail(g, font, px, py, dw, GameText.resolve(ID), id.toString());
+        py = detail(g, font, px, py, dw, GameText.resolve(KIND),
+                GameText.resolve(key.isItem() ? ITEM : key.isFluid() ? FLUID : CHEMICAL));
+        py = detail(g, font, px, py, dw, GameText.resolve(ROOM), weightLabel(key.weight(e.total())));
         if (key.isItem() && stack.isDamageableItem()) {
-            py = detail(g, font, px, py, dw, "DURABILITY",
+            py = detail(g, font, px, py, dw, GameText.resolve(DURABILITY),
                     (stack.getMaxDamage() - stack.getDamageValue()) + " / " + stack.getMaxDamage());
         }
         if (key.isItem()) {
-            py = detailList(g, font, px, py, dw, "TAGS", itemTags(stack));
-            detailList(g, font, px, py, dw, "COMPONENTS", componentNames(stack));
+            py = detailList(g, font, px, py, dw, GameText.resolve(TAGS), itemTags(stack));
+            detailList(g, font, px, py, dw, GameText.resolve(COMPONENTS), componentNames(stack));
         }
         Draw.popScissor(g);
     }
@@ -1539,13 +1662,15 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                 names.append(names.length() > 0 ? ", " : "").append(key.displayName().getString());
             }
         }
-        int py = panelHeader(g, font, dx, dy, dw, null, count + " items selected", names.toString(), skin.dim(), false);
-        py = detailList(g, font, px, py, dw, "SELECTED", lines.size() > 12 ? lines.subList(0, 12) : lines);
+        int py = panelHeader(g, font, dx, dy, dw, null, GameText.resolve(ITEMS_SELECTED.with(count)), names.toString(),
+                skin.dim(), false);
+        py = detailList(g, font, px, py, dw, GameText.resolve(SELECTED), lines.size() > 12 ? lines.subList(0, 12) : lines);
         if (tab != TAB_CRAFTING) {
-            py = detail(g, font, px, py, dw, "TOGETHER", formatCount(items) + " items · " + weightLabel(weight));
+            py = detail(g, font, px, py, dw, GameText.resolve(TOGETHER),
+                    GameText.resolve(ITEMS_AND_ROOM.with(formatCount(items), weightLabel(weight))));
         }
         if (lines.size() > 12) {
-            Texts.small(g, font, "+" + (lines.size() - 12) + " more", px + 2, py - 2, skin.dim());
+            Texts.small(g, font, GameText.resolve(MORE.with(lines.size() - 12)), px + 2, py - 2, skin.dim());
             py += 8;
         }
         if (withButtons) {
@@ -1565,19 +1690,19 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     /** "1,248 in the network · Server 1, 2, 3 #1, ..." or "not in stock" for a craftable result. */
     private String storedLine(final NetworkItemEntry e) {
         if (e.total() <= 0) {
-            return "not in stock" + (craftEntryFor(e.key()) != null ? " · craftable" : "");
+            return GameText.resolve(craftEntryFor(e.key()) != null ? NOT_IN_STOCK_CRAFTABLE : NOT_IN_STOCK);
         }
-        final StringBuilder out = new StringBuilder(amountLabel(e.key(), e.total()) + " in the network");
-        if (!e.shares().isEmpty()) {
-            out.append(" · ");
-            for (int i = 0; i < e.shares().size(); i++) {
-                if (i > 0) {
-                    out.append(", ");
-                }
-                out.append(e.shares().get(i).label());
+        if (e.shares().isEmpty()) {
+            return GameText.resolve(IN_THE_NETWORK.with(amountLabel(e.key(), e.total())));
+        }
+        final StringBuilder where = new StringBuilder();
+        for (int i = 0; i < e.shares().size(); i++) {
+            if (i > 0) {
+                where.append(", ");
             }
+            where.append(GameText.resolve(e.shares().get(i).label()));
         }
-        return out.toString();
+        return GameText.resolve(IN_THE_NETWORK_ON.with(amountLabel(e.key(), e.total()), where.toString()));
     }
 
     /** What the server said makes and uses the key, asking once per snapshot when it has not said yet. */
@@ -1638,7 +1763,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                            final String label, final List<String> values) {
         int vy = sectionRule(g, font, px, py, dw, label);
         if (values.isEmpty()) {
-            Texts.small(g, font, "(none)", px + 2, vy, skin.dim());
+            Texts.small(g, font, GameText.resolve(NONE), px + 2, vy, skin.dim());
             return vy + 10;
         }
         for (final String v : values) {
@@ -1725,7 +1850,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     /** A readable mod name for a namespace (Minecraft for vanilla, otherwise the title-cased namespace). */
     private static String modName(final String ns) {
         if (ns.equals("minecraft")) {
-            return "Minecraft";
+            return GameText.resolve(MINECRAFT);
         }
         return Character.toUpperCase(ns.charAt(0)) + ns.substring(1).replace('_', ' ');
     }
@@ -2320,8 +2445,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     }
 
     private String destLabel() {
-        return popupDestIndex == 0 ? "This computer"
-                : (popupDestIndex - 1 < servers.size() ? servers.get(popupDestIndex - 1).name() : "This computer");
+        return popupDestIndex == 0 || popupDestIndex - 1 >= servers.size() ? GameText.resolve(THIS_COMPUTER)
+                : servers.get(popupDestIndex - 1).name();
     }
 
     private void popupAction(final int mode) {
@@ -2399,7 +2524,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         if (popupEntry == null) {
             return "";
         }
-        return popupEntries.size() > 1 ? "Request " + popupEntries.size() + " items" : popupEntry.name().getString();
+        return popupEntries.size() > 1 ? GameText.resolve(REQUEST_ITEMS.with(popupEntries.size()))
+                : popupEntry.name().getString();
     }
 
     /** The request dialog's second line: what is available of the one item, or the items' names. */
@@ -2408,7 +2534,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             return "";
         }
         if (popupEntries.size() <= 1) {
-            return amount(popupEntry.key(), popupEntry.total()) + " available";
+            return GameText.resolve(AVAILABLE.with(amount(popupEntry.key(), popupEntry.total())));
         }
         final StringBuilder names = new StringBuilder();
         for (final NetworkItemEntry e : popupEntries) {
@@ -2436,26 +2562,30 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                         ctx.skin().dim(), false);
             }
         });
-        private final Button adv = add(new Button("Adv", NetworkInteractorApp.this::toggleAdvanced).setLabelScale(Texts.SMALL));
-        private final QuantityBox qty = add(new QuantityBox(() -> "x" + popupQty + (popupEntries.size() > 1 ? " each" : "")));
-        private final Button max = add(new Button("Max", NetworkInteractorApp.this::maxQty).setLabelScale(Texts.SMALL));
+        private final Button adv = add(new Button(GameText.resolve(ADVANCED), NetworkInteractorApp.this::toggleAdvanced)
+                .setLabelScale(Texts.SMALL));
+        private final QuantityBox qty = add(new QuantityBox(
+                () -> GameText.resolve((popupEntries.size() > 1 ? QUANTITY_EACH : QUANTITY).with(popupQty))));
+        private final Button max = add(new Button(GameText.resolve(MAX), NetworkInteractorApp.this::maxQty)
+                .setLabelScale(Texts.SMALL));
         private final Button[] steps = new Button[POPUP_STEPS.length];
-        private final Label prioLabel = add(new Label("PRIORITY", Label.Tone.DIM).setScale(Texts.SMALL));
+        private final Label prioLabel = add(new Label(GameText.resolve(PRIORITY), Label.Tone.DIM).setScale(Texts.SMALL));
         private final Button prioDown = add(new Button("<", () -> stepPopupPriority(-1)).setLabelScale(Texts.SMALL));
         private final UiComponent prioBox = add(new UiComponent() {
             @Override
             public void render(final GuiGraphics g, final UiContext ctx) {
                 ctx.skin().field(g, x(), y(), width(), height(), false);
-                final String text = popupPriority.label();
+                final String text = GameText.resolve(popupPriority.text());
                 Texts.small(g, ctx.font(), text, x() + (width() - Texts.smallWidth(ctx.font(), text)) / 2, y() + 2,
                         ctx.skin().text());
             }
         });
         private final Button prioUp = add(new Button(">", () -> stepPopupPriority(1)).setLabelScale(Texts.SMALL));
-        private final Label pullLabel = add(new Label("PULL FROM (servers)", Label.Tone.DIM).setScale(Texts.SMALL));
+        private final Label pullLabel = add(new Label(GameText.resolve(PULL_FROM), Label.Tone.DIM).setScale(Texts.SMALL));
         private final Panel sources = add(new Panel());
-        private final Label noSources = add(new Label("all sources", Label.Tone.DIM).setScale(Texts.SMALL));
-        private final Label sendTo = add(new Label("SEND TO", Label.Tone.DIM).setScale(Texts.SMALL));
+        private final Label noSources = add(new Label(GameText.resolve(ALL_SOURCES), Label.Tone.DIM)
+                .setScale(Texts.SMALL));
+        private final Label sendTo = add(new Label(GameText.resolve(SEND_TO), Label.Tone.DIM).setScale(Texts.SMALL));
         private final Button prevDest = add(new Button("<", () -> cycleDest(-1)).setLabelScale(Texts.SMALL));
         private final UiComponent destBox = add(new UiComponent() {
             @Override
@@ -2466,13 +2596,13 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             }
         });
         private final Button nextDest = add(new Button(">", () -> cycleDest(1)).setLabelScale(Texts.SMALL));
-        private final Button action = add(new Button(() -> popupDestIndex == 0 ? "Request" : "Send",
+        private final Button action = add(new Button(() -> GameText.resolve(popupDestIndex == 0 ? REQUEST : SEND),
                 NetworkInteractorApp.this::sendAdvancedRequest).setLabelScale(Texts.SMALL));
-        private final Button toInventory = add(new Button("To Inventory",
+        private final Button toInventory = add(new Button(GameText.resolve(TO_INVENTORY),
                 () -> popupAction(NiGridClickPayload.MODE_LOCAL_TO_INV)).setLabelScale(Texts.SMALL));
-        private final Button toNetwork = add(new Button("To Network",
+        private final Button toNetwork = add(new Button(GameText.resolve(TO_NETWORK),
                 () -> popupAction(NiGridClickPayload.MODE_LOCAL_TO_NET)).setLabelScale(Texts.SMALL));
-        private final Button request = add(new Button("Request",
+        private final Button request = add(new Button(GameText.resolve(REQUEST),
                 () -> popupAction(NiGridClickPayload.MODE_NET_TO_LOCAL)).setLabelScale(Texts.SMALL));
 
         private RequestPopup() {
@@ -2681,31 +2811,35 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             }
             final int tw = width() - 14;
             int ty = y() + 3;
-            Texts.small(g, font, Texts.clip(font, choice.label(), Texts.smallFits(tw)), x() + 3, ty, ctx.skin().text());
+            Texts.small(g, font, Texts.clip(font, GameText.resolve(choice.label()), Texts.smallFits(tw)), x() + 3, ty,
+                    ctx.skin().text());
             ty += 8;
             // The kind line as two: what it is and where it runs, then how long and in how many stages.
-            Texts.small(g, font, Texts.clip(font, choice.kind() + " · " + choice.machinesLine(), Texts.smallFits(tw + 8)),
-                    x() + 3, ty, ctx.skin().dim());
+            final String kind = GameText.resolve(KIND_AND_MACHINES.with(choice.kindText(), choice.machinesLine()));
+            Texts.small(g, font, Texts.clip(font, kind, Texts.smallFits(tw + 8)), x() + 3, ty, ctx.skin().dim());
             ty += 8;
-            final String stages = choice.stages() + (choice.stages() == 1 ? " stage" : " stages")
-                    + (choice.estimateTicks() > 0 ? " · ~" + RecipeChoice.seconds(choice.estimateTicks()) + " s" : "");
+            final boolean one = choice.stages() == 1;
+            final String stages = GameText.resolve(choice.estimateTicks() > 0
+                    ? (one ? ONE_STAGE_TIMED : STAGES_TIMED).with(choice.stages(), RecipeChoice.seconds(choice.estimateTicks()))
+                    : (one ? ONE_STAGE : STAGES).with(choice.stages()));
             Texts.small(g, font, Texts.clip(font, stages, Texts.smallFits(tw + 8)), x() + 3, ty, ctx.skin().dim());
             ty += 8;
             final int shown = Math.min(2, choice.inputs().size());
             for (int i = 0; i < shown; i++) {
                 final RecipeChoice.Input in = choice.inputs().get(i);
                 g.fill(x() + 3, ty + 2, x() + 6, ty + 5, in.satisfied() ? ONLINE_GREEN : SHORT_RED);
-                final String line = in.need() + " " + in.name() + " (" + formatCount(in.have()) + " in stock)";
+                final String line = GameText.resolve(INPUT_IN_STOCK.with(in.need(), in.name(), formatCount(in.have())));
                 Texts.small(g, font, Texts.clip(font, line, Texts.smallFits(tw + 2)), x() + 9, ty, ctx.skin().text());
                 ty += 8;
             }
             if (choice.inputs().size() > shown) {
-                Texts.small(g, font, "+" + (choice.inputs().size() - shown) + " more", x() + 9, ty, ctx.skin().dim());
+                Texts.small(g, font, GameText.resolve(MORE.with(choice.inputs().size() - shown)), x() + 9, ty,
+                        ctx.skin().dim());
                 ty += 8;
             }
             final boolean ok = choice.allInStock();
-            Texts.small(g, font, Texts.clip(font, choice.stockNote(), Texts.smallFits(tw + 8)), x() + 3, ty,
-                    ok ? ONLINE_GREEN : SHORT_RED);
+            Texts.small(g, font, Texts.clip(font, GameText.resolve(choice.stockNote()), Texts.smallFits(tw + 8)), x() + 3,
+                    ty, ok ? ONLINE_GREEN : SHORT_RED);
         }
 
         @Override
@@ -2728,8 +2862,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                     return;
                 }
                 DesktopItems.item(g, craftEntry.result(), x(), y() - 1);
-                g.drawString(ctx.font(), "Craft " + Texts.clip(ctx.font(), craftEntry.title(), width() - 40), x() + 20, y() + 2,
-                        ctx.skin().text(), false);
+                g.drawString(ctx.font(), GameText.resolve(CRAFT_ITEM.with(Texts.clip(ctx.font(), craftEntry.title(),
+                        width() - 40))), x() + 20, y() + 2, ctx.skin().text(), false);
             }
         });
         private final QuantityBox qty = add(new QuantityBox(() -> Long.toString(craftQty)));
@@ -2749,7 +2883,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             }
         });
         private final Label planLabel = add(new Label(this::planLabelText, Label.Tone.DIM).setScale(Texts.SMALL));
-        private final Button priority = add(new Button(() -> "Prio: " + craftPriority.label(),
+        private final Button priority = add(new Button(() -> GameText.resolve(PRIORITY_BUTTON.with(craftPriority.text())),
                 NetworkInteractorApp.this::cycleCraftPriority).setLabelScale(Texts.SMALL));
         private final UiComponent plan = add(new UiComponent() {
             @Override
@@ -2759,9 +2893,11 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         });
         private final Label estimate = add(new Label(this::estimateText, Label.Tone.DIM).setScale(Texts.SMALL));
         private final Label feasible = add(new Label(this::feasibleText).setColor(0xFFB8860B).setScale(Texts.SMALL));
-        private final Button craft = add(new Button("Craft", () -> submitCraft(false)).setLabelScale(Texts.SMALL));
-        private final Button partial = add(new Button("Partial", () -> submitCraft(true)).setLabelScale(Texts.SMALL));
-        private final Button closeButton = add(new Button("Close", this::close).setLabelScale(Texts.SMALL));
+        private final Button craft = add(new Button(GameText.resolve(CRAFT), () -> submitCraft(false))
+                .setLabelScale(Texts.SMALL));
+        private final Button partial = add(new Button(GameText.resolve(PARTIAL), () -> submitCraft(true))
+                .setLabelScale(Texts.SMALL));
+        private final Button closeButton = add(new Button(GameText.resolve(CLOSE), this::close).setLabelScale(Texts.SMALL));
 
         private CraftPopup() {
             super("", CRAFT_W, CRAFT_H);
@@ -2830,18 +2966,19 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
         private String recipeLabelText() {
             final int count = craftPlan == null ? 0 : craftPlan.options().size();
-            return "RECIPE  ·  " + count + " patterns make this" + (count > CARDS_SHOWN ? " (Left/Right for more)" : "");
+            return GameText.resolve((count > CARDS_SHOWN ? RECIPE_CHOICES_MORE : RECIPE_CHOICES).with(count));
         }
 
         private String planLabelText() {
             final RecipeChoice chosen = craftPlan == null ? null : craftPlan.chosen();
-            return craftHasChoice() && chosen != null ? "PLAN - with " + chosen.label() : "PLAN - raw ingredients";
+            return GameText.resolve(craftHasChoice() && chosen != null ? PLAN_WITH.with(chosen.label()) : PLAN_RAW.text());
         }
 
         private String differencesText() {
             final RecipeChoice chosen = craftPlan == null ? null : craftPlan.chosen();
             final RecipeChoice other = otherChoice();
-            return chosen == null || other == null ? "" : RecipeDifferences.describe(chosen, other, craftQty);
+            return chosen == null || other == null ? ""
+                    : GameText.resolve(RecipeDifferences.describe(chosen, other, craftQty));
         }
 
         /** Plan rows (need vs have): green when the network has enough, red otherwise, then what covers a shortfall. */
@@ -2849,7 +2986,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             final Font font = ctx.font();
             int ry = top;
             if (craftPlan == null) {
-                Texts.small(g, font, "planning...", px + 1, ry, ctx.skin().dim());
+                Texts.small(g, font, GameText.resolve(PLANNING), px + 1, ry, ctx.skin().dim());
                 return;
             }
             final boolean choice = craftHasChoice();
@@ -2870,12 +3007,13 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                 ry += pitch;
             }
             if (craftPlan.rows().size() > shown) {
-                Texts.small(g, font, "+" + (craftPlan.rows().size() - shown) + " more", px + 18, ry, ctx.skin().dim());
+                Texts.small(g, font, GameText.resolve(MORE.with(craftPlan.rows().size() - shown)), px + 18, ry,
+                        ctx.skin().dim());
                 ry += 8;
             }
             for (int i = 0; i < coverLines; i++) {
-                Texts.small(g, font, Texts.clip(font, craftPlan.cover().get(i), Texts.smallFits(w - 12)), px + 1, ry,
-                        SHORT_RED);
+                Texts.small(g, font, Texts.clip(font, GameText.resolve(craftPlan.cover().get(i)), Texts.smallFits(w - 12)),
+                        px + 1, ry, SHORT_RED);
                 ry += 8;
             }
         }
@@ -2884,12 +3022,14 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             if (craftPlan == null) {
                 return "";
             }
-            final String est = craftPlan.estimateTicks() > 0 ? "EST ~" + Math.max(1, craftPlan.estimateTicks() / 20) + "s" : "EST --";
-            return craftHasChoice() && craftPlan.stages() > 1 ? est + " · " + craftPlan.stages() + " stages" : est;
+            final Text est = craftPlan.estimateTicks() > 0
+                    ? ESTIMATE.with(Math.max(1, craftPlan.estimateTicks() / 20)) : NO_ESTIMATE.text();
+            return GameText.resolve(craftHasChoice() && craftPlan.stages() > 1
+                    ? ESTIMATE_STAGES.with(est, craftPlan.stages()) : est);
         }
 
         private String feasibleText() {
-            return craftPlan == null ? "" : "max " + formatCount(craftPlan.maxFeasible());
+            return craftPlan == null ? "" : GameText.resolve(MAX_FEASIBLE.with(formatCount(craftPlan.maxFeasible())));
         }
 
         @Override
@@ -2936,14 +3076,23 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     /** A short amount with its unit where the unit is not obvious: items by the count, data by the millibucket. */
     private static String amount(final StorageKey key, final long n) {
-        return key.isItem() ? formatCount(n) : formatCount(n) + " mB";
+        return key.isItem() ? formatCount(n) : GameText.resolve(MILLIBUCKETS.with(formatCount(n)));
     }
 
     /** The exact amount with its unit, for a tooltip. */
     private static String amountLabel(final StorageKey key, final long n) {
-        return key.isItem()
-                ? String.format(Locale.ROOT, "%,d item%s", n, n == 1L ? "" : "s")
-                : String.format(Locale.ROOT, "%,d mB", n);
+        final String grouped = String.format(Locale.ROOT, "%,d", n);
+        return GameText.resolve(!key.isItem() ? MILLIBUCKETS.with(grouped)
+                : (n == 1L ? ONE_ITEM_EXACT : ITEMS_EXACT).with(grouped));
+    }
+
+    /** What the machine says each line is, in the language this player reads. */
+    private static List<String> resolveAll(final List<Text> lines) {
+        final List<String> out = new ArrayList<>(lines.size());
+        for (final Text line : lines) {
+            out.add(GameText.resolve(line));
+        }
+        return out;
     }
 
     /**
@@ -3121,7 +3270,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         final List<String> out = new ArrayList<>();
         if (craftPlan != null && craftPlan.hasChoice()) {
             for (final RecipeChoice choice : craftPlan.options()) {
-                out.add(choice.label());
+                out.add(GameText.resolve(choice.label()));
             }
         }
         return out;
@@ -3160,7 +3309,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     /** What the plan says the network would craft to cover what is short. */
     public List<String> craftPopupCoverLines() {
-        return craftPlan == null ? List.of() : craftPlan.cover();
+        return craftPlan == null ? List.of() : resolveAll(craftPlan.cover());
     }
 
     /** Whether the open craft popup's plan is feasible as it stands. */
@@ -3252,14 +3401,14 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     public List<String> detailsMadeBy() {
         final NetworkItemEntry e = detailEntry(lastMouseX, lastMouseY);
         final ItemRecipesPayload known = e == null ? null : recipes.get(e.key());
-        return known == null ? List.of() : known.madeBy();
+        return known == null ? List.of() : resolveAll(known.madeBy());
     }
 
     /** What the details panel lists the item in view as used in, or empty before the server answered. */
     public List<String> detailsUsedIn() {
         final NetworkItemEntry e = detailEntry(lastMouseX, lastMouseY);
         final ItemRecipesPayload known = e == null ? null : recipes.get(e.key());
-        return known == null ? List.of() : known.usedIn();
+        return known == null ? List.of() : resolveAll(known.usedIn());
     }
 
     /** The name of the item the details panel is about, or "". */

@@ -11,6 +11,7 @@ import dev.jstech.computers.gui.layout.CraftingComputerLayout;
 import dev.jstech.computers.menu.CraftingComputerMenu;
 import dev.jstech.computers.operation.payload.RenamePcPayload;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
@@ -60,7 +61,7 @@ public class CraftingComputerScreen extends AbstractAssemblyScreen<CraftingCompu
         super.init();
         // Name field in the header, since computers are renamed here, never via an anvil.
         setupNameBox(28, 8, 126, RenamePcPayload.MAX_LEN,
-                Component.literal("Name this computer...").withStyle(ChatFormatting.DARK_GRAY),
+                GameText.component(AssemblyTexts.NAME_THIS_COMPUTER).withStyle(ChatFormatting.DARK_GRAY),
                 menu.customName(),
                 s -> PacketDistributor.sendToServer(new RenamePcPayload(menu.computerPos(), s)));
     }
@@ -117,62 +118,68 @@ public class CraftingComputerScreen extends AbstractAssemblyScreen<CraftingCompu
 
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
-        JsTechTheme.text(g, font, "CC", 12, 11, JsTechTheme.text());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.TITLE_CRAFTING), 12, 11, JsTechTheme.text());
         final String status;
         final int statusColor;
         if (!menu.buildValid()) {
-            status = "OFFLINE";
+            status = GameText.resolve(AssemblyTexts.OFFLINE);
             statusColor = JsTechTheme.red();
         } else if (menu.isRunning()) {
-            status = "ONLINE";
+            status = GameText.resolve(AssemblyTexts.ONLINE);
             statusColor = JsTechTheme.green();
         } else {
-            status = "READY";
+            status = GameText.resolve(AssemblyTexts.READY);
             statusColor = JsTechTheme.amber();
         }
         final int pillX = 232 - font.width(status);
         JsTechTheme.text(g, font, status, pillX, 11, statusColor);
         g.fill(pillX - 6, 11, pillX - 2, 15, statusColor);
 
-        JsTechTheme.text(g, font, "BOARD", 8, 27, menu.hasBoard() ? JsTechTheme.accent() : JsTechTheme.dim());
-        JsTechTheme.text(g, font, "CPU", 44, 27, JsTechTheme.dim());
-        JsTechTheme.text(g, font, "PSU", 8, 60, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.BOARD), 8, 27,
+                menu.hasBoard() ? JsTechTheme.accent() : JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.CPU), 44, 27, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.PSU), 8, 60, JsTechTheme.dim());
         g.fill(30, 61, 34, 65, psuColor());
-        JsTechTheme.text(g, font, "RAM", 44, 60, JsTechTheme.dim());
-        JsTechTheme.text(g, font, "DISK", 8, 93, JsTechTheme.dim());
-        JsTechTheme.text(g, font, "PCIE", 44, 93,
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.RAM), 44, 60, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.DISK), 8, 93, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.PCIE), 44, 93,
                 menu.craftFactorX100() > 0 ? JsTechTheme.amber() : JsTechTheme.dim());
 
-        JsTechTheme.tileText(g, font, COL_R, TILE_Y0, "CAPACITY", JsTechTheme.fmt(menu.capacity()), "it/t",
-                JsTechTheme.text());
+        final String perTick = GameText.resolve(AssemblyTexts.ITEMS_PER_TICK);
+        JsTechTheme.tileText(g, font, COL_R, TILE_Y0, GameText.resolve(AssemblyTexts.CAPACITY),
+                JsTechTheme.fmt(menu.capacity()), perTick, JsTechTheme.text());
         final int factor = menu.craftFactorX100();
         if (factor > 0) {
             /*
              * The Crafting Card is an accelerator with two stats: throughput (this tile's value, factor x CPU) and
              * threads (how many of a craft's stages this computer runs at once, summed over the installed cards).
              */
-            JsTechTheme.tileText(g, font, COL_R, TILE_Y1, "CRAFT " + menu.craftThreads() + "T x" + formatFactor(factor),
-                    JsTechTheme.fmt(menu.craftThroughput()), "it/t", JsTechTheme.accent());
+            JsTechTheme.tileText(g, font, COL_R, TILE_Y1,
+                    GameText.resolve(AssemblyTexts.CRAFT_CARD.with(menu.craftThreads(), formatFactor(factor))),
+                    JsTechTheme.fmt(menu.craftThroughput()), perTick, JsTechTheme.accent());
         } else {
             // No Crafting Card installed: the computer runs but cannot craft.
-            JsTechTheme.tileText(g, font, COL_R, TILE_Y1, "CRAFT", "NO CARD", "", JsTechTheme.dim());
+            JsTechTheme.tileText(g, font, COL_R, TILE_Y1, GameText.resolve(AssemblyTexts.CRAFT),
+                    GameText.resolve(AssemblyTexts.NO_CARD), "", JsTechTheme.dim());
         }
-        JsTechTheme.tileText(g, font, COL_R, TILE_Y2, "RECIPE ROM",
-                menu.romUsed() + " / " + menu.romLimit(), "", JsTechTheme.text());
+        JsTechTheme.tileText(g, font, COL_R, TILE_Y2, GameText.resolve(AssemblyTexts.RECIPE_ROM),
+                GameText.resolve(AssemblyTexts.OF.with(menu.romUsed(), menu.romLimit())), "", JsTechTheme.text());
 
-        JsTechTheme.text(g, font, "NETWORK", COL_R, NETWORK_Y, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.NETWORK), COL_R, NETWORK_Y, JsTechTheme.dim());
         if (menu.isOnNetwork()) {
-            JsTechTheme.textRight(g, font, "LINKED", COL_R + COL_R_W, NETWORK_Y, JsTechTheme.green());
+            JsTechTheme.textRight(g, font, GameText.resolve(AssemblyTexts.LINKED), COL_R + COL_R_W, NETWORK_Y,
+                    JsTechTheme.green());
         } else {
             JsTechTheme.textRight(g, font, "--", COL_R + COL_R_W, NETWORK_Y, JsTechTheme.dim());
         }
 
         final boolean auto = menu.isAutoStart();
-        final String powerCap = auto ? "AUTO" : (menu.isRunning() ? "TURN OFF" : "TURN ON");
+        final String powerCap = GameText.resolve(auto ? AssemblyTexts.AUTO
+                : menu.isRunning() ? AssemblyTexts.TURN_OFF : AssemblyTexts.TURN_ON);
         JsTechTheme.textCenter(g, font, powerCap, POWER_X + COL_R_W / 2, POWER_Y + 4,
                 auto ? JsTechTheme.dim() : JsTechTheme.accent());
-        JsTechTheme.textCenter(g, font, "AUTO: " + (auto ? "ON" : "OFF"), AUTO_X + COL_R_W / 2, AUTO_Y + 4,
-                auto ? JsTechTheme.accent() : JsTechTheme.dim());
+        JsTechTheme.textCenter(g, font, GameText.resolve(auto ? AssemblyTexts.AUTO_ON : AssemblyTexts.AUTO_OFF),
+                AUTO_X + COL_R_W / 2, AUTO_Y + 4, auto ? JsTechTheme.accent() : JsTechTheme.dim());
     }
 
     private static String formatFactor(final int factorX100) {

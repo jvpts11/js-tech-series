@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.crafting;
 
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 
@@ -22,7 +26,12 @@ import java.util.List;
  * player tagged with that category, so the player declares "this face hosts a smelting machine" instead of the mod
  * guessing it from the block.
  */
+@TextHolder
 public final class MachineCategory {
+
+    private static final TextKey MACHINE = TextKey.of("jsc.crafting.machine", "Machine");
+    /* A recipe category as a machine: any machine that runs it. */
+    private static final TextKey ANY = TextKey.of("jsc.crafting.any_machine", "Any %s");
 
     /** Namespace grouping the generic entries in the machine picker. */
     public static final String GENERIC_NAMESPACE = "generic";
@@ -57,13 +66,25 @@ public final class MachineCategory {
      * as "Any" and the category's own path ({@code generic:minecraft:smelting} is "Any Smelting").
      */
     public static String label(final String machineType) {
+        return text(machineType).english();
+    }
+
+    /**
+     * The same, as text: a machine that is a block goes by the block's own name, which each player reads in their
+     * language; any other id goes by its title-cased path, which is data.
+     */
+    public static Text text(final String machineType) {
         if (machineType == null || machineType.isEmpty()) {
-            return "Machine";
+            return MACHINE.text();
         }
         if (isGenericId(machineType)) {
-            return "Any " + titleCase(pathOf(categoryOf(machineType)));
+            return ANY.with(titleCase(pathOf(categoryOf(machineType))));
         }
-        return titleCase(pathOf(machineType));
+        final ResourceLocation id = ResourceLocation.tryParse(machineType);
+        if (id != null && BuiltInRegistries.BLOCK.containsKey(id)) {
+            return GameText.of(BuiltInRegistries.BLOCK.get(id).getName());
+        }
+        return Text.literal(titleCase(pathOf(machineType)));
     }
 
     private static String pathOf(final String id) {

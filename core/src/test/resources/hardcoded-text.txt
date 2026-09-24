@@ -6,7 +6,6 @@ computers/src/main/java/dev/jstech/computers/blockentity/CraftingComputerBlockEn
 computers/src/main/java/dev/jstech/computers/blockentity/MainframeNetworking.java 2
 computers/src/main/java/dev/jstech/computers/blockentity/MainframeScheduler.java 1
 computers/src/main/java/dev/jstech/computers/blockentity/NetworkGatewayBlockEntity.java 3
-computers/src/main/java/dev/jstech/computers/client/AbstractAssemblyScreen.java 1
 computers/src/main/java/dev/jstech/computers/client/AbstractBusScreen.java 11
 computers/src/main/java/dev/jstech/computers/client/BootMenuScreen.java 4
 computers/src/main/java/dev/jstech/computers/client/BootSplashArt.java 4
@@ -14,9 +13,6 @@ computers/src/main/java/dev/jstech/computers/client/ClusterManagementComputerScr
 computers/src/main/java/dev/jstech/computers/client/CommandPromptScreen.java 12
 computers/src/main/java/dev/jstech/computers/client/ComputerTerminalScreen.java 21
 computers/src/main/java/dev/jstech/computers/client/ConsoleTerminalTab.java 1
-computers/src/main/java/dev/jstech/computers/client/CraftTerminalTab.java 7
-computers/src/main/java/dev/jstech/computers/client/CraftingComputerScreen.java 17
-computers/src/main/java/dev/jstech/computers/client/CraftingSwitchScreen.java 15
 computers/src/main/java/dev/jstech/computers/client/DesktopSplashArt.java 7
 computers/src/main/java/dev/jstech/computers/client/ExportBusScreen.java 2
 computers/src/main/java/dev/jstech/computers/client/ImportBusScreen.java 2
@@ -41,7 +37,6 @@ computers/src/main/java/dev/jstech/computers/client/ServerRackScreen.java 22
 computers/src/main/java/dev/jstech/computers/client/ServerRouterScreen.java 8
 computers/src/main/java/dev/jstech/computers/client/StorageTerminalTab.java 15
 computers/src/main/java/dev/jstech/computers/client/TasksTerminalTab.java 8
-computers/src/main/java/dev/jstech/computers/client/TerminalCraftPopup.java 5
 computers/src/main/java/dev/jstech/computers/client/TerminalDropPopup.java 15
 computers/src/main/java/dev/jstech/computers/client/TerminalOperationPopup.java 4
 computers/src/main/java/dev/jstech/computers/client/TerminalQuantityBox.java 1
@@ -58,8 +53,8 @@ computers/src/main/java/dev/jstech/computers/client/os/CdeWindowMenu.java 2
 computers/src/main/java/dev/jstech/computers/client/os/ClusterManagerApp.java 43
 computers/src/main/java/dev/jstech/computers/client/os/CodeWorkspace.java 5
 computers/src/main/java/dev/jstech/computers/client/os/CommandPalette.java 1
-computers/src/main/java/dev/jstech/computers/client/os/CraftPlannerApp.java 9
-computers/src/main/java/dev/jstech/computers/client/os/CraftingManagerApp.java 10
+computers/src/main/java/dev/jstech/computers/client/os/CraftPlannerApp.java 1
+computers/src/main/java/dev/jstech/computers/client/os/CraftingManagerApp.java 1
 computers/src/main/java/dev/jstech/computers/client/os/DeskFiles.java 4
 computers/src/main/java/dev/jstech/computers/client/os/DeskTrash.java 11
 computers/src/main/java/dev/jstech/computers/client/os/DesktopScreen.java 51
@@ -75,7 +70,6 @@ computers/src/main/java/dev/jstech/computers/client/os/FramesPanels.java 2
 computers/src/main/java/dev/jstech/computers/client/os/GatewayManagerApp.java 45
 computers/src/main/java/dev/jstech/computers/client/os/HelpViewerApp.java 2
 computers/src/main/java/dev/jstech/computers/client/os/InteracTuiKeys.java 14
-computers/src/main/java/dev/jstech/computers/client/os/InteractorOps.java 4
 computers/src/main/java/dev/jstech/computers/client/os/ItemCategories.java 2
 computers/src/main/java/dev/jstech/computers/client/os/KnotApp.java 8
 computers/src/main/java/dev/jstech/computers/client/os/LessKeys.java 2
@@ -83,7 +77,7 @@ computers/src/main/java/dev/jstech/computers/client/os/LinuxLaunchers.java 9
 computers/src/main/java/dev/jstech/computers/client/os/LinuxPanels.java 4
 computers/src/main/java/dev/jstech/computers/client/os/MessengerApp.java 8
 computers/src/main/java/dev/jstech/computers/client/os/NanoKeys.java 1
-computers/src/main/java/dev/jstech/computers/client/os/NetworkInteractorApp.java 39
+computers/src/main/java/dev/jstech/computers/client/os/NetworkInteractorApp.java 1
 computers/src/main/java/dev/jstech/computers/client/os/NetworkManagerApp.java 20
 computers/src/main/java/dev/jstech/computers/client/os/OccupyWorkspaceDialog.java 3
 computers/src/main/java/dev/jstech/computers/client/os/OpenWithPopup.java 8
@@ -98,7 +92,7 @@ computers/src/main/java/dev/jstech/computers/client/os/ShellView.java 4
 computers/src/main/java/dev/jstech/computers/client/os/SigmaWindowApp.java 1
 computers/src/main/java/dev/jstech/computers/client/os/SnakeApp.java 3
 computers/src/main/java/dev/jstech/computers/client/os/SolitaireApp.java 1
-computers/src/main/java/dev/jstech/computers/client/os/StorageInsightsApp.java 13
+computers/src/main/java/dev/jstech/computers/client/os/StorageInsightsApp.java 1
 computers/src/main/java/dev/jstech/computers/client/os/StyleManagerApp.java 1
 computers/src/main/java/dev/jstech/computers/client/os/SystemMonitorApp.java 5
 computers/src/main/java/dev/jstech/computers/client/os/TaskManagerApp.java 28
@@ -120,8 +114,6 @@ computers/src/main/java/dev/jstech/computers/crafting/NetworkCraftOperation.java
 computers/src/main/java/dev/jstech/computers/crafting/NetworkMultiStageOperation.java 1
 computers/src/main/java/dev/jstech/computers/crafting/NetworkProcessingOperation.java 1
 computers/src/main/java/dev/jstech/computers/crafting/PatternWorkbench.java 1
-computers/src/main/java/dev/jstech/computers/crafting/RecipeChoice.java 3
-computers/src/main/java/dev/jstech/computers/crafting/RecipeDifferences.java 11
 computers/src/main/java/dev/jstech/computers/datagen/JscRecipeMachinesProvider.java 1
 computers/src/main/java/dev/jstech/computers/datagen/advancement/ConditionalAdvancementProvider.java 1
 computers/src/main/java/dev/jstech/computers/gui/CdeExitMessage.java 6
@@ -154,14 +146,11 @@ computers/src/main/java/dev/jstech/computers/operation/payload/UiWindowPayload.j
 computers/src/main/java/dev/jstech/computers/operation/payload/automation/AutomationPayloads.java 12
 computers/src/main/java/dev/jstech/computers/operation/payload/cluster/ClusterManagerPayloads.java 12
 computers/src/main/java/dev/jstech/computers/operation/payload/cluster/ClusterManagerStateBuilder.java 1
-computers/src/main/java/dev/jstech/computers/operation/payload/crafting/CraftManagerPayloads.java 4
-computers/src/main/java/dev/jstech/computers/operation/payload/crafting/CraftingPayloads.java 5
 computers/src/main/java/dev/jstech/computers/operation/payload/desktop/ThisPcPayloads.java 7
 computers/src/main/java/dev/jstech/computers/operation/payload/files/ArchivePayloads.java 22
 computers/src/main/java/dev/jstech/computers/operation/payload/files/FileEditPayloads.java 8
 computers/src/main/java/dev/jstech/computers/operation/payload/files/FilePayloads.java 2
 computers/src/main/java/dev/jstech/computers/operation/payload/files/TrashPayloads.java 2
-computers/src/main/java/dev/jstech/computers/operation/payload/interactor/NetworkInteractorPayloads.java 1
 computers/src/main/java/dev/jstech/computers/operation/payload/iql/IqlPayloads.java 8
 computers/src/main/java/dev/jstech/computers/operation/payload/program/ConsolePayloads.java 10
 computers/src/main/java/dev/jstech/computers/operation/payload/program/DesktopShellPayloads.java 2

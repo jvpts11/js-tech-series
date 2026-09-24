@@ -197,7 +197,7 @@ public final class PayloadRoundTripGameTests {
                 new ClusterManagerStatePayload.Head(true, 32, 4, "Frames 11", "Cluster Manager", "ready"),
                 List.of(new ClusterManagerStatePayload.WireCluster(0, 0, "Kraken", true, 8, 3L, 12L, 50, "8 nodes", true)),
                 detail, job,
-                List.of(new NetworkItemEntry(logs(), 640L, List.of(new NetworkItemEntry.StorageShare("rack-1", 640L)))),
+                List.of(new NetworkItemEntry(logs(), 640L, List.of(new NetworkItemEntry.StorageShare(Text.literal("rack-1"), 640L)))),
                 List.of(new ClusterManagerStatePayload.WireDest(456L, "Vault A"))));
         helper.succeed();
     }

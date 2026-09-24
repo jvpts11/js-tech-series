@@ -12,6 +12,7 @@ import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
 
 import java.util.ArrayList;
@@ -94,12 +95,13 @@ final class CraftTerminalTab extends AbstractTerminalTab {
     @Override
     public void renderTabLabels(final GuiGraphics g, final int cx, final int cy, final int cw) {
         final var catalog = menu.craftCatalog();
-        g.drawString(font(), "CRAFTABLE", GRID_X, cy + 20, DIM(), false);
-        final String count = catalog.size() + (catalog.size() == 1 ? " pattern" : " patterns");
+        g.drawString(font(), GameText.resolve(TerminalTexts.CRAFTABLE), GRID_X, cy + 20, DIM(), false);
+        final String count = GameText.resolve((catalog.size() == 1 ? TerminalTexts.ONE_PATTERN : TerminalTexts.PATTERNS)
+                .with(catalog.size()));
         g.drawString(font(), count, GRID_X + CRAFT_COLS * 18 - font().width(count), cy + 20, TEXT(), false);
         if (catalog.isEmpty()) {
-            g.drawString(font(), "no patterns loaded", GRID_X, GRID_Y + 6, DIM(), false);
-            g.drawString(font(), "load one from a medium under Patterns", GRID_X, GRID_Y + 18, DIM(), false);
+            g.drawString(font(), GameText.resolve(TerminalTexts.NO_PATTERNS), GRID_X, GRID_Y + 6, DIM(), false);
+            g.drawString(font(), GameText.resolve(TerminalTexts.LOAD_UNDER_PATTERNS), GRID_X, GRID_Y + 18, DIM(), false);
         }
         final int totalRows = (catalog.size() + CRAFT_COLS - 1) / CRAFT_COLS;
         if (totalRows > CRAFT_ROWS) {
@@ -109,10 +111,10 @@ final class CraftTerminalTab extends AbstractTerminalTab {
 
         final int px = PANE_X + 6;
         final int right = PANE_X + PANE_W - 6;
-        g.drawString(font(), "RUNNING", px, RUNNING_Y, DIM(), false);
+        g.drawString(font(), GameText.resolve(TerminalTexts.RUNNING), px, RUNNING_Y, DIM(), false);
         final var running = runningCrafts();
         if (running.isEmpty()) {
-            g.drawString(font(), "nothing being made", px, RUNNING_Y + 14, DIM(), false);
+            g.drawString(font(), GameText.resolve(TerminalTexts.NOTHING_BEING_MADE), px, RUNNING_Y + 14, DIM(), false);
         }
         for (int i = 0; i < Math.min(RUNNING_ROWS, running.size()); i++) {
             final OperationRecord op = running.get(i);
@@ -123,21 +125,21 @@ final class CraftTerminalTab extends AbstractTerminalTab {
             g.drawString(font(), made, right - font().width(made) - 2, ry, DIM(), false);
         }
 
-        g.drawString(font(), "JUST MADE", px, RECENT_Y, DIM(), false);
+        g.drawString(font(), GameText.resolve(TerminalTexts.JUST_MADE), px, RECENT_Y, DIM(), false);
         final var recent = recentCrafts();
         if (recent.isEmpty()) {
-            g.drawString(font(), "nothing yet", px, RECENT_Y + 14, DIM(), false);
+            g.drawString(font(), GameText.resolve(TerminalTexts.NOTHING_YET), px, RECENT_Y + 14, DIM(), false);
         }
         for (int i = 0; i < Math.min(RECENT_ROWS, recent.size()); i++) {
             final OperationRecord op = recent.get(i);
             final int ry = RECENT_Y + 14 + i * 11;
-            final String st = switch (op.status()) {
-                case OperationRecord.STATUS_COMPLETED -> "done";
-                case OperationRecord.STATUS_PARTIAL -> "partial";
-                case OperationRecord.STATUS_RESOURCE_LOCKED -> "locked";
-                case OperationRecord.STATUS_DISCARDED -> "dropped";
-                default -> "failed";
-            };
+            final String st = GameText.resolve(switch (op.status()) {
+                case OperationRecord.STATUS_COMPLETED -> TerminalTexts.DONE;
+                case OperationRecord.STATUS_PARTIAL -> TerminalTexts.PARTIAL;
+                case OperationRecord.STATUS_RESOURCE_LOCKED -> TerminalTexts.LOCKED;
+                case OperationRecord.STATUS_DISCARDED -> TerminalTexts.DROPPED;
+                default -> TerminalTexts.FAILED;
+            });
             final int color = switch (op.status()) {
                 case OperationRecord.STATUS_COMPLETED -> GREEN();
                 case OperationRecord.STATUS_PARTIAL -> AMBER();
@@ -145,7 +147,8 @@ final class CraftTerminalTab extends AbstractTerminalTab {
                 default -> RED();
             };
             final String name = font().plainSubstrByWidth(
-                    op.name().getString() + " x" + fmt(op.moved()), PANE_W - 26 - font().width(st));
+                    GameText.resolve(TerminalTexts.MADE.with(op.name().getString(), fmt(op.moved()))),
+                    PANE_W - 26 - font().width(st));
             g.drawString(font(), name, px + 2, ry, TEXT(), false);
             g.drawString(font(), st, right - font().width(st) - 2, ry, color, false);
         }

@@ -20,6 +20,7 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.SearchField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -30,6 +31,29 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
+import static dev.jstech.computers.client.os.CraftPlannerTexts.BENCH_RUNS;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.CRAFT;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.CRAFTABLE;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.CRAFT_TREE;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.HAVE;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.INGREDIENTS;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.LOADING;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.MACHINE_RUNS;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.NOT_CRAFTABLE;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.NO_MATCH;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.PARTIAL;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.PICK_AN_ITEM;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.PLANNING;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.RAW;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.SEARCH_ITEM;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.SHORT;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.STAGES;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.STEPS;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.SUMMARY;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.TREE;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.TREE_NODE;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.WHEEL_TO_SCROLL;
 
 /**
  * Craft Planner: pick a target from the network's craft catalogue and see its full plan before crafting.
@@ -94,35 +118,36 @@ public final class CraftPlannerApp implements IDesktopApp {
         this.monitorPos = monitorPos;
 
         search = root.add(new SearchField(SEARCH_MAX));
-        search.setPlaceholder("search item...");
+        search.setPlaceholder(GameText.resolve(SEARCH_ITEM));
         catalogList = root.add(new ListView<CraftCatalogPayload.Entry>(this::filtered, CATALOG_ROW_H, this::renderCatalogRow)
                 .setOnClick(this::catalogClicked));
         search.setOnEdit(() -> catalogList.setScroll(0));
-        catalogEmpty = root.add(new Label(() -> catalog.isEmpty() ? "loading..." : "no match", Label.Tone.DIM));
+        catalogEmpty = root.add(new Label(() -> GameText.resolve(catalog.isEmpty() ? LOADING : NO_MATCH), Label.Tone.DIM));
 
-        pickLabel = root.add(new Label("Pick an item to plan.", Label.Tone.DIM));
+        pickLabel = root.add(new Label(GameText.resolve(PICK_AN_ITEM), Label.Tone.DIM));
         nameLabel = root.add(new Label(() -> selected.getHoverName().getString()));
         qtyMinus = root.add(new Button("-", () -> setQty(qty - step())));
         qtyLabel = root.add(new Label(() -> String.valueOf(qty)).setAlign(Label.Align.CENTER));
         qtyPlus = root.add(new Button("+", () -> setQty(qty + step())));
-        planningLabel = root.add(new Label("planning...", Label.Tone.DIM));
-        notCraftableLabel = root.add(new Label("No pattern on the network makes this.").setColor(C_CRIT));
-        pillLabel = root.add(new Label(() -> plan != null && plan.feasible() ? "Craftable" : "Partial")
+        planningLabel = root.add(new Label(GameText.resolve(PLANNING), Label.Tone.DIM));
+        notCraftableLabel = root.add(new Label(GameText.resolve(NOT_CRAFTABLE)).setColor(C_CRIT));
+        pillLabel = root.add(new Label(() -> GameText.resolve(plan != null && plan.feasible() ? CRAFTABLE : PARTIAL))
                 .setColor(() -> plan != null && plan.feasible() ? C_GOOD : C_AMBER));
         summaryLabel = root.add(new Label(() -> plan == null ? ""
-                : "max " + JsTechTheme.fmt(plan.maxFeasible()) + "  -  " + plan.stages().size() + " stages", Label.Tone.DIM));
-        viewToggle = root.add(new Button(() -> treeMode ? "Steps" : "Tree", () -> treeMode = !treeMode));
-        stagesHeader = root.add(new Label("STAGES", Label.Tone.DIM));
+                : GameText.resolve(SUMMARY.with(JsTechTheme.fmt(plan.maxFeasible()), plan.stages().size())),
+                Label.Tone.DIM));
+        viewToggle = root.add(new Button(() -> GameText.resolve(treeMode ? STEPS : TREE), () -> treeMode = !treeMode));
+        stagesHeader = root.add(new Label(GameText.resolve(STAGES), Label.Tone.DIM));
         stageList = root.add(new ListView<CraftPlannerPayload.Stage>(() -> plan == null ? List.of() : plan.stages(), STAGE_ROW_H,
                 this::renderStageRow));
-        ingredientsHeader = root.add(new Label("INGREDIENTS", Label.Tone.DIM));
+        ingredientsHeader = root.add(new Label(GameText.resolve(INGREDIENTS), Label.Tone.DIM));
         ingredientList = root.add(new ListView<CraftPlanPayload.Row>(() -> plan == null ? List.of() : plan.ingredients(),
                 INGREDIENT_ROW_H, this::renderIngredientRow));
-        treeHeader = root.add(new Label("CRAFT TREE", Label.Tone.DIM));
-        treeHint = root.add(new Label("wheel to scroll", Label.Tone.DIM).setAlign(Label.Align.RIGHT));
+        treeHeader = root.add(new Label(GameText.resolve(CRAFT_TREE), Label.Tone.DIM));
+        treeHint = root.add(new Label(GameText.resolve(WHEEL_TO_SCROLL), Label.Tone.DIM).setAlign(Label.Align.RIGHT));
         treeList = root.add(new ListView<CraftPlannerPayload.TreeNode>(() -> plan == null ? List.of() : plan.tree(), TREE_ROW_H,
                 this::renderTreeRow));
-        craft = root.add(new Button(() -> "Craft " + qty, this::craft));
+        craft = root.add(new Button(() -> GameText.resolve(CRAFT.with(qty)), this::craft));
 
         root.focus(search);
         active = this;
@@ -311,8 +336,8 @@ public final class CraftPlannerApp implements IDesktopApp {
     private void renderStageRow(final GuiGraphics g, final UiContext ctx, final CraftPlannerPayload.Stage s, final int index,
                                 final int x, final int y, final int w, final int h, final boolean hovered, final boolean selectedRow) {
         final Font font = ctx.font();
-        g.drawString(font, Texts.clip(font, s.name(), w - 60), x + 4, y, ctx.skin().text(), false);
-        final String tag = (s.machine() ? "machine" : "bench") + " x" + s.runs();
+        g.drawString(font, Texts.clip(font, GameText.resolve(s.name()), w - 60), x + 4, y, ctx.skin().text(), false);
+        final String tag = GameText.resolve((s.machine() ? MACHINE_RUNS : BENCH_RUNS).with(s.runs()));
         g.drawString(font, tag, x + w - font.width(tag), y, ctx.skin().dim(), false);
     }
 
@@ -322,7 +347,8 @@ public final class CraftPlannerApp implements IDesktopApp {
         final boolean ok = r.have() >= r.need();
         itemIcon(g, r.item(), x + 1, y - 1, 11);
         g.drawString(font, Texts.clip(font, r.item().getHoverName().getString(), w - 76), x + 15, y, ctx.skin().text(), false);
-        final String s = ok ? "have " + JsTechTheme.fmt(r.have()) : "short " + JsTechTheme.fmt(r.need() - r.have());
+        final String s = GameText.resolve(ok ? HAVE.with(JsTechTheme.fmt(r.have()))
+                : SHORT.with(JsTechTheme.fmt(r.need() - r.have())));
         g.drawString(font, s, x + w - font.width(s), y, ok ? C_GOOD : C_CRIT, false);
     }
 
@@ -335,10 +361,11 @@ public final class CraftPlannerApp implements IDesktopApp {
             g.fill(x + 2 + (n.depth() - 1) * 9 + 3, y + 4, ix - 1, y + 5, ctx.skin().edge());
         }
         itemIcon(g, n.item(), ix, y - 1, 10);
-        final String label = JsTechTheme.fmt(n.qty()) + "x " + n.item().getHoverName().getString();
+        final String label = GameText.resolve(TREE_NODE.with(JsTechTheme.fmt(n.qty()), n.item().getHoverName().getString()));
         g.drawString(font, Texts.clip(font, label, w - (ix - x) - 13 - 40), ix + 12, y, ctx.skin().text(), false);
         if (!n.craftable()) {
-            g.drawString(font, "raw", x + w - font.width("raw"), y, ctx.skin().dim(), false);
+            final String raw = GameText.resolve(RAW);
+            g.drawString(font, raw, x + w - font.width(raw), y, ctx.skin().dim(), false);
         }
     }
 

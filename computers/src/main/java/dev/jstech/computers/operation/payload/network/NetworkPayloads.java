@@ -41,6 +41,7 @@ import dev.jstech.core.format.UnitFormatter;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
 import dev.jstech.core.network.SubframeNode;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -374,7 +375,7 @@ public final class NetworkPayloads {
                             instanceof ServerRackBlockEntity rack
                             ? rack.getServerStorage(loc.slot()).used() : 0L)
                     .orElse(0L);
-            servers.add(new NetworkItemEntry.StorageShare(serverLabel(level, server.nodeUuid()), used));
+            servers.add(new NetworkItemEntry.StorageShare(Text.literal(serverLabel(level, server.nodeUuid())), used));
         }
         return new StorageInsightsPayload(totalItems, totals.size(), serverCount, top, low, servers);
     }

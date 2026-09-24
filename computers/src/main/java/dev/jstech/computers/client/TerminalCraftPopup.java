@@ -15,6 +15,7 @@ import dev.jstech.computers.operation.payload.CraftSubmitPayload;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -125,8 +126,8 @@ final class TerminalCraftPopup {
         g.fill(px, py, px + POPUP_W, py + 1, JsTechTheme.accent());
 
         screen.drawDataIcon(g, StorageKey.of(pattern.result()), -1L, px + 6, py + 5);
-        g.drawString(screen.tabFont(), "CRAFT  "
-                        + trim(pattern.result().getHoverName().getString(), 18),
+        g.drawString(screen.tabFont(), GameText.resolve(TerminalTexts.CRAFT_TITLE.with(
+                        trim(pattern.result().getHoverName().getString(), 18))),
                 px + 28, py + 8, JsTechTheme.text(), false);
 
         /*
@@ -142,10 +143,12 @@ final class TerminalCraftPopup {
             g.drawCenteredString(screen.tabFont(), STEP_LABELS[i], bx + 8, py + 33, JsTechTheme.accent());
         }
 
-        g.drawString(screen.tabFont(), "PLAN - raw ingredients", px + 6, py + 52, JsTechTheme.dim(), false);
+        g.drawString(screen.tabFont(), GameText.resolve(TerminalTexts.PLAN_RAW), px + 6, py + 52, JsTechTheme.dim(),
+                false);
         int rowY = py + 63;
         if (plan == null) {
-            g.drawString(screen.tabFont(), "planning...", px + 6, rowY, JsTechTheme.dim(), false);
+            g.drawString(screen.tabFont(), GameText.resolve(TerminalTexts.PLANNING), px + 6, rowY, JsTechTheme.dim(),
+                    false);
         } else {
             for (int i = 0; i < Math.min(PLAN_ROWS, plan.rows().size()); i++) {
                 final var row = plan.rows().get(i);
@@ -159,27 +162,28 @@ final class TerminalCraftPopup {
                 rowY += 14;
             }
             if (plan.rows().size() > PLAN_ROWS) {
-                g.drawString(screen.tabFont(), "+" + (plan.rows().size() - PLAN_ROWS) + " more",
+                g.drawString(screen.tabFont(), GameText.resolve(TerminalTexts.MORE.with(plan.rows().size() - PLAN_ROWS)),
                         px + 26, rowY, JsTechTheme.dim(), false);
             }
-            final String est = plan.estimateTicks() > 0
-                    ? "EST ~" + Math.max(1, plan.estimateTicks() / 20) + "s" : "EST --";
+            final String est = GameText.resolve(plan.estimateTicks() > 0
+                    ? TerminalTexts.ESTIMATE.with(Math.max(1, plan.estimateTicks() / 20)) : TerminalTexts.NO_ESTIMATE.text());
             g.drawString(screen.tabFont(), est, px + 6, py + 144, JsTechTheme.dim(), false);
             if (!plan.feasible()) {
-                g.drawString(screen.tabFont(), "max now: "
-                                + ComputerTerminalScreen.fmt(plan.maxFeasible()),
+                g.drawString(screen.tabFont(), GameText.resolve(TerminalTexts.MAX_NOW.with(
+                                ComputerTerminalScreen.fmt(plan.maxFeasible()))),
                         px + 70, py + 144, JsTechTheme.amber(), false);
             }
         }
 
         final boolean feasible = plan != null && plan.feasible();
         final boolean partialUseful = plan != null && !plan.feasible() && plan.maxFeasible() > 0;
-        button(g, px + 6, py + 156, 56, "CRAFT", feasible ? JsTechTheme.green() : JsTechTheme.dim(),
+        button(g, px + 6, py + 156, 56, GameText.resolve(TerminalTexts.CRAFT),
+                feasible ? JsTechTheme.green() : JsTechTheme.dim(),
                 feasible && hover(mouseX, mouseY, px + 6, py + 156, 56, 14));
-        button(g, px + 66, py + 156, 84, "PARTIAL",
+        button(g, px + 66, py + 156, 84, GameText.resolve(TerminalTexts.PARTIAL_BUTTON),
                 partialUseful ? JsTechTheme.amber() : JsTechTheme.dim(),
                 partialUseful && hover(mouseX, mouseY, px + 66, py + 156, 84, 14));
-        button(g, px + 154, py + 156, 44, "CLOSE", JsTechTheme.dim(),
+        button(g, px + 154, py + 156, 44, GameText.resolve(TerminalTexts.CLOSE), JsTechTheme.dim(),
                 hover(mouseX, mouseY, px + 154, py + 156, 44, 14));
         g.pose().popPose();
     }

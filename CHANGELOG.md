@@ -103,6 +103,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The Pattern Studio, the Pattern Encoder's panel and messages, and the Patterns heading of a network machine's
   space are text a language file can translate. A recipe with no name of its own is listed by its result's name in
   each player's language.
+- The Network Interactor, Storage Insights, the Crafting Manager, the Craft Planner, the Craft heading and its
+  craft question, the Crafting Computer's and the Crafting Switch's screens are text a language file can translate,
+  and so are a craft's recipe choices, what they differ in and what a plan is short of. Items, machines and recipe
+  results are named in each player's language, a machine that is a block goes by the block's own name, and the
+  priority tags and the kinds of bus are translatable too.
 
 ### Fixed
 - A monitor is used by one player at a time. A second player who used it while somebody was at it was handed a

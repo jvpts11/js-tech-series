@@ -14,6 +14,8 @@ import dev.jstech.computers.menu.CraftingSwitchMenu;
 import dev.jstech.computers.operation.payload.SetBusNamePayload;
 import dev.jstech.computers.operation.payload.SetCraftingSwitchFacePayload;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
@@ -76,13 +78,13 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
 
         activeBtn = new ThemeButton(leftPos + CraftingSwitchLayout.ACTIVE_X, topPos + CraftingSwitchLayout.ACTIVE_Y,
                 CraftingSwitchLayout.ACTIVE_W, CraftingSwitchLayout.ACTIVE_H,
-                Component.literal("Active"), b -> toggleActive());
+                GameText.component(CraftingSwitchTexts.ACTIVE), b -> toggleActive());
         addRenderableWidget(activeBtn);
 
         categoryBtn = new ThemeButton(leftPos + CraftingSwitchLayout.CATEGORY_X,
                 topPos + CraftingSwitchLayout.CATEGORY_Y,
                 CraftingSwitchLayout.CATEGORY_W, CraftingSwitchLayout.CATEGORY_H,
-                Component.literal("Category"), b -> {
+                GameText.component(CraftingSwitchTexts.CATEGORY), b -> {
                     categoryPickerOpen = true;
                     categoryScroll = 0;
                 });
@@ -154,10 +156,10 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
         final CraftingSwitchBlockEntity be = blockEntity();
         final Direction d = Direction.from3DDataValue(selectedFace);
         final boolean on = be != null && be.faceActive(d);
-        activeBtn.setMessage(Component.literal(on ? "Active: accepting" : "Inactive"));
+        activeBtn.setMessage(GameText.component(on ? CraftingSwitchTexts.ACCEPTING : CraftingSwitchTexts.INACTIVE));
         final String category = be == null ? "" : be.faceCategory(d);
-        categoryBtn.setMessage(Component.literal(category.isEmpty() ? "Category: none"
-                : "Cat: " + shortCategory(category)));
+        categoryBtn.setMessage(GameText.component(category.isEmpty() ? CraftingSwitchTexts.NO_CATEGORY.text()
+                : CraftingSwitchTexts.SHORT_CATEGORY.with(shortCategory(category))));
     }
 
     /** Trims a recipe-type id for the button label ({@code minecraft:smelting} → {@code smelting}). */
@@ -302,8 +304,10 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
         final Direction d = Direction.from3DDataValue(face);
         final var viaBus = busMachinesOnFace(face);
         if (be != null && !be.machineOnFace(d) && !viaBus.isEmpty()) {
-            return dirShort(d) + " > " + clamp(viaBus.get(0).blockName(), 10)
-                    + (viaBus.size() > 1 ? " +" + (viaBus.size() - 1) : "");
+            final String machine = clamp(GameText.resolve(viaBus.get(0).blockName()), 10);
+            return GameText.resolve(viaBus.size() > 1
+                    ? CraftingSwitchTexts.VIA_BUS_MORE.with(dirShort(d), machine, viaBus.size() - 1)
+                    : CraftingSwitchTexts.VIA_BUS.with(dirShort(d), machine));
         }
         return faceRowLabel(be, d);
     }
@@ -349,7 +353,7 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
         final boolean linked = be != null && be.isLinked();
 
         // Header status pill. Machines found over the cables show on their face rows, so this stays simple.
-        final String pill = linked ? "LINKED" : "UNLINKED";
+        final String pill = GameText.resolve(linked ? CraftingSwitchTexts.LINKED : CraftingSwitchTexts.UNLINKED);
         g.drawString(this.font, pill, x + imageWidth - 8 - this.font.width(pill),
                 y + CraftingSwitchLayout.HEADER_Y + 1, linked ? GREEN : DIM, false);
 
@@ -373,22 +377,24 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
         final var selViaBus = busMachinesOnFace(selectedFace);
         if (be != null && !be.machineOnFace(sel) && !selViaBus.isEmpty()) {
             final var line = selViaBus.get(0);
-            g.drawString(this.font, clamp(line.blockName(), 15), dx + 4,
+            g.drawString(this.font, clamp(GameText.resolve(line.blockName()), 15), dx + 4,
                     y + CraftingSwitchLayout.MACHINE_LABEL_Y, ACCENT, false);
-            g.drawString(this.font, "NAME", dx + 4, y + CraftingSwitchLayout.NAME_LABEL_Y, DIM, false);
+            g.drawString(this.font, GameText.resolve(CraftingSwitchTexts.NAME), dx + 4,
+                    y + CraftingSwitchLayout.NAME_LABEL_Y, DIM, false);
             // Absolute coordinates, tucked between the name field and the active toggle.
-            JsTechTheme.textS(g, this.font, "AT " + line.machinePos().getX() + ", " + line.machinePos().getY()
-                            + ", " + line.machinePos().getZ(),
+            JsTechTheme.textS(g, this.font, GameText.resolve(CraftingSwitchTexts.AT.with(line.machinePos().getX(),
+                            line.machinePos().getY(), line.machinePos().getZ())),
                     dx + 4, y + CraftingSwitchLayout.NAME_Y + CraftingSwitchLayout.NAME_H + 2, TEXT);
             if (selViaBus.size() > 1) {
-                JsTechTheme.textSRight(g, this.font, "+" + (selViaBus.size() - 1) + " more",
+                JsTechTheme.textSRight(g, this.font, GameText.resolve(CraftingSwitchTexts.MORE.with(selViaBus.size() - 1)),
                         dx + CraftingSwitchLayout.DETAIL_W - 2,
                         y + CraftingSwitchLayout.MACHINE_LABEL_Y + 1, DIM);
             }
         } else {
             final String machine = detailMachineLabel(be, sel);
             g.drawString(this.font, machine, dx + 4, y + CraftingSwitchLayout.MACHINE_LABEL_Y, ACCENT, false);
-            g.drawString(this.font, "NAME", dx + 4, y + CraftingSwitchLayout.NAME_LABEL_Y, DIM, false);
+            g.drawString(this.font, GameText.resolve(CraftingSwitchTexts.NAME), dx + 4,
+                    y + CraftingSwitchLayout.NAME_LABEL_Y, DIM, false);
         }
 
         /*
@@ -408,8 +414,8 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
 
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
-        g.drawString(this.font, "CRAFTING SWITCH", CraftingSwitchLayout.HEADER_X, CraftingSwitchLayout.HEADER_Y + 1,
-                TEXT, false);
+        g.drawString(this.font, GameText.resolve(CraftingSwitchTexts.TITLE), CraftingSwitchLayout.HEADER_X,
+                CraftingSwitchLayout.HEADER_Y + 1, TEXT, false);
         g.drawString(this.font, this.playerInventoryTitle, CraftingSwitchLayout.INV_X,
                 CraftingSwitchLayout.INV_LABEL_Y, DIM, false);
     }
@@ -441,7 +447,7 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
         g.fill(px, py, px + CP_W, py + ph, PANEL);
         g.fill(px, py, px + 1, py + ph, LINE);
         g.fill(px + CP_W - 1, py, px + CP_W, py + ph, LINE);
-        g.drawString(font, "MACHINE CATEGORY", px + 6, py + 3, ACCENT, false);
+        g.drawString(font, GameText.resolve(CraftingSwitchTexts.MACHINE_CATEGORY), px + 6, py + 3, ACCENT, false);
         g.fill(px + 4, py + 13, px + CP_W - 4, py + 14, LINE);
         for (int r = 0; r < CP_VIS_ROWS && categoryScroll + r < list.size(); r++) {
             final String category = list.get(categoryScroll + r);
@@ -451,7 +457,8 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
             if (hovered) {
                 g.fill(px + 3, ry, px + CP_W - 3, ry + CP_ROW_H, SEL);
             }
-            JsTechTheme.textS(g, font, category.isEmpty() ? "none" : category, px + 8, ry + 2,
+            JsTechTheme.textS(g, font, category.isEmpty() ? GameText.resolve(CraftingSwitchTexts.NONE) : category,
+                    px + 8, ry + 2,
                     hovered ? TEXT : DIM);
         }
         if (list.size() > CP_VIS_ROWS) {
@@ -467,13 +474,14 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
             return dir;
         }
         if (be.cableFace() == d) {
-            return dir + " → computer";
+            return GameText.resolve(CraftingSwitchTexts.TO_COMPUTER.with(dir));
         }
         if (be.machineOnFace(d)) {
             final String name = be.faceName(d);
-            return dir + "  " + (name.isEmpty() ? "machine" : name);
+            return GameText.resolve(CraftingSwitchTexts.FACE_MACHINE.with(dir,
+                    name.isEmpty() ? CraftingSwitchTexts.MACHINE.text() : Text.literal(name)));
         }
-        return dir + "  none";
+        return GameText.resolve(CraftingSwitchTexts.FACE_NONE.with(dir));
     }
 
     private static String detailMachineLabel(final CraftingSwitchBlockEntity be, final Direction d) {
@@ -481,19 +489,20 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
             return dirShort(d);
         }
         if (be.cableFace() == d) {
-            return dirShort(d) + " · crafting cable";
+            return GameText.resolve(CraftingSwitchTexts.CRAFTING_CABLE.with(dirShort(d)));
         }
-        return dirShort(d) + (be.machineOnFace(d) ? " · machine" : " · no machine");
+        return GameText.resolve((be.machineOnFace(d) ? CraftingSwitchTexts.HAS_MACHINE : CraftingSwitchTexts.NO_MACHINE)
+                .with(dirShort(d)));
     }
 
     private static String dirShort(final Direction d) {
-        return switch (d) {
-            case DOWN -> "DOWN";
-            case UP -> "UP";
-            case NORTH -> "NORTH";
-            case SOUTH -> "SOUTH";
-            case WEST -> "WEST";
-            case EAST -> "EAST";
-        };
+        return GameText.resolve(switch (d) {
+            case DOWN -> CraftingSwitchTexts.DOWN;
+            case UP -> CraftingSwitchTexts.UP;
+            case NORTH -> CraftingSwitchTexts.NORTH;
+            case SOUTH -> CraftingSwitchTexts.SOUTH;
+            case WEST -> CraftingSwitchTexts.WEST;
+            case EAST -> CraftingSwitchTexts.EAST;
+        });
     }
 }

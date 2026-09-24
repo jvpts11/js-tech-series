@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -29,11 +31,11 @@ public record ItemDetailPayload(ItemStack item, long total, List<NetworkItemEntr
     public static final int MAX_BUSES = 32;
 
     /** A bus that filters this item: its name and its kind (Import / Export / Input / Receiving). */
-    public record BusRef(String name, String kind) {
+    public record BusRef(String name, Text kind) {
         public static final StreamCodec<RegistryFriendlyByteBuf, BusRef> STREAM_CODEC =
                 StreamCodec.composite(
                         ByteBufCodecs.STRING_UTF8, BusRef::name,
-                        ByteBufCodecs.STRING_UTF8, BusRef::kind,
+                        TextCodecs.STREAM_CODEC, BusRef::kind,
                         BusRef::new);
     }
 

@@ -49,14 +49,16 @@ public final class MachinePayloadGameTests {
     @GameTest(template = ARENA)
     public static void craftManagerState_streamCodecRoundTrip(final GameTestHelper helper) {
         final List<CraftManagerStatePayload.WireRomEntry> rom = List.of(
-                new CraftManagerStatePayload.WireRomEntry(0, "Iron Block", true),
-                new CraftManagerStatePayload.WireRomEntry(1, "Gold Block", false));
+                new CraftManagerStatePayload.WireRomEntry(0, Text.literal("Iron Block"), true),
+                new CraftManagerStatePayload.WireRomEntry(1, Text.literal("Gold Block"), false));
         final List<CraftManagerStatePayload.WireMachine> machines = List.of(
-                new CraftManagerStatePayload.WireMachine("@1,2,3", "jsindustrial:compressor", "N (1, 2, 3)", false, true, 4),
-                new CraftManagerStatePayload.WireMachine("@4,5,6", "jsindustrial:macerator", "E (4, 5, 6)", true, false, 1));
+                new CraftManagerStatePayload.WireMachine("@1,2,3", "jsindustrial:compressor",
+                        Text.literal("N (1, 2, 3)"), false, true, 4),
+                new CraftManagerStatePayload.WireMachine("@4,5,6", "jsindustrial:macerator",
+                        Text.literal("E (4, 5, 6)"), true, false, 1));
         final CraftManagerStatePayload payload = new CraftManagerStatePayload(
-                "media:42", "Floppy (A:)", List.of("alpha.craft", "beta.craft"), rom, true, "Loaded 2", true,
-                machines);
+                "media:42", Text.literal("Floppy (A:)"), List.of("alpha.craft", "beta.craft"), rom, true,
+                Text.literal("Loaded 2"), true, machines);
         assertRoundTrip(helper, CraftManagerStatePayload.STREAM_CODEC, payload);
         helper.succeed();
     }
@@ -90,7 +92,7 @@ public final class MachinePayloadGameTests {
     @GameTest(template = ARENA)
     public static void craftManagerState_emptyListsRoundTrip(final GameTestHelper helper) {
         final CraftManagerStatePayload payload = new CraftManagerStatePayload(
-                "", "", List.of(), List.of(), false, "", false, List.of());
+                "", Text.EMPTY, List.of(), List.of(), false, Text.EMPTY, false, List.of());
         assertRoundTrip(helper, CraftManagerStatePayload.STREAM_CODEC, payload);
         helper.succeed();
     }
@@ -99,11 +101,11 @@ public final class MachinePayloadGameTests {
     public static void craftManagerState_maxMachinesRoundTrip(final GameTestHelper helper) {
         final List<CraftManagerStatePayload.WireMachine> machines = new ArrayList<>();
         for (int i = 0; i < CraftManagerStatePayload.MAX_MACHINES; i++) {
-            machines.add(new CraftManagerStatePayload.WireMachine("@" + i, "jsc:m" + i, "m" + i,
+            machines.add(new CraftManagerStatePayload.WireMachine("@" + i, "jsc:m" + i, Text.literal("m" + i),
                     i % 3 == 0, i % 4 == 0, i + 1));
         }
         final CraftManagerStatePayload payload = new CraftManagerStatePayload(
-                "media:1", "Disc", List.of(), List.of(), true, "", false, machines);
+                "media:1", Text.literal("Disc"), List.of(), List.of(), true, Text.EMPTY, false, machines);
         assertRoundTrip(helper, CraftManagerStatePayload.STREAM_CODEC, payload);
         helper.succeed();
     }
