@@ -18,6 +18,7 @@ import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.GatewayManagerActionPayload;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload;
 import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.core.text.Text;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.storage.StorageKey;
@@ -80,12 +81,14 @@ public final class GatewayManagerGameTests {
     }
 
     private static GatewayManagerStatePayload state(final GameTestHelper helper, final Fleet fleet) {
-        return GatewayManager.state(helper.getLevel(), fleet.host(), helper.absolutePos(GATEWAY).asLong(), "");
+        return GatewayManager.state(helper.getLevel(), fleet.host(), helper.absolutePos(GATEWAY).asLong(), Text.EMPTY);
     }
 
+    /** What the action said, in English. */
     private static String act(final GameTestHelper helper, final Fleet fleet, final int action, final int value,
                               final String text) {
-        return GatewayManager.act(helper.getLevel(), fleet.host(), helper.absolutePos(GATEWAY).asLong(), action, value, text);
+        return GatewayManager.act(helper.getLevel(), fleet.host(), helper.absolutePos(GATEWAY).asLong(), action, value, text)
+                .english();
     }
 
     @GameTest(template = ARENA)
@@ -97,7 +100,7 @@ public final class GatewayManagerGameTests {
                     helper.assertTrue(before.gateways().size() == 1 && before.gateways().get(0).name().equals("gateway-1"),
                             "the host lists its one Gateway; got " + before.gateways());
                     helper.assertTrue("desk".equals(before.head().hostName()), "under the host's name");
-                    helper.assertTrue(before.detail().present() && before.detail().link().equals("adjacent"),
+                    helper.assertTrue(before.detail().present() && before.detail().link().english().equals("adjacent"),
                             "with the selected one in detail; got " + before.detail().link());
                     helper.assertTrue(before.detail().servers() >= 1 && before.detail().mainframeOnline(),
                             "and the network it reaches; servers " + before.detail().servers());
@@ -120,11 +123,12 @@ public final class GatewayManagerGameTests {
                     helper.assertTrue(gateway(helper).identifying(), "Identify sets the lights blinking");
                     final List<String> whats = new ArrayList<>();
                     for (final GatewayManagerStatePayload.WireLog row : d.log()) {
-                        whats.add(row.what());
+                        whats.add(row.what().english());
                     }
                     helper.assertTrue(whats.contains("rename gateway-1 to cc-bridge") && whats.contains("identify"),
                             "the log has it all, signed by the host; got " + whats);
-                    helper.assertTrue(d.log().stream().allMatch(row -> row.who().equals("desk")), "signed by the host");
+                    helper.assertTrue(d.log().stream().allMatch(row -> row.who().english().equals("desk")),
+                            "signed by the host");
                     helper.assertTrue(d.recent().size() == GatewayManager.RECENT, "the status tab shows the last few");
                     final String missing = act(helper, fleet, GatewayManagerActionPayload.ACTION_RENAME, 0, "");
                     helper.assertTrue("gateway-1".equals(gateway(helper).name()), "an empty name goes back to the default; " + missing);
@@ -155,7 +159,8 @@ public final class GatewayManagerGameTests {
                     final String again = act(helper, fleet, GatewayManagerActionPayload.ACTION_CLEAR_BUFFER, 0, "");
                     helper.assertTrue(again.contains("empty"), "an empty buffer says so; got " + again);
                     helper.assertTrue(state(helper, fleet).detail().log().stream()
-                            .anyMatch(row -> row.what().equals("clear buffer to network") && row.result().contains("40 items")),
+                            .anyMatch(row -> row.what().english().equals("clear buffer to network")
+                                    && row.result().english().contains("40 items")),
                             "and the log keeps the move");
                 })
                 .thenSucceed();

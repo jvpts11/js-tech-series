@@ -11,6 +11,7 @@ import dev.jstech.computers.gui.layout.ClusterManagementComputerLayout;
 import dev.jstech.computers.menu.ClusterManagementComputerMenu;
 import dev.jstech.computers.operation.payload.RenamePcPayload;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
@@ -54,7 +55,7 @@ public class ClusterManagementComputerScreen extends AbstractAssemblyScreen<Clus
     protected void init() {
         super.init();
         setupNameBox(28, 8, 126, RenamePcPayload.MAX_LEN,
-                Component.literal("Name this computer...").withStyle(ChatFormatting.DARK_GRAY),
+                GameText.component(AssemblyTexts.NAME_THIS_COMPUTER).withStyle(ChatFormatting.DARK_GRAY),
                 menu.customName(),
                 s -> PacketDistributor.sendToServer(new RenamePcPayload(menu.computerPos(), s)));
     }
@@ -103,52 +104,59 @@ public class ClusterManagementComputerScreen extends AbstractAssemblyScreen<Clus
 
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
-        JsTechTheme.text(g, font, "CMC", 12, 11, JsTechTheme.text());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.TITLE_CLUSTER_MANAGEMENT), 12, 11, JsTechTheme.text());
         final String status;
         final int statusColor;
         if (!menu.buildValid()) {
-            status = "OFFLINE";
+            status = GameText.resolve(AssemblyTexts.OFFLINE);
             statusColor = JsTechTheme.red();
         } else if (menu.isRunning()) {
-            status = "ONLINE";
+            status = GameText.resolve(AssemblyTexts.ONLINE);
             statusColor = JsTechTheme.green();
         } else {
-            status = "READY";
+            status = GameText.resolve(AssemblyTexts.READY);
             statusColor = JsTechTheme.amber();
         }
         final int pillX = 232 - font.width(status);
         JsTechTheme.text(g, font, status, pillX, 11, statusColor);
         g.fill(pillX - 6, 11, pillX - 2, 15, statusColor);
 
-        JsTechTheme.text(g, font, "BOARD", 8, 27, menu.hasBoard() ? JsTechTheme.accent() : JsTechTheme.dim());
-        JsTechTheme.text(g, font, "CPU", 44, 27, JsTechTheme.dim());
-        JsTechTheme.text(g, font, "PSU", 8, 60, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.BOARD), 8, 27,
+                menu.hasBoard() ? JsTechTheme.accent() : JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.CPU), 44, 27, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.PSU), 8, 60, JsTechTheme.dim());
         g.fill(30, 61, 34, 65, !menu.hasPsu() ? JsTechTheme.dim() : menu.buildValid() ? JsTechTheme.green() : JsTechTheme.amber());
-        JsTechTheme.text(g, font, "RAM", 44, 60, JsTechTheme.dim());
-        JsTechTheme.text(g, font, "DISK", 8, 93, JsTechTheme.dim());
-        JsTechTheme.text(g, font, "PCIE", 44, 93, menu.hasCard() ? JsTechTheme.accent() : JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.RAM), 44, 60, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.DISK), 8, 93, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.PCIE), 44, 93,
+                menu.hasCard() ? JsTechTheme.accent() : JsTechTheme.dim());
 
         // Small-font tiles: four fit where the crafting computer keeps three.
-        JsTechTheme.tileTextS(g, font, COL_R, TILE_Y0, "CAPACITY", JsTechTheme.fmt(menu.capacity()) + " it/t · "
-                + JsTechTheme.fmt(menu.ramBuffer()) + " it", JsTechTheme.text());
-        JsTechTheme.tileTextS(g, font, COL_R, TILE_Y1, "NETWORK", menu.isOnNetwork() ? "LINKED" : "no link",
+        JsTechTheme.tileTextS(g, font, COL_R, TILE_Y0, GameText.resolve(AssemblyTexts.CAPACITY),
+                GameText.resolve(AssemblyTexts.CAPACITY_AND_BUFFER.with(JsTechTheme.fmt(menu.capacity()),
+                        JsTechTheme.fmt(menu.ramBuffer()))), JsTechTheme.text());
+        JsTechTheme.tileTextS(g, font, COL_R, TILE_Y1, GameText.resolve(AssemblyTexts.NETWORK),
+                GameText.resolve(menu.isOnNetwork() ? AssemblyTexts.LINKED : AssemblyTexts.NO_LINK),
                 menu.isOnNetwork() ? JsTechTheme.green() : JsTechTheme.dim());
         if (!menu.hasCard()) {
-            JsTechTheme.tileTextS(g, font, COL_R, TILE_Y2, "CLUSTERS IN REACH", "no interface card", JsTechTheme.amber());
+            JsTechTheme.tileTextS(g, font, COL_R, TILE_Y2, GameText.resolve(AssemblyTexts.CLUSTERS_IN_REACH),
+                    GameText.resolve(AssemblyTexts.NO_INTERFACE_CARD), JsTechTheme.amber());
         } else {
-            JsTechTheme.tileTextS(g, font, COL_R, TILE_Y2, "CLUSTERS IN REACH", menu.supercomputers() + " SC · "
-                    + menu.datacenters() + " DC · " + menu.lanes() + " lanes", JsTechTheme.text());
+            JsTechTheme.tileTextS(g, font, COL_R, TILE_Y2, GameText.resolve(AssemblyTexts.CLUSTERS_IN_REACH),
+                    GameText.resolve(AssemblyTexts.CLUSTERS.with(menu.supercomputers(), menu.datacenters(), menu.lanes())),
+                    JsTechTheme.text());
         }
-        JsTechTheme.tileTextS(g, font, COL_R, TILE_Y3, "MANAGEMENT",
-                menu.managerInstalled() ? "Cluster Manager · installed" : "Cluster Manager · not installed",
+        JsTechTheme.tileTextS(g, font, COL_R, TILE_Y3, GameText.resolve(AssemblyTexts.MANAGEMENT),
+                GameText.resolve(menu.managerInstalled() ? AssemblyTexts.MANAGER_INSTALLED : AssemblyTexts.MANAGER_MISSING),
                 menu.managerInstalled() ? JsTechTheme.accent() : JsTechTheme.dim());
 
         final boolean auto = menu.isAutoStart();
-        final String powerCap = auto ? "AUTO" : (menu.isRunning() ? "TURN OFF" : "TURN ON");
+        final String powerCap = GameText.resolve(auto ? AssemblyTexts.AUTO
+                : menu.isRunning() ? AssemblyTexts.TURN_OFF : AssemblyTexts.TURN_ON);
         JsTechTheme.textCenter(g, font, powerCap, POWER_X + COL_R_W / 2, POWER_Y + 4,
                 auto ? JsTechTheme.dim() : JsTechTheme.accent());
-        JsTechTheme.textCenter(g, font, "AUTO: " + (auto ? "ON" : "OFF"), AUTO_X + COL_R_W / 2, AUTO_Y + 4,
-                auto ? JsTechTheme.accent() : JsTechTheme.dim());
+        JsTechTheme.textCenter(g, font, GameText.resolve(auto ? AssemblyTexts.AUTO_ON : AssemblyTexts.AUTO_OFF),
+                AUTO_X + COL_R_W / 2, AUTO_Y + 4, auto ? JsTechTheme.accent() : JsTechTheme.dim());
     }
 
     @Override

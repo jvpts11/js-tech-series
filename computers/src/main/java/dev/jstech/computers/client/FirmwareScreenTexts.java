@@ -191,6 +191,16 @@ public final class FirmwareScreenTexts {
     static final TextKey SETUP_KEYS = TextKey.of("jsc.firmware.screen.setup_keys",
             "Enter: Boot   Tab: Page   F: Format   ESC: Exit");
 
+    // The boot manager's help under its list; its first two lines read as one sentence.
+    static final TextKey LOADER_HELP_FIRST = TextKey.of("jsc.firmware.screen.loader_help_first",
+            "   Use the Up and Down keys to select which entry is");
+    static final TextKey LOADER_HELP_SECOND = TextKey.of("jsc.firmware.screen.loader_help_second",
+            "   highlighted. Press Enter to boot the selected entry.");
+    static final TextKey LOADER_HELD = TextKey.of("jsc.firmware.screen.loader_held",
+            "The highlighted entry will be executed when you press Enter.");
+    static final TextKey LOADER_COUNTDOWN = TextKey.of("jsc.firmware.screen.loader_countdown",
+            "The highlighted entry will be executed automatically in %ss.");
+
     private FirmwareScreenTexts() {
     }
 

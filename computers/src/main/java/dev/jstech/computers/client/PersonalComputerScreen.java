@@ -10,6 +10,7 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.menu.PersonalComputerMenu;
 import dev.jstech.computers.operation.payload.RenamePcPayload;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
@@ -45,7 +46,7 @@ public class PersonalComputerScreen extends AbstractAssemblyScreen<PersonalCompu
         super.init();
         // Name field in the header, since a PC is renamed here, in its assembly GUI, never via an anvil.
         setupNameBox(28, 8, 126, RenamePcPayload.MAX_LEN,
-                Component.literal("Name this PC...").withStyle(ChatFormatting.DARK_GRAY),
+                GameText.component(AssemblyTexts.NAME_THIS_PC).withStyle(ChatFormatting.DARK_GRAY),
                 menu.customName(),
                 s -> PacketDistributor.sendToServer(new RenamePcPayload(menu.pcPos(), s)));
     }
@@ -103,48 +104,54 @@ public class PersonalComputerScreen extends AbstractAssemblyScreen<PersonalCompu
 
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
-        JsTechTheme.text(g, font, "PC", 12, 11, JsTechTheme.text());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.TITLE_PC), 12, 11, JsTechTheme.text());
         final String status;
         final int statusColor;
         if (!menu.buildValid()) {
-            status = "OFFLINE";
+            status = GameText.resolve(AssemblyTexts.OFFLINE);
             statusColor = JsTechTheme.red();
         } else if (menu.isRunning()) {
-            status = "ONLINE";
+            status = GameText.resolve(AssemblyTexts.ONLINE);
             statusColor = JsTechTheme.green();
         } else {
-            status = "READY";
+            status = GameText.resolve(AssemblyTexts.READY);
             statusColor = JsTechTheme.amber();
         }
         final int pillX = 232 - font.width(status);
         JsTechTheme.text(g, font, status, pillX, 11, statusColor);
         g.fill(pillX - 6, 11, pillX - 2, 15, statusColor);
 
-        JsTechTheme.text(g, font, "BOARD", 8, 27, menu.hasBoard() ? JsTechTheme.accent() : JsTechTheme.dim());
-        JsTechTheme.text(g, font, "CPU", 44, 27, JsTechTheme.dim());
-        JsTechTheme.text(g, font, "PSU", 8, 60, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.BOARD), 8, 27,
+                menu.hasBoard() ? JsTechTheme.accent() : JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.CPU), 44, 27, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.PSU), 8, 60, JsTechTheme.dim());
         g.fill(30, 61, 34, 65, psuColor());
-        JsTechTheme.text(g, font, "RAM", 44, 60, JsTechTheme.dim());
-        JsTechTheme.text(g, font, "DISK", 8, 93, JsTechTheme.dim());
-        JsTechTheme.text(g, font, "GPU", 44, 93, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.RAM), 44, 60, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.DISK), 8, 93, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.GPU), 44, 93, JsTechTheme.dim());
 
-        JsTechTheme.tileText(g, font, COL_R, 27, "CAPACITY", JsTechTheme.fmt(menu.capacity()), "it/t", JsTechTheme.text());
-        JsTechTheme.tileText(g, font, COL_R, 52, "RAM BUFFER", JsTechTheme.fmt(menu.ramBuffer()), "it", JsTechTheme.text());
+        JsTechTheme.tileText(g, font, COL_R, 27, GameText.resolve(AssemblyTexts.CAPACITY), JsTechTheme.fmt(menu.capacity()),
+                GameText.resolve(AssemblyTexts.ITEMS_PER_TICK), JsTechTheme.text());
+        JsTechTheme.tileText(g, font, COL_R, 52, GameText.resolve(AssemblyTexts.RAM_BUFFER), JsTechTheme.fmt(menu.ramBuffer()),
+                GameText.resolve(AssemblyTexts.ITEMS), JsTechTheme.text());
 
-        JsTechTheme.text(g, font, "NETWORK", COL_R, 74, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.NETWORK), COL_R, 74, JsTechTheme.dim());
         if (menu.isOnNetwork()) {
-            JsTechTheme.textRight(g, font, "LINKED", COL_R + COL_R_W, 74, JsTechTheme.green());
+            JsTechTheme.textRight(g, font, GameText.resolve(AssemblyTexts.LINKED), COL_R + COL_R_W, 74,
+                    JsTechTheme.green());
             final int n = menu.networkServerCount();
-            JsTechTheme.textRight(g, font, n + (n == 1 ? " server" : " servers"), COL_R + COL_R_W, 85, JsTechTheme.dim());
+            JsTechTheme.textRight(g, font, GameText.resolve((n == 1 ? AssemblyTexts.ONE_SERVER : AssemblyTexts.SERVERS)
+                    .with(n)), COL_R + COL_R_W, 85, JsTechTheme.dim());
         } else {
             JsTechTheme.textRight(g, font, "--", COL_R + COL_R_W, 74, JsTechTheme.dim());
         }
 
         final boolean auto = menu.isAutoStart();
-        final String powerCap = auto ? "AUTO" : (menu.isRunning() ? "TURN OFF" : "TURN ON");
+        final String powerCap = GameText.resolve(auto ? AssemblyTexts.AUTO
+                : menu.isRunning() ? AssemblyTexts.TURN_OFF : AssemblyTexts.TURN_ON);
         JsTechTheme.textCenter(g, font, powerCap, POWER_X + COL_R_W / 2, POWER_Y + 4, auto ? JsTechTheme.dim() : JsTechTheme.accent());
-        JsTechTheme.textCenter(g, font, "AUTO: " + (auto ? "ON" : "OFF"), AUTO_X + COL_R_W / 2, AUTO_Y + 4,
-                auto ? JsTechTheme.accent() : JsTechTheme.dim());
+        JsTechTheme.textCenter(g, font, GameText.resolve(auto ? AssemblyTexts.AUTO_ON : AssemblyTexts.AUTO_OFF),
+                AUTO_X + COL_R_W / 2, AUTO_Y + 4, auto ? JsTechTheme.accent() : JsTechTheme.dim());
     }
 
     private int psuColor() {

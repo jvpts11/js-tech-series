@@ -11,7 +11,8 @@ import dev.jstech.computers.datacenter.LoadBalanceMode;
 import dev.jstech.computers.menu.ServerRouterMenu;
 import dev.jstech.computers.operation.payload.RenameServerRouterPayload;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
-import java.util.Locale;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -48,7 +49,7 @@ public final class ServerRouterScreen extends AbstractContainerScreen<ServerRout
         this.titleLabelY = -1000;
         this.inventoryLabelY = -1000;
 
-        nameBox = new EditBox(font, leftPos + 10, topPos + 39, 170, 10, Component.literal("Name"));
+        nameBox = new EditBox(font, leftPos + 10, topPos + 39, 170, 10, GameText.component(ServerRouterTexts.NAME_FIELD));
         nameBox.setBordered(false);
         nameBox.setMaxLength(RenameServerRouterPayload.MAX_LEN);
         nameBox.setTextColor(JsTechTheme.text());
@@ -88,35 +89,36 @@ public final class ServerRouterScreen extends AbstractContainerScreen<ServerRout
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
         // Header.
-        JsTechTheme.text(g, font, "SERVER ROUTER", 12, 10, JsTechTheme.text());
-        JsTechTheme.textRight(g, font, "T3", W - 12, 10, JsTechTheme.accent());
+        JsTechTheme.text(g, font, GameText.resolve(ServerRouterTexts.TITLE), 12, 10, JsTechTheme.text());
+        JsTechTheme.textRight(g, font, GameText.resolve(ServerRouterTexts.TIER), W - 12, 10, JsTechTheme.accent());
 
-        JsTechTheme.textS(g, font, "NAME", 10, 28, JsTechTheme.dim());
+        JsTechTheme.textS(g, font, GameText.resolve(ServerRouterTexts.NAME), 10, 28, JsTechTheme.dim());
 
         // Input + rack-budget tiles.
         final Direction in = menu.inputFace();
-        JsTechTheme.tileTextS(g, font, 8, 56, "INPUT", in == null ? "none" : title(in.getName()), JsTechTheme.accent2());
+        JsTechTheme.tileTextS(g, font, 8, 56, GameText.resolve(ServerRouterTexts.INPUT),
+                GameText.resolve(in == null ? ServerRouterTexts.NONE : inputName(in)), JsTechTheme.accent2());
         final int max = menu.maxRacks();
-        final String racks = menu.managedRacks() + " / " + max;
-        JsTechTheme.tileTextS(g, font, 98, 56, "RACKS",
+        final String racks = GameText.resolve(ServerRouterTexts.RACKS_OF.with(menu.managedRacks(), max));
+        JsTechTheme.tileTextS(g, font, 98, 56, GameText.resolve(ServerRouterTexts.RACKS),
                 racks, menu.overCapacity() ? JsTechTheme.red() : JsTechTheme.green());
 
-        JsTechTheme.textS(g, font, "SECTIONS", 10, 84, JsTechTheme.dim());
+        JsTechTheme.textS(g, font, GameText.resolve(ServerRouterTexts.SECTIONS), 10, 84, JsTechTheme.dim());
 
         final int count = menu.sectionCount();
         if (count == 0) {
-            JsTechTheme.textS(g, font, "No datacenter sections", 12, ROW_Y0 + 3, JsTechTheme.dim());
+            JsTechTheme.textS(g, font, GameText.resolve(ServerRouterTexts.NO_SECTIONS), 12, ROW_Y0 + 3, JsTechTheme.dim());
             return;
         }
         for (int i = 0; i < count; i++) {
             final int ry = ROW_Y0 + i * ROW_PITCH;
             final Direction face = menu.sectionFace(i);
-            JsTechTheme.textS(g, font, face == null ? "?" : face.getName().toUpperCase(Locale.ROOT),
+            JsTechTheme.textS(g, font, face == null ? "?" : GameText.resolve(faceName(face)),
                     10, ry + 3, JsTechTheme.text());
-            JsTechTheme.textS(g, font, menu.sectionRacks(i) + "R · " + menu.sectionServers(i) + "S",
-                    40, ry + 3, JsTechTheme.dim());
+            JsTechTheme.textS(g, font, GameText.resolve(ServerRouterTexts.SECTION_SIZE.with(menu.sectionRacks(i),
+                    menu.sectionServers(i))), 40, ry + 3, JsTechTheme.dim());
             final LoadBalanceMode mode = menu.sectionMode(i);
-            JsTechTheme.textSCenter(g, font, mode.label(), MODE_X + MODE_W / 2, ry + 3, modeColor(mode));
+            JsTechTheme.textSCenter(g, font, GameText.resolve(mode.text()), MODE_X + MODE_W / 2, ry + 3, modeColor(mode));
         }
     }
 
@@ -153,7 +155,27 @@ public final class ServerRouterScreen extends AbstractContainerScreen<ServerRout
         };
     }
 
-    private static String title(final String s) {
-        return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    /** A section's face, as its row names it. */
+    private static TextKey faceName(final Direction face) {
+        return switch (face) {
+            case DOWN -> ServerRouterTexts.DOWN;
+            case UP -> ServerRouterTexts.UP;
+            case NORTH -> ServerRouterTexts.NORTH;
+            case SOUTH -> ServerRouterTexts.SOUTH;
+            case WEST -> ServerRouterTexts.WEST;
+            case EAST -> ServerRouterTexts.EAST;
+        };
+    }
+
+    /** The input face, as its tile names it. */
+    private static TextKey inputName(final Direction face) {
+        return switch (face) {
+            case DOWN -> ServerRouterTexts.INPUT_DOWN;
+            case UP -> ServerRouterTexts.INPUT_UP;
+            case NORTH -> ServerRouterTexts.INPUT_NORTH;
+            case SOUTH -> ServerRouterTexts.INPUT_SOUTH;
+            case WEST -> ServerRouterTexts.INPUT_WEST;
+            case EAST -> ServerRouterTexts.INPUT_EAST;
+        };
     }
 }

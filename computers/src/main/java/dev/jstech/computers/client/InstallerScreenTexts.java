@@ -115,6 +115,51 @@ final class InstallerScreenTexts {
     static final TextKey CANNOT_UNDO = TextKey.of("jsc.installer.screen.cannot_undo", "This cannot be undone.");
     static final TextKey ERASE_KEYS = TextKey.of("jsc.installer.screen.erase_keys", "Y = erase        N = cancel");
 
+    // The frames around an installer's pages and the buttons they carry.
+    static final TextKey FRAME_HELP = TextKey.of("jsc.installer.frame.help", "[ Help ]");
+    static final TextKey FRAME_REBOOT_NOW = TextKey.of("jsc.installer.frame.reboot_now", "[ Reboot Now ]");
+    /* Written-out buttons of a terminal installer, padded to one width so they line up. */
+    static final TextKey FRAME_DONE = TextKey.of("jsc.installer.frame.done", "[ Done       ]");
+    static final TextKey FRAME_BACK = TextKey.of("jsc.installer.frame.back", "[ Back       ]");
+    static final TextKey FRAME_WIZARD = TextKey.of("jsc.installer.frame.wizard", "%s Wizard");
+    static final TextKey FRAME_CANCEL = TextKey.of("jsc.installer.frame.cancel", "Cancel");
+    static final TextKey FRAME_RESTART = TextKey.of("jsc.installer.frame.restart", "Restart");
+    static final TextKey FRAME_NEXT_ARROW = TextKey.of("jsc.installer.frame.next_arrow", "Next >");
+    static final TextKey FRAME_BACK_ARROW = TextKey.of("jsc.installer.frame.back_arrow", "< Back");
+    static final TextKey FRAME_NEXT = TextKey.of("jsc.installer.frame.next", "Next");
+    static final TextKey FRAME_BACK_PLAIN = TextKey.of("jsc.installer.frame.back_plain", "Back");
+    static final TextKey FRAME_ERASE_DISK = TextKey.of("jsc.installer.frame.erase_disk", "Erase disk");
+    /* Three lines of a countdown: "Setup will complete in / approximately: / 39 seconds". */
+    static final TextKey FRAME_COMPLETE_IN = TextKey.of("jsc.installer.frame.complete_in", "Setup will complete in");
+    static final TextKey FRAME_APPROXIMATELY = TextKey.of("jsc.installer.frame.approximately", "approximately:");
+    static final TextKey FRAME_SECONDS = TextKey.of("jsc.installer.frame.seconds", "%s seconds");
+
+    // The firmware's own copy of a system that has no installer of its own.
+    static final TextKey COPY_PREPARING = TextKey.of("jsc.installer.copy.preparing", "preparing the disk");
+    static final TextKey COPY_COPYING = TextKey.of("jsc.installer.copy.copying", "copying the system");
+    static final TextKey COPY_FOLDERS = TextKey.of("jsc.installer.copy.folders", "creating folders");
+    static final TextKey COPY_BOOT_ENTRY = TextKey.of("jsc.installer.copy.boot_entry", "registering the boot entry");
+    static final TextKey COPY_STEP = TextKey.of("jsc.installer.copy.step", "%s ...");
+    static final TextKey COPY_DONE = TextKey.of("jsc.installer.copy.done", "done");
+    static final TextKey COPY_INSTALLERS_SYSTEM =
+            TextKey.of("jsc.installer.copy.installers_system", "the installer's system");
+    static final TextKey COPY_DEFAULT_DISK = TextKey.of("jsc.installer.copy.default_disk", "the default disk");
+    static final TextKey COPY_INSTALLING = TextKey.of("jsc.installer.copy.installing", "INSTALLING %s");
+    static final TextKey COPY_COMPLETE = TextKey.of("jsc.installer.copy.complete", "INSTALLATION COMPLETE");
+    static final TextKey COPY_FAILED = TextKey.of("jsc.installer.copy.failed", "INSTALLATION FAILED");
+    static final TextKey COPY_KEEP_MEDIUM = TextKey.of("jsc.installer.copy.keep_medium", "Do not remove the medium.");
+    static final TextKey COPY_INSTALLED_ON = TextKey.of("jsc.installer.copy.installed_on", "%s installed on %s.");
+    /* Two lines that read as one sentence. */
+    static final TextKey COPY_TAKE_OUT_FIRST =
+            TextKey.of("jsc.installer.copy.take_out_first", "Take the installation medium out before rebooting,");
+    static final TextKey COPY_TAKE_OUT_SECOND =
+            TextKey.of("jsc.installer.copy.take_out_second", "or the machine boots the installer again.");
+    static final TextKey COPY_REBOOT = TextKey.of("jsc.installer.copy.reboot", "REBOOT");
+    static final TextKey COPY_BACK_TO_SETUP = TextKey.of("jsc.installer.copy.back_to_setup", "BACK TO SETUP");
+    static final TextKey COPY_NOTHING_WRITTEN =
+            TextKey.of("jsc.installer.copy.nothing_written", "Nothing was written to %s.");
+    static final TextKey COPY_CLOSE = TextKey.of("jsc.installer.copy.close", "CLOSE");
+
     private InstallerScreenTexts() {
     }
 }

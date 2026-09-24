@@ -14,6 +14,8 @@ import dev.jstech.computers.operation.payload.RenameServerPayload;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.format.Unit;
 import dev.jstech.core.format.UnitFormatter;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
@@ -46,7 +48,7 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
          * an anvil. Each keystroke syncs the name to the held Server.
          */
         setupNameBox(52, 8, 104, RenameServerPayload.MAX_LEN,
-                Component.literal("Name this server...").withStyle(ChatFormatting.DARK_GRAY),
+                GameText.component(AssemblyTexts.NAME_THIS_SERVER).withStyle(ChatFormatting.DARK_GRAY),
                 menu.serverName(),
                 s -> PacketDistributor.sendToServer(new RenameServerPayload(s)));
     }
@@ -118,20 +120,20 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
         final ComputerBuild build = menu.currentBuild();
 
-        JsTechTheme.text(g, font, "SERVER", 12, 11, JsTechTheme.text());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.TITLE_SERVER), 12, 11, JsTechTheme.text());
         final String status;
         final int statusColor;
         if (build == null) {
-            status = "UNASSEMBLED";
+            status = GameText.resolve(AssemblyTexts.UNASSEMBLED);
             statusColor = JsTechTheme.dim();
         } else if (!build.validate().valid()) {
-            status = "ERROR";
+            status = GameText.resolve(AssemblyTexts.ERROR);
             statusColor = JsTechTheme.red();
         } else if (build.rams().isEmpty()) {
-            status = "WARN";
+            status = GameText.resolve(AssemblyTexts.WARN);
             statusColor = JsTechTheme.amber();
         } else {
-            status = "READY";
+            status = GameText.resolve(AssemblyTexts.READY);
             statusColor = JsTechTheme.green();
         }
         final int pillX = 232 - font.width(status);
@@ -139,48 +141,54 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
         g.fill(pillX - 6, 11, pillX - 2, 15, statusColor);
 
         // Spec tiles.
-        JsTechTheme.tileTextS(g, font, 8, 26, "ORCH", build == null ? "0" : fmt.compact(build.totalCapacity(), Unit.IT_PER_TICK), JsTechTheme.text());
-        JsTechTheme.tileTextS(g, font, 67, 26, "QUEUES", build == null ? "0" : String.valueOf(build.parallelQueues()), JsTechTheme.text());
-        JsTechTheme.tileTextS(g, font, 126, 26, "RAM BUF", build == null ? "0" : JsTechTheme.fmt(build.ramBuffer()), JsTechTheme.text());
-        JsTechTheme.tileTextS(g, font, 185, 26, "DRAW", build == null ? "0" : build.powerDraw() + "W", JsTechTheme.text());
+        JsTechTheme.tileTextS(g, font, 8, 26, GameText.resolve(AssemblyTexts.ORCHESTRATION),
+                build == null ? "0" : fmt.compact(build.totalCapacity(), Unit.IT_PER_TICK), JsTechTheme.text());
+        JsTechTheme.tileTextS(g, font, 67, 26, GameText.resolve(AssemblyTexts.QUEUES),
+                build == null ? "0" : String.valueOf(build.parallelQueues()), JsTechTheme.text());
+        JsTechTheme.tileTextS(g, font, 126, 26, GameText.resolve(AssemblyTexts.RAM_BUFFER_SHORT),
+                build == null ? "0" : JsTechTheme.fmt(build.ramBuffer()), JsTechTheme.text());
+        JsTechTheme.tileTextS(g, font, 185, 26, GameText.resolve(AssemblyTexts.DRAW),
+                build == null ? "0" : GameText.resolve(AssemblyTexts.WATTS.with(build.powerDraw())), JsTechTheme.text());
 
         // Track labels + values.
         final int draw = build == null ? 0 : build.powerDraw();
         final int watt = build == null ? 0 : build.psu().wattage();
-        JsTechTheme.textS(g, font, "POWER", 8, 49, JsTechTheme.text());
-        JsTechTheme.textSRight(g, font, build == null ? "-- W" : draw + "/" + watt + "W", 236, 49,
+        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.POWER), 8, 49, JsTechTheme.text());
+        JsTechTheme.textSRight(g, font, GameText.resolve(build == null ? AssemblyTexts.NO_WATTS.text()
+                        : AssemblyTexts.DRAW_OF.with(draw, watt)), 236, 49,
                 draw > watt ? JsTechTheme.red() : JsTechTheme.dim());
         /*
          * Drives live in the rack's hotswap bays since the racks rework, so the assembly has no
          * storage of its own to report, so point the player at the right place instead.
          */
-        JsTechTheme.textS(g, font, "STORAGE", 8, 59, JsTechTheme.text());
-        JsTechTheme.textSRight(g, font, "drives mount in the rack bays", 236, 59, JsTechTheme.dim());
+        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.STORAGE), 8, 59, JsTechTheme.text());
+        JsTechTheme.textSRight(g, font, GameText.resolve(AssemblyTexts.DRIVES_IN_BAYS), 236, 59, JsTechTheme.dim());
 
         // Problems strip.
         renderProblems(g, build);
 
         // Hardware bay labels (names only, the slots show installed vs available).
-        JsTechTheme.textS(g, font, "BOARD", 8, 87, JsTechTheme.dim());
-        JsTechTheme.textS(g, font, "CPU", 52, 87, JsTechTheme.dim());
-        JsTechTheme.textS(g, font, "RAM", 52, 117, JsTechTheme.dim());
-        JsTechTheme.textS(g, font, "GPU", 52, 165, JsTechTheme.dim());
+        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.BOARD), 8, 87, JsTechTheme.dim());
+        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.CPU), 52, 87, JsTechTheme.dim());
+        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.RAM), 52, 117, JsTechTheme.dim());
+        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.GPU), 52, 165, JsTechTheme.dim());
     }
 
     private void renderProblems(final GuiGraphics g, final ComputerBuild build) {
         if (build == null) {
-            JsTechTheme.textS(g, font, "Insert a motherboard and PSU to begin", 12, 71, JsTechTheme.dim());
+            JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.INSERT_TO_BEGIN), 12, 71, JsTechTheme.dim());
             return;
         }
-        final List<String> problems = build.validate().problems();
+        final List<Text> problems = build.validate().problems();
         if (problems.isEmpty()) {
-            JsTechTheme.textS(g, font, "All checks passed", 12, 71, JsTechTheme.green());
+            JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.ALL_CHECKS_PASSED), 12, 71, JsTechTheme.green());
             return;
         }
-        final String first = font.plainSubstrByWidth(problems.get(0), 250);
+        final String first = font.plainSubstrByWidth(GameText.resolve(problems.get(0)), 250);
         JsTechTheme.textS(g, font, first, 12, 71, JsTechTheme.red());
         if (problems.size() > 1) {
-            JsTechTheme.textSRight(g, font, "+" + (problems.size() - 1) + " more", 234, 71, JsTechTheme.amber());
+            JsTechTheme.textSRight(g, font, GameText.resolve(AssemblyTexts.MORE.with(problems.size() - 1)), 234, 71,
+                    JsTechTheme.amber());
         }
     }
 
@@ -199,10 +207,11 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
         if (relX >= 8 && relX < 236 && relY >= 68 && relY < 80) {
             final ComputerBuild build = menu.currentBuild();
             if (build != null) {
-                final List<String> problems = build.validate().problems();
+                final List<Text> problems = build.validate().problems();
                 if (problems.size() > 1) {
                     g.renderComponentTooltip(font,
-                            problems.stream().map(p -> (Component) Component.literal(p).withStyle(ChatFormatting.RED)).toList(),
+                            problems.stream().map(p -> (Component) GameText.component(p).withStyle(ChatFormatting.RED))
+                                    .toList(),
                             mouseX, mouseY);
                 }
             }

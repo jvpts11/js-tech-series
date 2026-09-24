@@ -12,6 +12,7 @@ import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.KvmSelectPayload;
 import dev.jstech.computers.operation.payload.OpenKvmPayload;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -122,8 +123,8 @@ public final class KvmChannelScreen extends AbstractComputerScreen<MonitorSessio
         final int y = top();
         JsTechTheme.window(g, x, y, W, panelHeight());
         JsTechTheme.headerBar(g, x + 6, y + 6, W - 12);
-        JsTechTheme.text(g, font, "KVM SWITCH", x + 12, y + 11, JsTechTheme.text());
-        final String count = channels.size() + " machines";
+        JsTechTheme.text(g, font, GameText.resolve(MonitorScreenTexts.KVM_TITLE), x + 12, y + 11, JsTechTheme.text());
+        final String count = GameText.resolve(MonitorScreenTexts.KVM_MACHINES.with(channels.size()));
         JsTechTheme.text(g, font, count, x + W - 12 - font.width(count), y + 11, JsTechTheme.dim());
 
         for (int i = 0; i < channels.size(); i++) {
@@ -137,10 +138,10 @@ public final class KvmChannelScreen extends AbstractComputerScreen<MonitorSessio
                 g.fill(x + PAD, rowY, x + PAD + 2, rowY + ROW_H - 2,
                         active ? JsTechTheme.accent() : JsTechTheme.dim());
             }
-            JsTechTheme.text(g, font, "F" + (i + 1), x + PAD + 8, rowY + 6,
+            JsTechTheme.text(g, font, GameText.resolve(MonitorScreenTexts.KVM_KEY.with(i + 1)), x + PAD + 8, rowY + 6,
                     active ? JsTechTheme.accent() : JsTechTheme.dim());
             JsTechTheme.text(g, font, channel.name(), x + PAD + 34, rowY + 6, JsTechTheme.text());
-            final String state = channel.running() ? "ONLINE" : "OFF";
+            final String state = GameText.resolve(channel.running() ? MonitorScreenTexts.KVM_ONLINE : MonitorScreenTexts.KVM_OFF);
             JsTechTheme.text(g, font, state, x + W - PAD - 8 - font.width(state), rowY + 6,
                     channel.running() ? JsTechTheme.green() : JsTechTheme.red());
         }

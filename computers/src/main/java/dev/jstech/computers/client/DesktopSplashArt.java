@@ -14,6 +14,8 @@ import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.boot.BootIdentity;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -40,12 +42,12 @@ public final class DesktopSplashArt {
     private static final int STEPS = 5;
 
     /** What those older ones said while each piece came up, in the order they came up in. */
-    private static final String[] STAGES = {
-            "Starting the panel...",
-            "Starting the desktop...",
-            "Starting Files...",
-            "Restoring the session...",
-            "Ready",
+    private static final TextKey[] STAGES = {
+            MonitorScreenTexts.STARTING_PANEL,
+            MonitorScreenTexts.STARTING_DESKTOP,
+            MonitorScreenTexts.STARTING_FILES,
+            MonitorScreenTexts.RESTORING_SESSION,
+            MonitorScreenTexts.READY,
     };
 
     /** The launcher's blue, the ground it sits on, and the line at the foot of the modern KDE screen. */
@@ -143,7 +145,8 @@ public final class DesktopSplashArt {
             default -> {
                 if (old) {
                     oldBox(g, font, x, y, w, h, progress, GNOME_OLD_GROUND, GNOME_OLD_FACE, "GNOME",
-                            "starting your desktop", GNOME_BAND_TOP, GNOME_BAND_MID, GNOME_BAND_LOW);
+                            GameText.resolve(MonitorScreenTexts.STARTING_YOUR_DESKTOP), GNOME_BAND_TOP, GNOME_BAND_MID,
+                            GNOME_BAND_LOW);
                 } else {
                     gnome(g, font, x, y, w, h, ticks, systemName);
                 }
@@ -174,7 +177,8 @@ public final class DesktopSplashArt {
         g.fill(x, y, x + w, y + h, GNOME_GROUND);
         spinner(g, x + w / 2, y + h / 2 - 12, ticks, GNOME_TEXT);
         big(g, font, "GNOME", x + w / 2, y + h - 30, 1.4f, GNOME_TEXT);
-        small(g, font, systemName.isEmpty() ? "" : "on " + systemName, x + w / 2, y + h - 14, GNOME_FOOT);
+        small(g, font, systemName.isEmpty() ? "" : GameText.resolve(MonitorScreenTexts.ON_SYSTEM.with(systemName)),
+                x + w / 2, y + h - 14, GNOME_FOOT);
     }
 
     /** The menu button's mark on the green it wears, its name, and three dots running under it. */
@@ -244,7 +248,7 @@ public final class DesktopSplashArt {
             g.fill(px + 5, sy + 5, px + side - 5, sy + side - 5,
                     i < done ? inner[i] : dimmed(inner[i]));
         }
-        small(g, font, STAGES[Math.min(STAGES.length - 1, done - 1)], bx + boxW / 2,
+        small(g, font, GameText.resolve(STAGES[Math.min(STAGES.length - 1, done - 1)]), bx + boxW / 2,
                 sy + side + 8, BOX_TEXT);
     }
 

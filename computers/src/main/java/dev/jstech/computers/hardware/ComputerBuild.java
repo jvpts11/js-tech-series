@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.hardware;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -16,12 +19,34 @@ import java.util.Objects;
 /**
  * An assembly of components on a motherboard, with a PSU.
  */
+@TextHolder
 public record ComputerBuild(MotherboardSpec motherboard,
                             List<CpuSpec> cpus,
                             List<IExpansionCardSpec> pcieCards,
                             List<RamSpec> rams,
                             PsuSpec psu,
                             List<DiskSpec> disks) {
+
+    /* What keeps a build from being a working computer. */
+    private static final TextKey NO_CPU = TextKey.of("jsc.build.no_cpu", "no CPU installed");
+    private static final TextKey NO_RAM = TextKey.of("jsc.build.no_ram", "no RAM installed");
+    private static final TextKey TOO_MANY_CPUS =
+            TextKey.of("jsc.build.too_many_cpus", "too many CPUs: %s installed, %s sockets");
+    private static final TextKey WRONG_SOCKET =
+            TextKey.of("jsc.build.wrong_socket", "CPU socket %s does not fit board socket %s");
+    private static final TextKey MIXED_ARCHITECTURES = TextKey.of("jsc.build.mixed_architectures",
+            "CPU architecture %s does not match the %s of the other processors");
+    private static final TextKey TOO_MANY_CARDS =
+            TextKey.of("jsc.build.too_many_cards", "too many PCIe cards: %s installed, %s PCIe slots");
+    private static final TextKey WRONG_BUS = TextKey.of("jsc.build.wrong_bus",
+            "expansion card bus family %s is not compatible with board bus %s");
+    private static final TextKey TOO_MANY_RAM =
+            TextKey.of("jsc.build.too_many_ram", "too many RAM modules: %s installed, %s slots");
+    private static final TextKey WRONG_RAM = TextKey.of("jsc.build.wrong_ram", "RAM generation %s not accepted by board");
+    private static final TextKey TOO_MANY_DISKS =
+            TextKey.of("jsc.build.too_many_disks", "too many disks: %s installed, %s disk slots");
+    private static final TextKey PSU_INSUFFICIENT =
+            TextKey.of("jsc.build.psu_insufficient", "PSU insufficient: draw %sW exceeds %sW");
 
     public ComputerBuild {
         Objects.requireNonNull(motherboard, "motherboard must not be null");
@@ -172,26 +197,24 @@ public record ComputerBuild(MotherboardSpec motherboard,
     }
 
     public BuildValidation validate() {
-        final List<String> problems = new ArrayList<>();
+        final List<Text> problems = new ArrayList<>();
 
         if (cpus.isEmpty()) {
-            problems.add("no CPU installed");
+            problems.add(NO_CPU.text());
         }
         /*
          * Every computer needs RAM to do work: with a zero buffer the CPU has nothing to stage
          * through and can move nothing. A box without RAM is not a working computer.
          */
         if (rams.isEmpty()) {
-            problems.add("no RAM installed");
+            problems.add(NO_RAM.text());
         }
         if (cpus.size() > motherboard.cpuSlots()) {
-            problems.add("too many CPUs: " + cpus.size() + " installed, "
-                    + motherboard.cpuSlots() + " sockets");
+            problems.add(TOO_MANY_CPUS.with(cpus.size(), motherboard.cpuSlots()));
         }
         for (final CpuSpec cpu : cpus) {
             if (!cpu.socket().equals(motherboard.socket())) {
-                problems.add("CPU socket " + cpu.socket().display() + " does not fit board socket "
-                        + motherboard.socket().display());
+                problems.add(WRONG_SOCKET.with(cpu.socket().display(), motherboard.socket().display()));
             }
         }
         /*
@@ -202,37 +225,32 @@ public record ComputerBuild(MotherboardSpec motherboard,
             final ArchitectureSpec first = cpus.get(0).architecture();
             for (final CpuSpec cpu : cpus) {
                 if (!cpu.architecture().equals(first)) {
-                    problems.add("CPU architecture " + cpu.architecture().name() + " does not match the "
-                            + first.name() + " of the other processors");
+                    problems.add(MIXED_ARCHITECTURES.with(cpu.architecture().name(), first.name()));
                     break;
                 }
             }
         }
 
         if (pcieCards.size() > motherboard.pcieSlots()) {
-            problems.add("too many PCIe cards: " + pcieCards.size() + " installed, "
-                    + motherboard.pcieSlots() + " PCIe slots");
+            problems.add(TOO_MANY_CARDS.with(pcieCards.size(), motherboard.pcieSlots()));
         }
         for (final IExpansionCardSpec card : pcieCards) {
             if (!card.bus().compatibleWith(motherboard.pcieGeneration())) {
-                problems.add("expansion card bus family " + card.bus().busFamily()
-                        + " is not compatible with board bus " + motherboard.pcieGeneration().busFamily());
+                problems.add(WRONG_BUS.with(card.bus().busFamily(), motherboard.pcieGeneration().busFamily()));
             }
         }
 
         if (rams.size() > motherboard.ramSlots()) {
-            problems.add("too many RAM modules: " + rams.size() + " installed, "
-                    + motherboard.ramSlots() + " slots");
+            problems.add(TOO_MANY_RAM.with(rams.size(), motherboard.ramSlots()));
         }
         for (final RamSpec ram : rams) {
             if (!motherboard.acceptedRam().contains(ram.generation())) {
-                problems.add("RAM generation " + ram.generation() + " not accepted by board");
+                problems.add(WRONG_RAM.with(ram.generation()));
             }
         }
 
         if (disks.size() > motherboard.diskSlots()) {
-            problems.add("too many disks: " + disks.size() + " installed, "
-                    + motherboard.diskSlots() + " disk slots");
+            problems.add(TOO_MANY_DISKS.with(disks.size(), motherboard.diskSlots()));
         }
 
         /*
@@ -242,7 +260,7 @@ public record ComputerBuild(MotherboardSpec motherboard,
         if (!psu.autoScaling()) {
             final int draw = powerDraw();
             if (draw > psu.wattage()) {
-                problems.add("PSU insufficient: draw " + draw + "W exceeds " + psu.wattage() + "W");
+                problems.add(PSU_INSUFFICIENT.with(draw, psu.wattage()));
             }
         }
 

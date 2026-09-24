@@ -14,6 +14,7 @@ import dev.jstech.computers.gateway.IGatewayBridge;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.vm.system.MemberId;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
@@ -45,7 +46,8 @@ final class GatewayCalls {
     private static final String OBJECT = "object";
     private static final String LONG = "long";
     /** Who a call on something out on the wire is written down as in the Gateway's log. */
-    private static final String PROGRAM = "a program";
+    private static final TextKey PROGRAM = TextKey.of("jsc.service.gateway.log.a_program", "a program");
+    private static final TextKey CALLED = TextKey.of("jsc.service.gateway.log.called", "called");
 
     /** The Java that answers a call with the Gateway the program chose in hand. */
     @FunctionalInterface
@@ -178,10 +180,11 @@ final class GatewayCalls {
         final List<Object> passed = new ArrayList<>(Arrays.asList(arguments).subList(2, arguments.length));
         try {
             final Object answered = bridge.call(peripheral, method, passed);
-            gateway.logged(PROGRAM, peripheral + "." + method, "called", GatewayLog.Tone.OK);
+            gateway.logged(PROGRAM.text(), Text.literal(peripheral + "." + method), CALLED.text(), GatewayLog.Tone.OK);
             return answered;
         } catch (final GatewayRefusedException refused) {
-            gateway.logged(PROGRAM, peripheral + "." + method, refused.getMessage(), GatewayLog.Tone.DENIED);
+            gateway.logged(PROGRAM.text(), Text.literal(peripheral + "." + method), refused.text(),
+                    GatewayLog.Tone.DENIED);
             throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, refused.text());
         }
     }

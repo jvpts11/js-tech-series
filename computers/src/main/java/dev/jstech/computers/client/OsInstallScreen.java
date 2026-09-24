@@ -12,6 +12,8 @@ import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.RequestFirmwarePayload;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.core.gui.Phosphor;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.Locale;
 import net.minecraft.client.Minecraft;
@@ -48,11 +50,11 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
     private enum Phase { WORKING, DONE, FAILED }
 
     /** The steps the progress walks through, each claiming a quarter of the work. */
-    private static final String[] STEPS = {
-            "preparing the disk",
-            "copying the system",
-            "creating folders",
-            "registering the boot entry",
+    private static final TextKey[] STEPS = {
+            InstallerScreenTexts.COPY_PREPARING,
+            InstallerScreenTexts.COPY_COPYING,
+            InstallerScreenTexts.COPY_FOLDERS,
+            InstallerScreenTexts.COPY_BOOT_ENTRY,
     };
 
     /** The copy the machine last reported, kept until the session that shows it is built. */
@@ -87,8 +89,10 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
                 : new Copying(FirmwareKind.forEra(HardwareEra.STANDARD), "", "", -1, Phase.WORKING, "",
                         WORK_TICKS, WORK_TICKS);
         this.kind = copying.kind();
-        this.osName = copying.osName().isBlank() ? "the installer's system" : copying.osName();
-        this.targetLabel = copying.targetLabel().isBlank() ? "the default disk" : copying.targetLabel();
+        this.osName = copying.osName().isBlank() ? GameText.resolve(InstallerScreenTexts.COPY_INSTALLERS_SYSTEM)
+                : copying.osName();
+        this.targetLabel = copying.targetLabel().isBlank() ? GameText.resolve(InstallerScreenTexts.COPY_DEFAULT_DISK)
+                : copying.targetLabel();
         this.targetSlot = copying.targetSlot();
         this.phase = copying.phase();
         this.failure = copying.failure();
@@ -219,11 +223,11 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
         g.fill(x, y, x + 1, y + H, p.edge);
         g.fill(x + W - 1, y, x + W, y + H, p.edge);
         g.fill(x + 1, y + 1, x + W - 1, y + 17, p.bar);
-        final String title = switch (phase) {
-            case WORKING -> "INSTALLING " + osName.toUpperCase(Locale.ROOT);
-            case DONE -> "INSTALLATION COMPLETE";
-            case FAILED -> "INSTALLATION FAILED";
-        };
+        final String title = GameText.resolve(switch (phase) {
+            case WORKING -> InstallerScreenTexts.COPY_INSTALLING.with(osName.toUpperCase(Locale.ROOT));
+            case DONE -> InstallerScreenTexts.COPY_COMPLETE.text();
+            case FAILED -> InstallerScreenTexts.COPY_FAILED.text();
+        });
         g.drawString(font, title, x + 8, y + 5, p.bright, false);
 
         int ty = y + 26;
@@ -233,9 +237,10 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
                 for (int i = 0; i < STEPS.length; i++) {
                     final boolean finished = i < done;
                     final boolean current = i == done;
-                    g.drawString(font, STEPS[i] + " ...", x + 10, ty, finished || current ? p.text : p.dim, false);
+                    g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_STEP.with(STEPS[i])), x + 10, ty,
+                            finished || current ? p.text : p.dim, false);
                     if (finished) {
-                        g.drawString(font, "done", x + W - 60, ty, p.ok, false);
+                        g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_DONE), x + W - 60, ty, p.ok, false);
                     } else if (current) {
                         g.drawString(font, (permille() % 1000) / 10 + "%", x + W - 60, ty, p.bright, false);
                     }
@@ -244,25 +249,33 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
                 ty += 12;
                 g.fill(x + 10, ty, x + W - 10, ty + 8, p.trackBg);
                 g.fill(x + 10, ty, x + 10 + (W - 20) * permille() / 1000, ty + 8, p.bright);
-                g.drawString(font, "Do not remove the medium.", x + 10, ty + 16, p.dim, false);
+                g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_KEEP_MEDIUM), x + 10, ty + 16, p.dim,
+                        false);
             }
             case DONE -> {
-                g.drawString(font, osName + " installed on " + targetLabel + ".", x + 10, ty, p.text, false);
-                g.drawString(font, "Take the installation medium out before rebooting,",
+                g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_INSTALLED_ON.with(osName, targetLabel)),
+                        x + 10, ty, p.text, false);
+                g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_TAKE_OUT_FIRST),
                         x + 10, ty + 16, p.dim, false);
-                g.drawString(font, "or the machine boots the installer again.", x + 10, ty + 27, p.dim, false);
-                primary = button(g, x + 10, y + H - 26, 96, 16, "REBOOT", p, true, mouseX, mouseY);
-                secondary = button(g, x + 114, y + H - 26, 110, 16, "BACK TO SETUP", p, false, mouseX, mouseY);
+                g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_TAKE_OUT_SECOND), x + 10, ty + 27, p.dim,
+                        false);
+                primary = button(g, x + 10, y + H - 26, 96, 16, GameText.resolve(InstallerScreenTexts.COPY_REBOOT), p,
+                        true, mouseX, mouseY);
+                secondary = button(g, x + 114, y + H - 26, 110, 16,
+                        GameText.resolve(InstallerScreenTexts.COPY_BACK_TO_SETUP), p, false, mouseX, mouseY);
             }
             case FAILED -> {
-                g.drawString(font, "Nothing was written to " + targetLabel + ".", x + 10, ty, p.dim, false);
+                g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_NOTHING_WRITTEN.with(targetLabel)),
+                        x + 10, ty, p.dim, false);
                 int ly = ty + 16;
                 for (final FormattedCharSequence line : font.split(Component.literal(failure), W - 20)) {
                     g.drawString(font, line, x + 10, ly, p.text, false);
                     ly += 11;
                 }
-                primary = button(g, x + 10, y + H - 26, 110, 16, "BACK TO SETUP", p, true, mouseX, mouseY);
-                secondary = button(g, x + 128, y + H - 26, 96, 16, "CLOSE", p, false, mouseX, mouseY);
+                primary = button(g, x + 10, y + H - 26, 110, 16, GameText.resolve(InstallerScreenTexts.COPY_BACK_TO_SETUP),
+                        p, true, mouseX, mouseY);
+                secondary = button(g, x + 128, y + H - 26, 96, 16, GameText.resolve(InstallerScreenTexts.COPY_CLOSE), p,
+                        false, mouseX, mouseY);
             }
         }
     }

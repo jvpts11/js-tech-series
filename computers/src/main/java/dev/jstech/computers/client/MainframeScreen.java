@@ -11,6 +11,7 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.menu.MainframeMenu;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.network.FailoverRole;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -106,23 +107,24 @@ public class MainframeScreen extends AbstractComputerScreen<MainframeMenu> {
 
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
-        JsTechTheme.text(g, font, "MAINFRAME", 12, 11, JsTechTheme.text());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.TITLE_MAINFRAME), 12, 11, JsTechTheme.text());
         final String status;
         final int statusColor;
         if (menu.networkState() == MainframeBlockEntity.NET_STATE_CONFLICT) {
-            status = "CONFLICT";
+            status = GameText.resolve(AssemblyTexts.CONFLICT);
             statusColor = JsTechTheme.red();
         } else if (!menu.buildValid()) {
-            status = "OFFLINE";
+            status = GameText.resolve(AssemblyTexts.OFFLINE);
             statusColor = JsTechTheme.red();
         } else if (menu.isRunning() && menu.failoverRole() == FailoverRole.PASSIVE) {
-            status = "STANDBY"; // a Passive Failover member: powered and synced, not orchestrating
+            // A Passive Failover member: powered and synced, not orchestrating.
+            status = GameText.resolve(AssemblyTexts.STANDBY);
             statusColor = JsTechTheme.amber();
         } else if (menu.isRunning()) {
-            status = "ONLINE";
+            status = GameText.resolve(AssemblyTexts.ONLINE);
             statusColor = JsTechTheme.green();
         } else {
-            status = "READY";
+            status = GameText.resolve(AssemblyTexts.READY);
             statusColor = JsTechTheme.amber();
         }
         final int pillX = 232 - font.width(status);
@@ -130,42 +132,48 @@ public class MainframeScreen extends AbstractComputerScreen<MainframeMenu> {
         g.fill(pillX - 6, 11, pillX - 2, 15, statusColor);
 
         // Hardware group labels (no counters, the drawn cells show installed vs available).
-        JsTechTheme.text(g, font, "BOARD", 8, 27, menu.hasBoard() ? JsTechTheme.accent() : JsTechTheme.dim());
-        JsTechTheme.text(g, font, "CPU", 44, 27, JsTechTheme.dim());
-        JsTechTheme.text(g, font, "PSU", 8, 60, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.BOARD), 8, 27,
+                menu.hasBoard() ? JsTechTheme.accent() : JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.CPU), 44, 27, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.PSU), 8, 60, JsTechTheme.dim());
         g.fill(30, 61, 34, 65, psuColor());
-        JsTechTheme.text(g, font, "RAM", 44, 60, JsTechTheme.dim());
-        JsTechTheme.text(g, font, "DISK", 8, 111, JsTechTheme.dim());
-        JsTechTheme.text(g, font, "GPU", 44, 111, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.RAM), 44, 60, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.DISK), 8, 111, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.GPU), 44, 111, JsTechTheme.dim());
 
         // Right column: spec tiles.
-        JsTechTheme.tileText(g, font, COL_R, 27, "CAPACITY", JsTechTheme.fmt(menu.capacity()), "it/t", JsTechTheme.text());
-        JsTechTheme.tileText(g, font, COL_R, 52, "QUEUES", String.valueOf(menu.parallelQueues()), "", JsTechTheme.text());
-        JsTechTheme.tileText(g, font, COL_R, 73, "RAM BUFFER", JsTechTheme.fmt(menu.ramBuffer()), "it", JsTechTheme.text());
+        JsTechTheme.tileText(g, font, COL_R, 27, GameText.resolve(AssemblyTexts.CAPACITY), JsTechTheme.fmt(menu.capacity()),
+                GameText.resolve(AssemblyTexts.ITEMS_PER_TICK), JsTechTheme.text());
+        JsTechTheme.tileText(g, font, COL_R, 52, GameText.resolve(AssemblyTexts.QUEUES), String.valueOf(menu.parallelQueues()),
+                "", JsTechTheme.text());
+        JsTechTheme.tileText(g, font, COL_R, 73, GameText.resolve(AssemblyTexts.RAM_BUFFER), JsTechTheme.fmt(menu.ramBuffer()),
+                GameText.resolve(AssemblyTexts.ITEMS), JsTechTheme.text());
 
-        JsTechTheme.text(g, font, "NETWORK", COL_R, 96, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.NETWORK), COL_R, 96, JsTechTheme.dim());
         final int net = menu.networkState();
-        final String netStr = net == MainframeBlockEntity.NET_STATE_CONFLICT ? "CONFLICT"
-                : net == MainframeBlockEntity.NET_STATE_LINKED ? "LINKED" : "--";
+        final String netStr = net == MainframeBlockEntity.NET_STATE_CONFLICT ? GameText.resolve(AssemblyTexts.CONFLICT)
+                : net == MainframeBlockEntity.NET_STATE_LINKED ? GameText.resolve(AssemblyTexts.LINKED) : "--";
         final int netColor = net == MainframeBlockEntity.NET_STATE_CONFLICT ? JsTechTheme.red()
                 : net == MainframeBlockEntity.NET_STATE_LINKED ? JsTechTheme.green() : JsTechTheme.dim();
         JsTechTheme.textRight(g, font, netStr, COL_R + COL_R_W, 96, netColor);
 
         // Operations dispatch: one row per metric (label left, value right).
         final int running = menu.runningOps();
-        opRow(g, "QUEUED", String.valueOf(menu.pendingOps()), 113, JsTechTheme.text());
-        opRow(g, "RUNNING", String.valueOf(running), 124, running > 0 ? JsTechTheme.green() : JsTechTheme.text());
-        opRow(g, "DONE", JsTechTheme.fmt(menu.completedOps()), 135, JsTechTheme.text());
+        opRow(g, GameText.resolve(AssemblyTexts.QUEUED), String.valueOf(menu.pendingOps()), 113, JsTechTheme.text());
+        opRow(g, GameText.resolve(AssemblyTexts.RUNNING), String.valueOf(running), 124,
+                running > 0 ? JsTechTheme.green() : JsTechTheme.text());
+        opRow(g, GameText.resolve(AssemblyTexts.DONE), JsTechTheme.fmt(menu.completedOps()), 135, JsTechTheme.text());
 
         // Control row captions.
         final boolean auto = menu.isAutoStart();
-        final String powerCap = auto ? "AUTO" : (menu.isManualOn() ? "TURN OFF" : "TURN ON");
+        final String powerCap = GameText.resolve(auto ? AssemblyTexts.AUTO
+                : menu.isManualOn() ? AssemblyTexts.TURN_OFF : AssemblyTexts.TURN_ON);
         JsTechTheme.textCenter(g, font, powerCap, POWER_X + BTN_W / 2, BTN_Y + 4, auto ? JsTechTheme.dim() : JsTechTheme.accent());
-        JsTechTheme.textCenter(g, font, "AUTO " + (auto ? "ON" : "OFF"), AUTO_X + BTN_W / 2, BTN_Y + 4,
-                auto ? JsTechTheme.accent() : JsTechTheme.dim());
+        JsTechTheme.textCenter(g, font, GameText.resolve(auto ? AssemblyTexts.AUTO_ON_SHORT : AssemblyTexts.AUTO_OFF_SHORT),
+                AUTO_X + BTN_W / 2, BTN_Y + 4, auto ? JsTechTheme.accent() : JsTechTheme.dim());
         final boolean failover = menu.failoverEnabled();
-        JsTechTheme.textCenter(g, font, "FAIL " + (failover ? "ON" : "OFF"), FAILOVER_X + BTN_W / 2, BTN_Y + 4,
-                failover ? JsTechTheme.accent() : JsTechTheme.dim());
+        JsTechTheme.textCenter(g, font, GameText.resolve(failover ? AssemblyTexts.FAILOVER_ON : AssemblyTexts.FAILOVER_OFF),
+                FAILOVER_X + BTN_W / 2, BTN_Y + 4, failover ? JsTechTheme.accent() : JsTechTheme.dim());
     }
 
     private void opRow(final GuiGraphics g, final String key, final String value, final int y, final int valueColor) {

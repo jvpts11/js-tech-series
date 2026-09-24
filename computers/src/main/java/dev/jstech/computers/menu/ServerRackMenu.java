@@ -18,6 +18,9 @@ import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RaidMode;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,11 +41,14 @@ import org.jetbrains.annotations.Nullable;
  * cabled), plus the player inventory. Slot positions come from {@link ServerRackLayout}, the same
  * source the screen draws from.
  */
+@TextHolder
 public class ServerRackMenu extends AbstractComputerMenu {
 
     /** How a unit's drive array stands, which is what the rack's rows colour it by. */
     public enum ArrayHealth { NONE, HEALTHY, DEGRADED, FAILED }
 
+    private static final TextKey RAID_DEGRADED = TextKey.of("jsc.rack.raid_degraded", "%s DEGRADED");
+    private static final TextKey RAID_FAILED = TextKey.of("jsc.rack.raid_failed", "%s FAILED");
     private static final int RACK_SLOTS = ServerRackBlockEntity.CAPACITY_U;
     private static final RackLayout LAYOUT = new RackLayout(RACK_SLOTS);
     private static final int FRONT_SLOTS = RACK_SLOTS * RackLayout.SLOTS_PER_U;
@@ -184,13 +190,14 @@ public class ServerRackMenu extends AbstractComputerMenu {
      * {@code RAID0 FAILED}), or null when the unit runs no array.
      */
     @Nullable
-    public String raidLabel(final int topRow) {
+    public Text raidLabel(final int topRow) {
+        // The level goes by its name, which reads the same in every language.
         final String mode = raidModeAt(topRow).name();
         return switch (raidHealth(topRow)) {
             case NONE -> null;
-            case HEALTHY -> mode;
-            case DEGRADED -> mode + " DEGRADED";
-            case FAILED -> mode + " FAILED";
+            case HEALTHY -> Text.literal(mode);
+            case DEGRADED -> RAID_DEGRADED.with(mode);
+            case FAILED -> RAID_FAILED.with(mode);
         };
     }
 

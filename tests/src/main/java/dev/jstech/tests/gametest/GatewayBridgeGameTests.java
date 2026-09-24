@@ -30,6 +30,7 @@ import dev.jstech.computers.integration.computercraft.GatewayPeripheral;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.Text;
 import dev.jstech.computers.machine.IMachineRuntime;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -311,10 +312,12 @@ public final class GatewayBridgeGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(fleet.storage(helper).count(cobble) == 200L
                         && cc.heard(GatewayService.EVENT_OPERATION, ids[1]), "waiting for the push to settle"))
                 .thenExecute(() -> {
-                    final List<String> whats = gateway(helper).log().entries().stream().map(GatewayLog.Entry::what).toList();
+                    final List<String> whats = gateway(helper).log().entries().stream()
+                            .map(e -> e.what().english()).toList();
                     helper.assertTrue(whats.contains("pull 32 " + COBBLESTONE) && whats.contains("push 32 " + COBBLESTONE),
                             "the Gateway's log has both requests signed by the computer; got " + whats);
-                    helper.assertTrue(gateway(helper).log().entries().stream().anyMatch(e -> e.who().equals("CC #" + CC_ID)),
+                    helper.assertTrue(gateway(helper).log().entries().stream()
+                                    .anyMatch(e -> e.who().english().equals("CC #" + CC_ID)),
                             "signed CC #3");
                     final String empty = refusal(lua(() -> peripheral[0].push(cc, COBBLESTONE, 1, Optional.empty())));
                     helper.assertTrue(empty.contains("holds no"), "pushing from an empty buffer is refused; got " + empty);
@@ -334,10 +337,11 @@ public final class GatewayBridgeGameTests {
                     fleet.storage(helper).insert(StorageKey.of(Items.COBBLESTONE), 200);
                     peripheral[0] = attach(helper, cc);
                     final NetworkGatewayBlockEntity g = gateway(helper);
-                    g.setPermissions(GatewayPermissions.DEFAULT.withRead(false), "desk", "set read off");
+                    g.setPermissions(GatewayPermissions.DEFAULT.withRead(false), "desk", Text.literal("set read off"));
                     final String read = refusal(lua(() -> peripheral[0].types(cc)));
                     helper.assertTrue(read.contains("reading the network is off"), "reads are refused with reads off; got " + read);
-                    g.setPermissions(GatewayPermissions.DEFAULT.withOperations(false), "desk", "set operations off");
+                    g.setPermissions(GatewayPermissions.DEFAULT.withOperations(false), "desk",
+                            Text.literal("set operations off"));
                     final String ops = refusal(lua(() -> peripheral[0].pull(cc, COBBLESTONE, 1, Optional.empty())));
                     helper.assertTrue(ops.contains("operations are off"), "operations are refused with operations off; got " + ops);
                     helper.assertTrue(refusal(lua(() -> peripheral[0].total(cc, COBBLESTONE))).isEmpty(),
@@ -347,7 +351,7 @@ public final class GatewayBridgeGameTests {
                 })
                 .thenExecuteAfter(2, () -> {
                     final NetworkGatewayBlockEntity g = gateway(helper);
-                    g.setPermissions(GatewayPermissions.DEFAULT.withCallCap(4), "desk", "set cap 4");
+                    g.setPermissions(GatewayPermissions.DEFAULT.withCallCap(4), "desk", Text.literal("set cap 4"));
                     int answered = 0;
                     for (int i = 0; i < 4; i++) {
                         if (refusal(lua(() -> peripheral[0].capacity(cc))).isEmpty()) {

@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.menu.InputBusMenu;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
@@ -22,12 +23,12 @@ public class InputBusScreen extends AbstractBusScreen<InputBusMenu> {
     }
 
     @Override
-    protected String windowTitle() {
-        return "CRAFTING INPUT BUS";
+    protected TextKey windowTitle() {
+        return BusTexts.INPUT_TITLE;
     }
 
     @Override
-    protected String filterHint() {
-        return "Click an item to set what to feed the machine";
+    protected TextKey filterHint() {
+        return BusTexts.INPUT_HINT;
     }
 }

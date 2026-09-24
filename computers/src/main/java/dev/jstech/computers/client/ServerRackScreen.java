@@ -18,6 +18,9 @@ import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.EraThemes;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.Locale;
 import net.minecraft.ChatFormatting;
@@ -287,9 +290,8 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
          * the player most needs to know about this rack right now.
          */
         final int throttle = menu.throttlePercent();
-        final String pill = throttle < 100
-                ? usedU + "/" + ROWS + "U  THROTTLED " + throttle + "%"
-                : usedU + "/" + ROWS + "U  " + (linked ? "LINKED" : "OFFLINE");
+        final String pill = GameText.resolve(throttle < 100 ? ServerRackTexts.THROTTLED.with(usedU, ROWS, throttle)
+                : (linked ? ServerRackTexts.LINKED : ServerRackTexts.OFFLINE).with(usedU, ROWS));
         final int pillColor = throttle < 100 ? JsTechTheme.amber()
                 : linked ? JsTechTheme.green() : JsTechTheme.red();
         final int pillX = 232 - font.width(pill);
@@ -298,8 +300,8 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
 
         for (int row = 0; row < ROWS; row++) {
             final int top = ServerRackLayout.rowY(row);
-            JsTechTheme.textS(g, font, (row + 1) + "U", ServerRackLayout.RULER_X + 2, top + 6,
-                    JsTechTheme.dim());
+            JsTechTheme.textS(g, font, GameText.resolve(ServerRackTexts.UNIT.with(row + 1)), ServerRackLayout.RULER_X + 2,
+                    top + 6, JsTechTheme.dim());
             for (int column = 0; column < ServerRackLayout.FRONT_SLOTS; column++) {
                 final RackLayout.SlotRole role =
                         menu.frontSlotRole(row * RackLayout.SLOTS_PER_U + column);
@@ -312,8 +314,8 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
             }
             final int covered = coveredBy(row);
             if (covered >= 0) {
-                JsTechTheme.textS(g, font, "^ " + (covered + 1) + "U", ServerRackLayout.STATUS_X,
-                        top + 6, JsTechTheme.dim());
+                JsTechTheme.textS(g, font, GameText.resolve(ServerRackTexts.COVERED.with(covered + 1)),
+                        ServerRackLayout.STATUS_X, top + 6, JsTechTheme.dim());
                 continue;
             }
             final ItemStack server = menu.serverInBay(row);
@@ -324,23 +326,23 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
             final String state;
             final int color;
             if (build == null) {
-                state = "INCOMPLETE";
+                state = GameText.resolve(ServerRackTexts.INCOMPLETE);
                 color = JsTechTheme.red();
             } else if (!menu.bayPowerOn(row)) {
-                state = "OFF";
+                state = GameText.resolve(ServerRackTexts.OFF);
                 color = JsTechTheme.dim();
             } else if (linked) {
-                state = "ONLINE";
+                state = GameText.resolve(ServerRackTexts.ONLINE);
                 color = JsTechTheme.green();
             } else {
-                state = "READY";
+                state = GameText.resolve(ServerRackTexts.READY);
                 color = JsTechTheme.amber();
             }
             // An array replaces the plain machine state in the row: its health is what matters here.
-            final String raid = menu.raidLabel(row);
+            final Text raid = menu.raidLabel(row);
             final int rebuild = menu.rebuildPermille(row);
             if (rebuild > 0 && build != null) {
-                JsTechTheme.textS(g, font, "REBUILD " + rebuild / 10 + "%",
+                JsTechTheme.textS(g, font, GameText.resolve(ServerRackTexts.REBUILD.with(rebuild / 10)),
                         ServerRackLayout.STATUS_X, top + 6, JsTechTheme.amber());
             } else if (raid != null && build != null) {
                 final int raidColor = switch (menu.raidHealth(row)) {
@@ -348,11 +350,11 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
                     case DEGRADED -> JsTechTheme.amber();
                     case NONE, HEALTHY -> JsTechTheme.green();
                 };
-                JsTechTheme.textS(g, font, raid, ServerRackLayout.STATUS_X, top + 6, raidColor);
+                JsTechTheme.textS(g, font, GameText.resolve(raid), ServerRackLayout.STATUS_X, top + 6, raidColor);
             } else {
                 JsTechTheme.textS(g, font, state, ServerRackLayout.STATUS_X, top + 6, color);
             }
-            JsTechTheme.textS(g, font, "PWR", ServerRackLayout.PWR_X + 3,
+            JsTechTheme.textS(g, font, GameText.resolve(ServerRackTexts.POWER), ServerRackLayout.PWR_X + 3,
                     top + ServerRackLayout.PWR_DY + 2,
                     menu.bayPowerOn(row) ? JsTechTheme.green() : JsTechTheme.red());
         }
@@ -419,12 +421,12 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
                 continue;
             }
             if (refused) {
-                final String cabinet = switch (carriedChassis.rackType()) {
-                    case SERVER -> "a Server Rack";
-                    case SUPERCOMPUTER -> "a Supercomputer Rack";
-                    case AI -> "an AI Rack";
+                final TextKey belongs = switch (carriedChassis.rackType()) {
+                    case SERVER -> ServerRackTexts.BELONGS_IN_SERVER_RACK;
+                    case SUPERCOMPUTER -> ServerRackTexts.BELONGS_IN_SUPERCOMPUTER_RACK;
+                    case AI -> ServerRackTexts.BELONGS_IN_AI_RACK;
                 };
-                g.renderTooltip(font, Component.literal("This chassis belongs in " + cabinet), mouseX, mouseY);
+                g.renderTooltip(font, GameText.component(belongs), mouseX, mouseY);
                 return;
             }
             // Blocked front slots explain themselves (the mounted chassis derives the reason).
@@ -438,9 +440,9 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
                     return; // the item's own tooltip already shows
                 }
                 if (menu.frontSlotRole(index) == RackLayout.SlotRole.DRIVE) {
-                    final String raid = menu.raidLabel(unitTopOf(row));
+                    final Text raid = menu.raidLabel(unitTopOf(row));
                     if (raid != null) {
-                        g.renderTooltip(font, Component.literal("Array member slot - " + raid),
+                        g.renderTooltip(font, GameText.component(ServerRackTexts.ARRAY_MEMBER.with(raid)),
                                 mouseX, mouseY);
                         return;
                     }
@@ -450,18 +452,16 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
                      * Point at where a controller is actually configured, so the player is never
                      * left clicking a gadget hoping something opens.
                      */
-                    g.renderTooltip(font, Component.literal(
-                            "Gadget bay - a RAID Controller is configured in the machine's firmware (STORAGE)"),
-                            mouseX, mouseY);
+                    g.renderTooltip(font, GameText.component(ServerRackTexts.GADGET_CONFIGURED), mouseX, mouseY);
                     return;
                 }
-                final String tip = switch (menu.frontSlotRole(index)) {
-                    case DRIVE -> "Drive bay - hotswap a disk here";
-                    case GADGET -> "Gadget bay - RAID controller or cache card";
-                    case BLOCKED_NO_UNIT -> "Blocked - no unit in this row cables these slots";
-                    case BLOCKED_BUDGET -> "Blocked - the chassis does not cable this slot";
+                final TextKey tip = switch (menu.frontSlotRole(index)) {
+                    case DRIVE -> ServerRackTexts.DRIVE_BAY;
+                    case GADGET -> ServerRackTexts.GADGET_BAY;
+                    case BLOCKED_NO_UNIT -> ServerRackTexts.BLOCKED_NO_UNIT;
+                    case BLOCKED_BUDGET -> ServerRackTexts.BLOCKED_BUDGET;
                 };
-                g.renderTooltip(font, Component.literal(tip), mouseX, mouseY);
+                g.renderTooltip(font, GameText.component(tip), mouseX, mouseY);
                 return;
             }
             // The unit's status area shows the machine summary.
@@ -470,20 +470,18 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
                 final ItemStack server = menu.serverInBay(row);
                 final List<Component> lines = new ArrayList<>();
                 final UUID uuid = ServerItem.nodeUuid(server);
-                lines.add(Component.literal(uuid != null
-                        ? "Node " + uuid.toString().substring(0, 8) : "Unassigned node"));
+                lines.add(GameText.component(uuid != null
+                        ? ServerRackTexts.NODE.with(uuid.toString().substring(0, 8))
+                        : ServerRackTexts.UNASSIGNED_NODE.text()));
                 final RackChassis chassis = ServerItem.chassisOf(server);
                 if (chassis != null) {
-                    lines.add(Component.literal(chassis.heightU() + "U - " + chassis.driveSlots()
-                            + " drive + " + chassis.gadgetSlots() + " gadget bays")
-                            .withStyle(ChatFormatting.GRAY));
+                    lines.add(GameText.component(ServerRackTexts.CHASSIS.with(chassis.heightU(), chassis.driveSlots(),
+                            chassis.gadgetSlots())).withStyle(ChatFormatting.GRAY));
                 }
                 if (ServerItem.build(server) == null) {
-                    lines.add(Component.literal("Incomplete - needs a board + PSU")
-                            .withStyle(ChatFormatting.RED));
+                    lines.add(GameText.component(ServerRackTexts.NEEDS_BOARD).withStyle(ChatFormatting.RED));
                 } else if (!menu.networkLinked()) {
-                    lines.add(Component.literal("Rack cable not on a network")
-                            .withStyle(ChatFormatting.YELLOW));
+                    lines.add(GameText.component(ServerRackTexts.NOT_ON_NETWORK).withStyle(ChatFormatting.YELLOW));
                 }
                 g.renderComponentTooltip(font, lines, mouseX, mouseY);
                 return;

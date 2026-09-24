@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -21,7 +23,7 @@ import net.minecraft.world.item.ItemStack;
  * at all, every Gateway on the host's ports, the selected one in detail (its two sides, its buffer, its
  * permissions, the computers and shares it sees, its log), and a status line for the last action.
  */
-public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, Detail detail, String status)
+public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, Detail detail, Text status)
         implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<GatewayManagerStatePayload> TYPE =
@@ -43,35 +45,36 @@ public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, 
     }
 
     /** One Gateway in the rail: where it stands and how it is linked, with its two lights. */
-    public record WireGateway(long pos, String name, String where, boolean linked, boolean ccLinked) {
+    public record WireGateway(long pos, String name, Text place, Text link, boolean linked, boolean ccLinked) {
         public static final StreamCodec<RegistryFriendlyByteBuf, WireGateway> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_LONG, WireGateway::pos,
                 ByteBufCodecs.stringUtf8(32), WireGateway::name,
-                ByteBufCodecs.stringUtf8(64), WireGateway::where,
+                TextCodecs.STREAM_CODEC, WireGateway::place,
+                TextCodecs.STREAM_CODEC, WireGateway::link,
                 ByteBufCodecs.BOOL, WireGateway::linked,
                 ByteBufCodecs.BOOL, WireGateway::ccLinked,
                 WireGateway::new);
     }
 
     /** One line of the log: when, who, what, how it went, and the colour of the result. */
-    public record WireLog(String when, String who, String what, String result, int tone) {
+    public record WireLog(String when, Text who, Text what, Text result, int tone) {
         public static final StreamCodec<RegistryFriendlyByteBuf, WireLog> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.stringUtf8(16), WireLog::when,
-                ByteBufCodecs.stringUtf8(48), WireLog::who,
-                ByteBufCodecs.stringUtf8(96), WireLog::what,
-                ByteBufCodecs.stringUtf8(64), WireLog::result,
+                TextCodecs.STREAM_CODEC, WireLog::who,
+                TextCodecs.STREAM_CODEC, WireLog::what,
+                TextCodecs.STREAM_CODEC, WireLog::result,
                 ByteBufCodecs.VAR_INT, WireLog::tone,
                 WireLog::new);
     }
 
     /** One ComputerCraft computer the Gateway knows. */
-    public record WireComputer(int id, String label, boolean on, boolean agent, String lastSeen) {
+    public record WireComputer(int id, String label, boolean on, boolean agent, Text lastSeen) {
         public static final StreamCodec<RegistryFriendlyByteBuf, WireComputer> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_INT, WireComputer::id,
                 ByteBufCodecs.stringUtf8(48), WireComputer::label,
                 ByteBufCodecs.BOOL, WireComputer::on,
                 ByteBufCodecs.BOOL, WireComputer::agent,
-                ByteBufCodecs.stringUtf8(24), WireComputer::lastSeen,
+                TextCodecs.STREAM_CODEC, WireComputer::lastSeen,
                 WireComputer::new);
     }
 
@@ -80,7 +83,7 @@ public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, 
      * (network, what was served), the names, the buffer, the last requests, the permissions, and the
      * two tables.
      */
-    public record Detail(long pos, String name, String link, boolean linked, int types, int servers,
+    public record Detail(long pos, String name, Text link, boolean linked, int types, int servers,
                          boolean mainframeOnline,
                          int budgetPermille, boolean ccOnline, int wiredComputers, int wiredDevices,
                          int calls, int operations, String peripheralName, int rednetId,
@@ -89,7 +92,9 @@ public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, 
 
         public static final StreamCodec<RegistryFriendlyByteBuf, Detail> STREAM_CODEC = StreamCodec.of(
                 (buf, d) -> {
-                    buf.writeVarLong(d.pos()).writeUtf(d.name(), 32).writeUtf(d.link(), 48).writeBoolean(d.linked())
+                    buf.writeVarLong(d.pos()).writeUtf(d.name(), 32);
+                    TextCodecs.STREAM_CODEC.encode(buf, d.link());
+                    buf.writeBoolean(d.linked())
                             .writeVarInt(d.types()).writeVarInt(d.servers()).writeBoolean(d.mainframeOnline())
                             .writeVarInt(d.budgetPermille()).writeBoolean(d.ccOnline())
                             .writeVarInt(d.wiredComputers()).writeVarInt(d.wiredDevices())
@@ -105,7 +110,7 @@ public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, 
                 buf -> {
                     final long pos = buf.readVarLong();
                     final String name = buf.readUtf(32);
-                    final String link = buf.readUtf(48);
+                    final Text link = TextCodecs.STREAM_CODEC.decode(buf);
                     final boolean linked = buf.readBoolean();
                     final int types = buf.readVarInt();
                     final int servers = buf.readVarInt();
@@ -136,7 +141,7 @@ public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, 
 
         /** No Gateway selected. */
         public static Detail none() {
-            return new Detail(0L, "", "", false, 0, 0, false, 0, false, 0, 0, 0, 0, "", -1, emptyBuffer(),
+            return new Detail(0L, "", Text.EMPTY, false, 0, 0, false, 0, false, 0, 0, 0, 0, "", -1, emptyBuffer(),
                     List.of(), true, true, 1, 1, List.of(), List.of());
         }
 
@@ -166,7 +171,7 @@ public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, 
                     Head.STREAM_CODEC, GatewayManagerStatePayload::head,
                     WireGateway.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_GATEWAYS)), GatewayManagerStatePayload::gateways,
                     Detail.STREAM_CODEC, GatewayManagerStatePayload::detail,
-                    ByteBufCodecs.stringUtf8(160), GatewayManagerStatePayload::status,
+                    TextCodecs.STREAM_CODEC, GatewayManagerStatePayload::status,
                     GatewayManagerStatePayload::new);
 
     /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */

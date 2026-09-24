@@ -19,6 +19,7 @@ import dev.jstech.computers.operation.payload.GatewayManagerStatePayload.WireLog
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.text.TextLists;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.server.level.ServerLevel;
@@ -201,7 +202,7 @@ public final class GatewayCommand implements ICliCommand {
     }
 
     private static GatewayManagerStatePayload state(final ServerLevel level, final BlockEntity host, final long pos) {
-        return GatewayManager.state(level, host, pos, "");
+        return GatewayManager.state(level, host, pos, Text.EMPTY);
     }
 
     private static void list(final CliContext ctx, final ServerLevel level, final BlockEntity host) {
@@ -218,7 +219,7 @@ public final class GatewayCommand implements ICliCommand {
             ctx.out().line(CliLine.of(CliSpan.plain(g.name()), CliSpan.pad(LIST_LINK_AT),
                     CliSpan.of(g.linked() ? UP : DOWN, CliStyle.PLAIN), CliSpan.pad(LIST_CC_AT),
                     CliSpan.of(g.ccLinked() ? UP : DOWN, CliStyle.PLAIN), CliSpan.pad(LIST_WHERE_AT),
-                    CliSpan.plain(g.where())));
+                    CliSpan.plain(TextLists.join(" · ", List.of(g.place(), g.link())))));
         }
         if (!state.head().ccInstalled()) {
             ctx.out().dim(NO_CC);
@@ -252,7 +253,8 @@ public final class GatewayCommand implements ICliCommand {
         if (!d.recent().isEmpty()) {
             ctx.out().header(RECENT);
             for (final WireLog row : d.recent()) {
-                ctx.out().line("  " + row.when() + "  " + row.who() + "  " + row.what() + "  " + row.result());
+                ctx.out().line(CliLine.build().plain("  " + row.when() + "  ").plain(row.who()).plain("  ")
+                        .plain(row.what()).plain("  ").plain(row.result()).done());
             }
         }
     }
@@ -306,8 +308,10 @@ public final class GatewayCommand implements ICliCommand {
         final List<WireLog> rows = d.log();
         for (int i = rows.size() - 1; i >= 0; i--) {
             final WireLog row = rows.get(i);
-            ctx.out().line(Text.literal(String.format(Locale.ROOT, "%-9s %-14s %-30s %s", row.when(), row.who(),
-                    row.what(), row.result())));
+            ctx.out().line(CliLine.of(CliSpan.plain(row.when()), CliSpan.pad(LOG_WHO_AT),
+                    CliSpan.plain(row.who()), CliSpan.pad(LOG_WHAT_AT),
+                    CliSpan.plain(row.what()), CliSpan.pad(LOG_RESULT_AT),
+                    CliSpan.plain(row.result())));
         }
     }
 
@@ -355,7 +359,7 @@ public final class GatewayCommand implements ICliCommand {
 
     private static void act(final CliContext ctx, final ServerLevel level, final BlockEntity host, final long pos,
                             final int action, final int value, final String text) {
-        final String said = GatewayManager.act(level, host, pos, action, value, text);
+        final Text said = GatewayManager.act(level, host, pos, action, value, text);
         if (said.isEmpty()) {
             ctx.out().dim(DONE);
         } else {

@@ -26,6 +26,10 @@ import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.PeripheralLinkValidator;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+import dev.jstech.core.text.TextTags;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -65,9 +69,26 @@ import org.jetbrains.annotations.Nullable;
  * screen shows only the buffer and a status line. Without CC: Tweaked the block still links and holds
  * items; its ComputerCraft side simply never comes up.
  */
+@TextHolder
 public class NetworkGatewayBlockEntity extends BlockEntity implements IPeripheralEndpoint {
 
     public static final int BUFFER_SLOTS = 9;
+
+    private static final TextKey NOT_LINKED = TextKey.of("jsc.gateway.not_linked", "not linked");
+    private static final TextKey ADJACENT = TextKey.of("jsc.gateway.adjacent", "adjacent");
+    private static final TextKey CABLE_ONE_BLOCK = TextKey.of("jsc.gateway.cable_one_block", "cable, %s block");
+    private static final TextKey CABLE_BLOCKS = TextKey.of("jsc.gateway.cable_blocks", "cable, %s blocks");
+    private static final TextKey RENAMED = TextKey.of("jsc.gateway.renamed", "renamed %s to %s");
+    /* What the log records of the Gateway's own doings, and how they went. */
+    private static final TextKey LOG_RENAME = TextKey.of("jsc.gateway.log.rename", "rename %s to %s");
+    private static final TextKey LOG_IDENTIFY = TextKey.of("jsc.gateway.log.identify", "identify");
+    private static final TextKey LOG_BLINKING = TextKey.of("jsc.gateway.log.blinking", "blinking");
+    private static final TextKey LOG_LINK = TextKey.of("jsc.gateway.log.link", "link");
+    private static final TextKey LOG_LINK_LOST = TextKey.of("jsc.gateway.log.link_lost", "link lost");
+    private static final TextKey LOG_LINK_GONE =
+            TextKey.of("jsc.gateway.log.link_gone", "the cable or the computer is gone");
+    private static final TextKey LOG_OK = TextKey.of("jsc.gateway.log.ok", "ok");
+    private static final TextKey LOG_SAID = TextKey.of("jsc.gateway.log.said", "said");
     /** How long the lights blink after Identify, in ticks. */
     private static final int IDENTIFY_TICKS = 60;
     private static final int BLINK_TICKS = 5;
@@ -203,11 +224,11 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
     }
 
     /** How the Gateway reaches its host, for the status lines. */
-    public String linkKind() {
+    public Text linkKind() {
         if (linkedOwner == null) {
-            return "not linked";
+            return NOT_LINKED.text();
         }
-        return linkLength <= 0 ? "adjacent" : "cable, " + linkLength + (linkLength == 1 ? " block" : " blocks");
+        return linkLength <= 0 ? ADJACENT.text() : (linkLength == 1 ? CABLE_ONE_BLOCK : CABLE_BLOCKS).with(linkLength);
     }
 
     /** The host computer's name, or what the client last heard it was. */
@@ -233,21 +254,21 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
      * Renames the Gateway to what {@code typed} cleans down to; an empty name goes back to the default this
      * Gateway took when it linked. Says what it did, for the shell and the manager's status line.
      */
-    public String rename(final String typed, final String by) {
+    public Text rename(final String typed, final String by) {
         final String cleaned = GatewayName.clean(typed);
         final String was = name();
         name = cleaned.isEmpty() ? defaultName() : cleaned;
         setChanged();
         syncToClients();
-        logged(by, "rename " + was + " to " + name(), "ok", GatewayLog.Tone.OK);
-        return "renamed " + was + " to " + name();
+        logged(by, LOG_RENAME.with(was, name()), LOG_OK.text(), GatewayLog.Tone.OK);
+        return RENAMED.with(was, name());
     }
 
     /** Makes the block's lights blink for a few seconds, so this Gateway stands out among several. */
     public void identify(final String by) {
         if (level != null) {
             identifyUntil = level.getGameTime() + IDENTIFY_TICKS;
-            logged(by, "identify", "blinking", GatewayLog.Tone.OK);
+            logged(by, LOG_IDENTIFY.text(), LOG_BLINKING.text(), GatewayLog.Tone.OK);
         }
     }
 
@@ -259,10 +280,10 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
         return permissions;
     }
 
-    public void setPermissions(final GatewayPermissions value, final String by, final String what) {
+    public void setPermissions(final GatewayPermissions value, final String by, final Text what) {
         permissions = value;
         setChanged();
-        logged(by, what, "ok", GatewayLog.Tone.OK);
+        logged(by, what, LOG_OK.text(), GatewayLog.Tone.OK);
     }
 
     public GatewayLog log() {
@@ -274,9 +295,24 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
     }
 
     /** Records something the Gateway did, stamped with the world's clock. */
-    public void logged(final String who, final String what, final String result, final GatewayLog.Tone tone) {
+    public void logged(final Text who, final Text what, final Text result, final GatewayLog.Tone tone) {
         log.add(level == null ? 0L : level.getDayTime(), who, what, result, tone);
         setChanged();
+    }
+
+    /** The same, asked by a computer that goes by its name or its id, which read the same in every language. */
+    public void logged(final String who, final Text what, final Text result, final GatewayLog.Tone tone) {
+        logged(Text.literal(who), what, result, tone);
+    }
+
+    /** Records a request as it was asked, which reads the same in every language, and how it went. */
+    public void logged(final String who, final String asked, final Text result, final GatewayLog.Tone tone) {
+        logged(Text.literal(who), Text.literal(asked), result, tone);
+    }
+
+    /** Records that a ComputerCraft computer said something to this side. */
+    public void loggedSaid(final String who) {
+        logged(who, "send", LOG_SAID.text(), GatewayLog.Tone.OK);
     }
 
     /** The name ComputerCraft computers wrap this Gateway by. */
@@ -522,7 +558,7 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
                     if (name.isEmpty()) {
                         name = defaultName();
                     }
-                    logged(hostName(), "link", linkKind(), GatewayLog.Tone.OK);
+                    logged(hostName(), LOG_LINK.text(), linkKind(), GatewayLog.Tone.OK);
                     syncToClients();
                 }
             });
@@ -531,7 +567,7 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
                 || !PeripheralLinks.socketReaches(level, socket, linkedOwner, PeripheralCableType.COMPUTING)) {
             final String was = hostName();
             unlink(level);
-            logged(was, "link lost", "the cable or the computer is gone", GatewayLog.Tone.DENIED);
+            logged(was, LOG_LINK_LOST.text(), LOG_LINK_GONE.text(), GatewayLog.Tone.DENIED);
             syncToClients();
         }
         if (bridge != null && !peripheralName().equals(publishedAs)) {
@@ -613,9 +649,9 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
             final GatewayLog.Entry e = newestFirst.get(i);
             final CompoundTag one = new CompoundTag();
             one.putLong(NBT_WHEN, e.dayTime());
-            one.putString(NBT_WHO, e.who());
-            one.putString(NBT_WHAT, e.what());
-            one.putString(NBT_RESULT, e.result());
+            one.put(NBT_WHO, TextTags.write(e.who()));
+            one.put(NBT_WHAT, TextTags.write(e.what()));
+            one.put(NBT_RESULT, TextTags.write(e.result()));
             one.putInt(NBT_TONE, e.tone().id());
             entries.add(one);
         }
@@ -637,8 +673,9 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
             final List<GatewayLog.Entry> oldestFirst = new ArrayList<>();
             for (final Tag raw : tag.getList(NBT_LOG, Tag.TAG_COMPOUND)) {
                 final CompoundTag one = (CompoundTag) raw;
-                oldestFirst.add(new GatewayLog.Entry(one.getLong(NBT_WHEN), one.getString(NBT_WHO),
-                        one.getString(NBT_WHAT), one.getString(NBT_RESULT), GatewayLog.Tone.byId(one.getInt(NBT_TONE))));
+                oldestFirst.add(new GatewayLog.Entry(one.getLong(NBT_WHEN), TextTags.read(one.getCompound(NBT_WHO)),
+                        TextTags.read(one.getCompound(NBT_WHAT)), TextTags.read(one.getCompound(NBT_RESULT)),
+                        GatewayLog.Tone.byId(one.getInt(NBT_TONE))));
             }
             log.restore(oldestFirst);
         }

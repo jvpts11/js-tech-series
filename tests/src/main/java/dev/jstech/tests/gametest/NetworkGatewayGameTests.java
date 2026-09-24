@@ -19,6 +19,7 @@ import dev.jstech.computers.gateway.GatewayLog;
 import dev.jstech.computers.gateway.GatewayPermissions;
 import dev.jstech.computers.integration.computercraft.ComputerCraftIntegration;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -77,13 +78,13 @@ public final class NetworkGatewayGameTests {
                 .thenExecuteAfter(SETTLE + 4, () -> {
                     final NetworkGatewayBlockEntity g = gatewayAt(helper, at);
                     helper.assertTrue(g.online(), "the back socket against the computer links");
-                    helper.assertTrue("adjacent".equals(g.linkKind()), "with no cable between; got " + g.linkKind());
+                    helper.assertTrue("adjacent".equals(g.linkKind().english()), "with no cable between; got " + g.linkKind());
                     helper.assertTrue("gateway-1".equals(g.name()), "and takes the first default name; got " + g.name());
                     helper.assertTrue("desk".equals(g.hostName()), "on the host it linked to; got " + g.hostName());
                     helper.assertTrue(pc.linkedEndpoints().contains(helper.absolutePos(at).asLong()),
                             "the computer counts it as a peripheral");
                     helper.assertTrue(helper.getBlockState(at).getValue(NetworkGatewayBlock.LIT), "the lights come on");
-                    helper.assertTrue(g.log().entries().stream().anyMatch(e -> e.what().equals("link")),
+                    helper.assertTrue(g.log().entries().stream().anyMatch(e -> e.what().english().equals("link")),
                             "the link is the first thing in its log");
                 })
                 .thenSucceed();
@@ -105,7 +106,8 @@ public final class NetworkGatewayGameTests {
                 .thenExecuteAfter(SETTLE + 6, () -> {
                     final NetworkGatewayBlockEntity g = gatewayAt(helper, at);
                     helper.assertTrue(g.online(), "the cable on the back socket links");
-                    helper.assertTrue("cable, 2 blocks".equals(g.linkKind()), "and its length is known; got " + g.linkKind());
+                    helper.assertTrue("cable, 2 blocks".equals(g.linkKind().english()),
+                            "and its length is known; got " + g.linkKind());
                     final NetworkGatewayBlockEntity other = gatewayAt(helper, second);
                     helper.assertTrue(other.online(), "the second Gateway links too");
                     helper.assertTrue(!other.name().equals(g.name()), "under its own default name; got " + other.name());
@@ -126,10 +128,10 @@ public final class NetworkGatewayGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 4, () -> {
                     final NetworkGatewayBlockEntity g = gatewayAt(helper, at);
-                    helper.assertTrue(g.rename("CC Bridge!", "desk").contains("cc-bridge"), "the name is cleaned");
+                    helper.assertTrue(g.rename("CC Bridge!", "desk").english().contains("cc-bridge"), "the name is cleaned");
                     helper.assertTrue("cc-bridge".equals(g.name()), "and kept; got " + g.name());
                     g.setPermissions(GatewayPermissions.DEFAULT.withRead(false)
-                            .withCeiling(OperationPriority.HIGH).withCallCap(16), "desk", "set everything");
+                            .withCeiling(OperationPriority.HIGH).withCallCap(16), "desk", Text.literal("set everything"));
                     g.buffer().setStackInSlot(2, new ItemStack(Items.COBBLESTONE, 7));
                     final CompoundTag saved = g.saveWithoutMetadata(helper.getLevel().registryAccess());
                     final NetworkGatewayBlockEntity fresh = new NetworkGatewayBlockEntity(at, helper.getBlockState(at));
@@ -140,7 +142,7 @@ public final class NetworkGatewayGameTests {
                                     && p.ceiling() == OperationPriority.HIGH && p.callCap() == 16,
                             "so do the permissions; got " + p);
                     helper.assertTrue(fresh.log().size() == g.log().size() && fresh.log().entries().get(0).what()
-                            .equals("set everything"), "and the log, newest first");
+                            .english().equals("set everything"), "and the log, newest first");
                     helper.assertTrue(fresh.buffer().getStackInSlot(2).getCount() == 7, "and the buffer");
                     helper.assertTrue(fresh.log().entries().get(0).tone() == GatewayLog.Tone.OK, "with its tones");
                 })

@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.menu.ExportBusMenu;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
@@ -21,12 +22,12 @@ public class ExportBusScreen extends AbstractBusScreen<ExportBusMenu> {
     }
 
     @Override
-    protected String windowTitle() {
-        return "EXPORT BUS";
+    protected TextKey windowTitle() {
+        return BusTexts.EXPORT_TITLE;
     }
 
     @Override
-    protected String filterHint() {
-        return "Click an item to set the export filter";
+    protected TextKey filterHint() {
+        return BusTexts.EXPORT_HINT;
     }
 }

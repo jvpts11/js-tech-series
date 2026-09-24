@@ -9,21 +9,25 @@ package dev.jstech.computers.datacenter;
 
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.StableIds;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 
 /**
  * How a Server Router spreads Operations across the Servers of one output-face section.
  */
+@TextHolder
 public enum LoadBalanceMode implements IStableId {
-    ROUND_ROBIN(0, "ROUND-ROBIN"),
-    LEAST_LOADED(1, "LEAST-LOADED"),
-    MANUAL(2, "MANUAL");
+    ROUND_ROBIN(0, TextKey.of("jsc.load_balance.round_robin", "ROUND-ROBIN")),
+    LEAST_LOADED(1, TextKey.of("jsc.load_balance.least_loaded", "LEAST-LOADED")),
+    MANUAL(2, TextKey.of("jsc.load_balance.manual", "MANUAL"));
+
+    private final int id;
+    private final TextKey label;
 
     private static final StableIds<LoadBalanceMode> IDS = StableIds.of(LoadBalanceMode.class);
 
-    private final int id;
-    private final String label;
-
-    LoadBalanceMode(final int id, final String label) {
+    LoadBalanceMode(final int id, final TextKey label) {
         this.id = id;
         this.label = label;
     }
@@ -33,9 +37,14 @@ public enum LoadBalanceMode implements IStableId {
         return id;
     }
 
-    /** What the router's screen and the Cluster Manager call the mode. */
+    /** What the router's screen and the Cluster Manager call the mode, in English. */
     public String label() {
-        return label;
+        return label.english();
+    }
+
+    /** The same, as text for a player to read in their language. */
+    public Text text() {
+        return label.text();
     }
 
     /** The mode the router's button moves on to from this one. */

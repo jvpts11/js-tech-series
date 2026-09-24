@@ -13,7 +13,6 @@ import dan200.computercraft.api.lua.LuaFunction;
 import dan200.computercraft.api.peripheral.IComputerAccess;
 import dan200.computercraft.api.peripheral.IPeripheral;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
-import dev.jstech.computers.gateway.GatewayLog;
 import dev.jstech.computers.gateway.GatewayRefusedException;
 import dev.jstech.computers.gateway.GatewayService;
 import java.util.ArrayList;
@@ -293,7 +292,7 @@ public final class GatewayPeripheral implements IPeripheral {
     public boolean send(final IComputerAccess computer, final String text) throws LuaException {
         service();
         gateway.said(computer.getID(), text, gateway.getLevel() == null ? 0L : gateway.getLevel().getGameTime());
-        gateway.logged("computer " + computer.getID(), "send", "said", GatewayLog.Tone.OK);
+        gateway.loggedSaid(new GatewayService.Caller(computer.getID()).label());
         return true;
     }
 

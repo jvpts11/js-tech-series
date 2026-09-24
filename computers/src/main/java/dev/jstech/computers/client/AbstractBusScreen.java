@@ -12,9 +12,12 @@ import dev.jstech.computers.gui.layout.BusLayout;
 import dev.jstech.computers.menu.AbstractBusMenu;
 import dev.jstech.computers.operation.payload.SetBusNamePayload;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -39,10 +42,10 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
     }
 
     /** The window caption, e.g. "EXPORT BUS". */
-    protected abstract String windowTitle();
+    protected abstract TextKey windowTitle();
 
     /** The tooltip shown when hovering the empty filter slot. */
-    protected abstract String filterHint();
+    protected abstract TextKey filterHint();
 
     @Override
     protected void init() {
@@ -50,7 +53,7 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
         final int bx = leftPos + BusLayout.NAME_X + 3;
         final int by = topPos + BusLayout.NAME_Y + 2;
         nameBox = new EditBox(font, bx, by, BusLayout.NAME_W - 6, BusLayout.NAME_H - 3,
-                Component.literal("name"));
+                GameText.component(BusTexts.NAME_FIELD));
         nameBox.setBordered(false);
         nameBox.setMaxLength(AbstractBusPart.MAX_NAME_LENGTH);
         nameBox.setTextColor(JsTechTheme.text());
@@ -119,20 +122,23 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
 
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
-        JsTechTheme.text(g, font, windowTitle(), 12, 11, JsTechTheme.text());
+        JsTechTheme.text(g, font, GameText.resolve(windowTitle()), 12, 11, JsTechTheme.text());
         final boolean linked = menu.linked();
-        final String pill = linked ? "LINKED" : "OFFLINE";
+        final String pill = GameText.resolve(linked ? BusTexts.LINKED : BusTexts.OFFLINE);
         final int pillColor = linked ? JsTechTheme.green() : JsTechTheme.red();
         final int pillX = BusLayout.HEADER_W - font.width(pill);
         JsTechTheme.text(g, font, pill, pillX, 11, pillColor);
         g.fill(pillX - 6, 11, pillX - 2, 15, pillColor);
 
-        JsTechTheme.text(g, font, "NAME", BusLayout.NAME_LABEL_X, BusLayout.NAME_LABEL_Y, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(BusTexts.NAME), BusLayout.NAME_LABEL_X, BusLayout.NAME_LABEL_Y,
+                JsTechTheme.dim());
 
         if (menu.stockControlsApply()) {
             // Min / max steppers: label + centered value + "-"/"+".
-            JsTechTheme.text(g, font, "MIN", BusLayout.LABEL_X, BusLayout.MIN_Y + 3, JsTechTheme.dim());
-            JsTechTheme.text(g, font, "MAX", BusLayout.LABEL_X, BusLayout.MAX_Y + 3, JsTechTheme.dim());
+            JsTechTheme.text(g, font, GameText.resolve(BusTexts.MIN), BusLayout.LABEL_X, BusLayout.MIN_Y + 3,
+                    JsTechTheme.dim());
+            JsTechTheme.text(g, font, GameText.resolve(BusTexts.MAX), BusLayout.LABEL_X, BusLayout.MAX_Y + 3,
+                    JsTechTheme.dim());
             JsTechTheme.textCenter(g, font, "-", BusLayout.MINUS_X + BusLayout.STEP / 2,
                     BusLayout.MIN_Y + 3, JsTechTheme.accent());
             JsTechTheme.textCenter(g, font, "-", BusLayout.MINUS_X + BusLayout.STEP / 2,
@@ -144,28 +150,35 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
             final int mid = (BusLayout.MINUS_X + BusLayout.STEP + BusLayout.PLUS_X) / 2;
             JsTechTheme.textCenter(g, font, String.valueOf(menu.min()), mid, BusLayout.MIN_Y + 3,
                     JsTechTheme.text());
-            JsTechTheme.textCenter(g, font, menu.max() <= 0 ? "any" : String.valueOf(menu.max()), mid,
-                    BusLayout.MAX_Y + 3, JsTechTheme.text());
+            JsTechTheme.textCenter(g, font, menu.max() <= 0 ? GameText.resolve(BusTexts.ANY) : String.valueOf(menu.max()),
+                    mid, BusLayout.MAX_Y + 3, JsTechTheme.text());
 
             // Mode toggle.
-            JsTechTheme.text(g, font, "MODE", BusLayout.LABEL_X, BusLayout.MODE_Y + 4, JsTechTheme.dim());
-            final String modeText = menu.mode() == AbstractBusPart.MODE_CONTINUOUS ? "CONTINUOUS" : "ON DEMAND";
+            JsTechTheme.text(g, font, GameText.resolve(BusTexts.MODE), BusLayout.LABEL_X, BusLayout.MODE_Y + 4,
+                    JsTechTheme.dim());
+            final String modeText = GameText.resolve(menu.mode() == AbstractBusPart.MODE_CONTINUOUS
+                    ? BusTexts.CONTINUOUS : BusTexts.ON_DEMAND);
             JsTechTheme.textCenter(g, font, modeText, BusLayout.MODE_X + BusLayout.MODE_W / 2,
                     BusLayout.MODE_Y + 4, JsTechTheme.accent());
         } else {
             /*
              * A passive crafting bus keeps its filter (it routes the mounted face) but has no stock window:
-             * explain the filter in place of the inapplicable min/max/mode controls.
+             * explain the filter in place of the inapplicable min/max/mode controls, wrapped to the room the
+             * controls leave, in whatever language it reads in.
              */
-            JsTechTheme.textS(g, font, "Filter pins what this face", BusLayout.LABEL_X,
-                    BusLayout.MIN_Y + 1, JsTechTheme.dim());
-            JsTechTheme.textS(g, font, "carries (empty = any). The", BusLayout.LABEL_X,
-                    BusLayout.MIN_Y + 10, JsTechTheme.dim());
-            JsTechTheme.textS(g, font, "crafting engine drives it.", BusLayout.LABEL_X,
-                    BusLayout.MIN_Y + 19, JsTechTheme.dim());
+            final int room = (int) ((BusLayout.WIDTH - BusLayout.LABEL_X - 8) / JsTechTheme.small());
+            int lineY = BusLayout.MIN_Y + 1;
+            for (final FormattedCharSequence line : font.split(GameText.component(BusTexts.PASSIVE_FILTER), room)) {
+                g.pose().pushPose();
+                g.pose().translate(BusLayout.LABEL_X, lineY, 0);
+                g.pose().scale(JsTechTheme.small(), JsTechTheme.small(), 1.0f);
+                g.drawString(font, line, 0, 0, JsTechTheme.dim(), false);
+                g.pose().popPose();
+                lineY += 9;
+            }
         }
 
-        JsTechTheme.text(g, font, "INVENTORY", 8, BusLayout.INV_LABEL_Y, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(BusTexts.INVENTORY), 8, BusLayout.INV_LABEL_Y, JsTechTheme.dim());
     }
 
     @Override
@@ -220,7 +233,7 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
         // Hint on the empty ghost filter slot (a held item sets the filter, not consumed).
         if (menu.filterApplies() && menu.filterStack().isEmpty()
                 && hover(mouseX, mouseY, BusLayout.FILTER_X, BusLayout.FILTER_Y, 16, 16)) {
-            g.renderTooltip(font, Component.literal(filterHint()), mouseX, mouseY);
+            g.renderTooltip(font, GameText.component(filterHint()), mouseX, mouseY);
         }
     }
 }

@@ -108,6 +108,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   and so are a craft's recipe choices, what they differ in and what a plan is short of. Items, machines and recipe
   results are named in each player's language, a machine that is a block goes by the block's own name, and the
   priority tags and the kinds of bus are translatable too.
+- The Gateway Manager, the Network Gateway's own screen and the `gateway` command are text a language file can
+  translate, and so is the Gateway's log: what the Gateway did and how each request went read in the language of
+  whoever looks at the log, while a request stays written as it was asked. A Gateway's place and its link travel
+  apart, so the rail no longer cuts a translated line in two.
+- The assembly screens of the Personal Computer, the Mainframe, the Server and the Cluster Management Computer, the
+  server rack and the Server Router, the buses, the firmware's own install screen, the boot manager's help, the
+  installers' frames, the KVM switch and the splash screens are text a language file can translate, and so are the
+  reasons a build is not a working computer and the load-balancing modes. The passive bus's explanation wraps to
+  the room it has in any language.
 
 ### Fixed
 - A monitor is used by one player at a time. A second player who used it while somebody was at it was handed a

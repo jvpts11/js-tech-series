@@ -107,16 +107,18 @@ final class InstallerFrames {
         g.fill(sx, sy, sx + sw, sy + band, ink.bar());
         TextWall.draw(g, font, GameText.resolve(flow.style().heading(flow.page(), flow.systemName())), sx + 10,
                 sy + 6, ink.barText());
-        TextWall.right(g, font, "[ Help ]", sx + sw - 10, sy + 6, ink.barText());
+        TextWall.right(g, font, GameText.resolve(InstallerScreenTexts.FRAME_HELP), sx + sw - 10, sy + 6, ink.barText());
         /*
          * The buttons of that installer are written out rather than drawn: it ran in a terminal, and the
          * brackets around a word were the whole of what a button looked like there.
          */
         final boolean finishing = flow.page() == InstallerPage.COPY || flow.page() == InstallerPage.DONE;
-        final String first = finishing ? "[ Reboot Now ]" : "[ Done       ]";
+        final String first = GameText.resolve(finishing ? InstallerScreenTexts.FRAME_REBOOT_NOW
+                : InstallerScreenTexts.FRAME_DONE);
         TextWall.centered(g, font, first, sx + sw / 2, sy + sh - 22, ink.accent());
         if (!finishing) {
-            TextWall.centered(g, font, "[ Back       ]", sx + sw / 2, sy + sh - 12, ink.text());
+            TextWall.centered(g, font, GameText.resolve(InstallerScreenTexts.FRAME_BACK), sx + sw / 2, sy + sh - 12,
+                    ink.text());
         }
         return new Frame(sx + 12, sy + band + 10, sw - 24, sh - band - 40, ink.paint(), null, null, null, null);
     }
@@ -161,7 +163,8 @@ final class InstallerFrames {
         final int dh = sh - 38;
         bevel(g, dx, dy, dw, dh, 0xFFC0C0C0, true);
         g.fillGradient(dx + 2, dy + 2, dx + dw - 2, dy + 2 + TITLE_BAR, 0xFF000080, 0xFF1084D0);
-        g.drawString(font, title + " Wizard", dx + 6, dy + 6, 0xFFFFFFFF, false);
+        g.drawString(font, GameText.resolve(InstallerScreenTexts.FRAME_WIZARD.with(title)), dx + 6, dy + 6, 0xFFFFFFFF,
+                false);
 
         final int railW = WIZARD_W;
         final int railTop = dy + TITLE_BAR + 8;
@@ -181,11 +184,14 @@ final class InstallerFrames {
         g.fill(dx + 6, dy + dh - 23, dx + dw - 6, dy + dh - 22, 0xFFFFFFFF);
 
         final int by = dy + dh - 18;
-        final int[] cancel = button(g, font, dx + dw - 6 - 52, by, 52, "Cancel", false, held == Held.CANCEL);
+        final int[] cancel = button(g, font, dx + dw - 6 - 52, by, 52, GameText.resolve(InstallerScreenTexts.FRAME_CANCEL),
+                false, held == Held.CANCEL);
         final boolean canGo = flow.canContinue() || flow.page() == InstallerPage.DONE;
         final int[] next = button(g, font, dx + dw - 6 - 106, by, 52,
-                flow.page() == InstallerPage.DONE ? "Restart" : "Next >", canGo, held == Held.NEXT);
-        final int[] back = button(g, font, dx + dw - 6 - 160, by, 52, "< Back", false, held == Held.BACK);
+                GameText.resolve(flow.page() == InstallerPage.DONE ? InstallerScreenTexts.FRAME_RESTART
+                        : InstallerScreenTexts.FRAME_NEXT_ARROW), canGo, held == Held.NEXT);
+        final int[] back = button(g, font, dx + dw - 6 - 160, by, 52,
+                GameText.resolve(InstallerScreenTexts.FRAME_BACK_ARROW), false, held == Held.BACK);
 
         final int cx = dx + 6 + railW + 8;
         final Paint paint = new Paint(0xFF000000, 0xFF000000, 0xFF404040, 0xFF0000A8, 0xFF000080, 0xFFFFFFFF);
@@ -221,10 +227,11 @@ final class InstallerFrames {
             ty += 11;
         }
         ty += 6;
-        g.drawString(font, "Setup will complete in", sx + 8, ty, 0xFFDCE6FA, false);
-        g.drawString(font, "approximately:", sx + 8, ty + 9, 0xFFDCE6FA, false);
+        g.drawString(font, GameText.resolve(InstallerScreenTexts.FRAME_COMPLETE_IN), sx + 8, ty, 0xFFDCE6FA, false);
+        g.drawString(font, GameText.resolve(InstallerScreenTexts.FRAME_APPROXIMATELY), sx + 8, ty + 9, 0xFFDCE6FA, false);
         final int left = Math.max(0, (flow.ticksTotal() - ticksDone) / 20);
-        g.drawString(font, left + " seconds", sx + 8, ty + 20, 0xFFFFFFFF, false);
+        g.drawString(font, GameText.resolve(InstallerScreenTexts.FRAME_SECONDS.with(left)), sx + 8, ty + 20, 0xFFFFFFFF,
+                false);
         g.fill(sx + 8, ty + 34, sx + panelW - 8, ty + 40, 0xFF16307F);
         g.fill(sx + 8, ty + 34, sx + 8 + (panelW - 16) * flow.permille(ticksDone) / 1000, ty + 40, 0xFF7BC34A);
 
@@ -249,8 +256,10 @@ final class InstallerFrames {
                 false);
         final int by = dy + dh - 18;
         final boolean canGo = flow.canContinue();
-        final int[] next = button(g, font, cx + cw - 6 - 52, by, 52, "Next >", canGo, held == Held.NEXT);
-        final int[] back = button(g, font, cx + cw - 6 - 106, by, 52, "< Back", false, held == Held.BACK);
+        final int[] next = button(g, font, cx + cw - 6 - 52, by, 52, GameText.resolve(InstallerScreenTexts.FRAME_NEXT_ARROW),
+                canGo, held == Held.NEXT);
+        final int[] back = button(g, font, cx + cw - 6 - 106, by, 52,
+                GameText.resolve(InstallerScreenTexts.FRAME_BACK_ARROW), false, held == Held.BACK);
         final Paint paint = new Paint(0xFF000000, 0xFF000000, 0xFF505050, 0xFF0846C0, 0xFF0846C0, 0xFFFFFFFF);
         return new Frame(cx + 8, dy + TITLE_BAR + 8, cw - 16, dh - TITLE_BAR - 32, paint, next, back, null, null);
     }
@@ -281,11 +290,13 @@ final class InstallerFrames {
         final boolean working = flow.page() == InstallerPage.COPY;
         final boolean canGo = flow.canContinue() || flow.page() == InstallerPage.DONE;
         final int[] next = working ? null : primary(g, font, cx + cw - 10 - 56, by, 56,
-                flow.page() == InstallerPage.DONE ? "Restart" : "Next", canGo, held == Held.NEXT);
-        final int[] back = working ? null : pale(g, font, cx + cw - 10 - 118, by, 56, "Back",
-                held == Held.BACK);
+                GameText.resolve(flow.page() == InstallerPage.DONE ? InstallerScreenTexts.FRAME_RESTART
+                        : InstallerScreenTexts.FRAME_NEXT), canGo, held == Held.NEXT);
+        final int[] back = working ? null : pale(g, font, cx + cw - 10 - 118, by, 56,
+                GameText.resolve(InstallerScreenTexts.FRAME_BACK_PLAIN), held == Held.BACK);
         final int[] erase = flow.page() == InstallerPage.DISK
-                ? pale(g, font, cx + 10, by, 66, "Erase disk", held == Held.ERASE) : null;
+                ? pale(g, font, cx + 10, by, 66, GameText.resolve(InstallerScreenTexts.FRAME_ERASE_DISK), held == Held.ERASE)
+                : null;
         final Paint paint = new Paint(0xFF202434, 0xFF202434, 0xFF6B7488, 0xFF3A6AE0, 0xFFE7EEFC, 0xFF202434);
         return new Frame(cx + 10, cy + 42, cw - 20, ch - 68, paint, next, back, null, erase);
     }

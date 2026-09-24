@@ -209,16 +209,19 @@ public final class PayloadRoundTripGameTests {
             buffer.add(i == 0 ? new ItemStack(Items.OAK_LOG, 32) : ItemStack.EMPTY);
         }
         final GatewayManagerStatePayload.WireLog entry =
-                new GatewayManagerStatePayload.WireLog("12:00", "desk", "link", "ok", 0);
+                new GatewayManagerStatePayload.WireLog("12:00", Text.literal("desk"), Text.literal("link"),
+                        Text.literal("ok"), 0);
         final GatewayManagerStatePayload.Detail detail = new GatewayManagerStatePayload.Detail(123L, "gateway-1",
-                "adjacent", true, 4000, 1, true, 750, false, 0, 0, 12, 3, "jsc_gateway_gateway_1", 5, buffer,
+                Text.literal("adjacent"), true, 4000, 1, true, 750, false, 0, 0, 12, 3, "jsc_gateway_gateway_1", 5, buffer,
                 List.of(entry),
-                true, true, 2, 2, List.of(new GatewayManagerStatePayload.WireComputer(5, "turtle", true, false, "now")),
+                true, true, 2, 2, List.of(new GatewayManagerStatePayload.WireComputer(5, "turtle", true, false,
+                        Text.literal("now"))),
                 List.of(entry));
         roundTrip(helper, GatewayManagerStatePayload.STREAM_CODEC, new GatewayManagerStatePayload(
                 new GatewayManagerStatePayload.Head("desk", true, "1.120.2", 12, 2),
-                List.of(new GatewayManagerStatePayload.WireGateway(123L, "gateway-1", "adjacent", true, false)),
-                detail, ""));
+                List.of(new GatewayManagerStatePayload.WireGateway(123L, "gateway-1", Text.literal("at 1, 2, 3"),
+                        Text.literal("adjacent"), true, false)),
+                detail, Text.EMPTY));
         helper.succeed();
     }
 

@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.os.boot.BootSplash;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -119,7 +120,7 @@ public final class BootSplashArt {
          */
         if (going && endsDark && total > 0 && ticks >= total * SAFE_FROM / 100) {
             g.fill(x, y, x + w, y + h, 0xFF000000);
-            g.drawCenteredString(font, "It's now safe to turn off your computer.",
+            g.drawCenteredString(font, GameText.resolve(MonitorScreenTexts.SAFE_TO_TURN_OFF),
                     x + w / 2, y + h / 2 - 4, SAFE_TEXT);
             return;
         }
@@ -220,7 +221,7 @@ public final class BootSplashArt {
     private static void welcome(final GuiGraphics g, final Font font, final int x, final int y, final int w,
                                 final int h) {
         bands(g, x, y, w, h);
-        big(g, font, "welcome", x + w * 45 / 100, y + h / 2 - 12);
+        big(g, font, GameText.resolve(MonitorScreenTexts.WELCOME), x + w * 45 / 100, y + h / 2 - 12);
     }
 
     /**

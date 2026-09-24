@@ -179,14 +179,12 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
             ty += WALL_ROW + 2;
         }
         int hy = boxBottom + 8;
-        wall(g, "   Use the Up and Down keys to select which entry is", x + MARGIN, hy, TEXT);
+        wall(g, GameText.resolve(FirmwareScreenTexts.LOADER_HELP_FIRST), x + MARGIN, hy, TEXT);
         hy += WALL_ROW;
-        wall(g, "   highlighted. Press Enter to boot the selected entry.", x + MARGIN, hy, TEXT);
+        wall(g, GameText.resolve(FirmwareScreenTexts.LOADER_HELP_SECOND), x + MARGIN, hy, TEXT);
         hy += WALL_ROW;
-        wall(g, this.held
-                ? "The highlighted entry will be executed when you press Enter."
-                : "The highlighted entry will be executed automatically in "
-                        + this.menu.secondsLeft(this.remaining) + "s.", x + MARGIN, hy, TEXT);
+        wall(g, GameText.resolve(this.held ? FirmwareScreenTexts.LOADER_HELD.text()
+                : FirmwareScreenTexts.LOADER_COUNTDOWN.with(this.menu.secondsLeft(this.remaining))), x + MARGIN, hy, TEXT);
     }
 
     /** The single rule around the list, which is the whole of that manager's furniture. */

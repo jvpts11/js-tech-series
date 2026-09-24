@@ -12,6 +12,7 @@ import dev.jstech.computers.gui.layout.NetworkGatewayLayout;
 import dev.jstech.computers.menu.NetworkGatewayMenu;
 import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.EraThemes;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -28,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 public class NetworkGatewayScreen extends AbstractContainerScreen<NetworkGatewayMenu> {
 
     private static final int LINES = 3;
-    private static final String TITLE = "NETWORK GATEWAY";
 
     private final EraTheme theme = EraThemes.STANDARD;
     private final String[] clippedLines = new String[LINES];
@@ -80,13 +80,15 @@ public class NetworkGatewayScreen extends AbstractContainerScreen<NetworkGateway
         final int lh = NetworkGatewayLayout.LINE_H;
         final String name = be == null ? "" : be.name();
         final String host = be == null ? "" : be.hostName();
-        line(g, 0, linked ? name + " on " + host + ", " + be.linkKind() : name + ", not linked: plug the cable in the back",
+        line(g, 0, GameText.resolve(linked ? NetworkGatewayTexts.LINKED.with(name, host, be.linkKind())
+                        : NetworkGatewayTexts.NOT_LINKED.with(name)),
                 ix, iy, linked ? theme.text() : theme.amber());
-        line(g, 1, be == null ? "" : "Seen from CC as " + be.peripheralName(), ix, iy + lh,
-                cc ? theme.text() : theme.dim());
-        line(g, 2, "Managed in Gateway Manager", ix, iy + lh * 2, theme.dim());
-        small(g, "ITEM BUFFER", x + NetworkGatewayLayout.BUFFER_X, y + NetworkGatewayLayout.BUFFER_CAPTION_Y, theme.dim());
-        small(g, "pull lands here, push leaves", x + NetworkGatewayLayout.BUFFER_HINT_X,
+        line(g, 1, be == null ? "" : GameText.resolve(NetworkGatewayTexts.SEEN_FROM_CC.with(be.peripheralName())),
+                ix, iy + lh, cc ? theme.text() : theme.dim());
+        line(g, 2, GameText.resolve(NetworkGatewayTexts.MANAGED), ix, iy + lh * 2, theme.dim());
+        small(g, GameText.resolve(NetworkGatewayTexts.ITEM_BUFFER), x + NetworkGatewayLayout.BUFFER_X,
+                y + NetworkGatewayLayout.BUFFER_CAPTION_Y, theme.dim());
+        small(g, GameText.resolve(NetworkGatewayTexts.BUFFER_HINT), x + NetworkGatewayLayout.BUFFER_HINT_X,
                 y + NetworkGatewayLayout.BUFFER_CAPTION_Y, theme.dim());
     }
 
@@ -116,7 +118,8 @@ public class NetworkGatewayScreen extends AbstractContainerScreen<NetworkGateway
 
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
-        g.drawString(font, TITLE, NetworkGatewayLayout.TITLE_X, NetworkGatewayLayout.TITLE_Y, theme.text(), false);
+        g.drawString(font, GameText.resolve(NetworkGatewayTexts.TITLE), NetworkGatewayLayout.TITLE_X,
+                NetworkGatewayLayout.TITLE_Y, theme.text(), false);
         smallLabel(g, "J's", NetworkGatewayLayout.LED_JS_LABEL_X, NetworkGatewayLayout.TITLE_Y);
         smallLabel(g, "CC", NetworkGatewayLayout.LED_CC_LABEL_X, NetworkGatewayLayout.TITLE_Y);
         g.drawString(font, playerInventoryTitle, NetworkGatewayLayout.INV_X, NetworkGatewayLayout.INV_LABEL_Y,

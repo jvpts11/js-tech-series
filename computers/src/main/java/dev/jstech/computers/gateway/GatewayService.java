@@ -62,7 +62,8 @@ import org.jetbrains.annotations.Nullable;
  * its id. An operation is named by its id; a prefix of the id is enough where it is unambiguous.
  *
  * <p>Why a request was refused is declared here and handed on in English, the machine's language: the other side
- * is another machine that reads it as data, and the Gateway's log keeps it as it was written.
+ * is another machine that reads it as data. The Gateway's log keeps it as text, read in the language of whoever
+ * looks at the log.
  */
 @TextHolder
 public final class GatewayService {
@@ -90,6 +91,20 @@ public final class GatewayService {
     private static final TextKey NO_PATTERN = TextKey.of("jsc.service.gateway.no_pattern", "no pattern crafts %s");
     private static final TextKey WOULD_NOT_STOP = TextKey.of("jsc.service.gateway.would_not_stop", "would not stop");
     private static final TextKey NOT_RUNNING = TextKey.of("jsc.service.gateway.not_running", "not running");
+    /* How a request went, as the Gateway's log shows it. */
+    private static final TextKey LOG_STOPPED = TextKey.of("jsc.service.gateway.log.stopped", "stopped");
+    private static final TextKey LOG_PROCESS = TextKey.of("jsc.service.gateway.log.process", "process %s");
+    private static final TextKey LOG_OK = TextKey.of("jsc.service.gateway.log.ok", "ok");
+    private static final TextKey LOG_STARTED = TextKey.of("jsc.service.gateway.log.started", "started");
+    private static final TextKey LOG_DONE = TextKey.of("jsc.service.gateway.log.done", "done");
+    private static final TextKey LOG_PARTIAL = TextKey.of("jsc.service.gateway.log.partial", "partial");
+    private static final TextKey LOG_FAILED = TextKey.of("jsc.service.gateway.log.failed", "failed");
+    private static final TextKey LOG_RUNNING = TextKey.of("jsc.service.gateway.log.running", "running");
+    private static final TextKey LOG_WAITING = TextKey.of("jsc.service.gateway.log.waiting", "waiting");
+    private static final TextKey LOG_LOCKED = TextKey.of("jsc.service.gateway.log.locked", "locked");
+    private static final TextKey LOG_PENDING = TextKey.of("jsc.service.gateway.log.pending", "pending");
+    private static final TextKey LOG_DISCARDED = TextKey.of("jsc.service.gateway.log.discarded", "discarded");
+    private static final TextKey LOG_UNKNOWN = TextKey.of("jsc.service.gateway.log.unknown", "unknown");
     private static final TextKey NO_SUCH_COMPUTER =
             TextKey.of("jsc.service.gateway.no_such_computer", "%s: no such computer on this network");
     private static final TextKey POWERED_OFF = TextKey.of("jsc.service.gateway.powered_off", "%s is powered off");
@@ -390,12 +405,12 @@ public final class GatewayService {
         for (final INetworkOperation live : mainframe.liveOperations()) {
             if (matches(live.operationId(), id)) {
                 final boolean stopped = mainframe.cancelOperation(live.operationId());
-                gateway.logged(caller.label(), what, stopped ? "stopped" : WOULD_NOT_STOP.text().english(),
+                gateway.logged(caller.label(), what, (stopped ? LOG_STOPPED : WOULD_NOT_STOP).text(),
                         stopped ? GatewayLog.Tone.OK : GatewayLog.Tone.BUSY);
                 return stopped;
             }
         }
-        gateway.logged(caller.label(), what, NOT_RUNNING.text().english(), GatewayLog.Tone.BUSY);
+        gateway.logged(caller.label(), what, NOT_RUNNING.text(), GatewayLog.Tone.BUSY);
         return false;
     }
 
@@ -427,7 +442,7 @@ public final class GatewayService {
             });
         }
         gateway.stats().count(GatewayStats.Kind.OPERATION, now());
-        gateway.logged(caller.label(), what, "process " + launch.id(), GatewayLog.Tone.OK);
+        gateway.logged(caller.label(), what, LOG_PROCESS.with(launch.id()), GatewayLog.Tone.OK);
         charge(SigmaCosts.SUBMIT);
         return launch.id();
     }
@@ -440,7 +455,7 @@ public final class GatewayService {
         final StorageKey key = resolve(name);
         final long total = storage().count(key);
         gateway.watch(caller.id(), nameOf(key), total);
-        gateway.logged(caller.label(), "watch " + nameOf(key), "ok", GatewayLog.Tone.OK);
+        gateway.logged(caller.label(), "watch " + nameOf(key), LOG_OK.text(), GatewayLog.Tone.OK);
         charge(SigmaCosts.READ);
         return total;
     }
@@ -460,7 +475,8 @@ public final class GatewayService {
         final GatewayLog.Tone tone = kind.startsWith("err") ? GatewayLog.Tone.DENIED
                 : kind.startsWith("warn") ? GatewayLog.Tone.BUSY : GatewayLog.Tone.OK;
         final String line = text == null ? "" : text.length() > WHAT_LENGTH ? text.substring(0, WHAT_LENGTH) : text;
-        gateway.logged(caller.label(), line, kind.isEmpty() ? "info" : kind, tone);
+        // The level is the caller's own word for it, written down as it was given.
+        gateway.logged(caller.label(), line, Text.literal(kind.isEmpty() ? "info" : kind), tone);
         charge(SigmaCosts.GLANCE_NETWORK);
     }
 
@@ -488,7 +504,7 @@ public final class GatewayService {
     }
 
     private GatewayRefusedException denied(final Caller caller, final String what, final Text why) {
-        gateway.logged(caller.label(), what, why.english(), GatewayLog.Tone.DENIED);
+        gateway.logged(caller.label(), what, why, GatewayLog.Tone.DENIED);
         return new GatewayRefusedException(why);
     }
 
@@ -529,7 +545,7 @@ public final class GatewayService {
 
     private String started(final Caller caller, final String what, final INetworkOperation op, final int cost) {
         gateway.stats().count(GatewayStats.Kind.OPERATION, now());
-        gateway.logged(caller.label(), what, "started", GatewayLog.Tone.BUSY);
+        gateway.logged(caller.label(), what, LOG_STARTED.text(), GatewayLog.Tone.BUSY);
         charge(cost);
         return op.operationId().toString();
     }
@@ -537,11 +553,25 @@ public final class GatewayService {
     /** An operation the caller started has settled: the log and the computer both hear how it went. */
     private void settled(final Caller caller, final INetworkOperation op) {
         final OperationRecord record = op.toRecord();
-        final String status = status(record.status());
         gateway.logged(caller.label(), typeName(record.type()) + " " + record.moved() + " " + nameOf(record.key()),
-                status, record.status() == OperationRecord.STATUS_COMPLETED ? GatewayLog.Tone.OK
+                statusText(record.status()), record.status() == OperationRecord.STATUS_COMPLETED ? GatewayLog.Tone.OK
                         : record.status() == OperationRecord.STATUS_PARTIAL ? GatewayLog.Tone.BUSY : GatewayLog.Tone.DENIED);
-        gateway.eventTo(caller.id(), EVENT_OPERATION, op.operationId().toString(), status);
+        gateway.eventTo(caller.id(), EVENT_OPERATION, op.operationId().toString(), status(record.status()));
+    }
+
+    /** The same state as the Gateway's log shows it, in the language of whoever reads the log. */
+    private static Text statusText(final byte status) {
+        return (switch (status) {
+            case OperationRecord.STATUS_COMPLETED -> LOG_DONE;
+            case OperationRecord.STATUS_PARTIAL -> LOG_PARTIAL;
+            case OperationRecord.STATUS_FAILED -> LOG_FAILED;
+            case OperationRecord.STATUS_PROCESSING -> LOG_RUNNING;
+            case OperationRecord.STATUS_WAITING -> LOG_WAITING;
+            case OperationRecord.STATUS_RESOURCE_LOCKED -> LOG_LOCKED;
+            case OperationRecord.STATUS_PENDING -> LOG_PENDING;
+            case OperationRecord.STATUS_DISCARDED -> LOG_DISCARDED;
+            default -> LOG_UNKNOWN;
+        }).text();
     }
 
     private void returnToBuffer(final StorageKey key, final long amount) {

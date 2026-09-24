@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.menu.ReceivingBusMenu;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
@@ -22,12 +23,12 @@ public class ReceivingBusScreen extends AbstractBusScreen<ReceivingBusMenu> {
     }
 
     @Override
-    protected String windowTitle() {
-        return "CRAFTING RECEIVING BUS";
+    protected TextKey windowTitle() {
+        return BusTexts.RECEIVING_TITLE;
     }
 
     @Override
-    protected String filterHint() {
-        return "Click an item to set what to receive from the machine";
+    protected TextKey filterHint() {
+        return BusTexts.RECEIVING_HINT;
     }
 }

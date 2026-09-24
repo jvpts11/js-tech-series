@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.menu.ImportBusMenu;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
@@ -21,12 +22,12 @@ public class ImportBusScreen extends AbstractBusScreen<ImportBusMenu> {
     }
 
     @Override
-    protected String windowTitle() {
-        return "IMPORT BUS";
+    protected TextKey windowTitle() {
+        return BusTexts.IMPORT_TITLE;
     }
 
     @Override
-    protected String filterHint() {
-        return "Click an item to import only that type (empty = import everything)";
+    protected TextKey filterHint() {
+        return BusTexts.IMPORT_HINT;
     }
 }
