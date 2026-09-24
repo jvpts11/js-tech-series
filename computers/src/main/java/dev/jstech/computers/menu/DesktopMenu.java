@@ -33,7 +33,7 @@ import net.minecraft.world.item.ItemStack;
  * they only render and accept input while that window is the front, non-minimized one. The vanilla
  * container then drives the cursor, drag, and shift-click for free.
  */
-public class DesktopMenu extends AbstractContainerMenu {
+public class DesktopMenu extends AbstractContainerMenu implements IMonitorMenu {
 
     /** Count of player inventory slots: 27 main + 9 hotbar. */
     public static final int INVENTORY_SLOTS = 36;
@@ -206,6 +206,7 @@ public class DesktopMenu extends AbstractContainerMenu {
         return ramReservedMb;
     }
 
+    @Override
     public BlockPos monitorPos() {
         return monitorPos;
     }

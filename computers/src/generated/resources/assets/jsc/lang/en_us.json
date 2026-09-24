@@ -156,6 +156,7 @@
   "block.jsc.mainframe_part": "Mainframe",
   "block.jsc.monitor": "Monitor",
   "block.jsc.monitor.at_capacity": "The computer's monitor outputs are all in use",
+  "block.jsc.monitor.in_use": "%s is using this monitor",
   "block.jsc.monitor.needs_kvm": "This rack holds several computers - mount a KVM Switch to pick one",
   "block.jsc.monitor.no_computer": "No computer found in range over a Peripheral Cable",
   "block.jsc.monitor.no_gpu": "The computer has no GPU - install a GPU to host monitors (4 per GPU)",

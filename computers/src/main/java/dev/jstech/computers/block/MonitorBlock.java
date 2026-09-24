@@ -20,6 +20,7 @@ import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.menu.DosTerminalMenu;
+import dev.jstech.computers.menu.IMonitorMenu;
 import dev.jstech.computers.menu.LinuxTtyMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.menu.NetTerminalMenu;
@@ -165,6 +166,16 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
             return InteractionResult.SUCCESS;
         }
         if (player instanceof ServerPlayer serverPlayer) {
+            /*
+             * One screen, one keyboard: whoever is at it keeps it. Asked before anything else, because what
+             * follows ends the remote session the screen holds and opens a session over the one being read.
+             */
+            final Player using = IMonitorMenu.userOf(serverPlayer.serverLevel().players(), pos, player);
+            if (using != null) {
+                serverPlayer.displayClientMessage(GameText.component(
+                        MonitorTexts.IN_USE.with(using.getGameProfile().getName())), true);
+                return InteractionResult.SUCCESS;
+            }
             /*
              * Using the monitor directly always means "show me MY machine": any remote session this
              * screen was holding ends here.

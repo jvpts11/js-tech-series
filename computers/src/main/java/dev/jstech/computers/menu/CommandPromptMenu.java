@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A slotless menu for the Command Prompt. It holds no inventory (the console is driven entirely by command payloads) but being a real menu lets the server validate that the player has this prompt open for this host before running a typed line, exactly as the graphical terminal does.
  */
-public class CommandPromptMenu extends AbstractContainerMenu {
+public class CommandPromptMenu extends AbstractContainerMenu implements IMonitorMenu {
 
     private final BlockPos monitorPos;
     private final BlockPos hostPos;
@@ -169,6 +169,7 @@ public class CommandPromptMenu extends AbstractContainerMenu {
         return this.console.osLabel();
     }
 
+    @Override
     public BlockPos monitorPos() {
         return monitorPos;
     }

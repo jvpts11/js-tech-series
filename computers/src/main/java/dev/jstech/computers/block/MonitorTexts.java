@@ -28,6 +28,7 @@ final class MonitorTexts {
     static final TextKey RACK_EMPTY = TextKey.of("block.jsc.monitor.rack_empty", "The rack holds no computer to show");
     static final TextKey NEEDS_KVM = TextKey.of("block.jsc.monitor.needs_kvm",
             "This rack holds several computers - mount a KVM Switch to pick one");
+    static final TextKey IN_USE = TextKey.of("block.jsc.monitor.in_use", "%s is using this monitor");
 
     private MonitorTexts() {
     }

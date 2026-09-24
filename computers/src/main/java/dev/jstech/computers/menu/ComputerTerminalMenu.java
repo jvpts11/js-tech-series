@@ -46,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Menu for the Monitor terminal, the tabbed interface a Monitor opens onto the computer it is linked to.
  */
-public class ComputerTerminalMenu extends AbstractComputerMenu {
+public class ComputerTerminalMenu extends AbstractComputerMenu implements IMonitorMenu {
 
     public static final int TAB_LOCAL = 0;
     public static final int TAB_STORAGE = 1;
@@ -595,6 +595,7 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
         }
     }
 
+    @Override
     public BlockPos monitorPos() {
         return monitorPos;
     }

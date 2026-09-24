@@ -85,6 +85,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   such as `cluster list`, stay in line under their headings whatever length the words come out in.
 
 ### Fixed
+- A monitor is used by one player at a time. A second player who used it while somebody was at it was handed a
+  session over the one being typed into, and ended the remote session the screen was holding; now they are told
+  who is using the monitor, and the one at it keeps it until they walk away or close it.
 - The Macerator, Electric Furnace, Compressor and Coal Generator can be mined in survival. They need the right
   tool to come away, but no tool counted as right for them, so breaking one gave nothing back and took a long
   time doing it. A pickaxe is now their tool: it mines them at a pickaxe's pace, and they drop themselves.

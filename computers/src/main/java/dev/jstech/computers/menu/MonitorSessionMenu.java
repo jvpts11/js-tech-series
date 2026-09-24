@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
  * arriving by its own packet, and this carries only who is being looked at, on which monitor, and which of
  * the sessions it is, so the client knows which screen to open and the server knows who is still watching.
  */
-public class MonitorSessionMenu extends AbstractContainerMenu {
+public class MonitorSessionMenu extends AbstractContainerMenu implements IMonitorMenu {
 
     private final BlockPos monitorPos;
     private final BlockPos hostPos;
@@ -76,6 +76,7 @@ public class MonitorSessionMenu extends AbstractContainerMenu {
         buf.writeVarInt(phase.id());
     }
 
+    @Override
     public BlockPos monitorPos() {
         return this.monitorPos;
     }
