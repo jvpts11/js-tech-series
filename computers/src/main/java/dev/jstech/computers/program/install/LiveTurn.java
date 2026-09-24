@@ -12,6 +12,7 @@ import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.program.tty.ITtyProcess;
 import dev.jstech.computers.program.tty.TtyScript;
 import dev.jstech.computers.program.tty.TtyScriptProcess;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +36,13 @@ public record LiveTurn(boolean ok, List<CliLine> lines, @Nullable ITtyProcess to
         lines = List.copyOf(lines);
     }
 
-    /** Accepted, and answered with those lines. */
+    /** Accepted, and answered with those lines of data: a listing, a file, what was echoed. */
     public static LiveTurn said(final String... lines) {
+        return new LiveTurn(true, plain(lines, CliStyle.PLAIN), null, false);
+    }
+
+    /** Accepted, and answered with those lines, each read in the player's language. */
+    public static LiveTurn said(final Text... lines) {
         return new LiveTurn(true, plain(lines, CliStyle.PLAIN), null, false);
     }
 
@@ -50,9 +56,14 @@ public record LiveTurn(boolean ok, List<CliLine> lines, @Nullable ITtyProcess to
         return new LiveTurn(true, List.of(), null, false);
     }
 
-    /** Refused, in the tool's own words. */
-    public static LiveTurn refused(final String... lines) {
+    /** Refused, in the tool's own words, each line read in the player's language. */
+    public static LiveTurn refused(final Text... lines) {
         return new LiveTurn(false, plain(lines, CliStyle.ERROR), null, false);
+    }
+
+    /** Refused, in lines already put together. */
+    public static LiveTurn refused(final List<CliLine> lines) {
+        return new LiveTurn(false, lines, null, false);
     }
 
     /** Accepted, and left running: the script is played in front of the terminal until it is over. */
@@ -66,7 +77,7 @@ public record LiveTurn(boolean ok, List<CliLine> lines, @Nullable ITtyProcess to
     }
 
     /** The line that ends the installation. */
-    public static LiveTurn finished(final String... lines) {
+    public static LiveTurn finished(final Text... lines) {
         return new LiveTurn(true, plain(lines, CliStyle.PLAIN), null, true);
     }
 
@@ -85,6 +96,14 @@ public record LiveTurn(boolean ok, List<CliLine> lines, @Nullable ITtyProcess to
     private static List<CliLine> plain(final String[] lines, final CliStyle style) {
         final List<CliLine> out = new ArrayList<>(lines.length);
         for (final String line : lines) {
+            out.add(new CliLine(line, style));
+        }
+        return out;
+    }
+
+    private static List<CliLine> plain(final Text[] lines, final CliStyle style) {
+        final List<CliLine> out = new ArrayList<>(lines.length);
+        for (final Text line : lines) {
             out.add(new CliLine(line, style));
         }
         return out;

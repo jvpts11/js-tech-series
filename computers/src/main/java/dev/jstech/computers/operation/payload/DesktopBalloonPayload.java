@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -20,9 +22,11 @@ import net.minecraft.resources.ResourceLocation;
  * carries the name of a program a click on it opens that program. It is how one of the editions greeted its
  * owner on a first start, instead of putting a window in front of them before they had touched anything.
  *
+ * @param title what the notice is headed with, read in the player's language
+ * @param body  what it says, read the same way
  * @param opens the program a click on it opens, or empty when clicking it only puts the notice away
  */
-public record DesktopBalloonPayload(BlockPos hostPos, String title, String body, String opens)
+public record DesktopBalloonPayload(BlockPos hostPos, Text title, Text body, String opens)
         implements CustomPacketPayload {
 
     /** The longest any part of a notice may be; past that it is a document and not a notice. */
@@ -41,14 +45,14 @@ public record DesktopBalloonPayload(BlockPos hostPos, String title, String body,
 
     private static void encode(final RegistryFriendlyByteBuf buf, final DesktopBalloonPayload p) {
         buf.writeBlockPos(p.hostPos());
-        buf.writeUtf(clip(p.title()), MAX_TEXT);
-        buf.writeUtf(clip(p.body()), MAX_TEXT);
+        TextCodecs.STREAM_CODEC.encode(buf, p.title());
+        TextCodecs.STREAM_CODEC.encode(buf, p.body());
         buf.writeUtf(clip(p.opens()), MAX_TEXT);
     }
 
     private static DesktopBalloonPayload decode(final RegistryFriendlyByteBuf buf) {
-        return new DesktopBalloonPayload(buf.readBlockPos(), buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT),
-                buf.readUtf(MAX_TEXT));
+        return new DesktopBalloonPayload(buf.readBlockPos(), TextCodecs.STREAM_CODEC.decode(buf),
+                TextCodecs.STREAM_CODEC.decode(buf), buf.readUtf(MAX_TEXT));
     }
 
     /* Cut rather than refused: a notice about a machine with a very long name should still be said. */

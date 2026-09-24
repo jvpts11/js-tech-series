@@ -25,6 +25,9 @@ import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -39,7 +42,12 @@ import java.util.Locale;
  * memory that is seated, and a network step reports what answered, or that nothing did. A system that says it
  * found something it did not find is worse than a system that says nothing, so a step that cannot be answered
  * says what actually happened instead.
+ *
+ * <p>What a kernel, an init or a driver writes into its log is data, the same in every language, as those logs
+ * are on a real machine. What a system says to the person in front of it (a greeting, a loader's message, a
+ * boot manager's menu, a reason given in words) is read in that person's language.
  */
+@TextHolder
 public final class BootLines {
 
     /** What a machine of the earliest age reserves below the line, in kilobytes, as those machines did. */
@@ -54,7 +62,7 @@ public final class BootLines {
     /** What a service manager writes at the head of a line that went well, and the star its rival uses. */
     private static final String MARK_OK = "[  OK  ]";
     private static final String MARK_STAR = " *";
-    private static final String MARK_DONE = "[ ok ]";
+    private static final Text MARK_DONE = Text.literal("[ ok ]");
 
     /**
      * Each step of a Linux machine stopping, in the two inits' own words: systemd's, which reaches targets, then
@@ -64,15 +72,64 @@ public final class BootLines {
      * one system in two colours, when the whole reason a player can tell those distributions apart on sight is
      * that they do not say the same words.
      */
-    private static final String[][] LINUX_STOP = {
-            {"Stopped target Graphical Interface.", "Stopping display manager ..."},
-            {"Stopped target Network is Online.", "Bringing down interface eth0 ..."},
-            {"Stopped target Network.", "Stopping netmount ..."},
-            {"Unmounted /boot/efi.", "Unmounting /boot ..."},
-            {"Reached target Unmount All Filesystems.", "Unmounting filesystems ..."},
-            {"Reached target System Shutdown.", "Saving the system clock ..."},
-            {"Reached target Late Shutdown Services.", "Stopping local ..."},
+    private static final Text[][] LINUX_STOP = {
+            {Text.literal("Stopped target Graphical Interface."), Text.literal("Stopping display manager ...")},
+            {Text.literal("Stopped target Network is Online."), Text.literal("Bringing down interface eth0 ...")},
+            {Text.literal("Stopped target Network."), Text.literal("Stopping netmount ...")},
+            {Text.literal("Unmounted /boot/efi."), Text.literal("Unmounting /boot ...")},
+            {Text.literal("Reached target Unmount All Filesystems."), Text.literal("Unmounting filesystems ...")},
+            {Text.literal("Reached target System Shutdown."), Text.literal("Saving the system clock ...")},
+            {Text.literal("Reached target Late Shutdown Services."), Text.literal("Stopping local ...")},
     };
+
+    private static final TextKey FIRST_HELLO = TextKey.of("jsc.boot.boot_lines.first_hello", "Hi.");
+    private static final TextKey GETTING_READY =
+            TextKey.of("jsc.boot.boot_lines.getting_ready", "%s is getting ready for you");
+    private static final TextKey LOADER_BOOT = TextKey.of("jsc.boot.boot_lines.loader_boot", "Boot");
+    private static final TextKey LOADER_REBOOT = TextKey.of("jsc.boot.boot_lines.loader_reboot", "Reboot");
+    private static final TextKey OLDEST_RESTARTS =
+            TextKey.of("jsc.boot.boot_lines.oldest_restarts", "Please wait while your computer restarts.");
+    private static final TextKey OLDEST_SHUTS_DOWN =
+            TextKey.of("jsc.boot.boot_lines.oldest_shuts_down", "Please wait while your computer shuts down.");
+    private static final TextKey MIDDLE_RESTARTS =
+            TextKey.of("jsc.boot.boot_lines.middle_restarts", "%s is restarting...");
+    private static final TextKey MIDDLE_SHUTS_DOWN =
+            TextKey.of("jsc.boot.boot_lines.middle_shuts_down", "%s is shutting down...");
+    private static final TextKey NEWEST_RESTARTS = TextKey.of("jsc.boot.boot_lines.newest_restarts", "Restarting");
+    private static final TextKey NEWEST_SHUTS_DOWN =
+            TextKey.of("jsc.boot.boot_lines.newest_shuts_down", "Shutting down");
+    private static final TextKey LOADING_LINUX =
+            TextKey.of("jsc.boot.boot_lines.loading_linux", "Loading Linux %s ...");
+    private static final TextKey LOADING_RAMDISK =
+            TextKey.of("jsc.boot.boot_lines.loading_ramdisk", "Loading initial ramdisk ...");
+    private static final TextKey DOS_STARTING = TextKey.of("jsc.boot.boot_lines.dos_starting", "Starting %s...");
+    private static final TextKey NET_LOADING_KERNEL =
+            TextKey.of("jsc.boot.boot_lines.net_loading_kernel", "Loading kernel");
+    private static final TextKey NET_DONE = TextKey.of("jsc.boot.boot_lines.net_done", "done");
+    private static final TextKey NET_LINK = TextKey.of("jsc.boot.boot_lines.net_link", "Network link");
+    private static final TextKey NET_DOWN = TextKey.of("jsc.boot.boot_lines.net_down", "down");
+    private static final TextKey NET_UP = TextKey.of("jsc.boot.boot_lines.net_up", "up");
+    private static final TextKey NET_MAINFRAME = TextKey.of("jsc.boot.boot_lines.net_mainframe", "Mainframe");
+    private static final TextKey NET_SKIPPED = TextKey.of("jsc.boot.boot_lines.net_skipped", "skipped");
+    private static final TextKey NET_INDEX = TextKey.of("jsc.boot.boot_lines.net_index", "Network index");
+    private static final TextKey NET_NO_CABLE =
+            TextKey.of("jsc.boot.boot_lines.net_no_cable", "No data cable reaches this computer.");
+    private static final TextKey NET_LOCAL_ONLY =
+            TextKey.of("jsc.boot.boot_lines.net_local_only", "%s opens with local storage only.");
+    private static final TextKey NET_NONE_ANSWERING =
+            TextKey.of("jsc.boot.boot_lines.net_none_answering", "none answering");
+    private static final TextKey NET_NOT_AVAILABLE =
+            TextKey.of("jsc.boot.boot_lines.net_not_available", "not available");
+    private static final TextKey NET_NO_MAINFRAME =
+            TextKey.of("jsc.boot.boot_lines.net_no_mainframe", "No Mainframe answers on this network.");
+    private static final TextKey NET_ITEM_TYPES = TextKey.of("jsc.boot.boot_lines.net_item_types", "%s item types");
+    private static final TextKey NET_STORAGE = TextKey.of("jsc.boot.boot_lines.net_storage", "Storage");
+    private static final TextKey NET_ONE_SERVER =
+            TextKey.of("jsc.boot.boot_lines.net_one_server", "%s server, %s%% full");
+    private static final TextKey NET_SERVERS = TextKey.of("jsc.boot.boot_lines.net_servers", "%s servers, %s%% full");
+    private static final TextKey NET_SERVICES_ON = TextKey.of("jsc.boot.boot_lines.net_services_on", "Services on %s");
+    private static final TextKey NET_STARTING_TERMINAL =
+            TextKey.of("jsc.boot.boot_lines.net_starting_terminal", "Starting the network terminal ...");
 
     private BootLines() {
     }
@@ -93,7 +150,8 @@ public final class BootLines {
             case FREEBSD -> BsdBootLines.up(machine, system, level);
             case UNIX -> SysVBootLines.up(machine, system);
             case FRAMES -> frames(machine, system);
-            default -> new BootSequence.Builder().title(system.displayName()).subtitle(copyright).build();
+            default -> new BootSequence.Builder().title(Text.literal(system.displayName()))
+                    .subtitle(Text.literal(copyright)).build();
         };
     }
 
@@ -115,9 +173,8 @@ public final class BootLines {
     private static BootSequence frames(final IOsHost machine, final OsDef system) {
         if (firstTime(machine, system)) {
             return new BootSequence.Builder()
-                    .title("Hi.")
-                    .subtitle(Installers.machineName(machine)
-                            + " is getting ready for you")
+                    .title(FIRST_HELLO.text())
+                    .subtitle(GETTING_READY.with(Installers.machineName(machine)))
                     .build();
         }
         return BootSequence.NONE;
@@ -166,7 +223,7 @@ public final class BootLines {
                     continue;
                 }
                 if (id.equals(runningId)) {
-                    out.entry(system.displayName(), slot, id.toString()).defaultsToLast();
+                    out.entry(Text.literal(system.displayName()), slot, id.toString()).defaultsToLast();
                 } else {
                     out.entry(manager.label(system.displayName(), device, slot), slot, id.toString());
                 }
@@ -206,9 +263,9 @@ public final class BootLines {
             return BootMenu.NONE;
         }
         final BootMenu.Builder out = new BootMenu.Builder(manager)
-                .entry("Boot", slot, running.toString())
+                .entry(LOADER_BOOT.text(), slot, running.toString())
                 .defaultsToLast()
-                .restart("Reboot");
+                .restart(LOADER_REBOOT.text());
         if (FirmwareKind.forEra(machine.installedEra() != null ? machine.installedEra() : HardwareEra.STANDARD)
                 == FirmwareKind.UEFI) {
             out.firmware(manager.firmwareLabel());
@@ -254,7 +311,7 @@ public final class BootLines {
         }
         return switch (system.platform()) {
             case FRAMES -> new BootSequence.Builder()
-                    .title(system.displayName())
+                    .title(Text.literal(system.displayName()))
                     .subtitle(framesGoodbye(system, restarting))
                     .build();
             case LINUX -> linuxDown(system, restarting);
@@ -270,12 +327,12 @@ public final class BootLines {
      * <p>The oldest spoke to the person in front of it, the one after it named the system, and the newest says
      * the one word and nothing else. They are quoted rather than composed because the wording is the thing.
      */
-    private static String framesGoodbye(final OsDef system, final boolean restarting) {
+    private static Text framesGoodbye(final OsDef system, final boolean restarting) {
         return switch (system.familyRank()) {
-            case 1 -> restarting ? "Please wait while your computer restarts."
-                    : "Please wait while your computer shuts down.";
-            case 2 -> restarting ? "Frames is restarting..." : "Frames is shutting down...";
-            default -> restarting ? "Restarting" : "Shutting down";
+            case 1 -> (restarting ? OLDEST_RESTARTS : OLDEST_SHUTS_DOWN).text();
+            // The family's name is its brand, which no language translates.
+            case 2 -> (restarting ? MIDDLE_RESTARTS : MIDDLE_SHUTS_DOWN).with("Frames");
+            default -> (restarting ? NEWEST_RESTARTS : NEWEST_SHUTS_DOWN).text();
         };
     }
 
@@ -287,8 +344,8 @@ public final class BootLines {
      */
     private static BootSequence linuxDown(final OsDef system, final boolean restarting) {
         final boolean openRc = system.packageManager() == PackageManagerKind.EMERGE;
-        final BootSequence.Builder out = new BootSequence.Builder().title("").subtitle("");
-        for (final String[] step : LINUX_STOP) {
+        final BootSequence.Builder out = new BootSequence.Builder().title(Text.EMPTY).subtitle(Text.EMPTY);
+        for (final Text[] step : LINUX_STOP) {
             if (openRc) {
                 out.marked(MARK_STAR, step[1], MARK_DONE, true);
             } else {
@@ -296,7 +353,7 @@ public final class BootLines {
             }
         }
         out.marked(stamp(LINUX_STOP.length + 1),
-                restarting ? "reboot: Restarting system" : "reboot: Power down", false);
+                Text.literal(restarting ? "reboot: Restarting system" : "reboot: Power down"), false);
         return out.build();
     }
 
@@ -336,34 +393,36 @@ public final class BootLines {
      */
     private static BootSequence systemd(final IOsHost machine, final String desktop,
                                         @Nullable final ServerLevel level) {
+        // The loader's two messages are its own and are read in the player's language; the kernel's log is data.
         final BootSequence.Builder out = new BootSequence.Builder()
-                .title("Loading Linux " + KERNEL_VERSION + " ...")
-                .subtitle("Loading initial ramdisk ...");
+                .title(LOADING_LINUX.with(KERNEL_VERSION))
+                .subtitle(LOADING_RAMDISK.text());
         int at = 0;
-        out.marked(stamp(at++), "Linux version " + KERNEL_VERSION + " (" + kernelArch(machine) + ")", false);
-        out.marked(stamp(at++), "CPU: " + cpuName(machine), false);
-        out.marked(stamp(at++), "Memory: " + machine.ramTotalMb() + " MB available", false);
+        out.marked(stamp(at++), Text.literal("Linux version " + KERNEL_VERSION + " (" + kernelArch(machine) + ")"),
+                false);
+        out.marked(stamp(at++), Text.literal("CPU: " + cpuName(machine)), false);
+        out.marked(stamp(at++), Text.literal("Memory: " + machine.ramTotalMb() + " MB available"), false);
         int drive = 0;
         for (int slot = 0; slot < machine.diskSlots(); slot++) {
             final ItemStack disk = machine.diskInSlot(slot);
             if (disk.getItem() instanceof DiskItem) {
-                out.marked(stamp(at++), "sd" + (char) ('a' + drive++) + ": "
-                        + disk.getHoverName().getString(), false);
+                out.marked(stamp(at++), Text.literal("sd" + (char) ('a' + drive++) + ": "
+                        + disk.getHoverName().getString()), false);
             }
         }
-        out.marked(MARK_OK, "Started Journal Service.", true);
-        out.marked(MARK_OK, "Reached target Local File Systems.", true);
+        out.marked(MARK_OK, Text.literal("Started Journal Service."), true);
+        out.marked(MARK_OK, Text.literal("Reached target Local File Systems."), true);
         /*
          * The claim is about the network, not about what happens to be reading it, so it is put to the machine
          * rather than to the shell running on it: a machine on a cable is on a network whether or not anything
          * is up yet to ask about it.
          */
         if (machine.networkAttached()) {
-            out.marked(MARK_OK, "Reached target Network is Online.", true);
+            out.marked(MARK_OK, Text.literal("Reached target Network is Online."), true);
         }
         final String mirror = mirrorOf(machine, level);
         if (!mirror.isEmpty()) {
-            out.marked(MARK_OK, "Found package mirror on " + mirror + ".", true);
+            out.marked(MARK_OK, Text.literal("Found package mirror on " + mirror + "."), true);
         }
         if (!desktop.isEmpty()) {
             /*
@@ -371,8 +430,8 @@ public final class BootLines {
              * nothing in its mark is the one still under way. It is the only pair on the screen, and it is what
              * makes the last moment of a start read as a moment rather than as another finished step.
              */
-            out.marked("", "Starting " + desktop + " Display Manager...", false);
-            out.marked(MARK_OK, "Started " + desktop + " Display Manager.", true);
+            out.marked("", Text.literal("Starting " + desktop + " Display Manager..."), false);
+            out.marked(MARK_OK, Text.literal("Started " + desktop + " Display Manager."), true);
         }
         return out.build();
     }
@@ -380,23 +439,23 @@ public final class BootLines {
     /** The other init: a star for every service it brings up, and its own column saying each one is up. */
     private static BootSequence openRc(final IOsHost machine, final OsDef system, final String desktop) {
         final BootSequence.Builder out = new BootSequence.Builder()
-                .title("OpenRC " + OPENRC_VERSION + " is starting up " + system.displayName()
-                        + " Linux (" + kernelArch(machine) + ")")
-                .subtitle("");
-        out.marked(MARK_STAR, "Mounting /proc ...", MARK_DONE, true);
-        out.marked(MARK_STAR, "Starting udev ...", MARK_DONE, true);
-        out.marked(MARK_STAR, "Checking local filesystems ...", MARK_DONE, true);
-        out.marked(MARK_STAR, "Mounting local filesystems ...", MARK_DONE, true);
-        out.marked(MARK_STAR, "Setting hostname to "
-                + (machine.customName().isEmpty() ? "localhost" : machine.customName()) + " ...",
+                .title(Text.literal("OpenRC " + OPENRC_VERSION + " is starting up " + system.displayName()
+                        + " Linux (" + kernelArch(machine) + ")"))
+                .subtitle(Text.EMPTY);
+        out.marked(MARK_STAR, Text.literal("Mounting /proc ..."), MARK_DONE, true);
+        out.marked(MARK_STAR, Text.literal("Starting udev ..."), MARK_DONE, true);
+        out.marked(MARK_STAR, Text.literal("Checking local filesystems ..."), MARK_DONE, true);
+        out.marked(MARK_STAR, Text.literal("Mounting local filesystems ..."), MARK_DONE, true);
+        out.marked(MARK_STAR, Text.literal("Setting hostname to "
+                + (machine.customName().isEmpty() ? "localhost" : machine.customName()) + " ..."),
                 MARK_DONE, true);
         if (machine.networkAttached()) {
-            out.marked(MARK_STAR, "Bringing up interface eth0 ...", MARK_DONE, true);
+            out.marked(MARK_STAR, Text.literal("Bringing up interface eth0 ..."), MARK_DONE, true);
         }
         if (!desktop.isEmpty()) {
-            out.marked(MARK_STAR, "Starting " + desktop + " ...", MARK_DONE, true);
+            out.marked(MARK_STAR, Text.literal("Starting " + desktop + " ..."), MARK_DONE, true);
         }
-        out.marked(MARK_STAR, "Starting local ...", MARK_DONE, true);
+        out.marked(MARK_STAR, Text.literal("Starting local ..."), MARK_DONE, true);
         return out.build();
     }
 
@@ -427,19 +486,19 @@ public final class BootLines {
     private static BootSequence dos(final IOsHost machine, final OsDef system,
                                     final String copyright) {
         final BootSequence.Builder out = new BootSequence.Builder()
-                .title("Starting " + system.displayName() + "...")
-                .subtitle("");
+                .title(DOS_STARTING.with(system.displayName()))
+                .subtitle(Text.EMPTY);
         /*
          * A system of this age loaded its drivers one at a time and each one printed its own name and what it
          * had found, which is why the drive letters come after them and not before: the letters exist because
-         * those drivers gave them out.
+         * those drivers gave them out. What the drivers print is their log, which is data.
          */
         final int extendedKb = Math.max(0, machine.ramTotalMb() * 1024 - BASE_MEMORY_KB);
-        out.line("MCMEM.SYS testing extended memory ... done");
-        out.line(String.format(Locale.ROOT, "%,d KB extended memory available", extendedKb));
+        out.line(Text.literal("MCMEM.SYS testing extended memory ... done"));
+        out.line(Text.literal(String.format(Locale.ROOT, "%,d KB extended memory available", extendedKb)));
         final String network = networkName(machine);
         if (!network.isEmpty()) {
-            out.line("NETLINK.SYS  network link up, Mainframe " + network);
+            out.line(Text.literal("NETLINK.SYS  network link up, Mainframe " + network));
         }
         char letter = 'C';
         for (int slot = 0; slot < machine.diskSlots(); slot++) {
@@ -447,11 +506,12 @@ public final class BootLines {
             if (!(disk.getItem() instanceof DiskItem)) {
                 continue;
             }
-            out.marked("Drive " + letter + ":", disk.getHoverName().getString(), freeOn(disk), false);
+            out.marked("Drive " + letter + ":", Text.literal(disk.getHoverName().getString()),
+                    Text.literal(freeOn(disk)), false);
             letter++;
         }
-        out.line(system.displayName() + " Version 1.0");
-        out.line(copyright);
+        out.line(Text.literal(system.displayName() + " Version 1.0"));
+        out.line(Text.literal(copyright));
         return out.build();
     }
 
@@ -465,49 +525,54 @@ public final class BootLines {
      */
     private static BootSequence net(final IOsHost machine, final OsDef system, final String copyright,
                                     @Nullable final ServerLevel level) {
+        /*
+         * The banner is the system's name and the machine's, which are data. The table below it is this system
+         * reporting to the person at the console, so its words are read in that person's language.
+         */
         final BootSequence.Builder out = new BootSequence.Builder()
-                .title(system.displayName() + " 1.0    "
-                        + (machine.customName().isEmpty() ? "" : machine.customName()))
-                .subtitle(copyright);
-        out.line("Loading kernel", "done");
+                .title(Text.literal(system.displayName() + " 1.0    "
+                        + (machine.customName().isEmpty() ? "" : machine.customName())))
+                .subtitle(Text.literal(copyright));
+        out.line(NET_LOADING_KERNEL.text(), NET_DONE.text());
         final NetworkReadService network = machine.networkService();
         if (network == null) {
             return out.build();
         }
         final ICliComputer.NetSummary summary = network.summary();
         if (summary == null || !summary.linked()) {
-            out.line("Network link", "down");
-            out.line("Mainframe", "skipped");
-            out.line("Network index", "skipped");
+            out.line(NET_LINK.text(), NET_DOWN.text());
+            out.line(NET_MAINFRAME.text(), NET_SKIPPED.text());
+            out.line(NET_INDEX.text(), NET_SKIPPED.text());
             /*
              * The reason, in words, and not only the word that says a step was skipped. A player looking at a
              * column of "skipped" learns that something did not happen and nothing about what to do about it,
              * and what to do about it here is plug a data cable in.
              */
-            out.line("No data cable reaches this computer.");
-            out.line(system.displayName() + " opens with local storage only.");
+            out.line(NET_NO_CABLE.text());
+            out.line(NET_LOCAL_ONLY.with(system.displayName()));
             return out.build();
         }
-        out.line("Network link", "up");
+        out.line(NET_LINK.text(), NET_UP.text());
         if (!summary.mainframePresent()) {
-            out.line("Mainframe", "none answering");
-            out.line("Network index", "not available");
-            out.line("No Mainframe answers on this network.");
-            out.line(system.displayName() + " opens with local storage only.");
+            out.line(NET_MAINFRAME.text(), NET_NONE_ANSWERING.text());
+            out.line(NET_INDEX.text(), NET_NOT_AVAILABLE.text());
+            out.line(NET_NO_MAINFRAME.text());
+            out.line(NET_LOCAL_ONLY.with(system.displayName()));
             return out.build();
         }
-        out.line("Mainframe", network.current());
-        out.line("Network index", String.format(Locale.ROOT, "%,d item types", summary.indexedTypes()));
+        out.line(NET_MAINFRAME.text(), Text.literal(network.current()));
+        final String types = String.format(Locale.ROOT, "%,d", summary.indexedTypes());
+        out.line(NET_INDEX.text(), NET_ITEM_TYPES.with(types));
         final long capacity = network.capacity();
         final long used = network.used();
         final int percent = capacity > 0 ? (int) (used * 100L / capacity) : 0;
-        out.line("Storage", summary.servers() + (summary.servers() == 1 ? " server, " : " servers, ")
-                + percent + "% full");
-        final String services = level == null ? "" : Installers.servicesOn(machine, level);
+        out.line(NET_STORAGE.text(), (summary.servers() == 1 ? NET_ONE_SERVER : NET_SERVERS)
+                .with(summary.servers(), percent));
+        final Text services = level == null ? Text.EMPTY : Installers.servicesOn(machine, level);
         if (!services.isEmpty()) {
-            out.line("Services on " + network.current(), services);
+            out.line(NET_SERVICES_ON.with(network.current()), services);
         }
-        out.line("Starting the network terminal ...");
+        out.line(NET_STARTING_TERMINAL.text());
         return out.build();
     }
 

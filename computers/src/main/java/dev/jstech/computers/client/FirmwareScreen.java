@@ -16,6 +16,7 @@ import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.InstallMode;
 import dev.jstech.computers.rack.RaidMode;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -347,8 +348,9 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
      * kind of drive it is, with whatever stands in the way of booting it said after.
      */
     private static String entryWhere(final FirmwareStatePayload.Entry e) {
+        final String device = GameText.resolve(e.device());
         final String where = e.kind() == FirmwareStatePayload.KIND_DISK
-                ? "Disk " + e.ref() + " · " + e.device() : e.device();
+                ? "Disk " + e.ref() + " · " + device : device;
         return e.note().isEmpty() ? where : where + " - " + e.note();
     }
 

@@ -11,6 +11,7 @@ import dev.jstech.computers.operation.payload.RequestWelcomePayload;
 import dev.jstech.computers.operation.payload.WelcomePayload;
 import dev.jstech.computers.operation.payload.WelcomeStartupPayload;
 import dev.jstech.computers.os.boot.WelcomeFacts;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -193,7 +194,7 @@ public final class WelcomeApp implements IDesktopApp {
         g.drawString(font, "Did you know...", x + PAD + 4, boxY + 4, this.skin.text(), false);
         int ty = boxY + 16;
         if (!this.facts.tips().isEmpty()) {
-            final String said = this.facts.tips().get(this.tip % this.facts.tips().size());
+            final String said = GameText.resolve(this.facts.tips().get(this.tip % this.facts.tips().size()));
             for (final FormattedCharSequence line : font.split(Component.literal(said), boxW - 8)) {
                 if (ty > boxY + boxH - 10) {
                     break;

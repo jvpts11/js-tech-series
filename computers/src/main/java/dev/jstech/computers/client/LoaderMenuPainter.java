@@ -9,6 +9,7 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.gui.layout.LoaderMenuLayout;
 import dev.jstech.computers.os.boot.BootMenu;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -41,7 +42,7 @@ public final class LoaderMenuPainter {
     public static void draw(final GuiGraphics g, final Font font, final int x, final int y, final BootMenu menu,
                             final int remaining, final boolean held) {
         g.fill(x, y, x + LoaderMenuLayout.WIDTH, y + LoaderMenuLayout.HEIGHT, GROUND);
-        box(g, font, x, y, menu.title());
+        box(g, font, x, y, GameText.resolve(menu.title()));
         entries(g, font, x, y, menu);
         /*
          * The sphere with its horns and the name are one picture, not a disc of fills and the game's letters: a
@@ -76,7 +77,7 @@ public final class LoaderMenuPainter {
         for (int i = 0; i < menu.entries().size(); i++) {
             final String number = (i + 1) + ".";
             final int after = left + TextWall.width(font, number + " ");
-            final String name = TextWall.clip(font, menu.entries().get(i).label(),
+            final String name = TextWall.clip(font, GameText.resolve(menu.entries().get(i).label()),
                     LoaderMenuLayout.itemRoom() - (after - left) - TextWall.width(font, " [Enter]"));
             TextWall.draw(g, font, number, left, ty, BRIGHT);
             TextWall.draw(g, font, name, after, ty, TEXT);

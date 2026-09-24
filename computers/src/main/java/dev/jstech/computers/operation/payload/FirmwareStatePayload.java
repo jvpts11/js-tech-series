@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -114,14 +116,15 @@ public record FirmwareStatePayload(
      * @param ref         the disk slot index, or the media reader's packed block position
      * @param osId        the OS on it ({@code ""} when the disk has no system / the medium is not an installer)
      * @param label       what the device holds: the system's name, an installer's name, or "no system"/"empty"
-     * @param device      the hardware itself by model, or the kind of drive for a reader
+     * @param device      the hardware itself by model, which is data, or the kind of drive for a reader, which is
+     *                    read in the player's language
      * @param size        how much the device holds, in words, and nothing for a drive whose size means nothing
      * @param note        why this cannot be booted or installed, and nothing when it can
      * @param bootable    whether this entry can be booted (a disk with an OS; an OS-installer medium whose OS
      *                    passes the hardware era gate)
      * @param installMode the id of the OS's install mode for a medium (guided / live manual / source), else -1
      */
-    public record Entry(int kind, long ref, String osId, String label, String device, String size, String note,
+    public record Entry(int kind, long ref, String osId, String label, Text device, String size, String note,
                         boolean bootable, int installMode) {
     }
 
@@ -154,7 +157,9 @@ public record FirmwareStatePayload(
             buf.writeVarLong(e.ref());
             buf.writeUtf(e.osId(), 64);
             buf.writeUtf(e.label(), 48);
-            buf.writeUtf(e.device(), 48);
+            // A model's name is cut to the column it is drawn in; a drive's kind is put together at the other end.
+            TextCodecs.STREAM_CODEC.encode(buf, e.device() instanceof Text.Literal model && model.value().length() > 48
+                    ? Text.literal(model.value().substring(0, 48)) : e.device());
             buf.writeUtf(e.size(), 16);
             buf.writeUtf(e.note(), 48);
             buf.writeBoolean(e.bootable());
@@ -183,7 +188,8 @@ public record FirmwareStatePayload(
         final List<Entry> entries = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             entries.add(new Entry(buf.readVarInt(), buf.readVarLong(), buf.readUtf(64), buf.readUtf(48),
-                    buf.readUtf(48), buf.readUtf(16), buf.readUtf(48), buf.readBoolean(), buf.readVarInt()));
+                    TextCodecs.STREAM_CODEC.decode(buf), buf.readUtf(16), buf.readUtf(48), buf.readBoolean(),
+                    buf.readVarInt()));
         }
         RaidInfo raid = RaidInfo.ABSENT;
         if (buf.readBoolean()) {

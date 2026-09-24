@@ -63,6 +63,8 @@ import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.rack.RaidMode;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.Locale;
 import net.minecraft.core.BlockPos;
@@ -126,14 +128,15 @@ public final class FirmwarePayloads {
                                 payload.host(), payload.monitorPos(),
                                 FirmwareKind.byId(payload.firmwareKind()),
                                 payload.name(), payload.remainingTicks(), payload.halted(),
-                                payload.complaint())));
+                                GameText.resolve(payload.complaint()))));
         // A finished installer still waiting for its reboot: the monitor comes back to that prompt.
         registrar.playToClient(OpenInstallDonePayload.TYPE, OpenInstallDonePayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
                         IInstallDoneScreenOpener.Holder.open(
                                 payload.host(), payload.monitorPos(),
                                 FirmwareKind.byId(payload.firmwareKind()),
-                                payload.osName(), payload.targetLabel(), payload.targetSlot(), payload.failure())));
+                                payload.osName(), GameText.resolve(payload.targetLabel()), payload.targetSlot(),
+                                GameText.resolve(payload.failure()))));
         // The boot manager: the monitor joins the machine where it stands, with what is left of its wait.
         registrar.playToClient(OpenBootMenuPayload.TYPE, OpenBootMenuPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
@@ -153,7 +156,7 @@ public final class FirmwarePayloads {
                         IInstallProgressScreenOpener.Holder.open(
                                 payload.hostPos(), payload.monitorPos(),
                                 FirmwareKind.byId(payload.firmwareKind()),
-                                payload.osName(), payload.targetLabel(), payload.ticksLeft(),
+                                payload.osName(), GameText.resolve(payload.targetLabel()), payload.ticksLeft(),
                                 payload.ticksTotal())));
         ComputerAccess.accept(registrar, PostCompletePayload.TYPE, PostCompletePayload.STREAM_CODEC,
                 ComputerAccess.screen(PostCompletePayload::hostPos), FirmwarePayloads::handlePostComplete);
@@ -189,7 +192,7 @@ public final class FirmwarePayloads {
             entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_DISK, i,
                     os == null ? "" : os.id().toString(),
                     os == null ? "no system" : os.displayName(),
-                    disk.getHoverName().getString(),
+                    Text.literal(disk.getHoverName().getString()),
                     spec == null ? "" : DiskSpec.sizeLabel(spec.capacityMb()),
                     "", os != null, -1));
         }
@@ -197,7 +200,7 @@ public final class FirmwarePayloads {
             if (!(level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader)) {
                 continue;
             }
-            final String drive = reader.driveType().driveName();
+            final Text drive = reader.driveType().driveName();
             final ItemStack media = reader.mediaSlot().getStackInSlot(0);
             if (media.isEmpty()) {
                 entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, endpoint, "",
@@ -417,8 +420,8 @@ public final class FirmwarePayloads {
                     final int slot = payload.target();
                     computer.setNeedsPost(false);
                     PacketDistributor.sendToPlayer(player, new OpenInstallDonePayload(payload.hostPos(),
-                            payload.monitorPos(), kind, "",
-                            slot < 0 ? "the default disk" : "Disk " + slot, slot, failure));
+                            payload.monitorPos(), kind, "", OsInstallRunner.targetLabel(slot), slot,
+                            Text.of(failure)));
                     MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos(), computer,
                             MonitorSessionMenu.Phase.INSTALL_PROGRESS);
                     return;

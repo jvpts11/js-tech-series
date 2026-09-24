@@ -272,7 +272,8 @@ public final class SocialServiceGameTests {
                         helper.assertTrue(
                                 SetupGate.refusal(base.rack().unitHost(0), spec, false, true).isEmpty(),
                                 path + " must accept a server, said: " + SetupGate
-                                        .refusal(base.rack().unitHost(0), spec, false, true).orElse(""));
+                                        .refusal(base.rack().unitHost(0), spec, false, true)
+                                        .map(said -> said.english()).orElse(""));
                     }
                 })
                 .thenSucceed();

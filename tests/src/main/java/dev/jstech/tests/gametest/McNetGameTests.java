@@ -234,7 +234,7 @@ public final class McNetGameTests {
                     final SystemIntegrity.Result health = SystemIntegrity.check(computer);
                     helper.assertTrue(health.state() == SystemIntegrity.State.NO_LOADER,
                             "the system is found and will not start; got " + health);
-                    helper.assertTrue(health.complaint().equals("netstart.sys is missing"),
+                    helper.assertTrue(health.complaint().english().equals("netstart.sys is missing"),
                             "in this system's own words; got " + health.complaint());
                     helper.assertTrue(computer.hasOs(),
                             "and the disk still says a system is installed, which is why it is found");

@@ -8,6 +8,9 @@
 package dev.jstech.computers.os.install;
 
 import dev.jstech.computers.os.PackageManagerKind;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 
 /**
  * One program being set up on one machine: what it is, where it comes from, how it was asked for,
@@ -17,13 +20,14 @@ import dev.jstech.computers.os.PackageManagerKind;
  * it are the machine's and the windows' business. It is saved with the machine, so a setup half way
  * through when the world went away carries on where it was.
  */
+@TextHolder
 public final class SetupJob {
 
     private final String programId;
     private final String name;
     private final String house;
     private final int sizeMb;
-    private final String source;
+    private final Text source;
     private final boolean removing;
     private final int ticksTotal;
     private int ticksLeft;
@@ -36,6 +40,14 @@ public final class SetupJob {
     private final String packageName;
     /** Whether a prompt has drawn the bar once; not saved, a prompt can draw it again from scratch. */
     private boolean barDrawn;
+
+    /** What the window says is happening, in the order a setup went through it. */
+    private static final TextKey REMOVING_FILES = TextKey.of("jsc.install.setup_job.removing_files", "Removing files");
+    private static final TextKey CLEANING_UP = TextKey.of("jsc.install.setup_job.cleaning_up", "Cleaning up");
+    private static final TextKey PREPARING = TextKey.of("jsc.install.setup_job.preparing", "Preparing to install");
+    private static final TextKey COPYING_FILES = TextKey.of("jsc.install.setup_job.copying_files", "Copying files");
+    private static final TextKey REGISTERING = TextKey.of("jsc.install.setup_job.registering", "Registering %s");
+    private static final TextKey FINISHING = TextKey.of("jsc.install.setup_job.finishing", "Finishing");
 
     /**
      * @param programId   the program, as the registry names it
@@ -50,7 +62,7 @@ public final class SetupJob {
      * @param packageName the package's short name
      */
     public SetupJob(final String programId, final String name, final String house, final int sizeMb,
-                    final String source, final boolean removing, final int ticksTotal, final int ticksLeft,
+                    final Text source, final boolean removing, final int ticksTotal, final int ticksLeft,
                     final PackageManagerKind manager, final String packageName) {
         this.programId = programId;
         this.name = name;
@@ -66,19 +78,19 @@ public final class SetupJob {
 
     /** A job part way through, asked for with a setup program. */
     public SetupJob(final String programId, final String name, final String house, final int sizeMb,
-                    final String source, final boolean removing, final int ticksTotal, final int ticksLeft) {
+                    final Text source, final boolean removing, final int ticksTotal, final int ticksLeft) {
         this(programId, name, house, sizeMb, source, removing, ticksTotal, ticksLeft, PackageManagerKind.NONE, "");
     }
 
     /** A job at its start, asked for with a setup program. */
     public SetupJob(final String programId, final String name, final String house, final int sizeMb,
-                    final String source, final boolean removing, final int ticksTotal) {
+                    final Text source, final boolean removing, final int ticksTotal) {
         this(programId, name, house, sizeMb, source, removing, ticksTotal, ticksTotal, PackageManagerKind.NONE, "");
     }
 
     /** A job at its start, asked for from that package manager. */
     public SetupJob(final String programId, final String name, final String house, final int sizeMb,
-                    final String source, final boolean removing, final int ticksTotal,
+                    final Text source, final boolean removing, final int ticksTotal,
                     final PackageManagerKind manager, final String packageName) {
         this(programId, name, house, sizeMb, source, removing, ticksTotal, ticksTotal, manager, packageName);
     }
@@ -104,7 +116,8 @@ public final class SetupJob {
         return this.sizeMb;
     }
 
-    public String source() {
+    /** Where it comes from, worded for the window and read in the player's language. */
+    public Text source() {
         return this.source;
     }
 
@@ -176,20 +189,20 @@ public final class SetupJob {
      * <p>A real setup names the file it is copying; this names the stages the disc's own layout has,
      * in the order a setup went through them, so the line changes as the bar moves.
      */
-    public String phase() {
+    public Text phase() {
         if (this.removing) {
-            return this.permille() < 500 ? "Removing files" : "Cleaning up";
+            return (this.permille() < 500 ? REMOVING_FILES : CLEANING_UP).text();
         }
         final int p = this.permille();
         if (p < 100) {
-            return "Preparing to install";
+            return PREPARING.text();
         }
         if (p < 850) {
-            return "Copying files";
+            return COPYING_FILES.text();
         }
         if (p < 1000) {
-            return "Registering " + this.name;
+            return REGISTERING.with(this.name);
         }
-        return "Finishing";
+        return FINISHING.text();
     }
 }

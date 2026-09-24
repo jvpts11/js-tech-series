@@ -10,6 +10,7 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -254,9 +255,10 @@ public final class PostWall {
                 out.add(Line.of("  +" + (state.entries().size() - listed) + " more"));
                 return;
             }
+            final String named = GameText.resolve(entry.device());
             final String role = entry.kind() == FirmwareStatePayload.KIND_DISK
-                    ? "Disk " + slot++ : entry.device();
-            final String device = entry.kind() == FirmwareStatePayload.KIND_DISK ? entry.device() : "";
+                    ? "Disk " + slot++ : named;
+            final String device = entry.kind() == FirmwareStatePayload.KIND_DISK ? named : "";
             out.add(Line.columns(role, device, entry.size(), entry.label()));
             listed++;
         }

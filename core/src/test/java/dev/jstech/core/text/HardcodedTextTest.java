@@ -60,6 +60,13 @@ class HardcodedTextTest {
     /** Who a line for the developer is written through. */
     private static final Set<String> LOGGERS = Set.of("LOGGER", "LOG", "logger", "log");
 
+    /**
+     * An advancement tab declaring its advancements on itself: the title and description handed in are the English the
+     * language file is generated from, under keys the advancement is shown by.
+     */
+    private static final Set<String> ADVANCEMENT_DECLARATIONS = Set.of("root", "task", "goal", "challenge", "secret",
+            "goalWith", "challengeOfAll");
+
     /** Two runs of letters with something between them: words, not an identifier. */
     private static final Pattern PROSE = Pattern.compile("[A-Za-z]{2,}[^A-Za-z]+[A-Za-z]{2,}");
     private static final Pattern LETTER = Pattern.compile("[A-Za-z]");
@@ -122,6 +129,7 @@ class HardcodedTextTest {
                         BLOCK = CONTENT.block("x", X::new)
                                 .named("Electric Furnace").register();
                         SPEC = ProgramSpec.of(id, "x").described("Keeps the network's files");
+                        this.task("first", "root", ICON, "First Steps", "Start the machine", on(EVENT));
                     }
                     @Deprecated(since = "the annotation text")
                     void g() { }
@@ -152,6 +160,7 @@ class HardcodedTextTest {
                     || (this.constructor && "TextKey".equals(this.name))
                     // A declaration's name or description, chained on it: the English the language file is made from.
                     || (("named".equals(this.name) || "described".equals(this.name)) && this.receiver == null)
+                    || ("this".equals(this.receiver) && ADVANCEMENT_DECLARATIONS.contains(this.name))
                     || ("Text".equals(this.receiver) && "literal".equals(this.name))
                     // A command's example line or switch in its manual: what a player types, which is data.
                     || (this.constructor && ("Example".equals(this.name) || "Option".equals(this.name)));

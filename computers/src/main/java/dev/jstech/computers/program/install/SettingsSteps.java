@@ -7,10 +7,14 @@
  */
 package dev.jstech.computers.program.install;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+
 /**
  * What both distributions settle the same way once somebody is inside the new system: what the machine is
  * called, and the hardware clock.
  */
+@TextHolder
 final class SettingsSteps {
 
     private final LiveInstallState.Distro distro;
@@ -19,6 +23,11 @@ final class SettingsSteps {
 
     /** What a machine may be called: a letter or a digit, then up to fourteen more of those or hyphens. */
     private static final String A_NAME = "[A-Za-z0-9][A-Za-z0-9-]{0,14}";
+
+    private static final TextKey NOT_ON_THE_MEDIUM = TextKey.of("jsc.install.settings_steps.not_on_the_medium",
+            "hostname: you cannot change the host name of the live medium");
+    private static final TextKey INVALID_NAME = TextKey.of("jsc.install.settings_steps.invalid_name",
+            "hostname: the specified hostname is invalid");
 
     SettingsSteps(final LiveInstallState.Distro distro, final LiveFiles files, final LiveProgress progress) {
         this.distro = distro;
@@ -48,10 +57,10 @@ final class SettingsSteps {
     /** Names the machine, written into the new system's own file so it is there to read back and carry over. */
     LiveTurn hostname(final String[] parts) {
         if (!this.files.inside()) {
-            return LiveTurn.refused("hostname: you cannot change the host name of the live medium");
+            return LiveTurn.refused(NOT_ON_THE_MEDIUM.text());
         }
         if (parts.length > 2) {
-            return LiveTurn.refused("hostname: the specified hostname is invalid");
+            return LiveTurn.refused(INVALID_NAME.text());
         }
         final String name = parts.length > 1 ? parts[1].trim() : "";
         if (name.isEmpty()) {
@@ -59,7 +68,7 @@ final class SettingsSteps {
             return LiveTurn.said(chosen.isEmpty() ? this.mediumName() : chosen);
         }
         if (!name.matches(A_NAME)) {
-            return LiveTurn.refused("hostname: the specified hostname is invalid");
+            return LiveTurn.refused(INVALID_NAME.text());
         }
         this.files.write(this.files.inNewSystem("/etc/hostname"), name);
         this.progress.chosenName = name;

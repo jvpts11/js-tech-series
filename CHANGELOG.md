@@ -89,6 +89,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   program was stopped. The file, the line and column, the error's code and the names in the code stay as they are.
   A program that reads another program's output, and a ComputerCraft computer told why the Network Gateway refused
   it, are handed the English.
+- What the installers and the tools of an installation say is text a language file can translate: the guided
+  installers' titles, headings, hints and steps, Setup's progress and refusals, the boot managers' menus, the
+  Frames editions' start and shutdown screens, the welcome tips, why a machine with a broken system will not start,
+  the install media's tooltips, and at the prompt of a live medium what fdisk, pacman, emerge, the ports, the kernel
+  build and every other step of an installation by hand asks and answers. What real systems print the same in every
+  language stays as it is: kernel and init logs, compiler and build lines, file listings, paths, package names and
+  the contents of files such as the live medium's guide.
+- The steps pacman counts through while it installs are no longer cut short at a fixed width.
 
 ### Fixed
 - A monitor is used by one player at a time. A second player who used it while somebody was at it was handed a

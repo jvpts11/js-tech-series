@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.os.install;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +30,7 @@ import java.util.List;
  * <p>Pure logic. It counts steps and answers questions about them; who ticks it, who writes the system and who
  * draws it are the machine's business.
  */
+@TextHolder
 public final class InstallerFlow {
 
     /** No disk chosen, and the answer a page gives when the machine has none at all. */
@@ -48,6 +53,12 @@ public final class InstallerFlow {
 
     /** The same for the desktops a Mirror can offer. */
     public static final int MOST_DESKTOPS = 16;
+
+    /** The step a desktop from the Mirror adds to the copy, with the Mirror named when one answers. */
+    private static final TextKey INSTALLING_DESKTOP =
+            TextKey.of("jsc.install.installer_flow.installing_desktop", "Installing %s");
+    private static final TextKey INSTALLING_FROM_MIRROR =
+            TextKey.of("jsc.install.installer_flow.installing_from_mirror", "Installing %s from the Mirror on %s");
 
     private final InstallerStyle style;
     private final String systemId;
@@ -551,7 +562,7 @@ public final class InstallerFlow {
         int written = 0;
         int lastWithSteps = 0;
         for (int i = 0; i < this.stages.size(); i++) {
-            for (final String label : this.stages.get(i).steps()) {
+            for (final Text label : this.stages.get(i).steps()) {
                 final int through = (int) ((long) this.copyTicks * (written + 1) / total);
                 final int before = (int) ((long) this.copyTicks * written / total);
                 built.add(new Step(label, i, through - before));
@@ -561,8 +572,9 @@ public final class InstallerFlow {
         }
         final Desktop chosen = this.desktop();
         if (chosen != null) {
-            final String where = this.mirrorAnswers() ? " from the Mirror on " + this.mirrorHost : "";
-            built.add(new Step("Installing " + chosen.name() + where, lastWithSteps, chosen.ticks()));
+            final Text label = this.mirrorAnswers() ? INSTALLING_FROM_MIRROR.with(chosen.name(), this.mirrorHost)
+                    : INSTALLING_DESKTOP.with(chosen.name());
+            built.add(new Step(label, lastWithSteps, chosen.ticks()));
         }
         this.steps = List.copyOf(built);
     }
@@ -605,10 +617,10 @@ public final class InstallerFlow {
     /**
      * One step of the work.
      *
-     * @param label      what the installer says it is doing
+     * @param label      what the installer says it is doing, read in the player's language
      * @param stageIndex the page it belongs to, which is what stops the copy running past a question
      * @param ticks      how long it takes
      */
-    public record Step(String label, int stageIndex, int ticks) {
+    public record Step(Text label, int stageIndex, int ticks) {
     }
 }

@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.os.boot;
 
+import dev.jstech.core.text.Text;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +20,7 @@ import java.util.List;
  * disks, plus a way into the firmware on the machines whose firmware can be reached that way. A machine with one
  * system still shows it, because the menu is also how a player finds out that the other disk is there.
  */
-public record BootMenu(BootManager manager, String title, List<Entry> entries, int defaultIndex,
+public record BootMenu(BootManager manager, Text title, List<Entry> entries, int defaultIndex,
                        int countdownTicks) {
 
     /** How many entries a menu may hold: more disks than any machine here has, plus the firmware. */
@@ -31,11 +33,11 @@ public record BootMenu(BootManager manager, String title, List<Entry> entries, i
     public static final int RESTART = -2;
 
     /** Nothing to choose between. */
-    public static final BootMenu NONE = new BootMenu(BootManager.NONE, "", List.of(), 0, 0);
+    public static final BootMenu NONE = new BootMenu(BootManager.NONE, Text.EMPTY, List.of(), 0, 0);
 
     public BootMenu {
         manager = manager == null ? BootManager.NONE : manager;
-        title = title == null ? "" : title;
+        title = title == null ? Text.EMPTY : title;
         entries = entries == null ? List.of() : List.copyOf(entries.size() > MOST_ENTRIES
                 ? entries.subList(0, MOST_ENTRIES) : entries);
         defaultIndex = entries.isEmpty() ? 0 : Math.max(0, Math.min(defaultIndex, entries.size() - 1));
@@ -62,10 +64,10 @@ public record BootMenu(BootManager manager, String title, List<Entry> entries, i
      * @param slot  the disk it sits on, or {@link #FIRMWARE} for the way into the setup
      * @param osId  the system on that disk, empty for the way into the setup
      */
-    public record Entry(String label, int slot, String osId) {
+    public record Entry(Text label, int slot, String osId) {
 
         public Entry {
-            label = label == null ? "" : label;
+            label = label == null ? Text.EMPTY : label;
             osId = osId == null ? "" : osId;
         }
 
@@ -92,19 +94,19 @@ public record BootMenu(BootManager manager, String title, List<Entry> entries, i
             this.manager = manager;
         }
 
-        public Builder entry(final String label, final int slot, final String osId) {
+        public Builder entry(final Text label, final int slot, final String osId) {
             this.entries.add(new Entry(label, slot, osId));
             return this;
         }
 
         /** The way into the setup, which boots nothing and so names no system. */
-        public Builder firmware(final String label) {
+        public Builder firmware(final Text label) {
             this.entries.add(new Entry(label, FIRMWARE, ""));
             return this;
         }
 
         /** Starting the machine over, for a manager that lists it. */
-        public Builder restart(final String label) {
+        public Builder restart(final Text label) {
             this.entries.add(new Entry(label, RESTART, ""));
             return this;
         }

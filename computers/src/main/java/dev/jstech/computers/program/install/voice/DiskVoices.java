@@ -9,6 +9,9 @@ package dev.jstech.computers.program.install.voice;
 
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.tty.TtyScript;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -20,14 +23,34 @@ import java.util.Locale;
  * make at once, then counts its way through the block groups twice, waits on the journal, and counts through
  * them a third time, each count running on the line it started on. How long all that takes is the disk's
  * business, so it is told how long it has and shares the time out the way the real one spends it.
+ *
+ * <p>The filesystem maker's sentences are the player's language; its name and version, and the two listers'
+ * columns and fields, are what the tools print in every language.
  */
+@TextHolder
 public final class DiskVoices {
 
-    private static final String MKE2FS_VERSION = "mke2fs 1.47.1 (20-May-2024)";
-    private static final String MKFS_FAT_VERSION = "mkfs.fat 4.2 (2021-01-31)";
+    private static final Text MKE2FS_VERSION = Text.literal("mke2fs 1.47.1 (20-May-2024)");
+    private static final Text MKFS_FAT_VERSION = Text.literal("mkfs.fat 4.2 (2021-01-31)");
 
     /** How many of the spare superblocks fit on one line of the list, which is where the real tool breaks it. */
     private static final int BACKUPS_PER_LINE = 8;
+
+    private static final TextKey CREATING = TextKey.of("jsc.install.disk_voices.creating",
+            "Creating filesystem with %s 4k blocks and %s inodes");
+    private static final TextKey FILESYSTEM_UUID =
+            TextKey.of("jsc.install.disk_voices.filesystem_uuid", "Filesystem UUID: %s");
+    private static final TextKey BACKUPS_STORED =
+            TextKey.of("jsc.install.disk_voices.backups_stored", "Superblock backups stored on blocks:");
+    private static final TextKey GROUP_TABLES =
+            TextKey.of("jsc.install.disk_voices.group_tables", "Allocating group tables:");
+    private static final TextKey INODE_TABLES =
+            TextKey.of("jsc.install.disk_voices.inode_tables", "Writing inode tables:");
+    private static final TextKey JOURNAL =
+            TextKey.of("jsc.install.disk_voices.journal", "Creating journal (%s blocks):");
+    private static final TextKey SUPERBLOCKS = TextKey.of("jsc.install.disk_voices.superblocks",
+            "Writing superblocks and filesystem accounting information:");
+    private static final TextKey DONE = TextKey.of("jsc.install.disk_voices.done", "done");
 
     private DiskVoices() {
     }
@@ -47,23 +70,22 @@ public final class DiskVoices {
         final TtyScript.Builder script = TtyScript.script()
                 .say(MKE2FS_VERSION)
                 .pause(share(ticks, 6))
-                .say("Creating filesystem with " + figures.blocks() + " 4k blocks and " + figures.inodes() + " inodes")
-                .say("Filesystem UUID: " + Ext4Figures.uuid(device, seed));
+                .say(CREATING.with(figures.blocks(), figures.inodes()))
+                .say(FILESYSTEM_UUID.with(Ext4Figures.uuid(device, seed)));
         if (!figures.backups().isEmpty()) {
-            script.say("Superblock backups stored on blocks: ");
+            script.say(Tint.line(BACKUPS_STORED, " "));
             script.sayAll(backupLines(figures.backups()));
         }
         script.say("")
-                .redraw(share(ticks, 10), p -> Bars.counting("Allocating group tables: ", p, groups, "done"))
-                .redraw(share(ticks, 40), p -> Bars.counting("Writing inode tables: ", p, groups, "done"));
+                .redraw(share(ticks, 10), p -> Bars.counting(GROUP_TABLES.text(), p, groups, DONE.text()))
+                .redraw(share(ticks, 40), p -> Bars.counting(INODE_TABLES.text(), p, groups, DONE.text()));
         if (figures.journal() > 0) {
             /* The journal is the one step with no count to watch: the line stands there, and then it is done. */
-            final String label = "Creating journal (" + figures.journal() + " blocks): ";
-            script.redraw(share(ticks, 22), p -> CliLine.plain(p >= 1.0 ? label + "done" : label));
+            final Text label = JOURNAL.with(figures.journal());
+            script.redraw(share(ticks, 22), p -> p >= 1.0 ? Tint.line(label, " ", DONE) : Tint.line(label, " "));
         }
         return script
-                .redraw(share(ticks, 22), p -> Bars.counting(
-                        "Writing superblocks and filesystem accounting information: ", p, groups, "done"))
+                .redraw(share(ticks, 22), p -> Bars.counting(SUPERBLOCKS.text(), p, groups, DONE.text()))
                 .say("")
                 .effect(made)
                 .done();
@@ -76,8 +98,9 @@ public final class DiskVoices {
 
     /** The header of a listing of block devices: the seven columns, in the real tool's order. */
     public static CliLine lsblkHeader() {
-        return CliLine.plain(String.format(Locale.ROOT, "%-9s %-7s %2s %6s %2s %-4s %s",
-                "NAME", "MAJ:MIN", "RM", "SIZE", "RO", "TYPE", "MOUNTPOINTS"));
+        /* The columns go by the names they are asked for with, which the lister never translates. */
+        return CliLine.plain(Text.literal(String.format(Locale.ROOT, "%-9s %-7s %2s %6s %2s %-4s %s",
+                "NAME", "MAJ:MIN", "RM", "SIZE", "RO", "TYPE", "MOUNTPOINTS")));
     }
 
     /**
@@ -90,15 +113,16 @@ public final class DiskVoices {
     public static CliLine lsblkRow(final String name, final int major, final int minor, final boolean removable,
                                    final long sizeMb, final boolean readOnly, final String type,
                                    final String mountPoint) {
-        return CliLine.plain(String.format(Locale.ROOT, "%-9s %-7s %2d %6s %2d %-4s %s",
+        return CliLine.plain(Text.literal(String.format(Locale.ROOT, "%-9s %-7s %2d %6s %2d %-4s %s",
                 name, major + ":" + minor, removable ? 1 : 0, size(sizeMb), readOnly ? 1 : 0, type, mountPoint)
-                .stripTrailing());
+                .stripTrailing()));
     }
 
     /** One filesystem as the identifier lister names it. */
     public static CliLine blkid(final String device, final String uuid, final boolean fat, final String partUuid) {
-        return CliLine.plain("/dev/" + device + ": UUID=\"" + uuid + "\" BLOCK_SIZE=\"" + (fat ? "512" : "4096")
-                + "\" TYPE=\"" + (fat ? "vfat" : "ext4") + "\" PARTUUID=\"" + partUuid + "\"");
+        return CliLine.plain(Text.literal("/dev/" + device + ": UUID=\"" + uuid + "\" BLOCK_SIZE=\""
+                + (fat ? "512" : "4096") + "\" TYPE=\"" + (fat ? "vfat" : "ext4") + "\" PARTUUID=\"" + partUuid
+                + "\""));
     }
 
     /** A size as a device listing writes one: the largest unit that fits, a decimal only when it says something. */

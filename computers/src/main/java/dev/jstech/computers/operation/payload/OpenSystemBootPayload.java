@@ -10,6 +10,8 @@ package dev.jstech.computers.operation.payload;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootSplash;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -54,13 +56,13 @@ public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int r
         buf.writeVarInt(p.remainingTicks());
         buf.writeVarInt(p.totalTicks());
         buf.writeUtf(p.splash().serializedName(), MAX_TEXT);
-        buf.writeUtf(clip(p.sequence().title()), MAX_TEXT);
-        buf.writeUtf(clip(p.sequence().subtitle()), MAX_TEXT);
+        TextCodecs.STREAM_CODEC.encode(buf, clip(p.sequence().title()));
+        TextCodecs.STREAM_CODEC.encode(buf, clip(p.sequence().subtitle()));
         final List<BootSequence.Line> lines = p.sequence().lines();
         buf.writeVarInt(lines.size());
         for (final BootSequence.Line line : lines) {
-            buf.writeUtf(clip(line.label()), MAX_TEXT);
-            buf.writeUtf(clip(line.value()), MAX_TEXT);
+            TextCodecs.STREAM_CODEC.encode(buf, clip(line.label()));
+            TextCodecs.STREAM_CODEC.encode(buf, clip(line.value()));
             buf.writeUtf(clip(line.mark()), MAX_TEXT);
             buf.writeBoolean(line.good());
         }
@@ -77,12 +79,12 @@ public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int r
         final int remaining = buf.readVarInt();
         final int total = buf.readVarInt();
         final BootSplash splash = BootSplash.byName(buf.readUtf(MAX_TEXT));
-        final String title = buf.readUtf(MAX_TEXT);
-        final String subtitle = buf.readUtf(MAX_TEXT);
+        final Text title = TextCodecs.STREAM_CODEC.decode(buf);
+        final Text subtitle = TextCodecs.STREAM_CODEC.decode(buf);
         final int count = Math.min(buf.readVarInt(), BootSequence.MOST_LINES);
         final List<BootSequence.Line> lines = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
-            lines.add(new BootSequence.Line(buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT),
+            lines.add(new BootSequence.Line(TextCodecs.STREAM_CODEC.decode(buf), TextCodecs.STREAM_CODEC.decode(buf),
                     buf.readUtf(MAX_TEXT), buf.readBoolean()));
         }
         final boolean endsDark = buf.readBoolean();
@@ -98,5 +100,13 @@ public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int r
      */
     private static String clip(final String text) {
         return text.length() <= MAX_TEXT ? text : text.substring(0, MAX_TEXT);
+    }
+
+    /*
+     * Words that are data are cut the same way. A declared sentence is not, since what it says is put together
+     * at the other end; what goes into it is held to size by the text codec.
+     */
+    private static Text clip(final Text text) {
+        return text instanceof Text.Literal literal ? Text.literal(clip(literal.value())) : text;
     }
 }

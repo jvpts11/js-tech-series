@@ -10,6 +10,9 @@ package dev.jstech.computers.program.install;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.install.voice.DiskVoices;
 import dev.jstech.computers.program.install.voice.Ext4Figures;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -27,6 +30,7 @@ import java.util.Set;
  * that has not been made, and the place the bootloader goes hangs inside the new system, so it is mounted
  * after the root is and under it.
  */
+@TextHolder
 final class LiveDisks {
 
     /**
@@ -60,6 +64,43 @@ final class LiveDisks {
     /** How long a mechanical disk takes to have a filesystem made on it, in ticks; a faster one takes less. */
     private static final int FORMAT_TICKS = 140;
 
+    private static final TextKey EXT4_USAGE = TextKey.of("jsc.install.live_disks.ext4_usage",
+            "Usage: mkfs.ext4 /dev/<device>");
+    private static final TextKey NO_DEVICE_SIZE = TextKey.of("jsc.install.live_disks.no_device_size",
+            "mke2fs: No such file or directory while trying to determine filesystem size");
+    private static final TextKey IS_ESP = TextKey.of("jsc.install.live_disks.is_esp",
+            "mke2fs: %s is the EFI System partition.");
+    private static final TextKey IS_ESP_HINT = TextKey.of("jsc.install.live_disks.is_esp_hint",
+            "       (that one holds the bootloader: mkfs.fat -F 32 /dev/%s)");
+    private static final TextKey HAS_TABLE = TextKey.of("jsc.install.live_disks.has_table",
+            "/dev/%s contains a gpt partition table.");
+    private static final TextKey USE_A_PARTITION = TextKey.of("jsc.install.live_disks.use_a_partition",
+            "mke2fs: will not make a filesystem here; use one of its partitions.");
+    private static final TextKey FAT_USAGE = TextKey.of("jsc.install.live_disks.fat_usage",
+            "Usage: mkfs.fat -F 32 /dev/<partition>");
+    private static final TextKey FAT_CANNOT_OPEN = TextKey.of("jsc.install.live_disks.fat_cannot_open",
+            "mkfs.fat: unable to open %s: No such file or directory");
+    private static final TextKey NOT_ESP = TextKey.of("jsc.install.live_disks.not_esp",
+            "mkfs.fat: %s is not an EFI System partition.");
+    private static final TextKey NOT_ESP_HINT = TextKey.of("jsc.install.live_disks.not_esp_hint",
+            "       (set its type first: fdisk, then t)");
+    private static final TextKey MOUNT_BAD_USAGE = TextKey.of("jsc.install.live_disks.mount_bad_usage",
+            "mount: bad usage");
+    private static final TextKey MOUNT_TRY = TextKey.of("jsc.install.live_disks.mount_try",
+            "Try 'mount /dev/<device> %s'.");
+    private static final TextKey NO_MOUNT_POINT = TextKey.of("jsc.install.live_disks.no_mount_point",
+            "mount: %s: mount point does not exist.");
+    private static final TextKey ROOT_FIRST = TextKey.of("jsc.install.live_disks.root_first",
+            "       (mount the root first: mount /dev/<partition> %s)");
+    private static final TextKey ESP_WRONG_FS = TextKey.of("jsc.install.live_disks.esp_wrong_fs",
+            "mount: %s: wrong fs type on /dev/%s.");
+    private static final TextKey ESP_FORMAT_FIRST = TextKey.of("jsc.install.live_disks.esp_format_first",
+            "       (make it first: mkfs.fat -F 32 /dev/%s)");
+    private static final TextKey WRONG_FS = TextKey.of("jsc.install.live_disks.wrong_fs",
+            "mount: %s: wrong fs type, bad option, bad superblock on /dev/%s.");
+    private static final TextKey FORMAT_FIRST = TextKey.of("jsc.install.live_disks.format_first",
+            "       (format it first: mkfs.ext4 /dev/%s)");
+
     LiveDisks(final String root) {
         this.root = root;
     }
@@ -78,9 +119,12 @@ final class LiveDisks {
             return disk + this.number;
         }
 
-        /** What a partition table calls it. */
-        String type() {
-            return this.esp ? "EFI System" : "Linux filesystem";
+        /**
+         * What a partition table calls it: the name of a row of the table of partition types, which the editor
+         * prints the way it prints the rest of the table, as data.
+         */
+        Text type() {
+            return Text.literal(this.esp ? "EFI System" : "Linux filesystem");
         }
     }
 
@@ -136,24 +180,21 @@ final class LiveDisks {
     LiveTurn mkfsExt4(final String arg, final LiveInstallState.Env env) {
         final String dev = deviceName(arg);
         if (dev.isEmpty()) {
-            return LiveTurn.refused("Usage: mkfs.ext4 /dev/<device>");
+            return LiveTurn.refused(EXT4_USAGE.text());
         }
         final Partition part = this.partitionOf(dev);
         if (part == null && !env.has(dev)) {
-            return LiveTurn.refused(
-                    "mke2fs: No such file or directory while trying to determine filesystem size");
+            return LiveTurn.refused(NO_DEVICE_SIZE.text());
         }
         if (part != null && part.esp()) {
-            return LiveTurn.refused("mke2fs: " + dev + " is the EFI System partition.",
-                    "       (that one holds the bootloader: mkfs.fat -F 32 /dev/" + dev + ")");
+            return LiveTurn.refused(IS_ESP.with(dev), IS_ESP_HINT.with(dev));
         }
         /*
          * A disk somebody partitioned is not a disk to write a filesystem straight onto: the real tool refuses
          * rather than quietly wiping the table somebody just made.
          */
         if (part == null && !this.table(dev).isEmpty()) {
-            return LiveTurn.refused("/dev/" + dev + " contains a gpt partition table.",
-                    "mke2fs: will not make a filesystem here; use one of its partitions.");
+            return LiveTurn.refused(HAS_TABLE.with(dev), USE_A_PARTITION.text());
         }
         final long sizeMb = this.sizeOf(dev, env);
         return LiveTurn.running(DiskVoices.mke2fs(dev, sizeMb, sizeMb, formatTicks(dev, env), () -> {
@@ -173,15 +214,14 @@ final class LiveDisks {
         }
         final String dev = deviceName(arg);
         if (dev.isEmpty()) {
-            return LiveTurn.refused("Usage: mkfs.fat -F 32 /dev/<partition>");
+            return LiveTurn.refused(FAT_USAGE.text());
         }
         final Partition part = this.partitionOf(dev);
         if (part == null) {
-            return LiveTurn.refused("mkfs.fat: unable to open " + dev + ": No such file or directory");
+            return LiveTurn.refused(FAT_CANNOT_OPEN.with(dev));
         }
         if (!part.esp()) {
-            return LiveTurn.refused("mkfs.fat: " + dev + " is not an EFI System partition.",
-                    "       (set its type first: fdisk, then t)");
+            return LiveTurn.refused(NOT_ESP.with(dev), NOT_ESP_HINT.text());
         }
         return LiveTurn.running(DiskVoices.mkfsFat(Math.max(8, formatTicks(dev, env) / 8), () -> {
             this.espDevice = dev;
@@ -212,29 +252,26 @@ final class LiveDisks {
             return this.bind(words);
         }
         if (words.size() < 2) {
-            return LiveTurn.refused("mount: bad usage", "Try 'mount /dev/<device> " + this.root + "'.");
+            return LiveTurn.refused(MOUNT_BAD_USAGE.text(), MOUNT_TRY.with(this.root));
         }
         final String dev = deviceName(words.get(0));
         final String point = words.get(1);
         if (point.equals(this.root + "/boot") || point.equals(this.root + "/efi")) {
             if (!this.mounted) {
-                return LiveTurn.refused("mount: " + point + ": mount point does not exist.",
-                        "       (mount the root first: mount /dev/<partition> " + this.root + ")");
+                return LiveTurn.refused(NO_MOUNT_POINT.with(point), ROOT_FIRST.with(this.root));
             }
             if (!this.espFormatted || !dev.equals(this.espDevice)) {
-                return LiveTurn.refused("mount: " + point + ": wrong fs type on /dev/" + dev + ".",
-                        "       (make it first: mkfs.fat -F 32 /dev/" + dev + ")");
+                return LiveTurn.refused(ESP_WRONG_FS.with(point, dev), ESP_FORMAT_FIRST.with(dev));
             }
             this.espMount = point;
             files.makeDir(point);
             return LiveTurn.silent();
         }
         if (!point.equals(this.root)) {
-            return LiveTurn.refused("mount: " + point + ": mount point does not exist.");
+            return LiveTurn.refused(NO_MOUNT_POINT.with(point));
         }
         if (!this.formatted || !dev.equals(this.device)) {
-            return LiveTurn.refused("mount: " + this.root + ": wrong fs type, bad option, bad superblock on /dev/"
-                    + dev + ".", "       (format it first: mkfs.ext4 /dev/" + dev + ")");
+            return LiveTurn.refused(WRONG_FS.with(this.root, dev), FORMAT_FIRST.with(dev));
         }
         this.mounted = true;
         return LiveTurn.silent();
@@ -333,13 +370,13 @@ final class LiveDisks {
     }
 
     void load(final LiveSaved saved) {
-        this.device = saved.text("device", "");
+        this.device = saved.value("device", "");
         this.formatted = saved.flag("formatted");
         this.mounted = saved.flag("mounted");
-        this.espDevice = saved.text("esp_device", "");
+        this.espDevice = saved.value("esp_device", "");
         this.espFormatted = saved.flag("esp_formatted");
-        this.espMount = saved.text("esp_mount", "");
-        for (final String bind : saved.text("binds", "").split(" ")) {
+        this.espMount = saved.value("esp_mount", "");
+        for (final String bind : saved.value("binds", "").split(" ")) {
             if (!bind.isEmpty()) {
                 this.binds.add(bind);
             }
@@ -354,7 +391,7 @@ final class LiveDisks {
     /** Binds one of the running medium's own places into the new system, or takes a flag that goes with one. */
     private LiveTurn bind(final List<String> words) {
         if (!this.mounted) {
-            return LiveTurn.refused("mount: " + this.root + ": mount point does not exist.");
+            return LiveTurn.refused(NO_MOUNT_POINT.with(this.root));
         }
         for (final String word : words) {
             if (word.equals("/proc") || word.equals("/sys") || word.equals("/dev") || word.equals("/run")) {

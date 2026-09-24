@@ -8,8 +8,12 @@
 package dev.jstech.computers.program.install;
 
 import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -26,6 +30,7 @@ import java.util.Locale;
  * Minecraft types, so every sequence is tested without the game; what it needs of the world comes in through
  * {@link Env}.
  */
+@TextHolder
 public final class LiveInstallState {
 
     private final Distro distro;
@@ -57,6 +62,34 @@ public final class LiveInstallState {
      * and the half-built system's, and they go when the session does. The mark is what sends the asking here.
      */
     public static final String FILE_SCHEME = "live:";
+
+    /** The two shells' word for a command they do not have, which the steps that are not there yet say too. */
+    static final TextKey BASH_NOT_FOUND = TextKey.of("jsc.install.live_install_state.bash_not_found",
+            "bash: %s: command not found");
+    static final TextKey ZSH_NOT_FOUND = TextKey.of("jsc.install.live_install_state.zsh_not_found",
+            "zsh: command not found: %s");
+
+    private static final TextKey FDISK_BAD_USAGE = TextKey.of("jsc.install.live_install_state.fdisk_bad_usage",
+            "fdisk: bad usage");
+    private static final TextKey FDISK_TRY_HELP = TextKey.of("jsc.install.live_install_state.fdisk_try_help",
+            "Try 'fdisk --help' for more information.");
+    private static final TextKey FDISK_CANNOT_OPEN = TextKey.of("jsc.install.live_install_state.fdisk_cannot_open",
+            "fdisk: cannot open /dev/%s: No such file or directory");
+    private static final TextKey NANO_DIRECTORY = TextKey.of("jsc.install.live_install_state.nano_directory",
+            "nano: %s is a directory");
+    private static final TextKey NANO_USAGE = TextKey.of("jsc.install.live_install_state.nano_usage",
+            "Usage: nano [OPTIONS] [[+LINE[,COLUMN]] FILE]...");
+    private static final TextKey CHROOT_NO_ROOT = TextKey.of("jsc.install.live_install_state.chroot_no_root",
+            "chroot: cannot change root directory to '%s': No such file or directory");
+    private static final TextKey CHROOT_NO_SHELL = TextKey.of("jsc.install.live_install_state.chroot_no_shell",
+            "chroot: failed to run command '/bin/bash': No such file or directory");
+    private static final TextKey LOGOUT = TextKey.of("jsc.install.live_install_state.logout", "logout");
+    private static final TextKey REBOOT_INSIDE = TextKey.of("jsc.install.live_install_state.reboot_inside",
+            "reboot: you are inside the new system. exit first.");
+    private static final TextKey WILL_NOT_BOOT = TextKey.of("jsc.install.live_install_state.will_not_boot",
+            "The new system will not boot:");
+    private static final TextKey REBOOTING = TextKey.of("jsc.install.live_install_state.rebooting",
+            "Rebooting into the new system ...");
 
     public LiveInstallState(final Distro distro) {
         this.distro = distro;
@@ -286,7 +319,7 @@ public final class LiveInstallState {
 
     public static LiveInstallState deserialize(final String written) {
         final LiveSaved saved = LiveSaved.read(written);
-        final Distro distro = Distro.find(saved.text("distro", ""));
+        final Distro distro = Distro.find(saved.value("distro", ""));
         if (distro == null) {
             return null;
         }
@@ -305,7 +338,7 @@ public final class LiveInstallState {
             case "eselect" -> this.gentoo.eselect(parts);
             case "genkernel" -> this.gentoo.genkernel(env);
             case "make" -> this.gentoo.make(line.trim(), env);
-            default -> LiveTurn.refused("bash: " + verb + ": command not found");
+            default -> LiveTurn.refused(BASH_NOT_FOUND.with(verb));
         };
     }
 
@@ -315,7 +348,7 @@ public final class LiveInstallState {
             case "genfstab" -> this.arch.genfstab(line, env);
             case "pacman" -> this.arch.pacman(parts, env);
             case "mkinitcpio" -> this.arch.mkinitcpio(env);
-            default -> LiveTurn.refused("zsh: command not found: " + verb);
+            default -> LiveTurn.refused(ZSH_NOT_FOUND.with(verb));
         };
     }
 
@@ -323,11 +356,11 @@ public final class LiveInstallState {
     private LiveTurn fdisk(final String arg, final Env env) {
         final String dev = LiveDisks.deviceName(arg);
         if (dev.isEmpty()) {
-            return LiveTurn.refused("fdisk: bad usage", "Try 'fdisk --help' for more information.");
+            return LiveTurn.refused(FDISK_BAD_USAGE.text(), FDISK_TRY_HELP.text());
         }
         final Device disk = env.find(dev);
         if (disk == null) {
-            return LiveTurn.refused("fdisk: cannot open /dev/" + dev + ": No such file or directory");
+            return LiveTurn.refused(FDISK_CANNOT_OPEN.with(dev));
         }
         return LiveTurn.running(new FdiskProcess(this.disks, dev, disk.sizeMb()));
     }
@@ -343,10 +376,10 @@ public final class LiveInstallState {
         }
         for (final String word : words) {
             if (!word.startsWith("-") && !word.startsWith("+")) {
-                return LiveTurn.refused("nano: " + word + " is a directory");
+                return LiveTurn.refused(NANO_DIRECTORY.with(word));
             }
         }
-        return LiveTurn.refused("Usage: nano [OPTIONS] [[+LINE[,COLUMN]] FILE]...");
+        return LiveTurn.refused(NANO_USAGE.text());
     }
 
     private LiveTurn mkdir(final String[] parts) {
@@ -361,22 +394,25 @@ public final class LiveInstallState {
     /** Steps into the new system, by whichever of the two tools this distribution uses for it. */
     private LiveTurn enter(final String verb, final String point) {
         if (verb.equals("arch-chroot") && this.distro != Distro.ARCH) {
-            return LiveTurn.refused("bash: arch-chroot: command not found");
+            return LiveTurn.refused(BASH_NOT_FOUND.with("arch-chroot"));
         }
         if (!point.equals(this.files.root())) {
-            return LiveTurn.refused("chroot: cannot change root directory to '" + point
-                    + "': No such file or directory");
+            return LiveTurn.refused(CHROOT_NO_ROOT.with(point));
         }
         if (!this.progress.base) {
-            return LiveTurn.refused("chroot: failed to run command '/bin/bash': No such file or directory");
+            return LiveTurn.refused(CHROOT_NO_SHELL.text());
         }
         this.files.enter();
         return LiveTurn.silent();
     }
 
+    /**
+     * Leaves the shell, which says so: the medium's login shell in its own words, and the new system's by echoing
+     * the command, which a shell prints as it is.
+     */
     private LiveTurn exit() {
         if (!this.files.inside()) {
-            return LiveTurn.said("logout");
+            return LiveTurn.said(LOGOUT.text());
         }
         this.files.leave();
         return LiveTurn.said("exit");
@@ -385,19 +421,20 @@ public final class LiveInstallState {
     /** Restarts into the new system, or says everything that would stop it coming up. */
     private LiveTurn reboot(final Env env) {
         if (this.files.inside()) {
-            return LiveTurn.refused("reboot: you are inside the new system. exit first.");
+            return LiveTurn.refused(REBOOT_INSIDE.text());
         }
-        final List<String> missing = new ArrayList<>(LiveChecklist.missing(this.distro, this.progress,
+        final List<Text> missing = LiveChecklist.missing(this.distro, this.progress,
                 this.distro == Distro.GENTOO && this.gentoo.fstabNamesARoot(), this.disks, this.chosenName(),
-                env.everyStep()));
+                env.everyStep());
         if (!missing.isEmpty()) {
-            final List<String> out = new ArrayList<>();
-            out.add("The new system will not boot:");
-            for (final String each : missing) {
-                out.add("  - " + each);
+            final List<CliLine> out = new ArrayList<>();
+            out.add(new CliLine(WILL_NOT_BOOT.text(), CliStyle.ERROR));
+            for (final Text each : missing) {
+                // The bullet is the layout of the list; what is missing is the item's own sentence.
+                out.add(CliLine.build().add("  - ", CliStyle.ERROR).add(each, CliStyle.ERROR).done());
             }
-            return LiveTurn.refused(out.toArray(String[]::new));
+            return LiveTurn.refused(out);
         }
-        return LiveTurn.finished("Rebooting into the new system ...");
+        return LiveTurn.finished(REBOOTING.text());
     }
 }

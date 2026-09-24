@@ -13,10 +13,12 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.BlockEntityTickers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
@@ -54,6 +56,7 @@ import org.jetbrains.annotations.Nullable;
  * computer can then query all linked readers to locate OS installation media without requiring the
  * reader to be physically adjacent.
  */
+@TextHolder
 public class MediaReaderBlock extends HorizontalDirectionalBlock implements EntityBlock, IPeripheralConnectable {
 
     public static final MapCodec<MediaReaderBlock> CODEC = RecordCodecBuilder.mapCodec(instance ->
@@ -64,6 +67,18 @@ public class MediaReaderBlock extends HorizontalDirectionalBlock implements Enti
 
     /** True when the slot holds a medium, so the model shows the "loaded" (lit LED) front face. */
     public static final BooleanProperty LOADED = BooleanProperty.create("loaded");
+
+    /** What a click with a disc is told when the drive will not take it. */
+    private static final TextKey ALREADY_HOLDS = TextKey.of("jsc.media.media_reader_block.already_holds",
+            "The drive already holds a disc - sneak-click to eject it.");
+    private static final TextKey CANNOT_READ = TextKey.of("jsc.media.media_reader_block.cannot_read",
+            "This %s cannot read that disc.");
+    private static final TextKey FLOPPY_DRIVE = TextKey.of("jsc.media.media_reader_block.floppy_drive",
+            "floppy drive");
+    private static final TextKey CD_DRIVE = TextKey.of("jsc.media.media_reader_block.cd_drive", "CD drive");
+    private static final TextKey DVD_DRIVE = TextKey.of("jsc.media.media_reader_block.dvd_drive", "DVD drive");
+    private static final TextKey DOCK_STATION = TextKey.of("jsc.media.media_reader_block.dock_station",
+            "dock station");
 
     private final MediaDriveType driveType;
 
@@ -130,8 +145,7 @@ public class MediaReaderBlock extends HorizontalDirectionalBlock implements Enti
                 return ItemInteractionResult.SUCCESS;
             }
             // The drive reads this format but the slot is taken. Say so, or the click looks ignored.
-            player.displayClientMessage(Component.literal(
-                    "The drive already holds a disc - sneak-click to eject it."), true);
+            player.displayClientMessage(GameText.component(ALREADY_HOLDS), true);
             return ItemInteractionResult.SUCCESS;
         }
 
@@ -140,20 +154,19 @@ public class MediaReaderBlock extends HorizontalDirectionalBlock implements Enti
          * player holding a DVD at a CD drive has no other way to learn the difference.
          */
         if (heldStack.getItem() instanceof MediaItem) {
-            player.displayClientMessage(Component.literal(
-                    "This " + driveName(reader) + " cannot read that disc."), true);
+            player.displayClientMessage(GameText.component(CANNOT_READ.with(driveName(reader))), true);
             return ItemInteractionResult.SUCCESS;
         }
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
     /** A readable name for this drive, for the message a refused disc gets. */
-    private static String driveName(final MediaReaderBlockEntity reader) {
+    private static TextKey driveName(final MediaReaderBlockEntity reader) {
         return switch (reader.driveType()) {
-            case FLOPPY_DRIVE -> "floppy drive";
-            case CD_DRIVE -> "CD drive";
-            case DVD_DRIVE -> "DVD drive";
-            case DOCK_STATION -> "dock station";
+            case FLOPPY_DRIVE -> FLOPPY_DRIVE;
+            case CD_DRIVE -> CD_DRIVE;
+            case DVD_DRIVE -> DVD_DRIVE;
+            case DOCK_STATION -> DOCK_STATION;
         };
     }
 

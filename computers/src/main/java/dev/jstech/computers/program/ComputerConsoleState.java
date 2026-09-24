@@ -14,6 +14,7 @@ import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.program.job.JobStorage;
 import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.core.id.StableNames;
+import dev.jstech.core.text.TextTags;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -318,7 +319,7 @@ public final class ComputerConsoleState {
             job.putString("Name", setup.name());
             job.putString("House", setup.house());
             job.putInt("SizeMb", setup.sizeMb());
-            job.putString("Source", setup.source());
+            job.put("Source", TextTags.write(setup.source()));
             job.putBoolean("Removing", setup.removing());
             job.putInt("Total", setup.ticksTotal());
             job.putInt("Left", setup.ticksLeft());
@@ -365,7 +366,7 @@ public final class ComputerConsoleState {
         if (tag.contains("Setup")) {
             final CompoundTag job = tag.getCompound("Setup");
             setup = new SetupJob(job.getString("Program"), job.getString("Name"),
-                    job.getString("House"), job.getInt("SizeMb"), job.getString("Source"),
+                    job.getString("House"), job.getInt("SizeMb"), TextTags.read(job.getCompound("Source")),
                     job.getBoolean("Removing"), job.getInt("Total"), job.getInt("Left"),
                     MANAGERS.find(job.getString("Via")), job.getString("Package"));
         }

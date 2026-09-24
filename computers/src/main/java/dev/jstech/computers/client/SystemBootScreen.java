@@ -13,6 +13,7 @@ import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.core.gui.Phosphor;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -146,7 +147,8 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
          */
         if (BootSplashArt.paintsItsOwnGround(this.splash)) {
             BootSplashArt.draw(g, font, this.splash, x, y, W, H, this.ticks, this.totalTicks,
-                    this.endsDark, this.sequence.title(), this.sequence.subtitle());
+                    this.endsDark, GameText.resolve(this.sequence.title()),
+                    GameText.resolve(this.sequence.subtitle()));
             return;
         }
 
@@ -165,19 +167,20 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
          * the top corner, the way a machine reading out its own start does.
          */
         if (this.sequence.lines().isEmpty()) {
-            g.drawCenteredString(font, this.sequence.title(), x + W / 2, y + H / 2 - 22, text);
-            g.drawCenteredString(font, this.sequence.subtitle(), x + W / 2, y + H / 2 - 10, dim);
+            g.drawCenteredString(font, GameText.resolve(this.sequence.title()), x + W / 2, y + H / 2 - 22, text);
+            g.drawCenteredString(font, GameText.resolve(this.sequence.subtitle()), x + W / 2, y + H / 2 - 10,
+                    dim);
             drawBar(g, x, y);
             return;
         }
 
         int ty = y + 12;
         if (!this.sequence.title().isEmpty()) {
-            wall(g, this.sequence.title(), x + MARGIN, ty, text);
+            wall(g, GameText.resolve(this.sequence.title()), x + MARGIN, ty, text);
             ty += WALL_ROW;
         }
         if (!this.sequence.subtitle().isEmpty()) {
-            wall(g, this.sequence.subtitle(), x + MARGIN, ty, dim);
+            wall(g, GameText.resolve(this.sequence.subtitle()), x + MARGIN, ty, dim);
             ty += WALL_ROW;
         }
         ty += 4;
@@ -196,16 +199,17 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
              * chose the length of, and at full length it runs through the column beside it or off the glass.
              */
             final int room = (line.value().isEmpty() ? x + W - MARGIN : valueAt - 4) - labelAt;
-            wall(g, wallClip(line.label(), room), labelAt, ty, text);
+            final String label = GameText.resolve(line.label());
+            wall(g, wallClip(label, room), labelAt, ty, text);
             if (!line.value().isEmpty()) {
                 /*
                  * A line with nothing at its head is one of the systems that ran dots out to its answer, which
                  * is how a machine of that age tied a question on the left to what came of it on the right.
                  */
                 if (line.mark().isEmpty()) {
-                    leader(g, labelAt + wallWidth(wallClip(line.label(), room)) + 3, valueAt - 3, ty, dim);
+                    leader(g, labelAt + wallWidth(wallClip(label, room)) + 3, valueAt - 3, ty, dim);
                 }
-                wall(g, line.value(), valueAt, ty, line.good() ? good : dim);
+                wall(g, GameText.resolve(line.value()), valueAt, ty, line.good() ? good : dim);
             }
             ty += WALL_ROW;
         }
@@ -228,8 +232,8 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
             if (line.value().isEmpty()) {
                 continue;
             }
-            widest = Math.max(widest, wallWidth(line.label()));
-            widestValue = Math.max(widestValue, wallWidth(line.value()));
+            widest = Math.max(widest, wallWidth(GameText.resolve(line.label())));
+            widestValue = Math.max(widestValue, wallWidth(GameText.resolve(line.value())));
         }
         final int room = W - 2 * MARGIN - widestValue;
         return Math.min(room, markColumn() + widest + 10);

@@ -9,6 +9,8 @@ package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.os.boot.BootManager;
 import dev.jstech.computers.os.boot.BootMenu;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -51,13 +53,11 @@ public record OpenBootMenuPayload(BlockPos hostPos, BlockPos monitorPos, BootMen
         buf.writeVarInt(p.menu().countdownTicks());
         // Whose menu it is, by name, since that decides how the screen draws it and which keys it takes.
         buf.writeUtf(p.menu().manager().serializedName(), MAX_LABEL);
-        buf.writeUtf(p.menu().title().length() <= MAX_LABEL ? p.menu().title()
-                : p.menu().title().substring(0, MAX_LABEL), MAX_LABEL);
+        TextCodecs.STREAM_CODEC.encode(buf, cut(p.menu().title()));
         final List<BootMenu.Entry> entries = p.menu().entries();
         buf.writeVarInt(entries.size());
         for (final BootMenu.Entry entry : entries) {
-            buf.writeUtf(entry.label().length() <= MAX_LABEL ? entry.label()
-                    : entry.label().substring(0, MAX_LABEL), MAX_LABEL);
+            TextCodecs.STREAM_CODEC.encode(buf, cut(entry.label()));
             buf.writeVarInt(entry.slot());
             buf.writeUtf(entry.osId().length() <= MAX_LABEL ? entry.osId()
                     : entry.osId().substring(0, MAX_LABEL), MAX_LABEL);
@@ -71,13 +71,23 @@ public record OpenBootMenuPayload(BlockPos hostPos, BlockPos monitorPos, BootMen
         final int chosen = buf.readVarInt();
         final int countdown = buf.readVarInt();
         final BootManager manager = BootManager.named(buf.readUtf(MAX_LABEL));
-        final String title = buf.readUtf(MAX_LABEL);
+        final Text title = TextCodecs.STREAM_CODEC.decode(buf);
         final int count = Math.min(buf.readVarInt(), BootMenu.MOST_ENTRIES);
         final List<BootMenu.Entry> entries = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
-            entries.add(new BootMenu.Entry(buf.readUtf(MAX_LABEL), buf.readVarInt(), buf.readUtf(MAX_LABEL)));
+            entries.add(new BootMenu.Entry(TextCodecs.STREAM_CODEC.decode(buf), buf.readVarInt(),
+                    buf.readUtf(MAX_LABEL)));
         }
         return new OpenBootMenuPayload(host, monitor, new BootMenu(manager, title, entries, chosen, countdown),
                 remaining);
+    }
+
+    /*
+     * Words that are data (a system's name, a disk's) are cut to the label's width; a declared sentence is put
+     * together at the other end, and what goes into it is held to size by the text codec.
+     */
+    private static Text cut(final Text text) {
+        return text instanceof Text.Literal literal && literal.value().length() > MAX_LABEL
+                ? Text.literal(literal.value().substring(0, MAX_LABEL)) : text;
     }
 }

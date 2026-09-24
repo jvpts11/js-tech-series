@@ -28,6 +28,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
@@ -167,9 +168,9 @@ public final class PayloadRoundTripGameTests {
                         "Visara Vertex GTX 780 Ti", 1, 2, "Standard"),
                 0, -1,
                 List.of(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_DISK, 0L, "jsc:frames_11",
-                                "Frames 11", "Vaultis Swift SSD 500 GB", "500 GB", "", true, 0),
+                                "Frames 11", Text.literal("Vaultis Swift SSD 500 GB"), "500 GB", "", true, 0),
                         new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, 123L, "jsc:ubuntu",
-                                "Ubuntu installer", "CD drive", "", "", true, 1)),
+                                "Ubuntu installer", Text.literal("CD drive"), "", "", true, 1)),
                 new FirmwareStatePayload.RaidInfo(true, 1, 2, 2, List.of(512L, 512L))));
         helper.succeed();
     }

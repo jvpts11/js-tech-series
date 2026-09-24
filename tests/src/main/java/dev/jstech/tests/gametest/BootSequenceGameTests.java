@@ -69,7 +69,7 @@ public final class BootSequenceGameTests {
             return;
         }
         final BootSequence sequence = BootLines.forMachine(computer, helper.getLevel());
-        helper.assertTrue(sequence.title().startsWith("Starting MC-DOS"),
+        helper.assertTrue(sequence.title().english().startsWith("Starting MC-DOS"),
                 "the system names itself as it starts: " + sequence.title());
         helper.assertTrue(marked(sequence, "Drive C:"),
                 "the first drive gets the first letter: " + labels(sequence));
@@ -192,7 +192,7 @@ public final class BootSequenceGameTests {
                 TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
                         .placeRunningPersonalComputer(WHERE);
         final BootSequence sequence = BootLines.forMachine(computer, helper.getLevel());
-        helper.assertTrue(sequence.title().equals("Hi."),
+        helper.assertTrue(sequence.title().english().equals("Hi."),
                 "a machine coming up for the first time is greeted: " + sequence.title());
         helper.assertFalse(sequence.subtitle().isEmpty(),
                 "and told what is being got ready for whom");
@@ -244,7 +244,7 @@ public final class BootSequenceGameTests {
         final BootMenu menu = BootLines.menuFor(linux, 100);
         helper.assertFalse(menu.isEmpty(), "a Linux machine stops at its boot manager");
         helper.assertTrue(menu.entries().size() == 1, "with one entry for its one disk: " + menu.entries());
-        helper.assertTrue(menu.entries().get(0).label().equals("Debian"),
+        helper.assertTrue(menu.entries().get(0).label().english().equals("Debian"),
                 "named after the system on it: " + menu.entries().get(0).label());
 
         final PersonalComputerBlockEntity frames =
@@ -338,7 +338,7 @@ public final class BootSequenceGameTests {
 
     private static boolean has(final BootSequence sequence, final String label) {
         for (final BootSequence.Line line : sequence.lines()) {
-            if (line.label().equals(label)) {
+            if (line.label().english().equals(label)) {
                 return true;
             }
         }
@@ -358,7 +358,7 @@ public final class BootSequenceGameTests {
     /** Whether any step says that anywhere in its line, for the lines a machine writes out as sentences. */
     private static boolean any(final BootSequence sequence, final String text) {
         for (final BootSequence.Line line : sequence.lines()) {
-            if (line.label().contains(text) || line.value().contains(text)) {
+            if (line.label().english().contains(text) || line.value().english().contains(text)) {
                 return true;
             }
         }
@@ -368,7 +368,7 @@ public final class BootSequenceGameTests {
     private static String labels(final BootSequence sequence) {
         final StringBuilder out = new StringBuilder();
         for (final BootSequence.Line line : sequence.lines()) {
-            out.append(line.label()).append(' ');
+            out.append(line.label().english()).append(' ');
         }
         return out.toString();
     }

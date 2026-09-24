@@ -99,7 +99,7 @@ public final class WreckedMachineGameTests {
                     final SystemIntegrity.Result health = SystemIntegrity.check(computer);
                     helper.assertTrue(health.state() == SystemIntegrity.State.NO_LOADER,
                             "the system is found and will not start; got " + health);
-                    helper.assertTrue(health.complaint().equals("kickmgr is missing"),
+                    helper.assertTrue(health.complaint().english().equals("kickmgr is missing"),
                             "in this family's own words; got " + health.complaint());
                     helper.assertTrue(computer.hasOs(),
                             "the disk still says a system is installed, which is why it is found at all");
@@ -133,7 +133,7 @@ public final class WreckedMachineGameTests {
                     DiskFilesystem.delete(computer.systemDisk(),
                             SystemIntegrity.loaderOf(computer.installedOs()));
                     final SystemIntegrity.Result health = SystemIntegrity.check(computer);
-                    helper.assertTrue(health.complaint().contains("kernel panic"),
+                    helper.assertTrue(health.complaint().english().contains("kernel panic"),
                             "a Linux panics; got " + health.complaint());
                 })
                 .thenSucceed();
@@ -166,7 +166,7 @@ public final class WreckedMachineGameTests {
 
                     final SystemIntegrity.Result health = SystemIntegrity.check(computer);
                     helper.assertTrue(health.state() == SystemIntegrity.State.NO_LOADER
-                                    && health.complaint().equals("kickmgr is missing"),
+                                    && health.complaint().english().equals("kickmgr is missing"),
                             "and the machine knows what it is missing; got " + health);
                 })
                 .thenSucceed();

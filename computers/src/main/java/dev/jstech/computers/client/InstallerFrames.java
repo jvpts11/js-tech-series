@@ -14,6 +14,7 @@ import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.InstallerPage;
 import dev.jstech.computers.os.install.InstallerStyle;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -84,10 +85,11 @@ final class InstallerFrames {
         if (flow.style() == InstallerStyle.UBUNTU) {
             return banded(g, font, flow, ink, sx, sy, sw, sh);
         }
-        TextWall.draw(g, font, flow.style().title(flow.systemName()), sx + 8, sy + 8, ink.bright());
-        TextWall.draw(g, font, flow.style().heading(flow.page(), flow.systemName()), sx + 8, sy + 20,
-                ink.text());
-        final String hint = flow.style().hint(flow.page());
+        TextWall.draw(g, font, GameText.resolve(flow.style().title(flow.systemName())), sx + 8, sy + 8,
+                ink.bright());
+        TextWall.draw(g, font, GameText.resolve(flow.style().heading(flow.page(), flow.systemName())), sx + 8,
+                sy + 20, ink.text());
+        final String hint = GameText.resolve(flow.style().hint(flow.page()));
         if (!hint.isEmpty()) {
             g.fill(sx, sy + sh - TITLE_BAR, sx + sw, sy + sh, ink.bar());
             TextWall.draw(g, font, hint, sx + 6, sy + sh - TITLE_BAR + 4, ink.barText());
@@ -103,8 +105,8 @@ final class InstallerFrames {
                                 final int sx, final int sy, final int sw, final int sh) {
         final int band = 19;
         g.fill(sx, sy, sx + sw, sy + band, ink.bar());
-        TextWall.draw(g, font, flow.style().heading(flow.page(), flow.systemName()), sx + 10, sy + 6,
-                ink.barText());
+        TextWall.draw(g, font, GameText.resolve(flow.style().heading(flow.page(), flow.systemName())), sx + 10,
+                sy + 6, ink.barText());
         TextWall.right(g, font, "[ Help ]", sx + sw - 10, sy + 6, ink.barText());
         /*
          * The buttons of that installer are written out rather than drawn: it ran in a terminal, and the
@@ -130,12 +132,12 @@ final class InstallerFrames {
         final int wh = sh - 34;
         g.fill(wx + 3, wy + 3, wx + ww + 3, wy + wh + 3, 0xFF000000);
         g.fill(wx, wy, wx + ww, wy + wh, ink.panel());
-        final String tab = " " + flow.style().heading(flow.page(), flow.systemName()) + " ";
+        final String tab = " " + GameText.resolve(flow.style().heading(flow.page(), flow.systemName())) + " ";
         final int tabW = TextWall.width(font, tab);
         final int tabX = wx + (ww - tabW) / 2;
         g.fill(tabX, wy - 5, tabX + tabW, wy + 5, ink.panel());
         TextWall.draw(g, font, tab, tabX, wy - 4, ink.panelText());
-        final String hint = flow.style().hint(flow.page());
+        final String hint = GameText.resolve(flow.style().hint(flow.page()));
         if (!hint.isEmpty()) {
             TextWall.draw(g, font, hint, sx + 8, sy + sh - 11, 0xFFFFFFFF);
         }
@@ -150,7 +152,8 @@ final class InstallerFrames {
     private static Frame wizard(final GuiGraphics g, final Font font, final InstallerFlow flow,
                                 final int sx, final int sy, final int sw, final int sh, final Held held) {
         g.fillGradient(sx, sy, sx + sw, sy + sh, 0xFF000080, 0xFF1084D0);
-        g.drawString(font, flow.style().title(flow.systemName()), sx + 14, sy + 8, 0xFFFFFFFF, true);
+        final String title = GameText.resolve(flow.style().title(flow.systemName()));
+        g.drawString(font, title, sx + 14, sy + 8, 0xFFFFFFFF, true);
 
         final int dx = sx + 22;
         final int dy = sy + 26;
@@ -158,7 +161,7 @@ final class InstallerFrames {
         final int dh = sh - 38;
         bevel(g, dx, dy, dw, dh, 0xFFC0C0C0, true);
         g.fillGradient(dx + 2, dy + 2, dx + dw - 2, dy + 2 + TITLE_BAR, 0xFF000080, 0xFF1084D0);
-        g.drawString(font, flow.style().title(flow.systemName()) + " Wizard", dx + 6, dy + 6, 0xFFFFFFFF, false);
+        g.drawString(font, title + " Wizard", dx + 6, dy + 6, 0xFFFFFFFF, false);
 
         final int railW = WIZARD_W;
         final int railTop = dy + TITLE_BAR + 8;
@@ -213,7 +216,7 @@ final class InstallerFrames {
             final boolean done = i < running;
             final boolean now = i == running;
             g.fill(sx + 8, ty + 2, sx + 13, ty + 7, done ? 0xFF5FE07A : now ? 0xFFF3A660 : 0xFF7D96D8);
-            g.drawString(font, clip(font, flow.steps().get(i).label(), panelW - 26), sx + 17, ty,
+            g.drawString(font, clip(font, GameText.resolve(flow.steps().get(i).label()), panelW - 26), sx + 17, ty,
                     done || now ? 0xFFFFFFFF : 0xFFB7C8F2, false);
             ty += 11;
         }
@@ -242,7 +245,8 @@ final class InstallerFrames {
         g.fill(cx, dy, cx + cw, dy + dh, 0xFFECE9D8);
         outline(g, cx, dy, cw, dh, 0xFF0831D9);
         g.fillGradient(cx + 1, dy + 1, cx + cw - 1, dy + 1 + TITLE_BAR, 0xFF3F8CF3, 0xFF0846C0);
-        g.drawString(font, flow.style().title(flow.systemName()), cx + 5, dy + 5, 0xFFFFFFFF, false);
+        g.drawString(font, GameText.resolve(flow.style().title(flow.systemName())), cx + 5, dy + 5, 0xFFFFFFFF,
+                false);
         final int by = dy + dh - 18;
         final boolean canGo = flow.canContinue();
         final int[] next = button(g, font, cx + cw - 6 - 52, by, 52, "Next >", canGo, held == Held.NEXT);
@@ -263,10 +267,11 @@ final class InstallerFrames {
         outline(g, cx, cy, cw, ch, 0xFFC0C4D2);
 
         FramesEmblem.draw(g, cx + 8, cy + 5, editionOf(flow));
-        g.drawString(font, flow.style().title(flow.systemName()), cx + 20, cy + 6, 0xFF6B7488, false);
-        g.fill(cx + 1, cy + 19, cx + cw - 1, cy + 20, 0xFFE3E5EE);
-        g.drawString(font, flow.style().heading(flow.page(), flow.systemName()), cx + 10, cy + 27, 0xFF202434,
+        g.drawString(font, GameText.resolve(flow.style().title(flow.systemName())), cx + 20, cy + 6, 0xFF6B7488,
                 false);
+        g.fill(cx + 1, cy + 19, cx + cw - 1, cy + 20, 0xFFE3E5EE);
+        g.drawString(font, GameText.resolve(flow.style().heading(flow.page(), flow.systemName())), cx + 10, cy + 27,
+                0xFF202434, false);
 
         final int by = cy + ch - 20;
         /*

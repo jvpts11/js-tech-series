@@ -14,6 +14,7 @@ import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.ProgressBar;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -116,7 +117,7 @@ public final class SetupApp implements IDesktopApp {
         return switch (this.state.state()) {
             case SetupProgressPayload.STATE_DONE -> this.state.removing()
                     ? "Its files are gone from the disk." : "You will find it in the Start menu.";
-            case SetupProgressPayload.STATE_REFUSED -> this.state.message();
+            case SetupProgressPayload.STATE_REFUSED -> GameText.resolve(this.state.message());
             case SetupProgressPayload.STATE_CANCELLED -> "Nothing was " + (this.state.removing() ? "removed." : "installed.");
             default -> this.state.removing()
                     ? "Removing " + this.state.name() + " from your computer."
@@ -128,7 +129,7 @@ public final class SetupApp implements IDesktopApp {
         if (this.state == null || this.state.over()) {
             return "";
         }
-        return this.state.phase() + "...";
+        return GameText.resolve(this.state.phase()) + "...";
     }
 
     private String percentText() {
@@ -140,7 +141,7 @@ public final class SetupApp implements IDesktopApp {
             return "";
         }
         final String size = this.state.sizeMb() > 0 ? this.state.sizeMb() + " MB" : "";
-        final String from = this.state.source().isEmpty() ? "" : "from " + this.state.source();
+        final String from = this.state.source().isEmpty() ? "" : "from " + GameText.resolve(this.state.source());
         final StringBuilder out = new StringBuilder(this.state.house());
         for (final String part : new String[] {size, from}) {
             if (!part.isEmpty()) {

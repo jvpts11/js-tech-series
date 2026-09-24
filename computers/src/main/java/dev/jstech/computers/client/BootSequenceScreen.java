@@ -16,6 +16,7 @@ import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.core.gui.Phosphor;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -457,8 +458,9 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         int slot = 0;
         for (int i = 0; i < listed; i++) {
             final FirmwareStatePayload.Entry entry = entries.get(i);
+            final String device = GameText.resolve(entry.device());
             final String where = entry.kind() == FirmwareStatePayload.KIND_DISK
-                    ? "Disk " + slot++ + " · " + entry.device() : entry.device();
+                    ? "Disk " + slot++ + " · " + device : device;
             wall(g, wallClip(where + ": " + entry.label(), boxW - 16), bx + 8, ly, text);
             ly += WALL_ROW;
         }

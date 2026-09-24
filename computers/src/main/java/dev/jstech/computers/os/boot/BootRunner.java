@@ -18,6 +18,9 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.install.OsInstallRunner;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +43,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * machine: it has the same phases, on the same clocks, and only differs in whether anybody can see them.
  * Nothing is pushed to a screen without asking the machine whether it is the one being looked at.
  */
+@TextHolder
 public final class BootRunner {
 
     /** How long a boot manager waits before booting its first entry: the five seconds those menus always gave. */
@@ -50,6 +54,13 @@ public final class BootRunner {
 
     /** How often a machine standing at its failure asks again whether it has somewhere to go: once a second. */
     private static final int HALT_RECHECK_TICKS = 20;
+
+    /** The notice that one edition greets its owner with, and the words it uses for a machine with no name. */
+    private static final TextKey WELCOME_TO = TextKey.of("jsc.boot.boot_runner.welcome_to", "Welcome to %s");
+    private static final TextKey A_COMPUTER = TextKey.of("jsc.boot.boot_runner.a_computer", "this computer");
+    private static final TextKey THIS_COMPUTER = TextKey.of("jsc.boot.boot_runner.this_computer", "This computer");
+    private static final TextKey IS_READY = TextKey.of("jsc.boot.boot_runner.is_ready",
+            "%s is ready. Click here to see what is on this computer.");
 
     private BootRunner() {
     }
@@ -340,12 +351,11 @@ public final class BootRunner {
      */
     private static void sayHello(final IOsHost machine, final ServerLevel level, final BlockPos pos) {
         final OsDef system = machine.installedOs();
-        final String name = machine.customName().isEmpty() ? "This computer" : machine.customName();
+        final Text name = machine.customName().isEmpty() ? THIS_COMPUTER.text() : Text.literal(machine.customName());
         ScreenSessions.eachWatcher(level, pos, (player, monitor) ->
                 PacketDistributor.sendToPlayer(player, new DesktopBalloonPayload(pos,
-                        "Welcome to " + (system == null ? "this computer" : system.displayName()),
-                        name + " is ready. Click here to see what is on this computer.",
-                        WelcomeFacts.WINDOW_KEY)));
+                        WELCOME_TO.with(system == null ? A_COMPUTER.text() : Text.literal(system.displayName())),
+                        IS_READY.with(name), WelcomeFacts.WINDOW_KEY)));
     }
 
     /** Puts the boot menu in front of whoever is watching. */

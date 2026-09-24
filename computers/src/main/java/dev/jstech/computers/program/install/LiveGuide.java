@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.program.install;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+
 /**
  * The walkthrough a live medium carries, which is the one thing on it that tells a player what to do.
  *
@@ -17,10 +21,15 @@ package dev.jstech.computers.program.install;
  * <p>It is read at a terminal, so it is written well inside a monitor's columns: a step on a line of its own
  * and what it is for underneath, because a line that runs past the edge is broken wherever the edge happens to
  * be.
+ *
+ * <p>The walkthrough is a file on the medium, so it is data in the machine's own language like any other file, and
+ * reads the same whatever language the player has; what {@code help} says at the terminal is the tool talking, and
+ * is read in the player's.
  */
+@TextHolder
 final class LiveGuide {
 
-    private static final String ARCH = String.join("\n",
+    private static final Text ARCH = Text.literal(String.join("\n",
             "Installing Arch Linux by hand.",
             "",
             "Steps marked * are the ones a system cannot boot without.",
@@ -61,9 +70,9 @@ final class LiveGuide {
             " * reboot",
             "",
             "A Mainframe on this network must be running the Mirror.",
-            "CTRL+C stops a tool that is running.");
+            "CTRL+C stops a tool that is running."));
 
-    private static final String GENTOO = String.join("\n",
+    private static final Text GENTOO = Text.literal(String.join("\n",
             "Installing Gentoo by hand.",
             "",
             "Steps marked * are the ones a system cannot boot without.",
@@ -120,25 +129,40 @@ final class LiveGuide {
             " * reboot",
             "",
             "A Mainframe on this network must be running the Mirror.",
-            "CTRL+C stops a tool that is running.");
+            "CTRL+C stops a tool that is running."));
+
+    /*
+     * What help says, a line each, kept as short as the lines were so it still fits the monitor's columns. The one
+     * sentence that runs over two lines is two keys, so the break stays where it reads well.
+     */
+    private static final TextKey HELP_MEDIUM = TextKey.of("jsc.install.live_guide.help_medium",
+            "This is the %s installation medium.");
+    private static final TextKey HELP_BY_HAND = TextKey.of("jsc.install.live_guide.help_by_hand",
+            "Nothing here installs itself: the steps are typed by hand, in");
+    private static final TextKey HELP_REAL_TOOLS = TextKey.of("jsc.install.live_guide.help_real_tools",
+            "order, and every tool is the real one.");
+    private static final TextKey HELP_WALKTHROUGH = TextKey.of("jsc.install.live_guide.help_walkthrough",
+            "The whole walkthrough is in %s");
+    private static final TextKey HELP_STOP = TextKey.of("jsc.install.live_guide.help_stop",
+            "A tool that is running can be stopped with CTRL+C.");
 
     private LiveGuide() {
     }
 
+    /** The walkthrough file, in the English every file on a machine is kept in. */
     static String of(final LiveInstallState.Distro distro) {
-        return distro == LiveInstallState.Distro.ARCH ? ARCH : GENTOO;
+        return (distro == LiveInstallState.Distro.ARCH ? ARCH : GENTOO).english();
     }
 
     /** What {@code help} says, which is where the walkthrough is. */
-    static String[] help(final LiveInstallState.Distro distro) {
-        return new String[]{
-            "This is the " + (distro == LiveInstallState.Distro.ARCH ? "Arch Linux" : "Gentoo")
-                    + " installation medium.",
-            "Nothing here installs itself: the steps are typed by hand, in",
-            "order, and every tool is the real one.",
-            "",
-            "The whole walkthrough is in /root/install.txt",
-            "    less /root/install.txt",
-            "A tool that is running can be stopped with CTRL+C."};
+    static Text[] help(final LiveInstallState.Distro distro) {
+        return new Text[]{
+            HELP_MEDIUM.with(Text.literal(distro == LiveInstallState.Distro.ARCH ? "Arch Linux" : "Gentoo")),
+            HELP_BY_HAND.text(),
+            HELP_REAL_TOOLS.text(),
+            Text.EMPTY,
+            HELP_WALKTHROUGH.with("/root/install.txt"),
+            Text.literal("    less /root/install.txt"),
+            HELP_STOP.text()};
     }
 }

@@ -28,6 +28,7 @@ import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.GameText;
 import java.util.List;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -73,8 +74,8 @@ public final class DesktopPayloads {
         // A notice the machine raises from the corner of its own desktop, which takes nothing over.
         registrar.playToClient(DesktopBalloonPayload.TYPE, DesktopBalloonPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
-                        DesktopScreen.raise(payload.hostPos(), payload.title(), payload.body(),
-                                payload.opens())));
+                        DesktopScreen.raise(payload.hostPos(), GameText.resolve(payload.title()),
+                                GameText.resolve(payload.body()), payload.opens())));
     }
 
     private static void handleRequestDesktopFiles(final RequestDesktopFilesPayload payload, final ServerPlayer player,

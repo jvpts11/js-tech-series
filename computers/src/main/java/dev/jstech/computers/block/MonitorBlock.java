@@ -48,6 +48,7 @@ import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
+import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
@@ -55,6 +56,7 @@ import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
 import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockEntityTickers;
 import java.util.ArrayList;
@@ -462,8 +464,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                 .getOs(ResourceLocation.tryParse(job.osId()));
         PacketDistributor.sendToPlayer(player, new OsInstallProgressPayload(
                 owner, monitorPos, kind.id(), os != null ? os.displayName() : job.osId(),
-                job.targetSlot() < 0 ? "the default disk" : "Disk " + job.targetSlot(),
-                job.ticksLeft(), job.ticksTotal()));
+                OsInstallRunner.targetLabel(job.targetSlot()), job.ticksLeft(), job.ticksTotal()));
         openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.INSTALL_PROGRESS);
     }
 
@@ -478,9 +479,8 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final OsDef os = osId == null ? null
                 : OsRegistry.getOs(osId);
         final String osName = os != null ? os.displayName() : "";
-        final String targetLabel = slot < 0 ? "the default disk" : "Disk " + slot;
         PacketDistributor.sendToPlayer(player, new OpenInstallDonePayload(
-                owner, monitorPos, kind.id(), osName, targetLabel, slot, ""));
+                owner, monitorPos, kind.id(), osName, OsInstallRunner.targetLabel(slot), slot, Text.EMPTY));
         openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.INSTALL_PROGRESS);
     }
 
@@ -519,8 +519,8 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
          * What the machine found wrong with its own disk, when that is why it stopped: a system whose loader
          * has been deleted is found and will not start, and the screen says which file it wanted.
          */
-        final String complaint = ownerBe instanceof IOsHost machine
-                ? SystemIntegrity.check(machine).complaint() : "";
+        final Text complaint = ownerBe instanceof IOsHost machine
+                ? SystemIntegrity.check(machine).complaint() : Text.EMPTY;
         PacketDistributor.sendToPlayer(player,
                 new OpenPostPayload(owner, monitorPos, kind.id(), name, remaining, halted, complaint));
         if (ownerBe instanceof IOsHost machine) {

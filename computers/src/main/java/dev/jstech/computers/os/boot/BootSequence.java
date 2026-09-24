@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.os.boot;
 
+import dev.jstech.core.text.Text;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,8 +21,11 @@ import java.util.List;
  *
  * <p>The steps share the time evenly, so a sequence appears line by line over however long the system takes on
  * this machine rather than over a length of its own.
+ *
+ * <p>The words are text rather than strings: a kernel's log reads the same in every language and is carried as
+ * data, while what a system says to the person in front of it is read in that person's language.
  */
-public record BootSequence(String title, String subtitle, List<Line> lines) {
+public record BootSequence(Text title, Text subtitle, List<Line> lines) {
 
     /**
      * How many steps a sequence may show.
@@ -31,11 +36,11 @@ public record BootSequence(String title, String subtitle, List<Line> lines) {
     public static final int MOST_LINES = 20;
 
     /** Nothing to show: a system with no sequence of its own yet. */
-    public static final BootSequence NONE = new BootSequence("", "", List.of());
+    public static final BootSequence NONE = new BootSequence(Text.EMPTY, Text.EMPTY, List.of());
 
     public BootSequence {
-        title = title == null ? "" : title;
-        subtitle = subtitle == null ? "" : subtitle;
+        title = title == null ? Text.EMPTY : title;
+        subtitle = subtitle == null ? Text.EMPTY : subtitle;
         lines = lines == null ? List.of() : List.copyOf(lines.size() > MOST_LINES
                 ? lines.subList(0, MOST_LINES) : lines);
     }
@@ -69,20 +74,21 @@ public record BootSequence(String title, String subtitle, List<Line> lines) {
      *
      * @param label what the machine was doing
      * @param value what came of it, drawn in its own column, which may be nothing
-     * @param mark  what stands at the head of the line, which may be nothing
+     * @param mark  what stands at the head of the line, which may be nothing: a time or a status word, which is
+     *              data in every language
      * @param good  whether the mark and the value report success, which is what makes them green
      */
-    public record Line(String label, String value, String mark, boolean good) {
+    public record Line(Text label, Text value, String mark, boolean good) {
 
         public Line {
-            label = label == null ? "" : label;
-            value = value == null ? "" : value;
+            label = label == null ? Text.EMPTY : label;
+            value = value == null ? Text.EMPTY : value;
             mark = mark == null ? "" : mark;
         }
 
         /** A step that reports nothing beside it, the way a plain line of a starting system reads. */
-        public static Line of(final String label) {
-            return new Line(label, "", "", false);
+        public static Line of(final Text label) {
+            return new Line(label, Text.EMPTY, "", false);
         }
     }
 
@@ -90,37 +96,37 @@ public record BootSequence(String title, String subtitle, List<Line> lines) {
     public static final class Builder {
 
         private final List<Line> lines = new ArrayList<>();
-        private String title = "";
-        private String subtitle = "";
+        private Text title = Text.EMPTY;
+        private Text subtitle = Text.EMPTY;
 
-        public Builder title(final String value) {
+        public Builder title(final Text value) {
             this.title = value;
             return this;
         }
 
-        public Builder subtitle(final String value) {
+        public Builder subtitle(final Text value) {
             this.subtitle = value;
             return this;
         }
 
-        public Builder line(final String label) {
+        public Builder line(final Text label) {
             this.lines.add(Line.of(label));
             return this;
         }
 
-        public Builder line(final String label, final String value) {
+        public Builder line(final Text label, final Text value) {
             this.lines.add(new Line(label, value, "", false));
             return this;
         }
 
         /** A step with a mark at the head of its line, which is how a kernel and an init report theirs. */
-        public Builder marked(final String mark, final String label, final boolean good) {
-            this.lines.add(new Line(label, "", mark, good));
+        public Builder marked(final String mark, final Text label, final boolean good) {
+            this.lines.add(new Line(label, Text.EMPTY, mark, good));
             return this;
         }
 
         /** The same, with what came of it in its own column at the other end. */
-        public Builder marked(final String mark, final String label, final String value, final boolean good) {
+        public Builder marked(final String mark, final Text label, final Text value, final boolean good) {
             this.lines.add(new Line(label, value, mark, good));
             return this;
         }

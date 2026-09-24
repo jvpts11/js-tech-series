@@ -125,7 +125,7 @@ class InstallerFlowTest {
         flow.chooseDesktop(0);
         assertEquals(withoutDesktop + GNOME.ticks(), flow.ticksTotal());
         final InstallerFlow.Step last = flow.steps().get(flow.steps().size() - 1);
-        assertEquals("Installing GNOME from the Mirror on CORE", last.label());
+        assertEquals("Installing GNOME from the Mirror on CORE", last.label().english());
     }
 
     @Test
@@ -238,10 +238,10 @@ class InstallerFlowTest {
     @Test
     void stepAt_namesTheStepTheWorkIsOn() {
         final InstallerFlow flow = frames11(List.of(EMPTY_500));
-        assertEquals("Copying files", flow.steps().get(flow.stepAt(0)).label());
-        assertEquals("Creating the system folders", flow.steps().get(flow.stepAt(25)).label());
-        assertEquals("Setting up the boot entry", flow.steps().get(flow.stepAt(99)).label());
-        assertEquals("Setting up the boot entry", flow.steps().get(flow.stepAt(1000)).label());
+        assertEquals("Copying files", flow.steps().get(flow.stepAt(0)).label().english());
+        assertEquals("Creating the system folders", flow.steps().get(flow.stepAt(25)).label().english());
+        assertEquals("Setting up the boot entry", flow.steps().get(flow.stepAt(99)).label().english());
+        assertEquals("Setting up the boot entry", flow.steps().get(flow.stepAt(1000)).label().english());
     }
 
     @Test

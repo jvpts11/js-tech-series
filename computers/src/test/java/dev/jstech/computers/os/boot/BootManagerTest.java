@@ -47,8 +47,9 @@ class BootManagerTest {
 
     @Test
     void label_namesAnotherSystemTheWayEachManagerDoes() {
-        assertEquals("Fedora Boot Manager (on /dev/sdb1)", BootManager.GRUB.label("Fedora", "/dev/sdb1", 1));
-        assertEquals("Frames XP (Disk 1)", BootManager.KICKMGR.label("Frames XP", "/dev/sdb1", 1));
-        assertEquals("FreeBSD", BootManager.LOADER.label("FreeBSD", "/dev/ada0", 0));
+        assertEquals("Fedora Boot Manager (on /dev/sdb1)",
+                BootManager.GRUB.label("Fedora", "/dev/sdb1", 1).english());
+        assertEquals("Frames XP (Disk 1)", BootManager.KICKMGR.label("Frames XP", "/dev/sdb1", 1).english());
+        assertEquals("FreeBSD", BootManager.LOADER.label("FreeBSD", "/dev/ada0", 0).english());
     }
 }

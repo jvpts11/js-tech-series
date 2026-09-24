@@ -12,6 +12,7 @@ import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.os.boot.BootMenu;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -151,7 +152,7 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
          * A boot manager of this kind drew a ruled box with the systems inside it and put its help underneath,
          * which is what tells a player at a glance that the list is the thing to act on and the rest is not.
          */
-        wallCentered(g, this.menu.title(), x + W / 2, y + 12, TEXT);
+        wallCentered(g, GameText.resolve(this.menu.title()), x + W / 2, y + 12, TEXT);
         final int boxTop = y + 30;
         final int boxBottom = boxTop + BOX_H;
         rule(g, x + MARGIN, boxTop, W - 2 * MARGIN, BOX_H);
@@ -173,7 +174,7 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
             }
             /* The star marks the entry the machine boots on its own, which is not always the one highlighted. */
             final String mark = i == this.menu.defaultIndex() ? "*" : " ";
-            wall(g, wallClip(mark + entry.label(), W - 2 * MARGIN - 14), x + MARGIN + 6, ty,
+            wall(g, wallClip(mark + GameText.resolve(entry.label()), W - 2 * MARGIN - 14), x + MARGIN + 6, ty,
                     on ? 0xFF000000 : TEXT);
             ty += WALL_ROW + 2;
         }

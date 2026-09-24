@@ -18,6 +18,7 @@ import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.SoftwareHouse;
 import dev.jstech.computers.os.fs.InstallerLayout;
+import dev.jstech.core.text.Text;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -104,7 +105,7 @@ public final class InstallerProjection {
                 Branding.osYear(os.displayName(), os.minEra()), os.house().name(),
                 Component.translatable("os.jsc." + os.id().getPath() + ".desc").getString()
                         .replace("os.jsc." + os.id().getPath() + ".desc", ""),
-                plain(MinSpecTooltip.osMinSpec(os.id())), os.platform().label(), "any computer",
+                plain(MinSpecTooltip.osMinSpec(os.id())), os.platform().label(), hostLabel(HostScope.ANY),
                 List.of(), KernelNames.bootFiles(os.platform()));
     }
 
@@ -122,14 +123,18 @@ public final class InstallerProjection {
                 FormattedMediaItem.installCommands(spec));
     }
 
+    /**
+     * Where a program runs, as the file on the disc says it. A file on a disk is data, written in the machine's
+     * own language like every other file, so these words are the same whoever reads them.
+     */
     private static String hostLabel(final HostScope scope) {
-        return switch (scope) {
+        return Text.literal(switch (scope) {
             case MAINFRAME -> "the Mainframe";
             case SERVER -> "a server in a rack";
             case CRAFTING_COMPUTER -> "a Crafting Computer";
             case CLUSTER_MANAGEMENT_COMPUTER -> "a Cluster Management Computer";
             default -> "any computer";
-        };
+        }).english();
     }
 
     private static List<String> plain(final List<Component> lines) {

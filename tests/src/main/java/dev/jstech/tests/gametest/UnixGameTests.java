@@ -202,7 +202,7 @@ public final class UnixGameTests {
 
     private static boolean has(final BootSequence sequence, final String label) {
         for (final BootSequence.Line line : sequence.lines()) {
-            if (line.label().equals(label)) {
+            if (line.label().english().equals(label)) {
                 return true;
             }
         }
@@ -210,13 +210,14 @@ public final class UnixGameTests {
     }
 
     private static String last(final BootSequence sequence) {
-        return sequence.lines().isEmpty() ? "" : sequence.lines().get(sequence.lines().size() - 1).label();
+        return sequence.lines().isEmpty() ? ""
+                : sequence.lines().get(sequence.lines().size() - 1).label().english();
     }
 
     private static String labels(final BootSequence sequence) {
         final StringBuilder out = new StringBuilder();
         for (final BootSequence.Line line : sequence.lines()) {
-            out.append(line.label()).append(" | ");
+            out.append(line.label().english()).append(" | ");
         }
         return out.toString();
     }

@@ -20,6 +20,9 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.Locale;
 import java.util.Optional;
@@ -31,8 +34,53 @@ import java.util.Optional;
  * manager) used to keep its own copy of these checks, and each said no in its own words, or in none.
  * They are asked here, once, in the order a real setup asks them, and the first thing wrong is the
  * answer.
+ *
+ * <p>The words are the setup's own, read in the player's language; the names of programs, systems and eras are
+ * data and go into them as they are.
  */
+@TextHolder
 public final class SetupGate {
+
+    /** A machine with nowhere to keep programs, which the runner says too when it is asked to start one. */
+    static final TextKey CANNOT_HOLD = TextKey.of("jsc.install.setup_gate.cannot_hold",
+            "This computer cannot hold installed programs.");
+
+    private static final TextKey NOT_INSTALLED = TextKey.of("jsc.install.setup_gate.not_installed",
+            "%s is not installed.");
+    private static final TextKey COMES_WITH_EVERY_SYSTEM = TextKey.of("jsc.install.setup_gate.comes_with_every_system",
+            "%s comes with every system. There is nothing to install.");
+    private static final TextKey ALREADY_INSTALLED = TextKey.of("jsc.install.setup_gate.already_installed",
+            "%s is already installed.");
+    private static final TextKey NEEDS_ERA = TextKey.of("jsc.install.setup_gate.needs_era",
+            "%s needs %s hardware or newer. This computer is %s.");
+    private static final TextKey NEEDS_SYSTEM = TextKey.of("jsc.install.setup_gate.needs_system",
+            "%s needs an operating system to install on.");
+    private static final TextKey WRONG_PLATFORM = TextKey.of("jsc.install.setup_gate.wrong_platform",
+            "%s runs on %s, not on %s.");
+    private static final TextKey NEEDS_NEWER_SYSTEM = TextKey.of("jsc.install.setup_gate.needs_newer_system",
+            "%s needs %s or newer. This computer runs %s.");
+    private static final TextKey NEEDS_PROCESSOR = TextKey.of("jsc.install.setup_gate.needs_processor",
+            "%s needs a %s MHz processor. This computer has %s MHz.");
+    private static final TextKey NEEDS_VIDEO_MEMORY = TextKey.of("jsc.install.setup_gate.needs_video_memory",
+            "%s needs %s MB of video memory. This computer has %s MB.");
+    private static final TextKey NEEDS_DISK = TextKey.of("jsc.install.setup_gate.needs_disk",
+            "%s needs %s MB free on the disk. There are %s MB.");
+    private static final TextKey PUT_DISC_IN = TextKey.of("jsc.install.setup_gate.put_disc_in",
+            "Put the %s disc in a drive linked to this computer.");
+    private static final TextKey CANNOT_INSTALL_HERE = TextKey.of("jsc.install.setup_gate.cannot_install_here",
+            "%s cannot install on this computer's system or hardware.");
+    private static final TextKey ONLY_INSTALLS_ON = TextKey.of("jsc.install.setup_gate.only_installs_on",
+            "%s only installs on %s.");
+    private static final TextKey ON_A_MAINFRAME = TextKey.of("jsc.install.setup_gate.on_a_mainframe", "a Mainframe");
+    private static final TextKey ON_A_CRAFTING_COMPUTER = TextKey.of("jsc.install.setup_gate.on_a_crafting_computer",
+            "a Crafting Computer");
+    private static final TextKey ON_A_SERVER = TextKey.of("jsc.install.setup_gate.on_a_server", "a server in a rack");
+    private static final TextKey ON_A_CLUSTER_MANAGER = TextKey.of("jsc.install.setup_gate.on_a_cluster_manager",
+            "a Cluster Management Computer");
+    private static final TextKey ON_THIS_COMPUTER = TextKey.of("jsc.install.setup_gate.on_this_computer",
+            "this computer");
+    private static final TextKey AND = TextKey.of("jsc.install.setup_gate.and", "%s and %s");
+    private static final TextKey NOTHING = TextKey.of("jsc.install.setup_gate.nothing", "nothing");
 
     private SetupGate() {
     }
@@ -42,64 +90,59 @@ public final class SetupGate {
      *
      * @param hasMedium whether the program's disc is in a linked drive, or it comes over the network
      */
-    public static Optional<String> refusal(final IOsHost host, final ProgramSpec spec, final boolean removing,
-                                           final boolean hasMedium) {
+    public static Optional<Text> refusal(final IOsHost host, final ProgramSpec spec, final boolean removing,
+                                         final boolean hasMedium) {
         final ComputerConsoleState console = host.console();
         if (console == null) {
-            return Optional.of("This computer cannot hold installed programs.");
+            return Optional.of(CANNOT_HOLD.text());
         }
         final String name = spec.displayName();
         if (removing) {
             return installed(host, console, spec) ? Optional.empty()
-                    : Optional.of(name + " is not installed.");
+                    : Optional.of(NOT_INSTALLED.with(name));
         }
         if (spec.preinstalled()) {
-            return Optional.of(name + " comes with every system. There is nothing to install.");
+            return Optional.of(COMES_WITH_EVERY_SYSTEM.with(name));
         }
         if (installed(host, console, spec)) {
-            return Optional.of(name + " is already installed.");
+            return Optional.of(ALREADY_INSTALLED.with(name));
         }
         final HardwareEra era = host.displayEra();
         if (spec.minEra() != HardwareEra.VINTAGE && era != null && !OsGating.canInstall(spec.minEra(), era)) {
-            return Optional.of(name + " needs " + eraName(spec.minEra()) + " hardware or newer. This computer is "
-                    + eraName(era) + ".");
+            return Optional.of(NEEDS_ERA.with(name, eraName(spec.minEra()), eraName(era)));
         }
         final OsDef os = host.installedOs();
         if (os == null) {
-            return Optional.of(name + " needs an operating system to install on.");
+            return Optional.of(NEEDS_SYSTEM.with(name));
         }
         if (!spec.platforms().contains(os.platform())) {
-            return Optional.of(name + " runs on " + platforms(spec) + ", not on " + os.platform().label() + ".");
+            return Optional.of(WRONG_PLATFORM.with(name, platforms(spec), os.platform().label()));
         }
         final int rank = OsRegistry.osVersionRank(os.id());
         if (rank != 0 && rank < spec.minOsRank()) {
-            return Optional.of(name + " needs " + OsRegistry.systemOfRank(spec.minOsRank())
-                    + " or newer. This computer runs "
-                    + os.displayName() + ".");
+            return Optional.of(NEEDS_NEWER_SYSTEM.with(name, OsRegistry.systemOfRank(spec.minOsRank()),
+                    os.displayName()));
         }
-        final Optional<String> scope = hostScope(host, spec);
+        final Optional<Text> scope = hostScope(host, spec);
         if (scope.isPresent()) {
             return scope;
         }
         if (host.maxCpuMhz() < spec.minCpuMhz()) {
-            return Optional.of(name + " needs a " + spec.minCpuMhz() + " MHz processor. This computer has "
-                    + host.maxCpuMhz() + " MHz.");
+            return Optional.of(NEEDS_PROCESSOR.with(name, spec.minCpuMhz(), host.maxCpuMhz()));
         }
         if (host.totalVramMb() < spec.minVramMb()) {
-            return Optional.of(name + " needs " + spec.minVramMb() + " MB of video memory. This computer has "
-                    + host.totalVramMb() + " MB.");
+            return Optional.of(NEEDS_VIDEO_MEMORY.with(name, spec.minVramMb(), host.totalVramMb()));
         }
         if (host.systemDiskFreeMb() < spec.minDiskMb()) {
-            return Optional.of(name + " needs " + spec.minDiskMb() + " MB free on the disk. There are "
-                    + host.systemDiskFreeMb() + " MB.");
+            return Optional.of(NEEDS_DISK.with(name, spec.minDiskMb(), host.systemDiskFreeMb()));
         }
         if (!hasMedium) {
-            return Optional.of("Put the " + name + " disc in a drive linked to this computer.");
+            return Optional.of(PUT_DISC_IN.with(name));
         }
         // The registry's own word is the last one, in case a rule lives there and nowhere above.
         if (!OsRegistry.canInstallProgram(os.id(), spec.id(), host.maxCpuMhz(), host.totalVramMb(),
                 host.systemDiskFreeMb())) {
-            return Optional.of(name + " cannot install on this computer's system or hardware.");
+            return Optional.of(CANNOT_INSTALL_HERE.with(name));
         }
         return Optional.empty();
     }
@@ -123,7 +166,7 @@ public final class SetupGate {
     }
 
     /** A program bound to one kind of machine refuses every other kind by name. */
-    private static Optional<String> hostScope(final IOsHost host, final ProgramSpec spec) {
+    private static Optional<Text> hostScope(final IOsHost host, final ProgramSpec spec) {
         final boolean allowed = switch (spec.hostScope()) {
             case ANY -> true;
             case MAINFRAME -> host instanceof MainframeBlockEntity;
@@ -134,25 +177,23 @@ public final class SetupGate {
         if (allowed) {
             return Optional.empty();
         }
-        final String where = switch (spec.hostScope()) {
-            case MAINFRAME -> "a Mainframe";
-            case CRAFTING_COMPUTER -> "a Crafting Computer";
-            case SERVER -> "a server in a rack";
-            case CLUSTER_MANAGEMENT_COMPUTER -> "a Cluster Management Computer";
-            default -> "this computer";
+        final TextKey where = switch (spec.hostScope()) {
+            case MAINFRAME -> ON_A_MAINFRAME;
+            case CRAFTING_COMPUTER -> ON_A_CRAFTING_COMPUTER;
+            case SERVER -> ON_A_SERVER;
+            case CLUSTER_MANAGEMENT_COMPUTER -> ON_A_CLUSTER_MANAGER;
+            default -> ON_THIS_COMPUTER;
         };
-        return Optional.of(spec.displayName() + " only installs on " + where + ".");
+        return Optional.of(ONLY_INSTALLS_ON.with(spec.displayName(), where));
     }
 
-    private static String platforms(final ProgramSpec spec) {
-        final StringBuilder out = new StringBuilder();
+    /** The families a program runs on, joined the way a sentence lists them; the families' names are data. */
+    private static Text platforms(final ProgramSpec spec) {
+        Text out = null;
         for (final Platform platform : spec.platforms()) {
-            if (!out.isEmpty()) {
-                out.append(" and ");
-            }
-            out.append(platform.label());
+            out = out == null ? Text.literal(platform.label()) : AND.with(out, platform.label());
         }
-        return out.isEmpty() ? "nothing" : out.toString();
+        return out == null ? NOTHING.text() : out;
     }
 
     /** An era's name as a word: "Legacy", not "LEGACY". */

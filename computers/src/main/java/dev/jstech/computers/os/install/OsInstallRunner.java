@@ -18,6 +18,9 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -37,7 +40,16 @@ import org.jetbrains.annotations.Nullable;
  * <p>How far it may run is the installer's business, not the clock's: the work goes to the end of the page it is
  * on and waits there, so a question nobody has answered is never copied past.
  */
+@TextHolder
 public final class OsInstallRunner {
+
+    private static final TextKey MEDIUM_TAKEN_OUT = TextKey.of("jsc.install.os_install_runner.medium_taken_out",
+            "The medium was taken out before the system was written.");
+    private static final TextKey DISK_REFUSED = TextKey.of("jsc.install.os_install_runner.disk_refused",
+            "The disk would not take the system.");
+    private static final TextKey DEFAULT_DISK = TextKey.of("jsc.install.os_install_runner.default_disk",
+            "the default disk");
+    private static final TextKey DISK_SLOT = TextKey.of("jsc.install.os_install_runner.disk_slot", "Disk %s");
 
     private OsInstallRunner() {
     }
@@ -52,7 +64,7 @@ public final class OsInstallRunner {
         if (mediumGone(level, job)) {
             machine.setInstalling(null);
             machine.setInstaller(null);
-            tell(level, machine, pos, job, system, "The medium was taken out before the system was written.");
+            tell(level, machine, pos, job, system, MEDIUM_TAKEN_OUT.text());
             return;
         }
         final InstallerFlow flow = machine.installer();
@@ -96,7 +108,7 @@ public final class OsInstallRunner {
         final int slot = flow != null ? flow.targetSlot() : job.targetSlot();
         if (id == null || !machine.installOs(id, slot)) {
             machine.setInstaller(null);
-            tell(level, machine, pos, job, system, "The disk would not take the system.");
+            tell(level, machine, pos, job, system, DISK_REFUSED.text());
             return;
         }
         /*
@@ -105,7 +117,7 @@ public final class OsInstallRunner {
          */
         machine.setPendingInstallSlot(slot);
         if (flow == null) {
-            tell(level, machine, pos, job, system, "");
+            tell(level, machine, pos, job, system, Text.EMPTY);
             return;
         }
         name(machine, flow);
@@ -162,16 +174,24 @@ public final class OsInstallRunner {
         });
     }
 
+    /**
+     * The disk a copy is going onto, as the installer's last page names it: by its slot, or as the machine's
+     * default one when none was chosen.
+     */
+    public static Text targetLabel(final int slot) {
+        return slot < 0 ? DEFAULT_DISK.text() : DISK_SLOT.with(slot);
+    }
+
     /** Puts every player watching this machine on the installer's last beat, finished or refused. */
     private static void tell(final ServerLevel level, final IOsHost machine, final BlockPos pos,
-                             final OsInstallJob job, @Nullable final OsDef system, final String failure) {
+                             final OsInstallJob job, @Nullable final OsDef system, final Text failure) {
         if (!machine.onScreen()) {
             return;
         }
         final HardwareEra era = machine.displayEra();
         final int kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD).id();
         final String name = system != null ? system.displayName() : job.osId();
-        final String target = job.targetSlot() < 0 ? "the default disk" : "Disk " + job.targetSlot();
+        final Text target = targetLabel(job.targetSlot());
         ScreenSessions.eachWatcher(level, pos, (player, monitor) -> {
             PacketDistributor.sendToPlayer(player, new OpenInstallDonePayload(pos, monitor, kind, name, target,
                     failure.isEmpty() ? job.targetSlot() : -1, failure));

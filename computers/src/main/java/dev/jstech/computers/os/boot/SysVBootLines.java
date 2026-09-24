@@ -11,6 +11,7 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.install.Installers;
+import dev.jstech.core.text.Text;
 
 /**
  * What UNIX System V says on its way up and on its way down.
@@ -34,17 +35,18 @@ final class SysVBootLines {
     /** The banner, the memory, the root filesystem checked, and the word that it is ready. */
     static BootSequence up(final IOsHost machine, final OsDef system) {
         final long total = machine.ramTotalMb() * BYTES_PER_MB;
+        // The kernel's and init's console lines, which this system never printed in any language but its own.
         final BootSequence.Builder out = new BootSequence.Builder()
-                .title("Booting the UNIX System...")
-                .subtitle("");
-        out.line(system.displayName() + " Release " + KernelNames.SYSTEM_V_RELEASE);
-        out.line("Copyright (c) 1984, 1986, 1987 " + system.house().name());
-        out.line("All Rights Reserved");
-        out.line("Total real memory     = " + total);
-        out.line("Available memory      = " + Math.max(0L, total - KEPT_BYTES));
-        out.line("The system is coming up.  Please wait.");
-        out.line("/dev/root: clean");
-        out.line("The system is ready.");
+                .title(Text.literal("Booting the UNIX System..."))
+                .subtitle(Text.EMPTY);
+        out.line(Text.literal(system.displayName() + " Release " + KernelNames.SYSTEM_V_RELEASE));
+        out.line(Text.literal("Copyright (c) 1984, 1986, 1987 " + system.house().name()));
+        out.line(Text.literal("All Rights Reserved"));
+        out.line(Text.literal("Total real memory     = " + total));
+        out.line(Text.literal("Available memory      = " + Math.max(0L, total - KEPT_BYTES)));
+        out.line(Text.literal("The system is coming up.  Please wait."));
+        out.line(Text.literal("/dev/root: clean"));
+        out.line(Text.literal("The system is ready."));
         return out.build();
     }
 
@@ -54,14 +56,14 @@ final class SysVBootLines {
      * @param restarting the machine is coming straight back up, which is run level 6 and not 0
      */
     static BootSequence down(final IOsHost machine, final boolean restarting) {
-        final BootSequence.Builder out = new BootSequence.Builder().title("").subtitle("");
-        out.line("Broadcast Message from player (console) on " + Installers.hostName(machine));
-        out.line("THE SYSTEM IS BEING SHUT DOWN NOW ! ! !");
-        out.line("Log off now or risk your files being damaged.");
-        out.line("INIT: New run level: " + (restarting ? "6" : "0"));
-        out.line("The system is coming down.  Please wait.");
-        out.line("System services are now being stopped.");
-        out.line(restarting ? "The system is being restarted." : "The system is down.");
+        final BootSequence.Builder out = new BootSequence.Builder().title(Text.EMPTY).subtitle(Text.EMPTY);
+        out.line(Text.literal("Broadcast Message from player (console) on " + Installers.hostName(machine)));
+        out.line(Text.literal("THE SYSTEM IS BEING SHUT DOWN NOW ! ! !"));
+        out.line(Text.literal("Log off now or risk your files being damaged."));
+        out.line(Text.literal("INIT: New run level: " + (restarting ? "6" : "0")));
+        out.line(Text.literal("The system is coming down.  Please wait."));
+        out.line(Text.literal("System services are now being stopped."));
+        out.line(Text.literal(restarting ? "The system is being restarted." : "The system is down."));
         return out.build();
     }
 }

@@ -109,7 +109,7 @@ final class LiveProgress {
         this.base = saved.flag("base");
         this.fstab = saved.flag("fstab");
         this.synced = saved.flag("synced");
-        this.profile = PortageVoices.profileOf(saved.text("profile", "0"));
+        this.profile = PortageVoices.profileOf(saved.value("profile", "0"));
         this.worldUpdated = saved.flag("world_updated");
         this.sources = saved.flag("sources");
         this.kernelChosen = saved.flag("kernel_chosen");
@@ -120,8 +120,8 @@ final class LiveProgress {
         this.bootloader = saved.flag("bootloader");
         this.grubConfig = saved.flag("grub_config");
         this.clockSet = saved.flag("clock_set");
-        this.chosenName = saved.text("chosen_name", "");
-        for (final String pkg : saved.text("asked", "").split(" ")) {
+        this.chosenName = saved.value("chosen_name", "");
+        for (final String pkg : saved.value("asked", "").split(" ")) {
             if (!pkg.isEmpty()) {
                 this.asked.add(pkg);
             }

@@ -10,9 +10,12 @@ package dev.jstech.computers.program.install;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliSpan;
 import dev.jstech.computers.program.cli.CliStyle;
+import dev.jstech.core.text.Text;
 
 /**
  * A live medium's prompt, in the words and the colours each medium's shell really gives it.
+ *
+ * <p>A prompt is data in every language: the user, the machine's name and where the session stands.
  *
  * <p>Gentoo's root prompt is the machine's name in red and the rest in blue, inside the new system as much as
  * outside it, where it is marked as a chroot. Arch's medium runs a shell that puts only the user in red, and
@@ -31,7 +34,7 @@ final class LivePrompt {
     static CliLine of(final LiveInstallState.Distro distro, final boolean inside, final String where) {
         if (distro == LiveInstallState.Distro.ARCH) {
             return inside
-                    ? new CliLine("[root@archiso " + where + "]#", CliStyle.PROMPT)
+                    ? new CliLine(Text.literal("[root@archiso " + where + "]#"), CliStyle.PROMPT)
                     : CliLine.of(new CliSpan("root", CliStyle.ERROR),
                             new CliSpan("@archiso " + where + " #", CliStyle.PROMPT));
         }

@@ -28,6 +28,7 @@ import dev.jstech.computers.os.fs.DiskTrash;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.fs.TrashFolder;
 import dev.jstech.computers.os.fs.TrashKind;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -114,7 +115,7 @@ public final class TrashPayloads {
         };
         if (!refusal.isEmpty()) {
             PacketDistributor.sendToPlayer(player,
-                    new DesktopBalloonPayload(payload.hostPos(), trash.kind().title(), refusal, ""));
+                    new DesktopBalloonPayload(payload.hostPos(), Text.of(trash.kind().title()), Text.of(refusal), ""));
         }
     }
 

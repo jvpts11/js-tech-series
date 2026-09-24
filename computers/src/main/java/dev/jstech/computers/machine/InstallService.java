@@ -34,6 +34,7 @@ import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.ICliInstallation;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
@@ -154,7 +155,7 @@ public final class InstallService {
         if (machine == null) {
             return ICliComputer.OpResult.fail(PackageService.NO_STORE);
         }
-        final Optional<String> refusal = SetupRunner.begin(machine, this.level,
+        final Optional<Text> refusal = SetupRunner.begin(machine, this.level,
                 ((BlockEntity) this.terminal).getBlockPos(), program, medium, false);
         return refusal.map(ICliComputer.OpResult::fail)
                 .orElseGet(() -> ICliComputer.OpResult.ok(SETTING_UP.with(program.commandName(), driveName(medium))));

@@ -305,7 +305,7 @@ public final class PackageService {
         }
         final ProgramSpec removing = spec;
         final PackageManagerKind manager = this.manager();
-        final Optional<String> refusal = SetupRunner.begin(host, this.level, machine.getBlockPos(), removing, null,
+        final Optional<Text> refusal = SetupRunner.begin(host, this.level, machine.getBlockPos(), removing, null,
                 true, manager);
         return refusal.map(ICliComputer.OpResult::fail).orElseGet(() -> ICliComputer.OpResult.ok(
                 PackageManagerVoices.remove(manager, removing.commandName(), ProgramVersions.of(removing.id()),
@@ -437,7 +437,7 @@ public final class PackageService {
         if (!(machine instanceof IOsHost host)) {
             return ICliComputer.OpResult.fail(NO_STORE);
         }
-        final Optional<String> refusal = SetupRunner.begin(host, this.level, machine.getBlockPos(), spec, null,
+        final Optional<Text> refusal = SetupRunner.begin(host, this.level, machine.getBlockPos(), spec, null,
                 false, manager);
         return refusal.map(ICliComputer.OpResult::fail).orElseGet(() -> ICliComputer.OpResult.ok(
                 PackageManagerVoices.fetch(manager, spec.commandName(), ProgramVersions.of(spec.id()),

@@ -17,6 +17,7 @@ import dev.jstech.computers.os.install.InstallerChrome;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.InstallerPage;
 import dev.jstech.computers.os.install.InstallerStyle;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -818,7 +819,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
                 g.fill(f.x(), ty - 1, f.x() + f.w(), ty + step * 2 - 1, p.select());
             }
             this.say(g, (i + 1) + ") " + (wanted ? "[!]" : "[x]") + " "
-                            + this.flow.style().heading(page, this.flow.systemName()),
+                            + GameText.resolve(this.flow.style().heading(page, this.flow.systemName())),
                     f.x() + 2, ty, here ? p.selectText() : wanted ? p.accent() : p.text());
             this.say(g, this.answerFor(page), f.x() + 22, ty + step, here ? p.selectText() : p.dim());
             ty += step * 2 + 2;
@@ -879,7 +880,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             ty += step * 2;
         }
         final InstallerFlow.Step running = this.flow.steps().get(this.flow.stepAt(this.ticksDone));
-        this.say(g, running.label(), f.x(), ty, p.bright());
+        this.say(g, GameText.resolve(running.label()), f.x(), ty, p.bright());
         ty += step + 4;
         /* The bar itself, sunk into the page the way those installers drew one. */
         final int barH = 9;
@@ -906,7 +907,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             final boolean done = i < running;
             final String answer = done ? "done" : i == running
                     ? this.flow.stepPermille(this.ticksDone) / 10 + "%" : "";
-            final String label = this.fit(line.label(), f.w() - 60);
+            final String label = this.fit(GameText.resolve(line.label()), f.w() - 60);
             this.say(g, label, f.x(), ty, done || i == running ? p.text() : p.dim());
             if (!answer.isEmpty()) {
                 final int answerAt = f.x() + f.w() - this.width(answer);
@@ -927,7 +928,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         for (int i = 0; i < this.flow.steps().size(); i++) {
             final InstallerFlow.Step line = this.flow.steps().get(i);
             final boolean done = i < running;
-            g.drawString(font, InstallerFrames.clip(font, line.label(), f.w() - 40), f.x(), ty,
+            g.drawString(font, InstallerFrames.clip(font, GameText.resolve(line.label()), f.w() - 40), f.x(), ty,
                     done || i == running ? p.text() : p.dim(), false);
             if (done) {
                 right(g, "100%", f.x() + f.w(), ty, p.dim());
@@ -951,7 +952,8 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     private void drawWorkBeside(final GuiGraphics g, final InstallerFrames.Frame f) {
         final InstallerFrames.Paint p = f.paint();
         final InstallerFlow.Step step = this.flow.steps().get(this.flow.stepAt(this.ticksDone));
-        g.drawString(font, InstallerFrames.clip(font, step.label(), f.w()), f.x(), f.y(), p.text(), false);
+        g.drawString(font, InstallerFrames.clip(font, GameText.resolve(step.label()), f.w()), f.x(), f.y(), p.text(),
+                false);
         final InstallerFlow.Disk disk = this.flow.target();
         if (disk != null) {
             /*
@@ -980,7 +982,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         if (this.state != null) {
             for (final FirmwareStatePayload.Entry entry : this.state.entries()) {
                 if (entry.kind() == FirmwareStatePayload.KIND_MEDIA && !entry.osId().isEmpty()) {
-                    return "the " + entry.device();
+                    return "the " + GameText.resolve(entry.device());
                 }
             }
         }

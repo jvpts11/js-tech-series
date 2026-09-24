@@ -128,8 +128,9 @@ public final class FreeBsdGameTests {
         helper.assertTrue(computer.installOs(FREEBSD), "FreeBSD installs on the machine");
         final BootMenu menu = BootLines.menuFor(computer, 200);
         helper.assertTrue(menu.manager() == BootManager.LOADER, "FreeBSD brings its own loader: " + menu.manager());
-        helper.assertTrue(menu.title().equals("Welcome to FreeBSD"), "headed the way it heads it: " + menu.title());
-        helper.assertTrue(menu.entries().get(0).label().equals("Boot") && menu.defaultIndex() == 0,
+        helper.assertTrue(menu.title().english().equals("Welcome to FreeBSD"),
+                "headed the way it heads it: " + menu.title());
+        helper.assertTrue(menu.entries().get(0).label().english().equals("Boot") && menu.defaultIndex() == 0,
                 "the boot comes first and is what Enter does: " + menu.entries());
         helper.assertTrue(FREEBSD.toString().equals(menu.entries().get(0).osId()),
                 "and it boots the system it belongs to: " + menu.entries().get(0).osId());
@@ -309,7 +310,7 @@ public final class FreeBsdGameTests {
 
     private static boolean has(final BootSequence sequence, final String label) {
         for (final BootSequence.Line line : sequence.lines()) {
-            if (line.label().equals(label)) {
+            if (line.label().english().equals(label)) {
                 return true;
             }
         }
@@ -318,7 +319,7 @@ public final class FreeBsdGameTests {
 
     private static boolean any(final BootSequence sequence, final String text) {
         for (final BootSequence.Line line : sequence.lines()) {
-            if (line.label().contains(text) || line.value().contains(text)) {
+            if (line.label().english().contains(text) || line.value().english().contains(text)) {
                 return true;
             }
         }
@@ -326,13 +327,14 @@ public final class FreeBsdGameTests {
     }
 
     private static String last(final BootSequence sequence) {
-        return sequence.lines().isEmpty() ? "" : sequence.lines().get(sequence.lines().size() - 1).label();
+        return sequence.lines().isEmpty() ? ""
+                : sequence.lines().get(sequence.lines().size() - 1).label().english();
     }
 
     private static String labels(final BootSequence sequence) {
         final StringBuilder out = new StringBuilder();
         for (final BootSequence.Line line : sequence.lines()) {
-            out.append(line.label()).append(" | ");
+            out.append(line.label().english()).append(" | ");
         }
         return out.toString();
     }

@@ -19,6 +19,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
@@ -29,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * Reads a machine for the things its installer has to ask about: the disks it has, what each already holds, and
@@ -111,23 +114,19 @@ public final class Installers {
      *
      * <p>Beside {@link #networkHost} and {@link #mirrorHost} because it answers the same kind of question about
      * the same Mainframe: what a machine finds when it looks up its own network.
+     *
+     * <p>The services are named as they are sold, which is data in every language.
      */
-    public static String servicesOn(final IOsHost machine, final ServerLevel level) {
+    public static Text servicesOn(final IOsHost machine, final ServerLevel level) {
         final MainframeBlockEntity mainframe = mainframeOf(machine, level);
         if (mainframe == null) {
-            return "";
+            return Text.EMPTY;
         }
-        final List<String> running = new ArrayList<>();
-        if (mainframe.isIqlEngineInstalled()) {
-            running.add("IQL Engine");
-        }
-        if (mainframe.isAutomationEngineInstalled()) {
-            running.add("Automation Engine");
-        }
-        if (mainframe.isMirrorInstalled()) {
-            running.add("Mirror");
-        }
-        return String.join(", ", running);
+        return Text.literal(String.join(", ", Stream.of(
+                        mainframe.isIqlEngineInstalled() ? "IQL Engine" : null,
+                        mainframe.isAutomationEngineInstalled() ? "Automation Engine" : null,
+                        mainframe.isMirrorInstalled() ? "Mirror" : null)
+                .filter(Objects::nonNull).toList()));
     }
 
     /** The Mainframe orchestrating this machine's network, or null when it belongs to none. */

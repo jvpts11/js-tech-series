@@ -55,7 +55,8 @@ final class LiveSaved {
         return "1".equals(this.values.get(name));
     }
 
-    String text(final String name, final String fallback) {
+    /** What was saved under that name, or the fallback when nothing was. */
+    String value(final String name, final String fallback) {
         return this.values.getOrDefault(name, fallback);
     }
 

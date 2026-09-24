@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -20,15 +22,17 @@ import net.minecraft.resources.ResourceLocation;
  * what is left of it rather than starting one over. The client plays the era-styled POST (memory count,
  * detected drives, "press DEL for setup") and answers with {@link PostCompletePayload} only when the player
  * asks for the firmware setup; the machine finishes the self-test itself and boots whoever is watching.
+ *
+ * @param complaint what the machine found wrong with the system on its disk, read in the player's language
  */
 public record OpenPostPayload(BlockPos host, BlockPos monitorPos, int firmwareKind, String name,
-                              int remainingTicks, boolean halted, String complaint)
+                              int remainingTicks, boolean halted, Text complaint)
         implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<OpenPostPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "open_post"));
 
-    /** How long a complaint may be: a line of a terminal, which is all one has ever been. */
+    /** How long a complaint's words that are data may be: a line of a terminal, which is all one has ever been. */
     private static final int MOST_LETTERS = 80;
 
     /*
@@ -45,13 +49,15 @@ public record OpenPostPayload(BlockPos host, BlockPos monitorPos, int firmwareKi
         buf.writeUtf(payload.name);
         buf.writeVarInt(payload.remainingTicks);
         buf.writeBoolean(payload.halted);
-        buf.writeUtf(payload.complaint.length() > MOST_LETTERS
-                ? payload.complaint.substring(0, MOST_LETTERS) : payload.complaint, MOST_LETTERS);
+        // A declared sentence is put together at the other end; only words that are data are cut here.
+        TextCodecs.STREAM_CODEC.encode(buf, payload.complaint instanceof Text.Literal literal
+                && literal.value().length() > MOST_LETTERS
+                ? Text.literal(literal.value().substring(0, MOST_LETTERS)) : payload.complaint);
     }
 
     private static OpenPostPayload decode(final RegistryFriendlyByteBuf buf) {
         return new OpenPostPayload(buf.readBlockPos(), buf.readBlockPos(), buf.readVarInt(), buf.readUtf(),
-                buf.readVarInt(), buf.readBoolean(), buf.readUtf(MOST_LETTERS));
+                buf.readVarInt(), buf.readBoolean(), TextCodecs.STREAM_CODEC.decode(buf));
     }
 
     @Override

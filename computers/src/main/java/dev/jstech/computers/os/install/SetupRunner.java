@@ -26,6 +26,9 @@ import dev.jstech.computers.os.SoftwareHouse;
 import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.cli.CliStyle;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -46,13 +49,73 @@ import org.jetbrains.annotations.Nullable;
  * and a bar at the prompt; on Linux it is the terminal alone, drawn the way the package manager that
  * was asked draws it, since no Linux ever put up a Setup window for {@code apt}.
  */
+@TextHolder
 public final class SetupRunner {
-
-    /** Where a program comes from when no disc is involved. */
-    public static final String SOURCE_NETWORK = "the Mirror";
 
     /** How often a running job is told to the windows and the prompt, in ticks. */
     private static final int PUSH_EVERY = 10;
+
+    /** Where a program comes from, as the Setup window words it. */
+    private static final TextKey FROM_MIRROR = TextKey.of("jsc.install.setup_runner.from_mirror", "the Mirror");
+    private static final TextKey FROM_FLOPPY = TextKey.of("jsc.install.setup_runner.from_floppy", "floppy");
+    private static final TextKey FROM_CD = TextKey.of("jsc.install.setup_runner.from_cd", "CD");
+    private static final TextKey FROM_DVD = TextKey.of("jsc.install.setup_runner.from_dvd", "DVD");
+    private static final TextKey FROM_USB = TextKey.of("jsc.install.setup_runner.from_usb", "USB drive");
+
+    private static final TextKey STILL_SETTING_UP = TextKey.of("jsc.install.setup_runner.still_setting_up",
+            "This computer is still setting up %s.");
+    private static final TextKey WAS_CANCELLED = TextKey.of("jsc.install.setup_runner.was_cancelled",
+            "Setup was cancelled.");
+    private static final TextKey CANCELLED_NOTHING_REMOVED =
+            TextKey.of("jsc.install.setup_runner.cancelled_nothing_removed", "Setup cancelled. Nothing was removed.");
+    private static final TextKey CANCELLED_NOTHING_INSTALLED = TextKey.of(
+            "jsc.install.setup_runner.cancelled_nothing_installed", "Setup cancelled. Nothing was installed.");
+
+    /*
+     * What the package managers print as the bar fills and once it is full. Their own words are translated, as
+     * those tools translate them; package names, versions, sizes, rates and times are data.
+     */
+    private static final TextKey APT_PROGRESS = TextKey.of("jsc.install.setup_runner.apt_progress",
+            "Progress: [%s%%] [%s]");
+    private static final TextKey PCKMGR_REMOVING = TextKey.of("jsc.install.setup_runner.pckmgr_removing",
+            "Removing %s %s  [%s]  %s%%");
+    private static final TextKey PCKMGR_DOWNLOADING = TextKey.of("jsc.install.setup_runner.pckmgr_downloading",
+            "Downloading %s %s  [%s]  %s%%");
+    private static final TextKey APT_REMOVING = TextKey.of("jsc.install.setup_runner.apt_removing",
+            "Removing %s (%s) ...");
+    private static final TextKey APT_TRIGGERS = TextKey.of("jsc.install.setup_runner.apt_triggers",
+            "Processing triggers for %s ...");
+    private static final TextKey APT_FETCHED = TextKey.of("jsc.install.setup_runner.apt_fetched",
+            "Fetched %s MB in %ss (%s MB/s)");
+    private static final TextKey APT_SELECTING = TextKey.of("jsc.install.setup_runner.apt_selecting",
+            "Selecting previously unselected package %s.");
+    private static final TextKey APT_UNPACKING = TextKey.of("jsc.install.setup_runner.apt_unpacking",
+            "Unpacking %s (%s) ...");
+    private static final TextKey APT_SETTING_UP = TextKey.of("jsc.install.setup_runner.apt_setting_up",
+            "Setting up %s (%s) ...");
+    private static final TextKey DNF_RUNNING = TextKey.of("jsc.install.setup_runner.dnf_running",
+            "Running transaction");
+    private static final TextKey DNF_ERASING = TextKey.of("jsc.install.setup_runner.dnf_erasing",
+            "  Erasing          : %s   1/1");
+    private static final TextKey DNF_INSTALLING = TextKey.of("jsc.install.setup_runner.dnf_installing",
+            "  Installing       : %s   1/1");
+    private static final TextKey DNF_REMOVED = TextKey.of("jsc.install.setup_runner.dnf_removed", "Removed:");
+    private static final TextKey DNF_INSTALLED = TextKey.of("jsc.install.setup_runner.dnf_installed", "Installed:");
+    private static final TextKey DNF_COMPLETE = TextKey.of("jsc.install.setup_runner.dnf_complete", "Complete!");
+    private static final TextKey PACMAN_REMOVING = TextKey.of("jsc.install.setup_runner.pacman_removing",
+            "(1/1) removing %s");
+    private static final TextKey PACMAN_KEYS = TextKey.of("jsc.install.setup_runner.pacman_keys",
+            "(1/1) checking keys in keyring");
+    private static final TextKey PACMAN_INTEGRITY = TextKey.of("jsc.install.setup_runner.pacman_integrity",
+            "(1/1) checking package integrity");
+    private static final TextKey PACMAN_INSTALLING = TextKey.of("jsc.install.setup_runner.pacman_installing",
+            "(1/1) installing %s");
+    private static final TextKey VERSION_REMOVED = TextKey.of("jsc.install.setup_runner.version_removed",
+            "%s %s removed.");
+    private static final TextKey VERSION_INSTALLED = TextKey.of("jsc.install.setup_runner.version_installed",
+            "%s %s installed.");
+    private static final TextKey REMOVED = TextKey.of("jsc.install.setup_runner.removed", "%s removed.");
+    private static final TextKey INSTALLED = TextKey.of("jsc.install.setup_runner.installed", "%s installed.");
 
     private SetupRunner() {
     }
@@ -61,9 +124,9 @@ public final class SetupRunner {
      * Starts installing (or removing) {@code spec} on {@code host}, asked for the plain way: a disc's
      * setup program, or the Frames package manager when there is no disc.
      */
-    public static Optional<String> begin(final IOsHost host, final ServerLevel level, final BlockPos pos,
-                                         final ProgramSpec spec, @Nullable final MediaFormat medium,
-                                         final boolean removing) {
+    public static Optional<Text> begin(final IOsHost host, final ServerLevel level, final BlockPos pos,
+                                       final ProgramSpec spec, @Nullable final MediaFormat medium,
+                                       final boolean removing) {
         return begin(host, level, pos, spec, medium, removing,
                 medium == null ? PackageManagerKind.PCKMGR : PackageManagerKind.NONE);
     }
@@ -76,22 +139,22 @@ public final class SetupRunner {
      *                program or the install verb
      * @return the refusal, which was also shown at the machine's windows, or empty when the job began
      */
-    public static Optional<String> begin(final IOsHost host, final ServerLevel level, final BlockPos pos,
-                                         final ProgramSpec spec, @Nullable final MediaFormat medium,
-                                         final boolean removing, final PackageManagerKind manager) {
+    public static Optional<Text> begin(final IOsHost host, final ServerLevel level, final BlockPos pos,
+                                       final ProgramSpec spec, @Nullable final MediaFormat medium,
+                                       final boolean removing, final PackageManagerKind manager) {
         final ComputerConsoleState console = host.console();
         if (console == null) {
-            return Optional.of("This computer cannot hold installed programs.");
+            return Optional.of(SetupGate.CANNOT_HOLD.text());
         }
         if (console.setup() != null) {
-            return Optional.of("This computer is still setting up " + console.setup().name() + ".");
+            return Optional.of(STILL_SETTING_UP.with(console.setup().name()));
         }
-        final Optional<String> refusal = SetupGate.refusal(host, spec, removing, true);
+        final Optional<Text> refusal = SetupGate.refusal(host, spec, removing, true);
         if (refusal.isPresent()) {
             pushWindow(host, level, pos, refused(pos, spec, removing, refusal.get()));
             return refusal;
         }
-        final String source = medium == null ? SOURCE_NETWORK : sourceName(medium);
+        final Text source = medium == null ? FROM_MIRROR.text() : sourceName(medium);
         // A floppy is a floppy, but a newer machine unpacks what it carries that much faster.
         final int factor = SetupTiming.eraFactor(host.displayEra());
         final int ticks = medium == null ? SetupTiming.networkTicks(spec.minDiskMb(), removing, factor)
@@ -101,7 +164,7 @@ public final class SetupRunner {
                 spec.commandName());
         console.beginSetup(job);
         host.setChanged();
-        pushWindow(host, level, pos, progress(pos, job, SetupProgressPayload.STATE_RUNNING, ""));
+        pushWindow(host, level, pos, progress(pos, job, SetupProgressPayload.STATE_RUNNING, Text.EMPTY));
         // Whoever asked has already said what began; the bar follows on the next tick.
         return Optional.empty();
     }
@@ -115,9 +178,9 @@ public final class SetupRunner {
         }
         console.clearSetup();
         host.setChanged();
-        pushWindow(host, level, pos, progress(pos, job, SetupProgressPayload.STATE_CANCELLED, "Setup was cancelled."));
-        promptLines(level, pos, List.of(line("Setup cancelled. Nothing was "
-                + (job.removing() ? "removed." : "installed."), CliStyle.ERROR)), false);
+        pushWindow(host, level, pos, progress(pos, job, SetupProgressPayload.STATE_CANCELLED, WAS_CANCELLED.text()));
+        promptLines(level, pos, List.of(line((job.removing() ? CANCELLED_NOTHING_REMOVED
+                : CANCELLED_NOTHING_INSTALLED).text(), CliStyle.ERROR)), false);
     }
 
     /** One tick of whatever the machine is setting up, if anything. */
@@ -132,14 +195,14 @@ public final class SetupRunner {
             console.clearSetup();
             finish(host, console, job);
             host.setChanged();
-            pushWindow(host, level, pos, progress(pos, job, SetupProgressPayload.STATE_DONE, ""));
+            pushWindow(host, level, pos, progress(pos, job, SetupProgressPayload.STATE_DONE, Text.EMPTY));
             // The bar reaches its end where it stands, then the lines that say what was done follow it.
             promptLines(level, pos, List.of(line(bar(job), CliStyle.PLAIN)), !job.drawBar());
             promptLines(level, pos, finished(job), false);
             return;
         }
         if (job.ticksLeft() % PUSH_EVERY == 0) {
-            pushWindow(host, level, pos, progress(pos, job, SetupProgressPayload.STATE_RUNNING, ""));
+            pushWindow(host, level, pos, progress(pos, job, SetupProgressPayload.STATE_RUNNING, Text.EMPTY));
             // The first drawing takes a line of its own; every one after it grows over that line.
             final boolean first = job.drawBar();
             promptLines(level, pos, List.of(line(bar(job), CliStyle.PLAIN)), !first);
@@ -177,17 +240,25 @@ public final class SetupRunner {
         console.install(id);
         console.setInstalledVersion(id, ProgramVersions.of(id));
         JscEvents.awardHost(host, JscEvents.PROGRAM_INSTALLED, path);
-        if (SOURCE_NETWORK.equals(job.source())) {
+        if (fromMirror(job)) {
             JscEvents.awardHost(host, JscEvents.MIRROR_INSTALL, path);
         }
     }
 
-    private static String sourceName(final MediaFormat medium) {
+    /**
+     * Whether the job came over the network. Asked of the sentence's key rather than of its words, so a job saved
+     * by a build that worded it differently is still recognised.
+     */
+    private static boolean fromMirror(final SetupJob job) {
+        return job.source() instanceof Text.Translated said && said.key().key().equals(FROM_MIRROR.key());
+    }
+
+    private static Text sourceName(final MediaFormat medium) {
         return switch (medium) {
-            case FLOPPY -> "floppy";
-            case CD -> "CD";
-            case DVD -> "DVD";
-            case USB -> "USB drive";
+            case FLOPPY -> FROM_FLOPPY.text();
+            case CD -> FROM_CD.text();
+            case DVD -> FROM_DVD.text();
+            case USB -> FROM_USB.text();
         };
     }
 
@@ -200,18 +271,20 @@ public final class SetupRunner {
      * rate, {@code pacman} does both on one line, and a setup program from a disc draws a plain bar.
      * Whichever it is, the line is the one line, redrawn.
      */
-    static String bar(final SetupJob job) {
+    static Text bar(final SetupJob job) {
         final int pct = job.permille() / 10;
         final String pkg = job.packageName();
         final String ver = ProgramVersions.of(job.programId());
         return switch (job.manager()) {
-            case APT -> "Progress: [" + pad3(pct) + "%] [" + cells(job.permille(), 40, '#', '.') + "]";
-            case DNF -> pkg + "-" + ver + "  " + rate(job) + " MB/s | " + doneMb(job) + " MB  " + clock(job);
-            case PACMAN -> " " + pkg + "-" + ver + "  " + job.sizeMb() + ".0 MiB  " + rate(job) + " MiB/s "
-                    + clock(job) + " [" + cells(job.permille(), 20, '#', '-') + "] " + pad3(pct) + "%";
-            case PCKMGR -> (job.removing() ? "Removing " : "Downloading ") + pkg + " " + ver
-                    + "  [" + cells(job.permille(), 20, '#', '.') + "]  " + pct + "%";
-            default -> "[" + cells(job.permille(), 20, '#', '.') + "]  " + pct + "%";
+            case APT -> APT_PROGRESS.with(pad3(pct), cells(job.permille(), 40, '#', '.'));
+            // Nothing but names and figures, which those tools print the same in every language.
+            case DNF -> Text.literal(pkg + "-" + ver + "  " + rate(job) + " MB/s | " + doneMb(job) + " MB  "
+                    + clock(job));
+            case PACMAN -> Text.literal(" " + pkg + "-" + ver + "  " + job.sizeMb() + ".0 MiB  " + rate(job)
+                    + " MiB/s " + clock(job) + " [" + cells(job.permille(), 20, '#', '-') + "] " + pad3(pct) + "%");
+            case PCKMGR -> (job.removing() ? PCKMGR_REMOVING : PCKMGR_DOWNLOADING)
+                    .with(pkg, ver, cells(job.permille(), 20, '#', '.'), pct);
+            default -> Text.literal("[" + cells(job.permille(), 20, '#', '.') + "]  " + pct + "%");
         };
     }
 
@@ -223,36 +296,34 @@ public final class SetupRunner {
         switch (job.manager()) {
             case APT -> {
                 if (job.removing()) {
-                    out.add(line("Removing " + pkg + " (" + ver + ") ...", CliStyle.PLAIN));
-                    out.add(line("Processing triggers for " + pkg + " ...", CliStyle.OK));
+                    out.add(line(APT_REMOVING.with(pkg, ver), CliStyle.PLAIN));
+                    out.add(line(APT_TRIGGERS.with(pkg), CliStyle.OK));
                 } else {
-                    out.add(line("Fetched " + job.sizeMb() + " MB in " + seconds(job) + "s (" + rate(job) + " MB/s)",
-                            CliStyle.PLAIN));
-                    out.add(line("Selecting previously unselected package " + pkg + ".", CliStyle.PLAIN));
-                    out.add(line("Unpacking " + pkg + " (" + ver + ") ...", CliStyle.PLAIN));
-                    out.add(line("Setting up " + pkg + " (" + ver + ") ...", CliStyle.OK));
+                    out.add(line(APT_FETCHED.with(job.sizeMb(), seconds(job), rate(job)), CliStyle.PLAIN));
+                    out.add(line(APT_SELECTING.with(pkg), CliStyle.PLAIN));
+                    out.add(line(APT_UNPACKING.with(pkg, ver), CliStyle.PLAIN));
+                    out.add(line(APT_SETTING_UP.with(pkg, ver), CliStyle.OK));
                 }
             }
             case DNF -> {
-                out.add(line("Running transaction", CliStyle.PLAIN));
-                out.add(line("  " + (job.removing() ? "Erasing          : " : "Installing       : ") + pkg + "-" + ver
-                        + "   1/1", CliStyle.PLAIN));
-                out.add(line((job.removing() ? "Removed:" : "Installed:"), CliStyle.PLAIN));
-                out.add(line("  " + pkg + "-" + ver, CliStyle.PLAIN));
-                out.add(line("Complete!", CliStyle.OK));
+                out.add(line(DNF_RUNNING.text(), CliStyle.PLAIN));
+                out.add(line((job.removing() ? DNF_ERASING : DNF_INSTALLING).with(pkg + "-" + ver), CliStyle.PLAIN));
+                out.add(line((job.removing() ? DNF_REMOVED : DNF_INSTALLED).text(), CliStyle.PLAIN));
+                out.add(line(Text.literal("  " + pkg + "-" + ver), CliStyle.PLAIN));
+                out.add(line(DNF_COMPLETE.text(), CliStyle.OK));
             }
             case PACMAN -> {
                 if (job.removing()) {
-                    out.add(line("(1/1) removing " + pkg, CliStyle.OK));
+                    out.add(line(PACMAN_REMOVING.with(pkg), CliStyle.OK));
                 } else {
-                    out.add(line("(1/1) checking keys in keyring", CliStyle.PLAIN));
-                    out.add(line("(1/1) checking package integrity", CliStyle.PLAIN));
-                    out.add(line("(1/1) installing " + pkg, CliStyle.OK));
+                    out.add(line(PACMAN_KEYS.text(), CliStyle.PLAIN));
+                    out.add(line(PACMAN_INTEGRITY.text(), CliStyle.PLAIN));
+                    out.add(line(PACMAN_INSTALLING.with(pkg), CliStyle.OK));
                 }
             }
-            case PCKMGR -> out.add(line(job.name() + " " + ver
-                    + (job.removing() ? " removed." : " installed."), CliStyle.OK));
-            default -> out.add(line(job.name() + (job.removing() ? " removed." : " installed."), CliStyle.OK));
+            case PCKMGR -> out.add(line((job.removing() ? VERSION_REMOVED : VERSION_INSTALLED).with(job.name(), ver),
+                    CliStyle.OK));
+            default -> out.add(line((job.removing() ? REMOVED : INSTALLED).with(job.name()), CliStyle.OK));
         }
         return out;
     }
@@ -285,22 +356,22 @@ public final class SetupRunner {
         return String.format(Locale.ROOT, "%02d:%02d", gone / 60, gone % 60);
     }
 
-    private static WireLine line(final String text, final CliStyle style) {
+    private static WireLine line(final Text text, final CliStyle style) {
         return new WireLine(text, style.id());
     }
 
     /* Who gets told */
 
     private static SetupProgressPayload progress(final BlockPos pos, final SetupJob job, final int state,
-                                                 final String message) {
+                                                 final Text message) {
         return new SetupProgressPayload(pos, job.programId(), job.name(), job.house(), job.sizeMb(), job.source(),
                 job.permille(), job.phase(), state, message, job.removing());
     }
 
     private static SetupProgressPayload refused(final BlockPos pos, final ProgramSpec spec, final boolean removing,
-                                                final String message) {
+                                                final Text message) {
         return new SetupProgressPayload(pos, spec.id().toString(), spec.displayName(),
-                spec.houseOr(SoftwareHouse.MIDSOFT).name(), spec.minDiskMb(), "", 0, "",
+                spec.houseOr(SoftwareHouse.MIDSOFT).name(), spec.minDiskMb(), Text.EMPTY, 0, Text.EMPTY,
                 SetupProgressPayload.STATE_REFUSED, message, removing);
     }
 

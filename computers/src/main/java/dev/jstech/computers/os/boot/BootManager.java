@@ -10,6 +10,9 @@ package dev.jstech.computers.os.boot;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 
 /**
  * The boot manager a family of systems brings with it.
@@ -20,35 +23,46 @@ import dev.jstech.core.id.StableNames;
  *
  * <p>The families with no manager of their own boot what they are pointed at and say nothing: a system of the
  * first age had one disk and no question to ask.
+ *
+ * <p>A manager's name and version are data, the same in every language; what it says to the person choosing
+ * (the way into the firmware, how it names another system) is read in that person's language.
  */
+@TextHolder
 public enum BootManager implements IStableName {
 
     /** No manager: the machine boots what the firmware points it at. */
-    NONE("none", "", ""),
+    NONE("none"),
 
     /** The Linux family's, listed by device and entered from the firmware settings. */
-    GRUB("grub", "GNU GRUB  version 2.12", "Firmware Settings"),
+    GRUB("grub"),
 
     /** The Frames family's, which names its editions rather than the devices they sit on. */
-    KICKMGR("kickmgr", "Midsoft Boot Manager", "Change firmware settings"),
+    KICKMGR("kickmgr"),
 
     /**
      * FreeBSD's loader, which is no chooser of systems at all: it boots the one it belongs to, counting down on
      * every start, and offers what else can be done from there. It lists only what this machine can really do,
      * which leaves the boot itself, starting over, and the firmware where the firmware is reached that way.
      */
-    LOADER("loader", "Welcome to FreeBSD", "Firmware settings");
+    LOADER("loader");
 
     private static final StableNames<BootManager> NAMES = StableNames.of(BootManager.class);
 
-    private final String serializedName;
-    private final String title;
-    private final String firmwareLabel;
+    private static final TextKey GRUB_FIRMWARE =
+            TextKey.of("jsc.boot.boot_manager.grub_firmware", "Firmware Settings");
+    private static final TextKey KICKMGR_FIRMWARE =
+            TextKey.of("jsc.boot.boot_manager.kickmgr_firmware", "Change firmware settings");
+    private static final TextKey LOADER_FIRMWARE =
+            TextKey.of("jsc.boot.boot_manager.loader_firmware", "Firmware settings");
+    private static final TextKey LOADER_WELCOME = TextKey.of("jsc.boot.boot_manager.loader_welcome", "Welcome to %s");
+    private static final TextKey GRUB_OTHER =
+            TextKey.of("jsc.boot.boot_manager.grub_other", "%s Boot Manager (on %s)");
+    private static final TextKey KICKMGR_OTHER = TextKey.of("jsc.boot.boot_manager.kickmgr_other", "%s (Disk %s)");
 
-    BootManager(final String serializedName, final String title, final String firmwareLabel) {
+    private final String serializedName;
+
+    BootManager(final String serializedName) {
         this.serializedName = serializedName;
-        this.title = title;
-        this.firmwareLabel = firmwareLabel;
     }
 
     /** The manager a system of that family brings, or {@link #NONE} for a family that brings none. */
@@ -80,9 +94,14 @@ public enum BootManager implements IStableName {
         return this != LOADER;
     }
 
-    /** What the manager writes across the top of its list. */
-    public String title() {
-        return this.title;
+    /** What the manager writes across the top of its list: its own name, or the loader's greeting. */
+    public Text title() {
+        return switch (this) {
+            case GRUB -> Text.literal("GNU GRUB  version 2.12");
+            case KICKMGR -> Text.literal("Midsoft Boot Manager");
+            case LOADER -> LOADER_WELCOME.with("FreeBSD");
+            case NONE -> Text.EMPTY;
+        };
     }
 
     /**
@@ -98,8 +117,13 @@ public enum BootManager implements IStableName {
     }
 
     /** What it calls the way into the firmware's own setup. */
-    public String firmwareLabel() {
-        return this.firmwareLabel;
+    public Text firmwareLabel() {
+        return switch (this) {
+            case GRUB -> GRUB_FIRMWARE.text();
+            case KICKMGR -> KICKMGR_FIRMWARE.text();
+            case LOADER -> LOADER_FIRMWARE.text();
+            case NONE -> Text.EMPTY;
+        };
     }
 
     /**
@@ -109,11 +133,11 @@ public enum BootManager implements IStableName {
      * machine that is how you tell two installations apart. The Frames manager names the edition and the disk
      * it is on, because that is what its own list said.
      */
-    public String label(final String systemName, final String device, final int slot) {
+    public Text label(final String systemName, final String device, final int slot) {
         return switch (this) {
-            case GRUB -> systemName + " Boot Manager (on " + device + ")";
-            case KICKMGR -> systemName + " (Disk " + slot + ")";
-            default -> systemName;
+            case GRUB -> GRUB_OTHER.with(systemName, device);
+            case KICKMGR -> KICKMGR_OTHER.with(systemName, slot);
+            default -> Text.literal(systemName);
         };
     }
 }

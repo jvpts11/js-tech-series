@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os.install;
 
+import dev.jstech.core.text.Text;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ class InstallerStyleTest {
     void stages_framesXp_asksItsQuestionWhileTheCopyRuns() {
         for (final InstallerStyle.Stage stage : InstallerStyle.FRAMES_XP.stages()) {
             if (stage.page() == InstallerPage.NAME) {
-                assertEquals(List.of("Collecting information"), stage.steps());
+                assertEquals(List.of("Collecting information"), stage.steps().stream().map(Text::english).toList());
                 return;
             }
         }
@@ -108,34 +109,38 @@ class InstallerStyleTest {
 
     @Test
     void heading_isEachInstallersOwnWords() {
-        assertEquals("Partition disks", InstallerStyle.DEBIAN.heading(InstallerPage.DISK, "Debian"));
-        assertEquals("Guided storage configuration", InstallerStyle.UBUNTU.heading(InstallerPage.DISK, "Ubuntu"));
-        assertEquals("Installation Destination", InstallerStyle.FEDORA.heading(InstallerPage.DISK, "Fedora"));
+        assertEquals("Partition disks", InstallerStyle.DEBIAN.heading(InstallerPage.DISK, "Debian").english());
+        assertEquals("Guided storage configuration",
+                InstallerStyle.UBUNTU.heading(InstallerPage.DISK, "Ubuntu").english());
+        assertEquals("Installation Destination",
+                InstallerStyle.FEDORA.heading(InstallerPage.DISK, "Fedora").english());
         assertEquals("Where do you want to install Frames 11?",
-                InstallerStyle.FRAMES_11.heading(InstallerPage.DISK, "Frames 11"));
-        assertEquals("Choose a Disk", InstallerStyle.FRAMES_95.heading(InstallerPage.DISK, "Frames 95"));
+                InstallerStyle.FRAMES_11.heading(InstallerPage.DISK, "Frames 11").english());
+        assertEquals("Choose a Disk", InstallerStyle.FRAMES_95.heading(InstallerPage.DISK, "Frames 95").english());
     }
 
     @Test
     void title_namesTheSystemBeingInstalled() {
-        assertEquals("MC-DOS Setup", InstallerStyle.MC_DOS.title("MC-DOS"));
-        assertEquals("Debian installer", InstallerStyle.DEBIAN.title("Debian"));
+        assertEquals("MC-DOS Setup", InstallerStyle.MC_DOS.title("MC-DOS").english());
+        assertEquals("Debian installer", InstallerStyle.DEBIAN.title("Debian").english());
     }
 
     @Test
     void hint_theTextInstallers_sayWhichKeysWork() {
-        assertEquals("ENTER=Continue  F3=Exit", InstallerStyle.MC_DOS.hint(InstallerPage.WELCOME));
-        assertEquals("ENTER=Restart", InstallerStyle.MC_DOS.hint(InstallerPage.DONE));
-        assertEquals("ENTER=Continue  F3=Exit", InstallerStyle.FRAMES_95.hint(InstallerPage.WELCOME));
-        assertTrue(InstallerStyle.FRAMES_XP.hint(InstallerPage.DISK).contains("E=Erase disk"));
-        assertTrue(InstallerStyle.FEDORA.hint(InstallerPage.HUB).contains("'b' to begin installation"));
-        assertEquals("", InstallerStyle.FRAMES_11.hint(InstallerPage.DISK));
+        assertEquals("ENTER=Continue  F3=Exit", InstallerStyle.MC_DOS.hint(InstallerPage.WELCOME).english());
+        assertEquals("ENTER=Restart", InstallerStyle.MC_DOS.hint(InstallerPage.DONE).english());
+        assertEquals("ENTER=Continue  F3=Exit", InstallerStyle.FRAMES_95.hint(InstallerPage.WELCOME).english());
+        assertTrue(InstallerStyle.FRAMES_XP.hint(InstallerPage.DISK).english().contains("E=Erase disk"));
+        assertTrue(InstallerStyle.FEDORA.hint(InstallerPage.HUB).english().contains("'b' to begin installation"));
+        assertEquals("", InstallerStyle.FRAMES_11.hint(InstallerPage.DISK).english());
     }
 
     private static List<String> steps(final InstallerStyle style) {
         final List<String> all = new ArrayList<>();
         for (final InstallerStyle.Stage stage : style.stages()) {
-            all.addAll(stage.steps());
+            for (final Text step : stage.steps()) {
+                all.add(step.english());
+            }
         }
         return all;
     }

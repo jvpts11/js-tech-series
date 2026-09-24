@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.program.install;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -30,6 +32,7 @@ import java.util.TreeSet;
  * step outside wrote under the mount point, because that is the same file seen from inside. It is the one
  * thing about a chroot that has to be true for any of the rest to make sense.
  */
+@TextHolder
 final class LiveFiles {
 
     private final Map<String, String> files = new LinkedHashMap<>();
@@ -45,6 +48,22 @@ final class LiveFiles {
 
     /** The guide the medium carries, which is the medium's and so is never written down with the rest. */
     private static final String GUIDE = HOME + "/install.txt";
+
+    /*
+     * What the shell and its tools say when a path is wrong. The tool's name and the path go in front as data,
+     * the way the tools print them; only what went wrong is a sentence.
+     */
+    private static final TextKey CANNOT_ACCESS = TextKey.of("jsc.install.live_files.cannot_access",
+            "ls: cannot access '%s': No such file or directory");
+    private static final TextKey NO_SUCH_FILE = TextKey.of("jsc.install.live_files.no_such_file",
+            "%s: No such file or directory");
+    private static final TextKey IS_A_DIRECTORY = TextKey.of("jsc.install.live_files.is_a_directory",
+            "%s: Is a directory");
+    private static final TextKey NOT_A_DIRECTORY = TextKey.of("jsc.install.live_files.not_a_directory",
+            "%s: Not a directory");
+    private static final TextKey USAGE = TextKey.of("jsc.install.live_files.usage", "Usage: %s <file>");
+    private static final TextKey SYNTAX_ERROR = TextKey.of("jsc.install.live_files.syntax_error",
+            "bash: syntax error near unexpected token `newline'");
 
     /**
      * @param root  where the new system's disk is mounted, which is this distribution's own choice of place
@@ -150,8 +169,7 @@ final class LiveFiles {
             return LiveTurn.said(this.asTyped(whole));
         }
         if (!this.dirs.contains(whole)) {
-            return LiveTurn.refused("ls: cannot access '" + (arg.isEmpty() ? this.asTyped(this.cwd) : arg)
-                    + "': No such file or directory");
+            return LiveTurn.refused(CANNOT_ACCESS.with(arg.isEmpty() ? this.asTyped(this.cwd) : arg));
         }
         final SortedSet<String> here = new TreeSet<>();
         final String prefix = whole.equals("/") ? "/" : whole + "/";
@@ -170,15 +188,15 @@ final class LiveFiles {
 
     LiveTurn cat(final String arg, final boolean paged) {
         if (arg.isEmpty()) {
-            return LiveTurn.refused(paged ? "Usage: less <file>" : "Usage: cat <file>");
+            return LiveTurn.refused(USAGE.with(paged ? "less" : "cat"));
         }
         final String whole = this.resolve(arg);
         if (this.dirs.contains(whole)) {
-            return LiveTurn.refused("cat: " + arg + ": Is a directory");
+            return LiveTurn.refused(IS_A_DIRECTORY.with("cat: " + arg));
         }
         final String content = this.files.get(whole);
         if (content == null) {
-            return LiveTurn.refused((paged ? arg + ": " : "cat: " + arg + ": ") + "No such file or directory");
+            return LiveTurn.refused(NO_SUCH_FILE.with(paged ? arg : "cat: " + arg));
         }
         final List<String> out = new ArrayList<>(List.of(content.split("\n", -1)));
         if (paged) {
@@ -191,10 +209,10 @@ final class LiveFiles {
     LiveTurn cd(final String arg) {
         final String whole = this.resolve(arg.isEmpty() ? HOME : arg);
         if (this.files.containsKey(whole)) {
-            return LiveTurn.refused("cd: " + arg + ": Not a directory");
+            return LiveTurn.refused(NOT_A_DIRECTORY.with("cd: " + arg));
         }
         if (!this.dirs.contains(whole)) {
-            return LiveTurn.refused("cd: " + arg + ": No such file or directory");
+            return LiveTurn.refused(NO_SUCH_FILE.with("cd: " + arg));
         }
         this.cwd = this.asTyped(whole);
         return LiveTurn.silent();
@@ -238,11 +256,11 @@ final class LiveFiles {
     /** Writes text to the file a redirection named, after what is there or over it. */
     private LiveTurn putInto(final String target, final String text, final boolean after) {
         if (target.isEmpty()) {
-            return LiveTurn.refused("bash: syntax error near unexpected token `newline'");
+            return LiveTurn.refused(SYNTAX_ERROR.text());
         }
         final String whole = this.resolve(target);
         if (this.dirs.contains(whole)) {
-            return LiveTurn.refused("bash: " + target + ": Is a directory");
+            return LiveTurn.refused(IS_A_DIRECTORY.with("bash: " + target));
         }
         final String had = after ? this.files.get(whole) : null;
         this.write(whole, had == null || had.isEmpty() ? text : had + "\n" + text);
@@ -264,7 +282,7 @@ final class LiveFiles {
     }
 
     void load(final LiveSaved saved) {
-        this.cwd = saved.text("cwd", HOME);
+        this.cwd = saved.value("cwd", HOME);
         this.inside = saved.flag("inside");
         for (final Map.Entry<String, String> line : saved.all().entrySet()) {
             if (line.getKey().startsWith("dir:")) {

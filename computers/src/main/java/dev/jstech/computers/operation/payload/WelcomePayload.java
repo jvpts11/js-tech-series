@@ -8,6 +8,8 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.os.boot.WelcomeFacts;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -31,17 +33,15 @@ import java.util.List;
  * @param networkHost   the network this machine is on, by the Mainframe's name; empty when it is on none
  * @param mirrorHost    the Mirror answering it, empty when none does
  * @param showAtStartup whether the welcome is still wanted on later starts
+ * @param tips          the tips, read in the player's own language
  */
 public record WelcomePayload(BlockPos hostPos, String machineName, String cpuName, int memoryMb, String systemName,
                              int systemSlot, String systemDisk, List<WelcomeFacts.Other> others, String networkHost,
                              String mirrorHost, boolean showAtStartup,
-                             List<String> tips) implements CustomPacketPayload {
+                             List<Text> tips) implements CustomPacketPayload {
 
     /** The longest a name travels, wider than any the game gives a machine, a processor or a drive. */
     public static final int MAX_NAME = 64;
-
-    /** The longest a tip travels, which is a sentence and a half. */
-    public static final int MAX_TIP = 180;
 
     /** More systems than any machine has disks. */
     public static final int MOST_OTHERS = 16;
@@ -93,7 +93,7 @@ public record WelcomePayload(BlockPos hostPos, String machineName, String cpuNam
         final int tips = Math.min(p.tips().size(), WelcomeFacts.MOST_TIPS);
         buf.writeVarInt(tips);
         for (int i = 0; i < tips; i++) {
-            buf.writeUtf(cut(p.tips().get(i), MAX_TIP), MAX_TIP);
+            TextCodecs.STREAM_CODEC.encode(buf, p.tips().get(i));
         }
     }
 
@@ -114,9 +114,9 @@ public record WelcomePayload(BlockPos hostPos, String machineName, String cpuNam
         final String mirrorHost = buf.readUtf(MAX_NAME);
         final boolean showAtStartup = buf.readBoolean();
         final int tipCount = Math.min(buf.readVarInt(), WelcomeFacts.MOST_TIPS);
-        final List<String> tips = new ArrayList<>(tipCount);
+        final List<Text> tips = new ArrayList<>(tipCount);
         for (int i = 0; i < tipCount; i++) {
-            tips.add(buf.readUtf(MAX_TIP));
+            tips.add(TextCodecs.STREAM_CODEC.decode(buf));
         }
         return new WelcomePayload(host, machineName, cpuName, memoryMb, systemName, systemSlot, systemDisk,
                 others, networkHost, mirrorHost, showAtStartup, tips);

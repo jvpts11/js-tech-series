@@ -13,6 +13,9 @@ import dev.jstech.computers.program.install.voice.Ext4Figures;
 import dev.jstech.computers.program.tty.ITtyProcess;
 import dev.jstech.computers.program.tty.ITtySink;
 import dev.jstech.computers.program.tty.TtyQuestion;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -30,7 +33,11 @@ import org.jetbrains.annotations.Nullable;
  * <p>A size can also be given on the command's own line, {@code n 512M}, and a type the same way,
  * {@code t 1 uefi}. The real one takes neither, but somebody who has done this before types faster than the
  * questions come, and being made to wait for them teaches nothing.
+ *
+ * <p>Its questions, its menu and what it says back are read in the player's language, as the real one's are. The
+ * table it prints is data: device names, sectors, sizes, and the names of rows of the table of partition types.
  */
+@TextHolder
 final class FdiskProcess implements ITtyProcess {
 
     private final List<LiveDisks.Partition> draft = new ArrayList<>();
@@ -45,7 +52,8 @@ final class FdiskProcess implements ITtyProcess {
     /** The partition a run of questions is about, once the first of them has been answered. */
     private int chosen;
 
-    private static final String VERSION = "fdisk (util-linux 2.40.2)";
+    /** The tool's name and version, which it welcomes you to and which are the same in every language. */
+    private static final Text VERSION = Text.literal("fdisk (util-linux 2.40.2)");
 
     /** How many sectors a megabyte is, at the five hundred and twelve bytes a sector has always been. */
     private static final long SECTORS_PER_MB = 2048L;
@@ -56,7 +64,87 @@ final class FdiskProcess implements ITtyProcess {
     /** The most partitions a table of this kind holds. */
     private static final int MOST = 128;
 
-    private static final CliLine COMMAND = new CliLine("Command (m for help): ", CliStyle.OK);
+    /* Its questions, each followed by a space the answer is typed after. */
+    private static final TextKey ASK_COMMAND = TextKey.of("jsc.install.fdisk_process.ask_command",
+            "Command (m for help):");
+    private static final TextKey ASK_NUMBER = TextKey.of("jsc.install.fdisk_process.ask_number",
+            "Partition number (%s-%s, default %s):");
+    private static final TextKey ASK_FIRST = TextKey.of("jsc.install.fdisk_process.ask_first",
+            "First sector (%s-%s, default %s):");
+    private static final TextKey ASK_LAST = TextKey.of("jsc.install.fdisk_process.ask_last",
+            "Last sector, +/-sectors or +/-size{K,M,G,T,P} (%s-%s, default %s):");
+    private static final TextKey ASK_TYPE = TextKey.of("jsc.install.fdisk_process.ask_type",
+            "Partition type or alias (type L to list all):");
+
+    private static final TextKey WELCOME = TextKey.of("jsc.install.fdisk_process.welcome", "Welcome to %s.");
+    private static final TextKey IN_MEMORY = TextKey.of("jsc.install.fdisk_process.in_memory",
+            "Changes will remain in memory only, until you decide to write them.");
+    private static final TextKey BE_CAREFUL = TextKey.of("jsc.install.fdisk_process.be_careful",
+            "Be careful before using the write command.");
+    private static final TextKey NO_TABLE = TextKey.of("jsc.install.fdisk_process.no_table",
+            "Device does not contain a recognized partition table.");
+
+    /* The menu m prints: the groups, and what each command's letter does. */
+    private static final TextKey HELP = TextKey.of("jsc.install.fdisk_process.help", "Help:");
+    private static final TextKey GROUP_GENERIC = TextKey.of("jsc.install.fdisk_process.group_generic", "Generic");
+    private static final TextKey GROUP_SAVE = TextKey.of("jsc.install.fdisk_process.group_save", "Save & Exit");
+    private static final TextKey GROUP_LABEL = TextKey.of("jsc.install.fdisk_process.group_label",
+            "Create a new label");
+    private static final TextKey MENU_DELETE = TextKey.of("jsc.install.fdisk_process.menu_delete",
+            "delete a partition");
+    private static final TextKey MENU_NEW = TextKey.of("jsc.install.fdisk_process.menu_new", "add a new partition");
+    private static final TextKey MENU_PRINT = TextKey.of("jsc.install.fdisk_process.menu_print",
+            "print the partition table");
+    private static final TextKey MENU_TYPE = TextKey.of("jsc.install.fdisk_process.menu_type",
+            "change a partition type");
+    private static final TextKey MENU_WRITE = TextKey.of("jsc.install.fdisk_process.menu_write",
+            "write table to disk and exit");
+    private static final TextKey MENU_QUIT = TextKey.of("jsc.install.fdisk_process.menu_quit",
+            "quit without saving changes");
+    private static final TextKey MENU_GPT = TextKey.of("jsc.install.fdisk_process.menu_gpt",
+            "create a new empty GPT partition table");
+
+    private static final TextKey CREATED_LABEL = TextKey.of("jsc.install.fdisk_process.created_label",
+            "Created a new GPT disklabel (GUID: %s).");
+    private static final TextKey NO_FREE_SECTORS = TextKey.of("jsc.install.fdisk_process.no_free_sectors",
+            "No free sectors available.");
+    private static final TextKey ALTERED = TextKey.of("jsc.install.fdisk_process.altered",
+            "The partition table has been altered.");
+    private static final TextKey REREAD = TextKey.of("jsc.install.fdisk_process.reread",
+            "Calling ioctl() to re-read partition table.");
+    private static final TextKey SYNCING = TextKey.of("jsc.install.fdisk_process.syncing", "Syncing disks.");
+    private static final TextKey UNKNOWN_COMMAND = TextKey.of("jsc.install.fdisk_process.unknown_command",
+            "%s: unknown command");
+    private static final TextKey NO_PARTITION = TextKey.of("jsc.install.fdisk_process.no_partition",
+            "No partition is defined yet!");
+    private static final TextKey SELECTED = TextKey.of("jsc.install.fdisk_process.selected",
+            "Selected partition %s");
+    private static final TextKey OUT_OF_RANGE = TextKey.of("jsc.install.fdisk_process.out_of_range",
+            "Value out of range.");
+    private static final TextKey DELETED = TextKey.of("jsc.install.fdisk_process.deleted",
+            "Partition %s has been deleted.");
+    private static final TextKey PARSE_FAILED = TextKey.of("jsc.install.fdisk_process.parse_failed",
+            "Failed to parse partition type '%s'.");
+    private static final TextKey CHANGED_TYPE = TextKey.of("jsc.install.fdisk_process.changed_type",
+            "Changed type of partition '%s' to '%s'.");
+    private static final TextKey CREATED = TextKey.of("jsc.install.fdisk_process.created",
+            "Created a new partition %s of type '%s' and of size %s.");
+
+    /* What p prints above the table: the disk, how it is measured, and its label. */
+    private static final TextKey DISK_LINE = TextKey.of("jsc.install.fdisk_process.disk_line",
+            "Disk %s: %s, %s bytes, %s sectors");
+    private static final TextKey UNITS = TextKey.of("jsc.install.fdisk_process.units",
+            "Units: sectors of 1 * 512 = 512 bytes");
+    private static final TextKey SECTOR_SIZE = TextKey.of("jsc.install.fdisk_process.sector_size",
+            "Sector size (logical/physical): 512 bytes / 512 bytes");
+    private static final TextKey IO_SIZE = TextKey.of("jsc.install.fdisk_process.io_size",
+            "I/O size (minimum/optimal): 512 bytes / 512 bytes");
+    private static final TextKey LABEL_TYPE = TextKey.of("jsc.install.fdisk_process.label_type",
+            "Disklabel type: %s");
+    private static final TextKey DISK_ID = TextKey.of("jsc.install.fdisk_process.disk_id", "Disk identifier: %s");
+
+    private static final CliLine COMMAND =
+            CliLine.build().add(ASK_COMMAND, CliStyle.OK).add(" ", CliStyle.OK).done();
 
     /** Where in a run of questions the editor is standing. */
     private enum Stage {
@@ -87,11 +175,9 @@ final class FdiskProcess implements ITtyProcess {
             return;
         }
         this.opened = true;
-        say(out, "", "Welcome to " + VERSION + ".",
-                "Changes will remain in memory only, until you decide to write them.",
-                "Be careful before using the write command.", "");
+        say(out, Text.EMPTY, WELCOME.with(VERSION), IN_MEMORY.text(), BE_CAREFUL.text(), Text.EMPTY);
         if (this.draft.isEmpty()) {
-            say(out, "Device does not contain a recognized partition table.", "");
+            say(out, NO_TABLE.text(), Text.EMPTY);
         }
     }
 
@@ -103,15 +189,11 @@ final class FdiskProcess implements ITtyProcess {
         }
         return new TtyQuestion(switch (this.stage) {
             case COMMAND -> COMMAND;
-            case NEW_NUMBER -> CliLine.plain("Partition number (" + this.nextNumber() + "-" + MOST + ", default "
-                    + this.nextNumber() + "): ");
-            case NEW_FIRST -> CliLine.plain("First sector (" + this.nextStart() + "-" + this.lastUsable()
-                    + ", default " + this.nextStart() + "): ");
-            case NEW_LAST -> CliLine.plain("Last sector, +/-sectors or +/-size{K,M,G,T,P} (" + this.nextStart()
-                    + "-" + this.lastUsable() + ", default " + this.defaultLast() + "): ");
-            case TYPE_NUMBER, DELETE_NUMBER -> CliLine.plain("Partition number (1-" + this.draft.size()
-                    + ", default " + this.draft.size() + "): ");
-            case TYPE_KIND -> CliLine.plain("Partition type or alias (type L to list all): ");
+            case NEW_NUMBER -> question(ASK_NUMBER.with(this.nextNumber(), MOST, this.nextNumber()));
+            case NEW_FIRST -> question(ASK_FIRST.with(this.nextStart(), this.lastUsable(), this.nextStart()));
+            case NEW_LAST -> question(ASK_LAST.with(this.nextStart(), this.lastUsable(), this.defaultLast()));
+            case TYPE_NUMBER, DELETE_NUMBER -> question(ASK_NUMBER.with(1, this.draft.size(), this.draft.size()));
+            case TYPE_KIND -> question(ASK_TYPE.text());
         }, false);
     }
 
@@ -141,7 +223,7 @@ final class FdiskProcess implements ITtyProcess {
     public void interrupt(final long now, @Nullable final ITtySink out) {
         // Left without writing, so everything typed since it opened goes with it, as the opening lines said.
         this.over = true;
-        say(out, "^C");
+        say(out, Text.literal("^C"));
     }
 
     @Override
@@ -156,20 +238,16 @@ final class FdiskProcess implements ITtyProcess {
         switch (letter) {
             case "" -> {
             }
-            case "m", "help" -> say(out, "", "Help:", "", "  Generic", "   d   delete a partition",
-                    "   n   add a new partition", "   p   print the partition table",
-                    "   t   change a partition type", "", "  Save & Exit",
-                    "   w   write table to disk and exit", "   q   quit without saving changes", "",
-                    "  Create a new label", "   g   create a new empty GPT partition table", "");
+            case "m", "help" -> help(out);
             case "g" -> {
                 this.gpt = true;
                 this.draft.clear();
-                say(out, "Created a new GPT disklabel (GUID: " + this.guid() + ").", "");
+                say(out, CREATED_LABEL.with(this.guid()), Text.EMPTY);
             }
             case "p" -> this.print(out);
             case "n" -> {
                 if (this.draft.size() >= MOST) {
-                    say(out, "No free sectors available.", "");
+                    say(out, NO_FREE_SECTORS.text(), Text.EMPTY);
                 } else if (parts.length > 1) {
                     this.made(megabytesOf(parts[1]), out);
                 } else {
@@ -181,14 +259,13 @@ final class FdiskProcess implements ITtyProcess {
             case "w" -> {
                 this.disks.writeTable(this.disk, this.draft);
                 this.over = true;
-                say(out, "The partition table has been altered.", "Calling ioctl() to re-read partition table.",
-                        "Syncing disks.", "");
+                say(out, ALTERED.text(), REREAD.text(), SYNCING.text(), Text.EMPTY);
             }
             case "q" -> {
                 this.over = true;
-                say(out, "");
+                say(out, Text.EMPTY);
             }
-            default -> say(out, letter + ": unknown command", "");
+            default -> say(out, UNKNOWN_COMMAND.with(letter), Text.EMPTY);
         }
     }
 
@@ -198,7 +275,7 @@ final class FdiskProcess implements ITtyProcess {
      */
     private void ask(final String[] parts, final Stage which, final Stage then, @Nullable final ITtySink out) {
         if (this.draft.isEmpty()) {
-            say(out, "No partition is defined yet!", "");
+            say(out, NO_PARTITION.text(), Text.EMPTY);
             return;
         }
         if (parts.length > 1) {
@@ -209,7 +286,7 @@ final class FdiskProcess implements ITtyProcess {
             return;
         }
         if (this.draft.size() == 1) {
-            say(out, "Selected partition 1");
+            say(out, SELECTED.with(1));
             this.picked("1", then, out);
             return;
         }
@@ -220,7 +297,7 @@ final class FdiskProcess implements ITtyProcess {
     private void picked(final String typed, final Stage then, @Nullable final ITtySink out) {
         final int number = typed.isEmpty() ? this.draft.size() : numberOf(typed);
         if (number < 1 || number > this.draft.size()) {
-            say(out, "Value out of range.", "");
+            say(out, OUT_OF_RANGE.text(), Text.EMPTY);
             this.stage = Stage.COMMAND;
             return;
         }
@@ -235,7 +312,7 @@ final class FdiskProcess implements ITtyProcess {
             this.draft.set(i, new LiveDisks.Partition(i + 1, was.sizeMb(), was.esp()));
         }
         this.stage = Stage.COMMAND;
-        say(out, "", "Partition " + number + " has been deleted.", "");
+        say(out, Text.EMPTY, DELETED.with(number), Text.EMPTY);
     }
 
     /** The kind a partition is changed to, by the real one's number for it or by a word. */
@@ -245,18 +322,19 @@ final class FdiskProcess implements ITtyProcess {
         final boolean esp = kind.equals("1") || kind.equals("uefi") || kind.equals("efi") || kind.equals("ef");
         if (!esp && !kind.equals("20") && !kind.equals("linux") && !kind.equals("83")) {
             if (kind.equals("l")) {
-                say(out, "  1 EFI System                     C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
-                        " 20 Linux filesystem               0FC63DAF-8483-4772-8E79-3D69D8477DE4", "");
+                // Rows of the table of partition types: a number, a name and an identifier, all data.
+                say(out, Text.literal("  1 EFI System                     C12A7328-F81F-11D2-BA4B-00A0C93EC93B"),
+                        Text.literal(" 20 Linux filesystem               0FC63DAF-8483-4772-8E79-3D69D8477DE4"),
+                        Text.EMPTY);
                 this.stage = Stage.TYPE_KIND;
                 return;
             }
-            say(out, "Failed to parse partition type '" + typed + "'.", "");
+            say(out, PARSE_FAILED.with(typed), Text.EMPTY);
             return;
         }
         final LiveDisks.Partition was = this.draft.get(this.chosen - 1);
         this.draft.set(this.chosen - 1, new LiveDisks.Partition(was.number(), was.sizeMb(), esp));
-        say(out, "Changed type of partition '" + was.type() + "' to '" + this.draft.get(this.chosen - 1).type()
-                + "'.", "");
+        say(out, CHANGED_TYPE.with(was.type(), this.draft.get(this.chosen - 1).type()), Text.EMPTY);
     }
 
     /** A new partition of that size, or of whatever is left of the disk when no size was given. */
@@ -265,40 +343,42 @@ final class FdiskProcess implements ITtyProcess {
         final int number = this.draft.size() + 1;
         final long room = this.sizeMb - this.taken();
         if (room <= 0 || sizeMb > room) {
-            say(out, "Value out of range.", "");
+            say(out, OUT_OF_RANGE.text(), Text.EMPTY);
             return;
         }
-        this.draft.add(new LiveDisks.Partition(number, sizeMb, false));
-        say(out, "", "Created a new partition " + number + " of type 'Linux filesystem' and of size "
-                + size(sizeMb > 0 ? sizeMb : room) + ".", "");
+        final LiveDisks.Partition added = new LiveDisks.Partition(number, sizeMb, false);
+        this.draft.add(added);
+        say(out, Text.EMPTY, CREATED.with(number, added.type(), size(sizeMb > 0 ? sizeMb : room)), Text.EMPTY);
     }
 
     /** The table as the editor prints it: the disk, its label, and every partition by its sectors. */
     private void print(@Nullable final ITtySink out) {
         final long sectors = this.sizeMb * SECTORS_PER_MB;
-        say(out, "Disk /dev/" + this.disk + ": " + size(this.sizeMb) + ", " + this.sizeMb * 1024L * 1024L
-                        + " bytes, " + sectors + " sectors",
-                "Units: sectors of 1 * 512 = 512 bytes",
-                "Sector size (logical/physical): 512 bytes / 512 bytes",
-                "I/O size (minimum/optimal): 512 bytes / 512 bytes",
-                "Disklabel type: " + (this.gpt ? "gpt" : "dos"));
+        say(out, DISK_LINE.with(Text.literal("/dev/" + this.disk), size(this.sizeMb), this.sizeMb * 1024L * 1024L,
+                        sectors),
+                UNITS.text(), SECTOR_SIZE.text(), IO_SIZE.text(),
+                LABEL_TYPE.with(Text.literal(this.gpt ? "gpt" : "dos")));
         if (this.gpt) {
-            say(out, "Disk identifier: " + this.guid());
+            say(out, DISK_ID.with(this.guid()));
         }
         if (!this.draft.isEmpty()) {
-            say(out, "", String.format(Locale.ROOT, "%-10s %10s %10s %10s %6s %s", "Device", "Start", "End",
-                    "Sectors", "Size", "Type"));
+            /*
+             * The table is data, its column names too: they are laid out in fixed widths the rows below line up
+             * under, which words of another length would break.
+             */
+            say(out, Text.EMPTY, Text.literal(String.format(Locale.ROOT, "%-10s %10s %10s %10s %6s %s", "Device",
+                    "Start", "End", "Sectors", "Size", "Type")));
             long start = FIRST_SECTOR;
             for (final LiveDisks.Partition part : this.draft) {
                 final long megabytes = part.sizeMb() > 0 ? part.sizeMb() : this.sizeMb - this.taken();
                 final long count = part.sizeMb() > 0 ? megabytes * SECTORS_PER_MB : this.defaultLast() - start + 1;
-                say(out, String.format(Locale.ROOT, "%-10s %10d %10d %10d %6s %s", "/dev/" + part.on(this.disk),
-                        start, start + count - 1, count, size(megabytes).replace(" ", "").replace("iB", ""),
-                        part.type()));
+                line(out, CliLine.build().plain(Text.literal(String.format(Locale.ROOT, "%-10s %10d %10d %10d %6s ",
+                        "/dev/" + part.on(this.disk), start, start + count - 1, count,
+                        size(megabytes).replace(" ", "").replace("iB", "")))).plain(part.type()).done());
                 start += count;
             }
         }
-        say(out, "");
+        say(out, Text.EMPTY);
     }
 
     private int nextNumber() {
@@ -329,6 +409,39 @@ final class FdiskProcess implements ITtyProcess {
     /** An identifier shaped like the real thing, the same for the same disk every time it is asked. */
     private String guid() {
         return Ext4Figures.uuid(this.disk, this.sizeMb).toUpperCase(Locale.ROOT);
+    }
+
+    /** The menu {@code m} prints: each group's name, and under it each command's letter and what it does. */
+    private static void help(@Nullable final ITtySink out) {
+        say(out, Text.EMPTY, HELP.text(), Text.EMPTY);
+        menuGroup(out, GROUP_GENERIC);
+        menuItem(out, 'd', MENU_DELETE);
+        menuItem(out, 'n', MENU_NEW);
+        menuItem(out, 'p', MENU_PRINT);
+        menuItem(out, 't', MENU_TYPE);
+        say(out, Text.EMPTY);
+        menuGroup(out, GROUP_SAVE);
+        menuItem(out, 'w', MENU_WRITE);
+        menuItem(out, 'q', MENU_QUIT);
+        say(out, Text.EMPTY);
+        menuGroup(out, GROUP_LABEL);
+        menuItem(out, 'g', MENU_GPT);
+        say(out, Text.EMPTY);
+    }
+
+    /** A group of the menu, by its name, indented as the real one indents it. */
+    private static void menuGroup(@Nullable final ITtySink out, final TextKey name) {
+        line(out, CliLine.build().plain("  ").plain(name.text()).done());
+    }
+
+    /** A command of the menu: its letter, which is what is typed, and what it does. */
+    private static void menuItem(@Nullable final ITtySink out, final char letter, final TextKey does) {
+        line(out, CliLine.build().plain("   " + letter + "   ").plain(does.text()).done());
+    }
+
+    /** A question as the editor asks it, with the space the answer is typed after. */
+    private static CliLine question(final Text asked) {
+        return CliLine.build().plain(asked).plain(" ").done();
     }
 
     /** A size as a person writes it at the last question: {@code +512M}, {@code +1G}, or nothing for the rest. */
@@ -368,11 +481,17 @@ final class FdiskProcess implements ITtyProcess {
                 : String.format(Locale.ROOT, "%.1f", rounded);
     }
 
-    private static void say(@Nullable final ITtySink out, final String... lines) {
+    private static void say(@Nullable final ITtySink out, final Text... lines) {
         if (out != null) {
-            for (final String line : lines) {
+            for (final Text line : lines) {
                 out.line(CliLine.plain(line));
             }
+        }
+    }
+
+    private static void line(@Nullable final ITtySink out, final CliLine line) {
+        if (out != null) {
+            out.line(line);
         }
     }
 }

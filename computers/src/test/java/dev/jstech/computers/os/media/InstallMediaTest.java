@@ -49,8 +49,8 @@ public final class InstallMediaTest {
     @Test
     public void readerName_namesEveryFormat() {
         for (final MediaFormat format : MediaFormat.values()) {
-            assertEquals(false, InstallMedia.readerName(format).isBlank(), format.name());
+            assertEquals(false, InstallMedia.readerName(format).english().isBlank(), format.name());
         }
-        assertEquals("Dock Station", InstallMedia.readerName(MediaFormat.USB));
+        assertEquals("Dock Station", InstallMedia.readerName(MediaFormat.USB).english());
     }
 }

@@ -25,6 +25,7 @@ import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import io.netty.buffer.Unpooled;
 import java.util.Optional;
@@ -111,9 +112,10 @@ public final class SetupGameTests {
                 SetupTiming.eraFactor(mainframe.displayEra()));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 4, () -> {
-                    final Optional<String> refusal = SetupRunner.begin(mainframe, helper.getLevel(),
+                    final Optional<Text> refusal = SetupRunner.begin(mainframe, helper.getLevel(),
                             helper.absolutePos(pos), spec(MINESWEEPER), MediaFormat.FLOPPY, false);
-                    helper.assertTrue(refusal.isEmpty(), "the machine takes the program: " + refusal.orElse(""));
+                    helper.assertTrue(refusal.isEmpty(),
+                            "the machine takes the program: " + refusal.map(Text::english).orElse(""));
                     final SetupJob job = mainframe.console().setup();
                     helper.assertTrue(job != null && !job.removing(), "a setup job is running");
                     helper.assertTrue(job.ticksTotal() == ticks, "the job takes the floppy's time: " + job.ticksTotal());
@@ -159,17 +161,19 @@ public final class SetupGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 4, () -> {
                     // Virtual Studio wants Frames XP or newer; this machine runs Frames 95.
-                    final Optional<String> refusal = SetupRunner.begin(mainframe, helper.getLevel(),
+                    final Optional<Text> refusal = SetupRunner.begin(mainframe, helper.getLevel(),
                             helper.absolutePos(pos), spec(jsc("virtual_studio")), MediaFormat.DVD, false);
                     helper.assertTrue(refusal.isPresent(), "a program the system is too old for is refused");
-                    helper.assertTrue(refusal.get().contains("or newer") || refusal.get().contains("needs"),
-                            "the refusal says why: " + refusal.get());
+                    final String why = refusal.get().english();
+                    helper.assertTrue(why.contains("or newer") || why.contains("needs"),
+                            "the refusal says why: " + why);
                     helper.assertTrue(mainframe.console().setup() == null, "no job starts for a refused program");
                     // Removing what is not there is refused too.
-                    final Optional<String> notThere = SetupRunner.begin(mainframe, helper.getLevel(),
+                    final Optional<Text> notThere = SetupRunner.begin(mainframe, helper.getLevel(),
                             helper.absolutePos(pos), spec(MINESWEEPER), null, true);
-                    helper.assertTrue(notThere.isPresent() && notThere.get().contains("not installed"),
-                            "removing a program that is not there says so: " + notThere.orElse(""));
+                    helper.assertTrue(notThere.isPresent() && notThere.get().english().contains("not installed"),
+                            "removing a program that is not there says so: "
+                                    + notThere.map(Text::english).orElse(""));
                 })
                 .thenSucceed();
     }
@@ -211,9 +215,10 @@ public final class SetupGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 4, () -> {
                     mainframe.console().install(MINESWEEPER.toString());
-                    final Optional<String> refusal = SetupRunner.begin(mainframe, helper.getLevel(),
+                    final Optional<Text> refusal = SetupRunner.begin(mainframe, helper.getLevel(),
                             helper.absolutePos(pos), spec(MINESWEEPER), null, true);
-                    helper.assertTrue(refusal.isEmpty(), "removing an installed program is allowed: " + refusal.orElse(""));
+                    helper.assertTrue(refusal.isEmpty(),
+                            "removing an installed program is allowed: " + refusal.map(Text::english).orElse(""));
                     final SetupJob job = mainframe.console().setup();
                     helper.assertTrue(job != null && job.removing(), "a removal job is running");
                     // A small program sits at the floor on install, so removing is shorter but not a fifth to the tick.
@@ -256,7 +261,8 @@ public final class SetupGameTests {
         final String name = "n".repeat(64);
         final String text = "m".repeat(160);
         final SetupProgressPayload payload = new SetupProgressPayload(new BlockPos(1, 2, 3), id, name, name, 512,
-                name, 999, name, SetupProgressPayload.STATE_REFUSED, text, true);
+                Text.literal(name), 999, Text.literal(name), SetupProgressPayload.STATE_REFUSED, Text.literal(text),
+                true);
         final RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(),
                 helper.getLevel().registryAccess());
         try {
@@ -269,11 +275,12 @@ public final class SetupGameTests {
         helper.assertTrue(back.equals(payload), "the payload survives the wire whole");
         // Longer than the wire allows is clipped, never fatal.
         final SetupProgressPayload longer = new SetupProgressPayload(new BlockPos(1, 2, 3), id, name, name, 1,
-                name, 0, name, SetupProgressPayload.STATE_REFUSED, "m".repeat(400), false);
+                Text.literal(name), 0, Text.literal(name), SetupProgressPayload.STATE_REFUSED,
+                Text.literal("m".repeat(400)), false);
         final RegistryFriendlyByteBuf buf2 = new RegistryFriendlyByteBuf(Unpooled.buffer(),
                 helper.getLevel().registryAccess());
         SetupProgressPayload.STREAM_CODEC.encode(buf2, longer);
-        helper.assertTrue(SetupProgressPayload.STREAM_CODEC.decode(buf2).message().length() == 160,
+        helper.assertTrue(SetupProgressPayload.STREAM_CODEC.decode(buf2).message().english().length() == 160,
                 "a refusal too long for the wire is shortened");
         helper.succeed();
     }

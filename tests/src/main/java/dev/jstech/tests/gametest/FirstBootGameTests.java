@@ -191,7 +191,8 @@ public final class FirstBootGameTests {
         final PersonalComputerBlockEntity computer = legacy(helper);
         helper.assertTrue(computer.installOs(FRAMES_95), "Frames 95 installs on the machine");
 
-        final java.util.List<String> alone = WelcomeFacts.tips(computer, "", false);
+        final java.util.List<String> alone = WelcomeFacts.tips(computer, "", false).stream()
+                .map(tip -> tip.english()).toList();
         helper.assertTrue(alone.getFirst().contains("once a Mainframe on this network runs the Mirror"),
                 "with no Mirror it says where software would come from: " + alone.getFirst());
         for (final String tip : alone) {
@@ -199,7 +200,8 @@ public final class FirstBootGameTests {
                     "and a machine on no network is told nothing about one: " + tip);
         }
 
-        final java.util.List<String> served = WelcomeFacts.tips(computer, "CORE", true);
+        final java.util.List<String> served = WelcomeFacts.tips(computer, "CORE", true).stream()
+                .map(tip -> tip.english()).toList();
         helper.assertTrue(served.getFirst().contains("the Mirror on CORE"),
                 "with one answering it names it: " + served.getFirst());
         helper.succeed();
@@ -218,8 +220,8 @@ public final class FirstBootGameTests {
         computer.console().setComputerName("STUDIO-11");
 
         final BootSequence first = BootLines.forMachine(computer, helper.getLevel());
-        helper.assertTrue("Hi.".equals(first.title()), "the first start greets: " + first.title());
-        helper.assertTrue(first.subtitle().startsWith("STUDIO-11"),
+        helper.assertTrue("Hi.".equals(first.title().english()), "the first start greets: " + first.title());
+        helper.assertTrue(first.subtitle().english().startsWith("STUDIO-11"),
                 "and greets this machine by its own name: " + first.subtitle());
 
         computer.setSystemWelcome(computer.systemWelcome().met());

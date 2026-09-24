@@ -15,6 +15,9 @@ import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.install.Installers;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -34,6 +37,7 @@ import java.util.List;
  * as it stands, so the ones about the network only appear when there is a network, and the one about installing
  * software says where software comes from when no Mirror is answering.
  */
+@TextHolder
 public final class WelcomeFacts {
 
     /** The most tips a welcome walks through, which is as many as there are true things worth saying. */
@@ -41,6 +45,21 @@ public final class WelcomeFacts {
 
     /** What the machine calls the welcome's window when it puts one up, and what closes it again. */
     public static final String WINDOW_KEY = "Welcome";
+
+    private static final TextKey TIP_NO_MIRROR = TextKey.of("jsc.boot.welcome_facts.tip_no_mirror",
+            "pckmgr at the Command Prompt installs programs, once a Mainframe on this network runs the Mirror.");
+    private static final TextKey TIP_MIRROR = TextKey.of("jsc.boot.welcome_facts.tip_mirror",
+            "pckmgr at the Command Prompt installs programs from the Mirror on %s. Try pckmgr search.");
+    private static final TextKey TIP_THIS_PC = TextKey.of("jsc.boot.welcome_facts.tip_this_pc",
+            "This PC shows the disks in this computer and what each one holds.");
+    private static final TextKey TIP_HOSTNAME = TextKey.of("jsc.boot.welcome_facts.tip_hostname",
+            "This computer's name, %s, is its hostname: other machines on the network reach it by that name.");
+    private static final TextKey TIP_NETWORK = TextKey.of("jsc.boot.welcome_facts.tip_network",
+            "Network shows the machines and the storage on the network this computer is cabled to.");
+    private static final TextKey TIP_TASK_MANAGER = TextKey.of("jsc.boot.welcome_facts.tip_task_manager",
+            "Right-click the taskbar to open the Task Manager.");
+    private static final TextKey TIP_ESC = TextKey.of("jsc.boot.welcome_facts.tip_esc",
+            "ESC closes the monitor; the computer keeps running.");
 
     private WelcomeFacts() {
     }
@@ -89,24 +108,19 @@ public final class WelcomeFacts {
      * @param mirrorHost the Mirror answering this machine, empty when none does
      * @param networked  whether a data cable reaches a network at all
      */
-    public static List<String> tips(final IOsHost machine, final String mirrorHost, final boolean networked) {
-        final List<String> tips = new ArrayList<>();
-        tips.add(mirrorHost.isEmpty()
-                ? "pckmgr at the Command Prompt installs programs, once a Mainframe on this network runs the "
-                        + "Mirror."
-                : "pckmgr at the Command Prompt installs programs from the Mirror on " + mirrorHost
-                        + ". Try pckmgr search.");
-        tips.add("This PC shows the disks in this computer and what each one holds.");
+    public static List<Text> tips(final IOsHost machine, final String mirrorHost, final boolean networked) {
+        final List<Text> tips = new ArrayList<>();
+        tips.add(mirrorHost.isEmpty() ? TIP_NO_MIRROR.text() : TIP_MIRROR.with(mirrorHost));
+        tips.add(TIP_THIS_PC.text());
         final String name = machine.console() == null ? "" : machine.console().computerName();
         if (!name.isBlank()) {
-            tips.add("This computer's name, " + name + ", is its hostname: other machines on the network reach "
-                    + "it by that name.");
+            tips.add(TIP_HOSTNAME.with(name));
         }
         if (networked) {
-            tips.add("Network shows the machines and the storage on the network this computer is cabled to.");
+            tips.add(TIP_NETWORK.text());
         }
-        tips.add("Right-click the taskbar to open the Task Manager.");
-        tips.add("ESC closes the monitor; the computer keeps running.");
+        tips.add(TIP_TASK_MANAGER.text());
+        tips.add(TIP_ESC.text());
         return tips.size() <= MOST_TIPS ? tips : tips.subList(0, MOST_TIPS);
     }
 

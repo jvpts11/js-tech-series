@@ -8,6 +8,9 @@
 package dev.jstech.computers.os.media;
 
 import dev.jstech.computers.os.ProgramKind;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 
 /**
@@ -19,7 +22,13 @@ import dev.jstech.core.tier.HardwareEra;
  * <p>Pure, so the rule is unit-tested and the creative tab, the tooltip and the installer projection
  * all read the same answer.
  */
+@TextHolder
 public final class InstallMedia {
+
+    private static final TextKey FLOPPY_DRIVE = TextKey.of("jsc.media.install_media.floppy_drive", "Floppy Drive");
+    private static final TextKey CD_DRIVE = TextKey.of("jsc.media.install_media.cd_drive", "CD Drive");
+    private static final TextKey DVD_DRIVE = TextKey.of("jsc.media.install_media.dvd_drive", "DVD Drive");
+    private static final TextKey DOCK_STATION = TextKey.of("jsc.media.install_media.dock_station", "Dock Station");
 
     private InstallMedia() {
     }
@@ -43,12 +52,12 @@ public final class InstallMedia {
     }
 
     /** The drive a medium of {@code format} is read in, for the words on a tooltip. */
-    public static String readerName(final MediaFormat format) {
+    public static Text readerName(final MediaFormat format) {
         return switch (format) {
-            case FLOPPY -> "Floppy Drive";
-            case CD -> "CD Drive";
-            case DVD -> "DVD Drive";
-            case USB -> "Dock Station";
+            case FLOPPY -> FLOPPY_DRIVE.text();
+            case CD -> CD_DRIVE.text();
+            case DVD -> DVD_DRIVE.text();
+            case USB -> DOCK_STATION.text();
         };
     }
 }

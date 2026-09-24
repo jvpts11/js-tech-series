@@ -9,6 +9,7 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -46,12 +47,13 @@ public final class FirmwareBootMenus {
 
         /** What a menu row calls the place this boots from: the disk by slot, or the drive by its kind. */
         public String where() {
-            return this.slot >= 0 ? "Disk " + this.slot : this.entry.device();
+            return this.slot >= 0 ? "Disk " + this.slot : GameText.resolve(this.entry.device());
         }
 
         /** How a modern dialog names it: the disk by slot and model, or the drive on its own. */
         public String device() {
-            return this.slot < 0 ? this.entry.device() : "Disk " + this.slot + " " + this.entry.device();
+            final String device = GameText.resolve(this.entry.device());
+            return this.slot < 0 ? device : "Disk " + this.slot + " " + device;
         }
     }
 
