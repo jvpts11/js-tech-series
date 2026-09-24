@@ -14,6 +14,7 @@ import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -54,15 +55,16 @@ public final class RemoteControlApp implements IDesktopApp {
     public RemoteControlApp(final BlockPos host, final BlockPos monitorPos) {
         this.host = host;
         this.monitorPos = monitorPos;
-        header = root.add(new Label("Machines on this network", Label.Tone.DIM));
+        header = root.add(new Label(GameText.resolve(RemoteControlTexts.MACHINES), Label.Tone.DIM));
         hostList = root.add(new ListView<RemoteHostsPayload.Entry>(() -> hosts, ROW_H, this::renderHostRow)
                 .setOnClick((index, button, mx, my) -> {
                     if (index >= 0) {
                         selected = index;
                     }
                 }));
-        emptyLabel = root.add(new Label("No other machine is reachable.", Label.Tone.DIM));
-        connect = root.add(new Button(() -> canConnect() ? "Take over" : "Select a machine", this::takeOver));
+        emptyLabel = root.add(new Label(GameText.resolve(RemoteControlTexts.NONE_REACHABLE), Label.Tone.DIM));
+        connect = root.add(new Button(() -> GameText.resolve(canConnect() ? RemoteControlTexts.TAKE_OVER
+                : RemoteControlTexts.SELECT), this::takeOver));
         active = this;
         request();
     }
@@ -144,9 +146,10 @@ public final class RemoteControlApp implements IDesktopApp {
             g.fill(x, y, x + w, y + h, ctx.skin().listHover());
         }
         g.drawString(font, entry.hostname(), x + 4, y + 3, ctx.skin().listRowText(sel), false);
-        final String detail = entry.type() + (entry.os().isEmpty() ? "" : "  -  " + entry.os());
+        final String detail = GameText.resolve(entry.os().isEmpty() ? entry.type()
+                : RemoteControlTexts.KIND_AND_SYSTEM.with(entry.type(), entry.os()));
         g.drawString(font, detail, x + 4, y + 12, ctx.skin().dim(), false);
-        final String state = entry.running() ? "up" : "off";
+        final String state = GameText.resolve(entry.running() ? RemoteControlTexts.UP : RemoteControlTexts.OFF);
         g.drawString(font, state, x + w - 4 - font.width(state), y + 7, entry.running() ? C_UP : C_DOWN, false);
     }
 

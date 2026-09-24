@@ -8,6 +8,10 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -25,7 +29,11 @@ import java.util.List;
  *
  * <p>The stream codec is written by hand because the payload has more fields than
  * {@code StreamCodec.composite} accepts.
+ *
+ * <p>The processor, its architecture and the disks travel as text, read in the player's language; the names the
+ * player chose travel as they are.
  */
+@TextHolder
 public record SettingsSnapshotPayload(
         BlockPos hostPos,
         String wallpaper,
@@ -40,9 +48,9 @@ public record SettingsSnapshotPayload(
         boolean taskbarCentered,
         boolean darkMode,
         int netshare,
-        String cpuLabel,
+        Text cpuLabel,
         int cpuMhz,
-        String cpuArch,
+        Text cpuArch,
         int ramMb,
         int vramMb,
         String osLabel,
@@ -56,7 +64,7 @@ public record SettingsSnapshotPayload(
 ) implements CustomPacketPayload {
 
     /** One disk's usage for the Storage page. */
-    public record DiskUse(String label, long capMb, long usedMb, boolean system) {}
+    public record DiskUse(Text label, long capMb, long usedMb, boolean system) {}
 
     /** One folder this computer shares with the network: its share name, its path and whether others may write. */
     public record ShareRow(String name, String path, boolean writable) {}
@@ -74,6 +82,10 @@ public record SettingsSnapshotPayload(
      * number tells them apart, so the number travels for those and is 0 for everything else.
      */
     public record RamUse(String label, int mb, long heldBytes, String kind, int id) {}
+
+    /** How many processors a machine has seated, as its specifications say it. */
+    public static final TextKey ONE_CPU = TextKey.of("jsc.settings_snapshot.one_cpu", "%s CPU");
+    public static final TextKey CPUS = TextKey.of("jsc.settings_snapshot.cpus", "%s CPUs");
 
     public static final int MAX = 64;
 
@@ -118,9 +130,9 @@ public record SettingsSnapshotPayload(
         buf.writeBoolean(p.taskbarCentered);
         buf.writeBoolean(p.darkMode);
         buf.writeVarInt(p.netshare);
-        buf.writeUtf(clip(p.cpuLabel, 64), 64);
+        TextCodecs.STREAM_CODEC.encode(buf, p.cpuLabel);
         buf.writeVarInt(p.cpuMhz);
-        buf.writeUtf(clip(p.cpuArch, 48), 48);
+        TextCodecs.STREAM_CODEC.encode(buf, p.cpuArch);
         buf.writeVarInt(p.ramMb);
         buf.writeVarInt(p.vramMb);
         buf.writeUtf(clip(p.osLabel, LABEL_MAX), LABEL_MAX);
@@ -132,7 +144,7 @@ public record SettingsSnapshotPayload(
         buf.writeVarInt(Math.min(p.disks.size(), MAX));
         for (int i = 0; i < p.disks.size() && i < MAX; i++) {
             final DiskUse d = p.disks.get(i);
-            buf.writeUtf(clip(d.label(), LABEL_MAX), LABEL_MAX);
+            TextCodecs.STREAM_CODEC.encode(buf, d.label());
             buf.writeVarLong(d.capMb());
             buf.writeVarLong(d.usedMb());
             buf.writeBoolean(d.system());
@@ -176,9 +188,9 @@ public record SettingsSnapshotPayload(
         final boolean taskbarCentered = buf.readBoolean();
         final boolean darkMode = buf.readBoolean();
         final int netshare = buf.readVarInt();
-        final String cpuLabel = buf.readUtf(64);
+        final Text cpuLabel = TextCodecs.STREAM_CODEC.decode(buf);
         final int cpuMhz = buf.readVarInt();
-        final String cpuArch = buf.readUtf(48);
+        final Text cpuArch = TextCodecs.STREAM_CODEC.decode(buf);
         final int ramMb = buf.readVarInt();
         final int vramMb = buf.readVarInt();
         final String osLabel = buf.readUtf(48);
@@ -191,7 +203,8 @@ public record SettingsSnapshotPayload(
         final int diskCount = Math.min(buf.readVarInt(), MAX);
         final List<DiskUse> disks = new ArrayList<>(diskCount);
         for (int i = 0; i < diskCount; i++) {
-            disks.add(new DiskUse(buf.readUtf(48), buf.readVarLong(), buf.readVarLong(), buf.readBoolean()));
+            disks.add(new DiskUse(TextCodecs.STREAM_CODEC.decode(buf), buf.readVarLong(), buf.readVarLong(),
+                    buf.readBoolean()));
         }
         final int ramUsedMb = buf.readVarInt();
         final int ramUseCount = Math.min(buf.readVarInt(), MAX);

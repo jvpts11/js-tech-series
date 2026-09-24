@@ -15,6 +15,7 @@ import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.install.Installers;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -97,9 +98,9 @@ public final class WelcomeFacts {
     }
 
     /** The drive the system that booted is on, as it is written on it. */
-    public static String bootedDisk(final IOsHost machine) {
+    public static Text bootedDisk(final IOsHost machine) {
         final int slot = bootedSlot(machine);
-        return slot < 0 ? "" : machine.diskInSlot(slot).getHoverName().getString();
+        return slot < 0 ? Text.EMPTY : GameText.of(machine.diskInSlot(slot).getHoverName());
     }
 
     /**

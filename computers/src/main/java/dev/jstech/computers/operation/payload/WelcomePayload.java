@@ -26,17 +26,18 @@ import java.util.List;
  * in it, the memory counted over its modules, the disk its system is on, the other systems it could boot and the
  * network it is cabled to. The tips travel with it because two of them are only true on some machines.
  *
+ * @param cpuName       the processor, by its model, read in the player's language
  * @param systemName    the system that booted, by the name a person reads
  * @param systemSlot    the disk that system is on
- * @param systemDisk    that drive, as it is written on it
+ * @param systemDisk    that drive, by its name, read in the player's language
  * @param others        the other systems on this machine's other disks
  * @param networkHost   the network this machine is on, by the Mainframe's name; empty when it is on none
  * @param mirrorHost    the Mirror answering it, empty when none does
  * @param showAtStartup whether the welcome is still wanted on later starts
  * @param tips          the tips, read in the player's own language
  */
-public record WelcomePayload(BlockPos hostPos, String machineName, String cpuName, int memoryMb, String systemName,
-                             int systemSlot, String systemDisk, List<WelcomeFacts.Other> others, String networkHost,
+public record WelcomePayload(BlockPos hostPos, String machineName, Text cpuName, int memoryMb, String systemName,
+                             int systemSlot, Text systemDisk, List<WelcomeFacts.Other> others, String networkHost,
                              String mirrorHost, boolean showAtStartup,
                              List<Text> tips) implements CustomPacketPayload {
 
@@ -76,11 +77,11 @@ public record WelcomePayload(BlockPos hostPos, String machineName, String cpuNam
     private static void encode(final RegistryFriendlyByteBuf buf, final WelcomePayload p) {
         buf.writeBlockPos(p.hostPos());
         buf.writeUtf(cut(p.machineName(), MAX_NAME), MAX_NAME);
-        buf.writeUtf(cut(p.cpuName(), MAX_NAME), MAX_NAME);
+        TextCodecs.STREAM_CODEC.encode(buf, p.cpuName());
         buf.writeVarInt(p.memoryMb());
         buf.writeUtf(cut(p.systemName(), MAX_NAME), MAX_NAME);
         buf.writeVarInt(p.systemSlot() + 1);
-        buf.writeUtf(cut(p.systemDisk(), MAX_NAME), MAX_NAME);
+        TextCodecs.STREAM_CODEC.encode(buf, p.systemDisk());
         final int others = Math.min(p.others().size(), MOST_OTHERS);
         buf.writeVarInt(others);
         for (int i = 0; i < others; i++) {
@@ -100,11 +101,11 @@ public record WelcomePayload(BlockPos hostPos, String machineName, String cpuNam
     private static WelcomePayload decode(final RegistryFriendlyByteBuf buf) {
         final BlockPos host = buf.readBlockPos();
         final String machineName = buf.readUtf(MAX_NAME);
-        final String cpuName = buf.readUtf(MAX_NAME);
+        final Text cpuName = TextCodecs.STREAM_CODEC.decode(buf);
         final int memoryMb = buf.readVarInt();
         final String systemName = buf.readUtf(MAX_NAME);
         final int systemSlot = buf.readVarInt() - 1;
-        final String systemDisk = buf.readUtf(MAX_NAME);
+        final Text systemDisk = TextCodecs.STREAM_CODEC.decode(buf);
         final int otherCount = Math.min(buf.readVarInt(), MOST_OTHERS);
         final List<WelcomeFacts.Other> others = new ArrayList<>(otherCount);
         for (int i = 0; i < otherCount; i++) {

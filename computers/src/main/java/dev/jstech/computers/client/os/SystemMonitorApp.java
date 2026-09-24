@@ -19,6 +19,8 @@ import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -73,24 +75,31 @@ public final class SystemMonitorApp implements IDesktopApp {
 
     public SystemMonitorApp(final BlockPos host) {
         this.host = host;
-        loadingLabel = root.add(new Label("Reading machine...", Label.Tone.DIM));
-        nameLabel = root.add(new Label(() -> data == null || data.computerName().isEmpty() ? "Computer" : data.computerName()));
+        loadingLabel = root.add(new Label(GameText.resolve(SystemMonitorTexts.READING), Label.Tone.DIM));
+        nameLabel = root.add(new Label(() -> data == null || data.computerName().isEmpty()
+                ? GameText.resolve(SystemMonitorTexts.COMPUTER) : data.computerName()));
         osLabel = root.add(new Label(() -> data == null ? "" : data.osLabel() + "  (" + data.platform() + ")", Label.Tone.DIM)
                 .setAlign(Label.Align.RIGHT));
-        spec(0, "Processor", () -> data == null || data.cpuLabel().isEmpty() ? "-" : data.cpuLabel(), () -> cpuClock(data == null ? 0 : data.cpuMhz()));
+        spec(0, SystemMonitorTexts.PROCESSOR, () -> data == null || data.cpuLabel().isEmpty() ? "-"
+                : GameText.resolve(data.cpuLabel()), () -> cpuClock(data == null ? 0 : data.cpuMhz()));
         // A second processor line with no group of its own, the way a continuation row reads under the one above it.
-        spec(1, "", () -> data == null || data.cpuArch().isEmpty() ? "-" : data.cpuArch(), () -> "");
-        spec(2, "Memory", () -> "RAM", () -> data == null ? "-"
-                : RamLedger.heldLabel(heldBytes()) + " of " + JsTechTheme.fmt(data.ramMb()) + " MB");
-        spec(3, "Graphics", () -> data != null && data.vramMb() > 0 ? "VRAM" : "no GPU",
-                () -> data != null && data.vramMb() > 0 ? JsTechTheme.fmt(data.vramMb()) + " MB" : "-");
-        memoryHeader = root.add(new Label("MEMORY", Label.Tone.DIM));
-        memoryFree = root.add(new Label(() -> data == null ? ""
-                : JsTechTheme.fmt(Math.max(0, data.ramMb() - data.ramUsedMb())) + " MB free", Label.Tone.DIM)
+        spec(1, null, () -> data == null || data.cpuArch().isEmpty() ? "-" : GameText.resolve(data.cpuArch()),
+                () -> "");
+        spec(2, SystemMonitorTexts.MEMORY, () -> GameText.resolve(SystemMonitorTexts.RAM), () -> data == null ? "-"
+                : GameText.resolve(SystemMonitorTexts.HELD_OF.with(RamLedger.heldLabel(heldBytes()),
+                        JsTechTheme.fmt(data.ramMb()))));
+        spec(3, SystemMonitorTexts.GRAPHICS, () -> GameText.resolve(data != null && data.vramMb() > 0
+                        ? SystemMonitorTexts.VRAM : SystemMonitorTexts.NO_GPU),
+                () -> data != null && data.vramMb() > 0
+                        ? GameText.resolve(SystemMonitorTexts.MEGABYTES.with(JsTechTheme.fmt(data.vramMb()))) : "-");
+        memoryHeader = root.add(new Label(GameText.resolve(SystemMonitorTexts.MEMORY_HEADER), Label.Tone.DIM));
+        memoryFree = root.add(new Label(() -> data == null ? "" : GameText.resolve(SystemMonitorTexts.FREE.with(
+                JsTechTheme.fmt(Math.max(0, data.ramMb() - data.ramUsedMb())))), Label.Tone.DIM)
                 .setAlign(Label.Align.RIGHT));
         memList = root.add(new ListView<RamUse>(() -> data == null ? List.of() : data.ramUses(), MEM_ROW_H, this::renderMemoryRow));
-        storageHeader = root.add(new Label("STORAGE", Label.Tone.DIM));
-        programsLabel = root.add(new Label(() -> data == null ? "" : data.installed().size() + " programs installed", Label.Tone.DIM)
+        storageHeader = root.add(new Label(GameText.resolve(SystemMonitorTexts.STORAGE_HEADER), Label.Tone.DIM));
+        programsLabel = root.add(new Label(() -> data == null ? ""
+                : GameText.resolve(SystemMonitorTexts.PROGRAMS_INSTALLED.with(data.installed().size())), Label.Tone.DIM)
                 .setAlign(Label.Align.RIGHT));
         diskList = root.add(new ListView<DiskUse>(() -> data == null ? List.of() : data.disks(), DISK_ROW_H, this::renderDiskRow));
         active = this;
@@ -106,8 +115,10 @@ public final class SystemMonitorApp implements IDesktopApp {
         return sum;
     }
 
-    private void spec(final int index, final String group, final Supplier<String> label, final Supplier<String> value) {
-        specGroups[index] = root.add(new Label(group, Label.Tone.DIM));
+    /* A line of specifications: its group, or none for a line that continues the one above, then its two values. */
+    private void spec(final int index, @Nullable final TextKey group, final Supplier<String> label,
+                      final Supplier<String> value) {
+        specGroups[index] = root.add(new Label(group == null ? "" : GameText.resolve(group), Label.Tone.DIM));
         specLabels[index] = root.add(new Label(label));
         specValues[index] = root.add(new Label(value).setAlign(Label.Align.RIGHT));
     }
@@ -218,7 +229,8 @@ public final class SystemMonitorApp implements IDesktopApp {
     private void renderDiskRow(final GuiGraphics g, final UiContext ctx, final DiskUse disk, final int index, final int x,
                                final int y, final int w, final int h, final boolean hovered, final boolean selected) {
         final Font font = ctx.font();
-        final String tag = disk.label() + (disk.system() ? " (system)" : "");
+        final String tag = GameText.resolve(disk.system() ? SystemMonitorTexts.SYSTEM_DISK.with(disk.label())
+                : disk.label());
         g.drawString(font, tag, x, y, ctx.skin().text(), false);
         final long cap = Math.max(1L, disk.capMb());
         final double frac = Math.min(1.0, (double) disk.usedMb() / cap);

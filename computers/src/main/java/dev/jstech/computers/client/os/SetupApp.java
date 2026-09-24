@@ -71,9 +71,10 @@ public final class SetupApp implements IDesktopApp {
         this.detail = this.root.add(new Label(this::detailText, Label.Tone.DIM));
         this.bar = this.root.add(new ProgressBar(() -> this.state == null ? 0 : this.state.permille() / 10));
         this.percent = this.root.add(new Label(this::percentText, Label.Tone.DIM));
-        this.cancel = this.root.add(new Button("Cancel", () ->
+        this.cancel = this.root.add(new Button(GameText.resolve(SetupTexts.CANCEL), () ->
                 PacketDistributor.sendToServer(new CancelSetupPayload(this.host))));
-        this.close = this.root.add(new Button("Close", () -> DesktopScreen.requestClose(KEY)).setPrimary(true));
+        this.close = this.root.add(new Button(GameText.resolve(SetupTexts.CLOSE), () -> DesktopScreen.requestClose(KEY))
+                .setPrimary(true));
         this.close.setVisible(false);
     }
 
@@ -92,21 +93,20 @@ public final class SetupApp implements IDesktopApp {
 
     /* What the labels say */
 
-    private String verb() {
-        return this.state != null && this.state.removing() ? "Removing" : "Installing";
-    }
-
     private String headlineText() {
         if (this.state == null) {
-            return "Setup";
+            return GameText.resolve(SetupTexts.SETUP);
         }
+        final boolean removing = this.state.removing();
+        final String name = this.state.name();
         return switch (this.state.state()) {
-            case SetupProgressPayload.STATE_DONE -> this.state.name()
-                    + (this.state.removing() ? " was removed." : " is installed.");
-            case SetupProgressPayload.STATE_REFUSED -> "Setup cannot " + (this.state.removing() ? "remove " : "install ")
-                    + this.state.name() + ".";
-            case SetupProgressPayload.STATE_CANCELLED -> "Setup was cancelled.";
-            default -> this.skin.form() == OsSkin.Form.LUNA ? verb() + " " + this.state.name() : this.state.name();
+            case SetupProgressPayload.STATE_DONE ->
+                    GameText.resolve((removing ? SetupTexts.WAS_REMOVED : SetupTexts.IS_INSTALLED).with(name));
+            case SetupProgressPayload.STATE_REFUSED ->
+                    GameText.resolve((removing ? SetupTexts.CANNOT_REMOVE : SetupTexts.CANNOT_INSTALL).with(name));
+            case SetupProgressPayload.STATE_CANCELLED -> GameText.resolve(SetupTexts.CANCELLED);
+            default -> this.skin.form() == OsSkin.Form.LUNA
+                    ? GameText.resolve((removing ? SetupTexts.REMOVING : SetupTexts.INSTALLING).with(name)) : name;
         };
     }
 
@@ -114,14 +114,15 @@ public final class SetupApp implements IDesktopApp {
         if (this.state == null) {
             return "";
         }
+        final boolean removing = this.state.removing();
         return switch (this.state.state()) {
-            case SetupProgressPayload.STATE_DONE -> this.state.removing()
-                    ? "Its files are gone from the disk." : "You will find it in the Start menu.";
+            case SetupProgressPayload.STATE_DONE ->
+                    GameText.resolve(removing ? SetupTexts.FILES_GONE : SetupTexts.IN_START_MENU);
             case SetupProgressPayload.STATE_REFUSED -> GameText.resolve(this.state.message());
-            case SetupProgressPayload.STATE_CANCELLED -> "Nothing was " + (this.state.removing() ? "removed." : "installed.");
-            default -> this.state.removing()
-                    ? "Removing " + this.state.name() + " from your computer."
-                    : "Copying files to your computer.";
+            case SetupProgressPayload.STATE_CANCELLED ->
+                    GameText.resolve(removing ? SetupTexts.NOTHING_REMOVED : SetupTexts.NOTHING_INSTALLED);
+            default -> GameText.resolve(removing ? SetupTexts.REMOVING_FROM.with(this.state.name())
+                    : SetupTexts.COPYING.text());
         };
     }
 
@@ -129,19 +130,20 @@ public final class SetupApp implements IDesktopApp {
         if (this.state == null || this.state.over()) {
             return "";
         }
-        return GameText.resolve(this.state.phase()) + "...";
+        return GameText.resolve(SetupTexts.PHASE.with(this.state.phase()));
     }
 
     private String percentText() {
-        return this.state == null ? "" : (this.state.permille() / 10) + "%";
+        return this.state == null ? "" : GameText.resolve(SetupTexts.PERCENT.with(this.state.permille() / 10));
     }
 
     private String subtitle() {
         if (this.state == null) {
             return "";
         }
-        final String size = this.state.sizeMb() > 0 ? this.state.sizeMb() + " MB" : "";
-        final String from = this.state.source().isEmpty() ? "" : "from " + GameText.resolve(this.state.source());
+        final String size = this.state.sizeMb() > 0 ? GameText.resolve(SetupTexts.SIZE.with(this.state.sizeMb())) : "";
+        final String from = this.state.source().isEmpty() ? ""
+                : GameText.resolve(SetupTexts.FROM.with(this.state.source()));
         final StringBuilder out = new StringBuilder(this.state.house());
         for (final String part : new String[] {size, from}) {
             if (!part.isEmpty()) {

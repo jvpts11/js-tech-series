@@ -30,6 +30,9 @@ import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.gui.layout.DesktopZ;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import java.util.Collections;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -58,7 +61,6 @@ import java.util.function.Supplier;
  */
 public final class NetworkManagerApp implements IDesktopApp {
 
-    private static final List<String> TABS = List.of("Devices", "Processes", "Hardware", "Map", "Log", "Stats");
     private static final int TAB_DEVICES = 0;
     private static final int TAB_PROCESSES = 1;
     private static final int TAB_HARDWARE = 2;
@@ -100,7 +102,7 @@ public final class NetworkManagerApp implements IDesktopApp {
     }
 
     /** One line of the hardware readout: what it counts, and the count read live from the snapshot. */
-    private record HardwareRow(String key, Supplier<String> value) {
+    private record HardwareRow(TextKey key, Supplier<String> value) {
     }
 
     /** One line of the detail dialog: what the stage or the source was, and how much went through it. */
@@ -190,49 +192,65 @@ public final class NetworkManagerApp implements IDesktopApp {
         this.host = host;
         this.monitorPos = monitorPos;
 
-        tabs = root.add(new TabStrip(TABS).fitToLabels(14).setOnSelect(this::selectTab));
-        loadingLabel = root.add(new Label("Loading network...", Label.Tone.DIM));
+        tabs = root.add(new TabStrip(words(NetworkManagerTexts.DEVICES, NetworkManagerTexts.PROCESSES,
+                NetworkManagerTexts.HARDWARE, NetworkManagerTexts.MAP, NetworkManagerTexts.LOG,
+                NetworkManagerTexts.STATS)).fitToLabels(14).setOnSelect(this::selectTab));
+        loadingLabel = root.add(new Label(GameText.resolve(NetworkManagerTexts.LOADING), Label.Tone.DIM));
         netLabel = root.add(new Label(this::networkText, Label.Tone.DIM));
 
-        devColumns = root.add(new ColumnHeader(List.of("NODE", "TYPE", "STATUS")).setSortable(false));
+        devColumns = root.add(new ColumnHeader(words(NetworkManagerTexts.NODE_COLUMN, NetworkManagerTexts.TYPE_COLUMN,
+                NetworkManagerTexts.STATUS_COLUMN)).setSortable(false));
         devList = root.add(new ListView<NetworkNodeInfo>(this::nodes, DEV_ROW_H, this::renderDeviceRow));
 
-        slotsLabel = root.add(new Label(() -> "Craft slots  " + scSlotsUsed + " / " + scSlotsTotal, Label.Tone.DIM));
-        liveLabel = root.add(new Label(() -> activeOps.size() + " running", Label.Tone.DIM).setAlign(Label.Align.RIGHT));
-        noProcLabel = root.add(new Label("No Operations in flight.", Label.Tone.DIM));
+        slotsLabel = root.add(new Label(() -> GameText.resolve(NetworkManagerTexts.CRAFT_SLOTS.with(scSlotsUsed,
+                scSlotsTotal)), Label.Tone.DIM));
+        liveLabel = root.add(new Label(() -> GameText.resolve(NetworkManagerTexts.RUNNING_COUNT.with(activeOps.size())),
+                Label.Tone.DIM).setAlign(Label.Align.RIGHT));
+        noProcLabel = root.add(new Label(GameText.resolve(NetworkManagerTexts.NO_OPERATIONS), Label.Tone.DIM));
         procList = root.add(new ListView<OperationRecord>(() -> activeOps, PROC_ROW_H, this::renderProcessRow)
                 .setOnClick(this::processClicked));
         procBar = root.add(new ScrollBar(() -> Math.max(0, activeOps.size() - procList.visibleRows()), procList::scroll,
                 v -> procList.setScroll(v)));
 
-        hardwareRows.add(new HardwareRow("Orchestration capacity", () -> JsTechTheme.fmt(hardware().capacity()) + " it/t"));
-        hardwareRows.add(new HardwareRow("Parallel queues", () -> String.valueOf(hardware().queues())));
-        hardwareRows.add(new HardwareRow("RAM buffer", () -> JsTechTheme.fmt(hardware().ramBuffer()) + " it"));
-        hardwareRows.add(new HardwareRow("Network storage", () -> JsTechTheme.fmt(hardware().storageItems()) + " items"));
-        hardwareRows.add(new HardwareRow("Mainframes", () -> countKind(NetworkNodeInfo.KIND_MAINFRAME)));
-        hardwareRows.add(new HardwareRow("Servers", () -> countKind(NetworkNodeInfo.KIND_SERVER)));
-        hardwareRows.add(new HardwareRow("Subframes", () -> countKind(NetworkNodeInfo.KIND_SUBFRAME)));
-        hardwareRows.add(new HardwareRow("Supercomputers", () -> countKind(NetworkNodeInfo.KIND_SUPERCOMPUTER)));
-        hardwareRows.add(new HardwareRow("Crafting computers", () -> countKind(NetworkNodeInfo.KIND_CRAFTING)));
-        hardwareRows.add(new HardwareRow("Personal computers", () -> countKind(NetworkNodeInfo.KIND_PC)));
-        hardwareRows.add(new HardwareRow("Cluster managers", () -> countKind(NetworkNodeInfo.KIND_CLUSTER_MANAGEMENT)));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.ORCHESTRATION,
+                () -> GameText.resolve(NetworkManagerTexts.PER_TICK.with(JsTechTheme.fmt(hardware().capacity())))));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.QUEUES, () -> String.valueOf(hardware().queues())));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.RAM_BUFFER, () -> GameText.resolve(
+                NetworkManagerTexts.ITEM_EQUIVALENTS.with(JsTechTheme.fmt(hardware().ramBuffer())))));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.NETWORK_STORAGE, () -> GameText.resolve(
+                NetworkManagerTexts.ITEMS.with(JsTechTheme.fmt(hardware().storageItems())))));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.MAINFRAMES,
+                () -> countKind(NetworkNodeInfo.KIND_MAINFRAME)));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.SERVERS, () -> countKind(NetworkNodeInfo.KIND_SERVER)));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.SUBFRAMES,
+                () -> countKind(NetworkNodeInfo.KIND_SUBFRAME)));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.SUPERCOMPUTERS,
+                () -> countKind(NetworkNodeInfo.KIND_SUPERCOMPUTER)));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.CRAFTING_COMPUTERS,
+                () -> countKind(NetworkNodeInfo.KIND_CRAFTING)));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.PERSONAL_COMPUTERS,
+                () -> countKind(NetworkNodeInfo.KIND_PC)));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.CLUSTER_MANAGERS,
+                () -> countKind(NetworkNodeInfo.KIND_CLUSTER_MANAGEMENT)));
         for (final HardwareRow row : hardwareRows) {
-            hwKeys.add(root.add(new Label(row.key())));
+            hwKeys.add(root.add(new Label(GameText.resolve(row.key()))));
             hwValues.add(root.add(new Label(row.value()).setAlign(Label.Align.RIGHT)));
         }
-        nodesHeader = root.add(new Label("NODES", Label.Tone.DIM));
+        nodesHeader = root.add(new Label(GameText.resolve(NetworkManagerTexts.NODES), Label.Tone.DIM));
 
         map = root.add(new MapCanvas());
 
-        noLogLabel = root.add(new Label("No Operations logged yet.", Label.Tone.DIM));
+        noLogLabel = root.add(new Label(GameText.resolve(NetworkManagerTexts.NO_LOG), Label.Tone.DIM));
         logList = root.add(new ListView<OperationRecord>(() -> logNewestFirst, LOG_ROW_H, this::renderLogRow)
                 .setOnClick(this::logClicked));
         logBar = root.add(new ScrollBar(() -> Math.max(0, logNewestFirst.size() - logList.visibleRows()), logList::scroll,
                 v -> logList.setScroll(v)));
 
         statsHeader = root.add(new Label(this::statsHeaderText, Label.Tone.DIM));
-        noStatsLabel = root.add(new Label("No Operations settled in the last hour.", Label.Tone.DIM));
-        statsColumns = root.add(new ColumnHeader(List.of("TYPE", "OPS/H", "WAIT", "RUN", "FAIL")).setSortable(false));
+        noStatsLabel = root.add(new Label(GameText.resolve(NetworkManagerTexts.NO_STATS), Label.Tone.DIM));
+        statsColumns = root.add(new ColumnHeader(words(NetworkManagerTexts.TYPE_COLUMN,
+                NetworkManagerTexts.OPS_PER_HOUR, NetworkManagerTexts.WAIT, NetworkManagerTexts.RUN,
+                NetworkManagerTexts.FAIL)).setSortable(false));
         statsList = root.add(new ListView<NetworkManagerPayload.TypeStat>(this::statRows, STAT_ROW_H, this::renderStatRow));
 
         detailPopup = new Popup("", DETAIL_W, DETAIL_H).setDim(0xB0000000).setLayouter(this::layoutDetail);
@@ -245,14 +263,14 @@ public final class NetworkManagerApp implements IDesktopApp {
                 .setColor(() -> detailOp != null && detailOp.cause().isPresent() ? C_RED : 0));
         detailTiming = detailPopup.add(new Label(this::detailTimingText, Label.Tone.DIM).setAlign(Label.Align.RIGHT));
         detailList = detailPopup.add(new ListView<DetailRow>(() -> detailRows, 10, this::renderDetailRow));
-        detailClose = detailPopup.add(new Button("Close", detailPopup::close));
+        detailClose = detailPopup.add(new Button(GameText.resolve(NetworkManagerTexts.CLOSE), detailPopup::close));
         // A live Operation can be re-prioritised from its detail; a logged one only shows the level it ran at.
-        detailPrioLabel = detailPopup.add(new Label("PRIORITY", Label.Tone.DIM));
+        detailPrioLabel = detailPopup.add(new Label(GameText.resolve(NetworkManagerTexts.PRIORITY), Label.Tone.DIM));
         detailPrioDown = detailPopup.add(new Button("<", () -> stepDetailPriority(-1)));
-        detailPrioValue = detailPopup.add(new Label(() -> detailOp == null ? "" : detailOp.priority().label())
-                .setAlign(Label.Align.CENTER));
+        detailPrioValue = detailPopup.add(new Label(() -> detailOp == null ? ""
+                : GameText.resolve(detailOp.priority().text())).setAlign(Label.Align.CENTER));
         detailPrioUp = detailPopup.add(new Button(">", () -> stepDetailPriority(1)));
-        detailCancel = detailPopup.add(new Button("Cancel", this::cancelDetail));
+        detailCancel = detailPopup.add(new Button(GameText.resolve(NetworkManagerTexts.CANCEL), this::cancelDetail));
 
         active = this;
         PacketDistributor.sendToServer(new RequestNetworkManagerPayload(host));
@@ -360,20 +378,31 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     private String statsHeaderText() {
         final NetworkManagerPayload.Statistics stats = statistics();
-        return "Last hour: " + JsTechTheme.fmt(stats.movedLastHour()) + " items moved   -   peak "
-                + stats.peakConcurrent() + " in flight today";
+        return GameText.resolve(NetworkManagerTexts.LAST_HOUR.with(JsTechTheme.fmt(stats.movedLastHour()),
+                stats.peakConcurrent()));
     }
 
     /** Ticks as a short duration: whole seconds past a minute's worth, else ticks. */
     private static String ticksLabel(final long ticks) {
-        return ticks >= 1200 ? (ticks / 20) + "s" : ticks + "t";
+        return GameText.resolve(ticks >= 1200 ? NetworkManagerTexts.SECONDS.with(ticks / 20)
+                : NetworkManagerTexts.TICKS.with(ticks));
     }
 
     private String networkText() {
         if (data == null) {
             return "";
         }
-        return "Network " + (data.networkId().isEmpty() ? "(none)" : data.networkId()) + "   -   " + data.nodes().size() + " node(s)";
+        return GameText.resolve(NetworkManagerTexts.NETWORK_LINE.with(data.networkId().isEmpty()
+                ? NetworkManagerTexts.NO_NETWORK.text() : Text.literal(data.networkId()), data.nodes().size()));
+    }
+
+    /* The words for those keys, in the player's language. */
+    private static List<String> words(final TextKey... keys) {
+        final List<String> out = new ArrayList<>(keys.length);
+        for (final TextKey key : keys) {
+            out.add(GameText.resolve(key));
+        }
+        return out;
     }
 
     private String countKind(final int kind) {
@@ -551,12 +580,13 @@ public final class NetworkManagerApp implements IDesktopApp {
         final int typeX = devColumns.columnX(1);
         final int statusX = devColumns.columnX(2);
         final boolean named = !n.name().isEmpty();
-        final String nm = named ? n.name() : "unnamed";
+        final String nm = named ? n.name() : GameText.resolve(NetworkManagerTexts.UNNAMED);
         final String nmClipped = Texts.clip(font, nm, typeX - 6 - nameX - font.width(n.id()) - 4);
         g.drawString(font, nmClipped, nameX, y + 2, named ? ctx.skin().text() : ctx.skin().dim(), false);
         g.drawString(font, n.id(), nameX + font.width(nmClipped) + 4, y + 2, ctx.skin().dim(), false);
-        g.drawString(font, Texts.clip(font, n.kindLabel(), statusX - 6 - typeX), typeX, y + 2, ctx.skin().dim(), false);
-        final String status = n.online() ? "online" : "offline";
+        g.drawString(font, Texts.clip(font, GameText.resolve(n.kindLabel()), statusX - 6 - typeX), typeX, y + 2,
+                ctx.skin().dim(), false);
+        final String status = GameText.resolve(n.online() ? NetworkManagerTexts.ONLINE : NetworkManagerTexts.OFFLINE);
         g.drawString(font, status, x + w - font.width(status), y + 2, n.online() ? C_GREEN : ctx.skin().dim(), false);
     }
 
@@ -570,7 +600,7 @@ public final class NetworkManagerApp implements IDesktopApp {
         int nameX = x + 4 + font.width(type) + 4;
         // A level other than the default is worth a tag: raised in amber, lowered dimmed.
         if (op.priority() != OperationPriority.DEFAULT) {
-            final String tag = op.priority().label();
+            final String tag = GameText.resolve(op.priority().text());
             g.drawString(font, tag, nameX, y + 3,
                     op.priority().compareTo(OperationPriority.DEFAULT) > 0 ? C_AMBER : ctx.skin().dim(), false);
             nameX += font.width(tag) + 4;
@@ -669,7 +699,8 @@ public final class NetworkManagerApp implements IDesktopApp {
             final int h = height();
             g.fill(x, y, x + w, y + h, ctx.skin().fieldBg());
             Draw.outline(g, x, y, w, h, ctx.skin().edge());
-            g.drawString(font, "drag nodes  -  middle-drag to pan  -  wheel to zoom", x + 4, y + h - 10, ctx.skin().dim(), false);
+            g.drawString(font, GameText.resolve(NetworkManagerTexts.MAP_HINT), x + 4, y + h - 10, ctx.skin().dim(),
+                    false);
             final List<NetworkNodeInfo> nodes = nodes();
             int mainframe = -1;
             for (int i = 0; i < nodes.size(); i++) {
@@ -809,23 +840,27 @@ public final class NetworkManagerApp implements IDesktopApp {
                                  final int mouseX, final int mouseY, final int cx, final int cy,
                                  final int cw, final int ch) {
         final List<String> lines = new ArrayList<>();
-        lines.add(n.name().isEmpty() ? "unnamed" : n.name());
-        lines.add(n.kindLabel() + "  -  " + (n.online() ? "online" : "offline"));
+        lines.add(n.name().isEmpty() ? GameText.resolve(NetworkManagerTexts.UNNAMED) : n.name());
+        lines.add(GameText.resolve(NetworkManagerTexts.KIND_AND_STATE.with(n.kindLabel(),
+                n.online() ? NetworkManagerTexts.ONLINE : NetworkManagerTexts.OFFLINE)));
         if (n.cpuMhz() > 0) {
-            lines.add("CPU " + cpuClock(n.cpuMhz()) + (n.vramMb() > 0 ? "   VRAM " + JsTechTheme.fmt(n.vramMb()) + " MB" : ""));
+            lines.add(GameText.resolve(n.vramMb() > 0
+                    ? NetworkManagerTexts.CPU_AND_VRAM.with(cpuClock(n.cpuMhz()), JsTechTheme.fmt(n.vramMb()))
+                    : NetworkManagerTexts.CPU.with(cpuClock(n.cpuMhz()))));
         }
         if (!n.osLabel().isEmpty()) {
-            lines.add("OS " + n.osLabel());
+            lines.add(GameText.resolve(NetworkManagerTexts.OS.with(n.osLabel())));
         }
         if (n.storageTotalMb() > 0) {
-            lines.add("Storage " + JsTechTheme.fmt(n.storageFreeMb()) + " / " + JsTechTheme.fmt(n.storageTotalMb()) + " MB free");
+            lines.add(GameText.resolve(NetworkManagerTexts.STORAGE_OF.with(JsTechTheme.fmt(n.storageFreeMb()),
+                    JsTechTheme.fmt(n.storageTotalMb()))));
         } else if (n.storageFreeMb() > 0) {
-            lines.add("Storage " + JsTechTheme.fmt(n.storageFreeMb()) + " MB free");
+            lines.add(GameText.resolve(NetworkManagerTexts.STORAGE_FREE.with(JsTechTheme.fmt(n.storageFreeMb()))));
         }
         if (n.publicPermille() >= 0) {
-            lines.add("Private " + (100 - n.publicPermille() / 10) + "%");
+            lines.add(GameText.resolve(NetworkManagerTexts.PRIVATE.with(100 - n.publicPermille() / 10)));
         }
-        lines.add("id " + n.id());
+        lines.add(GameText.resolve(NetworkManagerTexts.ID.with(n.id())));
 
         int tw = 0;
         for (final String l : lines) {
@@ -885,8 +920,10 @@ public final class NetworkManagerApp implements IDesktopApp {
         if (detailOp == null) {
             return "";
         }
-        final String reqLabel = detailOp.requested() >= 1_000_000_000L ? "all" : JsTechTheme.fmt(detailOp.requested());
-        return JsTechTheme.fmt(detailOp.moved()) + " of " + reqLabel + "   " + statusLabel(detailOp.status());
+        final Text requested = detailOp.requested() >= 1_000_000_000L ? NetworkManagerTexts.ALL.text()
+                : Text.literal(JsTechTheme.fmt(detailOp.requested()));
+        return GameText.resolve(NetworkManagerTexts.AMOUNT.with(JsTechTheme.fmt(detailOp.moved()), requested,
+                statusLabel(detailOp.status())));
     }
 
     /** How long the Operation waited and ran, on the section row's right; blank before its first tick. */
@@ -894,7 +931,8 @@ public final class NetworkManagerApp implements IDesktopApp {
         if (detailOp == null || detailOp.waitedTicks() + detailOp.ranTicks() == 0) {
             return "";
         }
-        return "waited " + ticksLabel(detailOp.waitedTicks()) + ", ran " + ticksLabel(detailOp.ranTicks());
+        return GameText.resolve(NetworkManagerTexts.TIMING.with(ticksLabel(detailOp.waitedTicks()),
+                ticksLabel(detailOp.ranTicks())));
     }
 
     /*
@@ -909,7 +947,8 @@ public final class NetworkManagerApp implements IDesktopApp {
         if (why.isPresent()) {
             return why.get().getString();
         }
-        return !detailOp.subs().isEmpty() ? "STAGES" : !detailOp.moves().isEmpty() ? "SOURCES" : "No sub-operations.";
+        return GameText.resolve(!detailOp.subs().isEmpty() ? NetworkManagerTexts.STAGES
+                : !detailOp.moves().isEmpty() ? NetworkManagerTexts.SOURCES : NetworkManagerTexts.NO_SUB_OPERATIONS);
     }
 
     private void layoutDetail(final Popup p) {
@@ -920,7 +959,7 @@ public final class NetworkManagerApp implements IDesktopApp {
         final boolean live = detailIsLive();
         final int prioRight = p.right() - 6;
         final int prioW = live ? 12 + 34 + 12 : 34;
-        final int prioLabelW = lastFont == null ? 40 : lastFont.width("PRIORITY") + 4;
+        final int prioLabelW = lastFont == null ? 40 : lastFont.width(detailPrioLabel.text()) + 4;
         detailAmount.setBounds(p.x() + 6, p.y() + 18, p.width() - 12 - prioW - prioLabelW - 4, 8);
         detailPrioLabel.setBounds(prioRight - prioW - prioLabelW, p.y() + 18, prioLabelW, 8);
         detailPrioDown.setBounds(prioRight - prioW, p.y() + 16, 12, 11);
@@ -931,9 +970,9 @@ public final class NetworkManagerApp implements IDesktopApp {
         detailSection.setBounds(p.x() + 6, p.y() + 34, p.width() / 2, 8);
         detailTiming.setBounds(p.x() + p.width() / 2, p.y() + 34, p.width() / 2 - 6, 8);
         detailList.setBounds(p.x() + 8, p.y() + 45, p.width() - 14, Math.max(10, p.height() - 45 - 24));
-        final int cw = (lastFont == null ? 30 : lastFont.width("Close")) + 12;
+        final int cw = (lastFont == null ? 30 : lastFont.width(detailClose.label())) + 12;
         detailClose.setBounds(p.right() - cw - 4, p.bottom() - 15, cw, 13);
-        final int xw = (lastFont == null ? 36 : lastFont.width("Cancel")) + 12;
+        final int xw = (lastFont == null ? 36 : lastFont.width(detailCancel.label())) + 12;
         detailCancel.setBounds(p.x() + 6, p.bottom() - 15, xw, 13);
         detailCancel.setVisible(live);
     }
@@ -976,17 +1015,18 @@ public final class NetworkManagerApp implements IDesktopApp {
     }
 
     private static String statusLabel(final byte status) {
-        return switch (status) {
-            case OperationRecord.STATUS_COMPLETED -> "done";
-            case OperationRecord.STATUS_PARTIAL -> "partial";
-            case OperationRecord.STATUS_FAILED -> "failed";
-            case OperationRecord.STATUS_PROCESSING -> "running";
-            case OperationRecord.STATUS_WAITING -> "waiting";
-            case OperationRecord.STATUS_RESOURCE_LOCKED -> "locked";
-            case OperationRecord.STATUS_PENDING -> "queued";
-            case OperationRecord.STATUS_DISCARDED -> "discarded";
-            default -> "";
+        final TextKey word = switch (status) {
+            case OperationRecord.STATUS_COMPLETED -> NetworkManagerTexts.DONE;
+            case OperationRecord.STATUS_PARTIAL -> NetworkManagerTexts.PARTIAL;
+            case OperationRecord.STATUS_FAILED -> NetworkManagerTexts.FAILED;
+            case OperationRecord.STATUS_PROCESSING -> NetworkManagerTexts.RUNNING;
+            case OperationRecord.STATUS_WAITING -> NetworkManagerTexts.WAITING;
+            case OperationRecord.STATUS_RESOURCE_LOCKED -> NetworkManagerTexts.LOCKED;
+            case OperationRecord.STATUS_PENDING -> NetworkManagerTexts.QUEUED;
+            case OperationRecord.STATUS_DISCARDED -> NetworkManagerTexts.DISCARDED;
+            default -> null;
         };
+        return word == null ? "" : GameText.resolve(word);
     }
 
     private int statusColor(final byte status) {

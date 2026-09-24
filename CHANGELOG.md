@@ -143,6 +143,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   packing or unpacking an archive, and to something that cannot go to the trash. A volume nobody has named, the
   kind of machine, its parts and its linked drives are read in the player's language; the names a player gave
   stay as they are.
+- The Task Manager in all its shapes, the System Monitor, Settings, the welcome a system puts up, the Network
+  Manager, a program's Setup window and Remote Control are text a language file can translate, and so are the
+  processor, its architecture and the disks those windows are told of, and each machine's kind.
 
 ### Fixed
 - Saving an IQL file from the Network Management Studio to a full disk no longer fails to send its answer: the

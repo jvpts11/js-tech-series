@@ -23,6 +23,8 @@ import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ComputerSettings;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -45,7 +47,8 @@ final class SettingsSnapshots {
         final ItemStack sysDisk = computer.systemDisk();
         final int netshare = DiskItem.publicPermille(sysDisk);
         final int cpuCount = computer.installedCpus();
-        final String cpuLabel = cpuCount + (cpuCount == 1 ? " CPU" : " CPUs");
+        final Text cpuLabel = (cpuCount == 1 ? SettingsSnapshotPayload.ONE_CPU : SettingsSnapshotPayload.CPUS)
+                .with(cpuCount);
         final String osLabel = MachineLabels.osLabelOf(computer.installedOsId());
         final OsDef os = computer.installedOs();
         final String platform = os == null ? "-" : os.platform().label();
@@ -53,7 +56,7 @@ final class SettingsSnapshots {
         final List<SettingsSnapshotPayload.DiskUse> disks = new ArrayList<>();
         for (final ItemStack stack : computer.diskStacks()) {
             if (stack.getItem() instanceof DiskItem diskItem) {
-                disks.add(new SettingsSnapshotPayload.DiskUse(stack.getHoverName().getString(),
+                disks.add(new SettingsSnapshotPayload.DiskUse(GameText.of(stack.getHoverName()),
                         diskItem.spec().capacityMb(), usedMb(stack), stack == sysDisk));
             }
         }
@@ -94,12 +97,12 @@ final class SettingsSnapshots {
     }
 
     /** How the machine's architecture reads on a screen, or empty when it has no processor to read it from. */
-    private static String architectureOf(final IOsHost computer) {
+    private static Text architectureOf(final IOsHost computer) {
         if (!(computer instanceof AbstractComputerBlockEntity machine)) {
-            return "";
+            return Text.EMPTY;
         }
         final ComputerBuild build = machine.currentBuild();
-        return build == null || build.cpus().isEmpty() ? ""
-                : HardwareTooltip.architecture(build.cpus().getFirst()).english();
+        return build == null || build.cpus().isEmpty() ? Text.EMPTY
+                : HardwareTooltip.architecture(build.cpus().getFirst());
     }
 }

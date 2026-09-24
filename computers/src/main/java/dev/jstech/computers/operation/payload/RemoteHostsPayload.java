@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -21,8 +23,11 @@ import java.util.List;
  */
 public record RemoteHostsPayload(List<Entry> hosts) implements CustomPacketPayload {
 
-    /** One remotely reachable machine: where it is, what it is, and what it is running. */
-    public record Entry(long pos, String hostname, String type, String os, boolean running) {
+    /**
+     * One remotely reachable machine: where it is, what kind of machine it is, read in the player's language, and
+     * what it is running.
+     */
+    public record Entry(long pos, String hostname, Text type, String os, boolean running) {
     }
 
     public static final int MAX_HOSTS = 64;
@@ -34,7 +39,7 @@ public record RemoteHostsPayload(List<Entry> hosts) implements CustomPacketPaylo
             StreamCodec.composite(
                     ByteBufCodecs.VAR_LONG, Entry::pos,
                     ByteBufCodecs.STRING_UTF8, Entry::hostname,
-                    ByteBufCodecs.STRING_UTF8, Entry::type,
+                    TextCodecs.STREAM_CODEC, Entry::type,
                     ByteBufCodecs.STRING_UTF8, Entry::os,
                     ByteBufCodecs.BOOL, Entry::running,
                     Entry::new);

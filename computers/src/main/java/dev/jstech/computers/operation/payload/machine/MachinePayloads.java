@@ -14,6 +14,7 @@ import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.os.RemoteControlApp;
+import dev.jstech.computers.machine.RemoteComputerService;
 import dev.jstech.computers.menu.ClusterManagementComputerMenu;
 import dev.jstech.computers.menu.CraftingComputerMenu;
 import dev.jstech.computers.menu.PersonalComputerMenu;
@@ -109,7 +110,7 @@ public final class MachinePayloads {
                 final var os = machine instanceof IOsHost h
                         ? h.installedOs() : null;
                 entries.add(new RemoteHostsPayload.Entry(machine.getBlockPos().asLong(), hostname,
-                        remote.type(), os == null ? "" : os.displayName(), remote.running()));
+                        RemoteComputerService.typeOf(machine), os == null ? "" : os.displayName(), remote.running()));
             });
             PacketDistributor.sendToPlayer(player, new RemoteHostsPayload(entries));
             return;

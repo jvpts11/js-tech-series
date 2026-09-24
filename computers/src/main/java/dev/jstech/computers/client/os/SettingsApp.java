@@ -26,6 +26,9 @@ import dev.jstech.core.client.gui.component.ProgressBar;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -50,8 +53,9 @@ import java.util.function.BooleanSupplier;
  */
 public final class SettingsApp implements IDesktopApp {
 
-    private static final List<String> NAV = List.of(
-            "Personalize", "System", "Network", "Storage", "Display", "Programs", "Sound", "Users");
+    private static final List<TextKey> NAV = List.of(SettingsTexts.PERSONALIZE, SettingsTexts.SYSTEM,
+            SettingsTexts.NETWORK, SettingsTexts.STORAGE, SettingsTexts.DISPLAY, SettingsTexts.PROGRAMS,
+            SettingsTexts.SOUND, SettingsTexts.USERS);
     private static final int FIRST_SOON = 6;
     private static final int NAV_W = 78;
     private static final int NAV_ROW_H = 15;
@@ -73,7 +77,7 @@ public final class SettingsApp implements IDesktopApp {
 
     // components
     private final Panel root = new Panel();
-    private final ListView<String> nav;
+    private final ListView<TextKey> nav;
     private final Panel pagePanel = new Panel();
     private final Label loadingLabel;
     /** What the page was last built for; a change in any part rebuilds it. */
@@ -154,8 +158,8 @@ public final class SettingsApp implements IDesktopApp {
 
     public SettingsApp(final BlockPos host) {
         this.host = host;
-        nav = root.add(new ListView<String>(() -> NAV, NAV_ROW_H, this::renderNavRow).setOnClick(this::navClicked));
-        loadingLabel = root.add(new Label("Loading...", Label.Tone.DIM));
+        nav = root.add(new ListView<TextKey>(() -> NAV, NAV_ROW_H, this::renderNavRow).setOnClick(this::navClicked));
+        loadingLabel = root.add(new Label(GameText.resolve(SettingsTexts.LOADING), Label.Tone.DIM));
         root.add(pagePanel);
         active = this;
         PacketDistributor.sendToServer(new RequestSettingsPayload(host));
@@ -218,12 +222,14 @@ public final class SettingsApp implements IDesktopApp {
         }
     }
 
-    private void renderNavRow(final GuiGraphics g, final UiContext ctx, final String item, final int index, final int x,
-                              final int y, final int w, final int h, final boolean hovered, final boolean selected) {
+    private void renderNavRow(final GuiGraphics g, final UiContext ctx, final TextKey item, final int index,
+                              final int x, final int y, final int w, final int h, final boolean hovered,
+                              final boolean selected) {
         final boolean sel = page == index;
         ctx.skin().listRow(g, x, y, w, h, hovered, sel);
         final int tc = sel ? ctx.skin().listRowText(true) : (index >= FIRST_SOON ? ctx.skin().dim() : ctx.skin().text());
-        g.drawString(ctx.font(), item, x + 5, y + 4, tc, false);
+        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(item), w - 7), x + 5, y + 4, tc,
+                false);
     }
 
     // rendering
@@ -278,24 +284,28 @@ public final class SettingsApp implements IDesktopApp {
         }
     }
 
-    private Label heading(final String title, final int x, final int y, final int w) {
-        final Label label = pagePanel.add(new Label(title));
+    private Label heading(final TextKey title, final int x, final int y, final int w) {
+        final Label label = pagePanel.add(new Label(GameText.resolve(title)));
         label.setBounds(x, y, w, 8);
         return label;
     }
 
-    private Label caption(final String text, final int x, final int y, final int w) {
-        final Label label = pagePanel.add(new Label(text, Label.Tone.DIM));
+    private Label caption(final Text text, final int x, final int y, final int w) {
+        final Label label = pagePanel.add(new Label(GameText.resolve(text), Label.Tone.DIM));
         label.setBounds(x, y, w, 8);
         return label;
+    }
+
+    private Label caption(final TextKey text, final int x, final int y, final int w) {
+        return caption(text.text(), x, y, w);
     }
 
     private void personalize(final int x, final int top, final int w, final Font font) {
         final SettingsSnapshotPayload d = data;
         int y = top;
-        heading("Personalize", x, y, w);
+        heading(SettingsTexts.PERSONALIZE, x, y, w);
         y += 13;
-        caption("Wallpaper", x, y, w);
+        caption(SettingsTexts.WALLPAPER, x, y, w);
         y += 10;
         final int tw = 34;
         final int th = 21;
@@ -314,7 +324,7 @@ public final class SettingsApp implements IDesktopApp {
 
         // Accent and theme only on the richer skins (scales with the OS).
         if (skin.form() != OsSkin.Form.BEVEL) {
-            caption("Accent", x, y, w);
+            caption(SettingsTexts.ACCENT, x, y, w);
             y += 10;
             // Each swatch offers the colour it shows, which is the one a resource pack gives it.
             final List<Integer> accents = Accents.PALETTE.get().all();
@@ -324,7 +334,7 @@ public final class SettingsApp implements IDesktopApp {
                         () -> set("accent", String.format(Locale.ROOT, "%06X", argb & 0xFFFFFF)))).setBounds(x + i * 18, y, 14, 14);
             }
             y += 22;
-            caption("Theme", x, y, w);
+            caption(SettingsTexts.THEME, x, y, w);
             y += 10;
             int tx = x;
             final ThemePreset current = ThemePreset.byId(d.themePreset());
@@ -337,56 +347,60 @@ public final class SettingsApp implements IDesktopApp {
             }
             y += 19;
         }
-        caption("Clock", x, y, w);
+        caption(SettingsTexts.CLOCK, x, y, w);
         y += 10;
-        toggleButtons(x, y, font, "24-hour", "12-hour", !d.clock12h(), () -> set("clock", "24h"), () -> set("clock", "12h"));
+        toggleButtons(x, y, font, SettingsTexts.HOUR_24, SettingsTexts.HOUR_12, !d.clock12h(),
+                () -> set("clock", "24h"), () -> set("clock", "12h"));
         y += 19;
 
         // Taskbar alignment and dark mode are Frames 11 concepts only, so they appear exclusively on the flat skin.
         if (skin.form() == OsSkin.Form.FLAT) {
-            caption("Taskbar", x, y, w);
+            caption(SettingsTexts.TASKBAR, x, y, w);
             y += 10;
-            toggleButtons(x, y, font, "Center", "Left", d.taskbarCentered(), () -> set("taskbar", "center"), () -> set("taskbar", "left"));
+            toggleButtons(x, y, font, SettingsTexts.CENTER, SettingsTexts.LEFT, d.taskbarCentered(),
+                    () -> set("taskbar", "center"), () -> set("taskbar", "left"));
             y += 19;
-            caption("Appearance", x, y, w);
+            caption(SettingsTexts.APPEARANCE, x, y, w);
             y += 10;
-            toggleButtons(x, y, font, "Light", "Dark", !d.darkMode(), () -> set("darkmode", "off"), () -> set("darkmode", "on"));
+            toggleButtons(x, y, font, SettingsTexts.LIGHT, SettingsTexts.DARK, !d.darkMode(),
+                    () -> set("darkmode", "off"), () -> set("darkmode", "on"));
         }
     }
 
     private void system(final int x, final int top, final int w, final Font font) {
         final SettingsSnapshotPayload d = data;
         int y = top;
-        heading("System", x, y, w);
+        heading(SettingsTexts.SYSTEM, x, y, w);
         y += 13;
-        caption("Computer name", x, y, w);
+        caption(SettingsTexts.COMPUTER_NAME, x, y, w);
         y += 10;
-        final TextField field = pagePanel.add(new TextField(NAME_MAX).setPlaceholder("(unnamed)")
+        final TextField field = pagePanel.add(new TextField(NAME_MAX)
+                .setPlaceholder(GameText.resolve(SettingsTexts.UNNAMED))
                 .setOnCommit(name -> set("name", name)));
         field.sync(d.computerName());
         field.setBounds(x, y, Math.min(w, 130), 13);
         nameField = field;
         y += 20;
 
-        heading("About", x, y, w);
+        heading(SettingsTexts.ABOUT, x, y, w);
         y += 12;
-        y = specRow(x, y, w, "Processor", d.cpuLabel() + " - " + d.cpuMhz() + " MHz");
+        y = specRow(x, y, w, SettingsTexts.PROCESSOR, SettingsTexts.PROCESSOR_VALUE.with(d.cpuLabel(), d.cpuMhz()));
         if (!d.cpuArch().isEmpty()) {
-            y = specRow(x, y, w, "Architecture", d.cpuArch());
+            y = specRow(x, y, w, SettingsTexts.ARCHITECTURE, d.cpuArch());
         }
         if (d.ramMb() > 0) {
-            y = specRow(x, y, w, "Memory", group(d.ramMb()) + " MB");
+            y = specRow(x, y, w, SettingsTexts.MEMORY, SettingsTexts.MEGABYTES.with(group(d.ramMb())));
         }
         if (d.vramMb() > 0) {
-            y = specRow(x, y, w, "Graphics", d.vramMb() + " MB VRAM");
+            y = specRow(x, y, w, SettingsTexts.GRAPHICS, SettingsTexts.VRAM.with(d.vramMb()));
         }
-        y = specRow(x, y, w, "System", d.osLabel());
-        y = specRow(x, y, w, "Platform", d.platform());
+        y = specRow(x, y, w, SettingsTexts.SYSTEM, Text.literal(d.osLabel()));
+        y = specRow(x, y, w, SettingsTexts.PLATFORM, Text.literal(d.platform()));
         // Restart into the firmware setup (the boot manager): the way to reach it once an OS is installed.
         final BlockPos monitor = monitorPos;
         if (monitor != null) {
             y += 4;
-            final String label = "Restart to firmware";
+            final String label = GameText.resolve(SettingsTexts.RESTART_TO_FIRMWARE);
             pagePanel.add(new Button(label, () -> PacketDistributor.sendToServer(new RequestFirmwarePayload(host, monitor))))
                     .setBounds(x, y, font.width(label) + 12, BTN_H);
         }
@@ -395,18 +409,19 @@ public final class SettingsApp implements IDesktopApp {
     private void network(final int x, final int top, final int w, final Font font) {
         final SettingsSnapshotPayload d = data;
         int y = top;
-        heading("Network", x, y, w);
+        heading(SettingsTexts.NETWORK, x, y, w);
         y += 13;
-        caption("System disk public share", x, y, w);
+        caption(SettingsTexts.PUBLIC_SHARE, x, y, w);
         y += 11;
         final int permille = d.netshare();
-        stepper(x, y, font, String.format(Locale.ROOT, "%.1f%% (%d/1000)", permille / 10.0, permille),
+        stepper(x, y, font, GameText.resolve(SettingsTexts.SHARE_AMOUNT.with(
+                        String.format(Locale.ROOT, "%.1f", permille / 10.0), permille)),
                 () -> set("netshare", Integer.toString(Math.max(0, permille - 50))),
                 () -> set("netshare", Integer.toString(Math.min(1000, permille + 50))));
         y += 20;
         pagePanel.add(new ProgressBar(() -> permille / 10)).setBounds(x, y, Math.min(w, 150), 6);
         y += 16;
-        caption("Link: on the data network", x, y, w);
+        caption(SettingsTexts.LINK, x, y, w);
         y += 12;
 
         /*
@@ -414,7 +429,7 @@ public final class SettingsApp implements IDesktopApp {
          * mode, a read / write pair to change it and Remove; then a field and two buttons to share another.
          * The page has room for a few rows; past that the prompt is the place to see them all.
          */
-        caption("Shared folders", x, y, w);
+        caption(SettingsTexts.SHARED_FOLDERS, x, y, w);
         y += 10;
         shareRowRead.clear();
         shareRowWrite.clear();
@@ -429,48 +444,56 @@ public final class SettingsApp implements IDesktopApp {
              */
             pagePanel.add(new Label(share.path(), share.writable() ? Label.Tone.ACCENT : Label.Tone.TEXT).setScale(SMALL))
                     .setBounds(x, y + 2, w - 100, 8);
-            shareRowRead.add(pagePanel.add(new Button("read", () -> set("share", share.path() + " read"))
-                    .setPrimary(!share.writable()).setLabelScale(SMALL)));
+            shareRowRead.add(pagePanel.add(new Button(GameText.resolve(SettingsTexts.READ),
+                    () -> set("share", share.path() + " read")).setPrimary(!share.writable()).setLabelScale(SMALL)));
             shareRowRead.get(i).setBounds(x + w - 96, y, 24, SHARE_ROW_H - 1);
-            shareRowWrite.add(pagePanel.add(new Button("write", () -> set("share", share.path() + " write"))
-                    .setPrimary(share.writable()).setLabelScale(SMALL)));
+            shareRowWrite.add(pagePanel.add(new Button(GameText.resolve(SettingsTexts.WRITE),
+                    () -> set("share", share.path() + " write")).setPrimary(share.writable()).setLabelScale(SMALL)));
             shareRowWrite.get(i).setBounds(x + w - 70, y, 28, SHARE_ROW_H - 1);
-            shareRowRemove.add(pagePanel.add(new Button("Remove", () -> set("unshare", share.name())).setLabelScale(SMALL)));
+            shareRowRemove.add(pagePanel.add(new Button(GameText.resolve(SettingsTexts.REMOVE),
+                    () -> set("unshare", share.name())).setLabelScale(SMALL)));
             shareRowRemove.get(i).setBounds(x + w - 40, y, 40, SHARE_ROW_H - 1);
             y += SHARE_ROW_H;
         }
         if (shares.size() > shown) {
-            caption("and " + (shares.size() - shown) + " more: config share at the prompt lists them all", x, y + 2, w);
+            caption(SettingsTexts.MORE_SHARES.with(shares.size() - shown), x, y + 2, w);
             y += 10;
         }
         y += 3;
-        final TextField field = pagePanel.add(new TextField(SHARE_PATH_MAX).setPlaceholder("folder to share, as C:\\pub"));
+        final TextField field = pagePanel.add(new TextField(SHARE_PATH_MAX)
+                .setPlaceholder(GameText.resolve(SettingsTexts.SHARE_HINT)));
         field.setBounds(x, y, w, 13);
         shareField = field;
         y += 17;
-        final int readW = Math.round(font.width("Share read-only") * SMALL) + 10;
-        final int writeW = Math.round(font.width("Share for writing") * SMALL) + 10;
-        shareReadOnly = pagePanel.add(new Button("Share read-only", () -> shareTyped("read")).setLabelScale(SMALL));
+        final String readOnly = GameText.resolve(SettingsTexts.SHARE_READ_ONLY);
+        final String forWriting = GameText.resolve(SettingsTexts.SHARE_FOR_WRITING);
+        final int readW = Math.round(font.width(readOnly) * SMALL) + 10;
+        final int writeW = Math.round(font.width(forWriting) * SMALL) + 10;
+        shareReadOnly = pagePanel.add(new Button(readOnly, () -> shareTyped("read")).setLabelScale(SMALL));
         shareReadOnly.setBounds(x, y, readW, BTN_H);
-        shareForWriting = pagePanel.add(new Button("Share for writing", () -> shareTyped("write")).setLabelScale(SMALL));
+        shareForWriting = pagePanel.add(new Button(forWriting, () -> shareTyped("write")).setLabelScale(SMALL));
         shareForWriting.setBounds(x + readW + 4, y, writeW, BTN_H);
         y += BTN_H + 4;
         final String host = d.computerName().isEmpty() ? "computer" : d.computerName().toLowerCase(Locale.ROOT).replace(' ', '-');
-        pagePanel.add(new Label("Others reach it as \\\\" + host + "\\<share>,", Label.Tone.DIM)
+        pagePanel.add(new Label(GameText.resolve(SettingsTexts.REACHED_AS.with(host)), Label.Tone.DIM)
                 .setScale(SMALL)).setBounds(x, y, w, 8);
         y += 8;
-        pagePanel.add(new Label("CC computers as /jsc/" + host + "/<share>.", Label.Tone.DIM)
+        pagePanel.add(new Label(GameText.resolve(SettingsTexts.CC_REACHES_AS.with(host)), Label.Tone.DIM)
                 .setScale(SMALL)).setBounds(x, y, w, 8);
         y += 13;
 
-        caption("Remote programs", x, y, w);
+        caption(SettingsTexts.REMOTE_PROGRAMS, x, y, w);
         y += 10;
         remoteAllowed = d.remoteAllowed();
-        final int allowedW = font.width("Allowed") + 12;
-        remoteAllowedButton = pagePanel.add(new Button("Allowed", () -> set("remote", "on")).setPrimary(d.remoteAllowed()));
+        final String allowed = GameText.resolve(SettingsTexts.ALLOWED);
+        final String refused = GameText.resolve(SettingsTexts.REFUSED);
+        final int allowedW = font.width(allowed) + 12;
+        remoteAllowedButton = pagePanel.add(new Button(allowed, () -> set("remote", "on"))
+                .setPrimary(d.remoteAllowed()));
         remoteAllowedButton.setBounds(x, y, allowedW, BTN_H);
-        remoteRefusedButton = pagePanel.add(new Button("Refused", () -> set("remote", "off")).setPrimary(!d.remoteAllowed()));
-        remoteRefusedButton.setBounds(x + allowedW + 4, y, font.width("Refused") + 12, BTN_H);
+        remoteRefusedButton = pagePanel.add(new Button(refused, () -> set("remote", "off"))
+                .setPrimary(!d.remoteAllowed()));
+        remoteRefusedButton.setBounds(x + allowedW + 4, y, font.width(refused) + 12, BTN_H);
     }
 
     // what the client tests read and click
@@ -537,11 +560,12 @@ public final class SettingsApp implements IDesktopApp {
     private void storage(final int x, final int top, final int w, final Font font) {
         final SettingsSnapshotPayload d = data;
         int y = top;
-        heading("Storage", x, y, w);
+        heading(SettingsTexts.STORAGE, x, y, w);
         y += 13;
         for (final SettingsSnapshotPayload.DiskUse disk : d.disks()) {
             final String cap = DiskSpec.sizeLabel(disk.capMb());
-            pagePanel.add(new Label(disk.label() + (disk.system() ? "  [sys]" : ""))).setBounds(x, y, w - font.width(cap) - 4, 8);
+            pagePanel.add(new Label(GameText.resolve(disk.system() ? SettingsTexts.SYSTEM_DISK.with(disk.label())
+                    : disk.label()))).setBounds(x, y, w - font.width(cap) - 4, 8);
             pagePanel.add(new Label(cap, Label.Tone.DIM).setAlign(Label.Align.RIGHT)).setBounds(x, y, w, 8);
             y += 10;
             final int percent = disk.capMb() > 0 ? (int) Math.min(100, 100 * disk.usedMb() / disk.capMb()) : 0;
@@ -549,19 +573,19 @@ public final class SettingsApp implements IDesktopApp {
             y += 11;
         }
         if (d.disks().isEmpty()) {
-            caption("No disks installed", x, y, w);
+            caption(SettingsTexts.NO_DISKS, x, y, w);
         }
     }
 
     private void display(final int x, final int top, final int w, final Font font) {
         final SettingsSnapshotPayload d = data;
         int y = top;
-        heading("Display", x, y, w);
+        heading(SettingsTexts.DISPLAY, x, y, w);
         y += 13;
-        caption("Brightness", x, y, w);
+        caption(SettingsTexts.BRIGHTNESS, x, y, w);
         y += 10;
         final int b = d.brightness();
-        stepper(x, y, font, b + "%",
+        stepper(x, y, font, GameText.resolve(SettingsTexts.PERCENT.with(b)),
                 () -> set("brightness", Integer.toString(Math.max(0, b - 10))),
                 () -> set("brightness", Integer.toString(Math.min(100, b + 10))));
         y += 20;
@@ -569,15 +593,15 @@ public final class SettingsApp implements IDesktopApp {
          * How big everything on the glass is drawn. Smaller fits more of a program on the screen at
          * the cost of smaller text, which is a choice for the player and the monitor they sit at.
          */
-        caption("Scale", x, y, w);
+        caption(SettingsTexts.SCALE, x, y, w);
         y += 10;
         final int scale = d.guiScale() <= 0 ? DesktopScreen.DEFAULT_SCALE : d.guiScale();
         final int at = Math.max(0, SCALES.indexOf(scale));
-        stepper(x, y, font, scale + "%",
+        stepper(x, y, font, GameText.resolve(SettingsTexts.PERCENT.with(scale)),
                 () -> set("guiscale", Integer.toString(SCALES.get(Math.min(SCALES.size() - 1, at + 1)))),
                 () -> set("guiscale", Integer.toString(SCALES.get(Math.max(0, at - 1)))));
         y += 20;
-        caption("Monitor: linked display", x, y, w);
+        caption(SettingsTexts.MONITOR, x, y, w);
     }
 
     /** The sizes the desktop can be drawn at, the biggest first, as percentages of its own size. */
@@ -598,13 +622,13 @@ public final class SettingsApp implements IDesktopApp {
     private void programs(final int x, final int top, final int w, final Font font) {
         final SettingsSnapshotPayload d = data;
         int y = top;
-        heading("Programs", x, y, w);
+        heading(SettingsTexts.PROGRAMS, x, y, w);
         y += 13;
         if (d.installed().isEmpty()) {
-            caption("No programs installed", x, y, w);
+            caption(SettingsTexts.NO_PROGRAMS, x, y, w);
             return;
         }
-        final String btn = "Uninstall";
+        final String btn = GameText.resolve(SettingsTexts.UNINSTALL);
         final int bw = font.width(btn) + 8;
         for (final String id : d.installed()) {
             final ResourceLocation rl = ResourceLocation.tryParse(id);
@@ -623,21 +647,26 @@ public final class SettingsApp implements IDesktopApp {
     }
 
     private void comingSoon(final int x, final int y, final int w, final int h) {
-        pagePanel.add(new Label(NAV.get(page)).setAlign(Label.Align.CENTER)).setBounds(x, y + h / 2 - 10, w, 8);
-        pagePanel.add(new Label("Coming in a future update", Label.Tone.DIM).setAlign(Label.Align.CENTER)).setBounds(x, y + h / 2 + 2, w, 8);
+        pagePanel.add(new Label(GameText.resolve(NAV.get(page))).setAlign(Label.Align.CENTER))
+                .setBounds(x, y + h / 2 - 10, w, 8);
+        pagePanel.add(new Label(GameText.resolve(SettingsTexts.COMING_SOON), Label.Tone.DIM)
+                .setAlign(Label.Align.CENTER)).setBounds(x, y + h / 2 + 2, w, 8);
     }
 
     // small controls
 
-    private int specRow(final int x, final int y, final int w, final String label, final String value) {
-        pagePanel.add(new Label(label, Label.Tone.DIM)).setBounds(x, y, w / 2, 8);
-        pagePanel.add(new Label(value).setAlign(Label.Align.RIGHT)).setBounds(x + w / 2, y, w - w / 2, 8);
+    private int specRow(final int x, final int y, final int w, final TextKey label, final Text value) {
+        pagePanel.add(new Label(GameText.resolve(label), Label.Tone.DIM)).setBounds(x, y, w / 2, 8);
+        pagePanel.add(new Label(GameText.resolve(value)).setAlign(Label.Align.RIGHT)).setBounds(x + w / 2, y,
+                w - w / 2, 8);
         return y + 11;
     }
 
     /** Two buttons of which one is lit: the setting's two states. */
-    private void toggleButtons(final int x, final int y, final Font font, final String a, final String b, final boolean aOn,
-                               final Runnable onA, final Runnable onB) {
+    private void toggleButtons(final int x, final int y, final Font font, final TextKey aKey, final TextKey bKey,
+                               final boolean aOn, final Runnable onA, final Runnable onB) {
+        final String a = GameText.resolve(aKey);
+        final String b = GameText.resolve(bKey);
         final int aw = font.width(a) + 12;
         final int bw = font.width(b) + 12;
         pagePanel.add(new Button(a, onA).setPrimary(aOn)).setBounds(x, y, aw, BTN_H);
