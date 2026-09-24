@@ -7,7 +7,10 @@
  */
 package dev.jstech.tests.datagen;
 
+import dev.jstech.core.datagen.ContentLanguageProvider;
+import dev.jstech.core.datagen.ContentSoundProvider;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestSounds;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -15,7 +18,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 /**
- * Data generation for the test mod: the structure templates the GameTests run inside.
+ * Data generation for the test mod: the structure templates the GameTests run inside, and the entries and subtitles
+ * of the sounds the tests play.
  */
 @EventBusSubscriber(modid = JsTests.MODID)
 public final class JsTestsDataGenerators {
@@ -28,5 +32,8 @@ public final class JsTestsDataGenerators {
         final DataGenerator generator = event.getGenerator();
         final PackOutput output = generator.getPackOutput();
         generator.addProvider(event.includeServer(), new GameTestStructureProvider(output));
+        generator.addProvider(event.includeClient(),
+                new ContentSoundProvider(output, TestSounds.CONTENT, event.getExistingFileHelper()));
+        generator.addProvider(event.includeClient(), new ContentLanguageProvider(output, TestSounds.CONTENT));
     }
 }

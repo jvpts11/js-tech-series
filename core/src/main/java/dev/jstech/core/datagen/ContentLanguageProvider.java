@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.datagen;
 
+import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ContentTab;
 import dev.jstech.core.content.ItemEntry;
@@ -21,8 +22,8 @@ import net.neoforged.neoforge.common.data.LanguageProvider;
 
 /**
  * Writes a mod's English: every sentence it declares beside the code that says it, the names of its declared blocks,
- * items and tabs, and whatever else the mod names in registries of its own. A key written twice fails the run, so
- * two declarations cannot quietly claim one sentence.
+ * items and tabs, the subtitles of its sounds, and whatever else the mod names in registries of its own. A key
+ * written twice fails the run, so two declarations cannot quietly claim one sentence.
  */
 public final class ContentLanguageProvider extends LanguageProvider {
 
@@ -52,6 +53,9 @@ public final class ContentLanguageProvider extends LanguageProvider {
         }
         for (final ItemEntry<?> item : content.declaredItems()) {
             add(item.get().getDescriptionId(), item.english());
+        }
+        for (final SoundKey sound : content.declaredSounds()) {
+            add(sound.subtitle().key(), sound.subtitle().english());
         }
         more.forEach(names -> names.accept(this::add));
     }

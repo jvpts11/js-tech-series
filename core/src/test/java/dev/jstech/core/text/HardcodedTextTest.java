@@ -52,6 +52,9 @@ class HardcodedTextTest {
             "showBalloon", "raise", "displayClientMessage", "sendSystemMessage", "broadcastSystemMessage",
             "sendConsoleLine", "setTooltip", "withTooltip", "setPlaceholder", "submenu");
 
+    /** What a declaration chains on to say its English: a thing's name, what it does, a sound's subtitle. */
+    private static final Set<String> DECLARATIONS = Set.of("named", "described", "subtitle");
+
     /** The toolkit's controls whose first words are the label a player reads on them. */
     private static final Set<String> LABELLED = Set.of("Button", "Label", "Checkbox", "Popup");
 
@@ -287,7 +290,7 @@ class HardcodedTextTest {
                     || ("TextKey".equals(this.receiver) && "of".equals(this.name))
                     || (this.constructor && "TextKey".equals(this.name))
                     // A declaration's name or description, chained on it: the English the language file is made from.
-                    || (("named".equals(this.name) || "described".equals(this.name)) && this.receiver == null)
+                    || (this.name != null && DECLARATIONS.contains(this.name) && this.receiver == null)
                     || ("this".equals(this.receiver) && ADVANCEMENT_DECLARATIONS.contains(this.name))
                     // A config value's comment is written into the config file above it: a file's words, in English.
                     || "comment".equals(this.name)

@@ -1,0 +1,17 @@
+{
+  "test/click": {
+    "sounds": [
+      "random/click"
+    ],
+    "subtitle": "subtitles.jstests.test.click"
+  },
+  "test/hum": {
+    "sounds": [
+      {
+        "attenuation_distance": 8,
+        "name": "block/beacon/ambient"
+      }
+    ],
+    "subtitle": "subtitles.jstests.test.hum"
+  }
+}

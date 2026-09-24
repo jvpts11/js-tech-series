@@ -31,6 +31,8 @@ public final class JsTests {
     public JsTests(final IEventBus modEventBus, final ModContainer modContainer) {
         LOGGER.warn("J's Tech Series Tests {} loaded. This is a development-only test mod: it is not part of the"
                 + " series, adds nothing to the game and must not be installed.", modContainer.getModInfo().getVersion());
+        // The sounds the tests play through the series' sound system, on files the game already has.
+        TestSounds.CONTENT.register(modEventBus);
         if (GameTestHooks.isGametestServer()) {
             /*
              * The language API's tests need a language that is not the series' own, and languages are only taken

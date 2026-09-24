@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.content;
 
+import dev.jstech.core.audio.SoundKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.ItemLike;
@@ -45,9 +47,11 @@ public final class ModContent {
     private final DeferredRegister.Items items;
     private final DeferredRegister<BlockEntityType<?>> blockEntities;
     private final DeferredRegister<CreativeModeTab> tabs;
+    private final DeferredRegister<SoundEvent> sounds;
     private final List<BlockEntry<?>> declaredBlocks = new ArrayList<>();
     private final List<ItemEntry<?>> declaredItems = new ArrayList<>();
     private final List<ContentTab> declaredTabs = new ArrayList<>();
+    private final List<SoundKey> declaredSounds = new ArrayList<>();
 
     /* Every mod's content, by mod id, in the order the mods made theirs. */
     private static final Map<String, ModContent> BY_MOD = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -58,6 +62,7 @@ public final class ModContent {
         this.items = DeferredRegister.createItems(modid);
         this.blockEntities = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, modid);
         this.tabs = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, modid);
+        this.sounds = DeferredRegister.create(Registries.SOUND_EVENT, modid);
         if (BY_MOD.putIfAbsent(modid, this) != null) {
             throw new IllegalStateException("the content of " + modid + " is declared twice");
         }
@@ -118,6 +123,11 @@ public final class ModContent {
         return tab;
     }
 
+    /** Starts declaring a sound, known by that path under the mod's namespace ({@code computer/power_on}). */
+    public SoundBuilder sound(final String path) {
+        return new SoundBuilder(this, path);
+    }
+
     /** The blocks declared so far, in declaration order. */
     public List<BlockEntry<?>> declaredBlocks() {
         return Collections.unmodifiableList(declaredBlocks);
@@ -132,9 +142,14 @@ public final class ModContent {
         return Collections.unmodifiableList(declaredTabs);
     }
 
+    /** The sounds declared so far, in declaration order. */
+    public List<SoundKey> declaredSounds() {
+        return Collections.unmodifiableList(declaredSounds);
+    }
+
     /** Hands the registrations to the mod's event bus; call it once, after every declaration class has loaded. */
     public void register(final IEventBus modEventBus) {
-        Arrays.asList(blocks, items, blockEntities, tabs).forEach(register -> register.register(modEventBus));
+        Arrays.asList(blocks, items, blockEntities, tabs, sounds).forEach(register -> register.register(modEventBus));
     }
 
     DeferredRegister.Blocks blockRegister() {
@@ -151,5 +166,13 @@ public final class ModContent {
 
     void declare(final ItemEntry<?> entry) {
         declaredItems.add(entry);
+    }
+
+    DeferredRegister<SoundEvent> soundRegister() {
+        return sounds;
+    }
+
+    void declare(final SoundKey key) {
+        declaredSounds.add(key);
     }
 }
