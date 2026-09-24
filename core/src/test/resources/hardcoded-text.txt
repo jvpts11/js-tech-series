@@ -124,7 +124,6 @@ computers/src/main/java/dev/jstech/computers/client/os/VirtualStudioCodeApp.java
 computers/src/main/java/dev/jstech/computers/client/os/WelcomeApp.java 24
 computers/src/main/java/dev/jstech/computers/client/os/WorkstationInfoApp.java 1
 computers/src/main/java/dev/jstech/computers/client/theme/MonitorFrameStyle.java 1
-computers/src/main/java/dev/jstech/computers/config/ComputersServerConfig.java 23
 computers/src/main/java/dev/jstech/computers/crafting/NetworkCraftOperation.java 3
 computers/src/main/java/dev/jstech/computers/crafting/NetworkMultiStageOperation.java 1
 computers/src/main/java/dev/jstech/computers/crafting/NetworkProcessingOperation.java 1
@@ -232,7 +231,6 @@ core/src/main/java/dev/jstech/core/client/gui/component/CellGrid.java 1
 core/src/main/java/dev/jstech/core/client/gui/component/Checkbox.java 1
 core/src/main/java/dev/jstech/core/client/gui/component/TabStrip.java 1
 core/src/main/java/dev/jstech/core/config/ConfigValidator.java 11
-core/src/main/java/dev/jstech/core/config/CoreServerConfig.java 2
 core/src/main/java/dev/jstech/core/id/StableCodecs.java 2
 core/src/main/java/dev/jstech/core/operation/OperationCancelledException.java 1
 industrial/src/main/java/dev/jstech/industrial/client/CoalGeneratorScreen.java 1

@@ -130,6 +130,7 @@ class HardcodedTextTest {
                                 .named("Electric Furnace").register();
                         SPEC = ProgramSpec.of(id, "x").described("Keeps the network's files");
                         this.task("first", "root", ICON, "First Steps", "Start the machine", on(EVENT));
+                        builder.comment("Whether the machine asks first").define("ask", true);
                     }
                     @Deprecated(since = "the annotation text")
                     void g() { }
@@ -161,6 +162,8 @@ class HardcodedTextTest {
                     // A declaration's name or description, chained on it: the English the language file is made from.
                     || (("named".equals(this.name) || "described".equals(this.name)) && this.receiver == null)
                     || ("this".equals(this.receiver) && ADVANCEMENT_DECLARATIONS.contains(this.name))
+                    // A config value's comment is written into the config file above it: a file's words, in English.
+                    || "comment".equals(this.name)
                     || ("Text".equals(this.receiver) && "literal".equals(this.name))
                     // A command's example line or switch in its manual: what a player types, which is data.
                     || (this.constructor && ("Example".equals(this.name) || "Option".equals(this.name)));
