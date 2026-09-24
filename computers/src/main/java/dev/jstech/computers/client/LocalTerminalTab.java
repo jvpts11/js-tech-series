@@ -9,7 +9,10 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.util.FormattedCharSequence;
 
 /**
  * The Local heading: what this machine is made of and how much of it is in use.
@@ -54,19 +57,25 @@ final class LocalTerminalTab extends AbstractTerminalTab {
     @Override
     public void renderTabLabels(final GuiGraphics g, final int cx, final int cy, final int cw) {
         final int tileW = (COL_W - 8) / 3;
-        g.drawString(font(), "THIS COMPUTER", cx, cy + 20, DIM(), false);
-        tile(g, cx, cy + 32, "CAPACITY", fmt(menu.capacity()), "it/t");
-        tile(g, cx + tileW + 4, cy + 32, "QUEUES", String.valueOf(menu.queues()), "");
-        tile(g, cx + 2 * (tileW + 4), cy + 32, "RAM BUF", fmt(menu.ramBuffer()), "it");
+        g.drawString(font(), GameText.resolve(TerminalGridTexts.THIS_COMPUTER), cx, cy + 20, DIM(), false);
+        tile(g, cx, cy + 32, GameText.resolve(AssemblyTexts.CAPACITY), fmt(menu.capacity()),
+                GameText.resolve(AssemblyTexts.ITEMS_PER_TICK));
+        tile(g, cx + tileW + 4, cy + 32, GameText.resolve(AssemblyTexts.QUEUES), String.valueOf(menu.queues()), "");
+        tile(g, cx + 2 * (tileW + 4), cy + 32, GameText.resolve(AssemblyTexts.RAM_BUFFER_SHORT),
+                fmt(menu.ramBuffer()), GameText.resolve(AssemblyTexts.ITEMS));
 
-        g.drawString(font(), "HARDWARE", cx, cy + 64, DIM(), false);
-        barLabel(g, cx, cy + 76, COL_W, "CPU", menu.installedCpus() + "/" + menu.cpuSlots());
-        barLabel(g, cx, cy + 88, COL_W, "RAM", menu.installedRam() + "/" + menu.ramSlots());
-        barLabel(g, cx, cy + 100, COL_W, "GPU", menu.installedGpus() + "/" + menu.gpuSlots());
-        barLabel(g, cx, cy + 112, COL_W, "Disk", menu.installedDisks() + "/" + menu.diskSlots());
-        final String store = menu.storageCapacity() <= 0 ? "no disk"
+        g.drawString(font(), GameText.resolve(TerminalGridTexts.HARDWARE), cx, cy + 64, DIM(), false);
+        barLabel(g, cx, cy + 76, COL_W, GameText.resolve(AssemblyTexts.CPU),
+                menu.installedCpus() + "/" + menu.cpuSlots());
+        barLabel(g, cx, cy + 88, COL_W, GameText.resolve(AssemblyTexts.RAM),
+                menu.installedRam() + "/" + menu.ramSlots());
+        barLabel(g, cx, cy + 100, COL_W, GameText.resolve(AssemblyTexts.GPU),
+                menu.installedGpus() + "/" + menu.gpuSlots());
+        barLabel(g, cx, cy + 112, COL_W, GameText.resolve(TerminalGridTexts.DISK),
+                menu.installedDisks() + "/" + menu.diskSlots());
+        final String store = menu.storageCapacity() <= 0 ? GameText.resolve(TerminalGridTexts.NO_DISK)
                 : fmt(menu.storageUsed()) + "/" + fmt(menu.storageCapacity());
-        barLabel(g, cx, cy + 128, COL_W, "Storage", store);
+        barLabel(g, cx, cy + 128, COL_W, GameText.resolve(TerminalGridTexts.STORAGE), store);
 
         renderNetworkPane(g);
     }
@@ -75,27 +84,33 @@ final class LocalTerminalTab extends AbstractTerminalTab {
     private void renderNetworkPane(final GuiGraphics g) {
         final int px = PANE_X + 6;
         final int right = PANE_X + PANE_W - 6;
-        g.drawString(font(), "THE NETWORK", px, PANE_Y + 6, DIM(), false);
+        g.drawString(font(), GameText.resolve(TerminalGridTexts.THE_NETWORK), px, PANE_Y + 6, DIM(), false);
         final int net = menu.networkLinkState();
-        final String state = net == 2 ? "two orchestrators" : net == 1 ? "joined" : "not on one";
-        g.drawString(font(), state, px, PANE_Y + 20, net == 2 ? RED() : net == 1 ? GREEN() : DIM(), false);
+        final TextKey state = net == 2 ? TerminalGridTexts.TWO_ORCHESTRATORS
+                : net == 1 ? TerminalGridTexts.JOINED : TerminalGridTexts.NOT_ON_ONE;
+        g.drawString(font(), GameText.resolve(state), px, PANE_Y + 20,
+                net == 2 ? RED() : net == 1 ? GREEN() : DIM(), false);
         if (net != 1) {
-            g.drawString(font(), "A data cable to a Mainframe", px, PANE_Y + 36, DIM(), false);
-            g.drawString(font(), "is what puts it on one.", px, PANE_Y + 46, DIM(), false);
+            int y = PANE_Y + 36;
+            for (final FormattedCharSequence line
+                    : font().split(GameText.component(TerminalGridTexts.CABLE_HINT), PANE_W - 12)) {
+                g.drawString(font(), line, px, y, DIM(), false);
+                y += 10;
+            }
             return;
         }
-        row(g, px, right, PANE_Y + 36, "Servers", String.valueOf(menu.serverCount()));
-        row(g, px, right, PANE_Y + 48, "Computers", String.valueOf(menu.pcCount()));
-        row(g, px, right, PANE_Y + 60, "Subframes", String.valueOf(menu.subframeCount()));
+        row(g, px, right, PANE_Y + 36, TerminalGridTexts.SERVERS, String.valueOf(menu.serverCount()));
+        row(g, px, right, PANE_Y + 48, TerminalGridTexts.COMPUTERS, String.valueOf(menu.pcCount()));
+        row(g, px, right, PANE_Y + 60, TerminalGridTexts.SUBFRAMES, String.valueOf(menu.subframeCount()));
         g.fill(px, PANE_Y + 74, right, PANE_Y + 75, LINE());
-        row(g, px, right, PANE_Y + 80, "Held", fmt(menu.networkStorageUsed()));
-        row(g, px, right, PANE_Y + 92, "Room", fmt(menu.networkStorageTotal()));
-        row(g, px, right, PANE_Y + 104, "In flight", String.valueOf(menu.activeOps().size()));
+        row(g, px, right, PANE_Y + 80, TerminalGridTexts.HELD, fmt(menu.networkStorageUsed()));
+        row(g, px, right, PANE_Y + 92, TerminalGridTexts.ROOM, fmt(menu.networkStorageTotal()));
+        row(g, px, right, PANE_Y + 104, TerminalGridTexts.IN_FLIGHT, String.valueOf(menu.activeOps().size()));
     }
 
     private void row(final GuiGraphics g, final int px, final int right, final int y,
-                     final String key, final String value) {
-        g.drawString(font(), key, px, y, DIM(), false);
+                     final TextKey key, final String value) {
+        g.drawString(font(), GameText.resolve(key), px, y, DIM(), false);
         g.drawString(font(), value, right - font().width(value), y, TEXT(), false);
     }
 }

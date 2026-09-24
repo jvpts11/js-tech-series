@@ -9,6 +9,10 @@ package dev.jstech.computers.operation.payload;
 
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -24,9 +28,16 @@ import java.util.List;
  * picks the icon and the right actions), its name, its state and a short detail (uptime, the job's trigger,
  * or its condition).
  */
+@TextHolder
 public record ProcessListPayload(List<ProcessLine> processes) implements CustomPacketPayload {
 
     public static final int MAX = 64;
+
+    /* What the engine's own line says about it, serving or stopped. */
+    public static final TextKey ENGINE_SERVING =
+            TextKey.of("jsc.process.engine_serving", "the network's query and job engine");
+    public static final TextKey ENGINE_STOPPED =
+            TextKey.of("jsc.process.engine_stopped", "stopped, start it to run jobs");
 
     /** A service process (a background daemon, e.g. the IQL Engine): actions are Start/Stop/Restart. */
     public static final int KIND_SERVICE = 0;
@@ -52,22 +63,23 @@ public record ProcessListPayload(List<ProcessLine> processes) implements CustomP
     }
 
     /** How a process stands, and the word the tab shows for it. */
+    @TextHolder
     public enum ProcessState implements IStableId {
         /** A service that is serving. */
-        RUNNING(0, "running"),
+        RUNNING(0, TextKey.of("jsc.process.running", "running")),
         /** A service that was stopped. */
-        STOPPED(1, "stopped"),
+        STOPPED(1, TextKey.of("jsc.process.stopped", "stopped")),
         /** A job whose service is running, so it fires when its moment comes. */
-        ACTIVE(2, "active"),
+        ACTIVE(2, TextKey.of("jsc.process.active", "active")),
         /** A job the player paused. */
-        PAUSED(3, "paused"),
+        PAUSED(3, TextKey.of("jsc.process.paused", "paused")),
         /** A job whose service is stopped, so nothing fires it. */
-        IDLE(4, "idle");
+        IDLE(4, TextKey.of("jsc.process.idle", "idle"));
 
         private final int id;
-        private final String word;
+        private final TextKey word;
 
-        ProcessState(final int id, final String word) {
+        ProcessState(final int id, final TextKey word) {
             this.id = id;
             this.word = word;
         }
@@ -78,8 +90,8 @@ public record ProcessListPayload(List<ProcessLine> processes) implements CustomP
         }
 
         /** What the tab calls it. */
-        public String word() {
-            return this.word;
+        public Text word() {
+            return this.word.text();
         }
 
         /** Whether the process is doing its work right now, which is what Stop, rather than Start, acts on. */
@@ -88,15 +100,18 @@ public record ProcessListPayload(List<ProcessLine> processes) implements CustomP
         }
     }
 
-    /** One process: its kind, display name, current state, and a short detail line. */
-    public record ProcessLine(int kind, String name, ProcessState state, String detail) {
+    /**
+     * One process: its kind, its name, its current state, and a short detail line. The name is also what an
+     * action on the process names it by, so it stays as it was written.
+     */
+    public record ProcessLine(int kind, String name, ProcessState state, Text detail) {
 
         public static final StreamCodec<RegistryFriendlyByteBuf, ProcessLine> STREAM_CODEC =
                 StreamCodec.composite(
                         ByteBufCodecs.VAR_INT, ProcessLine::kind,
                         ByteBufCodecs.stringUtf8(48), ProcessLine::name,
                         StableCodecs.byId(ProcessState.class, ProcessState.STOPPED), ProcessLine::state,
-                        ByteBufCodecs.stringUtf8(64), ProcessLine::detail,
+                        TextCodecs.STREAM_CODEC, ProcessLine::detail,
                         ProcessLine::new);
     }
 }

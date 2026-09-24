@@ -9,6 +9,8 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.GuiGraphics;
 
 import java.util.List;
@@ -20,7 +22,8 @@ final class TasksTerminalTab extends AbstractTerminalTab {
 
     /** Mirror of the screen's own hit test; update together if this layout changes. */
     private static final int TASK_OP_ROWS = 4;
-    private static final String[] TASK_SUBTABS = {"Processes", "Hardware", "Devices"};
+    private static final TextKey[] TASK_SUBTABS =
+            {TerminalUpkeepTexts.PROCESSES, TerminalUpkeepTexts.HARDWARE, TerminalUpkeepTexts.DEVICES};
 
     TasksTerminalTab(final ComputerTerminalScreen screen, final ComputerTerminalMenu menu) {
         super(screen, menu);
@@ -48,7 +51,7 @@ final class TasksTerminalTab extends AbstractTerminalTab {
     public void renderTabLabels(final GuiGraphics g, final int cx, final int cy, final int cw) {
         final int sw = cw / 3;
         for (int i = 0; i < 3; i++) {
-            g.drawCenteredString(font(), TASK_SUBTABS[i], cx + i * sw + sw / 2, cy + 28,
+            g.drawCenteredString(font(), GameText.resolve(TASK_SUBTABS[i]), cx + i * sw + sw / 2, cy + 28,
                     i == screen.taskSubTab ? ACCENT() : DIM());
         }
         switch (screen.taskSubTab) {
@@ -70,19 +73,21 @@ final class TasksTerminalTab extends AbstractTerminalTab {
     private void tasksProcesses(final GuiGraphics g, final int cx, final int cy, final int cw) {
         final int tileW = (cw - 8) / 3;
         final List<OperationRecord> active = menu.activeOps();
-        tile(g, cx, cy + 44, "IN FLIGHT", String.valueOf(active.size()), "");
-        tile(g, cx + tileW + 4, cy + 44, "PENDING", String.valueOf(menu.pendingOps()), "");
-        tile(g, cx + 2 * (tileW + 4), cy + 44, "DONE", fmt(menu.completedOps()), "");
-        g.drawString(font(), "IN PROGRESS", cx, cy + 78, DIM(), false);
+        tile(g, cx, cy + 44, GameText.resolve(TerminalUpkeepTexts.IN_FLIGHT), String.valueOf(active.size()), "");
+        tile(g, cx + tileW + 4, cy + 44, GameText.resolve(TerminalUpkeepTexts.PENDING),
+                String.valueOf(menu.pendingOps()), "");
+        tile(g, cx + 2 * (tileW + 4), cy + 44, GameText.resolve(TerminalUpkeepTexts.DONE),
+                fmt(menu.completedOps()), "");
+        g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.IN_PROGRESS), cx, cy + 78, DIM(), false);
         if (active.isEmpty()) {
-            g.drawString(font(), "Idle - no Operations running.", cx, cy + 90, DIM(), false);
+            g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.IDLE), cx, cy + 90, DIM(), false);
             return;
         }
         for (int i = 0; i < TASK_OP_ROWS && i < active.size(); i++) {
             taskOpRow(g, cx, cy + 90 + i * 14, cw, active.get(i));
         }
         if (active.size() > TASK_OP_ROWS) {
-            g.drawString(font(), "+" + (active.size() - TASK_OP_ROWS) + " more",
+            g.drawString(font(), GameText.resolve(AssemblyTexts.MORE.with(active.size() - TASK_OP_ROWS)),
                     cx, cy + 90 + TASK_OP_ROWS * 14, DIM(), false);
         }
     }
@@ -102,29 +107,35 @@ final class TasksTerminalTab extends AbstractTerminalTab {
 
     private void tasksHardware(final GuiGraphics g, final int cx, final int cy, final int cw) {
         final int tileW = (cw - 8) / 3;
-        tile(g, cx, cy + 44, "CAPACITY", fmt(menu.capacity()), "it/t");
-        tile(g, cx + tileW + 4, cy + 44, "QUEUES", String.valueOf(menu.queues()), "");
-        tile(g, cx + 2 * (tileW + 4), cy + 44, "RAM BUF", fmt(menu.ramBuffer()), "it");
-        g.drawString(font(), "HARDWARE", cx, cy + 78, DIM(), false);
-        barLabel(g, cx, cy + 90, cw, "CPU", menu.installedCpus() + "/" + menu.cpuSlots());
-        barLabel(g, cx, cy + 102, cw, "RAM", menu.installedRam() + "/" + menu.ramSlots());
-        barLabel(g, cx, cy + 114, cw, "GPU", menu.installedGpus() + "/" + menu.gpuSlots());
-        barLabel(g, cx, cy + 126, cw, "Disk", menu.installedDisks() + "/" + menu.diskSlots());
+        tile(g, cx, cy + 44, GameText.resolve(AssemblyTexts.CAPACITY), fmt(menu.capacity()),
+                GameText.resolve(AssemblyTexts.ITEMS_PER_TICK));
+        tile(g, cx + tileW + 4, cy + 44, GameText.resolve(AssemblyTexts.QUEUES), String.valueOf(menu.queues()), "");
+        tile(g, cx + 2 * (tileW + 4), cy + 44, GameText.resolve(AssemblyTexts.RAM_BUFFER_SHORT),
+                fmt(menu.ramBuffer()), GameText.resolve(AssemblyTexts.ITEMS));
+        g.drawString(font(), GameText.resolve(TerminalGridTexts.HARDWARE), cx, cy + 78, DIM(), false);
+        barLabel(g, cx, cy + 90, cw, GameText.resolve(AssemblyTexts.CPU),
+                menu.installedCpus() + "/" + menu.cpuSlots());
+        barLabel(g, cx, cy + 102, cw, GameText.resolve(AssemblyTexts.RAM),
+                menu.installedRam() + "/" + menu.ramSlots());
+        barLabel(g, cx, cy + 114, cw, GameText.resolve(AssemblyTexts.GPU),
+                menu.installedGpus() + "/" + menu.gpuSlots());
+        barLabel(g, cx, cy + 126, cw, GameText.resolve(TerminalGridTexts.DISK),
+                menu.installedDisks() + "/" + menu.diskSlots());
     }
 
     private void tasksDevices(final GuiGraphics g, final int cx, final int cy, final int cw) {
-        deviceRow(g, cx, cy + 48, cw, "Mainframe", 1);
-        deviceRow(g, cx, cy + 62, cw, "Servers", menu.serverCount());
-        deviceRow(g, cx, cy + 76, cw, "Personal Computers", menu.pcCount());
-        deviceRow(g, cx, cy + 90, cw, "Subframes", menu.subframeCount());
-        g.drawString(font(), "Network storage", cx, cy + 110, DIM(), false);
+        deviceRow(g, cx, cy + 48, cw, TerminalUpkeepTexts.MAINFRAME, 1);
+        deviceRow(g, cx, cy + 62, cw, TerminalUpkeepTexts.DEVICE_SERVERS, menu.serverCount());
+        deviceRow(g, cx, cy + 76, cw, TerminalUpkeepTexts.PERSONAL_COMPUTERS, menu.pcCount());
+        deviceRow(g, cx, cy + 90, cw, TerminalUpkeepTexts.SUBFRAMES, menu.subframeCount());
+        g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.NETWORK_STORAGE), cx, cy + 110, DIM(), false);
         final String st = fmt(menu.storageUsed()) + " / " + fmt(menu.storageCapacity());
         g.drawString(font(), st, cx + cw - font().width(st), cy + 110, TEXT(), false);
     }
 
     private void deviceRow(final GuiGraphics g, final int cx, final int y, final int cw,
-                           final String name, final int count) {
-        g.drawString(font(), name, cx + 4, y, TEXT(), false);
+                           final TextKey name, final int count) {
+        g.drawString(font(), GameText.resolve(name), cx + 4, y, TEXT(), false);
         final String c = String.valueOf(count);
         g.drawString(font(), c, cx + cw - font().width(c) - 4, y, count > 0 ? GREEN() : DIM(), false);
     }

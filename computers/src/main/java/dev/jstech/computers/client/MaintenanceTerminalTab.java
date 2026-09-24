@@ -9,6 +9,8 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.index.IndexHealth;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
@@ -65,27 +67,30 @@ final class MaintenanceTerminalTab extends AbstractTerminalTab {
 
     @Override
     public void renderTabLabels(final GuiGraphics g, final int cx, final int cy, final int cw) {
-        g.drawString(font(), "STORAGE INDEX", cx, cy + 20, DIM(), false);
+        g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.STORAGE_INDEX), cx, cy + 20, DIM(), false);
         final int tileW = (cw - 4) / 2;
-        tile(g, cx, cy + MNT_TILE_ROW1_Y, "TYPES", fmt(menu.indexedTypes()), "");
-        tile(g, cx + tileW + 4, cy + MNT_TILE_ROW1_Y, "SERVERS", String.valueOf(menu.indexedServers()), "");
-        tile(g, cx, cy + MNT_TILE_ROW2_Y, "LOCKS", String.valueOf(menu.activeLocks()), "");
+        tile(g, cx, cy + MNT_TILE_ROW1_Y, GameText.resolve(TerminalUpkeepTexts.TYPES), fmt(menu.indexedTypes()), "");
+        tile(g, cx + tileW + 4, cy + MNT_TILE_ROW1_Y, GameText.resolve(TerminalUpkeepTexts.SERVERS),
+                String.valueOf(menu.indexedServers()), "");
+        tile(g, cx, cy + MNT_TILE_ROW2_Y, GameText.resolve(TerminalUpkeepTexts.LOCKS),
+                String.valueOf(menu.activeLocks()), "");
         final long used = menu.networkStorageUsed();
         final long total = menu.networkStorageTotal();
-        tile(g, cx + tileW + 4, cy + MNT_TILE_ROW2_Y, "STORAGE",
+        tile(g, cx + tileW + 4, cy + MNT_TILE_ROW2_Y, GameText.resolve(TerminalUpkeepTexts.STORAGE),
                 total <= 0 ? "0" : fmt(used) + "/" + fmt(total), "");
         final var health = menu.indexHealth();
         if (health == IndexHealth.State.OK) {
-            g.drawString(font(), "ACTIONS", cx, cy + MNT_ACTIONS_Y, DIM(), false);
+            g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.ACTIONS), cx, cy + MNT_ACTIONS_Y, DIM(), false);
         } else {
             // Name the state, how many item types are in doubt, and the run that settles it.
             final int types = menu.indexHealthTypes();
-            final String action = health
-                    == IndexHealth.State.FRAGMENTED
-                    ? "VACUUM" : "REINDEX";
-            g.drawString(font(), health.name() + " - " + types + " item type"
-                    + (types == 1 ? "" : "s") + " affected", cx + 2, cy + MNT_ACTIONS_Y, 0xFFFFFFFF, false);
-            final String hint = "run " + action;
+            final boolean fragmented = health == IndexHealth.State.FRAGMENTED;
+            final String action = fragmented ? "VACUUM" : "REINDEX";
+            final TextKey state = fragmented ? TerminalUpkeepTexts.FRAGMENTED : TerminalUpkeepTexts.STALE;
+            final String affected = GameText.resolve(
+                    (types == 1 ? TerminalUpkeepTexts.ONE_AFFECTED : TerminalUpkeepTexts.AFFECTED).with(state, types));
+            g.drawString(font(), affected, cx + 2, cy + MNT_ACTIONS_Y, 0xFFFFFFFF, false);
+            final String hint = GameText.resolve(TerminalUpkeepTexts.RUN.with(action));
             g.drawString(font(), hint, cx + cw - 2 - font().width(hint), cy + MNT_ACTIONS_Y,
                     0xFFFFE0A0, false);
         }
@@ -93,9 +98,11 @@ final class MaintenanceTerminalTab extends AbstractTerminalTab {
         g.drawCenteredString(font(), "ANALYZE", cx + halfW / 2, cy + MNT_BTN_ROW1_Y + 4, 0xFFFFFFFF);
         g.drawCenteredString(font(), "VACUUM", cx + halfW + 4 + halfW / 2, cy + MNT_BTN_ROW1_Y + 4, 0xFFFFFFFF);
         g.drawCenteredString(font(), "REINDEX", cx + cw / 2, cy + MNT_BTN_REINDEX_Y + 4, 0xFFFFFFFF);
-        g.drawCenteredString(font(), "DROP DATA...", cx + cw / 2, cy + MNT_BTN_DROP_Y + 4, 0xFFFFFFFF);
+        g.drawCenteredString(font(), GameText.resolve(TerminalUpkeepTexts.DROP_DATA_BUTTON), cx + cw / 2,
+                cy + MNT_BTN_DROP_Y + 4, 0xFFFFFFFF);
         if (!screen.maintHint.isEmpty()) {
-            g.drawString(font(), screen.maintHint, cx, cy + MNT_BTN_DROP_Y + MNT_BTN_H + 2, ACCENT(), false);
+            g.drawString(font(), GameText.resolve(screen.maintHint), cx, cy + MNT_BTN_DROP_Y + MNT_BTN_H + 2,
+                    ACCENT(), false);
         }
     }
 

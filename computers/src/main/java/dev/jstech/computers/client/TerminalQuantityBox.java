@@ -7,10 +7,10 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.LongConsumer;
@@ -54,7 +54,7 @@ final class TerminalQuantityBox {
             return;
         }
         final EditBox made = new EditBox(font, -4000, -4000, this.width, this.height,
-                Component.literal("Qty"));
+                GameText.component(TerminalGridTexts.QUANTITY));
         made.setMaxLength(this.maxLength);
         made.setFilter(s -> s.isEmpty() || s.chars().allMatch(Character::isDigit));
         made.setResponder(this::typed);

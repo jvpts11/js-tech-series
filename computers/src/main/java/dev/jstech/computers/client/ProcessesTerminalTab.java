@@ -10,6 +10,8 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.ProcessActionPayload;
 import dev.jstech.computers.operation.payload.ProcessListPayload;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.GuiGraphics;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -61,22 +63,24 @@ final class ProcessesTerminalTab extends AbstractTerminalTab {
         final var processes = menu.processes();
         clampSelection(processes.size());
 
-        g.drawString(font(), "SERVICES & JOBS", cx, cy + SUBHEAD_Y, DIM(), false);
+        g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.SERVICES_AND_JOBS), cx, cy + SUBHEAD_Y, DIM(), false);
 
         // Toolbar: two context buttons for the selected process (disabled when the list is empty).
         final boolean any = !processes.isEmpty();
         final ProcessListPayload.ProcessLine sel = any ? processes.get(selected) : null;
         final boolean service = sel != null && sel.kind() == ProcessListPayload.KIND_SERVICE;
         final boolean running = sel != null && sel.state().running();
-        final String primary = sel == null ? "None" : service ? (running ? "Stop" : "Start") : "End";
+        final TextKey primary = sel == null ? TerminalUpkeepTexts.NONE
+                : service ? (running ? TerminalUpkeepTexts.STOP : TerminalUpkeepTexts.START) : TerminalUpkeepTexts.END;
         final int primaryColor = service ? TEXT() : RED();
         final int[] b1 = primaryRect(cx, cy, cw);
         final int[] b2 = restartRect(cx, cy, cw);
-        button(g, b1[0], b1[1], b1[2], b1[3], primary, any ? primaryColor : DIM(), any);
-        button(g, b2[0], b2[1], b2[2], b2[3], "Restart", any ? ACCENT() : DIM(), any);
+        button(g, b1[0], b1[1], b1[2], b1[3], GameText.resolve(primary), any ? primaryColor : DIM(), any);
+        button(g, b2[0], b2[1], b2[2], b2[3], GameText.resolve(TerminalUpkeepTexts.RESTART),
+                any ? ACCENT() : DIM(), any);
 
         if (!any) {
-            g.drawString(font(), "no processes running", cx, cy + LIST_Y + 6, DIM(), false);
+            g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.NO_PROCESSES), cx, cy + LIST_Y + 6, DIM(), false);
             return;
         }
 
@@ -89,9 +93,9 @@ final class ProcessesTerminalTab extends AbstractTerminalTab {
                 jobIcon(g, cx + 3, row + 3);
             }
             g.drawString(font(), p.name(), cx + 18, row + 2, TEXT(), false);
-            final String state = p.state().word();
+            final String state = GameText.resolve(p.state().word());
             g.drawString(font(), state, cx + cw - 4 - font().width(state), row + 2, stateColor(p.state()), false);
-            g.drawString(font(), p.detail(), cx + 18, row + 12, DIM(), false);
+            g.drawString(font(), GameText.resolve(p.detail()), cx + 18, row + 12, DIM(), false);
             row += ROW_H;
         }
     }

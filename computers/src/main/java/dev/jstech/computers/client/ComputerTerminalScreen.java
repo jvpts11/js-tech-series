@@ -23,6 +23,9 @@ import dev.jstech.computers.operation.payload.TerminalLocalDepositPayload;
 import dev.jstech.computers.operation.payload.TerminalMaintenancePayload;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.resources.ResourceLocation;
 import java.util.Optional;
@@ -136,8 +139,9 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
      * mod's usual ones: "Upkeep" is what fits beside a heading list this narrow, and "Programs" is what
      * this system calls what is running, since its own verb for it is programs rather than processes.
      */
-    private static final String[] TAB_NAMES =
-            {"Local", "Storage", "Network", "Ops", "Tasks", "Upkeep", "Craft", "Programs", "Console", "Patterns"};
+    private static final TextKey[] TAB_NAMES = {TerminalTexts.TAB_LOCAL, TerminalTexts.TAB_STORAGE,
+            TerminalTexts.TAB_NETWORK, TerminalTexts.TAB_OPS, TerminalTexts.TAB_TASKS, TerminalTexts.TAB_UPKEEP,
+            TerminalTexts.TAB_CRAFT, TerminalTexts.TAB_PROGRAMS, TerminalTexts.TAB_CONSOLE, TerminalTexts.TAB_PATTERNS};
 
     private int netScrollRow;
     int selectedOp;
@@ -193,8 +197,6 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     // Operations tab layout (content-relative); the tab and this hit test read the one number.
     private static final int OPS_ROWS = ComputerTerminalLayout.OPS_ROWS;
 
-    private static final String[] TASK_SUBTABS = {"Processes", "Hardware", "Devices"};
-
     /** How far down the Craft heading's catalogue has been scrolled. */
     int craftScroll;
 
@@ -223,7 +225,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     private static final int MNT_BTN_DROP_Y = 130;
     private static final int MNT_BTN_H = 15;
 
-    String maintHint = "";
+    Text maintHint = Text.EMPTY;
 
     /** The one question this screen asks that cannot be taken back, and the only modal that is its own. */
     private final TerminalDropPopup drop = new TerminalDropPopup(this, menu);
@@ -247,7 +249,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     protected void init() {
         super.init();
         final EditBox box = new EditBox(font, leftPos + NET_X + 4, topPos + TOOLBAR_Y + 2,
-                SEARCH_W - 8, TOOLBAR_H - 3, Component.literal("Search"));
+                SEARCH_W - 8, TOOLBAR_H - 3, GameText.component(TerminalTexts.SEARCH));
         box.setBordered(false);
         /*
          * The fields are built outside a render pass, so color them from the resolved era theme (not the bound
@@ -255,7 +257,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
          */
         box.setTextColor(theme.text());
         box.setMaxLength(48);
-        box.setHint(Component.literal("Search items...").withStyle(ChatFormatting.DARK_GRAY));
+        box.setHint(GameText.component(TerminalTexts.SEARCH_HINT).withStyle(ChatFormatting.DARK_GRAY));
         box.setResponder(s -> netScrollRow = 0);
         addRenderableWidget(box);
         searchBox = box;
@@ -451,11 +453,11 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         return menu.activeTab();
     }
 
-    /** The headings this machine offers, named, in rail order. */
+    /** The headings this machine offers, named in English whatever the player reads, in rail order. */
     public List<String> headings() {
         final List<String> out = new ArrayList<>();
         for (final int tab : railTabs()) {
-            out.add(TAB_NAMES[tab]);
+            out.add(TAB_NAMES[tab].english());
         }
         return out;
     }
@@ -813,7 +815,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         for (int row = 0; row < visible && railScroll + row < rail.length; row++) {
             final int i = railScroll + row;
             final int ty = TAB_Y0 + row * TAB_H;
-            g.drawString(font, TAB_NAMES[rail[i]], RAIL_X + 8, ty + 5,
+            g.drawString(font, GameText.resolve(TAB_NAMES[rail[i]]), RAIL_X + 8, ty + 5,
                     rail[i] == menu.activeTab() ? TAB_LABEL_ON : DIM, false);
         }
 
@@ -823,11 +825,12 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         if (heading != null) {
             heading.renderTabLabels(g, cx, cy, cw);
         } else {
-            placeholder(g, cx, cy, "Not available yet");
+            placeholder(g, cx, cy, GameText.resolve(TerminalTexts.NOT_AVAILABLE));
         }
 
         // The player's own rows, named so the two halves of the glass are never confused for one another.
-        g.drawString(font, "Your inventory", CONTENT_X, ComputerTerminalLayout.INV_LABEL_Y, DIM, false);
+        g.drawString(font, GameText.resolve(TerminalTexts.YOUR_INVENTORY), CONTENT_X,
+                ComputerTerminalLayout.INV_LABEL_Y, DIM, false);
     }
 
     /**
@@ -841,15 +844,16 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         final int netState = menu.networkLinkState();
         int at = 6 + font.width(this.title) + 10;
         if (netState == 2) {
-            g.drawString(font, "network conflict", at, 4, RED, false);
+            g.drawString(font, GameText.resolve(TerminalTexts.NETWORK_CONFLICT), at, 4, RED, false);
         } else if (netState == 1) {
-            final String servers = menu.serverCount() + (menu.serverCount() == 1 ? " server" : " servers");
+            final String servers = GameText.resolve(
+                    (menu.serverCount() == 1 ? AssemblyTexts.ONE_SERVER : AssemblyTexts.SERVERS).with(menu.serverCount()));
             g.drawString(font, servers, at, 4, DIM, false);
             at += font.width(servers) + 10;
-            final String held = fmt(menu.networkStorageUsed()) + " held";
+            final String held = GameText.resolve(TerminalTexts.HELD.with(fmt(menu.networkStorageUsed())));
             g.drawString(font, held, at, 4, TEXT, false);
         } else {
-            g.drawString(font, "no network", at, 4, DIM, false);
+            g.drawString(font, GameText.resolve(TerminalTexts.NO_NETWORK), at, 4, DIM, false);
         }
         /*
          * What the machine itself is doing, at the far end: a build that will not run, a machine that is
@@ -858,14 +862,15 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         final String state;
         final int stateColor;
         if (!menu.buildValid()) {
-            state = "build invalid";
+            state = GameText.resolve(TerminalTexts.BUILD_INVALID);
             stateColor = RED;
         } else if (!menu.running()) {
-            state = "halted";
+            state = GameText.resolve(TerminalTexts.HALTED);
             stateColor = AMBER;
         } else {
             final int live = menu.activeOps().size();
-            state = live == 0 ? "idle" : live + (live == 1 ? " op" : " ops");
+            state = GameText.resolve(live == 0 ? TerminalTexts.IDLE.text()
+                    : (live == 1 ? TerminalTexts.ONE_OP : TerminalTexts.OPS).with(live));
             stateColor = live == 0 ? DIM : GREEN;
         }
         g.drawString(font, state, imageWidth - font.width(state) - 6, 4, stateColor, false);
@@ -1054,15 +1059,15 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     }
 
     static String statusLabel(final byte status) {
-        return switch (status) {
-            case OperationRecord.STATUS_COMPLETED -> "COMPLETED";
-            case OperationRecord.STATUS_PARTIAL -> "PARTIAL";
-            case OperationRecord.STATUS_PROCESSING -> "PROCESSING";
-            case OperationRecord.STATUS_WAITING -> "WAITING";
-            case OperationRecord.STATUS_RESOURCE_LOCKED -> "RESOURCE LOCKED";
-            case OperationRecord.STATUS_PENDING -> "PENDING";
-            default -> "FAILED";
-        };
+        return GameText.resolve(switch (status) {
+            case OperationRecord.STATUS_COMPLETED -> TerminalTexts.STATUS_COMPLETED;
+            case OperationRecord.STATUS_PARTIAL -> TerminalTexts.STATUS_PARTIAL;
+            case OperationRecord.STATUS_PROCESSING -> TerminalTexts.STATUS_PROCESSING;
+            case OperationRecord.STATUS_WAITING -> TerminalTexts.STATUS_WAITING;
+            case OperationRecord.STATUS_RESOURCE_LOCKED -> TerminalTexts.STATUS_RESOURCE_LOCKED;
+            case OperationRecord.STATUS_PENDING -> TerminalTexts.STATUS_PENDING;
+            default -> TerminalTexts.STATUS_FAILED;
+        });
     }
 
     static String opTypeLabel(final byte type) {
@@ -1507,17 +1512,17 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         switch (maintButtonAt((int) mouseX, (int) mouseY)) {
             case 0 -> {
                 sendMaintenance(TerminalMaintenancePayload.ACTION_ANALYZE);
-                maintHint = "ANALYZE logged";
+                maintHint = TerminalTexts.LOGGED.with("ANALYZE");
                 return true;
             }
             case 1 -> {
                 sendMaintenance(TerminalMaintenancePayload.ACTION_VACUUM);
-                maintHint = "VACUUM logged";
+                maintHint = TerminalTexts.LOGGED.with("VACUUM");
                 return true;
             }
             case 2 -> {
                 sendMaintenance(TerminalMaintenancePayload.ACTION_REINDEX);
-                maintHint = "REINDEX logged";
+                maintHint = TerminalTexts.LOGGED.with("REINDEX");
                 return true;
             }
             case 3 -> {
@@ -1772,14 +1777,14 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
             opPopup.render(g);
         } else if (isGridTab()) {
             final boolean local = menu.activeTab() == ComputerTerminalMenu.TAB_STORAGE;
-            final String where = local ? "in storage" : "on the network";
+            final TextKey where = local ? TerminalTexts.IN_STORAGE : TerminalTexts.ON_THE_NETWORK;
             renderNetworkHover(g, mouseX, mouseY);
             if (overDepositBar(mouseX, mouseY)) {
                 g.renderComponentTooltip(font, List.of(
-                        Component.literal(local ? "Deposit into local storage" : "Deposit into the network"),
-                        Component.literal("Click: deposit held stack").withStyle(ChatFormatting.GRAY),
-                        Component.literal("Right-click: deposit one").withStyle(ChatFormatting.GRAY),
-                        Component.literal("Shift-click an inventory item").withStyle(ChatFormatting.GRAY)),
+                        GameText.component(local ? TerminalTexts.DEPOSIT_LOCAL : TerminalTexts.DEPOSIT_NETWORK),
+                        GameText.component(TerminalTexts.DEPOSIT_CLICK).withStyle(ChatFormatting.GRAY),
+                        GameText.component(TerminalTexts.DEPOSIT_RIGHT_CLICK).withStyle(ChatFormatting.GRAY),
+                        GameText.component(TerminalTexts.DEPOSIT_SHIFT_CLICK).withStyle(ChatFormatting.GRAY)),
                         mouseX, mouseY);
                 return;
             }
@@ -1787,12 +1792,11 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
             if (e != null) {
                 final List<Component> lines = new ArrayList<>();
                 lines.add(e.name());
-                lines.add(Component.literal(String.format("%,d", e.total()) + " " + where)
+                lines.add(GameText.component(where.with(String.format("%,d", e.total())))
                         .withStyle(ChatFormatting.GRAY));
                 if (local) {
-                    lines.add(Component.literal("Click: take a stack").withStyle(ChatFormatting.DARK_GRAY));
-                    lines.add(Component.literal("Shift-click: take all  -  Right-click: take one")
-                            .withStyle(ChatFormatting.DARK_GRAY));
+                    lines.add(GameText.component(TerminalTexts.TAKE_CLICK).withStyle(ChatFormatting.DARK_GRAY));
+                    lines.add(GameText.component(TerminalTexts.TAKE_SHIFT_CLICK).withStyle(ChatFormatting.DARK_GRAY));
                 }
                 g.renderComponentTooltip(font, lines, mouseX, mouseY);
             }

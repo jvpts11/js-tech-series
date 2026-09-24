@@ -45,10 +45,13 @@ public final class ProgramService {
     /** The other computers of the network, for a program asked after by the machine it runs on. */
     private final RemoteComputerService remotes;
 
-    /** Why a program did not start, said alike at the prompt and to a program that asked for another. */
+    /*
+     * Why a program did not start, said alike at the prompt, to a program that asked for another, and to a desktop
+     * that opened one.
+     */
     static final TextKey NO_RUNNER = TextKey.of("jsc.service.programs.no_runner",
             "%s: nothing installed runs a program of this kind (compile a source file first)");
-    static final TextKey NO_ROOM =
+    public static final TextKey NO_ROOM =
             TextKey.of("jsc.service.programs.no_room", "%s: %s MB will not fit in %s MB of free memory");
 
     private static final TextKey NOTHING_RUNNING_AS =

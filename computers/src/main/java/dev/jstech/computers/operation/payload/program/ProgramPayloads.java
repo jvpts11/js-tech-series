@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.machine.ProgramLauncher;
+import dev.jstech.computers.machine.ProgramService;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
@@ -29,12 +30,14 @@ import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliStyle;
+import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.computers.program.iql.IqlSavedObject;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramPriority;
+import dev.jstech.core.text.Text;
 import java.util.function.Function;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -84,7 +87,7 @@ public final class ProgramPayloads {
             final boolean running = mainframe.isIqlEngineRunning();
             lines.add(new ProcessListPayload.ProcessLine(ProcessListPayload.KIND_SERVICE, "IQL Engine",
                     running ? ProcessListPayload.ProcessState.RUNNING : ProcessListPayload.ProcessState.STOPPED,
-                    running ? "the network's query and job engine" : "stopped, start it to run jobs"));
+                    (running ? ProcessListPayload.ENGINE_SERVING : ProcessListPayload.ENGINE_STOPPED).text()));
             for (final IqlSavedObject job
                     : mainframe.iqlCatalog().ofType(
                             IqlDefinition.ObjectType.JOB)) {
@@ -98,12 +101,13 @@ public final class ProgramPayloads {
         PacketDistributor.sendToPlayer(player, new ProcessListPayload(lines));
     }
 
-    private static String jobDetail(final IqlSavedObject job) {
-        return switch (job.triggerKind()) {
+    /* A job is described by its own trigger clause, which is the query language's words and not the game's. */
+    private static Text jobDetail(final IqlSavedObject job) {
+        return Text.literal(switch (job.triggerKind()) {
             case EVERY -> "every " + job.triggerSpec();
             case WHEN -> "when " + job.triggerSpec();
             case NONE -> job.body();
-        };
+        });
     }
 
     private static void handleProcessList(final ProcessListPayload payload, final Player player) {
@@ -179,15 +183,15 @@ public final class ProgramPayloads {
         final Function<String, ICliComputer.FsResult> disk =
                 path -> readDiskFile(level, computer, path)
                         .map(ICliComputer.FsResult::content)
-                        .orElse(ICliComputer.FsResult.fail("file not found"));
+                        .orElse(ICliComputer.FsResult.fail(CliTexts.FILE_NOT_FOUND.text()));
         final var launch = ProgramLauncher.launch(computer, payload.path(), disk,
                 List.of(), IProgramParent.NONE,
                 ProgramPriority.MEDIUM, 0);
         if (!launch.ok()) {
-            final String why = switch (launch.refusal()) {
-                case UNREADABLE -> name + ": " + launch.message();
-                case NO_MEMORY -> name + ": not enough memory to run it";
-                case NO_RUNNER, NOT_STARTED -> launch.message();
+            final Text why = switch (launch.refusal()) {
+                case UNREADABLE -> CliTexts.SAID_BY.with(name, launch.said());
+                case NO_MEMORY -> ProgramService.NO_ROOM.with(name, launch.roomMb(), launch.freeMb());
+                case NO_RUNNER, NOT_STARTED -> launch.said();
             };
             wire.add(new WireLine(why, CliStyle.ERROR.id()));
             PacketDistributor.sendToPlayer(player,
@@ -199,7 +203,7 @@ public final class ProgramPayloads {
         if (console) {
             computer.programs().hold(launch.id());
         } else {
-            wire.add(new WireLine(launch.message(),
+            wire.add(new WireLine(launch.said(),
                     CliStyle.OK.id()));
         }
         PacketDistributor.sendToPlayer(player,

@@ -117,6 +117,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   installers' frames, the KVM switch and the splash screens are text a language file can translate, and so are the
   reasons a build is not a working computer and the load-balancing modes. The passive bus's explanation wraps to
   the room it has in any language.
+- A network machine's space is text a language file can translate, heading by heading: the rail, the status bar,
+  the grids and their tooltips, the Local, Ops, Tasks, Upkeep and Programs headings, the questions that take a
+  thing out, open an Operation and drop data, and the Command Prompt's banners and keys. So are what storage
+  maintenance and a DROP tell the player when they finish, the names the Operations list gives them, the states
+  of a machine's processes, and why a program opened from a desktop did not start. An Operation keyword such as
+  ANALYZE or DROP stays as it is typed.
 
 ### Fixed
 - A monitor is used by one player at a time. A second player who used it while somebody was at it was handed a

@@ -30,6 +30,10 @@ import dev.jstech.computers.storage.DataContainers;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.component.DataComponents;
@@ -61,7 +65,30 @@ import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.open
  * The network terminal's payloads: selecting, inserting and dropping items, storage maintenance, the server
  * breakdown and the snapshot of what the network holds.
  */
+@TextHolder
 public final class TerminalPayloads {
+
+    /* What a maintenance run tells the player when it is done; the run's own keyword is data. */
+    private static final TextKey ANALYZED = TextKey.of("jsc.terminal.maintenance.analyzed",
+            "%s complete - %s types reconciled");
+    private static final TextKey REINDEXED = TextKey.of("jsc.terminal.maintenance.reindexed",
+            "%s complete - catalog rebuilt from disks");
+    private static final TextKey REINDEX_STARTED = TextKey.of("jsc.terminal.maintenance.reindex_started",
+            "%s started - rebuilding the catalog from disks");
+    private static final TextKey VACUUMED_ONE = TextKey.of("jsc.terminal.maintenance.vacuumed_one",
+            "%s freed %s ghost entry");
+    private static final TextKey VACUUMED = TextKey.of("jsc.terminal.maintenance.vacuumed",
+            "%s freed %s ghost entries");
+    /* A DROP: how much it destroyed, and from where. */
+    private static final TextKey DROPPED = TextKey.of("jsc.terminal.drop.dropped", "%s destroyed %s from %s");
+    private static final TextKey FROM_NETWORK = TextKey.of("jsc.terminal.drop.from_network", "the network");
+    private static final TextKey FROM_SERVER = TextKey.of("jsc.terminal.drop.from_server", "a server");
+    private static final TextKey ONE_TYPE = TextKey.of("jsc.terminal.drop.one_type", "%s type");
+    private static final TextKey TYPES = TextKey.of("jsc.terminal.drop.types", "%s types");
+    /* The names the Operations list gives a maintenance run, which has no item of its own to show. */
+    private static final TextKey INDEX = TextKey.of("jsc.terminal.maintenance.index", "index");
+    private static final TextKey GHOST_ROWS = TextKey.of("jsc.terminal.maintenance.ghost_rows", "ghost rows");
+    private static final TextKey NETWORK = TextKey.of("jsc.terminal.drop.network", "network");
 
     private TerminalPayloads() {
     }
@@ -104,38 +131,36 @@ public final class TerminalPayloads {
         byte opType;
         long count;
         ItemStack icon;
-        String message;
+        Text message;
         switch (payload.action()) {
             case TerminalMaintenancePayload.ACTION_ANALYZE -> {
                 index.analyzeIncremental(level, net);
                 opType = OperationRecord.TYPE_ANALYZE;
                 count = index.catalogSize();
-                icon = labelledIcon(Items.SPYGLASS, "index");
-                message = "ANALYZE complete - " + count + " types reconciled";
+                icon = labelledIcon(Items.SPYGLASS, GameText.component(INDEX));
+                message = ANALYZED.with("ANALYZE", count);
             }
             case TerminalMaintenancePayload.ACTION_REINDEX -> {
                 /*
                  * The disks are read now; the catalog is built off the tick and swapped in later, when
                  * the run is logged and the grid refreshed.
                  */
-                final ItemStack reindexIcon = labelledIcon(Items.COMPASS, "index");
+                final ItemStack reindexIcon = labelledIcon(Items.COMPASS, GameText.component(INDEX));
                 mainframe.reindexAsync(() -> {
                     mainframe.recordOperation(OperationRecord.TYPE_REINDEX, reindexIcon, index.catalogSize(),
                             index.catalogSize(), OperationRecord.STATUS_COMPLETED, List.of());
-                    player.displayClientMessage(Component.literal("REINDEX complete - catalog rebuilt from disks"),
-                            true);
+                    player.displayClientMessage(GameText.component(REINDEXED.with("REINDEX")), true);
                     dispatchTerminalQuery(player, net, level);
                 });
-                player.displayClientMessage(Component.literal("REINDEX started - rebuilding the catalog from disks"),
-                        true);
+                player.displayClientMessage(GameText.component(REINDEX_STARTED.with("REINDEX")), true);
                 return;
             }
             case TerminalMaintenancePayload.ACTION_VACUUM -> {
                 final int freed = index.vacuum(level, net);
                 opType = OperationRecord.TYPE_VACUUM;
                 count = freed;
-                icon = labelledIcon(Items.HOPPER, "ghost rows");
-                message = "VACUUM freed " + freed + (freed == 1 ? " ghost entry" : " ghost entries");
+                icon = labelledIcon(Items.HOPPER, GameText.component(GHOST_ROWS));
+                message = (freed == 1 ? VACUUMED_ONE : VACUUMED).with("VACUUM", freed);
             }
             default -> {
                 return;
@@ -144,7 +169,7 @@ public final class TerminalPayloads {
         // Index maintenance is instantaneous; log it COMPLETED so the Operations tab records that it ran.
         mainframe.recordOperation(opType, icon, count, count,
                 OperationRecord.STATUS_COMPLETED, List.of());
-        player.displayClientMessage(Component.literal(message), true);
+        player.displayClientMessage(GameText.component(message), true);
         dispatchTerminalQuery(player, net, level); // the catalog may have changed, so refresh the grid
     }
 
@@ -161,13 +186,13 @@ public final class TerminalPayloads {
         }
         final NetworkIndex index = mainframe.networkIndex();
         long destroyed = 0L;
-        String label;
+        Text label;
         StorageKey recordKey;
         switch (payload.scope()) {
             case TerminalDropPayload.SCOPE_NETWORK -> {
                 destroyed = index.dropAll(level, net);
-                label = "the network";
-                recordKey = StorageKey.of(labelledIcon(Items.TNT, "network"));
+                label = FROM_NETWORK.text();
+                recordKey = StorageKey.of(labelledIcon(Items.TNT, GameText.component(NETWORK)));
             }
             case TerminalDropPayload.SCOPE_SERVER -> {
                 if (payload.serverKey().isEmpty()) {
@@ -180,17 +205,18 @@ public final class TerminalPayloads {
                     return;
                 }
                 destroyed = index.dropServer(level, node);
-                label = "a server";
-                recordKey = StorageKey.of(labelledIcon(Items.TNT, serverLabel(level, node)));
+                label = FROM_SERVER.text();
+                recordKey = StorageKey.of(labelledIcon(Items.TNT, Component.literal(serverLabel(level, node))));
             }
             case TerminalDropPayload.SCOPE_TYPES -> {
                 for (final StorageKey key : payload.types()) {
                     destroyed += index.dropType(level, net, key, null);
                 }
                 final int n = payload.types().size();
-                label = n + (n == 1 ? " type" : " types");
+                label = (n == 1 ? ONE_TYPE : TYPES).with(n);
                 // A single-type DROP shows that data's real icon; many types collapse to a tagged marker.
-                recordKey = n == 1 ? payload.types().get(0) : StorageKey.of(labelledIcon(Items.TNT, n + " types"));
+                recordKey = n == 1 ? payload.types().get(0)
+                        : StorageKey.of(labelledIcon(Items.TNT, GameText.component(TYPES.with(n))));
             }
             default -> {
                 return;
@@ -198,14 +224,13 @@ public final class TerminalPayloads {
         }
         mainframe.recordOperation(new OperationRecord(OperationRecord.TYPE_DROP, recordKey,
                 destroyed, destroyed, OperationRecord.STATUS_COMPLETED, List.of()));
-        player.displayClientMessage(Component.literal(
-                "DROP destroyed " + destroyed + " from " + label), true);
+        player.displayClientMessage(GameText.component(DROPPED.with("DROP", destroyed, label)), true);
         dispatchTerminalQuery(player, net, level);
     }
 
-    private static ItemStack labelledIcon(final Item item, final String label) {
+    private static ItemStack labelledIcon(final Item item, final Component label) {
         final ItemStack stack = new ItemStack(item);
-        stack.set(DataComponents.CUSTOM_NAME, Component.literal(label));
+        stack.set(DataComponents.CUSTOM_NAME, label);
         return stack;
     }
 

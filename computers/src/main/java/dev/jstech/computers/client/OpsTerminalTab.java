@@ -10,6 +10,7 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -68,14 +69,14 @@ final class OpsTerminalTab extends AbstractTerminalTab {
 
     @Override
     public void renderTabLabels(final GuiGraphics g, final int cx, final int cy, final int cw) {
-        g.drawString(font(), "OPERATIONS", cx, cy + 20, DIM(), false);
+        g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.OPERATIONS), cx, cy + 20, DIM(), false);
         final List<OperationRecord> ops = ops();
         final int live = menu.activeOps().size();
-        final String n = live > 0 ? live + " live / " + ops.size()
-                : ops.size() + (ops.size() == 1 ? " op" : " ops");
+        final String n = GameText.resolve(live > 0 ? TerminalUpkeepTexts.LIVE_OF.with(live, ops.size())
+                : (ops.size() == 1 ? TerminalTexts.ONE_OP : TerminalTexts.OPS).with(ops.size()));
         g.drawString(font(), n, cx + cw - font().width(n), cy + 20, DIM(), false);
         if (ops.isEmpty()) {
-            g.drawString(font(), "No operations yet.", cx, cy + 40, DIM(), false);
+            g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.NO_OPERATIONS), cx, cy + 40, DIM(), false);
             return;
         }
         final int start = clampOpScroll(ops.size());
@@ -89,8 +90,10 @@ final class OpsTerminalTab extends AbstractTerminalTab {
              * Show "all" for an uncapped request, so a Long.MAX demand never renders as an absurd,
              * overflowing "9223372036854.8M" total.
              */
-            final String reqLabel = op.requested() >= 1_000_000_000L ? "all" : fmt(op.requested());
-            final String sub = fmt(op.moved()) + " of " + reqLabel + "  " + statusLabel(op.status());
+            final String reqLabel = op.requested() >= 1_000_000_000L
+                    ? GameText.resolve(TerminalUpkeepTexts.ALL) : fmt(op.requested());
+            final String sub = GameText.resolve(
+                    TerminalUpkeepTexts.MOVED_OF.with(fmt(op.moved()), reqLabel, statusLabel(op.status())));
             g.drawString(font(), sub, cx + 24, cy + DETAIL_Y + 16, statusColor(op.status()), false);
             /*
              * A craft carries its stages as sub-operations; show those (what it is made of, how far each is)
@@ -105,7 +108,7 @@ final class OpsTerminalTab extends AbstractTerminalTab {
                     if (mv.size() == 2) {
                         moveRow(g, cx, cy + DETAIL_Y + 38, mv.get(1));
                     } else if (mv.size() > 2) {
-                        g.drawString(font(), "+" + (mv.size() - 1) + " more sources",
+                        g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.MORE_SOURCES.with(mv.size() - 1)),
                                 cx + 6, cy + DETAIL_Y + 38, DIM(), false);
                     }
                 }
@@ -124,7 +127,8 @@ final class OpsTerminalTab extends AbstractTerminalTab {
             g.drawString(font(), prog, cx + 100, ry + i * 10, subStateColor(s.state()), false);
         }
         if (subs.size() > show) {
-            g.drawString(font(), "+" + (subs.size() - show) + " more stages", cx + 6, ry + show * 10, DIM(), false);
+            g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.MORE_STAGES.with(subs.size() - show)),
+                    cx + 6, ry + show * 10, DIM(), false);
         }
     }
 

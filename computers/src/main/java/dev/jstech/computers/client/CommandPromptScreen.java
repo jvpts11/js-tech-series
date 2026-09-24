@@ -41,6 +41,7 @@ import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.gui.LineHistory;
 import dev.jstech.core.gui.Phosphor;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.HashMap;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -214,7 +215,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
          * as everything above it, so it is laid out and painted with the rest. It sits well off the window so
          * that a click on the glass cannot land in it and move a cursor nobody can see it moving.
          */
-        input = new EditBox(font, -4000, -4000, 40, 11, Component.literal("command"));
+        input = new EditBox(font, -4000, -4000, 40, 11, GameText.component(CommandPromptTexts.COMMAND));
         input.setBordered(false);
         input.setMaxLength(RunCommandPayload.MAX_LEN);
         input.setFocused(true);
@@ -241,10 +242,10 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
                  * MC-DOS wears a period boot banner instead of the generic shell greeting. The lines are
                  * kept short on purpose so they never overflow the narrow 256px window.
                  */
-                push(menu.osLabel() + "  Version 1.0  [Network Build]", CliStyle.ACCENT);
+                push(CommandPromptTexts.DOS_VERSION.with(menu.osLabel()), CliStyle.ACCENT);
                 push(Branding.systemCopyright(
                         menu.osLabel(), screenEra()), CliStyle.DIM);
-                push("640K base memory", CliStyle.DIM);
+                push(CommandPromptTexts.BASE_MEMORY.with(640), CliStyle.DIM);
                 push("", CliStyle.PLAIN);
             } else if (netStyle()) {
                 /*
@@ -255,13 +256,12 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
                 push(menu.osLabel() + " 1.0", CliStyle.ACCENT);
                 push(Branding.systemCopyright(menu.osLabel(), screenEra()), CliStyle.DIM);
                 push("", CliStyle.PLAIN);
-                push("No operating space is installed.", CliStyle.WARN);
-                push("netgetter install interactor  puts one on.", CliStyle.DIM);
+                push(CommandPromptTexts.NO_SPACE.text(), CliStyle.WARN);
+                push(CommandPromptTexts.PUTS_ONE_ON.with("netgetter install interactor"), CliStyle.DIM);
                 push("", CliStyle.PLAIN);
             } else {
-                push(Branding.houseOf(menu.osLabel()).name()
-                        + " Shell v1.0", CliStyle.ACCENT);
-                push("type 'help' for commands, TAB to complete", CliStyle.DIM);
+                push(CommandPromptTexts.SHELL_VERSION.with(Branding.houseOf(menu.osLabel()).name()), CliStyle.ACCENT);
+                push(CommandPromptTexts.HELP_HINT.with("help"), CliStyle.DIM);
                 push("", CliStyle.PLAIN);
             }
         }
@@ -321,10 +321,12 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
          */
         if (!identityShown) {
             identityShown = true;
-            final String machine = menu.hostname().isBlank() ? "machine" : menu.hostname();
-            final String drives = payload.devices().isEmpty() ? "no drives"
-                    : payload.devices().size() + (payload.devices().size() == 1 ? " drive" : " drives");
-            push("machine: " + machine + "  ·  " + drives, CliStyle.DIM);
+            final Text machine = menu.hostname().isBlank() ? CommandPromptTexts.UNNAMED.text()
+                    : Text.literal(menu.hostname());
+            final int count = payload.devices().size();
+            final Text drives = count == 0 ? CommandPromptTexts.NO_DRIVES.text()
+                    : (count == 1 ? CommandPromptTexts.ONE_DRIVE : CommandPromptTexts.DRIVES).with(count);
+            push(CommandPromptTexts.MACHINE.with(machine, drives), CliStyle.DIM);
             push("", CliStyle.PLAIN);
         }
     }
@@ -398,6 +400,11 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         scrollback.push(new CliLine(text, style));
     }
 
+    /** The same, for a line that is a sentence and so is read in the player's language. */
+    private void push(final Text text, final CliStyle style) {
+        scrollback.push(new CliLine(text, style));
+    }
+
     private void submit() {
         final String line = input.getValue().trim();
         input.setValue("");
@@ -453,8 +460,9 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
         if (!bareTerminal()) {
-            JsTechTheme.text(g, font, "COMMAND PROMPT", 12, 11, JsTechTheme.text());
-            JsTechTheme.textRight(g, font, "PROGRAM", imageWidth - 10, 11, JsTechTheme.accent());
+            JsTechTheme.text(g, font, GameText.resolve(CommandPromptTexts.TITLE), 12, 11, JsTechTheme.text());
+            JsTechTheme.textRight(g, font, GameText.resolve(CommandPromptTexts.PROGRAM), imageWidth - 10, 11,
+                    JsTechTheme.accent());
         }
 
         // Console scrollback, newest at the bottom, honoring the scroll offset.
@@ -477,7 +485,8 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         painter.draw(g, font, all.subList(start, end), 0, 0, rowPitch(), this::colorOf, glass());
         g.pose().popPose();
         if (scrollOffset > 0) {
-            JsTechTheme.textSRight(g, font, "scrolled +" + scrollOffset, imageWidth - 10, bottom - 7, JsTechTheme.dim());
+            JsTechTheme.textSRight(g, font, GameText.resolve(CommandPromptTexts.SCROLLED.with(scrollOffset)),
+                    imageWidth - 10, bottom - 7, JsTechTheme.dim());
         }
 
         if (this.editor != null) {
@@ -510,9 +519,8 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
                 JsTechTheme.textSRight(g, font, hint, imageWidth - 10, imageHeight - 17, JsTechTheme.dim());
             }
         }
-        JsTechTheme.textS(g, font, keyboard.busy()
-                        ? "CTRL+C interrupt    wheel scroll    ESC close"
-                        : "ENTER run    UP/DOWN history    wheel scroll    ESC close",
+        JsTechTheme.textS(g, font,
+                GameText.resolve(keyboard.busy() ? CommandPromptTexts.KEYS_BUSY : CommandPromptTexts.KEYS),
                 10, imageHeight - 7, JsTechTheme.dim());
     }
 

@@ -12,7 +12,9 @@ import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
 import dev.jstech.computers.operation.payload.ServerBreakdownPayload;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.util.FormattedCharSequence;
 
 import java.util.List;
 
@@ -63,15 +65,18 @@ final class NetworkTerminalTab extends AbstractTerminalTab {
     @Override
     public void renderTabLabels(final GuiGraphics g, final int cx, final int cy, final int cw) {
         final int shown = visibleItems().size();
-        final String kinds = shown + (shown == 1 ? " kind" : " kinds");
+        final String kinds = GameText.resolve(
+                (shown == 1 ? TerminalGridTexts.ONE_KIND : TerminalGridTexts.KINDS).with(shown));
         g.drawString(font(), kinds, cx + cw - font().width(kinds), TOOLBAR_Y + 3, DIM(), false);
-        g.drawCenteredString(font(), screen.sortByQuantity ? "Qty" : "Name",
+        g.drawCenteredString(font(),
+                GameText.resolve(screen.sortByQuantity ? TerminalGridTexts.QUANTITY : TerminalGridTexts.NAME),
                 SORT_X + SORT_W / 2, TOOLBAR_Y + 3, ACCENT());
         final String mod = screen.modFilter();
-        g.drawCenteredString(font(), mod.isEmpty() ? "Mod" : font().plainSubstrByWidth(mod, MOD_W - 6),
+        g.drawCenteredString(font(),
+                mod.isEmpty() ? GameText.resolve(TerminalGridTexts.MOD) : font().plainSubstrByWidth(mod, MOD_W - 6),
                 MOD_X + MOD_W / 2, TOOLBAR_Y + 3, mod.isEmpty() ? DIM() : ACCENT());
         final boolean holding = !menu.getCarried().isEmpty();
-        g.drawCenteredString(font(), "Deposit all",
+        g.drawCenteredString(font(), GameText.resolve(TerminalGridTexts.DEPOSIT_ALL),
                 DEPOSIT_X + DEPOSIT_W / 2 + 4, DEPOSIT_Y + 2, holding ? ACCENT() : DIM());
         renderPane(g);
     }
@@ -82,9 +87,13 @@ final class NetworkTerminalTab extends AbstractTerminalTab {
         final int px = PANE_X + 6;
         final int right = PANE_X + PANE_W - 6;
         if (picked == null) {
-            g.drawString(font(), "Nothing picked out.", px, PANE_Y + 6, DIM(), false);
-            g.drawString(font(), "Click a thing in the grid", px, PANE_Y + 20, DIM(), false);
-            g.drawString(font(), "to see where it is kept.", px, PANE_Y + 30, DIM(), false);
+            g.drawString(font(), GameText.resolve(TerminalGridTexts.NOTHING_PICKED), px, PANE_Y + 6, DIM(), false);
+            int y = PANE_Y + 20;
+            for (final FormattedCharSequence line
+                    : font().split(GameText.component(TerminalGridTexts.PICK_HINT), PANE_W - 12)) {
+                g.drawString(font(), line, px, y, DIM(), false);
+                y += 10;
+            }
             return;
         }
         g.drawString(font(), font().plainSubstrByWidth(picked.name().getString(), PANE_W - 12),
@@ -93,12 +102,12 @@ final class NetworkTerminalTab extends AbstractTerminalTab {
                 px, PANE_Y + 18, DIM(), false);
         rule(g, px, PANE_Y + 29, right);
 
-        g.drawString(font(), "Held by", px, PANE_Y + 35, TEXT(), false);
+        g.drawString(font(), GameText.resolve(TerminalGridTexts.HELD_BY), px, PANE_Y + 35, TEXT(), false);
         final String total = fmt(picked.total());
         g.drawString(font(), total, right - font().width(total), PANE_Y + 35, TEXT(), false);
         final List<ServerBreakdownPayload.ServerHolding> held = menu.serverBreakdown();
         if (held.isEmpty()) {
-            g.drawString(font(), "asking the network ...", px + 6, PANE_Y + 47, DIM(), false);
+            g.drawString(font(), GameText.resolve(TerminalGridTexts.ASKING), px + 6, PANE_Y + 47, DIM(), false);
         }
         for (int i = 0; i < PANE_SERVER_ROWS && i < held.size(); i++) {
             final ServerBreakdownPayload.ServerHolding row = held.get(i);
@@ -108,27 +117,27 @@ final class NetworkTerminalTab extends AbstractTerminalTab {
             g.drawString(font(), count, right - font().width(count), ry, TEXT(), false);
         }
         if (held.size() > PANE_SERVER_ROWS) {
-            g.drawString(font(), "+" + (held.size() - PANE_SERVER_ROWS) + " more",
+            g.drawString(font(), GameText.resolve(AssemblyTexts.MORE.with(held.size() - PANE_SERVER_ROWS)),
                     px + 6, PANE_Y + 47 + PANE_SERVER_ROWS * 12, DIM(), false);
         }
         rule(g, px, PANE_Y + 81, right);
 
-        g.drawString(font(), "Made from", px, PANE_Y + 85, TEXT(), false);
+        g.drawString(font(), GameText.resolve(TerminalGridTexts.MADE_FROM), px, PANE_Y + 85, TEXT(), false);
         final CraftCatalogPayload.Entry pattern = screen.craftFor(picked);
         if (pattern == null) {
-            g.drawString(font(), "no pattern for it", px + 6, PANE_Y + 95, DIM(), false);
+            g.drawString(font(), GameText.resolve(TerminalGridTexts.NO_PATTERN), px + 6, PANE_Y + 95, DIM(), false);
         } else {
             final int dot = switch (pattern.availability()) {
                 case CraftCatalogPayload.DOT_GREEN -> GREEN();
                 case CraftCatalogPayload.DOT_AMBER -> AMBER();
                 default -> RED();
             };
-            g.drawString(font(), "a pattern this network holds", px + 6, PANE_Y + 95, dot, false);
+            g.drawString(font(), GameText.resolve(TerminalGridTexts.HAS_PATTERN), px + 6, PANE_Y + 95, dot, false);
         }
-        g.drawCenteredString(font(), "Get",
+        g.drawCenteredString(font(), GameText.resolve(TerminalGridTexts.GET),
                 ComputerTerminalScreen.PANE_GET_X + ComputerTerminalScreen.PANE_BTN_W / 2,
                 ComputerTerminalScreen.PANE_BTN_Y + 2, ACCENT());
-        g.drawCenteredString(font(), "Craft",
+        g.drawCenteredString(font(), GameText.resolve(TerminalGridTexts.CRAFT),
                 ComputerTerminalScreen.PANE_CRAFT_X + ComputerTerminalScreen.PANE_BTN_W / 2,
                 ComputerTerminalScreen.PANE_BTN_Y + 2, pattern == null ? DIM() : ACCENT());
     }

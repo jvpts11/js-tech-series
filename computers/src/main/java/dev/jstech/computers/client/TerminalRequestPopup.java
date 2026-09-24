@@ -17,6 +17,7 @@ import dev.jstech.computers.operation.payload.TerminalLocalUploadPayload;
 import dev.jstech.computers.operation.payload.TerminalLocalWithdrawPayload;
 import dev.jstech.computers.operation.payload.TerminalSelectPayload;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -135,15 +136,17 @@ final class TerminalRequestPopup {
         g.drawString(screen.tabFont(),
                 screen.tabFont().plainSubstrByWidth(picked.name().getString(), POPUP_W - 78),
                 px + 28, py + 6, JsTechTheme.text(), false);
-        g.drawString(screen.tabFont(), ComputerTerminalScreen.fmt(picked.total())
-                        + (picked.key().isItem() ? "" : " mB") + (this.local ? " in local" : " available"),
+        // A fluid's amount is in millibuckets, which is the game's own unit and is written the same everywhere.
+        final String amount = ComputerTerminalScreen.fmt(picked.total()) + (picked.key().isItem() ? "" : " mB");
+        g.drawString(screen.tabFont(),
+                GameText.resolve((this.local ? TerminalGridTexts.IN_LOCAL : TerminalGridTexts.AVAILABLE).with(amount)),
                 px + 28, py + 17, JsTechTheme.dim(), false);
         if (!this.local) {
             final boolean advHover = inRect(mouseX, mouseY, px + POPUP_W - 44, py + 5, 36, 12);
             g.fill(px + POPUP_W - 44, py + 5, px + POPUP_W - 8, py + 17,
                     this.advanced ? JsTechTheme.accent() : (advHover ? 0xFF24323C : 0xFF1A222B));
-            g.drawCenteredString(screen.tabFont(), "ADV", px + POPUP_W - 26, py + 7,
-                    this.advanced ? 0xFF0F151C : JsTechTheme.dim());
+            g.drawCenteredString(screen.tabFont(), GameText.resolve(TerminalGridTexts.ADVANCED), px + POPUP_W - 26,
+                    py + 7, this.advanced ? 0xFF0F151C : JsTechTheme.dim());
         }
 
         // Quantity: the field, drawn here so it sits on the panel, and the button that asks for all of it.
@@ -151,7 +154,8 @@ final class TerminalRequestPopup {
         this.qty.render(g, mouseX, mouseY, partialTick);
         final boolean maxHover = inRect(mouseX, mouseY, px + POPUP_W - 58, py + 30, 50, 14);
         g.fill(px + POPUP_W - 58, py + 30, px + POPUP_W - 8, py + 44, maxHover ? 0xFF2BB3A4 : 0xFF1F9488);
-        g.drawCenteredString(screen.tabFont(), "MAX", px + POPUP_W - 33, py + 33, 0xFFFFFFFF);
+        g.drawCenteredString(screen.tabFont(), GameText.resolve(TerminalGridTexts.MAX), px + POPUP_W - 33, py + 33,
+                0xFFFFFFFF);
 
         for (int i = 0; i < STEP_LABELS.length; i++) {
             final int bx = px + 8 + i * 23;
@@ -351,27 +355,29 @@ final class TerminalRequestPopup {
                               final int px, final int py, final int ph) {
         final boolean hasStorage = menu.usableStorageSlots() > 0;
         g.drawString(screen.tabFont(),
-                hasStorage ? "Lands in this computer's storage" : "Needs internal storage (no disk)",
+                GameText.resolve(hasStorage ? TerminalGridTexts.LANDS_HERE : TerminalGridTexts.NEEDS_STORAGE),
                 px + 8, py + 70, hasStorage ? JsTechTheme.dim() : JsTechTheme.amber(), false);
         actionButton(g, mouseX, mouseY, px + 8, py + ph - 22, POPUP_W - 16,
-                "REQUEST " + ComputerTerminalScreen.fmt(this.amount));
+                GameText.resolve(TerminalGridTexts.REQUEST.with(ComputerTerminalScreen.fmt(this.amount))));
     }
 
     private void renderStorageActions(final GuiGraphics g, final int mouseX, final int mouseY,
                                       final int px, final int py, final int ph) {
-        g.drawString(screen.tabFont(), "Send local items to:", px + 8, py + 70, JsTechTheme.dim(), false);
+        g.drawString(screen.tabFont(), GameText.resolve(TerminalGridTexts.SEND_LOCAL_TO), px + 8, py + 70,
+                JsTechTheme.dim(), false);
         final int by = py + ph - 22;
-        actionButton(g, mouseX, mouseY, px + 8, by, 90, "TO INVENTORY");
-        actionButton(g, mouseX, mouseY, px + 104, by, 90, "TO NETWORK");
+        actionButton(g, mouseX, mouseY, px + 8, by, 90, GameText.resolve(TerminalGridTexts.TO_INVENTORY));
+        actionButton(g, mouseX, mouseY, px + 104, by, 90, GameText.resolve(TerminalGridTexts.TO_NETWORK));
     }
 
     private void renderAdvanced(final GuiGraphics g, final int mouseX, final int mouseY,
                                 final int px, final int py, final int ph) {
-        g.drawString(screen.tabFont(), "PULL FROM", px + 8, py + 66, JsTechTheme.dim(), false);
+        g.drawString(screen.tabFont(), GameText.resolve(TerminalGridTexts.PULL_FROM), px + 8, py + 66,
+                JsTechTheme.dim(), false);
         final List<ServerBreakdownPayload.ServerHolding> servers = menu.serverBreakdown();
         if (servers.isEmpty()) {
-            g.drawString(screen.tabFont(), "all servers",
-                    px + POPUP_W - 8 - screen.tabFont().width("all servers"), py + 66,
+            final String all = GameText.resolve(TerminalGridTexts.ALL_SERVERS);
+            g.drawString(screen.tabFont(), all, px + POPUP_W - 8 - screen.tabFont().width(all), py + 66,
                     JsTechTheme.dim(), false);
         }
         for (int i = 0; i < Math.min(SERVER_ROWS, servers.size()); i++) {
@@ -387,15 +393,17 @@ final class TerminalRequestPopup {
                     JsTechTheme.dim(), false);
         }
         if (servers.size() > SERVER_ROWS) {
-            g.drawString(screen.tabFont(), "+" + (servers.size() - SERVER_ROWS) + " more (included)",
+            g.drawString(screen.tabFont(),
+                    GameText.resolve(TerminalGridTexts.MORE_INCLUDED.with(servers.size() - SERVER_ROWS)),
                     px + 22, py + 78 + SERVER_ROWS * 12, JsTechTheme.dim(), false);
         }
 
         // SEND TO: cycle through every computer that can receive items.
-        g.drawString(screen.tabFont(), "SEND TO", px + 8, py + 140, JsTechTheme.dim(), false);
+        g.drawString(screen.tabFont(), GameText.resolve(TerminalGridTexts.SEND_TO), px + 8, py + 140,
+                JsTechTheme.dim(), false);
         final List<NetworkServersPayload.ServerEntry> comp = menu.networkServers();
         if (comp.isEmpty()) {
-            g.drawString(screen.tabFont(), "No computers available", px + 8, py + 154,
+            g.drawString(screen.tabFont(), GameText.resolve(TerminalGridTexts.NO_COMPUTERS), px + 8, py + 154,
                     JsTechTheme.amber(), false);
         } else {
             final NetworkServersPayload.ServerEntry target =
@@ -406,12 +414,13 @@ final class TerminalRequestPopup {
             g.drawCenteredString(screen.tabFont(), "<", px + 15, py + 155, JsTechTheme.accent());
             g.fill(px + POPUP_W - 22, py + 152, px + POPUP_W - 8, py + 166, rh ? 0xFF24323C : 0xFF1A222B);
             g.drawCenteredString(screen.tabFont(), ">", px + POPUP_W - 15, py + 155, JsTechTheme.accent());
-            final String text = screen.tabFont().plainSubstrByWidth(
-                    target.name() + "  (" + ComputerTerminalScreen.fmt(target.free()) + " free)", POPUP_W - 52);
+            final String text = screen.tabFont().plainSubstrByWidth(GameText.resolve(
+                    TerminalGridTexts.WITH_FREE.with(target.name(), ComputerTerminalScreen.fmt(target.free()))),
+                    POPUP_W - 52);
             g.drawString(screen.tabFont(), text, px + 26, py + 155, JsTechTheme.text(), false);
         }
         actionButton(g, mouseX, mouseY, px + 8, py + ph - 22, POPUP_W - 16,
-                "SEND " + ComputerTerminalScreen.fmt(this.amount));
+                GameText.resolve(TerminalGridTexts.SEND.with(ComputerTerminalScreen.fmt(this.amount))));
     }
 
     private void actionButton(final GuiGraphics g, final int mouseX, final int mouseY,
