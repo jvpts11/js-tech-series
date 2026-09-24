@@ -18,6 +18,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   keeps to a share of the game's sound channels, the sounds that matter most and are nearest first; many machines
   of one kind close together are heard as one room, louder the more there are; and walls between a sound and the
   listener muffle it, which the player may turn off.
+- The sound system plays sounds made as they play: a synthesiser (square, pulse, triangle, sawtooth, sine and
+  noise, note by note, the way a PC speaker or an early sound card makes a tune) and recordings read from files
+  that are not the mods' own, WAV and Ogg Vorbis to begin with and any other kind a mod registers a decoder for.
+  The server sends a tune as its notes, heard by the players near where it plays, and each client makes the
+  sound itself. Such a sound has a subtitle and a channel like any other and the player can turn it off the same
+  way; heard from a place in the world, a stereo recording is played in mono so it comes from that place.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.

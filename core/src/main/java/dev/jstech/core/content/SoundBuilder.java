@@ -15,6 +15,7 @@ import dev.jstech.core.audio.SoundSpec;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,7 @@ public final class SoundBuilder {
     private boolean stream;
     private int range = DEFAULT_RANGE;
     private int priority = SoundSpec.NORMAL;
+    private boolean made;
     private final List<ResourceLocation> files = new ArrayList<>();
     private @Nullable String english;
 
@@ -102,6 +104,15 @@ public final class SoundBuilder {
         return this;
     }
 
+    /**
+     * Has no file: what it plays is made as it plays, handed over each time (a synthesised tune, a recording from a
+     * disk). It is declared all the same, for its subtitle and its channel and so a player can turn it off.
+     */
+    public SoundBuilder made() {
+        this.made = true;
+        return this;
+    }
+
     /** Plays that file, which already exists, instead of one of its own; call it again for more than one. */
     public SoundBuilder file(final ResourceLocation existing) {
         this.files.add(existing);
@@ -115,7 +126,7 @@ public final class SoundBuilder {
     }
 
     /**
-     * Registers the sound's event and keeps what was declared.
+     * Registers the sound's event, unless it is made as it plays and so has none, and keeps what was declared.
      *
      * @throws IllegalStateException when the sound was given no subtitle
      */
@@ -124,10 +135,12 @@ public final class SoundBuilder {
         if (english == null) {
             throw new IllegalStateException(id + " needs a subtitle");
         }
-        final SoundSpec spec = new SoundSpec(space, loop, channel, files.isEmpty() ? ownFiles(id) : files, stream,
-                range, priority);
-        final SoundKey key = new SoundKey(id, spec, TextKey.of(SoundKey.subtitleKey(id), english),
-                content.soundRegister().register(path, () -> SoundEvent.createFixedRangeEvent(id, range)));
+        final List<ResourceLocation> played = made || !files.isEmpty() ? files : ownFiles(id);
+        final SoundSpec spec = new SoundSpec(space, loop, channel, played, stream, range, priority, made);
+        final Supplier<SoundEvent> event = made ? () -> {
+            throw new IllegalStateException(id + " is made as it plays and has no event");
+        } : content.soundRegister().register(path, () -> SoundEvent.createFixedRangeEvent(id, range));
+        final SoundKey key = new SoundKey(id, spec, TextKey.of(SoundKey.subtitleKey(id), english), event);
         content.declare(key);
         return key;
     }

@@ -19,7 +19,7 @@ import net.neoforged.neoforge.common.data.SoundDefinitionsProvider;
 /**
  * A mod's {@code sounds.json}, written from the sounds it declared: each with its files, whether they are read as they
  * play, how far they carry and the key of its subtitle. A file named here that does not exist fails the generator,
- * so a sound cannot be declared ahead of the file it plays.
+ * so a sound cannot be declared ahead of the file it plays. A sound made as it plays has no file and no entry.
  */
 public final class ContentSoundProvider extends SoundDefinitionsProvider {
 
@@ -34,6 +34,9 @@ public final class ContentSoundProvider extends SoundDefinitionsProvider {
     public void registerSounds() {
         for (final SoundKey key : content.declaredSounds()) {
             final SoundSpec spec = key.spec();
+            if (spec.made()) {
+                continue;
+            }
             final SoundDefinition definition = definition().subtitle(key.subtitle().key());
             for (final ResourceLocation file : spec.files()) {
                 definition.with(sound(file).stream(spec.stream()).attenuationDistance(spec.range()));

@@ -1,6 +1,8 @@
 {
+  "subtitles.jstests.test.beep": "A test beep",
   "subtitles.jstests.test.click": "A test click",
   "subtitles.jstests.test.hum": "A test hum",
   "subtitles.jstests.test.room": "A test room",
+  "subtitles.jstests.test.tune": "A test tune",
   "subtitles.jstests.test.whir": "A test whir"
 }
