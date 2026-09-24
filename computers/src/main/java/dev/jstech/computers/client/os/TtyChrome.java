@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.os.edit.TtyLook;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.text.GameText;
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -41,14 +42,16 @@ final class TtyChrome {
                       final int rowHeight, final TtyLook look, final InkPalette palette) {
         g.fill(x, y - 1, x + width, y + LETTERS, palette.plain());
         g.drawString(font, look.titleLeft(), x + PAD, y, palette.ground(), false);
-        final int rightW = font.width(look.titleRight());
+        final String right = GameText.resolve(look.titleRight());
+        final int rightW = font.width(right);
         final int leftEnd = x + PAD + font.width(look.titleLeft()) + 6;
         final int rightStart = x + width - PAD - rightW;
-        final String middle = font.plainSubstrByWidth(look.titleMiddle(), Math.max(0, rightStart - leftEnd - 6));
+        final String middle = font.plainSubstrByWidth(GameText.resolve(look.titleMiddle()),
+                Math.max(0, rightStart - leftEnd - 6));
         // In the middle of the row when there is room, and after the name when there is not.
         final int centred = x + (width - font.width(middle)) / 2;
         g.drawString(font, middle, Math.max(leftEnd, centred), y, palette.ground(), false);
-        g.drawString(font, look.titleRight(), rightStart, y, palette.ground(), false);
+        g.drawString(font, right, rightStart, y, palette.ground(), false);
     }
 
     /** Something said in passing: in brackets, in the middle of the row, only as wide as what it says. */
@@ -86,7 +89,8 @@ final class TtyChrome {
                     // A pixel of the bar either side of the letters, without which they run into its edges.
                     g.fill(cx - 1, ry - 1, cx + chordW + 1, ry + LETTERS - 1, palette.plain());
                     g.drawString(font, key.chord(), cx, ry, palette.ground(), false);
-                    Draw.text(g, font, font.plainSubstrByWidth(key.does(), Math.max(0, column - chordW - 8)),
+                    Draw.text(g, font,
+                            font.plainSubstrByWidth(GameText.resolve(key.does()), Math.max(0, column - chordW - 8)),
                             cx + chordW + 4, ry, palette.plain(), palette.ground());
                 }
                 cx += column;

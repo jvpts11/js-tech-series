@@ -16,6 +16,8 @@ import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.fs.FileOpeners;
 import dev.jstech.computers.os.fs.TrashKind;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -285,8 +287,9 @@ public final class TrashApp implements IDesktopApp {
         if (chosen.isEmpty()) {
             return;
         }
-        final String what = chosen.size() == 1 ? chosen.getFirst().name() : "these " + chosen.size() + " items";
-        DesktopScreen.ask("Confirm File Delete", "Delete " + what + " for good?\nThis cannot be undone.",
+        final Text question = chosen.size() == 1 ? TrashTexts.DELETE_ONE.with(chosen.getFirst().name())
+                : TrashTexts.DELETE_MANY.with(chosen.size());
+        DesktopScreen.ask(GameText.resolve(TrashTexts.CONFIRM), GameText.resolve(question),
                 () -> act(TrashActionPayload.Action.SHRED, storedOf(chosen)));
     }
 
@@ -295,15 +298,17 @@ public final class TrashApp implements IDesktopApp {
         if (this.items.isEmpty()) {
             return;
         }
-        final String what = this.items.size() == 1 ? "the item" : "all " + this.items.size() + " items";
-        DesktopScreen.ask("Confirm File Delete", "Delete " + what + " in the " + title() + " for good?",
+        final Text trash = kindOf(this.style).titleText();
+        final Text question = this.items.size() == 1 ? TrashTexts.EMPTY_ONE.with(trash)
+                : TrashTexts.EMPTY_ALL.with(this.items.size(), trash);
+        DesktopScreen.ask(GameText.resolve(TrashTexts.CONFIRM), GameText.resolve(question),
                 () -> act(TrashActionPayload.Action.EMPTY, List.of()));
     }
 
     /** Says what an item is: its name, where it came from and the room it takes. */
     void showProperties(final TrashItem item) {
-        DesktopScreen.tell(item.name() + " Properties", "Name: " + item.name() + "\nOriginal location: "
-                + item.place() + "\nSize: " + item.size());
+        DesktopScreen.tell(GameText.resolve(TrashTexts.PROPERTIES_OF.with(item.name())),
+                GameText.resolve(TrashTexts.PROPERTIES_BODY.with(item.name(), item.place(), item.size())));
     }
 
     /** Opens a file manager at a place of the sidebar and puts this window away, as leaving the trash does. */
@@ -336,6 +341,12 @@ public final class TrashApp implements IDesktopApp {
     String iconSet() {
         final DesktopScreen desktop = DesktopScreen.current();
         return desktop == null ? this.skin.iconSet() : desktop.icons();
+    }
+
+    /** Writes words of the trash in the player's language, with the shadow that suits what they are written on. */
+    static void write(final GuiGraphics g, final Font font, final Text text, final int x, final int y,
+                      final int color, final int ground, final float scale) {
+        write(g, font, GameText.resolve(text), x, y, color, ground, scale);
     }
 
     /** Writes text with the shadow that suits what it is written on, at {@code scale} of the font's size. */

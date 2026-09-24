@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os.edit;
 
+import dev.jstech.core.text.Text;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -19,33 +20,33 @@ class NanoWordsTest {
 
     @Test
     void wrote_countsLinesTheWayItIsSaid() {
-        assertEquals("[ Wrote 1 line ]", NanoWords.wrote(1));
-        assertEquals("[ Wrote 12 lines ]", NanoWords.wrote(12));
-        assertEquals("[ Read 0 lines ]", NanoWords.read(0));
-        assertEquals("[ Replaced 1 occurrence ]", NanoWords.replaced(1));
-        assertEquals("[ Replaced 3 occurrences ]", NanoWords.replaced(3));
+        assertEquals("[ Wrote 1 line ]", NanoWords.wrote(1).english());
+        assertEquals("[ Wrote 12 lines ]", NanoWords.wrote(12).english());
+        assertEquals("[ Read 0 lines ]", NanoWords.read(0).english());
+        assertEquals("[ Replaced 1 occurrence ]", NanoWords.replaced(1).english());
+        assertEquals("[ Replaced 3 occurrences ]", NanoWords.replaced(3).english());
     }
 
     @Test
     void notFound_quotesWhatWasLookedFor() {
-        assertEquals("[ \"noatime\" not found ]", NanoWords.notFound("noatime"));
-        assertEquals("[ File \"make.conf\" not found ]", NanoWords.noSuchFile("make.conf"));
+        assertEquals("[ \"noatime\" not found ]", NanoWords.notFound("noatime").english());
+        assertEquals("[ File \"make.conf\" not found ]", NanoWords.noSuchFile("make.conf").english());
     }
 
     @Test
     void searching_offersTheLastThingSearchedForAgain() {
-        assertEquals("Search: UU", NanoWords.searching(NanoWords.SEARCH, "", "UU"));
-        assertEquals("Search [UUID]: ", NanoWords.searching(NanoWords.SEARCH, "UUID", ""));
+        assertEquals("Search: UU", NanoWords.searching(NanoWords.SEARCH, "", "UU").english());
+        assertEquals("Search [UUID]: ", NanoWords.searching(NanoWords.SEARCH, "UUID", "").english());
         assertEquals("Search (to replace) [-j1]: -j",
-                NanoWords.searching(NanoWords.SEARCH_TO_REPLACE, "-j1", "-j"));
+                NanoWords.searching(NanoWords.SEARCH_TO_REPLACE, "-j1", "-j").english());
     }
 
     @Test
     void position_saysHowFarThroughEachOfTheThreeIs() {
         assertEquals("[ line 3/12 (25%), col 1/20 (5%), char 40/300 (13%) ]",
-                NanoWords.position(3, 12, 1, 20, 40, 300));
+                NanoWords.position(3, 12, 1, 20, 40, 300).english());
         assertEquals("[ line 1/1 (100%), col 1/1 (100%), char 1/1 (100%) ]",
-                NanoWords.position(1, 1, 1, 1, 1, 1));
+                NanoWords.position(1, 1, 1, 1, 1, 1).english());
     }
 
     @Test
@@ -69,7 +70,7 @@ class NanoWordsTest {
 
     @Test
     void theHelpText_listsEveryKeyTheTwoRowsList() {
-        final String help = String.join("\n", NanoWords.HELP);
+        final String help = String.join("\n", NanoWords.HELP.stream().map(Text::english).toList());
         for (final List<TtyLook.Key> row : NanoWords.EDITING) {
             for (final TtyLook.Key key : row) {
                 assertTrue(help.contains(key.chord() + " "), key.chord() + " is listed and not explained");

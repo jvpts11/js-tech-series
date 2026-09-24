@@ -15,6 +15,8 @@ import dev.jstech.computers.operation.payload.RenameFilePayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.os.fs.Archive;
 import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import java.util.List;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -171,8 +173,8 @@ final class DeskFiles implements CodeFileReplies.IReader {
     }
 
     @Override
-    public void onSaved(final boolean ok, final String message) {
-        desktop.showBalloon(ok ? "67ark" : "Could not do that", message);
+    public void onSaved(final boolean ok, final Text message) {
+        desktop.showBalloon(ok ? "67ark" : GameText.resolve(FilesTexts.COULD_NOT), GameText.resolve(message));
         FilesApps.diskChanged();
     }
 

@@ -9,12 +9,16 @@ package dev.jstech.computers.os.fs;
 
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.os.FilesystemKind;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The trash of a system disk: putting a file or folder into it, reading what is in it, putting a thing back where it
@@ -40,16 +44,34 @@ public final class DiskTrash {
     public record Entry(String stored, String original, boolean directory, long weight) {
     }
 
-    /** How putting something in the trash went. */
+    /** How putting something in the trash went, and what the player is told when it did not go. */
+    @TextHolder
     public enum Outcome {
         /** It is in the trash. */
-        DONE,
-        /** Nothing is at that path. */
-        MISSING,
+        DONE(null),
+        /** Nothing is at that path; most likely a second click on the same thing, so nothing is said. */
+        MISSING(null),
         /** It is the trash, or a folder the trash is in, which cannot go into itself. */
-        HOLDS_TRASH,
+        HOLDS_TRASH(TextKey.of("jsc.trash.holds_trash", "%s holds the %s itself.")),
         /** The disk has no room left to write down where it came from, so it stayed where it was. */
-        NO_ROOM
+        NO_ROOM(TextKey.of("jsc.trash.no_room", "There is no room left on the disk to keep %s."));
+
+        private final @Nullable TextKey refusal;
+
+        Outcome(final @Nullable TextKey refusal) {
+            this.refusal = refusal;
+        }
+
+        /**
+         * What the player is told, about the thing's name and the trash's own name; empty when there is nothing to
+         * tell.
+         */
+        public Text refusal(final String name, final Text trash) {
+            if (this.refusal == null) {
+                return Text.EMPTY;
+            }
+            return this == HOLDS_TRASH ? this.refusal.with(name, trash) : this.refusal.with(name);
+        }
     }
 
     private DiskTrash() {

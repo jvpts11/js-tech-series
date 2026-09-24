@@ -12,9 +12,14 @@ import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.os.edit.TtyLook;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.logic.TextDocument;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
 
 /**
  * An editor that has taken over a terminal.
@@ -71,7 +76,7 @@ public final class TtyEditor {
         /** The file has just been opened, which is when an editor says whether there was one to open. */
         default void opened(final TtyEditor editor, final boolean existed) {
             if (!existed) {
-                editor.say("\"" + editor.name() + "\" [New]");
+                editor.say(TtyTexts.NEW_FILE.with(editor.name()));
             }
         }
 
@@ -229,6 +234,11 @@ public final class TtyEditor {
         this.message = text == null ? "" : text;
     }
 
+    /** Says a sentence at the bottom, in the player's language. */
+    public void say(final Text text) {
+        say(GameText.resolve(text));
+    }
+
     /** Whatever the flavour is in the middle of, such as a half-typed command. */
     public String pending() {
         return this.pending;
@@ -245,7 +255,7 @@ public final class TtyEditor {
     public void save() {
         this.host.save(this.path, this.doc.text());
         this.dirty = false;
-        say("\"" + name() + "\" written");
+        say(TtyTexts.WRITTEN.with(name()));
     }
 
     /** Gives the terminal back. */
@@ -325,7 +335,8 @@ public final class TtyEditor {
         drawStatus(g, font, x, y + height - keysH - this.lineH, width, look, palette);
         if (!look.page().isEmpty()) {
             Draw.pushScissor(g, x, y + head, x + width, y + height - keysH - this.lineH);
-            drawPage(g, font, look.page(), x + PAD, y + head + PAD, rows, palette);
+            drawPage(g, font, pageLines(font, look.page(), width - 2 * PAD), x + PAD, y + head + PAD, rows,
+                    palette);
             Draw.popScissor(g);
             return;
         }
@@ -372,6 +383,31 @@ public final class TtyEditor {
         this.columns = held;
         this.rows = tall;
         this.keys.resized(this, held, tall);
+    }
+
+    /**
+     * A page's lines in the player's language, each wrapped to the glass. A wrapped line keeps the indent it
+     * started with, so a paragraph set in from the edge stays set in on every row it takes.
+     */
+    private static List<String> pageLines(final Font font, final List<Text> page, final int width) {
+        final List<String> out = new ArrayList<>(page.size());
+        for (final Text line : page) {
+            final String words = GameText.resolve(line);
+            int lead = 0;
+            while (lead < words.length() && words.charAt(lead) == ' ') {
+                lead++;
+            }
+            final String indent = words.substring(0, lead);
+            final int room = Math.max(font.width("m"), width - font.width(indent));
+            final List<FormattedText> wrapped = font.getSplitter().splitLines(words.substring(lead), room, Style.EMPTY);
+            if (wrapped.isEmpty()) {
+                out.add(words);
+            }
+            for (final FormattedText row : wrapped) {
+                out.add(indent + row.getString());
+            }
+        }
+        return out;
     }
 
     /** Lines shown in place of the file, from wherever the wheel has left them. */

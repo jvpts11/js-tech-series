@@ -16,7 +16,10 @@ import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import java.util.List;
+import java.util.function.Function;
 import net.minecraft.Util;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -67,14 +70,14 @@ public final class OpenWithPopup extends Popup {
      */
     public OpenWithPopup(final String path, final String extension, final List<String> programs, final String opener,
                          final String iconSet, final Font font, final IChoice onChoice) {
-        super("Open with", OpenWithLayout.WIDTH, OpenWithLayout.HEIGHT);
+        super(GameText.resolve(FilesTexts.OPEN_WITH), OpenWithLayout.WIDTH, OpenWithLayout.HEIGHT);
         this.programs = List.copyOf(programs);
         this.iconSet = iconSet;
         this.onChoice = onChoice;
         this.canRemember = !extension.isEmpty() && extension.length() <= MAX_EXTENSION;
         final int textW = OpenWithLayout.listW();
         final String name = FsPaths.fileName(path);
-        this.question = add(new Label(fit("How do you want to open ", name, "?", font, textW)));
+        this.question = add(new Label(fit(OpenWithTexts.QUESTION::with, name, font, textW)));
         final int noteUnits = Texts.smallFits(OpenWithLayout.noteW());
         this.note = add(new Label(Texts.clip(font, noteFor(extension, opener, font, noteUnits), noteUnits),
                 Label.Tone.DIM).setScale(Texts.SMALL));
@@ -82,8 +85,9 @@ public final class OpenWithPopup extends Popup {
         this.list = add(new ListView<String>(() -> this.programs, OpenWithLayout.ROW_H, this::drawRow)
                 .setOnClick(this::clicked));
         this.list.setSelected(0);
-        this.once = add(new Button("Only this time", () -> choose(false)).setPrimary(true));
-        this.always = add(new Button("Always", () -> choose(true)));
+        this.once = add(new Button(GameText.resolve(OpenWithTexts.ONLY_THIS_TIME), () -> choose(false))
+                .setPrimary(true));
+        this.always = add(new Button(GameText.resolve(OpenWithTexts.ALWAYS), () -> choose(true)));
         this.always.setEnabled(this.canRemember);
         setDim(0x80000000);
         setCloseOnOutsideClick(false);
@@ -203,21 +207,24 @@ public final class OpenWithPopup extends Popup {
      */
     private static String noteFor(final String extension, final String opener, final Font font, final int width) {
         if (opener.isEmpty()) {
-            return extension.isEmpty() ? "Nothing on this computer opens this file yet."
-                    : fit("Nothing on this computer opens .", extension, " files yet.", font, width);
+            return extension.isEmpty() ? GameText.resolve(OpenWithTexts.NOTHING_OPENS)
+                    : fit(OpenWithTexts.NOTHING_OPENS_KIND::with, extension, font, width);
         }
-        return extension.isEmpty() ? "This file opens in " + opener + "."
-                : fit(".", extension, " files open in " + opener + ".", font, width);
+        return extension.isEmpty() ? GameText.resolve(OpenWithTexts.OPENS_IN.with(opener))
+                : fit(shown -> OpenWithTexts.KIND_OPENS_IN.with(shown, opener), extension, font, width);
     }
 
-    /** {@code before + name + after}, the name cut short with dots when the whole would be wider than {@code width}. */
-    private static String fit(final String before, final String name, final String after, final Font font,
+    /**
+     * The sentence around {@code name}, read in the player's language, the name cut short with dots when the whole
+     * would be wider than {@code width}.
+     */
+    private static String fit(final Function<String, Text> sentence, final String name, final Font font,
                               final int width) {
         String shown = name;
-        while (!shown.isEmpty() && font.width(before + shown + after) > width) {
+        while (!shown.isEmpty() && font.width(GameText.resolve(sentence.apply(shown))) > width) {
             shown = shown.length() <= 3 ? "" : shown.substring(0, shown.length() - 4) + "...";
         }
-        return before + shown + after;
+        return GameText.resolve(sentence.apply(shown));
     }
 
     /** The sunken well the programs are listed in, drawn the desktop's way. */

@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.os.edit;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+
 /**
  * What a line typed after a colon in Vim asks for.
  *
@@ -17,11 +21,18 @@ package dev.jstech.computers.os.edit;
  *
  * @param goTo the line asked for by a bare number, counted from one, or zero when none was
  */
-public record VimCommand(boolean write, boolean quit, boolean force, int goTo, String error) {
+@TextHolder
+public record VimCommand(boolean write, boolean quit, boolean force, int goTo, Text error) {
+
+    /* Vim's own refusals, each after its number; read in the player's language, as the real one's are. */
+    private static final TextKey NOT_A_COMMAND =
+            TextKey.of("jsc.vim.not_a_command", "E492: not an editor command: %s");
+    private static final TextKey UNWRITTEN =
+            TextKey.of("jsc.vim.unwritten", "E37: no write since last change (add ! to override)");
 
     /** A line that asked for nothing anybody knows. */
     public static VimCommand unknown(final String typed) {
-        return new VimCommand(false, false, false, 0, "E492: not an editor command: " + typed);
+        return new VimCommand(false, false, false, 0, NOT_A_COMMAND.with(typed));
     }
 
     /** Whether it could be read at all. */
@@ -40,15 +51,15 @@ public record VimCommand(boolean write, boolean quit, boolean force, int goTo, S
         final String line = typed == null ? "" : typed.trim();
         if (!line.isEmpty() && line.chars().allMatch(Character::isDigit)) {
             final int number = line.length() > 6 ? Integer.MAX_VALUE : Integer.parseInt(line);
-            return new VimCommand(false, false, false, Math.max(1, number), "");
+            return new VimCommand(false, false, false, Math.max(1, number), Text.EMPTY);
         }
         return switch (line) {
-            case "w" -> new VimCommand(true, false, false, 0, "");
-            case "q" -> new VimCommand(false, true, false, 0, "");
-            case "q!" -> new VimCommand(false, true, true, 0, "");
-            case "wq", "x" -> new VimCommand(true, true, false, 0, "");
-            case "wq!", "x!" -> new VimCommand(true, true, true, 0, "");
-            case "" -> new VimCommand(false, false, false, 0, "");
+            case "w" -> new VimCommand(true, false, false, 0, Text.EMPTY);
+            case "q" -> new VimCommand(false, true, false, 0, Text.EMPTY);
+            case "q!" -> new VimCommand(false, true, true, 0, Text.EMPTY);
+            case "wq", "x" -> new VimCommand(true, true, false, 0, Text.EMPTY);
+            case "wq!", "x!" -> new VimCommand(true, true, true, 0, Text.EMPTY);
+            case "" -> new VimCommand(false, false, false, 0, Text.EMPTY);
             default -> unknown(line);
         };
     }
@@ -59,7 +70,7 @@ public record VimCommand(boolean write, boolean quit, boolean force, int goTo, S
      * <p>Vim's own words, because a player who has met Vim knows what they mean and one who has not is
      * told exactly what to do about it.
      */
-    public static String unwritten() {
-        return "E37: no write since last change (add ! to override)";
+    public static Text unwritten() {
+        return UNWRITTEN.text();
     }
 }

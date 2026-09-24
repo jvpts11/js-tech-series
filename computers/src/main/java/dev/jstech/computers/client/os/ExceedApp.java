@@ -16,6 +16,8 @@ import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -78,7 +80,7 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private OsSkin skin = OsSkin.fallback();
     private String path = "";
-    private String status = "";
+    private Text status = Text.EMPTY;
     private boolean dirty;
     private int cursorRow;
     private int cursorColumn;
@@ -120,10 +122,10 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         this.host = host;
         this.monitorPos = monitorPos;
         this.dialog = new FileDialog(host, this);
-        openButton = root.add(new Button("Open", this::chooseOpen));
-        saveButton = root.add(new Button("Save", this::save));
-        saveAsButton = root.add(new Button("Save As", this::chooseSaveAs));
-        refreshButton = root.add(new Button("Refresh", this::ask));
+        openButton = root.add(new Button(GameText.resolve(ExceedTexts.OPEN), this::chooseOpen));
+        saveButton = root.add(new Button(GameText.resolve(ExceedTexts.SAVE), this::save));
+        saveAsButton = root.add(new Button(GameText.resolve(ExceedTexts.SAVE_AS), this::chooseSaveAs));
+        refreshButton = root.add(new Button(GameText.resolve(ExceedTexts.REFRESH), this::ask));
         root.add(formula);
         sheet.setFacts(facts);
         open = this;
@@ -143,7 +145,7 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         showing.facts.servers = payload.servers();
         // The facts are changed in place, so the sheet has to be told its answers may have moved.
         showing.sheet.forget();
-        showing.status = showing.sheet.liveCells() + " live cells";
+        showing.status = liveCells(showing.sheet.liveCells());
     }
 
     /* Asking the machine */
@@ -204,8 +206,8 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
     /* Files */
 
     private void chooseOpen() {
-        dialog.openFile("Open sheet", "",
-                List.of(FileDialog.Filter.of("Sheets", "csv"), FileDialog.Filter.ALL), this::openFile);
+        dialog.openFile(ExceedTexts.OPEN_SHEET.text(), "",
+                List.of(FileDialog.Filter.of(ExceedTexts.SHEETS, "csv"), FileDialog.Filter.ALL), this::openFile);
     }
 
     @Override
@@ -222,13 +224,13 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         sheet.fromCsv(exists ? content : "");
         this.path = target;
         this.dirty = false;
-        this.status = exists ? "Opened " + leaf(target) : "New sheet";
+        this.status = exists ? EditorTexts.OPENED.with(leaf(target)) : ExceedTexts.NEW_SHEET.text();
         ask();
     }
 
     private void chooseSaveAs() {
-        dialog.saveAs("Save sheet", "", path.isEmpty() ? "sheet.csv" : leaf(path),
-                List.of(FileDialog.Filter.of("Sheets", "csv")), target -> {
+        dialog.saveAs(ExceedTexts.SAVE_SHEET.text(), "", path.isEmpty() ? "sheet.csv" : leaf(path),
+                List.of(FileDialog.Filter.of(ExceedTexts.SHEETS, "csv")), target -> {
                     this.path = target;
                     save();
                 });
@@ -244,22 +246,22 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         final String csv = sheet.toCsv();
         // The cap on a save throws when handed more than it takes, so a sheet past it is refused here.
         if (csv.length() > SaveFilePayload.MAX_CONTENT) {
-            this.status = "Sheet too large to save";
+            this.status = ExceedTexts.TOO_LARGE_TO_SAVE.text();
             return;
         }
         CodeFileReplies.expectSaved(this);
         PacketDistributor.sendToServer(new SaveFilePayload(host, path, csv));
         FilesApps.diskChanged();
-        this.status = "Saving";
+        this.status = ExceedTexts.SAVING.text();
     }
 
     @Override
     public void onContentTooLarge(final String target) {
-        this.status = leaf(target) + " is too large to open here";
+        this.status = EditorTexts.TOO_LARGE.with(leaf(target));
     }
 
     @Override
-    public void onSaved(final boolean ok, final String message) {
+    public void onSaved(final boolean ok, final Text message) {
         this.status = message;
         if (ok) {
             this.dirty = false;
@@ -347,17 +349,17 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private void layoutToolbar(final Font font, final int x, final int y, final int width) {
         int bx = x + MARGIN;
-        bx = place(openButton, font, "Open", bx, y);
-        bx = place(saveButton, font, "Save", bx, y);
-        bx = place(saveAsButton, font, "Save As", bx, y);
-        final int w = font.width("Refresh") + 8;
+        bx = place(openButton, font, bx, y);
+        bx = place(saveButton, font, bx, y);
+        bx = place(saveAsButton, font, bx, y);
+        final int w = font.width(refreshButton.label()) + 8;
         // Pinned right, never back over the button before it; a narrow window clips rather than overlaps.
         refreshButton.setBounds(Math.max(bx, x + width - MARGIN - w), y + 1, w, 12);
     }
 
-    private static int place(final Button button, final Font font, final String label,
-                             final int bx, final int y) {
-        final int w = font.width(label) + 8;
+    /* A button as wide as the words it shows, in the player's language. */
+    private static int place(final Button button, final Font font, final int bx, final int y) {
+        final int w = font.width(button.label()) + 8;
         button.setBounds(bx, y + 1, w, 12);
         return bx + w + 2;
     }
@@ -437,12 +439,17 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
     private void drawStatus(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
         g.fill(x, y, x + width, y + STATUS_H, skin.windowBg());
         final int live = sheet.liveCells();
-        final String left = live == 0 ? "Ready" : live + (live == 1 ? " live cell" : " live cells");
+        final String left = GameText.resolve(live == 0 ? ExceedTexts.READY.text() : liveCells(live));
         g.drawString(font, left, x + MARGIN, y + 2, skin.text(), false);
         if (!status.isEmpty()) {
-            final String clipped = font.plainSubstrByWidth(status, width - MARGIN * 2 - font.width(left) - 8);
+            final String clipped = font.plainSubstrByWidth(GameText.resolve(status),
+                    width - MARGIN * 2 - font.width(left) - 8);
             g.drawString(font, clipped, x + width - MARGIN - font.width(clipped), y + 2, skin.dim(), false);
         }
+    }
+
+    private static Text liveCells(final int count) {
+        return (count == 1 ? ExceedTexts.ONE_LIVE_CELL : ExceedTexts.LIVE_CELLS).with(count);
     }
 
     private void clampScroll() {

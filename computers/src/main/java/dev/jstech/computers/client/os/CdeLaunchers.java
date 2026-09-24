@@ -12,6 +12,7 @@ import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Control;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -169,7 +170,7 @@ final class CdeLaunchers {
             out.add(new Row("Home", files, () -> desktop.openFolder(desktop.homeDir())));
             out.add(new Row("Desktop", files, () -> desktop.openFolder(desktop.desktopDirectory())));
             for (final DiskFilesPayload.WireVolume medium : desktop.media()) {
-                out.add(new Row(medium.label(), files, () -> desktop.openFolder(medium.key())));
+                out.add(new Row(GameText.resolve(medium.label()), files, () -> desktop.openFolder(medium.key())));
             }
         } else if (this.open == Control.EDITOR) {
             program(out, "editor");

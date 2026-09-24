@@ -38,7 +38,7 @@ public final class EmacsKeys implements TtyEditor.IKeys {
     @Override
     public String status(final TtyEditor editor) {
         if (this.askingToQuit) {
-            return EmacsChord.modifiedOnQuit();
+            return GameText.resolve(EmacsChord.modifiedOnQuit());
         }
         if (!this.chord.isEmpty()) {
             return this.chord + "-";
@@ -80,7 +80,7 @@ public final class EmacsKeys implements TtyEditor.IKeys {
             this.askingToQuit = false;
             editor.say("");
         } else {
-            editor.say("Please answer y or n.");
+            editor.say(TtyTexts.ANSWER_Y_OR_N.text());
         }
     }
 
@@ -93,7 +93,7 @@ public final class EmacsKeys implements TtyEditor.IKeys {
         if (this.askingToQuit) {
             if (key == GLFW.GLFW_KEY_ESCAPE || (control && key == GLFW.GLFW_KEY_G)) {
                 this.askingToQuit = false;
-                editor.say("Quit");
+                editor.say(TtyTexts.QUIT.text());
             }
             return true;
         }
@@ -138,7 +138,7 @@ public final class EmacsKeys implements TtyEditor.IKeys {
             }
             case GLFW.GLFW_KEY_ESCAPE -> {
                 this.chord = "";
-                editor.say("Quit");
+                editor.say(TtyTexts.QUIT.text());
             }
             default -> {
                 return false;
@@ -215,7 +215,7 @@ public final class EmacsKeys implements TtyEditor.IKeys {
                     editor.quit();
                 }
             }
-            case CANCEL -> editor.say("Quit");
+            case CANCEL -> editor.say(TtyTexts.QUIT.text());
             case COMPILE -> compile(editor);
             case BACKWARD_CHAR -> doc.left();
             case FORWARD_CHAR -> doc.right();
@@ -239,9 +239,9 @@ public final class EmacsKeys implements TtyEditor.IKeys {
             case UNDO -> {
                 if (doc.undo()) {
                     editor.touched();
-                    editor.say("Undo");
+                    editor.say(TtyTexts.UNDO.text());
                 } else {
-                    editor.say("No further undo information");
+                    editor.say(TtyTexts.NO_FURTHER_UNDO.text());
                 }
             }
             case PENDING, UNKNOWN -> editor.say(EmacsChord.unknown(was));
@@ -279,8 +279,8 @@ public final class EmacsKeys implements TtyEditor.IKeys {
     private static void compile(final TtyEditor editor) {
         final IProgrammingLanguage language = CodeWorkspace.languageOf(editor.path());
         if (language == null) {
-            editor.showLower("*compilation*", List.of("no compiler knows " + editor.name()));
-            editor.say("Compilation finished");
+            editor.showLower("*compilation*", List.of(GameText.resolve(TtyTexts.NO_COMPILER.with(editor.name()))));
+            editor.say(TtyTexts.COMPILATION_FINISHED.text());
             return;
         }
         final IProgrammingLanguage.CompileResult result = language.compile(
@@ -288,15 +288,16 @@ public final class EmacsKeys implements TtyEditor.IKeys {
         final List<String> out = new ArrayList<>();
         out.add(language.displayName() + " " + editor.name());
         if (result.ok()) {
-            out.add(editor.name() + " -> " + result.binary().split("\n", -1).length + " lines of assembly");
-            out.add("Compilation finished");
+            out.add(GameText.resolve(
+                    TtyTexts.ASSEMBLY_LINES.with(editor.name(), result.binary().split("\n", -1).length)));
+            out.add(GameText.resolve(TtyTexts.COMPILATION_FINISHED));
         } else {
             for (final IProgrammingLanguage.Complaint complaint : result.complaints()) {
                 out.add(GameText.resolve(complaint.text()));
             }
-            out.add("Compilation exited abnormally with " + result.complaints().size() + " error(s)");
+            out.add(GameText.resolve(TtyTexts.COMPILATION_FAILED.with(result.complaints().size())));
         }
         editor.showLower("*compilation*", out);
-        editor.say("Compilation finished");
+        editor.say(TtyTexts.COMPILATION_FINISHED.text());
     }
 }

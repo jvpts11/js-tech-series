@@ -39,11 +39,11 @@ class TrashItemTest {
     void summary_countsTheItemsAndAddsUpTheirSize() {
         final List<TrashItem> items = List.of(TrashItem.of("a", "x/a.txt", false, 2L, true),
                 TrashItem.of("b", "x/b.txt", false, 12L, true), TrashItem.of("c", "x/c", true, 4L, true));
-        assertEquals("3 items, 18 mB", TrashItem.summary(items));
-        assertEquals("1 item, 2 mB", TrashItem.summary(items.subList(0, 1)));
-        assertEquals("0 items, 0 mB", TrashItem.summary(List.of()));
-        assertEquals("3 objects", TrashItem.objects(items));
-        assertEquals("1 object", TrashItem.objects(items.subList(0, 1)));
+        assertEquals("3 items, 18 mB", TrashItem.summary(items).english());
+        assertEquals("1 item, 2 mB", TrashItem.summary(items.subList(0, 1)).english());
+        assertEquals("0 items, 0 mB", TrashItem.summary(List.of()).english());
+        assertEquals("3 objects", TrashItem.objects(items).english());
+        assertEquals("1 object", TrashItem.objects(items.subList(0, 1)).english());
     }
 
     @Test

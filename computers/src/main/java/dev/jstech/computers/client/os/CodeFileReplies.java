@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.FolderContentPayload;
+import dev.jstech.core.text.Text;
 
 /**
  * Where a file the server sent back belongs, when more than one window could have asked for it.
@@ -53,7 +54,7 @@ public final class CodeFileReplies {
         }
 
         /** What came of the save it asked for. */
-        default void onSaved(boolean ok, String message) {
+        default void onSaved(boolean ok, Text message) {
         }
     }
 
@@ -154,7 +155,7 @@ public final class CodeFileReplies {
     }
 
     /** Delivers the result of a save, and says whether anyone was waiting for it. */
-    public static boolean saved(final boolean ok, final String message) {
+    public static boolean saved(final boolean ok, final Text message) {
         final IReader reader = saved;
         saved = null;
         if (reader == null) {

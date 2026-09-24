@@ -21,6 +21,9 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -53,30 +56,40 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
     public enum Mode { OPEN_FILE, OPEN_FOLDER, SAVE }
 
     /**
-     * One entry of the kind list: what it says and the extensions it shows, lower-case and without the
-     * dot; none means every file.
+     * One entry of the kind list: what the kind is called and the extensions it shows, lower-case and
+     * without the dot; none means every file.
      */
-    public record Filter(String label, List<String> extensions) {
+    public record Filter(Text name, List<String> extensions) {
 
         public Filter {
             extensions = List.copyOf(extensions);
         }
 
         /** Every file, whatever it is. */
-        public static final Filter ALL = new Filter("All files (*.*)", List.of());
+        public static final Filter ALL = new Filter(FileDialogTexts.ALL_FILES.text(), List.of());
 
         /** Whether a file with {@code ext} is shown under this filter. */
         public boolean admits(final String ext) {
             return this.extensions.isEmpty() || this.extensions.contains(ext.toLowerCase(Locale.ROOT));
         }
 
-        /** A filter for the extensions given, labelled with them: {@code Text (*.txt)}. */
-        public static Filter of(final String name, final String... extensions) {
-            final StringBuilder label = new StringBuilder(name).append(" (");
-            for (int i = 0; i < extensions.length; i++) {
-                label.append(i > 0 ? ", " : "").append("*.").append(extensions[i]);
+        /** What the kind list says: the name with the patterns it shows, {@code Text (*.txt)}. */
+        public Text label() {
+            final StringBuilder patterns = new StringBuilder();
+            for (int i = 0; i < this.extensions.size(); i++) {
+                patterns.append(i > 0 ? ", " : "").append("*.").append(this.extensions.get(i));
             }
-            return new Filter(label.append(')').toString(), List.of(extensions));
+            return FileDialogTexts.FILTER.with(this.name, patterns.isEmpty() ? "*.*" : patterns.toString());
+        }
+
+        /** A filter for the extensions given, labelled with them. */
+        public static Filter of(final Text name, final String... extensions) {
+            return new Filter(name, List.of(extensions));
+        }
+
+        /** A filter for the extensions given, called by a sentence of the program that asks. */
+        public static Filter of(final TextKey name, final String... extensions) {
+            return of(name.text(), extensions);
         }
 
         /** One filter per language the machine knows, its sources by their extensions, then every file. */
@@ -85,7 +98,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
             for (final IProgrammingLanguage language : JsCore.languages().all()) {
                 final List<String> extensions = new ArrayList<>(language.sourceExtensions());
                 Collections.sort(extensions);
-                out.add(of(language.displayName(), extensions.toArray(new String[0])));
+                out.add(of(Text.literal(language.displayName()), extensions.toArray(new String[0])));
             }
             out.add(ALL);
             return out;
@@ -141,7 +154,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
 
     private OsSkin skin = OsSkin.fallback();
     private Mode mode = Mode.OPEN_FILE;
-    private String title = "Open";
+    private Text title = FileDialogTexts.OPEN.text();
     private List<Filter> filters = List.of(Filter.ALL);
     private int filter;
     private Consumer<String> onPick = path -> { };
@@ -155,7 +168,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
     private final List<DiskFilesPayload.WireVolume> volumes = new ArrayList<>();
     private final List<String> backStack = new ArrayList<>();
     private final List<String> forwardStack = new ArrayList<>();
-    private String message = "";
+    private Text message = Text.EMPTY;
     /** The path Save was pressed on once and would replace, so a second press is the answer. */
     private String replacing = "";
     private long lastClickAt;
@@ -172,45 +185,51 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
                 .setOnBlur(this::stopAddressEdit));
         this.addressEdit.setVisible(false);
         this.places = this.root.add(new ListView<>(this::places, ROW_H, this::drawPlace).setOnClick(this::onPlace));
-        this.header = this.root.add(new ColumnHeader(List.of("Name", "Type", "Size")).setSortable(false));
+        this.header = this.root.add(new ColumnHeader(List.of(GameText.resolve(FileDialogTexts.NAME_COLUMN),
+                GameText.resolve(FileDialogTexts.TYPE_COLUMN), GameText.resolve(FileDialogTexts.SIZE_COLUMN)))
+                .setSortable(false));
         this.rows = this.root.add(new ListView<>(this::entries, ROW_H, this::drawEntry).setOnClick(this::onRow));
-        this.nameLabel = this.root.add(new Label(() -> this.mode == Mode.OPEN_FOLDER ? "Folder:" : "File name:", Label.Tone.DIM));
+        this.nameLabel = this.root.add(new Label(() -> GameText.resolve(this.mode == Mode.OPEN_FOLDER
+                ? FileDialogTexts.FOLDER_LABEL : FileDialogTexts.FILE_NAME_LABEL), Label.Tone.DIM));
         this.name = this.root.add(new TextField(120).setOnCommit(value -> confirm()));
-        this.kindLabel = this.root.add(new Label(() -> this.mode == Mode.SAVE ? "Save as:" : "Type:", Label.Tone.DIM));
-        this.kind = this.root.add(new Button(() -> this.filters.get(this.filter).label(), this::cycleFilter).setLabelScale(0.85f));
-        this.newFolder = this.root.add(new Button("New folder", this::makeFolder).setLabelScale(0.85f));
-        this.primary = this.root.add(new Button(this::primaryLabel, this::confirm).setPrimary(true));
-        this.cancel = this.root.add(new Button("Cancel", this::close));
-        this.status = this.root.add(new Label(this::statusText, Label.Tone.DIM));
+        this.kindLabel = this.root.add(new Label(() -> GameText.resolve(this.mode == Mode.SAVE
+                ? FileDialogTexts.SAVE_AS_LABEL : FileDialogTexts.TYPE_LABEL), Label.Tone.DIM));
+        this.kind = this.root.add(new Button(this::filterLabel, this::cycleFilter).setLabelScale(0.85f));
+        this.newFolder = this.root.add(new Button(GameText.resolve(FileDialogTexts.NEW_FOLDER), this::makeFolder)
+                .setLabelScale(0.85f));
+        this.primary = this.root.add(new Button(() -> GameText.resolve(primaryLabel()), this::confirm)
+                .setPrimary(true));
+        this.cancel = this.root.add(new Button(GameText.resolve(FileDialogTexts.CANCEL), this::close));
+        this.status = this.root.add(new Label(() -> GameText.resolve(statusText()), Label.Tone.DIM));
     }
 
     /* Opening it */
 
     /** Opens on {@code start} to pick a file of one of the {@code filters}' kinds; the path chosen goes to {@code onPick}. */
-    public void openFile(final String windowTitle, final String start, final List<Filter> filters,
+    public void openFile(final Text windowTitle, final String start, final List<Filter> filters,
                          final Consumer<String> onPick) {
         show(Mode.OPEN_FILE, windowTitle, start, filters, "", onPick);
     }
 
     /** Opens on {@code start} to pick a folder; the folder chosen goes to {@code onPick}. */
-    public void openFolder(final String windowTitle, final String start, final Consumer<String> onPick) {
+    public void openFolder(final Text windowTitle, final String start, final Consumer<String> onPick) {
         show(Mode.OPEN_FOLDER, windowTitle, start, List.of(Filter.ALL), "", onPick);
     }
 
     /** Opens on {@code start} to pick where to save, with {@code initialName} in the field; the path goes to {@code onPick}. */
-    public void saveAs(final String windowTitle, final String start, final String initialName,
+    public void saveAs(final Text windowTitle, final String start, final String initialName,
                        final List<Filter> filters, final Consumer<String> onPick) {
         show(Mode.SAVE, windowTitle, start, filters, initialName, onPick);
     }
 
-    private void show(final Mode what, final String windowTitle, final String start, final List<Filter> kinds,
+    private void show(final Mode what, final Text windowTitle, final String start, final List<Filter> kinds,
                       final String initialName, final Consumer<String> pick) {
         this.mode = what;
         this.title = windowTitle;
         this.filters = kinds == null || kinds.isEmpty() ? List.of(Filter.ALL) : List.copyOf(kinds);
         this.filter = 0;
         this.onPick = pick;
-        this.message = "";
+        this.message = Text.EMPTY;
         this.replacing = "";
         this.backStack.clear();
         this.forwardStack.clear();
@@ -323,29 +342,35 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
     private List<Place> places() {
         final List<Place> out = new ArrayList<>();
         if (this.posix) {
-            out.add(new Place("PLACES", FileIcons.Kind.HOME, "", true));
+            out.add(new Place(GameText.resolve(FileDialogTexts.PLACES), FileIcons.Kind.HOME, "", true));
             // Where this system keeps its people, which is not the same place on every Unix.
             final String desktopDir = FilesApp.desktopDirAt(this.host, false);
-            out.add(new Place("Home", FileIcons.Kind.HOME, parentOf(desktopDir), false));
-            out.add(new Place("Desktop", FileIcons.Kind.FOLDER, desktopDir, false));
-            out.add(new Place("progs", FileIcons.Kind.FOLDER, CodeWorkspace.HOME, false));
-            out.add(new Place("DEVICES", FileIcons.Kind.HOME, "", true));
-            out.add(new Place("Root", FileIcons.Kind.BIN, "", false));
+            out.add(new Place(GameText.resolve(FileDialogTexts.HOME), FileIcons.Kind.HOME, parentOf(desktopDir),
+                    false));
+            out.add(new Place(GameText.resolve(FileDialogTexts.DESKTOP), FileIcons.Kind.FOLDER, desktopDir, false));
+            out.add(new Place(CodeWorkspace.HOME, FileIcons.Kind.FOLDER, CodeWorkspace.HOME, false));
+            out.add(new Place(GameText.resolve(FileDialogTexts.DEVICES_HEADING), FileIcons.Kind.HOME, "", true));
+            out.add(new Place(GameText.resolve(FileDialogTexts.ROOT), FileIcons.Kind.BIN, "", false));
         } else {
-            out.add(new Place("QUICK ACCESS", FileIcons.Kind.HOME, "", true));
-            out.add(new Place("Desktop", FileIcons.Kind.FOLDER, SystemLayout.DESKTOP_DIR, false));
-            out.add(new Place("progs", FileIcons.Kind.FOLDER, CodeWorkspace.HOME, false));
-            out.add(new Place("THIS PC", FileIcons.Kind.HOME, "", true));
-            out.add(new Place("Local Disk (C:)", FileIcons.Kind.BIN, "", false));
+            out.add(new Place(GameText.resolve(FileDialogTexts.QUICK_ACCESS), FileIcons.Kind.HOME, "", true));
+            out.add(new Place(GameText.resolve(FileDialogTexts.DESKTOP), FileIcons.Kind.FOLDER,
+                    SystemLayout.DESKTOP_DIR, false));
+            out.add(new Place(CodeWorkspace.HOME, FileIcons.Kind.FOLDER, CodeWorkspace.HOME, false));
+            out.add(new Place(GameText.resolve(FileDialogTexts.THIS_PC_HEADING), FileIcons.Kind.HOME, "", true));
+            out.add(new Place(GameText.resolve(FileDialogTexts.LOCAL_DISK), FileIcons.Kind.BIN, "", false));
         }
         for (final DiskFilesPayload.WireVolume volume : this.volumes) {
             if (volume.removable()) {
-                final String letter = letterOf(volume.key());
-                out.add(new Place(volume.label() + (letter.isEmpty() ? "" : " (" + letter + ")"),
-                        FileIcons.Kind.BIN, volume.key(), false));
+                out.add(new Place(onDrive(GameText.resolve(volume.label()), letterOf(volume.key())), FileIcons.Kind.BIN,
+                        volume.key(), false));
             }
         }
         return out;
+    }
+
+    /** A medium's name with its drive letter after it, or on its own where the desktop has no letters. */
+    private static String onDrive(final String label, final String letter) {
+        return letter.isEmpty() ? label : GameText.resolve(FileDialogTexts.ON_DRIVE.with(label, letter));
     }
 
     private static String parentOf(final String path) {
@@ -400,15 +425,15 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         final List<Breadcrumbs.Crumb> out = new ArrayList<>();
         if (onMedia()) {
             final String root = mediaRoot();
-            out.add(new Breadcrumbs.Crumb(this.posix ? "Devices" : "This PC", ""));
-            final String letter = letterOf(root);
-            String label = "Removable Drive";
+            out.add(new Breadcrumbs.Crumb(GameText.resolve(this.posix ? FileDialogTexts.DEVICES
+                    : FileDialogTexts.THIS_PC), ""));
+            String label = GameText.resolve(DiskFilesPayload.REMOVABLE_DRIVE);
             for (final DiskFilesPayload.WireVolume volume : this.volumes) {
                 if (volume.key().equals(root)) {
-                    label = volume.label();
+                    label = GameText.resolve(volume.label());
                 }
             }
-            out.add(new Breadcrumbs.Crumb(label + (letter.isEmpty() ? "" : " (" + letter + ")"), root));
+            out.add(new Breadcrumbs.Crumb(onDrive(label, letterOf(root)), root));
             String acc = root;
             for (final String seg : mediaRest().split("/")) {
                 if (!seg.isEmpty()) {
@@ -418,7 +443,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
             }
             return out;
         }
-        out.add(new Breadcrumbs.Crumb(this.posix ? "/" : "Local Disk (C:)", ""));
+        out.add(new Breadcrumbs.Crumb(this.posix ? "/" : GameText.resolve(FileDialogTexts.LOCAL_DISK), ""));
         String acc = "";
         for (final String seg : this.dir.split("/")) {
             if (!seg.isEmpty()) {
@@ -488,7 +513,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         stopAddressEdit();
         final String key = keyOf(typed);
         if (key == null) {
-            this.message = "No such drive: " + typed.trim();
+            this.message = FileDialogTexts.NO_SUCH_DRIVE.with(typed.trim());
             return;
         }
         go(key);
@@ -535,11 +560,13 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         final int textY = y + TEXT_DY;
         g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(entry.name(), typeX - nameX - 4), nameX, textY,
                 ctx.skin().listRowText(selected), false);
-        final String type = entry.up() ? "Up one level" : entry.file().directory() ? "Folder" : FilesApp.typeLabel(entry.file());
+        final String type = entry.up() ? GameText.resolve(FileDialogTexts.UP_ONE_LEVEL)
+                : entry.file().directory() ? GameText.resolve(FileDialogTexts.FOLDER)
+                : FilesApp.typeLabel(entry.file());
         g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(type, sizeX - typeX - 4), typeX, textY,
                 selected ? ctx.skin().listRowText(true) : ctx.skin().dim(), false);
         if (!entry.up() && !entry.file().directory()) {
-            g.drawString(ctx.font(), entry.file().weight() + " mB", sizeX, textY,
+            g.drawString(ctx.font(), GameText.resolve(FileDialogTexts.SIZE.with(entry.file().weight())), sizeX, textY,
                     selected ? ctx.skin().listRowText(true) : ctx.skin().dim(), false);
         }
     }
@@ -573,28 +600,29 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
 
     /* The bottom row */
 
-    private String primaryLabel() {
+    private TextKey primaryLabel() {
         return switch (this.mode) {
-            case OPEN_FILE -> "Open";
-            case OPEN_FOLDER -> "Select Folder";
-            case SAVE -> this.replacing.isEmpty() ? "Save" : "Replace";
+            case OPEN_FILE -> FileDialogTexts.OPEN;
+            case OPEN_FOLDER -> FileDialogTexts.SELECT_FOLDER;
+            case SAVE -> this.replacing.isEmpty() ? FileDialogTexts.SAVE : FileDialogTexts.REPLACE;
         };
     }
 
-    private String statusText() {
+    private Text statusText() {
         if (!this.message.isEmpty()) {
             return this.message;
         }
         final int count = entries().size() - (this.dir.isEmpty() ? 0 : 1);
         if (this.mode == Mode.OPEN_FOLDER) {
             final Entry picked = selectedEntry();
-            return picked != null && picked.file() != null ? "Select Folder picks " + picked.name()
-                    : "Select Folder picks this folder";
+            return picked != null && picked.file() != null ? FileDialogTexts.PICKS.with(picked.name())
+                    : FileDialogTexts.PICKS_THIS.text();
         }
         if (this.mode == Mode.SAVE) {
-            return this.name.edit().isBlank() ? "Type a name" : "Will be written to " + shown(join(this.dir, this.name.edit().trim()));
+            return this.name.edit().isBlank() ? FileDialogTexts.TYPE_A_NAME.text()
+                    : FileDialogTexts.WILL_BE_WRITTEN.with(shown(join(this.dir, this.name.edit().trim())));
         }
-        return count + (count == 1 ? " item" : " items");
+        return (count == 1 ? FileDialogTexts.ONE_ITEM : FileDialogTexts.ITEMS).with(count);
     }
 
     private Entry selectedEntry() {
@@ -657,13 +685,13 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
             return;
         }
         if (typed.isEmpty()) {
-            this.message = "Type a name, or pick one from the list";
+            this.message = FileDialogTexts.TYPE_OR_PICK.text();
             return;
         }
         if (typed.contains("/") || typed.contains("\\") || typed.contains(":")) {
             final String key = keyOf(typed);
             if (key == null) {
-                this.message = "No such drive: " + typed;
+                this.message = FileDialogTexts.NO_SUCH_DRIVE.with(typed);
                 return;
             }
             final int slash = key.lastIndexOf('/');
@@ -686,7 +714,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         final String path = join(this.dir, fileName);
         if (this.mode == Mode.OPEN_FILE) {
             if (!has(fileName)) {
-                this.message = "Not found: " + fileName;
+                this.message = FileDialogTexts.NOT_FOUND.with(fileName);
                 return;
             }
             finish(path);
@@ -694,7 +722,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         }
         if (has(fileName) && !path.equals(this.replacing)) {
             this.replacing = path;
-            this.message = fileName + " exists. Replace it?";
+            this.message = FileDialogTexts.EXISTS.with(fileName);
             return;
         }
         finish(path);
@@ -751,7 +779,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
 
     @Override
     public String title() {
-        return this.title;
+        return GameText.resolve(this.title);
     }
 
     @Override
@@ -817,7 +845,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
             startAddressEdit();
             return;
         }
-        this.message = "";
+        this.message = Text.EMPTY;
         this.root.mouseClicked(mx, my, button);
     }
 
@@ -921,11 +949,11 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
 
     /** The window's kind filter as shown. */
     public String filterLabel() {
-        return this.filters.get(this.filter).label();
+        return GameText.resolve(this.filters.get(this.filter).label());
     }
 
     /** The bottom line's text, for a test to read what the window says. */
     public String statusLine() {
-        return statusText();
+        return GameText.resolve(statusText());
     }
 }

@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.os.edit;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+
 /**
  * What a run of held keys in Emacs asks for.
  *
@@ -18,7 +22,13 @@ package dev.jstech.computers.os.edit;
  * <p>The chord is read as text, which is what the editor already has to show in its echo area anyway,
  * so what a player is told they pressed and what actually happens are read from the same string.
  */
+@TextHolder
 public final class EmacsChord {
+
+    /* The echo area's own words; a chord is data inside them. */
+    private static final TextKey UNDEFINED = TextKey.of("jsc.emacs.undefined", "%s is undefined");
+    private static final TextKey MODIFIED_ON_QUIT =
+            TextKey.of("jsc.emacs.modified_on_quit", "Modified buffers exist; exit anyway? (y or n)");
 
     /** What a finished chord does. */
     public enum Action {
@@ -127,12 +137,12 @@ public final class EmacsChord {
         "C-a", "C-e", "C-d", "C-k", "C-y", "M-<", "M->", "M-x compile"};
 
     /** How the echo area says a run nobody knows, in the words the real thing uses. */
-    public static String unknown(final String chord) {
-        return chord + " is undefined";
+    public static Text unknown(final String chord) {
+        return UNDEFINED.with(chord);
     }
 
     /** How the echo area asks about leaving with changes unwritten, in the words the real thing uses. */
-    public static String modifiedOnQuit() {
-        return "Modified buffers exist; exit anyway? (y or n)";
+    public static Text modifiedOnQuit() {
+        return MODIFIED_ON_QUIT.text();
     }
 }

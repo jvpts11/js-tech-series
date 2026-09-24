@@ -35,6 +35,7 @@ import dev.jstech.computers.program.cli.interac.InteracView;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -93,8 +94,7 @@ public final class FilePayloads {
                     && filesystemKindOf(computer)
                             != FilesystemKind.NONE) {
                 volumes.add(new DiskFilesPayload.WireVolume("",
-                        VolumeLabel.of(
-                                computer.systemDisk(), "Local Disk")));
+                        VolumeLabel.of(computer.systemDisk(), DiskFilesPayload.LOCAL_DISK.text())));
             }
             for (final long endpoint : computer.linkedEndpoints()) {
                 if (level.getBlockEntity(BlockPos.of(endpoint))
@@ -105,15 +105,16 @@ public final class FilePayloads {
                      * tree says what is in the drive before it is opened.
                      */
                     final ItemStack medium = reader.mediaSlot().getStackInSlot(0);
-                    final String fallback = InstallerProjection.facts(medium)
-                            .map(f -> f.name() + " Setup").orElse("Removable Drive");
+                    final Text fallback = InstallerProjection.facts(medium)
+                            .map(f -> DiskFilesPayload.SETUP.with(f.name()))
+                            .orElse(DiskFilesPayload.REMOVABLE_DRIVE.text());
                     volumes.add(new DiskFilesPayload.WireVolume("media:" + endpoint,
                             VolumeLabel.of(medium, fallback)));
                 }
             }
             // The other machines' shared folders, reached through this machine's own shell.
             if (netShell(level, computer) != null) {
-                volumes.add(new DiskFilesPayload.WireVolume(NET_ROOT, "Network"));
+                volumes.add(new DiskFilesPayload.WireVolume(NET_ROOT, DiskFilesPayload.NETWORK.text()));
             }
             final String reqDir = payload.dir();
             if (reqDir.startsWith(NET_ROOT)) {

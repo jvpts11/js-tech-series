@@ -9,8 +9,12 @@ package dev.jstech.computers.os.edit.project;
 
 import dev.jstech.computers.hardware.Architectures;
 import dev.jstech.computers.sigma.LanguageLevel;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * What a new project starts as: the shapes a program can have, each with the code that shape begins
@@ -19,39 +23,50 @@ import java.util.List;
  * <p>Every shape comes in both of the languages the mod ships, Σ# and the smaller Σ, because a studio on a modern
  * machine is where anybody would rather write either of them: the language being an old one is no reason to be
  * handed an empty file and left to it. A language an addon brings shows up in the studio's list with no shapes,
- * until it registers its own.
+ * until it registers its own. A shape's title and description are read in the player's language; its code, and the
+ * words the filters match, are not.
  */
+@TextHolder
 public enum ProjectTemplate {
 
-    CONSOLE_APP("Console App", ProjectFile.Kind.CONSOLE,
-            "A program with a Main that runs at the terminal it was started from, prints as it goes, "
-                    + "and is gone when it returns.",
-            List.of("Console")),
-    SCRIPT("Script", ProjectFile.Kind.SCRIPT,
-            "A program that stays up: set up once, called every tick, told when it is stopped. "
-                    + "For watching the network and reacting to it.",
-            List.of("Script")),
-    CLASS_LIBRARY("Class Library", ProjectFile.Kind.LIBRARY,
-            "Classes shared by other projects. Has no entry point of its own and compiles into theirs.",
-            List.of("Library")),
-    EMPTY_PROJECT("Empty Project", ProjectFile.Kind.EMPTY,
-            "A project with no files in it. For starting from nothing.",
-            List.of());
+    CONSOLE_APP(TextKey.of("jsc.project.console_app", "Console App"), ProjectFile.Kind.CONSOLE,
+            TextKey.of("jsc.project.console_app.description",
+                    "A program with a Main that runs at the terminal it was started from, prints as it goes, "
+                            + "and is gone when it returns."),
+            TextKey.of("jsc.project.kind.console", "Console")),
+    SCRIPT(TextKey.of("jsc.project.script", "Script"), ProjectFile.Kind.SCRIPT,
+            TextKey.of("jsc.project.script.description",
+                    "A program that stays up: set up once, called every tick, told when it is stopped. "
+                            + "For watching the network and reacting to it."),
+            TextKey.of("jsc.project.kind.script", "Script")),
+    CLASS_LIBRARY(TextKey.of("jsc.project.class_library", "Class Library"), ProjectFile.Kind.LIBRARY,
+            TextKey.of("jsc.project.class_library.description",
+                    "Classes shared by other projects. Has no entry point of its own and compiles into theirs."),
+            TextKey.of("jsc.project.kind.library", "Library")),
+    EMPTY_PROJECT(TextKey.of("jsc.project.empty_project", "Empty Project"), ProjectFile.Kind.EMPTY,
+            TextKey.of("jsc.project.empty_project.description",
+                    "A project with no files in it. For starting from nothing."),
+            null);
 
-    private final String title;
+    private final TextKey title;
     private final ProjectFile.Kind kind;
-    private final String description;
-    private final List<String> tags;
+    private final TextKey description;
+    /* The word the kind filter matches, in English, and shows in the player's language; none for no kind. */
+    private final @Nullable TextKey kindWord;
 
     /** The platforms every template here runs on, for the filter. */
     public static final List<String> PLATFORMS = List.of("Frames", "Linux");
 
-    ProjectTemplate(final String title, final ProjectFile.Kind kind, final String description,
-                    final List<String> tags) {
+    /* What the list adds under a shape in the smaller language, which runs where the full one does not. */
+    private static final TextKey RUNS_EVERYWHERE = TextKey.of("jsc.project.runs_everywhere",
+            "%s Runs on every machine, the earliest included.");
+
+    ProjectTemplate(final TextKey title, final ProjectFile.Kind kind, final TextKey description,
+                    final @Nullable TextKey kindWord) {
         this.title = title;
         this.kind = kind;
         this.description = description;
-        this.tags = tags;
+        this.kindWord = kindWord;
     }
 
     /**
@@ -73,19 +88,29 @@ public enum ProjectTemplate {
             return out;
         }
 
-        public String title() {
+        public Text title() {
             return this.template.title();
         }
 
         /** What the list says under the title, which for the smaller language says where it runs. */
-        public String description() {
+        public Text description() {
             return this.language.full() ? this.template.description()
-                    : this.template.description() + " Runs on every machine, the earliest included.";
+                    : RUNS_EVERYWHERE.with(this.template.description());
         }
 
         /** The words the filters match: the language, the platforms, and the kind. */
         public List<String> tags() {
             return this.template.tags(this.language);
+        }
+
+        /** The same words as the list shows them, the kind in the player's language. */
+        public List<Text> shownTags() {
+            return this.template.shownTags(this.language);
+        }
+
+        /** The kind as the list shows it, or empty for a shape of no kind. */
+        public Text kindText() {
+            return this.template.kindWord == null ? Text.EMPTY : this.template.kindWord.text();
         }
 
         public ProjectFile project(final String projectName) {
@@ -101,16 +126,16 @@ public enum ProjectTemplate {
         }
     }
 
-    public String title() {
-        return this.title;
+    public Text title() {
+        return this.title.text();
     }
 
     public ProjectFile.Kind kind() {
         return this.kind;
     }
 
-    public String description() {
-        return this.description;
+    public Text description() {
+        return this.description.text();
     }
 
     /** The words the filters match: the language, the platforms, and the kind. */
@@ -118,13 +143,40 @@ public enum ProjectTemplate {
         final List<String> out = new ArrayList<>();
         out.add(language.mark());
         out.addAll(PLATFORMS);
-        out.addAll(this.tags);
+        if (this.kindWord != null) {
+            out.add(this.kindWord.english());
+        }
+        return out;
+    }
+
+    /** The same words as the list shows them: the language and the platforms are names, the kind a word. */
+    public List<Text> shownTags(final LanguageLevel language) {
+        final List<Text> out = new ArrayList<>();
+        out.add(Text.literal(language.mark()));
+        for (final String platform : PLATFORMS) {
+            out.add(Text.literal(platform));
+        }
+        if (this.kindWord != null) {
+            out.add(this.kindWord.text());
+        }
         return out;
     }
 
     /** Whether the template's kind is the one asked for, or anything when nothing was. */
     public boolean isKind(final String kindFilter) {
-        return kindFilter == null || kindFilter.isEmpty() || this.tags.contains(kindFilter);
+        return kindFilter == null || kindFilter.isEmpty()
+                || this.kindWord != null && this.kindWord.english().equals(kindFilter);
+    }
+
+    /** The kinds the filter steps through, in the order the templates are listed. */
+    public static List<TextKey> kindWords() {
+        final List<TextKey> out = new ArrayList<>();
+        for (final ProjectTemplate template : values()) {
+            if (template.kindWord != null) {
+                out.add(template.kindWord);
+            }
+        }
+        return out;
     }
 
     /** The name of the first source a project of this template starts with, or empty for none. */

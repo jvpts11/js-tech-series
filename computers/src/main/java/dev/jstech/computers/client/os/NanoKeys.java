@@ -11,6 +11,8 @@ import dev.jstech.computers.os.edit.NanoReplace;
 import dev.jstech.computers.os.edit.NanoWords;
 import dev.jstech.computers.os.edit.TtyLook;
 import dev.jstech.core.client.gui.logic.TextDocument;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import java.util.List;
 import org.lwjgl.glfw.GLFW;
 
@@ -61,14 +63,15 @@ public final class NanoKeys implements TtyEditor.IKeys {
     @Override
     public String status(final TtyEditor editor) {
         return switch (this.asking) {
-            case SAVE_ON_EXIT -> NanoWords.SAVE_MODIFIED;
-            case FILE_NAME -> NanoWords.FILE_NAME + NanoWords.shown(editor.path());
-            case SEARCH -> NanoWords.searching(NanoWords.SEARCH, this.needle, this.answer.toString());
-            case REPLACE_WHAT -> NanoWords.searching(NanoWords.SEARCH_TO_REPLACE, this.needle,
-                    this.answer.toString());
-            case REPLACE_WITH -> NanoWords.REPLACE_WITH + this.answer;
-            case REPLACE_EACH -> NanoWords.REPLACE_THIS;
-            case READ_NAME -> NanoWords.FILE_TO_INSERT + this.answer;
+            case SAVE_ON_EXIT -> GameText.resolve(NanoWords.SAVE_MODIFIED);
+            case FILE_NAME -> GameText.resolve(NanoWords.FILE_NAME.with(NanoWords.shown(editor.path())));
+            case SEARCH -> GameText.resolve(
+                    NanoWords.searching(NanoWords.SEARCH, this.needle, this.answer.toString()));
+            case REPLACE_WHAT -> GameText.resolve(NanoWords.searching(NanoWords.SEARCH_TO_REPLACE, this.needle,
+                    this.answer.toString()));
+            case REPLACE_WITH -> GameText.resolve(NanoWords.REPLACE_WITH.with(this.answer.toString()));
+            case REPLACE_EACH -> GameText.resolve(NanoWords.REPLACE_THIS);
+            case READ_NAME -> GameText.resolve(NanoWords.FILE_TO_INSERT.with(this.answer.toString()));
             case NOTHING, HELP -> editor.message();
         };
     }
@@ -77,8 +80,8 @@ public final class NanoKeys implements TtyEditor.IKeys {
     public TtyLook look(final TtyEditor editor) {
         final String file = NanoWords.shown(editor.path());
         final boolean passing = this.asking == Asking.NOTHING || this.asking == Asking.HELP;
-        return new TtyLook(NanoWords.VERSION, file.isEmpty() ? NanoWords.NEW_BUFFER : file,
-                editor.dirty() ? NanoWords.MODIFIED : "",
+        return new TtyLook(NanoWords.VERSION, file.isEmpty() ? NanoWords.NEW_BUFFER.text() : Text.literal(file),
+                editor.dirty() ? NanoWords.MODIFIED.text() : Text.EMPTY,
                 passing ? TtyLook.Status.BRACKETED : TtyLook.Status.BAR,
                 switch (this.asking) {
                     case NOTHING -> NanoWords.EDITING;
@@ -92,7 +95,7 @@ public final class NanoKeys implements TtyEditor.IKeys {
 
     @Override
     public void opened(final TtyEditor editor, final boolean existed) {
-        editor.say(existed ? NanoWords.read(lines(editor.document())) : NanoWords.NEW_FILE);
+        editor.say(existed ? NanoWords.read(lines(editor.document())) : NanoWords.NEW_FILE.text());
     }
 
     @Override
@@ -199,7 +202,7 @@ public final class NanoKeys implements TtyEditor.IKeys {
         if (key == GLFW.GLFW_KEY_U ? doc.undo() : doc.redo()) {
             editor.touched();
         } else {
-            editor.say(key == GLFW.GLFW_KEY_U ? NanoWords.NOTHING_TO_UNDO : NanoWords.NOTHING_TO_REDO);
+            editor.say((key == GLFW.GLFW_KEY_U ? NanoWords.NOTHING_TO_UNDO : NanoWords.NOTHING_TO_REDO).text());
         }
     }
 
@@ -219,7 +222,7 @@ public final class NanoKeys implements TtyEditor.IKeys {
         if ((control && key == GLFW.GLFW_KEY_C) || key == GLFW.GLFW_KEY_ESCAPE) {
             final boolean midway = this.asking == Asking.REPLACE_EACH && this.replacing != null;
             editor.document().clearSelection();
-            editor.say(midway ? NanoWords.replaced(this.replacing.done()) : NanoWords.CANCELLED);
+            editor.say(midway ? NanoWords.replaced(this.replacing.done()) : NanoWords.CANCELLED.text());
             this.replacing = null;
             this.asking = Asking.NOTHING;
         } else if (key == GLFW.GLFW_KEY_BACKSPACE && !this.answer.isEmpty()) {
@@ -249,7 +252,7 @@ public final class NanoKeys implements TtyEditor.IKeys {
             case REPLACE_WHAT -> {
                 this.needle = typed.isEmpty() ? this.needle : typed;
                 if (this.needle.isEmpty()) {
-                    editor.say(NanoWords.CANCELLED);
+                    editor.say(NanoWords.CANCELLED.text());
                 } else {
                     ask(Asking.REPLACE_WITH);
                 }
@@ -330,7 +333,7 @@ public final class NanoKeys implements TtyEditor.IKeys {
         doc.clearSelection();
         final boolean wentRound = doc.cursorLine() < fromLine
                 || (doc.cursorLine() == fromLine && doc.cursorCol() <= fromCol);
-        editor.say(wentRound ? NanoWords.SEARCH_WRAPPED : "");
+        editor.say(wentRound ? NanoWords.SEARCH_WRAPPED.text() : Text.EMPTY);
     }
 
     /** Takes the cursor's line out of the file and keeps it, together with any taken just before it. */
@@ -352,7 +355,7 @@ public final class NanoKeys implements TtyEditor.IKeys {
     /** Pulls another file in where the cursor is, once the machine has said what is in it. */
     private static void insertFile(final TtyEditor editor, final String name) {
         if (name.isBlank()) {
-            editor.say(NanoWords.CANCELLED);
+            editor.say(NanoWords.CANCELLED.text());
             return;
         }
         editor.read(name.trim(), (content, existed) -> {
@@ -375,7 +378,7 @@ public final class NanoKeys implements TtyEditor.IKeys {
         return count > 0 && doc.line(count - 1).isEmpty() ? count - 1 : count;
     }
 
-    private static String position(final TextDocument doc) {
+    private static Text position(final TextDocument doc) {
         int before = 0;
         int all = 0;
         for (int i = 0; i < doc.lineCount(); i++) {

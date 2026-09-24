@@ -22,6 +22,8 @@ import dev.jstech.computers.vm.program.Process;
 import dev.jstech.computers.vm.program.ProgramImage;
 import dev.jstech.computers.vm.program.SnapshotException;
 import dev.jstech.computers.vm.program.Values;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.nbt.CompoundTag;
@@ -36,13 +38,14 @@ import org.slf4j.Logger;
  * reads it, runs it and saves it, and no language in the registry may claim the extension. That leaves a language free
  * to do nothing but compile, and keeps every compiled program running in a pack that took Σ# out of the registry.
  */
+@TextHolder
 public final class MachineListing {
 
     /** The extension of a listing, without the dot. */
     public static final String EXTENSION = "asm";
 
-    /** What a listing is called in front of a person. */
-    public static final String LABEL = "Σ# program";
+    /** What a listing is called in front of a person, in their language. */
+    public static final TextKey LABEL = TextKey.of("jsc.machine_listing.label", "Σ# program");
 
     private static final Logger LOGGER = LogUtils.getLogger();
 

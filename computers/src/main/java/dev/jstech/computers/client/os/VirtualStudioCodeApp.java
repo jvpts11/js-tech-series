@@ -27,6 +27,8 @@ import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.language.IProgrammingLanguage;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -66,7 +68,6 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     private static final int PANEL_H = 62;
     private static final int MIN_CODE_H = 36;
 
-    private static final List<String> PANEL_TABS = List.of("PROBLEMS", "TERMINAL");
     private static final int PANEL_PROBLEMS = 0;
     private static final int PANEL_TERMINAL = 1;
 
@@ -108,11 +109,12 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     private final Button askOk;
     private String askTitle = "";
     private Consumer<String> askAction = value -> { };
-    private final Popup settings = new Popup("Settings", 170, 50).setLayouter(this::layoutSettings);
+    private final Popup settings = new Popup(GameText.resolve(VsCodeTexts.SETTINGS_TITLE), 170, 50)
+            .setLayouter(this::layoutSettings);
     private final AmountStepper tabStepper = new AmountStepper();
     /** The question a closing tab with changes asks. */
-    private final Popup askClose = new Popup(() -> "Save changes to " + closingName() + "?", 176, 40)
-            .setLayouter(this::layoutAskClose);
+    private final Popup askClose = new Popup(() -> GameText.resolve(StudioTexts.SAVE_CHANGES.with(closingName())),
+            176, 40).setLayouter(this::layoutAskClose);
     /** The tab being closed while the question is up. */
     private int closing = -1;
 
@@ -156,19 +158,20 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         this.extensions = this.root.add(new ListView<>(() -> JsCore.languages().all(), ROW_H + 2, this::drawLanguage));
         this.tabs = this.root.add(new TabStrip(this.workspace::tabLabels).fitToLabels(10).setUnderline(false));
         this.tabs.setCloseable(this::closeTab);
-        this.askClose.add(new Button("Save", () -> {
+        this.askClose.add(new Button(GameText.resolve(StudioTexts.SAVE), () -> {
             this.askClose.close();
             this.workspace.setCurrent(this.closing);
             this.workspace.save();
             this.workspace.close(this.closing);
         }).setPrimary(true));
-        this.askClose.add(new Button("Don't Save", () -> {
+        this.askClose.add(new Button(GameText.resolve(StudioTexts.DONT_SAVE), () -> {
             this.askClose.close();
             this.workspace.close(this.closing);
         }));
-        this.askClose.add(new Button("Cancel", this.askClose::close));
+        this.askClose.add(new Button(GameText.resolve(StudioTexts.CANCEL), this.askClose::close));
         this.tabs.setOnSelect(this.workspace::setCurrent);
-        this.panelTabs = this.root.add(new TabStrip(PANEL_TABS).fitToLabels(12).setUnderline(true));
+        this.panelTabs = this.root.add(new TabStrip(List.of(GameText.resolve(VsCodeTexts.PROBLEMS_TAB),
+                GameText.resolve(StudioTexts.TERMINAL_TAB))).fitToLabels(12).setUnderline(true));
         this.panelTabs.setSelected(PANEL_TERMINAL);
         this.problems = this.root.add(new ListView<>(this::complaints, ROW_H, this::drawProblemRow))
                 .setOnClick(this::onProblemPicked);
@@ -178,18 +181,22 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
          */
         this.terminal = this.root.add(new ShellView(host, false, "")).setOnIdle(this::runNext);
         this.root.add(this.menuBar);
-        this.menuBar.add("File", this::fileMenu).add("Edit", this::editMenu).add("View", this::viewMenu)
-                .add("Go", this::goMenu).add("Run", this::runMenu).add("Terminal", this::terminalMenu)
-                .add("Help", this::helpMenu);
+        this.menuBar.add(GameText.resolve(StudioTexts.FILE_MENU), this::fileMenu)
+                .add(GameText.resolve(StudioTexts.EDIT_MENU), this::editMenu)
+                .add(GameText.resolve(StudioTexts.VIEW_MENU), this::viewMenu)
+                .add(GameText.resolve(VsCodeTexts.GO_MENU), this::goMenu)
+                .add(GameText.resolve(VsCodeTexts.RUN_MENU), this::runMenu)
+                .add(GameText.resolve(StudioTexts.TERMINAL), this::terminalMenu)
+                .add(GameText.resolve(StudioTexts.HELP_MENU), this::helpMenu);
         this.ask.add(this.askField);
-        this.askOk = this.ask.add(new Button("OK", () -> {
+        this.askOk = this.ask.add(new Button(GameText.resolve(StudioTexts.OK), () -> {
             this.ask.close();
             this.askAction.accept(this.askField.edit().trim());
         }).setPrimary(true));
         this.askField.setOnCommit(value -> this.askOk.mouseClicked(this.askOk.center()[0], this.askOk.center()[1], 0));
-        this.settings.add(new Label("Tab size", Label.Tone.DIM));
+        this.settings.add(new Label(GameText.resolve(StudioTexts.TAB_SIZE), Label.Tone.DIM));
         this.settings.add(this.tabStepper.setRange(2, 8).setAmount(4).setOnChange(v -> setTabSize((int) v)));
-        this.settings.add(new Button("Close", this.settings::close).setPrimary(true));
+        this.settings.add(new Button(GameText.resolve(StudioTexts.CLOSE), this.settings::close).setPrimary(true));
     }
 
     /* What is open and what is wrong with it */
@@ -391,7 +398,8 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
                               final int index, final int x, final int y, final int width, final int height,
                               final boolean hovered, final boolean selected) {
         g.drawString(ctx.font(), language.displayName(), x + 2, y + 1, ctx.skin().text(), false);
-        g.drawString(ctx.font(), "installed", x + width - ctx.font().width("installed") - 2, y + 1,
+        final String installed = GameText.resolve(VsCodeTexts.INSTALLED);
+        g.drawString(ctx.font(), installed, x + width - ctx.font().width(installed) - 2, y + 1,
                 ctx.skin().dim(), false);
     }
 
@@ -418,8 +426,12 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
 
     /* The menus, and the palette that holds every one of their entries */
 
-    private ContextMenu.Item item(final String label, final boolean enabled, final Runnable action) {
-        return new ContextMenu.Item(label, enabled, action);
+    private ContextMenu.Item item(final Text label, final boolean enabled, final Runnable action) {
+        return new ContextMenu.Item(GameText.resolve(label), enabled, action);
+    }
+
+    private ContextMenu.Item item(final TextKey label, final boolean enabled, final Runnable action) {
+        return item(label.text(), enabled, action);
     }
 
     private boolean hasDoc() {
@@ -428,43 +440,43 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
 
     private List<ContextMenu.Item> fileMenu() {
         final List<ContextMenu.Item> items = new ArrayList<>(List.of(
-                item("New File", this.folderOpen, this::newFile),
-                item("Open File...", this.folderOpen, this::openFileByName),
-                item("Open Folder...", true, this::pickFolder)));
+                item(StudioTexts.NEW_FILE, this.folderOpen, this::newFile),
+                item(StudioTexts.OPEN_FILE_ITEM, this.folderOpen, this::openFileByName),
+                item(StudioTexts.OPEN_FOLDER_ITEM, true, this::pickFolder)));
         for (final String path : recent()) {
-            items.add(item("Recent: " + shortName(path), true, () -> openRecent(path)));
+            items.add(item(StudioTexts.RECENT.with(shortName(path)), true, () -> openRecent(path)));
         }
         items.add(ContextMenu.Item.separator());
-        items.add(item("Save", hasDoc(), this.workspace::save));
-        items.add(item("Save As...", hasDoc(), this::saveAs));
-        items.add(item("Save All", this.workspace.anyDirty(), this.workspace::saveAll));
+        items.add(item(StudioTexts.SAVE, hasDoc(), this.workspace::save));
+        items.add(item(StudioTexts.SAVE_AS_ITEM, hasDoc(), this::saveAs));
+        items.add(item(StudioTexts.SAVE_ALL, this.workspace.anyDirty(), this.workspace::saveAll));
         items.add(ContextMenu.Item.separator());
-        items.add(item("Close Editor", hasDoc(), () -> closeTab(this.workspace.currentIndex())));
-        items.add(item("Close Folder", this.folderOpen, this::closeFolder));
-        items.add(item("Exit", true, () -> DesktopScreen.requestClose("Virtual Studio Code")));
+        items.add(item(VsCodeTexts.CLOSE_EDITOR, hasDoc(), () -> closeTab(this.workspace.currentIndex())));
+        items.add(item(VsCodeTexts.CLOSE_FOLDER, this.folderOpen, this::closeFolder));
+        items.add(item(StudioTexts.EXIT, true, () -> DesktopScreen.requestClose("Virtual Studio Code")));
         return items;
     }
 
     private List<ContextMenu.Item> editMenu() {
         return List.of(
-                item("Find...", hasDoc(), this::find),
-                item("Toggle Line Comment", hasDoc(), this::toggleComment));
+                item(StudioTexts.FIND_ITEM, hasDoc(), this::find),
+                item(StudioTexts.TOGGLE_LINE_COMMENT, hasDoc(), this::toggleComment));
     }
 
     private List<ContextMenu.Item> viewMenu() {
         return List.of(
-                item("Command Palette...", true, this::openPalette),
+                item(VsCodeTexts.PALETTE_ITEM, true, this::openPalette),
                 ContextMenu.Item.separator(),
-                item("Explorer", this.folderOpen, () -> this.side = Side.EXPLORER),
-                item("Extensions", true, () -> this.side = Side.EXTENSIONS),
+                item(VsCodeTexts.EXPLORER, this.folderOpen, () -> this.side = Side.EXPLORER),
+                item(VsCodeTexts.EXTENSIONS, true, () -> this.side = Side.EXTENSIONS),
                 ContextMenu.Item.separator(),
-                item("Problems", true, () -> this.panelTabs.setSelected(PANEL_PROBLEMS)),
-                item("Terminal", true, () -> this.panelTabs.setSelected(PANEL_TERMINAL)),
+                item(VsCodeTexts.PROBLEMS, true, () -> this.panelTabs.setSelected(PANEL_PROBLEMS)),
+                item(StudioTexts.TERMINAL, true, () -> this.panelTabs.setSelected(PANEL_TERMINAL)),
                 ContextMenu.Item.separator(),
-                ContextMenu.Item.submenu("Appearance", List.of(
-                        item("Zoom In", hasDoc(), () -> zoomEditor(1)),
-                        item("Zoom Out", hasDoc(), () -> zoomEditor(-1)),
-                        item("Reset Zoom", hasDoc(), () -> setEditorScale(1.0f)))));
+                ContextMenu.Item.submenu(GameText.resolve(VsCodeTexts.APPEARANCE), List.of(
+                        item(StudioTexts.ZOOM_IN, hasDoc(), () -> zoomEditor(1)),
+                        item(StudioTexts.ZOOM_OUT, hasDoc(), () -> zoomEditor(-1)),
+                        item(StudioTexts.RESET_ZOOM, hasDoc(), () -> setEditorScale(1.0f)))));
     }
 
     /** The menu the right button opens on the code: the clipboard, then what can be done to the code. */
@@ -472,15 +484,15 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         final CodeWorkspace.Doc doc = this.workspace.current();
         final boolean selected = doc != null && doc.area().document().hasSelection();
         return List.of(
-                item("Cut", selected, () -> pressInEditor(GLFW.GLFW_KEY_X)),
-                item("Copy", hasDoc(), () -> pressInEditor(GLFW.GLFW_KEY_C)),
-                item("Paste", hasDoc(), () -> pressInEditor(GLFW.GLFW_KEY_V)),
+                item(StudioTexts.CUT, selected, () -> pressInEditor(GLFW.GLFW_KEY_X)),
+                item(StudioTexts.COPY, hasDoc(), () -> pressInEditor(GLFW.GLFW_KEY_C)),
+                item(StudioTexts.PASTE, hasDoc(), () -> pressInEditor(GLFW.GLFW_KEY_V)),
                 ContextMenu.Item.separator(),
-                item("Toggle Line Comment", hasDoc(), this::toggleComment),
-                ContextMenu.Item.submenu("Refactor", List.of(
-                        item("Implement Interface", hasDoc(), this::implementInterface))),
+                item(StudioTexts.TOGGLE_LINE_COMMENT, hasDoc(), this::toggleComment),
+                ContextMenu.Item.submenu(GameText.resolve(StudioTexts.REFACTOR), List.of(
+                        item(StudioTexts.IMPLEMENT_INTERFACE, hasDoc(), this::implementInterface))),
                 ContextMenu.Item.separator(),
-                item("Command Palette...", true, this::openPalette));
+                item(VsCodeTexts.PALETTE_ITEM, true, this::openPalette));
     }
 
     /** Sends a Ctrl key to the code area, which is where the clipboard commands live. */
@@ -517,59 +529,71 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
 
     private List<ContextMenu.Item> goMenu() {
         return List.of(
-                item("Go to File...", this.folderOpen, this::goToFile),
-                item("Go to Line...", hasDoc(), this::goToLine));
+                item(VsCodeTexts.GO_TO_FILE_ITEM, this.folderOpen, this::goToFile),
+                item(VsCodeTexts.GO_TO_LINE_ITEM, hasDoc(), this::goToLine));
     }
 
     private List<ContextMenu.Item> runMenu() {
         return List.of(
-                item("Run File", hasDoc(), this::runFile),
-                item("Build File", hasDoc(), this::buildFile),
-                item("Build Folder", this.folderOpen && !this.workspace.files().isEmpty(), this::buildFolder),
-                item("Stop", true, () -> this.terminal.run("sigma stop")));
+                item(VsCodeTexts.RUN_FILE, hasDoc(), this::runFile),
+                item(VsCodeTexts.BUILD_FILE, hasDoc(), this::buildFile),
+                item(VsCodeTexts.BUILD_FOLDER, this.folderOpen && !this.workspace.files().isEmpty(), this::buildFolder),
+                item(StudioTexts.STOP, true, () -> this.terminal.run("sigma stop")));
     }
 
     private List<ContextMenu.Item> terminalMenu() {
         return List.of(
-                item("New Terminal", true, this::focusTerminal),
-                item("Clear", true, () -> this.terminal.run("cls")));
+                item(VsCodeTexts.NEW_TERMINAL, true, this::focusTerminal),
+                item(VsCodeTexts.CLEAR, true, () -> this.terminal.run("cls")));
     }
 
     private List<ContextMenu.Item> helpMenu() {
         return List.of(
-                item("Welcome", true, this::closeFolder),
-                item("Keyboard Shortcuts", true, this::showShortcuts),
-                item("About", true, () -> this.workspace.say("Virtual Studio Code, by Midsoft. Σ# 1.0.")));
+                item(VsCodeTexts.WELCOME, true, this::closeFolder),
+                item(VsCodeTexts.KEYBOARD_SHORTCUTS, true, this::showShortcuts),
+                item(VsCodeTexts.ABOUT_ITEM, true, () -> this.workspace.say(GameText.resolve(VsCodeTexts.ABOUT))));
     }
 
     /** Every command there is, under the name its menu gives it, for the palette. */
     private List<CommandPalette.Entry> commands() {
+        final Text sigma = Text.literal(LanguageLevel.SIGMA_SHARP.mark());
+        final Text terminal = StudioTexts.TERMINAL.text();
+        final Text file = StudioTexts.FILE_MENU.text();
+        final Text edit = StudioTexts.EDIT_MENU.text();
+        final Text view = StudioTexts.VIEW_MENU.text();
+        final Text help = StudioTexts.HELP_MENU.text();
         return List.of(
-                new CommandPalette.Entry("Σ#: Run File", "F5", this::runFile),
-                new CommandPalette.Entry("Σ#: Build File", "Ctrl+Shift+B", this::buildFile),
-                new CommandPalette.Entry("Σ#: Build Folder", "", this::buildFolder),
-                new CommandPalette.Entry("Σ#: Stop", "", () -> this.terminal.run("sigma stop")),
-                new CommandPalette.Entry("Terminal: New Terminal", "Ctrl+`", this::focusTerminal),
-                new CommandPalette.Entry("Terminal: Clear", "", () -> this.terminal.run("cls")),
-                new CommandPalette.Entry("File: New File", "", this::newFile),
-                new CommandPalette.Entry("File: Open File...", "Ctrl+O", this::openFileByName),
-                new CommandPalette.Entry("File: Open Folder...", "", this::pickFolder),
-                new CommandPalette.Entry("File: Save", "Ctrl+S", this.workspace::save),
-                new CommandPalette.Entry("File: Save As...", "", this::saveAs),
-                new CommandPalette.Entry("File: Save All", "", this.workspace::saveAll),
-                new CommandPalette.Entry("File: Close Folder", "", this::closeFolder),
-                new CommandPalette.Entry("Edit: Find...", "Ctrl+F", this::find),
-                new CommandPalette.Entry("Edit: Toggle Line Comment", "", this::toggleComment),
-                new CommandPalette.Entry("Edit: Implement Interface", "Ctrl+.", this::implementInterface),
-                new CommandPalette.Entry("View: Toggle Problems", "Ctrl+Shift+M", () -> this.panelTabs.setSelected(
+                command(sigma, VsCodeTexts.RUN_FILE, "F5", this::runFile),
+                command(sigma, VsCodeTexts.BUILD_FILE, "Ctrl+Shift+B", this::buildFile),
+                command(sigma, VsCodeTexts.BUILD_FOLDER, "", this::buildFolder),
+                command(sigma, StudioTexts.STOP, "", () -> this.terminal.run("sigma stop")),
+                command(terminal, VsCodeTexts.NEW_TERMINAL, "Ctrl+`", this::focusTerminal),
+                command(terminal, VsCodeTexts.CLEAR, "", () -> this.terminal.run("cls")),
+                command(file, StudioTexts.NEW_FILE, "", this::newFile),
+                command(file, StudioTexts.OPEN_FILE_ITEM, "Ctrl+O", this::openFileByName),
+                command(file, StudioTexts.OPEN_FOLDER_ITEM, "", this::pickFolder),
+                command(file, StudioTexts.SAVE, "Ctrl+S", this.workspace::save),
+                command(file, StudioTexts.SAVE_AS_ITEM, "", this::saveAs),
+                command(file, StudioTexts.SAVE_ALL, "", this.workspace::saveAll),
+                command(file, VsCodeTexts.CLOSE_FOLDER, "", this::closeFolder),
+                command(edit, StudioTexts.FIND_ITEM, "Ctrl+F", this::find),
+                command(edit, StudioTexts.TOGGLE_LINE_COMMENT, "", this::toggleComment),
+                command(edit, StudioTexts.IMPLEMENT_INTERFACE, "Ctrl+.", this::implementInterface),
+                command(view, VsCodeTexts.TOGGLE_PROBLEMS, "Ctrl+Shift+M", () -> this.panelTabs.setSelected(
                         this.panelTabs.selected() == PANEL_PROBLEMS ? PANEL_TERMINAL : PANEL_PROBLEMS)),
-                new CommandPalette.Entry("View: Explorer", "", () -> this.side = Side.EXPLORER),
-                new CommandPalette.Entry("View: Extensions", "", () -> this.side = Side.EXTENSIONS),
-                new CommandPalette.Entry("Go to File...", "Ctrl+P", this::goToFile),
-                new CommandPalette.Entry("Go to Line...", "Ctrl+G", this::goToLine),
-                new CommandPalette.Entry("Preferences: Open Settings", "Ctrl+,", this::openSettings),
-                new CommandPalette.Entry("Help: Welcome", "", this::closeFolder),
-                new CommandPalette.Entry("Help: Keyboard Shortcuts", "", this::showShortcuts));
+                command(view, VsCodeTexts.EXPLORER, "", () -> this.side = Side.EXPLORER),
+                command(view, VsCodeTexts.EXTENSIONS, "", () -> this.side = Side.EXTENSIONS),
+                new CommandPalette.Entry(GameText.resolve(VsCodeTexts.GO_TO_FILE_ITEM), "Ctrl+P", this::goToFile),
+                new CommandPalette.Entry(GameText.resolve(VsCodeTexts.GO_TO_LINE_ITEM), "Ctrl+G", this::goToLine),
+                command(VsCodeTexts.PREFERENCES.text(), VsCodeTexts.OPEN_SETTINGS, "Ctrl+,", this::openSettings),
+                command(help, VsCodeTexts.WELCOME, "", this::closeFolder),
+                command(help, VsCodeTexts.KEYBOARD_SHORTCUTS, "", this::showShortcuts));
+    }
+
+    /* A command as the palette lists it: what it belongs to, then its name, the way the menus read. */
+    private static CommandPalette.Entry command(final Text category, final TextKey name, final String keys,
+                                                final Runnable action) {
+        return new CommandPalette.Entry(GameText.resolve(VsCodeTexts.COMMAND.with(category, name)), keys, action);
     }
 
     private void openPalette() {
@@ -588,8 +612,8 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     }
 
     private void pickFolder() {
-        this.dialog.openFolder("Open Folder", this.folderOpen ? this.workspace.folder() : CodeWorkspace.HOME,
-                this::openFolder);
+        this.dialog.openFolder(StudioTexts.OPEN_FOLDER.text(),
+                this.folderOpen ? this.workspace.folder() : CodeWorkspace.HOME, this::openFolder);
     }
 
     /** The system's file window this editor opens, for a test to drive. */
@@ -616,28 +640,29 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     }
 
     private void openFileByName() {
-        this.dialog.openFile("Open File", this.folderOpen ? this.workspace.folder() : CodeWorkspace.HOME,
-                FileDialog.Filter.sources(), this::openFile);
+        this.dialog.openFile(StudioTexts.OPEN_FILE.text(),
+                this.folderOpen ? this.workspace.folder() : CodeWorkspace.HOME, FileDialog.Filter.sources(),
+                this::openFile);
     }
 
     private void goToLine() {
-        ask("Go to Line", "", value -> {
+        ask(VsCodeTexts.GO_TO_LINE, "", value -> {
             final CodeWorkspace.Doc doc = this.workspace.current();
             try {
                 if (doc != null) {
                     doc.area().document().setCursor(Integer.parseInt(value) - 1, 0);
                 }
             } catch (final NumberFormatException ignored) {
-                this.workspace.say("Not a line number: " + value);
+                this.workspace.say(GameText.resolve(StudioTexts.NOT_A_LINE.with(value)));
             }
         });
     }
 
     private void find() {
-        ask("Find", "", needle -> {
+        ask(StudioTexts.FIND, "", needle -> {
             final CodeWorkspace.Doc doc = this.workspace.current();
             if (doc != null && !doc.area().document().find(needle)) {
-                this.workspace.say("No results for '" + needle + "'");
+                this.workspace.say(GameText.resolve(StudioTexts.NO_RESULTS.with(needle)));
             }
         });
     }
@@ -646,8 +671,8 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     private void implementInterface() {
         final CodeWorkspace.Doc doc = this.workspace.current();
         if (doc != null) {
-            this.workspace.say(this.workspace.implementInterface(doc) ? "Interface implemented"
-                    : "Nothing to implement here");
+            this.workspace.say(GameText.resolve(this.workspace.implementInterface(doc)
+                    ? StudioTexts.INTERFACE_IMPLEMENTED : StudioTexts.NOTHING_TO_IMPLEMENT));
         }
     }
 
@@ -660,7 +685,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     }
 
     private void newFile() {
-        ask("New File", "untitled.sgs", name -> {
+        ask(StudioTexts.NEW_FILE, "untitled.sgs", name -> {
             if (!name.isEmpty()) {
                 final String folder = this.workspace.folder();
                 this.workspace.newFile(folder.isEmpty() ? name : folder + "/" + name);
@@ -674,8 +699,8 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         if (doc == null) {
             return;
         }
-        this.dialog.saveAs("Save As", this.workspace.folder(), doc.name(), FileDialog.Filter.sources(),
-                this.workspace::saveAs);
+        this.dialog.saveAs(StudioTexts.SAVE_AS.text(), this.workspace.folder(), doc.name(),
+                FileDialog.Filter.sources(), this.workspace::saveAs);
     }
 
     private void openSettings() {
@@ -684,7 +709,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     }
 
     private void showShortcuts() {
-        this.workspace.say("F5 run, Ctrl+Shift+B build, Ctrl+Shift+P palette, Ctrl+P file, Ctrl+G line, Ctrl+F find");
+        this.workspace.say(GameText.resolve(VsCodeTexts.SHORTCUTS));
     }
 
     private void focusTerminal() {
@@ -711,7 +736,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         }
         final LanguageLevel level = LanguageLevel.ofSource(doc.path());
         if (level == null) {
-            this.workspace.say(doc.name() + " is not a program to build");
+            this.workspace.say(GameText.resolve(VsCodeTexts.NOT_A_PROGRAM.with(doc.name())));
             return;
         }
         focusTerminal();
@@ -777,8 +802,8 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     }
 
     /** Asks for one thing in a small window and does something with the answer. */
-    private void ask(final String title, final String initial, final Consumer<String> action) {
-        this.askTitle = title;
+    private void ask(final TextKey title, final String initial, final Consumer<String> action) {
+        this.askTitle = GameText.resolve(title);
         this.askAction = action;
         this.askField.set(initial);
         // A file name opens with the caret before its extension, which is the part that gets typed over.
@@ -905,7 +930,8 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         if (sideShown) {
             this.skin.panel(g, x + RAIL_W, top, sideW, bodyTotal);
             if (captioned) {
-                g.drawString(font, "EXTENSIONS", x + RAIL_W + 4, top + 1, this.skin.dim(), false);
+                g.drawString(font, font.plainSubstrByWidth(GameText.resolve(VsCodeTexts.EXTENSIONS_CAPTION), sideW - 6),
+                        x + RAIL_W + 4, top + 1, this.skin.dim(), false);
             }
         }
         // A list that is not on show is hidden outright: one with no room still has rows to draw.
@@ -1027,19 +1053,19 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         int ly = y + 8;
         g.drawString(font, "Virtual Studio Code", left, ly, palette.plain(), false);
         ly += 10;
-        g.drawString(font, "Editing evolved", left, ly, palette.gutterText(), false);
+        g.drawString(font, GameText.resolve(VsCodeTexts.EDITING_EVOLVED), left, ly, palette.gutterText(), false);
         ly += 14;
-        g.drawString(font, "Start", left, ly, palette.plain(), false);
+        g.drawString(font, GameText.resolve(StudioTexts.START), left, ly, palette.plain(), false);
         ly += 10;
-        ly = link(g, font, left, ly, "New File...", this::newFile, palette);
-        ly = link(g, font, left, ly, "Open File...", this::pickFolder, palette);
-        ly = link(g, font, left, ly, "Open Folder...", this::pickFolder, palette);
+        ly = link(g, font, left, ly, GameText.resolve(StudioTexts.NEW_FILE_ITEM), this::newFile, palette);
+        ly = link(g, font, left, ly, GameText.resolve(StudioTexts.OPEN_FILE_ITEM), this::pickFolder, palette);
+        ly = link(g, font, left, ly, GameText.resolve(StudioTexts.OPEN_FOLDER_ITEM), this::pickFolder, palette);
         ly += 6;
-        g.drawString(font, "Recent", left, ly, palette.plain(), false);
+        g.drawString(font, GameText.resolve(VsCodeTexts.RECENT_HEADING), left, ly, palette.plain(), false);
         ly += 10;
         final List<String> recent = recent();
         if (recent.isEmpty()) {
-            g.drawString(font, "Nothing yet", left, ly, palette.gutterText(), false);
+            g.drawString(font, GameText.resolve(StudioTexts.NOTHING_YET), left, ly, palette.gutterText(), false);
             ly += 9;
         }
         for (final String path : recent) {
@@ -1047,16 +1073,16 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         }
         final int rightX = x + width / 2 + 6;
         int ry = y + 32;
-        g.drawString(font, "Walkthroughs", rightX, ry, palette.plain(), false);
+        g.drawString(font, GameText.resolve(VsCodeTexts.WALKTHROUGHS), rightX, ry, palette.plain(), false);
         ry += 10;
-        g.drawString(font, "Get started with Σ#:", rightX, ry, palette.gutterText(), false);
+        g.drawString(font, GameText.resolve(VsCodeTexts.GET_STARTED), rightX, ry, palette.gutterText(), false);
         ry += 9;
-        g.drawString(font, "open a folder, write, press F5", rightX, ry, palette.gutterText(), false);
+        g.drawString(font, GameText.resolve(VsCodeTexts.WALKTHROUGH_STEPS), rightX, ry, palette.gutterText(), false);
         ry += 14;
-        g.drawString(font, "Help", rightX, ry, palette.plain(), false);
+        g.drawString(font, GameText.resolve(StudioTexts.HELP_MENU), rightX, ry, palette.plain(), false);
         ry += 10;
-        ry = link(g, font, rightX, ry, "Keyboard shortcuts", this::showShortcuts, palette);
-        link(g, font, rightX, ry, "Command palette", this::openPalette, palette);
+        ry = link(g, font, rightX, ry, GameText.resolve(VsCodeTexts.SHORTCUTS_LINK), this::showShortcuts, palette);
+        link(g, font, rightX, ry, GameText.resolve(VsCodeTexts.PALETTE_LINK), this::openPalette, palette);
         Draw.popScissor(g);
     }
 
@@ -1072,14 +1098,15 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         final InkPalette palette = InkPalette.forGround(this.skin.isDark()).get();
         g.fill(x, y, x + width, y + height, palette.ground());
         Draw.pushScissor(g, x, y, x + width, y + height);
-        g.drawString(font, "Pick a file in the Explorer, or Ctrl+P", x + 6, y + 6, palette.gutterText(), false);
+        g.drawString(font, GameText.resolve(VsCodeTexts.EMPTY), x + 6, y + 6, palette.gutterText(), false);
         Draw.popScissor(g);
     }
 
     private void drawStatus(final GuiGraphics g, final Font font, final int x, final int y,
                             final int width, final CodeWorkspace.Doc doc) {
         this.skin.statusBar(g, x, y, width, STATUS_H);
-        final String where = this.folderOpen ? "[+] " + shortName(this.workspace.folder()) : "No folder open";
+        final String where = this.folderOpen ? "[+] " + shortName(this.workspace.folder())
+                : GameText.resolve(VsCodeTexts.NO_FOLDER);
         g.drawString(font, where, x + 3, y + 1, this.skin.dim(), false);
         int right = x + width - 3;
         final IProgrammingLanguage language = this.workspace.language();
@@ -1089,12 +1116,12 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
             right -= 8;
         }
         if (doc != null) {
-            final String spaces = "Spaces: " + this.tabSize;
+            final String spaces = GameText.resolve(VsCodeTexts.SPACES.with(this.tabSize));
             right -= font.width(spaces);
             g.drawString(font, spaces, right, y + 1, this.skin.dim(), false);
             right -= 8;
-            final String pos = "Ln " + (doc.area().document().cursorLine() + 1)
-                    + ", Col " + (doc.area().document().cursorCol() + 1);
+            final String pos = GameText.resolve(EditorTexts.LINE_AND_COLUMN.with(
+                    doc.area().document().cursorLine() + 1, doc.area().document().cursorCol() + 1));
             right -= font.width(pos);
             g.drawString(font, pos, right, y + 1, this.skin.dim(), false);
         }
@@ -1158,7 +1185,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
             final int slot = (int) ((mouseY - (this.root.y() + MenuBar.HEIGHT + 3)) / 13);
             switch (slot) {
                 case 0 -> this.side = Side.EXPLORER;
-                case 1 -> this.workspace.say("Search across files is not here yet");
+                case 1 -> this.workspace.say(GameText.resolve(VsCodeTexts.NO_SEARCH));
                 case 2 -> runFile();
                 case 3 -> this.side = Side.EXTENSIONS;
                 default -> { }

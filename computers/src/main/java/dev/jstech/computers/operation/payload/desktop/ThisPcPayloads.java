@@ -44,6 +44,10 @@ import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
+import dev.jstech.core.text.TextLists;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -117,7 +121,7 @@ public final class ThisPcPayloads {
                      * The three shares travel separately, so the disk can show where its space
                      * actually went instead of one anonymous "used" number.
                      */
-                    disks.add(new ThisPcPayload.WireDisk(slot, stack.getHoverName().getString(),
+                    disks.add(new ThisPcPayload.WireDisk(slot, GameText.of(stack.getHoverName()),
                             cap, usedItems, stack == sys, osId != null ? osId.getPath() : "",
                             osItems, storeItems, fileItems));
                 }
@@ -148,7 +152,7 @@ public final class ThisPcPayloads {
         String payloadName = "";
         int payloadYear = 0;
         String packageId = "";
-        String needs = "";
+        List<Text> needs = List.of();
         boolean installable = false;
         if (pl != null && kind == MediaKind.PROGRAM_INSTALL) {
             final ProgramSpec spec =
@@ -158,7 +162,7 @@ public final class ThisPcPayloads {
                 payloadName = spec.displayName();
                 payloadYear = Branding.year(spec.era());
                 packageId = spec.commandName();
-                needs = joinPlain(MinSpecTooltip.programMinSpec(pl));
+                needs = lines(MinSpecTooltip.programMinSpec(pl));
             }
         } else if (pl != null && kind == MediaKind.OS_INSTALL) {
             final OsDef os =
@@ -167,7 +171,7 @@ public final class ThisPcPayloads {
                 payloadName = os.displayName();
                 payloadYear = Branding.osYear(os.displayName(), os.minEra());
                 packageId = os.id().getPath();
-                needs = joinPlain(MinSpecTooltip.osMinSpec(pl));
+                needs = lines(MinSpecTooltip.osMinSpec(pl));
             }
         }
         final long stored = kind == MediaKind.DATA
@@ -176,7 +180,7 @@ public final class ThisPcPayloads {
         final int blocksAway = Math.abs(at.getX() - host.getX()) + Math.abs(at.getY() - host.getY())
                 + Math.abs(at.getZ() - host.getZ());
         return new ThisPcPayload.WireMedia(endpoint, reader.driveType().serializedName(),
-                m.isEmpty() ? "" : m.getHoverName().getString(), kind != null ? kind.serializedName() : "",
+                m.isEmpty() ? Text.EMPTY : GameText.of(m.getHoverName()), kind != null ? kind.serializedName() : "",
                 pl != null ? pl.getPath() : "", installable, payloadName, payloadYear, packageId, needs,
                 stored, blocksAway);
     }
@@ -185,17 +189,17 @@ public final class ThisPcPayloads {
     private static ThisPcPayload.WireMachine machineCard(
             final ServerLevel level, final IOsHost computer,
             final BlockPos host) {
-        final String kind;
+        final TextKey kind;
         if (computer instanceof MainframeBlockEntity) {
-            kind = "Mainframe";
+            kind = ThisPcPayload.MAINFRAME;
         } else if (computer instanceof CraftingComputerBlockEntity) {
-            kind = "Crafting Computer";
+            kind = ThisPcPayload.CRAFTING_COMPUTER;
         } else if (computer instanceof ClusterManagementComputerBlockEntity) {
-            kind = "Cluster Management Computer";
+            kind = ThisPcPayload.CLUSTER_MANAGEMENT_COMPUTER;
         } else if (computer instanceof ServerRackBlockEntity) {
-            kind = "Server";
+            kind = ThisPcPayload.SERVER;
         } else {
-            kind = "Personal Computer";
+            kind = ThisPcPayload.PERSONAL_COMPUTER;
         }
         final OsDef os = computer.installedOs();
         final String osLabel = os == null ? "" : os.displayName();
@@ -206,12 +210,12 @@ public final class ThisPcPayloads {
          * Hardware by what is seated, read off the parts themselves so every computer type answers
          * the same way whatever its slot layout.
          */
-        String board = "";
-        String cpu = "";
-        String architecture = "";
+        Text board = Text.EMPTY;
+        Text cpu = Text.EMPTY;
+        Text architecture = Text.EMPTY;
         int cpus = 0;
         int gpus = 0;
-        String psu = "";
+        Text psu = Text.EMPTY;
         boolean valid = false;
         if (computer instanceof AbstractComputerBlockEntity be) {
             final ItemStackHandler hardware = be.getHardware();
@@ -221,78 +225,77 @@ public final class ThisPcPayloads {
                     continue;
                 }
                 if (part.getItem() instanceof MotherboardItem) {
-                    board = part.getHoverName().getString();
+                    board = GameText.of(part.getHoverName());
                 } else if (part.getItem() instanceof CpuItem chip) {
                     cpus++;
                     if (cpu.isEmpty()) {
-                        cpu = part.getHoverName().getString();
+                        cpu = GameText.of(part.getHoverName());
                         // A machine has one architecture, so the first chip answers for all of them.
-                        architecture = HardwareTooltip.architecture(chip.spec()).english();
+                        architecture = HardwareTooltip.architecture(chip.spec());
                     }
                 } else if (part.getItem() instanceof GpuItem) {
                     gpus++;
                 } else if (part.getItem() instanceof PsuItem) {
-                    psu = part.getHoverName().getString();
+                    psu = GameText.of(part.getHoverName());
                 }
             }
             valid = be.buildValid();
         }
         final int mhz = computer.maxCpuMhz();
         if (!cpu.isEmpty() && mhz > 0) {
-            cpu = cpu + " · " + (mhz >= 1000 ? String.format(Locale.ROOT, "%.1f GHz", mhz / 1000.0) : mhz + " MHz");
+            cpu = ThisPcPayload.WITH_CLOCK.with(cpu,
+                    mhz >= 1000 ? String.format(Locale.ROOT, "%.1f GHz", mhz / 1000.0) : mhz + " MHz");
         }
-        // Linked peripherals by name, each kind counted once.
-        final Map<String, Integer> peripherals = new LinkedHashMap<>();
+        return new ThisPcPayload.WireMachine(computer.customName(), kind.text(),
+                MinSpecTooltip.eraLabel(computer.displayEra()),
+                osLabel, osYear, network == null ? "" : networkLabel(network), board, cpu, cpus, architecture,
+                (int) Math.min(Integer.MAX_VALUE, computer.ramBuffer()), computer.totalVramMb(), gpus, psu,
+                valid, peripherals(level, computer));
+    }
+
+    /** The linked peripherals by name, each kind named once with how many there are. */
+    private static Text peripherals(final ServerLevel level, final IOsHost computer) {
+        final Map<String, Integer> counts = new LinkedHashMap<>();
+        final Map<String, Text> names = new LinkedHashMap<>();
         for (final long endpoint : computer.linkedEndpoints()) {
             final BlockEntity be =
                     level.getBlockEntity(BlockPos.of(endpoint));
-            final String label;
+            final Text label;
             if (be instanceof MediaReaderBlockEntity reader) {
-                label = switch (reader.driveType()) {
-                    case FLOPPY_DRIVE -> "Floppy Drive";
-                    case CD_DRIVE -> "CD Drive";
-                    case DVD_DRIVE -> "DVD Drive";
-                    case DOCK_STATION -> "Dock Station";
-                };
+                label = (switch (reader.driveType()) {
+                    case FLOPPY_DRIVE -> ThisPcPayload.FLOPPY_DRIVE;
+                    case CD_DRIVE -> ThisPcPayload.CD_DRIVE;
+                    case DVD_DRIVE -> ThisPcPayload.DVD_DRIVE;
+                    case DOCK_STATION -> ThisPcPayload.DOCK_STATION;
+                }).text();
             } else if (be instanceof MonitorBlockEntity) {
-                label = "Monitor";
+                label = ThisPcPayload.MONITOR.text();
             } else if (be != null) {
-                label = be.getBlockState().getBlock().getName().getString();
+                label = GameText.of(be.getBlockState().getBlock().getName());
             } else {
                 continue;
             }
-            peripherals.merge(label, 1, Integer::sum);
+            // Counted by what the English reads, so two of one kind are one entry whatever language reads it.
+            counts.merge(label.english(), 1, Integer::sum);
+            names.putIfAbsent(label.english(), label);
         }
-        final StringBuilder joined = new StringBuilder();
-        for (final Map.Entry<String, Integer> e : peripherals.entrySet()) {
-            if (joined.length() > 0) {
-                joined.append(", ");
-            }
-            if (e.getValue() > 1) {
-                joined.append(e.getValue()).append(" × ");
-            }
-            joined.append(e.getKey());
+        final List<Text> parts = new ArrayList<>();
+        for (final Map.Entry<String, Integer> e : counts.entrySet()) {
+            final Text name = names.get(e.getKey());
+            parts.add(e.getValue() > 1 ? ThisPcPayload.COUNTED.with(e.getValue(), name) : name);
         }
-        return new ThisPcPayload.WireMachine(computer.customName(), kind,
-                MinSpecTooltip.eraLabel(computer.displayEra()).english(),
-                osLabel, osYear, network == null ? "" : networkLabel(network), board, cpu, cpus, architecture,
-                (int) Math.min(Integer.MAX_VALUE, computer.ramBuffer()), computer.totalVramMb(), gpus, psu,
-                valid, joined.toString());
+        return TextLists.join(", ", parts);
     }
 
-    private static String joinPlain(final List<Component> lines) {
-        final StringBuilder sb = new StringBuilder();
-        for (final Component line : lines) {
-            final String text = line.getString().trim();
-            if (text.isEmpty()) {
-                continue;
+    /** A requirement a line, the blank ones left out, as many as a row carries. */
+    private static List<Text> lines(final List<Component> components) {
+        final List<Text> out = new ArrayList<>();
+        for (final Component line : components) {
+            if (!line.getString().isBlank() && out.size() < ThisPcPayload.MAX_NEEDS) {
+                out.add(GameText.of(line));
             }
-            if (sb.length() > 0) {
-                sb.append(" · ");
-            }
-            sb.append(text);
         }
-        return sb.length() > 190 ? sb.substring(0, 190) : sb.toString();
+        return out;
     }
 
     private static void handleEjectMedia(final EjectMediaPayload payload, final ServerPlayer player,

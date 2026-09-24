@@ -11,6 +11,9 @@ import dev.jstech.computers.os.edit.TtyLook;
 import dev.jstech.computers.program.cli.interac.InteracScreen;
 import dev.jstech.computers.program.cli.interac.InteracState;
 import dev.jstech.computers.program.cli.interac.InteracView;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import org.lwjgl.glfw.GLFW;
 
@@ -43,15 +46,15 @@ public final class InteracTuiKeys implements TtyEditor.IKeys {
 
     /** A plain glass with one line that talks, which is the whole of what this view draws round itself. */
     private static final TtyLook LOOK =
-            new TtyLook("", "", "", TtyLook.Status.LINE, List.of(), List.of(), false);
+            new TtyLook("", Text.EMPTY, Text.EMPTY, TtyLook.Status.LINE, List.of(), List.of(), false);
 
     /** The same with the line that talks drawn as a question, for while one is being answered. */
     private static final TtyLook ASKING =
-            new TtyLook("", "", "", TtyLook.Status.BAR, List.of(), List.of(), false);
+            new TtyLook("", Text.EMPTY, Text.EMPTY, TtyLook.Status.BAR, List.of(), List.of(), false);
 
-    /** The help page, which stands in place of the view rather than beside it. */
-    private static final TtyLook HELPING =
-            new TtyLook("", "", "", TtyLook.Status.LINE, List.of(), help(), false);
+    /* How wide the help page's columns start, before a longer word in the player's language widens one. */
+    private static final int KEY_COLUMN = 12;
+    private static final int DOES_COLUMN = 19;
 
     /** What the numbered keys along the foot do, in their order. */
     private static final String[] VERBS = {"help", "get", "put", "craft", "lock", "unlock", "fav", "stop",
@@ -63,7 +66,8 @@ public final class InteracTuiKeys implements TtyEditor.IKeys {
     @Override
     public TtyLook look(final TtyEditor editor) {
         if (this.helping) {
-            return HELPING;
+            // The help page, which stands in place of the view rather than beside it.
+            return new TtyLook("", Text.EMPTY, Text.EMPTY, TtyLook.Status.LINE, List.of(), help(), false);
         }
         return this.asked.isEmpty() ? LOOK : ASKING;
     }
@@ -71,19 +75,19 @@ public final class InteracTuiKeys implements TtyEditor.IKeys {
     @Override
     public String status(final TtyEditor editor) {
         if (this.helping) {
-            return "Any key puts this away";
+            return GameText.resolve(InteracTuiTexts.PUTS_THIS_AWAY);
         }
         if (!this.asked.isEmpty()) {
-            return "Answer with a number, Enter to go on, Escape to leave it";
+            return GameText.resolve(InteracTuiTexts.ANSWER_A_NUMBER);
         }
-        return "interac  " + this.state.tabName() + "   Tab headings   type to search   F10 quit";
+        return GameText.resolve(InteracTuiTexts.STATUS.with("interac", this.state.tabName(), "Tab", "F10"));
     }
 
     /** The view is up; nothing is said about it, because the screen itself says everything. */
     @Override
     public void opened(final TtyEditor editor, final boolean existed) {
         if (!existed) {
-            editor.say("interac: this machine cannot reach a network");
+            editor.say(InteracTuiTexts.NO_NETWORK.with("interac"));
             return;
         }
         caretOnThePickedRow(editor);
@@ -302,20 +306,47 @@ public final class InteracTuiKeys implements TtyEditor.IKeys {
         }
     }
 
-    /** The help page, which says what the keys do and nothing a player could read off the screen itself. */
-    private static List<String> help() {
+    /**
+     * The help page, which says what the keys do and nothing a player could read off the screen itself. It is
+     * laid out in the player's language, each column as wide as its longest word needs.
+     */
+    private static List<Text> help() {
         return List.of(
-                "Arrows      move through the list, Page Up and Page Down by a screen",
-                "Tab         the next heading, Shift with it the one before",
-                "Letters     look for something; Backspace takes a letter off",
-                "Enter       the same as Get",
-                "",
-                "F1 Help     this page          F6 Free     let a held item go",
-                "F2 Get      into your hands    F7 Fav      star it, or take the star off",
-                "F3 Put      out of your hands  F8 Stop     call off an operation",
-                "F4 Craft    ask for some made  F9 Find     start the search again",
-                "F5 Lock     hold some back     F10 Quit    give the terminal back",
-                "",
-                "Any key puts this page away.");
+                row(InteracTuiTexts.ARROWS, InteracTuiTexts.ARROWS_DO),
+                row(InteracTuiTexts.TAB, InteracTuiTexts.TAB_DOES),
+                row(InteracTuiTexts.LETTERS, InteracTuiTexts.LETTERS_DO),
+                row(InteracTuiTexts.ENTER, InteracTuiTexts.ENTER_DOES),
+                Text.EMPTY,
+                twoKeys("F1", InteracTuiTexts.HELP, InteracTuiTexts.HELP_DOES,
+                        "F6", InteracTuiTexts.FREE, InteracTuiTexts.FREE_DOES),
+                twoKeys("F2", InteracTuiTexts.GET, InteracTuiTexts.GET_DOES,
+                        "F7", InteracTuiTexts.FAV, InteracTuiTexts.FAV_DOES),
+                twoKeys("F3", InteracTuiTexts.PUT, InteracTuiTexts.PUT_DOES,
+                        "F8", InteracTuiTexts.STOP, InteracTuiTexts.STOP_DOES),
+                twoKeys("F4", InteracTuiTexts.CRAFT, InteracTuiTexts.CRAFT_DOES,
+                        "F9", InteracTuiTexts.FIND, InteracTuiTexts.FIND_DOES),
+                twoKeys("F5", InteracTuiTexts.LOCK, InteracTuiTexts.LOCK_DOES,
+                        "F10", InteracTuiTexts.QUIT, InteracTuiTexts.QUIT_DOES),
+                Text.EMPTY,
+                InteracTuiTexts.PUTS_THE_PAGE_AWAY.text());
+    }
+
+    /* One key and what it does, the words starting where the key column ends. */
+    private static Text row(final TextKey key, final TextKey does) {
+        return Text.literal(column(GameText.resolve(key), KEY_COLUMN) + GameText.resolve(does));
+    }
+
+    /* Two numbered keys side by side, each followed by what it does. */
+    private static Text twoKeys(final String first, final TextKey firstName, final TextKey firstDoes,
+                                final String second, final TextKey secondName, final TextKey secondDoes) {
+        return Text.literal(column(first + " " + GameText.resolve(firstName), KEY_COLUMN)
+                + column(GameText.resolve(firstDoes), DOES_COLUMN)
+                + column(second + " " + GameText.resolve(secondName), KEY_COLUMN)
+                + GameText.resolve(secondDoes));
+    }
+
+    /* Words padded out to a column, and never run into the next one: a longer word keeps a space after it. */
+    private static String column(final String words, final int width) {
+        return words + " ".repeat(Math.max(1, width - words.length()));
     }
 }

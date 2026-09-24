@@ -103,19 +103,14 @@ public final class TrashPayloads {
             }
             return;
         }
-        final String refusal = switch (DiskTrash.put(disk, trash, path, computer.systemDiskFreeWeight(), now)) {
-            case DONE -> {
-                computer.setChanged();
-                yield "";
-            }
-            case NO_ROOM -> "There is no room left on the disk to keep " + FsPaths.fileName(path) + ".";
-            case HOLDS_TRASH -> FsPaths.fileName(path) + " holds the " + trash.kind().title() + " itself.";
-            // Already gone, most likely by a second click on the same thing: nothing to say.
-            case MISSING -> "";
-        };
+        final DiskTrash.Outcome outcome = DiskTrash.put(disk, trash, path, computer.systemDiskFreeWeight(), now);
+        if (outcome == DiskTrash.Outcome.DONE) {
+            computer.setChanged();
+        }
+        final Text refusal = outcome.refusal(FsPaths.fileName(path), trash.kind().titleText());
         if (!refusal.isEmpty()) {
             PacketDistributor.sendToPlayer(player,
-                    new DesktopBalloonPayload(payload.hostPos(), Text.of(trash.kind().title()), Text.of(refusal), ""));
+                    new DesktopBalloonPayload(payload.hostPos(), trash.kind().titleText(), refusal, ""));
         }
     }
 

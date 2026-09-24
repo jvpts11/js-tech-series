@@ -107,11 +107,11 @@ class EmacsChordTest {
 
     @Test
     void modifiedOnQuit_asksTheWayTheRealThingDoes() {
-        assertTrue(EmacsChord.modifiedOnQuit().contains("(y or n)"));
+        assertTrue(EmacsChord.modifiedOnQuit().english().contains("(y or n)"));
     }
 
     @Test
     void unknown_saysWhatWasPressed() {
-        assertEquals("C-x C-z is undefined", EmacsChord.unknown("C-x C-z"));
+        assertEquals("C-x C-z is undefined", EmacsChord.unknown("C-x C-z").english());
     }
 }

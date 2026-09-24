@@ -132,11 +132,25 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   tabs, lists, tables, buttons and dialogs, and what the machine answers to them, from a cluster's line and a
   bulk install's progress and summary to why a job could not be made and what a push or a pull came to. The names
   of clusters, nodes, people, files and programs stay as they are.
+- The code editors and the programs that open files are text a language file can translate: nano's, Vim's, emacs's
+  and less's lines and help, the Network Interactor's full-screen help, the text editor, Virtual Studio with its
+  Start Window, wizard, menus and build output, Virtual Studio Code with its Welcome page and palette, Exposure,
+  the system's file window, 67ark, Exceed and Paint. A project template's name and description are read in the
+  player's language too, and the wizard's search matches what the player reads. Code, commands and file names stay
+  as they are.
+- The file explorer, This PC, the trash in all three of its looks, the Open with window and what a medium's tooltip
+  says of its files are text a language file can translate, and so is what the machine answers to a save, to
+  packing or unpacking an archive, and to something that cannot go to the trash. A volume nobody has named, the
+  kind of machine, its parts and its linked drives are read in the player's language; the names a player gave
+  stay as they are.
 
 ### Fixed
 - Saving an IQL file from the Network Management Studio to a full disk no longer fails to send its answer: the
   reason was longer than the answer could carry, which is now text of any length. A long answer to a statement is
   carried whole for the same reason.
+- Saving a file whose path is near the longest one allowed no longer fails to send its answer, which left the
+  editor waiting: the answer names the path, and with it ran past what the answer could carry. It is now text of
+  any length.
 - A monitor is used by one player at a time. A second player who used it while somebody was at it was handed a
   session over the one being typed into, and ended the remote session the screen was holding; now they are told
   who is using the monitor, and the one at it keeps it until they walk away or close it.

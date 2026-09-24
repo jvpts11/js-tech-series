@@ -25,6 +25,7 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.logic.TextDocument;
 import dev.jstech.core.language.IProgrammingLanguage;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -319,7 +320,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         this.current = this.docs.size() - 1;
         recompile(doc);
         ensureSurveyed(dirOf(path));
-        this.status = exists ? "Opened " + doc.name() : "New file " + doc.name();
+        this.status = GameText.resolve((exists ? EditorTexts.OPENED : EditorTexts.NEW_FILE_NAMED).with(doc.name()));
         if (!this.toOpen.isEmpty() || !this.endOn.isEmpty()) {
             openNext();
         }
@@ -369,15 +370,15 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         if (doc == null) {
             return;
         }
-        this.status = "Saving...";
+        this.status = GameText.resolve(EditorTexts.SAVING);
         CodeFileReplies.expectSaved(this);
         PacketDistributor.sendToServer(new SaveFilePayload(this.host, doc.path, doc.area.text()));
         FilesApps.diskChanged();
     }
 
     @Override
-    public void onSaved(final boolean ok, final String message) {
-        this.status = message;
+    public void onSaved(final boolean ok, final Text message) {
+        this.status = GameText.resolve(message);
         final Doc doc = current();
         if (ok && doc != null) {
             doc.dirty = false;
@@ -845,7 +846,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         this.current = this.docs.size() - 1;
         doc.dirty = true;
         recompile(doc);
-        this.status = "New file " + doc.name();
+        this.status = GameText.resolve(EditorTexts.NEW_FILE_NAMED.with(doc.name()));
     }
 
     /** Whether any open file has changes not yet on the disk. */
@@ -892,8 +893,8 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         }
         if (this.announceSurvey) {
             this.announceSurvey = false;
-            this.status = ProblemReport.brokenFiles(this.folderComplaints) + " of "
-                    + folder.files().size() + " program(s) with problems";
+            this.status = GameText.resolve(EditorTexts.WITH_PROBLEMS.with(
+                    ProblemReport.brokenFiles(this.folderComplaints), folder.files().size()));
         }
     }
 

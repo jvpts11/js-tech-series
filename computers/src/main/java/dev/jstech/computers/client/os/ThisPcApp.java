@@ -33,6 +33,9 @@ import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -147,7 +150,7 @@ public final class ThisPcApp implements IDesktopApp {
             this.media = null;
             this.letterIndex = letterIndex;
             this.open = () -> DesktopScreen.requestOpenFiles("");
-            buttons.add(add(new Button("Open", open)));
+            buttons.add(add(new Button(GameText.resolve(ThisPcTexts.OPEN), open)));
         }
 
         DriveRow(final WireMedia media, final int letterIndex) {
@@ -157,12 +160,13 @@ public final class ThisPcApp implements IDesktopApp {
             this.letterIndex = letterIndex;
             this.open = media.loaded() ? () -> DesktopScreen.requestOpenFiles(key) : null;
             if (media.installable()) {
-                install = add(new Button("Install", () -> install(media.readerPos())).setPrimary(true));
+                install = add(new Button(GameText.resolve(ThisPcTexts.INSTALL), () -> install(media.readerPos()))
+                        .setPrimary(true));
                 buttons.add(install);
             }
             if (media.loaded()) {
-                buttons.add(add(new Button("Open", open)));
-                buttons.add(add(new Button("Eject", () -> eject(media.readerPos()))));
+                buttons.add(add(new Button(GameText.resolve(ThisPcTexts.OPEN), open)));
+                buttons.add(add(new Button(GameText.resolve(ThisPcTexts.EJECT), () -> eject(media.readerPos()))));
             }
         }
 
@@ -193,10 +197,11 @@ public final class ThisPcApp implements IDesktopApp {
             final int textColor = ctx.skin().listRowText(sel);
             if (disk != null) {
                 drawDiskIcon(g, cx + 4, cy + 5);
-                final String label = disk.label() + (drive().isEmpty() ? "" : "  " + drive());
+                final String label = GameText.resolve(disk.label()) + (drive().isEmpty() ? "" : "  " + drive());
                 g.drawString(font, Texts.trim(font, label, maxW), tx, cy + 2, textColor, false);
                 if (disk.system()) {
-                    final String badge = "System" + (disk.osPath().isEmpty() ? "" : " · " + prettyOs(disk.osPath()));
+                    final String badge = GameText.resolve(disk.osPath().isEmpty() ? ThisPcTexts.SYSTEM.text()
+                            : ThisPcTexts.SYSTEM_IS.with(prettyOs(disk.osPath())));
                     final int bw = font.width(badge);
                     if (font.width(label) + 6 + bw <= maxW) {
                         g.drawString(font, badge, tx + maxW - bw, cy + 2, GREEN, false);
@@ -217,30 +222,27 @@ public final class ThisPcApp implements IDesktopApp {
                         segX += w;
                     }
                 }
-                final String usage = disk.freeItems() + " of " + disk.capItems() + " it free";
+                final String usage = GameText.resolve(ThisPcTexts.FREE.with(disk.freeItems(), disk.capItems()));
                 g.drawString(font, usage, tx + maxW - font.width(usage), cy + 11, ctx.skin().dim(), false);
             } else if (media != null) {
                 drawMediaIcon(g, cx + 4, cy + 5, media);
-                final String head = prettyDrive(media.drive()) + (drive().isEmpty() ? "" : "  " + drive())
-                        + (media.loaded() ? "   " + media.mediaName() : "   no disc");
+                final String head = prettyDrive(media.drive()) + (drive().isEmpty() ? "" : "  " + drive()) + "   "
+                        + GameText.resolve(media.loaded() ? media.mediaName() : ThisPcTexts.NO_DISC.text());
                 g.drawString(font, Texts.trim(font, head, maxW), tx, cy + 2, media.loaded() ? textColor : ctx.skin().dim(), false);
                 final String detail;
                 int detailColor = ctx.skin().dim();
                 if (!media.loaded()) {
-                    detail = prettyDrive(media.drive()) + " drive, " + media.blocksAway() + " blocks away";
+                    detail = GameText.resolve(ThisPcTexts.DRIVE_AWAY.with(prettyDrive(media.drive()),
+                            media.blocksAway()));
                 } else if (media.kind().equals(MediaKind.OS_INSTALL.serializedName())) {
-                    detail = "Installs " + (media.payloadName().isEmpty() ? media.payloadPath() : media.payloadName())
-                            + (media.payloadYear() > 0 ? " · " + media.payloadYear() : "") + " · bootable"
-                            + (media.packageId().isEmpty() ? "" : " · package " + media.packageId());
+                    detail = installLine(media, ThisPcTexts.INSTALLS, true);
                     detailColor = AMBER;
                 } else if (media.kind().equals(MediaKind.PROGRAM_INSTALL.serializedName())) {
-                    detail = (media.installable() ? "Installs " : "Installed: ")
-                            + (media.payloadName().isEmpty() ? media.payloadPath() : media.payloadName())
-                            + (media.payloadYear() > 0 ? " · " + media.payloadYear() : "")
-                            + (media.packageId().isEmpty() ? "" : " · package " + media.packageId());
+                    detail = installLine(media, media.installable() ? ThisPcTexts.INSTALLS : ThisPcTexts.INSTALLED,
+                            false);
                     detailColor = media.installable() ? GREEN : ctx.skin().dim();
                 } else {
-                    detail = "Data medium · " + media.stored() + " stored";
+                    detail = GameText.resolve(ThisPcTexts.DATA_MEDIUM.with(media.stored()));
                 }
                 g.drawString(font, Texts.trim(font, detail, maxW), tx, cy + 11, detailColor, false);
             }
@@ -271,12 +273,11 @@ public final class ThisPcApp implements IDesktopApp {
             if (media != null) {
                 // The requirements ride on the tooltip of the detail line; the row has room for one line.
                 if (!media.needs().isEmpty() && media.loaded() && !media.kind().equals(MediaKind.DATA.serializedName()) && my >= y() + 11 && my < y() + 20) {
-                    final List<Component> lines = new ArrayList<>(3);
-                    lines.add(Component.literal(media.payloadName().isEmpty() ? media.mediaName() : media.payloadName()));
-                    for (final String need : media.needs().split(" · ")) {
-                        if (!need.isBlank()) {
-                            lines.add(Component.literal(need).withStyle(ChatFormatting.DARK_GRAY));
-                        }
+                    final List<Component> lines = new ArrayList<>(media.needs().size() + 1);
+                    lines.add(Component.literal(media.payloadName().isEmpty() ? GameText.resolve(media.mediaName())
+                            : media.payloadName()));
+                    for (final Text need : media.needs()) {
+                        lines.add(line(need, ChatFormatting.DARK_GRAY));
                     }
                     return lines;
                 }
@@ -284,13 +285,14 @@ public final class ThisPcApp implements IDesktopApp {
             }
             if (disk != null) {
                 final List<Component> lines = new ArrayList<>(6);
-                lines.add(Component.literal(disk.label()));
-                lines.add(Component.literal(disk.osPath().isEmpty() ? "No system installed" : "System: " + prettyOs(disk.osPath()))
-                        .withStyle(disk.osPath().isEmpty() ? ChatFormatting.GRAY : ChatFormatting.AQUA));
-                lines.add(Component.literal("  system   " + disk.osItems() + " it").withStyle(ChatFormatting.BLUE));
-                lines.add(Component.literal("  items    " + disk.storeItems() + " it").withStyle(ChatFormatting.GREEN));
-                lines.add(Component.literal("  files    " + disk.fileItems() + " it").withStyle(ChatFormatting.GOLD));
-                lines.add(Component.literal("  free     " + disk.freeItems() + " it").withStyle(ChatFormatting.DARK_GRAY));
+                lines.add(Component.literal(GameText.resolve(disk.label())));
+                lines.add(line(disk.osPath().isEmpty() ? ThisPcTexts.NO_SYSTEM.text()
+                        : ThisPcTexts.SYSTEM_NAMED.with(prettyOs(disk.osPath())),
+                        disk.osPath().isEmpty() ? ChatFormatting.GRAY : ChatFormatting.AQUA));
+                lines.add(line(ThisPcTexts.SHARE_SYSTEM.with(disk.osItems()), ChatFormatting.BLUE));
+                lines.add(line(ThisPcTexts.SHARE_ITEMS.with(disk.storeItems()), ChatFormatting.GREEN));
+                lines.add(line(ThisPcTexts.SHARE_FILES.with(disk.fileItems()), ChatFormatting.GOLD));
+                lines.add(line(ThisPcTexts.SHARE_FREE.with(disk.freeItems()), ChatFormatting.DARK_GRAY));
                 return lines;
             }
             return List.of();
@@ -309,21 +311,22 @@ public final class ThisPcApp implements IDesktopApp {
         kindLabel = root.add(new Label(this::kindLine, Label.Tone.DIM));
         systemLabel = root.add(new Label(this::systemLine).setColor(() -> data.machine().osLabel().isEmpty() ? AMBER : 0)
                 .setTone(Label.Tone.DIM));
-        renameButton = root.add(new Button("Rename", this::startRename));
+        renameButton = root.add(new Button(GameText.resolve(ThisPcTexts.RENAME), this::startRename));
         root.add(page);
-        drivesHeader = page.add(new SectionHeader(() -> "Devices and drives"));
-        noDrives = page.add(new Label("No disks installed and no drives linked", Label.Tone.DIM));
-        hardwareHeader = page.add(new SectionHeader(() -> "Hardware"));
-        final String[] keys = {"Board", "Processor", "Architecture", "Memory", "Graphics", "Power", "Peripherals",
-            "Build"};
+        drivesHeader = page.add(new SectionHeader(() -> GameText.resolve(ThisPcTexts.DEVICES_AND_DRIVES)));
+        noDrives = page.add(new Label(GameText.resolve(ThisPcTexts.NO_DRIVES), Label.Tone.DIM));
+        hardwareHeader = page.add(new SectionHeader(() -> GameText.resolve(ThisPcTexts.HARDWARE)));
+        final TextKey[] keys = {ThisPcTexts.BOARD, ThisPcTexts.PROCESSOR, ThisPcTexts.ARCHITECTURE,
+            ThisPcTexts.MEMORY, ThisPcTexts.GRAPHICS, ThisPcTexts.POWER, ThisPcTexts.PERIPHERALS, ThisPcTexts.BUILD};
         for (int i = 0; i < keys.length; i++) {
             final int line = i;
-            hwKeys.add(page.add(new Label(keys[i], Label.Tone.DIM)));
-            hwValues.add(page.add(new Label(() -> hardwareValue(line))
+            hwKeys.add(page.add(new Label(GameText.resolve(keys[i]), Label.Tone.DIM)));
+            hwValues.add(page.add(new Label(() -> GameText.resolve(hardwareValue(line)))
                     .setColor(() -> line == keys.length - 1 ? (data.machine().buildValid() ? GREEN : AMBER) : 0)));
         }
-        programsHeader = page.add(new SectionHeader(() -> "Installed programs  " + data.installedPrograms().size()));
-        noPrograms = page.add(new Label("None. Insert an installer, or run a package manager.", Label.Tone.DIM));
+        programsHeader = page.add(new SectionHeader(() -> GameText.resolve(ThisPcTexts.INSTALLED_PROGRAMS.with(
+                data.installedPrograms().size()))));
+        noPrograms = page.add(new Label(GameText.resolve(ThisPcTexts.NO_PROGRAMS), Label.Tone.DIM));
         programGrid = page.add(new CellGrid(1, 1, 1, ThisPcLayout.PROG_CELL_W, ThisPcLayout.PROG_CELL_H)
                 .setWells(false)
                 .setInset(2)
@@ -395,34 +398,63 @@ public final class ThisPcApp implements IDesktopApp {
 
     private String machineName() {
         final ThisPcPayload.WireMachine m = data.machine();
-        return m.name().isEmpty() ? m.kind() : m.name();
+        return m.name().isEmpty() ? GameText.resolve(m.kind()) : m.name();
     }
 
     private String kindLine() {
         final ThisPcPayload.WireMachine m = data.machine();
-        return m.name().isEmpty() ? m.era() + " era" : m.kind() + " · " + m.era() + " era";
+        return GameText.resolve(m.name().isEmpty() ? ThisPcTexts.ERA.with(m.era())
+                : ThisPcTexts.KIND_AND_ERA.with(m.kind(), m.era()));
     }
 
     private String systemLine() {
         final ThisPcPayload.WireMachine m = data.machine();
-        final String system = m.osLabel().isEmpty() ? "No system installed"
+        final String system = m.osLabel().isEmpty() ? GameText.resolve(ThisPcTexts.NO_SYSTEM)
                 : m.osLabel() + " · " + Branding.houseOf(m.osLabel()).name() + " " + m.osYear();
-        final String net = m.networkLabel().isEmpty() ? "not on a network" : "network " + m.networkLabel();
+        final String net = GameText.resolve(m.networkLabel().isEmpty() ? ThisPcTexts.NOT_ON_NETWORK.text()
+                : ThisPcTexts.ON_NETWORK.with(m.networkLabel()));
         return system + " · " + net;
     }
 
-    private String hardwareValue(final int line) {
+    private Text hardwareValue(final int line) {
         final ThisPcPayload.WireMachine m = data.machine();
+        final Text none = ThisPcTexts.NONE.text();
         return switch (line) {
-            case 0 -> m.boardLabel().isEmpty() ? "none" : m.boardLabel();
-            case 1 -> m.cpuLabel().isEmpty() ? "none" : (m.cpuCount() > 1 ? m.cpuCount() + " × " : "") + m.cpuLabel();
-            case 2 -> m.cpuArch().isEmpty() ? "none" : m.cpuArch();
-            case 3 -> m.ramMb() > 0 ? m.ramMb() + " it" : "none";
-            case 4 -> m.gpuCount() > 0 ? m.gpuCount() + " × " + m.vramMb() + " MB VRAM" : "none";
-            case 5 -> m.psuLabel().isEmpty() ? "none" : m.psuLabel();
-            case 6 -> m.peripherals().isEmpty() ? "none linked" : m.peripherals();
-            default -> m.buildValid() ? "OK, the machine comes up" : "not valid";
+            case 0 -> m.boardLabel().isEmpty() ? none : m.boardLabel();
+            case 1 -> m.cpuLabel().isEmpty() ? none
+                    : m.cpuCount() > 1 ? ThisPcPayload.COUNTED.with(m.cpuCount(), m.cpuLabel()) : m.cpuLabel();
+            case 2 -> m.cpuArch().isEmpty() ? none : m.cpuArch();
+            case 3 -> m.ramMb() > 0 ? ThisPcTexts.MEMORY_VALUE.with(m.ramMb()) : none;
+            case 4 -> m.gpuCount() > 0 ? ThisPcTexts.GRAPHICS_VALUE.with(m.gpuCount(), m.vramMb()) : none;
+            case 5 -> m.psuLabel().isEmpty() ? none : m.psuLabel();
+            case 6 -> m.peripherals().isEmpty() ? ThisPcTexts.NONE_LINKED.text() : m.peripherals();
+            default -> (m.buildValid() ? ThisPcTexts.COMES_UP : ThisPcTexts.NOT_VALID).text();
         };
+    }
+
+    /* One line of a tooltip, in the player's language and the colour of what it counts. */
+    private static Component line(final Text text, final ChatFormatting colour) {
+        return Component.literal(GameText.resolve(text)).withStyle(colour);
+    }
+
+    /*
+     * What an installer's row says under its name: what it installs, the year, whether a machine boots from it, and
+     * the id a package manager knows it by, each said only when there is something to say.
+     */
+    private static String installLine(final WireMedia media, final TextKey verb, final boolean bootable) {
+        final List<String> parts = new ArrayList<>();
+        parts.add(GameText.resolve(verb.with(media.payloadName().isEmpty() ? media.payloadPath()
+                : media.payloadName())));
+        if (media.payloadYear() > 0) {
+            parts.add(String.valueOf(media.payloadYear()));
+        }
+        if (bootable) {
+            parts.add(GameText.resolve(ThisPcTexts.BOOTABLE));
+        }
+        if (!media.packageId().isEmpty()) {
+            parts.add(GameText.resolve(ThisPcTexts.PACKAGE.with(media.packageId())));
+        }
+        return String.join(" · ", parts);
     }
 
     /** Rebuilds the drive rows from the listing: one row per disk, then one per linked drive. */
@@ -550,8 +582,10 @@ public final class ThisPcApp implements IDesktopApp {
         final List<Component> spec = MinSpecTooltip.programMinSpec(rl(id));
         final List<Component> lines = new ArrayList<>(spec.size() + 2);
         lines.add(Component.literal(prettyProgram(id)));
-        lines.add(Component.literal(Component.translatable("program.jsc." + rl(id).getPath() + ".desc").getString())
-                .withStyle(ChatFormatting.GRAY));
+        final ProgramSpec program = OsRegistry.getProgram(rl(id));
+        if (program != null) {
+            lines.add(Component.translatable(program.descriptionKey()).withStyle(ChatFormatting.GRAY));
+        }
         lines.addAll(spec);
         return lines;
     }
@@ -600,7 +634,7 @@ public final class ThisPcApp implements IDesktopApp {
     /** The index of the first drive whose medium name contains {@code nameContains}, or -1. */
     public int mediaRowIndex(final String nameContains) {
         for (int i = 0; i < data.media().size(); i++) {
-            if (data.media().get(i).mediaName().contains(nameContains)) {
+            if (GameText.resolve(data.media().get(i).mediaName()).contains(nameContains)) {
                 return i;
             }
         }
@@ -674,14 +708,14 @@ public final class ThisPcApp implements IDesktopApp {
             final int slot = Integer.parseInt(selectedKey.substring(5));
             for (final WireDisk d : data.disks()) {
                 if (d.slot() == slot) {
-                    label = d.label();
+                    label = GameText.resolve(d.label());
                 }
             }
         } else {
             final long pos = Long.parseLong(selectedKey.substring(6));
             for (final WireMedia m : data.media()) {
                 if (m.readerPos() == pos) {
-                    label = m.mediaName();
+                    label = GameText.resolve(m.mediaName());
                 }
             }
         }
@@ -733,12 +767,12 @@ public final class ThisPcApp implements IDesktopApp {
 
     private static String prettyDrive(final String drive) {
         final MediaDriveType type = MediaDriveType.find(drive);
-        return type == null ? drive : switch (type) {
-            case FLOPPY_DRIVE -> "Floppy";
-            case CD_DRIVE -> "CD";
-            case DVD_DRIVE -> "DVD";
-            case DOCK_STATION -> "USB";
-        };
+        return type == null ? drive : GameText.resolve(switch (type) {
+            case FLOPPY_DRIVE -> ThisPcTexts.FLOPPY;
+            case CD_DRIVE -> ThisPcTexts.CD;
+            case DVD_DRIVE -> ThisPcTexts.DVD;
+            case DOCK_STATION -> ThisPcTexts.USB;
+        });
     }
 
     private static ResourceLocation rl(final String id) {

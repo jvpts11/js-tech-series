@@ -10,9 +10,12 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.gui.TrashItem;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.gui.layout.TrashLayout;
+import dev.jstech.computers.os.fs.TrashKind;
 import dev.jstech.core.client.gui.component.ContextMenu;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -41,8 +44,6 @@ final class TrashLinuxLook implements ITrashLook {
 
     private static final int MENU_W = 140;
     private static final long DOUBLE_CLICK_MS = 300L;
-    private static final String EMPTY = "Empty Trash";
-    private static final String[] PLACES = {"Home", "Desktop", "Trash"};
     private static final ResourceLocation FILES = ResourceLocation.fromNamespaceAndPath("jsc", "files");
 
     TrashLinuxLook(final TrashApp app) {
@@ -145,11 +146,11 @@ final class TrashLinuxLook implements ITrashLook {
     @Override
     public int[] controlPoint(final String label) {
         final Rect r;
-        if (label.equals(EMPTY)) {
+        if (label.equals(GameText.resolve(TrashTexts.EMPTY_TRASH))) {
             r = TrashLayout.emptyButton();
-        } else if (label.equals(PLACES[0])) {
+        } else if (label.equals(placeName(0))) {
             r = TrashLayout.place(0);
-        } else if (label.equals(PLACES[1])) {
+        } else if (label.equals(placeName(1))) {
             r = TrashLayout.place(1);
         } else {
             return null;
@@ -162,18 +163,27 @@ final class TrashLinuxLook implements ITrashLook {
         return new Rect(this.left + r.x(), this.top + r.y(), r.w(), r.h());
     }
 
+    /* A place down the left: home, the desktop, and the Trash last, which is called what its kind calls it. */
+    private static String placeName(final int index) {
+        return GameText.resolve(switch (index) {
+            case 0 -> TrashTexts.HOME.text();
+            case 1 -> TrashTexts.DESKTOP.text();
+            default -> TrashKind.FREEDESKTOP.titleText();
+        });
+    }
+
     private void openMenu(final int mx, final int my) {
-        final String[] words = switch (this.app.style()) {
-            case GNOME -> new String[] {"Restore From Trash", "Delete From Trash"};
-            case CINNAMON -> new String[] {"Restore", "Delete Permanently"};
-            default -> new String[] {"Restore to Former Location", "Delete"};
+        final TextKey[] words = switch (this.app.style()) {
+            case GNOME -> new TextKey[] {TrashTexts.RESTORE_FROM_TRASH, TrashTexts.DELETE_FROM_TRASH};
+            case CINNAMON -> new TextKey[] {TrashTexts.RESTORE, TrashTexts.DELETE_PERMANENTLY};
+            default -> new TextKey[] {TrashTexts.RESTORE_TO_FORMER, TrashTexts.DELETE};
         };
         final List<ContextMenu.Item> entries = new ArrayList<>();
-        entries.add(new ContextMenu.Item(words[0], true, this.app::restoreSelected));
-        entries.add(new ContextMenu.Item(words[1], true, this.app::deleteSelected));
+        entries.add(new ContextMenu.Item(GameText.resolve(words[0]), true, this.app::restoreSelected));
+        entries.add(new ContextMenu.Item(GameText.resolve(words[1]), true, this.app::deleteSelected));
         entries.add(ContextMenu.Item.separator());
         final List<TrashItem> chosen = this.app.selection();
-        entries.add(new ContextMenu.Item("Properties", chosen.size() == 1,
+        entries.add(new ContextMenu.Item(GameText.resolve(TrashTexts.PROPERTIES), chosen.size() == 1,
                 () -> this.app.showProperties(chosen.getFirst())));
         this.menu.open(entries, mx, my, this.left, this.top, this.width, this.height);
     }
@@ -187,8 +197,8 @@ final class TrashLinuxLook implements ITrashLook {
         final int bx = this.left + b.x();
         final int by = this.top + b.y();
         final boolean any = !this.app.items().isEmpty();
-        skin.button(g, font, bx, by, b.w(), b.h(), EMPTY, any && b.holds(mouseX - this.left, mouseY - this.top),
-                false, false);
+        skin.button(g, font, bx, by, b.w(), b.h(), GameText.resolve(TrashTexts.EMPTY_TRASH),
+                any && b.holds(mouseX - this.left, mouseY - this.top), false, false);
         if (!any) {
             Draw.disabled(g, bx, by, b.w(), b.h());
         }
@@ -210,7 +220,7 @@ final class TrashLinuxLook implements ITrashLook {
             skin.listRow(g, px, py, r.w(), r.h(), !here && r.holds(mouseX - this.left, mouseY - this.top), here);
             ProgramIcons.draw(g, px + 3, py, TrashLayout.ICON_W, r.h(), here ? this.app.trashIcon() : FILES,
                     this.app.iconSet());
-            TrashApp.write(g, font, PLACES[i], px + 3 + TrashLayout.ICON_W + 3, py + 3, skin.listRowText(here),
+            TrashApp.write(g, font, placeName(i), px + 3 + TrashLayout.ICON_W + 3, py + 3, skin.listRowText(here),
                     here ? skin.listSelect() : skin.listHover(), 1f);
         }
     }

@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -21,8 +25,15 @@ import java.util.List;
  * mB-equivalents, whether it is read-only (a {@code .dat} storage projection or an installer's files),
  * and, for a {@code .dat}, the item it projects and how many are stored.
  */
+@TextHolder
 public record DiskFilesPayload(String dir, List<WireFile> files,
                                List<WireVolume> volumes) implements CustomPacketPayload {
+
+    /* What a volume is called when nobody has named it, in the player's language. */
+    public static final TextKey LOCAL_DISK = TextKey.of("jsc.disk_files.local_disk", "Local Disk");
+    public static final TextKey SETUP = TextKey.of("jsc.disk_files.setup", "%s Setup");
+    public static final TextKey REMOVABLE_DRIVE = TextKey.of("jsc.disk_files.removable_drive", "Removable Drive");
+    public static final TextKey NETWORK = TextKey.of("jsc.disk_files.network", "Network");
 
     public static final int MAX_FILES = 512;
     public static final int MAX_VOLUMES = 32;
@@ -50,14 +61,15 @@ public record DiskFilesPayload(String dir, List<WireFile> files,
 
     /**
      * One mountable volume for the explorer's drive tree: a {@code key} that addresses it ({@code ""}
-     * for the system disk, {@code "media:<readerPos>"} for a removable drive) and its display label.
+     * for the system disk, {@code "media:<readerPos>"} for a removable drive) and its display label: the name the
+     * player gave it, or what such a volume is called.
      */
-    public record WireVolume(String key, String label) {
+    public record WireVolume(String key, Text label) {
 
         public static final StreamCodec<RegistryFriendlyByteBuf, WireVolume> STREAM_CODEC =
                 StreamCodec.composite(
                         ByteBufCodecs.stringUtf8(64), WireVolume::key,
-                        ByteBufCodecs.stringUtf8(64), WireVolume::label,
+                        TextCodecs.STREAM_CODEC, WireVolume::label,
                         WireVolume::new);
 
         /** Whether this volume is a medium in a linked drive rather than the system disk. */

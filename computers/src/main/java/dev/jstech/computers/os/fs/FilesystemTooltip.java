@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os.fs;
 
+import dev.jstech.core.text.GameText;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -46,12 +47,12 @@ public final class FilesystemTooltip {
         }
         final int total = files.size();
         if (total <= LIST_THRESHOLD || Screen.hasShiftDown()) {
-            tooltip.add(Component.literal(total == 1 ? "1 file:" : total + " files:")
-                    .withStyle(ChatFormatting.AQUA));
+            tooltip.add(GameText.component(total == 1 ? FilesystemTooltipTexts.ONE_FILE.text()
+                    : FilesystemTooltipTexts.FILES.with(total)).withStyle(ChatFormatting.AQUA));
             int shown = 0;
             for (final StoredFile file : files.values()) {
                 if (shown >= MAX_LISTED) {
-                    tooltip.add(Component.literal("  ...and " + (total - shown) + " more")
+                    tooltip.add(GameText.component(FilesystemTooltipTexts.AND_MORE.with(total - shown))
                             .withStyle(ChatFormatting.DARK_GRAY));
                     break;
                 }
@@ -72,9 +73,9 @@ public final class FilesystemTooltip {
                 }
                 breakdown.append(entry.getValue()).append(" .").append(entry.getKey().extension());
             }
-            tooltip.add(Component.literal(total + " files: " + breakdown)
+            tooltip.add(GameText.component(FilesystemTooltipTexts.BY_KIND.with(total, breakdown.toString()))
                     .withStyle(ChatFormatting.AQUA));
-            tooltip.add(Component.literal("Hold Shift to list").withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add(GameText.component(FilesystemTooltipTexts.HOLD_SHIFT).withStyle(ChatFormatting.DARK_GRAY));
         }
     }
 

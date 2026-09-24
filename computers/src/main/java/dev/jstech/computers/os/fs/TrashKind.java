@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.os.fs;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+
 /**
  * How a desktop keeps what was deleted on it: each family of systems has its own habit, and its own name for
  * the place.
@@ -17,16 +21,23 @@ package dev.jstech.computers.os.fs;
  * file in {@code info}. CDE keeps a folder of its own in the home, with the files under their names and one index
  * beside them.
  */
+@TextHolder
 public enum TrashKind {
 
     /** Frames: the Recycle Bin, at the root of the system disk. */
-    RECYCLER,
+    RECYCLER(TextKey.of("jsc.trash.recycle_bin", "Recycle Bin")),
 
     /** The Linux and FreeBSD desktops: the Trash, in the home. */
-    FREEDESKTOP,
+    FREEDESKTOP(TextKey.of("jsc.trash.trash", "Trash")),
 
     /** CDE, on whichever system runs it: the Trash Can, in the home. */
-    CDE;
+    CDE(TextKey.of("jsc.trash.trash_can", "Trash Can"));
+
+    private final TextKey title;
+
+    TrashKind(final TextKey title) {
+        this.title = title;
+    }
 
     /** The habit of a desktop, by whether its system is a Unix and whether the desktop is CDE. */
     public static TrashKind of(final boolean unix, final boolean cde) {
@@ -36,12 +47,13 @@ public enum TrashKind {
         return unix ? FREEDESKTOP : RECYCLER;
     }
 
-    /** What the desktops of this habit call the place. */
+    /** What the desktops of this habit call the place, in English: the name its window is known by. */
     public String title() {
-        return switch (this) {
-            case RECYCLER -> "Recycle Bin";
-            case FREEDESKTOP -> "Trash";
-            case CDE -> "Trash Can";
-        };
+        return this.title.english();
+    }
+
+    /** What the desktops of this habit call the place, as the player reads it. */
+    public Text titleText() {
+        return this.title.text();
     }
 }

@@ -12,6 +12,7 @@ import dev.jstech.computers.operation.payload.ClusterManagerStatePayload;
 import dev.jstech.computers.operation.payload.CreateAutomationJobPayload;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
+import dev.jstech.computers.operation.payload.FileSavedPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload;
 import dev.jstech.computers.operation.payload.IqlResultPayload;
@@ -71,13 +72,16 @@ public final class PayloadRoundTripGameTests {
 
     @GameTest(template = ARENA)
     public static void desktop_thisPcRoundTrips(final GameTestHelper helper) {
-        final ThisPcPayload.WireMachine machine = new ThisPcPayload.WireMachine("desk", "Personal Computer", "Standard",
-                "Frames 11", 2021, "on CORE", "MF ATX Standard", "Integra Apex 7 4790K", 1, "x86-64, 64-bit",
-                16384, 3072, 1, "PSU 650G", true, "Monitor");
-        final ThisPcPayload.WireDisk disk = new ThisPcPayload.WireDisk(0, "Vaultis Swift SSD 500 GB", 2000L, 120L, true,
-                "C:\\", 80L, 20L, 20L);
-        final ThisPcPayload.WireMedia media = new ThisPcPayload.WireMedia(123L, "D:", "Frames 11 USB", "OS", "FRAMES",
-                true, "Frames 11", 2021, "jsc:frames_11", "", 0L, 2);
+        final ThisPcPayload.WireMachine machine = new ThisPcPayload.WireMachine("desk",
+                ThisPcPayload.PERSONAL_COMPUTER.text(), Text.literal("Standard"), "Frames 11", 2021, "on CORE",
+                Text.literal("MF ATX Standard"), ThisPcPayload.WITH_CLOCK.with("Integra Apex 7 4790K", "4.0 GHz"), 1,
+                Text.literal("x86-64, 64-bit"), 16384, 3072, 1, Text.literal("PSU 650G"), true,
+                ThisPcPayload.COUNTED.with(2, ThisPcPayload.MONITOR));
+        final ThisPcPayload.WireDisk disk = new ThisPcPayload.WireDisk(0, Text.literal("Vaultis Swift SSD 500 GB"),
+                2000L, 120L, true, "C:\\", 80L, 20L, 20L);
+        final ThisPcPayload.WireMedia media = new ThisPcPayload.WireMedia(123L, "D:", Text.literal("Frames 11 USB"),
+                "OS", "FRAMES", true, "Frames 11", 2021, "jsc:frames_11",
+                List.of(Text.literal("Standard era or later"), Text.literal("64 it of memory")), 0L, 2);
         roundTrip(helper, ThisPcPayload.STREAM_CODEC,
                 new ThisPcPayload(machine, List.of(disk), List.of(media), List.of("jsc:nms")));
         helper.succeed();
@@ -106,7 +110,16 @@ public final class PayloadRoundTripGameTests {
         roundTrip(helper, DiskFilesPayload.STREAM_CODEC, new DiskFilesPayload("C:\\Users",
                 List.of(new DiskFilesPayload.WireFile("C:\\notes.txt", "txt", 4L, false, false),
                         new DiskFilesPayload.WireFile("C:\\Data", "", 0L, false, true, "minecraft:oak_log", 640L)),
-                List.of(new DiskFilesPayload.WireVolume("c", "System"))));
+                List.of(new DiskFilesPayload.WireVolume("c", Text.literal("System")),
+                        new DiskFilesPayload.WireVolume("media:1", DiskFilesPayload.SETUP.with("Frames 11")))));
+        helper.succeed();
+    }
+
+    /* A save names its path, and a path near the longest allowed once made an answer past the old cap. */
+    @GameTest(template = ARENA)
+    public static void files_savedAnswerCarriesALongPath(final GameTestHelper helper) {
+        roundTrip(helper, FileSavedPayload.STREAM_CODEC,
+                new FileSavedPayload(true, FileSavedPayload.SAVED.with("progs/" + "a".repeat(154))));
         helper.succeed();
     }
 

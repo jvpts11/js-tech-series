@@ -34,6 +34,12 @@ public final class VolumeLabel {
         return label != null && !label.isBlank() ? label : fallback;
     }
 
+    /** The volume's label, which is the player's own words, or {@code fallback} read in the player's language. */
+    public static Text of(final ItemStack stack, final Text fallback) {
+        final String label = stack.isEmpty() ? null : stack.get(ComputingComponents.VOLUME_LABEL.get());
+        return label != null && !label.isBlank() ? Text.literal(label) : fallback;
+    }
+
     /**
      * The volume's label as text: what the player called it, which is theirs, or else the medium's own name, which
      * each player reads in their language.

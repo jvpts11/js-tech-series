@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.os.fs;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -33,6 +36,7 @@ import java.util.zip.Inflater;
  *
  * <p>This class is pure and carries no Minecraft dependency.
  */
+@TextHolder
 public final class Archive {
 
     /** What every archive starts with, so a file that is not one is recognised before it is read. */
@@ -46,6 +50,33 @@ public final class Archive {
 
     private static final String SEPARATOR = "\t";
     private static final char NEWLINE = '\n';
+
+    /* Why a set of files could not be packed, in the words the player is told. */
+    private static final TextKey AT_LEAST_ONE =
+            TextKey.of("jsc.archive.at_least_one", "An archive must hold at least one file");
+    private static final TextKey AT_MOST = TextKey.of("jsc.archive.at_most", "An archive holds at most %s files");
+    private static final TextKey NO_TAB_OR_NEWLINE =
+            TextKey.of("jsc.archive.no_tab_or_newline", "A file name may not hold a tab or a newline: %s");
+    private static final TextKey SAME_NAME =
+            TextKey.of("jsc.archive.same_name", "Two files would be archived under the name %s");
+
+    /**
+     * Files that cannot be packed together, and why, in words for the player. Still an illegal argument, so a
+     * caller that only asks whether packing worked needs to know nothing more.
+     */
+    public static final class Refused extends IllegalArgumentException {
+
+        private final transient Text text;
+
+        Refused(final Text text) {
+            super(text.english());
+            this.text = text;
+        }
+
+        public Text text() {
+            return this.text;
+        }
+    }
 
     /** One file inside an archive, as the listing at the top of it says. */
     public record Entry(String name, FileType type, int originalBytes) {
@@ -79,10 +110,10 @@ public final class Archive {
      */
     public static String pack(final List<StoredFile> files) {
         if (files == null || files.isEmpty()) {
-            throw new IllegalArgumentException("an archive must hold at least one file");
+            throw new Refused(AT_LEAST_ONE.text());
         }
         if (files.size() > MAX_ENTRIES) {
-            throw new IllegalArgumentException("an archive holds at most " + MAX_ENTRIES + " files");
+            throw new Refused(AT_MOST.with(MAX_ENTRIES));
         }
         final StringBuilder header = new StringBuilder(MAGIC).append(NEWLINE);
         final StringBuilder joined = new StringBuilder();
@@ -90,14 +121,14 @@ public final class Archive {
         for (final StoredFile file : files) {
             final String name = leaf(file.path());
             if (name.indexOf(SEPARATOR.charAt(0)) >= 0 || name.indexOf(NEWLINE) >= 0) {
-                throw new IllegalArgumentException("a file name may not hold a tab or a newline: " + name);
+                throw new Refused(NO_TAB_OR_NEWLINE.with(name));
             }
             /*
              * A file keeps only its own name inside, so two files of the same name from different folders
              * would become one on the way out. Refused rather than silently swallowed.
              */
             if (!names.add(name)) {
-                throw new IllegalArgumentException("two files would be archived under the name " + name);
+                throw new Refused(SAME_NAME.with(name));
             }
             final int bytes = file.content().getBytes(StandardCharsets.UTF_8).length;
             header.append(name).append(SEPARATOR)

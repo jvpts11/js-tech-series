@@ -12,6 +12,8 @@ import dev.jstech.computers.gui.CdeScheme;
 import dev.jstech.computers.gui.TrashItem;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.gui.layout.TrashLayout;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -40,7 +42,7 @@ final class TrashCdeLook implements ITrashLook {
     private long lastClickAt;
 
     private static final long DOUBLE_CLICK_MS = 300L;
-    private static final String[] TITLES = {"File", "Selected", "View"};
+    private static final TextKey[] TITLES = {TrashTexts.FILE_MENU, TrashTexts.SELECTED_MENU, TrashTexts.VIEW_MENU};
 
     TrashCdeLook(final TrashApp app) {
         this.app = app;
@@ -60,10 +62,11 @@ final class TrashCdeLook implements ITrashLook {
             if (this.menu.isOpen() && this.openTitle == i) {
                 MotifChrome.raised(g, x + r.x(), y + r.y(), r.w(), r.h(), p.window(), p);
             }
-            final int tx = x + r.x() + (r.w() - font.width(TITLES[i])) / 2;
-            TrashApp.write(g, font, TITLES[i], tx, y + r.y() + 2, p.ink(), p.window(), 1f);
+            final String title = GameText.resolve(TITLES[i]);
+            final int tx = x + r.x() + (r.w() - font.width(title)) / 2;
+            TrashApp.write(g, font, title, tx, y + r.y() + 2, p.ink(), p.window(), 1f);
             // The letter that opens the menu from the keyboard, underlined as Motif marked it.
-            g.fill(tx, y + r.y() + 10, tx + font.width(TITLES[i].substring(0, 1)) - 1, y + r.y() + 11, p.ink());
+            g.fill(tx, y + r.y() + 10, tx + font.width(title.substring(0, 1)) - 1, y + r.y() + 11, p.ink());
         }
         final Rect well = well();
         MotifChrome.sunken(g, well.x(), well.y(), well.w(), well.h(), p.inset(), p);
@@ -163,7 +166,7 @@ final class TrashCdeLook implements ITrashLook {
     @Override
     public int[] controlPoint(final String label) {
         for (int i = 0; i < TITLES.length; i++) {
-            if (TITLES[i].equals(label)) {
+            if (GameText.resolve(TITLES[i]).equals(label)) {
                 final Rect r = TrashLayout.menu(i);
                 return new int[] {this.left + r.x() + r.w() / 2, this.top + r.y() + r.h() / 2};
             }
@@ -199,16 +202,15 @@ final class TrashCdeLook implements ITrashLook {
         final Rect r = TrashLayout.menu(index);
         final List<MotifMenu.Entry> entries = switch (index) {
             case 0 -> List.of(
-                    new MotifMenu.Entry("Select All", "", !this.app.items().isEmpty(), this.app::selectAll),
-                    new MotifMenu.Entry("Deselect All", "", !this.app.selection().isEmpty(),
-                            this.app::clearSelection),
+                    entry(TrashTexts.SELECT_ALL, !this.app.items().isEmpty(), this.app::selectAll),
+                    entry(TrashTexts.DESELECT_ALL, !this.app.selection().isEmpty(), this.app::clearSelection),
                     MotifMenu.Entry.line(),
-                    new MotifMenu.Entry("Close", "", true, this.app::close));
+                    entry(TrashTexts.CLOSE, true, this.app::close));
             case 1 -> selectedEntries();
             default -> List.of(
-                    new MotifMenu.Entry("By Name", "", this.app.order() != TrashApp.Order.BY_NAME,
+                    entry(TrashTexts.BY_NAME, this.app.order() != TrashApp.Order.BY_NAME,
                             () -> this.app.orderBy(TrashApp.Order.BY_NAME)),
-                    new MotifMenu.Entry("By Size", "", this.app.order() != TrashApp.Order.BY_SIZE,
+                    entry(TrashTexts.BY_SIZE, this.app.order() != TrashApp.Order.BY_SIZE,
                             () -> this.app.orderBy(TrashApp.Order.BY_SIZE)));
         };
         this.openTitle = index;
@@ -219,7 +221,12 @@ final class TrashCdeLook implements ITrashLook {
     /** What CDE does to the objects that are selected. */
     private List<MotifMenu.Entry> selectedEntries() {
         final boolean any = !this.app.selection().isEmpty();
-        return List.of(new MotifMenu.Entry("Put Back", "", any, this.app::restoreSelected),
-                new MotifMenu.Entry("Shred", "", any, this.app::deleteSelected));
+        return List.of(entry(TrashTexts.PUT_BACK, any, this.app::restoreSelected),
+                entry(TrashTexts.SHRED, any, this.app::deleteSelected));
+    }
+
+    /* An entry of a Motif menu, in the player's language and with no key beside it. */
+    private static MotifMenu.Entry entry(final TextKey label, final boolean enabled, final Runnable action) {
+        return new MotifMenu.Entry(GameText.resolve(label), "", enabled, action);
     }
 }

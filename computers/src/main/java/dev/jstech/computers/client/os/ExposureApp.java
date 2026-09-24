@@ -27,6 +27,7 @@ import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -95,8 +96,8 @@ public final class ExposureApp implements IDesktopApp {
     private Consumer<String> askAction = value -> { };
 
     /* The question asked before a file with changes is closed. */
-    private final Popup askClose = new Popup(() -> "Save changes to " + closingName() + "?", 176, 40)
-            .setLayouter(this::layoutAskClose);
+    private final Popup askClose = new Popup(() -> GameText.resolve(StudioTexts.SAVE_CHANGES.with(closingName())),
+            176, 40).setLayouter(this::layoutAskClose);
     private int closing = -1;
 
     /** The outline of the open file, read again only when its text changes. */
@@ -118,35 +119,38 @@ public final class ExposureApp implements IDesktopApp {
                 .setOnClick(this::onOutlinePicked);
         this.problems = this.root.add(new ListView<>(this.workspace::folderProblems, ROW_H, this::drawProblemRow))
                 .setOnClick(this::onProblemPicked);
-        this.survey = this.root.add(new Button("Rebuild all", this.workspace::surveyFolder));
+        this.survey = this.root.add(new Button(GameText.resolve(ExposureTexts.REBUILD_ALL_BUTTON),
+                this.workspace::surveyFolder));
         this.root.add(this.menuBar);
-        this.menuBar.add("File", this::fileMenu).add("Source", this::sourceMenu).add("Project", this::projectMenu);
+        this.menuBar.add(GameText.resolve(StudioTexts.FILE_MENU), this::fileMenu)
+                .add(GameText.resolve(ExposureTexts.SOURCE_MENU), this::sourceMenu)
+                .add(GameText.resolve(StudioTexts.PROJECT_MENU), this::projectMenu);
         this.ask.add(this.askField);
-        this.askOk = this.ask.add(new Button("OK", () -> {
+        this.askOk = this.ask.add(new Button(GameText.resolve(StudioTexts.OK), () -> {
             this.ask.close();
             this.askAction.accept(this.askField.edit().trim());
         }).setPrimary(true));
         this.askField.setOnCommit(value -> this.askOk.mouseClicked(this.askOk.center()[0], this.askOk.center()[1], 0));
-        this.askClose.add(new Button("Save", () -> {
+        this.askClose.add(new Button(GameText.resolve(StudioTexts.SAVE), () -> {
             this.askClose.close();
             final int index = this.closing;
             this.workspace.setCurrent(index);
             this.workspace.save();
             this.workspace.close(index);
         }).setPrimary(true));
-        this.askClose.add(new Button("Don't Save", () -> {
+        this.askClose.add(new Button(GameText.resolve(StudioTexts.DONT_SAVE), () -> {
             this.askClose.close();
             this.workspace.close(this.closing);
         }));
-        this.askClose.add(new Button("Cancel", this.askClose::close));
+        this.askClose.add(new Button(GameText.resolve(StudioTexts.CANCEL), this.askClose::close));
         this.workspace.refresh();
         this.workspace.surveyFolder();
     }
 
     /* The menus */
 
-    private ContextMenu.Item item(final String label, final boolean enabled, final Runnable action) {
-        return new ContextMenu.Item(label, enabled, action);
+    private ContextMenu.Item item(final TextKey label, final boolean enabled, final Runnable action) {
+        return new ContextMenu.Item(GameText.resolve(label), enabled, action);
     }
 
     private boolean hasDoc() {
@@ -155,37 +159,37 @@ public final class ExposureApp implements IDesktopApp {
 
     private List<ContextMenu.Item> fileMenu() {
         return List.of(
-                item("New File...", true, this::newFile),
-                item("Open File...", true, this::openFileByName),
-                item("Open Folder...", true, this::pickFolder),
+                item(StudioTexts.NEW_FILE_ITEM, true, this::newFile),
+                item(StudioTexts.OPEN_FILE_ITEM, true, this::openFileByName),
+                item(StudioTexts.OPEN_FOLDER_ITEM, true, this::pickFolder),
                 ContextMenu.Item.separator(),
-                item("Save", hasDoc(), this::save),
-                item("Save As...", hasDoc(), this::saveAs),
-                item("Save All", this.workspace.anyDirty(), () -> {
+                item(StudioTexts.SAVE, hasDoc(), this::save),
+                item(StudioTexts.SAVE_AS_ITEM, hasDoc(), this::saveAs),
+                item(StudioTexts.SAVE_ALL, this.workspace.anyDirty(), () -> {
                     this.workspace.saveAll();
                     this.workspace.surveyFolder();
                 }),
                 ContextMenu.Item.separator(),
-                item("Close File", hasDoc(), () -> closeTab(this.workspace.currentIndex())),
-                item("Exit", true, () -> DesktopScreen.requestClose(KEY)));
+                item(ExposureTexts.CLOSE_FILE, hasDoc(), () -> closeTab(this.workspace.currentIndex())),
+                item(StudioTexts.EXIT, true, () -> DesktopScreen.requestClose(KEY)));
     }
 
     private List<ContextMenu.Item> sourceMenu() {
         return List.of(
-                item("Toggle Line Comment", hasDoc(), this::toggleComment),
-                item("Go To Line...", hasDoc(), this::goToLine),
-                ContextMenu.Item.submenu("Refactor", List.of(
-                        item("Implement Interface", hasDoc(), this::implementInterface))),
+                item(StudioTexts.TOGGLE_LINE_COMMENT, hasDoc(), this::toggleComment),
+                item(StudioTexts.GO_TO_LINE_ITEM, hasDoc(), this::goToLine),
+                ContextMenu.Item.submenu(GameText.resolve(StudioTexts.REFACTOR), List.of(
+                        item(StudioTexts.IMPLEMENT_INTERFACE, hasDoc(), this::implementInterface))),
                 ContextMenu.Item.separator(),
-                item("Zoom In", hasDoc(), () -> zoomEditor(1)),
-                item("Zoom Out", hasDoc(), () -> zoomEditor(-1)),
-                item("Reset Zoom", hasDoc(), () -> setEditorScale(1.0f)));
+                item(StudioTexts.ZOOM_IN, hasDoc(), () -> zoomEditor(1)),
+                item(StudioTexts.ZOOM_OUT, hasDoc(), () -> zoomEditor(-1)),
+                item(StudioTexts.RESET_ZOOM, hasDoc(), () -> setEditorScale(1.0f)));
     }
 
     private List<ContextMenu.Item> projectMenu() {
         return List.of(
-                item("Rebuild All", true, this.workspace::surveyFolder),
-                item("Run at Terminal", hasDoc(), this::runAtTerminal));
+                item(ExposureTexts.REBUILD_ALL, true, this.workspace::surveyFolder),
+                item(ExposureTexts.RUN_AT_TERMINAL, hasDoc(), this::runAtTerminal));
     }
 
     /** The menu the right button opens on the code. */
@@ -193,13 +197,13 @@ public final class ExposureApp implements IDesktopApp {
         final CodeWorkspace.Doc doc = this.workspace.current();
         final boolean selected = doc != null && doc.area().document().hasSelection();
         return List.of(
-                item("Cut", selected, () -> pressInEditor(GLFW.GLFW_KEY_X)),
-                item("Copy", hasDoc(), () -> pressInEditor(GLFW.GLFW_KEY_C)),
-                item("Paste", hasDoc(), () -> pressInEditor(GLFW.GLFW_KEY_V)),
+                item(StudioTexts.CUT, selected, () -> pressInEditor(GLFW.GLFW_KEY_X)),
+                item(StudioTexts.COPY, hasDoc(), () -> pressInEditor(GLFW.GLFW_KEY_C)),
+                item(StudioTexts.PASTE, hasDoc(), () -> pressInEditor(GLFW.GLFW_KEY_V)),
                 ContextMenu.Item.separator(),
-                item("Toggle Line Comment", hasDoc(), this::toggleComment),
-                ContextMenu.Item.submenu("Refactor", List.of(
-                        item("Implement Interface", hasDoc(), this::implementInterface))));
+                item(StudioTexts.TOGGLE_LINE_COMMENT, hasDoc(), this::toggleComment),
+                ContextMenu.Item.submenu(GameText.resolve(StudioTexts.REFACTOR), List.of(
+                        item(StudioTexts.IMPLEMENT_INTERFACE, hasDoc(), this::implementInterface))));
     }
 
     private void pressInEditor(final int key) {
@@ -213,7 +217,7 @@ public final class ExposureApp implements IDesktopApp {
     /* The file actions */
 
     private void newFile() {
-        ask("New File", "untitled.sgs", name -> {
+        ask(StudioTexts.NEW_FILE, "untitled.sgs", name -> {
             if (!name.isEmpty()) {
                 createFile(name);
             }
@@ -228,11 +232,12 @@ public final class ExposureApp implements IDesktopApp {
     }
 
     private void openFileByName() {
-        this.dialog.openFile("Open File", this.workspace.folder(), FileDialog.Filter.sources(), this::openFile);
+        this.dialog.openFile(StudioTexts.OPEN_FILE.text(), this.workspace.folder(), FileDialog.Filter.sources(),
+                this::openFile);
     }
 
     private void pickFolder() {
-        this.dialog.openFolder("Open Folder", this.workspace.folder(), folder -> {
+        this.dialog.openFolder(StudioTexts.OPEN_FOLDER.text(), this.workspace.folder(), folder -> {
             this.workspace.setFolder(folder);
             this.workspace.surveyFolder();
         });
@@ -262,10 +267,11 @@ public final class ExposureApp implements IDesktopApp {
         if (doc == null) {
             return;
         }
-        this.dialog.saveAs("Save As", this.workspace.folder(), doc.name(), FileDialog.Filter.sources(), path -> {
-            this.workspace.saveAs(path);
-            this.workspace.surveyFolder();
-        });
+        this.dialog.saveAs(StudioTexts.SAVE_AS.text(), this.workspace.folder(), doc.name(),
+                FileDialog.Filter.sources(), path -> {
+                    this.workspace.saveAs(path);
+                    this.workspace.surveyFolder();
+                });
     }
 
     private void closeTab(final int index) {
@@ -299,12 +305,12 @@ public final class ExposureApp implements IDesktopApp {
         if (doc == null) {
             return;
         }
-        ask("Go To Line", String.valueOf(doc.area().document().cursorLine() + 1), typed -> {
+        ask(StudioTexts.GO_TO_LINE, String.valueOf(doc.area().document().cursorLine() + 1), typed -> {
             try {
                 final int line = Integer.parseInt(typed.trim());
                 doc.area().document().setCursor(Math.max(0, line - 1), 0);
             } catch (final NumberFormatException ignored) {
-                this.workspace.say("Not a line number: " + typed);
+                this.workspace.say(GameText.resolve(StudioTexts.NOT_A_LINE.with(typed)));
             }
         });
     }
@@ -312,8 +318,8 @@ public final class ExposureApp implements IDesktopApp {
     private void implementInterface() {
         final CodeWorkspace.Doc doc = this.workspace.current();
         if (doc != null) {
-            this.workspace.say(this.workspace.implementInterface(doc) ? "Interface implemented"
-                    : "Nothing to implement here");
+            this.workspace.say(GameText.resolve(this.workspace.implementInterface(doc)
+                    ? StudioTexts.INTERFACE_IMPLEMENTED : StudioTexts.NOTHING_TO_IMPLEMENT));
         }
     }
 
@@ -325,7 +331,7 @@ public final class ExposureApp implements IDesktopApp {
         }
         final LanguageLevel level = LanguageLevel.ofSource(doc.path());
         if (level == null) {
-            this.workspace.say(doc.name() + " is not a program to run");
+            this.workspace.say(GameText.resolve(ExposureTexts.NOT_A_PROGRAM.with(doc.name())));
             return;
         }
         this.workspace.save();
@@ -357,8 +363,8 @@ public final class ExposureApp implements IDesktopApp {
     }
 
     /** Asks for one thing in a small window and does something with the answer. */
-    private void ask(final String title, final String initial, final Consumer<String> action) {
-        this.askTitle = title;
+    private void ask(final TextKey title, final String initial, final Consumer<String> action) {
+        this.askTitle = GameText.resolve(title);
         this.askAction = action;
         this.askField.set(initial);
         final int dot = initial.lastIndexOf('.');
@@ -648,7 +654,8 @@ public final class ExposureApp implements IDesktopApp {
         this.menuBar.setWindow(x, y, width, height);
         this.skin.panel(g, x, y + MenuBar.HEIGHT, width, TOOLBAR_H);
         this.survey.setBounds(x + 3, y + MenuBar.HEIGHT + 2, 52, TOOLBAR_H - 4);
-        final String where = "Folder: C:\\" + this.workspace.folder().replace('/', '\\');
+        final String where = GameText.resolve(ExposureTexts.FOLDER.with(
+                "C:\\" + this.workspace.folder().replace('/', '\\')));
         g.drawString(font, font.plainSubstrByWidth(where, width - 64), x + 60, y + MenuBar.HEIGHT + 4,
                 this.skin.dim(), false);
 
@@ -658,12 +665,14 @@ public final class ExposureApp implements IDesktopApp {
         final int upperH = dockShown ? bodyH - DOCK_H : bodyH;
 
         this.skin.panel(g, x, bodyY, SIDE_W, upperH);
-        g.drawString(font, "PACKAGE", x + 3, bodyY + 1, this.skin.dim(), false);
+        g.drawString(font, font.plainSubstrByWidth(GameText.resolve(ExposureTexts.PACKAGE), SIDE_W - 6), x + 3,
+                bodyY + 1, this.skin.dim(), false);
         this.explorer.setBounds(x, bodyY + CAPTION_H, SIDE_W, upperH - CAPTION_H);
 
         final int outlineX = x + width - OUTLINE_W;
         this.skin.panel(g, outlineX, bodyY, OUTLINE_W, upperH);
-        g.drawString(font, "OUTLINE", outlineX + 3, bodyY + 1, this.skin.dim(), false);
+        g.drawString(font, font.plainSubstrByWidth(GameText.resolve(ExposureTexts.OUTLINE), OUTLINE_W - 6),
+                outlineX + 3, bodyY + 1, this.skin.dim(), false);
         this.outline.setBounds(outlineX, bodyY + CAPTION_H, OUTLINE_W, upperH - CAPTION_H);
 
         final int codeX = x + SIDE_W;
@@ -708,12 +717,13 @@ public final class ExposureApp implements IDesktopApp {
         final int count = this.workspace.folderProblems().size();
         this.skin.panel(g, x, y, width, CAPTION_H);
         // The heading names the columns the rows have: the file, the line, and what was said.
-        final String heading = "PROBLEMS (" + count + ")";
+        final String heading = GameText.resolve(ExposureTexts.PROBLEMS.with(count));
         g.drawString(font, heading, x + 3, y + 1, this.skin.dim(), false);
         if (x + 3 + font.width(heading) + 6 < x + NAME_W) {
-            g.drawString(font, "LINE", x + NAME_W, y + 1, this.skin.dim(), false);
+            g.drawString(font, GameText.resolve(ExposureTexts.LINE), x + NAME_W, y + 1, this.skin.dim(), false);
         }
-        g.drawString(font, "WHAT THE COMPILER SAID", x + NAME_W + LINE_W, y + 1, this.skin.dim(), false);
+        g.drawString(font, GameText.resolve(ExposureTexts.COMPILER_SAID), x + NAME_W + LINE_W, y + 1,
+                this.skin.dim(), false);
         this.problems.setBounds(x, y + CAPTION_H, width, height - CAPTION_H);
     }
 
@@ -722,14 +732,15 @@ public final class ExposureApp implements IDesktopApp {
         final InkPalette palette = InkPalette.forGround(this.skin.isDark()).get();
         g.fill(x, y, x + width, y + height, palette.ground());
         Draw.pushScissor(g, x, y, x + width, y + height);
-        g.drawString(font, "Pick a file, or File > New File", x + 6, y + 6, palette.gutterText(), false);
+        g.drawString(font, GameText.resolve(ExposureTexts.EMPTY), x + 6, y + 6, palette.gutterText(), false);
         Draw.popScissor(g);
     }
 
     private void drawStatus(final GuiGraphics g, final Font font, final int x, final int y,
                             final int width, final CodeWorkspace.Doc doc) {
         this.skin.statusBar(g, x, y, width, STATUS_H);
-        g.drawString(font, this.workspace.status().isEmpty() ? "Writable" : this.workspace.status(),
+        g.drawString(font, this.workspace.status().isEmpty() ? GameText.resolve(ExposureTexts.WRITABLE)
+                        : this.workspace.status(),
                 x + 3, y + 1, this.skin.dim(), false);
         if (doc != null) {
             final String where = (doc.area().document().cursorLine() + 1)

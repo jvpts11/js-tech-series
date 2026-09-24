@@ -24,6 +24,7 @@ import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.core.text.Text;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import net.minecraft.server.level.ServerLevel;
@@ -67,14 +68,14 @@ public final class FileEditPayloads {
     private static void handleSaveFile(final SaveFilePayload payload, final ServerPlayer player,
                                        final ServerLevel level) {
         boolean ok = false;
-        String msg = "No computer";
+        Text msg = FileSavedPayload.NO_COMPUTER.text();
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
             final String path = payload.path();
             if (LiveSessionFiles.names(path)) {
                 // A file of a by-hand install: what is written is what the steps after it read.
                 final boolean written = LiveSessionFiles.write(computer, path, payload.content());
-                PacketDistributor.sendToPlayer(player,
-                        new FileSavedPayload(written, written ? "Saved " + path : "No live medium is booted"));
+                PacketDistributor.sendToPlayer(player, new FileSavedPayload(written,
+                        written ? FileSavedPayload.SAVED.with(path) : FileSavedPayload.NO_LIVE_MEDIUM.text()));
                 return;
             }
             if (path.startsWith(NET_ROOT)) {
@@ -83,7 +84,8 @@ public final class FileEditPayloads {
                 final ICliComputer.FsResult written =
                         shell == null ? null : shell.writeFile(netDos(path), payload.content());
                 PacketDistributor.sendToPlayer(player, new FileSavedPayload(written != null && written.ok(),
-                        written == null ? "No shell" : written.ok() ? "Saved " + path : written.message().english()));
+                        written == null ? FileSavedPayload.NO_SHELL.text()
+                                : written.ok() ? FileSavedPayload.SAVED.with(path) : written.message()));
                 return;
             }
             final boolean media = path.startsWith("media:");
@@ -99,9 +101,9 @@ public final class FileEditPayloads {
             final FileType type = FileType.of(ext);
             if (vol.isEmpty()
                     || kind == FilesystemKind.NONE) {
-                msg = media ? "No medium" : "No system disk";
+                msg = (media ? FileSavedPayload.NO_MEDIUM : FileSavedPayload.NO_SYSTEM_DISK).text();
             } else if (!type.userEditable()) {
-                msg = "." + type.extension() + " is read-only";
+                msg = FileSavedPayload.TYPE_READ_ONLY.with(type.extension());
             } else {
                 final long oldWeight = DiskFilesystem
                         .read(vol, real)
@@ -124,11 +126,11 @@ public final class FileEditPayloads {
                             computer.setChanged();
                         }
                         ok = true;
-                        msg = "Saved " + path;
+                        msg = FileSavedPayload.SAVED.with(path);
                     }
-                    case INVALID_PATH -> msg = "Invalid file name";
-                    case DISK_FULL -> msg = "Not enough free space";
-                    case READ_ONLY -> msg = "Read-only";
+                    case INVALID_PATH -> msg = FileSavedPayload.INVALID_NAME.text();
+                    case DISK_FULL -> msg = FileSavedPayload.NO_ROOM.text();
+                    case READ_ONLY -> msg = FileSavedPayload.READ_ONLY.text();
                 }
             }
         }

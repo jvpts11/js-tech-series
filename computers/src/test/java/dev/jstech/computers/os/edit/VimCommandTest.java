@@ -78,7 +78,7 @@ class VimCommandTest {
     void of_refusesSomethingItDoesNotKnowByName() {
         final VimCommand command = VimCommand.of("wqx");
         assertFalse(command.ok());
-        assertTrue(command.error().contains("wqx"));
+        assertTrue(command.error().english().contains("wqx"));
         assertFalse(command.write(), "a line it could not read must not write");
         assertFalse(command.quit(), "a line it could not read must not quit");
     }
@@ -98,7 +98,7 @@ class VimCommandTest {
 
     @Test
     void unwritten_saysWhatToDoAboutIt() {
-        assertTrue(VimCommand.unwritten().contains("!"));
+        assertTrue(VimCommand.unwritten().english().contains("!"));
     }
 
     @Test
@@ -113,6 +113,6 @@ class VimCommandTest {
 
     @Test
     void unknown_namesWhatWasTyped() {
-        assertEquals("E492: not an editor command: zz", VimCommand.unknown("zz").error());
+        assertEquals("E492: not an editor command: zz", VimCommand.unknown("zz").error().english());
     }
 }

@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.os.edit.VimCommand;
 import dev.jstech.core.client.gui.logic.TextDocument;
+import dev.jstech.core.text.GameText;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -45,7 +46,7 @@ public final class VimKeys implements TtyEditor.IKeys {
             return editor.message();
         }
         final String name = "\"" + editor.name() + "\"" + (editor.dirty() ? " [+]" : "");
-        return this.mode == Mode.INSERT ? "-- INSERT --  " + name : name;
+        return this.mode == Mode.INSERT ? GameText.resolve(TtyTexts.INSERT.with(name)) : name;
     }
 
     @Override
@@ -124,9 +125,9 @@ public final class VimKeys implements TtyEditor.IKeys {
             case 'u' -> {
                 if (doc.undo()) {
                     editor.touched();
-                    editor.say("1 change; before");
+                    editor.say(TtyTexts.ONE_CHANGE_BEFORE.text());
                 } else {
-                    editor.say("Already at oldest change");
+                    editor.say(TtyTexts.OLDEST_CHANGE.text());
                 }
             }
             case 'p' -> put(editor, true);
@@ -162,7 +163,7 @@ public final class VimKeys implements TtyEditor.IKeys {
             }
             case "yy" -> {
                 this.register = doc.line(doc.cursorLine()) + "\n";
-                editor.say("1 line yanked");
+                editor.say(TtyTexts.ONE_LINE_YANKED.text());
             }
             case "gg" -> doc.setCursor(0, 0);
             default -> { }
@@ -322,9 +323,9 @@ public final class VimKeys implements TtyEditor.IKeys {
         if (control && key == GLFW.GLFW_KEY_R && this.mode == Mode.NORMAL) {
             if (doc.redo()) {
                 editor.touched();
-                editor.say("1 change; after");
+                editor.say(TtyTexts.ONE_CHANGE_AFTER.text());
             } else {
-                editor.say("Already at newest change");
+                editor.say(TtyTexts.NEWEST_CHANGE.text());
             }
             return true;
         }
