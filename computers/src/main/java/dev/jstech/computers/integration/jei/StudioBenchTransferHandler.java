@@ -11,6 +11,7 @@ import dev.jstech.computers.client.os.PatternStudioApp;
 import dev.jstech.computers.integration.jei.logic.PatternGridFiller;
 import dev.jstech.computers.integration.jei.payload.SetPatternPayload;
 import dev.jstech.computers.menu.DesktopMenu;
+import dev.jstech.core.text.GameText;
 import mezz.jei.api.constants.RecipeTypes;
 import mezz.jei.api.gui.ingredient.IRecipeSlotView;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
@@ -19,7 +20,6 @@ import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.transfer.IRecipeTransferError;
 import mezz.jei.api.recipe.transfer.IRecipeTransferHandler;
 import mezz.jei.api.recipe.transfer.IRecipeTransferHandlerHelper;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
@@ -67,7 +67,7 @@ public final class StudioBenchTransferHandler
                                                          final boolean maxTransfer, final boolean doTransfer) {
         final PatternStudioApp studio = PatternStudioApp.active();
         if (studio == null || !JscJeiPlugin.studioInFront(container)) {
-            return helper.createUserErrorWithTooltip(Component.literal("Open the Pattern Studio to transfer recipes"));
+            return helper.createUserErrorWithTooltip(GameText.component(JeiTexts.OPEN_STUDIO));
         }
         if (!doTransfer) {
             return null; // a ghost draft has no missing-items error

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.gui.layout.ServerRackLayout;
 import dev.jstech.computers.hardware.ComputerBuild;
@@ -18,6 +19,9 @@ import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.EraThemes;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -41,6 +45,7 @@ import java.util.UUID;
  * the server slot and the rack's five hotswap slots, and a power switch per bay. No console and no
  * terminal live here: software access always goes through a monitor cabled to the rack.
  */
+@PaletteHolder
 public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
 
     private static final int ROWS = ServerRackLayout.ROWS;
@@ -80,51 +85,69 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
      * colours of that era's block model. The labels follow the era skin like every other screen.
      */
 
-    /** Everything the cabinet is made of, so one set of values can be swapped for another era's. */
+    /**
+     * Everything the cabinet is made of, so one set of values can be swapped for another era's: the body and its
+     * header, the rails and the rules between rows, a bay and its sill, the front slots, the power switch in both
+     * states, and the recessed ruler cells and blocked slots.
+     */
     private record Materials(int bodyTop, int bodyBottom, int bodyEdge, int bodyGloss,
                              int headTop, int headBottom, int rail, int rowRule,
                              int srvTop, int srvBottom, int srvEdge,
                              int slotTop, int slotBottom, int slotEdge, int slotGloss, int vent,
                              int pwrOnTop, int pwrOnBottom, int pwrOffTop, int pwrOffBottom,
-                             int blockedFill, int blockedText, int gadgetMark) {
+                             int blockedFill, int blockedText, int gadgetMark,
+                             int recess, int recessTop, int srvGloss, int gadgetSill, int rebuildBack,
+                             int pwrOnEdge, int pwrOnGloss, int pwrOffEdge, int pwrOffGloss) {
     }
 
     /** Today's machine: black steel and cyan. Unchanged, to the value. */
-    private static final Materials STANDARD_RACK = new Materials(
-            0xFF171D24, 0xFF10151B, 0xFF39434F, 0xFF4A5563,
-            0xFF222A33, 0xFF171D25, 0xFF2A323B, 0xFF1B2129,
-            0xFF2B333D, 0xFF1A2028, 0xFF454F5C,
-            0xFF232A33, 0xFF161B21, 0xFF3C4653, 0xFF4D5765, 0xFF0D1116,
-            0xFF243B2A, 0xFF16261A, 0xFF3B2424, 0xFF261616,
-            0xFF232834, 0xFF4A5262, 0xFFF0B23A);
+    private static final Palette<Materials> STANDARD_RACK = Palettes.declare(JsComputers.MODID, "rack/standard",
+            new Materials(
+                    0xFF171D24, 0xFF10151B, 0xFF39434F, 0xFF4A5563,
+                    0xFF222A33, 0xFF171D25, 0xFF2A323B, 0xFF1B2129,
+                    0xFF2B333D, 0xFF1A2028, 0xFF454F5C,
+                    0xFF232A33, 0xFF161B21, 0xFF3C4653, 0xFF4D5765, 0xFF0D1116,
+                    0xFF243B2A, 0xFF16261A, 0xFF3B2424, 0xFF261616,
+                    0xFF232834, 0xFF4A5262, 0xFFF0B23A,
+                    0xFF141920, 0xFF262D36, 0xFF5B6673, 0xFF7A5C17, 0xFF232834,
+                    0xFF3F6B4B, 0xFF4F7A5B, 0xFF6B3F3F, 0xFF7A4F4F));
 
     /** The grey-and-cream machine room of the nineties, the colours of the Legacy cabinet. */
-    private static final Materials LEGACY_RACK = new Materials(
-            0xFFB4B0A0, 0xFF9C9888, 0xFF6E6A58, 0xFFE4E0D0,
-            0xFFC4C0AC, 0xFFAAA694, 0xFF8A8676, 0xFF9A9684,
-            0xFFD2CEBC, 0xFFB4B0A0, 0xFF6E6A58,
-            0xFFC0BCA8, 0xFFA6A290, 0xFF6E6A58, 0xFFE4E0D0, 0xFF57544A,
-            0xFF3E7A46, 0xFF265A2E, 0xFF9A3A32, 0xFF6E221C,
-            0xFFA6A290, 0xFF6E6A58, 0xFFB8860B);
+    private static final Palette<Materials> LEGACY_RACK = Palettes.declare(JsComputers.MODID, "rack/legacy",
+            new Materials(
+                    0xFFB4B0A0, 0xFF9C9888, 0xFF6E6A58, 0xFFE4E0D0,
+                    0xFFC4C0AC, 0xFFAAA694, 0xFF8A8676, 0xFF9A9684,
+                    0xFFD2CEBC, 0xFFB4B0A0, 0xFF6E6A58,
+                    0xFFC0BCA8, 0xFFA6A290, 0xFF6E6A58, 0xFFE4E0D0, 0xFF57544A,
+                    0xFF3E7A46, 0xFF265A2E, 0xFF9A3A32, 0xFF6E221C,
+                    0xFFA6A290, 0xFF6E6A58, 0xFFB8860B,
+                    0xFF141920, 0xFF262D36, 0xFF5B6673, 0xFF7A5C17, 0xFF232834,
+                    0xFF3F6B4B, 0xFF4F7A5B, 0xFF6B3F3F, 0xFF7A4F4F));
 
     /** Beige plastic and a green screen: the Vintage cabinet, lit the way its own monitor is. */
-    private static final Materials VINTAGE_RACK = new Materials(
-            0xFF0A160A, 0xFF040D04, 0xFF1E5A1E, 0xFF2E8B2E,
-            0xFF0E1E0E, 0xFF071407, 0xFF103810, 0xFF0A2A0A,
-            0xFF103010, 0xFF071807, 0xFF1E5A1E,
-            0xFF0C260C, 0xFF041004, 0xFF1E5A1E, 0xFF2E8B2E, 0xFF000000,
-            0xFF10401A, 0xFF072207, 0xFF3E1410, 0xFF1E0A08,
-            0xFF061806, 0xFF2E8B2E, 0xFFFFB000);
+    private static final Palette<Materials> VINTAGE_RACK = Palettes.declare(JsComputers.MODID, "rack/vintage",
+            new Materials(
+                    0xFF0A160A, 0xFF040D04, 0xFF1E5A1E, 0xFF2E8B2E,
+                    0xFF0E1E0E, 0xFF071407, 0xFF103810, 0xFF0A2A0A,
+                    0xFF103010, 0xFF071807, 0xFF1E5A1E,
+                    0xFF0C260C, 0xFF041004, 0xFF1E5A1E, 0xFF2E8B2E, 0xFF000000,
+                    0xFF10401A, 0xFF072207, 0xFF3E1410, 0xFF1E0A08,
+                    0xFF061806, 0xFF2E8B2E, 0xFFFFB000,
+                    0xFF141920, 0xFF262D36, 0xFF5B6673, 0xFF7A5C17, 0xFF232834,
+                    0xFF3F6B4B, 0xFF4F7A5B, 0xFF6B3F3F, 0xFF7A4F4F));
+
+    /** How strong a status lamp's halo is against its core, as an alpha. */
+    private static final int HALO_ALPHA = 0x55;
 
     /** What this cabinet is made of; resolved from its era every tick, so a rebuild repaints it live. */
-    private Materials mat = STANDARD_RACK;
+    private Materials mat = STANDARD_RACK.get();
     private EraTheme theme = EraThemes.STANDARD;
 
     private void resolveEra() {
         final HardwareEra era = menu.rackEra();
         this.theme = EraThemes.ofNullable(era);
-        this.mat = era == HardwareEra.VINTAGE ? VINTAGE_RACK
-                : era == HardwareEra.LEGACY ? LEGACY_RACK : STANDARD_RACK;
+        this.mat = (era == HardwareEra.VINTAGE ? VINTAGE_RACK
+                : era == HardwareEra.LEGACY ? LEGACY_RACK : STANDARD_RACK).get();
     }
 
     @Override
@@ -159,7 +182,7 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
 
     /** A status light: a lit core with a dimmer halo, so it reads as a lamp and not a square. */
     private static void led(final GuiGraphics g, final int x, final int y, final int color) {
-        final int halo = (color & 0x00FFFFFF) | 0x55000000;
+        final int halo = (color & 0xFFFFFF) | (HALO_ALPHA << 24);
         g.fill(x, y - 1, x + 3, y + 4, halo);
         g.fill(x - 1, y, x + 4, y + 3, halo);
         g.fill(x, y, x + 3, y + 3, color);
@@ -189,8 +212,8 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
             final int top = y + ServerRackLayout.rowY(row);
             // Rack-unit ruler cell, recessed into the rail.
             g.fill(x + ServerRackLayout.RULER_X, top, x + ServerRackLayout.RULER_X + 14,
-                    top + ServerRackLayout.SLOT, 0xFF141920);
-            g.fill(x + ServerRackLayout.RULER_X, top, x + ServerRackLayout.RULER_X + 14, top + 1, 0xFF262D36);
+                    top + ServerRackLayout.SLOT, mat.recess());
+            g.fill(x + ServerRackLayout.RULER_X, top, x + ServerRackLayout.RULER_X + 14, top + 1, mat.recessTop());
             // Row separator, so eight units read as eight shelves.
             g.fill(x + 8, top + ServerRackLayout.SLOT, x + imageWidth - 8,
                     top + ServerRackLayout.SLOT + 1, mat.rowRule());
@@ -205,7 +228,7 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
                         top + ServerRackLayout.SLOT, mat.blockedFill());
             } else {
                 raised(g, x + ServerRackLayout.SERVER_X, top, ServerRackLayout.SLOT,
-                        ServerRackLayout.SLOT, mat.srvTop(), mat.srvBottom(), mat.srvEdge(), 0xFF5B6673);
+                        ServerRackLayout.SLOT, mat.srvTop(), mat.srvBottom(), mat.srvEdge(), mat.srvGloss());
             }
             // The five hotswap slots of this row, colored by what the mounted chassis cables.
             for (int column = 0; column < ServerRackLayout.FRONT_SLOTS; column++) {
@@ -226,12 +249,12 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
                         // A gadget bay wears an amber sill instead of drive vents.
                         g.fill(slotX + 2, top + ServerRackLayout.SLOT - 4,
                                 slotX + ServerRackLayout.SLOT - 2, top + ServerRackLayout.SLOT - 2,
-                                0xFF7A5C17);
+                                mat.gadgetSill());
                     }
                     case BLOCKED_NO_UNIT, BLOCKED_BUDGET -> {
                         g.fill(slotX, top, slotX + ServerRackLayout.SLOT,
-                                top + ServerRackLayout.SLOT, 0xFF141920);
-                        g.fill(slotX, top, slotX + ServerRackLayout.SLOT, top + 1, 0xFF262D36);
+                                top + ServerRackLayout.SLOT, mat.recess());
+                        g.fill(slotX, top, slotX + ServerRackLayout.SLOT, top + 1, mat.recessTop());
                     }
                 }
             }
@@ -241,7 +264,7 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
                 final int barX = x + ServerRackLayout.STATUS_X;
                 final int barW = ServerRackLayout.PWR_X - ServerRackLayout.STATUS_X - 4;
                 final int barY = top + ServerRackLayout.SLOT - 4;
-                g.fill(barX, barY, barX + barW, barY + 2, 0xFF232834);
+                g.fill(barX, barY, barX + barW, barY + 2, mat.rebuildBack());
                 g.fill(barX, barY, barX + barW * rebuild / 1000, barY + 2, JsTechTheme.amber());
             }
             // The power switch on a mounted unit's top row, with the bay's own status lamp.
@@ -251,7 +274,7 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
                 final int py = top + ServerRackLayout.PWR_DY;
                 raised(g, px, py, ServerRackLayout.PWR_W, ServerRackLayout.PWR_H,
                         on ? mat.pwrOnTop() : mat.pwrOffTop(), on ? mat.pwrOnBottom() : mat.pwrOffBottom(),
-                        on ? 0xFF3F6B4B : 0xFF6B3F3F, on ? 0xFF4F7A5B : 0xFF7A4F4F);
+                        on ? mat.pwrOnEdge() : mat.pwrOffEdge(), on ? mat.pwrOnGloss() : mat.pwrOffGloss());
                 led(g, x + ServerRackLayout.STATUS_X - 8, top + 7,
                         on ? JsTechTheme.green() : JsTechTheme.red());
             }

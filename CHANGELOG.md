@@ -152,6 +152,17 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   count, what a terminal says when it lost its machine or cannot open a program, a program's setup progress,
   the config listing and the network conflict notice are text a language file can translate. The categories keep
   their English names underneath, so a saved filter survives a change of language.
+- The desktop's own words are text a language file can translate: its errors and notices, the crash of a system
+  that ran out of memory, the menus of the wallpaper, of an icon and of a panel entry, the power dialog, the
+  Frames start menus' own words, the recipe viewer's hint to open the Pattern Studio and a command palette with
+  nothing to show. The desktop's own colours (the crash page, a dragged label, the selection band, the panel
+  menu, the tray balloon, the power shade) are the `jsc:desktop/shell` palette, which a resource pack can
+  recolour.
+- The installers' frames, the Server Rack's cabinet in each era, the Frames and Linux panels and their start
+  menus, and the tray are palettes a resource pack can recolour (`jsc:installer/*`, `jsc:rack/*`,
+  `jsc:panel/*`, `jsc:launcher/*`), and the words on those panels and menus (Start, Apps, Menu, Activities, the
+  Linux menus' places and categories, their search hints and session buttons) are text a language file can
+  translate.
 
 ### Fixed
 - Saving an IQL file from the Network Management Studio to a full disk no longer fails to send its answer: the

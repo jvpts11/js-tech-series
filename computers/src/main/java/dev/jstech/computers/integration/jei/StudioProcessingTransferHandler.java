@@ -14,6 +14,7 @@ import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.storage.IChemicalBridge;
 import dev.jstech.computers.storage.ChemicalBridges;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.GameText;
 import mezz.jei.api.gui.ingredient.IRecipeSlotView;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.ingredients.ITypedIngredient;
@@ -23,7 +24,6 @@ import mezz.jei.api.recipe.transfer.IRecipeTransferError;
 import mezz.jei.api.recipe.transfer.IRecipeTransferHandlerHelper;
 import mezz.jei.api.recipe.transfer.IUniversalRecipeTransferHandler;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.MenuType;
@@ -70,7 +70,7 @@ public final class StudioProcessingTransferHandler implements IUniversalRecipeTr
                                                          final boolean maxTransfer, final boolean doTransfer) {
         final PatternStudioApp studio = PatternStudioApp.active();
         if (studio == null || !JscJeiPlugin.studioInFront(container)) {
-            return helper.createUserErrorWithTooltip(Component.literal("Open the Pattern Studio to transfer recipes"));
+            return helper.createUserErrorWithTooltip(GameText.component(JeiTexts.OPEN_STUDIO));
         }
         if (!doTransfer) {
             return null;

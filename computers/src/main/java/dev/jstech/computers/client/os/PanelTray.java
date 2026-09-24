@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -25,7 +29,10 @@ import net.minecraft.resources.ResourceLocation;
  *
  * <p>How wide all this runs matters beyond the corner itself: it is where a panel's task buttons have to
  * stop, so the clock can never be written over by a row of open windows.
+ *
+ * <p>Its own colours are the palette {@code jsc:panel/tray}.
  */
+@PaletteHolder
 final class PanelTray {
 
     /** The padding at each end of the notification area. */
@@ -44,6 +51,10 @@ final class PanelTray {
     private static final int BADGE = 4;
     private static final int RAM_BAR_W = 26;
     private static final int RAM_BAR_H = 6;
+
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "panel/tray",
+            new Colours(0xFF101318, 0xFFF2F4F8, 0xFF202430, 0xFF505868, 0xFF2A2F3A, 0xFF11151E, 0xFF5FE07A,
+                    0xFFF0B23A, 0xFFEF6A5A));
 
     private final DesktopScreen desktop;
 
@@ -104,10 +115,11 @@ final class PanelTray {
         final int h = 22;
         final int x = Math.max(2, sw - w - 2);
         final int y = panelY - h - 2;
-        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, 0xFF101318);
-        g.fill(x, y, x + w, y + h, 0xFFF2F4F8);
-        g.drawString(desktop.textFont(), link, x + 4, y + 3, 0xFF202430, false);
-        g.drawString(desktop.textFont(), mem, x + 4, y + 12, 0xFF505868, false);
+        final Colours c = PALETTE.get();
+        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, c.tipBorder());
+        g.fill(x, y, x + w, y + h, c.tip());
+        g.drawString(desktop.textFont(), link, x + 4, y + 3, c.tipInk(), false);
+        g.drawString(desktop.textFont(), mem, x + 4, y + 12, c.tipDim(), false);
     }
 
     /**
@@ -143,8 +155,9 @@ final class PanelTray {
 
     /** The memory bar: a dark trough filled green shading to amber, and red once the machine is nearly full. */
     private void drawRamBar(final GuiGraphics g, final int x, final int y) {
-        g.fill(x, y, x + RAM_BAR_W, y + RAM_BAR_H, 0xFF2A2F3A);
-        g.fill(x + 1, y + 1, x + RAM_BAR_W - 1, y + RAM_BAR_H - 1, 0xFF11151E);
+        final Colours c = PALETTE.get();
+        g.fill(x, y, x + RAM_BAR_W, y + RAM_BAR_H, c.barEdge());
+        g.fill(x + 1, y + 1, x + RAM_BAR_W - 1, y + RAM_BAR_H - 1, c.barTrough());
         final int innerW = RAM_BAR_W - 2;
         final int used = desktop.ramUsed();
         final int total = desktop.ramTotal();
@@ -155,7 +168,7 @@ final class PanelTray {
         final boolean nearlyFull = used * 100L >= total * 95L;
         for (int px = 0; px < fillW; px++) {
             final float t = innerW <= 1 ? 0f : (float) px / (innerW - 1);
-            final int color = nearlyFull ? 0xFFEF6A5A : blend(0xFF5FE07A, 0xFFF0B23A, t);
+            final int color = nearlyFull ? c.barFull() : blend(c.barLow(), c.barHigh(), t);
             g.fill(x + 1 + px, y + 1, x + 2 + px, y + RAM_BAR_H - 1, color);
         }
     }
@@ -165,6 +178,14 @@ final class PanelTray {
         final int r = (int) (((from >> 16) & 0xFF) + (((to >> 16) & 0xFF) - ((from >> 16) & 0xFF)) * t);
         final int gr = (int) (((from >> 8) & 0xFF) + (((to >> 8) & 0xFF) - ((from >> 8) & 0xFF)) * t);
         final int b = (int) ((from & 0xFF) + ((to & 0xFF) - (from & 0xFF)) * t);
-        return 0xFF000000 | (r << 16) | (gr << 8) | b;
+        return 0xFF << 24 | (r << 16) | (gr << 8) | b;
+    }
+
+    /**
+     * The tray's own colours: the tip's border, paper and two inks, and the memory bar's edge and trough with the
+     * green it starts at, the amber it shades to and the red of a machine that is nearly full.
+     */
+    private record Colours(int tipBorder, int tip, int tipInk, int tipDim, int barEdge, int barTrough, int barLow,
+                           int barHigh, int barFull) {
     }
 }

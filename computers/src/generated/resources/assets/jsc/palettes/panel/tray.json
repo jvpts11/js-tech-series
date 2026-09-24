@@ -1,0 +1,11 @@
+{
+  "barEdge": "#FF2A2F3A",
+  "barFull": "#FFEF6A5A",
+  "barHigh": "#FFF0B23A",
+  "barLow": "#FF5FE07A",
+  "barTrough": "#FF11151E",
+  "tip": "#FFF2F4F8",
+  "tipBorder": "#FF101318",
+  "tipDim": "#FF505868",
+  "tipInk": "#FF202430"
+}

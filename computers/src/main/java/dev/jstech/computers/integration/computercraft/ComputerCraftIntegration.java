@@ -22,8 +22,6 @@ import org.jetbrains.annotations.Nullable;
 public final class ComputerCraftIntegration {
 
     public static final String MOD_ID = "computercraft";
-    /** What a Gateway says on its screen when the mod it bridges to is not there. */
-    public static final String MISSING = "CC: Tweaked is not installed";
 
     private ComputerCraftIntegration() {
     }

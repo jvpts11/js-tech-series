@@ -64,6 +64,8 @@ import dev.jstech.core.client.gui.component.ContextMenu;
 import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.gui.layout.DesktopZ;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -469,7 +471,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
      */
     public static void showDatLockedError() {
         if (active != null) {
-            active.showError("Error", DAT_LOCKED_MESSAGE);
+            active.datLocked();
         }
     }
 
@@ -494,14 +496,31 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
      */
     public static void showInstallerLockedError() {
         if (active != null) {
-            active.showError("Error", "This file is part of the installer and cannot be changed, copied or deleted."
-                    + " Run the setup program to install it.");
+            active.showError(words(DesktopTexts.ERROR), words(DesktopTexts.INSTALLER_LOCKED));
         }
     }
 
     /** Opens a modal error dialog with the given title and message over this desktop. */
     void showError(final String title, final String message) {
         this.popup = new DesktopPopup(title, message, this.font);
+    }
+
+    /*
+     * The error for a {@code .dat} touched by hand. A {@code .dat} is a read-only projection of the computer's
+     * stored items, so the only sanctioned way to move those items is the Network Interactor.
+     */
+    private void datLocked() {
+        showError(words(DesktopTexts.ERROR), words(DesktopTexts.DAT_LOCKED));
+    }
+
+    /* The notice for a file that no program on this machine opens. */
+    private void cannotOpen(final String path) {
+        showBalloon(words(DesktopTexts.CANNOT_OPEN),
+                GameText.resolve(DesktopTexts.NO_PROGRAM_OPENS.with(FsPaths.fileName(path))));
+    }
+
+    private static String words(final TextKey key) {
+        return GameText.resolve(key);
     }
 
     /**
@@ -568,15 +587,6 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     /** The currently shown desktop is the one that receives desktop-folder listing replies. */
     @Nullable
     private static DesktopScreen active;
-
-    /**
-     * The exact message shown whenever a player tries to copy, create, delete, rename, or otherwise
-     * modify a {@code .dat} file by hand. A {@code .dat} is a read-only projection of the computer's
-     * stored items, so the only sanctioned way to move those items is the Network Interactor.
-     */
-    static final String DAT_LOCKED_MESSAGE =
-            "This file is impossible to modify, create, delete or change manually, "
-                    + "use the network interactor for it.";
 
     /** The modal dialog currently shown over the desktop (an error, or Open with), or {@code null} when none. */
     @Nullable
@@ -1054,7 +1064,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
 
     /** Says a file cannot be changed by hand, which is what a projection of stored items is. */
     void showLocked() {
-        showError("Error", DAT_LOCKED_MESSAGE);
+        datLocked();
     }
 
     /** Whether this panel's popup shows the windows' live pictures rather than a list of their titles. */
@@ -1373,15 +1383,21 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
      * the Task Manager is one entry on it rather than the click's whole meaning. A separator sits before that entry.
      */
     private enum PanelRow {
-        CASCADE("Cascade Windows"),
-        SHOW_DESKTOP("Show the Desktop"),
-        SEPARATOR(""),
-        TASK_MANAGER("Task Manager");
+        CASCADE(DesktopTexts.CASCADE),
+        SHOW_DESKTOP(DesktopTexts.SHOW_DESKTOP),
+        SEPARATOR(null),
+        TASK_MANAGER(DesktopTexts.TASK_MANAGER);
 
-        private final String label;
+        @Nullable
+        private final TextKey label;
 
-        PanelRow(final String label) {
+        PanelRow(@Nullable final TextKey label) {
             this.label = label;
+        }
+
+        /** What the row reads as in the player's language; a separator reads as nothing. */
+        String words() {
+            return this.label == null ? "" : GameText.resolve(this.label);
         }
     }
 
@@ -1509,8 +1525,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
              * A refusal the machine can simply report: the desktop is still there, so a balloon says it the
              * way the notification area always did, instead of taking the screen over with a dialog.
              */
-            showBalloon("Low on memory", "This computer is running out of RAM for programs. " + key
-                    + " needs " + need + " MB and only " + Math.max(0, free) + " MB are free.");
+            showBalloon(words(DesktopTexts.LOW_MEMORY),
+                    GameText.resolve(DesktopTexts.LOW_MEMORY_BODY.with(key, need, Math.max(0, free))));
         }
         return false;
     }
@@ -1527,23 +1543,23 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
 
     /** The cooperative-kernel crash screen: a classic blue fatal-error page, drawn in desktop-local coords. */
     private void renderCrash(final GuiGraphics g, final int sw, final int sh) {
-        g.fill(0, 0, sw, sh, 0xFF0000AA);
+        final DesktopShellPalette.Colours c = DesktopShellPalette.get();
+        g.fill(0, 0, sw, sh, c.crashGround());
         final int cy = sh / 3;
         final String head = " Frames ";
         final int hw = font.width(head) + 6;
-        g.fill((sw - hw) / 2, cy - 2, (sw + hw) / 2, cy + 10, 0xFFAAAAAA);
-        g.drawString(font, head, (sw - font.width(head)) / 2, cy, 0xFF0000AA, false);
-        final String[] lines = {
-            "A fatal exception has occurred.",
-            "This computer ran out of memory with too many",
-            "programs open, and the system became unstable.",
-            "",
-            "The cooperative kernel cannot recover.",
-            "Rebooting...",
-        };
+        g.fill((sw - hw) / 2, cy - 2, (sw + hw) / 2, cy + 10, c.crashBand());
+        g.drawString(font, head, (sw - font.width(head)) / 2, cy, c.crashGround(), false);
+        final List<String> lines = new ArrayList<>();
+        lines.add(words(DesktopTexts.CRASH_FATAL));
+        // The cause is written over two lines of the screen, where the language breaks it.
+        lines.addAll(List.of(words(DesktopTexts.CRASH_CAUSE).split("\n")));
+        lines.add("");
+        lines.add(words(DesktopTexts.CRASH_NO_RECOVERY));
+        lines.add(words(DesktopTexts.REBOOTING));
         int ly = cy + 20;
         for (final String s : lines) {
-            g.drawString(font, s, (sw - font.width(s)) / 2, ly, 0xFFFFFFFF, false);
+            g.drawString(font, s, (sw - font.width(s)) / 2, ly, c.crashInk(), false);
             ly += 11;
         }
     }
@@ -1727,7 +1743,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             return null;
         }
         for (int i = 0; i < PANEL_CTX.size(); i++) {
-            if (PANEL_CTX.get(i) != PanelRow.SEPARATOR && PANEL_CTX.get(i).label.equals(label)) {
+            if (PANEL_CTX.get(i) != PanelRow.SEPARATOR && PANEL_CTX.get(i).words().equals(label)) {
                 return new int[] {sx(panelCtxX + PANEL_CTX_W / 2),
                         sy(panelCtxY + 1 + i * DESK_CTX_ITEM_H + DESK_CTX_ITEM_H / 2)};
             }
@@ -2722,8 +2738,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
                     : DesktopIcons.baseName(desktopItems.get(deskDragSlot - iconLaunchers.size()).path());
             final int gx = (int) deskDragX + 6;
             final int gy = (int) deskDragY + 2;
-            g.fill(gx, gy, gx + font.width(label) + 6, gy + 12, 0xD0303848);
-            g.drawString(font, label, gx + 3, gy + 2, 0xFFFFFFFF, false);
+            final DesktopShellPalette.Colours c = DesktopShellPalette.get();
+            g.fill(gx, gy, gx + font.width(label) + 6, gy + 12, c.ghostFill());
+            g.drawString(font, label, gx + 3, gy + 2, c.ghostInk(), false);
         }
         g.pose().popPose();
     }
@@ -2739,11 +2756,12 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         final int[] r = bandRect();
         g.pose().pushPose();
         g.pose().translate(0, 0, DesktopZ.ICONS + 1);
-        g.fill(r[0], r[1], r[0] + r[2], r[1] + r[3], 0x334C84F0);
-        g.fill(r[0], r[1], r[0] + r[2], r[1] + 1, 0xCC4C84F0);
-        g.fill(r[0], r[1] + r[3] - 1, r[0] + r[2], r[1] + r[3], 0xCC4C84F0);
-        g.fill(r[0], r[1], r[0] + 1, r[1] + r[3], 0xCC4C84F0);
-        g.fill(r[0] + r[2] - 1, r[1], r[0] + r[2], r[1] + r[3], 0xCC4C84F0);
+        final DesktopShellPalette.Colours c = DesktopShellPalette.get();
+        g.fill(r[0], r[1], r[0] + r[2], r[1] + r[3], c.bandFill());
+        g.fill(r[0], r[1], r[0] + r[2], r[1] + 1, c.bandEdge());
+        g.fill(r[0], r[1] + r[3] - 1, r[0] + r[2], r[1] + r[3], c.bandEdge());
+        g.fill(r[0], r[1], r[0] + 1, r[1] + r[3], c.bandEdge());
+        g.fill(r[0] + r[2] - 1, r[1], r[0] + r[2], r[1] + r[3], c.bandEdge());
         g.pose().popPose();
     }
 
@@ -2945,7 +2963,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         // (0) Dropped on the trash, its icon or CDE's control for it: the file is deleted.
         if (src != null && overTrash(dx, dy)) {
             if (src.readOnly()) {
-                showError("Error", DAT_LOCKED_MESSAGE);
+                datLocked();
             } else {
                 clearMovedIconCell(src);
                 DeskTrash.delete(host, List.of(src.path()));
@@ -2959,7 +2977,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             final String destDir = files.crossWindowDropDir(explorer, dx, dy);
             if (destDir != null && !samePathParent(src.path(), destDir)) {
                 if (src.readOnly()) {
-                    showError("Error", DAT_LOCKED_MESSAGE);
+                    datLocked();
                 } else {
                     PacketDistributor.sendToServer(new MoveFilePayload(host, src.path(), destDir));
                     clearMovedIconCell(src);
@@ -2977,7 +2995,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             final DiskFilesPayload.WireFile dst = desktopItems.get(target - iconLaunchers.size());
             if (dst.directory()) {
                 if (src.readOnly()) {
-                    showError("Error", DAT_LOCKED_MESSAGE);
+                    datLocked();
                 } else {
                     PacketDistributor.sendToServer(new MoveFilePayload(host, src.path(), dst.path()));
                     clearMovedIconCell(src);
@@ -3048,7 +3066,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         // Dropped on the trash: deleted, as a delete from the explorer's own menu would.
         if (overTrash(dx, dy)) {
             if (dragged.readOnly()) {
-                showError("Error", DAT_LOCKED_MESSAGE);
+                datLocked();
             } else {
                 DeskTrash.delete(host, List.of(dragged.path()));
             }
@@ -3084,7 +3102,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             return;
         }
         if (dragged.readOnly()) {
-            showError("Error", DAT_LOCKED_MESSAGE);
+            datLocked();
             return;
         }
         PacketDistributor.sendToServer(new MoveFilePayload(host, dragged.path(), destDir));
@@ -3147,7 +3165,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private void chooseOpener(final String path) {
         final List<String> programs = FileOpeners.choices(path, installedPrograms);
         if (programs.isEmpty()) {
-            showBalloon("Cannot open", "No program on this computer opens " + FsPaths.fileName(path));
+            cannotOpen(path);
             return;
         }
         final String extension = FileOpeners.extensionOf(path);
@@ -3181,7 +3199,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
                 runAtTerminal(path);
                 return;
             }
-            showBalloon("Cannot open", "No program on this computer opens " + FsPaths.fileName(path));
+            cannotOpen(path);
             return;
         }
         if (programId.equals(FileOpeners.EDITOR)) {
@@ -3199,7 +3217,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
                 ResourceLocation.fromNamespaceAndPath("jsc", programId));
         final Launcher launcher = spec == null ? null : launcherFor(spec.id());
         if (launcher == null) {
-            showBalloon("Cannot open", "No program on this computer opens " + FsPaths.fileName(path));
+            cannotOpen(path);
             return;
         }
         runLauncher(launcher);
@@ -3293,11 +3311,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             if (!entries.isEmpty()) {
                 entries.add(ContextMenu.Item.separator());
             }
-            entries.add(new ContextMenu.Item("Choose another program...", true,
+            entries.add(new ContextMenu.Item(words(DesktopTexts.CHOOSE_ANOTHER), true,
                     () -> chooseOpener(path)));
         }
         if (entries.isEmpty()) {
-            entries.add(new ContextMenu.Item("No program opens this", false, () -> { }));
+            entries.add(new ContextMenu.Item(words(DesktopTexts.NO_PROGRAM_OPENS_THIS), false, () -> { }));
         }
         return entries;
     }
@@ -3305,7 +3323,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     /** What New offers on the desktop: a folder first, then a file of every kind the machine can create. */
     private List<ContextMenu.Item> newDeskItems() {
         final List<ContextMenu.Item> entries = new ArrayList<>();
-        entries.add(new ContextMenu.Item("Folder", true, deskFiles::newFolder));
+        entries.add(new ContextMenu.Item(words(DesktopTexts.FOLDER), true, deskFiles::newFolder));
         entries.add(ContextMenu.Item.separator());
         for (final FileType type
                 : FileOpeners.creatable()) {
@@ -3342,22 +3360,24 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         final int my = panelCtxY;
         final int mh = PANEL_CTX.size() * DESK_CTX_ITEM_H + 2;
         final boolean light = luminance(skin.text()) > 140;
-        final int bg = light ? 0xFF262B36 : 0xFFE8E8EC;
-        final int fg = light ? 0xFFE7E9EF : 0xFF1A2230;
-        g.fill(mx - 1, my - 1, mx + PANEL_CTX_W + 1, my + mh + 1, light ? 0xFF11151E : 0xFF000000);
+        final DesktopShellPalette.Colours c = DesktopShellPalette.get();
+        final int bg = light ? c.darkMenuFill() : c.lightMenuFill();
+        final int fg = light ? c.darkMenuInk() : c.lightMenuInk();
+        g.fill(mx - 1, my - 1, mx + PANEL_CTX_W + 1, my + mh + 1, light ? c.darkMenuBorder() : c.lightMenuBorder());
         g.fill(mx, my, mx + PANEL_CTX_W, my + mh, bg);
-        g.fill(mx, my, mx + PANEL_CTX_W, my + 1, light ? 0xFF3A4150 : 0xFFFFFFFF);
+        g.fill(mx, my, mx + PANEL_CTX_W, my + 1, light ? c.darkMenuRule() : c.lightMenuTop());
         final int hover = panelCtxItemAt(hoverMx, hoverMy);
         int iy = my + 1;
         for (int k = 0; k < PANEL_CTX.size(); k++) {
             if (PANEL_CTX.get(k) == PanelRow.SEPARATOR) {
                 g.fill(mx + 4, iy + DESK_CTX_ITEM_H / 2, mx + PANEL_CTX_W - 4,
-                        iy + DESK_CTX_ITEM_H / 2 + 1, light ? 0xFF3A4150 : 0xFFB6BAC4);
+                        iy + DESK_CTX_ITEM_H / 2 + 1, light ? c.darkMenuRule() : c.lightMenuRule());
             } else {
                 if (k == hover) {
                     g.fill(mx + 1, iy, mx + PANEL_CTX_W - 1, iy + DESK_CTX_ITEM_H, skin.accent());
                 }
-                g.drawString(font, PANEL_CTX.get(k).label, mx + 4, iy + 2, k == hover ? 0xFFFFFFFF : fg, false);
+                g.drawString(font, PANEL_CTX.get(k).words(), mx + 4, iy + 2, k == hover ? c.menuHoverInk() : fg,
+                        false);
             }
             iy += DESK_CTX_ITEM_H;
         }
@@ -3426,7 +3446,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             entries.addAll(trash.menu());
         } else if (slot >= 0 && slot < iconLaunchers.size()) {
             final Launcher launcher = iconLaunchers.get(slot);
-            entries.add(deskItem("Open", true, () -> runLauncher(launcher)));
+            entries.add(deskItem(DesktopTexts.OPEN, true, () -> runLauncher(launcher)));
             /*
              * Only what the machine could actually take off: the programs that ship with a system are
              * part of it, so offering to remove one would be offering something that then fails.
@@ -3435,19 +3455,19 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
                     Programs.get(launcher.programId());
             if (pinsOnPanel() && launcher.factory() != null) {
                 final boolean pinned = pinnedPrograms.contains(launcher.programId().getPath());
-                entries.add(deskItem(pinned ? "Unpin from taskbar" : "Pin to taskbar", true,
+                entries.add(deskItem(pinned ? DesktopTexts.UNPIN : DesktopTexts.PIN, true,
                         () -> togglePin(launcher.label())));
             }
             if (spec != null && spec.installable()) {
                 entries.add(ContextMenu.Item.separator());
-                entries.add(deskItem("Uninstall", true, () -> uninstallLauncher(spec)));
+                entries.add(deskItem(DesktopTexts.UNINSTALL, true, () -> uninstallLauncher(spec)));
             }
         } else if (slot >= iconLaunchers.size() && slot - iconLaunchers.size() < desktopItems.size()) {
             final int di = slot - iconLaunchers.size();
             final DiskFilesPayload.WireFile file = desktopItems.get(di);
-            entries.add(deskItem("Open", true, () -> openSlot(iconLaunchers.size() + di)));
+            entries.add(deskItem(DesktopTexts.OPEN, true, () -> openSlot(iconLaunchers.size() + di)));
             if (!file.directory()) {
-                entries.add(ContextMenu.Item.submenu("Open with", openWithItems(file.path())));
+                entries.add(ContextMenu.Item.submenu(words(DesktopTexts.OPEN_WITH), openWithItems(file.path())));
             }
             addArchiveItems(entries, file, di);
             entries.add(ContextMenu.Item.separator());
@@ -3455,26 +3475,28 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
              * A projection of what a drive holds is not a file anybody wrote, so it cannot be renamed or
              * deleted by hand; the filesystem refuses both, and a menu that offered them would be lying.
              */
-            entries.add(deskItem("Rename", !file.readOnly(), () -> deskFiles.startRename(di)));
-            entries.add(deskItem("Delete", !file.readOnly(), () -> deskFiles.delete(di)));
+            entries.add(deskItem(DesktopTexts.RENAME, !file.readOnly(), () -> deskFiles.startRename(di)));
+            entries.add(deskItem(DesktopTexts.DELETE, !file.readOnly(), () -> deskFiles.delete(di)));
             entries.add(ContextMenu.Item.separator());
-            entries.add(deskItem("Properties", true, () -> requestFileProperties(file.path())));
+            entries.add(deskItem(DesktopTexts.PROPERTIES, true, () -> requestFileProperties(file.path())));
         } else {
-            entries.add(ContextMenu.Item.submenu("New", newDeskItems()));
+            entries.add(ContextMenu.Item.submenu(words(DesktopTexts.NEW), newDeskItems()));
             entries.add(ContextMenu.Item.separator());
-            entries.add(deskItem("Refresh", true, this::requestDesktop));
+            entries.add(deskItem(DesktopTexts.REFRESH, true, this::requestDesktop));
             entries.add(ContextMenu.Item.separator());
-            entries.add(deskItem("Display settings", true, () -> openSettingsPage(SettingsApp.PAGE_DISPLAY)));
-            entries.add(deskItem("Personalize", true, () -> openSettingsPage(SettingsApp.PAGE_PERSONALIZE)));
+            entries.add(deskItem(DesktopTexts.DISPLAY_SETTINGS, true,
+                    () -> openSettingsPage(SettingsApp.PAGE_DISPLAY)));
+            entries.add(deskItem(DesktopTexts.PERSONALIZE, true,
+                    () -> openSettingsPage(SettingsApp.PAGE_PERSONALIZE)));
             entries.add(ContextMenu.Item.separator());
-            entries.add(deskItem("Properties", true, () -> runLauncherCalled("This PC")));
+            entries.add(deskItem(DesktopTexts.PROPERTIES, true, () -> runLauncherCalled("This PC")));
         }
         deskMenu.open(entries, x, y, 0, 0, sw(), sh());
     }
 
     private static ContextMenu.Item deskItem(
-            final String label, final boolean enabled, final Runnable action) {
-        return new ContextMenu.Item(label, enabled, action);
+            final TextKey label, final boolean enabled, final Runnable action) {
+        return new ContextMenu.Item(words(label), enabled, action);
     }
 
     /**
@@ -3490,10 +3512,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         }
         entries.add(ContextMenu.Item.separator());
         if (Archive.EXTENSION.equalsIgnoreCase(file.ext())) {
-            entries.add(deskItem("Extract here", true, () -> deskFiles.extractHere(index)));
+            entries.add(deskItem(DesktopTexts.EXTRACT_HERE, true, () -> deskFiles.extractHere(index)));
             return;
         }
-        entries.add(deskItem("Compress to " + Archive.leaf(archiveNameOf(file.path())), true,
+        entries.add(new ContextMenu.Item(
+                GameText.resolve(DesktopTexts.COMPRESS_TO.with(Archive.leaf(archiveNameOf(file.path())))), true,
                 () -> deskFiles.compress(index)));
     }
 
@@ -3707,12 +3730,12 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
 
     /** The left edge of the footer's "Turn Off Computer" entry, shared by the drawing and the hit-test. */
     private int xpFooterOffX(final int x, final int w) {
-        return x + w - 6 - (font.width("Turn Off Computer") + 14);
+        return x + w - 6 - (font.width(words(DesktopTexts.TURN_OFF_COMPUTER)) + 14);
     }
 
     /** The left edge of the footer's "Log Off" entry, immediately before the Turn Off one. */
     private int xpFooterLogX(final int x, final int w) {
-        return xpFooterOffX(x, w) - 8 - (font.width("Log Off") + 14);
+        return xpFooterOffX(x, w) - 8 - (font.width(words(DesktopTexts.XP_LOG_OFF)) + 14);
     }
 
     /** The launchers shown in the XP right "places" column: the fixed system entries, in launcher order. */
@@ -3782,38 +3805,39 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         final int y = r[1];
         final int w = r[2];
         final int h = r[3];
-        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, 0xFF000000);
-        g.fill(x, y, x + w, y + h, 0xFFFFFFE1);
+        final DesktopShellPalette.Colours c = DesktopShellPalette.get();
+        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, c.balloonBorder());
+        g.fill(x, y, x + w, y + h, c.balloonFill());
         /*
          * The tail, pointing down at the notification area it came from: a bordered wedge, drawn as an
          * outline first and the pale fill inset into it, so it carries the same 1px edge as the box.
          */
         final int tail = x + w - 42;
         for (int i = 0; i < 7; i++) {
-            g.fill(tail + i - 1, y + h + i, tail + 14 - i, y + h + i + 1, 0xFF000000);
+            g.fill(tail + i - 1, y + h + i, tail + 14 - i, y + h + i + 1, c.balloonBorder());
         }
         for (int i = 0; i < 6; i++) {
-            g.fill(tail + i, y + h + i, tail + 12 - i, y + h + i + 1, 0xFFFFFFE1);
+            g.fill(tail + i, y + h + i, tail + 12 - i, y + h + i + 1, c.balloonFill());
         }
-        g.fill(tail, y + h - 1, tail + 12, y + h, 0xFFFFFFE1); // the tail opens into the balloon
+        g.fill(tail, y + h - 1, tail + 12, y + h, c.balloonFill()); // the tail opens into the balloon
         // The round blue "i" and the title beside it.
-        g.fill(x + 6, y + 5, x + 14, y + 13, 0xFF1C53C9);
-        g.fill(x + 7, y + 4, x + 13, y + 14, 0xFF1C53C9);
-        g.fill(x + 9, y + 6, x + 11, y + 7, 0xFFFFFFFF);
-        g.fill(x + 9, y + 8, x + 11, y + 12, 0xFFFFFFFF);
+        g.fill(x + 6, y + 5, x + 14, y + 13, c.balloonIcon());
+        g.fill(x + 7, y + 4, x + 13, y + 14, c.balloonIcon());
+        g.fill(x + 9, y + 6, x + 11, y + 7, c.balloonIconMark());
+        g.fill(x + 9, y + 8, x + 11, y + 12, c.balloonIconMark());
         g.drawString(font, Component.literal(balloon.title()).withStyle(ChatFormatting.BOLD),
-                x + 18, y + 5, 0xFF000000, false);
+                x + 18, y + 5, c.balloonTitle(), false);
         int ly = y + 16;
         for (final FormattedCharSequence line
                 : font.split(Component.literal(balloon.body()), w - 12)) {
-            g.drawString(font, line, x + 6, ly, 0xFF303030, false);
+            g.drawString(font, line, x + 6, ly, c.balloonBody(), false);
             ly += 9;
         }
         // The close box, the one part of a balloon anyone ever clicked.
         final int bx = x + w - 12;
-        g.fill(bx, y + 4, bx + 8, y + 12, 0xFFE8E8CA);
-        outline(g, bx, y + 4, 8, 8, 0xFF6A6A55);
-        g.drawString(font, "x", bx + 2, y + 5, 0xFF303030, false);
+        g.fill(bx, y + 4, bx + 8, y + 12, c.balloonCloseFill());
+        outline(g, bx, y + 4, 8, 8, c.balloonCloseEdge());
+        g.drawString(font, "x", bx + 2, y + 5, c.balloonBody(), false);
     }
 
     /** A click on a live balloon: its close box dismisses it, and the rest of it absorbs the click. */
@@ -4199,7 +4223,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
 
     /** A short account line for the Frames 11 Start footer: the computer's name, or a generic label. */
     private String hostAccountLabel() {
-        return (computerName == null || computerName.isBlank()) ? "Local account" : trim(computerName, 22);
+        return (computerName == null || computerName.isBlank()) ? words(DesktopTexts.LOCAL_ACCOUNT)
+                : trim(computerName, 22);
     }
 
     /** A thin one-pixel rectangle outline used by the Frames 11 Start panel. */
@@ -4227,10 +4252,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
 
     private static final int POWER_W = 190;
     private static final int POWER_ROW_H = 20;
-    private static final String[][] POWER_CHOICES = {
-            {"Shut down", "the machine powers off"},
-            {"Restart", "power-cycle, back at the POST"},
-            {"Log off", "leave the screen, keep it running"},
+    /** Each power choice with the line under it that says what it does, in the order the dialog lists them. */
+    private static final TextKey[][] POWER_CHOICES = {
+            {DesktopTexts.SHUT_DOWN, DesktopTexts.SHUT_DOWN_HINT},
+            {DesktopTexts.RESTART, DesktopTexts.RESTART_HINT},
+            {DesktopTexts.LOG_OFF, DesktopTexts.LOG_OFF_HINT},
     };
 
     private boolean powerOpen;
@@ -4254,11 +4280,13 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         if (entry.open()) {
             final boolean several = entry.windows() > 1;
             final boolean minimized = entry.state() == TaskbarGroups.State.MINIMIZED;
-            items.add(deskItem(several ? "Restore all" : minimized ? "Restore" : "Bring to front", true,
+            items.add(deskItem(several ? DesktopTexts.RESTORE_ALL
+                            : minimized ? DesktopTexts.RESTORE : DesktopTexts.BRING_TO_FRONT, true,
                     () -> restoreGroup(key)));
-            items.add(deskItem(several ? "Minimize all" : "Minimize", true, () -> minimizeGroup(key)));
+            items.add(deskItem(several ? DesktopTexts.MINIMIZE_ALL : DesktopTexts.MINIMIZE, true,
+                    () -> minimizeGroup(key)));
             if (!several) {
-                items.add(deskItem("Maximize", true, () -> {
+                items.add(deskItem(DesktopTexts.MAXIMIZE, true, () -> {
                     restoreGroup(key);
                     final List<DesktopWindow> mine = groupWindows(key);
                     if (!mine.isEmpty()) {
@@ -4266,18 +4294,20 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
                     }
                 }));
             }
-            items.add(deskItem("Minimize others", true, () -> minimizeOthers(key)));
+            items.add(deskItem(DesktopTexts.MINIMIZE_OTHERS, true, () -> minimizeOthers(key)));
             if (pinnable) {
                 items.add(ContextMenu.Item.separator());
-                items.add(deskItem(entry.pinned() ? "Unpin from taskbar" : "Pin to taskbar", true, () -> togglePin(key)));
+                items.add(deskItem(entry.pinned() ? DesktopTexts.UNPIN : DesktopTexts.PIN, true,
+                        () -> togglePin(key)));
             }
             items.add(ContextMenu.Item.separator());
-            items.add(deskItem(several ? "Close all windows" : "Close", true, () -> closeGroup(key)));
+            items.add(deskItem(several ? DesktopTexts.CLOSE_ALL_WINDOWS : DesktopTexts.CLOSE, true,
+                    () -> closeGroup(key)));
         } else {
-            items.add(deskItem("Open", true, () -> runLauncherCalled(key)));
+            items.add(deskItem(DesktopTexts.OPEN, true, () -> runLauncherCalled(key)));
             if (pinnable) {
                 items.add(ContextMenu.Item.separator());
-                items.add(deskItem("Unpin from taskbar", true, () -> togglePin(key)));
+                items.add(deskItem(DesktopTexts.UNPIN, true, () -> togglePin(key)));
             }
         }
         taskPopup.dismiss();
@@ -4499,11 +4529,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         }
         final int x = powerX();
         final int y = powerY();
-        g.fill(0, 0, surfaceW, surfaceH, 0x99000000);
+        g.fill(0, 0, surfaceW, surfaceH, DesktopShellPalette.get().powerShade());
         skin.windowShadow(g, x, y, POWER_W, powerHeight());
         skin.windowFrame(g, x, y, POWER_W, powerHeight());
         skin.titleBar(g, x, y, POWER_W, 14);
-        g.drawString(font, "Power", x + 6, y + 3, skin.titleText(), false);
+        g.drawString(font, words(DesktopTexts.POWER), x + 6, y + 3, skin.titleText(), false);
         for (int i = 0; i < POWER_CHOICES.length; i++) {
             final int rowY = y + 18 + i * POWER_ROW_H;
             final boolean hovered = mouseX >= x + 4 && mouseX < x + POWER_W - 4
@@ -4511,8 +4541,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             if (hovered) {
                 g.fill(x + 4, rowY, x + POWER_W - 4, rowY + POWER_ROW_H - 2, skin.listHover());
             }
-            g.drawString(font, POWER_CHOICES[i][0], x + 12, rowY + 2, skin.text(), false);
-            g.drawString(font, POWER_CHOICES[i][1], x + 12, rowY + 11, skin.dim(), false);
+            g.drawString(font, words(POWER_CHOICES[i][0]), x + 12, rowY + 2, skin.text(), false);
+            g.drawString(font, words(POWER_CHOICES[i][1]), x + 12, rowY + 11, skin.dim(), false);
         }
         return true;
     }
@@ -5523,7 +5553,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             }
             if (!modal && lmx >= slot.x && lmx < slot.x + 16 && lmy >= slot.y && lmy < slot.y + 16) {
                 hoveredSlot = slot;
-                g.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, 0x80FFFFFF);
+                g.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, DesktopShellPalette.get().slotHover());
             }
         }
     }

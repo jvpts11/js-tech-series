@@ -11,7 +11,6 @@ computers/src/main/java/dev/jstech/computers/client/CraftingSwitchScreen.java 9
 computers/src/main/java/dev/jstech/computers/client/DesktopSplashArt.java 35
 computers/src/main/java/dev/jstech/computers/client/FirmwareBootMenus.java 14
 computers/src/main/java/dev/jstech/computers/client/FirmwareScreen.java 28
-computers/src/main/java/dev/jstech/computers/client/InstallerFrames.java 169
 computers/src/main/java/dev/jstech/computers/client/InstallerScreen.java 17
 computers/src/main/java/dev/jstech/computers/client/IqlEditor.java 4
 computers/src/main/java/dev/jstech/computers/client/LoaderMenuPainter.java 3
@@ -22,7 +21,6 @@ computers/src/main/java/dev/jstech/computers/client/PatternEncoderScreen.java 1
 computers/src/main/java/dev/jstech/computers/client/PersonalComputerScreen.java 2
 computers/src/main/java/dev/jstech/computers/client/PostWall.java 1
 computers/src/main/java/dev/jstech/computers/client/ServerAssemblyScreen.java 2
-computers/src/main/java/dev/jstech/computers/client/ServerRackScreen.java 82
 computers/src/main/java/dev/jstech/computers/client/StorageTerminalTab.java 1
 computers/src/main/java/dev/jstech/computers/client/SystemBootScreen.java 9
 computers/src/main/java/dev/jstech/computers/client/TerminalCraftPopup.java 2
@@ -44,19 +42,14 @@ computers/src/main/java/dev/jstech/computers/client/os/CraftingManagerApp.java 2
 computers/src/main/java/dev/jstech/computers/client/os/DesktopIcons.java 13
 computers/src/main/java/dev/jstech/computers/client/os/DesktopItems.java 1
 computers/src/main/java/dev/jstech/computers/client/os/DesktopPopup.java 4
-computers/src/main/java/dev/jstech/computers/client/os/DesktopScreen.java 38
 computers/src/main/java/dev/jstech/computers/client/os/DesktopTheme.java 1
 computers/src/main/java/dev/jstech/computers/client/os/DesktopWindow.java 1
 computers/src/main/java/dev/jstech/computers/client/os/ExceedApp.java 2
 computers/src/main/java/dev/jstech/computers/client/os/ExposureApp.java 1
 computers/src/main/java/dev/jstech/computers/client/os/FilesApp.java 6
-computers/src/main/java/dev/jstech/computers/client/os/FramesLaunchers.java 38
-computers/src/main/java/dev/jstech/computers/client/os/FramesPanels.java 53
 computers/src/main/java/dev/jstech/computers/client/os/GatewayManagerApp.java 5
 computers/src/main/java/dev/jstech/computers/client/os/InteractorOps.java 9
 computers/src/main/java/dev/jstech/computers/client/os/KnotApp.java 5
-computers/src/main/java/dev/jstech/computers/client/os/LinuxLaunchers.java 41
-computers/src/main/java/dev/jstech/computers/client/os/LinuxPanels.java 15
 computers/src/main/java/dev/jstech/computers/client/os/MessengerApp.java 6
 computers/src/main/java/dev/jstech/computers/client/os/MinesweeperApp.java 16
 computers/src/main/java/dev/jstech/computers/client/os/MotifMenu.java 1
@@ -64,7 +57,6 @@ computers/src/main/java/dev/jstech/computers/client/os/NetworkInteractorApp.java
 computers/src/main/java/dev/jstech/computers/client/os/NetworkManagerApp.java 15
 computers/src/main/java/dev/jstech/computers/client/os/OpenWithPopup.java 1
 computers/src/main/java/dev/jstech/computers/client/os/PaintApp.java 3
-computers/src/main/java/dev/jstech/computers/client/os/PanelTray.java 10
 computers/src/main/java/dev/jstech/computers/client/os/PatternStudioApp.java 1
 computers/src/main/java/dev/jstech/computers/client/os/PixWallpaper.java 1
 computers/src/main/java/dev/jstech/computers/client/os/PlayingCards.java 11

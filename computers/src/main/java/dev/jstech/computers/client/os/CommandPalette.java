@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -124,7 +125,8 @@ public final class CommandPalette {
         this.list.setBounds(this.x + 2, this.y + 16, W - 4, rows * ROW_H);
         this.list.render(g, ctx);
         if (matching().isEmpty()) {
-            g.drawString(ctx.font(), "No matching results", this.x + 5, this.y + 17, ctx.skin().dim(), false);
+            g.drawString(ctx.font(), GameText.resolve(StudioTexts.NO_MATCHES), this.x + 5, this.y + 17,
+                    ctx.skin().dim(), false);
         }
     }
 

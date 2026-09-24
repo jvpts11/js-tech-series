@@ -9,6 +9,11 @@ package dev.jstech.computers.client.os;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import dev.jstech.computers.JsComputers;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -29,10 +34,26 @@ import net.minecraft.resources.ResourceLocation;
  *
  * <p>Each is drawn and hit-tested here, together, for the same reason the Linux ones are: a menu drawn in one
  * file and clicked in another drifts, and what drifts is where the click lands.
+ *
+ * <p>The colours each menu adds to its theme's are the palettes {@code jsc:launcher/period},
+ * {@code jsc:launcher/frames_95}, {@code jsc:launcher/frames_xp} and {@code jsc:launcher/frames_11}.
  */
+@PaletteHolder
 final class FramesLaunchers {
 
     private final DesktopScreen desktop;
+
+    private static final Palette<Period> PERIOD = Palettes.declare(JsComputers.MODID, "launcher/period",
+            new Period(0xFFFFFFFF));
+    private static final Palette<Classic> CLASSIC = Palettes.declare(JsComputers.MODID, "launcher/frames_95",
+            new Classic(0xFF000000, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFF808080, 0xFFFFFFFF, 0xFFC03030,
+                    0xFFFFFFFF));
+    private static final Palette<Luna> LUNA = Palettes.declare(JsComputers.MODID, "launcher/frames_xp",
+            new Luna(0xFF13315F, 0xFF3B7BD4, 0xFF1E4E9E, 0xFFFFFFFF, 0xFFFFD268, 0xFFF4A11E,
+                    0xFFFFFFFF, 0xFFDCE7F6, 0xFFB6C6E0, 0xFF1A3A70, 0xFF9FBBE6, 0x333B7BD4, 0xFF2F9A33,
+                    0x33FFFFFF, 0xFFE0A020, 0xFFE24C4C, 0xFFFFFFFF, 0xFFFFFFFF, 0xFF2F6FD6));
+    private static final Palette<Modern> MODERN = Palettes.declare(JsComputers.MODID, "launcher/frames_11",
+            new Modern(0x40000000));
 
     FramesLaunchers(final DesktopScreen desktop) {
         this.desktop = desktop;
@@ -57,7 +78,7 @@ final class FramesLaunchers {
         pose.pushPose();
         pose.translate(x + DesktopScreen.BAND_W - 3, y + h - 8, 0);
         pose.mulPose(Axis.ZP.rotationDegrees(-90));
-        g.drawString(desktop.textFont(), desktop.deskName(), 0, 0, 0xFFFFFFFF, false);
+        g.drawString(desktop.textFont(), desktop.deskName(), 0, 0, PERIOD.get().bandInk(), false);
         pose.popPose();
 
         final int itemX = x + DesktopScreen.BAND_W + 6;
@@ -95,18 +116,19 @@ final class FramesLaunchers {
         final int y = tbY - h;
         final int w = DesktopScreen.MENU_W;
         final DesktopTheme theme = desktop.themeColours();
+        final Classic c = CLASSIC.get();
         // Raised panel.
-        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, 0xFF000000);
+        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, c.border());
         g.fill(x, y, x + w, y + h, theme.menuBg());
-        g.fill(x, y, x + w, y + 1, 0xFFFFFFFF);
-        g.fill(x, y, x + 1, y + h, 0xFFFFFFFF);
+        g.fill(x, y, x + w, y + 1, c.light());
+        g.fill(x, y, x + 1, y + h, c.light());
         // Side band with the OS name, drawn rotated like the classic Start menu.
         g.fill(x + 1, y + 1, x + 1 + DesktopScreen.BAND_W, y + h - 1, theme.titleActive());
         final PoseStack pose = g.pose();
         pose.pushPose();
         pose.translate(x + DesktopScreen.BAND_W - 5, y + h - 7, 0);
         pose.mulPose(Axis.ZP.rotationDegrees(-90));
-        g.drawString(desktop.textFont(), desktop.osBand(), 0, 0, 0xFFFFFFFF, false);
+        g.drawString(desktop.textFont(), desktop.osBand(), 0, 0, c.bandInk(), false);
         pose.popPose();
         // Program items with icons.
         final int itemX = x + DesktopScreen.BAND_W + 4;
@@ -118,16 +140,17 @@ final class FramesLaunchers {
             }
             ProgramIcons.draw(g, itemX, my, 16, 14, l.programId(), desktop.icons());
             g.drawString(desktop.textFont(), l.label(), itemX + 20, my + 3,
-                    hov ? 0xFFFFFFFF : theme.menuText(), false);
+                    hov ? c.hoverInk() : theme.menuText(), false);
             my += DesktopScreen.MENU_ITEM_H;
         }
         // Separator, then Shut Down.
-        g.fill(itemX, my + 1, x + w - 4, my + 2, 0xFF808080);
-        g.fill(itemX, my + 2, x + w - 4, my + 3, 0xFFFFFFFF);
+        g.fill(itemX, my + 1, x + w - 4, my + 2, c.ruleDark());
+        g.fill(itemX, my + 2, x + w - 4, my + 3, c.ruleLight());
         my += 6;
-        g.fill(itemX + 3, my + 2, itemX + 13, my + 12, 0xFFC03030);
-        g.fill(itemX + 7, my, itemX + 9, my + 6, 0xFFFFFFFF);
-        g.drawString(desktop.textFont(), "Shut Down", itemX + 20, my + 3, theme.menuText(), false);
+        g.fill(itemX + 3, my + 2, itemX + 13, my + 12, c.powerMark());
+        g.fill(itemX + 7, my, itemX + 9, my + 6, c.powerStem());
+        g.drawString(desktop.textFont(), GameText.resolve(DesktopTexts.START_SHUT_DOWN), itemX + 20, my + 3,
+                theme.menuText(), false);
     }
 
     boolean click95(final int mx, final int my, final int tbY) {
@@ -159,29 +182,30 @@ final class FramesLaunchers {
         final int h = desktop.startMenuTall();
         final int y = tbY - h;
         final DesktopTheme theme = desktop.themeColours();
+        final Luna c = LUNA.get();
         // Panel with a thin border.
-        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, 0xFF13315F);
+        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, c.border());
         g.fill(x, y, x + w, y + h, theme.menuBg());
         // Header band: the player's own face and name over the Luna blue, the way this menu always opened.
-        g.fillGradient(x, y, x + w, y + DesktopScreen.XP_HEADER_H, 0xFF3B7BD4, 0xFF1E4E9E);
+        g.fillGradient(x, y, x + w, y + DesktopScreen.XP_HEADER_H, c.bandFrom(), c.bandTo());
         drawPlayerFace(g, x + 4, y + 3, DesktopScreen.XP_HEADER_H - 6);
         g.drawString(desktop.textFont(), playerName(),
                 x + 4 + DesktopScreen.XP_HEADER_H - 6 + 5, y + (DesktopScreen.XP_HEADER_H - 8) / 2,
-                0xFFFFFFFF, true);
+                c.bandInk(), true);
         // The orange rule under the header, lit along its top edge.
-        g.fill(x, y + DesktopScreen.XP_HEADER_H, x + w, y + DesktopScreen.XP_HEADER_H + 1, 0xFFFFD268);
+        g.fill(x, y + DesktopScreen.XP_HEADER_H, x + w, y + DesktopScreen.XP_HEADER_H + 1, c.orangeTop());
         g.fill(x, y + DesktopScreen.XP_HEADER_H + 1,
-                x + w, y + DesktopScreen.XP_HEADER_H + DesktopScreen.XP_ORANGE_H, 0xFFF4A11E);
+                x + w, y + DesktopScreen.XP_HEADER_H + DesktopScreen.XP_ORANGE_H, c.orange());
         // Body: left programs column over white, right places column over a tinted panel.
         final int bodyTop = y + DesktopScreen.XP_HEADER_H + DesktopScreen.XP_ORANGE_H;
         final int bodyBot = y + h - DesktopScreen.XP_FOOTER_H;
         final int split = x + DesktopScreen.XP_LEFT_W;
-        g.fill(x, bodyTop, split, bodyBot, 0xFFFFFFFF);
-        g.fill(split, bodyTop, x + w, bodyBot, 0xFFDCE7F6);
-        g.fill(split, bodyTop, split + 1, bodyBot, 0xFFB6C6E0);
+        g.fill(x, bodyTop, split, bodyBot, c.leftBody());
+        g.fill(split, bodyTop, x + w, bodyBot, c.rightBody());
+        g.fill(split, bodyTop, split + 1, bodyBot, c.split());
         drawXpLeftColumn(g, x + 3, bodyTop + 3, DesktopScreen.XP_LEFT_W - 6);
         drawXpColumn(g, desktop.xpRight(), split + 3, bodyTop + 3,
-                w - DesktopScreen.XP_LEFT_W - 6, 0xFF1A3A70, 0, false);
+                w - DesktopScreen.XP_LEFT_W - 6, c.rightInk(), 0, false);
         drawXpFooter(g, x, y, w, h, bodyBot);
     }
 
@@ -228,7 +252,7 @@ final class FramesLaunchers {
         final int panelEdge = skin.edge();
         final int panelHover = skin.listHover();
         // Soft drop shadow, then the panel with a hairline border.
-        g.fill(x + 2, y + 3, x + w + 2, y + h + 3, 0x40000000);
+        g.fill(x + 2, y + 3, x + w + 2, y + h + 3, MODERN.get().shadow());
         g.fill(x - 1, y - 1, x + w + 1, y + h + 1, skin.windowBorder());
         g.fill(x, y, x + w, y + h, panelBg);
         final int contentTop = drawW11Search(g, x, y, w, panelEdge, panelDim, panelText, skin);
@@ -295,26 +319,27 @@ final class FramesLaunchers {
      * that opens the page listing everything installed, services included.
      */
     private void drawXpLeftColumn(final GuiGraphics g, final int colX, final int colY, final int colW) {
+        final Luna c = LUNA.get();
         final List<DesktopScreen.Launcher> items = desktop.xpLeft();
         final int pinned = Math.min(DesktopScreen.XP_PINNED, items.size());
         drawXpColumn(g, items, colX, colY, colW, desktop.themeColours().menuText(), pinned, true);
         if (items.size() > pinned) {
             final int sepY = colY + pinned * DesktopScreen.XP_ROW_H + DesktopScreen.XP_SEP_H / 2;
-            g.fill(colX + 3, sepY, colX + colW - 3, sepY + 1, 0xFF9FBBE6);
+            g.fill(colX + 3, sepY, colX + colW - 3, sepY + 1, c.rule());
         }
         final int afterRows = colY + desktop.xpLeftRow(items.size());
         g.fill(colX + 3, afterRows + DesktopScreen.XP_SEP_H / 2,
-                colX + colW - 3, afterRows + DesktopScreen.XP_SEP_H / 2 + 1, 0xFF9FBBE6);
+                colX + colW - 3, afterRows + DesktopScreen.XP_SEP_H / 2 + 1, c.rule());
         final int allY = colY + desktop.xpAllRow();
         if (desktop.hoverIn(colX, allY, colW, DesktopScreen.XP_ALL_ROW_H)) {
-            g.fill(colX, allY, colX + colW, allY + DesktopScreen.XP_ALL_ROW_H, 0x333B7BD4);
+            g.fill(colX, allY, colX + colW, allY + DesktopScreen.XP_ALL_ROW_H, c.rowHover());
         }
-        g.drawString(desktop.textFont(), Component.literal("All Programs").withStyle(ChatFormatting.BOLD),
+        g.drawString(desktop.textFont(), GameText.component(DesktopTexts.ALL_PROGRAMS).withStyle(ChatFormatting.BOLD),
                 colX + 4, allY + 4, desktop.themeColours().menuText(), false);
         // The green chevron that always sat at the end of this row.
         final int ax = colX + colW - 10;
         for (int i = 0; i < 5; i++) {
-            g.fill(ax + i, allY + 3 + i, ax + i + 1, allY + 12 - i, 0xFF2F9A33);
+            g.fill(ax + i, allY + 3 + i, ax + i + 1, allY + 12 - i, c.chevron());
         }
     }
 
@@ -330,7 +355,7 @@ final class FramesLaunchers {
             final DesktopScreen.Launcher l = items.get(i);
             final int my = colY + (leftColumn ? desktop.xpLeftRow(i) : i * DesktopScreen.XP_ROW_H);
             if (desktop.hoverIn(colX, my, colW, DesktopScreen.XP_ROW_H)) {
-                g.fill(colX, my, colX + colW, my + DesktopScreen.XP_ROW_H, 0x333B7BD4);
+                g.fill(colX, my, colX + colW, my + DesktopScreen.XP_ROW_H, LUNA.get().rowHover());
             }
             ProgramIcons.draw(g, colX + 1, my, 14, 12, l.programId(), desktop.icons());
             final String label = desktop.shorten(l.label(), (colW - 20) / 6);
@@ -346,22 +371,25 @@ final class FramesLaunchers {
     /** The XP footer band: Log Off and Turn Off Computer, right-aligned, mirroring the header gradient. */
     private void drawXpFooter(final GuiGraphics g, final int x, final int y, final int w, final int h,
                               final int footY) {
-        g.fillGradient(x, footY, x + w, y + h, 0xFF3B7BD4, 0xFF1E4E9E);
+        final Luna c = LUNA.get();
+        g.fillGradient(x, footY, x + w, y + h, c.bandFrom(), c.bandTo());
         final int offX = desktop.xpFooterOff(x, w);
         final int logX = desktop.xpFooterLog(x, w);
         final int textY = footY + (DesktopScreen.XP_FOOTER_H - 8) / 2;
         if (desktop.hoverBelowRight(footY, logX, offX - 4)) {
-            g.fill(logX - 2, footY + 2, offX - 6, y + h - 2, 0x33FFFFFF);
+            g.fill(logX - 2, footY + 2, offX - 6, y + h - 2, c.footerHover());
         }
-        g.fill(logX, footY + 5, logX + 8, footY + 13, 0xFFE0A020);
-        g.fill(logX + 3, footY + 8, logX + 8, footY + 10, 0xFFFFFFFF);
-        g.drawString(desktop.textFont(), "Log Off", logX + 12, textY, 0xFFFFFFFF, true);
+        g.fill(logX, footY + 5, logX + 8, footY + 13, c.logOffMark());
+        g.fill(logX + 3, footY + 8, logX + 8, footY + 10, c.markStem());
+        g.drawString(desktop.textFont(), GameText.resolve(DesktopTexts.XP_LOG_OFF), logX + 12, textY, c.bandInk(),
+                true);
         if (desktop.hoverBelowRight(footY, offX, x + w - 2)) {
-            g.fill(offX - 2, footY + 2, x + w - 3, y + h - 2, 0x33FFFFFF);
+            g.fill(offX - 2, footY + 2, x + w - 3, y + h - 2, c.footerHover());
         }
-        g.fill(offX, footY + 5, offX + 8, footY + 13, 0xFFE24C4C);
-        g.fill(offX + 3, footY + 3, offX + 5, footY + 9, 0xFFFFFFFF);
-        g.drawString(desktop.textFont(), "Turn Off Computer", offX + 12, textY, 0xFFFFFFFF, true);
+        g.fill(offX, footY + 5, offX + 8, footY + 13, c.turnOffMark());
+        g.fill(offX + 3, footY + 3, offX + 5, footY + 9, c.markStem());
+        g.drawString(desktop.textFont(), GameText.resolve(DesktopTexts.TURN_OFF_COMPUTER), offX + 12, textY,
+                c.bandInk(), true);
     }
 
     /** A click inside the XP menu's two columns; false when it landed on neither a row nor All Programs. */
@@ -404,7 +432,8 @@ final class FramesLaunchers {
         g.fill(fieldX + 8, fieldY + 7, fieldX + 10, fieldY + 9, panelDim);
         final String q = desktop.searchText();
         if (q.isEmpty()) {
-            g.drawString(desktop.textFont(), "Type here to search", fieldX + 13, fieldY + 3, panelDim, false);
+            g.drawString(desktop.textFont(), GameText.resolve(DesktopTexts.SEARCH_HINT), fieldX + 13, fieldY + 3,
+                    panelDim, false);
         } else {
             g.drawString(desktop.textFont(), desktop.shorten(q, (fieldW - 16) / 6),
                     fieldX + 13, fieldY + 3, panelText, false);
@@ -415,7 +444,7 @@ final class FramesLaunchers {
     private void drawW11Pinned(final GuiGraphics g, final int x, final int w, final int contentTop,
                                final List<DesktopScreen.Launcher> filtered, final int panelDim,
                                final int panelText, final int panelHover, final int panelEdge) {
-        g.drawString(desktop.textFont(), "Pinned", x + 8, contentTop, panelDim, false);
+        g.drawString(desktop.textFont(), GameText.resolve(DesktopTexts.PINNED), x + 8, contentTop, panelDim, false);
         final int gridTop = contentTop + 9;
         final int gridX = x + (w - DesktopScreen.W11_COLS * DesktopScreen.W11_TILE_W) / 2;
         for (int i = 0; i < filtered.size(); i++) {
@@ -429,7 +458,8 @@ final class FramesLaunchers {
     private void drawW11Results(final GuiGraphics g, final int x, final int w, final int contentTop,
                                 final List<DesktopScreen.Launcher> filtered, final int panelDim,
                                 final int panelText, final int panelHover) {
-        g.drawString(desktop.textFont(), filtered.isEmpty() ? "No results" : "Best match",
+        g.drawString(desktop.textFont(),
+                GameText.resolve(filtered.isEmpty() ? DesktopTexts.NO_RESULTS : DesktopTexts.BEST_MATCH),
                 x + 8, contentTop, panelDim, false);
         int my = contentTop + 11;
         final int rowW = w - 12;
@@ -488,14 +518,42 @@ final class FramesLaunchers {
      * without a player yet falls back to a plain plate, so the header never renders as a hole.
      */
     private static void drawPlayerFace(final GuiGraphics g, final int x, final int y, final int size) {
-        g.fill(x - 1, y - 1, x + size + 1, y + size + 1, 0xFFFFFFFF); // the little white frame XP drew
+        final Luna c = LUNA.get();
+        g.fill(x - 1, y - 1, x + size + 1, y + size + 1, c.faceFrame()); // the little white frame XP drew
         final AbstractClientPlayer player = Minecraft.getInstance().player;
         if (player == null) {
-            g.fill(x, y, x + size, y + size, 0xFF2F6FD6);
+            g.fill(x, y, x + size, y + size, c.faceFallback());
             return;
         }
         final ResourceLocation skin = player.getSkin().texture();
         g.blit(skin, x, y, size, size, 8.0F, 8.0F, 8, 8, 64, 64);
         g.blit(skin, x, y, size, size, 40.0F, 8.0F, 8, 8, 64, 64);
+    }
+
+    /** The period launcher's one colour of its own: the desktop's name on its side band. */
+    private record Period(int bandInk) {
+    }
+
+    /**
+     * The grey menu: its border and light edges, the edition's name on its band, a hovered row's words, the rule
+     * over Shut Down, and the power mark beside it.
+     */
+    private record Classic(int border, int light, int bandInk, int hoverInk, int ruleDark, int ruleLight,
+                           int powerMark, int powerStem) {
+    }
+
+    /**
+     * The two-column menu: its border, the blue bands at its head and foot with their ink, the orange rule, the
+     * two columns and the line between them, the right column's ink, the separators, a hovered row, the All
+     * Programs chevron, the footer's hover and marks, and the frame and stand-in of the player's face.
+     */
+    private record Luna(int border, int bandFrom, int bandTo, int bandInk, int orangeTop, int orange,
+                        int leftBody, int rightBody, int split, int rightInk, int rule, int rowHover, int chevron,
+                        int footerHover, int logOffMark, int turnOffMark, int markStem, int faceFrame,
+                        int faceFallback) {
+    }
+
+    /** The floating menu's one colour of its own: the soft shadow under it. */
+    private record Modern(int shadow) {
     }
 }

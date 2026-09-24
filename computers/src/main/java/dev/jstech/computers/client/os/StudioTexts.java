@@ -30,6 +30,7 @@ final class StudioTexts {
     static final TextKey FIND = TextKey.of("jsc.studio.find", "Find");
     static final TextKey GO_TO_LINE = TextKey.of("jsc.studio.go_to_line", "Go To Line");
     static final TextKey TAB_SIZE = TextKey.of("jsc.studio.tab_size", "Tab size");
+    static final TextKey NO_MATCHES = TextKey.of("jsc.studio.no_matches", "No matching results");
 
     // The file windows they open.
     static final TextKey OPEN_FILE = TextKey.of("jsc.studio.open_file", "Open File");

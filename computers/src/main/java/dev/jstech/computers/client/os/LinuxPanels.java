@@ -7,9 +7,14 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.TaskbarGroups;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
@@ -29,10 +34,20 @@ import net.minecraft.client.gui.GuiGraphics;
  *
  * <p>The buttons are laid out by the same measurement the click handling tests against, so the button a
  * player sees and the button they hit are the same rectangle.
+ *
+ * <p>The colours they add to their theme's are the palette {@code jsc:panel/linux}.
  */
+@PaletteHolder
 final class LinuxPanels {
 
     private final DesktopScreen desktop;
+
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "panel/linux",
+            new Colours(0x22FFFFFF, 0xFFFFFFFF, 0x30FFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFF7C838A, 0xFFFFFFFF));
+
+    /* How strongly a put-away program's line and icon are faded, as alphas over their own colour. */
+    private static final int FADED_LINE_ALPHA = 0x60;
+    private static final int FADED_ICON_ALPHA = 0x90;
 
     LinuxPanels(final DesktopScreen desktop) {
         this.desktop = desktop;
@@ -67,7 +82,8 @@ final class LinuxPanels {
         // Launcher: KDE's K, GNOME's footprint. Both are a raised square stud, not a wide Start slab.
         final boolean startHot = desktop.launcherOpen() || (lmx >= 4 && lmx <= 58 && lmy >= tbY);
         skin.button(g, desktop.textFont(), 4, tbY + 3, 54, DesktopScreen.TASKBAR_H - 6,
-                kde ? "K  Apps" : "▲  Menu", startHot, desktop.launcherOpen(), false);
+                kde ? "K  " + GameText.resolve(PanelTexts.APPS) : "▲  " + GameText.resolve(PanelTexts.MENU),
+                startHot, desktop.launcherOpen(), false);
 
         drawPeriodTasks(g, tbY, sw, lmx, lmy, skin);
 
@@ -90,9 +106,9 @@ final class LinuxPanels {
         g.fill(0, DesktopScreen.TASKBAR_H - 1, sw, DesktopScreen.TASKBAR_H, theme.taskbarEdge());
         final boolean hot = desktop.launcherOpen() || (lmx < 64 && lmy < DesktopScreen.TASKBAR_H);
         if (hot) {
-            g.fill(4, 3, 62, DesktopScreen.TASKBAR_H - 3, 0x22FFFFFF);
+            g.fill(4, 3, 62, DesktopScreen.TASKBAR_H - 3, PALETTE.get().hover());
         }
-        g.drawString(desktop.textFont(), "Activities", 8, 8, theme.startText(), false);
+        g.drawString(desktop.textFont(), GameText.resolve(PanelTexts.ACTIVITIES), 8, 8, theme.startText(), false);
         final String clock = desktop.clock();
         g.drawString(desktop.textFont(), clock,
                 (sw - desktop.textFont().width(clock)) / 2, 8, theme.startText(), false);
@@ -102,19 +118,22 @@ final class LinuxPanels {
 
     private void drawModernLauncher(final GuiGraphics g, final int tbY, final int sh, final int lmx,
                                     final int lmy, final boolean kde, final DesktopTheme theme) {
+        final Colours c = PALETTE.get();
         final boolean startHot = desktop.launcherOpen() || (lmx >= 4 && lmx <= 58 && lmy >= tbY);
         if (startHot) {
-            g.fill(4, tbY + 2, 58, sh - 2, 0x22FFFFFF);
+            g.fill(4, tbY + 2, 58, sh - 2, c.hover());
         }
         if (kde) {
             g.fill(8, tbY + 5, 22, tbY + 19, theme.startButton());
-            g.drawString(desktop.textFont(), "K", 12, tbY + 8, 0xFFFFFFFF, false);
-            g.drawString(desktop.textFont(), "Apps", 26, tbY + 8, theme.startText(), false);
+            g.drawString(desktop.textFont(), "K", 12, tbY + 8, c.glyph(), false);
+            g.drawString(desktop.textFont(), GameText.resolve(PanelTexts.APPS), 26, tbY + 8, theme.startText(),
+                    false);
         } else {
             g.fill(8, tbY + 5, 22, tbY + 19, theme.startButton());
-            g.fill(11, tbY + 8, 19, tbY + 16, 0xFFFFFFFF);
+            g.fill(11, tbY + 8, 19, tbY + 16, c.glyph());
             g.fill(13, tbY + 10, 17, tbY + 14, theme.startButton());
-            g.drawString(desktop.textFont(), "Menu", 26, tbY + 8, theme.startText(), false);
+            g.drawString(desktop.textFont(), GameText.resolve(PanelTexts.MENU), 26, tbY + 8, theme.startText(),
+                    false);
         }
     }
 
@@ -141,7 +160,7 @@ final class LinuxPanels {
             final boolean shown = entry.key().equals(desktop.openTaskPopup());
             if (!entry.open()) {
                 if (hot || shown) {
-                    g.fill(bx, tbY + 3, bx + bw, sh - 3, 0x22FFFFFF);
+                    g.fill(bx, tbY + 3, bx + bw, sh - 3, PALETTE.get().hover());
                 }
                 ProgramIcons.draw(g, bx + 3, tbY + 4, 16, 16,
                         desktop.programIdFor(entry.key()), desktop.icons());
@@ -161,25 +180,31 @@ final class LinuxPanels {
             g.fill(bx + 2, tbY + 1, bx + bw + 2, tbY + 3, theme.taskButton());
             g.fill(bx + bw, tbY + 3, bx + bw + 2, sh - 5, theme.taskButton());
         }
+        final Colours c = PALETTE.get();
         g.fill(bx, tbY + 3, bx + bw, sh - 3,
-                active ? accent : highlighted ? 0x30FFFFFF : theme.taskButton());
-        final int line = active ? 0xFFFFFFFF : minimized ? (accent & 0x00FFFFFF) | 0x60000000 : accent;
+                active ? accent : highlighted ? c.taskHover() : theme.taskButton());
+        final int line = active ? c.activeLine() : minimized ? faded(accent, FADED_LINE_ALPHA) : accent;
         g.fill(bx, sh - 4, bx + bw, sh - 3, line);
         ProgramIcons.draw(g, bx + 3, tbY + 4, 16, 16, desktop.programIdFor(entry.key()), desktop.icons());
         if (minimized) {
-            g.fill(bx + 3, tbY + 4, bx + 19, tbY + 20, (theme.taskbar() & 0x00FFFFFF) | 0x90000000);
+            g.fill(bx + 3, tbY + 4, bx + 19, tbY + 20, faded(theme.taskbar(), FADED_ICON_ALPHA));
         }
-        final int textColor = active ? 0xFFFFFFFF : minimized ? 0xFF7C838A : theme.startText();
+        final int textColor = active ? c.activeInk() : minimized ? c.minimizedInk() : theme.startText();
         final int textW = bw - 22 - (several ? 12 : 0);
         g.drawString(desktop.textFont(),
                 desktop.shorten(desktop.taskLabel(entry), desktop.taskTitleRoom(textW + 20)),
                 bx + 22, tbY + 8, textColor, false);
         if (several) {
             final int badgeX = bx + bw - 12;
-            g.fill(badgeX, tbY + 5, badgeX + 10, tbY + 13, active ? 0xFFFFFFFF : accent);
+            g.fill(badgeX, tbY + 5, badgeX + 10, tbY + 13, active ? c.badge() : accent);
             Texts.small(g, desktop.textFont(), String.valueOf(entry.windows()),
-                    badgeX + 3, tbY + 6, active ? accent : 0xFFFFFFFF);
+                    badgeX + 3, tbY + 6, active ? accent : c.badge());
         }
+    }
+
+    /* That colour with its own alpha replaced, which is how a put-away program fades on the panel. */
+    private static int faded(final int colour, final int alpha) {
+        return (colour & 0xFFFFFF) | (alpha << 24);
     }
 
     /**
@@ -214,5 +239,13 @@ final class LinuxPanels {
                 desktop.drawStackCaret(g, bx + btnW - 8, tbY + 10 + (active ? 1 : 0), textColor);
             }
         }
+    }
+
+    /**
+     * What the Linux panels add to their theme: a hovered launcher or icon, the marks on the launcher, a hovered
+     * task button, the line and ink of the program in front, a put-away program's ink, and the window count badge.
+     */
+    private record Colours(int hover, int glyph, int taskHover, int activeLine, int activeInk, int minimizedInk,
+                           int badge) {
     }
 }
