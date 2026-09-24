@@ -311,7 +311,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         commandUsage.clear();
         for (final ConsoleInitPayload.WireCommand command : payload.commands()) {
             names.add(command.name());
-            commandUsage.put(command.name(), command.usage());
+            commandUsage.put(command.name(), GameText.resolve(command.usage()));
         }
         completion.know(names, payload.devices());
         /*

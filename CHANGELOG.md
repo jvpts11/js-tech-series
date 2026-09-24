@@ -52,6 +52,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the full-screen terminal's, so what is drawn in characters keeps its shape instead of being squashed flat.
 - FreeBSD's prompt is root's, as a machine fresh from its installer stands at: `root@host:~ #`, with `root@host`
   in red and the rest in the prompt's own colour.
+- A manual page's paragraphs wrap to the width of whatever shows them, at a terminal, under `--help` and `/?`, and
+  in the Help Viewer, with the lines they wrap onto set in under the first, instead of breaking at fixed places.
+  The Help Viewer files every command under what the command says it is for, so each command sits under the same
+  heading wherever it is listed.
 
 ### Fixed
 - The Macerator, Electric Furnace, Compressor and Coal Generator can be mined in survival. They need the right

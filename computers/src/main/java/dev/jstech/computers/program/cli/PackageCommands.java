@@ -9,6 +9,9 @@ package dev.jstech.computers.program.cli;
 
 
 import dev.jstech.computers.os.PackageManagerKind;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.Locale;
 
 /**
@@ -26,9 +29,47 @@ final class PackageCommands {
      * own flags but all resolving packages against the network's Mirror service. Only the manager the installed
      * OS ships is available, so {@code apt} does not exist on Arch and {@code pacman} does not exist on Ubuntu.
      */
+    @TextHolder
     static final class PackageManagerCommand implements ICliCommand {
 
         private final PackageManagerKind kind;
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.package.summary",
+                "install and remove packages from the network mirror");
+        /* Each manager's own flags; the words in brackets are the reader's. */
+        private static final TextKey USAGE_PACMAN = TextKey.of("jsc.cli.package.pacman.usage",
+                "-S <package> | -R <package> | -Ss [term] | -Q | -Syu");
+        private static final TextKey USAGE_EMERGE = TextKey.of("jsc.cli.package.emerge.usage",
+                "[--ask] <package> | --unmerge <package> | --search [term] | --sync");
+        private static final TextKey USAGE_PKG = TextKey.of("jsc.cli.package.pkg.usage",
+                "install <package> | delete <package> | search [term] | info | update");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.package.usage",
+                "install <package> | remove <package> | search [term] | list | update");
+        /* How the apt family opens a line about a repository it could not read, and one about a refusal. */
+        private static final TextKey ERR = TextKey.of("jsc.cli.package.err", "Err: %s");
+        private static final TextKey REFUSED = TextKey.of("jsc.cli.package.refused", "E: %s");
+        private static final TextKey NO_MIRROR = TextKey.of("jsc.cli.package.no_mirror",
+                "could not resolve mirror://");
+        private static final TextKey NOT_ON_A_MIRROR = TextKey.of("jsc.cli.package.not_on_a_mirror",
+                "  This computer is not on a network whose Mainframe runs the Mirror service.");
+        private static final TextKey ALL_UP_TO_DATE = TextKey.of("jsc.cli.package.pkg.all_up_to_date",
+                "All repositories are up to date.");
+        private static final TextKey SYNCHRONIZING = TextKey.of("jsc.cli.package.pacman.synchronizing",
+                ":: Synchronizing package databases (mirror://mainframe) ... done");
+        private static final TextKey READING_LISTS = TextKey.of("jsc.cli.package.reading_lists",
+                "Reading package lists from mirror://mainframe ... Done");
+        private static final TextKey UPDATING_CATALOGUE = TextKey.of("jsc.cli.package.pkg.updating_catalogue",
+                "Updating Mirror repository catalogue...");
+        private static final TextKey CATALOGUE_UP_TO_DATE = TextKey.of("jsc.cli.package.pkg.catalogue_up_to_date",
+                "Mirror repository is up to date.");
+        private static final TextKey RESOLVING = TextKey.of("jsc.cli.package.resolving",
+                "Resolving mirror://mainframe ...");
+        /* A package's name, marked when this computer has it or another player wrote it. */
+        private static final TextKey INSTALLED_TAG = TextKey.of("jsc.cli.package.installed_tag", "%s  [installed]");
+        private static final TextKey COMMUNITY_TAG = TextKey.of("jsc.cli.package.community_tag", "%s  [community]");
+        private static final TextKey NO_MATCH = TextKey.of("jsc.cli.package.no_match", "no packages match '%s'");
+        private static final TextKey NONE_INSTALLED = TextKey.of("jsc.cli.package.none_installed",
+                "no packages installed");
 
         PackageManagerCommand(final PackageManagerKind kind) {
             this.kind = kind;
@@ -42,18 +83,20 @@ final class PackageCommands {
 
         @Override public String name() { return kind.command(); }
 
-        @Override public String summary() { return "install and remove packages from the network mirror"; }
+        @Override public CommandGroup group() { return CommandGroup.SOFTWARE; }
+
+        @Override public Text summary() { return SUMMARY.text(); }
 
         /*
          * Removal is listed here on purpose: a verb the shell accepts but never advertises may as well
          * not exist, since the only way to find it is to already know it.
          */
-        @Override public String usage() {
+        @Override public Text usage() {
             return switch (kind) {
-                case PACMAN -> "-S <package> | -R <package> | -Ss [term] | -Q | -Syu";
-                case EMERGE -> "[--ask] <package> | --unmerge <package> | --search [term] | --sync";
-                case PKG -> "install <package> | delete <package> | search [term] | info | update";
-                default -> "install <package> | remove <package> | search [term] | list | update";
+                case PACMAN -> USAGE_PACMAN.text();
+                case EMERGE -> USAGE_EMERGE.text();
+                case PKG -> USAGE_PKG.text();
+                default -> USAGE.text();
             };
         }
 
@@ -72,14 +115,14 @@ final class PackageCommands {
                         case "-Q" -> installed(ctx);
                         case "-Syu", "-Sy" -> sync(ctx);
                         case "-R", "-Rs", "-Rns" -> remove(ctx, arg);
-                        default -> ctx.out().error("usage: pacman " + usage());
+                        default -> ctx.out().error(usageLine());
                     }
                 }
                 case EMERGE -> {
                     switch (verb) {
                         case "--search", "-s" -> search(ctx, arg);
                         case "--sync" -> sync(ctx);
-                        case "" -> ctx.out().error("usage: emerge " + usage());
+                        case "" -> ctx.out().error(usageLine());
                         case "--ask", "-a", "-av" -> install(ctx, arg, true);
                         case "--unmerge", "-C", "--depclean", "-c" -> remove(ctx, arg);
                         default -> install(ctx, ctx.rest(0), false);
@@ -93,7 +136,7 @@ final class PackageCommands {
                         case "info", "query" -> installed(ctx);
                         case "update", "upgrade" -> sync(ctx);
                         case "delete", "remove" -> remove(ctx, arg);
-                        default -> ctx.out().error("usage: pkg " + usage());
+                        default -> ctx.out().error(usageLine());
                     }
                 }
                 default -> {
@@ -103,42 +146,45 @@ final class PackageCommands {
                         case "list" -> installed(ctx);
                         case "update", "upgrade" -> sync(ctx);
                         case "remove", "purge", "erase" -> remove(ctx, arg);
-                        default -> ctx.out().error("usage: " + kind.command() + " " + usage());
+                        default -> ctx.out().error(usageLine());
                     }
                 }
             }
         }
 
+        /** How this manager is typed, said when it was typed some other way. */
+        private Text usageLine() {
+            return CliTexts.USAGE.with(kind.command(), usage());
+        }
+
         private void sync(final CliContext ctx) {
             if (!ctx.computer().mirrorReachable()) {
-                ctx.out().error(problem("could not resolve mirror://"));
-                ctx.out().dim("  This computer is not on a network whose Mainframe runs the Mirror service.");
+                ctx.out().error(problem(NO_MIRROR));
+                ctx.out().dim(NOT_ON_A_MIRROR);
                 return;
             }
             if (kind == PackageManagerKind.PKG) {
                 catalogue(ctx);
-                ctx.out().line("All repositories are up to date.");
+                ctx.out().line(ALL_UP_TO_DATE);
                 return;
             }
-            ctx.out().dim(kind == PackageManagerKind.PACMAN
-                    ? ":: Synchronizing package databases (mirror://mainframe) ... done"
-                    : "Reading package lists from mirror://mainframe ... Done");
+            ctx.out().dim(kind == PackageManagerKind.PACMAN ? SYNCHRONIZING : READING_LISTS);
         }
 
         /** What pkg says before anything that reads the repository, which is that it looked at it first. */
         private static void catalogue(final CliContext ctx) {
-            ctx.out().line("Updating Mirror repository catalogue...");
-            ctx.out().line("Mirror repository is up to date.");
+            ctx.out().line(UPDATING_CATALOGUE);
+            ctx.out().line(CATALOGUE_UP_TO_DATE);
         }
 
         /** A repository that could not be read, the way this manager opens such a line: pkg names itself. */
-        private String problem(final String what) {
-            return (kind == PackageManagerKind.PKG ? "pkg: " : "Err: ") + what;
+        private Text problem(final TextKey what) {
+            return kind == PackageManagerKind.PKG ? CliTexts.SAID_BY.with(kind.command(), what) : ERR.with(what);
         }
 
         /** A package the manager would not install or remove, opened in its own way too. */
-        private String refusal(final String why) {
-            return (kind == PackageManagerKind.PKG ? "pkg: " : "E: ") + why;
+        private Text refusal(final Text why) {
+            return kind == PackageManagerKind.PKG ? CliTexts.SAID_BY.with(kind.command(), why) : REFUSED.with(why);
         }
 
         /**
@@ -155,7 +201,7 @@ final class PackageCommands {
                 }
             }
             if (name.isEmpty()) {
-                ctx.out().error("usage: " + kind.command() + " " + usage());
+                ctx.out().error(usageLine());
                 return;
             }
             final ICliPackages.Installing result = ctx.computer().packageInstall(name, ask);
@@ -165,23 +211,23 @@ final class PackageCommands {
                 return;
             }
             if (kind == PackageManagerKind.PKG) {
-                ctx.out().line("Updating Mirror repository catalogue...");
+                ctx.out().line(UPDATING_CATALOGUE);
                 if (result.ok()) {
-                    ctx.out().line("Mirror repository is up to date.");
+                    ctx.out().line(CATALOGUE_UP_TO_DATE);
                 }
             } else {
-                ctx.out().dim("Resolving mirror://mainframe ...");
+                ctx.out().dim(RESOLVING);
             }
             if (result.ok()) {
                 lines(ctx, result.message().english());
             } else {
-                ctx.out().error(refusal(result.message().english()));
+                ctx.out().error(refusal(result.message()));
             }
         }
 
         private void remove(final CliContext ctx, final String pkg) {
             if (pkg.isBlank()) {
-                ctx.out().error("usage: " + kind.command() + " " + usage());
+                ctx.out().error(usageLine());
                 return;
             }
             final String name = pkg.trim().split("\\s+")[0];
@@ -189,7 +235,7 @@ final class PackageCommands {
             if (result.ok()) {
                 lines(ctx, result.message().english());
             } else {
-                ctx.out().error(refusal(result.message().english()));
+                ctx.out().error(refusal(result.message()));
             }
         }
 
@@ -207,7 +253,7 @@ final class PackageCommands {
 
         private void search(final CliContext ctx, final String term) {
             if (!ctx.computer().mirrorReachable()) {
-                ctx.out().error(problem("could not resolve mirror://"));
+                ctx.out().error(problem(NO_MIRROR));
                 return;
             }
             final String needle = term.trim().toLowerCase(Locale.ROOT);
@@ -218,11 +264,12 @@ final class PackageCommands {
                     continue;
                 }
                 any = true;
-                ctx.out().row(p.name() + (p.installed() ? "  [installed]" : p.community() ? "  [community]" : ""),
-                        p.description());
+                final Text named = p.installed() ? INSTALLED_TAG.with(p.name())
+                        : p.community() ? COMMUNITY_TAG.with(p.name()) : Text.literal(p.name());
+                ctx.out().row(named, Text.literal(p.description()));
             }
             if (!any) {
-                ctx.out().dim("no packages match '" + needle + "'");
+                ctx.out().dim(NO_MATCH.with(needle));
             }
         }
 
@@ -235,7 +282,7 @@ final class PackageCommands {
                 }
             }
             if (!any) {
-                ctx.out().dim(ctx.computer().mirrorReachable() ? "no packages installed" : "could not resolve mirror://");
+                ctx.out().dim(ctx.computer().mirrorReachable() ? NONE_INSTALLED : NO_MIRROR);
             }
         }
     }

@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 
 /**
@@ -48,7 +51,28 @@ final class NetFileCommands {
      * <p>No folder column and no folders in it: what is on a flat disk is every file there is, so the
      * listing is the disk.
      */
+    @TextHolder
     static final class ListFiles implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.netfile.listfiles.summary", "everything on this machine's disk");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.netfile.listfiles.about",
+                "Lists every file the disk holds, with how big it is and when it was written.");
+        private static final TextKey ABOUT_FLAT = TextKey.of("jsc.cli.netfile.listfiles.about.flat",
+                "This disk keeps no folders, so there is nothing to list the contents of: what you see is the"
+                        + " whole of it.");
+        private static final TextKey EXAMPLE_ALL =
+                TextKey.of("jsc.cli.netfile.listfiles.example.all", "everything the disk holds");
+        private static final TextKey EMPTY = TextKey.of("jsc.cli.netfile.listfiles.empty", "the disk is empty");
+        /* The headings of the listing; the spaces line them up over the columns of the rows below. */
+        private static final TextKey HEADER = TextKey.of("jsc.cli.netfile.listfiles.header",
+                "NAME                        SIZE  WRITTEN");
+        private static final TextKey KEPT = TextKey.of("jsc.cli.netfile.listfiles.kept", "[kept]");
+        private static final TextKey TOTAL_ONE =
+                TextKey.of("jsc.cli.netfile.listfiles.total.one", "%s file, %s mB");
+        private static final TextKey TOTAL_MANY =
+                TextKey.of("jsc.cli.netfile.listfiles.total.many", "%s files, %s mB");
+
         @Override public CommandScope scope() {
             return NET_FILES;
         }
@@ -61,19 +85,16 @@ final class NetFileCommands {
             return CommandGroup.FILES;
         }
 
-        @Override public String summary() {
-            return "everything on this machine's disk";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public List<String> description() {
-            return List.of("Lists every file the disk holds, with how big it is and when it was written.",
-                    "",
-                    "This disk keeps no folders, so there is nothing to list the contents of: what you see",
-                    "is the whole of it.");
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text(), ABOUT_FLAT.text());
         }
 
         @Override public List<Example> examples() {
-            return List.of(new Example("listfiles", "everything the disk holds"));
+            return List.of(new Example("listfiles", EXAMPLE_ALL));
         }
 
         @Override public List<String> seeAlso() {
@@ -88,10 +109,10 @@ final class NetFileCommands {
             }
             final List<ICliComputer.FsEntry> entries = result.entries();
             if (entries == null || entries.isEmpty()) {
-                ctx.out().dim("the disk is empty");
+                ctx.out().dim(EMPTY);
                 return;
             }
-            ctx.out().header(CliText.pad("NAME", NAME_W) + CliText.padLeft("SIZE", SIZE_W) + "  WRITTEN");
+            ctx.out().header(HEADER);
             long weight = 0L;
             int files = 0;
             for (final ICliComputer.FsEntry entry : entries) {
@@ -100,18 +121,30 @@ final class NetFileCommands {
                 }
                 files++;
                 weight += entry.weightMbEq();
-                ctx.out().line(CliText.pad(entry.name(), NAME_W)
+                final CliLine.Builder row = CliLine.build().plain(Text.literal(CliText.pad(entry.name(), NAME_W)
                         + CliText.padLeft(CliText.group(entry.weightMbEq()) + " mB", SIZE_W)
-                        + "  " + Stamps.of(entry.modified())
-                        + (entry.readOnly() ? "  [kept]" : ""));
+                        + "  " + Stamps.of(entry.modified())));
+                if (entry.readOnly()) {
+                    row.plain("  ").plain(KEPT.text());
+                }
+                ctx.out().line(row.done());
             }
-            ctx.out().dim(CliText.group(files) + (files == 1 ? " file, " : " files, ")
-                    + CliText.group(weight) + " mB");
+            ctx.out().dim((files == 1 ? TOTAL_ONE : TOTAL_MANY).with(CliText.group(files), CliText.group(weight)));
         }
     }
 
     /** What is in a file, put on the glass whole. */
+    @TextHolder
     static final class SeeFile implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.netfile.seefile.summary", "put a file on the glass");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.netfile.seefile.usage", "<file>");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.netfile.seefile.about",
+                "Writes the whole file to the glass at once. A file longer than the glass runs off the top of it;"
+                        + " read shows a long one a page at a time instead.");
+        private static final TextKey EMPTY = TextKey.of("jsc.cli.netfile.seefile.empty", "that file is empty");
+
         @Override public CommandScope scope() {
             return NET_FILES;
         }
@@ -124,17 +157,16 @@ final class NetFileCommands {
             return CommandGroup.FILES;
         }
 
-        @Override public String summary() {
-            return "put a file on the glass";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public String usage() {
-            return "<file>";
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
-        @Override public List<String> description() {
-            return List.of("Writes the whole file to the glass at once. A file longer than the glass runs",
-                    "off the top of it; read shows a long one a page at a time instead.");
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text());
         }
 
         @Override public List<String> seeAlso() {
@@ -143,7 +175,7 @@ final class NetFileCommands {
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: seefile <file>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final ICliComputer.FsResult result = ctx.computer().readFile(ctx.arg(0));
@@ -153,7 +185,7 @@ final class NetFileCommands {
             }
             final String content = result.message().english();
             if (content.isEmpty()) {
-                ctx.out().dim("that file is empty");
+                ctx.out().dim(EMPTY);
                 return;
             }
             for (final String line : content.split("\n", -1)) {
@@ -163,7 +195,13 @@ final class NetFileCommands {
     }
 
     /** Takes a file off the disk. */
+    @TextHolder
     static final class Delete implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.netfile.delete.summary", "take a file off the disk");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.netfile.delete.usage", "<file>");
+
         @Override public CommandScope scope() {
             return NET_FILES;
         }
@@ -176,12 +214,12 @@ final class NetFileCommands {
             return CommandGroup.FILES;
         }
 
-        @Override public String summary() {
-            return "take a file off the disk";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public String usage() {
-            return "<file>";
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
         @Override public List<String> seeAlso() {
@@ -190,12 +228,18 @@ final class NetFileCommands {
 
         @Override public void run(final CliContext ctx) {
             say(ctx, ctx.computer().deleteFile(ctx.hasArgs() ? ctx.arg(0) : ""),
-                    "usage: delete <file>", !ctx.hasArgs());
+                    CliTexts.USAGE.with(name(), usage()), !ctx.hasArgs());
         }
     }
 
     /** A second file with the same content under another name. */
+    @TextHolder
     static final class Copy implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.netfile.copy.summary", "a second file with the same content");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.netfile.copy.usage", "<file> <new name>");
+
         @Override public CommandScope scope() {
             return NET_FILES;
         }
@@ -208,12 +252,12 @@ final class NetFileCommands {
             return CommandGroup.FILES;
         }
 
-        @Override public String summary() {
-            return "a second file with the same content";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public String usage() {
-            return "<file> <new name>";
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
         @Override public List<String> seeAlso() {
@@ -222,15 +266,21 @@ final class NetFileCommands {
 
         @Override public void run(final CliContext ctx) {
             if (ctx.argCount() < 2) {
-                ctx.out().error("usage: copy <file> <new name>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
-            say(ctx, ctx.computer().copyPath(ctx.arg(0), ctx.arg(1)), "", false);
+            say(ctx, ctx.computer().copyPath(ctx.arg(0), ctx.arg(1)), Text.EMPTY, false);
         }
     }
 
     /** The same file under another name. */
+    @TextHolder
     static final class Rename implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.netfile.rename.summary", "give a file another name");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.netfile.rename.usage", "<file> <new name>");
+
         @Override public CommandScope scope() {
             return NET_FILES;
         }
@@ -243,12 +293,12 @@ final class NetFileCommands {
             return CommandGroup.FILES;
         }
 
-        @Override public String summary() {
-            return "give a file another name";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public String usage() {
-            return "<file> <new name>";
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
         @Override public List<String> seeAlso() {
@@ -257,15 +307,26 @@ final class NetFileCommands {
 
         @Override public void run(final CliContext ctx) {
             if (ctx.argCount() < 2) {
-                ctx.out().error("usage: rename <file> <new name>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
-            say(ctx, ctx.computer().renamePath(ctx.arg(0), ctx.arg(1)), "", false);
+            say(ctx, ctx.computer().renamePath(ctx.arg(0), ctx.arg(1)), Text.EMPTY, false);
         }
     }
 
     /** A file made out of what was typed after it. */
+    @TextHolder
     static final class Write implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.netfile.write.summary", "make a file out of what you type");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.netfile.write.usage", "<file> <text...>");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.netfile.write.about",
+                "Writes the text after the name into that file, replacing whatever was there. The kind of file is"
+                        + " read from the end of its name.");
+        private static final TextKey EXAMPLE_NOTES =
+                TextKey.of("jsc.cli.netfile.write.example.notes", "a file with that line in it");
+
         @Override public CommandScope scope() {
             return NET_FILES;
         }
@@ -278,22 +339,20 @@ final class NetFileCommands {
             return CommandGroup.FILES;
         }
 
-        @Override public String summary() {
-            return "make a file out of what you type";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public String usage() {
-            return "<file> <text...>";
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
-        @Override public List<String> description() {
-            return List.of("Writes the text after the name into that file, replacing whatever was there.",
-                    "The kind of file is read from the end of its name.");
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text());
         }
 
         @Override public List<Example> examples() {
-            return List.of(new Example("write notes.txt the cable runs north",
-                    "a file with that line in it"));
+            return List.of(new Example("write notes.txt the cable runs north", EXAMPLE_NOTES));
         }
 
         @Override public List<String> seeAlso() {
@@ -302,16 +361,16 @@ final class NetFileCommands {
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: write <file> <text...>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
-            say(ctx, ctx.computer().writeFile(ctx.arg(0), ctx.rest(1)), "", false);
+            say(ctx, ctx.computer().writeFile(ctx.arg(0), ctx.rest(1)), Text.EMPTY, false);
         }
     }
 
     /** Prints what the machine made of it, or the usage when there was nothing to act on. */
     private static void say(final CliContext ctx, final ICliComputer.FsResult result,
-                            final String usage, final boolean missing) {
+                            final Text usage, final boolean missing) {
         if (missing) {
             ctx.out().error(usage);
             return;

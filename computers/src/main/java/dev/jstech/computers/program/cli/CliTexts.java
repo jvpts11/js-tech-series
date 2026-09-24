@@ -19,6 +19,12 @@ public final class CliTexts {
 
     public static final TextKey NO_SYSTEM = TextKey.of("jsc.cli.no_system", "no system disk or OS installed");
 
+    /** A command's name in front of what it has to say, which is how every Unix tool opens a complaint. */
+    public static final TextKey SAID_BY = TextKey.of("jsc.cli.said_by", "%s: %s");
+
+    /** How a command is typed, said when it was typed some other way: its name, then its usage. */
+    public static final TextKey USAGE = TextKey.of("jsc.cli.usage", "usage: %s %s");
+
     /* The system messages of the DOS prompt, which every command that reaches a drive answers with alike. */
     public static final TextKey BAD_SYNTAX =
             TextKey.of("jsc.cli.dos.bad_syntax", "The syntax of the command is incorrect.");

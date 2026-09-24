@@ -10,7 +10,9 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.gui.layout.HelpViewerLayout;
 import dev.jstech.computers.operation.payload.HelpPayload;
 import dev.jstech.computers.operation.payload.RequestHelpPayload;
+import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -40,8 +42,8 @@ public final class HelpViewerApp implements IDesktopApp {
 
     private final BlockPos host;
 
-    /** The list as the machine gave it, and the page it is showing. */
-    private List<HelpPayload.Entry> entries = List.of();
+    /** The list as the machine gave it, and the page it is showing, in this player's language. */
+    private List<Shown> entries = List.of();
     private String page = "";
     private List<String> lines = List.of();
 
@@ -70,11 +72,19 @@ public final class HelpViewerApp implements IDesktopApp {
 
     /** Hands a machine's answer to every open window showing that machine. */
     public static void accept(final HelpPayload payload) {
+        final List<Shown> shown = new ArrayList<>(payload.entries().size());
+        for (final HelpPayload.Entry entry : payload.entries()) {
+            shown.add(new Shown(GameText.resolve(entry.group()), entry.name(), GameText.resolve(entry.summary())));
+        }
+        final List<String> page = new ArrayList<>(payload.lines().size());
+        for (final WireLine line : payload.lines()) {
+            page.add(line.toLine().text(GameText.LOADED));
+        }
         for (final HelpViewerApp app : OPEN) {
             if (app.host.equals(payload.hostPos())) {
-                app.entries = payload.entries();
+                app.entries = shown;
                 app.page = payload.page();
-                app.lines = payload.lines();
+                app.lines = page;
                 app.scroll = 0;
             }
         }
@@ -94,7 +104,7 @@ public final class HelpViewerApp implements IDesktopApp {
     public List<String> shownList() {
         final List<String> out = new ArrayList<>();
         String group = "";
-        for (final HelpPayload.Entry entry : narrowed()) {
+        for (final Shown entry : narrowed()) {
             if (!entry.group().equals(group)) {
                 group = entry.group();
                 out.add(group);
@@ -188,8 +198,10 @@ public final class HelpViewerApp implements IDesktopApp {
                     this.skin.windowBg());
         }
 
-        for (int i = 0; i < fit && this.scroll + i < this.lines.size(); i++) {
-            Draw.text(g, font, this.lines.get(this.scroll + i), x + HelpViewerLayout.DOC_X + 3,
+        final List<String> page = wrapped(font, w - HelpViewerLayout.DOC_X - HelpViewerLayout.PAD - 6);
+        this.scroll = Math.max(0, Math.min(this.scroll, Math.max(0, page.size() - fit)));
+        for (int i = 0; i < fit && this.scroll + i < page.size(); i++) {
+            Draw.text(g, font, page.get(this.scroll + i), x + HelpViewerLayout.DOC_X + 3,
                     bodyY + 2 + i * HelpViewerLayout.ROW_H, ink, this.skin.windowBg());
         }
     }
@@ -267,16 +279,47 @@ public final class HelpViewerApp implements IDesktopApp {
         ask(name);
     }
 
+    /**
+     * The page's lines cut to the width of the well, each a paragraph that wraps, its rows after the first set in as
+     * far as the line is.
+     */
+    private List<String> wrapped(final Font font, final int width) {
+        final List<String> out = new ArrayList<>();
+        for (final String line : this.lines) {
+            int indent = 0;
+            while (indent < line.length() && line.charAt(indent) == ' ') {
+                indent++;
+            }
+            final String margin = " ".repeat(indent);
+            final StringBuilder row = new StringBuilder(line.substring(0, indent));
+            boolean empty = true;
+            for (final String word : line.substring(indent).split(" ")) {
+                final String next = empty ? row + word : row + " " + word;
+                if (!empty && font.width(next) > width) {
+                    out.add(row.toString());
+                    row.setLength(0);
+                    row.append(margin).append(word);
+                } else {
+                    row.setLength(0);
+                    row.append(next);
+                }
+                empty = false;
+            }
+            out.add(row.toString());
+        }
+        return out;
+    }
+
     /** The rows that answer to what is being searched for, which is what apropos answers. */
-    private List<HelpPayload.Entry> narrowed() {
+    private List<Shown> narrowed() {
         final String wanted = this.searching.toString().toLowerCase(Locale.ROOT);
-        final List<HelpPayload.Entry> kept = new ArrayList<>();
+        final List<Shown> kept = new ArrayList<>();
         final Set<String> groups = new LinkedHashSet<>();
-        for (final HelpPayload.Entry entry : this.entries) {
+        for (final Shown entry : this.entries) {
             groups.add(entry.group());
         }
         for (final String group : groups) {
-            for (final HelpPayload.Entry entry : this.entries) {
+            for (final Shown entry : this.entries) {
                 if (!entry.group().equals(group)) {
                     continue;
                 }
@@ -291,5 +334,9 @@ public final class HelpViewerApp implements IDesktopApp {
 
     private void ask(final String name) {
         PacketDistributor.sendToServer(new RequestHelpPayload(this.host, name));
+    }
+
+    /** One command of the list as this player reads it: its heading, its name and its one line. */
+    private record Shown(String group, String name, String summary) {
     }
 }

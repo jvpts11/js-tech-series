@@ -10,6 +10,9 @@ package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.program.cli.man.ManPage;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.Locale;
 
@@ -33,16 +36,23 @@ final class PosixFileCommands {
     private PosixFileCommands() {
     }
 
+    @TextHolder
     static final class Ls implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.posix.ls.summary", "list directory contents");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.posix.ls.usage", "[-l] [directory]");
+
         @Override public CommandScope scope() {
             return POSIX_FILES;
         }
 
         @Override public String name() { return "ls"; }
 
-        @Override public String summary() { return "list directory contents"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String usage() { return "[-l] [directory]"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             boolean longFormat = false;
@@ -57,7 +67,7 @@ final class PosixFileCommands {
             }
             final ICliComputer.FsResult result = ctx.computer().listDisk(dos(ctx, dir));
             if (!result.ok()) {
-                ctx.out().error("ls: " + result.message());
+                ctx.out().error(CliTexts.SAID_BY.with(name(), result.message()));
                 return;
             }
             final List<ICliComputer.FsEntry> entries = result.entries();
@@ -69,12 +79,13 @@ final class PosixFileCommands {
                  * Columns, the way ls -l prints them: the mode, the size, then the name. The name goes last
                  * because it is the one column nothing can plan a width for; pushed to the right edge with
                  * the size, every line ran the width of the glass and folded in half on a narrow window.
+                 * Every column is data (a mode, a figure and its unit, a name), so the line is one.
                  */
                 for (final ICliComputer.FsEntry e : entries) {
                     final String mode = (e.isDir() ? "d" : "-") + (e.readOnly() ? "r--r--r--" : "rw-r--r--");
-                    ctx.out().line(mode + CliText.padLeft(
+                    ctx.out().line(Text.literal(mode + CliText.padLeft(
                             e.isDir() ? "" : String.format(Locale.ROOT, "%,d mB", e.weightMbEq()), SIZE_W)
-                            + "  " + e.name() + (e.isDir() ? "/" : ""));
+                            + "  " + e.name() + (e.isDir() ? "/" : "")));
                 }
                 return;
             }
@@ -89,50 +100,73 @@ final class PosixFileCommands {
         }
     }
 
+    @TextHolder
     static final class Pwd implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.posix.pwd.summary", "print the current directory");
+
         @Override public CommandScope scope() {
             return POSIX_FILES;
         }
 
         @Override public String name() { return "pwd"; }
 
-        @Override public String summary() { return "print the current directory"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
+
+        @Override public Text summary() { return SUMMARY.text(); }
 
         @Override public void run(final CliContext ctx) {
             ctx.out().line(PosixPath.render(ctx.computer().tree(), ctx.computer().currentLocation()));
         }
     }
 
+    @TextHolder
     static final class Cd implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.posix.cd.summary",
+                "change the current directory (home when no argument)");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.posix.cd.usage", "[directory]");
+
         @Override public CommandScope scope() {
             return POSIX_FILES;
         }
 
         @Override public String name() { return "cd"; }
 
-        @Override public String summary() { return "change the current directory (home when no argument)"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String usage() { return "[directory]"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             final String target = ctx.hasArgs() ? ctx.rest(0) : "~";
             final ICliComputer.FsResult result = ctx.computer().changeDir(dos(ctx, target));
             if (!result.ok()) {
-                ctx.out().error("cd: " + result.message());
+                ctx.out().error(CliTexts.SAID_BY.with(name(), result.message()));
             }
         }
     }
 
+    @TextHolder
     static final class Cat implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.posix.cat.summary", "print the content of a file");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.posix.cat.usage", "<file> [file...]");
+        private static final TextKey USAGE_ERROR = TextKey.of("jsc.cli.posix.cat.usage_error", "usage: cat <file>");
+
         @Override public CommandScope scope() {
             return POSIX_FILES;
         }
 
         @Override public String name() { return "cat"; }
 
-        @Override public String summary() { return "print the content of a file"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String usage() { return "<file> [file...]"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         /**
          * Every file it was given, one after another, which is what the name is short for and what a word with
@@ -140,13 +174,13 @@ final class PosixFileCommands {
          */
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: cat <file>");
+                ctx.out().error(USAGE_ERROR);
                 return;
             }
             for (final String named : ctx.args()) {
                 final ICliComputer.FsResult result = ctx.computer().readFile(dos(ctx, named));
                 if (!result.ok()) {
-                    ctx.out().error("cat: " + result.message());
+                    ctx.out().error(CliTexts.SAID_BY.with(name(), result.message()));
                     continue;
                 }
                 for (final String line : result.message().english().split("\n", -1)) {
@@ -156,150 +190,201 @@ final class PosixFileCommands {
         }
     }
 
+    @TextHolder
     static final class Rm implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.posix.rm.summary", "remove a file");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.posix.rm.usage", "<file>");
+
         @Override public CommandScope scope() {
             return POSIX_FILES;
         }
 
         @Override public String name() { return "rm"; }
 
-        @Override public String summary() { return "remove a file"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String usage() { return "<file>"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: rm <file>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final ICliComputer.FsResult result = ctx.computer().deleteFile(dos(ctx, ctx.arg(0)));
             if (!result.ok()) {
-                ctx.out().error("rm: " + result.message());
+                ctx.out().error(CliTexts.SAID_BY.with(name(), result.message()));
             }
         }
     }
 
+    @TextHolder
     static final class Mkdir implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.posix.mkdir.summary", "create a directory");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.posix.mkdir.usage", "<directory>");
+
         @Override public CommandScope scope() {
             return POSIX_FILES;
         }
 
         @Override public String name() { return "mkdir"; }
 
-        @Override public String summary() { return "create a directory"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String usage() { return "<directory>"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: mkdir <directory>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final ICliComputer.FsResult result = ctx.computer().makeDir(dos(ctx, ctx.rest(0)));
             if (!result.ok()) {
-                ctx.out().error("mkdir: " + result.message());
+                ctx.out().error(CliTexts.SAID_BY.with(name(), result.message()));
             }
         }
     }
 
+    @TextHolder
     static final class Rmdir implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.posix.rmdir.summary", "remove an empty directory");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.posix.rmdir.usage", "<directory>");
+
         @Override public CommandScope scope() {
             return POSIX_FILES;
         }
 
         @Override public String name() { return "rmdir"; }
 
-        @Override public String summary() { return "remove an empty directory"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String usage() { return "<directory>"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: rmdir <directory>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final ICliComputer.FsResult result = ctx.computer().removeDir(dos(ctx, ctx.rest(0)));
             if (!result.ok()) {
-                ctx.out().error("rmdir: " + result.message());
+                ctx.out().error(CliTexts.SAID_BY.with(name(), result.message()));
             }
         }
     }
 
+    @TextHolder
     static final class Cp implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.posix.cp.summary", "copy a file to another location");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.posix.cp.usage", "<source> <destination>");
+
         @Override public CommandScope scope() {
             return POSIX_FILES;
         }
 
         @Override public String name() { return "cp"; }
 
-        @Override public String summary() { return "copy a file to another location"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String usage() { return "<source> <destination>"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (ctx.argCount() < 2) {
-                ctx.out().error("usage: cp <source> <destination>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final ICliComputer.FsResult result = ctx.computer().copyPath(dos(ctx, ctx.arg(0)), dos(ctx, ctx.arg(1)));
             if (!result.ok()) {
-                ctx.out().error("cp: " + result.message());
+                ctx.out().error(CliTexts.SAID_BY.with(name(), result.message()));
             }
         }
     }
 
+    @TextHolder
     static final class Mv implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.posix.mv.summary", "move a file into a directory, or rename it");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.posix.mv.usage", "<source> <directory|new-name>");
+
         @Override public CommandScope scope() {
             return POSIX_FILES;
         }
 
         @Override public String name() { return "mv"; }
 
-        @Override public String summary() { return "move a file into a directory, or rename it"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String usage() { return "<source> <directory|new-name>"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (ctx.argCount() < 2) {
-                ctx.out().error("usage: mv <source> <directory|new-name>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final String dest = ctx.arg(1);
             // A bare new name (no slash, no path form) is a rename; anything else moves into a directory.
-            final boolean rename = !dest.contains("/") && !dest.startsWith("~") && !dest.equals(".") && !dest.equals("..");
+            final boolean rename = !dest.contains("/") && !dest.startsWith("~") && !dest.equals(".")
+                    && !dest.equals("..");
             final ICliComputer.FsResult result = rename
                     ? ctx.computer().renamePath(dos(ctx, ctx.arg(0)), dest)
                     : ctx.computer().movePath(dos(ctx, ctx.arg(0)), dos(ctx, dest));
             if (!result.ok()) {
-                ctx.out().error("mv: " + result.message());
+                ctx.out().error(CliTexts.SAID_BY.with(name(), result.message()));
             }
         }
     }
 
+    @TextHolder
     static final class Touch implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.posix.touch.summary", "create an empty file");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.posix.touch.usage", "<file>");
+
         @Override public CommandScope scope() {
             return POSIX_FILES;
         }
 
         @Override public String name() { return "touch"; }
 
-        @Override public String summary() { return "create an empty file"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String usage() { return "<file>"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: touch <file>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final ICliComputer.FsResult result = ctx.computer().writeFile(dos(ctx, ctx.arg(0)), "");
             if (!result.ok()) {
-                ctx.out().error("touch: " + result.message());
+                ctx.out().error(CliTexts.SAID_BY.with(name(), result.message()));
             }
         }
     }
 
+    @TextHolder
     static final class Write implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.posix.write.summary", "create or overwrite a file with the given text");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.posix.write.usage", "<file> <text...>");
+
         @Override public CommandScope scope() {
             return POSIX_FILES;
         }
@@ -308,43 +393,50 @@ final class PosixFileCommands {
 
         @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String summary() { return "create or overwrite a file with the given text"; }
+        @Override public Text summary() { return SUMMARY.text(); }
 
-        @Override public String usage() { return "<file> <text...>"; }
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (ctx.argCount() < 2) {
-                ctx.out().error("usage: write <file> <text...>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final ICliComputer.FsResult result = ctx.computer().writeFile(dos(ctx, ctx.arg(0)), ctx.rest(1));
             if (!result.ok()) {
-                ctx.out().error("write: " + result.message());
+                ctx.out().error(CliTexts.SAID_BY.with(name(), result.message()));
             } else if (!result.message().english().isEmpty()) {
                 ctx.out().ok(result.message());
             }
         }
     }
 
+    @TextHolder
     static final class Run implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.posix.run.summary", "execute an .iql script");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.posix.run.usage", "<file.iql>");
+
         @Override public CommandScope scope() {
             return POSIX_FILES;
         }
 
         @Override public String name() { return "run"; }
 
-        @Override public String summary() { return "execute an .iql script"; }
+        @Override public CommandGroup group() { return CommandGroup.MACHINE; }
 
-        @Override public String usage() { return "<file.iql>"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: run <file.iql>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final ICliComputer.FsResult result = ctx.computer().runScript(dos(ctx, ctx.arg(0)));
             if (!result.ok()) {
-                ctx.out().error("run: " + result.message());
+                ctx.out().error(CliTexts.SAID_BY.with(name(), result.message()));
                 return;
             }
             if (result.opResult() != null) {
@@ -359,7 +451,11 @@ final class PosixFileCommands {
         }
     }
 
+    @TextHolder
     static final class Clear implements ICliCommand, CliShell.IClearMarker {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.posix.clear.summary", "clear the terminal");
+
         /** Clearing the glass needs no files, so it is the one here that asks nothing of the disk. */
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.UNIX_SYSTEMS);
@@ -369,14 +465,25 @@ final class PosixFileCommands {
 
         @Override public CommandGroup group() { return CommandGroup.MACHINE; }
 
-        @Override public String summary() { return "clear the terminal"; }
+        @Override public Text summary() { return SUMMARY.text(); }
 
         @Override public void run(final CliContext ctx) {
             // The shell clears the scrollback because this command is a ClearMarker; nothing to print.
         }
     }
 
+    @TextHolder
     static final class Man implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.posix.man.summary", "show the manual entry for a command");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.posix.man.usage", "<command>");
+        private static final TextKey WHICH_PAGE =
+                TextKey.of("jsc.cli.posix.man.which_page", "What manual page do you want?");
+        private static final TextKey TRY_INTRO =
+                TextKey.of("jsc.cli.posix.man.try_intro", "For example, try 'man intro'.");
+        private static final TextKey NO_ENTRY = TextKey.of("jsc.cli.posix.man.no_entry", "No manual entry for %s");
+
         /** The manual is about commands, not about files, so a system with no disk still has it. */
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.UNIX_SYSTEMS);
@@ -384,42 +491,60 @@ final class PosixFileCommands {
 
         @Override public String name() { return "man"; }
 
-        @Override public String summary() { return "show the manual entry for a command"; }
+        @Override public CommandGroup group() { return CommandGroup.HELP; }
 
-        @Override public String usage() { return "<command>"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("What manual page do you want?");
-                ctx.out().dim("For example, try 'man intro'.");
+                ctx.out().error(WHICH_PAGE);
+                ctx.out().dim(TRY_INTRO);
                 return;
             }
             final ICliCommand command = ctx.shell().find(ctx.arg(0));
             if (command == null || !command.available(ctx.computer())) {
-                ctx.out().error("No manual entry for " + ctx.arg(0));
+                ctx.out().error(NO_ENTRY.with(ctx.arg(0)));
                 return;
             }
             ctx.out().accent(command.name().toUpperCase(Locale.ROOT) + "(1)");
-            for (final String line : ManPage.lines(command, true)) {
+            for (final CliLine line : ManPage.lines(command, true)) {
                 ctx.out().line(line);
             }
             ctx.computer().report(JscEvents.MAN_PAGE, command.name());
         }
     }
 
+    @TextHolder
     static final class Df implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.posix.df.summary", "report filesystem space usage");
+        private static final TextKey NONE_MOUNTED =
+                TextKey.of("jsc.cli.posix.df.none_mounted", "no filesystems mounted");
+        /* The spacing of the heading lines up with the columns of the rows printed under it. */
+        private static final TextKey HEADING = TextKey.of("jsc.cli.posix.df.heading",
+                "Filesystem       Size   Used   Avail  Use%  Mounted on");
+        /*
+         * Said after where the drive is mounted, where its length cannot push anything out of line, since a
+         * drive with nothing in it has no figures to line up.
+         */
+        private static final TextKey NO_MEDIUM = TextKey.of("jsc.cli.posix.df.no_medium", "%s  (no medium)");
+
         @Override public CommandScope scope() {
             return POSIX_FILES;
         }
 
         @Override public String name() { return "df"; }
 
-        @Override public String summary() { return "report filesystem space usage"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
+
+        @Override public Text summary() { return SUMMARY.text(); }
 
         @Override public void run(final CliContext ctx) {
             final List<ICliComputer.MountInfo> mounts = ctx.computer().mounts();
             if (mounts.isEmpty()) {
-                ctx.out().error("df: no filesystems mounted");
+                ctx.out().error(CliTexts.SAID_BY.with(name(), NONE_MOUNTED));
                 return;
             }
             /*
@@ -427,19 +552,18 @@ final class PosixFileCommands {
              * right edge instead, every row ran the width of the glass and folded in half on a window
              * narrower than a monitor.
              */
-            ctx.out().header("Filesystem       Size   Used   Avail  Use%  Mounted on");
+            ctx.out().header(HEADING);
             for (final ICliComputer.MountInfo m : mounts) {
                 final String mount = PosixPath.render(ctx.computer().tree(), DosPath.Location.root(m.drive()));
                 if (!m.ready()) {
-                    ctx.out().line(CliText.pad(String.format(Locale.ROOT, "/dev/%s%s", m.device(),
-                            "  (no medium)"), MOUNT_AT) + mount);
+                    ctx.out().line(NO_MEDIUM.with(Text.literal(CliText.pad("/dev/" + m.device(), MOUNT_AT) + mount)));
                     continue;
                 }
                 final long used = Math.max(0L, m.capacityMbEq() - m.freeMbEq());
                 final int pct = m.capacityMbEq() <= 0 ? 0 : (int) (used * 100 / m.capacityMbEq());
-                ctx.out().line(CliText.pad(String.format(Locale.ROOT, "/dev/%-8s %6s %6s %6s %3d%%",
+                ctx.out().line(Text.literal(CliText.pad(String.format(Locale.ROOT, "/dev/%-8s %6s %6s %6s %3d%%",
                         m.device(), size(m.capacityMbEq()), size(used), size(m.freeMbEq()), pct), MOUNT_AT)
-                        + mount);
+                        + mount));
             }
         }
 
@@ -454,7 +578,19 @@ final class PosixFileCommands {
         }
     }
 
+    @TextHolder
     static final class Mkfs implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.posix.mkfs.summary", "build a filesystem on a device (erases it)");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.posix.mkfs.usage", "/dev/<device>");
+        private static final TextKey USAGE_ERROR = TextKey.of("jsc.cli.posix.mkfs.usage_error",
+                "usage: mkfs.ext4 /dev/<device>   (see df for the devices)");
+        private static final TextKey CREATING =
+                TextKey.of("jsc.cli.posix.mkfs.creating", "Creating filesystem on /dev/%s ... done");
+        private static final TextKey NO_SUCH_DEVICE =
+                TextKey.of("jsc.cli.posix.mkfs.no_such_device", "cannot open /dev/%s: No such device");
+
         @Override public CommandScope scope() {
             return POSIX_FILES;
         }
@@ -463,13 +599,15 @@ final class PosixFileCommands {
 
         @Override public List<String> aliases() { return List.of("mkfs"); }
 
-        @Override public String summary() { return "build a filesystem on a device (erases it)"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String usage() { return "/dev/<device>"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: mkfs.ext4 /dev/<device>   (see df for the devices)");
+                ctx.out().error(USAGE_ERROR);
                 return;
             }
             final String raw = ctx.arg(0);
@@ -479,15 +617,16 @@ final class PosixFileCommands {
                 if (mount.device().equals(device) || mount.device().startsWith(device)) {
                     final ICliComputer.OpResult result = ctx.computer().formatDrive(mount.drive());
                     if (result.ok()) {
-                        ctx.out().dim("mke2fs 1.47 (JSC)");
-                        ctx.out().ok("Creating filesystem on /dev/" + device + " ... done");
+                        // The tool's own banner, a name and a version, which read the same in every language.
+                        ctx.out().dim(Text.literal("mke2fs 1.47 (JSC)"));
+                        ctx.out().ok(CREATING.with(device));
                     } else {
-                        ctx.out().error("mkfs.ext4: " + result.message());
+                        ctx.out().error(CliTexts.SAID_BY.with(name(), result.message()));
                     }
                     return;
                 }
             }
-            ctx.out().error("mkfs.ext4: cannot open /dev/" + device + ": No such device");
+            ctx.out().error(CliTexts.SAID_BY.with(name(), NO_SUCH_DEVICE.with(device)));
         }
     }
 

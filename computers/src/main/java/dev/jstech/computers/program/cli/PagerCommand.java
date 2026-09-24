@@ -8,6 +8,9 @@
 package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.os.Platform;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.Set;
 
@@ -21,10 +24,17 @@ import java.util.Set;
  * <p>The words after it are a file. With a pipe feeding it instead, there is nothing to hand the glass to, so
  * it prints what it was given, which is what the older of the two names has always done.
  */
+@TextHolder
 final class PagerCommand implements ICliCommand, CliShell.IHandOver {
 
     private final String name;
     private final Set<Platform> systems;
+
+    private static final TextKey SUMMARY = TextKey.of("jsc.cli.pager.summary", "read a file a page at a time");
+    private static final TextKey USAGE = TextKey.of("jsc.cli.pager.usage", "<file>");
+    private static final TextKey ABOUT = TextKey.of("jsc.cli.pager.about", "Takes the terminal and shows the file,"
+            + " a page at a time. Space and Page Down go on, b and Page Up go back, the arrows move a line, / looks"
+            + " for something and n finds the next one of those, and q gives the terminal back.");
 
     /**
      * @param name    the word this family types
@@ -46,13 +56,13 @@ final class PagerCommand implements ICliCommand, CliShell.IHandOver {
     }
 
     @Override
-    public String summary() {
-        return "read a file a page at a time";
+    public Text summary() {
+        return SUMMARY.text();
     }
 
     @Override
-    public String usage() {
-        return "<file>";
+    public Text usage() {
+        return USAGE.text();
     }
 
     @Override
@@ -61,10 +71,8 @@ final class PagerCommand implements ICliCommand, CliShell.IHandOver {
     }
 
     @Override
-    public List<String> description() {
-        return List.of("Takes the terminal and shows the file, a page at a time. Space and Page Down go on, b",
-                "and Page Up go back, the arrows move a line, / looks for something and n finds the next one",
-                "of those, and q gives the terminal back.");
+    public List<Text> description() {
+        return List.of(ABOUT.text());
     }
 
     @Override
@@ -88,7 +96,7 @@ final class PagerCommand implements ICliCommand, CliShell.IHandOver {
             return;
         }
         if (!ctx.hasInput()) {
-            ctx.out().error("usage: " + this.name + " <file>");
+            ctx.out().error(CliTexts.USAGE.with(this.name, usage()));
             return;
         }
         for (final String line : ctx.input()) {

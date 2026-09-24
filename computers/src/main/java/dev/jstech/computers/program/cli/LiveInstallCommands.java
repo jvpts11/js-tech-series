@@ -9,6 +9,9 @@ package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.program.install.LiveTurn;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +54,11 @@ public final class LiveInstallCommands {
             super(VERB);
         }
 
+        /** An editor, and editors stand with the rest of what a program is written with. */
+        @Override public CommandGroup group() {
+            return CommandGroup.PROGRAMMING;
+        }
+
         @Override
         public String fileOf(final ICliComputer computer, final List<String> args) {
             final LiveInstallState live = computer.liveInstall();
@@ -60,9 +68,13 @@ public final class LiveInstallCommands {
     }
 
     /** One install verb; the state machine decides what it does at this point of the sequence. */
+    @TextHolder
     static class LiveVerb implements ICliCommand {
 
         private final String verb;
+
+        /* The verb goes in as it is typed: it is the tool's own name, the same in every language. */
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.live.verb.summary", "live installer: %s");
 
         LiveVerb(final String verb) {
             this.verb = verb;
@@ -75,7 +87,12 @@ public final class LiveInstallCommands {
 
         @Override public String name() { return verb; }
 
-        @Override public String summary() { return "live installer: " + verb; }
+        /** A step of putting a system on the machine. */
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
+        }
+
+        @Override public Text summary() { return SUMMARY.with(verb); }
 
         @Override public void run(final CliContext ctx) {
             final String line = ctx.hasArgs() ? verb + " " + ctx.rest(0) : verb;
@@ -94,7 +111,11 @@ public final class LiveInstallCommands {
         }
     }
 
+    @TextHolder
     static final class Clear implements ICliCommand, CliShell.IClearMarker {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.live.clear.summary", "clear the terminal");
+
         @Override public CommandScope scope() {
             return CommandScope.everywhere();
         }
@@ -103,7 +124,7 @@ public final class LiveInstallCommands {
 
         @Override public CommandGroup group() { return CommandGroup.MACHINE; }
 
-        @Override public String summary() { return "clear the terminal"; }
+        @Override public Text summary() { return SUMMARY.text(); }
 
         @Override public void run(final CliContext ctx) {
         }

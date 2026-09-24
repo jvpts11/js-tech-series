@@ -8,6 +8,9 @@
 package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.program.cli.man.ManPage;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 
 /**
@@ -20,7 +23,18 @@ final class ShellCommands {
     private ShellCommands() {
     }
 
+    @TextHolder
     static final class Help implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.shell.help.summary", "list commands, or show how one is used");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.shell.help.usage", "[command]");
+        private static final TextKey NO_SUCH = TextKey.of("jsc.cli.shell.help.no_such", "no such command: %s");
+        private static final TextKey ALSO = TextKey.of("jsc.cli.shell.help.also", "  also: %s");
+        private static final TextKey COMMANDS = TextKey.of("jsc.cli.shell.help.commands", "commands");
+        private static final TextKey DETAILS =
+                TextKey.of("jsc.cli.shell.help.details", "'help <command>' for details");
+
         @Override public CommandScope scope() {
             return CommandScope.everywhere();
         }
@@ -29,39 +43,43 @@ final class ShellCommands {
             return "help";
         }
 
+        @Override public CommandGroup group() {
+            return CommandGroup.HELP;
+        }
+
         @Override public List<String> aliases() {
             return List.of("?", "commands");
         }
 
-        @Override public String summary() {
-            return "list commands, or show how one is used";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public String usage() {
-            return "[command]";
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
         @Override public void run(final CliContext ctx) {
             if (ctx.hasArgs()) {
                 final ICliCommand command = ctx.shell().find(ctx.arg(0));
                 if (command == null || !command.available(ctx.computer())) {
-                    ctx.out().error("no such command: " + ctx.arg(0));
+                    ctx.out().error(NO_SUCH.with(ctx.arg(0)));
                     return;
                 }
                 /*
                  * The command's own page, in this family's voice: the same words the manual has on a Unix
                  * system, which is the whole point of there being one body of text about a command.
                  */
-                ctx.out().accent(command.name() + (command.usage().isEmpty() ? "" : " " + command.usage()));
-                for (final String line : ManPage.lines(command, false)) {
+                ctx.out().line(ManPage.synopsis(command, CliStyle.ACCENT));
+                for (final CliLine line : ManPage.lines(command, false)) {
                     ctx.out().line(line);
                 }
                 if (!command.aliases().isEmpty()) {
-                    ctx.out().dim("  also: " + String.join(", ", command.aliases()));
+                    ctx.out().dim(ALSO.with(String.join(", ", command.aliases())));
                 }
                 return;
             }
-            ctx.out().header("commands");
+            ctx.out().header(COMMANDS);
             /*
              * The dots stop at one column for the whole list, worked out from the longest name there is,
              * so every summary starts in the same place however long the names happen to be.
@@ -79,11 +97,15 @@ final class ShellCommands {
                 }
             }
             ctx.out().blank();
-            ctx.out().dim("'help <command>' for details");
+            ctx.out().dim(DETAILS);
         }
     }
 
+    @TextHolder
     static final class Clear implements ICliCommand, CliShell.IClearMarker {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.shell.cls.summary", "clear the console");
+
         /** The DOS family's own word for it; the Unix systems clear with {@code clear}. */
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.DOS_SYSTEMS);
@@ -93,8 +115,12 @@ final class ShellCommands {
             return "cls";
         }
 
-        @Override public String summary() {
-            return "clear the console";
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
+        }
+
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
         @Override public void run(final CliContext ctx) {
@@ -102,7 +128,12 @@ final class ShellCommands {
         }
     }
 
+    @TextHolder
     static final class Echo implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.shell.echo.summary", "print the given text");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.shell.echo.usage", "<text>");
+
         @Override public CommandScope scope() {
             return CommandScope.everywhere();
         }
@@ -111,12 +142,16 @@ final class ShellCommands {
             return "echo";
         }
 
-        @Override public String summary() {
-            return "print the given text";
+        @Override public CommandGroup group() {
+            return CommandGroup.TEXT;
         }
 
-        @Override public String usage() {
-            return "<text>";
+        @Override public Text summary() {
+            return SUMMARY.text();
+        }
+
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
         @Override public void run(final CliContext ctx) {
@@ -124,7 +159,11 @@ final class ShellCommands {
         }
     }
 
+    @TextHolder
     static final class Version implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.shell.version.summary", "show the shell version");
+
         /** {@code VER} is the DOS family's; a Unix system says what it is with {@code uname}. */
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.DOS_SYSTEMS);
@@ -134,20 +173,34 @@ final class ShellCommands {
             return "version";
         }
 
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
+        }
+
         @Override public List<String> aliases() {
             return List.of("ver");
         }
 
-        @Override public String summary() {
-            return "show the shell version";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
         @Override public void run(final CliContext ctx) {
-            ctx.out().accent("J's Computers Shell v1.0");
+            // A product's name and number, which read the same in every language.
+            ctx.out().accent(Text.literal("J's Computers Shell v1.0"));
         }
     }
 
+    @TextHolder
     static final class Whoami implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.shell.whoami.summary", "show this computer's name and id");
+        private static final TextKey NAME = TextKey.of("jsc.cli.shell.whoami.name", "name");
+        private static final TextKey TYPE = TextKey.of("jsc.cli.shell.whoami.type", "type");
+        private static final TextKey NODE = TextKey.of("jsc.cli.shell.whoami.node", "node");
+        private static final TextKey UNNAMED = TextKey.of("jsc.cli.shell.whoami.unnamed", "(unnamed)");
+
         @Override public CommandScope scope() {
             return CommandScope.everywhere();
         }
@@ -160,20 +213,25 @@ final class ShellCommands {
             return CommandGroup.MACHINE;
         }
 
-        @Override public String summary() {
-            return "show this computer's name and id";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
         @Override public void run(final CliContext ctx) {
             final ICliComputer c = ctx.computer();
-            ctx.out().row("name", c.name().isEmpty() ? "(unnamed)" : c.name());
-            ctx.out().row("type", c.type());
-            ctx.out().row("node", c.nodeId());
+            ctx.out().row(NAME.text(), c.name().isEmpty() ? UNNAMED.text() : Text.literal(c.name()));
+            ctx.out().row(TYPE, c.type());
+            ctx.out().row(NODE, c.nodeId());
         }
     }
 
     /** Leaves a remote shell. With no session open there is nothing to leave but the window. */
+    @TextHolder
     static final class Exit implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.shell.exit.summary",
+                "close the remote shell and return to this computer");
+
         @Override public CommandScope scope() {
             return CommandScope.everywhere();
         }
@@ -191,8 +249,8 @@ final class ShellCommands {
             return List.of("logout");
         }
 
-        @Override public String summary() {
-            return "close the remote shell and return to this computer";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
         @Override public void run(final CliContext ctx) {

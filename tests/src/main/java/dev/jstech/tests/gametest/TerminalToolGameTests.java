@@ -27,6 +27,7 @@ import dev.jstech.computers.program.cli.ICliCommand;
 import dev.jstech.computers.program.tty.TtyScript;
 import dev.jstech.computers.program.tty.TtyScriptProcess;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -238,8 +239,8 @@ public final class TerminalToolGameTests {
         }
 
         @Override
-        public String summary() {
-            return "A tool that holds the terminal for a while, for the tests.";
+        public Text summary() {
+            return Text.literal("A tool that holds the terminal for a while, for the tests.");
         }
 
         @Override

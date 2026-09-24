@@ -8,9 +8,13 @@
 package dev.jstech.computers.program.cli.man;
 
 import dev.jstech.computers.program.cli.CliContext;
+import dev.jstech.computers.program.cli.CommandGroup;
 import dev.jstech.computers.program.cli.CommandScope;
 import dev.jstech.computers.program.cli.ICliCommand;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 
 /**
@@ -20,7 +24,11 @@ import java.util.List;
  * the same pages and the same list of what this machine really offers, so none of them can teach something
  * that is not there.
  */
+@TextHolder
 public final class ManCommands {
+
+    private static final TextKey NOTHING_APPROPRIATE =
+            TextKey.of("jsc.cli.man.nothing_appropriate", "%s: nothing appropriate.");
 
     private ManCommands() {
     }
@@ -36,7 +44,16 @@ public final class ManCommands {
     }
 
     /** {@code whatis}: the one line a page opens with. */
+    @TextHolder
     static final class Whatis implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.man.whatis.summary", "say in one line what a command is for");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.man.whatis.usage", "<command>");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.man.whatis.about", "Prints the one line a manual"
+                + " page opens with, which is enough to tell whether the page is worth opening at all.");
+        private static final TextKey WHAT = TextKey.of("jsc.cli.man.whatis.what", "whatis what?");
+
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.UNIX_SYSTEMS);
         }
@@ -45,17 +62,20 @@ public final class ManCommands {
             return "whatis";
         }
 
-        @Override public String summary() {
-            return "say in one line what a command is for";
+        @Override public CommandGroup group() {
+            return CommandGroup.HELP;
         }
 
-        @Override public String usage() {
-            return "<command>";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public List<String> description() {
-            return List.of("Prints the one line a manual page opens with, which is enough to tell whether",
-                    "the page is worth opening at all.");
+        @Override public Text usage() {
+            return USAGE.text();
+        }
+
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text());
         }
 
         @Override public List<String> seeAlso() {
@@ -64,12 +84,12 @@ public final class ManCommands {
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("whatis what?");
+                ctx.out().error(WHAT);
                 return;
             }
             final ICliCommand found = ctx.shell().find(ctx.arg(0));
             if (found == null || !found.available(ctx.computer())) {
-                ctx.out().error(ctx.arg(0) + ": nothing appropriate.");
+                ctx.out().error(NOTHING_APPROPRIATE.with(ctx.arg(0)));
                 return;
             }
             ctx.out().line(ManPage.whatis(found));
@@ -77,7 +97,19 @@ public final class ManCommands {
     }
 
     /** {@code apropos}: every page whose one line answers to a word. */
+    @TextHolder
     static final class Apropos implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.man.apropos.summary", "search what every command is for");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.man.apropos.usage", "<text>");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.man.apropos.about", "Searches the name and the"
+                + " one-line summary of every page this machine has, and prints the ones that answer. It is how to"
+                + " find a command whose name you do not know.");
+        private static final TextKey NETWORK_EXAMPLE =
+                TextKey.of("jsc.cli.man.apropos.example.network", "every command that works the network");
+        private static final TextKey WHAT = TextKey.of("jsc.cli.man.apropos.what", "apropos what?");
+
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.UNIX_SYSTEMS);
         }
@@ -86,21 +118,24 @@ public final class ManCommands {
             return "apropos";
         }
 
-        @Override public String summary() {
-            return "search what every command is for";
+        @Override public CommandGroup group() {
+            return CommandGroup.HELP;
         }
 
-        @Override public String usage() {
-            return "<text>";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public List<String> description() {
-            return List.of("Searches the name and the one-line summary of every page this machine has, and",
-                    "prints the ones that answer. It is how to find a command whose name you do not know.");
+        @Override public Text usage() {
+            return USAGE.text();
+        }
+
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text());
         }
 
         @Override public List<ICliCommand.Example> examples() {
-            return List.of(new ICliCommand.Example("apropos network", "every command that works the network"));
+            return List.of(new ICliCommand.Example("apropos network", NETWORK_EXAMPLE));
         }
 
         @Override public List<String> seeAlso() {
@@ -109,7 +144,7 @@ public final class ManCommands {
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("apropos what?");
+                ctx.out().error(WHAT);
                 return;
             }
             final String wanted = ctx.rest(0);
@@ -121,7 +156,7 @@ public final class ManCommands {
                 }
             }
             if (found == 0) {
-                ctx.out().error(wanted + ": nothing appropriate.");
+                ctx.out().error(NOTHING_APPROPRIATE.with(wanted));
             }
         }
     }
@@ -134,7 +169,18 @@ public final class ManCommands {
      * belong to, and the programs installed beside them. It is off unless a server turns it on, so that a
      * player who wants each system's own experience keeps it.
      */
+    @TextHolder
     static final class ListCommands implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.man.listcmd.summary", "list everything this computer can run");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.man.listcmd.about", "Lists every command this"
+                + " computer offers and every program installed on it, in one list, whichever system it runs."
+                + " Nothing here is hidden and nothing is added: it is the same answer the prompt itself gives"
+                + " when it decides whether a word is a command.");
+        private static final TextKey COMMANDS = TextKey.of("jsc.cli.man.listcmd.commands", "COMMANDS");
+        private static final TextKey PROGRAMS = TextKey.of("jsc.cli.man.listcmd.programs", "PROGRAMS");
+
         @Override public CommandScope scope() {
             return CommandScope.everywhere();
         }
@@ -143,14 +189,16 @@ public final class ManCommands {
             return "listcmd";
         }
 
-        @Override public String summary() {
-            return "list everything this computer can run";
+        @Override public CommandGroup group() {
+            return CommandGroup.HELP;
         }
 
-        @Override public List<String> description() {
-            return List.of("Lists every command this computer offers and every program installed on it, in one",
-                    "list, whichever system it runs. Nothing here is hidden and nothing is added: it is the",
-                    "same answer the prompt itself gives when it decides whether a word is a command.");
+        @Override public Text summary() {
+            return SUMMARY.text();
+        }
+
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text());
         }
 
         /** Off unless a server turns it on, in which case it is a command like any other. */
@@ -159,13 +207,13 @@ public final class ManCommands {
         }
 
         @Override public void run(final CliContext ctx) {
-            ctx.out().header("COMMANDS");
+            ctx.out().header(COMMANDS);
             for (final ICliCommand command : ctx.shell().commands()) {
                 if (command.available(ctx.computer())) {
-                    ctx.out().row("  " + command.name(), command.summary());
+                    ctx.out().row(Text.literal("  " + command.name()), command.summary());
                 }
             }
-            ctx.out().header("PROGRAMS");
+            ctx.out().header(PROGRAMS);
             for (final var program : ctx.computer().programs()) {
                 ctx.out().row("  " + program.name(), program.id());
             }

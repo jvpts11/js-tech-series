@@ -9,6 +9,9 @@ package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.program.job.JobWhen;
 import dev.jstech.computers.program.job.MachineJobs;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.Locale;
 
@@ -20,10 +23,35 @@ import java.util.Locale;
  * own words over one list: {@code &}, {@code jobs} and {@code crontab} on one side, {@code START} and
  * {@code AT} on the other.
  */
+@TextHolder
 final class JobCommands {
 
     /** Work belongs to a machine, so this is wherever a machine is. */
     private static final CommandScope ANY_MACHINE = CommandScope.everywhere();
+
+    /* What each family says about the list, in its own voice: the Unix one terse, the DOS one in sentences. */
+    private static final TextKey NOTHING_TO_RUN = TextKey.of("jsc.cli.job.nothing_to_run", "nothing to run");
+    private static final TextKey DOS_NOTHING_TO_RUN = TextKey.of("jsc.cli.job.dos.nothing_to_run",
+            "A command is needed.");
+    private static final TextKey NO_MEMORY = TextKey.of("jsc.cli.job.no_memory",
+            "the machine has no memory left for another job");
+    private static final TextKey DOS_NO_MEMORY = TextKey.of("jsc.cli.job.dos.no_memory",
+            "Not enough memory to start another task.");
+    private static final TextKey KEEPS_NONE = TextKey.of("jsc.cli.job.keeps_none", "this machine keeps no jobs");
+    private static final TextKey DOS_KEEPS_NONE = TextKey.of("jsc.cli.job.dos.keeps_none",
+            "This computer keeps no tasks.");
+    private static final TextKey DOS_STARTED = TextKey.of("jsc.cli.job.dos.started", "Started job %s: %s");
+    private static final TextKey DOS_ADDED = TextKey.of("jsc.cli.job.dos.added", "Added a new job with ID = %s");
+    private static final TextKey NO_JOBS = TextKey.of("jsc.cli.job.no_jobs", "no jobs");
+    private static final TextKey DOS_NO_JOBS = TextKey.of("jsc.cli.job.dos.no_jobs",
+            "There are no entries in the list.");
+    /* The headings of the list; the spaces line them up over the columns of the rows below. */
+    private static final TextKey HEADER = TextKey.of("jsc.cli.job.header", "  ID  WHEN            COMMAND");
+    private static final TextKey DOS_HEADER = TextKey.of("jsc.cli.job.dos.header", "ID    WHEN            COMMAND");
+    private static final TextKey NO_SUCH = TextKey.of("jsc.cli.job.no_such", "no such job: %s");
+    private static final TextKey DOS_NO_SUCH = TextKey.of("jsc.cli.job.dos.no_such", "The job ID does not exist.");
+    private static final TextKey DONE = TextKey.of("jsc.cli.job.done", "[%s] done");
+    private static final TextKey DOS_DELETED = TextKey.of("jsc.cli.job.dos.deleted", "Deleted job %s.");
 
     private JobCommands() {
     }
@@ -45,29 +73,27 @@ final class JobCommands {
      */
     static void add(final CliContext ctx, final String line, final JobWhen when, final boolean dosStyle) {
         if (line.isBlank()) {
-            ctx.out().error(dosStyle ? "A command is needed." : "nothing to run");
+            ctx.out().error(dosStyle ? DOS_NOTHING_TO_RUN : NOTHING_TO_RUN);
             return;
         }
         final ICliComputer.MemoryUse memory = ctx.computer().memory();
         if (memory.totalMb() > 0 && memory.usedMb() + MachineJobs.JOB_MB > memory.totalMb()) {
-            ctx.out().error(dosStyle
-                    ? "Not enough memory to start another task."
-                    : "the machine has no memory left for another job");
+            ctx.out().error(dosStyle ? DOS_NO_MEMORY : NO_MEMORY);
             return;
         }
         final MachineJobs.Job job = ctx.computer().addJob(line, when);
         if (job == null) {
-            ctx.out().error(dosStyle ? "This computer keeps no tasks." : "this machine keeps no jobs");
+            ctx.out().error(dosStyle ? DOS_KEEPS_NONE : KEEPS_NONE);
             return;
         }
         if (when.once()) {
             ctx.out().ok(dosStyle
-                    ? "Started job " + job.id() + ": " + line
-                    : "[" + job.id() + "] " + line);
+                    ? DOS_STARTED.with(job.id(), line)
+                    : Text.literal("[" + job.id() + "] " + line));
         } else {
             ctx.out().ok(dosStyle
-                    ? "Added a new job with ID = " + job.id()
-                    : "[" + job.id() + "] " + when.label() + "  " + line);
+                    ? DOS_ADDED.with(job.id())
+                    : Text.literal("[" + job.id() + "] " + when.label() + "  " + line));
         }
     }
 
@@ -75,10 +101,10 @@ final class JobCommands {
     static void list(final CliContext ctx, final boolean dosStyle) {
         final List<MachineJobs.Job> jobs = ctx.computer().jobs();
         if (jobs.isEmpty()) {
-            ctx.out().dim(dosStyle ? "There are no entries in the list." : "no jobs");
+            ctx.out().dim(dosStyle ? DOS_NO_JOBS : NO_JOBS);
             return;
         }
-        ctx.out().header(CliText.pad(dosStyle ? "ID" : "  ID", 6) + CliText.pad("WHEN", 16) + "COMMAND");
+        ctx.out().header(dosStyle ? DOS_HEADER : HEADER);
         for (final MachineJobs.Job job : jobs) {
             ctx.out().line(CliText.pad(String.valueOf(job.id()), 6)
                     + CliText.pad(job.when().label(), 16) + job.line());
@@ -88,10 +114,10 @@ final class JobCommands {
     static void stop(final CliContext ctx, final String written, final boolean dosStyle) {
         final int id = number(written);
         if (id <= 0 || !ctx.computer().stopJob(id)) {
-            ctx.out().error(dosStyle ? "The job ID does not exist." : "no such job: " + written);
+            ctx.out().error(dosStyle ? DOS_NO_SUCH.text() : NO_SUCH.with(written));
             return;
         }
-        ctx.out().ok(dosStyle ? "Deleted job " + id + "." : "[" + id + "] done");
+        ctx.out().ok(dosStyle ? DOS_DELETED.with(id) : DONE.with(id));
     }
 
     /** A number written on its own or after the mark a shell puts before a job's number. */
@@ -104,7 +130,21 @@ final class JobCommands {
     }
 
     /** {@code jobs}: what this machine is doing on its own. */
+    @TextHolder
     static final class Jobs implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.job.jobs.summary", "list the work this machine is doing on its own");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.job.jobs.about",
+                "Lists what the machine was left with: lines put in the background with & and lines waiting for"
+                        + " their hour. Stop one with kill %%n, whichever kind it is.");
+        private static final TextKey EXAMPLE_BACKGROUND = TextKey.of("jsc.cli.job.jobs.example.background",
+                "leave it running and get the prompt back");
+        private static final TextKey EXAMPLE_JOBS =
+                TextKey.of("jsc.cli.job.jobs.example.jobs", "what is still going");
+        private static final TextKey EXAMPLE_KILL =
+                TextKey.of("jsc.cli.job.jobs.example.kill", "stop the first of them");
+
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.UNIX_SYSTEMS);
         }
@@ -113,19 +153,22 @@ final class JobCommands {
             return "jobs";
         }
 
-        @Override public String summary() {
-            return "list the work this machine is doing on its own";
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
         }
 
-        @Override public List<String> description() {
-            return List.of("Lists what the machine was left with: lines put in the background with & and lines",
-                    "waiting for their hour. Stop one with kill %n, whichever kind it is.");
+        @Override public Text summary() {
+            return SUMMARY.text();
+        }
+
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text());
         }
 
         @Override public List<ICliCommand.Example> examples() {
-            return List.of(new Example("interac craft 64 chest &", "leave it running and get the prompt back"),
-                    new Example("jobs", "what is still going"),
-                    new Example("kill %1", "stop the first of them"));
+            return List.of(new Example("interac craft 64 chest &", EXAMPLE_BACKGROUND),
+                    new Example("jobs", EXAMPLE_JOBS),
+                    new Example("kill %1", EXAMPLE_KILL));
         }
 
         @Override public List<String> seeAlso() {
@@ -138,7 +181,31 @@ final class JobCommands {
     }
 
     /** {@code crontab}: the lines this machine runs at an hour. */
+    @TextHolder
     static final class Crontab implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.job.crontab.summary", "run a command at an hour, every day");
+        private static final TextKey USAGE =
+                TextKey.of("jsc.cli.job.crontab.usage", "-l | -r <id> | <hour> [days] <command>");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.job.crontab.about",
+                "Leaves a line for the machine to run at an hour of the world's own day, every day, or on the days"
+                        + " named. The shortest anything repeats is an hour, which is a little under a minute of"
+                        + " real time.");
+        private static final TextKey ABOUT_DAYS = TextKey.of("jsc.cli.job.crontab.about.days",
+                "The hour is written as 06:00 or as 6, and the days as the letters of the week: M, T, W, Th, F, Sa,"
+                        + " Su, apart with commas.");
+        private static final TextKey OPTION_LIST =
+                TextKey.of("jsc.cli.job.crontab.option.list", "list what this machine runs and when");
+        private static final TextKey OPTION_REMOVE =
+                TextKey.of("jsc.cli.job.crontab.option.remove", "take one off the list");
+        private static final TextKey EXAMPLE_MORNING =
+                TextKey.of("jsc.cli.job.crontab.example.morning", "every morning at six");
+        private static final TextKey EXAMPLE_EVENINGS =
+                TextKey.of("jsc.cli.job.crontab.example.evenings", "three evenings a week");
+        private static final TextKey NOT_AN_HOUR =
+                TextKey.of("jsc.cli.job.crontab.not_an_hour", "%s is not an hour of the day");
+
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.UNIX_SYSTEMS);
         }
@@ -147,32 +214,30 @@ final class JobCommands {
             return "crontab";
         }
 
-        @Override public String summary() {
-            return "run a command at an hour, every day";
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
         }
 
-        @Override public String usage() {
-            return "-l | -r <id> | <hour> [days] <command>";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public List<String> description() {
-            return List.of("Leaves a line for the machine to run at an hour of the world's own day, every day,",
-                    "or on the days named. The shortest anything repeats is an hour, which is a little under a",
-                    "minute of real time.",
-                    "",
-                    "The hour is written as 06:00 or as 6, and the days as the letters of the week: M, T, W,",
-                    "Th, F, Sa, Su, apart with commas.");
+        @Override public Text usage() {
+            return USAGE.text();
+        }
+
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text(), ABOUT_DAYS.text());
         }
 
         @Override public List<Option> options() {
-            return List.of(new Option("-l", "list what this machine runs and when"),
-                    new Option("-r <id>", "take one off the list"));
+            return List.of(new Option("-l", OPTION_LIST), new Option("-r <id>", OPTION_REMOVE));
         }
 
         @Override public List<Example> examples() {
             return List.of(
-                    new Example("crontab 06:00 interac get 64 coal --to local", "every morning at six"),
-                    new Example("crontab 18:00 M,W,F interac craft 8 chest", "three evenings a week"));
+                    new Example("crontab 06:00 interac get 64 coal --to local", EXAMPLE_MORNING),
+                    new Example("crontab 18:00 M,W,F interac craft 8 chest", EXAMPLE_EVENINGS));
         }
 
         @Override public List<String> seeAlso() {
@@ -190,7 +255,7 @@ final class JobCommands {
             }
             final int hour = JobWhen.hourOf(ctx.arg(0));
             if (hour < 0) {
-                ctx.out().error("crontab: " + ctx.arg(0) + " is not an hour of the day");
+                ctx.out().error(CliTexts.SAID_BY.with(name(), NOT_AN_HOUR.with(ctx.arg(0))));
                 return;
             }
             final List<Integer> days = JobWhen.daysOf(ctx.arg(1));
@@ -200,7 +265,16 @@ final class JobCommands {
     }
 
     /** {@code START}: the DOS family's way of leaving a line running. */
+    @TextHolder
     static final class Start implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.job.start.summary", "run a command without waiting for it");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.job.start.usage", "<command>");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.job.start.about",
+                "Leaves the machine running a command and gives the prompt straight back. On a system that runs one"
+                        + " thing at a time, the machine takes them in turn.");
+
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.DOS_SYSTEMS);
         }
@@ -209,17 +283,20 @@ final class JobCommands {
             return "start";
         }
 
-        @Override public String summary() {
-            return "run a command without waiting for it";
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
         }
 
-        @Override public String usage() {
-            return "<command>";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public List<String> description() {
-            return List.of("Leaves the machine running a command and gives the prompt straight back. On a system",
-                    "that runs one thing at a time, the machine takes them in turn.");
+        @Override public Text usage() {
+            return USAGE.text();
+        }
+
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text());
         }
 
         @Override public List<String> seeAlso() {
@@ -232,7 +309,29 @@ final class JobCommands {
     }
 
     /** {@code AT}: and its way of leaving a line for an hour. */
+    @TextHolder
     static final class At implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.job.at.summary", "run a command at an hour");
+        private static final TextKey USAGE =
+                TextKey.of("jsc.cli.job.at.usage", "[hh:mm [/EVERY:days] <command>] [id /DELETE]");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.job.at.about",
+                "With nothing after it, lists what this computer is set to run and when. With an hour and a"
+                        + " command, leaves that command for that hour of every day, or of the days named after"
+                        + " /EVERY. The shortest anything repeats is an hour of the world's clock.");
+        private static final TextKey OPTION_EVERY =
+                TextKey.of("jsc.cli.job.at.option.every", "only on the days named");
+        private static final TextKey OPTION_DELETE =
+                TextKey.of("jsc.cli.job.at.option.delete", "take one off the list");
+        private static final TextKey EXAMPLE_MORNING =
+                TextKey.of("jsc.cli.job.at.example.morning", "every morning at six");
+        private static final TextKey EXAMPLE_LIST =
+                TextKey.of("jsc.cli.job.at.example.list", "what this computer is set to do");
+        private static final TextKey EXAMPLE_DELETE =
+                TextKey.of("jsc.cli.job.at.example.delete", "take the second off the list");
+        private static final TextKey BAD_TIME =
+                TextKey.of("jsc.cli.job.at.bad_time", "The time is not in the right format.");
+
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.DOS_SYSTEMS);
         }
@@ -241,29 +340,30 @@ final class JobCommands {
             return "at";
         }
 
-        @Override public String summary() {
-            return "run a command at an hour";
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
         }
 
-        @Override public String usage() {
-            return "[hh:mm [/EVERY:days] <command>] [id /DELETE]";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public List<String> description() {
-            return List.of("With nothing after it, lists what this computer is set to run and when. With an hour",
-                    "and a command, leaves that command for that hour of every day, or of the days named after",
-                    "/EVERY. The shortest anything repeats is an hour of the world's clock.");
+        @Override public Text usage() {
+            return USAGE.text();
+        }
+
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text());
         }
 
         @Override public List<Option> options() {
-            return List.of(new Option("/EVERY:M,W,F", "only on the days named"),
-                    new Option("<id> /DELETE", "take one off the list"));
+            return List.of(new Option("/EVERY:M,W,F", OPTION_EVERY), new Option("<id> /DELETE", OPTION_DELETE));
         }
 
         @Override public List<Example> examples() {
-            return List.of(new Example("AT 06:00 INTERAC GET 64 COAL /LOCAL", "every morning at six"),
-                    new Example("AT", "what this computer is set to do"),
-                    new Example("AT 2 /DELETE", "take the second off the list"));
+            return List.of(new Example("AT 06:00 INTERAC GET 64 COAL /LOCAL", EXAMPLE_MORNING),
+                    new Example("AT", EXAMPLE_LIST),
+                    new Example("AT 2 /DELETE", EXAMPLE_DELETE));
         }
 
         @Override public List<String> seeAlso() {
@@ -285,7 +385,7 @@ final class JobCommands {
             }
             final int hour = JobWhen.hourOf(ctx.arg(0));
             if (hour < 0) {
-                ctx.out().error("The time is not in the right format.");
+                ctx.out().error(BAD_TIME);
                 return;
             }
             List<Integer> days = List.of();

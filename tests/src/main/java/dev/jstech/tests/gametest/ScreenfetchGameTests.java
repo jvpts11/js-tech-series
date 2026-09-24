@@ -60,11 +60,11 @@ public final class ScreenfetchGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     final List<CliLine> out = fetch(helper, machine, "apt install screenfetch",
                             TermBuffer.MONITOR_COLUMNS);
-                    helper.assertTrue(out.get(3).spans().contains(new CliSpan("dMMMNy", CliStyle.BRIGHT)),
+                    helper.assertTrue(has(out.get(3), "dMMMNy", CliStyle.BRIGHT),
                             "the lettering inside the ring is white; got " + out.get(3).spans());
-                    helper.assertTrue(out.get(0).spans().contains(new CliSpan("player", CliStyle.RED)),
+                    helper.assertTrue(has(out.get(0), "player", CliStyle.RED),
                             "the user is in the logo's red; got " + out.get(0).spans());
-                    helper.assertTrue(out.get(2).spans().contains(new CliSpan("OS:", CliStyle.RED)),
+                    helper.assertTrue(has(out.get(2), "OS:", CliStyle.RED),
                             "and so is every label; got " + out.get(2).spans());
                     helper.assertTrue(out.get(2).text().contains("Ubuntu"), "with its value beside it");
                 })
@@ -98,8 +98,8 @@ public final class ScreenfetchGameTests {
                     final List<CliLine> out = fetch(helper, machine, "pkg install screenfetch",
                             TermBuffer.MONITOR_COLUMNS);
                     for (final CliLine line : out) {
-                        helper.assertTrue(line.spans().size() == 1 && line.style() == CliStyle.RED,
-                                "each row is one run of red; got " + line.spans());
+                        helper.assertTrue(line.spans().stream().allMatch(span -> span.style() == CliStyle.RED),
+                                "each row is all red; got " + line.spans());
                     }
                     helper.assertTrue(out.get(1).text().startsWith("  s` `.....---.......--.```   -/"),
                             "under its own mark; got " + out.get(1).text());
@@ -121,11 +121,21 @@ public final class ScreenfetchGameTests {
                     }
                     helper.assertTrue(all.toString().contains("Kernel: Frames NT 5.1"),
                             "the version Frames XP gives for itself; got " + all);
-                    helper.assertTrue(out.get(2).spans().contains(new CliSpan("OS:", CliStyle.GREEN)),
+                    helper.assertTrue(has(out.get(2), "OS:", CliStyle.GREEN),
                             "the labels in the flag's second colour; got " + out.get(2).spans());
                     helper.assertTrue(all.toString().contains("Et:::ztt33EEEL"), "under the flag; got " + all);
                 })
                 .thenSucceed();
+    }
+
+    /* Whether the line has a run that reads those words, in English, in that colour. */
+    private static boolean has(final CliLine line, final String words, final CliStyle style) {
+        for (final CliSpan span : line.spans()) {
+            if (span.style() == style && span.english().equals(words)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /* Installs screenfetch with that command, from a Mirror on the machine itself, and runs it. */

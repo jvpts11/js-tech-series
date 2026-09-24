@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 
 /**
@@ -27,21 +29,26 @@ public interface ICliCommand {
     }
 
     /** A one-line description shown by {@code help}. */
-    String summary();
+    Text summary();
 
-    /** The argument syntax shown by {@code help <name>}, e.g. {@code "<quantity> <item>"}. */
-    default String usage() {
-        return "";
+    /**
+     * The argument syntax shown by {@code help <name>}, e.g. {@code "<quantity> <item>"}. The switches are written
+     * as the command takes them and the words in angle brackets are the reader's, so it is declared text.
+     */
+    default Text usage() {
+        return Text.EMPTY;
     }
 
     /**
-     * What the command does, in whole sentences: the paragraphs of its manual page.
+     * What the command does, in whole sentences: the paragraphs of its manual page, one to an entry. A paragraph
+     * is one piece of text however long it is, since where its lines break is for whatever shows it to decide, in
+     * the reader's language.
      *
      * <p>A command that says nothing here has a page made of what it does say, which is honest and thin. One
      * that says something has a page worth reading, and it is the only place the words are written: the
      * manual, the Help window on a desktop and {@code /?} at a DOS prompt all read this.
      */
-    default List<String> description() {
+    default List<Text> description() {
         return List.of();
     }
 
@@ -71,7 +78,11 @@ public interface ICliCommand {
      * @param flag how it is written, as the family this command belongs to writes it
      * @param what what it does, in one line
      */
-    record Option(String flag, String what) {
+    record Option(String flag, Text what) {
+
+        public Option(final String flag, final TextKey what) {
+            this(flag, what.text());
+        }
     }
 
     /**
@@ -80,10 +91,14 @@ public interface ICliCommand {
      * @param line what to type
      * @param what what comes of it, in one line, or empty when the line speaks for itself
      */
-    record Example(String line, String what) {
+    record Example(String line, Text what) {
+
+        public Example(final String line, final TextKey what) {
+            this(line, what.text());
+        }
 
         public Example(final String line) {
-            this(line, "");
+            this(line, Text.EMPTY);
         }
     }
 

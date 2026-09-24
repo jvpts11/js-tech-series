@@ -105,7 +105,7 @@ public final class TtyEditorGameTests {
                 for (final ICliCommand command : CliCommands.commandsFor(family)) {
                     if (command.name().equals(verb)) {
                         found = true;
-                        helper.assertTrue(command.usage().contains("<file>"),
+                        helper.assertTrue(command.usage().english().contains("<file>"),
                                 verb + " should say it takes a file");
                     }
                 }

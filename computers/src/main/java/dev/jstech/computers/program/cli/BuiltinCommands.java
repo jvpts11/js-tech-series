@@ -131,8 +131,8 @@ public final class BuiltinCommands {
                  * any other, so they are listed by help and gated by whether the machine has them,
                  * which is what lets a headless server be programmed at all.
                  */
-                new TtyEditorCommand("vim", "edit a file in the terminal", "vim"),
-                new TtyEditorCommand("emacs", "edit a file in the terminal", "emacs"));
+                new TtyEditorCommand("vim", TtyEditorCommand.EDITS_A_FILE, "vim"),
+                new TtyEditorCommand("emacs", TtyEditorCommand.EDITS_A_FILE, "emacs"));
     }
 
     // meta

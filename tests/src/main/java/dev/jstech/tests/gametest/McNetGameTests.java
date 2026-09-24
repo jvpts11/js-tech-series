@@ -160,8 +160,8 @@ public final class McNetGameTests {
                             "findtext finds the line");
 
                     final List<String> everything = shell(helper, computer, "showcommands");
-                    helper.assertTrue(says(everything, "FILES") && says(everything, "listfiles")
-                                    && says(everything, "MACHINE") && says(everything, "memory"),
+                    helper.assertTrue(says(everything, "Files") && says(everything, "listfiles")
+                                    && says(everything, "The Machine") && says(everything, "memory"),
                             "showcommands gathers what this machine can run; got " + everything);
                     /*
                      * This machine is on no cable, so the verbs that need a network are not among them. The

@@ -25,6 +25,7 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliCommand;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
@@ -91,7 +92,9 @@ public final class OsCliGameTests {
                             + e.getMessage());
                     return;
                 }
-                helper.assertTrue(ConsoleInitPayload.STREAM_CODEC.decode(buf).commands().equals(commands),
+                final List<ConsoleInitPayload.WireCommand> back =
+                        ConsoleInitPayload.STREAM_CODEC.decode(buf).commands();
+                helper.assertTrue(shapes(back).equals(shapes(commands)),
                         "the " + family + (live ? " live" : "") + " shell's commands survive the round trip");
             }
         }
@@ -1522,6 +1525,29 @@ public final class OsCliGameTests {
             sb.append(line.text()).append('\n');
         }
         return sb.toString();
+    }
+
+    /**
+     * Each command as its name and the shape of its usage: the key of a declared sentence and what went into it,
+     * or the words of data. The English stays behind with the sender, so the shape is what a round trip keeps.
+     */
+    private static List<String> shapes(final List<ConsoleInitPayload.WireCommand> commands) {
+        final List<String> out = new ArrayList<>(commands.size());
+        for (final ConsoleInitPayload.WireCommand command : commands) {
+            out.add(command.name() + " " + shape(command.usage()));
+        }
+        return out;
+    }
+
+    private static String shape(final Text text) {
+        if (!(text instanceof Text.Translated translated)) {
+            return "'" + text.english() + "'";
+        }
+        final List<String> args = new ArrayList<>(translated.args().size());
+        for (final Text arg : translated.args()) {
+            args.add(shape(arg));
+        }
+        return translated.key().key() + args;
     }
 
     /**

@@ -9,6 +9,9 @@ package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.ShellFamily;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.Locale;
 
@@ -38,7 +41,11 @@ final class NetMachineCommands {
     }
 
     /** Wipes the glass. */
+    @TextHolder
     static final class Clear implements ICliCommand, CliShell.IClearMarker {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.netmachine.clear.summary", "wipe the glass");
+
         @Override public CommandScope scope() {
             return NET_MACHINE;
         }
@@ -51,8 +58,8 @@ final class NetMachineCommands {
             return CommandGroup.MACHINE;
         }
 
-        @Override public String summary() {
-            return "wipe the glass";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
         @Override public void run(final CliContext ctx) {
@@ -61,7 +68,20 @@ final class NetMachineCommands {
     }
 
     /** What the memory is spent on: what is fitted, what was promised, and what is really in it. */
+    @TextHolder
     static final class Memory implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.netmachine.memory.summary", "what this machine's memory is spent on");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.netmachine.memory.about",
+                "Three numbers, and they are not the same one. Fitted is the memory in the machine. Promised is"
+                        + " what has been set aside for the things it agreed to run. Held is what those things are"
+                        + " really using at this moment, which is the one that moves while you watch.");
+        private static final TextKey FITTED = TextKey.of("jsc.cli.netmachine.memory.fitted", "Fitted");
+        private static final TextKey PROMISED = TextKey.of("jsc.cli.netmachine.memory.promised", "Promised");
+        private static final TextKey HELD = TextKey.of("jsc.cli.netmachine.memory.held", "Held");
+        private static final TextKey FREE = TextKey.of("jsc.cli.netmachine.memory.free", "Free");
+
         @Override public CommandScope scope() {
             return NET_MACHINE;
         }
@@ -74,14 +94,12 @@ final class NetMachineCommands {
             return CommandGroup.MACHINE;
         }
 
-        @Override public String summary() {
-            return "what this machine's memory is spent on";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public List<String> description() {
-            return List.of("Three numbers, and they are not the same one. Fitted is the memory in the machine.",
-                    "Promised is what has been set aside for the things it agreed to run. Held is what those",
-                    "things are really using at this moment, which is the one that moves while you watch.");
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text());
         }
 
         @Override public List<String> seeAlso() {
@@ -90,15 +108,23 @@ final class NetMachineCommands {
 
         @Override public void run(final CliContext ctx) {
             final ICliComputer.MemoryUse use = ctx.computer().memory();
-            ctx.out().row("Fitted", use.totalMb() + " mB");
-            ctx.out().row("Promised", use.usedMb() + " mB");
-            ctx.out().row("Held", RamLedger.heldLabel(use.heldBytes()));
-            ctx.out().row("Free", Math.max(0, use.totalMb() - use.usedMb()) + " mB");
+            ctx.out().row(FITTED.text(), Text.literal(use.totalMb() + " mB"));
+            ctx.out().row(PROMISED.text(), Text.literal(use.usedMb() + " mB"));
+            ctx.out().row(HELD, RamLedger.heldLabel(use.heldBytes()));
+            ctx.out().row(FREE.text(), Text.literal(Math.max(0, use.totalMb() - use.usedMb()) + " mB"));
         }
     }
 
     /** What the machine is running. */
+    @TextHolder
     static final class Tasklist implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.netmachine.tasklist.summary", "what this machine is running");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.netmachine.tasklist.about",
+                "Lists what the machine is running, the number each answers to, and what each is holding of the"
+                        + " memory it was promised. Stop one with end.");
+
         @Override public CommandScope scope() {
             return NET_MACHINE;
         }
@@ -111,13 +137,12 @@ final class NetMachineCommands {
             return CommandGroup.MACHINE;
         }
 
-        @Override public String summary() {
-            return "what this machine is running";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public List<String> description() {
-            return List.of("Lists what the machine is running, the number each answers to, and what each is",
-                    "holding of the memory it was promised. Stop one with end.");
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text());
         }
 
         @Override public List<String> seeAlso() {
@@ -130,7 +155,21 @@ final class NetMachineCommands {
     }
 
     /** Stops one of them. */
+    @TextHolder
     static final class End implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.netmachine.end.summary", "stop something this machine is running");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.netmachine.end.usage", "<number>");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.netmachine.end.about",
+                "Stops the thing of that number, which tasklist tells you. What it was doing stops where it stands,"
+                        + " and what it had not finished stays not done.");
+        private static final TextKey EXAMPLE_FOURTH =
+                TextKey.of("jsc.cli.netmachine.end.example.fourth", "stop the fourth thing tasklist shows");
+        private static final TextKey DONE = TextKey.of("jsc.cli.netmachine.end.done", "[%s] done");
+        private static final TextKey NO_JOB =
+                TextKey.of("jsc.cli.netmachine.end.no_job", "this machine was left with no job %s");
+
         @Override public CommandScope scope() {
             return NET_MACHINE;
         }
@@ -143,21 +182,20 @@ final class NetMachineCommands {
             return CommandGroup.MACHINE;
         }
 
-        @Override public String summary() {
-            return "stop something this machine is running";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public String usage() {
-            return "<number>";
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
-        @Override public List<String> description() {
-            return List.of("Stops the thing of that number, which tasklist tells you. What it was doing stops",
-                    "where it stands, and what it had not finished stays not done.");
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text());
         }
 
         @Override public List<Example> examples() {
-            return List.of(new Example("end 4", "stop the fourth thing tasklist shows"));
+            return List.of(new Example("end 4", EXAMPLE_FOURTH));
         }
 
         @Override public List<String> seeAlso() {
@@ -166,7 +204,7 @@ final class NetMachineCommands {
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: end <number>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             /*
@@ -176,9 +214,9 @@ final class NetMachineCommands {
             if (ctx.arg(0).startsWith("%")) {
                 final int id = MachineFacts.whole(ctx.arg(0));
                 if (id > 0 && ctx.computer().stopJob(id)) {
-                    ctx.out().ok("[" + id + "] done");
+                    ctx.out().ok(DONE.with(id));
                 } else {
-                    ctx.out().error("this machine was left with no job " + ctx.arg(0));
+                    ctx.out().error(NO_JOB.with(ctx.arg(0)));
                 }
                 return;
             }
@@ -187,7 +225,16 @@ final class NetMachineCommands {
     }
 
     /** Where a command came from. */
+    @TextHolder
     static final class FindCommand implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.netmachine.findcommand.summary", "say where a command comes from");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.netmachine.findcommand.usage", "<command>");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.netmachine.findcommand.about",
+                "Says whether a command is on this machine at all and what put it there: the system itself, or a"
+                        + " package installed over it, which is the one to remove if it misbehaves.");
+
         @Override public CommandScope scope() {
             return NET_MACHINE;
         }
@@ -200,17 +247,16 @@ final class NetMachineCommands {
             return CommandGroup.MACHINE;
         }
 
-        @Override public String summary() {
-            return "say where a command comes from";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public String usage() {
-            return "<command>";
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
-        @Override public List<String> description() {
-            return List.of("Says whether a command is on this machine at all and what put it there: the system",
-                    "itself, or a package installed over it, which is the one to remove if it misbehaves.");
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text());
         }
 
         @Override public List<String> seeAlso() {
@@ -219,7 +265,7 @@ final class NetMachineCommands {
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: findcommand <command>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             MachineFacts.whereIs(ctx, ctx.arg(0), ShellFamily.NET);
@@ -227,7 +273,15 @@ final class NetMachineCommands {
     }
 
     /** The day and hour of the world this machine stands in. */
+    @TextHolder
     static final class WorldTime implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.netmachine.worldtime.summary", "the day and hour of the world");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.netmachine.worldtime.about",
+                "There is one clock here and everything on the machine is timed by it: a line left for an hour, a"
+                        + " file's stamp, a log. This is that clock.");
+
         @Override public CommandScope scope() {
             return NET_MACHINE;
         }
@@ -240,13 +294,12 @@ final class NetMachineCommands {
             return CommandGroup.MACHINE;
         }
 
-        @Override public String summary() {
-            return "the day and hour of the world";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public List<String> description() {
-            return List.of("There is one clock here and everything on the machine is timed by it: a line left",
-                    "for an hour, a file's stamp, a log. This is that clock.");
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text());
         }
 
         @Override public List<String> seeAlso() {
@@ -259,7 +312,26 @@ final class NetMachineCommands {
     }
 
     /** Erases a disk. */
+    @TextHolder
     static final class Format implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.netmachine.format.summary", "erase everything on a disk");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.netmachine.format.usage", "<drive> [yes]");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.netmachine.format.about",
+                "Erases a disk and everything on it. A shell that remembers nothing between lines cannot ask you"
+                        + " twice, so saying yes after the drive is how you mean it.");
+        private static final TextKey EXAMPLE_ASK = TextKey.of("jsc.cli.netmachine.format.example.ask",
+                "what it would destroy, and nothing done");
+        private static final TextKey EXAMPLE_YES =
+                TextKey.of("jsc.cli.netmachine.format.example.yes", "and then it is done");
+        private static final TextKey NO_DRIVE =
+                TextKey.of("jsc.cli.netmachine.format.no_drive", "there is no drive called %s");
+        private static final TextKey WOULD_LOSE =
+                TextKey.of("jsc.cli.netmachine.format.would_lose", "Everything on drive %s would be lost.");
+        private static final TextKey SAY_YES =
+                TextKey.of("jsc.cli.netmachine.format.say_yes", "Say 'format %s yes' to do it.");
+
         @Override public CommandScope scope() {
             return NET_DISK;
         }
@@ -272,38 +344,36 @@ final class NetMachineCommands {
             return CommandGroup.FILES;
         }
 
-        @Override public String summary() {
-            return "erase everything on a disk";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public String usage() {
-            return "<drive> [yes]";
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
-        @Override public List<String> description() {
-            return List.of("Erases a disk and everything on it. A shell that remembers nothing between lines",
-                    "cannot ask you twice, so saying yes after the drive is how you mean it.");
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text());
         }
 
         @Override public List<Example> examples() {
-            return List.of(new Example("format d", "what it would destroy, and nothing done"),
-                    new Example("format d yes", "and then it is done"));
+            return List.of(new Example("format d", EXAMPLE_ASK), new Example("format d yes", EXAMPLE_YES));
         }
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: format <drive> [yes]");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final String said = ctx.arg(0).toUpperCase(Locale.ROOT);
             if (said.isEmpty() || !Character.isLetter(said.charAt(0))) {
-                ctx.out().error("there is no drive called " + ctx.arg(0));
+                ctx.out().error(NO_DRIVE.with(ctx.arg(0)));
                 return;
             }
             final char drive = said.charAt(0);
             if (ctx.argCount() < 2 || !ctx.arg(1).equalsIgnoreCase("yes")) {
-                ctx.out().styled("Everything on drive " + drive + " would be lost.", CliStyle.ERROR);
-                ctx.out().dim("Say 'format " + Character.toLowerCase(drive) + " yes' to do it.");
+                ctx.out().styled(WOULD_LOSE.with(String.valueOf(drive)), CliStyle.ERROR);
+                ctx.out().dim(SAY_YES.with(String.valueOf(Character.toLowerCase(drive))));
                 return;
             }
             final ICliComputer.OpResult result = ctx.computer().formatDrive(drive);
@@ -312,7 +382,13 @@ final class NetMachineCommands {
     }
 
     /** Runs a stored IQL script against the network. */
+    @TextHolder
     static final class Run implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.netmachine.run.summary", "run a stored script against the network");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.netmachine.run.usage", "<file>");
+
         @Override public CommandScope scope() {
             return NET_DISK;
         }
@@ -321,12 +397,16 @@ final class NetMachineCommands {
             return "run";
         }
 
-        @Override public String summary() {
-            return "run a stored script against the network";
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
         }
 
-        @Override public String usage() {
-            return "<file>";
+        @Override public Text summary() {
+            return SUMMARY.text();
+        }
+
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
         @Override public List<String> seeAlso() {
@@ -335,7 +415,7 @@ final class NetMachineCommands {
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: run <file>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final ICliComputer.FsResult result = ctx.computer().runScript(ctx.arg(0));

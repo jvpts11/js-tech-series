@@ -14,6 +14,8 @@ import dev.jstech.computers.program.cli.sh.ShRunner;
 import dev.jstech.computers.program.job.JobWhen;
 import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.computers.program.tty.ITtyProcess;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,11 +25,19 @@ import java.util.Map;
 /**
  * The command interpreter: it owns a set of {@link ICliCommand}s, looks one up by name or alias, and runs it against an {@link ICliComputer}, collecting the styled output. Pure logic with no Minecraft types, so the whole parse-and-dispatch path is unit-tested with a fake computer.
  */
+@TextHolder
 public final class CliShell {
 
     private final Map<String, ICliCommand> byName = new LinkedHashMap<>();
     private final Map<String, ICliCommand> lookup = new LinkedHashMap<>();
     private final int width;
+
+    private static final TextKey NOT_FOUND = TextKey.of("jsc.cli.shell.not_found", "command not found: %s");
+    private static final TextKey TRY_HELP = TextKey.of("jsc.cli.shell.try_help", "type 'help' to list commands");
+    private static final TextKey FAILED = TextKey.of("jsc.cli.shell.failed", "error running '%s': %s");
+    private static final TextKey NO_JOB_MEMORY =
+            TextKey.of("jsc.cli.shell.no_job_memory", "the machine has no memory left for another job");
+    private static final TextKey NO_JOBS = TextKey.of("jsc.cli.shell.no_jobs", "this machine keeps no jobs");
 
     public CliShell(final List<ICliCommand> commands, final int width) {
         this.width = width;
@@ -120,8 +130,8 @@ public final class CliShell {
          * uninstalled program's verbs) does not exist here, exactly like an unknown word.
          */
         if (command == null || !command.available(computer)) {
-            out.error("command not found: " + word);
-            out.dim("type 'help' to list commands");
+            out.error(NOT_FOUND.with(word));
+            out.dim(TRY_HELP);
             return new Response(out.lines(), false);
         }
         final List<String> args = new ArrayList<>(tokens.subList(1, tokens.size()));
@@ -135,8 +145,8 @@ public final class CliShell {
          */
         if (args.contains("--help")
                 || (computer.shellFamily() == ShellFamily.DOS && args.contains("/?"))) {
-            out.accent(command.name() + (command.usage().isEmpty() ? "" : " " + command.usage()));
-            for (final String said : ManPage.lines(command, false)) {
+            out.line(ManPage.synopsis(command, CliStyle.ACCENT));
+            for (final CliLine said : ManPage.lines(command, false)) {
                 out.line(said);
             }
             return new Response(out.lines(), false);
@@ -149,7 +159,7 @@ public final class CliShell {
              * A command must not throw for ordinary errors; if one does anyway, the shell stays alive
              * and reports it rather than tearing down the session.
              */
-            out.error("error running '" + word + "': " + unexpected.getMessage());
+            out.error(FAILED.with(word, String.valueOf(unexpected.getMessage())));
         }
         final boolean clear = command instanceof IClearMarker;
         /*
@@ -170,12 +180,12 @@ public final class CliShell {
     private Response backgrounded(final List<String> tokens, final ICliComputer computer, final CliOutput out) {
         final ICliComputer.MemoryUse memory = computer.memory();
         if (memory.totalMb() > 0 && memory.usedMb() + MachineJobs.JOB_MB > memory.totalMb()) {
-            out.error("the machine has no memory left for another job");
+            out.error(NO_JOB_MEMORY);
             return new Response(out.lines(), false);
         }
         final MachineJobs.Job job = computer.addJob(String.join(" ", tokens), JobWhen.AT_ONCE);
         if (job == null) {
-            out.error("this machine keeps no jobs");
+            out.error(NO_JOBS);
         } else {
             out.ok("[" + job.id() + "] " + job.line());
         }

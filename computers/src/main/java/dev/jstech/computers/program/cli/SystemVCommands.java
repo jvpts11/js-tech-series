@@ -8,6 +8,9 @@
 package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.os.Platform;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 
 /**
@@ -32,13 +35,32 @@ public final class SystemVCommands {
      * question and the answer. With more than one medium in, it lists them and asks to be told which, by name,
      * rather than guessing.
      */
+    @TextHolder
     static final class InstallPkg implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.sysv.installpkg.summary", "install the package on the medium in a drive");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.sysv.installpkg.usage", "[package]");
+        private static final TextKey NO_MEDIUM =
+                TextKey.of("jsc.cli.sysv.installpkg.no_medium", "no package medium in a drive");
+        private static final TextKey INSERT = TextKey.of("jsc.cli.sysv.installpkg.insert",
+                "  Insert the medium the package came on and try again.");
+        private static final TextKey NO_SUCH = TextKey.of("jsc.cli.sysv.installpkg.no_such",
+                "%s: no such package on the media in the drives");
+        private static final TextKey ON_MEDIA = TextKey.of("jsc.cli.sysv.installpkg.on_media",
+                "The following packages are on the media in the drives:");
+        private static final TextKey SAY_WHICH =
+                TextKey.of("jsc.cli.sysv.installpkg.say_which", "Say which: installpkg <package>");
+        private static final TextKey INSTALLING =
+                TextKey.of("jsc.cli.sysv.installpkg.installing", "Installing the %s package.");
 
         @Override public String name() { return "installpkg"; }
 
-        @Override public String summary() { return "install the package on the medium in a drive"; }
+        @Override public CommandGroup group() { return CommandGroup.SOFTWARE; }
 
-        @Override public String usage() { return "[package]"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public CommandScope scope() {
             return CommandScope.on(Platform.UNIX);
@@ -47,30 +69,30 @@ public final class SystemVCommands {
         @Override public void run(final CliContext ctx) {
             final List<ICliComputer.ProgramInfo> media = ctx.computer().programsOnMedia();
             if (media.isEmpty()) {
-                ctx.out().error("installpkg: no package medium in a drive");
-                ctx.out().dim("  Insert the medium the package came on and try again.");
+                ctx.out().error(CliTexts.SAID_BY.with(name(), NO_MEDIUM));
+                ctx.out().dim(INSERT);
                 return;
             }
             final ICliComputer.ProgramInfo chosen = ctx.hasArgs() ? named(media, ctx.arg(0))
                     : media.size() == 1 ? media.getFirst() : null;
             if (chosen == null && ctx.hasArgs()) {
-                ctx.out().error("installpkg: " + ctx.arg(0) + ": no such package on the media in the drives");
+                ctx.out().error(CliTexts.SAID_BY.with(name(), NO_SUCH.with(ctx.arg(0))));
                 return;
             }
             if (chosen == null) {
-                ctx.out().line("The following packages are on the media in the drives:");
+                ctx.out().line(ON_MEDIA);
                 for (final ICliComputer.ProgramInfo each : media) {
                     ctx.out().line("    " + each.name());
                 }
-                ctx.out().dim("Say which: installpkg <package>");
+                ctx.out().dim(SAY_WHICH);
                 return;
             }
-            ctx.out().line("Installing the " + chosen.name() + " package.");
+            ctx.out().line(INSTALLING.with(chosen.name()));
             final ICliComputer.OpResult result = ctx.computer().install(chosen.id());
             if (result.ok()) {
                 ctx.out().ok(result.message());
             } else {
-                ctx.out().error("installpkg: " + result.message());
+                ctx.out().error(CliTexts.SAID_BY.with(name(), result.message()));
             }
         }
 

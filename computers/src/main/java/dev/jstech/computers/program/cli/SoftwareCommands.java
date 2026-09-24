@@ -13,6 +13,9 @@ import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.iql.IqlVerb;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -45,10 +48,44 @@ final class SoftwareCommands {
      * they are the same manager fetching from the same mirror: one implementation wearing two names, so a
      * fix to how packages install is a fix on both machines. MC-DOS has neither and installs from media.
      */
+    @TextHolder
     static final class Pckmgr implements ICliCommand {
 
         private final String name;
         private final Set<Platform> systems;
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.software.pckmgr.summary",
+                "install, remove, search and update packages from the network mirror");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.software.pckmgr.usage",
+                "install|remove|search|list|update [name]");
+        private static final TextKey UNKNOWN_OPTION = TextKey.of("jsc.cli.software.pckmgr.unknown_option",
+                "%s list: unknown option %s (did you mean --available?)");
+        /* The verbs as the usage lists them, each with what it does; the spacing keeps the second column straight. */
+        private static final TextKey VERB_INSTALL = TextKey.of("jsc.cli.software.pckmgr.verb.install",
+                "  install <name>   fetch and set up a package");
+        private static final TextKey VERB_REMOVE = TextKey.of("jsc.cli.software.pckmgr.verb.remove",
+                "  remove <name>    uninstall a package");
+        private static final TextKey VERB_SEARCH = TextKey.of("jsc.cli.software.pckmgr.verb.search",
+                "  search [text]    find packages the mirror offers");
+        private static final TextKey VERB_LIST = TextKey.of("jsc.cli.software.pckmgr.verb.list",
+                "  list [--available]  installed packages, or everything on offer");
+        private static final TextKey VERB_UPDATE = TextKey.of("jsc.cli.software.pckmgr.verb.update",
+                "  update           bring installed packages to the current build");
+        private static final TextKey NEEDS_NAME = TextKey.of("jsc.cli.software.pckmgr.needs_name",
+                "this verb needs a package name");
+        private static final TextKey NO_MIRROR = TextKey.of("jsc.cli.software.pckmgr.no_mirror",
+                "could not resolve mirror:// - no package source reachable");
+        /* A package's name and where it stands with this computer, as a row of the listing opens. */
+        private static final TextKey LISTED = TextKey.of("jsc.cli.software.pckmgr.listed", "  %s  [%s]");
+        private static final TextKey INSTALLED = TextKey.of("jsc.cli.software.pckmgr.installed", "installed");
+        private static final TextKey COMMUNITY = TextKey.of("jsc.cli.software.pckmgr.community", "community");
+        private static final TextKey AVAILABLE = TextKey.of("jsc.cli.software.pckmgr.available", "available");
+        private static final TextKey NONE_INSTALLED = TextKey.of("jsc.cli.software.pckmgr.none_installed",
+                "No packages installed.");
+        private static final TextKey NOTHING_OFFERED = TextKey.of("jsc.cli.software.pckmgr.nothing_offered",
+                "The mirror offers nothing for this computer.");
+        private static final TextKey NO_MATCH = TextKey.of("jsc.cli.software.pckmgr.no_match",
+                "No package matches %s.");
 
         Pckmgr(final String name, final Set<Platform> systems) {
             this.name = name;
@@ -63,12 +100,16 @@ final class SoftwareCommands {
             return this.name;
         }
 
-        @Override public String summary() {
-            return "install, remove, search and update packages from the network mirror";
+        @Override public CommandGroup group() {
+            return CommandGroup.SOFTWARE;
         }
 
-        @Override public String usage() {
-            return this.name + " install|remove|search|list|update [name]";
+        @Override public Text summary() {
+            return SUMMARY.text();
+        }
+
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
         @Override public void run(final CliContext ctx) {
@@ -91,19 +132,18 @@ final class SoftwareCommands {
                      * becomes "the feature is broken".
                      */
                     if (!flag.isEmpty() && !flag.equalsIgnoreCase("--available")) {
-                        ctx.out().error(this.name + " list: unknown option " + flag
-                                + " (did you mean --available?)");
+                        ctx.out().error(UNKNOWN_OPTION.with(this.name, flag));
                     } else {
                         listPackages(ctx, "", flag.isEmpty());
                     }
                 }
                 default -> {
-                    ctx.out().error("usage: " + usage());
-                    ctx.out().line("  install <name>   fetch and set up a package");
-                    ctx.out().line("  remove <name>    uninstall a package");
-                    ctx.out().line("  search [text]    find packages the mirror offers");
-                    ctx.out().line("  list [--available]  installed packages, or everything on offer");
-                    ctx.out().line("  update           bring installed packages to the current build");
+                    ctx.out().error(CliTexts.USAGE.with(this.name, usage()));
+                    ctx.out().line(VERB_INSTALL);
+                    ctx.out().line(VERB_REMOVE);
+                    ctx.out().line(VERB_SEARCH);
+                    ctx.out().line(VERB_LIST);
+                    ctx.out().line(VERB_UPDATE);
                 }
             }
         }
@@ -111,7 +151,7 @@ final class SoftwareCommands {
         private void requireName(final CliContext ctx,
                                  final Function<String, ICliComputer.OpResult> action) {
             if (ctx.argCount() < 2) {
-                ctx.out().error(this.name + ": this verb needs a package name");
+                ctx.out().error(CliTexts.SAID_BY.with(this.name, NEEDS_NAME));
                 return;
             }
             report(ctx, action.apply(ctx.arg(1)));
@@ -144,7 +184,7 @@ final class SoftwareCommands {
                                          final boolean onlyInstalled) {
             final List<ICliComputer.PackageInfo> packages = ctx.computer().packagesAvailable();
             if (packages.isEmpty()) {
-                ctx.out().error("could not resolve mirror:// - no package source reachable");
+                ctx.out().error(NO_MIRROR);
                 return;
             }
             final String needle = filter == null ? "" : filter.toLowerCase(Locale.ROOT);
@@ -161,19 +201,24 @@ final class SoftwareCommands {
                  * Something another player wrote says so. Whether to install it is then an informed
                  * choice rather than a guess about where it came from.
                  */
-                final String state = info.installed() ? "installed" : info.community() ? "community" : "available";
-                ctx.out().row("  " + info.name() + "  [" + state + "]", info.description());
+                final TextKey state = info.installed() ? INSTALLED : info.community() ? COMMUNITY : AVAILABLE;
+                ctx.out().row(LISTED.with(info.name(), state), Text.literal(info.description()));
                 shown++;
             }
             if (shown == 0) {
-                ctx.out().line(onlyInstalled ? "No packages installed."
-                        : needle.isEmpty() ? "The mirror offers nothing for this computer."
-                                : "No package matches " + filter + ".");
+                ctx.out().line(onlyInstalled ? NONE_INSTALLED.text()
+                        : needle.isEmpty() ? NOTHING_OFFERED.text() : NO_MATCH.with(filter));
             }
         }
     }
 
+    @TextHolder
     static final class ProgramsList implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.software.programs.summary",
+                "list installed programs");
+        private static final TextKey NONE = TextKey.of("jsc.cli.software.programs.none", "no programs installed");
+
         @Override public CommandScope scope() {
             return CommandScope.everywhere();
         }
@@ -182,18 +227,22 @@ final class SoftwareCommands {
             return "programs";
         }
 
+        @Override public CommandGroup group() {
+            return CommandGroup.SOFTWARE;
+        }
+
         @Override public List<String> aliases() {
             return List.of("apps");
         }
 
-        @Override public String summary() {
-            return "list installed programs";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
         @Override public void run(final CliContext ctx) {
             final List<ICliComputer.ProgramInfo> programs = ctx.computer().programs();
             if (programs.isEmpty()) {
-                ctx.out().dim("no programs installed");
+                ctx.out().dim(NONE);
                 return;
             }
             for (final ICliComputer.ProgramInfo program : programs) {
@@ -202,7 +251,15 @@ final class SoftwareCommands {
         }
     }
 
+    @TextHolder
     static final class Install implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.software.install.summary",
+                "install a program on this computer");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.software.install.usage", "<program-id>");
+        private static final TextKey SEE_PROGRAMS = TextKey.of("jsc.cli.software.install.see_programs",
+                "usage: install <program-id>   (see 'programs')");
+
         @Override public CommandScope scope() {
             return CommandScope.everywhere();
         }
@@ -211,17 +268,21 @@ final class SoftwareCommands {
             return "install";
         }
 
-        @Override public String summary() {
-            return "install a program on this computer";
+        @Override public CommandGroup group() {
+            return CommandGroup.SOFTWARE;
         }
 
-        @Override public String usage() {
-            return "<program-id>";
+        @Override public Text summary() {
+            return SUMMARY.text();
+        }
+
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: install <program-id>   (see 'programs')");
+                ctx.out().error(SEE_PROGRAMS);
                 return;
             }
             final ICliComputer.OpResult result = ctx.computer().install(ctx.arg(0));
@@ -229,7 +290,15 @@ final class SoftwareCommands {
         }
     }
 
+    @TextHolder
     static final class Uninstall implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.software.uninstall.summary",
+                "remove an installed program from this computer");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.software.uninstall.usage", "<program-id>");
+        private static final TextKey SEE_PROGRAMS = TextKey.of("jsc.cli.software.uninstall.see_programs",
+                "usage: uninstall <program-id>   (see 'programs')");
+
         @Override public CommandScope scope() {
             return CommandScope.everywhere();
         }
@@ -238,17 +307,21 @@ final class SoftwareCommands {
             return "uninstall";
         }
 
-        @Override public String summary() {
-            return "remove an installed program from this computer";
+        @Override public CommandGroup group() {
+            return CommandGroup.SOFTWARE;
         }
 
-        @Override public String usage() {
-            return "<program-id>";
+        @Override public Text summary() {
+            return SUMMARY.text();
+        }
+
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: uninstall <program-id>   (see 'programs')");
+                ctx.out().error(SEE_PROGRAMS);
                 return;
             }
             final ICliComputer.OpResult result = ctx.computer().packageRemove(ctx.arg(0));
@@ -256,7 +329,14 @@ final class SoftwareCommands {
         }
     }
 
+    @TextHolder
     static final class Store implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.software.store.summary",
+                "list programs you can install on this computer");
+        private static final TextKey NOTHING_ELSE = TextKey.of("jsc.cli.software.store.nothing_else",
+                "nothing else to install");
+
         @Override public CommandScope scope() {
             return CommandScope.everywhere();
         }
@@ -265,12 +345,16 @@ final class SoftwareCommands {
             return "store";
         }
 
+        @Override public CommandGroup group() {
+            return CommandGroup.SOFTWARE;
+        }
+
         @Override public List<String> aliases() {
             return List.of("available");
         }
 
-        @Override public String summary() {
-            return "list programs you can install on this computer";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
         @Override public void run(final CliContext ctx) {
@@ -280,16 +364,23 @@ final class SoftwareCommands {
                 if (program.preinstalled()) {
                     continue;
                 }
-                ctx.out().row("  " + program.commandName(), "install " + program.commandName());
+                // The line to type to install it, which is the same whatever language the reader has.
+                ctx.out().row(Text.literal("  " + program.commandName()),
+                        Text.literal("install " + program.commandName()));
                 any = true;
             }
             if (!any) {
-                ctx.out().dim("nothing else to install");
+                ctx.out().dim(NOTHING_ELSE);
             }
         }
     }
 
+    @TextHolder
     static final class IqlEngineCommand implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.software.iqlengine.summary",
+                "start/stop the network's IQL Engine service");
+
         /** A service of the network, run from the machine that orchestrates it. */
         @Override public CommandScope scope() {
             return MAINFRAME_SERVICE;
@@ -299,16 +390,22 @@ final class SoftwareCommands {
             return "iqlengine";
         }
 
+        /** Starting and stopping one of the network's services, which is where the services command stands too. */
+        @Override public CommandGroup group() {
+            return CommandGroup.SOFTWARE;
+        }
+
         @Override public List<String> aliases() {
             return List.of("engine");
         }
 
-        @Override public String summary() {
-            return "start/stop the network's IQL Engine service";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public String usage() {
-            return "start|stop|status";
+        /** Nothing but the words it takes, which are typed as they are in every language. */
+        @Override public Text usage() {
+            return Text.literal("start|stop|status");
         }
 
         @Override public boolean available(final ICliComputer computer) {
@@ -322,7 +419,13 @@ final class SoftwareCommands {
         }
     }
 
+    @TextHolder
     static final class Services implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.software.services.summary",
+                "list the network's services and their state");
+        private static final TextKey NONE = TextKey.of("jsc.cli.software.services.none", "no services");
+
         @Override public CommandScope scope() {
             return MAINFRAME_SERVICE;
         }
@@ -331,8 +434,12 @@ final class SoftwareCommands {
             return "services";
         }
 
-        @Override public String summary() {
-            return "list the network's services and their state";
+        @Override public CommandGroup group() {
+            return CommandGroup.SOFTWARE;
+        }
+
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
         @Override public boolean available(final ICliComputer computer) {
@@ -342,7 +449,7 @@ final class SoftwareCommands {
         @Override public void run(final CliContext ctx) {
             final List<ICliComputer.ServiceStatus> services = ctx.computer().services();
             if (services.isEmpty()) {
-                ctx.out().dim("no services");
+                ctx.out().dim(NONE);
                 return;
             }
             for (final ICliComputer.ServiceStatus service : services) {
@@ -351,10 +458,22 @@ final class SoftwareCommands {
         }
     }
 
+    @TextHolder
     static final class Maint implements ICliCommand {
 
         private final String verb;
         private final IqlVerb action;
+
+        /* What each upkeep does, in its own sentence, since a verb's word is not a word a translator can move. */
+        private static final TextKey ANALYZE_SUMMARY = TextKey.of("jsc.cli.software.maint.analyze.summary",
+                "mainframe: analyze the storage index");
+        private static final TextKey REINDEX_SUMMARY = TextKey.of("jsc.cli.software.maint.reindex.summary",
+                "mainframe: reindex the storage index");
+        private static final TextKey VACUUM_SUMMARY = TextKey.of("jsc.cli.software.maint.vacuum.summary",
+                "mainframe: vacuum the storage index");
+        /* Any other upkeep a later verb brings, named by the word it is typed as. */
+        private static final TextKey OTHER_SUMMARY = TextKey.of("jsc.cli.software.maint.summary",
+                "mainframe: %s the storage index");
 
         Maint(final String verb, final IqlVerb action) {
             this.verb = verb;
@@ -370,8 +489,17 @@ final class SoftwareCommands {
             return verb;
         }
 
-        @Override public String summary() {
-            return "mainframe: " + verb + " the storage index";
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
+        }
+
+        @Override public Text summary() {
+            return switch (this.action) {
+                case ANALYZE -> ANALYZE_SUMMARY.text();
+                case REINDEX -> REINDEX_SUMMARY.text();
+                case VACUUM -> VACUUM_SUMMARY.text();
+                default -> OTHER_SUMMARY.with(this.verb);
+            };
         }
 
         @Override public void run(final CliContext ctx) {
@@ -389,16 +517,24 @@ final class SoftwareCommands {
      * manager) instead of the installed OS, which is how the player reaches it once a system is installed.
      */
     /** Installs or reports the Mirror, the Mainframe's package repository the Linux package managers use. */
+    @TextHolder
     static final class MirrorCommand implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.software.mirror.summary",
+                "install or check the Mirror package service on the Mainframe");
+
         @Override public CommandScope scope() {
             return MAINFRAME_SERVICE;
         }
 
         @Override public String name() { return "mirror"; }
 
-        @Override public String summary() { return "install or check the Mirror package service on the Mainframe"; }
+        @Override public CommandGroup group() { return CommandGroup.SOFTWARE; }
 
-        @Override public String usage() { return "install|status"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        /** Nothing but the words it takes, which are typed as they are in every language. */
+        @Override public Text usage() { return Text.literal("install|status"); }
 
         @Override public void run(final CliContext ctx) {
             final ICliComputer.OpResult result = ctx.computer().mirrorControl(ctx.hasArgs() ? ctx.arg(0) : "status");

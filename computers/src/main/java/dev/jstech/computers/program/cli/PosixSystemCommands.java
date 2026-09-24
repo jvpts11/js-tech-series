@@ -9,6 +9,9 @@ package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +26,14 @@ final class PosixSystemCommands {
     private PosixSystemCommands() {
     }
 
+    @TextHolder
     static final class Uname implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.system.uname.summary", "print system information");
+        private static final TextKey EXTRA_OPERAND =
+                TextKey.of("jsc.cli.system.uname.extra_operand", "extra operand '%s'");
+        private static final TextKey INVALID_OPTION =
+                TextKey.of("jsc.cli.system.uname.invalid_option", "invalid option -- '%s'");
 
         /** Every letter the tool takes: all of it, the kernel, the machine's name, the release, the architecture. */
         private static final String LETTERS = "asnrm";
@@ -34,9 +44,12 @@ final class PosixSystemCommands {
 
         @Override public String name() { return "uname"; }
 
-        @Override public String summary() { return "print system information"; }
+        @Override public CommandGroup group() { return CommandGroup.MACHINE; }
 
-        @Override public String usage() { return "[-a|-s|-r|-m|-sr]"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        /** Nothing but switches, written as the tool takes them, so there is nothing in it to translate. */
+        @Override public Text usage() { return Text.literal("[-a|-s|-r|-m|-sr]"); }
 
         /*
          * The letters may come together or apart, as they always could: -sr is -s -r. What is printed is in
@@ -48,14 +61,15 @@ final class PosixSystemCommands {
             final StringBuilder asked = new StringBuilder();
             for (int i = 0; i < ctx.argCount(); i++) {
                 if (!ctx.arg(i).startsWith("-") || ctx.arg(i).length() < 2) {
-                    ctx.out().error("uname: extra operand '" + ctx.arg(i) + "'");
+                    ctx.out().error(CliTexts.SAID_BY.with(name(), EXTRA_OPERAND.with(ctx.arg(i))));
                     return;
                 }
                 asked.append(ctx.arg(i).substring(1));
             }
             for (int i = 0; i < asked.length(); i++) {
                 if (LETTERS.indexOf(asked.charAt(i)) < 0) {
-                    ctx.out().error("uname: invalid option -- '" + asked.charAt(i) + "'");
+                    ctx.out().error(CliTexts.SAID_BY.with(name(),
+                            INVALID_OPTION.with(String.valueOf(asked.charAt(i)))));
                     return;
                 }
             }
@@ -82,7 +96,12 @@ final class PosixSystemCommands {
         }
     }
 
+    @TextHolder
     static final class Hostname implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.system.hostname.summary", "print this computer's host name");
+
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.UNIX_SYSTEMS);
         }
@@ -91,7 +110,7 @@ final class PosixSystemCommands {
 
         @Override public CommandGroup group() { return CommandGroup.MACHINE; }
 
-        @Override public String summary() { return "print this computer's host name"; }
+        @Override public Text summary() { return SUMMARY.text(); }
 
         @Override public void run(final CliContext ctx) {
             ctx.out().line(ctx.computer().hostname());

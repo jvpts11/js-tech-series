@@ -8,6 +8,9 @@
 package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.program.job.JobWhen;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -42,7 +45,15 @@ final class NetSoftwareCommands {
     }
 
     /** Takes a program off the machine. */
+    @TextHolder
     static final class Uninstall implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.netsoftware.uninstall.summary", "take a program off this machine");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.netsoftware.uninstall.usage", "<program>");
+        private static final TextKey USAGE_HINT = TextKey.of("jsc.cli.netsoftware.uninstall.usage_hint",
+                "usage: uninstall <program>   (see 'programs')");
+
         @Override public CommandScope scope() {
             return NET_ANY;
         }
@@ -51,12 +62,16 @@ final class NetSoftwareCommands {
             return "uninstall";
         }
 
-        @Override public String summary() {
-            return "take a program off this machine";
+        @Override public CommandGroup group() {
+            return CommandGroup.SOFTWARE;
         }
 
-        @Override public String usage() {
-            return "<program>";
+        @Override public Text summary() {
+            return SUMMARY.text();
+        }
+
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
         @Override public List<String> seeAlso() {
@@ -65,7 +80,7 @@ final class NetSoftwareCommands {
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: uninstall <program>   (see 'programs')");
+                ctx.out().error(USAGE_HINT);
                 return;
             }
             final ICliComputer.OpResult result = ctx.computer().packageRemove(ctx.arg(0));
@@ -74,7 +89,18 @@ final class NetSoftwareCommands {
     }
 
     /** Leaves the machine running a line and gives the prompt straight back. */
+    @TextHolder
     static final class RunBackground implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.netsoftware.runbackground.summary", "run a line without waiting for it");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.netsoftware.runbackground.usage", "<line>");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.netsoftware.runbackground.about",
+                "Leaves the machine with the line and hands the prompt back at once. This machine runs one thing at"
+                        + " a time, so it takes them in the order they were left.");
+        private static final TextKey EXAMPLE_CRAFT =
+                TextKey.of("jsc.cli.netsoftware.runbackground.example.craft", "ask for them and carry on");
+
         @Override public CommandScope scope() {
             return NET_ANY;
         }
@@ -83,22 +109,24 @@ final class NetSoftwareCommands {
             return "runbackground";
         }
 
-        @Override public String summary() {
-            return "run a line without waiting for it";
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
         }
 
-        @Override public String usage() {
-            return "<line>";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public List<String> description() {
-            return List.of("Leaves the machine with the line and hands the prompt back at once. This machine",
-                    "runs one thing at a time, so it takes them in the order they were left.");
+        @Override public Text usage() {
+            return USAGE.text();
+        }
+
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text());
         }
 
         @Override public List<Example> examples() {
-            return List.of(new Example("runbackground interac craft 64 chest",
-                    "ask for them and carry on"));
+            return List.of(new Example("runbackground interac craft 64 chest", EXAMPLE_CRAFT));
         }
 
         @Override public List<String> seeAlso() {
@@ -107,7 +135,7 @@ final class NetSoftwareCommands {
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: runbackground <line>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             JobCommands.add(ctx, ctx.rest(0), JobWhen.AT_ONCE, false);
@@ -115,7 +143,28 @@ final class NetSoftwareCommands {
     }
 
     /** Leaves a line for an hour, and lists or forgets what was left. */
+    @TextHolder
     static final class Schedule implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.netsoftware.schedule.summary",
+                "leave a line for an hour of the world's clock");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.netsoftware.schedule.usage",
+                "[hh:mm [days] <line>] [forget <number>]");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.netsoftware.schedule.about",
+                "With nothing after it, says what this machine is already set to do. With an hour and a line,"
+                        + " leaves that line to run at that hour, every day unless days are named. The shortest"
+                        + " anything repeats is an hour of the world's clock.");
+        private static final TextKey EXAMPLE_MORNING =
+                TextKey.of("jsc.cli.netsoftware.schedule.example.morning", "every morning at six");
+        private static final TextKey EXAMPLE_EVENINGS =
+                TextKey.of("jsc.cli.netsoftware.schedule.example.evenings", "three evenings a week");
+        private static final TextKey EXAMPLE_LIST =
+                TextKey.of("jsc.cli.netsoftware.schedule.example.list", "what it is set to do");
+        private static final TextKey EXAMPLE_FORGET =
+                TextKey.of("jsc.cli.netsoftware.schedule.example.forget", "take the second off the list");
+        private static final TextKey BAD_HOUR =
+                TextKey.of("jsc.cli.netsoftware.schedule.bad_hour", "say the hour as 06:00");
+
         @Override public CommandScope scope() {
             return NET_ANY;
         }
@@ -124,26 +173,27 @@ final class NetSoftwareCommands {
             return "schedule";
         }
 
-        @Override public String summary() {
-            return "leave a line for an hour of the world's clock";
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
         }
 
-        @Override public String usage() {
-            return "[hh:mm [days] <line>] [forget <number>]";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public List<String> description() {
-            return List.of("With nothing after it, says what this machine is already set to do. With an hour",
-                    "and a line, leaves that line to run at that hour, every day unless days are named.",
-                    "The shortest anything repeats is an hour of the world's clock.");
+        @Override public Text usage() {
+            return USAGE.text();
+        }
+
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text());
         }
 
         @Override public List<Example> examples() {
-            return List.of(new Example("schedule 06:00 interac get 64 coal --to local",
-                            "every morning at six"),
-                    new Example("schedule 18:00 M,W,F interac craft 8 chest", "three evenings a week"),
-                    new Example("schedule", "what it is set to do"),
-                    new Example("schedule forget 2", "take the second off the list"));
+            return List.of(new Example("schedule 06:00 interac get 64 coal --to local", EXAMPLE_MORNING),
+                    new Example("schedule 18:00 M,W,F interac craft 8 chest", EXAMPLE_EVENINGS),
+                    new Example("schedule", EXAMPLE_LIST),
+                    new Example("schedule forget 2", EXAMPLE_FORGET));
         }
 
         @Override public List<String> seeAlso() {
@@ -161,7 +211,7 @@ final class NetSoftwareCommands {
             }
             final int hour = JobWhen.hourOf(ctx.arg(0));
             if (hour < 0) {
-                ctx.out().error("say the hour as 06:00");
+                ctx.out().error(BAD_HOUR);
                 return;
             }
             List<Integer> days = List.of();
@@ -184,7 +234,15 @@ final class NetSoftwareCommands {
      * <p>Read off the same filter every other listing reads, so it never teaches a verb the machine does not
      * have, and never hides one it does.
      */
+    @TextHolder
     static final class ShowCommands implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.netsoftware.showcommands.summary", "everything this machine can run");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.netsoftware.showcommands.about",
+                "Lists every word this machine answers to, gathered by what the thing is for. An appliance keeps no"
+                        + " manuals, so this is where it says what it has.");
+
         @Override public CommandScope scope() {
             return NET_ANY;
         }
@@ -193,35 +251,34 @@ final class NetSoftwareCommands {
             return "showcommands";
         }
 
-        @Override public String summary() {
-            return "everything this machine can run";
+        /** It is how this machine teaches what it can do, so it stands with the manual and the help. */
+        @Override public CommandGroup group() {
+            return CommandGroup.HELP;
         }
 
-        @Override public List<String> description() {
-            return List.of("Lists every word this machine answers to, gathered by what the thing is for.",
-                    "An appliance keeps no manuals, so this is where it says what it has.");
+        @Override public Text summary() {
+            return SUMMARY.text();
+        }
+
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text());
         }
 
         @Override public List<String> seeAlso() {
             return List.of("findcommand", "netgetter");
         }
 
+        /** The groups come out in the order a person meets them, which is the order the map keeps its keys in. */
         @Override public void run(final CliContext ctx) {
             final Map<CommandGroup, List<String>> byGroup = new EnumMap<>(CommandGroup.class);
-            for (final CommandGroup group : CommandGroup.values()) {
-                byGroup.put(group, new ArrayList<>());
-            }
             for (final ICliCommand command : ctx.shell().commands()) {
                 if (command.available(ctx.computer())) {
-                    byGroup.get(command.group()).add(command.name());
+                    byGroup.computeIfAbsent(command.group(), group -> new ArrayList<>()).add(command.name());
                 }
             }
             for (final Map.Entry<CommandGroup, List<String>> group : byGroup.entrySet()) {
-                if (group.getValue().isEmpty()) {
-                    continue;
-                }
                 group.getValue().sort(String::compareTo);
-                ctx.out().row(group.getKey().name(), String.join("  ", group.getValue()));
+                ctx.out().row(group.getKey().title().text(), Text.literal(String.join("  ", group.getValue())));
             }
         }
     }

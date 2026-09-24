@@ -176,27 +176,53 @@ public final class TermBuffer {
         return parts;
     }
 
-    /** One line with no breaks in it, cut into rows of that many cells and added to {@code out}. */
+    /**
+     * One line with no breaks in it, cut into rows of that many cells and added to {@code out}.
+     *
+     * <p>A line set in from the edge, a paragraph of a manual page, keeps its place: the rows it wraps onto are set
+     * in as far as it is, so the paragraph reads as one block rather than running back under its own heading. A
+     * line set in by more than half the glass has no room to do that and wraps from the edge.
+     */
     private static void wrapInto(final List<TermRow> out, final List<Cell> cells, final int columns) {
+        int indent = 0;
+        while (indent < cells.size() && cells.get(indent).ch() == ' ') {
+            indent++;
+        }
+        if (indent == cells.size() || indent > columns / 2) {
+            indent = 0;
+        }
         int from = 0;
-        while (cells.size() - from > columns) {
-            int cut = from + columns;
+        int room = columns;
+        while (cells.size() - from > room) {
+            int cut = from + room;
             boolean atSpace = false;
-            for (int i = cut; i > from + columns / 2; i--) {
+            for (int i = cut; i > from + room / 2; i--) {
                 if (cells.get(i - 1).ch() == ' ') {
                     cut = i;
                     atSpace = true;
                     break;
                 }
             }
-            out.add(rowOf(cells, from, cut));
+            out.add(setIn(rowOf(cells, from, cut), room == columns ? 0 : indent));
             from = cut;
             /* A row broken at a space does not open the next one with more of them. */
             while (atSpace && from < cells.size() && cells.get(from).ch() == ' ') {
                 from++;
             }
+            room = columns - indent;
         }
-        out.add(rowOf(cells, from, cells.size()));
+        out.add(setIn(rowOf(cells, from, cells.size()), room == columns ? 0 : indent));
+    }
+
+    /** The row set in by that many blank cells. */
+    private static TermRow setIn(final TermRow row, final int cells) {
+        if (cells == 0) {
+            return row;
+        }
+        final List<CliRun> runs = new ArrayList<>(row.runs().size() + 1);
+        runs.add(CliRun.plain(" ".repeat(cells)));
+        runs.addAll(row.runs());
+        return new TermRow(runs);
     }
 
     /** The line, already in a language, a cell at a time, its tabs opened out to the next stop. */

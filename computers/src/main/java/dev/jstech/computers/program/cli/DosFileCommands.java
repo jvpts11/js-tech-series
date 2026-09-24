@@ -8,6 +8,9 @@
 package dev.jstech.computers.program.cli;
 
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.Locale;
 
@@ -36,7 +39,19 @@ final class DosFileCommands {
     private DosFileCommands() {
     }
 
+    @TextHolder
     static final class Format implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.dos.format.summary", "erase everything on a drive");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.dos.format.usage", "<drive>: [/y]");
+        private static final TextKey INVALID_DRIVE =
+                TextKey.of("jsc.cli.dos.format.invalid_drive", "invalid drive: %s");
+        private static final TextKey WARNING =
+                TextKey.of("jsc.cli.dos.format.warning", "WARNING: ALL DATA ON DRIVE %s: WILL BE LOST!");
+        private static final TextKey PROCEED =
+                TextKey.of("jsc.cli.dos.format.proceed", "Run 'format %s: /y' to proceed.");
+
         @Override public CommandScope scope() {
             return DOS_FILES;
         }
@@ -49,30 +64,30 @@ final class DosFileCommands {
             return CommandGroup.FILES;
         }
 
-        @Override public String summary() {
-            return "erase everything on a drive";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public String usage() {
-            return "<drive>: [/y]";
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: format <drive>: [/y]");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final String arg = ctx.arg(0).toUpperCase(Locale.ROOT);
             if (arg.isEmpty() || !Character.isLetter(arg.charAt(0))) {
-                ctx.out().error("format: invalid drive: " + ctx.arg(0));
+                ctx.out().error(CliTexts.SAID_BY.with(name(), INVALID_DRIVE.with(ctx.arg(0))));
                 return;
             }
             final char drive = arg.charAt(0);
             // The real format asks before destroying a volume; a stateless shell asks for the /y flag.
             final boolean confirmed = ctx.argCount() > 1 && ctx.arg(1).equalsIgnoreCase("/y");
             if (!confirmed) {
-                ctx.out().styled("WARNING: ALL DATA ON DRIVE " + drive + ": WILL BE LOST!", CliStyle.ERROR);
-                ctx.out().dim("Run 'format " + drive + ": /y' to proceed.");
+                ctx.out().styled(WARNING.with(String.valueOf(drive)), CliStyle.ERROR);
+                ctx.out().dim(PROCEED.with(String.valueOf(drive)));
                 return;
             }
             final ICliComputer.OpResult result = ctx.computer().formatDrive(drive);
@@ -80,16 +95,28 @@ final class DosFileCommands {
         }
     }
 
+    @TextHolder
     static final class Dir implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.dos.dir.summary", "list the contents of a directory");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.dos.dir.usage", "[directory]");
+        private static final TextKey DIRECTORY_OF = TextKey.of("jsc.cli.dos.dir.directory_of", " Directory of %s");
+        private static final TextKey NOT_FOUND = TextKey.of("jsc.cli.dos.dir.not_found", "File Not Found");
+        private static final TextKey TOTALS =
+                TextKey.of("jsc.cli.dos.dir.totals", "%s File(s), %s Dir(s), %s mB");
+
         @Override public CommandScope scope() {
             return DOS_FILES;
         }
 
         @Override public String name() { return "dir"; }
 
-        @Override public String summary() { return "list the contents of a directory"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String usage() { return "[directory]"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             final String dir = ctx.hasArgs() ? ctx.rest(0) : "";
@@ -98,12 +125,11 @@ final class DosFileCommands {
                 ctx.out().error(result.message());
                 return;
             }
-            ctx.out().accent(" Directory of "
-                    + DosPath.resolve(ctx.computer().currentLocation(), dir).dosPath());
+            ctx.out().accent(DIRECTORY_OF.with(DosPath.resolve(ctx.computer().currentLocation(), dir).dosPath()));
             ctx.out().blank();
             final List<ICliComputer.FsEntry> entries = result.entries();
             if (entries.isEmpty()) {
-                ctx.out().dim("File Not Found");
+                ctx.out().dim(NOT_FOUND);
                 return;
             }
             int dirs = 0;
@@ -115,22 +141,24 @@ final class DosFileCommands {
              * anybody can plan for, and a listing whose last column runs long is still a listing that lines
              * up. Written as a settings row instead, every line ran the whole width of the glass and folded
              * in half on any window narrower than a monitor.
+             *
+             * Every column is data, the marks included: <DIR>, a unit and [RO] are what the listing has always
+             * printed, in every language DOS was sold in.
              */
             for (final ICliComputer.FsEntry entry : entries) {
                 final String stamp = CliText.pad(formatStamp(entry.modified()), STAMP_W);
                 if (entry.isDir()) {
                     dirs++;
-                    ctx.out().line(stamp + CliText.pad("<DIR>", SIZE_W) + entry.name());
+                    ctx.out().line(Text.literal(stamp + CliText.pad("<DIR>", SIZE_W) + entry.name()));
                 } else {
                     files++;
                     bytes += entry.weightMbEq();
-                    ctx.out().line(stamp + CliText.padLeft(CliText.group(entry.weightMbEq()) + " mB",
-                            SIZE_W - 2) + "  " + entry.name() + (entry.readOnly() ? "  [RO]" : ""));
+                    ctx.out().line(Text.literal(stamp + CliText.padLeft(CliText.group(entry.weightMbEq()) + " mB",
+                            SIZE_W - 2) + "  " + entry.name() + (entry.readOnly() ? "  [RO]" : "")));
                 }
             }
             ctx.out().blank();
-            ctx.out().dim(CliText.group(files) + " File(s), " + CliText.group(dirs) + " Dir(s), "
-                    + CliText.group(bytes) + " mB");
+            ctx.out().dim(TOTALS.with(CliText.group(files), CliText.group(dirs), CliText.group(bytes)));
         }
     }
 
@@ -138,20 +166,28 @@ final class DosFileCommands {
      * Prints the content of a file on the system disk to the console.
      * Refuses to open {@code .dat} (read-only storage projections).
      */
+    @TextHolder
     static final class Type implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.dos.type.summary", "print the content of a file");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.dos.type.usage", "<file>");
+        private static final TextKey EMPTY_FILE = TextKey.of("jsc.cli.dos.type.empty_file", "(empty file)");
+
         @Override public CommandScope scope() {
             return DOS_FILES;
         }
 
         @Override public String name() { return "type"; }
 
-        @Override public String summary() { return "print the content of a file"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String usage() { return "<file>"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: type <file>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final ICliComputer.FsResult result = ctx.computer().readFile(ctx.arg(0));
@@ -162,7 +198,7 @@ final class DosFileCommands {
             // Print each line of the file content as a plain output line.
             final String content = result.message().english();
             if (content.isEmpty()) {
-                ctx.out().dim("(empty file)");
+                ctx.out().dim(EMPTY_FILE);
                 return;
             }
             for (final String line : content.split("\n", -1)) {
@@ -175,7 +211,13 @@ final class DosFileCommands {
      * Deletes a file from the system disk. Refuses to delete {@code .dat} storage projections;
      * use the Network Interactor to move items out of disk storage.
      */
+    @TextHolder
     static final class Del implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.dos.del.summary", "delete a file from the system disk");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.dos.del.usage", "<file>");
+
         @Override public CommandScope scope() {
             return DOS_FILES;
         }
@@ -184,13 +226,15 @@ final class DosFileCommands {
 
         @Override public List<String> aliases() { return List.of("erase"); }
 
-        @Override public String summary() { return "delete a file from the system disk"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String usage() { return "<file>"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: del <file>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final ICliComputer.FsResult result = ctx.computer().deleteFile(ctx.arg(0));
@@ -206,7 +250,13 @@ final class DosFileCommands {
      * Creates or overwrites a file on the system disk with the given text. The file type is inferred
      * from the extension; non-editable types ({@code .dat}, {@code .log}) are refused.
      */
+    @TextHolder
     static final class Write implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.dos.write.summary", "create or overwrite a file on the system disk");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.dos.write.usage", "<file> <text...>");
+
         @Override public CommandScope scope() {
             return DOS_FILES;
         }
@@ -217,13 +267,13 @@ final class DosFileCommands {
 
         @Override public List<String> aliases() { return List.of("save"); }
 
-        @Override public String summary() { return "create or overwrite a file on the system disk"; }
+        @Override public Text summary() { return SUMMARY.text(); }
 
-        @Override public String usage() { return "<file> <text...>"; }
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (ctx.argCount() < 1) {
-                ctx.out().error("usage: write <file> <text...>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final ICliComputer.FsResult result = ctx.computer().writeFile(ctx.arg(0), ctx.rest(1));
@@ -239,20 +289,28 @@ final class DosFileCommands {
      * Reads a {@code .iql} file from the system disk and executes it as an IQL statement, routing
      * through the same dispatch path as the {@code operation} command.
      */
+    @TextHolder
     static final class Run implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.dos.run.summary", "execute an .iql script from the system disk");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.dos.run.usage", "<file.iql>");
+
         @Override public CommandScope scope() {
             return DOS_FILES;
         }
 
         @Override public String name() { return "run"; }
 
-        @Override public String summary() { return "execute an .iql script from the system disk"; }
+        @Override public CommandGroup group() { return CommandGroup.MACHINE; }
 
-        @Override public String usage() { return "<file.iql>"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: run <file.iql>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final ICliComputer.FsResult result = ctx.computer().runScript(ctx.arg(0));
@@ -274,7 +332,13 @@ final class DosFileCommands {
      * Shows or changes the current directory. With no argument it prints the current path (DOS
      * behaviour); with a path it changes to that directory relative to the current one.
      */
+    @TextHolder
     static final class Cd implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.dos.cd.summary", "show or change the current directory");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.dos.cd.usage", "[directory]");
+
         @Override public CommandScope scope() {
             return DOS_FILES;
         }
@@ -283,9 +347,11 @@ final class DosFileCommands {
 
         @Override public List<String> aliases() { return List.of("chdir"); }
 
-        @Override public String summary() { return "show or change the current directory"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String usage() { return "[directory]"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
@@ -300,7 +366,12 @@ final class DosFileCommands {
     }
 
     /** Creates a directory on the current drive. */
+    @TextHolder
     static final class Mkdir implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.dos.mkdir.summary", "create a directory");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.dos.mkdir.usage", "<directory>");
+
         @Override public CommandScope scope() {
             return DOS_FILES;
         }
@@ -309,13 +380,15 @@ final class DosFileCommands {
 
         @Override public List<String> aliases() { return List.of("md"); }
 
-        @Override public String summary() { return "create a directory"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String usage() { return "<directory>"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: mkdir <directory>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final ICliComputer.FsResult result = ctx.computer().makeDir(ctx.rest(0));
@@ -326,7 +399,12 @@ final class DosFileCommands {
     }
 
     /** Removes an empty directory from the current drive. */
+    @TextHolder
     static final class Rmdir implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.dos.rmdir.summary", "remove an empty directory");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.dos.rmdir.usage", "<directory>");
+
         @Override public CommandScope scope() {
             return DOS_FILES;
         }
@@ -335,13 +413,15 @@ final class DosFileCommands {
 
         @Override public List<String> aliases() { return List.of("rd"); }
 
-        @Override public String summary() { return "remove an empty directory"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String usage() { return "<directory>"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: rmdir <directory>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final ICliComputer.FsResult result = ctx.computer().removeDir(ctx.rest(0));
@@ -352,7 +432,13 @@ final class DosFileCommands {
     }
 
     /** Copies a file (or directory subtree) to a new location. */
+    @TextHolder
     static final class Copy implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.dos.copy.summary", "copy a file to another location");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.dos.copy.usage", "<source> <destination>");
+
         @Override public CommandScope scope() {
             return DOS_FILES;
         }
@@ -361,13 +447,13 @@ final class DosFileCommands {
 
         @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String summary() { return "copy a file to another location"; }
+        @Override public Text summary() { return SUMMARY.text(); }
 
-        @Override public String usage() { return "<source> <destination>"; }
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (ctx.argCount() < 2) {
-                ctx.out().error("usage: copy <source> <destination>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final ICliComputer.FsResult result = ctx.computer().copyPath(ctx.arg(0), ctx.arg(1));
@@ -380,20 +466,28 @@ final class DosFileCommands {
     }
 
     /** Moves a file (or directory subtree) into another directory. */
+    @TextHolder
     static final class Move implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.dos.move.summary", "move a file into another directory");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.dos.move.usage", "<source> <directory>");
+
         @Override public CommandScope scope() {
             return DOS_FILES;
         }
 
         @Override public String name() { return "move"; }
 
-        @Override public String summary() { return "move a file into another directory"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String usage() { return "<source> <directory>"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (ctx.argCount() < 2) {
-                ctx.out().error("usage: move <source> <directory>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final ICliComputer.FsResult result = ctx.computer().movePath(ctx.arg(0), ctx.arg(1));
@@ -406,7 +500,12 @@ final class DosFileCommands {
     }
 
     /** Renames a file or directory in place. */
+    @TextHolder
     static final class Ren implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.dos.ren.summary", "rename a file or directory");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.dos.ren.usage", "<file> <new name>");
+
         @Override public CommandScope scope() {
             return DOS_FILES;
         }
@@ -415,13 +514,15 @@ final class DosFileCommands {
 
         @Override public List<String> aliases() { return List.of("rename"); }
 
-        @Override public String summary() { return "rename a file or directory"; }
+        @Override public CommandGroup group() { return CommandGroup.FILES; }
 
-        @Override public String usage() { return "<file> <new name>"; }
+        @Override public Text summary() { return SUMMARY.text(); }
+
+        @Override public Text usage() { return USAGE.text(); }
 
         @Override public void run(final CliContext ctx) {
             if (ctx.argCount() < 2) {
-                ctx.out().error("usage: ren <file> <new name>");
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final ICliComputer.FsResult result = ctx.computer().renamePath(ctx.arg(0), ctx.arg(1));

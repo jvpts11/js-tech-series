@@ -56,6 +56,11 @@ public sealed interface Text permits Text.Literal, Text.Translated {
         return resolve(ITextLanguage.ENGLISH);
     }
 
+    /** Whether it says nothing: words that are data and none of them. A declared sentence always says something. */
+    default boolean isEmpty() {
+        return this instanceof Literal literal && literal.value().isEmpty();
+    }
+
     /** Words that are data, the same in every language. */
     record Literal(String value) implements Text {
 
