@@ -26,6 +26,7 @@ import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -546,8 +547,8 @@ public final class ExposureApp implements IDesktopApp {
         final String where = String.valueOf(row.complaint().line());
         g.drawString(font, where, x + NAME_W, y + 1, ctx.skin().dim(), false);
         final int textX = x + NAME_W + LINE_W;
-        g.drawString(font, font.plainSubstrByWidth(row.complaint().message(), width - (textX - x) - 2),
-                textX, y + 1, 0xFFC0392B, false);
+        g.drawString(font, font.plainSubstrByWidth(GameText.resolve(row.complaint().message()),
+                width - (textX - x) - 2), textX, y + 1, 0xFFC0392B, false);
     }
 
     /** Clicking a row opens the file it is about and puts the caret where the compiler stopped. */

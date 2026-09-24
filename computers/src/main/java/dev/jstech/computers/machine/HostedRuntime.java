@@ -9,6 +9,7 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.core.language.ILanguageProcess;
 import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.text.Text;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.nbt.CompoundTag;
@@ -67,12 +68,18 @@ final class HostedRuntime implements IMachineRuntime {
     }
 
     @Override
-    public String message() {
-        return this.process.message();
+    public Text message() {
+        final Text said = this.process.message();
+        return said == null ? Text.EMPTY : said;
     }
 
     @Override
     public List<String> console() {
+        return this.view.lines().stream().map(Text::english).toList();
+    }
+
+    @Override
+    public List<Text> consoleText() {
         return this.view.lines();
     }
 

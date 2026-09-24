@@ -20,6 +20,9 @@ import dev.jstech.computers.sigma.sem.SubsetRules;
 import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.PropertySpec;
 import dev.jstech.computers.vm.system.SystemApi;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -36,6 +39,7 @@ import java.util.Set;
  * declared above it in the same method, a field of the type around it, {@code this}, {@code base}, a
  * type named for its static side, or a chain of those read one member at a time.
  */
+@TextHolder
 public final class SigmaCompletions {
 
     /** What a candidate is, which is what an editor draws its little mark from. */
@@ -45,11 +49,20 @@ public final class SigmaCompletions {
      * One candidate.
      *
      * @param label     what to insert, and what to list it under
-     * @param signature the whole shape, with what it takes and what it gives back
+     * @param signature the whole shape, with what it takes and what it gives back, in English for the one line
+     *                  that is words rather than code
      * @param sort      what kind of member it is
      * @param owner     the type that declares it, for the line under the list
      */
     public record Item(String label, String signature, Sort sort, String owner) {
+
+        /**
+         * What the list shows for it, in the reader's words. A signature is code and reads the same in every
+         * language; the star that opens a whole namespace is the one line that says something in words.
+         */
+        public Text shown() {
+            return ALL.equals(this.label) ? EVERYTHING_IN.with(this.owner) : Text.literal(this.signature);
+        }
     }
 
     /**
@@ -97,6 +110,18 @@ public final class SigmaCompletions {
     private static final Item PRINTF =
             new Item("printf", "printf(string format, ...) : void", Sort.METHOD, "the language");
 
+    /** What a using writes to bring in everything a namespace holds. */
+    private static final String ALL = "*";
+
+    /** The line the star is listed with, naming the namespace it opens. */
+    private static final TextKey EVERYTHING_IN = TextKey.of("jsc.sigma.completions.everything_in",
+            "* : everything in %s");
+
+    /* What a call costs a program, as the strip under the list says it. */
+    private static final TextKey COSTS = TextKey.of("jsc.sigma.completions.costs", "costs %s");
+    private static final TextKey COSTS_READ_WRITE = TextKey.of("jsc.sigma.completions.costs_read_write",
+            "costs %s to read and %s to write");
+
     private SigmaCompletions() {
     }
 
@@ -114,7 +139,7 @@ public final class SigmaCompletions {
         }
         final List<Item> out = new ArrayList<>(candidates.size());
         for (final Item item : candidates) {
-            if (item.sort() == Sort.VARIABLE || OWN.equals(item.owner()) || "*".equals(item.label())) {
+            if (item.sort() == Sort.VARIABLE || OWN.equals(item.owner()) || ALL.equals(item.label())) {
                 out.add(item);
             } else if (item.sort() == Sort.TYPE && item.signature().endsWith(" : " + NAMESPACE)) {
                 if (BuiltIns.SUBSET_LIBRARY.equals(item.label())) {
@@ -351,8 +376,8 @@ public final class SigmaCompletions {
         final String inside = under == null ? "" : under;
         final Set<String> seen = new LinkedHashSet<>();
         final List<Item> items = new ArrayList<>();
-        if (!inside.isEmpty() && "*".startsWith(wanted)) {
-            items.add(new Item("*", "* : everything in " + inside, Sort.TYPE, inside));
+        if (!inside.isEmpty() && ALL.startsWith(wanted)) {
+            items.add(new Item(ALL, EVERYTHING_IN.with(inside).english(), Sort.TYPE, inside));
         }
         for (final String namespace : builtIns.namespaces()) {
             final String rest = inside.isEmpty() ? namespace
@@ -468,7 +493,7 @@ public final class SigmaCompletions {
      * <p>A call written several ways may cost something different each way, as a call across a Gateway does for
      * every thing it hands over, so the price is the one for the way this item writes it.
      */
-    public static String costOf(final Item item) {
+    public static Text costOf(final Item item) {
         final List<IMemberSpec> ways = SystemApi.members(item.owner(), item.label());
         IMemberSpec chosen = ways.size() == 1 ? ways.getFirst() : null;
         final String taken = takenBy(item.signature());
@@ -481,8 +506,8 @@ public final class SigmaCompletions {
             return null;
         }
         return chosen instanceof PropertySpec value && value.writable()
-                ? "costs " + value.cost().describe() + " to read and " + value.writeCost().describe() + " to write"
-                : "costs " + chosen.cost().describe();
+                ? COSTS_READ_WRITE.with(value.cost().text(), value.writeCost().text())
+                : COSTS.with(chosen.cost().text());
     }
 
     /** What a signature says its member takes: the text between its brackets, or nothing for a value. */

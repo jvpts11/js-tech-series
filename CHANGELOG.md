@@ -83,6 +83,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   Network Gateway, remote computers, jobs and clusters. What is typed, names, paths and code stay as they are, and
   what goes down a pipe or into a file is written in English, the machine's own language. The columns of a table,
   such as `cluster list`, stay in line under their headings whatever length the words come out in.
+- What the Sigma compilers and the runtime say is text a language file can translate, the way a real compiler's
+  messages are on a machine set to another language: every error and warning of `scc` and `sgsc`, the problems of a
+  listing and of a package, the Error List of the studios, the cost of a call shown beside a suggestion, and why a
+  program was stopped. The file, the line and column, the error's code and the names in the code stay as they are.
+  A program that reads another program's output, and a ComputerCraft computer told why the Network Gateway refused
+  it, are handed the English.
 
 ### Fixed
 - A monitor is used by one player at a time. A second player who used it while somebody was at it was handed a

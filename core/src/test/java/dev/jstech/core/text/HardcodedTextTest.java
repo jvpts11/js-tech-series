@@ -111,6 +111,7 @@ class HardcodedTextTest {
                     void f() {
                         LOGGER.warn("a log line for developers");
                         throw new IllegalStateException("an exception message here");
+                        Objects.requireNonNull(name, "a name is never missing here");
                         ctx.out().line("Shown to the player");
                         ctx.out().line(Text.literal("/usr/ports"));
                         final String label = "Low on memory";
@@ -145,6 +146,8 @@ class HardcodedTextTest {
                     || (this.receiver != null && LOGGERS.contains(this.receiver))
                     || (this.constructor && this.name != null
                             && (this.name.endsWith("Exception") || this.name.endsWith("Error")))
+                    // What a null check says when it fails is an exception's message, for whoever reads the log.
+                    || ("Objects".equals(this.receiver) && "requireNonNull".equals(this.name))
                     || ("TextKey".equals(this.receiver) && "of".equals(this.name))
                     || (this.constructor && "TextKey".equals(this.name))
                     // A declaration's name or description, chained on it: the English the language file is made from.

@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.vm.program;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,6 +27,7 @@ import java.util.Set;
  * drawn, by the machine's own system, and this is only what the program said. Changing one goes through
  * {@link UiMutator}.
  */
+@TextHolder
 public final class UiWidgets {
 
     public static final String WIDGET = "Widget";
@@ -88,6 +91,9 @@ public final class UiWidgets {
 
     private static final Set<String> KINDS = Set.of(WINDOW, ROW, COLUMN, LABEL, BUTTON, TEXT_BOX, CHECK_BOX,
             PROGRESS_BAR, LIST_BOX, CANVAS, MESSAGE_BOX);
+    private static final TextKey NOT_A_WIDGET = TextKey.of("jsc.vm.ui_widgets.not_a_widget",
+            "this is not a widget to put in a window");
+    private static final TextKey THIS_HAS_NO = TextKey.of("jsc.vm.ui_widgets.this_has_no", "this %s has no %s");
 
     private UiWidgets() {
     }
@@ -304,14 +310,14 @@ public final class UiWidgets {
         if (value instanceof Values.Obj object && isWidget(object.type())) {
             return object;
         }
-        throw new Halt(Halt.Reason.NO_OBJECT, line, "this is not a widget to put in a window");
+        throw new Halt(Halt.Reason.NO_OBJECT, line, NOT_A_WIDGET.text());
     }
 
     static Values.ListValue listOf(final Values.Obj self, final String name, final int line) {
         if (self.get(name) instanceof Values.ListValue list) {
             return list;
         }
-        throw new Halt(Halt.Reason.NO_OBJECT, line, "this " + self.type() + " has no " + name);
+        throw new Halt(Halt.Reason.NO_OBJECT, line, THIS_HAS_NO.with(self.type(), name));
     }
 
     /*

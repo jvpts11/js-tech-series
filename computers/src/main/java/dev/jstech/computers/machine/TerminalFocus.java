@@ -9,6 +9,7 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.vm.program.ProgramEntry;
 import dev.jstech.computers.vm.program.ProgramTable;
+import dev.jstech.core.text.Text;
 import java.util.List;
 import java.util.function.IntPredicate;
 import net.minecraft.nbt.CompoundTag;
@@ -90,12 +91,12 @@ final class TerminalFocus {
      * <p>A program that printed more than its console keeps while nobody was looking has scrolled: what
      * fell off the end is gone, the way it is gone from any terminal nobody was watching.
      */
-    List<String> unseen() {
+    List<Text> unseen() {
         final ProgramEntry<IMachineRuntime> one = this.table.byId(this.held);
         if (one == null) {
             return List.of();
         }
-        final List<String> kept = one.process().console();
+        final List<Text> kept = one.process().consoleText();
         final long written = one.process().written();
         final int fresh = (int) Math.min(written - this.shown, kept.size());
         this.shown = written;

@@ -20,6 +20,8 @@ import dev.jstech.computers.sigma.sem.NamedType;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Opcode;
 import dev.jstech.computers.vm.system.IntrinsicTypes;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +36,7 @@ import java.util.List;
  * <p>A few shapes of the language have no instruction of their own and are written in terms of ones
  * that do. A property is a field. A short-circuit is a branch. An enum value is a number.
  */
+@TextHolder
 final class ExpressionWriter {
 
     private final Emitter emitter;
@@ -47,6 +50,10 @@ final class ExpressionWriter {
      */
     private static final String DELEGATE = IntrinsicTypes.DELEGATE;
     private static final String STRING = IntrinsicTypes.TEXT;
+
+    /** What is not built yet when a string with holes reaches this stage without having been reduced. */
+    private static final TextKey UNREDUCED_INTERPOLATION = TextKey.of(
+            "jsc.sigma.expression_writer.unreduced_interpolation", "a string with holes that was never reduced");
 
     /*
      * The one place the two fold back on each other: a call is a value, and the values a call takes are
@@ -101,8 +108,7 @@ final class ExpressionWriter {
              * which would otherwise show up as a program quietly missing a line it printed.
              */
             case IExpr.Interpolation written -> this.emitter.diagnostics.error(written.line(),
-                    written.column(), SigmaError.NOT_YET_BUILT,
-                    "a string with holes that was never reduced");
+                    written.column(), SigmaError.NOT_YET_BUILT, UNREDUCED_INTERPOLATION);
         }
         this.coerce(this.emitter.model.typeOf(expression), wanted);
     }

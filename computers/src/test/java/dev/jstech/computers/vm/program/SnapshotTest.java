@@ -287,7 +287,7 @@ class SnapshotTest {
                 """));
         assertEquals(Process.State.HALTED, process.state());
         assertNotNull(process.message());
-        assertTrue(process.message().contains("divided by zero"), process.message());
+        assertTrue(process.message().english().contains("divided by zero"), String.valueOf(process.message()));
         assertEquals("before", process.console().getFirst());
     }
 
@@ -337,6 +337,6 @@ class SnapshotTest {
                         also.Add("late");
                 """));
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("disposed"), process.message());
+        assertTrue(process.message().english().contains("disposed"), String.valueOf(process.message()));
     }
 }

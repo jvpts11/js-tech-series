@@ -19,6 +19,8 @@ import dev.jstech.core.client.gui.component.ContextMenu;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.logic.TextDocument;
 import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
@@ -107,7 +109,7 @@ public final class CodeCompletions {
         this.offered.clear();
         this.labels.clear();
         for (final SigmaCompletions.Item item : found.subList(0, Math.min(found.size(), MAX_ITEMS))) {
-            entries.add(new ContextMenu.Item(item.signature(), true,
+            entries.add(new ContextMenu.Item(GameText.resolve(item.shown()), true,
                     () -> take(doc, where, item.label())));
             this.offered.add(item);
             this.labels.add(item.label());
@@ -189,10 +191,11 @@ public final class CodeCompletions {
         if (at < 0 || at >= this.offered.size()) {
             return;
         }
-        final String text = SigmaCompletions.costOf(this.offered.get(at));
-        if (text == null) {
+        final Text cost = SigmaCompletions.costOf(this.offered.get(at));
+        if (cost == null) {
             return;
         }
+        final String text = GameText.resolve(cost);
         final int y = this.menu.bottom();
         g.fill(this.menu.x() - 1, y, this.menu.right() + 1, y + ROW_H + 1, 0xFF000000);
         g.fill(this.menu.x(), y, this.menu.right(), y + ROW_H, ctx.skin().fieldBg());

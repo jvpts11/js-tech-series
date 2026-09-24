@@ -18,6 +18,8 @@ import dev.jstech.computers.sigma.ast.TypeRef;
 import dev.jstech.computers.sigma.lex.Lexer;
 import dev.jstech.computers.sigma.lex.Token;
 import dev.jstech.computers.sigma.lex.TokenKind;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -33,12 +35,17 @@ import java.util.Set;
  * back on itself. The reader of statements is made here for that reason, and handed on to whoever else
  * needs it, since there is only ever one file being read.
  */
+@TextHolder
 final class ExpressionParser {
 
     private final TokenCursor cursor;
     private final DiagnosticBag diagnostics;
     private final TypeParser types;
     private final StatementParser statements;
+
+    /** What a hole in an interpolated string was expected to end with, where something else followed. */
+    private static final TextKey END_OF_HOLE = TextKey.of("jsc.sigma.expression_parser.end_of_hole",
+            "the end of the hole");
 
     private static final Set<TokenKind> LITERALS = EnumSet.of(
             TokenKind.INT_LITERAL, TokenKind.LONG_LITERAL, TokenKind.FLOAT_LITERAL, TokenKind.DOUBLE_LITERAL,
@@ -92,7 +99,7 @@ final class ExpressionParser {
         final IExpr expression = this.parseExpression();
         if (!this.cursor.atEnd()) {
             final Token extra = this.cursor.peek();
-            this.diagnostics.error(extra.line(), extra.column(), SigmaError.EXPECTED_TOKEN, "the end of the hole",
+            this.diagnostics.error(extra.line(), extra.column(), SigmaError.EXPECTED_TOKEN, END_OF_HOLE,
                     extra.describe());
         }
         return expression;

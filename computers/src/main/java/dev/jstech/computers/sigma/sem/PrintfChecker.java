@@ -10,6 +10,9 @@ package dev.jstech.computers.sigma.sem;
 import dev.jstech.computers.sigma.SigmaError;
 import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.lex.TokenKind;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +26,7 @@ import java.util.List;
  * pieces joined together and handed to the console, exactly what adding them up by hand would have come to. A
  * method of the program's own called {@code printf} is the program's, and is called instead.
  */
+@TextHolder
 final class PrintfChecker {
 
     private final BodyScope scope;
@@ -30,6 +34,12 @@ final class PrintfChecker {
 
     /** The name the call is written under. */
     static final String NAME = "printf";
+
+    /* How many holes a format has and how many values a call gives, as the message counts them. */
+    private static final TextKey ONE_HOLE = TextKey.of("jsc.sigma.printf_checker.one_hole", "1 hole");
+    private static final TextKey HOLES = TextKey.of("jsc.sigma.printf_checker.holes", "%s holes");
+    private static final TextKey ONE_VALUE = TextKey.of("jsc.sigma.printf_checker.one_value", "1 value");
+    private static final TextKey VALUES = TextKey.of("jsc.sigma.printf_checker.values", "%s values");
 
     PrintfChecker(final BodyScope scope, final ExpressionChecker expressions) {
         this.scope = scope;
@@ -60,7 +70,7 @@ final class PrintfChecker {
         }
         if (format.holes() != values.size()) {
             this.scope.report(call.line(), call.column(), SigmaError.PRINTF_WRONG_COUNT,
-                    counted(format.holes(), "hole"), counted(values.size(), "value"));
+                    counted(format.holes(), ONE_HOLE, HOLES), counted(values.size(), ONE_VALUE, VALUES));
             return ITypeSymbol.Primitive.VOID;
         }
         final List<Object> pieces = new ArrayList<>(format.pieces().size());
@@ -104,7 +114,7 @@ final class PrintfChecker {
         throw new IllegalStateException("the console has no Print to print through");
     }
 
-    private static String counted(final int count, final String what) {
-        return count + " " + what + (count == 1 ? "" : "s");
+    private static Text counted(final int count, final TextKey one, final TextKey many) {
+        return count == 1 ? one.text() : many.with(count);
     }
 }

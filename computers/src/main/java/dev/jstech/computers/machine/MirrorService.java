@@ -131,7 +131,7 @@ public final class MirrorService {
             return ICliComputer.OpResult.fail(
                     CliTexts.SAID_BY.with(path, NOT_A_PACKAGE.with(Text.literal("sgpack build"))));
         }
-        final List<String> wrong = packed.problems();
+        final List<Text> wrong = packed.problemTexts();
         if (!wrong.isEmpty()) {
             return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with(path, wrong.getFirst()));
         }

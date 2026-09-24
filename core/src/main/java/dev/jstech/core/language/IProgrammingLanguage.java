@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.language;
 
+import dev.jstech.core.text.Text;
 import java.util.List;
 import java.util.Set;
 import net.minecraft.nbt.CompoundTag;
@@ -54,26 +55,36 @@ public interface IProgrammingLanguage {
     /**
      * One thing wrong with a program, where it is and what to say about it.
      *
+     * <p>The message is a sentence, read in the language of whoever is shown it, as a compiler's messages are on a
+     * machine set to another language; the file, the place and the code stay as they are, since those are what a
+     * person looks up.
+     *
      * @param line      the line it is on, counting from one
      * @param column    the column, counting from one
      * @param arguments the names and values the message was written around, in the order it names them, so a
      *                  tool that acts on a complaint reads them here rather than taking the sentence apart
      */
-    record Complaint(String file, int line, int column, String code, String message, List<String> arguments) {
+    record Complaint(String file, int line, int column, String code, Text message, List<String> arguments) {
 
         public Complaint {
+            message = message == null ? Text.EMPTY : message;
             arguments = arguments == null ? List.of() : List.copyOf(arguments);
         }
 
         /** A complaint whose message stands on its own, with nothing a tool would need to read out of it. */
         public Complaint(final String file, final int line, final int column, final String code,
-                         final String message) {
+                         final Text message) {
             this(file, line, column, code, message, List.of());
         }
 
         /** How a person reads it: {@code file(line,col): error CODE: message}. */
+        public Text text() {
+            return LanguageTexts.COMPLAINT.with(this.file, this.line, this.column, this.code, this.message);
+        }
+
+        /** The same line in English, the form it takes as data: in a file, down a pipe, in a log. */
         public String format() {
-            return file + "(" + line + "," + column + "): error " + code + ": " + message;
+            return this.text().english();
         }
     }
 

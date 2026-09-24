@@ -10,6 +10,8 @@ package dev.jstech.computers.vm.program;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Instruction;
 import dev.jstech.computers.vm.listing.Opcode;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 
 /**
  * Carrying out a program's instructions: the next one of the thread whose turn it is, and what each one does.
@@ -18,6 +20,7 @@ import dev.jstech.computers.vm.listing.Opcode;
  * checks) as a plain call on a field. There is no object per opcode and nothing virtual between the switch and the
  * work, because one call more per instruction is a share of what an instruction costs that shows.
  */
+@TextHolder
 final class InstructionExecutor {
 
     /** What two values being the same means, which needs the program's own types to tell a struct from a class. */
@@ -30,6 +33,11 @@ final class InstructionExecutor {
     private final FieldAccess fieldAccess;
     private final CallDispatch calls;
     private final ObjectMaking objects;
+
+    private static final TextKey NO_NETWORK = TextKey.of("jsc.vm.instruction_executor.no_network",
+            "this computer is not on a network");
+    private static final TextKey NOT_LOCKED = TextKey.of("jsc.vm.instruction_executor.not_locked",
+            "this thread is letting go of a lock it does not hold");
 
     InstructionExecutor(final ProgramImage program, final Heap heap, final ThreadScheduler scheduler,
                         final MonitorTable locks, final FieldAccess fieldAccess, final CallDispatch calls,
@@ -103,8 +111,7 @@ final class InstructionExecutor {
             case LDFN -> this.calls.handler(frame, (IOperand.Method) instruction.operand(), line);
             case CALL, CALLVIRT -> this.calls.call(frame, frame.method.call(line - 1),
                     instruction.opcode() == Opcode.CALLVIRT, line);
-            case SYS -> throw new Halt(Halt.Reason.NO_NETWORK, line,
-                    "this computer is not on a network");
+            case SYS -> throw new Halt(Halt.Reason.NO_NETWORK, line, NO_NETWORK.text());
             case RET -> this.calls.leave(frame, frame.method.gives() ? frame.pop() : null);
             default -> { }
         }
@@ -166,7 +173,7 @@ final class InstructionExecutor {
     private void exitMonitor(final ProgramThread thread, final Frame frame, final int line) {
         final Object target = this.heap.alive(frame.pop(), line);
         if (!this.locks.exit(thread, target)) {
-            throw new Halt(Halt.Reason.NOT_LOCKED, line, "this thread is letting go of a lock it does not hold");
+            throw new Halt(Halt.Reason.NOT_LOCKED, line, NOT_LOCKED.text());
         }
     }
 }

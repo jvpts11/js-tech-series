@@ -15,6 +15,8 @@ import dev.jstech.computers.sigma.ast.INode;
 import dev.jstech.computers.sigma.ast.IStmt;
 import dev.jstech.computers.sigma.sem.IBinding;
 import dev.jstech.computers.sigma.sem.SemanticModel;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -36,10 +38,17 @@ import java.util.Set;
  * says whether a variable outlives the lambda that keeps it: one declared inside a loop is a different
  * variable on every turn, and a single shared place could not be all of them.
  */
+@TextHolder
 final class CaptureFinder {
 
     private final SemanticModel model;
     private final DiagnosticBag diagnostics;
+
+    /* The two ways of keeping a variable that are not built yet, as the message names them. */
+    private static final TextKey NESTED_LAMBDA = TextKey.of("jsc.sigma.capture_finder.nested_lambda",
+            "a lambda inside another one that keeps its variable");
+    private static final TextKey LOOP_VARIABLE = TextKey.of("jsc.sigma.capture_finder.loop_variable",
+            "a lambda that keeps a variable a loop declares");
 
     CaptureFinder(final SemanticModel model, final DiagnosticBag diagnostics) {
         this.model = model;
@@ -64,11 +73,11 @@ final class CaptureFinder {
             for (final IBinding.Variable variable : inside.used) {
                 final Integer depth = method.declared.get(variable);
                 if (depth == null) {
-                    this.cannotYet(at, "a lambda inside another one that keeps its variable");
+                    this.cannotYet(at, NESTED_LAMBDA);
                     return null;
                 }
                 if (depth > 0) {
-                    this.cannotYet(at, "a lambda that keeps a variable a loop declares");
+                    this.cannotYet(at, LOOP_VARIABLE);
                     return null;
                 }
                 fields.putIfAbsent(variable, variable.name());
@@ -87,7 +96,7 @@ final class CaptureFinder {
         }
     }
 
-    private void cannotYet(final INode at, final String what) {
+    private void cannotYet(final INode at, final TextKey what) {
         this.diagnostics.error(at.line(), at.column(), SigmaError.NOT_YET_BUILT, what);
     }
 

@@ -12,6 +12,7 @@ import dev.jstech.computers.vm.listing.Shape;
 import dev.jstech.computers.vm.program.Process;
 import dev.jstech.computers.vm.program.SnapshotException;
 import dev.jstech.computers.vm.program.Values;
+import dev.jstech.core.text.Text;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.nbt.CompoundTag;
@@ -60,13 +61,18 @@ final class SigmaProgram implements IMachineRuntime {
     }
 
     @Override
-    public String message() {
-        return this.process.message() == null ? "" : this.process.message();
+    public Text message() {
+        return this.process.message();
     }
 
     @Override
     public List<String> console() {
         return this.process.console();
+    }
+
+    @Override
+    public List<Text> consoleText() {
+        return this.process.consoleText();
     }
 
     @Override

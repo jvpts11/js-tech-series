@@ -376,8 +376,8 @@ public final class SystemUiGameTests {
                     final var one = computer.programs().byId(started.id());
                     helper.assertTrue(one.process().state() == dev.jstech.core.language.ILanguageProcess.State.HALTED,
                             "it stops; state " + one.process().state());
-                    helper.assertTrue(one.process().message().contains("no desktop to open a window on"),
-                            "with the reason; got " + one.process().message());
+                    helper.assertTrue(one.process().message().english().contains("no desktop to open a window on"),
+                            "with the reason; got " + one.process().message().english());
                     helper.assertTrue(computer.programs().windowsOf(started.id()).isEmpty(), "and opens nothing");
                 })
                 .thenSucceed();

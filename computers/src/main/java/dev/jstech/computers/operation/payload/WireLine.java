@@ -65,7 +65,12 @@ public record WireLine(List<Span> spans, boolean over) {
 
     /** A line of words that are data, in one colour. */
     public WireLine(final String text, final int style) {
-        this(List.of(new Span(Text.literal(text), style, NO_FILL, false, false)), false);
+        this(Text.literal(text), style);
+    }
+
+    /** A line of text in one colour, read in its player's language where it is a sentence. */
+    public WireLine(final Text text, final int style) {
+        this(List.of(new Span(text, style, NO_FILL, false, false)), false);
     }
 
     /** The line a command wrote, as it goes on the wire. */

@@ -53,7 +53,7 @@ final class RemoteComputerCalls {
             final ProgramLauncher.Launch launch = remotes.start(remote, path, ProgramCalls.strings(arguments, 1),
                     remotes.parentOf(call.callerId()), ProgramCalls.priority(arguments));
             if (launch == null) {
-                throw new Halt(Halt.Reason.CANNOT_START, line, CANNOT_RUN.with(host).english());
+                throw new Halt(Halt.Reason.CANNOT_START, line, CANNOT_RUN.with(host));
             }
             if (!launch.ok()) {
                 throw new Halt(Halt.Reason.CANNOT_START, line, ProgramCalls.refusal(path, host, launch));
@@ -88,13 +88,13 @@ final class RemoteComputerCalls {
                             ? named : "";
                     final ServerCliComputer remote = remotes.find(host);
                     if (remote == null) {
-                        throw new Halt(Halt.Reason.NO_OBJECT, line, NO_SUCH_COMPUTER.with(host).english());
+                        throw new Halt(Halt.Reason.NO_OBJECT, line, NO_SUCH_COMPUTER.with(host));
                     }
                     if (!remote.running()) {
-                        throw new Halt(Halt.Reason.REFUSED, line, HOST_OFF.with(host).english());
+                        throw new Halt(Halt.Reason.REFUSED, line, HOST_OFF.with(host));
                     }
                     if (!remote.remoteAllowed()) {
-                        throw new Halt(Halt.Reason.REFUSED, line, NO_REMOTE_PROGRAMS.with(host).english());
+                        throw new Halt(Halt.Reason.REFUSED, line, NO_REMOTE_PROGRAMS.with(host));
                     }
                     return function.call(remotes, remote, host, call, arguments, line);
                 }, parameters);

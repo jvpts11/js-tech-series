@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.vm.listing;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.Objects;
 
 /**
@@ -17,9 +20,12 @@ import java.util.Objects;
  * @param line    the line the problem is on
  * @param column  the column it starts at
  * @param code    the code a player quotes, for example {@code A4003}
- * @param message what is wrong, in words
+ * @param message what is wrong, as a sentence read in the player's language
  */
-public record ListingProblem(int line, int column, String code, String message) {
+@TextHolder
+public record ListingProblem(int line, int column, String code, Text message) {
+
+    private static final TextKey LINE = TextKey.of("jsc.vm.listing.problem", "(%s,%s): error %s: %s");
 
     public ListingProblem {
         Objects.requireNonNull(code, "code");
@@ -30,8 +36,13 @@ public record ListingProblem(int line, int column, String code, String message) 
     }
 
     /** The one-line form, for example {@code (4,1): error A4003: 'nonsense' is not an instruction}. */
+    public Text text() {
+        return LINE.with(this.line, this.column, this.code, this.message);
+    }
+
+    /** The same line in English, the form it takes as data. */
     public String format() {
-        return "(" + this.line + "," + this.column + "): error " + this.code + ": " + this.message;
+        return this.text().english();
     }
 
     @Override

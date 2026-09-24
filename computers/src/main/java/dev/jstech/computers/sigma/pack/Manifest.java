@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.sigma.pack;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,6 +23,7 @@ import java.util.Map;
  * wrote, and see in a diff what changed between two versions. Nothing here is compiled or encoded: a
  * package that cannot be read by eye is a package nobody can be sure of before installing it.
  */
+@TextHolder
 public record Manifest(String name, String version, String house, String entry, String icon,
                        int minRamMb, List<String> files, String about) {
 
@@ -33,39 +37,65 @@ public record Manifest(String name, String version, String house, String entry, 
     /** What a package gets when it names no icon. */
     public static final String DEFAULT_ICON = "gear";
 
+    /*
+     * What can be wrong with a manifest, each starting with the line it is about. That line's name is how the file
+     * is written, the same in every language, so it goes in as data.
+     */
+    private static final TextKey BAD_NAME = TextKey.of("jsc.sigma.manifest.bad_name",
+            "%s: must be lowercase letters, digits or dashes; got \"%s\"");
+    private static final TextKey BAD_VERSION = TextKey.of("jsc.sigma.manifest.bad_version",
+            "%s: must look like 1.0.0; got \"%s\"");
+    private static final TextKey NO_ENTRY = TextKey.of("jsc.sigma.manifest.no_entry",
+            "%s: name the listing the package runs");
+    private static final TextKey ENTRY_NOT_A_LISTING = TextKey.of("jsc.sigma.manifest.entry_not_a_listing",
+            "%s: must be a compiled listing; got \"%s\"");
+    private static final TextKey ENTRY_NOT_IN_FILES = TextKey.of("jsc.sigma.manifest.entry_not_in_files",
+            "%s: must include the entry, \"%s\"");
+    private static final TextKey BAD_ICON = TextKey.of("jsc.sigma.manifest.bad_icon",
+            "%s: must be one of %s; got \"%s\"");
+    private static final TextKey NO_RAM = TextKey.of("jsc.sigma.manifest.no_ram",
+            "%s: a package needs at least a megabyte to run in");
+    private static final TextKey NO_FILES = TextKey.of("jsc.sigma.manifest.no_files",
+            "%s: a package with no files in it is not a package");
+
     public Manifest {
         files = List.copyOf(files);
     }
 
+    /** Whether this could be published as it stands, and what is wrong if not, in English, as data. */
+    public List<String> problems() {
+        return this.problemTexts().stream().map(Text::english).toList();
+    }
+
     /**
-     * Whether this could be published as it stands, and what is wrong if not.
+     * Whether this could be published as it stands, and what is wrong if not, as the player reads it.
      *
      * <p>Every one of these is something the player can fix in the file in front of them, so the
      * complaint names the line they would fix.
      */
-    public List<String> problems() {
-        final List<String> found = new ArrayList<>();
+    public List<Text> problemTexts() {
+        final List<Text> found = new ArrayList<>();
         if (!isPlainName(this.name)) {
-            found.add("name: must be lowercase letters, digits or dashes; got \"" + this.name + "\"");
+            found.add(BAD_NAME.with("name", this.name));
         }
         if (!isVersion(this.version)) {
-            found.add("version: must look like 1.0.0; got \"" + this.version + "\"");
+            found.add(BAD_VERSION.with("version", this.version));
         }
         if (this.entry.isBlank()) {
-            found.add("entry: name the listing the package runs");
+            found.add(NO_ENTRY.with("entry"));
         } else if (!this.entry.toLowerCase(Locale.ROOT).endsWith(".asm")) {
-            found.add("entry: must be a compiled listing; got \"" + this.entry + "\"");
+            found.add(ENTRY_NOT_A_LISTING.with("entry", this.entry));
         } else if (!this.files.contains(this.entry)) {
-            found.add("files: must include the entry, \"" + this.entry + "\"");
+            found.add(ENTRY_NOT_IN_FILES.with("files", this.entry));
         }
         if (!ICONS.contains(this.icon)) {
-            found.add("icon: must be one of " + String.join(", ", ICONS) + "; got \"" + this.icon + "\"");
+            found.add(BAD_ICON.with("icon", String.join(", ", ICONS), this.icon));
         }
         if (this.minRamMb < 1) {
-            found.add("ram: a package needs at least a megabyte to run in");
+            found.add(NO_RAM.with("ram"));
         }
         if (this.files.isEmpty()) {
-            found.add("files: a package with no files in it is not a package");
+            found.add(NO_FILES.with("files"));
         }
         return found;
     }

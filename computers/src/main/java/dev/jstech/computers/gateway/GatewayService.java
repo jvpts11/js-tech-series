@@ -29,6 +29,7 @@ import dev.jstech.computers.vm.system.CallCost;
 import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.peripheral.IPeripheralOwner;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -105,6 +106,19 @@ public final class GatewayService {
             TextKey.of("jsc.service.gateway.reading_off", "denied: reading the network is off");
     private static final TextKey OPERATIONS_OFF =
             TextKey.of("jsc.service.gateway.operations_off", "denied: operations are off");
+    private static final TextKey NOT_IN_WORLD =
+            TextKey.of("jsc.service.gateway.not_in_world", "the Gateway is not in a world");
+    private static final TextKey NOT_LINKED =
+            TextKey.of("jsc.service.gateway.not_linked", "the Gateway is not linked to a computer");
+    private static final TextKey WHICH_ITEM = TextKey.of("jsc.service.gateway.which_item", "which item?");
+    private static final TextKey UNKNOWN_FLUID = TextKey.of("jsc.service.gateway.unknown_fluid", "unknown fluid: %s");
+    private static final TextKey UNKNOWN_CHEMICAL =
+            TextKey.of("jsc.service.gateway.unknown_chemical", "unknown chemical: %s");
+    private static final TextKey UNKNOWN_ITEM = TextKey.of("jsc.service.gateway.unknown_item", "unknown item: %s");
+    private static final TextKey NOT_ON_NETWORK =
+            TextKey.of("jsc.service.gateway.not_on_network", "the computer is not on a network");
+    private static final TextKey NO_MAINFRAME =
+            TextKey.of("jsc.service.gateway.no_running_mainframe", "the network has no running Mainframe");
 
     /** Who is asking, from the other side: a ComputerCraft computer by its id. */
     public record Caller(int id) {
@@ -130,11 +144,11 @@ public final class GatewayService {
     /** The service for a linked Gateway; refused while the Gateway has no computer to answer for it. */
     public static GatewayService of(final NetworkGatewayBlockEntity gateway) throws GatewayRefusedException {
         if (!(gateway.getLevel() instanceof ServerLevel level)) {
-            throw new GatewayRefusedException("the Gateway is not in a world");
+            throw new GatewayRefusedException(NOT_IN_WORLD.text());
         }
         final IPeripheralOwner owner = gateway.owner();
         if (!(owner instanceof IComputerTerminalHost terminal) || !(owner instanceof BlockEntity)) {
-            throw new GatewayRefusedException("the Gateway is not linked to a computer");
+            throw new GatewayRefusedException(NOT_LINKED.text());
         }
         return new GatewayService(gateway, level, terminal);
     }
@@ -144,28 +158,28 @@ public final class GatewayService {
     /** The key a name on the other side stands for. */
     public static StorageKey resolve(final String name) throws GatewayRefusedException {
         if (name == null || name.isBlank()) {
-            throw new GatewayRefusedException("which item?");
+            throw new GatewayRefusedException(WHICH_ITEM.text());
         }
         final String given = name.trim().toLowerCase(Locale.ROOT);
         if (given.startsWith(FLUID_PREFIX)) {
             final ResourceLocation id = ResourceLocation.tryParse(given.substring(FLUID_PREFIX.length()));
             final Fluid fluid = id == null ? null : BuiltInRegistries.FLUID.getOptional(id).orElse(null);
             if (fluid == null) {
-                throw new GatewayRefusedException("unknown fluid: " + name);
+                throw new GatewayRefusedException(UNKNOWN_FLUID.with(name));
             }
             return StorageKey.of(new FluidStack(fluid, 1));
         }
         if (given.startsWith(CHEMICAL_PREFIX)) {
             final ResourceLocation id = ResourceLocation.tryParse(given.substring(CHEMICAL_PREFIX.length()));
             if (id == null) {
-                throw new GatewayRefusedException("unknown chemical: " + name);
+                throw new GatewayRefusedException(UNKNOWN_CHEMICAL.with(name));
             }
             return StorageKey.chemical(id);
         }
         final ResourceLocation id = ResourceLocation.tryParse(given.contains(":") ? given : "minecraft:" + given);
         final Item item = id == null ? null : BuiltInRegistries.ITEM.getOptional(id).orElse(null);
         if (item == null) {
-            throw new GatewayRefusedException("unknown item: " + name);
+            throw new GatewayRefusedException(UNKNOWN_ITEM.with(name));
         }
         return StorageKey.of(item);
     }
@@ -231,7 +245,8 @@ public final class GatewayService {
         final List<Map<String, Object>> rows = new ArrayList<>();
         for (final Map.Entry<NodeUuid, Long> entry : storage().breakdown(resolve(name)).entrySet()) {
             if (entry.getValue() > 0L) {
-                rows.add(row("server", NetworkLookup.serverLabel(level, entry.getKey()), "quantity", entry.getValue()));
+                rows.add(luaTable("server", NetworkLookup.serverLabel(level, entry.getKey()),
+                        "quantity", entry.getValue()));
             }
         }
         charge(ROWS.at(rows.size(), 0));
@@ -242,7 +257,8 @@ public final class GatewayService {
         read(caller, "servers");
         final List<Map<String, Object>> rows = new ArrayList<>();
         for (final ICliComputer.ServerUse server : shell.servers()) {
-            rows.add(row("name", server.name(), "used", server.stored(), "capacity", server.capacity(), "online", true));
+            rows.add(luaTable("name", server.name(), "used", server.stored(), "capacity", server.capacity(),
+                    "online", true));
         }
         charge(ROWS.at(rows.size(), 0));
         return rows;
@@ -257,7 +273,7 @@ public final class GatewayService {
         }
         final List<Map<String, Object>> rows = new ArrayList<>();
         for (final ICliComputer.RemoteHost host : shell.reachableHosts()) {
-            rows.add(row("name", host.hostname(), "label", host.name(), "os", host.os(), "type", host.type(),
+            rows.add(luaTable("name", host.hostname(), "label", host.name(), "os", host.os(), "type", host.type(),
                     "online", host.running(), "shares", sharesByHost.getOrDefault(host.hostname(), List.of())));
         }
         charge(ROWS.at(rows.size(), 0));
@@ -275,7 +291,7 @@ public final class GatewayService {
         final NetworkSelectOperation op = mainframe().submitNetworkSelect(key, demand(quantity),
                 new BufferSink(gateway.buffer()), label(caller));
         if (op == null) {
-            throw denied(caller, what, COULD_NOT_START.with("SELECT").english());
+            throw denied(caller, what, COULD_NOT_START.with("SELECT"));
         }
         op.setPriority(priorityOf(priority));
         op.abortWhen(gateway::isRemoved);
@@ -300,12 +316,12 @@ public final class GatewayService {
             }
         }
         if (taken == 0L) {
-            throw denied(caller, what, BUFFER_HOLDS_NONE.with(name).english());
+            throw denied(caller, what, BUFFER_HOLDS_NONE.with(name));
         }
         final NetworkInsertOperation op = mainframe().submitNetworkInsert(key, taken, label(caller));
         if (op == null) {
             returnToBuffer(key, taken);
-            throw denied(caller, what, COULD_NOT_START.with("INSERT").english());
+            throw denied(caller, what, COULD_NOT_START.with("INSERT"));
         }
         op.setPriority(priorityOf(priority));
         op.onSettle(() -> {
@@ -328,7 +344,7 @@ public final class GatewayService {
             }
         });
         if (op == null) {
-            throw denied(caller, what, NO_PATTERN.with(name).english());
+            throw denied(caller, what, NO_PATTERN.with(name));
         }
         made[0] = op;
         op.setPriority(priorityOf(priority));
@@ -343,12 +359,12 @@ public final class GatewayService {
         final MainframeBlockEntity mainframe = mainframe();
         for (final INetworkOperation live : mainframe.liveOperations()) {
             if (matches(live.operationId(), id)) {
-                return row(live.liveRecord());
+                return luaTable(live.liveRecord());
             }
         }
         for (final OperationRecord record : mainframe.recentOperations()) {
             if (matches(record.id(), id)) {
-                return row(record);
+                return luaTable(record);
             }
         }
         return null;
@@ -359,7 +375,7 @@ public final class GatewayService {
         read(caller, "operations");
         final List<Map<String, Object>> rows = new ArrayList<>();
         for (final OperationRecord record : mainframe().activeOperationRecords()) {
-            rows.add(row(record));
+            rows.add(luaTable(record));
         }
         charge(ROWS.at(rows.size(), 0));
         return rows;
@@ -390,24 +406,24 @@ public final class GatewayService {
         operations(caller, what);
         final ServerCliComputer remote = shell.remoteShell(computer);
         if (remote == null) {
-            throw denied(caller, what, NO_SUCH_COMPUTER.with(computer).english());
+            throw denied(caller, what, NO_SUCH_COMPUTER.with(computer));
         }
         if (!remote.running()) {
-            throw denied(caller, what, POWERED_OFF.with(computer).english());
+            throw denied(caller, what, POWERED_OFF.with(computer));
         }
         if (!remote.remoteAllowed()) {
-            throw denied(caller, what, NO_REMOTE_PROGRAMS.with(computer).english());
+            throw denied(caller, what, NO_REMOTE_PROGRAMS.with(computer));
         }
         if (!(remote.machine() instanceof AbstractComputerBlockEntity machine)) {
-            throw denied(caller, what, CANNOT_RUN.with(computer).english());
+            throw denied(caller, what, CANNOT_RUN.with(computer));
         }
         final ProgramLauncher.Launch launch = ProgramLauncher.launch(machine, program, remote::readFile,
                 new ArrayList<>(args), IProgramParent.NONE, ProgramPriority.named(priority), 0);
         if (!launch.ok()) {
             throw denied(caller, what, switch (launch.refusal()) {
-                case NO_RUNNER -> NO_RUNNER.with(program).english();
-                case NO_MEMORY -> NO_MEMORY.with(computer, launch.roomMb(), launch.freeMb()).english();
-                case UNREADABLE, NOT_STARTED -> CliTexts.SAID_BY.with(computer, launch.message()).english();
+                case NO_RUNNER -> NO_RUNNER.with(program);
+                case NO_MEMORY -> NO_MEMORY.with(computer, launch.roomMb(), launch.freeMb());
+                case UNREADABLE, NOT_STARTED -> CliTexts.SAID_BY.with(computer, launch.message());
             });
         }
         gateway.stats().count(GatewayStats.Kind.OPERATION, now());
@@ -453,26 +469,26 @@ public final class GatewayService {
     /** Counts the call against the cap; refused once the tick's calls are spent. */
     private void admit(final Caller caller, final String what) throws GatewayRefusedException {
         if (!gateway.admit()) {
-            throw denied(caller, what, BUSY.with(gateway.permissions().callCap()).english());
+            throw denied(caller, what, BUSY.with(gateway.permissions().callCap()));
         }
     }
 
     private void read(final Caller caller, final String what) throws GatewayRefusedException {
         admit(caller, what);
         if (!gateway.permissions().read()) {
-            throw denied(caller, what, READING_OFF.text().english());
+            throw denied(caller, what, READING_OFF.text());
         }
     }
 
     private void operations(final Caller caller, final String what) throws GatewayRefusedException {
         admit(caller, what);
         if (!gateway.permissions().operations()) {
-            throw denied(caller, what, OPERATIONS_OFF.text().english());
+            throw denied(caller, what, OPERATIONS_OFF.text());
         }
     }
 
-    private GatewayRefusedException denied(final Caller caller, final String what, final String why) {
-        gateway.logged(caller.label(), what, why, GatewayLog.Tone.DENIED);
+    private GatewayRefusedException denied(final Caller caller, final String what, final Text why) {
+        gateway.logged(caller.label(), what, why.english(), GatewayLog.Tone.DENIED);
         return new GatewayRefusedException(why);
     }
 
@@ -487,7 +503,7 @@ public final class GatewayService {
     private NetworkStorage storage() throws GatewayRefusedException {
         final NetworkUuid net = terminal.networkUuid();
         if (net == null) {
-            throw new GatewayRefusedException("the computer is not on a network");
+            throw new GatewayRefusedException(NOT_ON_NETWORK.text());
         }
         return NetworkStorage.of(level, net);
     }
@@ -495,7 +511,7 @@ public final class GatewayService {
     private MainframeBlockEntity mainframe() throws GatewayRefusedException {
         final MainframeBlockEntity mainframe = shell.mainframe();
         if (mainframe == null || !mainframe.isRunning()) {
-            throw new GatewayRefusedException("the network has no running Mainframe");
+            throw new GatewayRefusedException(NO_MAINFRAME.text());
         }
         return mainframe;
     }
@@ -550,13 +566,15 @@ public final class GatewayService {
         return quantity <= 0L ? "all" : Long.toString(quantity);
     }
 
-    private static Map<String, Object> row(final OperationRecord record) {
-        return row("id", record.id().toString(), "type", typeName(record.type()), "status", status(record.status()),
-                "item", record.key() == null ? "" : nameOf(record.key()), "requested", record.requested(),
-                "moved", record.moved(), "priority", record.priority().serializedName());
+    private static Map<String, Object> luaTable(final OperationRecord record) {
+        return luaTable("id", record.id().toString(), "type", typeName(record.type()),
+                "status", status(record.status()), "item", record.key() == null ? "" : nameOf(record.key()),
+                "requested", record.requested(), "moved", record.moved(),
+                "priority", record.priority().serializedName());
     }
 
-    private static Map<String, Object> row(final Object... pairs) {
+    /** A table for the other side, its field names first and their values after each: names a program reads by. */
+    private static Map<String, Object> luaTable(final Object... pairs) {
         final Map<String, Object> made = new LinkedHashMap<>();
         for (int i = 0; i + 1 < pairs.length; i += 2) {
             made.put(String.valueOf(pairs[i]), pairs[i + 1]);

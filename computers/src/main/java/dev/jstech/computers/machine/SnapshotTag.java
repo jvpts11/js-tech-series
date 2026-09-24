@@ -9,6 +9,8 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.vm.program.Snapshot;
 import dev.jstech.computers.vm.program.SnapshotException;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextTags;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -176,17 +178,14 @@ public final class SnapshotTag {
             watches.add(each);
         }
         tag.put(WATCHES, watches);
-        final ListTag console = new ListTag();
-        for (final String line : shot.console().lines()) {
-            console.add(StringTag.valueOf(line));
-        }
-        tag.put(CONSOLE, console);
+        // Lines kept as sentences, so what the runtime said of a halt reads in its player's words after a reload too.
+        tag.put(CONSOLE, TextTags.writeAll(shot.console().lines()));
         tag.putLong(WRITTEN, shot.console().written());
         tag.putLong(RANDOM, shot.console().random());
         tag.put(INPUT, names(shot.input()));
         tag.putLong(DROPPED, shot.callbacks().dropped());
         tag.putString(STATE, identity.state());
-        tag.putString(MESSAGE, identity.message());
+        tag.put(MESSAGE, TextTags.write(identity.message()));
         tag.putLong(SPENT, identity.spent());
         if (!identity.name().isEmpty()) {
             tag.putString(PROGRAM_NAME, identity.name());
@@ -212,11 +211,7 @@ public final class SnapshotTag {
             final CompoundTag owner = owners.getCompound(i);
             statics.put(owner.getString(OWNER), readFields(owner.getList(FIELDS, Tag.TAG_COMPOUND)));
         }
-        final List<String> console = new ArrayList<>();
-        final ListTag lines = tag.getList(CONSOLE, Tag.TAG_STRING);
-        for (int i = 0; i < lines.size(); i++) {
-            console.add(lines.getString(i));
-        }
+        final List<Text> console = TextTags.readAll(tag.getList(CONSOLE, Tag.TAG_COMPOUND));
         final List<Snapshot.WatchShot> watches = new ArrayList<>();
         final ListTag watching = tag.getList(WATCHES, Tag.TAG_COMPOUND);
         for (int i = 0; i < watching.size(); i++) {
@@ -244,7 +239,8 @@ public final class SnapshotTag {
         }
         return new Snapshot(format, tag.getString(LISTING),
                 new Snapshot.HeapShot(tag.getLong(BUDGET), held),
-                new Snapshot.IdentityShot(tag.getString(STATE), tag.getString(MESSAGE), tag.getLong(SPENT),
+                new Snapshot.IdentityShot(tag.getString(STATE), TextTags.read(tag.getCompound(MESSAGE)),
+                        tag.getLong(SPENT),
                         tag.getString(PROGRAM_NAME), readNames(tag.getList(ARGS, Tag.TAG_STRING)),
                         tag.getInt(MACHINE_ID), tag.getBoolean(EXITED), tag.getInt(EXIT_CODE)),
                 new Snapshot.ConsoleShot(console, tag.getLong(WRITTEN), tag.getLong(RANDOM)),

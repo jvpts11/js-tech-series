@@ -99,7 +99,7 @@ public final class ProgramService {
         return one == null ? 0 : one.process().exitCode();
     }
 
-    /** What the program under that number printed, or nothing when it is gone. */
+    /** What the program under that number printed, in English as a program reads it, or nothing when it is gone. */
     public List<String> output(final int id, final String host) {
         final ProgramEntry<IMachineRuntime> one = this.find(id, host);
         return one == null ? List.of() : one.process().console();

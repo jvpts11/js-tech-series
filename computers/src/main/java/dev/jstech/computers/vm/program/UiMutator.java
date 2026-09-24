@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.vm.program;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 
 /**
@@ -19,11 +21,24 @@ import java.util.List;
  * its own: a program's text is copied in and a read hands a copy out, so when a widget lets go of a text it replaced,
  * or a canvas of the strokes it cleared, nothing the program holds goes with it.
  */
+@TextHolder
 final class UiMutator {
 
     /** What a window may not hold more of, counting every widget inside its rows and columns. */
-    private static final String TOO_MANY =
-            "a window holds at most " + UiWidgets.MOST_WIDGETS + " widgets, counting the ones inside rows and columns";
+    private static final TextKey TOO_MANY = TextKey.of("jsc.vm.ui_mutator.too_many",
+            "a window holds at most %s widgets, counting the ones inside rows and columns");
+    private static final TextKey WINDOW_FULL = TextKey.of("jsc.vm.ui_mutator.window_full",
+            "a window holds at most %s widgets");
+    private static final TextKey BOX_FULL = TextKey.of("jsc.vm.ui_mutator.box_full",
+            "a row or a column holds at most %s widgets");
+    private static final TextKey BOX_INSIDE_ITSELF = TextKey.of("jsc.vm.ui_mutator.box_inside_itself",
+            "a row or a column cannot hold itself or a row or a column it is inside");
+    private static final TextKey LIST_FULL = TextKey.of("jsc.vm.ui_mutator.list_full",
+            "a list holds at most %s rows");
+    private static final TextKey CANVAS_FULL = TextKey.of("jsc.vm.ui_mutator.canvas_full",
+            "a canvas holds at most %s strokes");
+    private static final TextKey NOT_WRITABLE = TextKey.of("jsc.vm.ui_mutator.not_writable",
+            "%s is not a program's to write");
 
     private final Heap heap;
     /** The windows the program has open, as they are now, which a row or a column growing inside one must still fit. */
@@ -45,7 +60,7 @@ final class UiMutator {
             case UiWidgets.LIST_BOX -> this.list(self, member, arguments, line);
             case UiWidgets.CANVAS -> this.canvas(self, member, arguments, line);
             case UiWidgets.WINDOW -> this.window(self, member, arguments, line);
-            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, self.type() + " has no " + member);
+            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, FieldAccess.HAS_NO.with(self.type(), member));
         };
         this.changed(self);
         return answer;
@@ -67,12 +82,11 @@ final class UiMutator {
     private Object window(final Values.Obj self, final String member, final List<Object> arguments,
                           final int line) {
         if (!"Add".equals(member) || arguments.size() < 5) {
-            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, UiWidgets.WINDOW + " has no " + member);
+            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, FieldAccess.HAS_NO.with(UiWidgets.WINDOW, member));
         }
         final Values.ListValue placed = UiWidgets.listOf(self, UiWidgets.PLACED, line);
         if (placed.items().size() >= UiWidgets.MOST_WIDGETS) {
-            throw new Halt(Halt.Reason.OUT_OF_RANGE, line,
-                    "a window holds at most " + UiWidgets.MOST_WIDGETS + " widgets");
+            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, WINDOW_FULL.with(UiWidgets.MOST_WIDGETS));
         }
         final Values.Obj where = new Values.Obj(UiWidgets.PLACE);
         where.set("Widget", UiWidgets.widget(arguments.getFirst(), line));
@@ -85,7 +99,7 @@ final class UiMutator {
         if (UiWidgets.count(self) > UiWidgets.MOST_WIDGETS) {
             placed.items().removeLast();
             this.heap.release(where);
-            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, TOO_MANY);
+            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, TOO_MANY.with(UiWidgets.MOST_WIDGETS));
         }
         this.fit(placed, line);
         return null;
@@ -97,13 +111,11 @@ final class UiMutator {
         switch (member) {
             case "Add" -> {
                 if (children.items().size() >= UiWidgets.MOST_WIDGETS) {
-                    throw new Halt(Halt.Reason.OUT_OF_RANGE, line,
-                            "a row or a column holds at most " + UiWidgets.MOST_WIDGETS + " widgets");
+                    throw new Halt(Halt.Reason.OUT_OF_RANGE, line, BOX_FULL.with(UiWidgets.MOST_WIDGETS));
                 }
                 final Values.Obj child = UiWidgets.widget(arguments.isEmpty() ? null : arguments.getFirst(), line);
                 if (UiWidgets.holds(child, self)) {
-                    throw new Halt(Halt.Reason.REFUSED, line,
-                            "a row or a column cannot hold itself or a row or a column it is inside");
+                    throw new Halt(Halt.Reason.REFUSED, line, BOX_INSIDE_ITSELF.text());
                 }
                 children.items().add(child);
                 weights.items().add(arguments.size() > 1 ? Math.max(0, Numbers.toInt(arguments.get(1))) : 0);
@@ -113,7 +125,7 @@ final class UiMutator {
                 children.items().clear();
                 weights.items().clear();
             }
-            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, self.type() + " has no " + member);
+            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, FieldAccess.HAS_NO.with(self.type(), member));
         }
         this.fit(children, line);
         this.fit(weights, line);
@@ -133,7 +145,7 @@ final class UiMutator {
         if (over) {
             children.items().removeLast();
             weights.items().removeLast();
-            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, TOO_MANY);
+            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, TOO_MANY.with(UiWidgets.MOST_WIDGETS));
         }
     }
 
@@ -143,8 +155,7 @@ final class UiMutator {
         switch (member) {
             case "Add" -> {
                 if (items.items().size() >= UiWidgets.MOST_ROWS) {
-                    throw new Halt(Halt.Reason.OUT_OF_RANGE, line,
-                            "a list holds at most " + UiWidgets.MOST_ROWS + " rows");
+                    throw new Halt(Halt.Reason.OUT_OF_RANGE, line, LIST_FULL.with(UiWidgets.MOST_ROWS));
                 }
                 items.items().add(this.heap.adopt(UiWidgets.text(arguments, 0, ""), line));
                 rights.items().add(this.heap.adopt(UiWidgets.text(arguments, 1, ""), line));
@@ -156,7 +167,8 @@ final class UiMutator {
                 rights.items().clear();
                 self.set(UiWidgets.SELECTED, 0);
             }
-            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, UiWidgets.LIST_BOX + " has no " + member);
+            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line,
+                    FieldAccess.HAS_NO.with(UiWidgets.LIST_BOX, member));
         }
         this.fit(items, line);
         this.fit(rights, line);
@@ -186,8 +198,7 @@ final class UiMutator {
             return null;
         }
         if (drawing.items().size() >= UiWidgets.MOST_STROKES) {
-            throw new Halt(Halt.Reason.OUT_OF_RANGE, line,
-                    "a canvas holds at most " + UiWidgets.MOST_STROKES + " strokes");
+            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, CANVAS_FULL.with(UiWidgets.MOST_STROKES));
         }
         final Values.Obj stroke = stroke(member);
         switch (member) {
@@ -209,7 +220,8 @@ final class UiMutator {
                 stroke.set("Y", Numbers.toInt(arguments.get(1)));
                 stroke.set("Colour", Numbers.toInt(arguments.get(2)));
             }
-            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, UiWidgets.CANVAS + " has no " + member);
+            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line,
+                    FieldAccess.HAS_NO.with(UiWidgets.CANVAS, member));
         }
         this.draw(drawing, stroke, line);
         return null;
@@ -241,7 +253,7 @@ final class UiMutator {
             case UiWidgets.OPEN, UiWidgets.ID, UiWidgets.COUNT, UiWidgets.PLACED, UiWidgets.CHILDREN,
                  UiWidgets.WEIGHTS, UiWidgets.ITEMS, UiWidgets.RIGHTS, UiWidgets.DRAWING, UiWidgets.REVISION,
                  UiWidgets.EPOCH ->
-                    throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, name + " is not a program's to write");
+                    throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, NOT_WRITABLE.with(name));
             default -> {
                 if (value instanceof String said) {
                     this.replace(self, name, said, line);
@@ -259,7 +271,7 @@ final class UiMutator {
         self.set(UiWidgets.CONTENT, value == null ? null : UiWidgets.widget(value, line));
         if (UiWidgets.WINDOW.equals(self.type()) && UiWidgets.count(self) > UiWidgets.MOST_WIDGETS) {
             self.set(UiWidgets.CONTENT, before);
-            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, TOO_MANY);
+            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, TOO_MANY.with(UiWidgets.MOST_WIDGETS));
         }
     }
 

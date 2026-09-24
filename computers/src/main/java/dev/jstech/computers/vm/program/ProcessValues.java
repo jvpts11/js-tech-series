@@ -115,7 +115,7 @@ final class ProcessValues {
     private static void writeWidget(final Process process, final Object target, final String name,
                                     final Object value, final int line) {
         if (!(target instanceof Values.Obj widget)) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no object to write " + name + " on");
+            throw new Halt(Halt.Reason.NO_OBJECT, line, FieldAccess.NOTHING_TO_WRITE_ON.with(name));
         }
         process.charge(SigmaCosts.DRAW);
         process.windows0().mutator().write(widget, name, value, line);
@@ -151,6 +151,6 @@ final class ProcessValues {
     }
 
     private static Object nothing(final String name, final int line) {
-        throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "there is no " + name + " to read here");
+        throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, FieldAccess.NOTHING_TO_READ.with(name));
     }
 }

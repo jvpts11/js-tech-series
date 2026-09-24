@@ -8,6 +8,8 @@
 package dev.jstech.computers.vm.program;
 
 import dev.jstech.computers.vm.listing.Opcode;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 
 /**
  * Arithmetic on the values a running program holds.
@@ -17,7 +19,14 @@ import dev.jstech.computers.vm.listing.Opcode;
  * is give back the same kind it was given, so an int divided by an int stays an int, whole and
  * rounded towards zero, as the language says.
  */
+@TextHolder
 public final class Numbers {
+
+    private static final TextKey NOT_FOR_REALS = TextKey.of("jsc.vm.numbers.not_for_reals",
+            "%s does not apply to a real number");
+    private static final TextKey DIVIDED_BY_ZERO = TextKey.of("jsc.vm.numbers.divided_by_zero", "divided by zero");
+    private static final TextKey REMAINDER_BY_ZERO = TextKey.of("jsc.vm.numbers.remainder_by_zero",
+            "took the remainder of a division by zero");
 
     private Numbers() {
     }
@@ -50,8 +59,7 @@ public final class Numbers {
             case MUL -> left * right;
             case DIV -> divide(left, right, line);
             case REM -> remainder(left, right, line);
-            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line,
-                    opcode.text() + " does not apply to a real number");
+            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, NOT_FOR_REALS.with(opcode.text()));
         };
     }
 
@@ -72,28 +80,28 @@ public final class Numbers {
 
     private static double divide(final double left, final double right, final int line) {
         if (right == 0) {
-            throw new Halt(Halt.Reason.DIVIDE_BY_ZERO, line, "divided by zero");
+            throw new Halt(Halt.Reason.DIVIDE_BY_ZERO, line, DIVIDED_BY_ZERO.text());
         }
         return left / right;
     }
 
     private static double remainder(final double left, final double right, final int line) {
         if (right == 0) {
-            throw new Halt(Halt.Reason.DIVIDE_BY_ZERO, line, "took the remainder of a division by zero");
+            throw new Halt(Halt.Reason.DIVIDE_BY_ZERO, line, REMAINDER_BY_ZERO.text());
         }
         return left % right;
     }
 
     private static long divideWhole(final long left, final long right, final int line) {
         if (right == 0) {
-            throw new Halt(Halt.Reason.DIVIDE_BY_ZERO, line, "divided by zero");
+            throw new Halt(Halt.Reason.DIVIDE_BY_ZERO, line, DIVIDED_BY_ZERO.text());
         }
         return left / right;
     }
 
     private static long remainderWhole(final long left, final long right, final int line) {
         if (right == 0) {
-            throw new Halt(Halt.Reason.DIVIDE_BY_ZERO, line, "took the remainder of a division by zero");
+            throw new Halt(Halt.Reason.DIVIDE_BY_ZERO, line, REMAINDER_BY_ZERO.text());
         }
         return left % right;
     }

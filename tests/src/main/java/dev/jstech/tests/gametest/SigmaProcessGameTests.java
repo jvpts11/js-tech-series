@@ -23,6 +23,7 @@ import dev.jstech.computers.vm.program.ProgramConsole;
 import dev.jstech.computers.vm.program.ProgramPriority;
 import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -365,7 +366,7 @@ public final class SigmaProcessGameTests {
                     programs.hold(id);
                     helper.assertTrue(programs.unseen().isEmpty(), "nothing has been printed yet");
                     programs.tick(512);
-                    final List<String> first = programs.unseen();
+                    final List<String> first = programs.unseen().stream().map(Text::english).toList();
                     helper.assertTrue(first.equals(List.of("hi 0", "hi 1", "hi 2")),
                             "it hands over what was printed; got " + first);
                     helper.assertTrue(programs.unseen().isEmpty(),
@@ -392,7 +393,7 @@ public final class SigmaProcessGameTests {
                             """), 1, computer).id();
                     programs.hold(id);
                     programs.tick(100000);
-                    final List<String> seen = programs.unseen();
+                    final List<String> seen = programs.unseen().stream().map(Text::english).toList();
                     /*
                      * What fell off the end while nobody looked is gone, as it is on any terminal; what
                      * is left is the newest, in order, ending with the last thing the program said.

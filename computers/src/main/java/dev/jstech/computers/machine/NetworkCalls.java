@@ -84,7 +84,7 @@ final class NetworkCalls {
                                   final String... parameters) {
         network(bindings, name, (net, call, target, arguments, line) -> {
             if (!net.online()) {
-                throw new Halt(Halt.Reason.NO_NETWORK, line, MachineCalls.NOT_ON_NETWORK.text().english());
+                throw new Halt(Halt.Reason.NO_NETWORK, line, MachineCalls.NOT_ON_NETWORK.text());
             }
             return function.call(net, call, target, arguments, line);
         }, parameters);

@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.vm.system;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+
 /**
  * What a call costs a program beyond the one instruction that makes it: a fixed part, and parts that grow with how much
  * the call brings back or moves, so asking for one thing and asking for a hundred thousand are not the same question.
@@ -15,6 +19,7 @@ package dev.jstech.computers.vm.system;
  * @param perRow   what every row it brings back adds
  * @param perBlock what every {@link #BLOCK_BYTES} it reads or writes adds, a part of a block counting as a block
  */
+@TextHolder
 public record CallCost(int fixed, int perRow, int perBlock) {
 
     /** How many bytes make one block, the measure reading and writing are priced by. */
@@ -22,6 +27,13 @@ public record CallCost(int fixed, int perRow, int perBlock) {
 
     /** A call that costs nothing beyond its instruction. */
     public static final CallCost FREE = new CallCost(0, 0, 0);
+
+    private static final TextKey COSTS_NOTHING = TextKey.of("jsc.vm.call_cost.free", "free");
+    private static final TextKey PLUS_PER_ROW = TextKey.of("jsc.vm.call_cost.plus_per_row",
+            "%s plus %s for every row it brings back");
+    private static final TextKey PLUS_PER_BLOCK = TextKey.of("jsc.vm.call_cost.plus_per_block",
+            "%s plus %s for every %s KB it reads or writes");
+    private static final TextKey ONE = TextKey.of("jsc.vm.call_cost.one", "one");
 
     public CallCost {
         if (fixed < 0 || perRow < 0 || perBlock < 0) {
@@ -56,23 +68,30 @@ public record CallCost(int fixed, int perRow, int perBlock) {
         return (int) Math.min(Integer.MAX_VALUE, this.fixed + byRows + byBlocks);
     }
 
-    /** How a tooltip says it: {@code free}, {@code 50}, {@code 50 plus one for every row it brings back}. */
-    public String describe() {
+    /**
+     * How a tooltip says it, in its reader's language: {@code free}, {@code 50},
+     * {@code 50 plus one for every row it brings back}.
+     */
+    public Text text() {
         if (this.equals(FREE)) {
-            return "free";
+            return COSTS_NOTHING.text();
         }
-        final StringBuilder said = new StringBuilder(String.valueOf(this.fixed));
+        Text said = Text.literal(String.valueOf(this.fixed));
         if (this.perRow > 0) {
-            said.append(" plus ").append(count(this.perRow)).append(" for every row it brings back");
+            said = PLUS_PER_ROW.with(said, count(this.perRow));
         }
         if (this.perBlock > 0) {
-            said.append(" plus ").append(count(this.perBlock)).append(" for every ").append(BLOCK_BYTES / 1024)
-                    .append(" KB it reads or writes");
+            said = PLUS_PER_BLOCK.with(said, count(this.perBlock), BLOCK_BYTES / 1024);
         }
-        return said.toString();
+        return said;
     }
 
-    private static String count(final int amount) {
-        return amount == 1 ? "one" : String.valueOf(amount);
+    /** The same in English, the language the machine keeps what it writes down in. */
+    public String describe() {
+        return this.text().english();
+    }
+
+    private static Text count(final int amount) {
+        return amount == 1 ? ONE.text() : Text.literal(String.valueOf(amount));
     }
 }

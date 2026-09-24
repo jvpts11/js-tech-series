@@ -18,6 +18,7 @@ import dev.jstech.computers.vm.program.Numbers;
 import dev.jstech.computers.vm.program.UiWidgets;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.core.text.Text;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -282,8 +283,8 @@ final class ClientReplication {
         }
         final var state = one.process().state();
         final boolean over = !MachinePrograms.running(one.process());
-        final List<String> fresh = programs.unseen();
-        final String halt = over && state == ILanguageProcess.State.HALTED ? one.process().message() : null;
+        final List<Text> fresh = programs.unseen();
+        final Text halt = over && state == ILanguageProcess.State.HALTED ? one.process().message() : null;
         if (over) {
             programs.release();
             this.machine.setChanged();
@@ -296,7 +297,7 @@ final class ClientReplication {
             return;
         }
         final List<WireLine> wire = new ArrayList<>();
-        for (final String line : fresh) {
+        for (final Text line : fresh) {
             wire.add(new WireLine(line, CliStyle.PLAIN.id()));
         }
         if (halt != null) {

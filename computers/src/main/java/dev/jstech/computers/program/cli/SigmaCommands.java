@@ -214,9 +214,9 @@ public final class SigmaCommands {
             final String assembly = built.ok() ? built.assembly() : null;
             for (final Diagnostic diagnostic : diagnostics) {
                 if (diagnostic.isError()) {
-                    ctx.out().error(diagnostic.format());
+                    ctx.out().error(diagnostic.text());
                 } else {
-                    ctx.out().dim(diagnostic.format());
+                    ctx.out().dim(diagnostic.text());
                 }
             }
             if (assembly == null) {
@@ -526,7 +526,7 @@ public final class SigmaCommands {
             final String name = ctx.argCount() > 1 ? ctx.arg(1).toLowerCase(Locale.ROOT) : "program";
             final Manifest made = Manifest.fresh(name, computer.name().isEmpty()
                     ? "unsigned" : computer.name());
-            final List<String> wrong = made.problems();
+            final List<Text> wrong = made.problemTexts();
             if (!wrong.isEmpty()) {
                 ctx.out().error(CliTexts.SAID_BY.with(this.name(), wrong.getFirst()));
                 return;
@@ -559,9 +559,9 @@ public final class SigmaCommands {
                 files.put(named, file.message().english());
             }
             final Packed packed = new Packed(manifest, files);
-            final List<String> wrong = packed.problems();
+            final List<Text> wrong = packed.problemTexts();
             if (!wrong.isEmpty()) {
-                for (final String one : wrong) {
+                for (final Text one : wrong) {
                     ctx.out().error(CliTexts.SAID_BY.with(Manifest.FILE, one));
                 }
                 return;

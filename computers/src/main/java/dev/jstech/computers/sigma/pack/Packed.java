@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.sigma.pack;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,6 +23,7 @@ import java.util.Map;
  * it in the editor and read every line of it first. Nothing is compressed, nothing is encoded, and
  * there is nowhere for anything to hide.
  */
+@TextHolder
 public record Packed(Manifest manifest, Map<String, String> files) {
 
     /** What the first line of a built package says. */
@@ -37,6 +41,12 @@ public record Packed(Manifest manifest, Map<String, String> files) {
 
     /** The extension a built package is written under. */
     public static final String EXTENSION = ".cpk";
+
+    /* A file the manifest and the package disagree about, on the manifest's files line, which goes in as data. */
+    private static final TextKey NAMED_NOT_PACKED = TextKey.of("jsc.sigma.packed.named_not_packed",
+            "%s: %s is named but not in the package");
+    private static final TextKey PACKED_NOT_NAMED = TextKey.of("jsc.sigma.packed.packed_not_named",
+            "%s: %s is in the package but not named");
 
     public Packed {
         files = new LinkedHashMap<>(files);
@@ -118,22 +128,27 @@ public record Packed(Manifest manifest, Map<String, String> files) {
         return new Packed(Manifest.read(head.toString()), files);
     }
 
+    /** What is wrong with it, if anything, in English: the form it takes as data. */
+    public List<String> problems() {
+        return this.problemTexts().stream().map(Text::english).toList();
+    }
+
     /**
-     * What is wrong with it, if anything.
+     * What is wrong with it, if anything, as the player reads it.
      *
      * <p>A package is checked when it is built and again when it is installed, because the two can be
      * far apart: it may have crossed a Mirror and a world save in between.
      */
-    public List<String> problems() {
-        final List<String> found = new ArrayList<>(this.manifest.problems());
+    public List<Text> problemTexts() {
+        final List<Text> found = new ArrayList<>(this.manifest.problemTexts());
         for (final String named : this.manifest.files()) {
             if (!this.files.containsKey(named)) {
-                found.add("files: " + named + " is named but not in the package");
+                found.add(NAMED_NOT_PACKED.with("files", named));
             }
         }
         for (final String held : this.files.keySet()) {
             if (!this.manifest.files().contains(held)) {
-                found.add("files: " + held + " is in the package but not named");
+                found.add(PACKED_NOT_NAMED.with("files", held));
             }
         }
         return found;

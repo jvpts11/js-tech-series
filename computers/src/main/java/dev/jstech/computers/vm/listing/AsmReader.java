@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.vm.listing;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -25,10 +27,14 @@ import java.util.Set;
  * in an editor says everything that is wrong with it at once. The problems are the listing's own, so
  * reading one needs nothing from the language that wrote it.
  */
+@TextHolder
 public final class AsmReader {
 
     /** Past this many, further problems are almost always the same mistake echoing. */
     public static final int MAX_PROBLEMS = 100;
+
+    /* What a number in the listing has to be, said in the reader's language inside the problem that quotes it. */
+    private static final TextKey WHOLE_NUMBER = TextKey.of("jsc.vm.asm_reader.whole_number", "a whole number");
 
     private final String[] lines;
     private final List<ListingProblem> problems = new ArrayList<>();
@@ -378,7 +384,7 @@ public final class AsmReader {
         try {
             return Integer.parseInt(text.trim());
         } catch (final NumberFormatException notANumber) {
-            this.report(line, ListingError.MALFORMED_OPERAND, text, "a whole number");
+            this.report(line, ListingError.MALFORMED_OPERAND, text, WHOLE_NUMBER);
             return fallback;
         }
     }

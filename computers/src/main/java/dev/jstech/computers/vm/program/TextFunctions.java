@@ -10,13 +10,20 @@ package dev.jstech.computers.vm.program;
 import dev.jstech.computers.vm.system.IPureContext;
 import dev.jstech.computers.vm.system.IntrinsicRegistry;
 import dev.jstech.computers.vm.system.IntrinsicTypes;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
 /** What the language does with text: joining it, cutting it, searching it and changing it. */
+@TextHolder
 final class TextFunctions {
 
     private static final String TEXT = IntrinsicTypes.TEXT;
+    private static final TextKey NO_START = TextKey.of("jsc.vm.text_functions.no_start",
+            "there is no place %s to start from in a string of %s");
+    private static final TextKey NO_RUN = TextKey.of("jsc.vm.text_functions.no_run",
+            "there are no %s characters from place %s in a string of %s");
 
     private TextFunctions() {
     }
@@ -75,9 +82,8 @@ final class TextFunctions {
         final long length = toEnd ? (long) value.length() - start : Numbers.toInt(arguments[1]);
         if (start < 0 || start > value.length() || length < 0 || start + length > value.length()) {
             throw new Halt(Halt.Reason.OUT_OF_RANGE, line, toEnd
-                    ? "there is no place " + start + " to start from in a string of " + value.length()
-                    : "there are no " + length + " characters from place " + start + " in a string of "
-                            + value.length());
+                    ? NO_START.with(start, value.length())
+                    : NO_RUN.with(length, start, value.length()));
         }
         return context.text(value.substring(start, (int) (start + length)), line);
     }

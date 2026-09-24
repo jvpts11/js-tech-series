@@ -12,7 +12,7 @@ import dev.jstech.core.text.TextKey;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -25,8 +25,9 @@ import net.neoforged.neoforgespi.language.ModFileScanData;
  * Every sentence a mod declares, found where it is declared.
  *
  * <p>The classes marked {@link TextHolder} are read out of the mod's own scan of itself, and each one's
- * {@code static final} {@link TextKey} fields are what it declares. That is what lets a sentence be written once,
- * beside the code that says it, with nothing else to keep in step: the English file is made from these.
+ * {@code static final} {@link TextKey} fields are what it declares, and so, on an enum, is the {@code TextKey} each
+ * of its constants carries. That is what lets a sentence be written once, beside the code that says it, with
+ * nothing else to keep in step: the English file is made from these.
  */
 public final class DeclaredTexts {
 
@@ -66,16 +67,34 @@ public final class DeclaredTexts {
         } catch (final ClassNotFoundException missing) {
             throw new IllegalStateException("the sentences of " + className + " could not be read", missing);
         }
-        return Arrays.stream(holder.getDeclaredFields())
-                .filter(field -> field.getType() == TextKey.class && Modifier.isStatic(field.getModifiers()))
-                .map(DeclaredTexts::read)
-                .toList();
+        final List<TextKey> keys = new ArrayList<>();
+        for (final Field field : holder.getDeclaredFields()) {
+            if (field.getType() != TextKey.class) {
+                continue;
+            }
+            if (Modifier.isStatic(field.getModifiers())) {
+                keys.add(read(field, null));
+            } else if (holder.isEnum()) {
+                /*
+                 * A list of messages each with a code of its own, a compiler's for one, is an enum whose every
+                 * constant carries its sentence, so the code and the words stay on one line.
+                 */
+                for (final Object constant : holder.getEnumConstants()) {
+                    // A constant with nothing to say leaves the field empty, and declares nothing.
+                    final TextKey key = read(field, constant);
+                    if (key != null) {
+                        keys.add(key);
+                    }
+                }
+            }
+        }
+        return keys;
     }
 
-    private static TextKey read(final Field field) {
+    private static TextKey read(final Field field, final Object owner) {
         try {
             field.setAccessible(true);
-            return (TextKey) field.get(null);
+            return (TextKey) field.get(owner);
         } catch (final IllegalAccessException | RuntimeException unreadable) {
             throw new IllegalStateException("the sentence " + field + " could not be read", unreadable);
         }

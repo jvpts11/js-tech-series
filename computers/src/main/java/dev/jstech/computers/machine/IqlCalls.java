@@ -48,7 +48,7 @@ final class IqlCalls {
         iql(bindings, "Query", (iql, engine, call, arguments, line) -> {
             final IqlEngine.Outcome outcome = engine.run(text(arguments, 0));
             if (!outcome.ok()) {
-                throw new Halt(Halt.Reason.REFUSED, line, outcome.message());
+                throw new Halt(Halt.Reason.REFUSED, line, outcome.said());
             }
             return rows(outcome);
         }, STRING);
@@ -66,7 +66,7 @@ final class IqlCalls {
         iql(bindings, "RunFile", (iql, engine, call, arguments, line) -> {
             final ICliComputer.FsResult read = iql.read(text(arguments, 0));
             if (!read.ok()) {
-                throw new Halt(Halt.Reason.NO_OBJECT, line, read.message().english());
+                throw new Halt(Halt.Reason.NO_OBJECT, line, read.message());
             }
             return result(call, IqlService.runEach(engine, read.message().english()));
         }, STRING);
@@ -78,7 +78,7 @@ final class IqlCalls {
         MachineCalls.bind(bindings, MachineServices::iql, "Iql", name, (iql, call, target, arguments, line) -> {
             final IqlEngine engine = iql.engine();
             if (engine == null) {
-                throw new Halt(Halt.Reason.NO_NETWORK, line, NO_MAINFRAME.text().english());
+                throw new Halt(Halt.Reason.NO_NETWORK, line, NO_MAINFRAME.text());
             }
             return function.call(iql, engine, call, arguments, line);
         }, parameters);

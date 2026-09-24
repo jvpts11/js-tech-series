@@ -423,21 +423,21 @@ class SigmaCompletionsTest {
         final SigmaCompletions.Item handingOne = calls.stream()
                 .filter(item -> item.signature().equals("Call(string, string, object) : object"))
                 .findFirst().orElseThrow();
-        assertEquals("costs 105", SigmaCompletions.costOf(handingOne));
+        assertEquals("costs 105", SigmaCompletions.costOf(handingOne).english());
     }
 
     @Test
     void costOf_saysWhatWritingAWidgetsValueCosts() {
         final SigmaCompletions.Item text =
                 named(SigmaCompletions.members(this.builtIns, null, "Button", "Text", false), "Text");
-        assertEquals("costs free to read and 50 to write", SigmaCompletions.costOf(text));
+        assertEquals("costs free to read and 50 to write", SigmaCompletions.costOf(text).english());
     }
 
     @Test
     void costOf_pricesTheFreeCallsTooAndLeavesTheLanguagesOwnMembersUnpriced() {
         final SigmaCompletions.Item floor =
                 named(SigmaCompletions.members(this.builtIns, null, "Math", "Floor", true), "Floor");
-        assertEquals("costs free", SigmaCompletions.costOf(floor));
+        assertEquals("costs free", SigmaCompletions.costOf(floor).english());
         final SigmaCompletions.Item length =
                 named(SigmaCompletions.members(this.builtIns, null, "string", "Length", false), "Length");
         assertNull(SigmaCompletions.costOf(length));

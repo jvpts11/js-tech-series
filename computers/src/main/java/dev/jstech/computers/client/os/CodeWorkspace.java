@@ -24,6 +24,7 @@ import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.logic.TextDocument;
 import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -771,7 +772,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
      * a wrong name is underlined whole rather than as one letter.
      */
     private static CodeArea.Mark markOf(final Doc doc, final IProgrammingLanguage.Complaint complaint) {
-        final String text = complaint.code() + ": " + complaint.message();
+        final String text = complaint.code() + ": " + GameText.resolve(complaint.message());
         final int row = complaint.line() - 1;
         if (complaint.column() <= 0 || row < 0 || row >= doc.area.document().lineCount()) {
             return new CodeArea.Mark(complaint.line(), true, text);

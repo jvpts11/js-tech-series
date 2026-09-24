@@ -136,7 +136,7 @@ class UiWidgetsTest {
     @Test
     void show_putsTheWindowTheProgramBuiltOnTheMachinesDesktop() {
         final Process process = start(load(PANEL), desktop(true));
-        assertEquals(Process.State.FINISHED, process.state(), process::message);
+        assertEquals(Process.State.FINISHED, process.state(), () -> String.valueOf(process.message()));
         assertEquals(1, process.windows().size());
         final Values.Obj window = process.windows().getFirst();
         assertEquals("Reactor", window.get(UiWidgets.TITLE));
@@ -303,7 +303,8 @@ class UiWidgetsTest {
     void show_saysSoOnAMachineWithNoDesktop() {
         final Process process = start(load(PANEL), desktop(false));
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("no desktop to open a window on"), process.message());
+        assertTrue(process.message().english().contains("no desktop to open a window on"),
+                String.valueOf(process.message()));
     }
 
     @Test
@@ -331,7 +332,7 @@ class UiWidgetsTest {
                     public void OnDestroy() { }
                 }
                 """), desktop(true));
-        assertEquals(Process.State.FINISHED, process.state(), process::message);
+        assertEquals(Process.State.FINISHED, process.state(), () -> String.valueOf(process.message()));
         final Values.Obj window = process.windows().getFirst();
         assertEquals("Careful", window.get(UiWidgets.TITLE));
         assertEquals(Boolean.TRUE, window.get(UiWidgets.ASK));
@@ -356,7 +357,7 @@ class UiWidgetsTest {
                     public void OnDestroy() { }
                 }
                 """), desktop(true));
-        assertEquals(Process.State.FINISHED, process.state(), process::message);
+        assertEquals(Process.State.FINISHED, process.state(), () -> String.valueOf(process.message()));
         final Values.Obj paper = widgetOf(process, UiWidgets.CANVAS);
         final Values.ListValue drawing = (Values.ListValue) paper.get(UiWidgets.DRAWING);
         assertEquals(3, drawing.items().size());
@@ -481,7 +482,7 @@ class UiWidgetsTest {
                 }
                 """), desktop(true));
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("cannot hold itself"), process.message());
+        assertTrue(process.message().english().contains("cannot hold itself"), String.valueOf(process.message()));
     }
 
     @Test
@@ -499,7 +500,7 @@ class UiWidgetsTest {
                 }
                 """), desktop(true));
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("cannot hold itself"), process.message());
+        assertTrue(process.message().english().contains("cannot hold itself"), String.valueOf(process.message()));
     }
 
     @Test
@@ -518,7 +519,8 @@ class UiWidgetsTest {
                 }
                 """), desktop(true));
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("a window holds at most 256 widgets"), process.message());
+        assertTrue(process.message().english().contains("a window holds at most 256 widgets"),
+                String.valueOf(process.message()));
     }
 
     @Test
@@ -540,7 +542,8 @@ class UiWidgetsTest {
                 }
                 """), desktop(true));
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("a window holds at most 256 widgets"), process.message());
+        assertTrue(process.message().english().contains("a window holds at most 256 widgets"),
+                String.valueOf(process.message()));
     }
 
     @Test

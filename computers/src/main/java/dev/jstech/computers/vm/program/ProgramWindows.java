@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.vm.program;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -19,10 +21,14 @@ import java.util.List;
  * change to a window or a widget, the program's or a player's, goes through the one {@link UiMutator} kept here, which
  * sees these windows as they are.
  */
+@TextHolder
 final class ProgramWindows {
 
     /** The most windows one program may have open at a time. */
     static final int MOST_WINDOWS = 8;
+
+    private static final TextKey TOO_MANY_WINDOWS = TextKey.of("jsc.vm.program_windows.too_many_windows",
+            "a program may have %s windows open at once");
 
     private final List<Values.Obj> open = new ArrayList<>();
     /** The numbers the next window and the next widget get, so an event can name what it happened to. */
@@ -48,8 +54,7 @@ final class ProgramWindows {
             return;
         }
         if (this.open.size() >= MOST_WINDOWS) {
-            throw new Halt(Halt.Reason.OUT_OF_RANGE, line,
-                    "a program may have " + MOST_WINDOWS + " windows open at once");
+            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, TOO_MANY_WINDOWS.with(MOST_WINDOWS));
         }
         window.set(UiWidgets.ID, this.nextWindow++);
         window.set(UiWidgets.OPEN, Boolean.TRUE);

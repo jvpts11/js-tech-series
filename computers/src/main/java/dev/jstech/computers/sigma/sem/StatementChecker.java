@@ -11,6 +11,8 @@ import dev.jstech.computers.sigma.SigmaError;
 import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.ast.IStmt;
 import dev.jstech.computers.sigma.ast.TypeRef;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
@@ -27,12 +29,16 @@ import java.util.Set;
  * something of their own for their body to see. Getting that wrong is invisible until two names collide,
  * so it is written the same way every time: keep what was there, replace it, put it back.
  */
+@TextHolder
 final class StatementChecker {
 
     private final BodyScope scope;
     private final ExpressionChecker expressions;
 
     static final String INFERRED = "var";
+
+    /** What a message names where there is no value or type at all, as in "cannot convert 'nothing' to 'var'". */
+    static final TextKey NOTHING = TextKey.of("jsc.sigma.statement_checker.nothing", "nothing");
 
     StatementChecker(final BodyScope scope, final ExpressionChecker expressions) {
         this.scope = scope;
@@ -249,7 +255,7 @@ final class StatementChecker {
     private ITypeSymbol inferred(final IStmt.LocalDecl local) {
         if (local.initializer() == null) {
             this.scope.report(local.line(), local.column(),
-                    SigmaError.CANNOT_CONVERT, "nothing", INFERRED);
+                    SigmaError.CANNOT_CONVERT, NOTHING, INFERRED);
             return ITypeSymbol.Special.ERROR;
         }
         final ITypeSymbol found = this.expressions.check(local.initializer(), null);

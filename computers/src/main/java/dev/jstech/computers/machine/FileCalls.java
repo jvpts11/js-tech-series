@@ -32,7 +32,7 @@ final class FileCalls {
             final ICliComputer.FsResult read = files.read(path(arguments));
             // A program reads in the machine's language: the file's own words, or why there were none.
             if (!read.ok()) {
-                throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, read.message().english());
+                throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, read.message());
             }
             final String found = read.message().english();
             call.moved(FileService.bytesOf(found));

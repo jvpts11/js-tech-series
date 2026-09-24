@@ -17,6 +17,7 @@ import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
 import dev.jstech.computers.vm.system.MemberId;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -88,7 +89,7 @@ class ProcessGatewayTest {
                     final String named = String.valueOf(arguments[0]);
                     if (!NAMES.contains(named)) {
                         throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line,
-                                "this computer has no Gateway called " + named);
+                                Text.literal("this computer has no Gateway called " + named));
                     }
                     call.chooseGateway(named);
                     yield true;
@@ -115,7 +116,7 @@ class ProcessGatewayTest {
                     yield all;
                 }
                 case "Call" -> "done";
-                default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "Gateway has no " + name);
+                default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, Text.literal("Gateway has no " + name));
             };
         }
     }
@@ -173,7 +174,7 @@ class ProcessGatewayTest {
     void gateway_answersEverythingAProgramAsksOfIt() {
         final Machine machine = new Machine();
         final Process process = start(load(BRIDGE), machine);
-        assertEquals(Process.State.FINISHED, process.state(), process::message);
+        assertEquals(Process.State.FINISHED, process.state(), () -> String.valueOf(process.message()));
         assertEquals(List.of("online true", "first north", "names 2", "picked true", "now west",
                 "computer 3 turtle bay true", "device monitor_0 monitor 2", "called done",
                 "power truetruetrue", "sent true"), process.console());
@@ -223,6 +224,6 @@ class ProcessGatewayTest {
                 }
                 """), new Machine(false));
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("Gateway"), process.message());
+        assertTrue(process.message().english().contains("Gateway"), String.valueOf(process.message()));
     }
 }

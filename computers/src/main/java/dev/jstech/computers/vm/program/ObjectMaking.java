@@ -9,6 +9,8 @@ package dev.jstech.computers.vm.program;
 
 import dev.jstech.computers.vm.listing.AsmType;
 import dev.jstech.computers.vm.listing.IOperand;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.Map;
 
@@ -16,12 +18,17 @@ import java.util.Map;
  * Making a program's objects: an instance of one of its types, whose constructor then waits its turn, one the runtime
  * brings with it, an array, and the copy a struct makes of itself; and reaching into an array's places.
  */
+@TextHolder
 final class ObjectMaking {
 
     private final Process process;
     private final Heap heap;
     private final ProgramImage program;
     private final CallDispatch calls;
+
+    private static final TextKey NEGATIVE_LENGTH = TextKey.of("jsc.vm.object_making.negative_length",
+            "an array cannot have %s places");
+    private static final TextKey NO_ARRAY = TextKey.of("jsc.vm.object_making.no_array", "there is no array here");
 
     ObjectMaking(final Process process, final Heap heap, final ProgramImage program, final CallDispatch calls) {
         this.process = process;
@@ -101,7 +108,7 @@ final class ObjectMaking {
     void newArray(final Frame frame, final IOperand.Type element, final int line) {
         final int length = Numbers.toInt(frame.pop());
         if (length < 0) {
-            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, "an array cannot have " + length + " places");
+            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, NEGATIVE_LENGTH.with(length));
         }
         final Values.Arr made = new Values.Arr(element.name().value(), length);
         this.heap.allocate(made, Heap.HEADER + (long) Heap.sizeOf(element.name().value()) * length, line);
@@ -126,6 +133,6 @@ final class ObjectMaking {
         if (this.heap.alive(value, line) instanceof Values.Arr array) {
             return array;
         }
-        throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no array here");
+        throw new Halt(Halt.Reason.NO_OBJECT, line, NO_ARRAY.text());
     }
 }

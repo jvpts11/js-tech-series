@@ -213,8 +213,8 @@ public final class RemoteExecutionGameTests {
                 .thenExecuteAfter(20, () -> {
                     helper.assertTrue(refused[0].state() == ILanguageProcess.State.HALTED,
                             "the program stops on the refusal; state " + refused[0].state());
-                    helper.assertTrue(refused[0].message().contains("does not take programs"),
-                            "and says why; got " + refused[0].message());
+                    helper.assertTrue(refused[0].message().english().contains("does not take programs"),
+                            "and says why; got " + refused[0].message().english());
                     helper.assertTrue(!refused[0].console().contains("never"), "nothing ran past it");
                 })
                 .thenSucceed();

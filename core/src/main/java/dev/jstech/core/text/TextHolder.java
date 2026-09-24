@@ -13,9 +13,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a class that declares sentences as {@code static final} {@link TextKey} fields, so the language generator
- * finds them and writes their English. A class that declares one without this is caught by the build, which checks
- * that every declared key reaches its mod's English file.
+ * Marks a class that declares sentences as {@code static final} {@link TextKey} fields, or an enum whose constants
+ * each carry one in a {@code TextKey} field, so the language generator finds them and writes their English. A class
+ * that declares one without this is caught by the build, which checks that every declared key reaches its mod's
+ * English file.
  *
  * <p>Every such class is loaded to be read, on a server as well, so it must be one a dedicated server can load. A
  * class that exists only on a client, a screen, keeps its sentences in a small class of constants beside it.

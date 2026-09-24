@@ -99,17 +99,16 @@ final class ProgramCalls {
 
     /**
      * Why a program could not be started, from this machine or, when a host is named, on that one. It goes into the
-     * program that asked, as what its halt says, so it is in the English the machine keeps.
+     * program that asked, as what its halt says.
      */
-    static String refusal(final String path, final String host, final ProgramLauncher.Launch launch) {
+    static Text refusal(final String path, final String host, final ProgramLauncher.Launch launch) {
         final String where = host.isEmpty() ? path : host;
-        final Text why = switch (launch.refusal()) {
+        return switch (launch.refusal()) {
             case NO_RUNNER -> ProgramService.NO_RUNNER.with(path);
             case NO_MEMORY -> ProgramService.NO_ROOM.with(where, launch.roomMb(), launch.freeMb());
             case UNREADABLE, NOT_STARTED -> host.isEmpty() ? launch.said()
                     : CliTexts.SAID_BY.with(host, launch.said());
         };
-        return why.english();
     }
 
     /** The priority a start asked for, as its third argument names it, or the default one when it names none. */
@@ -142,7 +141,7 @@ final class ProgramCalls {
         if (target instanceof Values.Obj handle && handle.get("Id") instanceof Integer id) {
             return id;
         }
-        throw new Halt(Halt.Reason.NO_OBJECT, line, NO_PROCESS.text().english());
+        throw new Halt(Halt.Reason.NO_OBJECT, line, NO_PROCESS.text());
     }
 
     /** The machine a handle's program is on: what its {@code Host} says, or this one when it says nothing. */

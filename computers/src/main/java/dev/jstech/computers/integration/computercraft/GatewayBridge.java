@@ -12,6 +12,7 @@ import dan200.computercraft.api.peripheral.IPeripheral;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.gateway.GatewayRefusedException;
 import dev.jstech.computers.gateway.IGatewayBridge;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -92,14 +93,14 @@ final class GatewayBridge implements IGatewayBridge {
             throws GatewayRefusedException {
         final IPeripheral found = element.peripherals().get(name);
         if (found == null) {
-            throw new GatewayRefusedException(
-                    "there is no " + name + " on this Gateway's wire");
+            throw new GatewayRefusedException(BridgeTexts.NOT_ON_WIRE.with(name));
         }
         try {
             return GatewayCalls.call(found, method, arguments);
         } catch (final LuaException refused) {
-            throw new GatewayRefusedException(
-                    refused.getMessage() == null ? name + "." + method + " failed" : refused.getMessage());
+            // What the peripheral said is its own words, in whatever language its mod wrote them in.
+            throw new GatewayRefusedException(refused.getMessage() == null
+                    ? BridgeTexts.CALL_FAILED.with(name + "." + method) : Text.literal(refused.getMessage()));
         }
     }
 

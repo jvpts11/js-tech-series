@@ -61,7 +61,7 @@ final class MachineCalls {
             return (call, target, arguments, line) -> {
                 final S reached = this.service.apply(services);
                 if (reached == null) {
-                    throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, CANNOT_REACH.with(this.id.owner()).english());
+                    throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, CANNOT_REACH.with(this.id.owner()));
                 }
                 return this.function.call(reached, call, target, arguments, line);
             };

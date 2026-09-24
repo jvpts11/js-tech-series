@@ -268,7 +268,8 @@ class ProcessTest {
         process.offerInput("twelve");
         process.step(PLENTY);
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("'twelve' is not a number"), process.message());
+        assertTrue(process.message().english().contains("'twelve' is not a number"),
+                String.valueOf(process.message()));
     }
 
     @Test
@@ -535,7 +536,7 @@ class ProcessTest {
                         int bad = 1 / zero;
                 """);
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("divided by zero"), process.message());
+        assertTrue(process.message().english().contains("divided by zero"), String.valueOf(process.message()));
         assertEquals("before", process.console().getFirst());
     }
 
@@ -546,8 +547,9 @@ class ProcessTest {
                         deep.Down(0);
                 """, ROOM);
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("calls went 1024 deep"), process.message());
-        assertTrue(process.message().contains("Down"), "it names the method being called: " + process.message());
+        assertTrue(process.message().english().contains("calls went 1024 deep"), String.valueOf(process.message()));
+        assertTrue(process.message().english().contains("Down"),
+                "it names the method being called: " + process.message());
     }
 
     @Test
@@ -574,7 +576,7 @@ class ProcessTest {
                         also.Add("late");
                 """);
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("disposed"), process.message());
+        assertTrue(process.message().english().contains("disposed"), String.valueOf(process.message()));
     }
 
     @Test
@@ -585,7 +587,7 @@ class ProcessTest {
                         names.Add("late");
                 """);
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("nothing here"), process.message());
+        assertTrue(process.message().english().contains("nothing here"), String.valueOf(process.message()));
     }
 
     @Test
@@ -603,8 +605,8 @@ class ProcessTest {
     void run_stopsWhenItAsksForMoreThanItHas() {
         final Process process = run("", "        int[] big = new int[10000];", 1024);
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("out of memory"), process.message());
-        assertTrue(process.message().contains("line "), process.message());
+        assertTrue(process.message().english().contains("out of memory"), String.valueOf(process.message()));
+        assertTrue(process.message().english().contains("line "), String.valueOf(process.message()));
     }
 
     @Test
@@ -895,8 +897,9 @@ class ProcessTest {
         process.step(PLENTY);
 
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().startsWith("the runtime could not carry this out"), process.message());
-        assertEquals(List.of(process.message()), process.console());
+        assertTrue(process.message().english().startsWith("the runtime could not carry this out"),
+                String.valueOf(process.message()));
+        assertEquals(List.of(process.message().english()), process.console());
     }
 
     @Test
@@ -908,7 +911,8 @@ class ProcessTest {
         process.step(PLENTY);
 
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().startsWith("the runtime could not carry this out"), process.message());
+        assertTrue(process.message().english().startsWith("the runtime could not carry this out"),
+                String.valueOf(process.message()));
         assertFalse(process.console().contains("never"));
     }
 }

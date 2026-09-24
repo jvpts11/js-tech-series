@@ -26,6 +26,7 @@ import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -401,8 +402,8 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         final String where = complaint.line() + ":" + complaint.column();
         g.drawString(ctx.font(), where, x + 2, y + 1, ctx.skin().dim(), false);
         final int textX = x + 2 + ctx.font().width("00:00") + 4;
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(complaint.message(), width - (textX - x) - 2),
-                textX, y + 1, 0xFFC0392B, false);
+        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(complaint.message()),
+                width - (textX - x) - 2), textX, y + 1, 0xFFC0392B, false);
     }
 
     private void onProblemPicked(final int index, final int button, final double mx, final double my) {

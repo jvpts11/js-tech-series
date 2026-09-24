@@ -126,7 +126,7 @@ final class GatewayCalls {
         chosen(bindings, name, (gateway, arguments, line) -> {
             final IGatewayBridge bridge = gateway.bridge();
             if (bridge == null) {
-                throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, NO_CC_SIDE.with(gateway.name()).english());
+                throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, NO_CC_SIDE.with(gateway.name()));
             }
             return function.call(gateway, bridge, arguments, line);
         }, parameters);
@@ -138,7 +138,7 @@ final class GatewayCalls {
         final NetworkGatewayBlockEntity gateway = gateways.pick(chosen);
         if (gateway == null) {
             throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, chosen.isEmpty()
-                    ? NO_GATEWAY.text().english() : NO_GATEWAY_CALLED.with(chosen).english());
+                    ? NO_GATEWAY.text() : NO_GATEWAY_CALLED.with(chosen));
         }
         return gateway;
     }
@@ -182,7 +182,7 @@ final class GatewayCalls {
             return answered;
         } catch (final GatewayRefusedException refused) {
             gateway.logged(PROGRAM, peripheral + "." + method, refused.getMessage(), GatewayLog.Tone.DENIED);
-            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, refused.getMessage());
+            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, refused.text());
         }
     }
 }

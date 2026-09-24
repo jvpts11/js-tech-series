@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.core.text.Text;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -60,16 +61,18 @@ class PrintfFormatTest {
 
     @Test
     void read_aLetterItDoesNotHaveIsNamedWithTheOnesItDoes() {
-        final String problem = PrintfFormat.read("%q").problem();
-        assertNotNull(problem);
+        final Text read = PrintfFormat.read("%q").problem();
+        assertNotNull(read);
+        final String problem = read.english();
         assertTrue(problem.contains("'%q'") && problem.contains("%d, %f, %s, %c"), problem);
     }
 
     @Test
     void read_aWidthOrAPrecisionIsSaidNotToBeHere() {
         for (final String format : List.of("%5d", "%.2f", "%-8s")) {
-            final String problem = PrintfFormat.read(format).problem();
-            assertNotNull(problem, format);
+            final Text read = PrintfFormat.read(format).problem();
+            assertNotNull(read, format);
+            final String problem = read.english();
             assertTrue(problem.contains("no widths or precisions"), problem);
         }
     }

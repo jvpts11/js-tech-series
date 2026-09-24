@@ -17,6 +17,9 @@ import dev.jstech.computers.sigma.ast.INode;
 import dev.jstech.computers.sigma.ast.IStmt;
 import dev.jstech.computers.sigma.ast.TypeRef;
 import dev.jstech.computers.sigma.lower.Lowerer;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,6 +37,7 @@ import java.util.TreeSet;
  * purpose: these hierarchies are sealed, so a node type added later stops this file compiling until somebody has
  * decided whether the subset has it.
  */
+@TextHolder
 public final class SubsetRules {
 
     /** The types the subset's library does not carry, whatever a program tries to name them for. */
@@ -53,6 +57,64 @@ public final class SubsetRules {
             "Time", Set.of("Tick", "Day"),
             "Computer", Set.of("Name", "RamMb", "Online"),
             "Script", Set.of("OnInit", "OnTick", "OnDestroy"));
+
+    /*
+     * What the subset does not have, and what to write instead, in pairs: the first fills "Sigma has no %s", the
+     * second the advice after it. A construct named by its keyword or a type by its name is not here, since those
+     * are code and read the same in every language.
+     */
+    private static final TextKey LIBRARY_NAMED = TextKey.of("jsc.sigma.subset_rules.library", "the '%s' library");
+    private static final TextKey LIBRARY_INSTEAD = TextKey.of("jsc.sigma.subset_rules.library_instead",
+            "everything Sigma has is in %s");
+    private static final TextKey LIBRARY_MEMBERS = TextKey.of("jsc.sigma.subset_rules.library_members",
+            "Sigma's %s has %s");
+    private static final TextKey INTERFACES = TextKey.of("jsc.sigma.subset_rules.interfaces", "interfaces");
+    private static final TextKey INTERFACES_INSTEAD = TextKey.of("jsc.sigma.subset_rules.interfaces_instead",
+            "write a class whose methods are virtual and stand on it instead");
+    private static final TextKey DELEGATES = TextKey.of("jsc.sigma.subset_rules.delegates", "delegates");
+    private static final TextKey DELEGATES_INSTEAD = TextKey.of("jsc.sigma.subset_rules.delegates_instead",
+            "call the method by name, or keep the object and call it through that");
+    private static final TextKey RECORDS = TextKey.of("jsc.sigma.subset_rules.records", "records");
+    private static final TextKey RECORDS_INSTEAD = TextKey.of("jsc.sigma.subset_rules.records_instead",
+            "write a struct with the same fields");
+    private static final TextKey ABSTRACT_CLASSES = TextKey.of("jsc.sigma.subset_rules.abstract_classes",
+            "abstract classes");
+    private static final TextKey ABSTRACT_CLASSES_INSTEAD = TextKey.of(
+            "jsc.sigma.subset_rules.abstract_classes_instead",
+            "write a class with virtual methods that do nothing, and stand on that");
+    private static final TextKey EVENTS = TextKey.of("jsc.sigma.subset_rules.events", "events");
+    private static final TextKey EVENTS_INSTEAD = TextKey.of("jsc.sigma.subset_rules.events_instead",
+            "keep the object that wants telling and call a method on it");
+    private static final TextKey PROPERTIES = TextKey.of("jsc.sigma.subset_rules.properties", "properties");
+    private static final TextKey PROPERTIES_INSTEAD = TextKey.of("jsc.sigma.subset_rules.properties_instead",
+            "write a field, or a method that gives the value back");
+    private static final TextKey ABSTRACT_METHODS = TextKey.of("jsc.sigma.subset_rules.abstract_methods",
+            "abstract methods");
+    private static final TextKey ABSTRACT_METHODS_INSTEAD = TextKey.of(
+            "jsc.sigma.subset_rules.abstract_methods_instead", "give it a body that does nothing and write virtual");
+    private static final TextKey TYPE_ARGUMENTS = TextKey.of("jsc.sigma.subset_rules.type_arguments",
+            "types with arguments in angle brackets");
+    private static final TextKey TYPE_ARGUMENTS_INSTEAD = TextKey.of("jsc.sigma.subset_rules.type_arguments_instead",
+            "write an array, or a class that holds exactly what you need");
+    private static final TextKey LIST_INSTEAD = TextKey.of("jsc.sigma.subset_rules.list_instead",
+            "use an array, and a count of your own beside it");
+    private static final TextKey MAP_INSTEAD = TextKey.of("jsc.sigma.subset_rules.map_instead",
+            "use two arrays, or walk one array looking for the key");
+    private static final TextKey THREAD_INSTEAD = TextKey.of("jsc.sigma.subset_rules.thread_instead",
+            "these machines run one thing at a time");
+    private static final TextKey VAR_INSTEAD = TextKey.of("jsc.sigma.subset_rules.var_instead",
+            "write the type out");
+    private static final TextKey FOREACH_INSTEAD = TextKey.of("jsc.sigma.subset_rules.foreach_instead",
+            "write a for over the array's Length");
+    private static final TextKey LOCK_INSTEAD = TextKey.of("jsc.sigma.subset_rules.lock_instead",
+            "these machines run one thing at a time, so nothing is being raced for");
+    private static final TextKey LAMBDAS = TextKey.of("jsc.sigma.subset_rules.lambdas", "lambdas");
+    private static final TextKey LAMBDAS_INSTEAD = TextKey.of("jsc.sigma.subset_rules.lambdas_instead",
+            "write a method and call it, since there is nothing here that takes code as a value");
+    private static final TextKey INTERPOLATION = TextKey.of("jsc.sigma.subset_rules.interpolation",
+            "strings with holes in them");
+    private static final TextKey INTERPOLATION_INSTEAD = TextKey.of("jsc.sigma.subset_rules.interpolation_instead",
+            "add the pieces together with +");
 
     private final DiagnosticBag diagnostics;
 
@@ -90,8 +152,7 @@ public final class SubsetRules {
                 final String reached = using.name();
                 if (reached.equals("System") || reached.startsWith("System.")) {
                     this.diagnostics.error(using.line(), using.column(), SigmaError.NOT_IN_THE_SUBSET,
-                            "the '" + reached + "' library",
-                            "everything Sigma has is in " + BuiltIns.SUBSET_LIBRARY);
+                            LIBRARY_NAMED.with(reached), LIBRARY_INSTEAD.with(BuiltIns.SUBSET_LIBRARY));
                 }
             }
             for (final IDecl.ITypeDecl type : unit.types()) {
@@ -102,10 +163,8 @@ public final class SubsetRules {
 
     private void type(final IDecl.ITypeDecl declaration) {
         switch (declaration) {
-            case IDecl.InterfaceDecl face -> this.refuse(face, "interfaces",
-                    "write a class whose methods are virtual and stand on it instead");
-            case IDecl.DelegateDecl delegate -> this.refuse(delegate, "delegates",
-                    "call the method by name, or keep the object and call it through that");
+            case IDecl.InterfaceDecl face -> this.refuse(face, INTERFACES.text(), INTERFACES_INSTEAD);
+            case IDecl.DelegateDecl delegate -> this.refuse(delegate, DELEGATES.text(), DELEGATES_INSTEAD);
             case IDecl.EnumDecl ignored -> { } // an enum is a name for a number, which those machines had
             case IDecl.ClassDecl klass -> this.classDecl(klass);
         }
@@ -113,12 +172,11 @@ public final class SubsetRules {
 
     private void classDecl(final IDecl.ClassDecl klass) {
         if (klass.flavour() == IDecl.ClassDecl.Flavour.RECORD) {
-            this.refuse(klass, "records", "write a struct with the same fields");
+            this.refuse(klass, RECORDS.text(), RECORDS_INSTEAD);
             return;
         }
         if (klass.modifiers().contains(IDecl.Modifier.ABSTRACT)) {
-            this.refuse(klass, "abstract classes",
-                    "write a class with virtual methods that do nothing, and stand on that");
+            this.refuse(klass, ABSTRACT_CLASSES.text(), ABSTRACT_CLASSES_INSTEAD);
         }
         for (final IDecl.IMemberDecl member : klass.members()) {
             this.member(member);
@@ -127,10 +185,8 @@ public final class SubsetRules {
 
     private void member(final IDecl.IMemberDecl member) {
         switch (member) {
-            case IDecl.EventDecl event -> this.refuse(event, "events",
-                    "keep the object that wants telling and call a method on it");
-            case IDecl.PropertyDecl property -> this.refuse(property, "properties",
-                    "write a field, or a method that gives the value back");
+            case IDecl.EventDecl event -> this.refuse(event, EVENTS.text(), EVENTS_INSTEAD);
+            case IDecl.PropertyDecl property -> this.refuse(property, PROPERTIES.text(), PROPERTIES_INSTEAD);
             case IDecl.FieldDecl field -> this.typeRef(field.type());
             case IDecl.MethodDecl method -> this.method(method);
             case IDecl.ConstructorDecl constructor -> {
@@ -145,7 +201,7 @@ public final class SubsetRules {
 
     private void method(final IDecl.MethodDecl method) {
         if (method.modifiers().contains(IDecl.Modifier.ABSTRACT)) {
-            this.refuse(method, "abstract methods", "give it a body that does nothing and write virtual");
+            this.refuse(method, ABSTRACT_METHODS.text(), ABSTRACT_METHODS_INSTEAD);
         }
         this.typeRef(method.returnType());
         for (final IDecl.Parameter parameter : method.parameters()) {
@@ -160,16 +216,15 @@ public final class SubsetRules {
             return;
         }
         if (!type.arguments().isEmpty()) {
-            this.refuse(type, "types with arguments in angle brackets",
-                    "write an array, or a class that holds exactly what you need");
+            this.refuse(type, TYPE_ARGUMENTS.text(), TYPE_ARGUMENTS_INSTEAD);
         } else if (ABSENT_TYPES.contains(type.name())) {
-            this.refuse(type, "'" + type.name() + "'", switch (type.name()) {
-                case "List" -> "use an array, and a count of your own beside it";
-                case "Map" -> "use two arrays, or walk one array looking for the key";
-                default -> "these machines run one thing at a time";
+            this.refuse(type, Text.literal("'" + type.name() + "'"), switch (type.name()) {
+                case "List" -> LIST_INSTEAD;
+                case "Map" -> MAP_INSTEAD;
+                default -> THREAD_INSTEAD;
             });
         } else if ("var".equals(type.name())) {
-            this.refuse(type, "var", "write the type out");
+            this.refuse(type, Text.literal("var"), VAR_INSTEAD);
         }
         for (final TypeRef argument : type.arguments()) {
             this.typeRef(argument);
@@ -187,12 +242,12 @@ public final class SubsetRules {
     private void statement(final IStmt statement) {
         switch (statement) {
             case IStmt.ForEach each -> {
-                this.refuse(each, "foreach", "write a for over the array's Length");
+                this.refuse(each, Text.literal("foreach"), FOREACH_INSTEAD);
                 this.expression(each.source());
                 this.statement(each.body());
             }
             case IStmt.Lock held -> {
-                this.refuse(held, "lock", "these machines run one thing at a time, so nothing is being raced for");
+                this.refuse(held, Text.literal("lock"), LOCK_INSTEAD);
                 this.expression(held.target());
                 this.statement(held.body());
             }
@@ -247,8 +302,7 @@ public final class SubsetRules {
     private void expression(final IExpr expression) {
         switch (expression) {
             case IExpr.Lambda lambda -> {
-                this.refuse(lambda, "lambdas",
-                        "write a method and call it, since there is nothing here that takes code as a value");
+                this.refuse(lambda, LAMBDAS.text(), LAMBDAS_INSTEAD);
                 this.expression(lambda.body());
                 this.block(lambda.block());
             }
@@ -296,7 +350,7 @@ public final class SubsetRules {
             }
             case IExpr.OutArgument out -> this.typeRef(out.type());
             case IExpr.Interpolation written -> {
-                this.refuse(written, "strings with holes in them", "add the pieces together with +");
+                this.refuse(written, INTERPOLATION.text(), INTERPOLATION_INSTEAD);
                 for (final IExpr hole : Lowerer.holesOf(written)) {
                     this.expression(hole);
                 }
@@ -330,8 +384,7 @@ public final class SubsetRules {
          * using at all. It is caught at the root of the chain, where the namespace is still a name of its own.
          */
         if (root(member) instanceof IExpr.Name first && "System".equals(first.identifier())) {
-            this.refuse(first, "the 'System' library",
-                    "everything Sigma has is in " + BuiltIns.SUBSET_LIBRARY);
+            this.refuse(first, LIBRARY_NAMED.with("System"), LIBRARY_INSTEAD.with(BuiltIns.SUBSET_LIBRARY));
             return;
         }
         if (!(member.target() instanceof IExpr.Name owner)) {
@@ -339,9 +392,8 @@ public final class SubsetRules {
         }
         final Set<String> offered = LIBRARY.get(owner.identifier());
         if (offered != null && !offered.contains(member.name())) {
-            this.refuse(member, "'" + owner.identifier() + "." + member.name() + "'",
-                    "Sigma's " + owner.identifier() + " has "
-                            + String.join(", ", new TreeSet<>(offered)));
+            this.refuse(member, Text.literal("'" + owner.identifier() + "." + member.name() + "'"),
+                    LIBRARY_MEMBERS.with(owner.identifier(), String.join(", ", new TreeSet<>(offered))));
         }
     }
 
@@ -354,7 +406,12 @@ public final class SubsetRules {
         return at;
     }
 
-    private void refuse(final INode where, final String what, final String instead) {
+    private void refuse(final INode where, final Text what, final TextKey instead) {
+        this.refuse(where, what, instead.text());
+    }
+
+    /** Reports {@code what} as missing from the subset: a phrase to translate, or code marked as data. */
+    private void refuse(final INode where, final Text what, final Text instead) {
         this.diagnostics.error(where.line(), where.column(), SigmaError.NOT_IN_THE_SUBSET, what, instead);
     }
 }

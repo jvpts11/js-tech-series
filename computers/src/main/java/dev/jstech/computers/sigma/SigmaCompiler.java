@@ -46,14 +46,17 @@ public final class SigmaCompiler {
             return this.assembly != null && this.diagnostics.stream().noneMatch(Diagnostic::isError);
         }
 
-        /** The messages as the console prints them, one per line, plus a note if any were dropped. */
+        /**
+         * The messages one per line, plus a note if any were dropped, in English: the form they take as data, in a
+         * file or a log.
+         */
         public List<String> lines() {
             final List<String> lines = new ArrayList<>();
             for (final Diagnostic diagnostic : this.diagnostics) {
                 lines.add(diagnostic.format());
             }
             if (this.truncated) {
-                lines.add("too many errors; the rest were not reported");
+                lines.add(DiagnosticBag.TOO_MANY.text().english());
             }
             return lines;
         }

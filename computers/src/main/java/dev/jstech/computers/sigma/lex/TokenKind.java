@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.sigma.lex;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,18 +19,19 @@ import java.util.Map;
  *
  * <p>The keyword set is closed on purpose: a word that is not here is an identifier, so a program
  * never stops compiling because a later version of the language claimed one of the player's names.
- * Each kind carries how it is written, which is what a diagnostic quotes back.
+ * Each kind carries how it is written, which is what a diagnostic quotes back. A kind that has no one
+ * spelling, a number or a name, is described instead, in words read in the player's language.
  */
 public enum TokenKind {
 
-    INT_LITERAL("an integer"),
-    LONG_LITERAL("a long integer"),
-    FLOAT_LITERAL("a float"),
-    DOUBLE_LITERAL("a double"),
-    STRING_LITERAL("a string"),
-    INTERPOLATED_STRING("an interpolated string"),
-    CHAR_LITERAL("a character"),
-    IDENTIFIER("a name"),
+    INT_LITERAL(Described.INT_LITERAL),
+    LONG_LITERAL(Described.LONG_LITERAL),
+    FLOAT_LITERAL(Described.FLOAT_LITERAL),
+    DOUBLE_LITERAL(Described.DOUBLE_LITERAL),
+    STRING_LITERAL(Described.STRING_LITERAL),
+    INTERPOLATED_STRING(Described.INTERPOLATED_STRING),
+    CHAR_LITERAL(Described.CHAR_LITERAL),
+    IDENTIFIER(Described.IDENTIFIER),
 
     NAMESPACE("namespace", true),
     USING("using", true),
@@ -128,7 +132,7 @@ public enum TokenKind {
     SHIFT_LEFT("<<"),
     SHIFT_RIGHT(">>"),
 
-    END_OF_FILE("the end of the file");
+    END_OF_FILE(Described.END_OF_FILE);
 
     private static final Map<String, TokenKind> KEYWORDS;
 
@@ -145,6 +149,13 @@ public enum TokenKind {
     private final String text;
     private final boolean keyword;
 
+    /*
+     * What a kind with no one spelling is called, or null for one that is spelled. Kept as text and not as its key:
+     * the sentences are all declared in Described, and a key held by only some of the constants would leave the
+     * language generator a constant with none to read.
+     */
+    private final Text description;
+
     TokenKind(final String text) {
         this(text, false);
     }
@@ -152,6 +163,13 @@ public enum TokenKind {
     TokenKind(final String text, final boolean keyword) {
         this.text = text;
         this.keyword = keyword;
+        this.description = null;
+    }
+
+    TokenKind(final TextKey description) {
+        this.text = description.english();
+        this.keyword = false;
+        this.description = description.text();
     }
 
     /** The kind of the reserved word spelled {@code word}, or {@code null} if it is a plain name. */
@@ -159,7 +177,7 @@ public enum TokenKind {
         return KEYWORDS.get(word);
     }
 
-    /** How this kind is written, for the punctuation and the keywords; a description for the rest. */
+    /** How this kind is written, for the punctuation and the keywords; the English description for the rest. */
     public String text() {
         return this.text;
     }
@@ -169,8 +187,27 @@ public enum TokenKind {
         return this.keyword;
     }
 
-    /** How a diagnostic names this kind: quoted when it has one spelling, plain when it is a class. */
-    public String describe() {
-        return this.keyword || !Character.isLetter(this.text.charAt(0)) ? "'" + this.text + "'" : this.text;
+    /** How a diagnostic names this kind: quoted when it has one spelling, described when it is a class. */
+    public Text describe() {
+        return this.description != null ? this.description : Text.literal("'" + this.text + "'");
+    }
+
+    /** What the kinds with no one spelling are called in a diagnostic, as in "expected a name but found ...". */
+    @TextHolder
+    private static final class Described {
+
+        static final TextKey INT_LITERAL = TextKey.of("jsc.sigma.token_kind.int_literal", "an integer");
+        static final TextKey LONG_LITERAL = TextKey.of("jsc.sigma.token_kind.long_literal", "a long integer");
+        static final TextKey FLOAT_LITERAL = TextKey.of("jsc.sigma.token_kind.float_literal", "a float");
+        static final TextKey DOUBLE_LITERAL = TextKey.of("jsc.sigma.token_kind.double_literal", "a double");
+        static final TextKey STRING_LITERAL = TextKey.of("jsc.sigma.token_kind.string_literal", "a string");
+        static final TextKey INTERPOLATED_STRING = TextKey.of("jsc.sigma.token_kind.interpolated_string",
+                "an interpolated string");
+        static final TextKey CHAR_LITERAL = TextKey.of("jsc.sigma.token_kind.char_literal", "a character");
+        static final TextKey IDENTIFIER = TextKey.of("jsc.sigma.token_kind.identifier", "a name");
+        static final TextKey END_OF_FILE = TextKey.of("jsc.sigma.token_kind.end_of_file", "the end of the file");
+
+        private Described() {
+        }
     }
 }

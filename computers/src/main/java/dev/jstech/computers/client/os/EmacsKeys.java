@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.os.edit.EmacsChord;
 import dev.jstech.core.client.gui.logic.TextDocument;
 import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
 import org.lwjgl.glfw.GLFW;
@@ -291,7 +292,7 @@ public final class EmacsKeys implements TtyEditor.IKeys {
             out.add("Compilation finished");
         } else {
             for (final IProgrammingLanguage.Complaint complaint : result.complaints()) {
-                out.add(complaint.format());
+                out.add(GameText.resolve(complaint.text()));
             }
             out.add("Compilation exited abnormally with " + result.complaints().size() + " error(s)");
         }

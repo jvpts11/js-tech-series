@@ -250,7 +250,7 @@ public final class MachinePrograms {
     }
 
     /** What the held program has printed since this was last asked, and never the same line twice. */
-    public List<String> unseen() {
+    public List<Text> unseen() {
         return this.focus.unseen();
     }
 
@@ -303,9 +303,8 @@ public final class MachinePrograms {
                     return Started.failed(DOES_NOT_COMPILE.with(name));
                 }
                 // The compiler's own line is quoted as it said it; how many more there are is the machine's to say.
-                final String first = complaints.getFirst().format();
-                return Started.failed(complaints.size() > 1 ? AND_MORE.with(first, complaints.size() - 1)
-                        : Text.literal(first));
+                final Text first = complaints.getFirst().text();
+                return Started.failed(complaints.size() > 1 ? AND_MORE.with(first, complaints.size() - 1) : first);
             }
             runnable = built.binary();
         }
@@ -319,7 +318,7 @@ public final class MachinePrograms {
                 // A listing that says what is wrong with it is worth more than being told it is not one.
                 final var problem = MachineListing.firstProblem(runnable, machine);
                 return Started.failed(CliTexts.SAID_BY.with(name, problem == null
-                        ? NOT_A_LISTING.with(MachineListing.LABEL) : Text.literal(problem.format())));
+                        ? NOT_A_LISTING.with(MachineListing.LABEL) : problem.text()));
             }
         } else {
             final HostedView view = new HostedView(machine, heapBytes);

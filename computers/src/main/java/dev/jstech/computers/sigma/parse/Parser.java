@@ -156,7 +156,8 @@ public final class Parser {
         final StringBuilder name = new StringBuilder();
         final Token first = this.cursor.peek();
         if (first.kind() != TokenKind.IDENTIFIER) {
-            this.diagnostics.error(first.line(), first.column(), SigmaError.EXPECTED_TOKEN, "a name", first.describe());
+            this.diagnostics.error(first.line(), first.column(), SigmaError.EXPECTED_TOKEN,
+                    TokenKind.IDENTIFIER.describe(), first.describe());
             return "";
         }
         name.append(this.cursor.advance().text());

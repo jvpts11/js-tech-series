@@ -267,7 +267,7 @@ class FieldAccessTest {
         final Process process = run(IHost.still(), "        string name = Computer.Name;");
 
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("Computer"), process.message());
+        assertTrue(process.message().english().contains("Computer"), String.valueOf(process.message()));
     }
 
     @Test

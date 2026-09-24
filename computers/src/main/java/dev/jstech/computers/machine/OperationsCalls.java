@@ -69,7 +69,7 @@ final class OperationsCalls {
         MachineCalls.bind(bindings, MachineServices::operations, "Operations", name,
                 (ops, call, target, arguments, line) -> {
                     if (!ops.onNetwork()) {
-                        throw new Halt(Halt.Reason.NO_NETWORK, line, NO_NETWORK.text().english());
+                        throw new Halt(Halt.Reason.NO_NETWORK, line, NO_NETWORK.text());
                     }
                     return function.call(ops, call, target, arguments, line);
                 }, parameters);

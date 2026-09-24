@@ -11,6 +11,9 @@ import dev.jstech.computers.vm.listing.Shape;
 import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -32,6 +35,7 @@ import java.util.function.Predicate;
  * <p>Nothing it does reaches outside itself except through the console it writes to and the host it
  * asks the time of, so a whole program can be run and read back with no world around it.
  */
+@TextHolder
 public final class Process {
 
     /** Where a process is up to. A snapshot writes it by its name. */
@@ -62,6 +66,20 @@ public final class Process {
 
     /** What starting a thread costs beyond the call itself: a stack of its own is not a small thing. */
     private static final int START_COST = SigmaCosts.THREAD_START;
+
+    private static final TextKey FAULT = TextKey.of("jsc.vm.process.fault",
+            "the runtime could not carry this out (%s)");
+    private static final TextKey NO_PROCESS = TextKey.of("jsc.vm.process.no_process", "there is no process here");
+    private static final TextKey NOTHING_TO_RUN = TextKey.of("jsc.vm.process.nothing_to_run", "%s has no %s to run");
+    private static final TextKey NO_DESKTOP = TextKey.of("jsc.vm.process.no_desktop",
+            "this computer has no desktop to open a window on");
+    private static final TextKey NO_THREAD_BODY = TextKey.of("jsc.vm.process.no_thread_body",
+            "there is no body to run on the thread");
+    private static final TextKey NO_THREAD_METHOD = TextKey.of("jsc.vm.process.no_thread_method",
+            "there is no %s to run on the thread");
+    private static final TextKey NO_THREAD = TextKey.of("jsc.vm.process.no_thread", "there is no thread here");
+    private static final TextKey NO_WATCH_HANDLER = TextKey.of("jsc.vm.process.no_watch_handler",
+            "there is no handler to call for %s");
 
     private final ProgramImage program;
     private final Heap heap;
@@ -281,14 +299,19 @@ public final class Process {
         return this.program;
     }
 
-    /** What it said when it stopped, or null while it is still going. */
-    public String message() {
+    /** What it was told when it stopped, or nothing while it is still going. */
+    public Text message() {
         return this.identity.message();
     }
 
-    /** What it has written to its own console. */
+    /** What it has written to its own console, in English, as a program reads it back. */
     public List<String> console() {
         return this.console.lines();
+    }
+
+    /** The same lines as a terminal shows them, with what the runtime said in its player's words. */
+    public List<Text> consoleText() {
+        return this.console.texts();
     }
 
     /** How many lines it has written since it started, the ones no longer kept included. */
@@ -415,7 +438,7 @@ public final class Process {
         if (this.heap.alive(token, line) instanceof Values.Obj object && object.get("Id") instanceof Integer id) {
             return id;
         }
-        throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no process here");
+        throw new Halt(Halt.Reason.NO_OBJECT, line, NO_PROCESS.text());
     }
 
     /** The machine a process handle points at: what its {@code Host} says, or this one when it says nothing. */
@@ -489,7 +512,7 @@ public final class Process {
     public void beginStatic(final String owner, final String method) {
         final MethodImage found = this.program.method(owner, method, List.of());
         if (found == null) {
-            this.halt(new Halt(Halt.Reason.NO_SUCH_MEMBER, 0, owner + " has no " + method + " to run"));
+            this.halt(new Halt(Halt.Reason.NO_SUCH_MEMBER, 0, NOTHING_TO_RUN.with(owner, method)));
             return;
         }
         this.waiting.add(new Frame(found, null), 0);
@@ -512,8 +535,7 @@ public final class Process {
     public void begin(final Values.Obj self, final String method) {
         final MethodImage found = this.program.method(self.type(), method, List.of());
         if (found == null) {
-            this.halt(new Halt(Halt.Reason.NO_SUCH_MEMBER, 0,
-                    self.type() + " has no " + method + " to run"));
+            this.halt(new Halt(Halt.Reason.NO_SUCH_MEMBER, 0, NOTHING_TO_RUN.with(self.type(), method)));
             return;
         }
         this.waiting.add(new Frame(found, self), 0);
@@ -526,8 +548,7 @@ public final class Process {
     public void beginFirst(final Values.Obj self, final String method) {
         final MethodImage found = this.program.method(self.type(), method, List.of());
         if (found == null) {
-            this.halt(new Halt(Halt.Reason.NO_SUCH_MEMBER, 0,
-                    self.type() + " has no " + method + " to run"));
+            this.halt(new Halt(Halt.Reason.NO_SUCH_MEMBER, 0, NOTHING_TO_RUN.with(self.type(), method)));
             return;
         }
         this.waiting.addFirst(new Frame(found, self), 0);
@@ -653,8 +674,7 @@ public final class Process {
      */
     private Halt fault(final RuntimeException cause, final int line) {
         this.host.fault(this.name(), line, cause);
-        return new Halt(Halt.Reason.FAULT, line,
-                "the runtime could not carry this out (" + cause.getClass().getSimpleName() + ")");
+        return new Halt(Halt.Reason.FAULT, line, FAULT.with(cause.getClass().getSimpleName()));
     }
 
     /**
@@ -772,7 +792,7 @@ public final class Process {
      */
     void openWindow(final Values.Obj window, final int line) {
         if (!this.host.hasDesktop()) {
-            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "this computer has no desktop to open a window on");
+            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, NO_DESKTOP.text());
         }
         this.windows.open(window, line);
         this.host.reached(ProgramMilestone.WINDOW_OPENED);
@@ -831,14 +851,13 @@ public final class Process {
     /** Starts a thread on the body a delegate holds, and hands back what the program holds it by. */
     Values.Obj spawn(final Object body, final int line) {
         if (!(body instanceof Values.DelegateValue delegate) || delegate.chain().isEmpty()) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no body to run on the thread");
+            throw new Halt(Halt.Reason.NO_OBJECT, line, NO_THREAD_BODY.text());
         }
         final Values.Bound bound = delegate.chain().getFirst();
         final MethodImage method =
                 this.program.method(bound.owner(), bound.method(), bound.parameters());
         if (method == null || !method.hasCode()) {
-            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line,
-                    "there is no " + bound.method() + " to run on the thread");
+            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, NO_THREAD_METHOD.with(bound.method()));
         }
         final ProgramThread made = this.scheduler.start();
         this.host.reached(ProgramMilestone.THREAD_STARTED);
@@ -886,7 +905,7 @@ public final class Process {
         if (this.heap.alive(token, line) instanceof Values.Obj object && object.get("Id") instanceof Integer id) {
             return id;
         }
-        throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no thread here");
+        throw new Halt(Halt.Reason.NO_OBJECT, line, NO_THREAD.text());
     }
 
     /**
@@ -965,7 +984,7 @@ public final class Process {
     public Values.Obj watch(final String item, final Watching kind, final long threshold,
                             final Values.DelegateValue handler, final int line) {
         if (handler == null || handler.chain().isEmpty()) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no handler to call for " + item);
+            throw new Halt(Halt.Reason.NO_OBJECT, line, NO_WATCH_HANDLER.with(item));
         }
         final Values.Obj token = new Values.Obj("Subscription");
         token.set("Id", this.watches.nextId());
@@ -1017,8 +1036,8 @@ public final class Process {
     }
 
     void halt(final Halt halt) {
-        this.identity.halt(halt.getMessage());
-        this.console.write(halt.getMessage());
+        this.identity.halt(halt.text());
+        this.console.write(halt.text());
         if (halt.reason() == Halt.Reason.STACK_DEPTH) {
             this.host.reached(ProgramMilestone.STACK_OVERFLOW);
         } else if (halt.reason() == Halt.Reason.DIVIDE_BY_ZERO) {

@@ -125,7 +125,7 @@ final class ProcessSnapshotReader {
         process.input().restore(shot.input());
         callbacks.startFrom(shot.callbacks().dropped());
         identity.restore(identityShot.args(), identityShot.machineId(), identityShot.spent(), identityShot.exited(),
-                identityShot.exitCode(), halted, identityShot.message().isEmpty() ? null : identityShot.message());
+                identityShot.exitCode(), halted, identityShot.message());
         // The windows the program had open come back open, with everything they were showing.
         final Snapshot.WindowsShot windowsShot = shot.windows();
         final ProgramWindows windows = process.windows0();

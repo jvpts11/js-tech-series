@@ -328,7 +328,7 @@ final class ExpressionChecker {
         if (wanted == null || wanted.kind() != NamedType.Kind.DELEGATE || wanted.invoke() == null) {
             if (!this.scope.rules().isError(expected)) {
                 this.scope.report(lambda.line(), lambda.column(), SigmaError.LAMBDA_SHAPE,
-                        expected == null ? "nothing" : expected.describe());
+                        expected == null ? StatementChecker.NOTHING : expected.describe());
             }
             return ITypeSymbol.Special.ERROR;
         }

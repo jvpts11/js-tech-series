@@ -52,7 +52,7 @@ final class MainframeCalls {
                                   final String... parameters) {
         mainframe(bindings, name, (stats, call, target, arguments, line) -> {
             if (!stats.onNetwork()) {
-                throw new Halt(Halt.Reason.NO_NETWORK, line, MachineCalls.NOT_ON_NETWORK.text().english());
+                throw new Halt(Halt.Reason.NO_NETWORK, line, MachineCalls.NOT_ON_NETWORK.text());
             }
             return function.call(stats, call, target, arguments, line);
         }, parameters);

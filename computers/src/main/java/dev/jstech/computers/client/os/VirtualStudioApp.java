@@ -38,6 +38,7 @@ import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -781,8 +782,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         final int fileX = x + width - COL_LINE_W - COL_FILE_W;
         final int descriptionW = fileX - (x + 3 + COL_CODE_W) - 4;
         g.drawString(ctx.font(), row.complaint().code(), x + 3, y + 1, 0xFFC0392B, false);
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(row.complaint().message(), descriptionW),
-                x + 3 + COL_CODE_W, y + 1, ctx.skin().listRowText(selected), false);
+        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(row.complaint().message()),
+                descriptionW), x + 3 + COL_CODE_W, y + 1, ctx.skin().listRowText(selected), false);
         g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(row.name(), COL_FILE_W - 4), fileX, y + 1,
                 ctx.skin().dim(), false);
         g.drawString(ctx.font(), String.valueOf(row.complaint().line()), x + width - COL_LINE_W, y + 1,
@@ -1001,7 +1002,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             return;
         }
         for (final IProgrammingLanguage.Complaint complaint : result.complaints()) {
-            print(what + ": " + complaint.format(), Tone.FAILED);
+            print(what + ": " + GameText.resolve(complaint.text()), Tone.FAILED);
             // The complaint names the source as the compiler saw it; the row needs the path on the disk.
             String path = complaint.file();
             for (final Map.Entry<String, String> entry : names.entrySet()) {
@@ -2750,7 +2751,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             final List<ProblemReport.Row> rows = errorRows();
             if (index >= 0 && index < rows.size()) {
                 final ProblemReport.Row row = rows.get(index);
-                g.renderTooltip(font, Component.literal(row.complaint().code() + ": " + row.complaint().message()
+                g.renderTooltip(font, Component.literal(row.complaint().code() + ": "
+                        + GameText.resolve(row.complaint().message())
                         + "  (" + row.name() + ", line " + row.complaint().line() + ")"), mouseX, mouseY);
                 return;
             }

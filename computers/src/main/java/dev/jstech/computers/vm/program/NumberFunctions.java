@@ -11,9 +11,12 @@ import dev.jstech.computers.vm.system.IPureContext;
 import dev.jstech.computers.vm.system.IPureFunction;
 import dev.jstech.computers.vm.system.IntrinsicRegistry;
 import dev.jstech.computers.vm.system.IntrinsicTypes;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.Locale;
 
 /** What the language does with numbers: the arithmetic of Math, reading a value out of text, and counting ticks. */
+@TextHolder
 final class NumberFunctions {
 
     private static final String MATH = "Math";
@@ -22,6 +25,10 @@ final class NumberFunctions {
     private static final String WHOLE = "int";
     private static final String REAL = "double";
     private static final String FLAG = "bool";
+    private static final TextKey NOT_A_NUMBER = TextKey.of("jsc.vm.number_functions.not_a_number",
+            "'%s' is not a number");
+    private static final TextKey NOT_A_TRUTH = TextKey.of("jsc.vm.number_functions.not_a_truth",
+            "'%s' is not true or false");
 
     private NumberFunctions() {
     }
@@ -86,10 +93,10 @@ final class NumberFunctions {
                 case "ToLong" -> Long.parseLong(text.trim());
                 case "ToFloat" -> Float.parseFloat(text.trim());
                 case "ToDouble" -> Double.parseDouble(text.trim());
-                default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "Convert has no " + name);
+                default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, FieldAccess.HAS_NO.with(CONVERT, name));
             };
         } catch (final NumberFormatException notANumber) {
-            throw new Halt(Halt.Reason.BAD_CAST, line, "'" + text + "' is not a number");
+            throw new Halt(Halt.Reason.BAD_CAST, line, NOT_A_NUMBER.with(text));
         }
     }
 
@@ -98,7 +105,7 @@ final class NumberFunctions {
         return switch (text.trim().toLowerCase(Locale.ROOT)) {
             case "true", "yes", "y", "on", "1" -> true;
             case "false", "no", "n", "off", "0" -> false;
-            default -> throw new Halt(Halt.Reason.BAD_CAST, line, "'" + text + "' is not true or false");
+            default -> throw new Halt(Halt.Reason.BAD_CAST, line, NOT_A_TRUTH.with(text));
         };
     }
 

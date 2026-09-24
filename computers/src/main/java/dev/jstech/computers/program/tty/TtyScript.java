@@ -8,6 +8,8 @@
 package dev.jstech.computers.program.tty;
 
 import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
@@ -146,6 +148,16 @@ public final class TtyScript {
 
         public Builder say(final String text) {
             return this.say(CliLine.plain(text));
+        }
+
+        /** A line of the tool's own words, read in the player's language. */
+        public Builder say(final Text text) {
+            return this.say(CliLine.plain(text));
+        }
+
+        /** A sentence of the tool's own with nothing put into it. */
+        public Builder say(final TextKey key) {
+            return this.say(CliLine.plain(key.text()));
         }
 
         /** Several lines at once, which is a tool that had them all ready. */

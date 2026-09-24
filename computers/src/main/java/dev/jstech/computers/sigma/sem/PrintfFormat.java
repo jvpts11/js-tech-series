@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.sigma.sem;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,27 +26,40 @@ import java.util.List;
  * out where it is used. What comes of it is pieces to be joined, so a line printed this way is the very line
  * somebody adding the pieces together by hand would have written.
  */
+@TextHolder
 public final class PrintfFormat {
+
+    /*
+     * What is wrong with a format that does not read. A percent sign the player is meant to see is written
+     * doubled, since a single one would be taken for a place an argument goes.
+     */
+    private static final TextKey ENDS_ON_PERCENT = TextKey.of("jsc.sigma.printf_format.ends_on_percent",
+            "the format ends on a '%%' with no letter after it");
+    private static final TextKey NO_WIDTHS = TextKey.of("jsc.sigma.printf_format.no_widths",
+            "there are no widths or precisions here; write %%d, %%f, %%s, %%c or %%%%");
+    private static final TextKey NO_SUCH_HOLE = TextKey.of("jsc.sigma.printf_format.no_such_hole",
+            "'%%%s' is no hole this printf has; there is %%d, %%f, %%s, %%c and %%%%");
 
     private PrintfFormat() {
     }
 
     /** What a hole takes. */
+    @TextHolder
     public enum Wants {
-        WHOLE_NUMBER("a whole number"),
-        FRACTION("a number"),
-        TEXT("text"),
-        CHARACTER("a character");
+        WHOLE_NUMBER(TextKey.of("jsc.sigma.printf_format.whole_number", "a whole number")),
+        FRACTION(TextKey.of("jsc.sigma.printf_format.fraction", "a number")),
+        TEXT(TextKey.of("jsc.sigma.printf_format.text", "text")),
+        CHARACTER(TextKey.of("jsc.sigma.printf_format.character", "a character"));
 
-        private final String words;
+        private final TextKey words;
 
-        Wants(final String words) {
+        Wants(final TextKey words) {
             this.words = words;
         }
 
-        /** The kind of value, in the words a message uses. */
-        public String words() {
-            return this.words;
+        /** The kind of value, in the words a message uses, read in the player's language. */
+        public Text words() {
+            return this.words.text();
         }
     }
 
@@ -61,7 +77,7 @@ public final class PrintfFormat {
      * @param pieces  the text and the holes in the order they come, each a {@code String} or a {@link Hole}
      * @param problem what is wrong with the format, or null when it reads
      */
-    public record Read(List<Object> pieces, String problem) {
+    public record Read(List<Object> pieces, Text problem) {
 
         public Read {
             pieces = List.copyOf(pieces);
@@ -88,7 +104,7 @@ public final class PrintfFormat {
                 continue;
             }
             if (i + 1 >= format.length()) {
-                return new Read(pieces, "the format ends on a '%' with no letter after it");
+                return new Read(pieces, ENDS_ON_PERCENT.text());
             }
             char letter = format.charAt(++i);
             if (letter == '%') {
@@ -101,8 +117,8 @@ public final class PrintfFormat {
             final Wants wants = wantsOf(letter);
             if (wants == null) {
                 return new Read(pieces, Character.isDigit(letter) || letter == '.' || letter == '-'
-                        ? "there are no widths or precisions here; write %d, %f, %s, %c or %%"
-                        : "'%" + letter + "' is no hole this printf has; there is %d, %f, %s, %c and %%");
+                        ? NO_WIDTHS.text()
+                        : NO_SUCH_HOLE.with(letter));
             }
             if (!text.isEmpty()) {
                 pieces.add(text.toString());

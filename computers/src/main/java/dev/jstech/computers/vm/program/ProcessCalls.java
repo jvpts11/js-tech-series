@@ -12,6 +12,8 @@ import dev.jstech.computers.vm.system.MemberId;
 import dev.jstech.computers.vm.system.MemberKind;
 import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.computers.vm.system.SystemApi;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +26,7 @@ import java.util.Map;
  * call the system declares as the process's to answer, and that is checked when the bindings are made, so what the
  * process answers cannot drift from what the compiler lets a program write.
  */
+@TextHolder
 final class ProcessCalls {
 
     /**
@@ -40,6 +43,7 @@ final class ProcessCalls {
     private static final String STRING = "string";
     /** What a watch on the network calls when it goes off. */
     private static final String STOCK_HANDLER = "Action<StockEvent>";
+    private static final TextKey NO_WIDGET = TextKey.of("jsc.vm.process_calls.no_widget", "there is no %s here to %s");
 
     /** A read has to wait while nothing has been typed at the terminal the program is in front of. */
     private static final IProcessWait LINE = (process, frame, count, line) -> {
@@ -259,7 +263,7 @@ final class ProcessCalls {
         if (target instanceof Values.Obj object && UiWidgets.handles(object.type())) {
             return object;
         }
-        throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no " + owner + " here to " + name);
+        throw new Halt(Halt.Reason.NO_OBJECT, line, NO_WIDGET.with(owner, name));
     }
 
     /** Puts a window on the machine's desktop; one the runtime made itself is the program's to hold like any other. */

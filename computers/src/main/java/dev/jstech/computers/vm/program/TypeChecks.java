@@ -7,13 +7,21 @@
  */
 package dev.jstech.computers.vm.program;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+
 /**
  * What a cast and a type test make of a value: the value as the type asked for, or a halt that says why it is not one,
  * and whether a value is of a type at all.
  */
+@TextHolder
 final class TypeChecks {
 
     private final ProgramImage program;
+
+    private static final TextKey NOTHING_TO_MAKE = TextKey.of("jsc.vm.type_checks.nothing_to_make",
+            "there is nothing here to make a %s");
+    private static final TextKey NOT_A = TextKey.of("jsc.vm.type_checks.not_a", "this is not a %s");
 
     TypeChecks(final ProgramImage program) {
         this.program = program;
@@ -35,13 +43,12 @@ final class TypeChecks {
             if (primitive == PrimitiveKind.BOOL && value instanceof Boolean) {
                 return value;
             }
-            throw new Halt(Halt.Reason.BAD_CAST, line, value == null ? "there is nothing here to make a " + type
-                    : "this is not a " + type);
+            throw new Halt(Halt.Reason.BAD_CAST, line, value == null ? NOTHING_TO_MAKE.with(type) : NOT_A.with(type));
         }
         if (value == null || this.isOfType(value, type)) {
             return value;
         }
-        throw new Halt(Halt.Reason.BAD_CAST, line, "this is not a " + type);
+        throw new Halt(Halt.Reason.BAD_CAST, line, NOT_A.with(type));
     }
 
     /** Whether the value is of {@code type} or stands on it; nothing is never of any type. */
