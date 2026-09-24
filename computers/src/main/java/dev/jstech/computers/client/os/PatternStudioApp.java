@@ -250,7 +250,8 @@ public final class PatternStudioApp implements IInventoryBandApp {
         resultLine = root.add(new Label(this::resultText).setTone(this::resultTone));
         benchFileLine = root.add(new Label(this::benchFileText, Label.Tone.DIM));
         benchRomLine = root.add(new Label(GameText.resolve(IN_RECIPE_ROM), Label.Tone.ACCENT));
-        benchClear = root.add(new Button(GameText.resolve(CLEAR), () -> send(of(PatternStudioEditPayload.BENCH_CLEAR))));
+        benchClear = root.add(new Button(GameText.resolve(CLEAR),
+                () -> send(of(PatternStudioEditPayload.BENCH_CLEAR))));
         benchNames = root.add(new NameNoteRow(PatternStudioEditPayload.BENCH_SET_NAME));
 
         inGrid = root.add(new CellGrid(PROC_COLS, PROC_ROWS, PatternWorkbench.PROC_GRID / PROC_COLS, CELL)
@@ -274,8 +275,10 @@ public final class PatternStudioApp implements IInventoryBandApp {
                 .setSelectable(true)
                 .setPadding(1));
         noStages = root.add(new Label(GameText.resolve(NO_STAGES), Label.Tone.DIM));
-        addBench = root.add(new Button(GameText.resolve(ADD_BENCH), () -> send(of(PatternStudioEditPayload.PIPE_ADD_BENCH))));
-        addMachine = root.add(new Button(GameText.resolve(ADD_MACHINE), () -> send(of(PatternStudioEditPayload.PIPE_ADD_PROC))));
+        addBench = root.add(new Button(GameText.resolve(ADD_BENCH),
+                () -> send(of(PatternStudioEditPayload.PIPE_ADD_BENCH))));
+        addMachine = root.add(new Button(GameText.resolve(ADD_MACHINE),
+                () -> send(of(PatternStudioEditPayload.PIPE_ADD_PROC))));
         removeStage = root.add(new Button(GameText.resolve(REMOVE), this::removeSelectedStage));
         pipeRom = root.add(new Label(GameText.resolve(IN_ROM), Label.Tone.ACCENT).setAlign(Label.Align.RIGHT));
         pipeNames = root.add(new NameNoteRow(PatternStudioEditPayload.PIPE_SET_NAME));
@@ -290,11 +293,14 @@ public final class PatternStudioApp implements IInventoryBandApp {
         encLine3 = root.add(new Label(this::encoderLine3).setTone(this::encoderLine3Tone).setColor(this::encoderLine3Color));
         encProgress = root.add(new ProgressBar(this::encoderProgress));
         encQueued = root.add(new Label(this::encoderQueued, Label.Tone.DIM));
-        encCancel = root.add(new Button(GameText.resolve(CANCEL), () -> send(of(PatternStudioEditPayload.ENCODER_CANCEL))));
-        encEject = root.add(new Button(GameText.resolve(EJECT), () -> send(of(PatternStudioEditPayload.ENCODER_EJECT))));
+        encCancel = root.add(new Button(GameText.resolve(CANCEL),
+                () -> send(of(PatternStudioEditPayload.ENCODER_CANCEL))));
+        encEject = root.add(new Button(GameText.resolve(EJECT),
+                () -> send(of(PatternStudioEditPayload.ENCODER_EJECT))));
 
         burn = root.add(new Button(GameText.resolve(BURN), () -> barAction(PatternStudioEditPayload.BURN)));
-        saveDisk = root.add(new Button(GameText.resolve(SAVE_TO_DISK), () -> barAction(PatternStudioEditPayload.SAVE_TO_DISK)));
+        saveDisk = root.add(new Button(GameText.resolve(SAVE_TO_DISK),
+                () -> barAction(PatternStudioEditPayload.SAVE_TO_DISK)));
         loadRom = root.add(new Button(this::loadRomLabel, () -> barAction(PatternStudioEditPayload.LOAD_INTO_ROM)));
         statusLine = root.add(new Label(this::statusText).setTone(this::statusTone));
 
@@ -1215,7 +1221,8 @@ public final class PatternStudioApp implements IInventoryBandApp {
                 if (!cell.tag().isEmpty()) {
                     lines.add(GameText.component(ANY_TAG.with(cell.tag())).withStyle(ChatFormatting.AQUA));
                     if (!cell.resolved().isEmpty()) {
-                        lines.add(GameText.component(NETWORK_WOULD_USE.with(GameText.of(cell.resolved().getHoverName())))
+                        lines.add(GameText.component(
+                                        NETWORK_WOULD_USE.with(GameText.of(cell.resolved().getHoverName())))
                                 .withStyle(ChatFormatting.GRAY));
                     }
                 }

@@ -21,6 +21,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -443,7 +444,7 @@ public final class OperationsService {
         }
         final List<ICliComputer.StoredItem> rows = new ArrayList<>();
         mainframe.lockedTypes().forEach((key, amount) ->
-                rows.add(new ICliComputer.StoredItem(key.displayName().getString(), amount)));
+                rows.add(new ICliComputer.StoredItem(GameText.of(key.displayName()), amount)));
         return rows;
     }
 

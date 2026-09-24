@@ -177,11 +177,25 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
     record NetworkShare(String hostname, ShareInfo share) {
     }
 
-    /** A line in a storage listing: a name, a quantity, and an optional detail (e.g. where the item lives). */
-    record StoredItem(String name, long quantity, String detail) {
+    /**
+     * A line in a storage listing: a name, a quantity, and an optional detail (e.g. where the item lives). The name
+     * is read in the player's language where it is a thing's name, and its English is what a search and a program
+     * compare against.
+     */
+    record StoredItem(Text name, long quantity, Text detail) {
 
+        public StoredItem(final Text name, final long quantity) {
+            this(name, quantity, Text.EMPTY);
+        }
+
+        /** A row whose words are data. */
+        public StoredItem(final String name, final long quantity, final String detail) {
+            this(Text.literal(name), quantity, Text.literal(detail));
+        }
+
+        /** A row whose name is data, with no detail. */
         public StoredItem(final String name, final long quantity) {
-            this(name, quantity, "");
+            this(Text.literal(name), quantity, Text.EMPTY);
         }
     }
 

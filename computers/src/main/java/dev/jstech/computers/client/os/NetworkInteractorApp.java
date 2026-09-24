@@ -448,7 +448,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         hintLabel = root.add(new Label(this::hintText, Label.Tone.DIM).setScale(Texts.SMALL));
         detailRequest = root.add(new Button(GameText.resolve(REQUEST), this::detailRequestPressed)
                 .setLabelScale(Texts.SMALL));
-        detailCraft = root.add(new Button(GameText.resolve(CRAFT), this::detailCraftPressed).setLabelScale(Texts.SMALL));
+        detailCraft = root.add(new Button(GameText.resolve(CRAFT), this::detailCraftPressed)
+                .setLabelScale(Texts.SMALL));
         detailStar = root.add(new Button(STAR, this::detailStarPressed).setLabelScale(Texts.SMALL));
         requestPopup = new RequestPopup();
         craftPopup = new CraftPopup();
@@ -890,8 +891,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         sx = statusSegment(g, font, sx, ty, GameText.resolve(online ? MAINFRAME_ONLINE : MAINFRAME_OFFLINE),
                 online ? ONLINE_GREEN : OFFLINE_RED, y, h);
         sx = statusSegment(g, font, sx, ty, GameText.resolve(TYPES.with(networkItems.size())), skin.text(), y, h);
-        statusSegment(g, font, sx, ty, GameText.resolve((serverCount == 1 ? ONE_SERVER : SERVERS_COUNT).with(serverCount)),
-                skin.text(), y, h);
+        statusSegment(g, font, sx, ty,
+                GameText.resolve((serverCount == 1 ? ONE_SERVER : SERVERS_COUNT).with(serverCount)), skin.text(), y, h);
         // The storage gauge, right: a small bar and the figures.
         final String figures = GameText.resolve(capacityItems > 0
                 ? USED_OF.with(DiskSpec.sizeLabel(usedMb), DiskSpec.sizeLabel(capacityMb))
@@ -1664,7 +1665,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         }
         int py = panelHeader(g, font, dx, dy, dw, null, GameText.resolve(ITEMS_SELECTED.with(count)), names.toString(),
                 skin.dim(), false);
-        py = detailList(g, font, px, py, dw, GameText.resolve(SELECTED), lines.size() > 12 ? lines.subList(0, 12) : lines);
+        py = detailList(g, font, px, py, dw, GameText.resolve(SELECTED),
+                lines.size() > 12 ? lines.subList(0, 12) : lines);
         if (tab != TAB_CRAFTING) {
             py = detail(g, font, px, py, dw, GameText.resolve(TOGETHER),
                     GameText.resolve(ITEMS_AND_ROOM.with(formatCount(items), weightLabel(weight))));
@@ -2569,7 +2571,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         private final Button max = add(new Button(GameText.resolve(MAX), NetworkInteractorApp.this::maxQty)
                 .setLabelScale(Texts.SMALL));
         private final Button[] steps = new Button[POPUP_STEPS.length];
-        private final Label prioLabel = add(new Label(GameText.resolve(PRIORITY), Label.Tone.DIM).setScale(Texts.SMALL));
+        private final Label prioLabel = add(new Label(GameText.resolve(PRIORITY), Label.Tone.DIM)
+                .setScale(Texts.SMALL));
         private final Button prioDown = add(new Button("<", () -> stepPopupPriority(-1)).setLabelScale(Texts.SMALL));
         private final UiComponent prioBox = add(new UiComponent() {
             @Override
@@ -2581,7 +2584,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             }
         });
         private final Button prioUp = add(new Button(">", () -> stepPopupPriority(1)).setLabelScale(Texts.SMALL));
-        private final Label pullLabel = add(new Label(GameText.resolve(PULL_FROM), Label.Tone.DIM).setScale(Texts.SMALL));
+        private final Label pullLabel = add(new Label(GameText.resolve(PULL_FROM), Label.Tone.DIM)
+                .setScale(Texts.SMALL));
         private final Panel sources = add(new Panel());
         private final Label noSources = add(new Label(GameText.resolve(ALL_SOURCES), Label.Tone.DIM)
                 .setScale(Texts.SMALL));
@@ -2820,7 +2824,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             ty += 8;
             final boolean one = choice.stages() == 1;
             final String stages = GameText.resolve(choice.estimateTicks() > 0
-                    ? (one ? ONE_STAGE_TIMED : STAGES_TIMED).with(choice.stages(), RecipeChoice.seconds(choice.estimateTicks()))
+                    ? (one ? ONE_STAGE_TIMED : STAGES_TIMED)
+                            .with(choice.stages(), RecipeChoice.seconds(choice.estimateTicks()))
                     : (one ? ONE_STAGE : STAGES).with(choice.stages()));
             Texts.small(g, font, Texts.clip(font, stages, Texts.smallFits(tw + 8)), x() + 3, ty, ctx.skin().dim());
             ty += 8;
@@ -2838,8 +2843,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                 ty += 8;
             }
             final boolean ok = choice.allInStock();
-            Texts.small(g, font, Texts.clip(font, GameText.resolve(choice.stockNote()), Texts.smallFits(tw + 8)), x() + 3,
-                    ty, ok ? ONLINE_GREEN : SHORT_RED);
+            Texts.small(g, font, Texts.clip(font, GameText.resolve(choice.stockNote()), Texts.smallFits(tw + 8)),
+                    x() + 3, ty, ok ? ONLINE_GREEN : SHORT_RED);
         }
 
         @Override
@@ -2883,7 +2888,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             }
         });
         private final Label planLabel = add(new Label(this::planLabelText, Label.Tone.DIM).setScale(Texts.SMALL));
-        private final Button priority = add(new Button(() -> GameText.resolve(PRIORITY_BUTTON.with(craftPriority.text())),
+        private final Button priority = add(new Button(
+                () -> GameText.resolve(PRIORITY_BUTTON.with(craftPriority.text())),
                 NetworkInteractorApp.this::cycleCraftPriority).setLabelScale(Texts.SMALL));
         private final UiComponent plan = add(new UiComponent() {
             @Override
@@ -2897,7 +2903,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                 .setLabelScale(Texts.SMALL));
         private final Button partial = add(new Button(GameText.resolve(PARTIAL), () -> submitCraft(true))
                 .setLabelScale(Texts.SMALL));
-        private final Button closeButton = add(new Button(GameText.resolve(CLOSE), this::close).setLabelScale(Texts.SMALL));
+        private final Button closeButton = add(new Button(GameText.resolve(CLOSE), this::close)
+                .setLabelScale(Texts.SMALL));
 
         private CraftPopup() {
             super("", CRAFT_W, CRAFT_H);
@@ -2971,7 +2978,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
         private String planLabelText() {
             final RecipeChoice chosen = craftPlan == null ? null : craftPlan.chosen();
-            return GameText.resolve(craftHasChoice() && chosen != null ? PLAN_WITH.with(chosen.label()) : PLAN_RAW.text());
+            return GameText.resolve(craftHasChoice() && chosen != null ? PLAN_WITH.with(chosen.label())
+                    : PLAN_RAW.text());
         }
 
         private String differencesText() {
@@ -3012,7 +3020,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                 ry += 8;
             }
             for (int i = 0; i < coverLines; i++) {
-                Texts.small(g, font, Texts.clip(font, GameText.resolve(craftPlan.cover().get(i)), Texts.smallFits(w - 12)),
+                Texts.small(g, font,
+                        Texts.clip(font, GameText.resolve(craftPlan.cover().get(i)), Texts.smallFits(w - 12)),
                         px + 1, ry, SHORT_RED);
                 ry += 8;
             }

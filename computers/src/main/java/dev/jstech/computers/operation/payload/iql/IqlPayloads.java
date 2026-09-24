@@ -36,6 +36,8 @@ import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
 import dev.jstech.core.peripheral.IPeripheralOwner;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextLists;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -115,7 +117,7 @@ public final class IqlPayloads {
         final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
         if (mainframe == null) {
             PacketDistributor.sendToPlayer(player,
-                    new IqlResultPayload(false, "the network has no running Mainframe", List.of()));
+                    new IqlResultPayload(false, IqlResultPayload.NO_MAINFRAME.text(), List.of()));
             return;
         }
         final var computer = new ServerCliComputer(host, level);
@@ -124,12 +126,12 @@ public final class IqlPayloads {
         final var outcome = engine.run(payload.statement());
         final List<IqlResultPayload.Row> rows = new ArrayList<>(outcome.rows().size());
         for (final var item : outcome.rows()) {
-            rows.add(new IqlResultPayload.Row(
-                    item.detail().isEmpty() ? item.name() : item.name() + "  ·  " + item.detail(),
-                    item.quantity()));
+            final Text label = item.detail().isEmpty() ? item.name()
+                    : TextLists.join("  ·  ", List.of(item.name(), item.detail()));
+            rows.add(new IqlResultPayload.Row(label, item.quantity()));
         }
         PacketDistributor.sendToPlayer(player,
-                new IqlResultPayload(outcome.ok(), outcome.message(), rows));
+                new IqlResultPayload(outcome.ok(), outcome.said(), rows));
     }
 
     private static void handleIqlResult(final IqlResultPayload payload, final Player player) {
@@ -157,7 +159,7 @@ public final class IqlPayloads {
             final IComputerTerminalHost host) {
         final NetworkUuid net = host.networkUuid();
         if (net == null) {
-            return new NmsSchemaPayload("jsc-net (offline)", List.of(), 0, 0,
+            return new NmsSchemaPayload(NmsSchemaPayload.OFFLINE.with("jsc-net"), List.of(), 0, 0,
                     NmsSchemaPayload.EngineSnapshot.offline());
         }
         final NetworkSystem system = NetworkSystem.get(level);
@@ -172,7 +174,7 @@ public final class IqlPayloads {
                 .of(level, net).query().size();
         final MainframeBlockEntity mainframe = resolveMainframe(level, net);
         final int operations = mainframe != null ? mainframe.activeOperationRecords().size() : 0;
-        return new NmsSchemaPayload(networkLabel(net), List.copyOf(servers), itemTypes, operations,
+        return new NmsSchemaPayload(Text.literal(networkLabel(net)), List.copyOf(servers), itemTypes, operations,
                 engineSnapshot(mainframe));
     }
 
@@ -238,19 +240,19 @@ public final class IqlPayloads {
         final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
         if (mainframe == null) {
             PacketDistributor.sendToPlayer(player,
-                    new IqlFileListPayload(List.of(), "no Mainframe on network", false));
+                    new IqlFileListPayload(List.of(), IqlFileListPayload.NO_MAINFRAME.text(), false));
             return;
         }
         final ItemStack sysDisk = mainframe.systemDisk();
         if (sysDisk.isEmpty()) {
             PacketDistributor.sendToPlayer(player,
-                    new IqlFileListPayload(List.of(), "Mainframe has no system disk", false));
+                    new IqlFileListPayload(List.of(), IqlFileListPayload.NO_SYSTEM_DISK.text(), false));
             return;
         }
         final FilesystemKind kind = filesystemKindOf(mainframe);
         if (kind == FilesystemKind.NONE) {
             PacketDistributor.sendToPlayer(player,
-                    new IqlFileListPayload(List.of(), "no OS installed on Mainframe disk", false));
+                    new IqlFileListPayload(List.of(), IqlFileListPayload.NO_OS.text(), false));
             return;
         }
         final String fileName = sanitizeIqlName(payload.fileName()) + ".iql";
@@ -262,11 +264,11 @@ public final class IqlPayloads {
         if (ok) {
             mainframe.setChanged();
         }
-        final String status = switch (result) {
-            case OK -> "saved: " + fileName;
-            case DISK_FULL -> "disk full, free space on the Mainframe's system disk";
-            case INVALID_PATH -> "invalid file name";
-            case READ_ONLY -> "file type is read-only";
+        final Text status = switch (result) {
+            case OK -> IqlFileListPayload.SAVED.with(fileName);
+            case DISK_FULL -> IqlFileListPayload.DISK_FULL.text();
+            case INVALID_PATH -> IqlFileListPayload.INVALID_NAME.text();
+            case READ_ONLY -> IqlFileListPayload.READ_ONLY.text();
         };
         PacketDistributor.sendToPlayer(player, iqlFileList(sysDisk, kind, status, ok));
     }
@@ -283,16 +285,16 @@ public final class IqlPayloads {
         final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
         if (mainframe == null) {
             PacketDistributor.sendToPlayer(player,
-                    new IqlFileListPayload(List.of(), "", false));
+                    new IqlFileListPayload(List.of(), Text.EMPTY, false));
             return;
         }
         final ItemStack sysDisk = mainframe.systemDisk();
         if (sysDisk.isEmpty()) {
-            PacketDistributor.sendToPlayer(player, new IqlFileListPayload(List.of(), "", true));
+            PacketDistributor.sendToPlayer(player, new IqlFileListPayload(List.of(), Text.EMPTY, true));
             return;
         }
         final FilesystemKind kind = filesystemKindOf(mainframe);
-        PacketDistributor.sendToPlayer(player, iqlFileList(sysDisk, kind, "", true));
+        PacketDistributor.sendToPlayer(player, iqlFileList(sysDisk, kind, Text.EMPTY, true));
     }
 
     /** Forwards the {@link IqlFileListPayload} to the open NMS screen. */
@@ -342,7 +344,7 @@ public final class IqlPayloads {
 
     /** Builds the payload listing every {@code .iql} file on the given disk. */
     private static IqlFileListPayload iqlFileList(final ItemStack disk, final FilesystemKind kind,
-                                                   final String status, final boolean ok) {
+                                                   final Text status, final boolean ok) {
         final List<DiskFilesystem.FileEntry> entries = DiskFilesystem.list(disk, "", kind);
         final List<String> names = new ArrayList<>();
         for (final DiskFilesystem.FileEntry entry : entries) {

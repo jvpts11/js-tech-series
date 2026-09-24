@@ -130,10 +130,10 @@ public class PersonalComputerScreen extends AbstractAssemblyScreen<PersonalCompu
         JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.DISK), 8, 93, JsTechTheme.dim());
         JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.GPU), 44, 93, JsTechTheme.dim());
 
-        JsTechTheme.tileText(g, font, COL_R, 27, GameText.resolve(AssemblyTexts.CAPACITY), JsTechTheme.fmt(menu.capacity()),
-                GameText.resolve(AssemblyTexts.ITEMS_PER_TICK), JsTechTheme.text());
-        JsTechTheme.tileText(g, font, COL_R, 52, GameText.resolve(AssemblyTexts.RAM_BUFFER), JsTechTheme.fmt(menu.ramBuffer()),
-                GameText.resolve(AssemblyTexts.ITEMS), JsTechTheme.text());
+        JsTechTheme.tileText(g, font, COL_R, 27, GameText.resolve(AssemblyTexts.CAPACITY),
+                JsTechTheme.fmt(menu.capacity()), GameText.resolve(AssemblyTexts.ITEMS_PER_TICK), JsTechTheme.text());
+        JsTechTheme.tileText(g, font, COL_R, 52, GameText.resolve(AssemblyTexts.RAM_BUFFER),
+                JsTechTheme.fmt(menu.ramBuffer()), GameText.resolve(AssemblyTexts.ITEMS), JsTechTheme.text());
 
         JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.NETWORK), COL_R, 74, JsTechTheme.dim());
         if (menu.isOnNetwork()) {

@@ -148,7 +148,8 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
         JsTechTheme.tileTextS(g, font, 126, 26, GameText.resolve(AssemblyTexts.RAM_BUFFER_SHORT),
                 build == null ? "0" : JsTechTheme.fmt(build.ramBuffer()), JsTechTheme.text());
         JsTechTheme.tileTextS(g, font, 185, 26, GameText.resolve(AssemblyTexts.DRAW),
-                build == null ? "0" : GameText.resolve(AssemblyTexts.WATTS.with(build.powerDraw())), JsTechTheme.text());
+                build == null ? "0" : GameText.resolve(AssemblyTexts.WATTS.with(build.powerDraw())),
+                JsTechTheme.text());
 
         // Track labels + values.
         final int draw = build == null ? 0 : build.powerDraw();

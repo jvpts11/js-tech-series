@@ -101,7 +101,8 @@ public final class ItemInfoPayloads {
                             ? rack.getServerStorage(loc.slot()).count(key) : 0L)
                     .orElse(0L);
             if (held > 0) {
-                stored.add(new NetworkItemEntry.StorageShare(Text.literal(serverLabel(level, server.nodeUuid())), held));
+                stored.add(new NetworkItemEntry.StorageShare(
+                        Text.literal(serverLabel(level, server.nodeUuid())), held));
             }
         }
 

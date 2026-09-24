@@ -18,6 +18,10 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -39,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
  * anything: whoever asks what the network holds is told in the same tick. A machine with no cable is not on a
  * network, and says so rather than pretending.
  */
+@TextHolder
 public final class NetworkReadService {
 
     /**
@@ -49,6 +54,15 @@ public final class NetworkReadService {
 
     /** How many ways of making a thing, and things it goes into, one answer names before it stops. */
     private static final int MOST_RECIPE_LINES = 12;
+
+    /* The rows a query of the network's machines and Operations reads back; names and keywords are data. */
+    private static final TextKey ON_SERVERS = TextKey.of("jsc.network.read.on_servers", "%s servers");
+    private static final TextKey MAINFRAME = TextKey.of("jsc.network.read.mainframe", "Mainframe");
+    private static final TextKey A_SERVER = TextKey.of("jsc.network.read.server", "%s (server)");
+    private static final TextKey A_PC = TextKey.of("jsc.network.read.pc", "%s (pc)");
+    private static final TextKey A_CRAFTING_COMPUTER = TextKey.of("jsc.network.read.crafting", "%s (crafting)");
+    /* An Operation: its verb, what it moves and how it stands. */
+    private static final TextKey OPERATION = TextKey.of("jsc.network.read.operation", "%s %s [%s]");
 
     private final IComputerTerminalHost terminal;
     private final ServerLevel level;
@@ -130,11 +144,11 @@ public final class NetworkReadService {
         return sum;
     }
 
-    /** Every kind of thing the network holds. */
+    /** Every kind of thing the network holds, by its English name, which is what a program is handed. */
     public List<String> types() {
         final List<String> names = new ArrayList<>();
         for (final ICliComputer.StoredItem item : this.query(null, "", EVERYTHING)) {
-            names.add(item.name());
+            names.add(item.name().english());
         }
         return names;
     }
@@ -181,21 +195,21 @@ public final class NetworkReadService {
                         || where.matches(rowOf(entry.getKey(), entry.getValue(), scopedServer)))
                 .sorted((a, b) -> Long.compare(b.getValue(), a.getValue()))
                 .limit(Math.max(limit, 0))
-                .map(entry -> new ICliComputer.StoredItem(entry.getKey().displayName().getString(), entry.getValue(),
+                .map(entry -> new ICliComputer.StoredItem(GameText.of(entry.getKey().displayName()), entry.getValue(),
                         this.location(net, entry.getKey(), scopedServer)))
                 .toList();
     }
 
     /** Where an item lives: the scoped server, the single server holding it, or "N servers" across the net. */
-    private String location(final NetworkUuid net, final StorageKey key, final String scopedServer) {
+    private Text location(final NetworkUuid net, final StorageKey key, final String scopedServer) {
         if (!scopedServer.isEmpty()) {
-            return scopedServer;
+            return Text.literal(scopedServer);
         }
         final Map<NodeUuid, Long> breakdown = NetworkStorage.of(this.level, net).breakdown(key);
         if (breakdown.size() == 1) {
-            return NetworkLookup.serverLabel(this.level, breakdown.keySet().iterator().next());
+            return Text.literal(NetworkLookup.serverLabel(this.level, breakdown.keySet().iterator().next()));
         }
-        return breakdown.size() + " servers";
+        return ON_SERVERS.with(breakdown.size());
     }
 
     /** The server of this network that a name picks out, or null when no server carries that label. */
@@ -269,26 +283,27 @@ public final class NetworkReadService {
         final NetworkSystem system = NetworkSystem.get(this.level);
         final List<ICliComputer.StoredItem> out = new ArrayList<>();
         if (this.mainframe(net) != null) {
-            out.add(new ICliComputer.StoredItem("Mainframe", 1L));
+            out.add(new ICliComputer.StoredItem(MAINFRAME.text(), 1L));
         }
         for (final ServerNode server : system.serversOf(net)) {
             if (out.size() >= limit) {
                 break;
             }
             out.add(new ICliComputer.StoredItem(
-                    NetworkLookup.serverLabel(this.level, server.nodeUuid()) + " (server)", 1L));
+                    A_SERVER.with(NetworkLookup.serverLabel(this.level, server.nodeUuid())), 1L));
         }
         for (final var pc : system.personalComputersOf(net)) {
             if (out.size() >= limit) {
                 break;
             }
-            out.add(new ICliComputer.StoredItem("PC-" + ShortId.of(pc.nodeUuid().asString()) + " (pc)", 1L));
+            out.add(new ICliComputer.StoredItem(A_PC.with("PC-" + ShortId.of(pc.nodeUuid().asString())), 1L));
         }
         for (final var cc : system.craftingComputersOf(net)) {
             if (out.size() >= limit) {
                 break;
             }
-            out.add(new ICliComputer.StoredItem("CC-" + ShortId.of(cc.nodeUuid().asString()) + " (crafting)", 1L));
+            out.add(new ICliComputer.StoredItem(
+                    A_CRAFTING_COMPUTER.with("CC-" + ShortId.of(cc.nodeUuid().asString())), 1L));
         }
         return out;
     }
@@ -305,7 +320,7 @@ public final class NetworkReadService {
                 break;
             }
             final ItemStack result = pattern.result();
-            out.add(new ICliComputer.StoredItem(result.getHoverName().getString(), result.getCount()));
+            out.add(new ICliComputer.StoredItem(GameText.of(result.getHoverName()), result.getCount()));
         }
         return out;
     }
@@ -336,8 +351,7 @@ public final class NetworkReadService {
     private List<ICliComputer.StoredItem> queryOperations(final int limit) {
         final List<ICliComputer.StoredItem> out = new ArrayList<>();
         for (final ICliComputer.ActiveOp op : this.operations.list()) {
-            out.add(new ICliComputer.StoredItem(op.type() + " " + op.item() + " [" + op.status() + "]",
-                    op.progress()));
+            out.add(new ICliComputer.StoredItem(OPERATION.with(op.type(), op.item(), op.status()), op.progress()));
             if (out.size() >= limit) {
                 return out;
             }
@@ -345,9 +359,8 @@ public final class NetworkReadService {
         final MainframeBlockEntity mainframe = this.mainframe(this.terminal.networkUuid());
         if (mainframe != null) {
             for (final OperationRecord record : mainframe.recentOperations()) {
-                out.add(new ICliComputer.StoredItem(OperationRecord.typeName(record.type()) + " "
-                        + record.name().getString() + " [" + OperationRecord.statusName(record.status()) + "]",
-                        record.moved()));
+                out.add(new ICliComputer.StoredItem(OPERATION.with(OperationRecord.typeName(record.type()),
+                        GameText.of(record.name()), OperationRecord.statusName(record.status())), record.moved()));
                 if (out.size() >= limit) {
                     break;
                 }

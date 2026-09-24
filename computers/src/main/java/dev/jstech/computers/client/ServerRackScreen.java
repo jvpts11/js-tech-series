@@ -300,8 +300,8 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
 
         for (int row = 0; row < ROWS; row++) {
             final int top = ServerRackLayout.rowY(row);
-            JsTechTheme.textS(g, font, GameText.resolve(ServerRackTexts.UNIT.with(row + 1)), ServerRackLayout.RULER_X + 2,
-                    top + 6, JsTechTheme.dim());
+            JsTechTheme.textS(g, font, GameText.resolve(ServerRackTexts.UNIT.with(row + 1)),
+                    ServerRackLayout.RULER_X + 2, top + 6, JsTechTheme.dim());
             for (int column = 0; column < ServerRackLayout.FRONT_SLOTS; column++) {
                 final RackLayout.SlotRole role =
                         menu.frontSlotRole(row * RackLayout.SLOTS_PER_U + column);

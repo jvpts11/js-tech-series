@@ -15,6 +15,7 @@ import dev.jstech.computers.program.iql.IqlVerb;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.text.TextLists;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -148,8 +149,9 @@ final class NetworkCommands {
                     return;
                 }
                 for (final ICliComputer.StoredItem item : items) {
-                    ctx.out().row(item.detail().isEmpty() ? item.name() : item.name() + " · " + item.detail(),
-                            CliText.group(item.quantity()));
+                    ctx.out().row(item.detail().isEmpty() ? item.name()
+                                    : TextLists.join(" · ", List.of(item.name(), item.detail())),
+                            Text.literal(CliText.group(item.quantity())));
                 }
                 return;
             }

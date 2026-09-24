@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -22,14 +26,15 @@ import java.util.List;
  * {@link SaveIqlFilePayload} write, so the NMS file picker always reflects the current disk state.
  *
  * <p>Each entry is the full file path, including the {@code .iql} extension. When the status field
- * is non-empty it reports the outcome of the preceding save (e.g. {@code "saved"} or
- * {@code "disk full"}); on a plain list-request it is empty.
+ * is non-empty it reports the outcome of the preceding save (saved, or why not), read in the player's
+ * language; on a plain list-request it is empty.
  *
  * @param files  the list of {@code .iql} file paths (may be empty)
- * @param status a short outcome message after a save, or an empty string for a plain list response
+ * @param status a short outcome message after a save, or empty for a plain list response
  * @param ok     true when the preceding operation succeeded (meaningful only when status is non-empty)
  */
-public record IqlFileListPayload(List<String> files, String status, boolean ok)
+@TextHolder
+public record IqlFileListPayload(List<String> files, Text status, boolean ok)
         implements CustomPacketPayload {
 
     /** Maximum number of file entries sent in one payload. */
@@ -38,8 +43,16 @@ public record IqlFileListPayload(List<String> files, String status, boolean ok)
     /** Maximum characters per file name ({@value SaveIqlFilePayload#MAX_NAME_LEN} + ".iql" + safety). */
     private static final int MAX_NAME = 40;
 
-    /** Maximum characters in the status message. */
-    private static final int MAX_STATUS = 48;
+    // How a save went.
+    public static final TextKey NO_MAINFRAME = TextKey.of("jsc.nms.file.no_mainframe", "no Mainframe on network");
+    public static final TextKey NO_SYSTEM_DISK =
+            TextKey.of("jsc.nms.file.no_system_disk", "Mainframe has no system disk");
+    public static final TextKey NO_OS = TextKey.of("jsc.nms.file.no_os", "no OS installed on Mainframe disk");
+    public static final TextKey SAVED = TextKey.of("jsc.nms.file.saved", "saved: %s");
+    public static final TextKey DISK_FULL =
+            TextKey.of("jsc.nms.file.disk_full", "disk full, free space on the Mainframe's system disk");
+    public static final TextKey INVALID_NAME = TextKey.of("jsc.nms.file.invalid_name", "invalid file name");
+    public static final TextKey READ_ONLY = TextKey.of("jsc.nms.file.read_only", "file type is read-only");
 
     public static final CustomPacketPayload.Type<IqlFileListPayload> TYPE =
             new CustomPacketPayload.Type<>(
@@ -56,7 +69,7 @@ public record IqlFileListPayload(List<String> files, String status, boolean ok)
             StreamCodec.composite(
                     FileName.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_FILES)),
                     payload -> payload.files().stream().map(FileName::new).toList(),
-                    ByteBufCodecs.stringUtf8(MAX_STATUS),
+                    TextCodecs.STREAM_CODEC,
                     IqlFileListPayload::status,
                     ByteBufCodecs.BOOL,
                     IqlFileListPayload::ok,

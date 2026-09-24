@@ -46,7 +46,7 @@ public final class IqlConditionParser {
         final IqlConditionParser parser = new IqlConditionParser(tokens, 0);
         final IIqlCondition condition = parser.parseCondition();
         if (parser.pos != tokens.size()) {
-            throw new IllegalArgumentException("unexpected token: " + tokens.get(parser.pos).text());
+            throw IqlError.of(IqlError.UNEXPECTED_TOKEN, tokens.get(parser.pos).text());
         }
         return condition;
     }
@@ -92,7 +92,7 @@ public final class IqlConditionParser {
     }
 
     private IIqlCondition parseComparison() {
-        final String field = expectType(Type.WORD, "a field name").text();
+        final String field = expectType(Type.WORD, IqlError.A_FIELD).text();
         final Op op = parseOperator();
         final String value = parseValue();
         return new IIqlCondition.Comparison(field, op, value);
@@ -100,7 +100,7 @@ public final class IqlConditionParser {
 
     private Op parseOperator() {
         if (pos >= tokens.size()) {
-            throw new IllegalArgumentException("expected a comparison operator");
+            throw IqlError.of(IqlError.EXPECTED, IqlError.AN_OPERATOR);
         }
         final Token token = tokens.get(pos);
         if (token.type() == Type.OPERATOR) {
@@ -114,7 +114,7 @@ public final class IqlConditionParser {
                 return word;
             }
         }
-        throw new IllegalArgumentException("expected a comparison operator, got: " + token.text());
+        throw IqlError.of(IqlError.EXPECTED_GOT, IqlError.AN_OPERATOR, token.text());
     }
 
     private static Op symbolOperator(final String symbol) {
@@ -125,7 +125,7 @@ public final class IqlConditionParser {
             case ">" -> Op.GT;
             case "<=" -> Op.LTE;
             case ">=" -> Op.GTE;
-            default -> throw new IllegalArgumentException("unknown operator: " + symbol);
+            default -> throw IqlError.of(IqlError.UNKNOWN_OPERATOR, symbol);
         };
     }
 
@@ -140,14 +140,14 @@ public final class IqlConditionParser {
 
     private String parseValue() {
         if (pos >= tokens.size()) {
-            throw new IllegalArgumentException("expected a value");
+            throw IqlError.of(IqlError.EXPECTED, IqlError.A_VALUE);
         }
         final Token token = tokens.get(pos);
         if (token.type() == Type.WORD || token.type() == Type.NUMBER || token.type() == Type.STRING) {
             pos++;
             return token.text();
         }
-        throw new IllegalArgumentException("expected a value, got: " + token.text());
+        throw IqlError.of(IqlError.EXPECTED_GOT, IqlError.A_VALUE, token.text());
     }
 
     private boolean peekKeyword(final String keyword) {
@@ -160,9 +160,9 @@ public final class IqlConditionParser {
         return pos < tokens.size() && tokens.get(pos).type() == type;
     }
 
-    private Token expectType(final Type type, final String what) {
+    private Token expectType(final Type type, final Object what) {
         if (pos >= tokens.size() || tokens.get(pos).type() != type) {
-            throw new IllegalArgumentException("expected " + what);
+            throw IqlError.of(IqlError.EXPECTED, what);
         }
         return tokens.get(pos++);
     }

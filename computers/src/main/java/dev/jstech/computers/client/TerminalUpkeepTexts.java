@@ -81,7 +81,8 @@ final class TerminalUpkeepTexts {
     static final TextKey NO_PROCESSES = TextKey.of("jsc.terminal.programs.no_processes", "no processes running");
 
     // The Console heading; the command it names is data.
-    static final TextKey START_HINT = TextKey.of("jsc.terminal.console.start_hint", "%s lists what this machine can run.");
+    static final TextKey START_HINT =
+            TextKey.of("jsc.terminal.console.start_hint", "%s lists what this machine can run.");
 
     // The question about dropping data.
     static final TextKey DROP_DATA = TextKey.of("jsc.terminal.drop.title", "DROP DATA");

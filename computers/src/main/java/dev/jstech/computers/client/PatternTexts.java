@@ -32,7 +32,8 @@ final class PatternTexts {
     static final TextKey QUEUED = TextKey.of("jsc.pattern_encoder.screen.queued", "%s (%s queued)");
     static final TextKey VINTAGE_WRITES =
             TextKey.of("jsc.pattern_encoder.screen.vintage_writes", "Vintage encoder: floppy disks");
-    static final TextKey LEGACY_WRITES = TextKey.of("jsc.pattern_encoder.screen.legacy_writes", "Legacy encoder: CD-RW");
+    static final TextKey LEGACY_WRITES =
+            TextKey.of("jsc.pattern_encoder.screen.legacy_writes", "Legacy encoder: CD-RW");
     static final TextKey STANDARD_WRITES =
             TextKey.of("jsc.pattern_encoder.screen.standard_writes", "Standard encoder: DVD, CD, USB");
 
@@ -49,7 +50,8 @@ final class PatternTexts {
             TextKey.of("jsc.terminal.patterns.taught_in_rom", "the ROM is where it is taught.");
     static final TextKey LINKED = TextKey.of("jsc.terminal.patterns.linked", "linked");
     static final TextKey LINKED_ERA = TextKey.of("jsc.terminal.patterns.linked_era", "linked  %s");
-    static final TextKey NO_MEDIUM_IN_BAY = TextKey.of("jsc.terminal.patterns.no_medium_in_bay", "no medium in its bay");
+    static final TextKey NO_MEDIUM_IN_BAY =
+            TextKey.of("jsc.terminal.patterns.no_medium_in_bay", "no medium in its bay");
     static final TextKey SEND_DRAFT_TO = TextKey.of("jsc.terminal.patterns.send_draft_to", "Send this draft to");
     static final TextKey SEND_ENCODER = TextKey.of("jsc.terminal.patterns.send_encoder", "Encoder");
     static final TextKey SEND_DISK = TextKey.of("jsc.terminal.patterns.send_disk", "Disk");

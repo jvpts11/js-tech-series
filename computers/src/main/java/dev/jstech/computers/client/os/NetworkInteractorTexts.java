@@ -46,8 +46,10 @@ final class NetworkInteractorTexts {
             TextKey.of("jsc.interactor.no_favourites_match", "No favourites match the search and filters.");
     static final TextKey NOTHING_MATCHES =
             TextKey.of("jsc.interactor.nothing_matches", "Nothing matches the search and filters.");
-    static final TextKey NOTHING_LOCAL = TextKey.of("jsc.interactor.nothing_local", "Nothing on this computer's disks.");
-    static final TextKey NOTHING_ON_NETWORK = TextKey.of("jsc.interactor.nothing_on_network", "Nothing on the network.");
+    static final TextKey NOTHING_LOCAL =
+            TextKey.of("jsc.interactor.nothing_local", "Nothing on this computer's disks.");
+    static final TextKey NOTHING_ON_NETWORK =
+            TextKey.of("jsc.interactor.nothing_on_network", "Nothing on the network.");
 
     // The caption over the well.
     static final TextKey LOCAL_STORAGE = TextKey.of("jsc.interactor.local_storage", "LOCAL STORAGE");
@@ -144,7 +146,8 @@ final class NetworkInteractorTexts {
     static final TextKey PRIORITY_BUTTON = TextKey.of("jsc.interactor.priority_button", "Prio: %s");
     static final TextKey PARTIAL = TextKey.of("jsc.interactor.partial", "Partial");
     static final TextKey CLOSE = TextKey.of("jsc.interactor.close", "Close");
-    static final TextKey RECIPE_CHOICES = TextKey.of("jsc.interactor.recipe_choices", "RECIPE  ·  %s patterns make this");
+    static final TextKey RECIPE_CHOICES =
+            TextKey.of("jsc.interactor.recipe_choices", "RECIPE  ·  %s patterns make this");
     static final TextKey RECIPE_CHOICES_MORE = TextKey.of("jsc.interactor.recipe_choices_more",
             "RECIPE  ·  %s patterns make this (Left/Right for more)");
     static final TextKey PLAN_WITH = TextKey.of("jsc.interactor.plan_with", "PLAN - with %s");
@@ -179,7 +182,8 @@ final class NetworkInteractorTexts {
     static final TextKey OPS_CAPTION = TextKey.of("jsc.interactor.ops.caption", "%s live · %s recent");
     static final TextKey SUPERCOMPUTER_SLOTS =
             TextKey.of("jsc.interactor.ops.supercomputer_slots", "Supercomputer: %s / %s parallel crafts");
-    static final TextKey NO_OPERATIONS = TextKey.of("jsc.interactor.ops.no_operations", "No operations on the network.");
+    static final TextKey NO_OPERATIONS =
+            TextKey.of("jsc.interactor.ops.no_operations", "No operations on the network.");
     static final TextKey MOVED = TextKey.of("jsc.interactor.ops.moved", "moved %s / %s");
     static final TextKey SUBOPERATIONS = TextKey.of("jsc.interactor.ops.suboperations", "SUBOPERATIONS");
     /* One machine's share: the machine, how far it has got, and in what state. */

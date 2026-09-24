@@ -123,8 +123,16 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   maintenance and a DROP tell the player when they finish, the names the Operations list gives them, the states
   of a machine's processes, and why a program opened from a desktop did not start. An Operation keyword such as
   ANALYZE or DROP stays as it is typed.
+- The Network Management Studio is text a language file can translate: its menus, panes, dialogs and status bar,
+  what a statement and a save answer, and why the query language could not read a statement. The names in a
+  query's results, and in what the prompt lists of the network, travel as the things' own names, so each player
+  reads them in their own language, while a search still matches them in English. The query language's own words,
+  its keywords, tables and columns, stay as they are typed.
 
 ### Fixed
+- Saving an IQL file from the Network Management Studio to a full disk no longer fails to send its answer: the
+  reason was longer than the answer could carry, which is now text of any length. A long answer to a statement is
+  carried whole for the same reason.
 - A monitor is used by one player at a time. A second player who used it while somebody was at it was handed a
   session over the one being typed into, and ended the remote session the screen was holding; now they are told
   who is using the monitor, and the one at it keeps it until they walk away or close it.

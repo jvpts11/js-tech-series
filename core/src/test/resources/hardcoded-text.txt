@@ -11,7 +11,7 @@ computers/src/main/java/dev/jstech/computers/client/DesktopSplashArt.java 2
 computers/src/main/java/dev/jstech/computers/client/InstallerScreen.java 1
 computers/src/main/java/dev/jstech/computers/client/LoaderMenuPainter.java 2
 computers/src/main/java/dev/jstech/computers/client/MaintenanceTerminalTab.java 3
-computers/src/main/java/dev/jstech/computers/client/NmsApp.java 28
+computers/src/main/java/dev/jstech/computers/client/NmsApp.java 6
 computers/src/main/java/dev/jstech/computers/client/ServerRackScreen.java 1
 computers/src/main/java/dev/jstech/computers/client/os/ApplicationManagerApp.java 1
 computers/src/main/java/dev/jstech/computers/client/os/ArchiverApp.java 27
@@ -95,7 +95,7 @@ computers/src/main/java/dev/jstech/computers/gui/layout/ClusterManagementCompute
 computers/src/main/java/dev/jstech/computers/gui/layout/CraftingComputerLayout.java 9
 computers/src/main/java/dev/jstech/computers/gui/layout/CraftingSwitchLayout.java 7
 computers/src/main/java/dev/jstech/computers/gui/layout/LoaderMenuLayout.java 5
-computers/src/main/java/dev/jstech/computers/gui/layout/NmsLayout.java 12
+computers/src/main/java/dev/jstech/computers/gui/layout/NmsLayout.java 11
 computers/src/main/java/dev/jstech/computers/gui/layout/ServerRackLayout.java 4
 computers/src/main/java/dev/jstech/computers/gui/layout/ServerRouterLayout.java 5
 computers/src/main/java/dev/jstech/computers/hardware/StorageTier.java 3
@@ -111,7 +111,6 @@ computers/src/main/java/dev/jstech/computers/machine/PortsTree.java 2
 computers/src/main/java/dev/jstech/computers/machine/SourceChains.java 14
 computers/src/main/java/dev/jstech/computers/operation/MoveLabels.java 1
 computers/src/main/java/dev/jstech/computers/operation/payload/NetworkNodeInfo.java 1
-computers/src/main/java/dev/jstech/computers/operation/payload/NmsSchemaPayload.java 1
 computers/src/main/java/dev/jstech/computers/operation/payload/OperationRecord.java 1
 computers/src/main/java/dev/jstech/computers/operation/payload/UiWindowPayload.java 1
 computers/src/main/java/dev/jstech/computers/operation/payload/automation/AutomationPayloads.java 12
@@ -122,7 +121,6 @@ computers/src/main/java/dev/jstech/computers/operation/payload/files/ArchivePayl
 computers/src/main/java/dev/jstech/computers/operation/payload/files/FileEditPayloads.java 8
 computers/src/main/java/dev/jstech/computers/operation/payload/files/FilePayloads.java 2
 computers/src/main/java/dev/jstech/computers/operation/payload/files/TrashPayloads.java 2
-computers/src/main/java/dev/jstech/computers/operation/payload/iql/IqlPayloads.java 8
 computers/src/main/java/dev/jstech/computers/operation/payload/program/ConsolePayloads.java 10
 computers/src/main/java/dev/jstech/computers/operation/payload/program/DesktopShellPayloads.java 2
 computers/src/main/java/dev/jstech/computers/operation/payload/program/ProgramPayloads.java 1
@@ -154,8 +152,6 @@ computers/src/main/java/dev/jstech/computers/program/cli/ICliRemote.java 2
 computers/src/main/java/dev/jstech/computers/program/cli/MachineFacts.java 3
 computers/src/main/java/dev/jstech/computers/program/cli/ScreenfetchLogos.java 16
 computers/src/main/java/dev/jstech/computers/program/cli/interac/InteracCommand.java 2
-computers/src/main/java/dev/jstech/computers/program/iql/IqlConditionParser.java 1
-computers/src/main/java/dev/jstech/computers/program/iql/IqlParser.java 8
 computers/src/main/java/dev/jstech/computers/sigma/LanguageLevel.java 1
 computers/src/main/java/dev/jstech/computers/sigma/edit/SigmaCompletions.java 3
 computers/src/main/java/dev/jstech/computers/storage/StorageKey.java 2

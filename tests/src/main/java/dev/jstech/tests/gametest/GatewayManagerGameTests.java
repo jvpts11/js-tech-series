@@ -87,8 +87,8 @@ public final class GatewayManagerGameTests {
     /** What the action said, in English. */
     private static String act(final GameTestHelper helper, final Fleet fleet, final int action, final int value,
                               final String text) {
-        return GatewayManager.act(helper.getLevel(), fleet.host(), helper.absolutePos(GATEWAY).asLong(), action, value, text)
-                .english();
+        return GatewayManager.act(helper.getLevel(), fleet.host(), helper.absolutePos(GATEWAY).asLong(), action, value,
+                text).english();
     }
 
     @GameTest(template = ARENA)

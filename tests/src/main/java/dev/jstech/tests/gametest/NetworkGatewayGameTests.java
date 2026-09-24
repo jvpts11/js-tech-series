@@ -78,7 +78,8 @@ public final class NetworkGatewayGameTests {
                 .thenExecuteAfter(SETTLE + 4, () -> {
                     final NetworkGatewayBlockEntity g = gatewayAt(helper, at);
                     helper.assertTrue(g.online(), "the back socket against the computer links");
-                    helper.assertTrue("adjacent".equals(g.linkKind().english()), "with no cable between; got " + g.linkKind());
+                    helper.assertTrue("adjacent".equals(g.linkKind().english()),
+                            "with no cable between; got " + g.linkKind());
                     helper.assertTrue("gateway-1".equals(g.name()), "and takes the first default name; got " + g.name());
                     helper.assertTrue("desk".equals(g.hostName()), "on the host it linked to; got " + g.hostName());
                     helper.assertTrue(pc.linkedEndpoints().contains(helper.absolutePos(at).asLong()),
@@ -128,10 +129,12 @@ public final class NetworkGatewayGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 4, () -> {
                     final NetworkGatewayBlockEntity g = gatewayAt(helper, at);
-                    helper.assertTrue(g.rename("CC Bridge!", "desk").english().contains("cc-bridge"), "the name is cleaned");
+                    helper.assertTrue(g.rename("CC Bridge!", "desk").english().contains("cc-bridge"),
+                            "the name is cleaned");
                     helper.assertTrue("cc-bridge".equals(g.name()), "and kept; got " + g.name());
                     g.setPermissions(GatewayPermissions.DEFAULT.withRead(false)
-                            .withCeiling(OperationPriority.HIGH).withCallCap(16), "desk", Text.literal("set everything"));
+                                    .withCeiling(OperationPriority.HIGH).withCallCap(16), "desk",
+                            Text.literal("set everything"));
                     g.buffer().setStackInSlot(2, new ItemStack(Items.COBBLESTONE, 7));
                     final CompoundTag saved = g.saveWithoutMetadata(helper.getLevel().registryAccess());
                     final NetworkGatewayBlockEntity fresh = new NetworkGatewayBlockEntity(at, helper.getBlockState(at));

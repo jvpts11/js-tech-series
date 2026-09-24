@@ -26,7 +26,8 @@ import java.util.List;
 public class CraftingCardItem extends SpecItem<CraftingCardSpec> implements IExpansionCardItem {
 
     private static final TextKey PURPOSE = TextKey.of("jsc.item.crafting_card.purpose", "Crafting accelerator (FPGA)");
-    private static final TextKey THREADS_ONE = TextKey.of("jsc.item.crafting_card.threads_one", "Threads  -  %s thread");
+    private static final TextKey THREADS_ONE =
+            TextKey.of("jsc.item.crafting_card.threads_one", "Threads  -  %s thread");
     private static final TextKey THREADS_MANY =
             TextKey.of("jsc.item.crafting_card.threads_many", "Threads  -  %s threads");
     private static final TextKey THROUGHPUT = TextKey.of("jsc.item.crafting_card.throughput", "Throughput  -  %sx CPU");

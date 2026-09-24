@@ -17,7 +17,8 @@ import java.util.Locale;
  *
  * <p>The rows come from the machine already; what a player asked for of them is a matter of text and numbers,
  * and is worked out here so it can be held to account without a network. The same narrowing serves the command
- * and, later, the search box of the full-screen view, so a search means one thing in both.
+ * and, later, the search box of the full-screen view, so a search means one thing in both. It reads a name in
+ * English, the machine's language, which is the one side it knows.
  */
 public final class InteracRows {
 
@@ -36,17 +37,17 @@ public final class InteracRows {
         final String wanted = text == null ? "" : text.trim().toLowerCase(Locale.ROOT);
         final List<ICliComputer.StoredItem> kept = new ArrayList<>();
         for (final ICliComputer.StoredItem row : rows) {
-            if (wanted.isEmpty() || row.name().toLowerCase(Locale.ROOT).contains(wanted)) {
+            if (wanted.isEmpty() || row.name().english().toLowerCase(Locale.ROOT).contains(wanted)) {
                 kept.add(row);
             }
         }
         if ("count".equalsIgnoreCase(sort)) {
             // Most first, and two of the same count read in the order a person would look for them.
             kept.sort((left, right) -> left.quantity() == right.quantity()
-                    ? left.name().compareToIgnoreCase(right.name())
+                    ? left.name().english().compareToIgnoreCase(right.name().english())
                     : Long.compare(right.quantity(), left.quantity()));
         } else {
-            kept.sort((left, right) -> left.name().compareToIgnoreCase(right.name()));
+            kept.sort((left, right) -> left.name().english().compareToIgnoreCase(right.name().english()));
         }
         return kept;
     }

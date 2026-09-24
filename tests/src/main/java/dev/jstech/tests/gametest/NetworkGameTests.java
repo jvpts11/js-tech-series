@@ -1374,7 +1374,7 @@ public final class NetworkGameTests {
                     final var schema = dev.jstech.computers.operation.payload.iql.IqlPayloads
                             .nmsSchema(helper.getLevel(),
                                     (dev.jstech.computers.terminal.IComputerTerminalHost) computer);
-                    helper.assertTrue(schema.networkLabel().startsWith("jsc-net-"),
+                    helper.assertTrue(schema.networkLabel().english().startsWith("jsc-net-"),
                             "the Object Explorer must show the real network label");
                     helper.assertFalse(schema.servers().isEmpty(),
                             "the Object Explorer must list the rack's real server");

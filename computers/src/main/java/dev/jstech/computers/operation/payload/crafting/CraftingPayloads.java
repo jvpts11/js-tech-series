@@ -294,7 +294,8 @@ public final class CraftingPayloads {
             if (plan.feasible() && !plan.steps().isEmpty()) {
                 if (lines.size() < CraftPlanPayload.MAX_COVER) {
                     lines.add(treeCovers
-                            ? CraftTexts.CRAFTED_BEFORE_STAGES.with(shortfall, name, rawSummary(plan), firstStepName(plan))
+                            ? CraftTexts.CRAFTED_BEFORE_STAGES.with(shortfall, name, rawSummary(plan),
+                                    firstStepName(plan))
                             : CraftTexts.CRAFT_IT_FIRST.with(shortfall, name, firstStepName(plan)));
                 }
                 covered &= treeCovers;
@@ -315,7 +316,8 @@ public final class CraftingPayloads {
             if (lines.size() >= CraftPlanPayload.MAX_COVER) {
                 break;
             }
-            lines.add(CraftTexts.NOTHING_MAKES_IT.with(missing.getValue(), GameText.of(missing.getKey().displayName())));
+            lines.add(CraftTexts.NOTHING_MAKES_IT.with(missing.getValue(),
+                    GameText.of(missing.getKey().displayName())));
         }
         return lines;
     }

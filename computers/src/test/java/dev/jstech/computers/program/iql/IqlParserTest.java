@@ -249,7 +249,7 @@ class IqlParserTest {
     void tryParse_reportsErrorMessageInsteadOfThrowing() {
         final IqlParseResult result = IqlParser.tryParse("DELETE 64 iron");
         assertFalse(result.ok());
-        assertTrue(result.error().contains("TO"));
+        assertTrue(result.error().english().contains("TO"));
     }
 
     @Test

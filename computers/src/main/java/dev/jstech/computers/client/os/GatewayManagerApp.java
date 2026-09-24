@@ -180,9 +180,11 @@ public final class GatewayManagerApp implements IDesktopApp {
     public GatewayManagerApp(final BlockPos host) {
         this.host = host;
 
-        railHeader = root.add(new Label(() -> GameText.resolve(GatewayManagerTexts.ON_THIS_COMPUTER.with(gateways().size())),
+        railHeader = root.add(new Label(
+                () -> GameText.resolve(GatewayManagerTexts.ON_THIS_COMPUTER.with(gateways().size())),
                 Label.Tone.DIM).setScale(CARD_SCALE));
-        emptyRail = root.add(new Label(GameText.resolve(GatewayManagerTexts.NONE_LINKED), Label.Tone.DIM).setScale(CARD_SCALE));
+        emptyRail = root.add(new Label(GameText.resolve(GatewayManagerTexts.NONE_LINKED), Label.Tone.DIM)
+                .setScale(CARD_SCALE));
         rail = root.add(new ListView<WireGateway>(this::gateways, RAIL_ROW_H, this::renderRailRow).setOnClick(this::railClicked));
         renameButton = root.add(new Button(GameText.resolve(GatewayManagerTexts.RENAME), this::openRename));
         identifyButton = root.add(new Button(GameText.resolve(GatewayManagerTexts.IDENTIFY),
@@ -197,10 +199,11 @@ public final class GatewayManagerApp implements IDesktopApp {
         loadingLabel = root.add(new Label(GameText.resolve(GatewayManagerTexts.ASKING), Label.Tone.DIM));
         placeholder = root.add(new Label(GameText.resolve(GatewayManagerTexts.SELECT_ONE), Label.Tone.DIM));
 
-        jsTitle = root.add(new Label(GameText.resolve(GatewayManagerTexts.THIS_SIDE), Label.Tone.DIM).setScale(CARD_SCALE));
-        jsBig = root.add(new Label(this::jsBigText).setScale(BIG_SCALE));
-        jsLines[0] = root.add(new Label(() -> detail() == null ? "" : cap(GameText.resolve(detail().link())), Label.Tone.TEXT)
+        jsTitle = root.add(new Label(GameText.resolve(GatewayManagerTexts.THIS_SIDE), Label.Tone.DIM)
                 .setScale(CARD_SCALE));
+        jsBig = root.add(new Label(this::jsBigText).setScale(BIG_SCALE));
+        jsLines[0] = root.add(new Label(() -> detail() == null ? "" : cap(GameText.resolve(detail().link())),
+                Label.Tone.TEXT).setScale(CARD_SCALE));
         jsLines[1] = root.add(new Label(() -> detail() == null ? ""
                 : GameText.resolve(GatewayManagerTexts.TYPES_AND_SERVERS.with(
                         counted(detail().types(), GatewayManagerTexts.ONE_TYPE, GatewayManagerTexts.TYPES),
@@ -217,11 +220,13 @@ public final class GatewayManagerApp implements IDesktopApp {
         ccBig = root.add(new Label(this::ccBigText).setScale(BIG_SCALE));
         ccLines[0] = root.add(new Label(() -> detail() == null || !ccInstalled() ? ""
                 : GameText.resolve(GatewayManagerTexts.COMPUTERS_AND_DEVICES.with(
-                        counted(detail().wiredComputers(), GatewayManagerTexts.ONE_COMPUTER, GatewayManagerTexts.COMPUTERS),
+                        counted(detail().wiredComputers(), GatewayManagerTexts.ONE_COMPUTER,
+                                GatewayManagerTexts.COMPUTERS),
                         counted(detail().wiredDevices(), GatewayManagerTexts.ONE_DEVICE, GatewayManagerTexts.DEVICES))))
                 .setScale(CARD_SCALE));
         ccLines[1] = root.add(new Label(() -> detail() == null || !ccInstalled() ? ""
-                : GameText.resolve(counted(detail().calls(), GatewayManagerTexts.SERVED_ONE, GatewayManagerTexts.SERVED)))
+                : GameText.resolve(
+                        counted(detail().calls(), GatewayManagerTexts.SERVED_ONE, GatewayManagerTexts.SERVED)))
                 .setScale(CARD_SCALE));
         ccLines[2] = root.add(new Label(() -> detail() == null || !ccInstalled() ? ""
                 : GameText.resolve(counted(detail().operations(), GatewayManagerTexts.ONE_OPERATION,
@@ -236,7 +241,8 @@ public final class GatewayManagerApp implements IDesktopApp {
                 .setRenderer(this::renderBufferCell).setTooltip(this::bufferTooltip));
         clearBuffer = root.add(new Button(GameText.resolve(GatewayManagerTexts.CLEAR_BUFFER),
                 () -> act(GatewayManagerActionPayload.ACTION_CLEAR_BUFFER)));
-        recentCaption = root.add(new Label(GameText.resolve(GatewayManagerTexts.RECENT), Label.Tone.DIM).setScale(CARD_SCALE));
+        recentCaption = root.add(new Label(GameText.resolve(GatewayManagerTexts.RECENT), Label.Tone.DIM)
+                .setScale(CARD_SCALE));
         recentList = root.add(new ListView<WireLog>(this::recent, LOG_ROW_H, this::renderLogRow));
         noRecent = root.add(new Label(GameText.resolve(GatewayManagerTexts.NOTHING_SERVED), Label.Tone.DIM)
                 .setScale(CARD_SCALE));
@@ -265,7 +271,8 @@ public final class GatewayManagerApp implements IDesktopApp {
 
         computerColumns = root.add(new ColumnHeader(List.of(GameText.resolve(GatewayManagerTexts.ID_COLUMN),
                 GameText.resolve(GatewayManagerTexts.LABEL_COLUMN), GameText.resolve(GatewayManagerTexts.STATE_COLUMN),
-                GameText.resolve(GatewayManagerTexts.AGENT_COLUMN), GameText.resolve(GatewayManagerTexts.LAST_SEEN_COLUMN)))
+                GameText.resolve(GatewayManagerTexts.AGENT_COLUMN),
+                GameText.resolve(GatewayManagerTexts.LAST_SEEN_COLUMN)))
                 .setSortable(false));
         computerList = root.add(new ListView<WireComputer>(this::computers, ROW_H, this::renderComputerRow));
         noComputers = root.add(new Label(this::noComputersText, Label.Tone.DIM).setScale(CARD_SCALE));
@@ -282,7 +289,8 @@ public final class GatewayManagerApp implements IDesktopApp {
                 GameText.resolve(GatewayManagerTexts.WHO_COLUMN), GameText.resolve(GatewayManagerTexts.RESULT_COLUMN)))
                 .setSortable(false));
         logList = root.add(new ListView<WireLog>(this::log, LOG_ROW_H, this::renderLogRow));
-        noLog = root.add(new Label(GameText.resolve(GatewayManagerTexts.NOTHING_DONE), Label.Tone.DIM).setScale(CARD_SCALE));
+        noLog = root.add(new Label(GameText.resolve(GatewayManagerTexts.NOTHING_DONE), Label.Tone.DIM)
+                .setScale(CARD_SCALE));
 
         renamePopup = new RenamePopup().setLayouter(this::layoutRenamePopup);
         renameHint = renamePopup.add(new Label(GameText.resolve(GatewayManagerTexts.RENAME_HINT), Label.Tone.DIM)
@@ -694,7 +702,8 @@ public final class GatewayManagerApp implements IDesktopApp {
 
     private int logResultX(final Font font) {
         // Room for the longest result the Gateway writes, "40 items in 12 operations", at the small font.
-        return lastX + lastW - PAD - Math.round(font.width(GameText.resolve(GatewayManagerTexts.WIDEST_RESULT)) * CARD_SCALE);
+        final int widest = font.width(GameText.resolve(GatewayManagerTexts.WIDEST_RESULT));
+        return lastX + lastW - PAD - Math.round(widest * CARD_SCALE);
     }
 
     private static void layoutCard(final int cx, final int cy, final int cw, final Label title, final Label big,
@@ -801,7 +810,8 @@ public final class GatewayManagerApp implements IDesktopApp {
         final Font font = ctx.font();
         final int ty = y + 1;
         g.drawString(font, String.valueOf(c.id()), computerColumns.columnX(0), ty, ctx.skin().text(), false);
-        g.drawString(font, Texts.clip(font, c.label().isEmpty() ? GameText.resolve(GatewayManagerTexts.NO_LABEL) : c.label(),
+        final String label = c.label().isEmpty() ? GameText.resolve(GatewayManagerTexts.NO_LABEL) : c.label();
+        g.drawString(font, Texts.clip(font, label,
                 computerColumns.columnX(2) - computerColumns.columnX(1) - GAP), computerColumns.columnX(1), ty,
                 c.label().isEmpty() ? ctx.skin().dim() : ctx.skin().text(), false);
         final int sx = computerColumns.columnX(2);

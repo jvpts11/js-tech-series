@@ -122,7 +122,8 @@ public final class CraftPlannerApp implements IDesktopApp {
         catalogList = root.add(new ListView<CraftCatalogPayload.Entry>(this::filtered, CATALOG_ROW_H, this::renderCatalogRow)
                 .setOnClick(this::catalogClicked));
         search.setOnEdit(() -> catalogList.setScroll(0));
-        catalogEmpty = root.add(new Label(() -> GameText.resolve(catalog.isEmpty() ? LOADING : NO_MATCH), Label.Tone.DIM));
+        catalogEmpty = root.add(new Label(() -> GameText.resolve(catalog.isEmpty() ? LOADING : NO_MATCH),
+                Label.Tone.DIM));
 
         pickLabel = root.add(new Label(GameText.resolve(PICK_AN_ITEM), Label.Tone.DIM));
         nameLabel = root.add(new Label(() -> selected.getHoverName().getString()));
@@ -361,7 +362,8 @@ public final class CraftPlannerApp implements IDesktopApp {
             g.fill(x + 2 + (n.depth() - 1) * 9 + 3, y + 4, ix - 1, y + 5, ctx.skin().edge());
         }
         itemIcon(g, n.item(), ix, y - 1, 10);
-        final String label = GameText.resolve(TREE_NODE.with(JsTechTheme.fmt(n.qty()), n.item().getHoverName().getString()));
+        final String label =
+                GameText.resolve(TREE_NODE.with(JsTechTheme.fmt(n.qty()), n.item().getHoverName().getString()));
         g.drawString(font, Texts.clip(font, label, w - (ix - x) - 13 - 40), ix + 12, y, ctx.skin().text(), false);
         if (!n.craftable()) {
             final String raw = GameText.resolve(RAW);

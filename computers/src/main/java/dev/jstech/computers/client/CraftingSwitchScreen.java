@@ -386,7 +386,8 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
                             line.machinePos().getY(), line.machinePos().getZ())),
                     dx + 4, y + CraftingSwitchLayout.NAME_Y + CraftingSwitchLayout.NAME_H + 2, TEXT);
             if (selViaBus.size() > 1) {
-                JsTechTheme.textSRight(g, this.font, GameText.resolve(CraftingSwitchTexts.MORE.with(selViaBus.size() - 1)),
+                JsTechTheme.textSRight(g, this.font,
+                        GameText.resolve(CraftingSwitchTexts.MORE.with(selViaBus.size() - 1)),
                         dx + CraftingSwitchLayout.DETAIL_W - 2,
                         y + CraftingSwitchLayout.MACHINE_LABEL_Y + 1, DIM);
             }

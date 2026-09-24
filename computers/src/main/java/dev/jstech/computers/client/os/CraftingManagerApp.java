@@ -158,8 +158,8 @@ public final class CraftingManagerApp implements IDesktopApp {
         mediaList = root.add(new ListView<String>(() -> mediaFiles, ROW_H, this::renderMediaRow)
                 .setPadding(1)
                 .setOnClick((index, button, mx, my) -> toggle(selectedMedia, index, mediaFiles.size())));
-        mediaEmpty = root.add(new Label(() -> GameText.resolve(mediaVolumeKey.isEmpty() ? INSERT_A_DISC : NO_CRAFT_FILES),
-                Label.Tone.DIM));
+        mediaEmpty = root.add(new Label(
+                () -> GameText.resolve(mediaVolumeKey.isEmpty() ? INSERT_A_DISC : NO_CRAFT_FILES), Label.Tone.DIM));
         romList = root.add(new ListView<WireRomEntry>(() -> romEntries, ROW_H, this::renderRomRow)
                 .setPadding(1)
                 .setOnClick((index, button, mx, my) -> toggle(selectedRom, index, romEntries.size())));
@@ -454,8 +454,8 @@ public final class CraftingManagerApp implements IDesktopApp {
             rowButton(g, ctx, machineButtonX(x, lastW, 2), y, bw,
                     GameText.resolve(grp.maxJobs() == 0 ? JOBS_AUTO.text() : JOBS.with(grp.maxJobs())));
         } else if (item instanceof WireMachine m) {
-            g.drawString(font, Texts.clip(font, GameText.resolve(m.label()), lastW / 2 - PAD * 2 - 6), x + PAD + 6, y + 3,
-                    ctx.skin().text(), false);
+            g.drawString(font, Texts.clip(font, GameText.resolve(m.label()), lastW / 2 - PAD * 2 - 6), x + PAD + 6,
+                    y + 3, ctx.skin().text(), false);
             rowButton(g, ctx, machineButtonX(x, lastW, 0), y, bw, GameText.resolve(m.locked() ? PAUSED : RUNNING));
             rowButton(g, ctx, machineButtonX(x, lastW, 1), y, bw, GameText.resolve(m.feedMax() ? FILL : ONE_LOT));
         }

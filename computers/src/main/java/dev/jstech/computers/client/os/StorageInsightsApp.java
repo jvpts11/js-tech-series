@@ -453,8 +453,8 @@ public final class StorageInsightsApp implements IDesktopApp {
 
     private void renderStoredRow(final GuiGraphics g, final UiContext ctx, final StorageShare s, final int index, final int x,
                                  final int y, final int w, final int h, final boolean hovered, final boolean selected) {
-        g.drawString(ctx.font(), Texts.clip(ctx.font(), GameText.resolve(s.label()) + "  " + JsTechTheme.fmt(s.qty()), w - 4),
-                x, y, ctx.skin().text(), false);
+        final String line = GameText.resolve(s.label()) + "  " + JsTechTheme.fmt(s.qty());
+        g.drawString(ctx.font(), Texts.clip(ctx.font(), line, w - 4), x, y, ctx.skin().text(), false);
     }
 
     private void renderBusRow(final GuiGraphics g, final UiContext ctx, final BusRef b, final int index, final int x,

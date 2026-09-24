@@ -42,7 +42,8 @@ public record ComputerBuild(MotherboardSpec motherboard,
             "expansion card bus family %s is not compatible with board bus %s");
     private static final TextKey TOO_MANY_RAM =
             TextKey.of("jsc.build.too_many_ram", "too many RAM modules: %s installed, %s slots");
-    private static final TextKey WRONG_RAM = TextKey.of("jsc.build.wrong_ram", "RAM generation %s not accepted by board");
+    private static final TextKey WRONG_RAM =
+            TextKey.of("jsc.build.wrong_ram", "RAM generation %s not accepted by board");
     private static final TextKey TOO_MANY_DISKS =
             TextKey.of("jsc.build.too_many_disks", "too many disks: %s installed, %s disk slots");
     private static final TextKey PSU_INSUFFICIENT =

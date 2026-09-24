@@ -107,8 +107,8 @@ public final class CraftPlanMath {
                 if (!row.satisfied() && !craftable) {
                     shortCraftable = false;
                 }
-                inputs.add(new RecipeChoice.Input(
-                        GameText.of(row.item().getHoverName()), row.need(), stock.getOrDefault(inputKey, 0L), craftable));
+                inputs.add(new RecipeChoice.Input(GameText.of(row.item().getHoverName()), row.need(),
+                        stock.getOrDefault(inputKey, 0L), craftable));
             }
             // A processing run whose short inputs something makes runs as one tree, so it is feasible after all.
             if (!feasible && recipe.proc().isPresent() && shortCraftable) {

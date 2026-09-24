@@ -603,7 +603,9 @@ public final class PatternStudioPayloads {
             } else if (stage.proc().isPresent()) {
                 final ProcessingPattern p = stage.proc().get();
                 final ProcessingPattern.ProcessingOutput primary = p.primaryOutput();
-                stages.add(new PatternStudioStatePayload.Stage(p.displayText(), false, primary != null && primary.key().isItem() ? primary.key().stack(1) : ItemStack.EMPTY));
+                final ItemStack icon = primary != null && primary.key().isItem()
+                        ? primary.key().stack(1) : ItemStack.EMPTY;
+                stages.add(new PatternStudioStatePayload.Stage(p.displayText(), false, icon));
             }
         }
 

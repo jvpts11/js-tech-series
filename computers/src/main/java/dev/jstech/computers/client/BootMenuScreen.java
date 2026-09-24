@@ -184,7 +184,8 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
         wall(g, GameText.resolve(FirmwareScreenTexts.LOADER_HELP_SECOND), x + MARGIN, hy, TEXT);
         hy += WALL_ROW;
         wall(g, GameText.resolve(this.held ? FirmwareScreenTexts.LOADER_HELD.text()
-                : FirmwareScreenTexts.LOADER_COUNTDOWN.with(this.menu.secondsLeft(this.remaining))), x + MARGIN, hy, TEXT);
+                        : FirmwareScreenTexts.LOADER_COUNTDOWN.with(this.menu.secondsLeft(this.remaining))),
+                x + MARGIN, hy, TEXT);
     }
 
     /** The single rule around the list, which is the whole of that manager's furniture. */

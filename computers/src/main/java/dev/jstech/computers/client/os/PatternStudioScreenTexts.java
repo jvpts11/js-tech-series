@@ -38,7 +38,8 @@ final class PatternStudioScreenTexts {
     /* How many a recipe makes, and of what: "4 x Oak Planks". */
     static final TextKey RESULT = TextKey.of("jsc.pattern_studio.screen.result", "%s x %s");
     static final TextKey FILE = TextKey.of("jsc.pattern_studio.screen.file", "File: %s");
-    static final TextKey PICK_MACHINE_BUTTON = TextKey.of("jsc.pattern_studio.screen.pick_machine_button", "Machine...");
+    static final TextKey PICK_MACHINE_BUTTON =
+            TextKey.of("jsc.pattern_studio.screen.pick_machine_button", "Machine...");
     static final TextKey STAGE_BENCH = TextKey.of("jsc.pattern_studio.screen.stage_bench", "%s. [bench] %s");
     static final TextKey STAGE_MACHINE = TextKey.of("jsc.pattern_studio.screen.stage_machine", "%s. [machine] %s");
 
@@ -54,7 +55,8 @@ final class PatternStudioScreenTexts {
     static final TextKey FILES_TAB = TextKey.of("jsc.pattern_studio.screen.files_tab", "Files");
     static final TextKey ENCODER_TAB = TextKey.of("jsc.pattern_studio.screen.encoder_tab", "Encoder");
     static final TextKey NO_DRIVES = TextKey.of("jsc.pattern_studio.screen.no_drives", "No drives");
-    static final TextKey CLICK_ADDS_STAGE = TextKey.of("jsc.pattern_studio.screen.click_adds_stage", "Click adds a stage");
+    static final TextKey CLICK_ADDS_STAGE =
+            TextKey.of("jsc.pattern_studio.screen.click_adds_stage", "Click adds a stage");
     static final TextKey CLICK_OPENS_FILE =
             TextKey.of("jsc.pattern_studio.screen.click_opens_file", "Click opens the file");
     static final TextKey ENCODER_OF_ERA = TextKey.of("jsc.pattern_studio.screen.encoder_of_era", "%s encoder");

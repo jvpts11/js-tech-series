@@ -196,13 +196,13 @@ public final class NmsLayout {
         final GuiLayout l = new GuiLayout(WIDTH, HEIGHT)
                 .box("menuBar", 0, MENU_Y, WIDTH, MENU_H)
                 .box("fileDropdown", FILE_DROP_X, FILE_DROP_Y, FILE_DROP_W, FILE_DROP_H);
-        // Item rows as text elements: longest label is "Save As..." = 10 chars.
-        final String[] labels = {"New", "Save", "Save As...", "Open..."};
-        for (int i = 0; i < labels.length; i++) {
+        // Item rows as text elements, by the English length of each: New, Save, Save As..., Open...
+        final int[] lengths = {3, 4, 10, 7};
+        for (int i = 0; i < lengths.length; i++) {
             l.text("fileDropLabel_" + i,
                     FILE_DROP_X + 4,
                     FILE_DROP_Y + 1 + i * FILE_DROP_ITEM_H + 1,
-                    labels[i].length(), SMALL);
+                    lengths[i], SMALL);
         }
         return l;
     }

@@ -36,7 +36,8 @@ public class RamItem extends SpecItem<RamSpec> {
         final RamSpec spec = spec();
         tooltip.add(GameText.component(BUFFER.with(spec.bufferItems(), spec.generation()))
                 .withStyle(ChatFormatting.GRAY));
-        tooltip.add(GameText.component(HardwareTooltip.WATTS.with(spec.tdpWatts())).withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(GameText.component(HardwareTooltip.WATTS.with(spec.tdpWatts()))
+                .withStyle(ChatFormatting.DARK_GRAY));
         HardwareTooltip.appendEra(tooltip, spec.era());
     }
 }

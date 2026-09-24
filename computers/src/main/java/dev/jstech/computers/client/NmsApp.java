@@ -24,6 +24,9 @@ import dev.jstech.computers.operation.payload.SaveIqlFilePayload;
 import dev.jstech.computers.program.ProgramKeybinds;
 import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import java.util.HashSet;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
@@ -75,13 +78,15 @@ public final class NmsApp implements IDesktopApp {
     private static final int MIN_EDITOR_H = 30;
     private static final int MIN_GRID_H = 22;
 
-    private static final String[] MENU = {"File", "Edit", "View", "Query", "Tools", "Window", "Help"};
+    private static final TextKey[] MENU = {NmsTexts.FILE, NmsTexts.EDIT, NmsTexts.VIEW, NmsTexts.QUERY,
+            NmsTexts.TOOLS, NmsTexts.WINDOW, NmsTexts.HELP};
     /** Which of those opens the File menu, the first of them. */
     private static final int FILE_MENU = 0;
     private static final int TAB_W = 82;
     private static final int EDITOR_LINE_H = 10;
 
-    private static final String[] FILE_ITEMS = {"New", "Save", "Save As...", "Open..."};
+    private static final TextKey[] FILE_ITEMS =
+            {NmsTexts.NEW, NmsTexts.SAVE, NmsTexts.SAVE_AS_ITEM, NmsTexts.OPEN_ITEM};
 
     private static final int DIALOG_NONE = 0;
     private static final int DIALOG_SAVE_AS = 1;
@@ -111,7 +116,7 @@ public final class NmsApp implements IDesktopApp {
     private record VisibleNode(Node node, int depth) {
     }
 
-    private record MsgLine(String text, boolean ok) {
+    private record MsgLine(Text text, boolean ok) {
     }
 
     private final BlockPos host;
@@ -129,7 +134,7 @@ public final class NmsApp implements IDesktopApp {
 
     private IqlEditor editor;
     private final List<IqlResultPayload.Row> rows = new ArrayList<>();
-    private String status = "ready";
+    private Text status = NmsTexts.READY.text();
     private boolean statusOk = true;
     private int gridScroll;
 
@@ -140,7 +145,7 @@ public final class NmsApp implements IDesktopApp {
     private final List<VisibleNode> visible = new ArrayList<>();
     private int treeScroll;
 
-    private String networkLabel = "jsc-net";
+    private Text networkLabel = Text.literal("jsc-net");
     private List<String> liveServers = List.of();
     private int liveItemTypes = -1;
     private int liveOperations = -1;
@@ -257,13 +262,13 @@ public final class NmsApp implements IDesktopApp {
 
     private void applyFileContent(final IqlFileContentPayload payload) {
         if (!payload.ok()) {
-            status = "could not open file";
+            status = NmsTexts.COULD_NOT_OPEN.text();
             statusOk = false;
             return;
         }
         editor().setValue(payload.content());
         currentFile = payload.fileName();
-        status = "opened: " + payload.fileName();
+        status = NmsTexts.OPENED.with(payload.fileName());
         statusOk = true;
         dialogMode = DIALOG_NONE;
     }
@@ -325,7 +330,7 @@ public final class NmsApp implements IDesktopApp {
         if (statement.isEmpty()) {
             return;
         }
-        status = "executing...";
+        status = NmsTexts.EXECUTING.text();
         statusOk = true;
         refreshOnResult = isDefinition(statement);
         PacketDistributor.sendToServer(new RunIqlPayload(monitorPos, host, statement));
@@ -416,7 +421,7 @@ public final class NmsApp implements IDesktopApp {
                 branch(TABLE, "computers", "computers",
                         leaf(COLUMN, "name"), leaf(COLUMN, "type"), leaf(COLUMN, "era"), leaf(COLUMN, "online")));
         tables.expanded = true;
-        final Node root = branch(DB, networkLabel + " (Mainframe)", null,
+        final Node root = branch(DB, GameText.resolve(NmsTexts.ON_MAINFRAME.with(networkLabel)), null,
                 engineInfo(),
                 serversBranch(),
                 tables,
@@ -428,7 +433,7 @@ public final class NmsApp implements IDesktopApp {
     }
 
     private Node engineInfo() {
-        return new Node(DB, "engine: " + liveEngine.state().word(), null, List.of());
+        return new Node(DB, GameText.resolve(NmsTexts.ENGINE.with(liveEngine.state().word())), null, List.of());
     }
 
     private Node objectBranch(final int leafIcon, final String label, final List<String> names) {
@@ -483,7 +488,7 @@ public final class NmsApp implements IDesktopApp {
     private void fileNew() {
         editor().setValue("");
         currentFile = null;
-        status = "new query";
+        status = NmsTexts.NEW_QUERY.text();
         statusOk = true;
         fileMenuOpen = false;
     }
@@ -513,7 +518,7 @@ public final class NmsApp implements IDesktopApp {
     private void commitSaveAs() {
         final String name = saveAsName.toString().trim();
         if (name.isEmpty()) {
-            status = "enter a file name";
+            status = NmsTexts.ENTER_A_NAME.text();
             statusOk = false;
             return;
         }
@@ -534,7 +539,7 @@ public final class NmsApp implements IDesktopApp {
     }
 
     private int fileLabelW() {
-        return JsTechTheme.widthS(font, "File") + 8;
+        return JsTechTheme.widthS(font, GameText.resolve(NmsTexts.FILE)) + 8;
     }
 
     private int hoveredFileItem(final int mlx, final int mly) {
@@ -718,33 +723,36 @@ public final class NmsApp implements IDesktopApp {
         int mx = 6;
         fileMenuLabelX = mx;
         for (int i = 0; i < MENU.length; i++) {
-            final String item = MENU[i];
+            final String item = GameText.resolve(MENU[i]);
             final int color = i == FILE_MENU && fileMenuOpen ? JsTechTheme.accent2() : JsTechTheme.text();
             JsTechTheme.textS(g, font, item, mx, NmsLayout.MENU_Y + 2, color);
             mx += JsTechTheme.widthS(font, item) + 8;
         }
-        JsTechTheme.textS(g, font, "Execute", EXEC_X + 12, NmsLayout.TOOLBAR_Y + 5, JsTechTheme.text());
-        JsTechTheme.textS(g, font, "network: " + networkLabel, EXEC_X + EXEC_W + 8, NmsLayout.TOOLBAR_Y + 5,
-                JsTechTheme.accent2());
+        JsTechTheme.textS(g, font, GameText.resolve(NmsTexts.EXECUTE), EXEC_X + 12, NmsLayout.TOOLBAR_Y + 5,
+                JsTechTheme.text());
+        JsTechTheme.textS(g, font, GameText.resolve(NmsTexts.NETWORK.with(networkLabel)), EXEC_X + EXEC_W + 8,
+                NmsLayout.TOOLBAR_Y + 5, JsTechTheme.accent2());
         final int engineColor = switch (liveEngine.state()) {
             case RUNNING -> JsTechTheme.green();
             case STOPPED -> JsTechTheme.amber();
             case NOT_INSTALLED -> JsTechTheme.red();
         };
-        JsTechTheme.textSRight(g, font, "engine: " + liveEngine.state().word(), w - 6, NmsLayout.TOOLBAR_Y + 5,
-                engineColor);
+        JsTechTheme.textSRight(g, font, GameText.resolve(NmsTexts.ENGINE.with(liveEngine.state().word())), w - 6,
+                NmsLayout.TOOLBAR_Y + 5, engineColor);
 
-        JsTechTheme.textS(g, font, fit("OBJECT EXPLORER", explorerW - 8), 6, NmsLayout.BODY_Y + 2, JsTechTheme.dim());
+        JsTechTheme.textS(g, font, fit(GameText.resolve(NmsTexts.OBJECT_EXPLORER), explorerW - 8), 6,
+                NmsLayout.BODY_Y + 2, JsTechTheme.dim());
         drawTree(g, mlx, mly);
 
         final int tabW = Math.min(TAB_W, rightW());
-        final String tabLabel = currentFile != null ? currentFile : networkLabel + ".query 1";
+        // An unsaved query is named after its network, the way a studio names a query it has not been told the name of.
+        final String tabLabel = currentFile != null ? currentFile : GameText.resolve(networkLabel) + ".query 1";
         JsTechTheme.textS(g, font, fit(tabLabel, tabW - 8), rightX() + 6, NmsLayout.BODY_Y + 2, JsTechTheme.tabLabelOn());
         drawEditor(g);
 
-        JsTechTheme.textS(g, font, "Results", rightX() + 6, resTabsY() + 2,
+        JsTechTheme.textS(g, font, GameText.resolve(NmsTexts.RESULTS), rightX() + 6, resTabsY() + 2,
                 showMessages ? JsTechTheme.dim() : JsTechTheme.text());
-        JsTechTheme.textS(g, font, "Messages", rightX() + 44, resTabsY() + 2,
+        JsTechTheme.textS(g, font, GameText.resolve(NmsTexts.MESSAGES), messagesTabX(), resTabsY() + 2,
                 showMessages ? JsTechTheme.text() : JsTechTheme.dim());
         if (showMessages) {
             drawMessages(g);
@@ -752,12 +760,12 @@ public final class NmsApp implements IDesktopApp {
             drawGrid(g);
         }
 
-        JsTechTheme.textS(g, font, status, 6, statusY() + 5, statusOk ? 0xFFFFFFFF : 0xFFFFD2D2);
-        JsTechTheme.textSRight(g, font, "F5 to run", w - 6, statusY() + 5, 0xFFE0ECF8);
+        JsTechTheme.textS(g, font, GameText.resolve(status), 6, statusY() + 5, statusOk ? 0xFFFFFFFF : 0xFFFFD2D2);
+        JsTechTheme.textSRight(g, font, GameText.resolve(NmsTexts.F5_TO_RUN), w - 6, statusY() + 5, 0xFFE0ECF8);
 
         if (fileMenuOpen) {
             for (int i = 0; i < FILE_ITEMS.length; i++) {
-                JsTechTheme.textS(g, font, FILE_ITEMS[i], NmsLayout.FILE_DROP_X + 4,
+                JsTechTheme.textS(g, font, GameText.resolve(FILE_ITEMS[i]), NmsLayout.FILE_DROP_X + 4,
                         NmsLayout.FILE_DROP_Y + 1 + i * NmsLayout.FILE_DROP_ITEM_H + 1, JsTechTheme.text());
             }
         }
@@ -765,19 +773,20 @@ public final class NmsApp implements IDesktopApp {
         if (dialogMode == DIALOG_SAVE_AS) {
             final int dxL = NmsLayout.DIALOG_X;
             final int dyL = NmsLayout.DIALOG_SAVE_Y;
-            JsTechTheme.textS(g, font, "Save As", dxL + 4, dyL + 2, JsTechTheme.dim());
-            JsTechTheme.textS(g, font, "File name:", dxL + 4, dyL + 14, JsTechTheme.text());
+            JsTechTheme.textS(g, font, GameText.resolve(NmsTexts.SAVE_AS), dxL + 4, dyL + 2, JsTechTheme.dim());
+            JsTechTheme.textS(g, font, GameText.resolve(NmsTexts.FILE_NAME), dxL + 4, dyL + 14, JsTechTheme.text());
             JsTechTheme.textS(g, font, fit(saveAsName + "_", NmsLayout.SAVE_EDIT_W - 6),
                     NmsLayout.SAVE_EDIT_X + 3, NmsLayout.SAVE_EDIT_Y + 3, JsTechTheme.text());
-            JsTechTheme.textS(g, font, "Enter = save   Esc = cancel", dxL + 4,
+            JsTechTheme.textS(g, font, GameText.resolve(NmsTexts.SAVE_KEYS), dxL + 4,
                     dyL + NmsLayout.DIALOG_H_SAVE - 10, JsTechTheme.dim());
         } else if (dialogMode == DIALOG_OPEN) {
             final int dxL = NmsLayout.DIALOG_X;
             final int dyL = NmsLayout.DIALOG_OPEN_Y;
-            JsTechTheme.textS(g, font, "Open IQL File", dxL + 4, dyL + 2, JsTechTheme.dim());
+            JsTechTheme.textS(g, font, GameText.resolve(NmsTexts.OPEN_FILE), dxL + 4, dyL + 2, JsTechTheme.dim());
             final int listTop = dyL + NmsLayout.PICKER_LIST_OFFSET_Y;
             if (iqlFiles.isEmpty()) {
-                JsTechTheme.textS(g, font, "no .iql files on disk", dxL + 4, listTop + 2, JsTechTheme.dim());
+                JsTechTheme.textS(g, font, GameText.resolve(NmsTexts.NO_FILES), dxL + 4, listTop + 2,
+                        JsTechTheme.dim());
             } else {
                 final int clamped = Math.max(0, Math.min(pickerScroll,
                         Math.max(0, iqlFiles.size() - NmsLayout.PICKER_VISIBLE)));
@@ -786,7 +795,8 @@ public final class NmsApp implements IDesktopApp {
                             dxL + 4, listTop + i * NmsLayout.PICKER_ROW_H + 2, JsTechTheme.text());
                 }
             }
-            JsTechTheme.textS(g, font, "Cancel", NmsLayout.DIALOG_X + NmsLayout.CANCEL_BTN_REL_X,
+            JsTechTheme.textS(g, font, GameText.resolve(NmsTexts.CANCEL),
+                    NmsLayout.DIALOG_X + NmsLayout.CANCEL_BTN_REL_X,
                     NmsLayout.DIALOG_OPEN_Y + NmsLayout.CANCEL_BTN_REL_Y, JsTechTheme.text());
         }
     }
@@ -860,8 +870,8 @@ public final class NmsApp implements IDesktopApp {
         final int left = rightX() + 6;
         final int qtyRight = viewW - 6;
         final int nameMax = qtyRight - left - 30;
-        JsTechTheme.textS(g, font, "item", left, gridY() + 1, JsTechTheme.dim());
-        JsTechTheme.textSRight(g, font, "qty", qtyRight, gridY() + 1, JsTechTheme.dim());
+        JsTechTheme.textS(g, font, GameText.resolve(NmsTexts.ITEM), left, gridY() + 1, JsTechTheme.dim());
+        JsTechTheme.textSRight(g, font, GameText.resolve(NmsTexts.QUANTITY), qtyRight, gridY() + 1, JsTechTheme.dim());
         final int top = gridY() + 10;
         final int bottom = statusY() - 1;
         final int visibleRows = (bottom - top) / NmsLayout.ROW_H;
@@ -869,29 +879,35 @@ public final class NmsApp implements IDesktopApp {
         for (int i = 0; i < visibleRows && clamped + i < rows.size(); i++) {
             final IqlResultPayload.Row row = rows.get(clamped + i);
             final int ry = top + i * NmsLayout.ROW_H;
-            JsTechTheme.textS(g, font, fit(row.label(), nameMax), left, ry, JsTechTheme.text());
+            JsTechTheme.textS(g, font, fit(GameText.resolve(row.label()), nameMax), left, ry, JsTechTheme.text());
             JsTechTheme.textSRight(g, font, JsTechTheme.fmt(row.quantity()), qtyRight, ry, JsTechTheme.accent2());
         }
         if (rows.isEmpty()) {
-            JsTechTheme.textS(g, font, "no result set", left, top, JsTechTheme.dim());
+            JsTechTheme.textS(g, font, GameText.resolve(NmsTexts.NO_RESULT_SET), left, top, JsTechTheme.dim());
         }
     }
 
     private void drawMessages(final GuiGraphics g) {
         final int left = rightX() + 6;
-        JsTechTheme.textS(g, font, "message", left, gridY() + 1, JsTechTheme.dim());
+        JsTechTheme.textS(g, font, GameText.resolve(NmsTexts.MESSAGE), left, gridY() + 1, JsTechTheme.dim());
         final int top = gridY() + 10;
         final int bottom = statusY() - 1;
         final int visibleRows = Math.max(1, (bottom - top) / NmsLayout.ROW_H);
         final int start = Math.max(0, messages.size() - visibleRows);
         for (int i = 0; start + i < messages.size() && i < visibleRows; i++) {
             final MsgLine line = messages.get(start + i);
-            JsTechTheme.textS(g, font, fit(line.text(), viewW - left - 6), left, top + i * NmsLayout.ROW_H,
+            JsTechTheme.textS(g, font, fit(GameText.resolve(line.text()), viewW - left - 6), left,
+                    top + i * NmsLayout.ROW_H,
                     line.ok() ? JsTechTheme.text() : 0xFFCC2222);
         }
         if (messages.isEmpty()) {
-            JsTechTheme.textS(g, font, "no messages yet", left, top, JsTechTheme.dim());
+            JsTechTheme.textS(g, font, GameText.resolve(NmsTexts.NO_MESSAGES), left, top, JsTechTheme.dim());
         }
+    }
+
+    /* The Messages tab sits after the Results tab, however long that one's word is in the player's language. */
+    private int messagesTabX() {
+        return rightX() + Math.max(44, 6 + JsTechTheme.widthS(font, GameText.resolve(NmsTexts.RESULTS)) + 8);
     }
 
     // input
@@ -996,11 +1012,13 @@ public final class NmsApp implements IDesktopApp {
             return;
         }
         if (mly >= resTabsY() && mly < resTabsY() + NmsLayout.RES_TABS_H) {
-            if (mlx >= rightX() + 4 && mlx < rightX() + 42) {
+            final int messagesX = messagesTabX();
+            if (mlx >= rightX() + 4 && mlx < messagesX - 2) {
                 showMessages = false;
                 return;
             }
-            if (mlx >= rightX() + 42 && mlx < rightX() + 92) {
+            final int messagesW = JsTechTheme.widthS(font, GameText.resolve(NmsTexts.MESSAGES));
+            if (mlx >= messagesX - 2 && mlx < messagesX + messagesW + 8) {
                 showMessages = true;
                 return;
             }

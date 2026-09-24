@@ -133,7 +133,7 @@ public final class InteracView {
                                                  final String search) {
         final List<InteracScreen.Row> rows = new ArrayList<>();
         for (final ICliComputer.StoredItem row : InteracRows.filtered(stock, search, "count")) {
-            rows.add(new InteracScreen.Row(row.name(), CliText.group(row.quantity()), row.detail()));
+            rows.add(new InteracScreen.Row(english(row.name()), CliText.group(row.quantity()), english(row.detail())));
         }
         return rows;
     }

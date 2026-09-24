@@ -31,7 +31,8 @@ public class MotherboardItem extends SpecItem<MotherboardSpec> {
     private static final TextKey FORM_FACTOR = TextKey.of("jsc.item.motherboard.form_factor", "%s form factor");
     /* CPU slots and socket, memory slots and generations, card slots and bus. */
     private static final TextKey SLOTS = TextKey.of("jsc.item.motherboard.slots", "%sx %s  |  %s RAM (%s)  |  %sx %s");
-    private static final TextKey OWN_ERA = TextKey.of("jsc.item.motherboard.own_era", "Seats parts of its own era only");
+    private static final TextKey OWN_ERA =
+            TextKey.of("jsc.item.motherboard.own_era", "Seats parts of its own era only");
 
     public MotherboardItem(final Properties properties, final MotherboardSpec spec) {
         super(properties, spec);

@@ -49,7 +49,8 @@ public final class ServerRouterScreen extends AbstractContainerScreen<ServerRout
         this.titleLabelY = -1000;
         this.inventoryLabelY = -1000;
 
-        nameBox = new EditBox(font, leftPos + 10, topPos + 39, 170, 10, GameText.component(ServerRouterTexts.NAME_FIELD));
+        nameBox = new EditBox(font, leftPos + 10, topPos + 39, 170, 10,
+                GameText.component(ServerRouterTexts.NAME_FIELD));
         nameBox.setBordered(false);
         nameBox.setMaxLength(RenameServerRouterPayload.MAX_LEN);
         nameBox.setTextColor(JsTechTheme.text());
@@ -107,7 +108,8 @@ public final class ServerRouterScreen extends AbstractContainerScreen<ServerRout
 
         final int count = menu.sectionCount();
         if (count == 0) {
-            JsTechTheme.textS(g, font, GameText.resolve(ServerRouterTexts.NO_SECTIONS), 12, ROW_Y0 + 3, JsTechTheme.dim());
+            JsTechTheme.textS(g, font, GameText.resolve(ServerRouterTexts.NO_SECTIONS), 12, ROW_Y0 + 3,
+                    JsTechTheme.dim());
             return;
         }
         for (int i = 0; i < count; i++) {
@@ -118,7 +120,8 @@ public final class ServerRouterScreen extends AbstractContainerScreen<ServerRout
             JsTechTheme.textS(g, font, GameText.resolve(ServerRouterTexts.SECTION_SIZE.with(menu.sectionRacks(i),
                     menu.sectionServers(i))), 40, ry + 3, JsTechTheme.dim());
             final LoadBalanceMode mode = menu.sectionMode(i);
-            JsTechTheme.textSCenter(g, font, GameText.resolve(mode.text()), MODE_X + MODE_W / 2, ry + 3, modeColor(mode));
+            JsTechTheme.textSCenter(g, font, GameText.resolve(mode.text()), MODE_X + MODE_W / 2, ry + 3,
+                    modeColor(mode));
         }
     }
 

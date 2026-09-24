@@ -148,7 +148,8 @@ final class InteractorOps {
     void renderHeader(final GuiGraphics g, final Font font, final int listLeft, final int gridTop) {
         // Supercomputer parallel craft-slot capacity, amber once every slot is taken.
         if (slotsTotal > 0) {
-            Texts.small(g, font, GameText.resolve(NetworkInteractorTexts.SUPERCOMPUTER_SLOTS.with(slotsUsed, slotsTotal)),
+            Texts.small(g, font,
+                    GameText.resolve(NetworkInteractorTexts.SUPERCOMPUTER_SLOTS.with(slotsUsed, slotsTotal)),
                     listLeft + 2, gridTop - 9, slotsUsed >= slotsTotal ? AMBER : app.panelSkin().dim());
         }
         if (all().isEmpty()) {
@@ -208,8 +209,9 @@ final class InteractorOps {
                 if (py > dy + dh - 9) {
                     break;
                 }
-                Texts.small(g, font, Texts.trim(font, GameText.resolve(NetworkInteractorTexts.SUB_LINE.with(sub.server(),
-                        sub.moved(), sub.planned(), subStateLabel(sub.state()))), Texts.smallFits(dw - 10)), px, py,
+                final String line = GameText.resolve(NetworkInteractorTexts.SUB_LINE.with(sub.server(),
+                        sub.moved(), sub.planned(), subStateLabel(sub.state())));
+                Texts.small(g, font, Texts.trim(font, line, Texts.smallFits(dw - 10)), px, py,
                         app.panelSkin().text());
                 py += 9;
             }

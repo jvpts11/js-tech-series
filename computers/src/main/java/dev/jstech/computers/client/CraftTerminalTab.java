@@ -101,7 +101,8 @@ final class CraftTerminalTab extends AbstractTerminalTab {
         g.drawString(font(), count, GRID_X + CRAFT_COLS * 18 - font().width(count), cy + 20, TEXT(), false);
         if (catalog.isEmpty()) {
             g.drawString(font(), GameText.resolve(TerminalTexts.NO_PATTERNS), GRID_X, GRID_Y + 6, DIM(), false);
-            g.drawString(font(), GameText.resolve(TerminalTexts.LOAD_UNDER_PATTERNS), GRID_X, GRID_Y + 18, DIM(), false);
+            g.drawString(font(), GameText.resolve(TerminalTexts.LOAD_UNDER_PATTERNS), GRID_X, GRID_Y + 18, DIM(),
+                    false);
         }
         final int totalRows = (catalog.size() + CRAFT_COLS - 1) / CRAFT_COLS;
         if (totalRows > CRAFT_ROWS) {

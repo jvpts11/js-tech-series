@@ -150,7 +150,8 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
             final int mid = (BusLayout.MINUS_X + BusLayout.STEP + BusLayout.PLUS_X) / 2;
             JsTechTheme.textCenter(g, font, String.valueOf(menu.min()), mid, BusLayout.MIN_Y + 3,
                     JsTechTheme.text());
-            JsTechTheme.textCenter(g, font, menu.max() <= 0 ? GameText.resolve(BusTexts.ANY) : String.valueOf(menu.max()),
+            JsTechTheme.textCenter(g, font,
+                    menu.max() <= 0 ? GameText.resolve(BusTexts.ANY) : String.valueOf(menu.max()),
                     mid, BusLayout.MAX_Y + 3, JsTechTheme.text());
 
             // Mode toggle.

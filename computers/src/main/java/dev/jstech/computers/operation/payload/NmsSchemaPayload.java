@@ -9,6 +9,10 @@ package dev.jstech.computers.operation.payload;
 
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -24,18 +28,22 @@ import java.util.List;
  * its saved objects (views/procedures/jobs by name), so the tree shows the real catalog instead of mock
  * examples. The column schema itself is fixed on the client; only these values vary.
  */
-public record NmsSchemaPayload(String networkLabel, List<String> servers, int itemTypes, int operations,
+@TextHolder
+public record NmsSchemaPayload(Text networkLabel, List<String> servers, int itemTypes, int operations,
                                EngineSnapshot engine) implements CustomPacketPayload {
 
     public static final int MAX_SERVERS = 128;
     public static final int MAX_OBJECTS = 256;
+
+    /* A network the studio's machine is not on, by the name it would have. */
+    public static final TextKey OFFLINE = TextKey.of("jsc.nms.offline", "%s (offline)");
 
     public static final CustomPacketPayload.Type<NmsSchemaPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "nms_schema"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, NmsSchemaPayload> STREAM_CODEC =
             StreamCodec.composite(
-                    ByteBufCodecs.stringUtf8(64), NmsSchemaPayload::networkLabel,
+                    TextCodecs.STREAM_CODEC, NmsSchemaPayload::networkLabel,
                     ByteBufCodecs.stringUtf8(48).apply(ByteBufCodecs.list(MAX_SERVERS)), NmsSchemaPayload::servers,
                     ByteBufCodecs.VAR_INT, NmsSchemaPayload::itemTypes,
                     ByteBufCodecs.VAR_INT, NmsSchemaPayload::operations,
@@ -53,15 +61,16 @@ public record NmsSchemaPayload(String networkLabel, List<String> servers, int it
     }
 
     /** How the network's IQL Engine stands, and the word the studio shows for it. */
+    @TextHolder
     public enum EngineState implements IStableId {
-        NOT_INSTALLED(0, "not installed"),
-        RUNNING(1, "running"),
-        STOPPED(2, "stopped");
+        NOT_INSTALLED(0, TextKey.of("jsc.nms.engine.not_installed", "not installed")),
+        RUNNING(1, TextKey.of("jsc.nms.engine.running", "running")),
+        STOPPED(2, TextKey.of("jsc.nms.engine.stopped", "stopped"));
 
         private final int id;
-        private final String word;
+        private final TextKey word;
 
-        EngineState(final int id, final String word) {
+        EngineState(final int id, final TextKey word) {
             this.id = id;
             this.word = word;
         }
@@ -72,8 +81,8 @@ public record NmsSchemaPayload(String networkLabel, List<String> servers, int it
         }
 
         /** What the studio calls it. */
-        public String word() {
-            return this.word;
+        public Text word() {
+            return this.word.text();
         }
     }
 

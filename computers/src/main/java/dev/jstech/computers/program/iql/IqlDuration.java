@@ -24,7 +24,7 @@ public final class IqlDuration {
     public static long toTicks(final String spec) {
         final String text = spec.strip().toLowerCase(Locale.ROOT);
         if (text.isEmpty()) {
-            throw new IllegalArgumentException("empty duration");
+            throw IqlError.of(IqlError.EMPTY_DURATION);
         }
         final char last = text.charAt(text.length() - 1);
         final boolean hasUnit = !Character.isDigit(last);
@@ -33,17 +33,17 @@ public final class IqlDuration {
         try {
             value = Long.parseLong(number);
         } catch (final NumberFormatException e) {
-            throw new IllegalArgumentException("not a duration: " + spec);
+            throw IqlError.of(IqlError.NOT_A_DURATION, spec);
         }
         if (value < 0) {
-            throw new IllegalArgumentException("duration must be >= 0: " + spec);
+            throw IqlError.of(IqlError.NEGATIVE_DURATION, spec);
         }
         return switch (hasUnit ? last : 's') {
             case 't' -> value;
             case 's' -> value * TICKS_PER_SECOND;
             case 'm' -> value * TICKS_PER_SECOND * 60L;
             case 'h' -> value * TICKS_PER_SECOND * 3600L;
-            default -> throw new IllegalArgumentException("unknown duration unit '" + last + "' in: " + spec);
+            default -> throw IqlError.of(IqlError.UNKNOWN_UNIT, String.valueOf(last), spec);
         };
     }
 }

@@ -79,7 +79,8 @@ public final class FirmwareScreenTexts {
             "No disk and no drive is attached to this computer.");
     static final TextKey INSERT_MEDIA = TextKey.of("jsc.firmware.screen.insert_media",
             "Insert installation media and press Enter, or DEL for Setup");
-    static final TextKey ENTERING_SETUP_NOW = TextKey.of("jsc.firmware.screen.entering_setup_now", "Entering Setup ...");
+    static final TextKey ENTERING_SETUP_NOW =
+            TextKey.of("jsc.firmware.screen.entering_setup_now", "Entering Setup ...");
     /* The two keys along a modern machine's foot, each followed by what it does. */
     static final TextKey KEY_SETUP = TextKey.of("jsc.firmware.screen.key_setup", " Setup   ");
     static final TextKey KEY_BOOT_MENU = TextKey.of("jsc.firmware.screen.key_boot_menu", " Boot Menu");

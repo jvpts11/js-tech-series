@@ -55,7 +55,8 @@ public final class JeiPayloads {
             return;
         }
         PatternStudioPayloads.applyBenchGrid(host, level, payload.grid(), payload.recipeId());
-        PacketDistributor.sendToPlayer(player, PatternStudioPayloads.buildState(level, host, PLACED_ON_BENCH.text(), 0));
+        PacketDistributor.sendToPlayer(player,
+                PatternStudioPayloads.buildState(level, host, PLACED_ON_BENCH.text(), 0));
     }
 
     private static void handleSetProcessingPattern(final SetProcessingPatternPayload payload,
@@ -66,6 +67,7 @@ public final class JeiPayloads {
         }
         PatternStudioPayloads.applyProcessingCells(host, level, payload.inputs(), payload.outputs(),
                 payload.recipeType());
-        PacketDistributor.sendToPlayer(player, PatternStudioPayloads.buildState(level, host, PLACED_IN_MACHINE_DRAFT.text(), 1));
+        PacketDistributor.sendToPlayer(player,
+                PatternStudioPayloads.buildState(level, host, PLACED_IN_MACHINE_DRAFT.text(), 1));
     }
 }

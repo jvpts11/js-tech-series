@@ -10,6 +10,7 @@ package dev.jstech.computers.program.cli.interac;
 import dev.jstech.computers.program.cli.CliContext;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
+import dev.jstech.computers.program.cli.CliSpan;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.program.cli.CliText;
 import dev.jstech.computers.program.cli.CliTexts;
@@ -262,8 +263,10 @@ public final class InteracCommand implements ICliCommand, CliShell.IHandOver {
         ctx.out().header(LIST_HEADER);
         for (int i = 0; i < rows.size() && i < MOST_ROWS; i++) {
             final ICliComputer.StoredItem row = rows.get(i);
-            ctx.out().line(CliText.pad(row.name(), NAME_WIDTH)
-                    + CliText.padLeft(CliText.group(row.quantity()), 9) + "  " + row.detail());
+            // The name is in the reader's language, so its column is padded where the line is read.
+            ctx.out().line(CliLine.of(CliSpan.plain(row.name()), CliSpan.pad(NAME_WIDTH),
+                    CliSpan.plain(CliText.padLeft(CliText.group(row.quantity()), 9) + "  "),
+                    CliSpan.plain(row.detail())));
         }
         final CliLine.Builder footer = CliLine.build()
                 .add(rows.size() == 1 ? KIND.with(rows.size()) : KINDS.with(rows.size()), CliStyle.DIM);
@@ -448,7 +451,7 @@ public final class InteracCommand implements ICliCommand, CliShell.IHandOver {
             return;
         }
         for (final ICliComputer.StoredItem row : held) {
-            ctx.out().row(row.name(), CliText.group(row.quantity()));
+            ctx.out().row(row.name(), Text.literal(CliText.group(row.quantity())));
         }
     }
 

@@ -76,7 +76,8 @@ public final class SkinSprites {
 
     /** Whether a picture is there, asked of the game's resources once per path. */
     static boolean exists(final ResourceLocation tex) {
-        return PRESENT.computeIfAbsent(tex, t -> Minecraft.getInstance().getResourceManager().getResource(t).isPresent());
+        return PRESENT.computeIfAbsent(tex,
+                t -> Minecraft.getInstance().getResourceManager().getResource(t).isPresent());
     }
 
     /** The first of the look's own picture, its modern look's for a period one, and the base look's. */

@@ -162,11 +162,13 @@ final class TerminalCraftPopup {
                 rowY += 14;
             }
             if (plan.rows().size() > PLAN_ROWS) {
-                g.drawString(screen.tabFont(), GameText.resolve(TerminalTexts.MORE.with(plan.rows().size() - PLAN_ROWS)),
+                g.drawString(screen.tabFont(),
+                        GameText.resolve(TerminalTexts.MORE.with(plan.rows().size() - PLAN_ROWS)),
                         px + 26, rowY, JsTechTheme.dim(), false);
             }
             final String est = GameText.resolve(plan.estimateTicks() > 0
-                    ? TerminalTexts.ESTIMATE.with(Math.max(1, plan.estimateTicks() / 20)) : TerminalTexts.NO_ESTIMATE.text());
+                    ? TerminalTexts.ESTIMATE.with(Math.max(1, plan.estimateTicks() / 20))
+                    : TerminalTexts.NO_ESTIMATE.text());
             g.drawString(screen.tabFont(), est, px + 6, py + 144, JsTechTheme.dim(), false);
             if (!plan.feasible()) {
                 g.drawString(screen.tabFont(), GameText.resolve(TerminalTexts.MAX_NOW.with(

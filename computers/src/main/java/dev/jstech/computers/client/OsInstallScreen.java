@@ -240,7 +240,8 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
                     g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_STEP.with(STEPS[i])), x + 10, ty,
                             finished || current ? p.text : p.dim, false);
                     if (finished) {
-                        g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_DONE), x + W - 60, ty, p.ok, false);
+                        g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_DONE), x + W - 60, ty, p.ok,
+                                false);
                     } else if (current) {
                         g.drawString(font, (permille() % 1000) / 10 + "%", x + W - 60, ty, p.bright, false);
                     }
@@ -272,8 +273,8 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
                     g.drawString(font, line, x + 10, ly, p.text, false);
                     ly += 11;
                 }
-                primary = button(g, x + 10, y + H - 26, 110, 16, GameText.resolve(InstallerScreenTexts.COPY_BACK_TO_SETUP),
-                        p, true, mouseX, mouseY);
+                primary = button(g, x + 10, y + H - 26, 110, 16,
+                        GameText.resolve(InstallerScreenTexts.COPY_BACK_TO_SETUP), p, true, mouseX, mouseY);
                 secondary = button(g, x + 128, y + H - 26, 96, 16, GameText.resolve(InstallerScreenTexts.COPY_CLOSE), p,
                         false, mouseX, mouseY);
             }

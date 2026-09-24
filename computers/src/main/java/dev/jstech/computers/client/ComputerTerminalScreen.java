@@ -846,8 +846,9 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         if (netState == 2) {
             g.drawString(font, GameText.resolve(TerminalTexts.NETWORK_CONFLICT), at, 4, RED, false);
         } else if (netState == 1) {
+            final int serverCount = menu.serverCount();
             final String servers = GameText.resolve(
-                    (menu.serverCount() == 1 ? AssemblyTexts.ONE_SERVER : AssemblyTexts.SERVERS).with(menu.serverCount()));
+                    (serverCount == 1 ? AssemblyTexts.ONE_SERVER : AssemblyTexts.SERVERS).with(serverCount));
             g.drawString(font, servers, at, 4, DIM, false);
             at += font.width(servers) + 10;
             final String held = GameText.resolve(TerminalTexts.HELD.with(fmt(menu.networkStorageUsed())));

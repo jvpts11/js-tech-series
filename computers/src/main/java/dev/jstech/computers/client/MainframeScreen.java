@@ -142,12 +142,12 @@ public class MainframeScreen extends AbstractComputerScreen<MainframeMenu> {
         JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.GPU), 44, 111, JsTechTheme.dim());
 
         // Right column: spec tiles.
-        JsTechTheme.tileText(g, font, COL_R, 27, GameText.resolve(AssemblyTexts.CAPACITY), JsTechTheme.fmt(menu.capacity()),
-                GameText.resolve(AssemblyTexts.ITEMS_PER_TICK), JsTechTheme.text());
-        JsTechTheme.tileText(g, font, COL_R, 52, GameText.resolve(AssemblyTexts.QUEUES), String.valueOf(menu.parallelQueues()),
-                "", JsTechTheme.text());
-        JsTechTheme.tileText(g, font, COL_R, 73, GameText.resolve(AssemblyTexts.RAM_BUFFER), JsTechTheme.fmt(menu.ramBuffer()),
-                GameText.resolve(AssemblyTexts.ITEMS), JsTechTheme.text());
+        JsTechTheme.tileText(g, font, COL_R, 27, GameText.resolve(AssemblyTexts.CAPACITY),
+                JsTechTheme.fmt(menu.capacity()), GameText.resolve(AssemblyTexts.ITEMS_PER_TICK), JsTechTheme.text());
+        JsTechTheme.tileText(g, font, COL_R, 52, GameText.resolve(AssemblyTexts.QUEUES),
+                String.valueOf(menu.parallelQueues()), "", JsTechTheme.text());
+        JsTechTheme.tileText(g, font, COL_R, 73, GameText.resolve(AssemblyTexts.RAM_BUFFER),
+                JsTechTheme.fmt(menu.ramBuffer()), GameText.resolve(AssemblyTexts.ITEMS), JsTechTheme.text());
 
         JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.NETWORK), COL_R, 96, JsTechTheme.dim());
         final int net = menu.networkState();
@@ -169,10 +169,12 @@ public class MainframeScreen extends AbstractComputerScreen<MainframeMenu> {
         final String powerCap = GameText.resolve(auto ? AssemblyTexts.AUTO
                 : menu.isManualOn() ? AssemblyTexts.TURN_OFF : AssemblyTexts.TURN_ON);
         JsTechTheme.textCenter(g, font, powerCap, POWER_X + BTN_W / 2, BTN_Y + 4, auto ? JsTechTheme.dim() : JsTechTheme.accent());
-        JsTechTheme.textCenter(g, font, GameText.resolve(auto ? AssemblyTexts.AUTO_ON_SHORT : AssemblyTexts.AUTO_OFF_SHORT),
+        JsTechTheme.textCenter(g, font,
+                GameText.resolve(auto ? AssemblyTexts.AUTO_ON_SHORT : AssemblyTexts.AUTO_OFF_SHORT),
                 AUTO_X + BTN_W / 2, BTN_Y + 4, auto ? JsTechTheme.accent() : JsTechTheme.dim());
         final boolean failover = menu.failoverEnabled();
-        JsTechTheme.textCenter(g, font, GameText.resolve(failover ? AssemblyTexts.FAILOVER_ON : AssemblyTexts.FAILOVER_OFF),
+        JsTechTheme.textCenter(g, font,
+                GameText.resolve(failover ? AssemblyTexts.FAILOVER_ON : AssemblyTexts.FAILOVER_OFF),
                 FAILOVER_X + BTN_W / 2, BTN_Y + 4, failover ? JsTechTheme.accent() : JsTechTheme.dim());
     }
 

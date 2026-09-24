@@ -31,7 +31,8 @@ final class GatewayManagerTexts {
 
     // The Status tab.
     static final TextKey THIS_SIDE = TextKey.of("jsc.gateway_manager.this_side", "THIS SIDE");
-    static final TextKey COMPUTERCRAFT_SIDE = TextKey.of("jsc.gateway_manager.computercraft_side", "COMPUTERCRAFT SIDE");
+    static final TextKey COMPUTERCRAFT_SIDE =
+            TextKey.of("jsc.gateway_manager.computercraft_side", "COMPUTERCRAFT SIDE");
     static final TextKey NOT_LINKED = TextKey.of("jsc.gateway_manager.not_linked", "Not linked");
     static final TextKey LINKED_TO = TextKey.of("jsc.gateway_manager.linked_to", "Linked to %s");
     static final TextKey TYPES_AND_SERVERS = TextKey.of("jsc.gateway_manager.types_and_servers", "%s, %s");
@@ -64,7 +65,8 @@ final class GatewayManagerTexts {
     static final TextKey BUFFER_SLOT = TextKey.of("jsc.gateway_manager.buffer_slot", "%s x %s");
 
     // The Permissions tab.
-    static final TextKey READ = TextKey.of("jsc.gateway_manager.read", "Read the network: types, totals, servers, watches");
+    static final TextKey READ =
+            TextKey.of("jsc.gateway_manager.read", "Read the network: types, totals, servers, watches");
     static final TextKey OPERATIONS_ALLOWED =
             TextKey.of("jsc.gateway_manager.operations_allowed", "Operations: pull, push, craft, cancel, run");
     static final TextKey CEILING = TextKey.of("jsc.gateway_manager.ceiling", "Priority ceiling for CC requests");
@@ -97,7 +99,8 @@ final class GatewayManagerTexts {
     static final TextKey WHEN_COLUMN = TextKey.of("jsc.gateway_manager.when_column", "WHEN");
     static final TextKey WHO_COLUMN = TextKey.of("jsc.gateway_manager.who_column", "WHO");
     static final TextKey RESULT_COLUMN = TextKey.of("jsc.gateway_manager.result_column", "RESULT");
-    static final TextKey NOTHING_DONE = TextKey.of("jsc.gateway_manager.nothing_done", "this Gateway has done nothing yet");
+    static final TextKey NOTHING_DONE =
+            TextKey.of("jsc.gateway_manager.nothing_done", "this Gateway has done nothing yet");
     /* The longest result the Gateway writes, so the result column is wide enough for it in any language. */
     static final TextKey WIDEST_RESULT = TextKey.of("jsc.gateway_manager.widest_result", "40 items in 12 operations");
 

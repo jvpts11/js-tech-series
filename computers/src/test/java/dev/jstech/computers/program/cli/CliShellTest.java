@@ -235,7 +235,7 @@ class CliShellTest {
                     .itemNameFilter(where).toLowerCase();
             final List<StoredItem> out = new ArrayList<>();
             for (final StoredItem item : stock) {
-                if (filter.isEmpty() || item.name().toLowerCase().contains(filter)) {
+                if (filter.isEmpty() || item.name().english().toLowerCase().contains(filter)) {
                     out.add(item);
                 }
             }

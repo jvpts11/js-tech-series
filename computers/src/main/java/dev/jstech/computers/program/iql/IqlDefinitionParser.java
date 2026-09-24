@@ -65,26 +65,26 @@ public final class IqlDefinitionParser {
         final String[] typeAndRest = rest.split("\\s+", 2);
         final IqlDefinition.ObjectType type = objectType(typeAndRest[0]);
         if (type == null) {
-            throw new IllegalArgumentException("CREATE expects VIEW, PROCEDURE, or JOB");
+            throw IqlError.of(IqlError.CREATE_WHAT);
         }
         if (typeAndRest.length < 2) {
-            throw new IllegalArgumentException("CREATE " + name(type) + " needs a name and an AS body");
+            throw IqlError.of(IqlError.NEEDS_NAME_AND_BODY, name(type));
         }
         final String[] nameAndRest = typeAndRest[1].strip().split("\\s+", 2);
         final String objectName = nameAndRest[0];
         if (objectName.isEmpty() || nameAndRest.length < 2) {
-            throw new IllegalArgumentException("CREATE " + name(type) + " needs a name and an AS body");
+            throw IqlError.of(IqlError.NEEDS_NAME_AND_BODY, name(type));
         }
         final String afterName = nameAndRest[1].strip();
         if (!startsWithKeyword(afterName, "AS")) {
-            throw new IllegalArgumentException("expected AS after the " + name(type) + " name");
+            throw IqlError.of(IqlError.EXPECTED_AS, name(type));
         }
         final String body = afterName.substring(2).strip();
         if (type == IqlDefinition.ObjectType.JOB) {
             return parseJob(objectName, body);
         }
         if (body.isEmpty()) {
-            throw new IllegalArgumentException("CREATE " + name(type) + " needs a body after AS");
+            throw IqlError.of(IqlError.NEEDS_BODY, name(type));
         }
         return IqlDefinition.create(type, objectName, body, IqlDefinition.TriggerKind.NONE, "");
     }
@@ -93,8 +93,7 @@ public final class IqlDefinitionParser {
         final int every = keywordIndex(afterAs, "EVERY");
         final int when = keywordIndex(afterAs, "WHEN");
         if (every < 0 && when < 0) {
-            throw new IllegalArgumentException(
-                    "CREATE JOB needs a trigger: EVERY <duration> or WHEN <condition>");
+            throw IqlError.of(IqlError.JOB_NEEDS_TRIGGER);
         }
         final boolean useEvery = every >= 0 && (when < 0 || every < when);
         final int at = useEvery ? every : when;
@@ -102,10 +101,10 @@ public final class IqlDefinitionParser {
         final String body = afterAs.substring(0, at).strip();
         final String spec = afterAs.substring(at + keywordLength).strip();
         if (body.isEmpty()) {
-            throw new IllegalArgumentException("CREATE JOB needs a body before its trigger");
+            throw IqlError.of(IqlError.JOB_NEEDS_BODY);
         }
         if (spec.isEmpty()) {
-            throw new IllegalArgumentException("CREATE JOB trigger needs a value");
+            throw IqlError.of(IqlError.TRIGGER_NEEDS_VALUE);
         }
         return IqlDefinition.create(IqlDefinition.ObjectType.JOB, name, body,
                 useEvery ? IqlDefinition.TriggerKind.EVERY : IqlDefinition.TriggerKind.WHEN, spec);
@@ -118,7 +117,7 @@ public final class IqlDefinitionParser {
             return null; // DROP <item> is the action, not a definition drop, so fall through to the action parser
         }
         if (parts.length < 2 || parts[1].isBlank()) {
-            throw new IllegalArgumentException("DROP " + name(type) + " needs a name");
+            throw IqlError.of(IqlError.DROP_NEEDS_NAME, name(type));
         }
         return IqlDefinition.drop(type, parts[1].strip());
     }
@@ -126,10 +125,10 @@ public final class IqlDefinitionParser {
     private static IqlDefinition parseExec(final String rest) {
         final String procedure = rest.strip();
         if (procedure.isEmpty()) {
-            throw new IllegalArgumentException("EXEC needs a procedure name");
+            throw IqlError.of(IqlError.EXEC_NEEDS_NAME);
         }
         if (procedure.split("\\s+").length > 1) {
-            throw new IllegalArgumentException("EXEC takes a single procedure name");
+            throw IqlError.of(IqlError.EXEC_ONE_NAME);
         }
         return IqlDefinition.exec(procedure);
     }

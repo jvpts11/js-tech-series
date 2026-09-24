@@ -61,7 +61,8 @@ final class StorageTerminalTab extends AbstractTerminalTab {
     @Override
     public void renderTabLabels(final GuiGraphics g, final int cx, final int cy, final int cw) {
         final int shown = visibleItems().size();
-        final String t = GameText.resolve((shown == 1 ? TerminalGridTexts.ONE_TYPE : TerminalGridTexts.TYPES).with(shown));
+        final String t = GameText.resolve(
+                (shown == 1 ? TerminalGridTexts.ONE_TYPE : TerminalGridTexts.TYPES).with(shown));
         g.drawString(font(), t, cx + cw - font().width(t), TOOLBAR_Y + 3, DIM(), false);
         g.drawCenteredString(font(),
                 GameText.resolve(screen.sortByQuantity ? TerminalGridTexts.QUANTITY : TerminalGridTexts.NAME),

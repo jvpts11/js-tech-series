@@ -42,8 +42,8 @@ public class PhiCoprocessorItem extends SpecItem<PhiCoprocessorSpec> implements 
     public void appendHoverText(final ItemStack stack, final TooltipContext context,
                                 final List<Component> tooltip, final TooltipFlag flag) {
         final PhiCoprocessorSpec spec = spec();
-        tooltip.add(GameText.component(CORES.with(spec.cores(), String.format(Locale.ROOT, "%.2f", spec.mhz() / 1000.0)))
-                .withStyle(ChatFormatting.GRAY));
+        final String gigahertz = String.format(Locale.ROOT, "%.2f", spec.mhz() / 1000.0);
+        tooltip.add(GameText.component(CORES.with(spec.cores(), gigahertz)).withStyle(ChatFormatting.GRAY));
         tooltip.add(GameText.component(SLOTS.with(spec.maxSlot())).withStyle(ChatFormatting.GOLD));
         super.appendHoverText(stack, context, tooltip, flag);
     }

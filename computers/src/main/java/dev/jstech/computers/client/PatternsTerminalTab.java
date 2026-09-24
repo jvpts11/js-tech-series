@@ -429,8 +429,8 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
         }
         g.drawCenteredString(font(), GameText.resolve(UNLOAD), PANE_X + (ACTION_W - 8) / 2, ACTION_Y + 2,
                 pickedRom >= 0 ? ACCENT() : DIM());
-        g.drawCenteredString(font(), GameText.resolve(DOWNLOAD), PANE_X + ACTION_W + 2 + (ACTION_W - 8) / 2, ACTION_Y + 2,
-                pickedRom >= 0 && hasMedium() ? ACCENT() : DIM());
+        g.drawCenteredString(font(), GameText.resolve(DOWNLOAD), PANE_X + ACTION_W + 2 + (ACTION_W - 8) / 2,
+                ACTION_Y + 2, pickedRom >= 0 && hasMedium() ? ACCENT() : DIM());
     }
 
     private void drawList(final GuiGraphics g, final int x, final int y, final int w,

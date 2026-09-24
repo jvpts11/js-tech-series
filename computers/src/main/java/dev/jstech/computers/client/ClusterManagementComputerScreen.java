@@ -143,11 +143,13 @@ public class ClusterManagementComputerScreen extends AbstractAssemblyScreen<Clus
                     GameText.resolve(AssemblyTexts.NO_INTERFACE_CARD), JsTechTheme.amber());
         } else {
             JsTechTheme.tileTextS(g, font, COL_R, TILE_Y2, GameText.resolve(AssemblyTexts.CLUSTERS_IN_REACH),
-                    GameText.resolve(AssemblyTexts.CLUSTERS.with(menu.supercomputers(), menu.datacenters(), menu.lanes())),
+                    GameText.resolve(
+                            AssemblyTexts.CLUSTERS.with(menu.supercomputers(), menu.datacenters(), menu.lanes())),
                     JsTechTheme.text());
         }
         JsTechTheme.tileTextS(g, font, COL_R, TILE_Y3, GameText.resolve(AssemblyTexts.MANAGEMENT),
-                GameText.resolve(menu.managerInstalled() ? AssemblyTexts.MANAGER_INSTALLED : AssemblyTexts.MANAGER_MISSING),
+                GameText.resolve(
+                        menu.managerInstalled() ? AssemblyTexts.MANAGER_INSTALLED : AssemblyTexts.MANAGER_MISSING),
                 menu.managerInstalled() ? JsTechTheme.accent() : JsTechTheme.dim());
 
         final boolean auto = menu.isAutoStart();

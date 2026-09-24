@@ -187,9 +187,9 @@ class InteracViewTest {
             final String wanted = text.toLowerCase(Locale.ROOT);
             final List<ItemMatch> found = new ArrayList<>();
             for (final StoredItem row : this.stock) {
-                if (row.name().toLowerCase(Locale.ROOT).contains(wanted)
-                        || idOf(row.name()).contains(wanted)) {
-                    found.add(new ItemMatch(idOf(row.name()), row.name(), row.quantity()));
+                final String name = row.name().english();
+                if (name.toLowerCase(Locale.ROOT).contains(wanted) || idOf(name).contains(wanted)) {
+                    found.add(new ItemMatch(idOf(name), name, row.quantity()));
                 }
             }
             return found;
@@ -197,9 +197,10 @@ class InteracViewTest {
 
         @Override public ItemDetail itemDetail(final String id) {
             for (final StoredItem row : this.stock) {
-                if (idOf(row.name()).equals(id)) {
-                    return new ItemDetail(row.name(), id, row.quantity(),
-                            List.of(new Holding(row.detail(), row.quantity())),
+                final String name = row.name().english();
+                if (idOf(name).equals(id)) {
+                    return new ItemDetail(name, id, row.quantity(),
+                            List.of(new Holding(row.detail().english(), row.quantity())),
                             List.of(Text.literal("Stone, smelted")),
                             List.of(Text.literal("Furnace"), Text.literal("Stone Bricks")));
                 }

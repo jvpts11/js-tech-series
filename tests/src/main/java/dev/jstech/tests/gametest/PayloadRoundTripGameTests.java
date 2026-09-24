@@ -112,8 +112,9 @@ public final class PayloadRoundTripGameTests {
 
     @GameTest(template = ARENA)
     public static void iql_resultRoundTrips(final GameTestHelper helper) {
-        roundTrip(helper, IqlResultPayload.STREAM_CODEC, new IqlResultPayload(true, "2 rows",
-                List.of(new IqlResultPayload.Row("Oak Log", 640L), new IqlResultPayload.Row("Iron Ingot", 12L))));
+        roundTrip(helper, IqlResultPayload.STREAM_CODEC, new IqlResultPayload(true, Text.literal("2 rows"),
+                List.of(new IqlResultPayload.Row(Text.literal("Oak Log"), 640L),
+                        new IqlResultPayload.Row(Text.literal("Iron Ingot"), 12L))));
         helper.succeed();
     }
 
@@ -197,7 +198,8 @@ public final class PayloadRoundTripGameTests {
                 new ClusterManagerStatePayload.Head(true, 32, 4, "Frames 11", "Cluster Manager", "ready"),
                 List.of(new ClusterManagerStatePayload.WireCluster(0, 0, "Kraken", true, 8, 3L, 12L, 50, "8 nodes", true)),
                 detail, job,
-                List.of(new NetworkItemEntry(logs(), 640L, List.of(new NetworkItemEntry.StorageShare(Text.literal("rack-1"), 640L)))),
+                List.of(new NetworkItemEntry(logs(), 640L,
+                        List.of(new NetworkItemEntry.StorageShare(Text.literal("rack-1"), 640L)))),
                 List.of(new ClusterManagerStatePayload.WireDest(456L, "Vault A"))));
         helper.succeed();
     }
@@ -212,8 +214,8 @@ public final class PayloadRoundTripGameTests {
                 new GatewayManagerStatePayload.WireLog("12:00", Text.literal("desk"), Text.literal("link"),
                         Text.literal("ok"), 0);
         final GatewayManagerStatePayload.Detail detail = new GatewayManagerStatePayload.Detail(123L, "gateway-1",
-                Text.literal("adjacent"), true, 4000, 1, true, 750, false, 0, 0, 12, 3, "jsc_gateway_gateway_1", 5, buffer,
-                List.of(entry),
+                Text.literal("adjacent"), true, 4000, 1, true, 750, false, 0, 0, 12, 3, "jsc_gateway_gateway_1", 5,
+                buffer, List.of(entry),
                 true, true, 2, 2, List.of(new GatewayManagerStatePayload.WireComputer(5, "turtle", true, false,
                         Text.literal("now"))),
                 List.of(entry));

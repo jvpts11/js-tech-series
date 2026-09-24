@@ -27,7 +27,8 @@ class TextListsTest {
 
     @Test
     void join_putsTheSeparatorBetweenEachTwoParts() {
-        final Text joined = TextLists.join(", ", List.of(Text.literal("Iron Ingot"), COAL.text(), Text.literal("Sand")));
+        final Text joined =
+                TextLists.join(", ", List.of(Text.literal("Iron Ingot"), COAL.text(), Text.literal("Sand")));
         assertEquals("Iron Ingot, Coal, Sand", joined.english());
     }
 
