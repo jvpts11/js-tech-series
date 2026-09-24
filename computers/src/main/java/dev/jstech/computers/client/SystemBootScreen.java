@@ -7,12 +7,16 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.core.gui.Phosphor;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.Minecraft;
@@ -29,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * here from its own parts and its own network. This screen joins it wherever it has got to and waits: the machine
  * is what puts the system in front of the player when it is ready, so closing this changes nothing.
  */
+@PaletteHolder
 public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     private static final int W = MonitorGlass.WIDTH;
@@ -40,8 +45,14 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
     /** Where the wall of text begins, and how much air is left at the right edge. */
     private static final int MARGIN = 12;
 
-    /** What a step that went well is written in, which is the one colour these logs ever used for it. */
-    private static final int GOOD = 0xFF5FE07A;
+    /**
+     * The screen's colours, {@code jsc:boot/system}: its ground; the earliest tube's text, quiet lines and good
+     * steps, in greys its phosphor lights; the later machines' white on black, their quiet lines, and the one colour
+     * these logs ever wrote a step that went well in; and the bar a silent system fills.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "boot/system",
+            new Colours(0xFF05070A, 0xFFB8B8B8, 0xFF707070, 0xFFB8B8B8, 0xFFE6ECF6, 0xFF7D8A9C, 0xFF5FE07A,
+                    0xFF1D2530, 0xFF39D6C4));
 
     /**
      * What the machine last said it was bringing up, kept until the screen showing it is built.
@@ -124,7 +135,8 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         final int y = this.topPos;
         final HardwareEra era = screenEra() == null ? HardwareEra.STANDARD : screenEra();
         MonitorFrame.renderBody(g, x, y, W, H, era, font);
-        g.fill(x, y, x + W, y + H, 0xFF05070A);
+        final Colours c = PALETTE.get();
+        g.fill(x, y, x + W, y + H, c.ground());
 
         /*
          * A machine with a desktop hands over to it before the desktop is there to click: the system's own
@@ -157,9 +169,9 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
          * the plain white on black their own sequences did.
          */
         final boolean phosphor = era == HardwareEra.VINTAGE;
-        final int text = phosphor ? Phosphor.green(0xFFB8B8B8) : 0xFFE6ECF6;
-        final int dim = phosphor ? Phosphor.green(0xFF707070) : 0xFF7D8A9C;
-        final int good = phosphor ? Phosphor.green(0xFFB8B8B8) : GOOD;
+        final int text = phosphor ? Phosphor.green(c.tubeText()) : c.text();
+        final int dim = phosphor ? Phosphor.green(c.tubeDim()) : c.dim();
+        final int good = phosphor ? Phosphor.green(c.tubeGood()) : c.good();
 
         /*
          * A system that reports nothing puts its name in the middle of the screen over a bar, which is what the
@@ -254,8 +266,9 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         final int barW = 140;
         final int bx = x + (W - barW) / 2;
         final int by = y + H / 2 + 12;
-        g.fill(bx, by, bx + barW, by + 3, 0xFF1D2530);
-        g.fill(bx, by, bx + Math.min(barW, barW * this.ticks / this.totalTicks), by + 3, 0xFF39D6C4);
+        final Colours c = PALETTE.get();
+        g.fill(bx, by, bx + barW, by + 3, c.barTrack());
+        g.fill(bx, by, bx + Math.min(barW, barW * this.ticks / this.totalTicks), by + 3, c.barFill());
     }
 
     /** The monitor this is drawn on, for whatever asks. */
@@ -268,5 +281,10 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
     @Nullable
     protected HardwareEra screenEra() {
         return this.getMenu().hardwareEra();
+    }
+
+    /** The screen's colours, as the palette above names them. */
+    private record Colours(int ground, int tubeText, int tubeDim, int tubeGood, int text, int dim, int good,
+                           int barTrack, int barFill) {
     }
 }

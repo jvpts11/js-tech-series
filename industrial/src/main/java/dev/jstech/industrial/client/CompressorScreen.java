@@ -18,7 +18,6 @@ import net.minecraft.world.entity.player.Inventory;
  */
 public class CompressorScreen extends AbstractMachineScreen<CompressorMenu> {
 
-    private static final int PROGRESS_FILL = 0xFF4488FF;
     private static final int ENERGY_X = 8;
     private static final int ENERGY_Y = 16;
     private static final int ENERGY_W = 10;
@@ -42,7 +41,7 @@ public class CompressorScreen extends AbstractMachineScreen<CompressorMenu> {
         MachineScreenSupport.drawSlot(g, x + 56, y + 35);
         MachineScreenSupport.drawSlot(g, x + 116, y + 35);
         MachineScreenSupport.drawProgressBar(g, x + 79, y + 38, 24, 8,
-                menu.getProgress(), menu.getMaxProgress(), PROGRESS_FILL);
+                menu.getProgress(), menu.getMaxProgress(), MachineScreenSupport.colours().compressorProgress());
         MachineScreenSupport.drawEnergyBar(g, x + ENERGY_X, y + ENERGY_Y, ENERGY_W, ENERGY_H,
                 menu.getEnergy(), menu.getMaxEnergy());
     }

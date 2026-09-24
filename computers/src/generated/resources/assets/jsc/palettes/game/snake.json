@@ -1,0 +1,14 @@
+{
+  "again": "#FFB8C2CE",
+  "body": "#FF6FBF3F",
+  "food": "#FFE0553F",
+  "ground": "#FF12160F",
+  "groundAlt": "#FF1A2015",
+  "head": "#FFB7F07A",
+  "hint": "#FFDCEFE1",
+  "hintBand": "#D012160F",
+  "overInk": "#FFF0B23A",
+  "overShade": "#C0000000",
+  "score": "#FFFFFFFF",
+  "wall": "#FF2E3826"
+}

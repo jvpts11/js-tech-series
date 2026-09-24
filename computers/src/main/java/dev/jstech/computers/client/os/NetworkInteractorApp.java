@@ -243,13 +243,10 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     private static final int SORT_MODES = 3;
     private static final TextKey[] SORT_LABELS = {SORT_A_Z, SORT_MOST, SORT_LEAST};
     private static final int OP_ROW_H = 12;
-    private static final int ONLINE_GREEN = 0xFF2E8B45;
-    private static final int OFFLINE_RED = 0xFF9A4A4A;
-    private static final int AMBER = 0xFFE6A93A;
-    private static final int LINK_BLUE = 0xFF2F6AC6;
-    private static final int STAR_GOLD = 0xFFE0A800;
-    private static final int SHORT_RED = 0xFFB23A3A;
     private static final int SCROLLBAR_W = 3;
+    /* How strong the rules inside a panel are, and a count's backing, as alphas over the skin's own colour. */
+    private static final int HALF_EDGE_ALPHA = 0x60;
+    private static final int COUNT_BACKING_ALPHA = 0xC0;
 
     /*
      * Request/storage popup (MC-NET style): clicking an item with an empty cursor opens a quantity dialog
@@ -826,7 +823,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             final int y0 = Math.min(pressY, bandY);
             final int x1 = Math.max(pressX, bandX);
             final int y1 = Math.max(pressY, bandY);
-            g.fill(x0, y0, x1, y1, 0x334A90E2);
+            g.fill(x0, y0, x1, y1, InteractorPalette.get().band());
             Draw.outline(g, x0, y0, Math.max(1, x1 - x0), Math.max(1, y1 - y0), skin.accent());
         }
     }
@@ -889,7 +886,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         final int ty = y + 2;
         int sx = x + 3;
         sx = statusSegment(g, font, sx, ty, GameText.resolve(online ? MAINFRAME_ONLINE : MAINFRAME_OFFLINE),
-                online ? ONLINE_GREEN : OFFLINE_RED, y, h);
+                online ? InteractorPalette.get().online() : InteractorPalette.get().offline(), y, h);
         sx = statusSegment(g, font, sx, ty, GameText.resolve(TYPES.with(networkItems.size())), skin.text(), y, h);
         statusSegment(g, font, sx, ty,
                 GameText.resolve((serverCount == 1 ? ONE_SERVER : SERVERS_COUNT).with(serverCount)), skin.text(), y, h);
@@ -922,15 +919,16 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     /** The gauge's colour: green with room, amber past three quarters, red when nearly full. */
     private int gaugeColor() {
         if (capacityItems <= 0) {
-            return ONLINE_GREEN;
+            return InteractorPalette.get().online();
         }
         final double share = (double) usedItems / capacityItems;
-        return share >= 0.95 ? SHORT_RED : share >= 0.75 ? AMBER : ONLINE_GREEN;
+        final InteractorPalette.Colours c = InteractorPalette.get();
+        return share >= 0.95 ? c.shortage() : share >= 0.75 ? c.amber() : c.online();
     }
 
     /** The skin's edge at half strength: the rules inside a panel, the cell separators. */
     private int halfEdge() {
-        return (skin.edge() & 0x00FFFFFF) | 0x60000000;
+        return (skin.edge() & 0xFFFFFF) | HALF_EDGE_ALPHA << 24;
     }
 
     /** The toolbar's small marks, drawn after the tree: the search's magnifier and the drop-downs' carets. */
@@ -1181,9 +1179,9 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             final CraftCatalogPayload.Entry e = list.get(index);
             DesktopItems.item(g, e.result(), cx + 1, cy + 1);
             mark = switch (e.availability()) {
-                case CraftCatalogPayload.DOT_GREEN -> 0xFF3CC75A;
-                case CraftCatalogPayload.DOT_AMBER -> AMBER;
-                default -> 0xFFD05050;
+                case CraftCatalogPayload.DOT_GREEN -> InteractorPalette.get().dotReady();
+                case CraftCatalogPayload.DOT_AMBER -> InteractorPalette.get().amber();
+                default -> InteractorPalette.get().dotMissing();
             };
             key = StorageKey.of(e.result());
         } else {
@@ -1208,7 +1206,9 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             final int w = Texts.smallWidth(ctx.font(), count);
             final int tx = cx + size - w - 1;
             final int ty = cy + cellHeight - 8;
-            g.fill(tx - 1, ty - 1, tx + w + 1, ty + 7, chosen ? 0x00000000 : (skin.fieldBg() & 0x00FFFFFF) | 0xC0000000);
+            // A chosen cell's count needs no backing: the selection already stands behind it.
+            g.fill(tx - 1, ty - 1, tx + w + 1, ty + 7,
+                    chosen ? 0 : (skin.fieldBg() & 0xFFFFFF) | COUNT_BACKING_ALPHA << 24);
             Texts.small(g, ctx.font(), count, tx, ty, skin.listRowText(chosen));
         }
         if (mark != 0) {
@@ -1216,10 +1216,10 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             g.fill(cx + size - 6, cy + cellHeight - 4, cx + size - 1, cy + cellHeight - 1, mark);
         }
         if (favourites.contains(key.id())) {
-            Texts.small(g, ctx.font(), STAR, cx + 1, cy, STAR_GOLD);
+            Texts.small(g, ctx.font(), STAR, cx + 1, cy, InteractorPalette.get().star());
         }
         if (index == keyCell) {
-            dottedOutline(g, cx + 1, cy + 1, size - 2, cellHeight - 2, STAR_GOLD);
+            dottedOutline(g, cx + 1, cy + 1, size - 2, cellHeight - 2, InteractorPalette.get().star());
         }
         g.pose().popPose();
     }
@@ -1488,7 +1488,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         final String shown = Texts.clip(font, name, Texts.smallFits(dw - (tx - dx) - 6 - starW));
         Texts.small(g, font, shown, tx, dy + 4, skin.text());
         if (starred) {
-            Texts.small(g, font, STAR, tx + Texts.smallWidth(font, shown) + 2, dy + 4, STAR_GOLD);
+            Texts.small(g, font, STAR, tx + Texts.smallWidth(font, shown) + 2, dy + 4, InteractorPalette.get().star());
         }
         Texts.small(g, font, Texts.clip(font, sub, Texts.smallFits(dw - (tx - dx) - 6)), tx, dy + 13, subColor);
         return dy + hh + 5;
@@ -1503,7 +1503,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         cardShown = true;
         final int px = dx + 5;
         int py = panelHeader(g, font, dx, dy, dw, null, GameText.resolve(THIS_NETWORK),
-                GameText.resolve(online ? MAINFRAME_ONLINE : MAINFRAME_OFFLINE), online ? ONLINE_GREEN : OFFLINE_RED,
+                GameText.resolve(online ? MAINFRAME_ONLINE : MAINFRAME_OFFLINE),
+                online ? InteractorPalette.get().online() : InteractorPalette.get().offline(),
                 false);
         py = sectionRule(g, font, px, py, dw, GameText.resolve(STORAGE));
         final int gw = dw - 12;
@@ -1599,7 +1600,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         final ItemStack stack = e.icon(); // empty for a fluid or a chemical
         final ResourceLocation id = key.registryId();
         final boolean starred = favourites.contains(key.id());
-        int py = panelHeader(g, font, dx, dy, dw, key, e.name().getString(), modName(id.getNamespace()), LINK_BLUE, starred);
+        int py = panelHeader(g, font, dx, dy, dw, key, e.name().getString(), modName(id.getNamespace()),
+                InteractorPalette.get().link(), starred);
         // Where it is: the network total and the servers that hold it, on one line.
         Texts.small(g, font, Texts.clip(font, storedLine(e), Texts.smallFits(dw - 10)), px, py, skin.dim());
         py += 10;
@@ -2617,7 +2619,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                 final int step = POPUP_STEPS[i];
                 steps[i] = add(new Button(stepLabel(step), () -> stepQty(step)).setLabelScale(Texts.SMALL));
             }
-            setDim(0x99000000);
+            setDim(InteractorPalette.get().popupDim());
             setLayouter(p -> layout());
             setOnClose(() -> {
                 popupEntry = null;
@@ -2834,7 +2836,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             final int shown = Math.min(2, choice.inputs().size());
             for (int i = 0; i < shown; i++) {
                 final RecipeChoice.Input in = choice.inputs().get(i);
-                g.fill(x() + 3, ty + 2, x() + 6, ty + 5, in.satisfied() ? ONLINE_GREEN : SHORT_RED);
+                g.fill(x() + 3, ty + 2, x() + 6, ty + 5,
+                        in.satisfied() ? InteractorPalette.get().online() : InteractorPalette.get().shortage());
                 final String line = GameText.resolve(INPUT_IN_STOCK.with(in.need(), in.name(), formatCount(in.have())));
                 Texts.small(g, font, Texts.clip(font, line, Texts.smallFits(tw + 2)), x() + 9, ty, ctx.skin().text());
                 ty += 8;
@@ -2846,7 +2849,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             }
             final boolean ok = choice.allInStock();
             Texts.small(g, font, Texts.clip(font, GameText.resolve(choice.stockNote()), Texts.smallFits(tw + 8)),
-                    x() + 3, ty, ok ? ONLINE_GREEN : SHORT_RED);
+                    x() + 3, ty, ok ? InteractorPalette.get().online() : InteractorPalette.get().shortage());
         }
 
         @Override
@@ -2881,7 +2884,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             @Override
             public void render(final GuiGraphics g, final UiContext ctx) {
                 g.fill(x(), y(), right(), bottom(), ctx.skin().fieldBg());
-                Draw.outline(g, x(), y(), width(), height(), AMBER);
+                Draw.outline(g, x(), y(), width(), height(), InteractorPalette.get().amber());
                 int ty = y() + 2;
                 for (final String line : wrapWords(ctx.font(), differencesText(), width() - 6, 3)) {
                     Texts.small(g, ctx.font(), line, x() + 3, ty, ctx.skin().text());
@@ -2900,7 +2903,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             }
         });
         private final Label estimate = add(new Label(this::estimateText, Label.Tone.DIM).setScale(Texts.SMALL));
-        private final Label feasible = add(new Label(this::feasibleText).setColor(0xFFB8860B).setScale(Texts.SMALL));
+        private final Label feasible = add(new Label(this::feasibleText).setColor(InteractorPalette.get().feasible())
+                .setScale(Texts.SMALL));
         private final Button craft = add(new Button(GameText.resolve(CRAFT), () -> submitCraft(false))
                 .setLabelScale(Texts.SMALL));
         private final Button partial = add(new Button(GameText.resolve(PARTIAL), () -> submitCraft(true))
@@ -2918,7 +2922,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             for (int i = 0; i < CARDS_SHOWN; i++) {
                 cards[i] = add(new RecipeCard(i));
             }
-            setDim(0xB0000000);
+            setDim(InteractorPalette.get().craftDim());
             setLayouter(p -> layout());
             setOnClose(() -> {
                 craftEntry = null;
@@ -3007,13 +3011,13 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             final int w = craftPopup.width();
             for (int i = 0; i < shown; i++) {
                 final CraftPlanPayload.Row row = craftPlan.rows().get(i);
-                final int color = row.satisfied() ? ctx.skin().text() : SHORT_RED;
+                final int color = row.satisfied() ? ctx.skin().text() : InteractorPalette.get().shortage();
                 DesktopItems.item(g, row.item(), px, ry - 2);
                 Texts.small(g, font, Texts.clip(font, row.item().getHoverName().getString(), Texts.smallFits(w - 100)),
                         px + 18, ry, color);
                 final String counts = formatCount(row.have()) + " / " + formatCount(row.need());
                 Texts.small(g, font, counts, px + w - 10 - Texts.smallWidth(font, counts), ry,
-                        row.satisfied() ? ONLINE_GREEN : SHORT_RED);
+                        row.satisfied() ? InteractorPalette.get().online() : InteractorPalette.get().shortage());
                 ry += pitch;
             }
             if (craftPlan.rows().size() > shown) {
@@ -3024,7 +3028,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             for (int i = 0; i < coverLines; i++) {
                 Texts.small(g, font,
                         Texts.clip(font, GameText.resolve(craftPlan.cover().get(i)), Texts.smallFits(w - 12)),
-                        px + 1, ry, SHORT_RED);
+                        px + 1, ry, InteractorPalette.get().shortage());
                 ry += 8;
             }
         }

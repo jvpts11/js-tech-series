@@ -45,9 +45,6 @@ final class InteractorOps {
     private int slotsUsed;
     private int slotsTotal;
 
-    private static final int AMBER = 0xFFE6A93A;
-    private static final int ONLINE_GREEN = 0xFF2E8B45;
-
     private final NetworkInteractorApp app;
 
     InteractorOps(final NetworkInteractorApp app) {
@@ -84,11 +81,12 @@ final class InteractorOps {
 
     /** Green for finished, amber for still going, red for anything that ended badly. */
     static int statusColor(final byte status) {
+        final InteractorPalette.Colours c = InteractorPalette.get();
         return switch (status) {
-            case 0 -> ONLINE_GREEN;        // completed
-            case 1, 3, 4, 6 -> 0xFFB8860B; // partial / processing / waiting / pending: amber
-            case 2, 5, 7 -> 0xFFB23A3A;    // failed / locked / discarded: red
-            default -> 0xFF6A7280;
+            case 0 -> c.online();              // completed
+            case 1, 3, 4, 6 -> c.opPending();  // partial / processing / waiting / pending: amber
+            case 2, 5, 7 -> c.opFailed();      // failed / locked / discarded: red
+            default -> c.opOther();
         };
     }
 
@@ -150,7 +148,8 @@ final class InteractorOps {
         if (slotsTotal > 0) {
             Texts.small(g, font,
                     GameText.resolve(NetworkInteractorTexts.SUPERCOMPUTER_SLOTS.with(slotsUsed, slotsTotal)),
-                    listLeft + 2, gridTop - 9, slotsUsed >= slotsTotal ? AMBER : app.panelSkin().dim());
+                    listLeft + 2, gridTop - 9,
+                    slotsUsed >= slotsTotal ? InteractorPalette.get().amber() : app.panelSkin().dim());
         }
         if (all().isEmpty()) {
             Texts.small(g, font, GameText.resolve(NetworkInteractorTexts.NO_OPERATIONS), listLeft + 2, gridTop + 4,
@@ -163,12 +162,13 @@ final class InteractorOps {
                    final int x, final int y, final int w, final int h, final boolean hovered,
                    final boolean picked) {
         final boolean live = index < active.size();
+        final InteractorPalette.Colours c = InteractorPalette.get();
         if (index == selected) {
-            g.fill(x, y, x + w, y + h, 0x552F6AC6);
+            g.fill(x, y, x + w, y + h, c.rowChosen());
         } else if (hovered) {
-            g.fill(x, y, x + w, y + h, 0x22000000);
+            g.fill(x, y, x + w, y + h, c.rowHover());
         }
-        g.fill(x + 1, y + 4, x + 4, y + 7, live ? 0xFF49E07A : 0xFF8A93A4);
+        g.fill(x + 1, y + 4, x + 4, y + 7, live ? c.live() : c.idle());
         final Font font = ctx.font();
         final String type = OperationPalette.labelFor(op.type());
         g.drawString(font, type, x + 7, y + 2, OperationPalette.colorFor(op.type()), false);

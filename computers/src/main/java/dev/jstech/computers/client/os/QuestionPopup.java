@@ -7,10 +7,14 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -26,6 +30,7 @@ import org.lwjgl.glfw.GLFW;
  * is closed by OK, Enter or Escape. The message may run over several lines, each broken where it says so and wrapped
  * to the dialog's width.
  */
+@PaletteHolder
 public final class QuestionPopup extends Popup {
 
     private final List<Label> lines = new ArrayList<>();
@@ -44,9 +49,9 @@ public final class QuestionPopup extends Popup {
     private static final int BTN_H = 16;
     private static final int BTN_GAP = 8;
     private static final int MAX_TEXT_WIDTH = WIDTH - PADDING * 2 - ICON - 6;
-    private static final int WARNING = 0xFFF2C230;
-    private static final int WARNING_EDGE = 0xFF8A6A00;
-    private static final int NOTE = 0xFF2F6FD0;
+    /** The question's own colours, {@code jsc:desktop/question}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/question",
+            new Colours(0x80000000, 0xFFF2C230, 0xFF8A6A00, 0xFF000000, 0xFF2F6FD0, 0xFFFFFFFF));
 
     /**
      * A dialog that asks, when {@code yes} is what answering Yes does, or that only tells, when it is null.
@@ -67,7 +72,7 @@ public final class QuestionPopup extends Popup {
         }
         final int bodyH = PADDING + Math.max(ICON, wrapped.size() * LINE_H) + PADDING + BTN_H + PADDING;
         setPreferredSize(WIDTH, TITLE_H + bodyH);
-        setDim(0x80000000);
+        setDim(PALETTE.get().dim());
         setCloseOnOutsideClick(false);
         setLayouter(this::layoutContent);
         open();
@@ -146,10 +151,11 @@ public final class QuestionPopup extends Popup {
         for (int row = 0; row < 15; row++) {
             final int half = row / 2 + 1;
             final int cx = ox + ICON / 2;
-            g.fill(cx - half, oy + 2 + row, cx + half, oy + 3 + row, row == 14 ? WARNING_EDGE : WARNING);
+            g.fill(cx - half, oy + 2 + row, cx + half, oy + 3 + row,
+                    row == 14 ? PALETTE.get().warningEdge() : PALETTE.get().warning());
         }
-        g.fill(ox + ICON / 2 - 1, oy + 7, ox + ICON / 2 + 1, oy + 12, 0xFF000000);
-        g.fill(ox + ICON / 2 - 1, oy + 13, ox + ICON / 2 + 1, oy + 15, 0xFF000000);
+        g.fill(ox + ICON / 2 - 1, oy + 7, ox + ICON / 2 + 1, oy + 12, PALETTE.get().warningMark());
+        g.fill(ox + ICON / 2 - 1, oy + 13, ox + ICON / 2 + 1, oy + 15, PALETTE.get().warningMark());
     }
 
     /** A round note sign, blue with an i in it. */
@@ -157,10 +163,10 @@ public final class QuestionPopup extends Popup {
         final int[] half = {4, 6, 7, 8, 9, 9, 9, 9, 8, 7, 6, 4};
         final int cx = ox + ICON / 2;
         for (int i = 0; i < half.length; i++) {
-            g.fill(cx - half[i], oy + 3 + i, cx + half[i], oy + 4 + i, NOTE);
+            g.fill(cx - half[i], oy + 3 + i, cx + half[i], oy + 4 + i, PALETTE.get().note());
         }
-        g.fill(cx - 1, oy + 5, cx + 1, oy + 7, 0xFFFFFFFF);
-        g.fill(cx - 1, oy + 8, cx + 1, oy + 13, 0xFFFFFFFF);
+        g.fill(cx - 1, oy + 5, cx + 1, oy + 7, PALETTE.get().noteMark());
+        g.fill(cx - 1, oy + 8, cx + 1, oy + 13, PALETTE.get().noteMark());
     }
 
     /** Breaks the message where it says so, then wraps each part to the dialog's width on its spaces. */
@@ -180,5 +186,12 @@ public final class QuestionPopup extends Popup {
             out.add(line.toString());
         }
         return out;
+    }
+
+    /**
+     * The question's colours: what dims the desktop behind it, the warning sign and its edge and mark, and the
+     * note sign and its mark.
+     */
+    private record Colours(int dim, int warning, int warningEdge, int warningMark, int note, int noteMark) {
     }
 }

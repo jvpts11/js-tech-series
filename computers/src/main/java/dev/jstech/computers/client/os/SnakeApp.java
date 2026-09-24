@@ -7,10 +7,14 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.program.SnakeGame;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -29,22 +33,20 @@ import java.util.List;
  * has no tick of its own to hang off, and reading the clock keeps it moving at the same speed whatever the
  * frame rate is doing.
  */
+@PaletteHolder
 public final class SnakeApp implements IDesktopApp {
 
     private static final int CELL = 7;
     private static final int MARGIN = 4;
     private static final int TOOLBAR_H = 15;
     private static final int STATUS_H = 11;
-    private static final int GROUND = 0xFF12160F;
-    private static final int GROUND_ALT = 0xFF1A2015;
-    private static final int WALL = 0xFF2E3826;
-    private static final int BODY = 0xFF6FBF3F;
-    private static final int HEAD = 0xFFB7F07A;
-    private static final int FOOD = 0xFFE0553F;
-    private static final int OVER_INK = 0xFFF0B23A;
-    private static final int OVER_SHADE = 0xC0000000;
-    /** The band the starting hint sits on, so it reads over whatever the arena is showing. */
-    private static final int HINT_BAND = 0xD012160F;
+    /**
+     * The arena's own colours, which the installed skin does not touch: {@code jsc:game/snake}. The band the
+     * starting hint sits on is there so it reads over whatever the arena is showing.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "game/snake",
+            new Colours(0xFF12160F, 0xFF1A2015, 0xFF2E3826, 0xFF6FBF3F, 0xFFB7F07A, 0xFFE0553F, 0xFFF0B23A,
+                    0xC0000000, 0xFFFFFFFF, 0xFFB8C2CE, 0xD012160F, 0xFFDCEFE1));
     /** A game tick in milliseconds, which is what the engine's speeds are counted in. */
     private static final long TICK_MS = 50L;
 
@@ -215,19 +217,20 @@ public final class SnakeApp implements IDesktopApp {
 
     private void drawArena(final GuiGraphics g, final int ax, final int ay,
                            final int arenaW, final int arenaH) {
-        g.fill(ax - 1, ay - 1, ax + arenaW + 1, ay + arenaH + 1, WALL);
+        final Colours c = PALETTE.get();
+        g.fill(ax - 1, ay - 1, ax + arenaW + 1, ay + arenaH + 1, c.wall());
         for (int row = 0; row < SnakeGame.ROWS; row++) {
             for (int col = 0; col < SnakeGame.COLS; col++) {
                 final int cx = ax + col * CELL;
                 final int cy = ay + row * CELL;
                 // A faint check, so the arena reads as a grid the snake moves on rather than as a flat box.
-                g.fill(cx, cy, cx + CELL, cy + CELL, (col + row) % 2 == 0 ? GROUND : GROUND_ALT);
+                g.fill(cx, cy, cx + CELL, cy + CELL, (col + row) % 2 == 0 ? c.ground() : c.groundAlt());
                 if (game.isFood(col, row)) {
-                    g.fill(cx + 1, cy + 1, cx + CELL - 1, cy + CELL - 1, FOOD);
+                    g.fill(cx + 1, cy + 1, cx + CELL - 1, cy + CELL - 1, c.food());
                 } else if (game.isHead(col, row)) {
-                    g.fill(cx, cy, cx + CELL, cy + CELL, HEAD);
+                    g.fill(cx, cy, cx + CELL, cy + CELL, c.head());
                 } else if (game.isBody(col, row)) {
-                    g.fill(cx, cy, cx + CELL, cy + CELL, BODY);
+                    g.fill(cx, cy, cx + CELL, cy + CELL, c.body());
                 }
             }
         }
@@ -235,11 +238,12 @@ public final class SnakeApp implements IDesktopApp {
 
     private void drawOver(final GuiGraphics g, final Font font, final int ax, final int ay,
                           final int arenaW, final int arenaH) {
-        g.fill(ax, ay, ax + arenaW, ay + arenaH, OVER_SHADE);
-        centre(g, font, GameText.resolve(SnakeTexts.GAME_OVER), ax, ay + arenaH / 2 - 10, arenaW, OVER_INK);
+        final Colours c = PALETTE.get();
+        g.fill(ax, ay, ax + arenaW, ay + arenaH, c.overShade());
+        centre(g, font, GameText.resolve(SnakeTexts.GAME_OVER), ax, ay + arenaH / 2 - 10, arenaW, c.overInk());
         centre(g, font, GameText.resolve(SnakeTexts.SCORE.with(game.score())), ax, ay + arenaH / 2, arenaW,
-                0xFFFFFFFF);
-        centre(g, font, GameText.resolve(SnakeTexts.AGAIN), ax, ay + arenaH / 2 + 10, arenaW, 0xFFB8C2CE);
+                c.score());
+        centre(g, font, GameText.resolve(SnakeTexts.AGAIN), ax, ay + arenaH / 2 + 10, arenaW, c.again());
     }
 
     private void drawHint(final GuiGraphics g, final Font font, final int ax, final int ay,
@@ -247,8 +251,8 @@ public final class SnakeApp implements IDesktopApp {
         // On a band of its own, because the snake is lying right where the words go.
         final String text = GameText.resolve(SnakeTexts.START_HINT);
         final int ty = ay + arenaH / 2 - 5;
-        g.fill(ax, ty - 2, ax + arenaW, ty + 11, HINT_BAND);
-        centre(g, font, text, ax, ty + 1, arenaW, 0xFFDCEFE1);
+        g.fill(ax, ty - 2, ax + arenaW, ty + 11, PALETTE.get().hintBand());
+        centre(g, font, text, ax, ty + 1, arenaW, PALETTE.get().hint());
     }
 
     private static void centre(final GuiGraphics g, final Font font, final String text,
@@ -323,5 +327,14 @@ public final class SnakeApp implements IDesktopApp {
     public void mouseReleased(final DesktopWindow window, final double mouseX, final double mouseY,
                               final int button) {
         root.mouseReleased(mouseX, mouseY, button);
+    }
+
+    /**
+     * The arena's colours: its checked ground, the wall round it, the snake's body and head, the food, the end of a
+     * game (the shade over the arena, its heading, the score and the line under it), and the starting hint's band
+     * and words.
+     */
+    private record Colours(int ground, int groundAlt, int wall, int body, int head, int food, int overInk,
+                           int overShade, int score, int again, int hintBand, int hint) {
     }
 }

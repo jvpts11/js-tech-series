@@ -1,0 +1,18 @@
+{
+  "bevelDark": "#FF808080",
+  "bevelLight": "#FFFFFFFF",
+  "eight": "#FF808080",
+  "face": "#FFC0C0C0",
+  "five": "#FF800000",
+  "flag": "#FFD01818",
+  "four": "#FF000080",
+  "grid": "#FF9A9A9A",
+  "ledGround": "#FF200000",
+  "ledOn": "#FFFF2B2B",
+  "mine": "#FF101010",
+  "one": "#FF0000FF",
+  "seven": "#FF000000",
+  "six": "#FF008080",
+  "three": "#FFFF0000",
+  "two": "#FF008000"
+}

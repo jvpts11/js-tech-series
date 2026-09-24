@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.operation.payload.EndProcessPayload;
 import dev.jstech.computers.operation.payload.RequestSettingsPayload;
@@ -19,6 +20,9 @@ import dev.jstech.computers.os.RamLedger;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.client.Minecraft;
@@ -41,10 +45,16 @@ import java.util.Random;
  * desktop the system monitor its own package brings. They all read the same machine: the memory ledger the
  * notification area draws from, the disks, the processor, and the network link.
  */
+@PaletteHolder
 public final class TaskManagerApp implements IDesktopApp {
 
     /** The shape this window takes, decided by the desktop it opened on. */
     private enum Form { CLOSE_BOX, LUNA, MODERN, PLASMA, GNOME }
+
+    /** The meters' and graphs' own colours, {@code jsc:app/task_manager}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/task_manager",
+            new Colours(0xFF2EA043, 0xFF001400, 0xFF1F8B1F, 0xFF39D639, 0xFF0F3D0F, 0xFFFFFFFF, 0xFFD1495B,
+                    0xFFE0A020, 0xFF2EA043));
 
     private static final int REFRESH_FRAMES = 40;
     private static final long SAMPLE_MS = 1000L;
@@ -460,7 +470,7 @@ public final class TaskManagerApp implements IDesktopApp {
         final boolean up = DesktopScreen.hostNetworked(host);
         Texts.small(g, font, GameText.resolve(TaskManagerTexts.NETWORK), x + 2, y + 2, skin.dim());
         g.drawString(font, GameText.resolve(up ? TaskManagerTexts.CONNECTED : TaskManagerTexts.NOT_CONNECTED), x + 2,
-                y + 11, up ? 0xFF2EA043 : skin.dim(), false);
+                y + 11, up ? PALETTE.get().connected() : skin.dim(), false);
         history(g, x + 2, y + 24, w - 4, h - 30, cpuHistory, 100);
         Texts.small(g, font, GameText.resolve(TaskManagerTexts.LINK_ACTIVITY), x + 2, y + h - 8, skin.dim());
     }
@@ -610,18 +620,19 @@ public final class TaskManagerApp implements IDesktopApp {
     /** One of the boxed meters: a dark face with the figure over a filled foot, as those managers drew them. */
     private void gauge(final GuiGraphics g, final Font font, final int x, final int y, final int w,
                        final int h, final String figure) {
-        g.fill(x, y, x + w, y + h, 0xFF001400);
+        final Colours c = PALETTE.get();
+        g.fill(x, y, x + w, y + h, c.meterFace());
         Draw.outline(g, x, y, w, h, skin.edge());
         grid(g, x, y, w, h);
         final int fill = (int) ((h - 2) * Math.min(1.0, load.percent() / 100.0));
-        g.fill(x + 1, y + h - 1 - fill, x + w - 1, y + h - 1, 0xFF1F8B1F);
-        Texts.small(g, font, figure, x + (w - Texts.smallWidth(font, figure)) / 2, y + h / 2 - 4, 0xFF39D639);
+        g.fill(x + 1, y + h - 1 - fill, x + w - 1, y + h - 1, c.meterFill());
+        Texts.small(g, font, figure, x + (w - Texts.smallWidth(font, figure)) / 2, y + h / 2 - 4, c.trace());
     }
 
     /** A history graph: the same green grid and line those managers all drew, over the last minute. */
     private void history(final GuiGraphics g, final int x, final int y, final int w, final int h,
                          final int[] series, final int max) {
-        g.fill(x, y, x + w, y + h, 0xFF001400);
+        g.fill(x, y, x + w, y + h, PALETTE.get().meterFace());
         Draw.outline(g, x, y, w, h, skin.edge());
         grid(g, x, y, w, h);
         if (samples < 2) {
@@ -645,11 +656,12 @@ public final class TaskManagerApp implements IDesktopApp {
     }
 
     private static void grid(final GuiGraphics g, final int x, final int y, final int w, final int h) {
+        final int grid = PALETTE.get().grid();
         for (int gy = y + h / 4; gy < y + h; gy += Math.max(4, h / 4)) {
-            g.fill(x + 1, gy, x + w - 1, gy + 1, 0xFF0F3D0F);
+            g.fill(x + 1, gy, x + w - 1, gy + 1, grid);
         }
         for (int gx = x + w / 6; gx < x + w; gx += Math.max(6, w / 6)) {
-            g.fill(gx, y + 1, gx + 1, y + h - 1, 0xFF0F3D0F);
+            g.fill(gx, y + 1, gx + 1, y + h - 1, grid);
         }
     }
 
@@ -661,7 +673,7 @@ public final class TaskManagerApp implements IDesktopApp {
         for (int i = 0; i <= steps; i++) {
             final int px = x1 + dx * i / steps;
             final int py = y1 + dy * i / steps;
-            g.fill(px, py, px + 1, py + 1, 0xFF39D639);
+            g.fill(px, py, px + 1, py + 1, PALETTE.get().trace());
         }
     }
 
@@ -709,8 +721,8 @@ public final class TaskManagerApp implements IDesktopApp {
             } else if (lastMouseY >= ry && lastMouseY < ry + ROW_H && lastMouseX >= x && lastMouseX < x + w) {
                 g.fill(x, ry, x + w, ry + ROW_H, skin.listHover());
             }
-            final int text = index == selected ? 0xFFFFFFFF : skin.text();
-            final int dim = index == selected ? 0xFFFFFFFF : skin.dim();
+            final int text = index == selected ? PALETTE.get().selectedInk() : skin.text();
+            final int dim = index == selected ? PALETTE.get().selectedInk() : skin.dim();
             if (detailed) {
                 // What it is holding, not what it was promised: the number that moves while a program runs.
                 final String mb = RamLedger.heldLabel(use.heldBytes());
@@ -767,13 +779,14 @@ public final class TaskManagerApp implements IDesktopApp {
     }
 
     private static int usageColor(final double frac) {
+        final Colours c = PALETTE.get();
         if (frac >= 0.9) {
-            return 0xFFD1495B;
+            return c.high();
         }
         if (frac >= 0.7) {
-            return 0xFFE0A020;
+            return c.busy();
         }
-        return 0xFF2EA043;
+        return c.calm();
     }
 
     // input
@@ -907,5 +920,14 @@ public final class TaskManagerApp implements IDesktopApp {
     public boolean mouseScrolled(final double delta) {
         scroll = Math.max(0, scroll - (int) Math.signum(delta));
         return true;
+    }
+
+    /**
+     * The Task Manager's colours: a link that is up, the meters' dark face, their fill, the green of their figures
+     * and of the graphs' line, the graphs' grid, the words on a chosen row, and how full something is (nearly,
+     * fairly, or not).
+     */
+    private record Colours(int connected, int meterFace, int meterFill, int trace, int grid, int selectedInk,
+                           int high, int busy, int calm) {
     }
 }

@@ -1,0 +1,9 @@
+{
+  "dropCell": "#804C84F0",
+  "dropTarget": "#FF49E07A",
+  "hover": "#28FFFFFF",
+  "picked": "#66000080",
+  "pickedInk": "#FFFFFFFF",
+  "pickedLabel": "#E0000080",
+  "shadow": "#FF000000"
+}

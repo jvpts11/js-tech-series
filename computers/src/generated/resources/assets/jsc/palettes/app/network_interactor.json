@@ -1,0 +1,21 @@
+{
+  "amber": "#FFE6A93A",
+  "band": "#334A90E2",
+  "craftDim": "#B0000000",
+  "dotMissing": "#FFD05050",
+  "dotReady": "#FF3CC75A",
+  "feasible": "#FFB8860B",
+  "idle": "#FF8A93A4",
+  "link": "#FF2F6AC6",
+  "live": "#FF49E07A",
+  "offline": "#FF9A4A4A",
+  "online": "#FF2E8B45",
+  "opFailed": "#FFB23A3A",
+  "opOther": "#FF6A7280",
+  "opPending": "#FFB8860B",
+  "popupDim": "#99000000",
+  "rowChosen": "#552F6AC6",
+  "rowHover": "#22000000",
+  "shortage": "#FFB23A3A",
+  "star": "#FFE0A800"
+}

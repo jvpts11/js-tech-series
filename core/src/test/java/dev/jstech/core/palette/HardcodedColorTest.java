@@ -75,12 +75,17 @@ class HardcodedColorTest {
         }
     }
 
+    /*
+     * A scanner pointed at the wrong place reads nothing and counts none, which would pass the ratchet for the wrong
+     * reason. What is checked is that every mod's sources are there to be read, not that any colours are left in
+     * them: a mod whose colours have all moved to palettes counts none, which is where they are all meant to end.
+     */
     @Test
     void everyModIsRead() {
-        final Map<String, Integer> found = countsByFile();
+        final Path root = Path.of("").toAbsolutePath().getParent();
         for (final String module : MODULES) {
-            assertTrue(found.keySet().stream().anyMatch(path -> path.startsWith(module + "/")),
-                    () -> "nothing was counted in " + module);
+            assertTrue(Files.isDirectory(sourcesOf(root, module)),
+                    () -> "the sources of " + module + " were not found");
         }
     }
 
@@ -107,7 +112,7 @@ class HardcodedColorTest {
         final Map<String, Integer> out = new TreeMap<>();
         final Path root = Path.of("").toAbsolutePath().getParent();
         for (final String module : MODULES) {
-            final Path main = root.resolve(module).resolve("src").resolve("main").resolve("java");
+            final Path main = sourcesOf(root, module);
             if (!Files.isDirectory(main)) {
                 continue;
             }
@@ -123,6 +128,10 @@ class HardcodedColorTest {
             }
         }
         return out;
+    }
+
+    private static Path sourcesOf(final Path root, final String module) {
+        return root.resolve(module).resolve("src").resolve("main").resolve("java");
     }
 
     /**

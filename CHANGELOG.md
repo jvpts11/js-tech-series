@@ -168,6 +168,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   popups and its Maintenance tab, and the installer's own pages are palettes a resource pack can recolour
   (`jsc:firmware/*`, `jsc:splash/*`, `jsc:boot/*`, `jsc:monitor/*`, `jsc:app/this_pc`, `jsc:terminal/*`,
   `jsc:installer/page`).
+- The Network Interactor, the Network Manager, the Task Manager, the Application Manager, the games (Minesweeper,
+  Snake, Solitaire and its cards), the desktop's icons and questions, a system's boot log, the Crafting Switch and
+  the Industrial machines' screens draw their colours from palettes a resource pack can recolour (`jsc:app/*`,
+  `jsc:game/*`, `jsc:desktop/*`, `jsc:boot/system`, `jsc:screen/crafting_switch`, `jsindustrial:machine/screen`).
 
 ### Fixed
 - Saving an IQL file from the Network Management Studio to a full disk no longer fails to send its answer: the

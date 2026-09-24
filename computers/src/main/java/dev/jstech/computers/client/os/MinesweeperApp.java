@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.GameWonPayload;
 import dev.jstech.computers.operation.payload.desktop.GamePayloads;
 import dev.jstech.computers.program.MinesweeperGame;
@@ -14,6 +15,9 @@ import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -29,20 +33,14 @@ import java.util.Map;
  * number colours). All rules live in the pure {@link MinesweeperGame}; the board component only draws it
  * and turns clicks into reveals and flags.
  */
+@PaletteHolder
 public final class MinesweeperApp implements IDesktopApp {
 
-    private static final int FACE = 0xFFC0C0C0;
-    private static final int BEVEL_LIGHT = 0xFFFFFFFF;
-    private static final int BEVEL_DARK = 0xFF808080;
-    private static final int GRID = 0xFF9A9A9A;
-    private static final int LED_BG = 0xFF200000;
-    private static final int LED_ON = 0xFFFF2B2B;
-    private static final int MINE = 0xFF101010;
-    private static final int FLAG_RED = 0xFFD01818;
-    private static final int[] NUMBER = {
-            0, 0xFF0000FF, 0xFF008000, 0xFFFF0000, 0xFF000080,
-            0xFF800000, 0xFF008080, 0xFF000000, 0xFF808080,
-    };
+    /** The game's own colours, the grey board and the numbers it always had: {@code jsc:game/minesweeper}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "game/minesweeper",
+            new Colours(0xFFC0C0C0, 0xFFFFFFFF, 0xFF808080, 0xFF9A9A9A, 0xFF200000, 0xFFFF2B2B, 0xFF101010,
+                    0xFFD01818, 0xFF0000FF, 0xFF008000, 0xFFFF0000, 0xFF000080, 0xFF800000, 0xFF008080,
+                    0xFF000000, 0xFF808080));
     private static final int PANEL_H = 24;
 
     private final BlockPos host;
@@ -80,35 +78,37 @@ public final class MinesweeperApp implements IDesktopApp {
             final boolean lost = game.state() == MinesweeperGame.State.LOST;
             final boolean showMine = lost && game.isMine(r, c);
             if (game.isRevealed(r, c) || showMine) {
-                g.fill(cx, cy, cx + cell, cy + cell, FACE);
-                g.fill(cx, cy, cx + cell, cy + 1, GRID);
-                g.fill(cx, cy, cx + 1, cy + cell, GRID);
+                g.fill(cx, cy, cx + cell, cy + cell, colours().face());
+                g.fill(cx, cy, cx + cell, cy + 1, colours().grid());
+                g.fill(cx, cy, cx + 1, cy + cell, colours().grid());
                 if (showMine) {
                     if (game.isRevealed(r, c)) {
-                        g.fill(cx + 1, cy + 1, cx + cell, cy + cell, FLAG_RED); // the mine that was triggered
+                        g.fill(cx + 1, cy + 1, cx + cell, cy + cell, colours().flag()); // the mine that was triggered
                     }
                     final int m = Math.max(2, cell / 3);
-                    g.fill(cx + (cell - m) / 2, cy + (cell - m) / 2, cx + (cell + m) / 2, cy + (cell + m) / 2, MINE);
+                    g.fill(cx + (cell - m) / 2, cy + (cell - m) / 2, cx + (cell + m) / 2, cy + (cell + m) / 2,
+                            colours().mine());
                 } else {
                     final int n = game.adjacent(r, c);
                     if (n > 0) {
                         final String s = String.valueOf(n);
-                        g.drawString(font, s, cx + (cell - font.width(s)) / 2 + 1, cy + (cell - 8) / 2 + 1, NUMBER[n], false);
+                        g.drawString(font, s, cx + (cell - font.width(s)) / 2 + 1, cy + (cell - 8) / 2 + 1,
+                                colours().number(n), false);
                     }
                 }
                 return;
             }
             // Unrevealed raised cell.
-            g.fill(cx, cy, cx + cell, cy + cell, FACE);
-            g.fill(cx, cy, cx + cell, cy + 1, BEVEL_LIGHT);
-            g.fill(cx, cy, cx + 1, cy + cell, BEVEL_LIGHT);
-            g.fill(cx, cy + cell - 1, cx + cell, cy + cell, BEVEL_DARK);
-            g.fill(cx + cell - 1, cy, cx + cell, cy + cell, BEVEL_DARK);
+            g.fill(cx, cy, cx + cell, cy + cell, colours().face());
+            g.fill(cx, cy, cx + cell, cy + 1, colours().bevelLight());
+            g.fill(cx, cy, cx + 1, cy + cell, colours().bevelLight());
+            g.fill(cx, cy + cell - 1, cx + cell, cy + cell, colours().bevelDark());
+            g.fill(cx + cell - 1, cy, cx + cell, cy + cell, colours().bevelDark());
             if (game.isFlagged(r, c)) {
                 final int fx = cx + cell / 2;
-                g.fill(fx, cy + 2, fx + 1, cy + cell - 3, MINE);              // pole
-                g.fill(fx - cell / 4, cy + 2, fx, cy + cell / 2, FLAG_RED);   // flag
-                g.fill(cx + cell / 2 - 3, cy + cell - 3, cx + cell / 2 + 3, cy + cell - 2, MINE); // base
+                g.fill(fx, cy + 2, fx + 1, cy + cell - 3, colours().mine());              // pole
+                g.fill(fx - cell / 4, cy + 2, fx, cy + cell / 2, colours().flag());   // flag
+                g.fill(cx + cell / 2 - 3, cy + cell - 3, cx + cell / 2 + 3, cy + cell - 2, colours().mine()); // base
             }
         }
 
@@ -241,22 +241,22 @@ public final class MinesweeperApp implements IDesktopApp {
 
     /** A 3-glyph red LED readout for a value, clamped to what fits (negative values keep a leading minus). */
     private static void led(final GuiGraphics g, final Font font, final int x, final int y, final int value) {
-        g.fill(x, y, x + 26, y + 15, LED_BG);
+        g.fill(x, y, x + 26, y + 15, colours().ledGround());
         final String s;
         if (value < 0) {
             s = "-" + String.format(Locale.ROOT, "%02d", Math.min(99, -value));
         } else {
             s = String.format(Locale.ROOT, "%03d", Math.min(999, value));
         }
-        g.drawString(font, s, x + 3, y + 4, LED_ON, false);
+        g.drawString(font, s, x + 3, y + 4, colours().ledOn(), false);
     }
 
     private static void sunken(final GuiGraphics g, final int x, final int y, final int w, final int h) {
-        g.fill(x, y, x + w, y + h, FACE);
-        g.fill(x, y, x + w, y + 1, BEVEL_DARK);
-        g.fill(x, y, x + 1, y + h, BEVEL_DARK);
-        g.fill(x, y + h - 1, x + w, y + h, BEVEL_LIGHT);
-        g.fill(x + w - 1, y, x + w, y + h, BEVEL_LIGHT);
+        g.fill(x, y, x + w, y + h, colours().face());
+        g.fill(x, y, x + w, y + 1, colours().bevelDark());
+        g.fill(x, y, x + 1, y + h, colours().bevelDark());
+        g.fill(x, y + h - 1, x + w, y + h, colours().bevelLight());
+        g.fill(x + w - 1, y, x + w, y + h, colours().bevelLight());
     }
 
     private int elapsedSeconds() {
@@ -277,5 +277,33 @@ public final class MinesweeperApp implements IDesktopApp {
     @Override
     public void mouseReleased(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
         root.mouseReleased(mouseX, mouseY, button);
+    }
+
+    private static Colours colours() {
+        return PALETTE.get();
+    }
+
+    /**
+     * The board's colours: its grey face, the two edges of a bevel, the grid, the counters' ground and digits, a
+     * mine, a flag, and the colour of each count from one to eight.
+     */
+    private record Colours(int face, int bevelLight, int bevelDark, int grid, int ledGround, int ledOn, int mine,
+                           int flag, int one, int two, int three, int four, int five, int six, int seven,
+                           int eight) {
+
+        /** The colour a count of that many neighbouring mines is written in; nought is never written. */
+        int number(final int n) {
+            return switch (n) {
+                case 1 -> one;
+                case 2 -> two;
+                case 3 -> three;
+                case 4 -> four;
+                case 5 -> five;
+                case 6 -> six;
+                case 7 -> seven;
+                case 8 -> eight;
+                default -> 0;
+            };
+        }
     }
 }

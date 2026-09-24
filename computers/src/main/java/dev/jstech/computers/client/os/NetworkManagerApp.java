@@ -8,6 +8,10 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.CancelOperationPayload;
 import dev.jstech.computers.operation.payload.NetworkManagerPayload;
 import dev.jstech.computers.operation.payload.NetworkNodeInfo;
@@ -59,6 +63,7 @@ import java.util.function.Supplier;
  * <p>The tabs, the tables, the hardware readout, the scrollbars and the detail dialog are components; the
  * map is a canvas of its own, since its nodes are dragged, panned and zoomed rather than listed.
  */
+@PaletteHolder
 public final class NetworkManagerApp implements IDesktopApp {
 
     private static final int TAB_DEVICES = 0;
@@ -79,18 +84,11 @@ public final class NetworkManagerApp implements IDesktopApp {
     private static final int DETAIL_W = 240;
     private static final int DETAIL_H = 150;
 
-    private static final int C_MAINFRAME = 0xFF3A6AE0;
-    private static final int C_SERVER = 0xFF12A26F;
-    private static final int C_SUBFRAME = 0xFF7B52C9;
-    private static final int C_PC = 0xFF1C9C9C;
-    private static final int C_CRAFTING = 0xFFD98A3A;
-    private static final int C_SUPERCOMPUTER = 0xFFC94FB0;
-    private static final int C_CLUSTER_MANAGEMENT = 0xFFA9B23C;
-
-    private static final int C_GREEN = 0xFF2EA043;
-    private static final int C_AMBER = 0xFFE0A020;
-    private static final int C_RED = 0xFFD1495B;
-    private static final int C_LINK = 0xFF9FB4E6;
+    /** Each kind of machine's colour on the map, the states' colours, and the hover card's: app/network_manager. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/network_manager",
+            new Colours(0xFF3A6AE0, 0xFF12A26F, 0xFF7B52C9, 0xFF1C9C9C, 0xFFD98A3A, 0xFFC94FB0, 0xFFA9B23C,
+                    0xFF2EA043, 0xFFE0A020, 0xFFD1495B, 0xFF9FB4E6, 0xB0000000, 0xF00E0E12, 0xFFFFFFFF,
+                    0xFFB7BCCB));
 
     private static final double MAP_ZOOM_MIN = 0.4;
     private static final double MAP_ZOOM_MAX = 2.5;
@@ -253,14 +251,15 @@ public final class NetworkManagerApp implements IDesktopApp {
                 NetworkManagerTexts.FAIL)).setSortable(false));
         statsList = root.add(new ListView<NetworkManagerPayload.TypeStat>(this::statRows, STAT_ROW_H, this::renderStatRow));
 
-        detailPopup = new Popup("", DETAIL_W, DETAIL_H).setDim(0xB0000000).setLayouter(this::layoutDetail);
+        detailPopup = new Popup("", DETAIL_W, DETAIL_H).setDim(colours().detailDim())
+                .setLayouter(this::layoutDetail);
         detailType = detailPopup.add(new Label(() -> detailOp == null ? "" : OperationPalette.labelFor(detailOp.type()))
                 .setColor(() -> detailOp == null ? 0 : OperationPalette.colorFor(detailOp.type())));
         detailName = detailPopup.add(new Label(() -> detailOp == null ? "" : detailOp.name().getString()));
         detailAmount = detailPopup.add(new Label(this::detailAmountText)
                 .setColor(() -> detailOp == null ? 0 : statusColor(detailOp.status())));
         detailSection = detailPopup.add(new Label(this::detailSectionText, Label.Tone.DIM)
-                .setColor(() -> detailOp != null && detailOp.cause().isPresent() ? C_RED : 0));
+                .setColor(() -> detailOp != null && detailOp.cause().isPresent() ? colours().bad() : 0));
         detailTiming = detailPopup.add(new Label(this::detailTimingText, Label.Tone.DIM).setAlign(Label.Align.RIGHT));
         detailList = detailPopup.add(new ListView<DetailRow>(() -> detailRows, 10, this::renderDetailRow));
         detailClose = detailPopup.add(new Button(GameText.resolve(NetworkManagerTexts.CLOSE), detailPopup::close));
@@ -565,7 +564,7 @@ public final class NetworkManagerApp implements IDesktopApp {
         for (int i = 0; i < figures.length; i++) {
             // Each figure sits right-aligned in its lane, so the columns read as a table.
             final int laneRight = i == figures.length - 1 ? x + w - 4 : statsColumns.columnX(i + 2) - 6;
-            final int color = i == 3 && stat.shortfallPercent() > 0 ? C_AMBER : ctx.skin().text();
+            final int color = i == 3 && stat.shortfallPercent() > 0 ? colours().warn() : ctx.skin().text();
             g.drawString(font, figures[i], laneRight - font.width(figures[i]), y + 2, color, false);
         }
     }
@@ -587,7 +586,8 @@ public final class NetworkManagerApp implements IDesktopApp {
         g.drawString(font, Texts.clip(font, GameText.resolve(n.kindLabel()), statusX - 6 - typeX), typeX, y + 2,
                 ctx.skin().dim(), false);
         final String status = GameText.resolve(n.online() ? NetworkManagerTexts.ONLINE : NetworkManagerTexts.OFFLINE);
-        g.drawString(font, status, x + w - font.width(status), y + 2, n.online() ? C_GREEN : ctx.skin().dim(), false);
+        g.drawString(font, status, x + w - font.width(status), y + 2,
+                n.online() ? colours().good() : ctx.skin().dim(), false);
     }
 
     private void renderProcessRow(final GuiGraphics g, final UiContext ctx, final OperationRecord op, final int index,
@@ -602,7 +602,8 @@ public final class NetworkManagerApp implements IDesktopApp {
         if (op.priority() != OperationPriority.DEFAULT) {
             final String tag = GameText.resolve(op.priority().text());
             g.drawString(font, tag, nameX, y + 3,
-                    op.priority().compareTo(OperationPriority.DEFAULT) > 0 ? C_AMBER : ctx.skin().dim(), false);
+                    op.priority().compareTo(OperationPriority.DEFAULT) > 0 ? colours().warn() : ctx.skin().dim(),
+                    false);
             nameX += font.width(tag) + 4;
         }
         final int barX = x + w / 2 + 4;
@@ -765,8 +766,8 @@ public final class NetworkManagerApp implements IDesktopApp {
 
         /** A thin link drawn as a horizontal leg then a vertical leg (the rect drawer has no diagonals). */
         private void drawLink(final GuiGraphics g, final int x1, final int y1, final int x2, final int y2) {
-            g.fill(Math.min(x1, x2), y1, Math.max(x1, x2), y1 + 1, C_LINK);
-            g.fill(x2, Math.min(y1, y2), x2 + 1, Math.max(y1, y2), C_LINK);
+            g.fill(Math.min(x1, x2), y1, Math.max(x1, x2), y1 + 1, colours().link());
+            g.fill(x2, Math.min(y1, y2), x2 + 1, Math.max(y1, y2), colours().link());
         }
 
         @Override
@@ -880,11 +881,11 @@ public final class NetworkManagerApp implements IDesktopApp {
          */
         g.pose().pushPose();
         g.pose().translate(0, 0, DesktopZ.TOOLTIP);
-        g.fill(bx, by, bx + boxW, by + boxH, 0xF00E0E12);
+        g.fill(bx, by, bx + boxW, by + boxH, colours().card());
         Draw.outline(g, bx, by, boxW, boxH, kindColor(n.kind()));
         int ly = by + 3;
         for (int i = 0; i < lines.size(); i++) {
-            final int color = i == 0 ? 0xFFFFFFFF : (i == 1 ? kindColor(n.kind()) : 0xFFB7BCCB);
+            final int color = i == 0 ? colours().cardTitle() : (i == 1 ? kindColor(n.kind()) : colours().cardText());
             g.drawString(font, lines.get(i), bx + 4, ly, color, false);
             ly += 10;
         }
@@ -1004,8 +1005,8 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     private int subStateColor(final byte state) {
         return switch (state) {
-            case OperationRecord.SubRow.SUB_COMPLETED, OperationRecord.SubRow.SUB_STREAMING -> C_GREEN;
-            case OperationRecord.SubRow.SUB_READING -> C_AMBER;
+            case OperationRecord.SubRow.SUB_COMPLETED, OperationRecord.SubRow.SUB_STREAMING -> colours().good();
+            case OperationRecord.SubRow.SUB_READING -> colours().warn();
             default -> skin.dim();
         };
     }
@@ -1031,22 +1032,24 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     private int statusColor(final byte status) {
         return switch (status) {
-            case OperationRecord.STATUS_PROCESSING, OperationRecord.STATUS_COMPLETED -> C_GREEN;
-            case OperationRecord.STATUS_PARTIAL, OperationRecord.STATUS_WAITING, OperationRecord.STATUS_PENDING -> C_AMBER;
-            case OperationRecord.STATUS_FAILED, OperationRecord.STATUS_RESOURCE_LOCKED, OperationRecord.STATUS_DISCARDED -> C_RED;
+            case OperationRecord.STATUS_PROCESSING, OperationRecord.STATUS_COMPLETED -> colours().good();
+            case OperationRecord.STATUS_PARTIAL, OperationRecord.STATUS_WAITING, OperationRecord.STATUS_PENDING ->
+                    colours().warn();
+            case OperationRecord.STATUS_FAILED, OperationRecord.STATUS_RESOURCE_LOCKED,
+                    OperationRecord.STATUS_DISCARDED -> colours().bad();
             default -> skin.text();
         };
     }
 
     private static int kindColor(final int kind) {
         return switch (kind) {
-            case NetworkNodeInfo.KIND_SERVER -> C_SERVER;
-            case NetworkNodeInfo.KIND_SUBFRAME -> C_SUBFRAME;
-            case NetworkNodeInfo.KIND_PC -> C_PC;
-            case NetworkNodeInfo.KIND_CRAFTING -> C_CRAFTING;
-            case NetworkNodeInfo.KIND_SUPERCOMPUTER -> C_SUPERCOMPUTER;
-            case NetworkNodeInfo.KIND_CLUSTER_MANAGEMENT -> C_CLUSTER_MANAGEMENT;
-            default -> C_MAINFRAME;
+            case NetworkNodeInfo.KIND_SERVER -> colours().server();
+            case NetworkNodeInfo.KIND_SUBFRAME -> colours().subframe();
+            case NetworkNodeInfo.KIND_PC -> colours().personalComputer();
+            case NetworkNodeInfo.KIND_CRAFTING -> colours().crafting();
+            case NetworkNodeInfo.KIND_SUPERCOMPUTER -> colours().supercomputer();
+            case NetworkNodeInfo.KIND_CLUSTER_MANAGEMENT -> colours().clusterManagement();
+            default -> colours().mainframe();
         };
     }
 
@@ -1103,5 +1106,19 @@ public final class NetworkManagerApp implements IDesktopApp {
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
         return detailPopup.isOpen() && detailPopup.keyPressed(key, scanCode, modifiers);
+    }
+
+    private static Colours colours() {
+        return PALETTE.get();
+    }
+
+    /**
+     * The Network Manager's colours: each kind of machine on the map, what is fine, what wants the eye and what is
+     * wrong, a link between machines, what dims the window behind a machine's details, and the card a hovered
+     * machine shows with its title and its lines.
+     */
+    private record Colours(int mainframe, int server, int subframe, int personalComputer, int crafting,
+                           int supercomputer, int clusterManagement, int good, int warn, int bad, int link,
+                           int detailDim, int card, int cardTitle, int cardText) {
     }
 }

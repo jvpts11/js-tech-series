@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
 import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.computers.gui.layout.CraftingSwitchLayout;
@@ -14,6 +15,9 @@ import dev.jstech.computers.menu.CraftingSwitchMenu;
 import dev.jstech.computers.operation.payload.SetBusNamePayload;
 import dev.jstech.computers.operation.payload.SetCraftingSwitchFacePayload;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import java.util.ArrayList;
@@ -33,16 +37,13 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * Reads the switch's block entity locally (the server keeps it in sync via the update tag) and pushes edits
  * back with {@link SetCraftingSwitchFacePayload}.
  */
+@PaletteHolder
 public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitchMenu> {
 
-    private static final int BG = 0xFF0B0E13;
-    private static final int PANEL = 0xFF11161D;
-    private static final int LINE = 0xFF1D2530;
-    private static final int SEL = 0xFF15212A;
-    private static final int ACCENT = 0xFF39D6C4;
-    private static final int TEXT = 0xFFCDD6E2;
-    private static final int DIM = 0xFF7D8A9C;
-    private static final int GREEN = 0xFF5FE07A;
+    /** The screen's colours, {@code jsc:screen/crafting_switch}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "screen/crafting_switch",
+            new Colours(0xFF0B0E13, 0xFF11161D, 0xFF1D2530, 0xFF15212A, 0xFF39D6C4, 0xFFCDD6E2, 0xFF7D8A9C,
+                    0xFF5FE07A, 0xC0000000));
 
     // Category picker popup: a modal list of the installed recipe types (plus "none").
     private static final int CP_X = 24;
@@ -346,8 +347,8 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
     protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
         final int x = leftPos;
         final int y = topPos;
-        g.fill(x, y, x + imageWidth, y + imageHeight, BG);
-        g.fill(x, y, x + imageWidth, y + 1, LINE);
+        g.fill(x, y, x + imageWidth, y + imageHeight, colours().ground());
+        g.fill(x, y, x + imageWidth, y + 1, colours().line());
 
         final CraftingSwitchBlockEntity be = blockEntity();
         final boolean linked = be != null && be.isLinked();
@@ -355,7 +356,7 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
         // Header status pill. Machines found over the cables show on their face rows, so this stays simple.
         final String pill = GameText.resolve(linked ? CraftingSwitchTexts.LINKED : CraftingSwitchTexts.UNLINKED);
         g.drawString(this.font, pill, x + imageWidth - 8 - this.font.width(pill),
-                y + CraftingSwitchLayout.HEADER_Y + 1, linked ? GREEN : DIM, false);
+                y + CraftingSwitchLayout.HEADER_Y + 1, linked ? colours().linked() : colours().dim(), false);
 
         /*
          * Face rows. A machine reached over a face's cable run is listed ON that face row, exactly like an
@@ -366,9 +367,10 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
             final int ry = y + CraftingSwitchLayout.rowY(i);
             final int rx = x + CraftingSwitchLayout.LIST_X;
             g.fill(rx, ry, rx + CraftingSwitchLayout.LIST_W, ry + CraftingSwitchLayout.ROW_BOX_H,
-                    i == selectedFace ? SEL : PANEL);
+                    i == selectedFace ? colours().selection() : colours().panel());
             final boolean hasMachine = be != null && (be.machineOnFace(d) || !busMachinesOnFace(i).isEmpty());
-            g.drawString(this.font, rowLabel(be, i), rx + 3, ry + 2, hasMachine ? TEXT : DIM, false);
+            g.drawString(this.font, rowLabel(be, i), rx + 3, ry + 2,
+                    hasMachine ? colours().text() : colours().dim(), false);
         }
 
         // Detail panel.
@@ -378,24 +380,25 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
         if (be != null && !be.machineOnFace(sel) && !selViaBus.isEmpty()) {
             final var line = selViaBus.get(0);
             g.drawString(this.font, clamp(GameText.resolve(line.blockName()), 15), dx + 4,
-                    y + CraftingSwitchLayout.MACHINE_LABEL_Y, ACCENT, false);
+                    y + CraftingSwitchLayout.MACHINE_LABEL_Y, colours().accent(), false);
             g.drawString(this.font, GameText.resolve(CraftingSwitchTexts.NAME), dx + 4,
-                    y + CraftingSwitchLayout.NAME_LABEL_Y, DIM, false);
+                    y + CraftingSwitchLayout.NAME_LABEL_Y, colours().dim(), false);
             // Absolute coordinates, tucked between the name field and the active toggle.
             JsTechTheme.textS(g, this.font, GameText.resolve(CraftingSwitchTexts.AT.with(line.machinePos().getX(),
                             line.machinePos().getY(), line.machinePos().getZ())),
-                    dx + 4, y + CraftingSwitchLayout.NAME_Y + CraftingSwitchLayout.NAME_H + 2, TEXT);
+                    dx + 4, y + CraftingSwitchLayout.NAME_Y + CraftingSwitchLayout.NAME_H + 2, colours().text());
             if (selViaBus.size() > 1) {
                 JsTechTheme.textSRight(g, this.font,
                         GameText.resolve(CraftingSwitchTexts.MORE.with(selViaBus.size() - 1)),
                         dx + CraftingSwitchLayout.DETAIL_W - 2,
-                        y + CraftingSwitchLayout.MACHINE_LABEL_Y + 1, DIM);
+                        y + CraftingSwitchLayout.MACHINE_LABEL_Y + 1, colours().dim());
             }
         } else {
             final String machine = detailMachineLabel(be, sel);
-            g.drawString(this.font, machine, dx + 4, y + CraftingSwitchLayout.MACHINE_LABEL_Y, ACCENT, false);
+            g.drawString(this.font, machine, dx + 4, y + CraftingSwitchLayout.MACHINE_LABEL_Y, colours().accent(),
+                    false);
             g.drawString(this.font, GameText.resolve(CraftingSwitchTexts.NAME), dx + 4,
-                    y + CraftingSwitchLayout.NAME_LABEL_Y, DIM, false);
+                    y + CraftingSwitchLayout.NAME_LABEL_Y, colours().dim(), false);
         }
 
         /*
@@ -416,9 +419,9 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
         g.drawString(this.font, GameText.resolve(CraftingSwitchTexts.TITLE), CraftingSwitchLayout.HEADER_X,
-                CraftingSwitchLayout.HEADER_Y + 1, TEXT, false);
+                CraftingSwitchLayout.HEADER_Y + 1, colours().text(), false);
         g.drawString(this.font, this.playerInventoryTitle, CraftingSwitchLayout.INV_X,
-                CraftingSwitchLayout.INV_LABEL_Y, DIM, false);
+                CraftingSwitchLayout.INV_LABEL_Y, colours().dim(), false);
     }
 
     @Override
@@ -444,28 +447,29 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
         final int px = leftPos + CP_X;
         final int py = topPos + CP_Y;
         final int ph = 15 + CP_VIS_ROWS * CP_ROW_H + 3;
-        g.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xC0000000);
-        g.fill(px, py, px + CP_W, py + ph, PANEL);
-        g.fill(px, py, px + 1, py + ph, LINE);
-        g.fill(px + CP_W - 1, py, px + CP_W, py + ph, LINE);
-        g.drawString(font, GameText.resolve(CraftingSwitchTexts.MACHINE_CATEGORY), px + 6, py + 3, ACCENT, false);
-        g.fill(px + 4, py + 13, px + CP_W - 4, py + 14, LINE);
+        g.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, colours().veil());
+        g.fill(px, py, px + CP_W, py + ph, colours().panel());
+        g.fill(px, py, px + 1, py + ph, colours().line());
+        g.fill(px + CP_W - 1, py, px + CP_W, py + ph, colours().line());
+        g.drawString(font, GameText.resolve(CraftingSwitchTexts.MACHINE_CATEGORY), px + 6, py + 3,
+                colours().accent(), false);
+        g.fill(px + 4, py + 13, px + CP_W - 4, py + 14, colours().line());
         for (int r = 0; r < CP_VIS_ROWS && categoryScroll + r < list.size(); r++) {
             final String category = list.get(categoryScroll + r);
             final int ry = py + 15 + r * CP_ROW_H;
             final boolean hovered = mouseX >= px + 3 && mouseX < px + CP_W - 3
                     && mouseY >= ry && mouseY < ry + CP_ROW_H;
             if (hovered) {
-                g.fill(px + 3, ry, px + CP_W - 3, ry + CP_ROW_H, SEL);
+                g.fill(px + 3, ry, px + CP_W - 3, ry + CP_ROW_H, colours().selection());
             }
             JsTechTheme.textS(g, font, category.isEmpty() ? GameText.resolve(CraftingSwitchTexts.NONE) : category,
                     px + 8, ry + 2,
-                    hovered ? TEXT : DIM);
+                    hovered ? colours().text() : colours().dim());
         }
         if (list.size() > CP_VIS_ROWS) {
             JsTechTheme.textSRight(g, font, (categoryScroll + 1) + "-"
                             + Math.min(list.size(), categoryScroll + CP_VIS_ROWS) + "/" + list.size(),
-                    px + CP_W - 6, py + 4, DIM);
+                    px + CP_W - 6, py + 4, colours().dim());
         }
     }
 
@@ -505,5 +509,17 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
             case WEST -> CraftingSwitchTexts.WEST;
             case EAST -> CraftingSwitchTexts.EAST;
         });
+    }
+
+    private static Colours colours() {
+        return PALETTE.get();
+    }
+
+    /**
+     * The screen's colours: its ground, a panel, the rules, the chosen row, the accent, the text and the quiet
+     * lines, a switch that is on a network, and the veil behind the machine picker.
+     */
+    private record Colours(int ground, int panel, int line, int selection, int accent, int text, int dim,
+                           int linked, int veil) {
     }
 }

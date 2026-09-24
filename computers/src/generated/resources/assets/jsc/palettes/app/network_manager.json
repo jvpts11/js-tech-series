@@ -1,0 +1,17 @@
+{
+  "bad": "#FFD1495B",
+  "card": "#F00E0E12",
+  "cardText": "#FFB7BCCB",
+  "cardTitle": "#FFFFFFFF",
+  "clusterManagement": "#FFA9B23C",
+  "crafting": "#FFD98A3A",
+  "detailDim": "#B0000000",
+  "good": "#FF2EA043",
+  "link": "#FF9FB4E6",
+  "mainframe": "#FF3A6AE0",
+  "personalComputer": "#FF1C9C9C",
+  "server": "#FF12A26F",
+  "subframe": "#FF7B52C9",
+  "supercomputer": "#FFC94FB0",
+  "warn": "#FFE0A020"
+}

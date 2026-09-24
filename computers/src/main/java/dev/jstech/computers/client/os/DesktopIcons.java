@@ -7,9 +7,13 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.layout.DesktopIconLayout;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -35,6 +39,7 @@ import net.minecraft.client.gui.GuiGraphics;
  * two lines and cut with an ellipsis past that; a name wider than its cell used to run across its
  * neighbour, which is how "Network" and "Command Prompt" came to read as one word.
  */
+@PaletteHolder
 final class DesktopIcons {
 
     /**
@@ -77,6 +82,10 @@ final class DesktopIcons {
     private static final int LABEL_W = CELL_W - 2;
     private static final int LABEL_LINES = 2;
     private static final int LABEL_LINE_H = 8;
+
+    /** The icons' own colours, {@code jsc:desktop/icons}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/icons",
+            new Colours(0x804C84F0, 0x66000080, 0x28FFFFFF, 0xFF49E07A, 0xE0000080, 0xFFFFFFFF, 0xFF000000));
 
     private final DesktopScreen desktop;
 
@@ -250,10 +259,11 @@ final class DesktopIcons {
     void drawDropCell(final GuiGraphics g, final int cell) {
         final int gx = xOf(cell) + CELL_DX;
         final int gy = yOf(cell) + CELL_DY;
-        g.fill(gx, gy, gx + CELL_W, gy + 1, 0x804C84F0);
-        g.fill(gx, gy + CELL_H - 1, gx + CELL_W, gy + CELL_H, 0x804C84F0);
-        g.fill(gx, gy, gx + 1, gy + CELL_H, 0x804C84F0);
-        g.fill(gx + CELL_W - 1, gy, gx + CELL_W, gy + CELL_H, 0x804C84F0);
+        final int edge = PALETTE.get().dropCell();
+        g.fill(gx, gy, gx + CELL_W, gy + 1, edge);
+        g.fill(gx, gy + CELL_H - 1, gx + CELL_W, gy + CELL_H, edge);
+        g.fill(gx, gy, gx + 1, gy + CELL_H, edge);
+        g.fill(gx + CELL_W - 1, gy, gx + CELL_W, gy + CELL_H, edge);
     }
 
     /** What an icon is called: a launcher's own name, or the file's, or what is being typed over it. */
@@ -272,11 +282,12 @@ final class DesktopIcons {
                           final int launcherCount, final List<DiskFilesPayload.WireFile> files) {
         final int cellX = ix + CELL_DX;
         final int cellY = iy + CELL_DY;
+        final Colours c = PALETTE.get();
         if (i == desktop.pickedIcon() || selected.contains(i)) {
-            g.fill(cellX, cellY, cellX + CELL_W, cellY + CELL_H, 0x66000080);
+            g.fill(cellX, cellY, cellX + CELL_W, cellY + CELL_H, c.picked());
         } else if (lmx >= cellX && lmx < cellX + CELL_W && lmy >= cellY && lmy < cellY + CELL_H && !dragging) {
             // Hover feedback so the player sees which icon the cursor is over.
-            g.fill(cellX, cellY, cellX + CELL_W, cellY + CELL_H, 0x28FFFFFF);
+            g.fill(cellX, cellY, cellX + CELL_W, cellY + CELL_H, c.hover());
         }
         /*
          * A green outline on the folder, or the trash, under the cursor while a real file or folder is being
@@ -285,10 +296,10 @@ final class DesktopIcons {
         if (dragging && desktop.draggedIconSlot() >= launcherCount
                 && i == dropTarget && i != desktop.draggedIconSlot()
                 && (i >= launcherCount ? files.get(i - launcherCount).directory() : desktop.isTrashIcon(i))) {
-            g.fill(cellX, cellY, cellX + CELL_W, cellY + 1, 0xFF49E07A);
-            g.fill(cellX, cellY + CELL_H - 1, cellX + CELL_W, cellY + CELL_H, 0xFF49E07A);
-            g.fill(cellX, cellY, cellX + 1, cellY + CELL_H, 0xFF49E07A);
-            g.fill(cellX + CELL_W - 1, cellY, cellX + CELL_W, cellY + CELL_H, 0xFF49E07A);
+            g.fill(cellX, cellY, cellX + CELL_W, cellY + 1, c.dropTarget());
+            g.fill(cellX, cellY + CELL_H - 1, cellX + CELL_W, cellY + CELL_H, c.dropTarget());
+            g.fill(cellX, cellY, cellX + 1, cellY + CELL_H, c.dropTarget());
+            g.fill(cellX + CELL_W - 1, cellY, cellX + CELL_W, cellY + CELL_H, c.dropTarget());
         }
         if (i < launcherCount) {
             ProgramIcons.draw(g, ix, iy, 24, 22, desktop.deskIcons().get(i).programId(), desktop.icons());
@@ -320,8 +331,8 @@ final class DesktopIcons {
         for (final String line : wrap(label, labelWidth())) {
             final int lw = Texts.smallWidth(desktop.textFont(), line);
             final int lcx = ix + 12 - lw / 2;
-            g.fill(lcx - 2, ly - 1, lcx + lw + 2, ly + LABEL_LINE_H, 0xE0000080);
-            Texts.small(g, desktop.textFont(), line, lcx, ly, 0xFFFFFFFF);
+            g.fill(lcx - 2, ly - 1, lcx + lw + 2, ly + LABEL_LINE_H, PALETTE.get().pickedLabel());
+            Texts.small(g, desktop.textFont(), line, lcx, ly, PALETTE.get().pickedInk());
             ly += LABEL_LINE_H;
         }
     }
@@ -331,7 +342,7 @@ final class DesktopIcons {
                           final int color, final boolean shadow) {
         final int lx = cx - Texts.smallWidth(desktop.textFont(), line) / 2;
         if (shadow) {
-            Texts.small(g, desktop.textFont(), line, lx + 1, y + 1, 0xFF000000);
+            Texts.small(g, desktop.textFont(), line, lx + 1, y + 1, PALETTE.get().shadow());
         }
         Texts.small(g, desktop.textFont(), line, lx, y, color);
     }
@@ -373,5 +384,13 @@ final class DesktopIcons {
             out.remove(out.size() - 1);
         }
         return out;
+    }
+
+    /**
+     * The icons' own colours: the cell a dragged icon would snap to, a picked icon's cell, a hovered one, the
+     * folder a file would drop into, a picked icon's name and its ink, and the shadow under a name.
+     */
+    private record Colours(int dropCell, int picked, int hover, int dropTarget, int pickedLabel, int pickedInk,
+                           int shadow) {
     }
 }

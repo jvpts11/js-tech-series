@@ -1,0 +1,14 @@
+{
+  "bevelDark": "#FF555555",
+  "bevelLight": "#FFFFFFFF",
+  "compressorProgress": "#FF4488FF",
+  "energyEmpty": "#FF200000",
+  "energyFull": "#FFFF3030",
+  "flameEmpty": "#FF555555",
+  "flameFull": "#FFFF9020",
+  "furnaceProgress": "#FFFF8000",
+  "maceratorProgress": "#FF3DCC3D",
+  "panel": "#FFC6C6C6",
+  "slotBorder": "#FF373737",
+  "slotFill": "#FF8B8B8B"
+}

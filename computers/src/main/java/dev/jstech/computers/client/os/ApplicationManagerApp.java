@@ -7,10 +7,14 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.layout.CdeAppManagerLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.os.CdeAppGroup;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -26,6 +30,7 @@ import net.minecraft.client.gui.GuiGraphics;
  * is installed. What a window shows is read from the desktop each time it is drawn, so a program installed
  * while it is open appears in it without being asked for.
  */
+@PaletteHolder
 final class ApplicationManagerApp implements IDesktopApp {
 
     /** What the first window is called, and what the name of a group's window begins with. */
@@ -50,8 +55,9 @@ final class ApplicationManagerApp implements IDesktopApp {
     private int height;
 
     private static final long DOUBLE_CLICK_MS = 300L;
-    private static final int PICKED_FILL = 0xFF2E3A66;
-    private static final int PICKED_INK = 0xFFFFFFFF;
+    /** Its own colours, {@code jsc:app/application_manager}: a picked name, and the folders a group is drawn as. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/application_manager",
+            new Colours(0xFF2E3A66, 0xFFFFFFFF, 0xFFFFE9A8, 0xFFF4C842, 0xFFFFF3C4, 0xFF9A7B16));
 
     /*
      * The window keeps no desktop of its own. A program's window outlives the screen it was opened on, so it asks
@@ -212,9 +218,10 @@ final class ApplicationManagerApp implements IDesktopApp {
         final int nameX = this.left + cell.x() + (cell.w() - nameW) / 2;
         final int nameY = this.top + cell.y() + CdeAppManagerLayout.ICON + 2;
         if (index == this.picked) {
-            g.fill(nameX - 2, nameY - 1, nameX + nameW + 2, nameY + CdeAppManagerLayout.NAME_H - 1, PICKED_FILL);
+            g.fill(nameX - 2, nameY - 1, nameX + nameW + 2, nameY + CdeAppManagerLayout.NAME_H - 1,
+                    PALETTE.get().pickedFill());
         }
-        Texts.small(g, font, shown, nameX, nameY, index == this.picked ? PICKED_INK : this.skin.text());
+        Texts.small(g, font, shown, nameX, nameY, index == this.picked ? PALETTE.get().pickedInk() : this.skin.text());
     }
 
     /** The groups that hold something on this machine, in the Application Manager's own order. */
@@ -260,12 +267,18 @@ final class ApplicationManagerApp implements IDesktopApp {
 
     /** A folder the way the desktop draws one: a tab, a body, a line of light along its head. */
     private static void folder(final GuiGraphics g, final int x, final int y) {
-        g.fill(x + 1, y + 1, x + 10, y + 4, 0xFFFFE9A8);
-        g.fill(x + 1, y + 4, x + 23, y + 20, 0xFFF4C842);
-        g.fill(x + 1, y + 4, x + 23, y + 6, 0xFFFFF3C4);
-        g.fill(x + 1, y + 1, x + 10, y + 2, 0xFF9A7B16);
-        g.fill(x + 1, y + 19, x + 23, y + 20, 0xFF9A7B16);
-        g.fill(x + 1, y + 1, x + 2, y + 20, 0xFF9A7B16);
-        g.fill(x + 22, y + 4, x + 23, y + 20, 0xFF9A7B16);
+        final Colours c = PALETTE.get();
+        g.fill(x + 1, y + 1, x + 10, y + 4, c.folderTab());
+        g.fill(x + 1, y + 4, x + 23, y + 20, c.folderBody());
+        g.fill(x + 1, y + 4, x + 23, y + 6, c.folderLight());
+        g.fill(x + 1, y + 1, x + 10, y + 2, c.folderEdge());
+        g.fill(x + 1, y + 19, x + 23, y + 20, c.folderEdge());
+        g.fill(x + 1, y + 1, x + 2, y + 20, c.folderEdge());
+        g.fill(x + 22, y + 4, x + 23, y + 20, c.folderEdge());
+    }
+
+    /** A picked name's fill and ink, and a folder's tab, body, the light along its head and its edge. */
+    private record Colours(int pickedFill, int pickedInk, int folderTab, int folderBody, int folderLight,
+                           int folderEdge) {
     }
 }

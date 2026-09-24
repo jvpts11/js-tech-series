@@ -18,8 +18,6 @@ import net.minecraft.world.entity.player.Inventory;
  */
 public class CoalGeneratorScreen extends AbstractMachineScreen<CoalGeneratorMenu> {
 
-    private static final int FLAME_EMPTY = 0xFF555555;
-    private static final int FLAME_FULL = 0xFFFF9020;
     private static final int ENERGY_X = 8;
     private static final int ENERGY_Y = 16;
     private static final int ENERGY_W = 10;
@@ -45,10 +43,11 @@ public class CoalGeneratorScreen extends AbstractMachineScreen<CoalGeneratorMenu
         final int flameY = y + 38;
         final int flameW = 14;
         final int flameH = 14;
-        g.fill(flameX, flameY, flameX + flameW, flameY + flameH, FLAME_EMPTY);
+        g.fill(flameX, flameY, flameX + flameW, flameY + flameH, MachineScreenSupport.colours().flameEmpty());
         final int lit = menu.getBurnScaled();
         if (lit > 0) {
-            g.fill(flameX, flameY + (flameH - lit), flameX + flameW, flameY + flameH, FLAME_FULL);
+            g.fill(flameX, flameY + (flameH - lit), flameX + flameW, flameY + flameH,
+                    MachineScreenSupport.colours().flameFull());
         }
 
         MachineScreenSupport.drawEnergyBar(g, x + ENERGY_X, y + ENERGY_Y, ENERGY_W, ENERGY_H,
