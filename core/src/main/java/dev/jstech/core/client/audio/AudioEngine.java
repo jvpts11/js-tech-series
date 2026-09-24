@@ -7,6 +7,11 @@
  */
 package dev.jstech.core.client.audio;
 
+import dev.jstech.core.audio.AudioChannel;
+import dev.jstech.core.audio.CueSoundPayload;
+import dev.jstech.core.audio.SoundContext;
+import dev.jstech.core.audio.SoundCue;
+import dev.jstech.core.audio.SoundCues;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.audio.SoundKeys;
 import dev.jstech.core.audio.SoundSpace;
@@ -17,6 +22,7 @@ import java.util.Locale;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * How a client plays the series' sounds itself: a program answering a click, a screen opening, a tune a program
@@ -101,6 +107,43 @@ public final class AudioEngine {
         } else if (!payload.onScreen() && sound.spec().space() == SoundSpace.WORLD) {
             playMade(sound, notes, payload.x(), payload.y(), payload.z(), 1.0F);
         }
+    }
+
+    /**
+     * Plays what a cue the server raised is bound to here; an unknown cue, or one bound to nothing, is silent. It
+     * hands nothing back, so the server's network code, which calls it, never names a class only a client has.
+     */
+    public static void playCue(final CueSoundPayload payload) {
+        final SoundCue cue = SoundCues.find(payload.cue());
+        if (cue != null && payload.onScreen() == (cue.space() == SoundSpace.INTERFACE)) {
+            playCue(cue, payload.context(), payload.x(), payload.y(), payload.z(), payload.volume(), payload.pitch());
+        }
+    }
+
+    /**
+     * Plays the sound a cue is bound to on this client for that context: from that point for a cue of the world, from
+     * the player's own screen for one of the interface. A sound the series did not declare plays in the cue's
+     * channel; a cue bound to nothing for that context, or to a sound made as it plays, is silent.
+     *
+     * @return the sound as it plays, or null when the cue is silent
+     */
+    @Nullable
+    public static SoundInstance playCue(final SoundCue cue, final SoundContext context, final double x,
+                                        final double y, final double z, final float volume, final float pitch) {
+        final String picked = SoundCueBindings.of(cue).pick(context);
+        final ResourceLocation id = picked == null ? null : ResourceLocation.tryParse(picked);
+        final SoundKey declared = id == null ? null : SoundKeys.find(id);
+        if (id == null || declared != null && declared.spec().made()) {
+            return null;
+        }
+        final boolean screen = cue.space() == SoundSpace.INTERFACE;
+        final AudioChannel channel = declared != null ? declared.spec().channel() : cue.channel();
+        final SoundInstance sound = ScaledSoundInstance.of(new SimpleSoundInstance(id, channel.source(), volume, pitch,
+                SoundInstance.createUnseededRandom(), false, 0,
+                screen ? SoundInstance.Attenuation.NONE : SoundInstance.Attenuation.LINEAR,
+                screen ? 0 : x, screen ? 0 : y, screen ? 0 : z, screen), channel.id().toString());
+        sink.play(sound);
+        return sound;
     }
 
     /** Stops a sound this engine started. */

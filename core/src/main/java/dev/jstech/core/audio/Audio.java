@@ -8,10 +8,12 @@
 package dev.jstech.core.audio;
 
 import dev.jstech.core.audio.pcm.Tone;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
@@ -24,6 +26,10 @@ import net.neoforged.neoforge.network.PacketDistributor;
  *
  * <p>A sound made as it plays is sent as its notes ({@link #tones}), which each client synthesises. It does not pass
  * the gate: a program that beeps twice in a row means both beeps.
+ *
+ * <p>A cue ({@link #cue}) is sent as what happened and the context it happened in, and each client picks the sound
+ * from its own packs' bindings. A machine with hardware of its own ({@link IAudioHost}) plays cues and notes from its
+ * speakers, at its volume, through its device.
  */
 public final class Audio {
 
@@ -106,6 +112,96 @@ public final class Audio {
             throw new IllegalArgumentException(sound.id() + " is a sound of the world, not of the interface");
         }
         PacketDistributor.sendToPlayer(player, new ToneSoundPayload(sound.id(), true, 0, 0, 0, tones));
+    }
+
+    /** Raises a cue of the world from the middle of that block, its sound picked by that context on each client. */
+    public static boolean cue(final ServerLevel level, final BlockPos pos, final SoundCue cue,
+                              final SoundContext context) {
+        return cue(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, cue, context, 1.0F, 1.0F);
+    }
+
+    /**
+     * Raises a cue of the world from that point, to every player near enough to hear it; each picks the sound from the
+     * bindings their own packs give, by that context.
+     *
+     * @return whether it was raised, which it is not when the same cue came from the same place a moment ago
+     * @throws IllegalArgumentException when the cue belongs to the interface and not to the world
+     */
+    public static boolean cue(final ServerLevel level, final double x, final double y, final double z,
+                              final SoundCue cue, final SoundContext context, final float volume, final float pitch) {
+        if (cue.space() != SoundSpace.WORLD) {
+            throw new IllegalArgumentException(cue.id() + " is a cue of the interface, not of the world");
+        }
+        final String source = level.dimension().location() + "@" + BlockPos.containing(x, y, z).asLong();
+        if (!GATE.allow(source, cue.id().toString(), level.getGameTime())) {
+            return false;
+        }
+        PacketDistributor.sendToPlayersNear(level, null, x, y, z, cue.range(),
+                new CueSoundPayload(cue.id(), false, x, y, z, context, volume, pitch));
+        return true;
+    }
+
+    /**
+     * Raises a cue of the interface for one player alone, from their own screen.
+     *
+     * @throws IllegalArgumentException when the cue belongs to the world and not to the interface
+     */
+    public static void cueOnScreen(final ServerPlayer player, final SoundCue cue, final SoundContext context) {
+        if (cue.space() != SoundSpace.INTERFACE) {
+            throw new IllegalArgumentException(cue.id() + " is a cue of the world, not of the interface");
+        }
+        PacketDistributor.sendToPlayer(player, new CueSoundPayload(cue.id(), true, 0, 0, 0, context, 1.0F, 1.0F));
+    }
+
+    /**
+     * Raises a cue of the world through a machine's own hardware: from each of its speakers, at its volume, picked by
+     * its context with its device in it. A machine whose device makes no sound, or whose volume is down, is silent.
+     *
+     * @return how many of its speakers it was raised from
+     */
+    public static int cue(final ServerLevel level, final IAudioHost host, final SoundCue cue) {
+        final AudioDevice device = host.audioDevice();
+        final float volume = host.audioVolume();
+        if (!device.audible() || volume <= 0.0F) {
+            return 0;
+        }
+        final SoundContext context = host.soundContext().with(SoundContext.DEVICE, device.id());
+        int raised = 0;
+        for (final Vec3 speaker : host.audioOutputs()) {
+            if (cue(level, speaker.x, speaker.y, speaker.z, cue, context, Math.min(1.0F, volume), 1.0F)) {
+                raised++;
+            }
+        }
+        return raised;
+    }
+
+    /**
+     * Plays notes through a machine's own hardware: as its device plays them (a PC speaker makes every shape a square
+     * wave), from each of its speakers, at its volume. A device that synthesises nothing plays none of them.
+     *
+     * @return how many of its speakers played them
+     * @throws IllegalArgumentException when the sound is not a sound of the world made as it plays, or there are no
+     *                                  notes or more than {@link ToneSoundPayload#MAX_TONES}
+     */
+    public static int tones(final ServerLevel level, final IAudioHost host, final SoundKey sound,
+                            final List<Tone> tones) {
+        requireMade(sound, tones);
+        if (sound.spec().space() != SoundSpace.WORLD) {
+            throw new IllegalArgumentException(sound.id() + " is a sound of the interface, not of the world");
+        }
+        final float volume = Math.min(1.0F, host.audioVolume());
+        final List<Tone> played = new ArrayList<>();
+        for (final Tone tone : host.audioDevice().adapt(tones)) {
+            played.add(new Tone(tone.wave(), tone.frequency(), tone.millis(), tone.volume() * volume));
+        }
+        if (played.isEmpty() || volume <= 0.0F) {
+            return 0;
+        }
+        for (final Vec3 speaker : host.audioOutputs()) {
+            PacketDistributor.sendToPlayersNear(level, null, speaker.x, speaker.y, speaker.z, sound.spec().range(),
+                    new ToneSoundPayload(sound.id(), false, speaker.x, speaker.y, speaker.z, played));
+        }
+        return host.audioOutputs().size();
     }
 
     private static void requireFiles(final SoundKey sound) {

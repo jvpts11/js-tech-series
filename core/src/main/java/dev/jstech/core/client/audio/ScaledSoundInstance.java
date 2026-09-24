@@ -37,7 +37,7 @@ class ScaledSoundInstance implements SoundInstance {
     }
 
     /** The same sound mixed in that channel, still ticking when the one asked for ticks. */
-    static SoundInstance of(final SoundInstance sound, final String channel) {
+    static ScaledSoundInstance of(final SoundInstance sound, final String channel) {
         return sound instanceof TickableSoundInstance ticking
                 ? new Ticking(ticking, channel) : new ScaledSoundInstance(sound, channel);
     }
@@ -45,6 +45,11 @@ class ScaledSoundInstance implements SoundInstance {
     /** The sound the game asked for. */
     SoundInstance original() {
         return sound;
+    }
+
+    /** The id of the channel it is mixed in. */
+    String channel() {
+        return channel;
     }
 
     @Override

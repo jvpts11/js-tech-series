@@ -9,8 +9,12 @@ package dev.jstech.tests.clienttest;
 
 import dev.jstech.core.audio.AudioChannels;
 import dev.jstech.core.audio.AudioPrefs;
+import dev.jstech.core.audio.CueSoundPayload;
 import dev.jstech.core.audio.IAudible;
 import dev.jstech.core.audio.LoopRequest;
+import dev.jstech.core.audio.SoundContext;
+import dev.jstech.core.audio.SoundSet;
+import dev.jstech.core.audio.SoundSetJson;
 import dev.jstech.core.audio.ToneSoundPayload;
 import dev.jstech.core.audio.pcm.AudioDecoders;
 import dev.jstech.core.audio.pcm.IPcmSource;
@@ -23,21 +27,26 @@ import dev.jstech.core.client.audio.AudioMixer;
 import dev.jstech.core.client.audio.AudioPrefsStore;
 import dev.jstech.core.client.audio.CapturingAudioSink;
 import dev.jstech.core.client.audio.PcmAudioStream;
+import dev.jstech.core.client.audio.SoundCueBindings;
 import dev.jstech.core.client.audio.SoundDirector;
 import dev.jstech.tests.TestSounds;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.AudioStream;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.GsonHelper;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +54,7 @@ import org.jetbrains.annotations.Nullable;
  * The sound system on a client: a sound of the screen reaches the speakers through the mixer, at the volume the player
  * gave its channel, and not at all once the player turned it off; a sound of the game itself is turned off the same
  * way. The director keeps the world's running sounds within its budget and makes rooms of many. A sound made as it
- * plays opens into the samples the speakers take.
+ * plays opens into the samples the speakers take, and a cue plays what its file binds it to for its context.
  */
 public final class AudioClientTests {
 
@@ -54,6 +63,7 @@ public final class AudioClientTests {
     private static final String BELL = SoundEvents.NOTE_BLOCK_BELL.value().getLocation().toString();
     private static final String DEVICES = AudioChannels.DEVICES.id().toString();
     private static final String BEEP = TestSounds.BEEP.id().toString();
+    private static final String ALERTS = AudioChannels.ALERTS.id().toString();
 
     private AudioClientTests() {
     }
@@ -231,6 +241,50 @@ public final class AudioClientTests {
                 .then(0, () -> {
                     prefs.setMuted(hum, false);
                     AudioPrefsStore.save();
+                    AudioEngine.restoreSink();
+                });
+    }
+
+    /**
+     * A cue's rules come from its file in the resources, which a pack replaces; its sound is picked by the context,
+     * one the series did not declare playing in the cue's channel; and a cue bound to nothing is silent.
+     */
+    @ClientTest(timeoutTicks = 400)
+    public static void cue_picksItsSoundByContextFromItsFile(final ClientTestContext ctx) {
+        final CapturingAudioSink sink = new CapturingAudioSink();
+        final AudioPrefs prefs = AudioPrefsStore.prefs();
+        final SoundContext buzzer = SoundContext.EMPTY.with(SoundContext.DEVICE, TestSounds.BUZZER.id());
+        final ResourceLocation bass = ResourceLocation.withDefaultNamespace("block.note_block.bass");
+        ctx.then(0, () -> AudioEngine.useSink(sink))
+                .thenAssert(0, () -> {
+                    final Optional<Resource> file = Minecraft.getInstance().getResourceManager()
+                            .getResource(TestSounds.ALARM.file());
+                    try (Reader reader = file.orElseThrow().openAsReader()) {
+                        return SoundSetJson.read(GsonHelper.parse(reader)).equals(TestSounds.ALARM.defaults())
+                                && SoundCueBindings.of(TestSounds.ALARM).equals(TestSounds.ALARM.defaults());
+                    } catch (final IOException | RuntimeException unreadable) {
+                        return false;
+                    }
+                }, "the alarm's rules are in its generated file, and that is what this client has")
+                .then(0, () -> {
+                    prefs.setVolume(ALERTS, 0.5F);
+                    final Vec3 at = ctx.player().position();
+                    AudioEngine.playCue(new CueSoundPayload(TestSounds.ALARM.id(), false, at.x, at.y, at.z, buzzer,
+                            1.0F, 1.0F));
+                    AudioEngine.playCue(TestSounds.ALARM, SoundContext.EMPTY, at.x, at.y, at.z, 1.0F, 1.0F);
+                })
+                .thenAssert(1, () -> sink.played().size() == 2 && sink.played().get(0).getLocation().equals(bass)
+                                && Math.abs(sink.played().get(0).getVolume() - 0.5F) < 0.001F
+                                && sink.played().get(1).getLocation().equals(TestSounds.HUM.id()),
+                        "through the buzzer the alarm is the game's bass, in the alerts channel, and the hum otherwise")
+                .then(0, () -> {
+                    SoundCueBindings.bind(TestSounds.ALARM, SoundSet.SILENT);
+                    AudioEngine.playCue(TestSounds.ALARM, buzzer, 0, 0, 0, 1.0F, 1.0F);
+                })
+                .thenAssert(1, () -> sink.played().size() == 2, "bound to nothing, as a pack may, it is silent")
+                .then(0, () -> {
+                    SoundCueBindings.unbind(TestSounds.ALARM);
+                    prefs.setVolume(ALERTS, 1.0F);
                     AudioEngine.restoreSink();
                 });
     }

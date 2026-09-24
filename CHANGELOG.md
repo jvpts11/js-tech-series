@@ -29,6 +29,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   and says which on the action bar; pressed again within five seconds, it brings that sound back.
 - While an alert plays, the series' other sound channels are lowered so the alert is heard over them, and come back
   up over a second once it ends; the player may turn this off in `config/jstech-audio.json`.
+- Sound cues: a mod says what happened (a computer powering on) and the sound heard is picked on each client from
+  `assets/<namespace>/sound_cues/`, by the context it happened in (the machine's era, its audio device, its
+  system's family). A resource pack binds a cue to other sounds, the game's own included, by shipping a file of the
+  same name. A machine with sound hardware of its own plays cues and tunes from each of its speakers, at its own
+  volume, as its device allows: a PC speaker turns every note into a square wave, and a machine with no sound
+  hardware stays silent.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.

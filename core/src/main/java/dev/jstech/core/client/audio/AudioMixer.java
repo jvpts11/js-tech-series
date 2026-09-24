@@ -100,20 +100,11 @@ public final class AudioMixer {
         if (isHeardFromOutside(sound)) {
             lastHeard = id;
         }
-        if (sound instanceof ScaledSoundInstance) {
-            return sound;
+        if (sound instanceof ScaledSoundInstance already) {
+            return watched(already);
         }
         final SoundKey key = SoundKeys.find(id);
-        if (key == null) {
-            return sound;
-        }
-        final SoundInstance scaled = ScaledSoundInstance.of(sound, key.spec().channel().id().toString());
-        if (key.spec().channel() == AudioChannels.ALERTS) {
-            synchronized (ALERTS) {
-                ALERTS.add(scaled);
-            }
-        }
-        return scaled;
+        return key == null ? sound : watched(ScaledSoundInstance.of(sound, key.spec().channel().id().toString()));
     }
 
     /** How much of its volume a channel keeps now: all of it for the alerts, less for the others while one plays. */
@@ -143,6 +134,16 @@ public final class AudioMixer {
         final Minecraft minecraft = Minecraft.getInstance();
         minecraft.getSoundManager().updateSourceVolume(SoundSource.BLOCKS,
                 minecraft.options.getSoundSourceVolume(SoundSource.BLOCKS));
+    }
+
+    /* An alert is kept while it plays, since the other channels stay lowered until the last one ends. */
+    private static SoundInstance watched(final ScaledSoundInstance sound) {
+        if (ALERTS_CHANNEL.equals(sound.channel())) {
+            synchronized (ALERTS) {
+                ALERTS.add(sound);
+            }
+        }
+        return sound;
     }
 
     /* The player's own sounds and the interface's are what they caused, not what they are hearing around them. */

@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.content;
 
+import dev.jstech.core.audio.SoundCue;
 import dev.jstech.core.audio.SoundKey;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,6 +53,7 @@ public final class ModContent {
     private final List<ItemEntry<?>> declaredItems = new ArrayList<>();
     private final List<ContentTab> declaredTabs = new ArrayList<>();
     private final List<SoundKey> declaredSounds = new ArrayList<>();
+    private final List<SoundCue> declaredCues = new ArrayList<>();
 
     /* Every mod's content, by mod id, in the order the mods made theirs. */
     private static final Map<String, ModContent> BY_MOD = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -128,6 +130,11 @@ public final class ModContent {
         return new SoundBuilder(this, path);
     }
 
+    /** Starts declaring a cue, known by that path under the mod's namespace ({@code computer/boot}). */
+    public CueBuilder cue(final String path) {
+        return new CueBuilder(this, path);
+    }
+
     /** The blocks declared so far, in declaration order. */
     public List<BlockEntry<?>> declaredBlocks() {
         return Collections.unmodifiableList(declaredBlocks);
@@ -145,6 +152,11 @@ public final class ModContent {
     /** The sounds declared so far, in declaration order. */
     public List<SoundKey> declaredSounds() {
         return Collections.unmodifiableList(declaredSounds);
+    }
+
+    /** The cues declared so far, in declaration order. */
+    public List<SoundCue> declaredCues() {
+        return Collections.unmodifiableList(declaredCues);
     }
 
     /** Hands the registrations to the mod's event bus; call it once, after every declaration class has loaded. */
@@ -174,5 +186,9 @@ public final class ModContent {
 
     void declare(final SoundKey key) {
         declaredSounds.add(key);
+    }
+
+    void declare(final SoundCue cue) {
+        declaredCues.add(cue);
     }
 }

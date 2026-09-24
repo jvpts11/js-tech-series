@@ -1,4 +1,5 @@
 {
+  "jstests.audio_device.buzzer": "Test buzzer",
   "subtitles.jstests.test.beep": "A test beep",
   "subtitles.jstests.test.click": "A test click",
   "subtitles.jstests.test.hum": "A test hum",

@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.datagen;
 
+import dev.jstech.core.datagen.ContentCueProvider;
 import dev.jstech.core.datagen.ContentLanguageProvider;
 import dev.jstech.core.datagen.ContentSoundProvider;
 import dev.jstech.tests.JsTests;
@@ -18,8 +19,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 /**
- * Data generation for the test mod: the structure templates the GameTests run inside, and the entries and subtitles
- * of the sounds the tests play.
+ * Data generation for the test mod: the structure templates the GameTests run inside, and the entries, subtitles and
+ * cue bindings of the sounds the tests play.
  */
 @EventBusSubscriber(modid = JsTests.MODID)
 public final class JsTestsDataGenerators {
@@ -35,5 +36,6 @@ public final class JsTestsDataGenerators {
         generator.addProvider(event.includeClient(),
                 new ContentSoundProvider(output, TestSounds.CONTENT, event.getExistingFileHelper()));
         generator.addProvider(event.includeClient(), new ContentLanguageProvider(output, TestSounds.CONTENT));
+        generator.addProvider(event.includeClient(), new ContentCueProvider(output, TestSounds.CONTENT));
     }
 }

@@ -10,15 +10,25 @@ package dev.jstech.tests;
 import dev.jstech.core.audio.AmbientField;
 import dev.jstech.core.audio.AmbientFields;
 import dev.jstech.core.audio.AudioChannels;
+import dev.jstech.core.audio.AudioDevice;
+import dev.jstech.core.audio.AudioDevices;
+import dev.jstech.core.audio.SoundContext;
+import dev.jstech.core.audio.SoundCue;
 import dev.jstech.core.audio.SoundKey;
+import dev.jstech.core.audio.pcm.Waveform;
 import dev.jstech.core.content.ModContent;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+import java.util.Map;
+import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
 
 /**
  * The sounds the tests play through the series' sound system: one of the interface, one of the world, a running one,
- * the room many running ones make, and two made as they play. They play files the game already has, or none, so the
- * test mod ships no sound.
+ * the room many running ones make, two made as they play, an alarm cue and the buzzer it sounds different through.
+ * They play files the game already has, or none, so the test mod ships no sound.
  */
+@TextHolder
 public final class TestSounds {
 
     public static final ModContent CONTENT = new ModContent(JsTests.MODID);
@@ -52,6 +62,18 @@ public final class TestSounds {
     /** A recording played on the player's own screen, made as it plays from the samples it is handed. */
     public static final SoundKey TUNE = CONTENT.sound("test/tune").onScreen().made()
             .subtitle("A test tune").register();
+
+    private static final TextKey BUZZER_NAME = TextKey.of("jstests.audio_device.buzzer", "Test buzzer");
+
+    /** A speaker that beeps square waves, one at a time, and plays no recording. */
+    public static final AudioDevice BUZZER = AudioDevices.register(
+            new AudioDevice("jstests:buzzer", BUZZER_NAME, Set.of(Waveform.SQUARE), false, 1));
+
+    /** A test machine's alarm: the game's bass note through the buzzer, the hum through anything else. */
+    public static final SoundCue ALARM = CONTENT.cue("test/alarm").world().channel(AudioChannels.ALERTS).range(12)
+            .when(Map.of(SoundContext.DEVICE, BUZZER.id()),
+                    ResourceLocation.withDefaultNamespace("block.note_block.bass"))
+            .otherwise(HUM).register();
 
     private TestSounds() {
     }

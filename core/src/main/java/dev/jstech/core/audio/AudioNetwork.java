@@ -16,8 +16,9 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 /**
- * What the sound system sends over the network: the sounds of a player's own screen, which only they hear, and the
- * notes of a synthesised sound, which each client that hears them makes into samples.
+ * What the sound system sends over the network: the sounds of a player's own screen, which only they hear, the
+ * notes of a synthesised sound, which each client that hears them makes into samples, and cues, whose sound each
+ * client picks from its own packs.
  */
 @EventBusSubscriber(modid = JsCore.MODID)
 public final class AudioNetwork {
@@ -32,6 +33,7 @@ public final class AudioNetwork {
         final PayloadRegistrar registrar = event.registrar(VERSION);
         registrar.playToClient(ScreenSoundPayload.TYPE, ScreenSoundPayload.STREAM_CODEC, AudioNetwork::onScreenSound);
         registrar.playToClient(ToneSoundPayload.TYPE, ToneSoundPayload.STREAM_CODEC, AudioNetwork::onToneSound);
+        registrar.playToClient(CueSoundPayload.TYPE, CueSoundPayload.STREAM_CODEC, AudioNetwork::onCueSound);
     }
 
     /* Runs on a client only: the payload is only ever sent to one. */
@@ -42,5 +44,10 @@ public final class AudioNetwork {
     /* Runs on a client only, as the one above. */
     private static void onToneSound(final ToneSoundPayload payload, final IPayloadContext context) {
         context.enqueueWork(() -> AudioEngine.playTones(payload));
+    }
+
+    /* Runs on a client only, as the ones above. */
+    private static void onCueSound(final CueSoundPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> AudioEngine.playCue(payload));
     }
 }

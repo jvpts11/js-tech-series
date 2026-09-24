@@ -15,6 +15,7 @@
   "jscore.audio_channel.machines": "Máquinas",
   "jscore.audio_channel.music": "Música",
   "jscore.audio_channel.voice": "Voz",
+  "jscore.audio_device.none": "Sem som",
   "jscore.era.advanced": "Advanced",
   "jscore.era.exa": "Exa",
   "jscore.era.legacy": "Legacy",
