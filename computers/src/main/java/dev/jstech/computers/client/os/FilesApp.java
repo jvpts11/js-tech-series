@@ -955,7 +955,8 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
                                final int x, final int y, final int w, final int h, final boolean hovered,
                                final boolean selectedRow) {
         if (item.section()) {
-            g.drawString(ctx.font(), item.label().toUpperCase(Locale.ROOT), x + 3, y + 3, ctx.skin().dim(), false);
+            g.drawString(ctx.font(), item.label().toUpperCase(Locale.ROOT), x + 3, y + FilesLayout.TEXT_DY,
+                    ctx.skin().dim(), false);
             return;
         }
         final boolean cur = item.target().isEmpty() ? (dir.isEmpty() && isVolumeItem(item))
@@ -965,27 +966,33 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             final DesktopScreen desktop = DesktopScreen.current();
             final boolean full = desktop != null && desktop.trashFull();
             ProgramIcons.draw(g, x + 2, y, FilesLayout.ICON_W, FilesLayout.ROW_H,
-                    ResourceLocation.fromNamespaceAndPath("jsc", full ? "trash_full" : "trash"),
-                    desktop == null ? skin.iconSet() : desktop.icons());
+                    ResourceLocation.fromNamespaceAndPath("jsc", full ? "trash_full" : "trash"), iconSet());
         } else {
-            FileIcons.draw(g, x + 2, y + 1, item.target().equals("Storage") ? FileIcons.Kind.DAT
+            FileIcons.draw(g, x + 2, y, item.target().equals("Storage") ? FileIcons.Kind.DAT
                     : (isVolumeItem(item) ? (item.removable() ? FileIcons.Kind.BIN : FileIcons.Kind.HOME)
-                    : FileIcons.Kind.FOLDER));
+                    : FileIcons.Kind.FOLDER), iconSet());
         }
         if (!(isVolumeItem(item) && item.volumeIndex() == volRenaming)) {
             final int maxW = w + 2 - (FilesLayout.ICON_W + 8) - (item.removable() ? 8 : 0);
-            g.drawString(ctx.font(), Texts.clip(ctx.font(), item.label(), maxW), x + 3 + FilesLayout.ICON_W, y + 2,
-                    ctx.skin().listRowText(cur), false);
+            g.drawString(ctx.font(), Texts.clip(ctx.font(), item.label(), maxW), x + 5 + FilesLayout.ICON_W,
+                    y + FilesLayout.TEXT_DY, ctx.skin().listRowText(cur), false);
         }
         if (item.removable()) {
-            // The eject control at the row's right edge: a tray glyph.
+            // The eject control at the row's right edge: a tray glyph, in the middle of the row.
             final int ex = x + w - 8;
+            final int ey = y + FilesLayout.TEXT_DY + 1;
             final int c = cur ? ctx.skin().listRowText(true) : ctx.skin().dim();
-            g.fill(ex + 2, y + 3, ex + 4, y + 4, c);
-            g.fill(ex + 1, y + 4, ex + 5, y + 5, c);
-            g.fill(ex, y + 5, ex + 6, y + 6, c);
-            g.fill(ex, y + 7, ex + 6, y + 8, c);
+            g.fill(ex + 2, ey, ex + 4, ey + 1, c);
+            g.fill(ex + 1, ey + 1, ex + 5, ey + 2, c);
+            g.fill(ex, ey + 2, ex + 6, ey + 3, c);
+            g.fill(ex, ey + 4, ex + 6, ey + 5, c);
         }
+    }
+
+    /** The look the pictures are drawn in: the desktop's own set, or this window's skin's when no desktop is open. */
+    private String iconSet() {
+        final DesktopScreen desktop = DesktopScreen.current();
+        return desktop == null ? skin.iconSet() : desktop.icons();
     }
 
     /** Whether {@code key} is the volume currently being browsed (system disk = any non-media path). */
@@ -1007,20 +1014,21 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             Draw.outline(g, x, y, w, h, DROP_TARGET_EDGE);
         }
         if (r.item() != null) {
-            DesktopItems.item(g, r.item(), x + 1, y - 3);
+            DesktopItems.item(g, r.item(), x + 2, y);
         } else {
-            FileIcons.draw(g, x + 2, y + 1, r.icon());
+            FileIcons.draw(g, x + 2, y, r.icon(), iconSet());
         }
         final boolean ro = r.file() != null && r.file().readOnly();
         final int nameColor = sel ? ctx.skin().listRowText(true) : (ro ? ctx.skin().dim() : ctx.skin().text());
         final int subColor = sel ? ctx.skin().listRowText(true) : ctx.skin().dim();
+        final int textY = y + FilesLayout.TEXT_DY;
         if (index != renaming) {
             g.drawString(ctx.font(), Texts.clip(ctx.font(), r.name(), FilesLayout.nameMaxW(contentW, typeColW, sizeColW)),
-                    x + 3 + FilesLayout.ICON_W + 3, y + 2, nameColor, false);
+                    x + 3 + FilesLayout.ICON_W + 3, textY, nameColor, false);
         }
         g.drawString(ctx.font(), Texts.clip(ctx.font(), r.type(), typeColW - 4),
-                lastX + FilesLayout.typeColX(contentW, typeColW, sizeColW), y + 2, subColor, false);
-        g.drawString(ctx.font(), r.size(), lastX + contentW - 4 - ctx.font().width(r.size()), y + 2, subColor, false);
+                lastX + FilesLayout.typeColX(contentW, typeColW, sizeColW), textY, subColor, false);
+        g.drawString(ctx.font(), r.size(), lastX + contentW - 4 - ctx.font().width(r.size()), textY, subColor, false);
     }
 
     private void renderIconCell(final GuiGraphics g, final UiContext ctx, final int index, final int cx, final int cy,
@@ -1032,7 +1040,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         if (r.item() != null) {
             DesktopItems.item(g, r.item(), cx + w / 2 - 8, cy + 2);
         } else {
-            FileIcons.draw(g, cx + w / 2 - FilesLayout.ICON_W / 2, cy + 4, r.icon());
+            FileIcons.draw(g, cx + w / 2 - FileIcons.SIZE / 2, cy + 2, r.icon(), iconSet());
         }
         if (index != renaming) {
             final String label = Texts.clip(ctx.font(), r.name(), w - 4);

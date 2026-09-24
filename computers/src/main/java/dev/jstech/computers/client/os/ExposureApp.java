@@ -56,6 +56,10 @@ public final class ExposureApp implements IDesktopApp {
     private static final int TAB_H = 10;
     private static final int STATUS_H = 9;
     private static final int ROW_H = 9;
+    /** The file list's rows hold a 16-pixel icon, so they are taller than the dense lists of the rest. */
+    private static final int FILE_ROW_H = 17;
+    private static final int FILE_TEXT_DY = 5;
+    private static final int FILE_NAME_DX = FileIcons.SIZE + 5;
     private static final int DOCK_H = 54;
     private static final int MIN_CODE_H = 36;
     /** The problems table's columns: the file's name, then the line, then what was said. */
@@ -104,7 +108,7 @@ public final class ExposureApp implements IDesktopApp {
         this.host = host;
         this.workspace = new CodeWorkspace(host);
         this.dialog = new FileDialog(host, this);
-        this.explorer = this.root.add(new ListView<>(this.workspace::files, ROW_H, this::drawFileRow))
+        this.explorer = this.root.add(new ListView<>(this.workspace::files, FILE_ROW_H, this::drawFileRow))
                 .setOnClick(this::onFilePicked);
         this.tabs = this.root.add(new TabStrip(this.workspace::tabLabels).fitToLabels(10).setUnderline(false)
                 .setCloseable(this::closeTab));
@@ -439,9 +443,9 @@ public final class ExposureApp implements IDesktopApp {
                              final int index, final int x, final int y, final int width, final int height,
                              final boolean hovered, final boolean selected) {
         ctx.skin().listRow(g, x, y, width, height, hovered, selected);
-        FileIcons.draw(g, x + 2, y, FileIcons.kindOfPath(file.path(), false));
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(ProblemReport.nameOf(file.path()), width - 16),
-                x + 14, y + 1, ctx.skin().listRowText(selected), false);
+        FileIcons.draw(g, x + 2, y, FileIcons.kindOfPath(file.path(), false), this.skin.iconSet());
+        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(ProblemReport.nameOf(file.path()),
+                width - FILE_NAME_DX - 2), x + FILE_NAME_DX, y + FILE_TEXT_DY, ctx.skin().listRowText(selected), false);
     }
 
     private void onFilePicked(final int index, final int button, final double mx, final double my) {

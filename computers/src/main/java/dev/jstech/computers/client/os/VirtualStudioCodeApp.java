@@ -59,6 +59,9 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     private static final int TAB_H = 10;
     private static final int STATUS_H = 9;
     private static final int ROW_H = 9;
+    /** The folder tree's rows hold a 16-pixel icon, so they are taller than the dense lists of the rest. */
+    private static final int SIDE_ROW_H = 17;
+    private static final int SIDE_TEXT_DY = 5;
     private static final int PANEL_H = 62;
     private static final int MIN_CODE_H = 36;
 
@@ -147,7 +150,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         this.host = host;
         this.workspace = new CodeWorkspace(host);
         this.dialog = new FileDialog(host, this);
-        this.explorer = this.root.add(new ListView<>(this::sideRows, ROW_H, this::drawSideRow))
+        this.explorer = this.root.add(new ListView<>(this::sideRows, SIDE_ROW_H, this::drawSideRow))
                 .setOnClick(this::onSideRow);
         this.extensions = this.root.add(new ListView<>(() -> JsCore.languages().all(), ROW_H + 2, this::drawLanguage));
         this.tabs = this.root.add(new TabStrip(this.workspace::tabLabels).fitToLabels(10).setUnderline(false));
@@ -323,16 +326,16 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
                              final boolean hovered, final boolean selected) {
         final int color = row.header() ? ctx.skin().dim() : ctx.skin().listRowText(selected);
         ctx.skin().listRow(g, x, y, width, height, hovered && !row.header(), selected && !row.header());
-        int textX = x + 2 + row.depth() * 5;
+        int textX = x + 2 + row.depth() * 8;
         if (!row.header()) {
             // The icon the explorer would give the same file, so a tree reads the way the explorer does.
             final boolean folder = row.file() != null && row.file().directory();
             final String path = row.file() != null ? row.file().path() : row.label();
-            FileIcons.draw(g, textX, y, FileIcons.kindOfPath(path, folder));
-            textX += 12;
+            FileIcons.draw(g, textX, y, FileIcons.kindOfPath(path, folder), this.skin.iconSet());
+            textX += FileIcons.SIZE + 3;
         }
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(row.label(), x + width - 2 - textX), textX, y + 1,
-                color, false);
+        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(row.label(), x + width - 2 - textX), textX,
+                y + SIDE_TEXT_DY, color, false);
     }
 
     /**

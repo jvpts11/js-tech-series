@@ -136,8 +136,8 @@ final class FramesPanels {
         g.fill(4, tbY + 3, 4 + sbW, sh - 3, desktop.themeColours().startButton());
         bevel(g, 4, tbY + 3, sbW, DesktopScreen.TASKBAR_H - 6, 0xFFFFFFFF, 0xFF808080);
         // The edition's own mark, the same one its setup and its boot screen wear.
-        FramesEmblem.draw(g, 8, tbY + 8, 7, desktop.panelStyle());
-        g.drawString(desktop.textFont(), "Start", 18, tbY + 8, 0xFF000000, false);
+        FramesEmblem.draw(g, 8, tbY + 7, desktop.panelStyle());
+        g.drawString(desktop.textFont(), "Start", 8 + FramesEmblem.SIZE + 3, tbY + 8, 0xFF000000, false);
     }
 
     /**
@@ -267,17 +267,10 @@ final class FramesPanels {
         }
         // The gloss along the top.
         g.fill(2, top + 1, DesktopScreen.XP_START_W - round, top + 1 + h / 3, 0x3AFFFFFF);
-        /*
-         * The edition's own mark, the same one its setup and its boot screen wear, with the right-hand panes
-         * lifted a pixel so the whole thing leans the way that button always did.
-         */
+        // The edition's own mark, the same one its setup and its boot screen wear.
         final int fx = 7;
-        final int fy = tbY + 8;
-        final int[] panes = FramesEmblem.panesOf(PanelStyle.FRAMES_XP);
-        g.fill(fx, fy + 1, fx + 4, fy + 4, panes[0]);
-        g.fill(fx + 5, fy, fx + 9, fy + 3, panes[1]);
-        g.fill(fx, fy + 5, fx + 4, fy + 8, panes[2]);
-        g.fill(fx + 5, fy + 4, fx + 9, fy + 7, panes[3]);
+        final int fy = tbY + 7;
+        FramesEmblem.draw(g, fx, fy, PanelStyle.FRAMES_XP);
         g.drawString(desktop.textFont(), Component.literal("start")
                         .withStyle(ChatFormatting.BOLD, ChatFormatting.ITALIC),
                 fx + 13, tbY + 8, 0xFFFFFFFF, true);
@@ -294,13 +287,9 @@ final class FramesPanels {
         g.fillGradient(x, y + h - q, x + w, y + h, 0xFF2E9A33, 0xFF24802A);
     }
 
-    /** The Frames 11 Start glyph: four solid blue panes with a thin gap. */
+    /** The Frames 11 Start glyph, the edition's mark centred in the eleven pixels its slot keeps for it. */
     private static void drawModernStart(final GuiGraphics g, final int x, final int y) {
-        final int c = FramesEmblem.panesOf(PanelStyle.FRAMES_11)[0];
-        g.fill(x, y, x + 5, y + 5, c);
-        g.fill(x + 6, y, x + 11, y + 5, c);
-        g.fill(x, y + 6, x + 5, y + 11, c);
-        g.fill(x + 6, y + 6, x + 11, y + 11, c);
+        FramesEmblem.draw(g, x + 1, y + 1, PanelStyle.FRAMES_11);
     }
 
     /** The mark under a Frames 11 icon: what the program is doing, in the bar's own language. */

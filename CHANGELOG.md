@@ -48,6 +48,20 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   Vim, Emacs and the desktops themselves, wore the Frames 95 icon there and now wear CDE's. The Help Viewer has an
   icon on every desktop it runs on, Workstation Info has one outside CDE as well, and a setup, the welcome and a
   window a Sigma program opens show their own icon on the panel and the title bar instead of the plain one.
+- New wallpapers, built from blocks the way the game's own art is: a stepped grass hill under slab clouds for
+  Frames XP, a blue flower drawn like an item for Frames 11, a wall of Breeze-blue blocks for KDE Plasma, a blocky
+  dusk with a square sun for GNOME and green block stairs for Cinnamon; Frames 95 keeps its plain teal. Frames 11
+  hangs a dark version of its flower while its dark theme is on. They are pictures a resource pack can replace,
+  under `assets/jsc/textures/gui/wallpaper/`, and the thumbnails in Personalize are the pictures themselves.
+- The rest of what the desktops drew out of rectangles is pictures too, in the same block style: each Frames
+  edition's mark on its Start button, the sky Frames 95 starts on and the bands Frames XP welcomes and closes on,
+  the marks KDE Plasma and Cinnamon come up behind, the pictures on CDE's front panel, the network and speaker
+  icons of every panel, and the picture down the side of the Frames 95 wizard: a computer, a boxed program and a
+  disk. The clock's hands, the calendar's day and everything that moves are still drawn over them.
+- File icons are pictures in each desktop's own style: a Frames 95 folder is not a GNOME one. Seventeen kinds of
+  file, from folders and documents to Sigma source, programs, packages and pictures, each drawn at 16 by 16 for
+  every desktop, in the explorer, the file dialog, the studios' trees and on the desktop itself. They are files a
+  resource pack can replace, under `assets/jsc/textures/gui/file/`.
 
 ### Changed
 - The three advancements of the old Computers tab moved into the Operating Systems tab, so a world that had
@@ -57,6 +71,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the full-screen terminal's, so what is drawn in characters keeps its shape instead of being squashed flat.
 - FreeBSD's prompt is root's, as a machine fresh from its installer stands at: `root@host:~ #`, with `root@host`
   in red and the rest in the prompt's own colour.
+- The explorer's rows, the file dialog's and those of the file trees in Virtual Studio, Virtual Studio Code and
+  Exposure are tall enough for a 16-pixel icon, as a list of small icons on a real desktop is. The file dialog
+  opens taller to make room for them.
 - A manual page's paragraphs wrap to the width of whatever shows them, at a terminal, under `--help` and `/?`, and
   in the Help Viewer, with the lines they wrap onto set in under the first, instead of breaking at fixed places.
   The Help Viewer files every command under what the command says it is for, so each command sits under the same

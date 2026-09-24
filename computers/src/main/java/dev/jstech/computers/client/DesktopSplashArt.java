@@ -59,11 +59,17 @@ public final class DesktopSplashArt {
     private static final int GNOME_TEXT = 0xFFDEDDDA;
     private static final int GNOME_FOOT = 0xFF8E8D8A;
 
-    /** The greens of the menu button that desktop is known by, and its ground. */
+    /** The greens of that desktop's ground, and the pale one at its foot. */
     private static final int MINT_TOP = 0xFF1B5E4A;
     private static final int MINT_BOTTOM = 0xFF2B8A6E;
-    private static final int MINT_GREEN = 0xFF69B03B;
     private static final int MINT_FOOT = 0xFFCFE8DA;
+
+    /** The marks the two desktops come up behind, and the size they are made at. */
+    private static final ResourceLocation PLASMA_MARK =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/splash/kde_plasma_mark.png");
+    private static final ResourceLocation CINNAMON_MARK =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/splash/cinnamon_mark.png");
+    private static final int MARK = 30;
 
     /** The older box: its face, its rule, and the dark text on it. */
     private static final int BOX_FACE = 0xFFD6D2CD;
@@ -150,11 +156,9 @@ public final class DesktopSplashArt {
                                   final int h, final int progress) {
         gradient(g, x, y, w, h, KDE_TOP, KDE_BOTTOM);
         final int cx = x + w / 2;
-        final int side = 30;
+        final int side = MARK;
         final int top = y + h / 2 - 34;
-        g.fill(cx - side / 2, top, cx + side / 2, top + side, 0x243DAEE9);
-        rule(g, cx - side / 2, top, side, side, KDE_BLUE);
-        big(g, font, "K", cx, top + 8, 2.0f, 0xFFFCFCFC);
+        g.blit(PLASMA_MARK, cx - side / 2, top, 0.0F, 0.0F, side, side, side, side);
         big(g, font, "Plasma", cx, top + side + 6, 1.8f, 0xFFFCFCFC);
 
         final int barW = 88;
@@ -178,12 +182,10 @@ public final class DesktopSplashArt {
                                  final int h, final int ticks, final String systemName) {
         gradient(g, x, y, w, h, MINT_TOP, MINT_BOTTOM);
         final int cx = x + w / 2;
-        final int side = 30;
+        final int side = MARK;
         final int top = y + h / 2 - 32;
-        /* The button's mark: the green plate, the white square in it, and the green one inside that. */
-        g.fill(cx - side / 2, top, cx + side / 2, top + side, MINT_GREEN);
-        g.fill(cx - 9, top + 6, cx + 9, top + 24, 0xFFFFFFFF);
-        g.fill(cx - 4, top + 11, cx + 4, top + 19, MINT_GREEN);
+        // The menu button's mark: the green plate, the white square in it, and the green one inside that.
+        g.blit(CINNAMON_MARK, cx - side / 2, top, 0.0F, 0.0F, side, side, side, side);
         big(g, font, "Cinnamon", cx, top + side + 8, 1.7f, 0xFFFFFFFF);
 
         final int dy = top + side + 30;

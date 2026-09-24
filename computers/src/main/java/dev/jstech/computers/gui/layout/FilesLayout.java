@@ -37,8 +37,11 @@ public final class FilesLayout {
     /** The column header over the list. */
     public static final int COLS_H = 10;
     public static final int STATUS_H = 11;
-    public static final int ROW_H = 11;
-    public static final int ICON_W = 12;
+    /** A row holds a 16-pixel icon with a pixel to spare, the way a details view of small icons always has. */
+    public static final int ROW_H = 17;
+    public static final int ICON_W = 16;
+    /** How far down a row its words start, so they sit in the middle of it beside the icon. */
+    public static final int TEXT_DY = 5;
     /** The Type and Size columns, right-aligned in the list. */
     public static final int TYPE_COL_W = 54;
     public static final int SIZE_COL_W = 40;

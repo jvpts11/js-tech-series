@@ -10,21 +10,30 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.os.boot.BootSplash;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * The pictures the systems come up behind, and go down behind.
  *
- * <p>The ground of each is drawn here, out of fills: a sky with its clouds, a black screen, a near-black one.
- * What sits on that ground is a texture, because a maker's lockup is lettering with weights and a face of its
- * own and drawing one out of rectangles and the game's font gets the words right and the thing itself wrong.
+ * <p>The grounds are pictures where they are pictures (a sky with its clouds, the blue bands of the later edition)
+ * and plain fills where they are plain (a black screen, a near-black one). What sits on that ground is a texture
+ * too, because a maker's lockup is lettering with weights and a face of its own, and drawing one out of rectangles
+ * and the game's font gets the words right and the thing itself wrong.
  * They are the one thing about starting a machine that nobody reads: a system's picture is what tells you
  * which system it is before a single word of it is on the glass.
  */
 public final class BootSplashArt {
 
-    /** The sky the oldest of the Frames editions came up on, from the horizon upward. */
-    private static final int SKY_TOP = 0xFF2E6BC0;
-    private static final int SKY_BOTTOM = 0xFF93BCE8;
+    /** The sky the oldest of the Frames editions came up on, clouds and all, and the size it is made at. */
+    private static final ResourceLocation FRAMES_95_SKY =
+            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/splash/ground/frames_95.png");
+
+    /** The blue bands the later edition drew every screen after its start on. */
+    private static final ResourceLocation FRAMES_XP_BANDS =
+            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/splash/ground/frames_xp_bands.png");
+
+    private static final int GROUND_W = 384;
+    private static final int GROUND_H = 256;
 
     /** The band along the foot of that sky, which the bar runs through. */
     private static final int HORIZON = 0xFF000080;
@@ -43,12 +52,6 @@ public final class BootSplashArt {
 
     /** How much of a going-down that edition spent on that last screen, in hundredths. */
     private static final int SAFE_FROM = 72;
-
-    /** The bands the later edition's blue ground is made of, and the two hairlines that separate them. */
-    private static final int BANDS_EDGE = 0xFF00309C;
-    private static final int BANDS_MIDDLE = 0xFF5A7EDC;
-    private static final int BANDS_TOP_LINE = 0xFFD5E1F7;
-    private static final int BANDS_BOTTOM_LINE = 0xFFF3A660;
 
     /** The ground the newest machines post against, which their system comes up on without a flash. */
     private static final int MODERN_GROUND = 0xFF10121C;
@@ -120,8 +123,7 @@ public final class BootSplashArt {
                     x + w / 2, y + h / 2 - 4, SAFE_TEXT);
             return;
         }
-        gradient(g, x, y, w, h, SKY_TOP, SKY_BOTTOM);
-        clouds(g, x, y, w, h);
+        ground(g, FRAMES_95_SKY, x, y, w, h);
 
         final int logoY = y + h / 2 - SplashLogos.H / 2 - 8;
         SplashLogos.draw(g, SplashLogos.FRAMES_95, x + w / 2, logoY);
@@ -223,29 +225,16 @@ public final class BootSplashArt {
 
     /**
      * The three bands that edition drew every screen after its start on: one blue at the top, a lighter one
-     * across the middle, the first again at the foot, with a white hairline over the middle band and a warm
-     * one under it.
+     * across the middle with a soft light over its left, the first again at the foot.
      */
     private static void bands(final GuiGraphics g, final int x, final int y, final int w, final int h) {
-        final int top = y + h * 16 / 100;
-        final int bottom = y + h * 84 / 100;
-        g.fill(x, y, x + w, top, BANDS_EDGE);
-        g.fill(x, top, x + w, bottom, BANDS_MIDDLE);
-        g.fill(x, bottom, x + w, y + h, BANDS_EDGE);
-        g.fill(x, top, x + w, top + 1, BANDS_TOP_LINE);
-        g.fill(x, bottom - 1, x + w, bottom, BANDS_BOTTOM_LINE);
-        /*
-         * The soft light over the left of the middle band, which is what that ground had instead of a picture.
-         * Drawn as rows that fade out from the left, since one wash is all a screen this size can carry.
-         */
-        for (int row = top + 1; row < bottom - 1; row++) {
-            final float down = Math.abs((row - (top + bottom) / 2.0f)) / ((bottom - top) / 2.0f);
-            final int alpha = (int) (0x38 * Math.max(0.0f, 1.0f - down * down));
-            if (alpha <= 0) {
-                continue;
-            }
-            g.fill(x, row, x + w * 45 / 100, row + 1, alpha << 24 | 0xFFFFFF);
-        }
+        ground(g, FRAMES_XP_BANDS, x, y, w, h);
+    }
+
+    /** A ground picture laid over the whole glass, made at the glass's own size and drawn to whatever it is. */
+    private static void ground(final GuiGraphics g, final ResourceLocation picture, final int x, final int y,
+                               final int w, final int h) {
+        g.blit(picture, x, y, w, h, 0.0F, 0.0F, GROUND_W, GROUND_H, GROUND_W, GROUND_H);
     }
 
     /**
@@ -304,38 +293,6 @@ public final class BootSplashArt {
         /* The one word this edition puts on its way down, under the mark it came up behind. */
         if (title.isEmpty() && !subtitle.isEmpty()) {
             g.drawCenteredString(font, subtitle, x + w / 2, cy + 20, 0xFFE6ECF6);
-        }
-    }
-
-    /** A vertical wash from one colour to the other, a row at a time, since the glass is small enough for it. */
-    private static void gradient(final GuiGraphics g, final int x, final int y, final int w, final int h,
-                                 final int top, final int bottom) {
-        for (int row = 0; row < h; row++) {
-            g.fill(x, y + row, x + w, y + row + 1, blend(top, bottom, (float) row / Math.max(1, h - 1)));
-        }
-    }
-
-    /**
-     * The clouds, at places that follow from the size of the glass.
-     *
-     * <p>Flat ellipses of white over the sky, each a little lighter at its top, which is as much cloud as a
-     * screen this size can carry without turning into a smudge.
-     */
-    private static void clouds(final GuiGraphics g, final int x, final int y, final int w, final int h) {
-        cloud(g, x + w / 6, y + h / 5, w / 5, h / 14);
-        cloud(g, x + w * 2 / 3, y + h / 8, w / 4, h / 12);
-        cloud(g, x + w / 3, y + h * 2 / 3, w / 4, h / 13);
-        cloud(g, x + w * 5 / 6, y + h / 2, w / 6, h / 16);
-    }
-
-    private static void cloud(final GuiGraphics g, final int cx, final int cy, final int rw, final int rh) {
-        final int wide = Math.max(6, rw);
-        final int tall = Math.max(2, rh);
-        for (int row = -tall; row <= tall; row++) {
-            final double t = (double) row / tall;
-            final int half = (int) (wide * Math.sqrt(Math.max(0, 1 - t * t)));
-            final int shade = row < 0 ? 0x55FFFFFF : 0x33FFFFFF;
-            g.fill(cx - half, cy + row, cx + half, cy + row + 1, shade);
         }
     }
 

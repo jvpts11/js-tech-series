@@ -9,49 +9,34 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.os.PanelStyle;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * The maker's mark of the desktop family: a window of four panes, in the colours of the edition wearing it.
  *
- * <p>One emblem, drawn in every place that edition shows its own face: the firmware setup, the installer, the
- * screen it comes up behind and the button at the corner of its desktop. It is the same mark in all of them on
- * purpose, because that is what a mark is for.
- *
- * <p>The panes are laid out as a window and not as a flag: the older editions leant theirs and the newest
- * squared it up, and the colours are each edition's own rather than one set of four borrowed by all three.
+ * <p>One small picture per edition, at {@code textures/gui/emblem/<edition>.png}, drawn wherever that edition shows
+ * its own face at a glance: the Start button at the corner of its desktop and the head of its installer. It is the
+ * same mark in all of them on purpose, because that is what a mark is for.
  */
 public final class FramesEmblem {
+
+    /** How big the mark is drawn, which is the size it is made at, so it is never resampled. */
+    public static final int SIZE = 9;
 
     private FramesEmblem() {
     }
 
-    /**
-     * Draws the emblem of that edition.
-     *
-     * @param size    how wide and tall the whole mark is, gap included
-     * @param edition the edition, by the chrome its desktop draws
-     */
-    public static void draw(final GuiGraphics g, final int x, final int y, final int size,
-                            final PanelStyle edition) {
-        final int gap = Math.max(1, size / 10);
-        final int half = (size - gap) / 2;
-        final int[] panes = panesOf(edition);
-        g.fill(x, y, x + half, y + half, panes[0]);
-        g.fill(x + half + gap, y, x + size, y + half, panes[1]);
-        g.fill(x, y + half + gap, x + half, y + size, panes[2]);
-        g.fill(x + half + gap, y + half + gap, x + size, y + size, panes[3]);
+    /** Draws that edition's mark with its top-left at {@code (x, y)}; an edition nobody knows wears the newest's. */
+    public static void draw(final GuiGraphics g, final int x, final int y, final PanelStyle edition) {
+        g.blit(texture(edition), x, y, 0.0F, 0.0F, SIZE, SIZE, SIZE, SIZE);
     }
 
-    /**
-     * The four panes of that edition, clockwise from the top left.
-     *
-     * <p>An edition nobody here knows wears the newest one's, which is the plainest of the three.
-     */
-    public static int[] panesOf(final PanelStyle edition) {
-        return switch (edition) {
-            case FRAMES_95 -> new int[]{0xFF000080, 0xFF1F8A8A, 0xFF5FC3C3, 0xFF3A4FA8};
-            case FRAMES_XP -> new int[]{0xFF2C66BD, 0xFF6F9FE0, 0xFF9BD164, 0xFF4E8B26};
-            default -> new int[]{0xFF5B84F0, 0xFF5B84F0, 0xFF5B84F0, 0xFF5B84F0};
+    private static ResourceLocation texture(final PanelStyle edition) {
+        final String id = switch (edition) {
+            case FRAMES_95 -> "frames_95";
+            case FRAMES_XP -> "frames_xp";
+            default -> "frames_11";
         };
+        return ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/emblem/" + id + ".png");
     }
 }

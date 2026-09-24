@@ -2518,7 +2518,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
              */
             PixWallpaper.want(host, desktopWallpaper);
             if (!PixWallpaper.paint(g, sw, sh)) {
-                WallpaperPainter.paint(g, sw, sh, desktopId, eraNow, desktopWallpaper);
+                WallpaperPainter.paint(g, sw, sh, desktopId, desktopWallpaper,
+                        desktopDarkMode && is(PanelStyle.FRAMES_11));
             }
         }
 

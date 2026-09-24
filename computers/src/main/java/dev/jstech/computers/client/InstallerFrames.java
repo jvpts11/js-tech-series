@@ -38,6 +38,12 @@ final class InstallerFrames {
     private static final int HEADER_MARK_W = 72;
     private static final int HEADER_MARK_H = 18;
 
+    /** The picture down the side of the oldest wizard, and the size it is made at. */
+    private static final ResourceLocation WIZARD_PICTURE =
+            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/installer/frames_95_wizard.png");
+    private static final int WIZARD_W = 46;
+    private static final int WIZARD_H = 168;
+
     private InstallerFrames() {
     }
 
@@ -154,11 +160,18 @@ final class InstallerFrames {
         g.fillGradient(dx + 2, dy + 2, dx + dw - 2, dy + 2 + TITLE_BAR, 0xFF000080, 0xFF1084D0);
         g.drawString(font, flow.style().title(flow.systemName()) + " Wizard", dx + 6, dy + 6, 0xFFFFFFFF, false);
 
-        final int railW = 46;
+        final int railW = WIZARD_W;
         final int railTop = dy + TITLE_BAR + 8;
         final int railBottom = dy + dh - 30;
-        bevel(g, dx + 6, railTop, railW, railBottom - railTop, 0xFF008080, false);
-        emblem(g, dx + 6 + (railW - 20) / 2, railTop + (railBottom - railTop - 20) / 2, 20, flow);
+        /*
+         * The picture that wizard had down its side: the computer, the box the software came in and its disk. It
+         * is drawn 1:1 and cut to the rail, over the rail's own teal, so a taller or shorter glass never stretches it.
+         */
+        final int railH = railBottom - railTop;
+        bevel(g, dx + 6, railTop, railW, railH, 0xFF008080, false);
+        final int shown = Math.min(WIZARD_H, railH);
+        g.blit(WIZARD_PICTURE, dx + 6, railTop, 0.0F, 0.0F, railW, shown, WIZARD_W, WIZARD_H);
+        edges(g, dx + 6, railTop, railW, railH, false);
 
         // The groove above the buttons, which is two lines and not one: that is what makes it look pressed in.
         g.fill(dx + 6, dy + dh - 24, dx + dw - 6, dy + dh - 23, 0xFF808080);
@@ -249,7 +262,7 @@ final class InstallerFrames {
         g.fill(cx, cy, cx + cw, cy + ch, 0xFFFAFAFE);
         outline(g, cx, cy, cw, ch, 0xFFC0C4D2);
 
-        emblem(g, cx + 8, cy + 6, 8, flow);
+        FramesEmblem.draw(g, cx + 8, cy + 5, editionOf(flow));
         g.drawString(font, flow.style().title(flow.systemName()), cx + 20, cy + 6, 0xFF6B7488, false);
         g.fill(cx + 1, cy + 19, cx + cw - 1, cy + 20, 0xFFE3E5EE);
         g.drawString(font, flow.style().heading(flow.page(), flow.systemName()), cx + 10, cy + 27, 0xFF202434,
@@ -272,16 +285,6 @@ final class InstallerFrames {
         return new Frame(cx + 10, cy + 42, cw - 20, ch - 68, paint, next, back, null, erase);
     }
 
-    /**
-     * The maker's mark of the edition being installed, the same one its desktop wears.
-     *
-     * <p>A picture rather than four filled squares: the mark is a window with an edge and a lean to it, and
-     * four flat squares are the words of it without the thing itself.
-     */
-    static void emblem(final GuiGraphics g, final int x, final int y, final int size, final InstallerFlow flow) {
-        SplashLogos.mark(g, editionOf(flow), x, y, size);
-    }
-
     /** The edition being installed, by the chrome of the desktop it comes with; the newest for any other. */
     private static PanelStyle editionOf(final InstallerFlow flow) {
         final ResourceLocation id = ResourceLocation.tryParse(flow.systemId());
@@ -295,6 +298,12 @@ final class InstallerFrames {
     private static void bevel(final GuiGraphics g, final int x, final int y, final int w, final int h,
                               final int fill, final boolean raised) {
         g.fill(x, y, x + w, y + h, fill);
+        edges(g, x, y, w, h, raised);
+    }
+
+    /** The two edges of a bevel alone, laid over whatever is already inside it. */
+    private static void edges(final GuiGraphics g, final int x, final int y, final int w, final int h,
+                              final boolean raised) {
         final int light = raised ? 0xFFFFFFFF : 0xFF808080;
         final int dark = raised ? 0xFF000000 : 0xFFFFFFFF;
         g.fill(x, y, x + w, y + 1, light);

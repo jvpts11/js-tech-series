@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * The corner of the panel that reports on the machine: the network, the sound, the memory and the clock.
@@ -31,6 +32,15 @@ final class PanelTray {
 
     private static final int ICON = 9;
     private static final int GAP = 4;
+
+    /** The two status pictures, white so the panel's text colour can be laid over them, and the badge of no link. */
+    private static final ResourceLocation NETWORK =
+            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/tray/network.png");
+    private static final ResourceLocation SPEAKER =
+            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/tray/speaker.png");
+    private static final ResourceLocation OFFLINE =
+            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/tray/offline_badge.png");
+    private static final int BADGE = 4;
     private static final int RAM_BAR_W = 26;
     private static final int RAM_BAR_H = 6;
 
@@ -75,10 +85,9 @@ final class PanelTray {
 
     /** The status group alone, for a panel that puts its clock somewhere else of its own. */
     void drawStatus(final GuiGraphics g, final int x, final int panelY, final int textColor) {
-        final boolean light = desktop.lightOn(textColor);
         final int iconY = panelY + (DesktopScreen.TASKBAR_H - ICON) / 2;
-        drawNetworkIcon(g, x, iconY, desktop.onNetwork(), light);
-        drawVolumeIcon(g, x + ICON + GAP, iconY, light);
+        drawNetworkIcon(g, x, iconY, desktop.onNetwork(), textColor);
+        tinted(g, SPEAKER, x + ICON + GAP, iconY, textColor);
         drawRamBar(g, x + 2 * (ICON + GAP), panelY + (DesktopScreen.TASKBAR_H - RAM_BAR_H) / 2);
     }
 
@@ -100,31 +109,34 @@ final class PanelTray {
     }
 
     /**
-     * The network icon: two linked machines, greyed and badged when this computer is on no network. It is
+     * The network icon: two linked machines, faded and badged when this computer is on no network. It is
      * the one status here that says something true about the machine rather than decorating it.
      */
     private static void drawNetworkIcon(final GuiGraphics g, final int x, final int y, final boolean up,
-                                        final boolean light) {
-        final int frame = up ? (light ? 0xFF2058D8 : 0xFF1A3A78) : 0xFF6E7686;
-        final int screen = up ? (light ? 0xFFCFE4FF : 0xFF9FC0F0) : 0xFFB6BAC4;
-        g.fill(x + 4, y, x + 9, y + 4, frame);
-        g.fill(x + 5, y + 1, x + 8, y + 3, screen);
-        g.fill(x, y + 5, x + 5, y + 9, frame);
-        g.fill(x + 1, y + 6, x + 4, y + 8, screen);
+                                        final int textColor) {
+        tinted(g, NETWORK, x, y, up ? textColor : faded(textColor));
         if (!up) {
-            g.fill(x + 5, y + 5, x + 9, y + 9, 0xFFD03A2A);
-            g.fill(x + 6, y + 6, x + 8, y + 7, 0xFFFFFFFF);
+            g.blit(OFFLINE, x + ICON - BADGE, y + ICON - BADGE, 0.0F, 0.0F, BADGE, BADGE, BADGE, BADGE);
         }
     }
 
-    /** The speaker, with the two arcs a volume icon has always had. */
-    private static void drawVolumeIcon(final GuiGraphics g, final int x, final int y, final boolean light) {
-        final int c = light ? 0xFFE8EEF8 : 0xFF3A4150;
-        g.fill(x, y + 3, x + 2, y + 6, c);
-        g.fill(x + 2, y + 2, x + 3, y + 7, c);
-        g.fill(x + 3, y + 1, x + 4, y + 8, c);
-        g.fill(x + 6, y + 3, x + 7, y + 6, c);
-        g.fill(x + 8, y + 1, x + 9, y + 8, c);
+    /**
+     * A white picture drawn in the panel's own text colour, so it is pale on a dark band and dark on a pale one
+     * without a picture for each.
+     */
+    private static void tinted(final GuiGraphics g, final ResourceLocation mask, final int x, final int y,
+                               final int argb) {
+        g.setColor((argb >> 16 & 0xFF) / 255.0F, (argb >> 8 & 0xFF) / 255.0F, (argb & 0xFF) / 255.0F, 1.0F);
+        g.blit(mask, x, y, 0.0F, 0.0F, ICON, ICON, ICON, ICON);
+        g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
+    /** The colour halfway to grey, which is how a status that is out reads on either kind of panel. */
+    private static int faded(final int argb) {
+        final int r = ((argb >> 16 & 0xFF) + 0x80) / 2;
+        final int gr = ((argb >> 8 & 0xFF) + 0x80) / 2;
+        final int b = ((argb & 0xFF) + 0x80) / 2;
+        return 0xFF << 24 | r << 16 | gr << 8 | b;
     }
 
     /** The memory bar: a dark trough filled green shading to amber, and red once the machine is nearly full. */

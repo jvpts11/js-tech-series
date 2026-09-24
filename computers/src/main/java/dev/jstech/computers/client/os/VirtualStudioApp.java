@@ -76,6 +76,9 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private static final int TAB_H = 10;
     private static final int STATUS_H = 9;
     private static final int ROW_H = 9;
+    /** The solution tree's rows hold a 16-pixel icon, so they are taller than the dense lists of the rest. */
+    private static final int TREE_ROW_H = 17;
+    private static final int TREE_TEXT_DY = 5;
     private static final int DOCK_H = 52;
     /** A template row: its title, what it is, and its tags, one under the other. */
     private static final int TEMPLATE_ROW_H = 28;
@@ -251,7 +254,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         this.host = host;
         this.workspace = new CodeWorkspace(host);
         this.dialog = new FileDialog(host, this);
-        this.explorer = this.root.add(new ListView<>(this::nodes, ROW_H, this::drawNode)).setOnClick(this::onNode);
+        this.explorer = this.root.add(new ListView<>(this::nodes, TREE_ROW_H, this::drawNode)).setOnClick(this::onNode);
         this.tabs = this.root.add(new TabStrip(this.workspace::tabLabels).fitToLabels(10).setUnderline(false));
         this.tabs.setOnSelect(this.workspace::setCurrent);
         this.dockTabs = this.root.add(new TabStrip(DOCK_TABS).fitToLabels(12).setUnderline(true));
@@ -685,11 +688,11 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         ctx.skin().listRow(g, x, y, width, height, hovered, selected);
         final int color = node.kind() == NodeKind.DEPENDENCY || node.kind() == NodeKind.OUTPUT
                 ? ctx.skin().dim() : ctx.skin().listRowText(selected);
-        final int iconX = x + 2 + node.depth() * 5;
-        FileIcons.draw(g, iconX, y, iconOf(node));
-        final int textX = iconX + 12;
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(node.label(), x + width - 2 - textX), textX, y + 1,
-                color, false);
+        final int iconX = x + 2 + node.depth() * 8;
+        FileIcons.draw(g, iconX, y, iconOf(node), this.skin.iconSet());
+        final int textX = iconX + FileIcons.SIZE + 3;
+        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(node.label(), x + width - 2 - textX), textX,
+                y + TREE_TEXT_DY, color, false);
     }
 
     /** The icon beside a row of the tree: what the explorer gives the same file, and a few of the tree's own. */
@@ -1138,12 +1141,14 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
                             final int index, final int x, final int y, final int width, final int height,
                             final boolean hovered, final boolean selected) {
         ctx.skin().listRow(g, x, y, width, height, hovered, selected);
-        FileIcons.draw(g, x + 2, y + 1, iconOf(offer.template()));
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(offer.title(), width - 16), x + 14, y + 1,
+        FileIcons.draw(g, x + 2, y + 1, iconOf(offer.template()), this.skin.iconSet());
+        final int textX = x + 2 + FileIcons.SIZE + 3;
+        final int textW = x + width - 2 - textX;
+        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(offer.title(), textW), textX, y + 1,
                 ctx.skin().listRowText(selected), false);
         final String kind = offer.tags().getLast();
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(offer.language().mark() + "  " + kind, width - 16),
-                x + 14, y + 10, ctx.skin().dim(), false);
+        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(offer.language().mark() + "  " + kind, textW),
+                textX, y + 10, ctx.skin().dim(), false);
     }
 
     /** The templates that fit what was typed and the three filters, each in every language it comes in. */
@@ -1173,9 +1178,9 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
                               final int index, final int x, final int y, final int width, final int height,
                               final boolean hovered, final boolean selected) {
         ctx.skin().listRow(g, x, y, width, height, hovered, selected);
-        FileIcons.draw(g, x + 3, y + 2, iconOf(template.template()));
-        final int textX = x + 16;
-        final int textW = width - 19;
+        FileIcons.draw(g, x + 3, y + 2, iconOf(template.template()), this.skin.iconSet());
+        final int textX = x + 3 + FileIcons.SIZE + 3;
+        final int textW = x + width - 3 - textX;
         g.drawString(ctx.font(), template.title(), textX, y + 1, ctx.skin().listRowText(selected), false);
         // The language at the far end of the title's row, since two rows of one shape differ in nothing else there.
         final String mark = template.language().mark();

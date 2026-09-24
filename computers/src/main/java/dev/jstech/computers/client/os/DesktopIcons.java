@@ -9,7 +9,6 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.layout.DesktopIconLayout;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
-import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.core.client.gui.component.Texts;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -294,7 +293,10 @@ final class DesktopIcons {
         if (i < launcherCount) {
             ProgramIcons.draw(g, ix, iy, 24, 22, desktop.deskIcons().get(i).programId(), desktop.icons());
         } else {
-            drawFileIcon(g, ix, iy, files.get(i - launcherCount));
+            // A file or folder wears the picture the explorer gives it, centred where a program's icon sits.
+            final DiskFilesPayload.WireFile file = files.get(i - launcherCount);
+            FileIcons.draw(g, ix + (ICON_W - FileIcons.SIZE) / 2, iy + 3,
+                    FileIcons.kindOfPath(file.path(), file.directory()), desktop.icons());
         }
     }
 
@@ -371,35 +373,5 @@ final class DesktopIcons {
             out.remove(out.size() - 1);
         }
         return out;
-    }
-
-    /** A folder or document icon (about 24 by 22) for a desktop file entry. */
-    private static void drawFileIcon(final GuiGraphics g, final int x, final int y,
-                                     final DiskFilesPayload.WireFile f) {
-        if (f.directory()) {
-            g.fill(x + 1, y + 1, x + 10, y + 4, 0xFFFFE9A8);   // tab
-            g.fill(x + 1, y + 4, x + 23, y + 20, 0xFFF4C842);  // body
-            g.fill(x + 1, y + 4, x + 23, y + 6, 0xFFFFF3C4);   // highlight
-            outline(g, x + 1, y + 1, 22, 19, 0xFF9A7B16);
-            return;
-        }
-        final int fill;
-        final int edge;
-        switch (FileType.of(f.ext())) {
-            case IQL -> { fill = 0xFFA9D4FF; edge = 0xFF3A72B0; }
-            case DAT -> { fill = 0xFFBDEEC0; edge = 0xFF4F9B53; }
-            default -> { fill = 0xFFEDEFF3; edge = 0xFF8A93A6; }
-        }
-        g.fill(x + 4, y + 1, x + 21, y + 21, fill);        // sheet
-        g.fill(x + 16, y + 1, x + 21, y + 6, 0xFFFFFFFF);  // folded corner
-        outline(g, x + 4, y + 1, 17, 20, edge);
-    }
-
-    private static void outline(final GuiGraphics g, final int x, final int y, final int w, final int h,
-                                final int color) {
-        g.fill(x, y, x + w, y + 1, color);
-        g.fill(x, y + h - 1, x + w, y + h, color);
-        g.fill(x, y, x + 1, y + h, color);
-        g.fill(x + w - 1, y, x + w, y + h, color);
     }
 }

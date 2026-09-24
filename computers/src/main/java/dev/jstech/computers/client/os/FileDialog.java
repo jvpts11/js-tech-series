@@ -105,8 +105,12 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
      * than the windows of the programs that open it, so the program still shows around it.
      */
     private static final int W = 280;
-    private static final int H = 160;
-    private static final int ROW_H = 11;
+    private static final int H = 190;
+    /** A row holds a 16-pixel icon with a pixel to spare, and its words sit in the middle of it. */
+    private static final int ROW_H = 17;
+    private static final int TEXT_DY = 5;
+    /** Where a row's name starts, clear of the icon in front of it. */
+    private static final int NAME_DX = FileIcons.SIZE + 5;
     private static final int PLACES_W = 82;
     private static final int TYPE_W = 78;
     private static final int SIZE_W = 30;
@@ -167,7 +171,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         this.addressEdit = this.root.add(new TextField(200).setOnCommit(this::goTyped).setRevertOnEscape(true)
                 .setOnBlur(this::stopAddressEdit));
         this.addressEdit.setVisible(false);
-        this.places = this.root.add(new ListView<>(this::places, ROW_H - 1, this::drawPlace).setOnClick(this::onPlace));
+        this.places = this.root.add(new ListView<>(this::places, ROW_H, this::drawPlace).setOnClick(this::onPlace));
         this.header = this.root.add(new ColumnHeader(List.of("Name", "Type", "Size")).setSortable(false));
         this.rows = this.root.add(new ListView<>(this::entries, ROW_H, this::drawEntry).setOnClick(this::onRow));
         this.nameLabel = this.root.add(new Label(() -> this.mode == Mode.OPEN_FOLDER ? "Folder:" : "File name:", Label.Tone.DIM));
@@ -373,14 +377,14 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
                            final int x, final int y, final int width, final int height,
                            final boolean hovered, final boolean selected) {
         if (place.heading()) {
-            g.drawString(ctx.font(), place.label(), x + 2, y + 1, ctx.skin().dim(), false);
+            g.drawString(ctx.font(), place.label(), x + 2, y + TEXT_DY, ctx.skin().dim(), false);
             return;
         }
         final boolean here = place.target().equals(onMedia() ? mediaRoot() : this.dir);
         ctx.skin().listRow(g, x, y, width, height, hovered, here);
-        FileIcons.draw(g, x + 3, y, place.icon());
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(place.label(), width - 18), x + 16, y + 1,
-                ctx.skin().listRowText(here), false);
+        FileIcons.draw(g, x + 2, y, place.icon(), this.skin.iconSet());
+        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(place.label(), width - NAME_DX - 3), x + NAME_DX,
+                y + TEXT_DY, ctx.skin().listRowText(here), false);
     }
 
     private void onPlace(final int index, final int button, final double mx, final double my) {
@@ -526,15 +530,16 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         final int nameX = this.header.columnX(0);
         final int typeX = this.header.columnX(1);
         final int sizeX = this.header.columnX(2);
-        FileIcons.draw(g, nameX - 13, y + 1, entry.up() ? FileIcons.Kind.UP
-                : FileIcons.kindOfPath(entry.file().path(), entry.file().directory()));
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(entry.name(), typeX - nameX - 4), nameX, y + 2,
+        FileIcons.draw(g, nameX - NAME_DX + 2, y, entry.up() ? FileIcons.Kind.UP
+                : FileIcons.kindOfPath(entry.file().path(), entry.file().directory()), this.skin.iconSet());
+        final int textY = y + TEXT_DY;
+        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(entry.name(), typeX - nameX - 4), nameX, textY,
                 ctx.skin().listRowText(selected), false);
         final String type = entry.up() ? "Up one level" : entry.file().directory() ? "Folder" : FilesApp.typeLabel(entry.file());
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(type, sizeX - typeX - 4), typeX, y + 2,
+        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(type, sizeX - typeX - 4), typeX, textY,
                 selected ? ctx.skin().listRowText(true) : ctx.skin().dim(), false);
         if (!entry.up() && !entry.file().directory()) {
-            g.drawString(ctx.font(), entry.file().weight() + " mB", sizeX, y + 2,
+            g.drawString(ctx.font(), entry.file().weight() + " mB", sizeX, textY,
                     selected ? ctx.skin().listRowText(true) : ctx.skin().dim(), false);
         }
     }
@@ -718,7 +723,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         final int lx = x + PLACES_W + 3;
         final int lw = w - PLACES_W - 3;
         this.header.setBounds(lx, y, lw, 10);
-        this.header.setColumnX(lx + 16, lx + lw - SIZE_W - TYPE_W, lx + lw - SIZE_W);
+        this.header.setColumnX(lx + NAME_DX, lx + lw - SIZE_W - TYPE_W, lx + lw - SIZE_W);
         this.rows.setBounds(lx, y + 10, lw, listH - 10);
         y += listH + 3;
         final int primaryW = this.mode == Mode.OPEN_FOLDER ? 64 : 38;
