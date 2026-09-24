@@ -10,6 +10,8 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.gui.layout.CdeStyleLayout;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -44,12 +46,13 @@ final class CdeStylePages {
 
     /** The two buttons of a page along its foot, with their words, the first being the default one. */
     static void buttons(final GuiGraphics g, final Font font, final OsSkin skin, final int left, final int top,
-                        final boolean colors, final String first, final String second, final int mx, final int my) {
+                        final boolean colors, final TextKey first, final TextKey second, final int mx,
+                        final int my) {
         for (int i = 0; i < 2; i++) {
             final Rect r = CdeStyleLayout.button(colors, i);
             final boolean over = r.holds(mx - left, my - top);
-            skin.button(g, font, left + r.x(), top + r.y(), r.w(), r.h(), i == 0 ? first : second, over, false,
-                    i == 0);
+            skin.button(g, font, left + r.x(), top + r.y(), r.w(), r.h(), GameText.resolve(i == 0 ? first : second),
+                    over, false, i == 0);
         }
     }
 

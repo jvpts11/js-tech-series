@@ -1006,7 +1006,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     }
 
     private String categoryLabel() {
-        final String text = categoryFilter.isEmpty() ? GameText.resolve(CATEGORY) : categoryFilter;
+        final String text = GameText.resolve(categoryFilter.isEmpty() ? CATEGORY.text()
+                : ItemCategories.label(categoryFilter));
         return lastFont == null ? text : Texts.clip(lastFont, text, Texts.smallFits(NetworkInteractorLayout.CAT_W - 4));
     }
 
@@ -1070,7 +1071,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         final List<ContextMenu.Item> items = new ArrayList<>();
         items.add(new ContextMenu.Item(GameText.resolve(ANY_CATEGORY), true, () -> setCategoryFilter("")));
         for (final String category : categoryOptions()) {
-            items.add(new ContextMenu.Item(category, true, () -> setCategoryFilter(category)));
+            items.add(new ContextMenu.Item(GameText.resolve(ItemCategories.label(category)), true,
+                    () -> setCategoryFilter(category)));
         }
         filterMenu.open(items, categoryButton.x(), categoryButton.bottom(), lastX, lastY, contentW, contentH);
     }

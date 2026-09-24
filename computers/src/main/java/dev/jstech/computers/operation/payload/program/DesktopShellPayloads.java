@@ -113,10 +113,8 @@ public final class DesktopShellPayloads {
                             wire, payload.session()));
                     return;
                 }
-                wire.add(new WireLine(
-                        (setup.removing() ? "Removing " : "Setting up ") + setup.name() + "  "
-                                + (setup.permille() / 10) + "%  (Ctrl+C to cancel)",
-                        CliStyle.DIM.id()));
+                wire.add(new WireLine((setup.removing() ? ConsoleTexts.REMOVING : ConsoleTexts.SETTING_UP)
+                        .with(setup.name(), setup.permille() / 10), CliStyle.DIM.id()));
                 PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(false, true,
                         SshTerminal.prompt(computer, computer),
                         wire, payload.session()));

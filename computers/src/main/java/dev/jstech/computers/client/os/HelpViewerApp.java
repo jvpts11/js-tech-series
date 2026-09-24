@@ -169,8 +169,8 @@ public final class HelpViewerApp implements IDesktopApp {
         }
 
         // The search field: what is typed in it narrows the list, which is what apropos does at a prompt.
-        Draw.text(g, font, "Search:", x + HelpViewerLayout.PAD, y + HelpViewerLayout.SEARCH_Y + 2, dim,
-                this.skin.windowBg());
+        Draw.text(g, font, GameText.resolve(HelpViewerTexts.SEARCH), x + HelpViewerLayout.PAD,
+                y + HelpViewerLayout.SEARCH_Y + 2, dim, this.skin.windowBg());
         this.skin.field(g, x + HelpViewerLayout.SEARCH_X, y + HelpViewerLayout.SEARCH_Y,
                 HelpViewerLayout.SEARCH_W, HelpViewerLayout.ROW_H, true);
         Draw.text(g, font, this.searching + "_", x + HelpViewerLayout.SEARCH_X + 3,

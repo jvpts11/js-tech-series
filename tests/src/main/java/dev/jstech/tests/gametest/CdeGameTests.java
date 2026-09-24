@@ -38,6 +38,7 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import io.netty.buffer.Unpooled;
@@ -277,8 +278,13 @@ public final class CdeGameTests {
         final RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(),
                 helper.getLevel().registryAccess());
         WorkstationInfoPayload.STREAM_CODEC.encode(buf, new WorkstationInfoPayload(machine.getBlockPos(), facts));
-        helper.assertTrue(WorkstationInfoPayload.STREAM_CODEC.decode(buf).facts().equals(facts),
-                "the facts cross the wire whole");
+        final WorkstationFacts back = WorkstationInfoPayload.STREAM_CODEC.decode(buf).facts();
+        // The processor's name crosses as the key it is read from, which the other side reads in its own language.
+        final WorkstationFacts sameProcessor = new WorkstationFacts(back.userName(), back.hostName(), back.network(),
+                back.system(), back.architecture(), back.windowSystem(), facts.processor(), back.processorMhz(),
+                back.memoryMb(), back.memoryUsedMb(), back.videoMb(), back.diskMb(), back.diskUsedMb());
+        helper.assertTrue(sameProcessor.equals(facts) && keyOf(back.processor()).equals(keyOf(facts.processor())),
+                "the facts cross the wire whole; got " + back);
         helper.succeed();
     }
 
@@ -309,6 +315,11 @@ public final class CdeGameTests {
 
     private static ResourceLocation jsc(final String path) {
         return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, path);
+    }
+
+    /* A translated text by its key, which is all of it that crosses the wire; anything else by its words. */
+    private static String keyOf(final Text text) {
+        return text instanceof Text.Translated translated ? translated.key().key() : text.english();
     }
 
     private static String text(final CliShell.Response response) {

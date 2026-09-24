@@ -31,8 +31,9 @@ import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.program.cli.SshTerminal;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -80,9 +81,7 @@ public final class ConsolePayloads {
      */
     private static void notListening(final ServerPlayer player) {
         PacketDistributor.sendToPlayer(player, new CommandOutputPayload(false, "",
-                List.of(new WireLine(
-                        "This terminal is no longer attached to that computer.",
-                        CliStyle.ERROR.id())), "", ""));
+                List.of(new WireLine(ConsoleTexts.NOT_ATTACHED.text(), CliStyle.ERROR.id())), "", ""));
     }
 
     private static void handleRunCommand(final RunCommandPayload payload, final ServerPlayer player,
@@ -211,14 +210,14 @@ public final class ConsolePayloads {
             }
         }
         if (program == null) {
-            sendConsoleLine(player, "no such program: " + name, OperationRecord.STATUS_FAILED);
+            sendConsoleLine(player, ConsoleTexts.NO_SUCH_PROGRAM.with(name), OperationRecord.STATUS_FAILED);
             return;
         }
         final boolean installed = program.preinstalled()
                 || (host.console() != null && host.console().isInstalled(program.id().toString()));
         if (!installed) {
-            sendConsoleLine(player, program.commandName() + " is not installed - try: install "
-                    + program.commandName(), OperationRecord.STATUS_FAILED);
+            sendConsoleLine(player, ConsoleTexts.NOT_INSTALLED.with(program.commandName(), program.commandName()),
+                    OperationRecord.STATUS_FAILED);
             return;
         }
         /*
@@ -232,52 +231,33 @@ public final class ConsolePayloads {
                         osComputer.maxCpuMhz(), osComputer.totalVramMb(),
                         osComputer.console() != null
                                 && osComputer.console().builtFromSource(program.id().toString()))) {
-            sendConsoleLine(player, program.commandName()
-                    + " cannot run on this computer's OS or hardware", OperationRecord.STATUS_FAILED);
-            player.displayClientMessage(Component.literal(
-                    "The " + program.commandName() + " cannot run on this computer's OS or hardware."), false);
+            sendConsoleLine(player, ConsoleTexts.CANNOT_RUN.with(program.commandName()),
+                    OperationRecord.STATUS_FAILED);
+            player.displayClientMessage(GameText.component(ConsoleTexts.CANNOT_RUN_MESSAGE.with(
+                    program.commandName())), false);
             return;
         }
         if (program.id().equals(Programs.NMS)) {
             // The NMS is now a desktop window opened from its Frames desktop icon, not a server-side menu.
-            sendConsoleLine(player, "open the NMS from its desktop icon on a Frames computer", -1);
-            player.displayClientMessage(Component.literal(
-                    "Open the NMS from its desktop icon."), false);
+            sendConsoleLine(player, ConsoleTexts.NMS_FROM_ICON.text(), -1);
+            player.displayClientMessage(GameText.component(ConsoleTexts.NMS_FROM_ICON_MESSAGE), false);
         } else {
-            sendConsoleLine(player, "the " + program.commandName() + " is already open", -1);
+            sendConsoleLine(player, ConsoleTexts.ALREADY_OPEN.with(program.commandName()), -1);
         }
     }
 
-    /** One styled line back to the open Command Prompt (status -1 = dim, FAILED = red, else green). */
-    private static void sendConsoleLine(final ServerPlayer player, final String text, final int status) {
+    /*
+     * One styled line back to the open Command Prompt (status -1 = dim, FAILED = red, else green). It goes as one
+     * line in the player's language, and the glass wraps it to its columns the way it wraps everything it shows.
+     */
+    private static void sendConsoleLine(final ServerPlayer player, final Text text, final int status) {
         final CliStyle style = status == OperationRecord.STATUS_FAILED
                 ? CliStyle.ERROR
                 : status < 0 ? CliStyle.DIM
                 : CliStyle.OK;
-        final List<WireLine> wire = new ArrayList<>();
-        for (final String line : wrapToConsole(text)) {
-            wire.add(new WireLine(line, style.id()));
-        }
         // An empty prompt means "keep the current prompt", so this helper does not change the directory.
-        PacketDistributor.sendToPlayer(player, new CommandOutputPayload(false, "", wire));
-    }
-
-    /** Word-wraps a direct console message to the console width so a long line never overflows the prompt. */
-    private static List<String> wrapToConsole(final String text) {
-        final List<String> lines = new ArrayList<>();
-        for (final String paragraph : text.split("\n", -1)) {
-            String remaining = paragraph;
-            while (remaining.length() > CLI_WIDTH) {
-                int cut = remaining.lastIndexOf(' ', CLI_WIDTH);
-                if (cut <= 0) {
-                    cut = CLI_WIDTH;
-                }
-                lines.add(remaining.substring(0, cut));
-                remaining = remaining.substring(cut).stripLeading();
-            }
-            lines.add(remaining);
-        }
-        return lines;
+        PacketDistributor.sendToPlayer(player, new CommandOutputPayload(false, "",
+                List.of(new WireLine(text, style.id()))));
     }
 
     private static void handleRequestConsoleInit(final RequestConsoleInitPayload payload, final ServerPlayer player,

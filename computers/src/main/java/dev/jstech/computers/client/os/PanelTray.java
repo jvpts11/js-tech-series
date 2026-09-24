@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 
@@ -96,8 +97,9 @@ final class PanelTray {
         if (!desktop.hoverBeyond(left(sw), panelY)) {
             return;
         }
-        final String link = desktop.onNetwork() ? "Network connected" : "No network";
-        final String mem = "RAM " + desktop.ramMeter();
+        final String link =
+                GameText.resolve(desktop.onNetwork() ? PanelTexts.NETWORK_CONNECTED : PanelTexts.NO_NETWORK);
+        final String mem = GameText.resolve(PanelTexts.RAM.with(desktop.ramMeter()));
         final int w = Math.max(desktop.textFont().width(link), desktop.textFont().width(mem)) + 8;
         final int h = 22;
         final int x = Math.max(2, sw - w - 2);

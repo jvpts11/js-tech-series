@@ -8,6 +8,8 @@
 package dev.jstech.computers.os.boot;
 
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +22,7 @@ import java.util.List;
  * disks, plus a way into the firmware on the machines whose firmware can be reached that way. A machine with one
  * system still shows it, because the menu is also how a player finds out that the other disk is there.
  */
+@TextHolder
 public record BootMenu(BootManager manager, Text title, List<Entry> entries, int defaultIndex,
                        int countdownTicks) {
 
@@ -34,6 +37,12 @@ public record BootMenu(BootManager manager, Text title, List<Entry> entries, int
 
     /** Nothing to choose between. */
     public static final BootMenu NONE = new BootMenu(BootManager.NONE, Text.EMPTY, List.of(), 0, 0);
+
+    /** The loader's count under its menu, with the seconds left put in, and what it says once a key stopped it. */
+    public static final TextKey AUTOBOOT =
+            TextKey.of("jsc.boot.menu.autoboot", "Autoboot in %s seconds. [Space] to pause");
+    public static final TextKey AUTOBOOT_PAUSED = TextKey.of("jsc.boot.menu.autoboot_paused",
+            "Autoboot paused. Press [Enter] to boot or a number to choose.");
 
     public BootMenu {
         manager = manager == null ? BootManager.NONE : manager;

@@ -16,6 +16,9 @@ import dev.jstech.core.network.MainframeNode;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.persistence.NetworkRegistrySavedData;
 import dev.jstech.core.uuid.NetworkUuid;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NetworkUuidState;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,7 +32,6 @@ import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -53,10 +55,17 @@ import org.jetbrains.annotations.Nullable;
  * <p>All of it was written down the side of the block entity among the hardware and the readouts. It is one
  * subject and it is one class now.
  */
+@TextHolder
 final class MainframeNetworking {
 
     /** How long a standby waits, in ticks, before it decides the one it was backing is really gone. */
     private static final int PROMOTE_DELAY = 60;
+
+    /** What every player is told when two Mainframes meet on one network, and when they part again. */
+    private static final TextKey CONFLICT = TextKey.of("jsc.mainframe.network_conflict",
+            "[J's Computers] NETWORK_CONFLICT: two Mainframes share one network near %s");
+    private static final TextKey CONFLICT_RESOLVED = TextKey.of("jsc.mainframe.network_conflict_resolved",
+            "[J's Computers] Network conflict resolved near %s");
 
     /** Every side, held once: Direction.values() hands back a fresh copy of the array on every call. */
     /*
@@ -365,10 +374,8 @@ final class MainframeNetworking {
         }
         if (conflict != conflicted && level.getServer() != null) {
             final String where = mainframe.getBlockPos().toShortString();
-            final String message = conflict
-                    ? "[J's Computers] NETWORK_CONFLICT: two Mainframes share one network near " + where
-                    : "[J's Computers] Network conflict resolved near " + where;
-            level.getServer().getPlayerList().broadcastSystemMessage(Component.literal(message), false);
+            final TextKey message = conflict ? CONFLICT : CONFLICT_RESOLVED;
+            level.getServer().getPlayerList().broadcastSystemMessage(GameText.component(message.with(where)), false);
         }
         conflicted = conflict;
     }

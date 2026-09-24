@@ -83,9 +83,9 @@ public final class OsFamilyOrderGameTests {
     /* The name a message shows for a place comes from the system at it, so nothing spells the names out. */
     @GameTest(template = ARENA)
     public static void systemOfRank_namesTheSystemAtThatPlace(final GameTestHelper helper) {
-        helper.assertTrue("Frames XP".equals(OsRegistry.systemOfRank(rankOf("frames_xp"))),
+        helper.assertTrue("Frames XP".equals(OsRegistry.systemOfRank(rankOf("frames_xp")).english()),
                 "the second desktop system read as " + OsRegistry.systemOfRank(rankOf("frames_xp")));
-        helper.assertTrue("a newer system".equals(OsRegistry.systemOfRank(9999)),
+        helper.assertTrue("a newer system".equals(OsRegistry.systemOfRank(9999).english()),
                 "a place past the end of every family named a system anyway");
         helper.succeed();
     }

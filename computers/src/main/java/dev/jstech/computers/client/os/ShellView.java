@@ -30,6 +30,7 @@ import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.List;
 import java.util.Locale;
@@ -58,6 +59,8 @@ public final class ShellView extends Panel {
     private static final int PAD = 3;
     private static final int MAX_SCROLLBACK = 256;
     private static final int TAG_COLOR = 0xFF5A6678;
+    /** The command that opens a program's window from the prompt, a word of the prompt and not of any language. */
+    private static final String RUN = "run";
 
     private final BlockPos host;
 
@@ -140,7 +143,7 @@ public final class ShellView extends Panel {
      *               another program does not
      */
     public ShellView(final BlockPos host, final boolean posix, final String systemName) {
-        this(host, posix, systemName, "Type HELP for a list of commands");
+        this(host, posix, systemName, GameText.resolve(ShellViewTexts.START_HINT.with("HELP")));
     }
 
     /**
@@ -180,7 +183,8 @@ public final class ShellView extends Panel {
             }
         }
         this.output = add(new ListView<TermRow>(this.scrollback::rows, LINE_H, this::renderLine));
-        this.scrolledTag = add(new Label(() -> this.scrollOffset > 0 ? "scrolled +" + this.scrollOffset : "")
+        this.scrolledTag = add(new Label(() -> this.scrollOffset > 0
+                ? GameText.resolve(ShellViewTexts.SCROLLED.with(this.scrollOffset)) : "")
                 .setColor(TAG_COLOR).setAlign(Label.Align.RIGHT));
         /*
          * No prompt is drawn while a program is running, because on a real terminal there is none: the
@@ -379,6 +383,10 @@ public final class ShellView extends Panel {
 
     /** A line of one colour, which is what this view writes on its own account. */
     private void push(final String text, final CliStyle style) {
+        this.scrollback.push(new CliLine(text, style));
+    }
+
+    private void push(final Text text, final CliStyle style) {
         this.scrollback.push(new CliLine(text, style));
     }
 
@@ -586,7 +594,7 @@ public final class ShellView extends Panel {
         final String[] parts = line.split("\\s+", 2);
         final String verb = parts[0].toLowerCase(Locale.ROOT);
         // "run/start/open <program>" launches a desktop window client-side (the server shell has no windows).
-        if (verb.equals("run") || verb.equals("start") || verb.equals("open")) {
+        if (verb.equals(RUN) || verb.equals("start") || verb.equals("open")) {
             handleRun(parts.length > 1 ? parts[1].trim() : "");
             return;
         }
@@ -598,19 +606,19 @@ public final class ShellView extends Panel {
     private void handleRun(final String name) {
         final List<String> labels = DesktopScreen.openableLabels();
         if (name.isEmpty()) {
-            push("Programs: " + String.join(", ", labels), CliStyle.PLAIN);
-            push("Usage: run <program>", CliStyle.DIM);
+            push(ShellViewTexts.PROGRAMS.with(String.join(", ", labels)), CliStyle.PLAIN);
+            push(ShellViewTexts.RUN_USAGE.with(RUN), CliStyle.DIM);
             return;
         }
         final String norm = name.toLowerCase(Locale.ROOT).replace(" ", "");
         for (final String label : labels) {
             if (label.equalsIgnoreCase(name) || label.toLowerCase(Locale.ROOT).replace(" ", "").equals(norm)) {
                 DesktopScreen.requestOpen(label);
-                push("Opening " + label + "...", CliStyle.OK);
+                push(ShellViewTexts.OPENING.with(label), CliStyle.OK);
                 return;
             }
         }
-        push("No such program: " + name + " (type 'run' to list them)", CliStyle.ERROR);
+        push(ShellViewTexts.NO_SUCH_PROGRAM.with(name, RUN), CliStyle.ERROR);
     }
 
     /**

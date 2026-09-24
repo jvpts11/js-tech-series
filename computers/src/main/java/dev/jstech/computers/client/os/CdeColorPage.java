@@ -114,7 +114,7 @@ final class CdeColorPage implements IDesktopApp {
             final Rect s = CdeStyleLayout.swatch(i);
             MotifChrome.raised(g, x + s.x(), y + s.y(), s.w(), s.h(), colours[i], shown);
         }
-        CdeStylePages.buttons(g, font, this.skin, x, y, true, "OK", "Cancel", mouseX, mouseY);
+        CdeStylePages.buttons(g, font, this.skin, x, y, true, CdeTexts.OK, CdeTexts.CANCEL, mouseX, mouseY);
     }
 
     @Override

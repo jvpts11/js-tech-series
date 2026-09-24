@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.os.WorkspaceSet;
+import dev.jstech.core.text.GameText;
 import java.util.function.IntConsumer;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -109,8 +110,11 @@ final class OccupyWorkspaceDialog implements IDesktopApp {
         if (this.skin == null) {
             return;
         }
-        final String asks = font.plainSubstrByWidth(this.program, w - PAD * 2 - font.width(" is on:")) + " is on:";
-        g.drawString(font, asks, x + PAD, y + 6, this.skin.text(), false);
+        // The program's name gives way to the words around it, which are as wide as the language makes them.
+        final int around = font.width(GameText.resolve(OccupyWorkspaceTexts.IS_ON.with("")));
+        final String name = font.plainSubstrByWidth(this.program, w - PAD * 2 - around);
+        g.drawString(font, GameText.resolve(OccupyWorkspaceTexts.IS_ON.with(name)), x + PAD, y + 6,
+                this.skin.text(), false);
         for (int i = 0; i < WorkspaceSet.COUNT; i++) {
             final int rowY = rowY(i);
             this.skin.panel(g, x + PAD, rowY, BOX, BOX);
@@ -120,9 +124,10 @@ final class OccupyWorkspaceDialog implements IDesktopApp {
             g.drawString(font, CdePanels.workspaceName(i), x + PAD + BOX + 6, rowY + 1, this.skin.text(), false);
         }
         final int by = buttonsY();
-        this.skin.button(g, font, okX(), by, BUTTON_W, BUTTON_H, "OK", over(mouseX, mouseY, okX(), by), false, true);
-        this.skin.button(g, font, cancelX(), by, BUTTON_W, BUTTON_H, "Cancel", over(mouseX, mouseY, cancelX(), by),
-                false, false);
+        this.skin.button(g, font, okX(), by, BUTTON_W, BUTTON_H, GameText.resolve(OccupyWorkspaceTexts.OK),
+                over(mouseX, mouseY, okX(), by), false, true);
+        this.skin.button(g, font, cancelX(), by, BUTTON_W, BUTTON_H, GameText.resolve(OccupyWorkspaceTexts.CANCEL),
+                over(mouseX, mouseY, cancelX(), by), false, false);
     }
 
     @Override

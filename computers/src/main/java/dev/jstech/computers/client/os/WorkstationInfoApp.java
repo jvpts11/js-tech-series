@@ -14,6 +14,7 @@ import dev.jstech.computers.operation.payload.RequestWorkstationInfoPayload;
 import dev.jstech.computers.operation.payload.WorkstationInfoPayload;
 import dev.jstech.computers.os.WorkstationFacts;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -77,7 +78,7 @@ public final class WorkstationInfoApp implements IDesktopApp {
         if (this.facts != null) {
             for (final WorkstationFacts.Group group : this.facts.groups()) {
                 for (final WorkstationFacts.Row row : group.rows()) {
-                    out.add(row.label() + "=" + row.value());
+                    out.add(GameText.resolve(row.label()) + "=" + GameText.resolve(row.value()));
                 }
             }
         }
@@ -153,7 +154,8 @@ public final class WorkstationInfoApp implements IDesktopApp {
             }
         }
         final Rect close = WorkstationInfoLayout.close();
-        this.skin.button(g, font, x + close.x(), y + close.y(), close.w(), close.h(), "Close",
+        this.skin.button(g, font, x + close.x(), y + close.y(), close.w(), close.h(),
+                GameText.resolve(WorkstationInfoTexts.CLOSE),
                 close.holds(mouseX - x, mouseY - y), false, true);
     }
 
@@ -183,15 +185,16 @@ public final class WorkstationInfoApp implements IDesktopApp {
                            final CdePalette p) {
         final Rect well = WorkstationInfoLayout.group(index);
         this.skin.panel(g, this.left + well.x(), this.top + well.y(), well.w(), well.h());
-        Texts.small(g, font, group.title().toUpperCase(Locale.ROOT), this.left + WorkstationInfoLayout.innerX(),
-                this.top + WorkstationInfoLayout.headY(index), LABEL_INK);
+        Texts.small(g, font, GameText.resolve(group.title()).toUpperCase(Locale.ROOT),
+                this.left + WorkstationInfoLayout.innerX(), this.top + WorkstationInfoLayout.headY(index), LABEL_INK);
         for (int r = 0; r < group.rows().size(); r++) {
             final WorkstationFacts.Row row = group.rows().get(r);
             final int rowY = this.top + WorkstationInfoLayout.rowY(index, r);
-            Texts.small(g, font, row.label(),
-                    this.left + WorkstationInfoLayout.LABEL_RIGHT - Texts.smallWidth(font, row.label()), rowY,
+            final String label = GameText.resolve(row.label());
+            Texts.small(g, font, label,
+                    this.left + WorkstationInfoLayout.LABEL_RIGHT - Texts.smallWidth(font, label), rowY,
                     LABEL_INK);
-            Texts.small(g, font, fit(font, row.value(), WorkstationInfoLayout.valueWidth()),
+            Texts.small(g, font, fit(font, GameText.resolve(row.value()), WorkstationInfoLayout.valueWidth()),
                     this.left + WorkstationInfoLayout.VALUE_X, rowY, p.ink());
             if (row.meter()) {
                 meter(g, WorkstationInfoLayout.meter(index, r), p);

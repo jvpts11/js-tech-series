@@ -44,6 +44,18 @@ final class EditorTexts {
     static final TextKey WITH_PROBLEMS =
             TextKey.of("jsc.editor.with_problems", "%s of %s program(s) with problems");
 
+    // The strip that finds, replaces and goes to a line, whose first caption is the Find button's word.
+    static final TextKey LINE = TextKey.of("jsc.editor.line", "Line");
+    static final TextKey REPLACE = TextKey.of("jsc.editor.replace", "Replace");
+    static final TextKey NEXT = TextKey.of("jsc.editor.next", "Next");
+    static final TextKey GO = TextKey.of("jsc.editor.go", "Go");
+    static final TextKey REPLACE_ALL = TextKey.of("jsc.editor.replace_all", "Replace all");
+    static final TextKey NONE_FOUND = TextKey.of("jsc.editor.none_found", "none");
+    static final TextKey AT_LINE = TextKey.of("jsc.editor.at_line", "line %s");
+    static final TextKey REPLACED = TextKey.of("jsc.editor.replaced", "%s replaced");
+    static final TextKey ONE_MATCH = TextKey.of("jsc.editor.one_match", "%s match");
+    static final TextKey MATCHES = TextKey.of("jsc.editor.matches", "%s matches");
+
     private EditorTexts() {
     }
 }

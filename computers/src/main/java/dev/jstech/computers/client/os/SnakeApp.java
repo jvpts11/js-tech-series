@@ -11,6 +11,7 @@ import dev.jstech.computers.program.SnakeGame;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import org.lwjgl.glfw.GLFW;
@@ -66,7 +67,7 @@ public final class SnakeApp implements IDesktopApp {
     private final Button wallsButton;
 
     public SnakeApp() {
-        restart = root.add(new Button("New", this::newGame));
+        restart = root.add(new Button(GameText.resolve(SnakeTexts.NEW), this::newGame));
         int at = 0;
         for (final SnakeGame.Speed s : SPEEDS) {
             speedButtons[at++] = root.add(new Button(label(s), () -> setSpeed(s)));
@@ -75,11 +76,11 @@ public final class SnakeApp implements IDesktopApp {
     }
 
     private static String label(final SnakeGame.Speed s) {
-        return switch (s) {
-            case SLOW -> "Slow";
-            case NORMAL -> "Normal";
-            case FAST -> "Fast";
-        };
+        return GameText.resolve(switch (s) {
+            case SLOW -> SnakeTexts.SLOW;
+            case NORMAL -> SnakeTexts.NORMAL;
+            case FAST -> SnakeTexts.FAST;
+        });
     }
 
     /**
@@ -89,7 +90,7 @@ public final class SnakeApp implements IDesktopApp {
      * no room for that: the button was pushed left onto the last speed and the two drew over each other.
      */
     private String wallsLabel() {
-        return "Walls";
+        return GameText.resolve(SnakeTexts.WALLS);
     }
 
     private void setSpeed(final SnakeGame.Speed s) {
@@ -193,15 +194,17 @@ public final class SnakeApp implements IDesktopApp {
 
     private void layoutToolbar(final Font font, final int x, final int y, final int width) {
         int bx = x + MARGIN;
-        restart.setBounds(bx, y + 2, 30, 12);
-        bx += 33;
+        // At least as wide as it always was, and wider for a language whose word for it is longer.
+        final int rw = Math.max(30, font.width(GameText.resolve(SnakeTexts.NEW)) + 8);
+        restart.setBounds(bx, y + 2, rw, 12);
+        bx += rw + 3;
         for (int i = 0; i < SPEEDS.size(); i++) {
             final int w = font.width(label(SPEEDS.get(i))) + 8;
             speedButtons[i].setBounds(bx, y + 2, w, 12);
             speedButtons[i].setPrimary(SPEEDS.get(i) == speed);
             bx += w + 2;
         }
-        final int ww = font.width("Walls") + 8;
+        final int ww = font.width(wallsLabel()) + 8;
         /*
          * Pinned to the right edge, and never left of where the speeds end: a narrow window would
          * otherwise slide it back over the last of them rather than simply running out of room.
@@ -233,15 +236,16 @@ public final class SnakeApp implements IDesktopApp {
     private void drawOver(final GuiGraphics g, final Font font, final int ax, final int ay,
                           final int arenaW, final int arenaH) {
         g.fill(ax, ay, ax + arenaW, ay + arenaH, OVER_SHADE);
-        centre(g, font, "Game over", ax, ay + arenaH / 2 - 10, arenaW, OVER_INK);
-        centre(g, font, "Score " + game.score(), ax, ay + arenaH / 2, arenaW, 0xFFFFFFFF);
-        centre(g, font, "New for another", ax, ay + arenaH / 2 + 10, arenaW, 0xFFB8C2CE);
+        centre(g, font, GameText.resolve(SnakeTexts.GAME_OVER), ax, ay + arenaH / 2 - 10, arenaW, OVER_INK);
+        centre(g, font, GameText.resolve(SnakeTexts.SCORE.with(game.score())), ax, ay + arenaH / 2, arenaW,
+                0xFFFFFFFF);
+        centre(g, font, GameText.resolve(SnakeTexts.AGAIN), ax, ay + arenaH / 2 + 10, arenaW, 0xFFB8C2CE);
     }
 
     private void drawHint(final GuiGraphics g, final Font font, final int ax, final int ay,
                           final int arenaW, final int arenaH) {
         // On a band of its own, because the snake is lying right where the words go.
-        final String text = "Arrow keys to start";
+        final String text = GameText.resolve(SnakeTexts.START_HINT);
         final int ty = ay + arenaH / 2 - 5;
         g.fill(ax, ty - 2, ax + arenaW, ty + 11, HINT_BAND);
         centre(g, font, text, ax, ty + 1, arenaW, 0xFFDCEFE1);
@@ -254,9 +258,9 @@ public final class SnakeApp implements IDesktopApp {
 
     private void drawStatus(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
         g.fill(x, y, x + width, y + STATUS_H, skin.windowBg());
-        final String left = "Score " + game.score() + "   Best " + best;
+        final String left = GameText.resolve(SnakeTexts.SCORE_AND_BEST.with(game.score(), best));
         g.drawString(font, left, x + MARGIN, y + 2, skin.text(), false);
-        final String right = "Length " + game.length();
+        final String right = GameText.resolve(SnakeTexts.LENGTH.with(game.length()));
         g.drawString(font, right, x + width - MARGIN - font.width(right), y + 2, skin.dim(), false);
     }
 

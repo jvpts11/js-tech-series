@@ -60,7 +60,7 @@ public final class WorkstationInfoPayloads {
         return new WorkstationFacts(UnixTree.of(platform).home().getLast(), Installers.hostName(computer),
                 network == null ? "" : network.value().toString(), systemOf(system),
                 KernelNames.architecture(platform, computer.processorBits()), windowSystemOf(computer),
-                WelcomePayloads.cpuName(computer), computer.maxCpuMhz(), computer.ramTotalMb(),
+                WelcomePayloads.cpuText(computer), computer.maxCpuMhz(), computer.ramTotalMb(),
                 computer.ramLedger().usedMb(), computer.totalVramMb(), diskMb, SettingsSnapshots.usedMb(disk));
     }
 

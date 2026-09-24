@@ -146,6 +146,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The Task Manager in all its shapes, the System Monitor, Settings, the welcome a system puts up, the Network
   Manager, a program's Setup window and Remote Control are text a language file can translate, and so are the
   processor, its architecture and the disks those windows are told of, and each machine's kind.
+- CDE's Workstation Info, its Exit dialog, a window's menu, the Style Manager's buttons and the Occupy Workspace
+  dialog, the desktop shell's own lines, the editor's find strip, Snake, the Help Viewer's search, the panel's
+  tray and window list, the Network Interactor's categories, the Cluster Manager's rack places, FreeBSD's loader
+  count, what a terminal says when it lost its machine or cannot open a program, a program's setup progress,
+  the config listing and the network conflict notice are text a language file can translate. The categories keep
+  their English names underneath, so a saved filter survives a change of language.
 
 ### Fixed
 - Saving an IQL file from the Network Management Studio to a full disk no longer fails to send its answer: the

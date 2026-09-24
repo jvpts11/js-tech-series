@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.TaskbarGroups;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
@@ -375,7 +376,8 @@ final class TaskPopup {
         if (inRect(lmx, lmy, all)) {
             g.fill(all[0], all[1], all[0] + all[2], all[1] + all[3], skin.listHover());
         }
-        g.drawString(desktop.textFont(), "Close all", all[0] + 14, all[1] + 2, 0xFFC04A3E, false);
+        g.drawString(desktop.textFont(), GameText.resolve(PanelTexts.CLOSE_ALL), all[0] + 14, all[1] + 2, 0xFFC04A3E,
+                false);
     }
 
     /** A click landing inside the popup: a close box, a window, the Close all row, or nothing at all. */

@@ -79,13 +79,10 @@ public final class WelcomePayloads {
                 WelcomeFacts.tips(computer, mirror, !network.isEmpty()));
     }
 
-    /** The processor really in the machine, by its own model, not the clock it happens to run at. */
-    static String cpuName(final IOsHost computer) {
-        final ItemStack chip = cpuStack(computer);
-        return chip.isEmpty() ? "" : chip.getHoverName().getString();
-    }
-
-    /** The same, as text each player reads in their own language. */
+    /**
+     * The processor really in the machine, by its own model, not the clock it happens to run at, as text each player
+     * reads in their own language.
+     */
     static Text cpuText(final IOsHost computer) {
         final ItemStack chip = cpuStack(computer);
         return chip.isEmpty() ? Text.EMPTY : GameText.of(chip.getHoverName());

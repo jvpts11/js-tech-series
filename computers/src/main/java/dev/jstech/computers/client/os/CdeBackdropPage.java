@@ -11,6 +11,7 @@ import dev.jstech.computers.gui.CdeBackdrop;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.gui.layout.CdeStyleLayout;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -109,9 +110,9 @@ final class CdeBackdropPage implements IDesktopApp {
         MotifChrome.backdrop(g, preview.w() - INSET * 2, preview.h() - INSET * 2, p, this.picked);
         g.pose().popPose();
         final Rect label = CdeStyleLayout.forWorkspace();
-        g.drawString(font, "For workspace " + CdePanels.workspaceName(desktop.workspace()), x + label.x(),
-                y + label.y(), this.skin.text(), false);
-        CdeStylePages.buttons(g, font, this.skin, x, y, false, "Apply", "Close", mouseX, mouseY);
+        g.drawString(font, GameText.resolve(CdeTexts.FOR_WORKSPACE.with(CdePanels.workspaceName(desktop.workspace()))),
+                x + label.x(), y + label.y(), this.skin.text(), false);
+        CdeStylePages.buttons(g, font, this.skin, x, y, false, CdeTexts.APPLY, CdeTexts.CLOSE, mouseX, mouseY);
     }
 
     @Override

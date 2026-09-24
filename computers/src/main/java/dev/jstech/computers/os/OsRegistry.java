@@ -8,6 +8,9 @@
 package dev.jstech.computers.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Collection;
@@ -26,7 +29,11 @@ import java.util.Map;
  * won would otherwise depend on the order the mods happened to load in. They are kept in the order they
  * arrived, so what a list shows is the same every time.
  */
+@TextHolder
 public final class OsRegistry {
+
+    /** What a message calls a system past the end of the family, which no system answers to. */
+    private static final TextKey NEWER_SYSTEM = TextKey.of("jsc.os.newer_system", "a newer system");
 
     private static final Map<ResourceLocation, KernelDef> KERNELS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, OsDef> OSES = new LinkedHashMap<>();
@@ -217,13 +224,13 @@ public final class OsRegistry {
      * <p>Falls back to words rather than a name where nothing answers to that rank, which is what happens if a
      * program asks for a rank past the end of its family.
      */
-    public static String systemOfRank(final int rank) {
+    public static Text systemOfRank(final int rank) {
         for (final OsDef os : oses()) {
             if (os.familyRank() == rank) {
-                return os.displayName();
+                return Text.literal(os.displayName());
             }
         }
-        return "a newer system";
+        return NEWER_SYSTEM.text();
     }
 
     /**

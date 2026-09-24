@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.program;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -27,6 +29,7 @@ import java.util.Map;
  * <p>All setters clamp to the documented range rather than rejecting, matching the config policy: an
  * out-of-range value is pinned to the nearest valid one, never accepted blindly.
  */
+@TextHolder
 public final class ComputerSettings {
 
     /** The most programs a panel keeps pinned; past that the panel has no room for its windows. */
@@ -44,6 +47,17 @@ public final class ComputerSettings {
     public static final int MAX_VARIABLES = 64;
     /** What a fresh machine pins: its file explorer. */
     public static final String DEFAULT_PINNED = "files";
+
+    /*
+     * The words of the config listing around its keys and values, which are data a player types back. The listing
+     * is the machine's own output, so it is written in English, the language a machine keeps what it prints in.
+     */
+    private static final TextKey DEFAULT_VALUE = TextKey.of("jsc.config.default_value", "%s (default)");
+    private static final TextKey STARRED = TextKey.of("jsc.config.starred", "%s starred");
+    private static final TextKey READ_WRITE = TextKey.of("jsc.config.read_write", "%s (read and write)");
+    private static final TextKey READ_ONLY = TextKey.of("jsc.config.read_only", "%s (read only)");
+    private static final TextKey REMOTE_ON =
+            TextKey.of("jsc.config.remote_on", "%s (other computers may run programs here)");
 
     /**
      * One folder this machine opens to the others on its network.
@@ -482,20 +496,20 @@ public final class ComputerSettings {
         lines.add(pad(SettingKey.THEME) + (themePreset.isEmpty() ? ThemePreset.SYSTEM.id() : themePreset));
         lines.add(pad(SettingKey.TASKBAR) + (taskbarCentered ? "center" : "left"));
         lines.add(pad(SettingKey.DARKMODE) + (darkMode ? "on" : "off"));
-        lines.add(pad(SettingKey.GUISCALE) + (guiScale == 0 ? "75% (default)" : guiScale + "%"));
+        lines.add(pad(SettingKey.GUISCALE) + (guiScale == 0 ? DEFAULT_VALUE.with("75%").english() : guiScale + "%"));
         lines.add(pad(SettingKey.BRIGHTNESS) + brightness + "%");
         lines.add(pad(SettingKey.SAVEDRIVE) + defaultSaveDrive + ":");
         lines.add(pad(SettingKey.AUTOOPEN) + (removableAutoOpen ? "on" : "off"));
         lines.add(pad(SettingKey.ACCENT)
                 + (accent == 0 ? "default" : String.format(Locale.ROOT, "#%06X", accent & 0xFFFFFF)));
         lines.add(pad("pinned") + (pinned.isEmpty() ? "none" : String.join(", ", pinned)));
-        lines.add(pad("favourites") + (favourites.isEmpty() ? "none" : favourites.size() + " starred"));
+        lines.add(pad("favourites") + (favourites.isEmpty() ? "none" : STARRED.with(favourites.size()).english()));
         final List<String> shared = new ArrayList<>();
         for (final Share share : shares) {
-            shared.add(share.name() + (share.writable() ? " (read and write)" : " (read only)"));
+            shared.add((share.writable() ? READ_WRITE : READ_ONLY).with(share.name()).english());
         }
         lines.add(pad("shares") + (shared.isEmpty() ? "none" : String.join(", ", shared)));
-        lines.add(pad(SettingKey.REMOTE) + (remoteAllowed ? "on (other computers may run programs here)" : "off"));
+        lines.add(pad(SettingKey.REMOTE) + (remoteAllowed ? REMOTE_ON.with("on").english() : "off"));
         return lines;
     }
 

@@ -797,7 +797,8 @@ public final class ClusterManagerApp implements IDesktopApp {
         final int c3 = columns.columnX(3);
         final int c4 = columns.columnX(4);
         final int ty = y + 1;
-        g.drawString(font, "R" + n.rackIndex() + " U" + (n.row() + 1), c0, ty, col, false);
+        g.drawString(font, GameText.resolve(ClusterManagerTexts.RACK_UNIT.with(n.rackIndex(), n.row() + 1)), c0, ty,
+                col, false);
         g.drawString(font, Texts.clip(font, n.name(), c2 - c1 - GAP), c1, ty, col, false);
         if (n.osLabel().isEmpty()) {
             g.drawString(font, "-", c2, ty, ctx.skin().dim(), false);
@@ -855,7 +856,8 @@ public final class ClusterManagerApp implements IDesktopApp {
                     ctx.skin().dim(), false);
             return;
         }
-        g.drawString(font, Texts.clip(font, "R" + node.rackIndex() + " U" + (node.row() + 1) + " " + node.name(),
+        g.drawString(font, Texts.clip(font, GameText.resolve(ClusterManagerTexts.RACK_UNIT.with(node.rackIndex(),
+                        node.row() + 1)) + " " + node.name(),
                 mapColumns.columnX(3) - mapColumns.columnX(2) - GAP), mapColumns.columnX(2), ty, ctx.skin().text(), false);
         final String st = GameText.resolve(node.code() >= 16 ? ClusterManagerTexts.ONLINE
                 : node.code() == 3 ? ClusterManagerTexts.BAY_OFF : node.code() == 2 ? ClusterManagerTexts.RATING_LOW

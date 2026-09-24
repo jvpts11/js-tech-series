@@ -122,6 +122,9 @@ final class ClusterManagerTexts {
             TextKey.of("jsc.cluster_manager.rename_hint", "Type a name; empty goes back to the default.");
     static final TextKey APPLY = TextKey.of("jsc.cluster_manager.apply", "APPLY");
 
+    // Where a node sits: its rack, then its unit in that rack.
+    static final TextKey RACK_UNIT = TextKey.of("jsc.cluster_manager.rack_unit", "R%s U%s");
+
     private ClusterManagerTexts() {
     }
 }

@@ -9,6 +9,8 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.os.WorkspaceSet;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
@@ -148,17 +150,18 @@ final class CdeWindowMenu {
         final List<MotifMenu.Entry> out = new ArrayList<>();
         if (!w.dialog()) {
             final boolean changed = w.minimized() || w.maximized();
-            out.add(new MotifMenu.Entry("Restore", "Alt+F5", changed, () -> restore(w)));
-            out.add(new MotifMenu.Entry("Minimize", "Alt+F9", !w.minimized(), () -> w.setMinimized(true)));
-            out.add(new MotifMenu.Entry("Maximize", "Alt+F10", !w.maximized(), () -> maximize(w)));
-            out.add(new MotifMenu.Entry("Lower", "", !w.minimized(), () -> this.desktop.lowerOne(w)));
+            out.add(new MotifMenu.Entry(words(CdeTexts.RESTORE), "Alt+F5", changed, () -> restore(w)));
+            out.add(new MotifMenu.Entry(words(CdeTexts.MINIMIZE), "Alt+F9", !w.minimized(),
+                    () -> w.setMinimized(true)));
+            out.add(new MotifMenu.Entry(words(CdeTexts.MAXIMIZE), "Alt+F10", !w.maximized(), () -> maximize(w)));
+            out.add(new MotifMenu.Entry(words(CdeTexts.LOWER), "", !w.minimized(), () -> this.desktop.lowerOne(w)));
             out.add(MotifMenu.Entry.line());
-            out.add(new MotifMenu.Entry("Occupy Workspace...", "", true, () -> askWorkspaces(w)));
-            out.add(new MotifMenu.Entry("Occupy All Workspaces", "", w.workspaces() != WorkspaceSet.EVERY,
+            out.add(new MotifMenu.Entry(words(CdeTexts.OCCUPY_WORKSPACE), "", true, () -> askWorkspaces(w)));
+            out.add(new MotifMenu.Entry(words(CdeTexts.OCCUPY_ALL), "", w.workspaces() != WorkspaceSet.EVERY,
                     () -> this.desktop.occupy(w, WorkspaceSet.EVERY)));
             out.add(MotifMenu.Entry.line());
         }
-        out.add(new MotifMenu.Entry("Close", "", true, () -> this.desktop.closeOne(w)));
+        out.add(new MotifMenu.Entry(words(CdeTexts.CLOSE), "", true, () -> this.desktop.closeOne(w)));
         return out;
     }
 
@@ -184,5 +187,9 @@ final class CdeWindowMenu {
         this.desktop.focusOne(w);
         DesktopScreen.openDialogFor(w.app(), new OccupyWorkspaceDialog(w.appKey(), w.workspaces(),
                 chosen -> this.desktop.occupy(w, chosen)));
+    }
+
+    private static String words(final TextKey key) {
+        return GameText.resolve(key);
     }
 }

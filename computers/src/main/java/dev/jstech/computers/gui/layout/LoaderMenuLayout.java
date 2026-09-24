@@ -42,10 +42,11 @@ public final class LoaderMenuLayout {
     public static final int LOCKUP_X = 247;
     public static final int LOCKUP_Y = 38;
 
-    /** The line that counts down, under the box, and the longest thing that line ever says. */
+    /** The line that counts down, under the box. */
     public static final int FOOT_X = 15;
     public static final int FOOT_Y = 203;
-    public static final String FOOT_PAUSED = "Autoboot paused. Press [Enter] to boot or a number to choose.";
+    /** How many letters the heading has room for, which is what the system's own welcome needs. */
+    public static final int TITLE_CHARS = 18;
 
     /** The scale everything but the name is written at, which is the machine screens' own. */
     private static final float TEXT_SCALE = 0.75f;
@@ -63,12 +64,13 @@ public final class LoaderMenuLayout {
         final GuiLayout l = new GuiLayout(WIDTH, HEIGHT)
                 .box("box", BOX_X, BOX_Y, BOX_W, BOX_H)
                 .box("lockup", LOCKUP_X, LOCKUP_Y, LOCKUP_W, LOCKUP_H);
-        l.text("title", TITLE_X, TITLE_Y, "Welcome to FreeBSD".length(), TEXT_SCALE);
+        l.text("title", TITLE_X, TITLE_Y, TITLE_CHARS, TEXT_SCALE);
         final int rowChars = (int) (itemRoom() / (GuiLayout.GLYPH_WIDTH * TEXT_SCALE));
         for (int i = 0; i < Math.min(entries, BootMenu.MOST_ENTRIES); i++) {
             l.text("item_" + i, ITEMS_X, ITEMS_Y + i * ITEM_PITCH, rowChars, TEXT_SCALE);
         }
-        l.text("foot", FOOT_X, FOOT_Y, FOOT_PAUSED.length(), TEXT_SCALE);
+        // The longest thing the line under the box ever says.
+        l.text("foot", FOOT_X, FOOT_Y, BootMenu.AUTOBOOT_PAUSED.english().length(), TEXT_SCALE);
         return l;
     }
 

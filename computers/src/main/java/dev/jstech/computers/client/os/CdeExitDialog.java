@@ -11,6 +11,9 @@ import dev.jstech.computers.gui.CdeExitMessage;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.layout.CdeExitLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -24,8 +27,8 @@ import net.minecraft.client.gui.GuiGraphics;
  */
 final class CdeExitDialog {
 
-    private static final String TITLE = "Exit";
-    private static final String[] BUTTONS = {"Shut Down", "Restart", "Cancel"};
+    private static final List<TextKey> BUTTONS =
+            List.of(CdeExitMessage.SHUT_DOWN, CdeExitMessage.RESTART, CdeExitMessage.CANCEL);
     private static final int DIM = 0x66000000;
     private static final int MENU_BUTTON = 12;
 
@@ -41,18 +44,19 @@ final class CdeExitDialog {
         // A dialog's bar keeps the menu button and nothing else, since a question is neither put away nor grown.
         MotifChrome.titleBar(g, d.x(), d.y(), d.w(), CdeExitLayout.TITLE_H, true, MENU_BUTTON + 2, 0, p);
         MotifChrome.control(g, d.x() + 1, d.y() + 1, MENU_BUTTON, MENU_BUTTON, OsSkin.Control.CLOSE, false, p);
-        g.drawString(font, TITLE, d.x() + (d.w() - font.width(TITLE)) / 2, d.y() + 3, p.activeInk(), false);
-        final List<String> lines = CdeExitMessage.lines(open);
+        final String title = GameText.resolve(CdeExitMessage.TITLE);
+        g.drawString(font, title, d.x() + (d.w() - font.width(title)) / 2, d.y() + 3, p.activeInk(), false);
+        final List<Text> lines = CdeExitMessage.lines(open);
         for (int i = 0; i < lines.size() && i < CdeExitLayout.LINES; i++) {
-            final String line = lines.get(i);
+            final String line = GameText.resolve(lines.get(i));
             g.drawString(font, line, d.x() + (d.w() - font.width(line)) / 2, CdeExitLayout.lineY(i, sw, sh),
                     p.ink(), false);
         }
         for (int i = 0; i < CdeExitLayout.BUTTONS; i++) {
             final Rect r = CdeExitLayout.button(i, sw, sh);
             MotifChrome.button(g, r.x(), r.y(), r.w(), r.h(), false, i == CdeExitLayout.SHUT_DOWN, p);
-            g.drawString(font, BUTTONS[i], r.x() + (r.w() - font.width(BUTTONS[i])) / 2, r.y() + 3, p.ink(),
-                    false);
+            final String label = GameText.resolve(BUTTONS.get(i));
+            g.drawString(font, label, r.x() + (r.w() - font.width(label)) / 2, r.y() + 3, p.ink(), false);
         }
     }
 }

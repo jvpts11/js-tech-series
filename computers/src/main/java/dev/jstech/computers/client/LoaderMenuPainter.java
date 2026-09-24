@@ -26,6 +26,8 @@ public final class LoaderMenuPainter {
     private static final int TEXT = 0xFFBDBDBD;
     private static final int BRIGHT = 0xFFFFFFFF;
     private static final int GROUND = 0xFF000000;
+    /* A character no sentence has, standing in for the seconds until the sentence is cut around them. */
+    private static final String SECONDS_MARK = "\u0001";
 
     private LoaderMenuPainter() {
     }
@@ -92,14 +94,20 @@ public final class LoaderMenuPainter {
     private static void foot(final GuiGraphics g, final Font font, final int x, final int y, final BootMenu menu,
                              final int remaining, final boolean held) {
         if (held) {
-            TextWall.draw(g, font, LoaderMenuLayout.FOOT_PAUSED, x, y, TEXT);
+            TextWall.draw(g, font, GameText.resolve(BootMenu.AUTOBOOT_PAUSED), x, y, TEXT);
             return;
         }
-        final String before = "Autoboot in ";
+        /*
+         * The sentence is resolved whole with a mark where the seconds go, so a language may put them anywhere in
+         * it, and then cut at the mark to write the seconds in white.
+         */
+        final String[] around = GameText.resolve(BootMenu.AUTOBOOT.with(SECONDS_MARK)).split(SECONDS_MARK, 2);
+        final String before = around[0];
+        final String after = around.length > 1 ? around[1] : "";
         final String seconds = Integer.toString(menu.secondsLeft(remaining));
         TextWall.draw(g, font, before, x, y, TEXT);
         TextWall.draw(g, font, seconds, x + TextWall.width(font, before), y, BRIGHT);
         // Each piece starts where the whole line before it ends, so three roundings never add up to a gap.
-        TextWall.draw(g, font, " seconds. [Space] to pause", x + TextWall.width(font, before + seconds), y, TEXT);
+        TextWall.draw(g, font, after, x + TextWall.width(font, before + seconds), y, TEXT);
     }
 }
