@@ -34,6 +34,9 @@ public final class SetupApp implements IDesktopApp {
     /** The window key, one per desktop: a machine sets one thing up at a time. */
     public static final String KEY = "Setup";
 
+    /** The box with a disc coming out of it that every setup window wears, whatever it installs. */
+    private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath("jsc", "setup");
+
     private static final int STRIP_W = 42;
     private static final int HEADER_H = 24;
     private static final int BUTTON_W = 44;
@@ -152,6 +155,11 @@ public final class SetupApp implements IDesktopApp {
     @Override
     public String title() {
         return this.state == null ? "Setup" : this.state.name() + " Setup";
+    }
+
+    @Override
+    public ResourceLocation iconId() {
+        return ICON;
     }
 
     @Override

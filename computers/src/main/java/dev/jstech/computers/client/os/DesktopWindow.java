@@ -441,9 +441,10 @@ public final class DesktopWindow {
                         ResourceLocation.fromNamespaceAndPath("jsc", skin.osPath()));
         final ProgramSpec program =
                 desktop == null ? null : desktop.programFor(appKey);
-        final boolean titleIcon = program != null && !skin.titleCentered();
+        final ResourceLocation icon = program != null ? program.iconId() : app.iconId();
+        final boolean titleIcon = icon != null && !skin.titleCentered();
         if (titleIcon) {
-            ProgramIcons.draw(g, wx + 3, wy + 2, ICON, ICON, program.iconId(), skin.iconSet());
+            ProgramIcons.draw(g, wx + 3, wy + 2, ICON, ICON, icon, skin.iconSet());
         }
         /*
          * Where the title sits is part of the skin's identity, not a constant: the GNOME form centres it,

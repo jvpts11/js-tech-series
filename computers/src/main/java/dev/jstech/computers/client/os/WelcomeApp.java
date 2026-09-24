@@ -15,6 +15,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -44,6 +45,9 @@ public final class WelcomeApp implements IDesktopApp {
     private static final int ROW = 13;
 
     private static final int PAD = 8;
+
+    /** The welcome's own picture: the lamp of the tips on the older editions, the star on the newest. */
+    private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath("jsc", "welcome");
 
     /** The windows waiting on an answer, so a machine's reply reaches the window that asked it. */
     private static final List<WelcomeApp> OPEN = new ArrayList<>();
@@ -80,6 +84,11 @@ public final class WelcomeApp implements IDesktopApp {
         }
         return this.facts == null || this.facts.systemName().isEmpty()
                 ? "Welcome" : "Welcome to " + this.facts.systemName();
+    }
+
+    @Override
+    public ResourceLocation iconId() {
+        return ICON;
     }
 
     @Override

@@ -2324,8 +2324,16 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         }
         // A window whose program has no launcher (the Task Manager) still shows its own icon on the panel.
         final ProgramSpec spec = chrome == null ? null : chrome.programFor(label);
-        return spec != null ? spec.id()
-                : ResourceLocation.fromNamespaceAndPath("jsc", "generic");
+        if (spec != null) {
+            return spec.id();
+        }
+        // A window no program answers to (a setup, the welcome, a player's own program) wears the one it asks for.
+        for (final DesktopWindow w : windows) {
+            if (w.appKey().equals(label) && w.app().iconId() != null) {
+                return w.app().iconId();
+            }
+        }
+        return ResourceLocation.fromNamespaceAndPath("jsc", "generic");
     }
 
     /** Whether the linked host computer's block entity is (an instance of) {@code type}. */

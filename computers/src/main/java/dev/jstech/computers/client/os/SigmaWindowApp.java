@@ -17,6 +17,7 @@ import java.util.Map;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
@@ -42,6 +43,9 @@ public final class SigmaWindowApp implements IDesktopApp {
     private static final int LEAST_LIST = 40;
     private static final int LEAST_CANVAS_W = 80;
     private static final int LEAST_CANVAS_H = 60;
+
+    /** What every window a player's own program opens wears: it is no installed program, so it has none of its own. */
+    private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath("jsc", "sigma_program");
 
     private final BlockPos host;
     private final int program;
@@ -156,6 +160,11 @@ public final class SigmaWindowApp implements IDesktopApp {
     @Override
     public String title() {
         return this.state.title().isEmpty() ? "Window" : this.state.title();
+    }
+
+    @Override
+    public ResourceLocation iconId() {
+        return ICON;
     }
 
     @Override

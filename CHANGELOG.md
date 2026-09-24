@@ -44,6 +44,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   its screens keep those colours too. A change of pack reaches a screen that is already open. A theme preset still
   puts on the accent the mod ships, since the machine that keeps it knows no resource pack.
 
+- Icons for every program on CDE: twenty-eight programs that run under it, from the Network Management Studio to
+  Vim, Emacs and the desktops themselves, wore the Frames 95 icon there and now wear CDE's. The Help Viewer has an
+  icon on every desktop it runs on, Workstation Info has one outside CDE as well, and a setup, the welcome and a
+  window a Sigma program opens show their own icon on the panel and the title bar instead of the plain one.
+
 ### Changed
 - The three advancements of the old Computers tab moved into the Operating Systems tab, so a world that had
   earned them shows them unearned there.

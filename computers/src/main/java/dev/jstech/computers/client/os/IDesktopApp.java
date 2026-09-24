@@ -9,6 +9,8 @@ package dev.jstech.computers.client.os;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A program that runs inside a {@link DesktopWindow} on the {@link DesktopScreen}. The window manager
@@ -42,6 +44,16 @@ public interface IDesktopApp {
      * yet migrated ignores it and keeps its old look.
      */
     default void applySkin(OsSkin skin) {
+    }
+
+    /**
+     * The icon the window wears when no program answers to its name: a setup, the welcome, a window a player's
+     * own program opened. The panel and the title bar draw it the way they draw a program's; null, the default,
+     * leaves the window to the program it belongs to.
+     */
+    @Nullable
+    default ResourceLocation iconId() {
+        return null;
     }
 
     /**
