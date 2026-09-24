@@ -184,7 +184,7 @@ public final class SettingsApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Settings";
+        return ProgramClient.nameOf("settings");
     }
 
     @Override

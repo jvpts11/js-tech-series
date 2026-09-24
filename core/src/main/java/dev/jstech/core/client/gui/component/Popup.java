@@ -27,7 +27,7 @@ public class Popup extends Panel {
     private final Supplier<String> title;
     private int preferredWidth;
     private int preferredHeight;
-    private int dim = 0x88000000;
+    private int dim = ComponentPalette.get().popupDim();
     private Consumer<Popup> layouter = popup -> { };
     private Runnable onClose = () -> { };
     private boolean closeOnOutsideClick = true;

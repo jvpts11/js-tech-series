@@ -136,7 +136,7 @@ public final class MenuBar extends UiComponent {
                 g.fill(mx - 2, y() + 1, mx + w + 2, y() + height() - 1, ctx.skin().accent());
             }
             g.drawString(ctx.font(), title, mx, y() + 1,
-                    i == this.open && this.menu.isOpen() ? 0xFFFFFFFF : ctx.skin().text(), false);
+                    i == this.open && this.menu.isOpen() ? ComponentPalette.get().litText() : ctx.skin().text(), false);
             mx += w + GAP;
         }
         if (this.menu.isOpen()) {

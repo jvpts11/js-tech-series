@@ -85,15 +85,16 @@ public abstract class DataTableWidget<T> extends RowListWidget<T> {
             final float partialTick) {
         graphics.enableScissor(getX(), getY(), getX() + width, getY() + height);
 
+        final WidgetPalette.Colours colours = WidgetPalette.get();
         // Header row.
-        graphics.fill(getX(), getY(), getX() + width, getY() + headerHeight, 0xFF2A2A2A);
+        graphics.fill(getX(), getY(), getX() + width, getY() + headerHeight, colours.tableHeader());
         for (int col = 0; col < columnHeaders.size(); col++) {
             graphics.drawString(
                     Minecraft.getInstance().font,
                     columnHeaders.get(col),
                     columnX(col) + 2,
                     getY() + (headerHeight - 8) / 2,
-                    0xFFFFFFFF);
+                    colours.tableHeaderText());
         }
 
         // Body rows for the current page.
@@ -102,7 +103,7 @@ public abstract class DataTableWidget<T> extends RowListWidget<T> {
         for (int i = first; i < last; i++) {
             final int rowY = getY() + headerHeight + (i - first) * rowHeight;
             // Alternating row background for readability.
-            final int bg = ((i - first) % 2 == 0) ? 0xFF1A1A1A : 0xFF222222;
+            final int bg = ((i - first) % 2 == 0) ? colours.tableRowEven() : colours.tableRowOdd();
             graphics.fill(getX(), rowY, getX() + width, rowY + rowHeight, bg);
             for (int col = 0; col < columnHeaders.size(); col++) {
                 renderCell(graphics, itemList.get(i), col,

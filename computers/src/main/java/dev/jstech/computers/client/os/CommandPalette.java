@@ -7,9 +7,13 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +28,7 @@ import org.lwjgl.glfw.GLFW;
  * what they want types three letters instead of finding the menu. The same box, given files instead of
  * commands, is how a file is opened by name.
  */
+@PaletteHolder
 public final class CommandPalette {
 
     /** One thing the box can run: what it is called, the key that also runs it, and what it does. */
@@ -33,6 +38,9 @@ public final class CommandPalette {
     private static final int ROW_H = 9;
     private static final int W = 170;
     private static final int ROWS = 8;
+    /** The outline behind the command box, {@code jsc:app/command_palette}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/command_palette",
+            new Colours(0xFF000000));
 
     private final TextField query = new TextField(48);
     private final ListView<Entry> list;
@@ -116,7 +124,7 @@ public final class CommandPalette {
         this.y = winY + 4;
         final int rows = Math.min(ROWS, Math.max(1, matching().size()));
         final int h = 3 + 11 + 2 + rows * ROW_H + 3;
-        g.fill(this.x - 1, this.y - 1, this.x + W + 1, this.y + h + 1, 0xFF000000);
+        g.fill(this.x - 1, this.y - 1, this.x + W + 1, this.y + h + 1, PALETTE.get().outline());
         ctx.skin().panel(g, this.x, this.y, W, h);
         g.drawString(ctx.font(), this.prefix, this.x + 4, this.y + 5, ctx.skin().dim(), false);
         this.query.setBounds(this.x + 4 + ctx.font().width(this.prefix) + 3, this.y + 3,
@@ -172,5 +180,9 @@ public final class CommandPalette {
 
     public boolean mouseScrolled(final double mx, final double my, final double delta) {
         return this.open && this.list.mouseScrolled(mx, my, delta);
+    }
+
+    /** The outline drawn behind the command box. */
+    private record Colours(int outline) {
     }
 }

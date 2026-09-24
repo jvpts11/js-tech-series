@@ -9,11 +9,11 @@ package dev.jstech.computers.os;
 
 import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.computers.program.Programs;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 import java.util.Map;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * A desktop environment: the graphical shell a computer runs on top of its OS. The Frames editions bundle
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * @param displayName      the human name
  * @param panelStyle       the chrome family the desktop screen draws
  * @param bundledPrograms  the pre-installed program ids this desktop shows launchers for, in rail order
- * @param nativeNames      per-program display-name overrides under this desktop (missing = the program's own)
+ * @param nativeNames      per-program names under this desktop, as sentences to translate (missing = the program's own)
  * @param house            who makes this desktop, and so who is credited for the programs it bundles
  */
 public record DesktopEnvironmentDef(
@@ -37,7 +37,7 @@ public record DesktopEnvironmentDef(
         String displayName,
         PanelStyle panelStyle,
         List<ResourceLocation> bundledPrograms,
-        Map<ResourceLocation, String> nativeNames,
+        Map<ResourceLocation, TextKey> nativeNames,
         SoftwareHouse house
 ) {
 
@@ -52,40 +52,20 @@ public record DesktopEnvironmentDef(
         }
     }
 
-    /** The name a program shows under this desktop: its native name here, else its own display name. */
-    public String nameOf(final ProgramSpec program) {
-        return nativeNames.getOrDefault(program.id(), program.displayName());
+    /** The name a program shows under this desktop: its native name here, else its own name. */
+    public TextKey nameOf(final ProgramSpec program) {
+        return nativeNames.getOrDefault(program.id(), program.name());
     }
 
     /**
-     * The launcher label a program carries under this desktop, which is also the key of its open window: its
-     * name here, except that Frames 11 calls its prompt Megashell. The server resolves a window back to its
-     * program with the same rule.
+     * The launcher label a program carries under this desktop: its name here, except that Frames 11 calls its
+     * prompt Megashell. Its window goes by the program's id ({@link WindowKeys}), never by this label.
      */
-    public String launcherLabel(final ProgramSpec program) {
+    public TextKey launcherLabel(final ProgramSpec program) {
         if (panelStyle == PanelStyle.FRAMES_11 && Programs.COMMAND_PROMPT.equals(program.id())) {
-            return "Megashell";
+            return DesktopNames.MEGASHELL;
         }
         return nameOf(program);
-    }
-
-    /**
-     * The program a window opened under {@code key} belongs to: the one this desktop labels that way, else
-     * the one whose own name it is, else nothing. A window's key is its launcher label, so this is how the
-     * machine reads a saved layout back into programs.
-     */
-    @Nullable
-    public ProgramSpec programFor(final String key) {
-        ProgramSpec byName = null;
-        for (final ProgramSpec spec : OsRegistry.programs()) {
-            if (launcherLabel(spec).equals(key)) {
-                return spec;
-            }
-            if (byName == null && spec.displayName().equals(key)) {
-                byName = spec;
-            }
-        }
-        return byName;
     }
 
     /**

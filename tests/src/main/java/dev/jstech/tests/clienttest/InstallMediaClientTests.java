@@ -15,6 +15,7 @@ import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.client.os.EditorApp;
 import dev.jstech.computers.client.os.FilesApp;
 import dev.jstech.computers.operation.payload.InstallFromMediaPayload;
+import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
@@ -139,7 +140,7 @@ public final class InstallMediaClientTests {
                 // What the disc's setup.exe and This PC's Install button both send.
                 .then(SETTLE, () -> PacketDistributor.sendToServer(new InstallFromMediaPayload(
                         ctx.abs(COMPUTER), ctx.abs(DRIVE).asLong())))
-                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).windowFor("Setup") != null,
+                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).windowFor(WindowKeys.SETUP) != null,
                         SCREEN_WAIT, "the Setup window to open")
                 .thenScreenshot(2, "setup-copying")
                 .thenAssert(SETTLE, () -> !ctx.screen(DesktopScreen.class).launcherLabels().contains("Minesweeper"),
@@ -148,7 +149,7 @@ public final class InstallMediaClientTests {
                 .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).launcherLabels().contains("Minesweeper"),
                         20 * 25, "the program to be installed when Setup finishes")
                 .thenScreenshot(2, "setup-done")
-                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).windowFor("Setup") == null,
+                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).windowFor(WindowKeys.SETUP) == null,
                         20 * 5, "the Setup window to close on its own");
     }
 
@@ -225,7 +226,7 @@ public final class InstallMediaClientTests {
                         }, SCREEN_WAIT, "the explorer to list the disc's setup program")
                 .then(SETTLE, () -> ctx.assertTrue(app(ctx, "Files", FilesApp.class).open(setup),
                         "the explorer opens the setup program the way a double click does"))
-                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).windowFor("Setup") != null,
+                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).windowFor(WindowKeys.SETUP) != null,
                         SCREEN_WAIT, "the Setup window to open from the explorer")
                 .thenScreenshot(2, "setup-from-explorer");
     }

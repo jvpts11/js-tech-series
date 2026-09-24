@@ -87,7 +87,7 @@ public final class InteracTuiKeys implements TtyEditor.IKeys {
     @Override
     public void opened(final TtyEditor editor, final boolean existed) {
         if (!existed) {
-            editor.say(InteracTuiTexts.NO_NETWORK.with("interac"));
+            editor.say(InteracTuiTexts.NO_NETWORK.with(Text.literal("interac")));
             return;
         }
         caretOnThePickedRow(editor);

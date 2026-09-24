@@ -11,6 +11,7 @@ import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.CdeScheme;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.gui.layout.CdeStyleLayout;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -42,8 +43,6 @@ final class CdeColorPage implements IDesktopApp {
     private int left;
     private int top;
 
-    private static final String TITLE = "Style Manager - Color";
-
     /** The palettes by name, in the order the Style Manager lists them. */
     private static final List<String> NAMES = names();
 
@@ -67,7 +66,7 @@ final class CdeColorPage implements IDesktopApp {
 
     @Override
     public String title() {
-        return TITLE;
+        return GameText.resolve(CdeStyleTitles.COLOR_PAGE);
     }
 
     @Override

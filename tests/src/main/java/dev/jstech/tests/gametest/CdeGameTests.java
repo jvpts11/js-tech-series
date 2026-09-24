@@ -82,8 +82,8 @@ public final class CdeGameTests {
                         && spec.platforms().contains(Platform.FREEBSD) && spec.platforms().contains(Platform.LINUX)
                         && !spec.platforms().contains(Platform.FRAMES),
                 "it runs on every Unix family and on nothing else: " + (spec == null ? "none" : spec.platforms()));
-        helper.assertTrue("File Manager".equals(desktop.nameOf(OsRegistry.getProgram(jsc("files"))))
-                        && "Style Manager".equals(desktop.nameOf(OsRegistry.getProgram(jsc("settings")))),
+        helper.assertTrue("File Manager".equals(desktop.nameOf(OsRegistry.getProgram(jsc("files"))).english())
+                        && "Style Manager".equals(desktop.nameOf(OsRegistry.getProgram(jsc("settings"))).english()),
                 "and it calls its programs what it always called them");
         final ProgramSpec plasma = OsRegistry.getProgram(jsc("kde_plasma"));
         helper.assertFalse(plasma.platforms().contains(Platform.UNIX), "no later desktop runs on UNIX");
@@ -186,10 +186,10 @@ public final class CdeGameTests {
                 "the panel offers exactly the workspaces a window can be on");
         final int oneAndFour = WorkspaceSet.only(0) | WorkspaceSet.only(3);
         final List<OpenWindow> left = List.of(
-                new OpenWindow("File Manager", 40, 30, 200, 140, false, false, "", WorkspaceSet.only(0)),
-                new OpenWindow("Text Editor", 60, 50, 180, 120, false, false, "", WorkspaceSet.only(2)),
-                new OpenWindow("Terminal", 20, 20, 220, 140, false, false, "", WorkspaceSet.EVERY),
-                new OpenWindow("Calculator", 30, 30, 120, 140, true, false, "", oneAndFour));
+                new OpenWindow("jsc:files", 40, 30, 200, 140, false, false, "", WorkspaceSet.only(0)),
+                new OpenWindow("jsc:editor", 60, 50, 180, 120, false, false, "", WorkspaceSet.only(2)),
+                new OpenWindow("jsc:command_prompt", 20, 20, 220, 140, false, false, "", WorkspaceSet.EVERY),
+                new OpenWindow("jsc:calculator", 30, 30, 120, 140, true, false, "", oneAndFour));
         machine.setOpenWindows(left);
         machine.setDesktopWorkspace(2);
 

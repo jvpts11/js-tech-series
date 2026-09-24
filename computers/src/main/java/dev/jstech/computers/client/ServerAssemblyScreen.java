@@ -74,8 +74,7 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
         JsTechTheme.window(g, x, y, imageWidth, imageHeight);
         JsTechTheme.headerBar(g, x + 6, y + 6, 232);
         // Name field background (the field itself is an EditBox drawn over this).
-        g.fill(x + 50, y + 7, x + 158, y + 19, 0xFF11161D);
-        g.fill(x + 50, y + 18, x + 158, y + 19, 0xFF24323C);
+        nameWell(g, x + 50, y + 7, x + 158);
 
         final ComputerBuild build = menu.currentBuild();
 

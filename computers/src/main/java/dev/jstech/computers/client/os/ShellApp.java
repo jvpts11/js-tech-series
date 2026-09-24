@@ -16,6 +16,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayDeque;
 import java.util.List;
 import net.minecraft.client.gui.Font;
@@ -71,11 +72,8 @@ public final class ShellApp implements IDesktopApp {
          * Frames 11 ships its own modern shell ("Megashell"); every other desktop names the window after its
          * native terminal (Konsole on KDE, Terminal on GNOME/Cinnamon, Command Prompt on the older Frames).
          */
-        if (chrome != null && chrome.panelStyle() == PanelStyle.FRAMES_11) {
-            this.title = "Megashell";
-        } else {
-            this.title = chrome != null && promptSpec != null ? chrome.nameOf(promptSpec) : "Command Prompt";
-        }
+        this.title = chrome != null && promptSpec != null ? GameText.resolve(chrome.launcherLabel(promptSpec))
+                : GameText.resolve(ShellAppTexts.TITLE);
         this.host = host;
         /*
          * A shell greets the player with the system it belongs to. On this family the desktop and the system are

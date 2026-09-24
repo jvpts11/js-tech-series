@@ -7,8 +7,12 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -20,6 +24,7 @@ import net.minecraft.client.gui.GuiGraphics;
  * <p>It is a list and nothing more: it knows where it is, what it holds and which entry a point is on. What an
  * entry does is the entry's own business, and when the menu opens and closes is the business of whoever owns it.
  */
+@PaletteHolder
 final class MotifMenu {
 
     /**
@@ -51,7 +56,9 @@ final class MotifMenu {
     private static final int LINE_H = 5;
     private static final int PAD = 3;
     private static final int KEYS_GAP = 12;
-    private static final int DIM_INK = 0xFF5A5E6C;
+    /** A disabled entry's ink, {@code jsc:desktop/motif_menu}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/motif_menu",
+            new Colours(0xFF5A5E6C));
 
     boolean isOpen() {
         return this.open;
@@ -139,11 +146,11 @@ final class MotifMenu {
             if (i == armed && entry.enabled()) {
                 MotifChrome.raised(g, this.x + PAD, top, this.w - PAD * 2, ROW_H, p.window(), p);
             }
-            final int ink = entry.enabled() ? p.ink() : DIM_INK;
+            final int ink = entry.enabled() ? p.ink() : PALETTE.get().dimInk();
             g.drawString(font, entry.label(), this.x + PAD * 2, top + 2, ink, false);
             if (!entry.keys().isEmpty()) {
                 final int keysW = Texts.smallWidth(font, entry.keys());
-                Texts.small(g, font, entry.keys(), this.x + this.w - PAD * 2 - keysW, top + 3, DIM_INK);
+                Texts.small(g, font, entry.keys(), this.x + this.w - PAD * 2 - keysW, top + 3, PALETTE.get().dimInk());
             }
             top += ROW_H;
         }
@@ -155,5 +162,9 @@ final class MotifMenu {
             h += entry.isLine() ? LINE_H : ROW_H;
         }
         return h;
+    }
+
+    /** A disabled entry's ink. */
+    private record Colours(int dimInk) {
     }
 }

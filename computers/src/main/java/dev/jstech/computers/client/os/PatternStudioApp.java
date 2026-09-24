@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.crafting.ProcessingPattern;
@@ -29,6 +30,9 @@ import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -112,6 +116,7 @@ import static dev.jstech.computers.client.os.PatternStudioScreenTexts.TO_ENCODER
  * <p>The content is a tree of the core's components, laid out every frame from the window's size; the app
  * keeps the draft state the server sends and the callbacks that send edits back.
  */
+@PaletteHolder
 public final class PatternStudioApp implements IInventoryBandApp {
 
     private static final int TAB_H = PatternStudioLayout.TAB_H;
@@ -133,7 +138,9 @@ public final class PatternStudioApp implements IInventoryBandApp {
     private static final int PROC_ROWS = PatternStudioLayout.PROC_ROWS;
     private static final int REFRESH_EVERY_FRAMES = 60;
     private static final int[] CHANCE_STEPS = {100, 75, 50, 25, 10};
-    private static final int ERROR_RED = 0xFFEF6A5A;
+    /** This app's own colours: the encoder's error indicator. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/pattern_studio",
+            new Colours(0xFFEF6A5A));
 
     /*
      * The player's inventory band under the editor: three rows, a gap, the hotbar, inside a frame. The desktop
@@ -426,7 +433,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
     @Override
     public String title() {
-        return "Pattern Studio";
+        return GameText.resolve(PatternStudioScreenTexts.TITLE);
     }
 
     @Override
@@ -984,7 +991,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
     private int encoderLine3Color() {
         final PatternStudioStatePayload.Encoder e = encoder();
-        return e != null && e.linked() && e.error() ? ERROR_RED : 0;
+        return e != null && e.linked() && e.error() ? PALETTE.get().encoderError() : 0;
     }
 
     private int encoderProgress() {
@@ -1469,5 +1476,9 @@ public final class PatternStudioApp implements IInventoryBandApp {
     /** Whether the inventory band was drawn on the last frame (a window tall enough to hold it). */
     public boolean bandShown() {
         return bandVisible(lastH);
+    }
+
+    /** This app's own colours: the encoder's error indicator. */
+    private record Colours(int encoderError) {
     }
 }

@@ -93,7 +93,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private static final int TEMPLATE_ROW_H = 28;
     private static final int RECENT_ROW_H = 19;
     private static final int MIN_CODE_H = 36;
-    private static final String KEY = "Virtual Studio";
+    /** The key the studio's window goes by, which is the program's id. */
+    private static final String KEY = "jsc:virtual_studio";
 
     /** Wide enough for the longest architecture name there is at three quarters of the font. */
     private static final int PLATFORM_BTN_W = 30;

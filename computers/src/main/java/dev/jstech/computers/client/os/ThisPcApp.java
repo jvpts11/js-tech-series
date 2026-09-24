@@ -310,7 +310,7 @@ public final class ThisPcApp implements IDesktopApp {
     }
 
     public ThisPcApp(final BlockPos host) {
-        this(host, "This PC");
+        this(host, GameText.resolve(ThisPcTexts.TITLE));
     }
 
     public ThisPcApp(final BlockPos host, final String title) {

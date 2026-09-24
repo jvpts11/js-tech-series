@@ -7,12 +7,21 @@
  */
 package dev.jstech.core.client.gui.hud;
 
+import dev.jstech.core.JsCore;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import java.util.Objects;
 
 /**
  * Immutable description of a mod toast notification (Operation complete, attack detected, robot stuck, etc.).
  */
+@PaletteHolder
 public record ToastData(String titleKey, String descriptionKey, Severity severity) {
+
+    /** The accent each severity is drawn with: blue, green, amber and red by default. */
+    private static final Palette<Accents> ACCENTS = Palettes.declare(JsCore.MODID, "gui/toast",
+            new Accents(0xFF4A90D9, 0xFF5CB85C, 0xFFF0AD4E, 0xFFD9534F));
 
     /**
      * Severity levels, ordered from least to most urgent.
@@ -51,11 +60,15 @@ public record ToastData(String titleKey, String descriptionKey, Severity severit
     }
 
     public int accentColor() {
+        final Accents accents = ACCENTS.get();
         return switch (severity) {
-            case INFO -> 0xFF4A90D9;     // blue
-            case SUCCESS -> 0xFF5CB85C;  // green
-            case WARNING -> 0xFFF0AD4E;  // amber
-            case CRITICAL -> 0xFFD9534F; // red
+            case INFO -> accents.info();
+            case SUCCESS -> accents.success();
+            case WARNING -> accents.warning();
+            case CRITICAL -> accents.critical();
         };
+    }
+
+    private record Accents(int info, int success, int warning, int critical) {
     }
 }

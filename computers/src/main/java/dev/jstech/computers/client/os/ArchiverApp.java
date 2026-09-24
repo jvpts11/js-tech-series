@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.ArchiveFilesPayload;
 import dev.jstech.computers.operation.payload.ExtractArchivePayload;
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
@@ -14,6 +15,9 @@ import dev.jstech.computers.os.fs.Archive;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import net.minecraft.client.gui.Font;
@@ -36,6 +40,7 @@ import java.util.Locale;
  * <p>The packing itself is the server's, because the space an archive saves has to be real. This window
  * chooses, asks, and shows what came back.
  */
+@PaletteHolder
 public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private static final int ROW_H = 11;
@@ -43,7 +48,9 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
     private static final int HEADER_H = 12;
     private static final int STATUS_H = 11;
     private static final int MARGIN = 4;
-    private static final int SAVED_GOOD = 0xFF1C7A32;
+    /** 67ark's own colour, {@code jsc:app/archiver}: the status line when it reports a space saving. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/archiver",
+            new Colours(0xFF1C7A32));
 
     /** Which of the two jobs this window is doing. */
     private enum Mode { LIST, BUILD }
@@ -452,12 +459,12 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
     private void drawStatus(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
         g.fill(x, y, x + width, y + STATUS_H, skin.windowBg());
         g.drawString(font, font.plainSubstrByWidth(GameText.resolve(status), width - MARGIN * 2 - 70), x + MARGIN,
-                y + 2, statusGood ? SAVED_GOOD : skin.dim(), false);
+                y + 2, statusGood ? PALETTE.get().savedGood() : skin.dim(), false);
         if (mode == Mode.LIST && originalBytes > 0) {
             // What the archive is for, said as one number: how much of the disk it handed back.
             final long saved = 100L - Math.min(100L, (long) packedBytes * 100L / originalBytes);
             right(g, font, GameText.resolve(ArchiverTexts.PERCENT_SAVED.with(saved)), x + width - MARGIN, y + 2,
-                    SAVED_GOOD);
+                    PALETTE.get().savedGood());
         }
     }
 
@@ -518,5 +525,9 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
         }
         this.scroll = Math.max(0, scroll - (int) Math.signum(delta));
         return true;
+    }
+
+    /** 67ark's colour: the status line's ink when it reports a space saving. */
+    private record Colours(int savedGood) {
     }
 }

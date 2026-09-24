@@ -7,11 +7,15 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.edit.CodeRuns;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.os.edit.TtyLook;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.logic.TextDocument;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import java.util.ArrayList;
@@ -31,11 +35,16 @@ import net.minecraft.network.chat.Style;
  * <p>What the keys mean is somebody else's answer. This holds the text, the view and the message line,
  * and the editors that use it differ only in how they read a keyboard and in what they keep round the text.
  */
+@PaletteHolder
 public final class TtyEditor {
 
     /** How far apart the rows are unless the terminal that was taken says otherwise. */
     private static final int LINE_H = 9;
     private static final int PAD = 3;
+
+    /** This editor's own colours, {@code jsc:editor/tty}: the caret block over the line. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "editor/tty",
+            new Colours(0x66CDD6E2));
 
     /** How wide the glass is taken to be until one has been drawn, which is what a terminal held. */
     private static final int DEFAULT_COLUMNS = 80;
@@ -354,7 +363,7 @@ public final class TtyEditor {
                 final String line = this.doc.line(i);
                 final int col = Math.min(this.doc.cursorCol(), line.length());
                 final int cx = startX + font.width(line.substring(0, col));
-                g.fill(cx, ry - 1, cx + font.width("m"), ry + LINE_H - 1, 0x66CDD6E2);
+                g.fill(cx, ry - 1, cx + font.width("m"), ry + LINE_H - 1, PALETTE.get().caret());
             }
             ry += this.lineH;
         }
@@ -521,5 +530,9 @@ public final class TtyEditor {
     public boolean scrolled(final double delta) {
         this.scroll = Math.max(0, this.scroll - (int) Math.signum(delta) * 3);
         return true;
+    }
+
+    /** This editor's colours: the caret block drawn over the line. */
+    private record Colours(int caret) {
     }
 }

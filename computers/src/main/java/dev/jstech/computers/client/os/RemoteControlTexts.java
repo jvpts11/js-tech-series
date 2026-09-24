@@ -18,6 +18,7 @@ import dev.jstech.core.text.TextKey;
 @TextHolder
 final class RemoteControlTexts {
 
+    static final TextKey TITLE = TextKey.of("jsc.remote_control.title", "Remote Control");
     static final TextKey MACHINES = TextKey.of("jsc.remote_control.machines", "Machines on this network");
     static final TextKey NONE_REACHABLE =
             TextKey.of("jsc.remote_control.none_reachable", "No other machine is reachable.");

@@ -173,9 +173,21 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the Industrial machines' screens draw their colours from palettes a resource pack can recolour (`jsc:app/*`,
   `jsc:game/*`, `jsc:desktop/*`, `jsc:boot/system`, `jsc:screen/crafting_switch`, `jsindustrial:machine/screen`).
 - The NMS, Setup, Messenger, Files, Knot, Storage Insights, the Gateway, Cluster, Automation and Craft Planner
-  managers, the Frames Recycle Bin's task pane, the code editors and their highlighting, the shell view's tags and the Operation
-  types' colours are palettes a resource pack can recolour (`jsc:app/*`, `jsc:editor/*`, `jsc:desktop/shell_view`,
-  `jsc:operation/types`).
+  managers, the Frames Recycle Bin's task pane, the code editors and their highlighting, the shell view's tags and
+  the Operation types' colours are palettes a resource pack can recolour (`jsc:app/*`, `jsc:editor/*`,
+  `jsc:desktop/shell_view`, `jsc:operation/types`).
+- Every colour left in the code is now a palette a resource pack can recolour: the toolkit's components, widgets
+  and dialogs (`jscore:gui/*`), the green of a Vintage tube (`jscore:gui/phosphor`), the toasts' accents
+  (`jscore:gui/toast`), the assembly screens' name field, the terminal's popups, the boot menus, the query and code
+  editors, Paint, the Style Manager, the System Monitor and the rest of the desktops' windows and programs. Only the
+  colours an image file stores stay in the code, since they are the file's and not the look's.
+- Every word a player reads is translatable: the dialog buttons, the search field, CDE's Front Panel, the default
+  name of a new file or folder, the Application Manager, and what each desktop calls the programs it bundles, so a
+  Text Editor or a System Settings reads in the player's language while Dolphin, Kate and Nemo keep their names.
+  Launchers and window titles show a program's name in the player's language.
+- A desktop's windows are known by the program they belong to rather than by the name they show, so a machine's
+  layout comes back the same whatever desktop or language it is looked at under, and the Task Manager and the
+  System Monitor list each window by the name the desktop gives its program.
 
 ### Fixed
 - Saving an IQL file from the Network Management Studio to a full disk no longer fails to send its answer: the

@@ -178,7 +178,7 @@ public enum SettingKey {
             return null;
         }
         try {
-            return 0xFF000000 | Integer.parseInt(hex, 16);
+            return 0xFF << 24 | Integer.parseInt(hex, 16);
         } catch (final NumberFormatException e) {
             return null;
         }

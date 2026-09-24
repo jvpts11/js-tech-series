@@ -310,7 +310,7 @@ public final class IqlService {
             case "status", "" -> ICliComputer.OpResult.ok(STATUS.with(this.stateText()));
             // The verbs are what is typed, so they are written as typed in every language.
             default -> ICliComputer.OpResult.fail(
-                    CliTexts.USAGE.with("iqlengine", Text.literal("install|start|stop|status")));
+                    CliTexts.USAGE.with(Text.literal("iqlengine"), Text.literal("install|start|stop|status")));
         };
     }
 

@@ -15,6 +15,7 @@ import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -64,11 +65,12 @@ public final class QuestionPopup extends Popup {
             this.lines.add(add(new Label(line)));
         }
         if (yes == null) {
-            this.first = add(new Button("OK", this::close).setPrimary(true));
+            this.first = add(new Button(GameText.resolve(DesktopTexts.QUESTION_OK), this::close).setPrimary(true));
             this.second = null;
         } else {
-            this.first = add(new Button("Yes", this::answerYes).setPrimary(true));
-            this.second = add(new Button("No", this::close));
+            this.first = add(new Button(GameText.resolve(DesktopTexts.QUESTION_YES), this::answerYes)
+                    .setPrimary(true));
+            this.second = add(new Button(GameText.resolve(DesktopTexts.QUESTION_NO), this::close));
         }
         final int bodyH = PADDING + Math.max(ICON, wrapped.size() * LINE_H) + PADDING + BTN_H + PADDING;
         setPreferredSize(WIDTH, TITLE_H + bodyH);

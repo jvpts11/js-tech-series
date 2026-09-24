@@ -15,6 +15,7 @@ import dev.jstech.computers.program.ThemePreset;
 import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
@@ -197,7 +198,7 @@ public final class MachineConfigService {
             }
         }
         if (path.isEmpty()) {
-            return ICliComputer.OpResult.fail(CliTexts.USAGE.with("config share", SHARE_USAGE));
+            return ICliComputer.OpResult.fail(CliTexts.USAGE.with(Text.literal("config share"), SHARE_USAGE));
         }
         final ICliComputer.OpResult folder = this.files.folderForShare(path);
         if (!folder.ok()) {

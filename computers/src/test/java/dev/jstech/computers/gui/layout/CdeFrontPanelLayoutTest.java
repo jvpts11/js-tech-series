@@ -87,8 +87,8 @@ class CdeFrontPanelLayoutTest {
     void everyControl_hasANameOfItsOwn() {
         final Set<String> tips = new HashSet<>();
         for (final Control control : Control.values()) {
-            assertFalse(control.tip().isBlank(), control.name());
-            assertTrue(tips.add(control.tip()), control + " shares its name");
+            assertFalse(control.tip().english().isBlank(), control.name());
+            assertTrue(tips.add(control.tip().english()), control + " shares its name");
         }
     }
 

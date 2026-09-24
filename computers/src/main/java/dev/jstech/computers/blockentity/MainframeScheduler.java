@@ -18,6 +18,8 @@ import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.operation.OperationStatistics;
 import dev.jstech.core.operation.exec.QueueArbiter;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
  * its queue count from it, and hands finished Operations back to it for the log. It is a piece of that machine
  * rather than a thing of its own, which is why it takes the machine rather than a set of numbers.
  */
+@TextHolder
 final class MainframeScheduler {
 
     /** The two things counted per Operation: the ticks it waited, and the ticks it actually ran. */
@@ -61,6 +64,15 @@ final class MainframeScheduler {
 
     /** Where an Operation's saved state keeps who asked for it. */
     private static final String REQUESTED_BY = "RequestedBy";
+
+    /** An Operation settled short: it delivered part of what was requested. */
+    private static final TextKey SETTLED_PARTIAL = TextKey.of("jsc.operation.failure.settled_partial",
+            "delivered %s of %s");
+    /** An Operation settled after waiting out its timeout on a resource somebody else was holding. */
+    private static final TextKey SETTLED_RESOURCE_LOCKED = TextKey.of("jsc.operation.failure.settled_resource_locked",
+            "timed out waiting on a locked resource");
+    /** An Operation settled with none of the above, and said nothing more about why. */
+    private static final TextKey SETTLED_FAILED = TextKey.of("jsc.operation.failure.settled_failed", "failed");
 
     private final MainframeBlockEntity mainframe;
 
@@ -546,11 +558,15 @@ final class MainframeScheduler {
         }
     }
 
+    /*
+     * The reason travels on a lifecycle event other code reads and records, so it is kept in the English the key
+     * was declared with rather than in whatever language this side of the game has loaded.
+     */
     private static String settleReason(final OperationRecord record) {
         return switch (record.status()) {
-            case OperationRecord.STATUS_PARTIAL -> "delivered " + record.moved() + " of " + record.requested();
-            case OperationRecord.STATUS_RESOURCE_LOCKED -> "timed out waiting on a locked resource";
-            default -> "failed";
+            case OperationRecord.STATUS_PARTIAL -> SETTLED_PARTIAL.with(record.moved(), record.requested()).english();
+            case OperationRecord.STATUS_RESOURCE_LOCKED -> SETTLED_RESOURCE_LOCKED.text().english();
+            default -> SETTLED_FAILED.text().english();
         };
     }
 

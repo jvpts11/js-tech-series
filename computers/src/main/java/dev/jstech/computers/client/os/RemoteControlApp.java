@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.RemoteControlPayload;
 import dev.jstech.computers.operation.payload.RemoteHostsPayload;
 import dev.jstech.core.client.gui.component.Button;
@@ -14,6 +15,9 @@ import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -28,12 +32,14 @@ import java.util.List;
  * session (POST, firmware, terminal or full desktop) on this monitor. The shell route is {@code ssh}; this
  * is the same reach for players who would rather point and click.
  */
+@PaletteHolder
 public final class RemoteControlApp implements IDesktopApp {
 
     private static final int ROW_H = 22;
     private static final int REFRESH_FRAMES = 60;
-    private static final int C_UP = 0xFF3FA34D;
-    private static final int C_DOWN = 0xFFC04A3E;
+    /** This app's own colours: a reachable host up or down. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/remote_control",
+            new Colours(0xFF3FA34D, 0xFFC04A3E));
 
     private final BlockPos host;
     private final BlockPos monitorPos;
@@ -96,7 +102,7 @@ public final class RemoteControlApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Remote Control";
+        return GameText.resolve(RemoteControlTexts.TITLE);
     }
 
     @Override
@@ -150,7 +156,8 @@ public final class RemoteControlApp implements IDesktopApp {
                 : RemoteControlTexts.KIND_AND_SYSTEM.with(entry.type(), entry.os()));
         g.drawString(font, detail, x + 4, y + 12, ctx.skin().dim(), false);
         final String state = GameText.resolve(entry.running() ? RemoteControlTexts.UP : RemoteControlTexts.OFF);
-        g.drawString(font, state, x + w - 4 - font.width(state), y + 7, entry.running() ? C_UP : C_DOWN, false);
+        final Colours c = PALETTE.get();
+        g.drawString(font, state, x + w - 4 - font.width(state), y + 7, entry.running() ? c.up() : c.down(), false);
     }
 
     @Override
@@ -166,5 +173,9 @@ public final class RemoteControlApp implements IDesktopApp {
     @Override
     public boolean mouseScrolled(final double delta) {
         return root.mouseScrolled(lastMouseX, lastMouseY, delta);
+    }
+
+    /** This app's own colours: a reachable host's state. */
+    private record Colours(int up, int down) {
     }
 }

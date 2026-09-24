@@ -8,6 +8,7 @@
 package dev.jstech.computers.gui.layout;
 
 import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.text.TextKey;
 
 /**
  * Where CDE's Front Panel puts things: a raised slab at the bottom centre of the desktop, controls either side
@@ -21,18 +22,20 @@ public final class CdeFrontPanelLayout {
 
     /** The controls, left to right, with the switch standing between the fourth and the fifth, the trash last. */
     public enum Control {
-        CLOCK(0, "Clock"), DATE(1, "Calendar"), FILES(2, "File Manager"), EDITOR(3, "Text Editor"),
-        STYLE(4, "Style Manager"), APPLICATIONS(5, "Applications"), TRASH(6, "Trash Can"),
+        CLOCK(0, CdeFrontPanelTexts.CLOCK), DATE(1, CdeFrontPanelTexts.CALENDAR),
+        FILES(2, CdeFrontPanelTexts.FILE_MANAGER), EDITOR(3, CdeFrontPanelTexts.TEXT_EDITOR),
+        STYLE(4, CdeFrontPanelTexts.STYLE_MANAGER), APPLICATIONS(5, CdeFrontPanelTexts.APPLICATIONS),
+        TRASH(6, CdeFrontPanelTexts.TRASH_CAN),
         /* The control that was held back until there was a viewer for it to open, which there now is. */
-        HELP(7, "Help Viewer");
+        HELP(7, CdeFrontPanelTexts.HELP_VIEWER);
 
         /** Its place along the panel, counted from the left and said outright rather than read off the order. */
         private final int place;
 
         /** What resting the pointer on it says, since the panel is pictures and nothing else. */
-        private final String tip;
+        private final TextKey tip;
 
-        Control(final int place, final String tip) {
+        Control(final int place, final TextKey tip) {
             this.place = place;
             this.tip = tip;
         }
@@ -41,7 +44,7 @@ public final class CdeFrontPanelLayout {
             return this.place;
         }
 
-        public String tip() {
+        public TextKey tip() {
             return this.tip;
         }
 

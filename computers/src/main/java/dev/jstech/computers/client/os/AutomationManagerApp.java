@@ -185,7 +185,7 @@ public final class AutomationManagerApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Automation Manager";
+        return GameText.resolve(AutomationManagerTexts.TITLE);
     }
 
     @Override
@@ -374,7 +374,8 @@ public final class AutomationManagerApp implements IDesktopApp {
                 y + 3, j.paused() ? PALETTE.get().warn() : PALETTE.get().good(), false);
         // Pause/resume + delete glyphs.
         g.drawString(font, j.paused() ? ">" : "=", x + w - 22, y + 3, ctx.skin().text(), false);
-        g.drawString(font, "x", x + w - 10, y + 3, PALETTE.get().delete(), false);
+        g.drawString(font, GameText.resolve(AutomationManagerTexts.DELETE_MARK), x + w - 10, y + 3,
+                PALETTE.get().delete(), false);
     }
 
     private void jobClicked(final int index, final int button, final double mx, final double my) {

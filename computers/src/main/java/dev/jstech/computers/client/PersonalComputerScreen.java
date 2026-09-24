@@ -58,8 +58,7 @@ public class PersonalComputerScreen extends AbstractAssemblyScreen<PersonalCompu
         JsTechTheme.window(g, x, y, imageWidth, imageHeight);
         JsTechTheme.headerBar(g, x + 6, y + 6, 232);
         // Name field background (the EditBox is drawn over this).
-        g.fill(x + 26, y + 7, x + 158, y + 19, 0xFF11161D);
-        g.fill(x + 26, y + 18, x + 158, y + 19, 0xFF24323C);
+        nameWell(g, x + 26, y + 7, x + 158);
         JsTechTheme.vLine(g, x + COL_R - 5, y + 24, 108);
 
         JsTechTheme.slot(g, x + 8, y + 40);  // motherboard

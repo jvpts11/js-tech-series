@@ -332,7 +332,7 @@ public final class ClusterManagerApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Cluster Manager";
+        return GameText.resolve(ClusterManagerAppTexts.TITLE);
     }
 
     // Wide enough for the three footer actions to read unclipped beside the cluster list.

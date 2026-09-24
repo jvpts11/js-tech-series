@@ -40,7 +40,7 @@ public final class TextShadow {
         final int r = between((text >> 16) & 0xFF, (ground >> 16) & 0xFF);
         final int g = between((text >> 8) & 0xFF, (ground >> 8) & 0xFF);
         final int b = between(text & 0xFF, ground & 0xFF);
-        return (text & 0xFF000000) | (r << 16) | (g << 8) | b;
+        return text >>> 24 << 24 | (r << 16) | (g << 8) | b;
     }
 
     private static int between(final int letter, final int ground) {

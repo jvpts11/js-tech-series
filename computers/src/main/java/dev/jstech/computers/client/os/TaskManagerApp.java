@@ -272,9 +272,9 @@ public final class TaskManagerApp implements IDesktopApp {
     @Override
     public String title() {
         return switch (form) {
-            case CLOSE_BOX -> "Close Program";
-            case PLASMA, GNOME -> "System Monitor";
-            default -> "Task Manager";
+            case CLOSE_BOX -> GameText.resolve(TaskManagerTexts.TITLE_CLOSE_PROGRAM);
+            case PLASMA, GNOME -> GameText.resolve(TaskManagerTexts.TITLE_SYSTEM_MONITOR);
+            default -> GameText.resolve(TaskManagerTexts.TITLE);
         };
     }
 
@@ -730,13 +730,13 @@ public final class TaskManagerApp implements IDesktopApp {
                 final String cpu = cpuOf(use) + "%";
                 final int cpuW = Texts.smallWidth(font, cpu);
                 final String kind = kindLabel(use.kind());
-                Texts.small(g, font, Texts.clip(font, use.label(), w - mbW - cpuW - 62), x + 1, ry + 2, text);
+                Texts.small(g, font, Texts.clip(font, shownName(use), w - mbW - cpuW - 62), x + 1, ry + 2, text);
                 Texts.small(g, font, kind, x + w - mbW - cpuW - 52, ry + 2, dim);
                 Texts.small(g, font, cpu, x + w - mbW - cpuW - 6, ry + 2, dim);
                 Texts.small(g, font, mb, x + w - mbW - 1, ry + 2, dim);
             } else {
                 // The task list has only the two columns its own manager had, at the header's own offsets.
-                Texts.small(g, font, Texts.clip(font, use.label(), w - 54), x + 1, ry + 2, text);
+                Texts.small(g, font, Texts.clip(font, shownName(use), w - 54), x + 1, ry + 2, text);
                 Texts.small(g, font, GameText.resolve(TaskManagerTexts.RUNNING), x + w - 48, ry + 2, dim);
             }
         }
@@ -757,6 +757,11 @@ public final class TaskManagerApp implements IDesktopApp {
     @Nullable
     private static RamLedger.Kind kindOf(final RamUse use) {
         return RamLedger.Kind.find(use.kind());
+    }
+
+    /** What a row reads as: a window by the name the desktop gives its program, anything else as the ledger has it. */
+    private static String shownName(final RamUse use) {
+        return kindOf(use) == RamLedger.Kind.WINDOW ? DesktopScreen.windowName(use.label()) : use.label();
     }
 
     private static String kindLabel(final String kind) {

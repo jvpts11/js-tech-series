@@ -140,7 +140,7 @@ public final class KvmChannelScreen extends AbstractComputerScreen<MonitorSessio
             }
             JsTechTheme.text(g, font, GameText.resolve(MonitorScreenTexts.KVM_KEY.with(i + 1)), x + PAD + 8, rowY + 6,
                     active ? JsTechTheme.accent() : JsTechTheme.dim());
-            JsTechTheme.text(g, font, channel.name(), x + PAD + 34, rowY + 6, JsTechTheme.text());
+            JsTechTheme.text(g, font, GameText.resolve(channel.name()), x + PAD + 34, rowY + 6, JsTechTheme.text());
             final String state = GameText.resolve(
                     channel.running() ? MonitorScreenTexts.KVM_ONLINE : MonitorScreenTexts.KVM_OFF);
             JsTechTheme.text(g, font, state, x + W - PAD - 8 - font.width(state), rowY + 6,

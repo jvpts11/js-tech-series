@@ -155,11 +155,11 @@ final class CdeLaunchers {
     }
 
     private static String heading(final Control control) {
-        return switch (control) {
-            case FILES -> "Files";
-            case EDITOR -> "Personal Applications";
-            default -> "Applications";
-        };
+        return GameText.resolve(switch (control) {
+            case FILES -> CdeLaunchersTexts.FILES_HEADING;
+            case EDITOR -> CdeLaunchersTexts.EDITOR_HEADING;
+            default -> CdeLaunchersTexts.APPLICATIONS_HEADING;
+        });
     }
 
     /** What the subpanel that is up lists; a program this machine does not have is left out. */
@@ -167,8 +167,10 @@ final class CdeLaunchers {
         final List<Row> out = new ArrayList<>();
         if (this.open == Control.FILES) {
             final ResourceLocation files = iconOf("files");
-            out.add(new Row("Home", files, () -> desktop.openFolder(desktop.homeDir())));
-            out.add(new Row("Desktop", files, () -> desktop.openFolder(desktop.desktopDirectory())));
+            out.add(new Row(GameText.resolve(CdeLaunchersTexts.HOME_ROW), files,
+                    () -> desktop.openFolder(desktop.homeDir())));
+            out.add(new Row(GameText.resolve(CdeLaunchersTexts.DESKTOP_ROW), files,
+                    () -> desktop.openFolder(desktop.desktopDirectory())));
             for (final DiskFilesPayload.WireVolume medium : desktop.media()) {
                 out.add(new Row(GameText.resolve(medium.label()), files, () -> desktop.openFolder(medium.key())));
             }
@@ -177,7 +179,7 @@ final class CdeLaunchers {
             program(out, "command_prompt");
             program(out, "calculator");
         } else if (this.open == Control.APPLICATIONS) {
-            out.add(new Row(ApplicationManagerApp.KEY, APPLICATION_MANAGER,
+            out.add(new Row(GameText.resolve(ApplicationManagerTexts.NAME), APPLICATION_MANAGER,
                     () -> desktop.openApplicationManager(null)));
             program(out, "system_monitor");
             program(out, "workstation_info");

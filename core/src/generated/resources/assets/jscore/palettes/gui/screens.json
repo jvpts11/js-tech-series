@@ -1,0 +1,9 @@
+{
+  "containerGround": "#F0202020",
+  "dialogDim": "#90000000",
+  "dialogMessage": "#FFBBBBBB",
+  "dialogTitle": "#FFFFFFFF",
+  "tabActive": "#FF3A3A3A",
+  "tabIdle": "#FF1E1E1E",
+  "tabText": "#FFFFFFFF"
+}

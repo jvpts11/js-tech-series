@@ -66,11 +66,12 @@ public final class ModalDialog extends Screen {
             final float partialTick) {
         this.renderBackground(graphics, mouseX, mouseY, partialTick);
         // Dim the parent further with a translucent overlay.
-        graphics.fill(0, 0, this.width, this.height, 0x90000000);
+        final ScreenPalette.Colours colours = ScreenPalette.get();
+        graphics.fill(0, 0, this.width, this.height, colours.dialogDim());
         graphics.drawCenteredString(
-                this.font, this.title, this.width / 2, this.height / 2 - 30, 0xFFFFFFFF);
+                this.font, this.title, this.width / 2, this.height / 2 - 30, colours.dialogTitle());
         graphics.drawCenteredString(
-                this.font, this.message, this.width / 2, this.height / 2 - 10, 0xFFBBBBBB);
+                this.font, this.message, this.width / 2, this.height / 2 - 10, colours.dialogMessage());
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 

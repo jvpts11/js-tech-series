@@ -112,6 +112,22 @@ final class DesktopTexts {
     static final TextKey OFFICE = TextKey.of("jsc.desktop.start.office", "Office");
     static final TextKey PREFERENCES = TextKey.of("jsc.desktop.start.preferences", "Preferences");
 
+    // A question over the whole desktop, and a note closed with OK.
+    static final TextKey QUESTION_OK = TextKey.of("jsc.desktop.question.ok", "OK");
+    static final TextKey QUESTION_YES = TextKey.of("jsc.desktop.question.yes", "Yes");
+    static final TextKey QUESTION_NO = TextKey.of("jsc.desktop.question.no", "No");
+
+    /*
+     * What a new file or folder is called until the player names it, in the player's language, the way every
+     * desktop names one. Once made, the name is the file's own and stays as it was made.
+     */
+    static final TextKey NEW_FILE = TextKey.of("jsc.desktop.new_file", "New File");
+    static final TextKey NEW_FOLDER = TextKey.of("jsc.desktop.new_folder", "New Folder");
+    static final TextKey NEW_FOLDER_NUMBERED = TextKey.of("jsc.desktop.new_folder_numbered", "New Folder (%s)");
+
+    /** The plain editor, as a menu that offers programs to open a file with names it. */
+    static final TextKey EDITOR = TextKey.of("jsc.desktop.editor", "Editor");
+
     private DesktopTexts() {
     }
 }

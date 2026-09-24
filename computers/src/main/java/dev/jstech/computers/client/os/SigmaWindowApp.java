@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.gui.layout.UiLayout;
 import dev.jstech.computers.operation.payload.UiEventPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -159,7 +160,7 @@ public final class SigmaWindowApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return this.state.title().isEmpty() ? "Window" : this.state.title();
+        return this.state.title().isEmpty() ? GameText.resolve(SigmaWindowTexts.DEFAULT_TITLE) : this.state.title();
     }
 
     @Override
@@ -376,7 +377,7 @@ public final class SigmaWindowApp implements IDesktopApp {
     };
 
     private static int paint(final int colour) {
-        return 0xFF000000 | PALETTE[Math.floorMod(colour, PALETTE.length)];
+        return 0xFF << 24 | PALETTE[Math.floorMod(colour, PALETTE.length)];
     }
 
     /* A line of single pixels, since the screen has no line of its own to draw with. */

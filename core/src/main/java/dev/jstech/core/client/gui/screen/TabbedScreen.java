@@ -81,15 +81,15 @@ public abstract class TabbedScreen extends CoreScreen {
         for (int i = 0; i < tabs.size(); i++) {
             final int tabX = i * tabWidth;
             final boolean active = i == activeTabIndex;
-            // Background tint: brighter for the active tab. ARGB colors.
-            final int bg = active ? 0xFF3A3A3A : 0xFF1E1E1E;
+            // Background tint: brighter for the active tab.
+            final int bg = active ? ScreenPalette.get().tabActive() : ScreenPalette.get().tabIdle();
             graphics.fill(tabX, 0, tabX + tabWidth, tabBarHeight, bg);
             graphics.drawCenteredString(
                     this.font,
                     tabs.get(i).title(),
                     tabX + tabWidth / 2,
                     (tabBarHeight - this.font.lineHeight) / 2,
-                    0xFFFFFFFF);
+                    ScreenPalette.get().tabText());
         }
     }
 

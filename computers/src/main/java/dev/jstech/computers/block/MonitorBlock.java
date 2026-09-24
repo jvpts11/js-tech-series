@@ -494,7 +494,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
             final ItemStack stack = rack.getServers().getStackInSlot(slot);
             final String custom = ServerItem.customName(stack);
             channels.add(new OpenKvmPayload.Channel(slot,
-                    custom.isEmpty() ? "bay " + (slot + 1) + "U" : custom,
+                    custom.isEmpty() ? MonitorTexts.KVM_BAY.with(slot + 1) : Text.literal(custom),
                     rack.bayPowerOn(slot)
                             && ServerItem.build(stack) != null));
         }

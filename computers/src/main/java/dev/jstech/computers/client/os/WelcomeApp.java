@@ -81,10 +81,11 @@ public final class WelcomeApp implements IDesktopApp {
     @Override
     public String title() {
         if (this.skin.form() == OsSkin.Form.FLAT) {
-            return "Get started";
+            return GameText.resolve(WelcomeTexts.TITLE_GET_STARTED);
         }
         return this.facts == null || this.facts.systemName().isEmpty()
-                ? "Welcome" : "Welcome to " + this.facts.systemName();
+                ? GameText.resolve(WelcomeTexts.TITLE)
+                : GameText.resolve(WelcomeTexts.WELCOME_TO.with(this.facts.systemName()));
     }
 
     @Override

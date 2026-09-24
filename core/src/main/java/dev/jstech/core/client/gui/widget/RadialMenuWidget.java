@@ -85,7 +85,8 @@ public final class RadialMenuWidget extends AbstractWidget {
             // Convert back to screen coords: x = sin(a), y = -cos(a).
             final int lx = centerX() + (int) Math.round(Math.sin(midAngle) * labelRadius);
             final int ly = centerY() - (int) Math.round(Math.cos(midAngle) * labelRadius);
-            final int color = (i == selectedSegment) ? 0xFFFFFF00 : 0xFFFFFFFF;
+            final int color = (i == selectedSegment) ? WidgetPalette.get().radialChosen()
+                    : WidgetPalette.get().radialLabel();
             graphics.drawCenteredString(
                     Minecraft.getInstance().font,
                     segmentLabels.get(i),

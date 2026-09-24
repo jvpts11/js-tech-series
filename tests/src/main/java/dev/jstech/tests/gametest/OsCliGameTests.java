@@ -1278,8 +1278,8 @@ public final class OsCliGameTests {
         final MainframeBlockEntity mainframe = placeMainframeWithOs(helper, pos,
                 ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "ubuntu"));
         final java.util.List<dev.jstech.computers.os.OpenWindow> layout = java.util.List.of(
-                new dev.jstech.computers.os.OpenWindow("Files", 40, 30, 200, 140, false, false),
-                new dev.jstech.computers.os.OpenWindow("Editor", 60, 50, 180, 120, true, false));
+                new dev.jstech.computers.os.OpenWindow("jsc:files", 40, 30, 200, 140, false, false),
+                new dev.jstech.computers.os.OpenWindow("jsc:editor", 60, 50, 180, 120, true, false));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     mainframe.setNeedsPost(false);

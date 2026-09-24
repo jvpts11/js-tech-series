@@ -7,8 +7,12 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.TaskbarGroups;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
  * pinned it, which program the cursor is over and since when. Every rectangle it draws is the rectangle
  * the clicks are tested against, so the card a player sees and the card they hit are the same box.
  */
+@PaletteHolder
 final class TaskPopup {
 
     /** The program whose windows are showing, or null while nothing is. */
@@ -69,6 +74,10 @@ final class TaskPopup {
     /** How long the cursor rests on a program before it opens, and how long it may be away before it shuts. */
     private static final long HOVER_MS = 350L;
     private static final long LEAVE_MS = 300L;
+
+    /** This popup's own colours, {@code jsc:desktop/task_popup}: a close mark under the cursor and its ink. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/task_popup",
+            new Colours(0xFFC04A3E, 0xFFFFFFFF));
 
     private final DesktopScreen desktop;
 
@@ -345,10 +354,10 @@ final class TaskPopup {
         }
         final boolean over = inRect(lmx, lmy, close);
         if (over) {
-            g.fill(close[0], close[1], close[0] + close[2], close[1] + close[3], 0xFFC04A3E);
+            g.fill(close[0], close[1], close[0] + close[2], close[1] + close[3], PALETTE.get().closeHover());
         }
         g.drawString(desktop.textFont(), "x", close[0] + 2, close[1],
-                over ? 0xFFFFFFFF : skin.text(), false);
+                over ? PALETTE.get().closeHoverInk() : skin.text(), false);
     }
 
     /** The rows of a period panel: an icon and the window's title, dimmed while that window is put away. */
@@ -376,8 +385,8 @@ final class TaskPopup {
         if (inRect(lmx, lmy, all)) {
             g.fill(all[0], all[1], all[0] + all[2], all[1] + all[3], skin.listHover());
         }
-        g.drawString(desktop.textFont(), GameText.resolve(PanelTexts.CLOSE_ALL), all[0] + 14, all[1] + 2, 0xFFC04A3E,
-                false);
+        g.drawString(desktop.textFont(), GameText.resolve(PanelTexts.CLOSE_ALL), all[0] + 14, all[1] + 2,
+                PALETTE.get().closeHover(), false);
     }
 
     /** A click landing inside the popup: a close box, a window, the Close all row, or nothing at all. */
@@ -409,5 +418,9 @@ final class TaskPopup {
 
     private static boolean inRect(final double mx, final double my, @Nullable final int[] r) {
         return r != null && mx >= r[0] && mx < r[0] + r[2] && my >= r[1] && my < r[1] + r[3];
+    }
+
+    /** This popup's colours: a close mark's hovered fill, and the ink drawn over that fill. */
+    private record Colours(int closeHover, int closeHoverInk) {
     }
 }

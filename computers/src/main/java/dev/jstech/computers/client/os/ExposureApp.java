@@ -13,6 +13,7 @@ import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.sigma.sem.IMemberSymbol;
 import dev.jstech.computers.sigma.sem.NamedType;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.os.edit.ProblemReport;
 import dev.jstech.core.client.gui.component.Button;
@@ -26,6 +27,9 @@ import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
@@ -49,7 +53,12 @@ import org.lwjgl.glfw.GLFW;
  * File menu, a folder is picked to work in, the right button on the code offers the clipboard and the
  * refactorings, and a program is built and run at the machine's terminal.
  */
+@PaletteHolder
 public final class ExposureApp implements IDesktopApp {
+
+    /** The problems table's ink for what the compiler said, {@code jsc:app/exposure}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/exposure",
+            new Colours(0xFFC0392B));
 
     private static final int TOOLBAR_H = 13;
     private static final int SIDE_W = 74;
@@ -67,7 +76,9 @@ public final class ExposureApp implements IDesktopApp {
     /** The problems table's columns: the file's name, then the line, then what was said. */
     private static final int NAME_W = 68;
     private static final int LINE_W = 26;
-    private static final String KEY = "Exposure";
+    /** What the program is called, and the key its window goes by, which is its id. */
+    private static final String NAME = "Exposure";
+    private static final String KEY = "jsc:exposure";
 
     /** One line of the outline: how deep it sits, what it says, and the line it stands on. */
     private record Outline(int depth, String label, int line) {
@@ -554,7 +565,7 @@ public final class ExposureApp implements IDesktopApp {
         g.drawString(font, where, x + NAME_W, y + 1, ctx.skin().dim(), false);
         final int textX = x + NAME_W + LINE_W;
         g.drawString(font, font.plainSubstrByWidth(GameText.resolve(row.complaint().message()),
-                width - (textX - x) - 2), textX, y + 1, 0xFFC0392B, false);
+                width - (textX - x) - 2), textX, y + 1, PALETTE.get().complaintInk(), false);
     }
 
     /** Clicking a row opens the file it is about and puts the caret where the compiler stopped. */
@@ -583,7 +594,7 @@ public final class ExposureApp implements IDesktopApp {
     @Override
     public String title() {
         final CodeWorkspace.Doc doc = this.workspace.current();
-        return doc == null ? KEY : doc.name() + (doc.dirty() ? " *" : "") + " - " + KEY;
+        return doc == null ? NAME : doc.name() + (doc.dirty() ? " *" : "") + " - " + NAME;
     }
 
     @Override
@@ -904,5 +915,9 @@ public final class ExposureApp implements IDesktopApp {
         if (!message.isEmpty()) {
             g.renderTooltip(font, Component.literal(message), mouseX, mouseY);
         }
+    }
+
+    /** The problems table's ink for what the compiler said. */
+    private record Colours(int complaintInk) {
     }
 }

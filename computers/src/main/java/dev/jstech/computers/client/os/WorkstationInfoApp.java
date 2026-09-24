@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.gui.layout.WorkstationInfoLayout;
@@ -14,6 +15,9 @@ import dev.jstech.computers.operation.payload.RequestWorkstationInfoPayload;
 import dev.jstech.computers.operation.payload.WorkstationInfoPayload;
 import dev.jstech.computers.os.WorkstationFacts;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +36,7 @@ import org.lwjgl.glfw.GLFW;
  * <p>Every figure is the machine's, asked for when the window opens and again every few seconds while it stays
  * open, so the memory in use, with the meter beside it, is always current.
  */
+@PaletteHolder
 public final class WorkstationInfoApp implements IDesktopApp {
 
     private final BlockPos host;
@@ -45,13 +50,12 @@ public final class WorkstationInfoApp implements IDesktopApp {
     private int left;
     private int top;
 
-    private static final String TITLE = "Workstation Info";
-
     /** How often an open window asks again, which is what keeps its memory figure current. */
     private static final long ASK_EVERY_MS = 2_000L;
 
-    /** The labels and the headings, a quieter ink than the facts beside them. */
-    private static final int LABEL_INK = 0xFF3A3D4A;
+    /** This window's own colours, {@code jsc:app/workstation_info}: the labels' and headings' quieter ink. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/workstation_info",
+            new Colours(0xFF3A3D4A));
     private static final String ELLIPSIS = "...";
 
     /** Every window of this kind that is up, so an answer from the machine reaches the one that asked. */
@@ -93,7 +97,7 @@ public final class WorkstationInfoApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return TITLE;
+        return GameText.resolve(WorkstationInfoTexts.TITLE);
     }
 
     @Override
@@ -186,14 +190,15 @@ public final class WorkstationInfoApp implements IDesktopApp {
         final Rect well = WorkstationInfoLayout.group(index);
         this.skin.panel(g, this.left + well.x(), this.top + well.y(), well.w(), well.h());
         Texts.small(g, font, GameText.resolve(group.title()).toUpperCase(Locale.ROOT),
-                this.left + WorkstationInfoLayout.innerX(), this.top + WorkstationInfoLayout.headY(index), LABEL_INK);
+                this.left + WorkstationInfoLayout.innerX(), this.top + WorkstationInfoLayout.headY(index),
+                PALETTE.get().labelInk());
         for (int r = 0; r < group.rows().size(); r++) {
             final WorkstationFacts.Row row = group.rows().get(r);
             final int rowY = this.top + WorkstationInfoLayout.rowY(index, r);
             final String label = GameText.resolve(row.label());
             Texts.small(g, font, label,
                     this.left + WorkstationInfoLayout.LABEL_RIGHT - Texts.smallWidth(font, label), rowY,
-                    LABEL_INK);
+                    PALETTE.get().labelInk());
             Texts.small(g, font, fit(font, GameText.resolve(row.value()), WorkstationInfoLayout.valueWidth()),
                     this.left + WorkstationInfoLayout.VALUE_X, rowY, p.ink());
             if (row.meter()) {
@@ -220,5 +225,9 @@ public final class WorkstationInfoApp implements IDesktopApp {
         }
         final int units = Math.max(1, Texts.smallFits(room) - font.width(ELLIPSIS));
         return font.plainSubstrByWidth(text, units) + ELLIPSIS;
+    }
+
+    /** This window's colours: the labels' and headings' quieter ink. */
+    private record Colours(int labelInk) {
     }
 }

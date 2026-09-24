@@ -34,9 +34,6 @@ public final class Draw {
         g.disableScissor();
     }
 
-    /** The translucent white laid over a control that cannot be used right now. */
-    public static final int DISABLED_OVERLAY = 0x66FFFFFF;
-
     private Draw() {
     }
 
@@ -65,6 +62,6 @@ public final class Draw {
 
     /** Fades a rectangle out, the way a disabled control is shown. */
     public static void disabled(final GuiGraphics g, final int x, final int y, final int w, final int h) {
-        g.fill(x, y, x + w, y + h, DISABLED_OVERLAY);
+        g.fill(x, y, x + w, y + h, ComponentPalette.get().disabled());
     }
 }

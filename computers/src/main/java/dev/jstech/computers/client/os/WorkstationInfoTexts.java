@@ -14,6 +14,7 @@ import dev.jstech.core.text.TextKey;
 @TextHolder
 final class WorkstationInfoTexts {
 
+    static final TextKey TITLE = TextKey.of("jsc.workstation.title", "Workstation Info");
     static final TextKey CLOSE = TextKey.of("jsc.workstation.close", "Close");
 
     private WorkstationInfoTexts() {

@@ -234,25 +234,30 @@ public final class OsBootstrap {
             new DesktopEnvironmentDef(rl("frames_11"), "Frames 11", PanelStyle.FRAMES_11, BUILTIN_APPS, Map.of(),
                     SoftwareHouse.MIDSOFT),
             new DesktopEnvironmentDef(rl("kde_plasma"), "KDE Plasma", PanelStyle.KDE, BUILTIN_APPS, Map.of(
-                    rl("files"), "Dolphin", rl("editor"), "Kate", rl("command_prompt"), "Konsole",
-                    rl("calculator"), "KCalc", rl("system_monitor"), "System Monitor",
-                    rl("settings"), "System Settings", rl("this_pc"), "Info Center"), SoftwareHouse.KDE_GUILD),
+                    rl("files"), DesktopNames.KDE_FILES, rl("editor"), DesktopNames.KDE_EDITOR,
+                    rl("command_prompt"), DesktopNames.KDE_TERMINAL, rl("calculator"), DesktopNames.KDE_CALCULATOR,
+                    rl("system_monitor"), DesktopNames.KDE_MONITOR, rl("settings"), DesktopNames.KDE_SETTINGS,
+                    rl("this_pc"), DesktopNames.KDE_THIS_PC), SoftwareHouse.KDE_GUILD),
             new DesktopEnvironmentDef(rl("gnome"), "GNOME", PanelStyle.GNOME, BUILTIN_APPS, Map.of(
-                    rl("files"), "Files", rl("editor"), "Text Editor", rl("command_prompt"), "Terminal",
-                    rl("calculator"), "Calculator", rl("system_monitor"), "System Monitor",
-                    rl("settings"), "Settings", rl("this_pc"), "About"), SoftwareHouse.GNOME_TRUST),
+                    rl("files"), DesktopNames.GNOME_FILES, rl("editor"), DesktopNames.GNOME_EDITOR,
+                    rl("command_prompt"), DesktopNames.GNOME_TERMINAL, rl("calculator"), DesktopNames.GNOME_CALCULATOR,
+                    rl("system_monitor"), DesktopNames.GNOME_MONITOR, rl("settings"), DesktopNames.GNOME_SETTINGS,
+                    rl("this_pc"), DesktopNames.GNOME_THIS_PC), SoftwareHouse.GNOME_TRUST),
             new DesktopEnvironmentDef(rl("cinnamon"), "Cinnamon", PanelStyle.CINNAMON, BUILTIN_APPS, Map.of(
-                    rl("files"), "Nemo", rl("editor"), "xed", rl("command_prompt"), "Terminal",
-                    rl("calculator"), "Calculator", rl("system_monitor"), "System Monitor",
-                    rl("settings"), "System Settings", rl("this_pc"), "System Info"), SoftwareHouse.SPEARMINT),
+                    rl("files"), DesktopNames.CINNAMON_FILES, rl("editor"), DesktopNames.CINNAMON_EDITOR,
+                    rl("command_prompt"), DesktopNames.CINNAMON_TERMINAL,
+                    rl("calculator"), DesktopNames.CINNAMON_CALCULATOR,
+                    rl("system_monitor"), DesktopNames.CINNAMON_MONITOR,
+                    rl("settings"), DesktopNames.CINNAMON_SETTINGS, rl("this_pc"), DesktopNames.CINNAMON_THIS_PC),
+                    SoftwareHouse.SPEARMINT),
             /*
              * CDE keeps its own names for what it bundles, which are plainer than anybody else's: it called a
              * file manager the File Manager. Its settings are the Style Manager, as they were.
              */
             new DesktopEnvironmentDef(rl("cde"), "CDE", PanelStyle.CDE, CDE_APPS, Map.of(
-                    rl("files"), "File Manager", rl("editor"), "Text Editor", rl("command_prompt"), "Terminal",
-                    rl("calculator"), "Calculator", rl("system_monitor"), "Performance Meter",
-                    rl("settings"), "Style Manager"),
+                    rl("files"), DesktopNames.CDE_FILES, rl("editor"), DesktopNames.CDE_EDITOR,
+                    rl("command_prompt"), DesktopNames.CDE_TERMINAL, rl("calculator"), DesktopNames.CDE_CALCULATOR,
+                    rl("system_monitor"), DesktopNames.CDE_MONITOR, rl("settings"), DesktopNames.CDE_SETTINGS),
                     SoftwareHouse.OPEN_DESK_CONSORTIUM)
     );
 

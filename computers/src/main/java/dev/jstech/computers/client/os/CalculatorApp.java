@@ -11,6 +11,7 @@ import dev.jstech.computers.program.CalcEngine;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import org.lwjgl.glfw.GLFW;
@@ -63,7 +64,7 @@ public final class CalculatorApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Calculator";
+        return ProgramClient.nameOf("calculator");
     }
 
     @Override
@@ -161,14 +162,14 @@ public final class CalculatorApp implements IDesktopApp {
             input = result;
             justResult = true;
         } catch (final RuntimeException ex) {
-            result = "Error";
+            result = GameText.resolve(CalculatorTexts.ERROR);
             justResult = false;
         }
     }
 
     private static String format(final double v) {
         if (Double.isNaN(v) || Double.isInfinite(v)) {
-            return "Error";
+            return GameText.resolve(CalculatorTexts.ERROR);
         }
         if (v == Math.rint(v) && Math.abs(v) < 1e15) {
             return Long.toString((long) v);

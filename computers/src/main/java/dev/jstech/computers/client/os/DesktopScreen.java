@@ -52,6 +52,7 @@ import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.SchedulerKind;
+import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.computers.os.fs.Archive;
 import dev.jstech.computers.os.fs.FileOpeners;
@@ -360,11 +361,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     /** What a program is called, for a menu that offers it by id. */
     public static String openerName(final String programId) {
         if (programId.equals(FileOpeners.EDITOR)) {
-            return "Editor";
+            return words(DesktopTexts.EDITOR);
         }
         final ProgramSpec spec = Programs.get(
                 ResourceLocation.fromNamespaceAndPath("jsc", programId));
-        return spec == null ? programId : spec.displayName();
+        return spec == null ? programId : GameText.resolve(spec.name());
     }
 
     /**
@@ -570,8 +571,18 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private int hoverX;
     private int hoverY;
     /** Programs pinned to the right "places" column of the Frames XP Start menu (drawn there, not on the left). */
-    private static final Set<String> XP_PLACES =
-            Set.of("This PC", "Files", "Settings", "Network");
+    private static final Set<ResourceLocation> XP_PLACES = Set.of(
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "this_pc"), Programs.FILES, Programs.SETTINGS,
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "network"));
+    /** The windows the desktop opens by itself, whatever this desktop calls the programs they belong to. */
+    private static final String FILES_KEY = WindowKeys.of(Programs.FILES);
+    private static final String SETTINGS_KEY = WindowKeys.of(Programs.SETTINGS);
+    private static final String THIS_PC_KEY =
+            WindowKeys.of(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "this_pc"));
+    private static final String EDITOR_KEY =
+            WindowKeys.of(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, FileOpeners.EDITOR));
+    private static final String WORKSTATION_INFO_KEY =
+            WindowKeys.of(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "workstation_info"));
     private int selectedIcon = -1;
     private long iconClickAt;
     @Nullable
@@ -949,16 +960,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         return media;
     }
 
-    /** Opens a file manager at that folder, under the name this desktop gives its file manager. */
+    /** Opens a file manager at that folder, as a window of the file manager this desktop has. */
     void openFolder(final String dir) {
-        String label = "Files";
-        for (final Launcher launcher : launchers) {
-            if (Programs.FILES.equals(launcher.programId())) {
-                label = launcher.label();
-                break;
-            }
-        }
-        openApp(label, new FilesApp(host, desktopId.getPath(), dir, monitorPos));
+        openApp(FILES_KEY, new FilesApp(host, desktopId.getPath(), dir, monitorPos));
     }
 
     /** Whether the host computer is on a data network right now, as its block entity tells the client. */
@@ -1257,9 +1261,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         return osBandLabel();
     }
 
-    /** The program a label belongs to, for a row that only has the label to go on. */
-    ResourceLocation programIdFor(final String label) {
-        return programIdForLabel(label);
+    /** The icon a window key or a launcher key is drawn with, for a panel entry or a row. */
+    ResourceLocation programIdFor(final String key) {
+        return iconOf(key);
     }
 
     /** The XP menu's two columns: the programs on the left, the system's own places on the right. */
@@ -1415,16 +1419,18 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     /**
      * One thing on the desktop that can be started.
      *
-     * <p>{@code runs} is the listing a player's own program starts at. Those have no window of their
-     * own: like any console program they get a terminal and print into it, which is the same thing that
-     * happens when one is opened in the file explorer.
+     * <p>{@code key} is what it is known by: the key its window goes by ({@link WindowKeys}), or {@code run:}
+     * and the listing for a player's own program. {@code label} is only what it reads as on this desktop.
+     * {@code runs} is the listing a player's own program starts at. Those have no window of their own: like
+     * any console program they get a terminal and print into it, which is the same thing that happens when
+     * one is opened in the file explorer.
      */
-    record Launcher(String label, ResourceLocation programId,
+    record Launcher(String key, String label, ResourceLocation programId,
                     Supplier<IDesktopApp> factory, String runs) {
 
-        Launcher(final String label, final ResourceLocation programId,
+        Launcher(final String key, final String label, final ResourceLocation programId,
                  final Supplier<IDesktopApp> factory) {
-            this(label, programId, factory, "");
+            this(key, label, programId, factory, "");
         }
     }
 
@@ -1478,7 +1484,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private int windowRamMb(final String key) {
         final OsDef os = OsRegistry.getOs(osId);
         return os == null ? 0
-                : MachineMemory.windowRamMb(key, os, chrome, spec -> sourceBuilt.contains(spec.id().getPath()));
+                : MachineMemory.windowRamMb(key, os, spec -> sourceBuilt.contains(spec.id().getPath()));
     }
 
     /** What the open windows hold together; a dialog is part of its program, not another copy of it. */
@@ -1526,7 +1532,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
              * way the notification area always did, instead of taking the screen over with a dialog.
              */
             showBalloon(words(DesktopTexts.LOW_MEMORY),
-                    GameText.resolve(DesktopTexts.LOW_MEMORY_BODY.with(key, need, Math.max(0, free))));
+                    GameText.resolve(DesktopTexts.LOW_MEMORY_BODY.with(nameOf(key), need, Math.max(0, free))));
         }
         return false;
     }
@@ -1650,7 +1656,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
      */
     public int[] taskEntryPoint(final String key) {
         final TaskStrip strip = taskStrip(sw());
-        final int index = TaskbarGroups.indexOf(strip.entries(), key);
+        final int index = TaskbarGroups.indexOf(strip.entries(), keyFor(key));
         if (index < 0) {
             return null;
         }
@@ -1662,18 +1668,22 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         return quick < 0 ? null : new int[] {sx(strip.quickX() + quick * QL_W + QL_W / 2), y};
     }
 
-    /** The programs the panel lists, in order: the pinned ones first, then every open one. */
+    /** The programs the panel lists, in order, by what they read as: the pinned ones first, then every open one. */
     public List<String> taskEntryLabels() {
         final List<String> out = new ArrayList<>();
         for (final TaskbarGroups.Entry entry : taskEntries()) {
-            out.add(entry.key());
+            out.add(nameOf(entry.key()));
         }
         return out;
     }
 
     /** The programs pinned to the panel, by the label the panel shows them under. */
     public List<String> pinnedLabels() {
-        return pinnedKeys();
+        final List<String> out = new ArrayList<>();
+        for (final String key : pinnedKeys()) {
+            out.add(nameOf(key));
+        }
+        return out;
     }
 
     /** Whether the panel's popup (the windows of one program) is up. */
@@ -1727,9 +1737,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
 
     /** The dialog window up over a window of the program {@code label}, or null. */
     public DesktopWindow dialogWindowFor(final String label) {
+        final String key = keyFor(label);
         for (int i = windows.size() - 1; i >= 0; i--) {
             final DesktopWindow w = windows.get(i);
-            if (w.dialog() && w.groupKey().equals(label)) {
+            if (w.dialog() && w.groupKey().equals(key)) {
                 return w;
             }
         }
@@ -1766,8 +1777,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
 
     /** Screen position of a title-bar button (1 minimise, 2 maximise, 3 the way out) of the window so labelled. */
     public int[] windowButtonPoint(final String label, final int button) {
+        final String key = keyFor(label);
         for (final DesktopWindow w : windows) {
-            if (w.appKey().equals(label)) {
+            if (w.appKey().equals(key)) {
                 final int[] at = w.buttonCentre(button);
                 return new int[] {sx(at[0]), sy(at[1])};
             }
@@ -1812,7 +1824,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
 
     /** What the Workstation Info window shows, as {@code label=value}, or nothing while it is not up. */
     public List<String> workstationInfoFacts() {
-        final DesktopWindow w = windowFor("Workstation Info");
+        final DesktopWindow w = windowFor(WORKSTATION_INFO_KEY);
         return w != null && w.app() instanceof WorkstationInfoApp app ? app.shownFacts() : List.of();
     }
 
@@ -1906,8 +1918,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     /** The workspaces the window so labelled is on, counted from nought. */
     public List<Integer> workspacesOf(final String label) {
         final List<Integer> out = new ArrayList<>();
+        final String key = keyFor(label);
         for (final DesktopWindow w : windows) {
-            if (!w.dialog() && w.appKey().equals(label)) {
+            if (!w.dialog() && w.appKey().equals(key)) {
                 for (int i = 0; i < WorkspaceSet.COUNT; i++) {
                     if (w.on(i)) {
                         out.add(i);
@@ -1935,7 +1948,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         final List<String> out = new ArrayList<>();
         for (final DesktopWindow w : windows) {
             if (!w.dialog() && !away(w)) {
-                out.add(w.appKey());
+                out.add(nameOf(w.appKey()));
             }
         }
         return out;
@@ -1967,21 +1980,16 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         final List<String> out = new ArrayList<>();
         for (final DesktopWindow w : windows) {
             if (!w.dialog()) {
-                out.add(w.appKey());
+                out.add(nameOf(w.appKey()));
             }
         }
         return out;
     }
 
-    /** The Start menu entries, top to bottom, as labelled for the player. */
     /** What this desktop calls its terminal, or an empty string when it has none installed. */
     private String terminalLabel() {
-        for (final Launcher l : launchers) {
-            if (Programs.COMMAND_PROMPT.equals(l.programId())) {
-                return l.label();
-            }
-        }
-        return "";
+        final Launcher terminal = launcherFor(Programs.COMMAND_PROMPT);
+        return terminal == null ? "" : terminal.label();
     }
 
     /**
@@ -2006,26 +2014,93 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         return front != null && front.app() == app;
     }
 
-    /** The open window hosting the program launched under {@code label}, or null. */
-    @Nullable
-    /** Every window of a program (its dialogs aside), front-most last, since a program may be open more than once. */
+    /**
+     * Every window of a program (its dialogs aside), front-most last, since a program may be open more than once.
+     * The program is named by its window key or by the label it reads as here.
+     */
     public List<DesktopWindow> windowsFor(final String label) {
         final List<DesktopWindow> out = new ArrayList<>();
+        final String key = keyFor(label);
         for (final DesktopWindow w : windows) {
-            if (!w.dialog() && w.appKey().equals(label)) {
+            if (!w.dialog() && w.appKey().equals(key)) {
                 out.add(w);
             }
         }
         return out;
     }
 
+    /** The oldest window of a program, named by its window key or by the label it reads as here; or null. */
+    @Nullable
     public DesktopWindow windowFor(final String label) {
+        final String key = keyFor(label);
         for (final DesktopWindow w : windows) {
-            if (!w.dialog() && w.appKey().equals(label)) {
+            if (!w.dialog() && w.appKey().equals(key)) {
                 return w;
             }
         }
         return null;
+    }
+
+    /**
+     * The window key a request or a test names: a key as it is, or else the label a launcher or an open window
+     * reads as on this desktop. A player who types a program's name at a shell asks this way; so do the tests,
+     * which name what they click by what it says.
+     */
+    private String keyFor(final String asked) {
+        for (final Launcher l : launchers) {
+            if (l.key().equals(asked)) {
+                return asked;
+            }
+        }
+        for (final DesktopWindow w : windows) {
+            if (w.appKey().equals(asked)) {
+                return asked;
+            }
+        }
+        for (final Launcher l : launchers) {
+            if (l.label().equals(asked)) {
+                return l.key();
+            }
+        }
+        for (final DesktopWindow w : windows) {
+            if (nameOf(w.appKey()).equals(asked)) {
+                return w.appKey();
+            }
+        }
+        return asked;
+    }
+
+    /**
+     * What a window key reads as on this desktop: the label of the launcher that opens it, else the name this
+     * desktop gives its program, else what its window calls itself, else the key.
+     */
+    String nameOf(final String key) {
+        for (final Launcher l : launchers) {
+            if (l.key().equals(key)) {
+                return l.label();
+            }
+        }
+        if (WindowKeys.TRASH.equals(key)) {
+            return trash.title();
+        }
+        final ProgramSpec spec = WindowKeys.program(key);
+        if (spec != null) {
+            return launcherLabel(spec);
+        }
+        for (final DesktopWindow w : windows) {
+            if (w.appKey().equals(key)) {
+                return w.app().title();
+            }
+        }
+        return key;
+    }
+
+    /**
+     * What a window key reads as on the desktop that is up, for a program listing the windows a machine has open
+     * (a task manager) by the names the player knows them by; the key itself while no desktop is up.
+     */
+    public static String windowName(final String key) {
+        return active == null ? key : active.nameOf(key);
     }
 
     /** Screen coordinates of the Start button's centre. */
@@ -2050,7 +2125,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     public int startMenuItemX(final int index) {
         if (panel == PanelStyle.FRAMES_XP
                 && index >= 0 && index < launchers.size()) {
-            final boolean place = XP_PLACES.contains(launchers.get(index).label());
+            final boolean place = XP_PLACES.contains(launchers.get(index).programId());
             final int colX = startMenuX() + (place ? XP_LEFT_W + 3 : 3);
             final int colW = place ? XP_MENU_W - XP_LEFT_W - 6 : XP_LEFT_W - 6;
             return sx(colX + colW / 2);
@@ -2063,7 +2138,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         if (panel == PanelStyle.FRAMES_XP
                 && index >= 0 && index < launchers.size()) {
             final Launcher target = launchers.get(index);
-            final boolean place = XP_PLACES.contains(target.label());
+            final boolean place = XP_PLACES.contains(target.programId());
             final List<Launcher> column = place ? xpRightLaunchers() : xpLeftLaunchers();
             final int row = Math.max(0, column.indexOf(target));
             // The left column has a separator under its pinned block, so its rows are not a plain multiple.
@@ -2304,7 +2379,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             }
             final ProgramClient.IDesktopAppFactory factory = ProgramClient.factory(spec.id());
             // Apps receive the desktop id (their skin/icon key); the Frames editions' id equals their OS id.
-            launchers.add(new Launcher(launcherLabel(spec), spec.id(),
+            launchers.add(new Launcher(WindowKeys.of(spec.id()), launcherLabel(spec), spec.id(),
                     () -> factory.create(host, monitorPos, desktopId)));
         }
         /*
@@ -2314,7 +2389,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
          * generic one, which is what ProgramIcons falls back to.
          */
         for (final CommunityLauncher one : communityPrograms) {
-            launchers.add(new Launcher(one.name(),
+            launchers.add(new Launcher(RUN_KEY + one.entry(), one.name(),
                     ResourceLocation.fromNamespaceAndPath(
                             JsComputers.MODID, "sigma_" + one.icon()),
                     null, one.entry()));
@@ -2326,26 +2401,29 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private record CommunityLauncher(String name, String icon, String entry) {
     }
 
+    /** What a player's own program is known by, ahead of the listing it starts at: it has no window to go by. */
+    private static final String RUN_KEY = "run:";
+
     private final List<CommunityLauncher> communityPrograms = new ArrayList<>();
 
-    /** The program id for an open window's app key (its launcher label), for the taskbar icon; generic if none. */
-    private ResourceLocation programIdForLabel(final String label) {
+    /** The icon for a window key or a launcher key, for the panel and the menus; the generic one if none. */
+    private ResourceLocation iconOf(final String key) {
         for (final Launcher l : launchers) {
-            if (l.label().equals(label)) {
+            if (l.key().equals(key)) {
                 return l.programId();
             }
         }
-        if (label.equals(trash.title())) {
+        if (WindowKeys.TRASH.equals(key)) {
             return trash.icon();
         }
         // A window whose program has no launcher (the Task Manager) still shows its own icon on the panel.
-        final ProgramSpec spec = chrome == null ? null : chrome.programFor(label);
+        final ProgramSpec spec = WindowKeys.program(key);
         if (spec != null) {
             return spec.id();
         }
         // A window no program answers to (a setup, the welcome, a player's own program) wears the one it asks for.
         for (final DesktopWindow w : windows) {
-            if (w.appKey().equals(label) && w.app().iconId() != null) {
+            if (w.appKey().equals(key) && w.app().iconId() != null) {
                 return w.app().iconId();
             }
         }
@@ -2376,14 +2454,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
      * its own display name otherwise; the shell reads "Megashell" on Frames 11.
      */
     private String launcherLabel(final ProgramSpec spec) {
-        if (chrome != null) {
-            return chrome.launcherLabel(spec); // the rule the server resolves a window back to its program with
-        }
-        if (Programs.COMMAND_PROMPT.equals(spec.id())
-                && is(PanelStyle.FRAMES_11)) {
-            return "Megashell";
-        }
-        return spec.displayName();
+        return GameText.resolve(chrome != null ? chrome.launcherLabel(spec) : spec.name());
     }
 
     /** Requests the desktop folder's files so they can be drawn as background icons. */
@@ -2875,7 +2946,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
          * repeated program closes the one on top rather than the oldest copy of it.
          */
         if (!PENDING_CLOSE.isEmpty()) {
-            for (final String key : PENDING_CLOSE) {
+            for (final String asked : PENDING_CLOSE) {
+                final String key = keyFor(asked);
                 for (int i = windows.size() - 1; i >= 0; i--) {
                     final DesktopWindow w = windows.get(i);
                     if (!w.dialog() && w.appKey().equals(key)) {
@@ -2896,8 +2968,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private void runOpenRequest(final String key) {
         if (key.startsWith(OPEN_FILES_AT)) {
             // This PC asked for a drive or a folder to be opened in the explorer.
-            if (allowOpen("Files")) {
-                openApp("Files", new FilesApp(host, desktopId.getPath(),
+            if (allowOpen(FILES_KEY)) {
+                openApp(FILES_KEY, new FilesApp(host, desktopId.getPath(),
                         key.substring(OPEN_FILES_AT.length()), monitorPos));
             }
             return;
@@ -2909,10 +2981,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         if (key.startsWith(OPEN_PROPS)) {
             // A desktop icon's Properties: the explorer on the desktop's folder shows the window.
             final String path = key.substring(OPEN_PROPS.length());
-            if (allowOpen("Files")) {
+            if (allowOpen(FILES_KEY)) {
                 final FilesApp files = new FilesApp(host, desktopId.getPath(), desktopDir, monitorPos);
                 files.showPropertiesFor(FsPaths.fileName(path));
-                openApp("Files", files);
+                openApp(FILES_KEY, files);
             }
             return;
         }
@@ -2937,9 +3009,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             chooseOpener(key.substring(CHOOSE_OPENER.length()));
             return;
         }
-        final IDesktopApp app = factoryFor(key);
-        if (app != null && allowOpen(key)) {
-            openApp(key, app);
+        // A plain program: by its window key, or by the name a player typed for it at a shell.
+        final String program = keyFor(key);
+        final IDesktopApp app = factoryFor(program);
+        if (app != null && allowOpen(program)) {
+            openApp(program, app);
         }
     }
 
@@ -3130,7 +3204,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         }
         final DiskFilesPayload.WireFile f = desktopItems.get(di);
         if (f.directory()) {
-            openApp("Files", new FilesApp(host, desktopId.getPath(), f.path(), monitorPos));
+            openApp(FILES_KEY, new FilesApp(host, desktopId.getPath(), f.path(), monitorPos));
             return;
         }
         openFile(f.path());
@@ -3204,7 +3278,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         }
         if (programId.equals(FileOpeners.EDITOR)) {
             final EditorApp editor = new EditorApp(host);
-            openApp("Editor", editor);
+            openApp(EDITOR_KEY, editor);
             editor.openFile(path);
             return;
         }
@@ -3225,7 +3299,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
          * The window exists once the launcher has run, so the file goes to it straight away. An app that
          * opens no files ignores this, which is what lets any program be picked without a special case.
          */
-        final DesktopWindow opened = windowFor(launcher.label());
+        final DesktopWindow opened = windowFor(launcher.key());
         if (opened != null) {
             opened.app().openFile(path);
         }
@@ -3256,10 +3330,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
      */
     @Nullable
     private ShellApp terminalApp() {
-        final String terminal = terminalLabel();
-        if (terminal.isEmpty()) {
+        final Launcher launcher = launcherFor(Programs.COMMAND_PROMPT);
+        if (launcher == null) {
             return null;
         }
+        final String terminal = launcher.key();
         final DesktopWindow open = windowFor(terminal);
         if (open != null && open.app() instanceof ShellApp shell) {
             open.setMinimized(false);
@@ -3336,15 +3411,15 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
 
     /** Opens the Settings window on one of its pages, the way a menu entry names a page rather than the program. */
     private void openSettingsPage(final int page) {
-        if (allowOpen("Settings")) {
-            openApp("Settings", new SettingsApp(host, monitorPos).showPage(page));
+        if (allowOpen(SETTINGS_KEY)) {
+            openApp(SETTINGS_KEY, new SettingsApp(host, monitorPos).showPage(page));
         }
     }
 
-    /** Runs the launcher labelled {@code label}, when the desktop has one. */
-    private void runLauncherCalled(final String label) {
+    /** Runs the launcher known by {@code key}, when the desktop has one. */
+    private void runLauncherKeyed(final String key) {
         for (final Launcher launcher : launchers) {
-            if (launcher.label().equals(label)) {
+            if (launcher.key().equals(key)) {
                 runLauncher(launcher);
                 return;
             }
@@ -3456,7 +3531,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             if (pinsOnPanel() && launcher.factory() != null) {
                 final boolean pinned = pinnedPrograms.contains(launcher.programId().getPath());
                 entries.add(deskItem(pinned ? DesktopTexts.UNPIN : DesktopTexts.PIN, true,
-                        () -> togglePin(launcher.label())));
+                        () -> togglePin(launcher.key())));
             }
             if (spec != null && spec.installable()) {
                 entries.add(ContextMenu.Item.separator());
@@ -3489,7 +3564,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             entries.add(deskItem(DesktopTexts.PERSONALIZE, true,
                     () -> openSettingsPage(SettingsApp.PAGE_PERSONALIZE)));
             entries.add(ContextMenu.Item.separator());
-            entries.add(deskItem(DesktopTexts.PROPERTIES, true, () -> runLauncherCalled("This PC")));
+            entries.add(deskItem(DesktopTexts.PROPERTIES, true, () -> runLauncherKeyed(THIS_PC_KEY)));
         }
         deskMenu.open(entries, x, y, 0, 0, sw(), sh());
     }
@@ -3589,7 +3664,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     /** The trash window that is up, or null while none is. */
     @Nullable
     public TrashApp trashWindow() {
-        final DesktopWindow open = windowFor(trash.title());
+        final DesktopWindow open = windowFor(WindowKeys.TRASH);
         return open != null && open.app() instanceof TrashApp app ? app : null;
     }
 
@@ -3704,7 +3779,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private List<Launcher> xpLeftLaunchers() {
         final List<Launcher> out = new ArrayList<>();
         for (final Launcher l : launchers) {
-            if (!XP_PLACES.contains(l.label())) {
+            if (!XP_PLACES.contains(l.programId())) {
                 out.add(l);
             }
         }
@@ -3742,7 +3817,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private List<Launcher> xpRightLaunchers() {
         final List<Launcher> out = new ArrayList<>();
         for (final Launcher l : launchers) {
-            if (XP_PLACES.contains(l.label())) {
+            if (XP_PLACES.contains(l.programId())) {
                 out.add(l);
             }
         }
@@ -3774,10 +3849,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     /** What a task button says: the window's title, or the count and the program when there are several. */
     private String entryLabel(final TaskbarGroups.Entry entry) {
         if (entry.windows() > 1) {
-            return entry.windows() + " " + entry.key();
+            return entry.windows() + " " + nameOf(entry.key());
         }
         final List<DesktopWindow> mine = groupWindows(entry.key());
-        return mine.isEmpty() ? entry.key() : titleOf(mine.get(mine.size() - 1));
+        return mine.isEmpty() ? nameOf(entry.key()) : titleOf(mine.get(mine.size() - 1));
     }
 
     /** The balloon's box in desktop-local coordinates, or null when none is up. Draw and hit-test share it. */
@@ -4031,7 +4106,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
                 || is(PanelStyle.KDE) || is(PanelStyle.CINNAMON));
     }
 
-    /** The pinned programs by the label the panel lists them under; only those this desktop can start. */
+    /** The pinned programs by the key their windows go by; only those this desktop can start. */
     private List<String> pinnedKeys() {
         final List<String> out = new ArrayList<>();
         if (!pinsOnPanel()) {
@@ -4040,7 +4115,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         for (final String id : pinnedPrograms) {
             for (final Launcher launcher : launchers) {
                 if (launcher.factory() != null && launcher.programId().getPath().equals(id)) {
-                    out.add(launcher.label());
+                    out.add(launcher.key());
                     break;
                 }
             }
@@ -4052,7 +4127,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     @Nullable
     private Launcher pinnableLauncher(final String key) {
         for (final Launcher launcher : launchers) {
-            if (launcher.factory() != null && launcher.label().equals(key)) {
+            if (launcher.factory() != null && launcher.key().equals(key)) {
                 return launcher;
             }
         }
@@ -4304,7 +4379,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             items.add(deskItem(several ? DesktopTexts.CLOSE_ALL_WINDOWS : DesktopTexts.CLOSE, true,
                     () -> closeGroup(key)));
         } else {
-            items.add(deskItem(DesktopTexts.OPEN, true, () -> runLauncherCalled(key)));
+            items.add(deskItem(DesktopTexts.OPEN, true, () -> runLauncherKeyed(key)));
             if (pinnable) {
                 items.add(ContextMenu.Item.separator());
                 items.add(deskItem(DesktopTexts.UNPIN, true, () -> togglePin(key)));
@@ -4480,7 +4555,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             return;
         }
         if (!entry.open()) {
-            runLauncherCalled(entry.key());
+            runLauncherKeyed(entry.key());
             return;
         }
         if (entry.windows() == 1) {
@@ -5646,13 +5721,13 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private void startProgramById(final String path) {
         for (final Launcher l : launchers) {
             if (l.programId().getPath().equals(path) && l.factory() != null) {
-                openApp(l.label(), l.factory().get());
+                openApp(l.key(), l.factory().get());
                 return;
             }
         }
     }
 
-    /** Recreates a program from its launcher key, for restoring persisted windows. */
+    /** Recreates a program from its window key ({@link WindowKeys}), for restoring persisted windows. */
     @Nullable
     private IDesktopApp factoryFor(final String key) {
         /*
@@ -5667,20 +5742,20 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             return new ApplicationManagerApp(ApplicationManagerApp.groupOf(key));
         }
         // Nor has the trash, which is a place of the desktop and no program.
-        if (key.equals(trash.title())) {
+        if (WindowKeys.TRASH.equals(key)) {
             return trash.window();
         }
         for (final Launcher l : launchers) {
-            if (l.label().equals(key) && l.factory() != null) {
+            if (l.key().equals(key) && l.factory() != null) {
                 return l.factory().get();
             }
         }
         /*
-         * A program the desktop shows no launcher for (the Task Manager) still opens, and still comes back
-         * with the session, so it is looked up by the same label the panel calls it.
+         * A program the desktop shows no launcher for (the Task Manager, or one a file opens in) still opens,
+         * and still comes back with the session, by the id its window goes by.
          */
-        final ProgramSpec spec = chrome == null ? null : chrome.programFor(key);
-        final ProgramClient.IDesktopAppFactory factory = spec == null ? null : ProgramClient.factory(spec.id());
+        final ResourceLocation id = ResourceLocation.tryParse(key);
+        final ProgramClient.IDesktopAppFactory factory = id == null ? null : ProgramClient.factory(id);
         return factory == null ? null : factory.create(host, monitorPos, desktopId);
     }
 
@@ -5689,12 +5764,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
      * destination and has no launcher of its own, exactly as on the desktops this imitates.
      */
     private void openTaskManager() {
-        final ProgramSpec spec = OsRegistry
-                .getProgram(Programs.TASK_MANAGER);
-        if (spec == null) {
+        if (OsRegistry.getProgram(Programs.TASK_MANAGER) == null) {
             return;
         }
-        final String key = chrome != null ? chrome.launcherLabel(spec) : spec.displayName();
+        final String key = WindowKeys.of(Programs.TASK_MANAGER);
         final DesktopWindow open = windowFor(key);
         if (open != null) {
             focusWindow(open);
@@ -5713,8 +5786,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             requestRunAtTerminal(l.runs());
             return;
         }
-        if (allowOpen(l.label())) {
-            openApp(l.label(), l.factory().get());
+        if (allowOpen(l.key())) {
+            openApp(l.key(), l.factory().get());
         }
     }
 

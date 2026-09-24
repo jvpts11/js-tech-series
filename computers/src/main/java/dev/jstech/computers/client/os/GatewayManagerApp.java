@@ -58,8 +58,10 @@ import org.lwjgl.glfw.GLFW;
 @PaletteHolder
 public final class GatewayManagerApp implements IDesktopApp {
 
-    public static final String TITLE = "Gateway Manager";
-    private static final String NETWORK_PROGRAM = "Network";
+    /** The window's name in English, for the client tests that look it up by what it says. */
+    public static final String TITLE = GatewayManagerAppTexts.TITLE.english();
+    /** The key of the Network program's window, which is its id. */
+    private static final String NETWORK_PROGRAM = "jsc:network";
     private static final TextKey[] TABS = {GatewayManagerTexts.STATUS_TAB, GatewayManagerTexts.PERMISSIONS_TAB,
             GatewayManagerTexts.COMPUTERS_TAB, GatewayManagerTexts.LOG_TAB};
     private static final TextKey[] CEILING_LABELS = {GatewayManagerTexts.LOW, GatewayManagerTexts.MEDIUM,
@@ -358,7 +360,7 @@ public final class GatewayManagerApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return TITLE;
+        return GameText.resolve(GatewayManagerAppTexts.TITLE);
     }
 
     // Wide enough for the five tabs and the two cards to sit whole beside the rail.

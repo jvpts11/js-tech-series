@@ -130,7 +130,7 @@ public class PatternEncoderScreen extends AbstractContainerScreen<PatternEncoder
         line(g, 0, of(linked ? LINKED_TO.with(pos(be.ownerPos())) : NOT_LINKED.text()), ix, iy,
                 linked ? theme.green() : theme.amber());
         final HardwareEra era = era();
-        line(g, 1, of(eraLine(era)), ix, iy + lh, era.screenColor() | 0xFF000000);
+        line(g, 1, of(eraLine(era)), ix, iy + lh, 0xFF << 24 | era.screenColor());
         final ItemStack media = menu.mediaStack();
         line(g, 2, of(media.isEmpty() ? BAY_EMPTY.text()
                         : BAY.with(VolumeLabel.of(media, of(REMOVABLE_MEDIUM)))),

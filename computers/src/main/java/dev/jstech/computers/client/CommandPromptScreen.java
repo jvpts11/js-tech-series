@@ -37,9 +37,13 @@ import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.program.cli.ConsoleGreeting;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.gui.LineHistory;
 import dev.jstech.core.gui.Phosphor;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
@@ -65,10 +69,13 @@ import java.util.Map;
 /**
  * The Command Prompt: a full CLI over the computer the Monitor is bound to. A typed line is echoed, sent to the server to run through the shell, and the styled result is appended to the scrollback. Up/Down walk the input history; the mouse wheel scrolls back through output. The same OS skin as the rest of the computing GUIs, square corners and all.
  */
+@PaletteHolder
 public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractComputerScreen<M>
         implements MachineKeyboard.ITakesKeysFirst {
 
-    private static final int CONSOLE = 0xFF070A0E;
+    /** The console panel's own ground, {@code jsc:screen/command_prompt}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "screen/command_prompt",
+            new Colours(0xFF070A0E));
 
     /** Where a network system stands before it has said so itself: at the machine, since it has no path. */
     private static final String NET_PROMPT = "SYSTEM:>";
@@ -257,7 +264,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
                 push(Branding.systemCopyright(menu.osLabel(), screenEra()), CliStyle.DIM);
                 push("", CliStyle.PLAIN);
                 push(CommandPromptTexts.NO_SPACE.text(), CliStyle.WARN);
-                push(CommandPromptTexts.PUTS_ONE_ON.with("netgetter install interactor"), CliStyle.DIM);
+                push(CommandPromptTexts.PUTS_ONE_ON.with(Text.literal("netgetter install interactor")), CliStyle.DIM);
                 push("", CliStyle.PLAIN);
             } else {
                 push(CommandPromptTexts.SHELL_VERSION.with(Branding.houseOf(menu.osLabel()).name()), CliStyle.ACCENT);
@@ -450,7 +457,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         // The console panel.
         final int top = y + 26;
         final int bottom = y + imageHeight - 22;
-        g.fill(x + 6, top, x + imageWidth - 6, bottom, CONSOLE);
+        g.fill(x + 6, top, x + imageWidth - 6, bottom, PALETTE.get().ground());
         g.fill(x + 6, top, x + imageWidth - 6, top + 1, JsTechTheme.line());
         // Input strip.
         g.fill(x + 6, y + imageHeight - 20, x + imageWidth - 6, y + imageHeight - 8, JsTechTheme.panel());
@@ -588,7 +595,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
     /** What the scrollback is written on, which is what the shadow under it is worked out against. */
     private int glass() {
-        return bareTerminal() ? bareGlass() : CONSOLE;
+        return bareTerminal() ? bareGlass() : PALETTE.get().ground();
     }
 
     /** What the line being typed is written on: the glass of a raw console, the input strip of a window. */
@@ -986,5 +993,9 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             return host.displayEra();
         }
         return menu.hardwareEra();
+    }
+
+    /** The console panel's own ground, under a windowed prompt (a bare terminal uses the glass's own instead). */
+    private record Colours(int ground) {
     }
 }

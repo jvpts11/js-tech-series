@@ -29,6 +29,8 @@ final class MonitorTexts {
     static final TextKey NEEDS_KVM = TextKey.of("block.jsc.monitor.needs_kvm",
             "This rack holds several computers - mount a KVM Switch to pick one");
     static final TextKey IN_USE = TextKey.of("block.jsc.monitor.in_use", "%s is using this monitor");
+    /** A KVM channel for a machine nobody has named, called after the rack row it sits in. */
+    static final TextKey KVM_BAY = TextKey.of("block.jsc.monitor.kvm_bay", "bay %sU");
 
     private MonitorTexts() {
     }

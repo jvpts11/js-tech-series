@@ -112,7 +112,7 @@ public final class SnakeApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Snake";
+        return ProgramClient.nameOf("snake");
     }
 
     /**

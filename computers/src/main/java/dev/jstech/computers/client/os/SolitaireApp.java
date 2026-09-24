@@ -15,6 +15,7 @@ import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -101,8 +102,8 @@ public final class SolitaireApp implements IDesktopApp {
     private long startedMs = System.currentTimeMillis();
 
     public SolitaireApp() {
-        newGame = root.add(new Button("New", this::deal));
-        finish = root.add(new Button("Finish", () -> this.finishing = true));
+        newGame = root.add(new Button(GameText.resolve(SolitaireTexts.NEW_GAME), this::deal));
+        finish = root.add(new Button(GameText.resolve(SolitaireTexts.FINISH), () -> this.finishing = true));
     }
 
     private void deal() {
@@ -114,7 +115,7 @@ public final class SolitaireApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Solitaire";
+        return GameText.resolve(SolitaireTexts.TITLE);
     }
 
     @Override
@@ -156,7 +157,7 @@ public final class SolitaireApp implements IDesktopApp {
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
         g.fill(x, y, x + width, y + height, skin.windowBg());
         newGame.setBounds(x + MARGIN, y + 2, 34, 12);
-        final int finishW = font.width("Finish") + 8;
+        final int finishW = font.width(GameText.resolve(SolitaireTexts.FINISH)) + 8;
         finish.setBounds(x + MARGIN + 36, y + 2, finishW, 12);
         playItselfHome();
         finish.setVisible(!finishing && !game.isWon() && game.canFinishAutomatically());
@@ -284,9 +285,9 @@ public final class SolitaireApp implements IDesktopApp {
                             final int width, final int height) {
         g.fill(x, feltBottom, x + width, feltBottom + STATUS_H, skin.windowBg());
         final int ty = feltBottom + 2;
-        final String left = "Score " + game.score() + "   Moves " + game.moves();
+        final String left = GameText.resolve(SolitaireTexts.SCORE_MOVES.with(game.score(), game.moves()));
         g.drawString(font, left, x + MARGIN, ty, skin.text(), false);
-        final String right = game.isWon() ? "You win" : clock();
+        final String right = game.isWon() ? GameText.resolve(SolitaireTexts.YOU_WIN) : clock();
         g.drawString(font, right, x + width - MARGIN - font.width(right), ty,
                 game.isWon() ? PALETTE.get().won() : skin.dim(), false);
     }

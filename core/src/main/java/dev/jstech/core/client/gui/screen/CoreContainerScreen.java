@@ -50,6 +50,6 @@ public abstract class CoreContainerScreen<T extends AbstractContainerMenu>
         graphics.fill(
                 leftPos, topPos,
                 leftPos + imageWidth, topPos + imageHeight,
-                0xF0202020);
+                ScreenPalette.get().containerGround());
     }
 }

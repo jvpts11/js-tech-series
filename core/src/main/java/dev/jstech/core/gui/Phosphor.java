@@ -7,6 +7,11 @@
  */
 package dev.jstech.core.gui;
 
+import dev.jstech.core.JsCore;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+
 /**
  * A monochrome monitor has one colour.
  *
@@ -19,17 +24,23 @@ package dev.jstech.core.gui;
  *
  * <p>Pure maths, no rendering: the screens call it, and a unit test can check it.
  */
+@PaletteHolder
 public final class Phosphor {
 
-    /** The green a P1-type tube glows: the Vintage skin's own text colour. */
-    public static final int GREEN = 0xFF33FF66;
+    /** The green a P1-type tube glows: the Vintage skin's own text colour. A pack may make it an amber tube. */
+    private static final Palette<Tube> TUBE = Palettes.declare(JsCore.MODID, "gui/phosphor", new Tube(0xFF33FF66));
 
     private Phosphor() {
     }
 
+    /** The colour the tube glows at full brightness. */
+    public static int glow() {
+        return TUBE.get().glow();
+    }
+
     /** {@code argb} as the green tube would show it, keeping its alpha and its relative brightness. */
     public static int green(final int argb) {
-        return tint(argb, GREEN);
+        return tint(argb, glow());
     }
 
     /** As {@link #green}, against an arbitrary phosphor colour. */
@@ -52,5 +63,8 @@ public final class Phosphor {
 
     private static int lit(final int channel, final float amount) {
         return Math.max(0, Math.min(255, Math.round(channel * amount)));
+    }
+
+    private record Tube(int glow) {
     }
 }

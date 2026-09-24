@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.text;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -42,6 +44,9 @@ class TranslationCoverageTest {
     /** A sentence declared as a field: the key is the first string it is made with. */
     private static final Pattern DECLARED = Pattern.compile("TextKey\\.of\\(\\s*\"([^\"]+)\"");
     private static final Pattern DECLARES = Pattern.compile("static\\s+final\\s+TextKey\\s+\\w+\\s*=");
+
+    /** A literal percent sign, a numbered argument, a bare one, or a percent sign that is none of them. */
+    private static final Pattern PLACEHOLDER = Pattern.compile("%%|%(\\d+)\\$s|%(s)|%");
 
     @Test
     void everyTranslationHasEveryEnglishSentenceAndNoOther() {
@@ -109,6 +114,67 @@ class TranslationCoverageTest {
         assertTrue(wrong.isEmpty(), () -> "these declare sentences the generator will not find: " + wrong);
     }
 
+    /*
+     * A translation may move the arguments about, numbering them to do it, but it must use the same ones and keep
+     * every literal percent sign: a lost argument drops a value from the sentence, and an extra one, or a single %
+     * where the English has %%, makes the sentence fail to format at all.
+     */
+    @Test
+    void everyTranslationUsesTheEnglishPlaceholders() {
+        final List<String> wrong = new ArrayList<>();
+        for (final List<Path> files : languagesByMod().values()) {
+            final Path english = files.stream()
+                    .filter(file -> file.getFileName().toString().equals(ENGLISH)).findFirst().orElse(null);
+            if (english == null) {
+                continue;
+            }
+            final Map<String, String> sentences = entriesOf(english);
+            for (final Path language : files) {
+                if (language.equals(english)) {
+                    continue;
+                }
+                entriesOf(language).forEach((key, translated) -> {
+                    final String original = sentences.get(key);
+                    if (original != null && !placeholders(original).equals(placeholders(translated))) {
+                        wrong.add(language.getFileName() + " " + key + ": \"" + original + "\" -> \"" + translated
+                                + "\"");
+                    }
+                });
+            }
+        }
+        assertTrue(wrong.isEmpty(), () -> "placeholders differ from the English:\n" + String.join("\n", wrong));
+    }
+
+    @Test
+    void placeholdersAreReadTheWayTheFormatReadsThem() {
+        assertEquals(placeholders("%s of %s, 100%%"), placeholders("%2$s de %1$s: 100%%"));
+        assertNotEquals(placeholders("%s of %s"), placeholders("%s de"));
+        assertNotEquals(placeholders("100%% of %s"), placeholders("100% de %s"));
+    }
+
+    /**
+     * The arguments a format uses, by their number (a bare {@code %s} takes the next one), and how many literal
+     * percent signs it writes; a lone % that starts neither is counted apart, since the format would reject it.
+     */
+    private static List<String> placeholders(final String format) {
+        final List<String> out = new ArrayList<>();
+        final Matcher placeholder = PLACEHOLDER.matcher(format);
+        int next = 1;
+        while (placeholder.find()) {
+            if ("%%".equals(placeholder.group())) {
+                out.add("%");
+            } else if (placeholder.group(1) != null) {
+                out.add("arg" + placeholder.group(1));
+            } else if (placeholder.group(2) != null) {
+                out.add("arg" + next++);
+            } else {
+                out.add("lone%");
+            }
+        }
+        out.sort(null);
+        return out;
+    }
+
     /** Every language file of every mod, by the mod's id: the generated English and the translations. */
     private static Map<String, List<Path>> languagesByMod() {
         final Map<String, List<Path>> out = new TreeMap<>();
@@ -138,18 +204,24 @@ class TranslationCoverageTest {
         return out;
     }
 
-    /**
-     * The keys of a language file, which is one flat object of strings: every string at the object's own level that
-     * a colon follows is a key.
-     */
+    /** The keys of a language file. */
     private static Set<String> keysOf(final Path file) {
+        return new TreeSet<>(entriesOf(file).keySet());
+    }
+
+    /**
+     * The sentences of a language file, which is one flat object of strings: every string at the object's own level
+     * that a colon follows is a key, and the string after the colon is its sentence.
+     */
+    private static Map<String, String> entriesOf(final Path file) {
         final String json;
         try {
             json = Files.readString(file, StandardCharsets.UTF_8);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-        final Set<String> keys = new TreeSet<>();
+        final Map<String, String> entries = new TreeMap<>();
+        String key = null;
         int depth = 0;
         int i = 0;
         while (i < json.length()) {
@@ -164,6 +236,14 @@ class TranslationCoverageTest {
                 while (i < json.length() && json.charAt(i) != '"') {
                     if (json.charAt(i) == '\\' && i + 1 < json.length()) {
                         i++;
+                        if (json.charAt(i) == 'u' && i + 4 < json.length()) {
+                            text.append((char) Integer.parseInt(json.substring(i + 1, i + 5), 16));
+                            i += 5;
+                            continue;
+                        }
+                        text.append(json.charAt(i) == 'n' ? '\n' : json.charAt(i));
+                        i++;
+                        continue;
                     }
                     text.append(json.charAt(i));
                     i++;
@@ -173,12 +253,15 @@ class TranslationCoverageTest {
                     after++;
                 }
                 if (depth == 1 && after < json.length() && json.charAt(after) == ':') {
-                    keys.add(text.toString());
+                    key = text.toString();
+                } else if (depth == 1 && key != null) {
+                    entries.put(key, text.toString());
+                    key = null;
                 }
             }
             i++;
         }
-        return keys;
+        return entries;
     }
 
     /** The mods a player plays with; the test mod is for development only and declares keys only to test them. */

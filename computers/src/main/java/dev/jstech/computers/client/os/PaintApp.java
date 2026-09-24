@@ -7,12 +7,16 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.os.fs.PixImage;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -36,6 +40,7 @@ import java.util.List;
  * <p>What earns it its place beside the games is the last button: a picture can become the desktop's
  * wallpaper, so something a player drew ends up on every screen of that machine.
  */
+@PaletteHolder
 public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /** What the pointer does on the canvas, each carrying the two names it is drawn and read by. */
@@ -78,13 +83,13 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
     private static final int SWATCH_ROWS = 2;
     /** How many rows the whole palette is, which is every colour a picture may hold. */
     private static final int PALETTE_ROWS = PixImage.COLOURS / SWATCH_COLS;
-    private static final int CHECKER_LIGHT = 0xFFBFBFBF;
-    private static final int CHECKER_DARK = 0xFFA0A0A0;
     /** How big one square of the chequer under the canvas is, in pixels of the screen. */
     private static final int CHECKER_SQUARE = 6;
-    private static final int CANVAS_EDGE = 0xFF2B2B2B;
     /** How many steps back the program remembers, which is what a drawing hand actually needs. */
     private static final int UNDO_DEPTH = 24;
+    /** Paint's own colours, {@code jsc:app/paint}: the chequer under a transparent pixel, and the canvas edge. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/paint",
+            new Colours(0xFFBFBFBF, 0xFFA0A0A0, 0xFF2B2B2B));
 
     /** The tools in the order the column offers them, read the same way by the drawing and the click. */
     private static final List<Tool> TOOLS = List.of(Tool.values());
@@ -363,7 +368,7 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
         final int shownH = Math.min(image.height() * zoom, bottom - top);
         this.canvasX = left;
         this.canvasY = top;
-        g.fill(left - 1, top - 1, left + shownW + 1, top + shownH + 1, CANVAS_EDGE);
+        g.fill(left - 1, top - 1, left + shownW + 1, top + shownH + 1, PALETTE.get().canvasEdge());
         drawPicture(g, image, left, top, shownW, shownH);
         this.hoverX = (mouseX - left) / zoom;
         this.hoverY = (mouseY - top) / zoom;
@@ -389,13 +394,13 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
          * canvas is otherwise sixteen thousand alternating squares, which is the worst case of the very
          * thing this method exists to avoid.
          */
-        g.fill(left, top, left + shownW, top + shownH, CHECKER_LIGHT);
+        g.fill(left, top, left + shownW, top + shownH, PALETTE.get().checkerLight());
         for (int sy = 0; sy < shownH; sy += CHECKER_SQUARE) {
             for (int sx = (sy / CHECKER_SQUARE) % 2 == 0 ? CHECKER_SQUARE : 0;
                     sx < shownW; sx += CHECKER_SQUARE * 2) {
                 g.fill(left + sx, top + sy,
                         left + Math.min(sx + CHECKER_SQUARE, shownW),
-                        top + Math.min(sy + CHECKER_SQUARE, shownH), CHECKER_DARK);
+                        top + Math.min(sy + CHECKER_SQUARE, shownH), PALETTE.get().checkerDark());
             }
         }
         final int columns = Math.min(image.width(), (shownW + zoom - 1) / zoom);
@@ -455,9 +460,9 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
     private void drawPalette(final GuiGraphics g, final int x, final int y, final int width) {
         g.fill(x, y, x + width, y + PALETTE_H, skin.windowBg());
         // The colour in hand, big enough to be read at a glance beside the strip it came from.
-        g.fill(x + MARGIN, y + 3, x + MARGIN + 18, y + 21, CANVAS_EDGE);
+        g.fill(x + MARGIN, y + 3, x + MARGIN + 18, y + 21, PALETTE.get().canvasEdge());
         if (PixImage.isTransparent(colour)) {
-            g.fill(x + MARGIN + 1, y + 4, x + MARGIN + 17, y + 20, CHECKER_LIGHT);
+            g.fill(x + MARGIN + 1, y + 4, x + MARGIN + 17, y + 20, PALETTE.get().checkerLight());
         } else {
             g.fill(x + MARGIN + 1, y + 4, x + MARGIN + 17, y + 20, PixImage.colourOf(colour));
         }
@@ -473,7 +478,7 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
                     continue;
                 }
                 if (PixImage.isTransparent(index)) {
-                    g.fill(sx, sy, sx + SWATCH - 1, sy + SWATCH - 1, CHECKER_LIGHT);
+                    g.fill(sx, sy, sx + SWATCH - 1, sy + SWATCH - 1, PALETTE.get().checkerLight());
                 } else {
                     g.fill(sx, sy, sx + SWATCH - 1, sy + SWATCH - 1, PixImage.colourOf(index));
                 }
@@ -688,5 +693,9 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
             return true;
         }
         return false;
+    }
+
+    /** The chequer under a transparent pixel, and the canvas edge. */
+    private record Colours(int checkerLight, int checkerDark, int canvasEdge) {
     }
 }

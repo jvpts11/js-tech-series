@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.layout.OpenWithLayout;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.core.client.gui.component.Button;
@@ -16,6 +17,9 @@ import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import java.util.List;
@@ -35,12 +39,16 @@ import org.lwjgl.glfw.GLFW;
  * nothing; Always does the same and makes that program the one for every file with the same extension on this
  * computer. Escape closes it without opening anything; a click outside it does nothing, as with the error dialog.
  */
+@PaletteHolder
 public final class OpenWithPopup extends Popup {
 
     /** How far apart two clicks on the same program may be to count as a double-click, in milliseconds. */
     private static final long DOUBLE_CLICK_MS = 400L;
     /** The longest extension an Always can be written down for. */
     private static final int MAX_EXTENSION = 32;
+    /** What Open With dims the desktop behind it with, {@code jsc:desktop/open_with}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/open_with",
+            new Colours(0x80000000));
 
     /** What the player chose: a program, and whether it opens every file with that extension from now on. */
     @FunctionalInterface
@@ -89,7 +97,7 @@ public final class OpenWithPopup extends Popup {
                 .setPrimary(true));
         this.always = add(new Button(GameText.resolve(OpenWithTexts.ALWAYS), () -> choose(true)));
         this.always.setEnabled(this.canRemember);
-        setDim(0x80000000);
+        setDim(PALETTE.get().dim());
         setCloseOnOutsideClick(false);
         setLayouter(this::layoutContent);
         open();
@@ -236,5 +244,9 @@ public final class OpenWithPopup extends Popup {
                 skin.field(g, x(), y(), width(), height(), false);
             }
         }
+    }
+
+    /** What Open With dims the desktop behind it with. */
+    private record Colours(int dim) {
     }
 }

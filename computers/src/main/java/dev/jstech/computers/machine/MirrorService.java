@@ -187,7 +187,7 @@ public final class MirrorService {
             return List.of();
         }
         // A service's state travels as the English the machine keeps until the listing carries words to translate.
-        return List.of(new ICliComputer.ServiceStatus("IQL Engine", this.iql.state()),
+        return List.of(new ICliComputer.ServiceStatus(Text.literal("IQL Engine").english(), this.iql.state()),
                 new ICliComputer.ServiceStatus("Mirror", this.state().english()));
     }
 

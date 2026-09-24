@@ -166,7 +166,7 @@ public final class KnotApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Knot";
+        return ProgramClient.nameOf("knot");
     }
 
     @Override

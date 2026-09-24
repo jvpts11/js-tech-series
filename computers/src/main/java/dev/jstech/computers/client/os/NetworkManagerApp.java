@@ -328,7 +328,7 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Network Manager";
+        return GameText.resolve(NetworkManagerAppTexts.TITLE);
     }
 
     @Override

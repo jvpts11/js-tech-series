@@ -26,8 +26,6 @@ public final class TextArea extends UiComponent {
     private static final int LINE_H = 9;
     private static final int INSET = 3;
     private static final int BAR = 3;
-    private static final int BAR_TRACK = 0x30808080;
-    private static final int BAR_THUMB = 0xA0909090;
 
     private final TextDocument doc = new TextDocument();
     private int scroll;
@@ -151,12 +149,13 @@ public final class TextArea extends UiComponent {
     private void drawBars(final GuiGraphics g, final Font font) {
         final int rows = doc.lineCount();
         final int visible = visibleLines();
+        final ComponentPalette.Colours colours = ComponentPalette.get();
         if (rows > visible) {
             final int trackH = height() - 2 - BAR;
             final int thumbH = Math.max(6, trackH * visible / rows);
             final int thumbY = y() + 1 + (trackH - thumbH) * scroll / Math.max(1, rows - visible);
-            g.fill(right() - 1 - BAR, y() + 1, right() - 1, y() + 1 + trackH, BAR_TRACK);
-            g.fill(right() - 1 - BAR, thumbY, right() - 1, thumbY + thumbH, BAR_THUMB);
+            g.fill(right() - 1 - BAR, y() + 1, right() - 1, y() + 1 + trackH, colours.barTrack());
+            g.fill(right() - 1 - BAR, thumbY, right() - 1, thumbY + thumbH, colours.barThumb());
         }
         final int room = Math.max(8, room());
         final int widest = widest(font) + 2;
@@ -165,8 +164,8 @@ public final class TextArea extends UiComponent {
             final int trackW = width() - 2 - BAR;
             final int thumbW = Math.max(6, trackW * room / widest);
             final int thumbX = trackX + (trackW - thumbW) * shift / Math.max(1, widest - room);
-            g.fill(trackX, bottom() - 1 - BAR, trackX + trackW, bottom() - 1, BAR_TRACK);
-            g.fill(thumbX, bottom() - 1 - BAR, thumbX + thumbW, bottom() - 1, BAR_THUMB);
+            g.fill(trackX, bottom() - 1 - BAR, trackX + trackW, bottom() - 1, colours.barTrack());
+            g.fill(thumbX, bottom() - 1 - BAR, thumbX + thumbW, bottom() - 1, colours.barThumb());
         }
     }
 

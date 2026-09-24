@@ -17,6 +17,7 @@ import dev.jstech.core.text.TextKey;
 @TextHolder
 final class StorageInsightsTexts {
 
+    static final TextKey TITLE = TextKey.of("jsc.storage_insights.title", "Storage Insights");
     static final TextKey READING = TextKey.of("jsc.storage_insights.reading", "Reading network...");
     static final TextKey SEARCH_ITEM = TextKey.of("jsc.storage_insights.search_item", "search item...");
     static final TextKey TYPES_TILE = TextKey.of("jsc.storage_insights.types_tile", "TYPES %s");

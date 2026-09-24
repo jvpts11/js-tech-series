@@ -104,7 +104,8 @@ final class MekanismChemicalBridge implements IChemicalBridge {
 
     @Override
     public int tint(final ResourceLocation chemical) {
-        return 0xFF000000 | (lookup(chemical).getTint() & 0xFFFFFF);
+        // Forces full alpha on Mekanism's own tint, which carries none of its own: not a declared colour.
+        return 0xFF << 24 | (lookup(chemical).getTint() & 0xFFFFFF);
     }
 
     private static Chemical lookup(final ResourceLocation chemical) {

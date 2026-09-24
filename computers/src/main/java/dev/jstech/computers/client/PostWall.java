@@ -32,9 +32,13 @@ import static dev.jstech.computers.client.FirmwareScreenTexts.VIDEO;
 import static dev.jstech.computers.client.FirmwareScreenTexts.VIDEO_ADAPTER;
 import static dev.jstech.computers.client.FirmwareScreenTexts.of;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.Font;
@@ -56,7 +60,10 @@ import java.util.Locale;
  * <p>The two ages print the same facts in their own hand. The earliest board names the parts in a column of
  * short labels with the machine's name off to the right; the one after it writes them out and gives the
  * machine and its board a line of their own.
+ *
+ * <p>The key it lifts out of its hints is the palette {@code jsc:firmware/post_wall}.
  */
+@PaletteHolder
 public final class PostWall {
 
     /** Where the wall begins, and how much air is left at the right edge. */
@@ -76,7 +83,8 @@ public final class PostWall {
     public static final int MOST_DRIVES = 10;
 
     /** The amber those boards lifted a key out of a sentence with. */
-    private static final int KEY = 0xFFFFE14D;
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "firmware/post_wall",
+            new Colours(0xFFFFE14D));
 
     private PostWall() {
     }
@@ -162,11 +170,12 @@ public final class PostWall {
             }
             return;
         }
+        final int key = PALETTE.get().key();
         int tx = x + MARGIN;
         tx = run(g, font, of(HINT_PRESS), tx, ty, dim);
-        tx = run(g, font, "DEL", tx, ty, KEY);
+        tx = run(g, font, "DEL", tx, ty, key);
         tx = run(g, font, of(HINT_SETUP), tx, ty, dim);
-        tx = run(g, font, "F12", tx, ty, KEY);
+        tx = run(g, font, "F12", tx, ty, key);
         run(g, font, of(HINT_BOOT_MENU), tx, ty, dim);
     }
 
@@ -315,5 +324,9 @@ public final class PostWall {
             return of(MEMORY_OLD.with(amount)) + (modules.isEmpty() ? "" : "  " + modules);
         }
         return of(MEMORY.with(amount)) + (modules.isEmpty() ? "" : "      " + modules);
+    }
+
+    /** The amber a key is lifted out of a hint sentence with. */
+    private record Colours(int key) {
     }
 }

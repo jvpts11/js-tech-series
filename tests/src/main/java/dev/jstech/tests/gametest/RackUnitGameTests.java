@@ -346,7 +346,7 @@ public final class RackUnitGameTests {
                     // Leave a window on the machine's desktop: the power cycle must not carry it over.
                     rack.setOpenWindows(java.util.List.of(
                             new dev.jstech.computers.os.OpenWindow(
-                                    "Files", 40, 30, 200, 140, false, false)));
+                                    "jsc:files", 40, 30, 200, 140, false, false)));
                     rack.toggleBayPower(0);
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {

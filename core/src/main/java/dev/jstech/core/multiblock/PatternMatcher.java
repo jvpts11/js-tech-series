@@ -115,14 +115,11 @@ public final class PatternMatcher {
     }
 
     public static int[] decodePosition(long encoded) {
-        int x = (int) ((encoded >> 38) & 0x3FFFFFFL);
-        int y = (int) (encoded & 0xFFFL);
-        int z = (int) ((encoded >> 12) & 0x3FFFFFFL);
-
-        // Sign-extend 26-bit x and z, and 12-bit y.
-        if ((x & 0x2000000) != 0) x |= 0xFC000000;
-        if ((z & 0x2000000) != 0) z |= 0xFC000000;
-        if ((y & 0x800) != 0) y |= 0xFFFFF000;
+        // Each field is moved up to the top of the long and shifted back down arithmetically, which sign-extends it:
+        // x already sits at the top (26 bits), z is the 26 bits under it and y the 12 at the bottom.
+        final int x = (int) (encoded >> 38);
+        final int y = (int) (encoded << 52 >> 52);
+        final int z = (int) (encoded << 26 >> 38);
 
         return new int[] { x, y, z };
     }

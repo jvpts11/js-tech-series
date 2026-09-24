@@ -143,7 +143,8 @@ public final class TrashApp implements IDesktopApp {
     /** Dolphin names the folder it is on before itself; the other desktops title the window with the place alone. */
     @Override
     public String title() {
-        return this.style == PanelStyle.KDE ? "Trash - Dolphin" : kindOf(this.style).title();
+        final String place = kindOf(this.style).title();
+        return this.style == PanelStyle.KDE ? place + " - Dolphin" : place;
     }
 
     @Override

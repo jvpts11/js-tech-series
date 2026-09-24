@@ -86,7 +86,7 @@ final class FramesLaunchers {
         for (final DesktopScreen.Launcher l : desktop.launcherList()) {
             final boolean hov = desktop.hoverIn(itemX, my, x + w - itemX, DesktopScreen.MENU_ITEM_H);
             skin.listRow(g, itemX, my, x + w - 4 - itemX, DesktopScreen.MENU_ITEM_H, hov, false);
-            ProgramIcons.draw(g, itemX + 2, my + 1, 14, 14, desktop.programIdFor(l.label()), desktop.icons());
+            ProgramIcons.draw(g, itemX + 2, my + 1, 14, 14, desktop.programIdFor(l.key()), desktop.icons());
             g.drawString(desktop.textFont(), l.label(), itemX + 20, my + 4,
                     hov ? skin.listRowText(true) : skin.text(), false);
             my += DesktopScreen.MENU_ITEM_H;

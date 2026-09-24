@@ -13,6 +13,11 @@ import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Control;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.os.WorkspaceSet;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import java.util.Locale;
 import javax.annotation.Nullable;
 import net.minecraft.client.gui.GuiGraphics;
@@ -30,9 +35,14 @@ import net.minecraft.resources.ResourceLocation;
  * <p>Where each thing sits is {@link CdeFrontPanelLayout}'s to say, and both the drawing and the clicks ask
  * it, so the control a player sees and the one they hit are the same rectangle.
  */
+@PaletteHolder
 final class CdePanels {
 
-    private static final String[] WORKSPACE_NAMES = {"One", "Two", "Three", "Four"};
+    private static final TextKey[] WORKSPACE_NAMES = {CdePanelsTexts.WORKSPACE_ONE, CdePanelsTexts.WORKSPACE_TWO,
+        CdePanelsTexts.WORKSPACE_THREE, CdePanelsTexts.WORKSPACE_FOUR};
+    /** The clock hands and the calendar day's ink, {@code jsc:desktop/front_panel}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/front_panel",
+            new Colours(0xFF1A1A1A));
 
     /** What each control opens, by the key its program goes by; the two that only show something open nothing. */
     private static final String FILES = "files";
@@ -89,7 +99,7 @@ final class CdePanels {
             this.shownTip = "";
             return;
         }
-        this.shownTip = over.tip();
+        this.shownTip = GameText.resolve(over.tip());
         final int w = desktop.textFont().width(this.shownTip) + TIP_PAD * 2;
         final Rect at = CdeFrontPanelLayout.tip(over, w, TIP_H, sw, sh);
         MotifChrome.raised(g, at.x(), at.y(), at.w(), at.h(), p.window(), p);
@@ -98,7 +108,7 @@ final class CdePanels {
 
     /** What workspace {@code index} is called, counted from nought: the four names CDE's switch came with. */
     static String workspaceName(final int index) {
-        return WORKSPACE_NAMES[WorkspaceSet.clampIndex(index)];
+        return GameText.resolve(WORKSPACE_NAMES[WorkspaceSet.clampIndex(index)]);
     }
 
     void render(final GuiGraphics g, final int sw, final int sh, final CdePalette p) {
@@ -182,7 +192,7 @@ final class CdePanels {
             } else {
                 MotifChrome.raised(g, r.x(), r.y(), r.w(), r.h(), p.window(), p);
             }
-            final String name = WORKSPACE_NAMES[i];
+            final String name = GameText.resolve(WORKSPACE_NAMES[i]);
             g.drawString(desktop.textFont(), name, r.x() + (r.w() - desktop.textFont().width(name)) / 2,
                     r.y() + (r.h() - 7) / 2, up ? p.activeInk() : p.ink(), false);
         }
@@ -193,7 +203,7 @@ final class CdePanels {
         } else {
             MotifChrome.raised(g, exit.x(), exit.y(), exit.w(), exit.h(), p.window(), p);
         }
-        final String word = "EXIT";
+        final String word = GameText.resolve(CdePanelsTexts.EXIT);
         g.drawString(desktop.textFont(), word, exit.x() + (exit.w() - desktop.textFont().width(word)) / 2,
                 exit.y() + (exit.h() - 7) / 2, p.ink(), false);
     }
@@ -248,13 +258,17 @@ final class CdePanels {
         for (int step = 0; step <= length; step++) {
             final int x = cx + (int) Math.round(Math.sin(angle) * step);
             final int y = cy - (int) Math.round(Math.cos(angle) * step);
-            g.fill(x, y, x + 1, y + 1, 0xFF1A1A1A);
+            g.fill(x, y, x + 1, y + 1, PALETTE.get().ink());
         }
     }
 
     /** The day of the world on the calendar page, under its red band. */
     private void day(final GuiGraphics g, final int cx, final int y) {
         final String day = Integer.toString(desktop.dayOfWorld());
-        g.drawString(desktop.textFont(), day, cx - desktop.textFont().width(day) / 2, y, 0xFF1A1A1A, false);
+        g.drawString(desktop.textFont(), day, cx - desktop.textFont().width(day) / 2, y, PALETTE.get().ink(), false);
+    }
+
+    /** The ink the clock's hands and the calendar day are drawn in. */
+    private record Colours(int ink) {
     }
 }

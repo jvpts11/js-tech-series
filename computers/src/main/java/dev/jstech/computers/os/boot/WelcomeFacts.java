@@ -14,6 +14,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
@@ -45,7 +46,7 @@ public final class WelcomeFacts {
     public static final int MOST_TIPS = 8;
 
     /** What the machine calls the welcome's window when it puts one up, and what closes it again. */
-    public static final String WINDOW_KEY = "Welcome";
+    public static final String WINDOW_KEY = WindowKeys.WELCOME;
 
     private static final TextKey TIP_NO_MIRROR = TextKey.of("jsc.boot.welcome_facts.tip_no_mirror",
             "pckmgr at the Command Prompt installs programs, once a Mainframe on this network runs the Mirror.");

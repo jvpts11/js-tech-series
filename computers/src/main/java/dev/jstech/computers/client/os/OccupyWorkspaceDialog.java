@@ -72,7 +72,7 @@ final class OccupyWorkspaceDialog implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Occupy Workspace";
+        return GameText.resolve(OccupyWorkspaceDialogTexts.TITLE);
     }
 
     @Override

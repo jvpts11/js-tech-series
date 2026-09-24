@@ -7,8 +7,12 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.GuiGraphics;
@@ -21,8 +25,15 @@ import net.minecraft.util.FormattedCharSequence;
  * <p>The sliders used to be a band above the grid, which cost the grid a row on the one heading that most
  * wants them. They live where the detail of what is picked out lives on the other headings, because that
  * is what they are: the detail of the store this heading is showing.
+ *
+ * <p>Its own colour beside the shared theme is the palette {@code jsc:terminal/storage}.
  */
+@PaletteHolder
 final class StorageTerminalTab extends AbstractTerminalTab {
+
+    /** The slider handle while it is being dragged, over its usual accent. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "terminal/storage",
+            new Colours(0xFFFFFFFF));
 
     private static final int GRID_ROWS = ComputerTerminalLayout.GRID_ROWS;
     private static final int TOOLBAR_Y = ComputerTerminalLayout.TOOLBAR_Y;
@@ -115,7 +126,7 @@ final class StorageTerminalTab extends AbstractTerminalTab {
             final int tickX = tx + Math.round(span * (i / 4.0f)) + SLIDER_HANDLE_W / 2;
             g.fill(tickX, ty + SLIDER_TRACK_H, tickX + 1, ty + SLIDER_TRACK_H + 1, LINE());
         }
-        final int handleColor = screen.draggingSliderDisk == disk ? 0xFFFFFFFF : ACCENT();
+        final int handleColor = screen.draggingSliderDisk == disk ? PALETTE.get().draggingHandle() : ACCENT();
         g.fill(handleX, ty - ComputerTerminalLayout.SLIDER_HANDLE_OVERHANG, handleX + SLIDER_HANDLE_W,
                 ty + SLIDER_TRACK_H + ComputerTerminalLayout.SLIDER_HANDLE_OVERHANG, handleColor);
     }
@@ -160,5 +171,9 @@ final class StorageTerminalTab extends AbstractTerminalTab {
             at += 10;
         }
         return at;
+    }
+
+    /** The slider handle's colour while a player is dragging it. */
+    private record Colours(int draggingHandle) {
     }
 }

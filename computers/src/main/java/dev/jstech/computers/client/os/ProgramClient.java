@@ -11,6 +11,8 @@ import dev.jstech.computers.client.NmsApp;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.core.text.GameText;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
@@ -60,6 +62,20 @@ public final class ProgramClient {
         return FACTORIES.containsKey(id);
     }
 
+    /**
+     * What the program {@code id} is called in the player's language, which is what its window calls itself when it
+     * has nothing more particular to say; the id's path when no such program is registered.
+     */
+    public static String nameOf(final ResourceLocation id) {
+        final ProgramSpec spec = OsRegistry.getProgram(id);
+        return spec == null ? id.getPath() : GameText.resolve(spec.name());
+    }
+
+    /** The same for one of this mod's own programs, by the path of its id. */
+    public static String nameOf(final String path) {
+        return nameOf(rl(path));
+    }
+
     private static void registerBuiltins() {
         // Built-in Frames apps.
         register(rl("network"), (host, mon, os) -> new NetworkInteractorApp(host, mon));
@@ -98,7 +114,7 @@ public final class ProgramClient {
         register(rl("virtual_studio_code"), (host, mon, os) -> new VirtualStudioCodeApp(host));
         register(rl("exposure"), (host, mon, os) -> new ExposureApp(host));
         // Linux's disk utility: the same volumes This PC lists, under the name that platform uses.
-        register(rl("disks"), (host, mon, os) -> new ThisPcApp(host, "Disks"));
+        register(rl("disks"), (host, mon, os) -> new ThisPcApp(host, nameOf(rl("disks"))));
     }
 
     private static ResourceLocation rl(final String path) {

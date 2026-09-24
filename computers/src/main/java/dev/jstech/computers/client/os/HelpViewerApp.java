@@ -59,8 +59,6 @@ public final class HelpViewerApp implements IDesktopApp {
     private int left;
     private int top;
 
-    private static final String TITLE = "Help Viewer";
-
     /** Which of the buttons walks back, the first of them. */
     private static final int BACKTRACK = 0;
 
@@ -116,7 +114,8 @@ public final class HelpViewerApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return TITLE + (this.page.isEmpty() ? "" : " - " + this.page);
+        final String title = GameText.resolve(HelpViewerAppTexts.TITLE);
+        return this.page.isEmpty() ? title : title + " - " + this.page;
     }
 
     @Override

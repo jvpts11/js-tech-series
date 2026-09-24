@@ -151,7 +151,7 @@ public class TextField extends UiComponent {
                 if (to > from) {
                     final int sx = x() + 3 + ctx.font().width(shown.substring(offset, from));
                     final int ex = x() + 3 + ctx.font().width(shown.substring(offset, to));
-                    g.fill(sx, textY - 1, ex, textY + 8, SELECTION);
+                    g.fill(sx, textY - 1, ex, textY + 8, ComponentPalette.get().selection());
                 }
             }
             g.drawString(ctx.font(), visible, x() + 3, textY, ctx.skin().text(), false);
@@ -193,8 +193,6 @@ public class TextField extends UiComponent {
         return state.selectedText();
     }
 
-    /** The colour the selection is drawn in, the same as the code editors use. */
-    private static final int SELECTION = 0x663A72B0;
     /** The font the field was last drawn with, which is what a click is measured against. */
     @Nullable
     private Font font;

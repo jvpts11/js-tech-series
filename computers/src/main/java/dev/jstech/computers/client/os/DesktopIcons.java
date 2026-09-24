@@ -114,11 +114,14 @@ final class DesktopIcons {
         return Math.max(1, (desktop.workAreaBottom() - desktop.workAreaTop() - 12) / PITCH_Y);
     }
 
-    /** The stable id of the icon at slot {@code i}: {@code app:<label>} or {@code file:<name>}. */
+    /**
+     * The stable id of the icon at slot {@code i}: {@code app:<key>} for a program or the trash, by the key its
+     * window goes by and not by the name it shows, or {@code file:<name>}.
+     */
     String keyOf(final int i) {
         final List<DesktopScreen.Launcher> launchers = desktop.deskIcons();
         if (i < launchers.size()) {
-            return "app:" + launchers.get(i).label();
+            return "app:" + launchers.get(i).key();
         }
         return "file:" + baseName(desktop.deskFiles().get(i - launchers.size()).path());
     }

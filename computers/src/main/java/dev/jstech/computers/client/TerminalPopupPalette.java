@@ -13,7 +13,7 @@ import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 
 /**
- * The colours the terminal's popups share, the one that asks for data and the one that drops it:
+ * The colours the terminal's popups share, the ones that ask for data, drop it, craft and run an Operation:
  * {@code jsc:terminal/popup}.
  */
 @PaletteHolder
@@ -22,7 +22,7 @@ final class TerminalPopupPalette {
     static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "terminal/popup",
             new Colours(0xE0070A0F, 0xFF0F151C, 0xFF1A222B, 0xFF24323C, 0xFF1F9488, 0xFF2BB3A4, 0xFFFFFFFF,
                     0xFF2A3340, 0xFF11161D, 0xFF0F151C, 0xFF2A3340, 0xFF8A241C, 0xFFB23228, 0xFF3A2420,
-                    0xFFFFFFFF));
+                    0xFFFFFFFF, 0xFF0A1A1F));
 
     private TerminalPopupPalette() {
     }
@@ -50,9 +50,10 @@ final class TerminalPopupPalette {
      * @param dangerHover   that button under the cursor
      * @param dangerOff     that button while it cannot be pressed
      * @param dangerInk     its words
+     * @param rim           the rim around the craft and Operation popups
      */
     record Colours(int veil, int panel, int control, int controlHover, int action, int actionHover, int actionInk,
                    int checkEdge, int checkFill, int onAccent, int cancelHover, int danger, int dangerHover,
-                   int dangerOff, int dangerInk) {
+                   int dangerOff, int dangerInk, int rim) {
     }
 }

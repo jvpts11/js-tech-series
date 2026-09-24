@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.storage;
 
+import dev.jstech.computers.JsComputers;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -23,10 +27,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * The registered {@link IChemicalBridge}s. With no bridge (no chemical mod present) every query answers "no
  * such chemical", so chemical keys are inert data the network can still store, move and display by id.
  */
+@PaletteHolder
 public final class ChemicalBridges {
 
     private static final List<IChemicalBridge> BRIDGES = new CopyOnWriteArrayList<>();
-    private static final int DEFAULT_TINT = 0xFF8FA3B7;
+
+    /** The tint a chemical with no bridge to explain it falls back to. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "storage/chemical",
+            new Colours(0xFF8FA3B7));
 
     private ChemicalBridges() {
     }
@@ -126,6 +134,10 @@ public final class ChemicalBridges {
                 return bridge.tint(chemical);
             }
         }
-        return DEFAULT_TINT;
+        return PALETTE.get().defaultTint();
+    }
+
+    /** The colours a chemical falls back to when no bridge recognises it. */
+    record Colours(int defaultTint) {
     }
 }

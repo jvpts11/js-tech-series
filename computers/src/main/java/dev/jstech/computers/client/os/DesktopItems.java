@@ -7,10 +7,14 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.client.ChemicalSprite;
 import dev.jstech.computers.client.FluidSprite;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.gui.layout.DesktopZ;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.item.ItemStack;
@@ -27,7 +31,12 @@ import org.jetbrains.annotations.Nullable;
  * drew it. Every app draws its items through here; only the carried (cursor) stack, which is meant to ride
  * above everything, uses the raw call.
  */
+@PaletteHolder
 public final class DesktopItems {
+
+    /** A data cell's amount badge ink, {@code jsc:app/desktop_items}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/desktop_items",
+            new Colours(0xFFFFFFFF));
 
     private DesktopItems() {
     }
@@ -86,8 +95,12 @@ public final class DesktopItems {
         if (label != null) {
             g.pose().pushPose();
             g.pose().translate(0.0F, 0.0F, DesktopZ.BAND_COUNT);
-            g.drawString(font, label, x + 17 - font.width(label), y + 9, 0xFFFFFFFF, true);
+            g.drawString(font, label, x + 17 - font.width(label), y + 9, PALETTE.get().badgeInk(), true);
             g.pose().popPose();
         }
+    }
+
+    /** A data cell's amount badge ink. */
+    private record Colours(int badgeInk) {
     }
 }

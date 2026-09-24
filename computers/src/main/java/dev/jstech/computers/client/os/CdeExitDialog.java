@@ -7,10 +7,14 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.CdeExitMessage;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.layout.CdeExitLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -25,11 +29,14 @@ import net.minecraft.client.gui.GuiGraphics;
  * <p>It only draws and says which button a point is on. What each button does to the machine is the desktop's to
  * carry out, the same way for every desktop.
  */
+@PaletteHolder
 final class CdeExitDialog {
 
     private static final List<TextKey> BUTTONS =
             List.of(CdeExitMessage.SHUT_DOWN, CdeExitMessage.RESTART, CdeExitMessage.CANCEL);
-    private static final int DIM = 0x66000000;
+    /** What the exit dialog dims the desktop behind it with, {@code jsc:desktop/exit_dialog}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/exit_dialog",
+            new Colours(0x66000000));
     private static final int MENU_BUTTON = 12;
 
     private CdeExitDialog() {
@@ -38,7 +45,7 @@ final class CdeExitDialog {
     /** Draws the dialog over a desktop that size, for a machine with that many programs open. */
     static void render(final GuiGraphics g, final Font font, final int sw, final int sh, final int open,
                        final CdePalette p) {
-        g.fill(0, 0, sw, sh, DIM);
+        g.fill(0, 0, sw, sh, PALETTE.get().dim());
         final Rect d = CdeExitLayout.dialog(sw, sh);
         MotifChrome.windowFrame(g, d.x(), d.y(), d.w(), d.h(), p);
         // A dialog's bar keeps the menu button and nothing else, since a question is neither put away nor grown.
@@ -58,5 +65,9 @@ final class CdeExitDialog {
             final String label = GameText.resolve(BUTTONS.get(i));
             g.drawString(font, label, r.x() + (r.w() - font.width(label)) / 2, r.y() + 3, p.ink(), false);
         }
+    }
+
+    /** How far the exit dialog dims the desktop behind it. */
+    private record Colours(int dim) {
     }
 }

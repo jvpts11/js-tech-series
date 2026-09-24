@@ -11,10 +11,12 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.layout.CdeAppManagerLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.os.CdeAppGroup;
+import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -33,9 +35,7 @@ import net.minecraft.client.gui.GuiGraphics;
 @PaletteHolder
 final class ApplicationManagerApp implements IDesktopApp {
 
-    /** What the first window is called, and what the name of a group's window begins with. */
-    static final String KEY = "Application Manager";
-
+    /** What comes between the Application Manager's name and a group's, on a group window's title. */
     private static final String GROUP_MARK = " - ";
 
     /** The group this window has open, or null for the window of the groups themselves. */
@@ -69,19 +69,18 @@ final class ApplicationManagerApp implements IDesktopApp {
 
     /** The key of the window that has {@code group} open, or of the first window for null. */
     static String keyOf(@Nullable final CdeAppGroup group) {
-        return group == null ? KEY : KEY + GROUP_MARK + group.label();
+        return WindowKeys.applicationManager(group);
     }
 
     /** Whether a window so keyed is one of the Application Manager's. */
     static boolean owns(final String key) {
-        return key.equals(KEY) || key.startsWith(KEY + GROUP_MARK);
+        return WindowKeys.isApplicationManager(key);
     }
 
     /** The group a window so keyed has open, or null for the first window. */
     @Nullable
     static CdeAppGroup groupOf(final String key) {
-        return key.startsWith(KEY + GROUP_MARK)
-                ? CdeAppGroup.labelled(key.substring((KEY + GROUP_MARK).length())) : null;
+        return WindowKeys.applicationManagerGroup(key);
     }
 
     /** The names under the icons this window shows, in the order it shows them, for a test to read. */
@@ -112,7 +111,8 @@ final class ApplicationManagerApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return keyOf(this.group);
+        final String name = GameText.resolve(ApplicationManagerTexts.NAME);
+        return this.group == null ? name : name + GROUP_MARK + this.group.label();
     }
 
     @Override
@@ -155,7 +155,8 @@ final class ApplicationManagerApp implements IDesktopApp {
             final Rect head = CdeAppManagerLayout.head(w);
             this.skin.panel(g, x + head.x(), y + head.y(), head.w(), head.h());
             final int count = programs().size();
-            final String says = this.group.label() + ", " + count + (count == 1 ? " program" : " programs");
+            final String says = GameText.resolve((count == 1 ? ApplicationManagerTexts.GROUP_ONE_PROGRAM
+                    : ApplicationManagerTexts.GROUP_PROGRAMS).with(this.group.label(), count));
             g.drawString(font, says, x + head.x() + 4, y + head.y() + 3, this.skin.text(), false);
         }
         final Rect well = CdeAppManagerLayout.well(headed, w, h);

@@ -55,9 +55,6 @@ public enum WallpaperStyle {
     private final String id;
     private final boolean offered;
 
-    /** The colour a thumbnail of "whatever the desktop comes with" is shown in. */
-    private static final int DEFAULT_SWATCH = 0xFF3A6A9A;
-
     /** The size the pictures are made at, which is the monitor's glass. */
     private static final int PICTURE_W = 384;
     private static final int PICTURE_H = 256;
@@ -94,7 +91,7 @@ public enum WallpaperStyle {
                               @Nullable final String id) {
         final WallpaperStyle style = byId(id);
         if (style == null) {
-            g.fill(x, y, x + w, y + h, DEFAULT_SWATCH);
+            g.fill(x, y, x + w, y + h, WallpaperPalette.get().defaultSwatch());
         } else {
             style.swatch(g, x, y, w, h);
         }

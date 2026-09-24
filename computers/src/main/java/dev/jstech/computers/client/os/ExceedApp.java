@@ -11,11 +11,15 @@ import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.operation.payload.RequestSheetFactsPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.operation.payload.SheetFactsPayload;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.program.Spreadsheet;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import net.minecraft.client.Minecraft;
@@ -44,6 +48,7 @@ import java.util.Map;
  * <p>It reads and writes the comma separated files the mod already has, so a sheet is a file any other
  * program on the machine can open.
  */
+@PaletteHolder
 public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private static final int TOOLBAR_H = 15;
@@ -54,8 +59,9 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
     private static final int COL_W = 46;
     private static final int STATUS_H = 11;
     private static final int MARGIN = 3;
-    private static final int LIVE_INK = 0xFF1C4FA8;
-    private static final int ERROR_INK = 0xFFB4231F;
+    /** A cell's ink when it is live (asked of the network) and when its formula errored, {@code jsc:app/exceed}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/exceed",
+            new Colours(0xFF1C4FA8, 0xFFB4231F));
     /** How long the sheet waits before asking the machine again, so typing does not send a packet a key. */
     private static final long ASK_EVERY_MS = 3000L;
     /** The longest name a cell may ask about, which is what the request payload carries. */
@@ -369,7 +375,7 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         final String name = Spreadsheet.cellName(cursorRow, cursorColumn);
         g.fill(x + MARGIN, y + 1, x + MARGIN + 28, y + FORMULA_H - 1, skin.fieldBg());
         g.drawString(font, name, x + MARGIN + (28 - font.width(name)) / 2, y + 3, skin.text(), false);
-        g.drawString(font, "fx", x + MARGIN + 31, y + 3, skin.dim(), false);
+        g.drawString(font, GameText.resolve(ExceedAppTexts.FORMULA_MARK), x + MARGIN + 31, y + 3, skin.dim(), false);
         formula.setBounds(x + MARGIN + 43, y + 1, Math.max(20, width - MARGIN * 2 - 43), FORMULA_H - 2);
     }
 
@@ -416,7 +422,7 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         if (!shown.isEmpty()) {
             final boolean live = sheet.isLive(row, column);
             final boolean bad = shown.startsWith("#");
-            final int ink = bad ? ERROR_INK : live ? LIVE_INK : skin.text();
+            final int ink = bad ? PALETTE.get().errorInk() : live ? PALETTE.get().liveInk() : skin.text();
             /*
              * Numbers are read against each other down a column, so they are set to the right; words are
              * read one at a time and start where the eye does, which is the left.
@@ -551,5 +557,9 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
             return true;
         }
         return root.keyPressed(key, scanCode, modifiers);
+    }
+
+    /** A cell's ink when it is live (asked of the network) and when its formula errored. */
+    private record Colours(int liveInk, int errorInk) {
     }
 }

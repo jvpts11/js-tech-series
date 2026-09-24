@@ -99,8 +99,8 @@ public final class OsMemoryGameTests {
                                     + mainframe.ramReservedMb());
 
                     mainframe.setOpenWindows(List.of(
-                            new OpenWindow("Files", 40, 30, 200, 140, false, false),
-                            new OpenWindow("Editor", 60, 50, 180, 120, true, false)));
+                            new OpenWindow("jsc:files", 40, 30, 200, 140, false, false),
+                            new OpenWindow("jsc:editor", 60, 50, 180, 120, true, false)));
                     final RamLedger ledger = mainframe.ramLedger();
                     helper.assertTrue(ledger.usedMb(RamLedger.Kind.WINDOW) == 32,
                             "two bundled windows weigh 16 MB each under XP; got "
@@ -150,7 +150,7 @@ public final class OsMemoryGameTests {
                     // 2048 MB minus the system's 64 leaves 1984: fifteen 128 MB studios fit, the sixteenth does not.
                     final List<OpenWindow> asked = new ArrayList<>();
                     for (int i = 0; i < 20; i++) {
-                        asked.add(new OpenWindow("Network Management Studio", 10 + i, 10, 200, 140, false, false));
+                        asked.add(new OpenWindow("jsc:nms", 10 + i, 10, 200, 140, false, false));
                     }
                     final List<OpenWindow> kept = mainframe.windowsWithinBudget(asked);
                     helper.assertTrue(kept.size() == 15, "fifteen studios fit in 1984 MB; kept " + kept.size());

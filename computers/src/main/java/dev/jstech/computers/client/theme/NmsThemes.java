@@ -7,11 +7,14 @@
  */
 package dev.jstech.computers.client.theme;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.client.os.OsSkin;
 import dev.jstech.core.client.gui.theme.EraPalette;
 import dev.jstech.core.client.gui.theme.EraStyle;
 import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.EraThemes;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.tier.HardwareEra;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +29,12 @@ import org.jetbrains.annotations.Nullable;
  * ({@code STANDARD}) skin ships now; earlier eras have no period-correct Studio skin yet and fall back to it, the same
  * way {@link EraThemes} shares STANDARD for eras without content. Their retro skins land with the eras build.
  */
+@PaletteHolder
 public final class NmsThemes {
+
+    /** The Studio's own override on top of a derived OS skin, {@code jsc:theme/nms}: the active tab's label. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "theme/nms",
+            new Colours(0xFFFFFFFF));
 
     private NmsThemes() {
     }
@@ -64,7 +72,11 @@ public final class NmsThemes {
                 skin.accent(), skin.accent(),
                 base.green(), base.amber(), base.red(),
                 skin.text(), skin.dim(),
-                skin.accent(), 0xFFFFFFFF, skin.listHover(),
+                skin.accent(), PALETTE.get().activeTabLabel(), skin.listHover(),
                 0, 0, 0, 0);
+    }
+
+    /** The Studio's own colours on top of a derived skin: the active tab's label, kept white for contrast. */
+    private record Colours(int activeTabLabel) {
     }
 }

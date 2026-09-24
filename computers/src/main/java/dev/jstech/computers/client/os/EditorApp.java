@@ -335,7 +335,7 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
     @Override
     public String title() {
         final Tab tab = current();
-        return (tab.dirty ? "*" : "") + tab.name + " - Editor";
+        return GameText.resolve(EditorAppTexts.TITLE.with((tab.dirty ? "*" : "") + tab.name));
     }
 
     /** The text in the buffer, which is what the player is reading or writing. */
@@ -483,7 +483,8 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private static String bytes(final String text) {
         final int size = text.getBytes(StandardCharsets.UTF_8).length;
-        return size < 1024 ? size + " B" : String.format(Locale.ROOT, "%.1f KB", size / 1024.0);
+        return GameText.resolve(size < 1024 ? ArchiverTexts.BYTES.with(size)
+                : ArchiverTexts.KILOBYTES.with(String.format(Locale.ROOT, "%.1f", size / 1024.0)));
     }
 
     private static String leaf(final String path) {

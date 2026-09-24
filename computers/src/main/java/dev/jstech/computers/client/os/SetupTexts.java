@@ -19,6 +19,7 @@ import dev.jstech.core.text.TextKey;
 final class SetupTexts {
 
     static final TextKey SETUP = TextKey.of("jsc.setup.setup", "Setup");
+    static final TextKey SETUP_OF = TextKey.of("jsc.setup.setup_of", "%s Setup");
     static final TextKey CANCEL = TextKey.of("jsc.setup.cancel", "Cancel");
     static final TextKey CLOSE = TextKey.of("jsc.setup.close", "Close");
 

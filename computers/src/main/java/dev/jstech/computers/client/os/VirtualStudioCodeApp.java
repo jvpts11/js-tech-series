@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.os.edit.CodeRuns;
 import dev.jstech.computers.os.edit.InkPalette;
@@ -26,6 +27,9 @@ import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -54,7 +58,12 @@ import org.lwjgl.glfw.GLFW;
  * wrong with them is the workspace's; the explorer, the tabs, the menus, the palette and the text are
  * components, so the heavier studio is a different arrangement of the same parts.
  */
+@PaletteHolder
 public final class VirtualStudioCodeApp implements IDesktopApp {
+
+    /** This editor's own colours, {@code jsc:editor/vs_code}: a problem's message. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "editor/vs_code",
+            new Colours(0xFFC0392B));
 
     private static final int RAIL_W = 14;
     private static final int SIDE_W = 82;
@@ -411,7 +420,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         g.drawString(ctx.font(), where, x + 2, y + 1, ctx.skin().dim(), false);
         final int textX = x + 2 + ctx.font().width("00:00") + 4;
         g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(complaint.message()),
-                width - (textX - x) - 2), textX, y + 1, 0xFFC0392B, false);
+                width - (textX - x) - 2), textX, y + 1, PALETTE.get().problem(), false);
     }
 
     private void onProblemPicked(final int index, final int button, final double mx, final double my) {
@@ -453,7 +462,8 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         items.add(ContextMenu.Item.separator());
         items.add(item(VsCodeTexts.CLOSE_EDITOR, hasDoc(), () -> closeTab(this.workspace.currentIndex())));
         items.add(item(VsCodeTexts.CLOSE_FOLDER, this.folderOpen, this::closeFolder));
-        items.add(item(StudioTexts.EXIT, true, () -> DesktopScreen.requestClose("Virtual Studio Code")));
+        // The window goes by the program's id, whatever its title bar says.
+        items.add(item(StudioTexts.EXIT, true, () -> DesktopScreen.requestClose("jsc:virtual_studio_code")));
         return items;
     }
 
@@ -866,7 +876,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         final CodeWorkspace.Doc doc = this.workspace.current();
         if (doc == null) {
             return this.folderOpen ? shortName(this.workspace.folder()) + " - Virtual Studio Code"
-                    : "Welcome - Virtual Studio Code";
+                    : GameText.resolve(VsCodeTexts.WELCOME) + " - Virtual Studio Code";
         }
         return doc.name() + (doc.dirty() ? " *" : "") + " - " + shortName(this.workspace.folder())
                 + " - Virtual Studio Code";
@@ -1414,5 +1424,9 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         if (!message.isEmpty()) {
             g.renderTooltip(font, Component.literal(message), mouseX, mouseY);
         }
+    }
+
+    /** This editor's colours: a problem's message in the Problems panel. */
+    private record Colours(int problem) {
     }
 }

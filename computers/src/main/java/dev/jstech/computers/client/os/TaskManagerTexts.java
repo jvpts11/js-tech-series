@@ -18,6 +18,11 @@ import dev.jstech.core.text.TextKey;
 @TextHolder
 final class TaskManagerTexts {
 
+    // The window, by the shape it takes.
+    static final TextKey TITLE = TextKey.of("jsc.task_manager.title", "Task Manager");
+    static final TextKey TITLE_CLOSE_PROGRAM = TextKey.of("jsc.task_manager.title_close_program", "Close Program");
+    static final TextKey TITLE_SYSTEM_MONITOR = TextKey.of("jsc.task_manager.title_system_monitor", "System Monitor");
+
     // The pages.
     static final TextKey APPLICATIONS = TextKey.of("jsc.task_manager.applications", "Applications");
     static final TextKey PROCESSES = TextKey.of("jsc.task_manager.processes", "Processes");

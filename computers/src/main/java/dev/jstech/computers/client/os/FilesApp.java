@@ -393,7 +393,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     @Override
     public String title() {
-        return "Files";
+        return GameText.resolve(FilesAppTexts.TITLE);
     }
 
     @Override
@@ -2059,14 +2059,14 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
      * it, and a file made as text and renamed afterwards is a rename the player should not have had to do.
      */
     public void newFile(final FileType type) {
-        final String name = uniqueName("New File", "." + type.extension());
+        final String name = uniqueName(GameText.resolve(DesktopTexts.NEW_FILE), "." + type.extension());
         pendingRename = name;
         PacketDistributor.sendToServer(new SaveFilePayload(host, join(dir, name), ""));
         FilesApps.diskChanged();
     }
 
     private void newFolder() {
-        final String name = uniqueName("New Folder", "");
+        final String name = uniqueName(GameText.resolve(DesktopTexts.NEW_FOLDER), "");
         pendingRename = name;
         PacketDistributor.sendToServer(new MkdirPayload(host, join(dir, name)));
         FilesApps.diskChanged();

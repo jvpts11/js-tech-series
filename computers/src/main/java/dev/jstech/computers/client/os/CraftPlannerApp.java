@@ -191,7 +191,7 @@ public final class CraftPlannerApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Craft Planner";
+        return GameText.resolve(CraftPlannerAppTexts.TITLE);
     }
 
     @Override

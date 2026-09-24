@@ -162,7 +162,8 @@ public final class MessengerApp implements IDesktopApp {
     public String title() {
         // A conversation with one person is titled with their name, the way a messenger window is.
         final String other = MessengerLog.otherIn(room, me());
-        return other.isEmpty() ? "Messenger" : "Messenger - " + other;
+        final String name = ProgramClient.nameOf("messenger");
+        return other.isEmpty() ? name : name + " - " + other;
     }
 
     @Override

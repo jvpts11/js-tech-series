@@ -638,10 +638,10 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
 
     /** Makes a folder here with the next free name and goes into it, so Select Folder picks the new one. */
     private void makeFolder() {
-        String made = "New Folder";
+        String made = GameText.resolve(DesktopTexts.NEW_FOLDER);
         int n = 2;
         while (has(made)) {
-            made = "New Folder (" + n++ + ")";
+            made = GameText.resolve(DesktopTexts.NEW_FOLDER_NUMBERED.with(n++));
         }
         final String path = join(this.dir, made);
         PacketDistributor.sendToServer(new MkdirPayload(this.host, path));

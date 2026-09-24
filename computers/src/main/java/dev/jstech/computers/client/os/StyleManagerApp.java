@@ -7,10 +7,16 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.gui.layout.CdeStyleLayout;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.client.gui.Font;
@@ -23,6 +29,7 @@ import net.minecraft.client.gui.GuiGraphics;
  * <p>This is what a CDE desktop has where the others have their settings. Everything else a machine keeps about
  * itself is still set at its prompt with {@code config}.
  */
+@PaletteHolder
 final class StyleManagerApp implements IDesktopApp {
 
     /** The page of each kind that is open, so a second click brings it forward rather than opening another. */
@@ -35,18 +42,29 @@ final class StyleManagerApp implements IDesktopApp {
     private int left;
     private int top;
 
-    private static final String TITLE = "Style Manager";
-    private static final List<String> PAGES = List.of("Color", "Backdrop");
+    private static final List<TextKey> PAGE_KEYS =
+            List.of(StyleManagerTexts.COLOR_PAGE, StyleManagerTexts.BACKDROP_PAGE);
     private static final int COLOR = 0;
 
     /** The four colours the Color page's picture is made of, the way the real one showed a palette. */
-    private static final int[] PAINTS = {0xFFD8332C, 0xFF3B6FD8, 0xFF3FA34D, 0xFFE2C36B};
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/style_manager",
+            new Colours(0xFFD8332C, 0xFF3B6FD8, 0xFF3FA34D, 0xFFE2C36B));
 
     /** The middle of the page so named on the strip, in desktop pixels, or null when the strip has none. */
     @Nullable
     int[] pageCentre(final String page) {
-        final int index = PAGES.indexOf(page);
+        final int index = pageIndex(page);
         return index < 0 ? null : CdeStylePages.centre(CdeStyleLayout.page(index), this.left, this.top);
+    }
+
+    /** The index of the page whose name resolves to {@code page}, or -1 when none does. */
+    private static int pageIndex(final String page) {
+        for (int i = 0; i < PAGE_KEYS.size(); i++) {
+            if (GameText.resolve(PAGE_KEYS.get(i)).equals(page)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /** The Color page, while it is open. */
@@ -63,7 +81,7 @@ final class StyleManagerApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return TITLE;
+        return GameText.resolve(StyleManagerTexts.TITLE);
     }
 
     @Override
@@ -102,7 +120,7 @@ final class StyleManagerApp implements IDesktopApp {
         }
         final CdePalette p = desktop.cdePalette();
         this.skin.panel(g, x, y, CdeStyleLayout.STRIP_W, CdeStyleLayout.STRIP_H);
-        for (int i = 0; i < PAGES.size(); i++) {
+        for (int i = 0; i < PAGE_KEYS.size(); i++) {
             final Rect page = CdeStyleLayout.page(i);
             final int px = x + page.x();
             final int py = y + page.y();
@@ -122,7 +140,7 @@ final class StyleManagerApp implements IDesktopApp {
                         desktop.cdeStyle().backdrop(desktop.workspace()));
                 g.pose().popPose();
             }
-            final String name = PAGES.get(i);
+            final String name = GameText.resolve(PAGE_KEYS.get(i));
             Texts.small(g, font, name, px + (page.w() - Texts.smallWidth(font, name)) / 2,
                     iy + CdeStyleLayout.PAGE_ICON + 4, this.skin.text());
         }
@@ -132,7 +150,7 @@ final class StyleManagerApp implements IDesktopApp {
     public void mouseClicked(final DesktopWindow window, final double mouseX, final double mouseY,
                              final int button) {
         if (button == 0) {
-            final int page = CdeStyleLayout.pageAt(mouseX - this.left, mouseY - this.top, PAGES.size());
+            final int page = CdeStyleLayout.pageAt(mouseX - this.left, mouseY - this.top, PAGE_KEYS.size());
             if (page >= 0) {
                 openPage(page);
             }
@@ -169,10 +187,16 @@ final class StyleManagerApp implements IDesktopApp {
     /** The Color page's picture: four paints in a square, one to each corner. */
     private static void paints(final GuiGraphics g, final int x, final int y) {
         final int half = CdeStyleLayout.PAGE_ICON / 2;
-        for (int i = 0; i < PAINTS.length; i++) {
+        final Colours c = PALETTE.get();
+        final int[] paints = {c.topLeft(), c.topRight(), c.bottomLeft(), c.bottomRight()};
+        for (int i = 0; i < paints.length; i++) {
             final int px = x + (i % 2) * half;
             final int py = y + (i / 2) * half;
-            g.fill(px, py, px + half, py + half, PAINTS[i]);
+            g.fill(px, py, px + half, py + half, paints[i]);
         }
+    }
+
+    /** The Color page's picture: the four paints, one to each corner. */
+    private record Colours(int topLeft, int topRight, int bottomLeft, int bottomRight) {
     }
 }

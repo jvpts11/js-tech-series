@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.CancelSetupPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
+import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.Panel;
@@ -38,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 public final class SetupApp implements IDesktopApp {
 
     /** The window key, one per desktop: a machine sets one thing up at a time. */
-    public static final String KEY = "Setup";
+    public static final String KEY = WindowKeys.SETUP;
 
     /** Setup's own colours, {@code jsc:app/setup}. */
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/setup",
@@ -166,7 +167,8 @@ public final class SetupApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return this.state == null ? "Setup" : this.state.name() + " Setup";
+        return GameText.resolve(this.state == null ? SetupTexts.SETUP.text()
+                : SetupTexts.SETUP_OF.with(this.state.name()));
     }
 
     @Override

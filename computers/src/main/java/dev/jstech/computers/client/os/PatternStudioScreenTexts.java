@@ -17,6 +17,8 @@ import dev.jstech.core.text.TextKey;
 @TextHolder
 final class PatternStudioScreenTexts {
 
+    static final TextKey TITLE = TextKey.of("jsc.pattern_studio.screen.title", "Pattern Studio");
+
     // The tabs and the drafts.
     static final TextKey BENCH_TAB = TextKey.of("jsc.pattern_studio.screen.bench_tab", "Bench");
     static final TextKey MACHINE_TAB = TextKey.of("jsc.pattern_studio.screen.machine_tab", "Machine");

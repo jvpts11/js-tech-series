@@ -27,12 +27,6 @@ import java.util.function.Supplier;
  */
 public final class CommandLine extends UiComponent {
 
-    private static final int BACKGROUND = 0xFF101820;
-    private static final int PROMPT = 0xFF40C060;
-
-    /** What picked-out letters are drawn on: a wash of the ink the line is written in. */
-    private static final int PICKED = 0x50CDD6E2;
-
     /** How many lines of a paste a terminal will run: enough for a handful of commands, and no more. */
     private static final int MOST_PASTED_LINES = 16;
 
@@ -42,9 +36,9 @@ public final class CommandLine extends UiComponent {
     private final LineHistory history = new LineHistory();
     private Supplier<String> prompt = () -> ">";
     private Supplier<String> idleText = () -> "";
-    private IntSupplier idleColor = () -> PROMPT;
-    private int background = BACKGROUND;
-    private int textColor = PROMPT;
+    private IntSupplier idleColor = () -> ComponentPalette.get().consolePrompt();
+    private int background = ComponentPalette.get().consoleGround();
+    private int textColor = ComponentPalette.get().consolePrompt();
     private BooleanSupplier unseen = () -> false;
     private BooleanSupplier takesNothing = () -> false;
 
@@ -127,13 +121,13 @@ public final class CommandLine extends UiComponent {
         final String shown = Texts.tail(ctx.font(), full, width() - 6);
         final int dropped = full.length() - shown.length();
         if (isFocused() && !hidden && input.hasSelection()) {
-            // Under the letters, so what Shift and the arrows picked out reads as picked out.
+            // Under the letters, on a wash of the ink, so what Shift and the arrows picked out reads as picked out.
             final int from = Math.max(0, prompt.get().length() + 1 + input.selectionStart() - dropped);
             final int to = Math.max(from, Math.min(shown.length(),
                     prompt.get().length() + 1 + input.selectionEnd() - dropped));
             final int left = x() + 3 + ctx.font().width(shown.substring(0, Math.min(from, shown.length())));
             g.fill(left, y() + 1, left + ctx.font().width(shown.substring(Math.min(from, shown.length()), to)),
-                    y() + 11, PICKED);
+                    y() + 11, ComponentPalette.get().consolePicked());
         }
         g.drawString(ctx.font(), shown, x() + 3, y() + 2, textColor, false);
         if (isFocused()) {

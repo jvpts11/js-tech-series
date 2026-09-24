@@ -95,10 +95,11 @@ final class TerminalOperationPopup {
         g.pose().translate(0, 0, 350);
         final int left = screen.left();
         final int top = screen.top();
-        g.fill(left, top, left + ComputerTerminalLayout.WIDTH, top + ComputerTerminalLayout.HEIGHT, 0xE0070A0F);
+        g.fill(left, top, left + ComputerTerminalLayout.WIDTH, top + ComputerTerminalLayout.HEIGHT,
+                TerminalPopupPalette.get().veil());
         final int px = x();
         final int py = y();
-        g.fill(px - 2, py - 2, px + POPUP_W + 2, py + POPUP_H + 2, 0xFF0A1A1F);
+        g.fill(px - 2, py - 2, px + POPUP_W + 2, py + POPUP_H + 2, TerminalPopupPalette.get().rim());
         g.fill(px, py, px + POPUP_W, py + POPUP_H, JsTechTheme.panel());
         g.fill(px, py, px + POPUP_W, py + 1, JsTechTheme.accent());
         screen.drawDataIcon(g, op.key(), -1L, px + 6, py + 5);

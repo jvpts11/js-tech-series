@@ -62,7 +62,7 @@ class PhosphorTest {
 
     @Test
     void green_ofWhiteIsTheTubesOwnColour() {
-        assertEquals(Phosphor.GREEN, Phosphor.green(0xFFFFFFFF),
+        assertEquals(Phosphor.glow(), Phosphor.green(0xFFFFFFFF),
                 "full brightness is exactly the phosphor the Vintage skin uses");
     }
 

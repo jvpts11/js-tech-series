@@ -19,6 +19,9 @@ import dev.jstech.core.client.gui.component.ContextMenu;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.logic.TextDocument;
 import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import java.util.ArrayList;
@@ -36,12 +39,16 @@ import net.minecraft.client.gui.GuiGraphics;
  * <p>The list itself is the toolkit's menu, so it looks like every other menu on the system and is
  * driven the same way: the arrows walk it, Enter or Tab takes what is on, Escape leaves.
  */
+@PaletteHolder
 public final class CodeCompletions {
 
     /** Wide enough for a whole signature, which is the point of showing one. */
     private static final int WIDTH = 168;
     private static final int ROW_H = 10;
     private static final int MAX_ITEMS = 8;
+    /** The outline behind the cost strip under the completions list, {@code jsc:editor/completions}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "editor/completions",
+            new Colours(0xFF000000));
 
     private final ContextMenu menu = new ContextMenu(WIDTH, ROW_H);
     private final BuiltIns builtIns = new BuiltIns();
@@ -197,7 +204,7 @@ public final class CodeCompletions {
         }
         final String text = GameText.resolve(cost);
         final int y = this.menu.bottom();
-        g.fill(this.menu.x() - 1, y, this.menu.right() + 1, y + ROW_H + 1, 0xFF000000);
+        g.fill(this.menu.x() - 1, y, this.menu.right() + 1, y + ROW_H + 1, PALETTE.get().outline());
         g.fill(this.menu.x(), y, this.menu.right(), y + ROW_H, ctx.skin().fieldBg());
         g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(text, this.menu.width() - 6),
                 this.menu.x() + 3, y + 1, ctx.skin().dim(), false);
@@ -211,5 +218,9 @@ public final class CodeCompletions {
     /** Gives a click to the list while it is up. */
     public boolean mouseClicked(final double mx, final double my, final int button) {
         return this.menu.isOpen() && this.menu.mouseClicked(mx, my, button);
+    }
+
+    /** The outline drawn behind the cost strip. */
+    private record Colours(int outline) {
     }
 }

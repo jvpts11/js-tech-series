@@ -18,6 +18,7 @@ import dev.jstech.core.text.TextKey;
 @TextHolder
 final class SystemMonitorTexts {
 
+    static final TextKey TITLE = TextKey.of("jsc.system_monitor.title", "System Monitor");
     static final TextKey READING = TextKey.of("jsc.system_monitor.reading", "Reading machine...");
     static final TextKey COMPUTER = TextKey.of("jsc.system_monitor.computer", "Computer");
     static final TextKey PROCESSOR = TextKey.of("jsc.system_monitor.processor", "Processor");

@@ -7,12 +7,18 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.gui.layout.WindowGeometry;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -25,7 +31,12 @@ import org.joml.Matrix4f;
  * corner is a resize grip. A maximized window fills the desktop above the taskbar; a minimized window is
  * hidden and reachable from its taskbar button.
  */
+@PaletteHolder
 public final class DesktopWindow {
+
+    /** An unfocused window's title ink, {@code jsc:desktop/window}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/window",
+            new Colours(0xFF5B6674));
 
     public static final int TITLE_H = 14;
     private static final int BTN = 11;
@@ -439,8 +450,7 @@ public final class DesktopWindow {
         final DesktopEnvironmentDef desktop =
                 OsRegistry.getDesktop(
                         ResourceLocation.fromNamespaceAndPath("jsc", skin.osPath()));
-        final ProgramSpec program =
-                desktop == null ? null : desktop.programFor(appKey);
+        final ProgramSpec program = WindowKeys.program(appKey);
         final ResourceLocation icon = program != null ? program.iconId() : app.iconId();
         final boolean titleIcon = icon != null && !skin.titleCentered();
         if (titleIcon) {
@@ -457,7 +467,7 @@ public final class DesktopWindow {
                 ? Math.max(titleFloor, Math.min(wx + (ww - font.width(title)) / 2, minX() - font.width(title) - 4))
                 : textLeft;
         g.drawString(font, title, titleX, wy + 3,
-                focused ? skin.titleText() : 0xFF5B6674, focused && skin.textShadow());
+                focused ? skin.titleText() : PALETTE.get().unfocusedTitle(), focused && skin.textShadow());
         /*
          * The focused window also carries an accent outline, so "which one am I typing into" reads
          * at a glance even when several windows overlap.
@@ -609,9 +619,15 @@ public final class DesktopWindow {
      * Manager on CDE. A title of the program's own making, such as a dialog's or a document's, is kept as it is.
      */
     public String titleOn(@Nullable final DesktopEnvironmentDef desktop) {
-        final ProgramSpec program = desktop == null ? null : desktop.programFor(appKey);
+        final ProgramSpec program = WindowKeys.program(appKey);
         final String own = app.title();
-        return program != null && !dialog() && own.equals(program.displayName()) ? appKey : own;
+        /*
+         * A generic title is the program's own name, in English or in the player's language, depending on whether
+         * the program says it through its name or through a sentence of its own that reads the same.
+         */
+        final boolean generic = program != null && !dialog()
+                && (own.equals(program.displayName()) || own.equals(GameText.resolve(program.name())));
+        return desktop != null && generic ? GameText.resolve(desktop.launcherLabel(program)) : own;
     }
 
     public int workspaces() {
@@ -647,5 +663,9 @@ public final class DesktopWindow {
 
     public boolean bodyHit(final double mx, final double my) {
         return mx >= curX && mx <= curX + curW && my >= curY + TITLE_H && my <= curY + curH;
+    }
+
+    /** An unfocused window's title ink. */
+    private record Colours(int unfocusedTitle) {
     }
 }

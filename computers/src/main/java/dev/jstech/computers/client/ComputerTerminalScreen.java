@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
@@ -23,6 +24,9 @@ import dev.jstech.computers.operation.payload.TerminalLocalDepositPayload;
 import dev.jstech.computers.operation.payload.TerminalMaintenancePayload;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -49,7 +53,12 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Screen for the Monitor terminal: a left tab rail (icon over name) and a content area, drawn as a flat dark "computer OS" with square edges and a cyan accent, with the player inventory pinned along the bottom so every tab is usable.
  */
+@PaletteHolder
 public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTerminalMenu> {
+
+    /** The screen's own highlights beside the era theme, {@code jsc:screen/computer_terminal}. */
+    private static final Palette<Highlights> HIGHLIGHTS = Palettes.declare(JsComputers.MODID,
+            "screen/computer_terminal", new Highlights(0xFF123038, 0xFFFFFFFF, 0x80FFFFFF));
 
     /*
      * Flat palette (ARGB), read live from the render-bound OS theme so the Monitor terminal repaints in the host
@@ -994,7 +1003,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
          * border around it, which cost a pixel on each side of a button that only has sixteen to live in
          * between the rule and the player's own rows, and so it sat on the rule.
          */
-        g.fill(dx, dy, dx + DEPOSIT_W, dy + DEPOSIT_H, holding ? 0xFF123038 : TRACK);
+        g.fill(dx, dy, dx + DEPOSIT_W, dy + DEPOSIT_H, holding ? HIGHLIGHTS.get().depositHolding() : TRACK);
         g.fill(dx, dy, dx + DEPOSIT_W, dy + 1, holding ? ACCENT : LINE);
         // Down-arrow glyph (deposit into the network), sized to sit inside the button with a pixel to spare.
         final int gx = dx + 4;
@@ -1703,7 +1712,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
                 final String c = fmt(count);
                 g.pose().pushPose();
                 g.pose().translate(0, 0, 200);
-                g.drawString(font, c, x + 17 - font.width(c), y + 9, 0xFFFFFFFF, true);
+                g.drawString(font, c, x + 17 - font.width(c), y + 9, HIGHLIGHTS.get().dataCount(), true);
                 g.pose().popPose();
             }
         } else {
@@ -1826,7 +1835,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         // Items render above flat fills, so push the highlight forward to sit over them.
         g.pose().pushPose();
         g.pose().translate(0, 0, 300);
-        g.fill(sx, sy, sx + 16, sy + 16, 0x80FFFFFF);
+        g.fill(sx, sy, sx + 16, sy + 16, HIGHLIGHTS.get().hoverWash());
         g.pose().popPose();
     }
 
@@ -1843,5 +1852,12 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
             return host.displayEra();
         }
         return menu.hardwareEra();
+    }
+
+    /**
+     * The screen's own highlights, beside the era theme: the deposit button lit while a player is holding
+     * something, the fluid/chemical quantity badge, and the wash over a hovered network cell.
+     */
+    private record Highlights(int depositHolding, int dataCount, int hoverWash) {
     }
 }

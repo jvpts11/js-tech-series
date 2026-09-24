@@ -19,6 +19,8 @@ import dev.jstech.core.text.TextKey;
 @TextHolder
 final class ThisPcTexts {
 
+    static final TextKey TITLE = TextKey.of("jsc.this_pc.title", "This PC");
+
     // The machine's card.
     static final TextKey RENAME = TextKey.of("jsc.this_pc.rename", "Rename");
     static final TextKey ERA = TextKey.of("jsc.this_pc.era", "%s era");

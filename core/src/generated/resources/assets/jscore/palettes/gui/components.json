@@ -1,0 +1,12 @@
+{
+  "barThumb": "#A0909090",
+  "barTrack": "#30808080",
+  "consoleGround": "#FF101820",
+  "consolePicked": "#50CDD6E2",
+  "consolePrompt": "#FF40C060",
+  "disabled": "#66FFFFFF",
+  "litText": "#FFFFFFFF",
+  "menuShade": "#FF000000",
+  "popupDim": "#88000000",
+  "selection": "#663A72B0"
+}

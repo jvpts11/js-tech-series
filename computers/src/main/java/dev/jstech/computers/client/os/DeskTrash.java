@@ -12,6 +12,7 @@ import dev.jstech.computers.operation.payload.DeleteFilePayload;
 import dev.jstech.computers.operation.payload.TrashActionPayload;
 import dev.jstech.computers.operation.payload.TrashFilePayload;
 import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.fs.TrashKind;
 import dev.jstech.core.client.gui.component.ContextMenu;
@@ -104,7 +105,7 @@ final class DeskTrash {
         return this.full;
     }
 
-    /** What this desktop calls its trash, which is also the key its window goes by. */
+    /** What this desktop calls its trash; its window goes by {@link WindowKeys#TRASH} on every desktop. */
     String title() {
         return TrashApp.kindOf(this.desktop.panelStyle()).title();
     }
@@ -121,13 +122,12 @@ final class DeskTrash {
 
     /** The trash as an icon on the wallpaper. */
     DesktopScreen.Launcher launcher() {
-        return new DesktopScreen.Launcher(title(), icon(), this::window);
+        return new DesktopScreen.Launcher(WindowKeys.TRASH, title(), icon(), this::window);
     }
 
     /** Whether a launcher is the trash's own. */
     boolean is(final DesktopScreen.Launcher launcher) {
-        final ResourceLocation id = launcher.programId();
-        return (EMPTY_ICON.equals(id) || FULL_ICON.equals(id)) && launcher.label().equals(title());
+        return WindowKeys.TRASH.equals(launcher.key());
     }
 
     /** A new trash window for this desktop. */
@@ -137,7 +137,7 @@ final class DeskTrash {
 
     /** Opens the trash, or brings its window forward when it is already up: one trash window a desktop. */
     void open() {
-        this.desktop.openOnce(title(), this::window);
+        this.desktop.openOnce(WindowKeys.TRASH, this::window);
     }
 
     /** The menu of the trash's own icon: open it, or empty it without opening it. */

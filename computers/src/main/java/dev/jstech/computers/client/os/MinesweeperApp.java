@@ -18,6 +18,7 @@ import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -152,11 +153,11 @@ public final class MinesweeperApp implements IDesktopApp {
     }
 
     private static String shortLabel(final MinesweeperGame.Difficulty d) {
-        return switch (d) {
-            case BEGINNER -> "Beg";
-            case INTERMEDIATE -> "Int";
-            case EXPERT -> "Exp";
-        };
+        return GameText.resolve(switch (d) {
+            case BEGINNER -> MinesweeperTexts.BEGINNER;
+            case INTERMEDIATE -> MinesweeperTexts.INTERMEDIATE;
+            case EXPERT -> MinesweeperTexts.EXPERT;
+        });
     }
 
     private String faceGlyph() {
@@ -176,7 +177,7 @@ public final class MinesweeperApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Minesweeper";
+        return ProgramClient.nameOf("minesweeper");
     }
 
     @Override

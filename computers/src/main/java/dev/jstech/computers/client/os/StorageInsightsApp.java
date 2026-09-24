@@ -224,7 +224,7 @@ public final class StorageInsightsApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Storage Insights";
+        return GameText.resolve(StorageInsightsTexts.TITLE);
     }
 
     @Override

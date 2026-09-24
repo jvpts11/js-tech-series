@@ -44,7 +44,7 @@ public final class Checkbox extends UiComponent {
         g.fill(x(), by, x() + BOX, by + BOX, on ? ctx.skin().accent() : ctx.skin().fieldBg());
         Draw.outline(g, x(), by, BOX, BOX, ctx.skin().edge());
         if (on) {
-            g.drawString(ctx.font(), "x", x() + 1, by - 1, 0xFFFFFFFF, false);
+            g.drawString(ctx.font(), "x", x() + 1, by - 1, ComponentPalette.get().litText(), false);
         }
         final int textX = x() + BOX + 4;
         final int fits = (int) ((width() - BOX - 4) / labelScale);

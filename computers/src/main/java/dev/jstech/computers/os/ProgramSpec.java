@@ -12,6 +12,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.resources.ResourceLocation;
 
@@ -246,6 +247,14 @@ public record ProgramSpec(
     /** Who to credit where the program is shown: its own house, or {@code shipper} when it is bundled. */
     public SoftwareHouse houseOr(final SoftwareHouse shipper) {
         return house.or(shipper);
+    }
+
+    /**
+     * The program's name as a sentence to translate, under {@link #titleKey()}: what a launcher, a title bar or a
+     * list shows in the player's language, with the English it is declared with.
+     */
+    public TextKey name() {
+        return TextKey.of(titleKey(), displayName);
     }
 
     /** The translation key for this program's display name, in vanilla {@code program.<ns>.<path>} form. */

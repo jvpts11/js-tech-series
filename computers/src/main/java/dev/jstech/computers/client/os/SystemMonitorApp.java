@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.os.RamLedger;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
@@ -19,6 +20,9 @@ import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.Font;
@@ -37,12 +41,13 @@ import java.util.function.Supplier;
  * snapshot the Settings app already builds, so it needs no server code of its own, and re-requests it on a
  * slow cadence so the storage bars track items being stored.
  */
+@PaletteHolder
 public final class SystemMonitorApp implements IDesktopApp {
 
     private static final int REFRESH_FRAMES = 40;
-    private static final int C_GREEN = 0xFF2EA043;
-    private static final int C_AMBER = 0xFFE0A020;
-    private static final int C_RED = 0xFFD1495B;
+    /** The window's own colours, {@code jsc:app/system_monitor}: a disk usage bar at each threshold. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/system_monitor",
+            new Colours(0xFF2EA043, 0xFFE0A020, 0xFFD1495B));
     private static final int BAR_H = 8;
     private static final int DISK_ROW_H = BAR_H + 12;
     private static final int MEM_ROW_H = 10;
@@ -132,7 +137,7 @@ public final class SystemMonitorApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "System Monitor";
+        return GameText.resolve(SystemMonitorTexts.TITLE);
     }
 
     @Override
@@ -221,7 +226,10 @@ public final class SystemMonitorApp implements IDesktopApp {
         // What it holds now, which is what a person watching this list is watching for.
         final String amount = RamLedger.heldLabel(use.heldBytes());
         final int amountW = font.width(amount);
-        final String name = font.plainSubstrByWidth(use.label(), w - amountW - 6);
+        // A window is listed by the name the desktop gives its program, not by the key the machine keeps it under.
+        final String label = RamLedger.Kind.find(use.kind()) == RamLedger.Kind.WINDOW
+                ? DesktopScreen.windowName(use.label()) : use.label();
+        final String name = font.plainSubstrByWidth(label, w - amountW - 6);
         g.drawString(font, name, x, y + 1, ctx.skin().text(), false);
         g.drawString(font, amount, x + w - amountW, y + 1, ctx.skin().dim(), false);
     }
@@ -244,13 +252,14 @@ public final class SystemMonitorApp implements IDesktopApp {
     }
 
     private static int usageColor(final double frac) {
+        final Colours c = PALETTE.get();
         if (frac >= 0.9) {
-            return C_RED;
+            return c.critical();
         }
         if (frac >= 0.7) {
-            return C_AMBER;
+            return c.warning();
         }
-        return C_GREEN;
+        return c.normal();
     }
 
     private static String cpuClock(final int mhz) {
@@ -263,5 +272,9 @@ public final class SystemMonitorApp implements IDesktopApp {
     @Override
     public boolean mouseScrolled(final double delta) {
         return root.mouseScrolled(lastMouseX, lastMouseY, delta);
+    }
+
+    /** A disk usage bar's colour under, at, and over the threshold that flags it. */
+    private record Colours(int normal, int warning, int critical) {
     }
 }

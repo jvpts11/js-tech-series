@@ -23,6 +23,7 @@ import dev.jstech.computers.operation.payload.RequestNmsSchemaPayload;
 import dev.jstech.computers.operation.payload.RunIqlPayload;
 import dev.jstech.computers.operation.payload.SaveIqlFilePayload;
 import dev.jstech.computers.program.ProgramKeybinds;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.palette.Palette;
@@ -192,7 +193,9 @@ public final class NmsApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Network Management Studio";
+        // The program's own name, as its launcher says it.
+        final var spec = Programs.get(Programs.NMS);
+        return spec == null ? Programs.NMS.getPath() : GameText.resolve(spec.name());
     }
 
     @Override

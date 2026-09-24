@@ -9,7 +9,6 @@ package dev.jstech.core.palette;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -23,56 +22,57 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 /**
- * Colours written into the code as numbers, counted file by file, so that there can only ever be fewer of them.
+ * No colour is written into the code as a number.
  *
  * <p>A colour belongs to a palette: declared once with {@link Palettes#declare}, written to a file a resource pack can
- * replace, and read by whatever paints with it. While the old ones move there, this holds the line: the count of
- * ARGB literals ({@code 0xAARRGGBB}) in each file is kept, a file may never have more than it had, and a file that is
- * new starts at none. What a palette declaration holds does not count, since that is where a colour belongs. When a
- * file has fewer, the new count is written down, so the number only ever goes one way.
+ * replace, and read by whatever paints with it. What a palette declaration holds does not count, since that is where
+ * a colour belongs. Any other ARGB literal ({@code 0xAARRGGBB}) fails the build, except in the few files listed as
+ * data below, each with the number it holds and why those numbers are not a look a pack should change.
  */
 class HardcodedColorTest {
 
-    /** Where the counts as they are now are written when they are not the ones kept. */
-    private static final Path WRITTEN = Path.of("build", "hardcoded-colors.txt");
-
     /** The mods whose screens a player sees; the test mod is for development only. */
     private static final Set<String> MODULES = Set.of("core", "computers", "industrial");
+
+    /**
+     * The files whose eight-digit numbers are data, not colours of the mod's look, and how many each holds. The count
+     * is exact, so a colour added next to them is still caught.
+     */
+    private static final Map<String, Data> DATA = Map.of(
+            "computers/src/main/java/dev/jstech/computers/os/fs/PixImage.java", new Data(16,
+                    "the colours the in-game image format stores its pixels as: a file's contents, not the look"),
+            "computers/src/main/java/dev/jstech/computers/program/install/voice/KernelVoices.java", new Data(2,
+                    "the multipliers of a hash that picks a kernel's boot line"),
+            "computers/src/main/java/dev/jstech/computers/program/install/voice/PortageVoices.java", new Data(1,
+                    "the multiplier of a hash that picks a build line"));
 
     /** An ARGB colour as a number: eight hexadecimal digits. */
     private static final Pattern ARGB = Pattern.compile("0[xX][0-9A-Fa-f]{8}");
 
     @Test
-    void colourLiterals_onlyEverGoDown() throws IOException {
+    void colourLiterals_liveOnlyInPalettesAndData() {
         final Map<String, Integer> found = countsByFile();
-        final Map<String, Integer> kept = kept();
-        final List<String> grown = new ArrayList<>();
-        boolean changed = !kept.keySet().equals(found.keySet());
-        for (final Map.Entry<String, Integer> file : found.entrySet()) {
-            final int before = kept.getOrDefault(file.getKey(), 0);
-            if (file.getValue() > before) {
-                grown.add(file.getKey() + ": " + before + " -> " + file.getValue());
+        final List<String> wrong = new ArrayList<>();
+        found.forEach((file, count) -> {
+            final Data data = DATA.get(file);
+            if (data == null) {
+                wrong.add(file + " writes " + count + " colour(s) as numbers; declare them in a palette");
+            } else if (count != data.count()) {
+                wrong.add(file + " holds " + count + " numbers, where " + data.count() + " are data ("
+                        + data.reason() + "); a new colour belongs in a palette, and fewer means the list is stale");
             }
-            changed |= file.getValue() != before;
-        }
-        if (changed) {
-            Files.createDirectories(WRITTEN.getParent());
-            Files.writeString(WRITTEN, render(found), StandardCharsets.UTF_8);
-        }
-        if (!grown.isEmpty()) {
-            fail("colours were written into the code as numbers; declare them in a palette instead:\n"
-                    + String.join("\n", grown));
-        }
-        if (changed) {
-            fail("there are fewer colours in the code than were counted, which is the way it should go: record it"
-                    + " by copying " + WRITTEN.toAbsolutePath() + " over src/test/resources/hardcoded-colors.txt");
-        }
+        });
+        DATA.forEach((file, data) -> {
+            if (!found.containsKey(file)) {
+                wrong.add(file + " is listed as data but holds none; take it off the list");
+            }
+        });
+        assertTrue(wrong.isEmpty(), () -> String.join("\n", wrong));
     }
 
     /*
@@ -233,24 +233,7 @@ class HardcodedColorTest {
         return Math.min(i + 1, source.length());
     }
 
-    private static String render(final Map<String, Integer> counts) {
-        final StringBuilder out = new StringBuilder();
-        counts.forEach((file, n) -> out.append(file).append(' ').append(n).append('\n'));
-        return out.toString();
-    }
-
-    private static Map<String, Integer> kept() throws IOException {
-        final Map<String, Integer> out = new TreeMap<>();
-        try (var stream = HardcodedColorTest.class.getResourceAsStream("/hardcoded-colors.txt")) {
-            if (stream == null) {
-                return out;
-            }
-            final Matcher row = Pattern.compile("^(\\S+) (\\d+)$", Pattern.MULTILINE)
-                    .matcher(new String(stream.readAllBytes(), StandardCharsets.UTF_8));
-            while (row.find()) {
-                out.put(row.group(1), Integer.parseInt(row.group(2)));
-            }
-        }
-        return out;
+    /** How many numbers a data file holds, and why they are data. */
+    private record Data(int count, String reason) {
     }
 }

@@ -37,8 +37,6 @@ final class CdeBackdropPage implements IDesktopApp {
     private int left;
     private int top;
 
-    private static final String TITLE = "Style Manager - Backdrop";
-
     /** The patterns by name, in the order the Style Manager lists them. */
     private static final List<String> LABELS = labels();
 
@@ -64,7 +62,7 @@ final class CdeBackdropPage implements IDesktopApp {
 
     @Override
     public String title() {
-        return TITLE;
+        return GameText.resolve(CdeStyleTitles.BACKDROP_PAGE);
     }
 
     @Override

@@ -735,7 +735,7 @@ public final class OsFilesystemGameTests {
                             new dev.jstech.computers.program.ComputerConsoleState();
                     final int cell = DesktopLayout.packCell(2, 3);
                     state.desktop().setIconCell("file:Notes.txt", cell);
-                    state.desktop().setIconCell("app:Network", DesktopLayout.packCell(1, 0));
+                    state.desktop().setIconCell("app:jsc:network", DesktopLayout.packCell(1, 0));
                     final net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
                     state.save(tag);
 
@@ -747,7 +747,7 @@ public final class OsFilesystemGameTests {
                             "a pinned icon's cell must persist; got " + back);
                     helper.assertTrue(DesktopLayout.cellColumn(back) == 2, "the persisted column must be 2");
                     helper.assertTrue(DesktopLayout.cellRow(back) == 3, "the persisted row must be 3");
-                    helper.assertTrue(loaded.desktop().iconCells().containsKey("app:Network"),
+                    helper.assertTrue(loaded.desktop().iconCells().containsKey("app:jsc:network"),
                             "a pinned launcher's cell must persist too");
                 })
                 .thenSucceed();

@@ -231,7 +231,7 @@ public final class ContextMenu extends UiComponent {
                 closeChild();
             }
         }
-        g.fill(x() - 1, y() - 1, right() + 1, bottom() + 1, 0xFF000000);
+        g.fill(x() - 1, y() - 1, right() + 1, bottom() + 1, ComponentPalette.get().menuShade());
         g.fill(x(), y(), right(), bottom(), ctx.skin().panelBg());
         int iy = y() + 1;
         for (int i = 0; i < items.size(); i++) {
@@ -244,7 +244,8 @@ public final class ContextMenu extends UiComponent {
                 if (lit) {
                     g.fill(x() + 1, iy, right() - 1, iy + itemHeight, ctx.skin().accent());
                 }
-                final int colour = lit ? 0xFFFFFFFF : (item.enabled() ? ctx.skin().text() : ctx.skin().dim());
+                final int colour = lit ? ComponentPalette.get().litText()
+                        : item.enabled() ? ctx.skin().text() : ctx.skin().dim();
                 g.drawString(ctx.font(), item.label(), x() + 4, iy + 2, colour, false);
                 if (item.hasChildren()) {
                     g.drawString(ctx.font(), ">", right() - 7, iy + 2, colour, false);

@@ -7,11 +7,15 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.TrashItem;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.gui.layout.TrashLayout;
 import dev.jstech.core.client.gui.component.ContextMenu;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -25,11 +29,16 @@ import net.minecraft.client.gui.GuiGraphics;
  * <p>The view is a rectangle in desktop pixels, and the cells come from {@link TrashLayout}, so what is drawn and what
  * a click finds are the same squares.
  */
+@PaletteHolder
 final class TrashIcons {
 
     /** The colours an icon view writes in: its ground, its text, and a selected name's fill and text. */
     record Inks(int ground, int text, int pickedFill, int pickedText) {
     }
+
+    /** This view's own colours, {@code jsc:desktop/trash_icons}: the wash over a cell under the cursor. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/trash_icons",
+            new Colours(0x22000000));
 
     private static final int ICON = 16;
 
@@ -47,7 +56,8 @@ final class TrashIcons {
             final Rect cell = TrashLayout.cell(view, i, app.scroll());
             final boolean picked = app.isSelected(item);
             if (!picked && cell.holds(mouseX, mouseY)) {
-                g.fill(cell.x() + 2, cell.y(), cell.x() + cell.w() - 2, cell.y() + cell.h() - 1, 0x22000000);
+                g.fill(cell.x() + 2, cell.y(), cell.x() + cell.w() - 2, cell.y() + cell.h() - 1,
+                        PALETTE.get().hoverWash());
             }
             ProgramIcons.draw(g, cell.x() + (cell.w() - ICON) / 2, cell.y() + 3, ICON, ICON, app.iconOf(item),
                     app.iconSet());
@@ -114,5 +124,9 @@ final class TrashIcons {
     /** A name in the small text, cut with dots when it is wider than its cell. */
     private static String fit(final Font font, final String name, final int room) {
         return Texts.smallWidth(font, name) <= room ? name : Texts.clip(font, name, Texts.smallFits(room));
+    }
+
+    /** This view's colours: the wash over the cell under the cursor. */
+    private record Colours(int hoverWash) {
     }
 }

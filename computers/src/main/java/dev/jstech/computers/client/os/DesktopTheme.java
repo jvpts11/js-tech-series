@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.CdeScheme;
+import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import java.util.function.Supplier;
@@ -64,6 +65,10 @@ public final class DesktopTheme {
 
     // CDE in the scheme it ships with.
     static final DesktopTheme CDE_DEFAULT = cde(CdeScheme.DEFAULT);
+
+    /** The one colour a CDE-derived theme does not take from the scheme: its start text, always white. */
+    private static final Palette<CdeDerivedColours> CDE_DERIVED = Palettes.declare(JsComputers.MODID,
+            "desktop/cde_derived", new CdeDerivedColours(0xFFFFFFFF));
 
     /**
      * A theme in the colours {@code colours} gives, which it asks for each time it paints: a declared palette, or
@@ -130,6 +135,10 @@ public final class DesktopTheme {
 
     private static DesktopColours fromCde(final CdePalette p) {
         return new DesktopColours(p.window(), p.light(), p.active(), p.ink(), p.window(),
-                0xFFFFFFFF, p.window(), p.ink(), p.active());
+                CDE_DERIVED.get().startText(), p.window(), p.ink(), p.active());
+    }
+
+    /** The one colour a CDE-derived theme does not take from the scheme. */
+    private record CdeDerivedColours(int startText) {
     }
 }

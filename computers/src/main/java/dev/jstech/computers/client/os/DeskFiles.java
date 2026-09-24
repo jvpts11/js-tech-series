@@ -201,14 +201,14 @@ final class DeskFiles implements CodeFileReplies.IReader {
      * had to do.
      */
     void newFile(final FileType type) {
-        final String name = uniqueName("New File", "." + type.extension());
+        final String name = uniqueName(GameText.resolve(DesktopTexts.NEW_FILE), "." + type.extension());
         pending = name;
         PacketDistributor.sendToServer(new SaveFilePayload(desktop.hostPos(), desktop.deskDir() + "/" + name, ""));
         FilesApps.diskChanged();
     }
 
     void newFolder() {
-        final String name = uniqueName("New Folder", "");
+        final String name = uniqueName(GameText.resolve(DesktopTexts.NEW_FOLDER), "");
         pending = name;
         PacketDistributor.sendToServer(new MkdirPayload(desktop.hostPos(), desktop.deskDir() + "/" + name));
         FilesApps.diskChanged();

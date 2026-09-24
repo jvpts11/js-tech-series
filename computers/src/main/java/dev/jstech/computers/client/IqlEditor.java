@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.JsComputers;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -21,13 +25,14 @@ import java.util.Set;
  * (keywords blue, strings red, the rest near-black, the classic SSMS palette). It keeps the text as a list of lines
  * with a cursor; the screen drives it (key/char events, the caret blink tick) and asks it to paint into the editor
  * rectangle. No selection or horizontal scroll, so a long line is simply broken with {@code ENTER}.
+ *
+ * <p>Its syntax colours are the palette {@code jsc:editor/iql}.
  */
+@PaletteHolder
 final class IqlEditor {
 
-    private static final int SYN_KEYWORD = 0xFF0000FF;
-    private static final int SYN_STRING = 0xFFA31515;
-    private static final int SYN_TEXT = 0xFF1E1E1E;
-    private static final int CARET = 0xFF1E1E1E;
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "editor/iql",
+            new Colours(0xFF0000FF, 0xFFA31515, 0xFF1E1E1E, 0xFF1E1E1E));
     private static final Set<String> KEYWORDS = Set.of(
             "QUERY", "SELECT", "INSERT", "DELETE", "MOVE", "DROP", "CRAFT", "COUNT", "LOCK", "UNLOCK",
             "ANALYZE", "VACUUM", "REINDEX", "SHOW", "FROM", "TO", "WHERE", "IF", "ORDER", "BY", "LIMIT",
@@ -219,7 +224,7 @@ final class IqlEditor {
             drawHighlighted(g, line, x, ly);
             if (scroll + i == cursorLine && (caretTimer / 6) % 2 == 0) {
                 final int caretX = x + font.width(line.substring(0, Math.min(cursorCol, line.length())));
-                g.fill(caretX, ly - 1, caretX + 1, ly + font.lineHeight, CARET);
+                g.fill(caretX, ly - 1, caretX + 1, ly + font.lineHeight, PALETTE.get().caret());
             }
         }
     }
@@ -243,12 +248,17 @@ final class IqlEditor {
     }
 
     private static int colorFor(final String word) {
+        final Colours c = PALETTE.get();
         if (word.startsWith("\"")) {
-            return SYN_STRING;
+            return c.string();
         }
         if (KEYWORDS.contains(word.toUpperCase(Locale.ROOT))) {
-            return SYN_KEYWORD;
+            return c.keyword();
         }
-        return SYN_TEXT;
+        return c.text();
+    }
+
+    /** The classic SSMS syntax colours: a keyword, a string, the rest of the text, and the caret. */
+    private record Colours(int keyword, int string, int text, int caret) {
     }
 }

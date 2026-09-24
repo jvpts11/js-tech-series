@@ -66,7 +66,7 @@ public final class MachineMemory {
             }
         }
         for (final OpenWindow window : host.openWindows()) {
-            ledger.add(window.key(), windowRamMb(window.key(), os, desktop, spec -> builtHere(console, spec)),
+            ledger.add(window.key(), windowRamMb(window.key(), os, spec -> builtHere(console, spec)),
                     RamLedger.Kind.WINDOW);
         }
         return ledger;
@@ -87,32 +87,20 @@ public final class MachineMemory {
         if (os == null) {
             return windows;
         }
-        final ResourceLocation desktopId = host.bootedDesktopId();
-        final DesktopEnvironmentDef desktop = desktopId != null ? OsRegistry.getDesktop(desktopId) : null;
         final ComputerConsoleState console = host.console();
         return RamLedger.withinBudget(windows,
-                window -> windowRamMb(window.key(), os, desktop, spec -> builtHere(console, spec)),
+                window -> windowRamMb(window.key(), os, spec -> builtHere(console, spec)),
                 host.ramTotalMb() - host.ramReservedMb());
     }
 
     /**
-     * The megabytes a window opened under {@code key} holds: its program's weight under {@code os}, found by the
-     * label the desktop gives the program, else by the program's own name; a window no program answers to weighs
-     * what a bundled program of that system does.
+     * The megabytes a window opened under {@code key} holds: the weight under {@code os} of the program the key
+     * names ({@link WindowKeys}); a window no program owns weighs what a bundled program of that system does.
      *
      * @param builtHere which programs the machine built from source, which hold a little less
      */
-    public static int windowRamMb(final String key, final OsDef os, @Nullable final DesktopEnvironmentDef desktop,
-                                  final Predicate<ProgramSpec> builtHere) {
-        ProgramSpec spec = desktop != null ? desktop.programFor(key) : null;
-        if (spec == null) {
-            for (final ProgramSpec candidate : OsRegistry.programs()) {
-                if (candidate.displayName().equals(key)) {
-                    spec = candidate;
-                    break;
-                }
-            }
-        }
+    public static int windowRamMb(final String key, final OsDef os, final Predicate<ProgramSpec> builtHere) {
+        final ProgramSpec spec = WindowKeys.program(key);
         return spec != null ? spec.ramMbOn(os, builtHere.test(spec)) : RamLedger.bundledWeightMb(os.ramMb());
     }
 

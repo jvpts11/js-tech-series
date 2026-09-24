@@ -607,7 +607,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     @Override
     public String title() {
-        return "Network Interactor";
+        return GameText.resolve(NetworkInteractorAppTexts.TITLE);
     }
 
     @Override

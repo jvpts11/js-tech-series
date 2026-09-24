@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.computers.operation.payload.CraftManagerStatePayload;
 import dev.jstech.computers.operation.payload.CraftManagerStatePayload.WireMachine;
@@ -25,6 +26,9 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import net.minecraft.client.gui.Font;
@@ -77,10 +81,12 @@ import static dev.jstech.computers.client.os.CraftingManagerTexts.THIS_COMPUTER;
  * one the app shows a banner and disables the buttons. The Machines tab lists the crafting network's
  * machines by type, each with a pause and a feed switch, and a jobs cap per type.
  */
+@PaletteHolder
 public final class CraftingManagerApp implements IDesktopApp {
 
-    private static final int WARN_BG = 0xFFFCE3A1;
-    private static final int WARN_TEXT = 0xFF6B4E00;
+    /** The card-required warning's band and ink, {@code jsc:app/crafting_manager}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/crafting_manager",
+            new Colours(0xFFFCE3A1, 0xFF6B4E00));
 
     private static final int PAD = 5;
     private static final int HEADER_H = 12;
@@ -150,7 +156,7 @@ public final class CraftingManagerApp implements IDesktopApp {
 
         tabs = root.add(new TabStrip(List.of(GameText.resolve(RECIPES_TAB), GameText.resolve(MACHINES_TAB)))
                 .setOnSelect(i -> tab = i));
-        warnLabel = root.add(new Label(GameText.resolve(CARD_REQUIRED_TO_MANAGE)).setColor(WARN_TEXT));
+        warnLabel = root.add(new Label(GameText.resolve(CARD_REQUIRED_TO_MANAGE)).setColor(PALETTE.get().warnText()));
         mediaHeader = root.add(new Label(() -> GameText.resolve(mediaVolumeKey.isEmpty() ? NO_REMOVABLE_MEDIA.text()
                 : MEDIA.with(mediaLabel)), Label.Tone.DIM));
         romHeader = root.add(new Label(() -> GameText.resolve(THIS_COMPUTER.with(romEntries.size(),
@@ -164,7 +170,8 @@ public final class CraftingManagerApp implements IDesktopApp {
                 .setPadding(1)
                 .setOnClick((index, button, mx, my) -> toggle(selectedRom, index, romEntries.size())));
         romEmpty = root.add(new Label(GameText.resolve(NO_RECIPES), Label.Tone.DIM));
-        statusLabel = root.add(new Label(() -> status).setColor(() -> statusWarns ? WARN_TEXT : skin.dim()));
+        statusLabel = root.add(new Label(() -> status)
+                .setColor(() -> statusWarns ? PALETTE.get().warnText() : skin.dim()));
         // Short labels: four buttons share the bar, and the narrowest default window leaves ~55px each.
         actions[0] = root.add(new Button(GameText.resolve(LOAD), this::loadSelected));
         actions[1] = root.add(new Button(GameText.resolve(LOAD_ALL), this::loadAll));
@@ -225,7 +232,7 @@ public final class CraftingManagerApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Crafting Manager";
+        return GameText.resolve(CraftingManagerAppTexts.TITLE);
     }
 
     @Override
@@ -268,7 +275,7 @@ public final class CraftingManagerApp implements IDesktopApp {
 
         // The bands the components sit on: the card warning, the pane headers, the status line, the action bar.
         if (warnLabel.visible()) {
-            g.fill(x + 1, y + TAB_H + 1, x + width - 1, y + TAB_H + 1 + HEADER_H, WARN_BG);
+            g.fill(x + 1, y + TAB_H + 1, x + width - 1, y + TAB_H + 1 + HEADER_H, PALETTE.get().warnBand());
         }
         if (tab == 0) {
             g.fill(mediaHeader.x() - 3, mediaHeader.y() - 2, mediaHeader.right() + 3, mediaHeader.y() - 2 + HEADER_H, skin.panelBg());
@@ -581,5 +588,9 @@ public final class CraftingManagerApp implements IDesktopApp {
     /** Centre of the {@code index}-th visible row of the ROM (right) list. */
     public int[] romRowCenter(final int index) {
         return romList.rowCenter(index);
+    }
+
+    /** The card-required warning's band and ink. */
+    private record Colours(int warnBand, int warnText) {
     }
 }
