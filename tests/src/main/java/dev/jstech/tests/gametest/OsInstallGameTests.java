@@ -24,6 +24,7 @@ import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -272,7 +273,8 @@ public final class OsInstallGameTests {
                 .thenExecuteAfter(SETTLE + 4, () -> {
                     helper.assertTrue(pc.isRunning(), "the vintage machine powers on");
                     helper.assertTrue(!pc.linkedEndpoints().isEmpty(), "the reader links to the computer");
-                    final String failure = FirmwarePayloads.beginInstall(helper.getLevel(), pc, -1L, -1);
+                    final Text said = FirmwarePayloads.beginInstall(helper.getLevel(), pc, -1L, -1);
+                    final String failure = said == null ? null : said.english();
                     helper.assertTrue(failure != null && failure.contains("Legacy") && failure.contains("Vintage"),
                             "the refusal names the era the system needs and the machine's own, got: " + failure);
                     helper.assertTrue(!pc.hasOs(), "nothing was written to the disk");

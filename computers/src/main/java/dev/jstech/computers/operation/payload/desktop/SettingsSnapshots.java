@@ -100,6 +100,6 @@ final class SettingsSnapshots {
         }
         final ComputerBuild build = machine.currentBuild();
         return build == null || build.cpus().isEmpty() ? ""
-                : HardwareTooltip.architecture(build.cpus().getFirst());
+                : HardwareTooltip.architecture(build.cpus().getFirst()).english();
     }
 }

@@ -26,6 +26,10 @@ import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.peripheral.PeripheralLinkValidator;
 import dev.jstech.core.peripheral.IPeripheralOwner;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+import dev.jstech.core.text.TextTags;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -68,11 +72,26 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * <p>The encoder comes in three eras, and each writes the media of its day: a Vintage encoder writes floppy
  * disks, a Legacy one writes CDs, a Standard one writes DVDs, CDs and USB sticks (and no floppies).
  */
+@TextHolder
 public class PatternEncoderBlockEntity extends BlockEntity implements IPeripheralEndpoint,
         GeoBlockEntity {
 
     /** The most jobs waiting behind the one being written. */
     public static final int QUEUE_MAX = 8;
+
+    private static final TextKey READY = TextKey.of("jsc.pattern_encoder.ready", "Ready");
+    private static final TextKey STARTING = TextKey.of("jsc.pattern_encoder.starting", "Starting...");
+    private static final TextKey INSERT_MEDIA = TextKey.of("jsc.pattern_encoder.insert_media", "Insert media");
+    private static final TextKey SEEKING = TextKey.of("jsc.pattern_encoder.seeking", "Seeking");
+    private static final TextKey WRITING = TextKey.of("jsc.pattern_encoder.writing", "Writing %s.craft");
+    private static final TextKey VERIFYING = TextKey.of("jsc.pattern_encoder.verifying", "Verifying %s.craft");
+    private static final TextKey DONE_WRITING = TextKey.of("jsc.pattern_encoder.done_writing", "Done: %s.craft");
+    private static final TextKey FAILED = TextKey.of("jsc.pattern_encoder.error", "Error");
+    private static final TextKey CANCELLED = TextKey.of("jsc.pattern_encoder.cancelled", "Cancelled");
+    private static final TextKey WRITE_FAILED = TextKey.of("jsc.pattern_encoder.write_failed", "Write failed: %s");
+    private static final TextKey MEDIUM_FULL = TextKey.of("jsc.pattern_encoder.medium_full", "medium full");
+    private static final TextKey NO_MEDIUM = TextKey.of("jsc.pattern_encoder.no_medium", "no medium");
+    private static final TextKey VERIFY_FAILED = TextKey.of("jsc.pattern_encoder.verify_failed", "Verify failed: %s");
 
     /*
      * The body's only motion: the disc spins and the activity lamp pulses while the head is down. No part
@@ -165,7 +184,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
     private int phaseTotal;
     private int writeTicks;
     private String currentFile = "";
-    private String message = "";
+    private Text message = Text.EMPTY;
     private int completed;
 
     @Nullable
@@ -344,20 +363,20 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
     }
 
     /** One line for a display: what the encoder is doing, or why it stopped. */
-    public String statusLine() {
+    public Text statusLine() {
         return switch (phase) {
-            case IDLE -> hasMedia() ? (queue.isEmpty() ? "Ready" : "Starting...") : "Insert media";
-            case SEEK -> "Seeking";
-            case WRITE -> "Writing " + currentFile + ".craft";
-            case VERIFY -> "Verifying " + currentFile + ".craft";
-            case DONE -> "Done: " + currentFile + ".craft";
-            case ERROR -> message.isEmpty() ? "Error" : message;
+            case IDLE -> hasMedia() ? (queue.isEmpty() ? READY.text() : STARTING.text()) : INSERT_MEDIA.text();
+            case SEEK -> SEEKING.text();
+            case WRITE -> WRITING.with(currentFile);
+            case VERIFY -> VERIFYING.with(currentFile);
+            case DONE -> DONE_WRITING.with(currentFile);
+            case ERROR -> message.isEmpty() ? FAILED.text() : message;
         };
     }
 
-    /** The reason the last job failed, or {@code ""}. */
-    public String lastError() {
-        return phase == Phase.ERROR ? message : "";
+    /** The reason the last job failed, or nothing. */
+    public Text lastError() {
+        return phase == Phase.ERROR ? message : Text.EMPTY;
     }
 
     /** Drops every waiting job and stops the current one; nothing half-written is left on the medium. */
@@ -365,7 +384,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
         queue.clear();
         if (busy()) {
             enter(Phase.ERROR, HOLD_TICKS);
-            message = "Cancelled";
+            message = CANCELLED.text();
         }
         setChanged();
         sync();
@@ -434,7 +453,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
                     final String written = write(level, job);
                     if (written == null) {
                         enter(Phase.ERROR, HOLD_TICKS);
-                        message = "Write failed: " + (hasMedia() ? "medium full" : "no medium");
+                        message = WRITE_FAILED.with(hasMedia() ? MEDIUM_FULL : NO_MEDIUM);
                     } else {
                         currentFile = written;
                         final MediaFormat format = bayFormat();
@@ -453,7 +472,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
                         enter(Phase.DONE, HOLD_TICKS);
                     } else {
                         enter(Phase.ERROR, HOLD_TICKS);
-                        message = "Verify failed: " + path;
+                        message = VERIFY_FAILED.with(path);
                     }
                     setChanged();
                     sync();
@@ -473,7 +492,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
         phaseTicks = 0;
         phaseTotal = total;
         if (next != Phase.ERROR) {
-            message = "";
+            message = Text.EMPTY;
         }
         setChanged();
     }
@@ -583,7 +602,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
         phaseTotal = tag.getInt("PhaseTotal");
         writeTicks = tag.getInt("WriteTicks");
         currentFile = tag.getString("CurrentFile");
-        message = tag.getString("Message");
+        message = TextTags.read(tag.getCompound("Message"));
         completed = tag.getInt("Completed");
         linkedOwner = tag.contains(NBT_LINKED_OWNER) ? tag.getLong(NBT_LINKED_OWNER) : null;
     }
@@ -605,7 +624,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
         tag.putInt("PhaseTotal", phaseTotal);
         tag.putInt("WriteTicks", writeTicks);
         tag.putString("CurrentFile", currentFile);
-        tag.putString("Message", message);
+        tag.put("Message", TextTags.write(message));
         tag.putInt("Completed", completed);
         if (linkedOwner != null) {
             tag.putLong(NBT_LINKED_OWNER, linkedOwner);
@@ -631,7 +650,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
         tag.putInt("PhaseTotal", phaseTotal);
         tag.putInt("WriteTicks", writeTicks);
         tag.putString("CurrentFile", currentFile);
-        tag.putString("Message", message);
+        tag.put("Message", TextTags.write(message));
         tag.putInt("Completed", completed);
         tag.putInt("QueueSize", queue.size());
         if (linkedOwner != null) {

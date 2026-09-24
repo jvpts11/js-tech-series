@@ -8,6 +8,8 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.crafting.PatternWorkbench;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -34,14 +36,13 @@ public record PatternStudioStatePayload(
         List<Stage> stages, String pipeName, String pipeNote, String pipeOpened,
         List<Drive> drives, Encoder encoder, List<Machine> machines,
         boolean craftingComputer, boolean hasCard, boolean romHasBench, boolean romHasProc, boolean romHasPipe,
-        String status, int tabHint) implements CustomPacketPayload {
+        Text status, int tabHint) implements CustomPacketPayload {
 
     public static final int MAX_NAME = 64;
     public static final int MAX_NOTE = 256;
     public static final int MAX_TAG = 128;
     public static final int MAX_LABEL = 64;
     public static final int MAX_KEY = 96;
-    public static final int MAX_STATUS = 96;
     public static final int MAX_FILES = 64;
     public static final int MAX_DRIVES = 8;
     public static final int MAX_MACHINES = 48;
@@ -68,9 +69,9 @@ public record PatternStudioStatePayload(
     }
 
     /** A pipeline stage as listed: what it makes and whether it runs on a bench or a machine. */
-    public record Stage(String label, boolean bench, ItemStack result) {
+    public record Stage(Text label, boolean bench, ItemStack result) {
         static final StreamCodec<RegistryFriendlyByteBuf, Stage> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.stringUtf8(MAX_LABEL), Stage::label,
+                TextCodecs.STREAM_CODEC, Stage::label,
                 ByteBufCodecs.BOOL, Stage::bench,
                 ItemStack.OPTIONAL_STREAM_CODEC, Stage::result,
                 Stage::new);
@@ -80,10 +81,10 @@ public record PatternStudioStatePayload(
      * A drive the Studio can open files from: {@code media:<pos>} for a linked reader or {@code disk} for the
      * system disk's crafts folder, with the {@code .craft} files it holds.
      */
-    public record Drive(String key, String label, boolean writable, List<String> files) {
+    public record Drive(String key, Text label, boolean writable, List<String> files) {
         static final StreamCodec<RegistryFriendlyByteBuf, Drive> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.stringUtf8(MAX_KEY), Drive::key,
-                ByteBufCodecs.stringUtf8(MAX_LABEL), Drive::label,
+                TextCodecs.STREAM_CODEC, Drive::label,
                 ByteBufCodecs.BOOL, Drive::writable,
                 ByteBufCodecs.stringUtf8(MAX_NAME).apply(ByteBufCodecs.list(MAX_FILES)), Drive::files,
                 Drive::new);
@@ -95,25 +96,25 @@ public record PatternStudioStatePayload(
     }
 
     /** The linked Pattern Encoder, or {@code linked == false} when there is none. */
-    public record Encoder(boolean linked, String era, String media, String status, int progress, int queued,
+    public record Encoder(boolean linked, Text era, Text media, Text status, int progress, int queued,
                           boolean busy, boolean error) {
         static final StreamCodec<RegistryFriendlyByteBuf, Encoder> STREAM_CODEC = StreamCodec.of(
                 (buf, e) -> {
                     buf.writeBoolean(e.linked());
-                    buf.writeUtf(e.era(), MAX_LABEL);
-                    buf.writeUtf(e.media(), MAX_LABEL);
-                    buf.writeUtf(e.status(), MAX_STATUS);
+                    TextCodecs.STREAM_CODEC.encode(buf, e.era());
+                    TextCodecs.STREAM_CODEC.encode(buf, e.media());
+                    TextCodecs.STREAM_CODEC.encode(buf, e.status());
                     buf.writeVarInt(e.progress());
                     buf.writeVarInt(e.queued());
                     buf.writeBoolean(e.busy());
                     buf.writeBoolean(e.error());
                 },
-                buf -> new Encoder(buf.readBoolean(), buf.readUtf(MAX_LABEL), buf.readUtf(MAX_LABEL),
-                        buf.readUtf(MAX_STATUS), buf.readVarInt(), buf.readVarInt(), buf.readBoolean(),
-                        buf.readBoolean()));
+                buf -> new Encoder(buf.readBoolean(), TextCodecs.STREAM_CODEC.decode(buf),
+                        TextCodecs.STREAM_CODEC.decode(buf), TextCodecs.STREAM_CODEC.decode(buf), buf.readVarInt(),
+                        buf.readVarInt(), buf.readBoolean(), buf.readBoolean()));
 
         public static Encoder none() {
-            return new Encoder(false, "", "", "", 0, 0, false, false);
+            return new Encoder(false, Text.EMPTY, Text.EMPTY, Text.EMPTY, 0, 0, false, false);
         }
     }
 
@@ -156,7 +157,7 @@ public record PatternStudioStatePayload(
         buf.writeBoolean(p.romHasBench());
         buf.writeBoolean(p.romHasProc());
         buf.writeBoolean(p.romHasPipe());
-        buf.writeUtf(p.status(), MAX_STATUS);
+        TextCodecs.STREAM_CODEC.encode(buf, p.status());
         buf.writeVarInt(p.tabHint());
     }
 
@@ -185,7 +186,7 @@ public record PatternStudioStatePayload(
         final boolean romBench = buf.readBoolean();
         final boolean romProc = buf.readBoolean();
         final boolean romPipe = buf.readBoolean();
-        final String status = buf.readUtf(MAX_STATUS);
+        final Text status = TextCodecs.STREAM_CODEC.decode(buf);
         final int tabHint = buf.readVarInt();
         return new PatternStudioStatePayload(bench, preview, benchName, benchNote, benchOpened, inputs, outputs,
                 machineType, timeout, procName, procNote, procOpened, stages, pipeName, pipeNote, pipeOpened,

@@ -227,7 +227,7 @@ public final class ThisPcPayloads {
                     if (cpu.isEmpty()) {
                         cpu = part.getHoverName().getString();
                         // A machine has one architecture, so the first chip answers for all of them.
-                        architecture = HardwareTooltip.architecture(chip.spec());
+                        architecture = HardwareTooltip.architecture(chip.spec()).english();
                     }
                 } else if (part.getItem() instanceof GpuItem) {
                     gpus++;
@@ -274,7 +274,7 @@ public final class ThisPcPayloads {
             joined.append(e.getKey());
         }
         return new ThisPcPayload.WireMachine(computer.customName(), kind,
-                MinSpecTooltip.eraLabel(computer.displayEra()),
+                MinSpecTooltip.eraLabel(computer.displayEra()).english(),
                 osLabel, osYear, network == null ? "" : networkLabel(network), board, cpu, cpus, architecture,
                 (int) Math.min(Integer.MAX_VALUE, computer.ramBuffer()), computer.totalVramMb(), gpus, psu,
                 valid, joined.toString());

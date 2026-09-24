@@ -7,12 +7,29 @@
  */
 package dev.jstech.computers.client;
 
+import static dev.jstech.computers.client.FirmwareScreenTexts.of;
+import static dev.jstech.computers.client.PatternTexts.BAY;
+import static dev.jstech.computers.client.PatternTexts.BAY_EMPTY;
+import static dev.jstech.computers.client.PatternTexts.CANCEL_QUEUE;
+import static dev.jstech.computers.client.PatternTexts.CONNECT_CABLE;
+import static dev.jstech.computers.client.PatternTexts.EJECT;
+import static dev.jstech.computers.client.PatternTexts.LEGACY_WRITES;
+import static dev.jstech.computers.client.PatternTexts.LINKED_TO;
+import static dev.jstech.computers.client.PatternTexts.NOT_LINKED;
+import static dev.jstech.computers.client.PatternTexts.QUEUED;
+import static dev.jstech.computers.client.PatternTexts.REMOVABLE_MEDIUM;
+import static dev.jstech.computers.client.PatternTexts.STANDARD_WRITES;
+import static dev.jstech.computers.client.PatternTexts.TITLE;
+import static dev.jstech.computers.client.PatternTexts.VINTAGE_WRITES;
+
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.gui.layout.PatternEncoderLayout;
 import dev.jstech.computers.menu.PatternEncoderMenu;
 import dev.jstech.computers.os.VolumeLabel;
 import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.EraThemes;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -55,10 +72,10 @@ public class PatternEncoderScreen extends AbstractContainerScreen<PatternEncoder
         theme = EraThemes.of(era());
         ejectBtn = addRenderableWidget(new EraButton(leftPos + PatternEncoderLayout.EJECT_X,
                 topPos + PatternEncoderLayout.BTN_Y, PatternEncoderLayout.EJECT_W, PatternEncoderLayout.BTN_H,
-                Component.literal("Eject"), b -> press(PatternEncoderMenu.BUTTON_EJECT)));
+                GameText.component(EJECT), b -> press(PatternEncoderMenu.BUTTON_EJECT)));
         cancelBtn = addRenderableWidget(new EraButton(leftPos + PatternEncoderLayout.CANCEL_X,
                 topPos + PatternEncoderLayout.BTN_Y, PatternEncoderLayout.CANCEL_W, PatternEncoderLayout.BTN_H,
-                Component.literal("Cancel queue"), b -> press(PatternEncoderMenu.BUTTON_CANCEL)));
+                GameText.component(CANCEL_QUEUE), b -> press(PatternEncoderMenu.BUTTON_CANCEL)));
     }
 
     private void press(final int id) {
@@ -110,12 +127,13 @@ public class PatternEncoderScreen extends AbstractContainerScreen<PatternEncoder
         final int lh = PatternEncoderLayout.LINE_H;
 
         final boolean linked = be != null && be.ownerPos() != null;
-        line(g, 0, linked ? "Linked to " + pos(be.ownerPos()) : "Not linked", ix, iy,
+        line(g, 0, of(linked ? LINKED_TO.with(pos(be.ownerPos())) : NOT_LINKED.text()), ix, iy,
                 linked ? theme.green() : theme.amber());
         final HardwareEra era = era();
-        line(g, 1, eraLine(era), ix, iy + lh, era.screenColor() | 0xFF000000);
+        line(g, 1, of(eraLine(era)), ix, iy + lh, era.screenColor() | 0xFF000000);
         final ItemStack media = menu.mediaStack();
-        line(g, 2, media.isEmpty() ? "Bay: empty" : "Bay: " + VolumeLabel.of(media, "Removable medium"),
+        line(g, 2, of(media.isEmpty() ? BAY_EMPTY.text()
+                        : BAY.with(VolumeLabel.of(media, of(REMOVABLE_MEDIUM)))),
                 ix, iy + lh * 2, media.isEmpty() ? theme.dim() : theme.text());
         final String status;
         final int statusColor;
@@ -123,10 +141,10 @@ public class PatternEncoderScreen extends AbstractContainerScreen<PatternEncoder
             status = "";
             statusColor = theme.text();
         } else if (!linked && be.phase() == PatternEncoderBlockEntity.Phase.IDLE) {
-            status = "Connect a peripheral cable";
+            status = of(CONNECT_CABLE);
             statusColor = theme.dim();
         } else {
-            status = be.statusLine() + (be.displayQueued() > 0 ? " (" + be.displayQueued() + " queued)" : "");
+            status = of(be.displayQueued() > 0 ? QUEUED.with(be.statusLine(), be.displayQueued()) : be.statusLine());
             statusColor = be.phase() == PatternEncoderBlockEntity.Phase.ERROR ? theme.red()
                     : be.phase() == PatternEncoderBlockEntity.Phase.DONE ? theme.green() : theme.text();
         }
@@ -144,11 +162,11 @@ public class PatternEncoderScreen extends AbstractContainerScreen<PatternEncoder
     }
 
     /** What this era's encoder writes, for the era line. */
-    private static String eraLine(final HardwareEra era) {
+    private static TextKey eraLine(final HardwareEra era) {
         return switch (era) {
-            case VINTAGE -> "Vintage encoder: floppy disks";
-            case LEGACY -> "Legacy encoder: CD-RW";
-            default -> "Standard encoder: DVD, CD, USB";
+            case VINTAGE -> VINTAGE_WRITES;
+            case LEGACY -> LEGACY_WRITES;
+            default -> STANDARD_WRITES;
         };
     }
 
@@ -176,7 +194,7 @@ public class PatternEncoderScreen extends AbstractContainerScreen<PatternEncoder
 
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
-        g.drawString(font, "PATTERN ENCODER", PatternEncoderLayout.TITLE_X, PatternEncoderLayout.TITLE_Y,
+        g.drawString(font, of(TITLE), PatternEncoderLayout.TITLE_X, PatternEncoderLayout.TITLE_Y,
                 theme.text(), false);
         g.drawString(font, playerInventoryTitle, PatternEncoderLayout.INV_X, PatternEncoderLayout.INV_LABEL_Y,
                 theme.dim(), false);

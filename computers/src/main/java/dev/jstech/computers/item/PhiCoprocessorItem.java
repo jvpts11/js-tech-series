@@ -9,6 +9,9 @@ package dev.jstech.computers.item;
 
 import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.PhiCoprocessorSpec;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -20,7 +23,11 @@ import java.util.List;
 /**
  * A crafting co-processor item for the Supercomputer.
  */
+@TextHolder
 public class PhiCoprocessorItem extends SpecItem<PhiCoprocessorSpec> implements IExpansionCardItem {
+
+    private static final TextKey CORES = TextKey.of("jsc.item.phi_coprocessor.cores", "%s cores @ %s GHz");
+    private static final TextKey SLOTS = TextKey.of("jsc.item.phi_coprocessor.slots", "Supercomputer slots 1-%s");
 
     public PhiCoprocessorItem(final Properties properties, final PhiCoprocessorSpec spec) {
         super(properties.stacksTo(16), spec);
@@ -35,11 +42,9 @@ public class PhiCoprocessorItem extends SpecItem<PhiCoprocessorSpec> implements 
     public void appendHoverText(final ItemStack stack, final TooltipContext context,
                                 final List<Component> tooltip, final TooltipFlag flag) {
         final PhiCoprocessorSpec spec = spec();
-        tooltip.add(Component.literal(spec.cores() + " cores @ "
-                        + String.format(Locale.ROOT, "%.2f", spec.mhz() / 1000.0) + " GHz")
+        tooltip.add(GameText.component(CORES.with(spec.cores(), String.format(Locale.ROOT, "%.2f", spec.mhz() / 1000.0)))
                 .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.literal("Supercomputer slots 1-" + spec.maxSlot())
-                .withStyle(ChatFormatting.GOLD));
+        tooltip.add(GameText.component(SLOTS.with(spec.maxSlot())).withStyle(ChatFormatting.GOLD));
         super.appendHoverText(stack, context, tooltip, flag);
     }
 }

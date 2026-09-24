@@ -10,6 +10,8 @@ package dev.jstech.computers.crafting;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.util.Sizes;
 import dev.jstech.core.util.Utf8Text;
 import java.util.ArrayList;
@@ -85,12 +87,17 @@ public record MultiStagePattern(List<Stage> stages, String name, String note) {
 
     /** What the pipeline is called where it is listed: its name, or its final result's when it has none. */
     public String displayName() {
+        return displayText().english();
+    }
+
+    /** The same, as text: a result's name reaches each player in their own language. */
+    public Text displayText() {
         if (!name.isEmpty()) {
-            return name;
+            return Text.literal(name);
         }
         final Stage last = finalStage();
         final StorageKey key = last == null ? null : outputKey(last);
-        return key == null ? "pipeline" : key.displayName().getString();
+        return key == null ? RecipeTexts.UNNAMED_PIPELINE.text() : GameText.of(key.displayName());
     }
 
     /** The same pipeline under a new name and note. */

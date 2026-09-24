@@ -29,6 +29,7 @@ import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -42,6 +43,63 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.ADD_BENCH;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.ADD_MACHINE;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.ANY_CATEGORY;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.ANY_TAG;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.BAY;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.BAY_EMPTY;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.BENCH_TAB;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.BURN;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.CANCEL;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.CHANCE;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.CLEAR;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.CLICK_ADDS_STAGE;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.CLICK_OPENS_FILE;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.CLOSE;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.DONE;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.EJECT;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.ENCODER_OF_ERA;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.ENCODER_TAB;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.FILE;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.FILES_TAB;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.HINT_BENCH;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.HINT_MACHINE;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.HINT_PIPELINE;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.INPUT_AMOUNT;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.INVENTORY;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.IN_RECIPE_ROM;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.IN_ROM;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.IN_STOCK;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.IN_THE_ROM;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.ITEMS;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.LOADING;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.LOAD_ROM;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.MACHINE_TAB;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.MILLIBUCKETS;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.MULTI_STAGE_TAB;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.NAME;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.NETWORK_WOULD_USE;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.NOTE;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.NO_DRIVES;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.NO_ENCODER;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.NO_RECIPE;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.NO_STAGES;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.OUTPUT_AMOUNT;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.PER_RUN;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.PER_RUN_ESTIMATED;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.PICK_MACHINE;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.PICK_MACHINE_BUTTON;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.QUEUED;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.REMOVE;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.RESULT;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.RUN_CABLE;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.SAVE_TO_DISK;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.STAGE_BENCH;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.STAGE_MACHINE;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.TIMEOUT;
+import static dev.jstech.computers.client.os.PatternStudioScreenTexts.TO_ENCODER;
 
 /**
  * The Pattern Studio: where recipes are authored. Three drafts live on the machine (a bench recipe, a machine
@@ -180,7 +238,8 @@ public final class PatternStudioApp implements IInventoryBandApp {
         this.host = host;
         this.monitorPos = monitorPos;
 
-        tabs = root.add(new TabStrip(List.of("Bench", "Machine", "Multi-stage")).setOnSelect(this::selectTab));
+        tabs = root.add(new TabStrip(List.of(GameText.resolve(BENCH_TAB), GameText.resolve(MACHINE_TAB),
+                GameText.resolve(MULTI_STAGE_TAB))).setOnSelect(this::selectTab));
 
         benchGrid = root.add(new CellGrid(3, 3, 3, CELL)
                 .setRenderer(this::renderBenchCell)
@@ -190,8 +249,8 @@ public final class PatternStudioApp implements IInventoryBandApp {
         arrow = root.add(new Label("->", Label.Tone.DIM));
         resultLine = root.add(new Label(this::resultText).setTone(this::resultTone));
         benchFileLine = root.add(new Label(this::benchFileText, Label.Tone.DIM));
-        benchRomLine = root.add(new Label("In the Recipe ROM", Label.Tone.ACCENT));
-        benchClear = root.add(new Button("Clear", () -> send(of(PatternStudioEditPayload.BENCH_CLEAR))));
+        benchRomLine = root.add(new Label(GameText.resolve(IN_RECIPE_ROM), Label.Tone.ACCENT));
+        benchClear = root.add(new Button(GameText.resolve(CLEAR), () -> send(of(PatternStudioEditPayload.BENCH_CLEAR))));
         benchNames = root.add(new NameNoteRow(PatternStudioEditPayload.BENCH_SET_NAME));
 
         inGrid = root.add(new CellGrid(PROC_COLS, PROC_ROWS, PatternWorkbench.PROC_GRID / PROC_COLS, CELL)
@@ -205,51 +264,52 @@ public final class PatternStudioApp implements IInventoryBandApp {
                 .setMarked(index -> procCellMarked(true, index))
                 .setOnClick((index, button, shift) -> procCellClicked(true, index, button, shift)));
         machineButton = root.add(new Button(this::machineButtonLabel, this::openMachinePicker));
-        timeoutLabel = root.add(new Label("Timeout", Label.Tone.DIM));
+        timeoutLabel = root.add(new Label(GameText.resolve(TIMEOUT), Label.Tone.DIM));
         timeout = root.add(new TextField(6).setOnCommit(this::commitTimeout));
         procFlag = root.add(new Label(this::procFlagText).setTone(this::procFlagTone));
-        procClear = root.add(new Button("Clear", () -> send(of(PatternStudioEditPayload.PROC_CLEAR))));
+        procClear = root.add(new Button(GameText.resolve(CLEAR), () -> send(of(PatternStudioEditPayload.PROC_CLEAR))));
         procNames = root.add(new NameNoteRow(PatternStudioEditPayload.PROC_SET_NAME));
 
         stageList = root.add(new ListView<PatternStudioStatePayload.Stage>(this::stages, ROW_H, this::renderStageRow)
                 .setSelectable(true)
                 .setPadding(1));
-        noStages = root.add(new Label("No stages yet", Label.Tone.DIM));
-        addBench = root.add(new Button("+ Bench", () -> send(of(PatternStudioEditPayload.PIPE_ADD_BENCH))));
-        addMachine = root.add(new Button("+ Machine", () -> send(of(PatternStudioEditPayload.PIPE_ADD_PROC))));
-        removeStage = root.add(new Button("Remove", this::removeSelectedStage));
-        pipeRom = root.add(new Label("In ROM", Label.Tone.ACCENT).setAlign(Label.Align.RIGHT));
+        noStages = root.add(new Label(GameText.resolve(NO_STAGES), Label.Tone.DIM));
+        addBench = root.add(new Button(GameText.resolve(ADD_BENCH), () -> send(of(PatternStudioEditPayload.PIPE_ADD_BENCH))));
+        addMachine = root.add(new Button(GameText.resolve(ADD_MACHINE), () -> send(of(PatternStudioEditPayload.PIPE_ADD_PROC))));
+        removeStage = root.add(new Button(GameText.resolve(REMOVE), this::removeSelectedStage));
+        pipeRom = root.add(new Label(GameText.resolve(IN_ROM), Label.Tone.ACCENT).setAlign(Label.Align.RIGHT));
         pipeNames = root.add(new NameNoteRow(PatternStudioEditPayload.PIPE_SET_NAME));
 
-        railTabs = root.add(new TabStrip(List.of("Files", "Encoder")).setUnderline(false).setOnSelect(this::selectRail));
+        railTabs = root.add(new TabStrip(List.of(GameText.resolve(FILES_TAB), GameText.resolve(ENCODER_TAB)))
+                .setUnderline(false).setOnSelect(this::selectRail));
         fileList = root.add(new ListView<FileRow>(this::fileRows, ROW_H, this::renderFileRow).setOnClick(this::fileRowClicked));
-        noDrives = root.add(new Label("No drives", Label.Tone.DIM));
+        noDrives = root.add(new Label(GameText.resolve(NO_DRIVES), Label.Tone.DIM));
         railHint = root.add(new Label(this::railHintText, Label.Tone.DIM));
         encLine1 = root.add(new Label(this::encoderLine1).setTone(this::encoderLine1Tone));
         encLine2 = root.add(new Label(this::encoderLine2).setTone(this::encoderLine2Tone));
         encLine3 = root.add(new Label(this::encoderLine3).setTone(this::encoderLine3Tone).setColor(this::encoderLine3Color));
         encProgress = root.add(new ProgressBar(this::encoderProgress));
         encQueued = root.add(new Label(this::encoderQueued, Label.Tone.DIM));
-        encCancel = root.add(new Button("Cancel", () -> send(of(PatternStudioEditPayload.ENCODER_CANCEL))));
-        encEject = root.add(new Button("Eject", () -> send(of(PatternStudioEditPayload.ENCODER_EJECT))));
+        encCancel = root.add(new Button(GameText.resolve(CANCEL), () -> send(of(PatternStudioEditPayload.ENCODER_CANCEL))));
+        encEject = root.add(new Button(GameText.resolve(EJECT), () -> send(of(PatternStudioEditPayload.ENCODER_EJECT))));
 
-        burn = root.add(new Button("Burn", () -> barAction(PatternStudioEditPayload.BURN)));
-        saveDisk = root.add(new Button("Save to disk", () -> barAction(PatternStudioEditPayload.SAVE_TO_DISK)));
+        burn = root.add(new Button(GameText.resolve(BURN), () -> barAction(PatternStudioEditPayload.BURN)));
+        saveDisk = root.add(new Button(GameText.resolve(SAVE_TO_DISK), () -> barAction(PatternStudioEditPayload.SAVE_TO_DISK)));
         loadRom = root.add(new Button(this::loadRomLabel, () -> barAction(PatternStudioEditPayload.LOAD_INTO_ROM)));
         statusLine = root.add(new Label(this::statusText).setTone(this::statusTone));
 
         machineSearch = new SearchField(48);
         machineSearch.setOnEdit(this::resetMachineScroll);
         machineList = new ListView<Choice>(this::machineChoices, ROW_H, this::renderChoiceRow).setOnClick(this::choiceClicked);
-        pickerClose = new Button("Close", this::closeMachinePicker);
-        machinePicker = new Popup("Pick a machine", 220, 150).setLayouter(this::layoutMachinePicker);
+        pickerClose = new Button(GameText.resolve(CLOSE), this::closeMachinePicker);
+        machinePicker = new Popup(GameText.resolve(PICK_MACHINE), 220, 150).setLayouter(this::layoutMachinePicker);
         machinePicker.add(machineSearch);
         machinePicker.add(machineList);
         machinePicker.add(pickerClose);
 
         amount = new AmountStepper();
-        amountClear = new Button("Clear", () -> commitAmount(0L));
-        amountDone = new Button("Done", () -> commitAmount(amount.amount()));
+        amountClear = new Button(GameText.resolve(CLEAR), () -> commitAmount(0L));
+        amountDone = new Button(GameText.resolve(DONE), () -> commitAmount(amount.amount()));
         amountPopup = new Popup(this::amountTitle, 150, 60).setLayouter(this::layoutAmountPopup);
         amountPopup.add(amount);
         amountPopup.add(amountClear);
@@ -288,8 +348,9 @@ public final class PatternStudioApp implements IInventoryBandApp {
             return;
         }
         active.state = payload;
-        if (!payload.status().isEmpty()) {
-            active.status = payload.status();
+        final String status = GameText.resolve(payload.status());
+        if (!status.isEmpty()) {
+            active.status = status;
             active.statusFrames = 200;
         }
         if (payload.tabHint() >= 0) {
@@ -461,7 +522,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
         layoutMachine(x, editorY + spare(editorH, machineHeight()), editorW, loaded && tab == TAB_MACHINE);
         layoutPipeline(g, x, editorY, editorW, editorH, loaded && tab == TAB_PIPELINE);
         if (!loaded) {
-            g.drawString(font, "Loading...", x + PAD, editorY + PAD, skin.dim(), false);
+            g.drawString(font, GameText.resolve(LOADING), x + PAD, editorY + PAD, skin.dim(), false);
         }
         if (bandVisible(height)) {
             renderBand(g, font, x + PAD, y + bandTop(height), PatternStudioLayout.bandLabelVisible(height));
@@ -480,7 +541,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
     private void renderBand(final GuiGraphics g, final Font font, final int bx, final int by, final boolean label) {
         if (label) {
-            g.drawString(font, "Inventory", bx + 2, by - 9, skin.dim(), false);
+            g.drawString(font, GameText.resolve(INVENTORY), bx + 2, by - 9, skin.dim(), false);
         }
         skin.panel(g, bx, by, BAND_W, BAND_H);
         for (int r = 0; r < INV_ROWS; r++) {
@@ -497,11 +558,11 @@ public final class PatternStudioApp implements IInventoryBandApp {
         if (state == null) {
             return "";
         }
-        return switch (tab) {
-            case TAB_MACHINE -> "Right-click: chance. Shift-click: amount";
-            case TAB_PIPELINE -> "Add a draft or a file as a stage";
-            default -> "Right-click a cell: the tag it accepts";
-        };
+        return GameText.resolve(switch (tab) {
+            case TAB_MACHINE -> HINT_MACHINE;
+            case TAB_PIPELINE -> HINT_PIPELINE;
+            default -> HINT_BENCH;
+        });
     }
 
     /**
@@ -607,8 +668,8 @@ public final class PatternStudioApp implements IInventoryBandApp {
         if (state == null) {
             return "";
         }
-        return state.preview().isEmpty() ? "No recipe"
-                : state.preview().getCount() + " x " + state.preview().getHoverName().getString();
+        return state.preview().isEmpty() ? GameText.resolve(NO_RECIPE)
+                : GameText.resolve(RESULT.with(state.preview().getCount(), state.preview().getHoverName().getString()));
     }
 
     private Label.Tone resultTone() {
@@ -616,7 +677,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
     }
 
     private String benchFileText() {
-        return state == null || state.benchOpened().isEmpty() ? "" : "File: " + state.benchOpened();
+        return state == null || state.benchOpened().isEmpty() ? "" : GameText.resolve(FILE.with(state.benchOpened()));
     }
 
     // machine
@@ -711,7 +772,8 @@ public final class PatternStudioApp implements IInventoryBandApp {
     }
 
     private String machineButtonLabel() {
-        final String machine = state == null || state.machineType().isEmpty() ? "Machine..." : machineLabel(state.machineType());
+        final String machine = state == null || state.machineType().isEmpty() ? GameText.resolve(PICK_MACHINE_BUTTON)
+                : machineLabel(state.machineType());
         return lastFont == null ? machine : Texts.clip(lastFont, machine, machineButton.width() - 6);
     }
 
@@ -719,7 +781,8 @@ public final class PatternStudioApp implements IInventoryBandApp {
         if (state == null) {
             return "";
         }
-        return state.romHasProc() ? "In the ROM" : !state.procOpened().isEmpty() ? "File: " + state.procOpened() : "";
+        return state.romHasProc() ? GameText.resolve(IN_THE_ROM)
+                : !state.procOpened().isEmpty() ? GameText.resolve(FILE.with(state.procOpened())) : "";
     }
 
     private Label.Tone procFlagTone() {
@@ -777,7 +840,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
                                 final int index, final int x, final int y, final int w, final int h,
                                 final boolean hovered, final boolean selected) {
         ctx.skin().listRow(g, x, y, w, h, hovered, selected);
-        final String text = (index + 1) + ". " + (s.bench() ? "[bench] " : "[machine] ") + s.label();
+        final String text = GameText.resolve((s.bench() ? STAGE_BENCH : STAGE_MACHINE).with(index + 1, s.label()));
         g.drawString(ctx.font(), Texts.clip(ctx.font(), text, w - 6), x + 3, y + 2, ctx.skin().listRowText(selected), false);
     }
 
@@ -801,7 +864,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
             return rows;
         }
         for (final PatternStudioStatePayload.Drive d : state.drives()) {
-            rows.add(new FileRow(d.key(), d.label(), true, ""));
+            rows.add(new FileRow(d.key(), GameText.resolve(d.label()), true, ""));
             for (final String f : d.files()) {
                 rows.add(new FileRow(d.key(), f, false, f));
             }
@@ -872,7 +935,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
     }
 
     private String railHintText() {
-        return tab == TAB_PIPELINE ? "Click adds a stage" : "Click opens the file";
+        return GameText.resolve(tab == TAB_PIPELINE ? CLICK_ADDS_STAGE : CLICK_OPENS_FILE);
     }
 
     @Nullable
@@ -882,7 +945,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
     private String encoderLine1() {
         final PatternStudioStatePayload.Encoder e = encoder();
-        return e != null && e.linked() ? e.era() + " encoder" : "No encoder linked";
+        return GameText.resolve(e != null && e.linked() ? ENCODER_OF_ERA.with(e.era()) : NO_ENCODER.text());
     }
 
     private Label.Tone encoderLine1Tone() {
@@ -893,9 +956,9 @@ public final class PatternStudioApp implements IInventoryBandApp {
     private String encoderLine2() {
         final PatternStudioStatePayload.Encoder e = encoder();
         if (e == null || !e.linked()) {
-            return "Run a peripheral cable";
+            return GameText.resolve(RUN_CABLE);
         }
-        return e.media().isEmpty() ? "Bay: empty" : "Bay: " + e.media();
+        return GameText.resolve(e.media().isEmpty() ? BAY_EMPTY.text() : BAY.with(e.media()));
     }
 
     private Label.Tone encoderLine2Tone() {
@@ -905,7 +968,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
     private String encoderLine3() {
         final PatternStudioStatePayload.Encoder e = encoder();
-        return e != null && e.linked() ? e.status() : "to a Pattern Encoder.";
+        return GameText.resolve(e != null && e.linked() ? e.status() : TO_ENCODER.text());
     }
 
     private Label.Tone encoderLine3Tone() {
@@ -925,7 +988,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
     private String encoderQueued() {
         final PatternStudioStatePayload.Encoder e = encoder();
-        return "Queued: " + (e == null ? 0 : e.queued());
+        return GameText.resolve(QUEUED.with(e == null ? 0 : e.queued()));
     }
 
     // action bar
@@ -970,7 +1033,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
     }
 
     private String loadRomLabel() {
-        return draftInRom() ? "In ROM" : "Load ROM";
+        return GameText.resolve(draftInRom() ? IN_ROM : LOAD_ROM);
     }
 
     private String statusText() {
@@ -1015,7 +1078,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
         for (final String category : MachineCategory.categoryIds()) {
             final String key = MachineCategory.genericIdOf(category);
             if (q.isEmpty() || category.toLowerCase(Locale.ROOT).contains(q)) {
-                out.add(new Choice(key, "Any " + category));
+                out.add(new Choice(key, GameText.resolve(ANY_CATEGORY.with(category))));
             }
         }
         return out;
@@ -1074,7 +1137,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
     }
 
     private String amountTitle() {
-        return amountForOutput ? "Output amount per run" : "Input amount per run";
+        return GameText.resolve(amountForOutput ? OUTPUT_AMOUNT : INPUT_AMOUNT);
     }
 
     private void layoutAmountPopup(final Popup p) {
@@ -1150,25 +1213,26 @@ public final class PatternStudioApp implements IInventoryBandApp {
                 }
                 lines.add(cell.stack().getHoverName());
                 if (!cell.tag().isEmpty()) {
-                    lines.add(Component.literal("Any #" + cell.tag()).withStyle(ChatFormatting.AQUA));
+                    lines.add(GameText.component(ANY_TAG.with(cell.tag())).withStyle(ChatFormatting.AQUA));
                     if (!cell.resolved().isEmpty()) {
-                        lines.add(Component.literal("Network would use: ").withStyle(ChatFormatting.GRAY)
-                                .append(cell.resolved().getHoverName()));
+                        lines.add(GameText.component(NETWORK_WOULD_USE.with(GameText.of(cell.resolved().getHoverName())))
+                                .withStyle(ChatFormatting.GRAY));
                     }
                 }
-                lines.add(Component.literal("In stock: " + cell.stock()).withStyle(ChatFormatting.GRAY));
+                lines.add(GameText.component(IN_STOCK.with(cell.stock())).withStyle(ChatFormatting.GRAY));
             } else {
                 final PatternStudioStatePayload.ProcCell cell = procCell(c[4] == 2 ? state.outputs() : state.inputs(), c[5]);
                 if (cell == null) {
                     return;
                 }
                 lines.add(cell.cell().key().displayName());
-                lines.add(Component.literal(amountLabel(cell.cell().key(), cell.cell().amount()) + " per run"
-                        + (cell.cell().estimated() ? " (estimated)" : "")).withStyle(ChatFormatting.GRAY));
+                lines.add(GameText.component((cell.cell().estimated() ? PER_RUN_ESTIMATED : PER_RUN)
+                        .with(amountLabel(cell.cell().key(), cell.cell().amount()))).withStyle(ChatFormatting.GRAY));
                 if (c[4] == 2 && cell.chance() < ProcessingPattern.FULL_CHANCE) {
-                    lines.add(Component.literal("Chance: " + cell.chance() + "%").withStyle(ChatFormatting.GRAY));
+                    lines.add(GameText.component(CHANCE.with(cell.chance() + "%")).withStyle(ChatFormatting.GRAY));
                 }
-                lines.add(Component.literal("In stock: " + amountLabel(cell.cell().key(), cell.stock())).withStyle(ChatFormatting.GRAY));
+                lines.add(GameText.component(IN_STOCK.with(amountLabel(cell.cell().key(), cell.stock())))
+                        .withStyle(ChatFormatting.GRAY));
             }
             g.renderComponentTooltip(font, lines, mouseX, mouseY);
             return;
@@ -1210,9 +1274,9 @@ public final class PatternStudioApp implements IInventoryBandApp {
     /** The name and note of a draft on one row: the name takes two fifths, the note the rest. */
     private final class NameNoteRow extends Panel {
         private final int action;
-        private final Label nameLabel = add(new Label("Name", Label.Tone.DIM));
+        private final Label nameLabel = add(new Label(GameText.resolve(NAME), Label.Tone.DIM));
         private final TextField name = add(new TextField(PatternStudioStatePayload.MAX_NAME).setOnCommit(v -> sendNames()));
-        private final Label noteLabel = add(new Label("Note", Label.Tone.DIM));
+        private final Label noteLabel = add(new Label(GameText.resolve(NOTE), Label.Tone.DIM));
         private final TextField note = add(new TextField(PatternStudioStatePayload.MAX_NOTE).setOnCommit(v -> sendNames()));
 
         private NameNoteRow(final int action) {
@@ -1274,14 +1338,14 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
     private static String machineLabel(final String type) {
         if (MachineCategory.isGenericId(type)) {
-            return "Any " + MachineCategory.categoryOf(type);
+            return GameText.resolve(ANY_CATEGORY.with(MachineCategory.categoryOf(type)));
         }
         final int colon = type.indexOf(':');
         return colon < 0 ? type : type.substring(colon + 1).replace('_', ' ');
     }
 
     private static String amountLabel(final StorageKey key, final long amount) {
-        return key.isItem() ? amount + " items" : amount + " mB";
+        return GameText.resolve((key.isItem() ? ITEMS : MILLIBUCKETS).with(amount));
     }
 
     @Nullable

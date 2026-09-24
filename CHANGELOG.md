@@ -97,6 +97,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   language stays as it is: kernel and init logs, compiler and build lines, file listings, paths, package names and
   the contents of files such as the live medium's guide.
 - The steps pacman counts through while it installs are no longer cut short at a fixed width.
+- The hardware's tooltips, the names of the hardware eras, a machine's firmware setup, its self-test, its boot menus
+  and every page of a guided installer are text a language file can translate. The parts a firmware lists by model
+  are named in each player's own language, and a disc's file of requirements is written in English, like every file.
+- The Pattern Studio, the Pattern Encoder's panel and messages, and the Patterns heading of a network machine's
+  space are text a language file can translate. A recipe with no name of its own is listed by its result's name in
+  each player's language.
 
 ### Fixed
 - A monitor is used by one player at a time. A second player who used it while somebody was at it was handed a

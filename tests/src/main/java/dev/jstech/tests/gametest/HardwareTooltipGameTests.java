@@ -16,6 +16,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -58,7 +59,10 @@ public final class HardwareTooltipGameTests {
                 ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "fedora"));
         helper.assertTrue(!lines.isEmpty() && lines.get(0).getString().equals("Needs Legacy hardware or later"),
                 "the needs line reads as before; got " + (lines.isEmpty() ? "nothing" : lines.get(0).getString()));
-        final TextColor colour = lines.get(0).getSiblings().get(0).getStyle().getColor();
+        // The era is the sentence's argument, so a translation can put it wherever its language puts it.
+        final Object era = lines.get(0).getContents() instanceof TranslatableContents sentence
+                && sentence.getArgs().length > 0 ? sentence.getArgs()[0] : null;
+        final TextColor colour = era instanceof Component word ? word.getStyle().getColor() : null;
         helper.assertTrue(colour != null && colour.getValue() == HardwareEra.LEGACY.screenColor(),
                 "the era word carries the Legacy screen colour; got " + colour);
         helper.succeed();

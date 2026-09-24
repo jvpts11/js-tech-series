@@ -8,6 +8,8 @@
 package dev.jstech.computers.os;
 
 import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -30,6 +32,15 @@ public final class VolumeLabel {
         }
         final String label = stack.get(ComputingComponents.VOLUME_LABEL.get());
         return label != null && !label.isBlank() ? label : fallback;
+    }
+
+    /**
+     * The volume's label as text: what the player called it, which is theirs, or else the medium's own name, which
+     * each player reads in their language.
+     */
+    public static Text text(final ItemStack stack) {
+        final String label = stack.isEmpty() ? null : stack.get(ComputingComponents.VOLUME_LABEL.get());
+        return label != null && !label.isBlank() ? Text.literal(label) : GameText.of(stack.getHoverName());
     }
 
     /** Sets the volume's label, or clears it (restoring the default name) when {@code label} is blank. */

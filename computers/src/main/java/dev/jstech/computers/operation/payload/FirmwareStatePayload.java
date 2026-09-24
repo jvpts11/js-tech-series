@@ -9,6 +9,8 @@ package dev.jstech.computers.operation.payload;
 
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextCodecs;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -59,13 +61,17 @@ public record FirmwareStatePayload(
      * @param ports      how many peripheral ports the board offers
      * @param eraLabel   the hardware generation in words
      */
-    public record Machine(String name, String cpuName, int cores, int cpuMhz, String cpuArch, int cpuBits,
-                          String boardName, int ramMb, int ramModules, int ramSlots, String ramName,
-                          String gpuName, int monitors, int ports, String eraLabel) {
+    @TextHolder
+    public record Machine(Text name, Text cpuName, int cores, int cpuMhz, String cpuArch, int cpuBits,
+                          Text boardName, int ramMb, int ramModules, int ramSlots, Text ramName,
+                          Text gpuName, int monitors, int ports, Text eraLabel) {
 
         /** A machine nothing could be read from: no parts, or a host that is not a computer. */
-        public static final Machine NONE =
-                new Machine("", "", 0, 0, "", 0, "", 0, 0, 0, "", "", 0, 0, "");
+        public static final Machine NONE = new Machine(Text.EMPTY, Text.EMPTY, 0, 0, "", 0, Text.EMPTY, 0, 0, 0,
+                Text.EMPTY, Text.EMPTY, 0, 0, Text.EMPTY);
+
+        /** How many modules of which kind: "2x DDR4 Module". */
+        private static final TextKey MODULES = TextKey.of("jsc.payload.firmware_state.modules", "%sx %s");
 
         /** Whether a processor was found at all, which is what decides that there is a self-test to show. */
         public boolean hasCpu() {
@@ -73,11 +79,11 @@ public record FirmwareStatePayload(
         }
 
         /** The memory as a self-test names it: how many modules of which kind, or nothing when none are in. */
-        public String memoryModules() {
+        public Text memoryModules() {
             if (this.ramModules <= 0 || this.ramName.isEmpty()) {
-                return "";
+                return Text.EMPTY;
             }
-            return this.ramModules + "x " + this.ramName;
+            return MODULES.with(this.ramModules, this.ramName);
         }
     }
 
@@ -124,7 +130,7 @@ public record FirmwareStatePayload(
      *                    passes the hardware era gate)
      * @param installMode the id of the OS's install mode for a medium (guided / live manual / source), else -1
      */
-    public record Entry(int kind, long ref, String osId, String label, Text device, String size, String note,
+    public record Entry(int kind, long ref, String osId, Text label, Text device, String size, Text note,
                         boolean bootable, int installMode) {
     }
 
@@ -156,12 +162,12 @@ public record FirmwareStatePayload(
             buf.writeVarInt(e.kind());
             buf.writeVarLong(e.ref());
             buf.writeUtf(e.osId(), 64);
-            buf.writeUtf(e.label(), 48);
+            TextCodecs.STREAM_CODEC.encode(buf, e.label());
             // A model's name is cut to the column it is drawn in; a drive's kind is put together at the other end.
             TextCodecs.STREAM_CODEC.encode(buf, e.device() instanceof Text.Literal model && model.value().length() > 48
                     ? Text.literal(model.value().substring(0, 48)) : e.device());
             buf.writeUtf(e.size(), 16);
-            buf.writeUtf(e.note(), 48);
+            TextCodecs.STREAM_CODEC.encode(buf, e.note());
             buf.writeBoolean(e.bootable());
             buf.writeVarInt(e.installMode());
         }
@@ -187,9 +193,9 @@ public record FirmwareStatePayload(
         final int count = Math.min(buf.readVarInt(), MAX_ENTRIES);
         final List<Entry> entries = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
-            entries.add(new Entry(buf.readVarInt(), buf.readVarLong(), buf.readUtf(64), buf.readUtf(48),
-                    TextCodecs.STREAM_CODEC.decode(buf), buf.readUtf(16), buf.readUtf(48), buf.readBoolean(),
-                    buf.readVarInt()));
+            entries.add(new Entry(buf.readVarInt(), buf.readVarLong(), buf.readUtf(64),
+                    TextCodecs.STREAM_CODEC.decode(buf), TextCodecs.STREAM_CODEC.decode(buf), buf.readUtf(16),
+                    TextCodecs.STREAM_CODEC.decode(buf), buf.readBoolean(), buf.readVarInt()));
         }
         RaidInfo raid = RaidInfo.ABSENT;
         if (buf.readBoolean()) {
@@ -207,26 +213,39 @@ public record FirmwareStatePayload(
     }
 
     private static void writeMachine(final RegistryFriendlyByteBuf buf, final Machine m) {
-        buf.writeUtf(m.name(), 48);
-        buf.writeUtf(m.cpuName(), 48);
+        TextCodecs.STREAM_CODEC.encode(buf, m.name());
+        TextCodecs.STREAM_CODEC.encode(buf, m.cpuName());
         buf.writeVarInt(m.cores());
         buf.writeVarInt(m.cpuMhz());
         buf.writeUtf(m.cpuArch(), 32);
         buf.writeVarInt(m.cpuBits());
-        buf.writeUtf(m.boardName(), 64);
+        TextCodecs.STREAM_CODEC.encode(buf, m.boardName());
         buf.writeVarInt(m.ramMb());
         buf.writeVarInt(m.ramModules());
         buf.writeVarInt(m.ramSlots());
-        buf.writeUtf(m.ramName(), 48);
-        buf.writeUtf(m.gpuName(), 48);
+        TextCodecs.STREAM_CODEC.encode(buf, m.ramName());
+        TextCodecs.STREAM_CODEC.encode(buf, m.gpuName());
         buf.writeVarInt(m.monitors());
         buf.writeVarInt(m.ports());
-        buf.writeUtf(m.eraLabel(), 24);
+        TextCodecs.STREAM_CODEC.encode(buf, m.eraLabel());
     }
 
     private static Machine readMachine(final RegistryFriendlyByteBuf buf) {
-        return new Machine(buf.readUtf(48), buf.readUtf(48), buf.readVarInt(), buf.readVarInt(), buf.readUtf(32),
-                buf.readVarInt(), buf.readUtf(64), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
-                buf.readUtf(48), buf.readUtf(48), buf.readVarInt(), buf.readVarInt(), buf.readUtf(24));
+        final Text name = TextCodecs.STREAM_CODEC.decode(buf);
+        final Text cpuName = TextCodecs.STREAM_CODEC.decode(buf);
+        final int cores = buf.readVarInt();
+        final int mhz = buf.readVarInt();
+        final String arch = buf.readUtf(32);
+        final int bits = buf.readVarInt();
+        final Text board = TextCodecs.STREAM_CODEC.decode(buf);
+        final int ramMb = buf.readVarInt();
+        final int modules = buf.readVarInt();
+        final int slots = buf.readVarInt();
+        final Text ramName = TextCodecs.STREAM_CODEC.decode(buf);
+        final Text gpuName = TextCodecs.STREAM_CODEC.decode(buf);
+        final int monitors = buf.readVarInt();
+        final int ports = buf.readVarInt();
+        return new Machine(name, cpuName, cores, mhz, arch, bits, board, ramMb, modules, slots, ramName, gpuName,
+                monitors, ports, TextCodecs.STREAM_CODEC.decode(buf));
     }
 }

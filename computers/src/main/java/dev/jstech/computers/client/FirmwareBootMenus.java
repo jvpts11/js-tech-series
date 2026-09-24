@@ -7,6 +7,16 @@
  */
 package dev.jstech.computers.client;
 
+import static dev.jstech.computers.client.FirmwareScreenTexts.BOOT_MENU;
+import static dev.jstech.computers.client.FirmwareScreenTexts.BOOT_MENU_THIS_BOOT;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DISK;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DISK_DEVICE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.KEYS_BLUE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.KEYS_DIALOG;
+import static dev.jstech.computers.client.FirmwareScreenTexts.KEYS_TUBE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.THIS_BOOT_ONLY;
+import static dev.jstech.computers.client.FirmwareScreenTexts.of;
+
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.core.text.GameText;
@@ -47,13 +57,18 @@ public final class FirmwareBootMenus {
 
         /** What a menu row calls the place this boots from: the disk by slot, or the drive by its kind. */
         public String where() {
-            return this.slot >= 0 ? "Disk " + this.slot : GameText.resolve(this.entry.device());
+            return this.slot >= 0 ? of(DISK.with(this.slot)) : GameText.resolve(this.entry.device());
         }
 
         /** How a modern dialog names it: the disk by slot and model, or the drive on its own. */
         public String device() {
-            final String device = GameText.resolve(this.entry.device());
-            return this.slot < 0 ? device : "Disk " + this.slot + " " + device;
+            return this.slot < 0 ? GameText.resolve(this.entry.device())
+                    : of(DISK_DEVICE.with(this.slot, this.entry.device()));
+        }
+
+        /** What is on it, as the player reads it. */
+        public String label() {
+            return GameText.resolve(this.entry.label());
         }
     }
 
@@ -81,7 +96,7 @@ public final class FirmwareBootMenus {
         g.fill(bx, by, bx + boxW, by + boxH, 0xFF000000);
         rule(g, bx, by, boxW, boxH, accent);
         rule(g, bx + 2, by + 2, boxW - 4, boxH - 4, accent);
-        TextWall.draw(g, font, "Boot Menu  (this boot only)", bx + 8, by + 8, accent);
+        TextWall.draw(g, font, of(BOOT_MENU_THIS_BOOT), bx + 8, by + 8, accent);
         int ly = by + 24;
         for (int i = from; i < from + rows; i++) {
             final Choice choice = choices.get(i);
@@ -89,11 +104,11 @@ public final class FirmwareBootMenus {
             TextWall.draw(g, font, TextWall.clip(font,
                             (on ? "> " : "  ") + (i + 1) + ". " + choice.where(), 78),
                     bx + 8, ly, on ? accent : text);
-            TextWall.draw(g, font, TextWall.clip(font, choice.entry().label(), boxW - 100), bx + 92, ly,
+            TextWall.draw(g, font, TextWall.clip(font, choice.label(), boxW - 100), bx + 92, ly,
                     on ? accent : text);
             ly += TextWall.ROW;
         }
-        TextWall.draw(g, font, "Up/Down  select     Enter  boot", bx + 8, by + boxH - 12, text);
+        TextWall.draw(g, font, of(KEYS_TUBE), bx + 8, by + boxH - 12, text);
     }
 
     /** The boards after them: the setup's own blue, a grey title bar, and the choice filled light. */
@@ -112,7 +127,7 @@ public final class FirmwareBootMenus {
         g.fill(bx, by, bx + boxW, by + boxH, ground);
         rule(g, bx, by, boxW, boxH, frame);
         g.fill(bx + 1, by + 1, bx + boxW - 1, by + 13, frame);
-        TextWall.centered(g, font, "Boot Menu", bx + boxW / 2, by + 4, ground);
+        TextWall.centered(g, font, of(BOOT_MENU), bx + boxW / 2, by + 4, ground);
         int ly = by + 16;
         for (int i = from; i < from + rows; i++) {
             final Choice choice = choices.get(i);
@@ -122,12 +137,12 @@ public final class FirmwareBootMenus {
             }
             TextWall.draw(g, font, TextWall.clip(font, choice.where(), 70), bx + 8, ly,
                     on ? ground : 0xFFFFFFFF);
-            TextWall.draw(g, font, TextWall.clip(font, choice.entry().label(), boxW - 92), bx + 84, ly,
+            TextWall.draw(g, font, TextWall.clip(font, choice.label(), boxW - 92), bx + 84, ly,
                     on ? ground : 0xFFFFFFFF);
             ly += rowH;
         }
         g.fill(bx + 1, ly + 1, bx + boxW - 1, ly + 2, 0xFF6FB7FF);
-        TextWall.draw(g, font, "Up/Down: Select     Enter: Boot", bx + 8, ly + 6, 0xFFFFE14D);
+        TextWall.draw(g, font, of(KEYS_BLUE), bx + 8, ly + 6, 0xFFFFE14D);
     }
 
     /** The modern machines: a dialog over the dimmed splash, each entry marked by what it is. */
@@ -144,8 +159,8 @@ public final class FirmwareBootMenus {
         g.fill(bx, by, bx + boxW, by + boxH, 0xFF2A2D3E);
         g.fill(bx, by, bx + boxW, by + 14, 0xFF3A4060);
         g.fill(bx, by, bx + 2, by + 14, accent);
-        TextWall.draw(g, font, "Boot Menu", bx + 7, by + 4, text);
-        TextWall.right(g, font, "this boot only", bx + boxW - 7, by + 4, dim);
+        TextWall.draw(g, font, of(BOOT_MENU), bx + 7, by + 4, text);
+        TextWall.right(g, font, of(THIS_BOOT_ONLY), bx + boxW - 7, by + 4, dim);
         int ly = by + 17;
         for (int i = from; i < from + rows; i++) {
             final Choice choice = choices.get(i);
@@ -164,14 +179,14 @@ public final class FirmwareBootMenus {
              * systems is reading the names of the systems, and the drive beside each is how they tell two
              * installations of the same one apart.
              */
-            final String name = TextWall.clip(font, choice.entry().label(), (boxW - 30) / 2);
+            final String name = TextWall.clip(font, choice.label(), (boxW - 30) / 2);
             TextWall.draw(g, font, name, bx + 21, ly + 3, text);
             TextWall.right(g, font,
                     TextWall.clip(font, choice.device(), boxW - 30 - TextWall.width(font, name)),
                     bx + boxW - 9, ly + 3, dim);
             ly += rowH + 3;
         }
-        TextWall.draw(g, font, "Up/Down Select   Enter Boot", bx + 7, ly + 3, dim);
+        TextWall.draw(g, font, of(KEYS_DIALOG), bx + 7, ly + 3, dim);
     }
 
     /**

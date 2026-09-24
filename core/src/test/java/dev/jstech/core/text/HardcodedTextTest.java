@@ -131,6 +131,7 @@ class HardcodedTextTest {
                         SPEC = ProgramSpec.of(id, "x").described("Keeps the network's files");
                         this.task("first", "root", ICON, "First Steps", "Start the machine", on(EVENT));
                         builder.comment("Whether the machine asks first").define("ask", true);
+                        layout.text("title", 4, 4, 15, 1.0f);
                     }
                     @Deprecated(since = "the annotation text")
                     void g() { }
@@ -164,6 +165,8 @@ class HardcodedTextTest {
                     || ("this".equals(this.receiver) && ADVANCEMENT_DECLARATIONS.contains(this.name))
                     // A config value's comment is written into the config file above it: a file's words, in English.
                     || "comment".equals(this.name)
+                    // A layout's text element is named for its overlap report; the words drawn there come elsewhere.
+                    || ("layout".equals(this.receiver) && "text".equals(this.name))
                     || ("Text".equals(this.receiver) && "literal".equals(this.name))
                     // A command's example line or switch in its manual: what a player types, which is data.
                     || (this.constructor && ("Example".equals(this.name) || "Option".equals(this.name)));

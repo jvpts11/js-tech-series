@@ -24,7 +24,6 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
-import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -109,7 +108,7 @@ public final class SetupGate {
         }
         final HardwareEra era = host.displayEra();
         if (spec.minEra() != HardwareEra.VINTAGE && era != null && !OsGating.canInstall(spec.minEra(), era)) {
-            return Optional.of(NEEDS_ERA.with(name, eraName(spec.minEra()), eraName(era)));
+            return Optional.of(NEEDS_ERA.with(name, spec.minEra().text(), era.text()));
         }
         final OsDef os = host.installedOs();
         if (os == null) {
@@ -194,11 +193,5 @@ public final class SetupGate {
             out = out == null ? Text.literal(platform.label()) : AND.with(out, platform.label());
         }
         return out == null ? NOTHING.text() : out;
-    }
-
-    /** An era's name as a word: "Legacy", not "LEGACY". */
-    public static String eraName(final HardwareEra era) {
-        final String raw = era.name().toLowerCase(Locale.ROOT);
-        return Character.toUpperCase(raw.charAt(0)) + raw.substring(1);
     }
 }

@@ -10,6 +10,8 @@ package dev.jstech.computers.crafting;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.util.Utf8Text;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -124,11 +126,16 @@ public record ProcessingPattern(List<ProcessingInput> inputs, List<ProcessingOut
 
     /** What the recipe is called where it is listed: its name, or its primary output's when it has none. */
     public String displayName() {
+        return displayText().english();
+    }
+
+    /** The same, as text: an output's name reaches each player in their own language. */
+    public Text displayText() {
         if (!name.isEmpty()) {
-            return name;
+            return Text.literal(name);
         }
         final ProcessingOutput primary = primaryOutput();
-        return primary == null ? "recipe" : primary.key().displayName().getString();
+        return primary == null ? RecipeTexts.UNNAMED_RECIPE.text() : GameText.of(primary.key().displayName());
     }
 
     /** The same recipe under a new name and note. */

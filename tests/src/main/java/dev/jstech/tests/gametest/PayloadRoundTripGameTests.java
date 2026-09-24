@@ -163,14 +163,16 @@ public final class PayloadRoundTripGameTests {
     @GameTest(template = ARENA)
     public static void firmware_stateRoundTrips(final GameTestHelper helper) {
         roundTrip(helper, FirmwareStatePayload.STREAM_CODEC, new FirmwareStatePayload(HOST, 2,
-                new FirmwareStatePayload.Machine("RENDER-01", "Integra Apex 7 4790K", 4, 4000, "x86-64", 64,
-                        "MF ATX Standard Motherboard", 16384, 2, 4, "Stratix DDR3-8192",
-                        "Visara Vertex GTX 780 Ti", 1, 2, "Standard"),
+                new FirmwareStatePayload.Machine(Text.literal("RENDER-01"), Text.literal("Integra Apex 7 4790K"), 4,
+                        4000, "x86-64", 64, Text.literal("MF ATX Standard Motherboard"), 16384, 2, 4,
+                        Text.literal("Stratix DDR3-8192"), Text.literal("Visara Vertex GTX 780 Ti"), 1, 2,
+                        Text.literal("Standard")),
                 0, -1,
                 List.of(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_DISK, 0L, "jsc:frames_11",
-                                "Frames 11", Text.literal("Vaultis Swift SSD 500 GB"), "500 GB", "", true, 0),
+                                Text.literal("Frames 11"), Text.literal("Vaultis Swift SSD 500 GB"), "500 GB",
+                                Text.EMPTY, true, 0),
                         new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, 123L, "jsc:ubuntu",
-                                "Ubuntu installer", Text.literal("CD drive"), "", "", true, 1)),
+                                Text.literal("Ubuntu installer"), Text.literal("CD drive"), "", Text.EMPTY, true, 1)),
                 new FirmwareStatePayload.RaidInfo(true, 1, 2, 2, List.of(512L, 512L))));
         helper.succeed();
     }

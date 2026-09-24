@@ -7,6 +7,18 @@
  */
 package dev.jstech.computers.operation.payload.firmware;
 
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.BY_HAND;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.EMPTY_DRIVE;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.ERA_OR_NEWER;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.INSTALLER;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.LIVE;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NEEDS_ERA;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NO_DISK;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NO_MEDIUM;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NO_ROOM;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NO_SYSTEM;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.UNKNOWN_SYSTEM;
+
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.ComputingModule;
@@ -26,7 +38,6 @@ import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.GpuItem;
-import dev.jstech.computers.item.HardwareTooltip;
 import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
@@ -66,7 +77,6 @@ import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
-import java.util.Locale;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -191,10 +201,10 @@ public final class FirmwarePayloads {
             final DiskSpec spec = ((DiskItem) disk.getItem()).spec();
             entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_DISK, i,
                     os == null ? "" : os.id().toString(),
-                    os == null ? "no system" : os.displayName(),
-                    Text.literal(disk.getHoverName().getString()),
+                    os == null ? NO_SYSTEM.text() : Text.literal(os.displayName()),
+                    GameText.of(disk.getHoverName()),
                     spec == null ? "" : DiskSpec.sizeLabel(spec.capacityMb()),
-                    "", os != null, -1));
+                    Text.EMPTY, os != null, -1));
         }
         for (final long endpoint : computer.linkedEndpoints()) {
             if (!(level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader)) {
@@ -204,22 +214,21 @@ public final class FirmwarePayloads {
             final ItemStack media = reader.mediaSlot().getStackInSlot(0);
             if (media.isEmpty()) {
                 entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, endpoint, "",
-                        "empty", drive, "", "", false, -1));
+                        EMPTY_DRIVE.text(), drive, "", Text.EMPTY, false, -1));
                 continue;
             }
             final OsDef os = reader.insertedKind() == MediaKind.OS_INSTALL && reader.insertedPayload() != null
                     ? OsRegistry.getOs(reader.insertedPayload()) : null;
             if (os == null) {
                 entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, endpoint, "",
-                        media.getHoverName().getString(), drive, "", "", false, -1));
+                        GameText.of(media.getHoverName()), drive, "", Text.EMPTY, false, -1));
                 continue;
             }
             final boolean eraOk = OsGating.canInstall(os.minEra(), era);
             entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, endpoint,
                     os.id().toString(),
-                    os.displayName() + (os.installMode() == InstallMode.GUIDED
-                            ? " installer" : " (live)"),
-                    drive, "", eraOk ? "" : eraName(os.minEra()) + " era or newer", eraOk,
+                    (os.installMode() == InstallMode.GUIDED ? INSTALLER : LIVE).with(os.displayName()),
+                    drive, "", eraOk ? Text.EMPTY : ERA_OR_NEWER.with(os.minEra().text()), eraOk,
                     os.installMode().id()));
         }
         return new FirmwareStatePayload(pos, era.id(), machineOf(level, computer, pos), computer.bootDiskSlot(),
@@ -241,24 +250,25 @@ public final class FirmwarePayloads {
         final HardwareEra era = computer.displayEra();
         final ComputerBuild build = machine.currentBuild();
         final CpuSpec cpu = build == null || build.cpus().isEmpty() ? null : build.cpus().getFirst();
-        String cpuName = "";
-        String boardName = "";
-        String gpuName = "";
-        String ramName = "";
+        Text cpuName = Text.EMPTY;
+        Text boardName = Text.EMPTY;
+        Text gpuName = Text.EMPTY;
+        Text ramName = Text.EMPTY;
         final ItemStackHandler hardware = machine.getHardware();
         for (int i = 0; i < hardware.getSlots(); i++) {
             final ItemStack part = hardware.getStackInSlot(i);
             if (part.isEmpty()) {
                 continue;
             }
+            // A part is named by its item, which each player reads in their own language.
             if (part.getItem() instanceof CpuItem && cpuName.isEmpty()) {
-                cpuName = part.getHoverName().getString();
+                cpuName = GameText.of(part.getHoverName());
             } else if (part.getItem() instanceof MotherboardItem) {
-                boardName = part.getHoverName().getString();
+                boardName = GameText.of(part.getHoverName());
             } else if (part.getItem() instanceof GpuItem && gpuName.isEmpty()) {
-                gpuName = part.getHoverName().getString();
+                gpuName = GameText.of(part.getHoverName());
             } else if (part.getItem() instanceof RamItem && ramName.isEmpty()) {
-                ramName = part.getHoverName().getString();
+                ramName = GameText.of(part.getHoverName());
             }
         }
         int monitors = 0;
@@ -268,14 +278,15 @@ public final class FirmwarePayloads {
                 monitors++;
             }
         }
-        final String name = computer.customName().isEmpty()
-                ? level.getBlockState(pos).getBlock().getName().getString() : computer.customName();
+        // What the player called it is theirs; what kind of machine it is, the game names.
+        final Text name = computer.customName().isEmpty()
+                ? GameText.of(level.getBlockState(pos).getBlock().getName()) : Text.literal(computer.customName());
         return new FirmwareStatePayload.Machine(name, cpuName, cpu == null ? 0 : cpu.cores(),
                 cpu == null ? 0 : cpu.freqMhz(),
                 cpu == null ? "" : cpu.architecture().name(), cpu == null ? 0 : cpu.architecture().bits(),
                 boardName, (int) Math.min(Integer.MAX_VALUE, computer.ramTotalMb()),
                 build == null ? 0 : build.rams().size(), machine.boardRamSlots(), ramName, gpuName, monitors,
-                machine.maxEndpoints(), era == null ? "" : HardwareTooltip.label(era));
+                machine.maxEndpoints(), era == null ? Text.EMPTY : era.text());
     }
 
     /**
@@ -411,7 +422,7 @@ public final class FirmwarePayloads {
                  * the machine the self-test hands over to.
                  */
                 computer.setNeedsPost(true);
-                final String failure = beginInstall(level, computer, payload.ref(), payload.target());
+                final Text failure = beginInstall(level, computer, payload.ref(), payload.target());
                 if (failure != null) {
                     // Refused before a minute of copying: say so instead of restarting into nothing.
                     final HardwareEra era = computer.displayEra();
@@ -420,8 +431,7 @@ public final class FirmwarePayloads {
                     final int slot = payload.target();
                     computer.setNeedsPost(false);
                     PacketDistributor.sendToPlayer(player, new OpenInstallDonePayload(payload.hostPos(),
-                            payload.monitorPos(), kind, "", OsInstallRunner.targetLabel(slot), slot,
-                            Text.of(failure)));
+                            payload.monitorPos(), kind, "", OsInstallRunner.targetLabel(slot), slot, failure));
                     MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos(), computer,
                             MonitorSessionMenu.Phase.INSTALL_PROGRESS);
                     return;
@@ -491,10 +501,10 @@ public final class FirmwarePayloads {
      * to the machine, and {@link OsInstallRunner} carries it.
      */
     @Nullable
-    public static String beginInstall(final ServerLevel level, final IOsHost computer,
-                                      final long readerPos, final int targetSlot) {
+    public static Text beginInstall(final ServerLevel level, final IOsHost computer,
+                                    final long readerPos, final int targetSlot) {
         final HardwareEra hostEra = computer.installedEra() != null ? computer.installedEra() : HardwareEra.STANDARD;
-        String failure = null;
+        Text failure = null;
         for (final long endpoint : computer.linkedEndpoints()) {
             /*
              * -1 is the word for "any drive with an installer in it"; anything else names one drive by its packed
@@ -511,12 +521,11 @@ public final class FirmwarePayloads {
             }
             final OsDef def = OsRegistry.getOs(reader.insertedPayload());
             if (def == null) {
-                failure = "The system on the medium is not known to this machine.";
+                failure = UNKNOWN_SYSTEM.text();
                 continue;
             }
             if (!OsGating.canInstall(def.minEra(), hostEra)) {
-                failure = def.displayName() + " needs " + eraName(def.minEra()) + " era hardware or newer; this machine is "
-                        + eraName(hostEra) + " era.";
+                failure = NEEDS_ERA.with(def.displayName(), def.minEra().text(), hostEra.text());
                 continue;
             }
             /*
@@ -524,13 +533,12 @@ public final class FirmwarePayloads {
              * system put on the disk by hand through its shell. Only guided installers land here.
              */
             if (def.installMode() != InstallMode.GUIDED) {
-                failure = def.displayName() + " is put on the disk by hand from its own shell: boot the medium instead.";
+                failure = BY_HAND.with(def.displayName());
                 continue;
             }
-            final String noRoom = computer.defaultInstallSlot() < 0
-                    ? "No disk is installed to put " + def.displayName() + " on."
-                    : "The target disk has no room for " + def.displayName() + " ("
-                            + def.footprintMb() + " MB needed).";
+            final Text noRoom = computer.defaultInstallSlot() < 0
+                    ? NO_DISK.with(def.displayName())
+                    : NO_ROOM.with(def.displayName(), def.footprintMb());
             /*
              * A machine that holds a copy of its own takes as long over it as the system is big and the medium
              * is slow, and goes on with it whether or not anybody is watching. A host with nowhere to keep the
@@ -568,13 +576,7 @@ public final class FirmwarePayloads {
                     flow.targetSlot(), endpoint, flow.ticksTotal(), flow.ticksTotal()));
             return null;
         }
-        return failure != null ? failure : "No installation medium is in a drive linked to this machine.";
-    }
-
-    /** The era as the firmware names it to the player: "Vintage", "Legacy", "Standard" ... */
-    private static String eraName(final HardwareEra era) {
-        final String lower = era.name().toLowerCase(Locale.ROOT);
-        return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
+        return failure != null ? failure : NO_MEDIUM.text();
     }
 
     private static void handleRequestFirmware(final RequestFirmwarePayload payload, final ServerPlayer player,

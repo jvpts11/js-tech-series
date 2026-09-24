@@ -7,6 +7,27 @@
  */
 package dev.jstech.computers.client;
 
+import static dev.jstech.computers.client.FirmwareScreenTexts.CORE_COUNT_MANY;
+import static dev.jstech.computers.client.FirmwareScreenTexts.CORE_COUNT_ONE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DISK;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DISK_BOOT_FAILURE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DISK_NAMED;
+import static dev.jstech.computers.client.FirmwareScreenTexts.ENTERING_SETUP_NOW;
+import static dev.jstech.computers.client.FirmwareScreenTexts.ENTRY;
+import static dev.jstech.computers.client.FirmwareScreenTexts.INSERT_MEDIA;
+import static dev.jstech.computers.client.FirmwareScreenTexts.KEY_BOOT_MENU;
+import static dev.jstech.computers.client.FirmwareScreenTexts.KEY_SETUP;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NON_SYSTEM_DISK;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NOTHING_ATTACHED;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NO_BOOTABLE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NO_BOOTABLE_FOUND;
+import static dev.jstech.computers.client.FirmwareScreenTexts.PRESS_ANY_KEY_SETUP;
+import static dev.jstech.computers.client.FirmwareScreenTexts.REPAIR;
+import static dev.jstech.computers.client.FirmwareScreenTexts.REPLACE_DISK;
+import static dev.jstech.computers.client.FirmwareScreenTexts.SUMMARY;
+import static dev.jstech.computers.client.FirmwareScreenTexts.THE_MEDIUM;
+import static dev.jstech.computers.client.FirmwareScreenTexts.of;
+
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
@@ -16,7 +37,7 @@ import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.core.gui.Phosphor;
-import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -344,7 +365,7 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         if (chosen == null) {
             return "";
         }
-        return (chosenSlot >= 0 ? "Disk " + chosenSlot : "the medium") + ": " + chosen.label();
+        return of(ENTRY.with(chosenSlot >= 0 ? DISK.with(chosenSlot) : THE_MEDIUM.text(), chosen.label()));
     }
 
     /**
@@ -357,20 +378,18 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
      */
     private List<String> noBootLines() {
         if (!this.complaint.isEmpty()) {
-            return List.of(this.complaint, "Put in an installation medium and install over it to repair.");
+            return List.of(this.complaint, of(REPAIR));
         }
         return switch (kind) {
-            case CLI_BIOS -> List.of("Non-system disk or disk error",
-                    "Replace and press any key when ready");
-            case BLUE_BIOS -> List.of("DISK BOOT FAILURE, INSERT SYSTEM DISK AND PRESS ENTER");
-            case UEFI -> List.of("No bootable device found",
-                    "Press any key to enter Setup");
+            case CLI_BIOS -> List.of(of(NON_SYSTEM_DISK), of(REPLACE_DISK));
+            case BLUE_BIOS -> List.of(of(DISK_BOOT_FAILURE));
+            case UEFI -> List.of(of(NO_BOOTABLE_FOUND), of(PRESS_ANY_KEY_SETUP));
         };
     }
 
     /** What the machine is called: the name its owner gave it, else the kind of machine it is. */
     private String machineTitle() {
-        final String named = state == null ? "" : state.machine().name();
+        final String named = state == null ? "" : of(state.machine().name());
         return named.isEmpty() ? machineName : named;
     }
 
@@ -381,8 +400,8 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         }
         final FirmwareStatePayload.Machine m = state.machine();
         final String memory = m.ramMb() >= 1024 ? m.ramMb() / 1024 + " GB" : m.ramMb() + " MB";
-        return m.cpuName() + " · " + m.cores() + (m.cores() == 1 ? " core" : " cores")
-                + " · " + memory + " · " + m.cpuArch();
+        return of(SUMMARY.with(m.cpuName(), (m.cores() == 1 ? CORE_COUNT_ONE : CORE_COUNT_MANY).with(m.cores()),
+                memory, m.cpuArch()));
     }
 
     /**
@@ -417,13 +436,15 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         final int fy = y + H - 16;
         wall(g, buildSummary(), x + PostWall.MARGIN, fy, dim);
         if (setupRequested) {
-            wallRight(g, "Entering Setup ...", x + W - PostWall.MARGIN, fy, accent);
+            wallRight(g, of(ENTERING_SETUP_NOW), x + W - PostWall.MARGIN, fy, accent);
         } else if ((ticks / 10) % 2 == 0) {
-            int tx = x + W - PostWall.MARGIN - wallWidth("DEL Setup   F12 Boot Menu");
+            final String setup = of(KEY_SETUP);
+            final String bootMenu = of(KEY_BOOT_MENU);
+            int tx = x + W - PostWall.MARGIN - wallWidth("DEL" + setup + "F12" + bootMenu);
             tx = PostWall.run(g, font, "DEL", tx, fy, text);
-            tx = PostWall.run(g, font, " Setup   ", tx, fy, dim);
+            tx = PostWall.run(g, font, setup, tx, fy, dim);
             tx = PostWall.run(g, font, "F12", tx, fy, text);
-            PostWall.run(g, font, " Boot Menu", tx, fy, dim);
+            PostWall.run(g, font, bootMenu, tx, fy, dim);
         }
     }
 
@@ -448,22 +469,21 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
          * about a wrecked one, whose device is right there and whose system will not start. A player who
          * deleted a file needs to be told which file, not that their disk has gone.
          */
-        wall(g, this.complaint.isEmpty() ? "No bootable device" : this.complaint,
+        wall(g, this.complaint.isEmpty() ? of(NO_BOOTABLE) : this.complaint,
                 bx + 7, by + 4, 0xFFF0B23A);
         int ly = by + 18;
         if (entries.isEmpty()) {
-            wall(g, "No disk and no drive is attached to this computer.", bx + 8, ly, dim);
+            wall(g, of(NOTHING_ATTACHED), bx + 8, ly, dim);
             ly += WALL_ROW;
         }
         int slot = 0;
         for (int i = 0; i < listed; i++) {
             final FirmwareStatePayload.Entry entry = entries.get(i);
-            final String device = GameText.resolve(entry.device());
-            final String where = entry.kind() == FirmwareStatePayload.KIND_DISK
-                    ? "Disk " + slot++ + " · " + device : device;
-            wall(g, wallClip(where + ": " + entry.label(), boxW - 16), bx + 8, ly, text);
+            final Text where = entry.kind() == FirmwareStatePayload.KIND_DISK
+                    ? DISK_NAMED.with(slot++, entry.device()) : entry.device();
+            wall(g, wallClip(of(ENTRY.with(where, entry.label())), boxW - 16), bx + 8, ly, text);
             ly += WALL_ROW;
         }
-        wall(g, "Insert installation media and press Enter, or DEL for Setup", bx + 8, ly + 4, dim);
+        wall(g, of(INSERT_MEDIA), bx + 8, ly + 4, dim);
     }
 }

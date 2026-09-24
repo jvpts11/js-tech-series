@@ -11,6 +11,8 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.PatternStudioPayloads;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -24,8 +26,14 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
  * Studio's bench or machine draft. This class has no dependency on the viewer's types and is always loaded;
  * the payloads are only ever sent by the viewer plugin, which exists only when the viewer is installed.
  */
+@TextHolder
 @EventBusSubscriber(modid = JsComputers.MODID, bus = EventBusSubscriber.Bus.MOD)
 public final class JeiPayloads {
+
+    private static final TextKey PLACED_ON_BENCH =
+            TextKey.of("jsc.pattern_studio.placed_on_bench", "Recipe placed on the bench");
+    private static final TextKey PLACED_IN_MACHINE_DRAFT =
+            TextKey.of("jsc.pattern_studio.placed_in_machine_draft", "Recipe placed in the machine draft");
 
     private JeiPayloads() {
     }
@@ -47,7 +55,7 @@ public final class JeiPayloads {
             return;
         }
         PatternStudioPayloads.applyBenchGrid(host, level, payload.grid(), payload.recipeId());
-        PacketDistributor.sendToPlayer(player, PatternStudioPayloads.buildState(level, host, "Recipe placed on the bench", 0));
+        PacketDistributor.sendToPlayer(player, PatternStudioPayloads.buildState(level, host, PLACED_ON_BENCH.text(), 0));
     }
 
     private static void handleSetProcessingPattern(final SetProcessingPatternPayload payload,
@@ -58,6 +66,6 @@ public final class JeiPayloads {
         }
         PatternStudioPayloads.applyProcessingCells(host, level, payload.inputs(), payload.outputs(),
                 payload.recipeType());
-        PacketDistributor.sendToPlayer(player, PatternStudioPayloads.buildState(level, host, "Recipe placed in the machine draft", 1));
+        PacketDistributor.sendToPlayer(player, PatternStudioPayloads.buildState(level, host, PLACED_IN_MACHINE_DRAFT.text(), 1));
     }
 }

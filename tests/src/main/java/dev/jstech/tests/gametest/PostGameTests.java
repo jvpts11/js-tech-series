@@ -241,8 +241,8 @@ public final class PostGameTests {
         helper.assertFalse(machine.cpuName().isEmpty(), "the processor is named by its own model");
         helper.assertFalse(machine.boardName().isEmpty(), "the board is named");
         helper.assertFalse(machine.ramName().isEmpty(), "and the memory modules are named");
-        helper.assertTrue(machine.memoryModules().startsWith(machine.ramModules() + "x "),
-                "which the self-test reads out as a count of them: " + machine.memoryModules());
+        helper.assertTrue(machine.memoryModules().english().startsWith(machine.ramModules() + "x "),
+                "which the self-test reads out as a count of them: " + machine.memoryModules().english());
         helper.assertTrue(machine.ramMb() > 0, "with the memory counted over what is seated");
         helper.succeed();
     }

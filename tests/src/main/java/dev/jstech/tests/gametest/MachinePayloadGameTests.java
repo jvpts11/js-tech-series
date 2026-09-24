@@ -16,6 +16,7 @@ import dev.jstech.computers.operation.payload.SetMachineConfigPayload;
 import dev.jstech.computers.operation.payload.TerminalSelectPayload;
 import dev.jstech.computers.operation.payload.UninstallProgramPayload;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
@@ -162,14 +163,16 @@ public final class MachinePayloadGameTests {
                 List.of(new PatternStudioStatePayload.ProcCell(3, cell, 100, 40L)),
                 List.of(new PatternStudioStatePayload.ProcCell(0, cell, 50, 0L)),
                 "minecraft:furnace", 600, "", "", "",
-                List.of(new PatternStudioStatePayload.Stage("Iron Ingot", false,
+                List.of(new PatternStudioStatePayload.Stage(Text.literal("Iron Ingot"), false,
                         new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_INGOT))),
                 "pipe", "", "pipe.craft",
-                List.of(new PatternStudioStatePayload.Drive("media:12345", "DVD-RW", true, List.of("a.craft", "b.craft")),
-                        new PatternStudioStatePayload.Drive("disk", "System disk (crafts)", true, List.of())),
-                new PatternStudioStatePayload.Encoder(true, "Standard", "DVD-RW", "Writing a.craft", 42, 2, true, false),
+                List.of(new PatternStudioStatePayload.Drive("media:12345", Text.literal("DVD-RW"), true,
+                                List.of("a.craft", "b.craft")),
+                        new PatternStudioStatePayload.Drive("disk", Text.literal("System disk (crafts)"), true, List.of())),
+                new PatternStudioStatePayload.Encoder(true, Text.literal("Standard"), Text.literal("DVD-RW"),
+                        Text.literal("Writing a.craft"), 42, 2, true, false),
                 List.of(new PatternStudioStatePayload.Machine("minecraft:furnace", "Furnace")),
-                true, true, false, true, false, "Sent", 1);
+                true, true, false, true, false, Text.literal("Sent"), 1);
         final RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(),
                 helper.getLevel().registryAccess());
         PatternStudioStatePayload.STREAM_CODEC.encode(buf, state);
@@ -186,12 +189,16 @@ public final class MachinePayloadGameTests {
                 "the machine cells survive");
         helper.assertTrue("minecraft:furnace".equals(decoded.machineType()) && decoded.timeout() == 600, "machine and timeout");
         helper.assertTrue(decoded.stages().size() == 1 && !decoded.stages().get(0).bench()
+                && "Iron Ingot".equals(decoded.stages().get(0).label().english())
                 && "pipe.craft".equals(decoded.pipeOpened()), "the pipeline survives");
-        helper.assertTrue(decoded.drives().size() == 2 && decoded.drives().get(0).files().size() == 2, "the drives survive");
+        helper.assertTrue(decoded.drives().size() == 2 && decoded.drives().get(0).files().size() == 2
+                && "DVD-RW".equals(decoded.drives().get(0).label().english()), "the drives survive");
         helper.assertTrue(decoded.encoder().linked() && decoded.encoder().progress() == 42
-                && decoded.encoder().queued() == 2 && decoded.encoder().busy(), "the encoder survives");
+                && decoded.encoder().queued() == 2 && decoded.encoder().busy()
+                && "Standard".equals(decoded.encoder().era().english())
+                && "Writing a.craft".equals(decoded.encoder().status().english()), "the encoder survives");
         helper.assertTrue(decoded.machines().size() == 1 && decoded.craftingComputer() && decoded.hasCard()
-                && !decoded.romHasBench() && decoded.romHasProc() && "Sent".equals(decoded.status())
+                && !decoded.romHasBench() && decoded.romHasProc() && "Sent".equals(decoded.status().english())
                 && decoded.tabHint() == 1, "the flags survive");
         helper.succeed();
     }

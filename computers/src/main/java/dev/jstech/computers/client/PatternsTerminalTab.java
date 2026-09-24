@@ -18,12 +18,38 @@ import dev.jstech.computers.operation.payload.RemoveRomCraftPayload;
 import dev.jstech.computers.operation.payload.RequestCraftManagerPayload;
 import dev.jstech.computers.operation.payload.RequestPatternStudioPayload;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static dev.jstech.computers.client.PatternTexts.ASKING;
+import static dev.jstech.computers.client.PatternTexts.BORN_AT_ENCODER;
+import static dev.jstech.computers.client.PatternTexts.DOWNLOAD;
+import static dev.jstech.computers.client.PatternTexts.DRAFT;
+import static dev.jstech.computers.client.PatternTexts.ENCODER_HEADING;
+import static dev.jstech.computers.client.PatternTexts.LINKED;
+import static dev.jstech.computers.client.PatternTexts.LINKED_ERA;
+import static dev.jstech.computers.client.PatternTexts.LOAD_ALL;
+import static dev.jstech.computers.client.PatternTexts.LOAD_ONE;
+import static dev.jstech.computers.client.PatternTexts.MAKES;
+import static dev.jstech.computers.client.PatternTexts.MEDIUM;
+import static dev.jstech.computers.client.PatternTexts.NONE_LINKED;
+import static dev.jstech.computers.client.PatternTexts.NOTHING_TAUGHT;
+import static dev.jstech.computers.client.PatternTexts.NOTHING_TO_LOAD;
+import static dev.jstech.computers.client.PatternTexts.NO_MEDIUM_IN_BAY;
+import static dev.jstech.computers.client.PatternTexts.NO_MEDIUM_IN_DRIVE;
+import static dev.jstech.computers.client.PatternTexts.RECIPE_ROM;
+import static dev.jstech.computers.client.PatternTexts.ROM_COUNT;
+import static dev.jstech.computers.client.PatternTexts.SEND_DISK;
+import static dev.jstech.computers.client.PatternTexts.SEND_DRAFT_TO;
+import static dev.jstech.computers.client.PatternTexts.SEND_ENCODER;
+import static dev.jstech.computers.client.PatternTexts.SEND_ROM;
+import static dev.jstech.computers.client.PatternTexts.TAUGHT_IN_ROM;
+import static dev.jstech.computers.client.PatternTexts.UNLOAD;
 
 /**
  * The Patterns heading: teaching this machine a recipe, in the network system's own shape.
@@ -333,43 +359,47 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
     }
 
     private void labelDraft(final GuiGraphics g) {
-        g.drawString(font(), "Draft", GRID_X, 22, DIM(), false);
-        g.drawString(font(), "makes", GRID_X + 60, RESULT_Y + 5, DIM(), false);
+        g.drawString(font(), GameText.resolve(DRAFT), GRID_X, 22, DIM(), false);
+        g.drawString(font(), GameText.resolve(MAKES), GRID_X + 60, RESULT_Y + 5, DIM(), false);
         if (studio == null) {
-            g.drawString(font(), "asking the machine ...", GRID_X, DRAFT_Y + 60, DIM(), false);
+            g.drawString(font(), GameText.resolve(ASKING), GRID_X, DRAFT_Y + 60, DIM(), false);
         }
     }
 
     private void labelEncoder(final GuiGraphics g) {
         final int px = RIGHT_X;
-        g.drawString(font(), "Pattern Encoder", px, 22, DIM(), false);
+        g.drawString(font(), GameText.resolve(ENCODER_HEADING), px, 22, DIM(), false);
         final PatternStudioStatePayload.Encoder enc = studio == null ? null : studio.encoder();
         if (enc == null || !enc.linked()) {
-            g.drawString(font(), "none linked to this machine", px, 36, DIM(), false);
-            g.drawString(font(), "A pattern is born at an encoder;", px, 48, DIM(), false);
-            g.drawString(font(), "the ROM is where it is taught.", px, 58, DIM(), false);
+            g.drawString(font(), GameText.resolve(NONE_LINKED), px, 36, DIM(), false);
+            g.drawString(font(), GameText.resolve(BORN_AT_ENCODER), px, 48, DIM(), false);
+            g.drawString(font(), GameText.resolve(TAUGHT_IN_ROM), px, 58, DIM(), false);
         } else {
-            g.drawString(font(), enc.era().isEmpty() ? "linked" : "linked  " + enc.era(), px, 36,
+            final String era = GameText.resolve(enc.era());
+            g.drawString(font(), GameText.resolve(era.isEmpty() ? LINKED.text() : LINKED_ERA.with(enc.era())), px, 36,
                     enc.error() ? RED() : GREEN(), false);
-            final String media = enc.media().isEmpty() ? "no medium in its bay" : enc.media();
+            final String media = GameText.resolve(enc.media().isEmpty() ? NO_MEDIUM_IN_BAY.text() : enc.media());
             g.drawString(font(), font().plainSubstrByWidth(media, RIGHT_W), px, 47, DIM(), false);
-            if (!enc.status().isEmpty()) {
-                g.drawString(font(), font().plainSubstrByWidth(enc.status(), RIGHT_W), px, 58,
+            final String status = GameText.resolve(enc.status());
+            if (!status.isEmpty()) {
+                g.drawString(font(), font().plainSubstrByWidth(status, RIGHT_W), px, 58,
                         enc.error() ? RED() : DIM(), false);
             }
         }
-        g.drawString(font(), "Send this draft to", px, SEND_Y - 10, DIM(), false);
+        g.drawString(font(), GameText.resolve(SEND_DRAFT_TO), px, SEND_Y - 10, DIM(), false);
         final boolean draft = studio != null && !studio.preview().isEmpty();
-        g.drawCenteredString(font(), "Encoder", SEND_ENCODER_X + SEND_W / 2, SEND_Y + 2,
+        g.drawCenteredString(font(), GameText.resolve(SEND_ENCODER), SEND_ENCODER_X + SEND_W / 2, SEND_Y + 2,
                 draft && encoderLinked() ? ACCENT() : DIM());
-        g.drawCenteredString(font(), "Disk", SEND_DISK_X + SEND_W / 2, SEND_Y + 2, draft ? ACCENT() : DIM());
-        g.drawCenteredString(font(), "ROM", SEND_ROM_X + SEND_W / 2, SEND_Y + 2, draft ? ACCENT() : DIM());
+        g.drawCenteredString(font(), GameText.resolve(SEND_DISK), SEND_DISK_X + SEND_W / 2, SEND_Y + 2,
+                draft ? ACCENT() : DIM());
+        g.drawCenteredString(font(), GameText.resolve(SEND_ROM), SEND_ROM_X + SEND_W / 2, SEND_Y + 2,
+                draft ? ACCENT() : DIM());
     }
 
     private void labelLists(final GuiGraphics g) {
         final List<String> files = mediaFiles();
         final String label = manager == null || manager.mediaLabel().isEmpty()
-                ? "No medium in a linked drive" : "Medium: " + manager.mediaLabel();
+                ? GameText.resolve(NO_MEDIUM_IN_DRIVE) : GameText.resolve(MEDIUM.with(manager.mediaLabel()));
         g.drawString(font(), font().plainSubstrByWidth(label, PANE_X - GRID_X - 12), GRID_X, SPLIT_Y + 6,
                 files.isEmpty() ? DIM() : TEXT(), false);
         for (int i = 0; i < LIST_ROWS && i + fileScroll < files.size(); i++) {
@@ -378,16 +408,16 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
                     GRID_X + 4, LIST_Y + i * ROW_H + 2, i + fileScroll == pickedFile ? ACCENT() : TEXT(), false);
         }
         if (files.isEmpty()) {
-            g.drawString(font(), "nothing on it to load", GRID_X + 4, LIST_Y + 2, DIM(), false);
+            g.drawString(font(), GameText.resolve(NOTHING_TO_LOAD), GRID_X + 4, LIST_Y + 2, DIM(), false);
         }
-        g.drawCenteredString(font(), "Load all", GRID_X + ACTION_W / 2, ACTION_Y + 2,
+        g.drawCenteredString(font(), GameText.resolve(LOAD_ALL), GRID_X + ACTION_W / 2, ACTION_Y + 2,
                 files.isEmpty() ? DIM() : ACCENT());
-        g.drawCenteredString(font(), "Load one", GRID_X + ACTION_W + 6 + ACTION_W / 2, ACTION_Y + 2,
+        g.drawCenteredString(font(), GameText.resolve(LOAD_ONE), GRID_X + ACTION_W + 6 + ACTION_W / 2, ACTION_Y + 2,
                 pickedFile >= 0 ? ACCENT() : DIM());
 
         final List<CraftManagerStatePayload.WireRomEntry> rom = romEntries();
-        g.drawString(font(), "Recipe ROM", PANE_X, SPLIT_Y + 6, TEXT(), false);
-        final String count = rom.size() + " of " + ROM_LIMIT;
+        g.drawString(font(), GameText.resolve(RECIPE_ROM), PANE_X, SPLIT_Y + 6, TEXT(), false);
+        final String count = GameText.resolve(ROM_COUNT.with(rom.size(), ROM_LIMIT));
         g.drawString(font(), count, PANE_X + PANE_W - font().width(count), SPLIT_Y + 6, ACCENT(), false);
         for (int i = 0; i < LIST_ROWS && i + romScroll < rom.size(); i++) {
             final CraftManagerStatePayload.WireRomEntry entry = rom.get(i + romScroll);
@@ -395,11 +425,11 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
                     PANE_X + 4, LIST_Y + i * ROW_H + 2, i + romScroll == pickedRom ? ACCENT() : TEXT(), false);
         }
         if (rom.isEmpty()) {
-            g.drawString(font(), "nothing taught yet", PANE_X + 4, LIST_Y + 2, DIM(), false);
+            g.drawString(font(), GameText.resolve(NOTHING_TAUGHT), PANE_X + 4, LIST_Y + 2, DIM(), false);
         }
-        g.drawCenteredString(font(), "Unload", PANE_X + (ACTION_W - 8) / 2, ACTION_Y + 2,
+        g.drawCenteredString(font(), GameText.resolve(UNLOAD), PANE_X + (ACTION_W - 8) / 2, ACTION_Y + 2,
                 pickedRom >= 0 ? ACCENT() : DIM());
-        g.drawCenteredString(font(), "Download", PANE_X + ACTION_W + 2 + (ACTION_W - 8) / 2, ACTION_Y + 2,
+        g.drawCenteredString(font(), GameText.resolve(DOWNLOAD), PANE_X + ACTION_W + 2 + (ACTION_W - 8) / 2, ACTION_Y + 2,
                 pickedRom >= 0 && hasMedium() ? ACCENT() : DIM());
     }
 

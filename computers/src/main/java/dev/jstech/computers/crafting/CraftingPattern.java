@@ -10,6 +10,8 @@ package dev.jstech.computers.crafting;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.util.Utf8Text;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -110,7 +112,12 @@ public record CraftingPattern(List<ItemStack> grid, ItemStack result, List<Strin
 
     /** What the pattern is called where it is listed: its name, or its result's name when it has none. */
     public String displayName() {
-        return name.isEmpty() ? result.getHoverName().getString() : name;
+        return displayText().english();
+    }
+
+    /** The same, as text: a result's name reaches each player in their own language. */
+    public Text displayText() {
+        return name.isEmpty() ? GameText.of(result.getHoverName()) : Text.literal(name);
     }
 
     /** The same recipe under a new name and note. */

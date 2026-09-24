@@ -7,6 +7,69 @@
  */
 package dev.jstech.computers.client;
 
+import static dev.jstech.computers.client.FirmwareScreenTexts.of;
+import static dev.jstech.computers.client.InstallerScreenTexts.AND_EVERY_FILE;
+import static dev.jstech.computers.client.InstallerScreenTexts.ANSWER;
+import static dev.jstech.computers.client.InstallerScreenTexts.CANNOT_UNDO;
+import static dev.jstech.computers.client.InstallerScreenTexts.COLUMN_DISK;
+import static dev.jstech.computers.client.InstallerScreenTexts.COLUMN_FREE;
+import static dev.jstech.computers.client.InstallerScreenTexts.COLUMN_HOLDS;
+import static dev.jstech.computers.client.InstallerScreenTexts.COLUMN_SIZE;
+import static dev.jstech.computers.client.InstallerScreenTexts.COMPLETE;
+import static dev.jstech.computers.client.InstallerScreenTexts.COMPUTER_NAME;
+import static dev.jstech.computers.client.InstallerScreenTexts.COPYING;
+import static dev.jstech.computers.client.InstallerScreenTexts.DISK;
+import static dev.jstech.computers.client.InstallerScreenTexts.DISK_ANSWER;
+import static dev.jstech.computers.client.InstallerScreenTexts.DISK_NARROW;
+import static dev.jstech.computers.client.InstallerScreenTexts.DISK_WIDE;
+import static dev.jstech.computers.client.InstallerScreenTexts.DONE;
+import static dev.jstech.computers.client.InstallerScreenTexts.ERASED_FIRST;
+import static dev.jstech.computers.client.InstallerScreenTexts.ERASE_ASK;
+import static dev.jstech.computers.client.InstallerScreenTexts.ERASE_KEYS;
+import static dev.jstech.computers.client.InstallerScreenTexts.EVERY_FILE;
+import static dev.jstech.computers.client.InstallerScreenTexts.FOUND_DISK;
+import static dev.jstech.computers.client.InstallerScreenTexts.FREE;
+import static dev.jstech.computers.client.InstallerScreenTexts.GENERATION;
+import static dev.jstech.computers.client.InstallerScreenTexts.HOLDS_FREE;
+import static dev.jstech.computers.client.InstallerScreenTexts.HUB_FOOT;
+import static dev.jstech.computers.client.InstallerScreenTexts.INSTALLATION_MEDIUM;
+import static dev.jstech.computers.client.InstallerScreenTexts.INSTALLED;
+import static dev.jstech.computers.client.InstallerScreenTexts.INSTALLING_ON;
+import static dev.jstech.computers.client.InstallerScreenTexts.MEMORY;
+import static dev.jstech.computers.client.InstallerScreenTexts.MIRROR_FIRST;
+import static dev.jstech.computers.client.InstallerScreenTexts.MIRROR_SECOND;
+import static dev.jstech.computers.client.InstallerScreenTexts.NAME_HELP_FIRST;
+import static dev.jstech.computers.client.InstallerScreenTexts.NAME_HELP_SECOND;
+import static dev.jstech.computers.client.InstallerScreenTexts.NEEDS;
+import static dev.jstech.computers.client.InstallerScreenTexts.NEEDS_ON_DISK;
+import static dev.jstech.computers.client.InstallerScreenTexts.NOTHING;
+import static dev.jstech.computers.client.InstallerScreenTexts.NOT_SET;
+import static dev.jstech.computers.client.InstallerScreenTexts.NO_DISK_SELECTED;
+import static dev.jstech.computers.client.InstallerScreenTexts.NO_DISK_WITH_ROOM;
+import static dev.jstech.computers.client.InstallerScreenTexts.NO_MIRROR;
+import static dev.jstech.computers.client.InstallerScreenTexts.NO_ROOM_ANYWHERE;
+import static dev.jstech.computers.client.InstallerScreenTexts.NO_ROOM_HERE;
+import static dev.jstech.computers.client.InstallerScreenTexts.NO_SYSTEM;
+import static dev.jstech.computers.client.InstallerScreenTexts.OK;
+import static dev.jstech.computers.client.InstallerScreenTexts.PREPARES;
+import static dev.jstech.computers.client.InstallerScreenTexts.PROCESSOR;
+import static dev.jstech.computers.client.InstallerScreenTexts.READING;
+import static dev.jstech.computers.client.InstallerScreenTexts.READING_MEDIUM;
+import static dev.jstech.computers.client.InstallerScreenTexts.RESTARTS_WHEN_FINISHED;
+import static dev.jstech.computers.client.InstallerScreenTexts.RESTART_TO_START;
+import static dev.jstech.computers.client.InstallerScreenTexts.SECONDS_LEFT;
+import static dev.jstech.computers.client.InstallerScreenTexts.SECONDS_LEFT_MEDIUM;
+import static dev.jstech.computers.client.InstallerScreenTexts.SECONDS_LEFT_SENTENCE;
+import static dev.jstech.computers.client.InstallerScreenTexts.TAKE_OUT_FIRST;
+import static dev.jstech.computers.client.InstallerScreenTexts.TAKE_OUT_SECOND;
+import static dev.jstech.computers.client.InstallerScreenTexts.TERMINAL_ONLY_ANSWER;
+import static dev.jstech.computers.client.InstallerScreenTexts.TERMINAL_ONLY_CHOICE;
+import static dev.jstech.computers.client.InstallerScreenTexts.THE_DRIVE;
+import static dev.jstech.computers.client.InstallerScreenTexts.THE_INSTALLATION_MEDIUM;
+import static dev.jstech.computers.client.InstallerScreenTexts.TO_QUIT;
+import static dev.jstech.computers.client.InstallerScreenTexts.TO_SET_UP;
+import static dev.jstech.computers.client.InstallerScreenTexts.WILL_BE_DELETED;
+
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
@@ -595,23 +658,22 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         final InstallerFlow.Disk disk = this.flow.target();
         final int step = this.row();
         int ty = f.y();
-        this.say(g, "Setup prepares " + this.flow.systemName() + " to run on this computer.",
-                f.x(), ty, p.text());
+        this.say(g, of(PREPARES.with(this.flow.systemName())), f.x(), ty, p.text());
         ty += step * 2;
-        this.say(g, "- To set up " + this.flow.systemName() + " now, press ENTER.", f.x(), ty, p.text());
+        this.say(g, of(TO_SET_UP.with(this.flow.systemName())), f.x(), ty, p.text());
         ty += step;
-        this.say(g, "- To quit Setup without installing, press F3.", f.x(), ty, p.text());
+        this.say(g, of(TO_QUIT), f.x(), ty, p.text());
         ty += step * 2;
         if (disk == null) {
-            this.say(g, "No disk in this machine has room for it.", f.x(), ty, p.accent());
+            this.say(g, of(NO_ROOM_ANYWHERE), f.x(), ty, p.accent());
             return;
         }
-        this.say(g, "Setup found a disk for " + this.flow.systemName() + ":", f.x(), ty, p.dim());
+        this.say(g, of(FOUND_DISK.with(this.flow.systemName())), f.x(), ty, p.dim());
         ty += step;
         // Cut to the page, since a drive names itself at whatever length its maker chose.
-        this.say(g, this.fit("Disk " + disk.slot() + "  " + disk.label(), f.w()), f.x() + 8, ty, p.bright());
+        this.say(g, this.fit(of(DISK_WIDE.with(disk.slot(), disk.label())), f.w()), f.x() + 8, ty, p.bright());
         ty += step;
-        this.say(g, holds(disk) + ", " + size(this.flow.freeOn(disk)) + " free", f.x() + 8, ty, p.dim());
+        this.say(g, of(HOLDS_FREE.with(holds(disk), size(this.flow.freeOn(disk)))), f.x() + 8, ty, p.dim());
     }
 
     /**
@@ -625,15 +687,15 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         final InstallerFrames.Paint p = f.paint();
         final FirmwareStatePayload.Machine machine = this.state == null ? null : this.state.machine();
         final InstallerFlow.Disk disk = this.flow.target();
-        final String unknown = "reading ...";
-        final String noRoom = "no disk with room";
+        final String unknown = of(READING);
+        final String noRoom = of(NO_DISK_WITH_ROOM);
         final String[][] rows = {
-                {"Generation", machine == null || machine.eraLabel().isEmpty() ? unknown : machine.eraLabel()},
-                {"Processor", machine == null || machine.cpuName().isEmpty() ? unknown : machine.cpuName()},
-                {"Memory", machine == null ? unknown : size(machine.ramMb())},
-                {"Disk " + (disk == null ? "-" : Integer.toString(disk.slot())),
-                        disk == null ? noRoom : size(this.flow.freeOn(disk)) + " free"},
-                {"Installation medium", this.flow.systemName()},
+                {of(GENERATION), machine == null || machine.eraLabel().isEmpty() ? unknown : of(machine.eraLabel())},
+                {of(PROCESSOR), machine == null || machine.cpuName().isEmpty() ? unknown : of(machine.cpuName())},
+                {of(MEMORY), machine == null ? unknown : size(machine.ramMb())},
+                {of(DISK.with(disk == null ? "-" : Integer.toString(disk.slot()))),
+                        disk == null ? noRoom : of(FREE.with(size(this.flow.freeOn(disk))))},
+                {of(INSTALLATION_MEDIUM), this.flow.systemName()},
         };
         final int step = this.row();
         int ty = f.y();
@@ -650,12 +712,12 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             this.leader(g, f.x() + this.width(label), answerAt - 3, ty, p.dim());
             this.say(g, line[1], answerAt, ty, p.text());
             if (good) {
-                this.sayRight(g, "OK", f.x() + f.w(), ty, p.accent());
+                this.sayRight(g, of(OK), f.x() + f.w(), ty, p.accent());
             }
             ty += step;
         }
         ty += step;
-        this.say(g, this.flow.systemName() + " needs " + size(this.flow.footprintMb()) + " on a disk.",
+        this.say(g, of(NEEDS_ON_DISK.with(this.flow.systemName(), size(this.flow.footprintMb()))),
                 f.x(), ty, p.dim());
     }
 
@@ -675,10 +737,10 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         final int step = this.row();
         int ty = f.y();
         if (table) {
-            g.drawString(font, "Disk", f.x() + 4, ty, p.dim(), false);
-            right(g, "Size", f.x() + f.w() - SIZE_COLUMN, ty, p.dim());
-            right(g, "Free", f.x() + f.w() - FREE_COLUMN, ty, p.dim());
-            right(g, "Holds", f.x() + f.w() - 4, ty, p.dim());
+            g.drawString(font, of(COLUMN_DISK), f.x() + 4, ty, p.dim(), false);
+            right(g, of(COLUMN_SIZE), f.x() + f.w() - SIZE_COLUMN, ty, p.dim());
+            right(g, of(COLUMN_FREE), f.x() + f.w() - FREE_COLUMN, ty, p.dim());
+            right(g, of(COLUMN_HOLDS), f.x() + f.w() - 4, ty, p.dim());
             g.fill(f.x(), ty + 9, f.x() + f.w(), ty + 10, 0xFFE3E5EE);
             ty += 13;
         }
@@ -703,30 +765,29 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             if (table) {
                 final String sizeText = size(disk.sizeMb());
                 final int sizeLeft = f.x() + f.w() - SIZE_COLUMN - font.width(sizeText);
-                g.drawString(font, InstallerFrames.clip(font, "Disk " + disk.slot() + " " + disk.label(),
+                g.drawString(font, InstallerFrames.clip(font, of(DISK_NARROW.with(disk.slot(), disk.label())),
                         sizeLeft - COLUMN_GAP - (f.x() + 4)), f.x() + 4, ty, row, false);
                 right(g, sizeText, f.x() + f.w() - SIZE_COLUMN, ty, faint);
                 right(g, size(this.flow.freeOn(disk)), f.x() + f.w() - FREE_COLUMN, ty, faint);
-                right(g, disk.hasSystem() ? disk.holds() : "Nothing", f.x() + f.w() - 4, ty, faint);
+                right(g, disk.hasSystem() ? disk.holds() : of(NOTHING), f.x() + f.w() - 4, ty, faint);
             } else {
-                final String state = holds(disk) + ", " + size(this.flow.freeOn(disk)) + " free";
-                this.say(g, this.fit("Disk " + disk.slot() + "  " + disk.label(),
+                final String state = of(HOLDS_FREE.with(holds(disk), size(this.flow.freeOn(disk))));
+                this.say(g, this.fit(of(DISK_WIDE.with(disk.slot(), disk.label())),
                         f.w() - this.width(state) - COLUMN_GAP), f.x(), ty, row);
                 this.sayRight(g, state, f.x() + f.w(), ty, faint);
             }
             ty += step;
         }
         ty += step;
-        this.say(g, this.flow.systemName() + " needs " + size(this.flow.footprintMb()) + ".",
-                f.x(), ty, p.dim());
+        this.say(g, of(NEEDS.with(this.flow.systemName(), size(this.flow.footprintMb()))), f.x(), ty, p.dim());
         final InstallerFlow.Disk disk = this.chosenDisk();
         if (disk != null && !this.flow.roomOn(disk)) {
-            this.say(g, "No room here. Erase this disk, or choose another.", f.x(), ty + step, p.accent());
+            this.say(g, of(NO_ROOM_HERE), f.x(), ty + step, p.accent());
         } else if (disk != null && disk.hasSystem()) {
-            this.say(g, disk.holds() + " on this disk is erased first.", f.x(), ty + step, p.accent());
+            this.say(g, of(ERASED_FIRST.with(disk.holds())), f.x(), ty + step, p.accent());
         }
         if (this.flow.page() == InstallerPage.SETTINGS) {
-            final String label = "Computer name:  ";
+            final String label = of(COMPUTER_NAME) + "  ";
             final int room = f.w() - this.width(label);
             this.say(g, label + this.tailThatFits(room) + this.caret(), f.x(), ty + step * 2, p.bright());
         }
@@ -736,10 +797,10 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         final InstallerFrames.Paint p = f.paint();
         final int step = this.row();
         int ty = f.y();
-        this.say(g, "This name identifies the computer at the", f.x(), ty, p.dim());
-        this.say(g, "prompt and on the network.", f.x(), ty + step, p.dim());
+        this.say(g, of(NAME_HELP_FIRST), f.x(), ty, p.dim());
+        this.say(g, of(NAME_HELP_SECOND), f.x(), ty + step, p.dim());
         ty += step * 3;
-        this.say(g, "Computer name:", f.x(), ty, p.text());
+        this.say(g, of(COMPUTER_NAME), f.x(), ty, p.text());
         final int fx = f.x();
         final int fy = ty + step + 2;
         final int fw = Math.min(150, f.w());
@@ -774,12 +835,10 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         final int step = this.row();
         int ty = f.y();
         if (this.flow.mirrorAnswers()) {
-            this.say(g, "The Mirror on " + this.flow.mirrorHost() + " answers. Choose a desktop to install",
-                    f.x(), ty, p.dim());
-            this.say(g, "with " + this.flow.systemName() + ", or none to boot to the terminal.",
-                    f.x(), ty + step, p.dim());
+            this.say(g, of(MIRROR_FIRST.with(this.flow.mirrorHost())), f.x(), ty, p.dim());
+            this.say(g, of(MIRROR_SECOND.with(this.flow.systemName())), f.x(), ty + step, p.dim());
         } else {
-            this.say(g, "No Mirror answers, so it comes up at its terminal.", f.x(), ty, p.dim());
+            this.say(g, of(NO_MIRROR), f.x(), ty, p.dim());
         }
         ty += step * 2 + 4;
         this.listAt(f.x(), ty, f.w(), this.flow.desktops().size() + 1);
@@ -795,7 +854,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
              */
             final String mark = here ? "(X) " : "( ) ";
             if (i == 0) {
-                this.say(g, mark + "None, the terminal only", f.x() + 2, ty, row);
+                this.say(g, mark + of(TERMINAL_ONLY_CHOICE), f.x() + 2, ty, row);
             } else {
                 final InstallerFlow.Desktop desktop = this.flow.desktops().get(i - 1);
                 this.say(g, mark + desktop.name(), f.x() + 2, ty, row);
@@ -824,17 +883,18 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             this.say(g, this.answerFor(page), f.x() + 22, ty + step, here ? p.selectText() : p.dim());
             ty += step * 2 + 2;
         }
-        this.say(g, "A letter begins the installation once nothing is still wanted.", f.x(), ty + 4, p.dim());
+        this.say(g, of(HUB_FOOT), f.x(), ty + 4, p.dim());
     }
 
     /** What each question on the list has been answered with so far, in a few words. */
     private String answerFor(final InstallerPage page) {
         return switch (page) {
-            case DISK, SETTINGS -> this.flow.target() == null ? "(no disk selected)"
-                    : "(Disk " + this.flow.target().slot() + ", " + this.flow.target().label() + ")";
-            case NAME -> this.flow.computerName().isBlank() ? "(not set)" : "(" + this.flow.computerName() + ")";
-            case DESKTOP -> this.flow.desktop() == null ? "(the terminal only)"
-                    : "(" + this.flow.desktop().name() + ")";
+            case DISK, SETTINGS -> of(this.flow.target() == null ? NO_DISK_SELECTED.text()
+                    : DISK_ANSWER.with(this.flow.target().slot(), this.flow.target().label()));
+            case NAME -> of(this.flow.computerName().isBlank() ? NOT_SET.text()
+                    : ANSWER.with(this.flow.computerName()));
+            case DESKTOP -> of(this.flow.desktop() == null ? TERMINAL_ONLY_ANSWER.text()
+                    : ANSWER.with(this.flow.desktop().name()));
             default -> "";
         };
     }
@@ -875,8 +935,8 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         final int percent = this.flow.permille(this.ticksDone) / 10;
         int ty = f.y();
         if (disk != null) {
-            this.say(g, this.fit("Setup is copying " + this.flow.systemName() + " to Disk " + disk.slot()
-                    + ", " + disk.label() + ".", f.w()), f.x(), ty, p.text());
+            this.say(g, this.fit(of(COPYING.with(this.flow.systemName(), disk.slot(), disk.label())), f.w()),
+                    f.x(), ty, p.text());
             ty += step * 2;
         }
         final InstallerFlow.Step running = this.flow.steps().get(this.flow.stepAt(this.ticksDone));
@@ -888,10 +948,10 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         g.fill(f.x(), ty, f.x() + f.w(), ty + barH, 0xFF000000);
         g.fill(f.x(), ty, f.x() + f.w() * this.flow.permille(this.ticksDone) / 1000, ty + barH, p.accent());
         ty += barH + 6;
-        this.say(g, percent + "% complete", f.x(), ty, p.text());
-        this.sayRight(g, "About " + this.secondsLeft() + " seconds left", f.x() + f.w(), ty, p.dim());
+        this.say(g, of(COMPLETE.with(percent)), f.x(), ty, p.text());
+        this.sayRight(g, of(SECONDS_LEFT.with(this.secondsLeft())), f.x() + f.w(), ty, p.dim());
         ty += step;
-        this.say(g, "Reading " + this.mediumName() + ". Leave it in.", f.x(), ty, p.dim());
+        this.say(g, of(READING_MEDIUM.with(this.mediumName())), f.x(), ty, p.dim());
     }
 
     /**
@@ -905,7 +965,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         for (int i = 0; i < this.flow.steps().size(); i++) {
             final InstallerFlow.Step line = this.flow.steps().get(i);
             final boolean done = i < running;
-            final String answer = done ? "done" : i == running
+            final String answer = done ? of(DONE) : i == running
                     ? this.flow.stepPermille(this.ticksDone) / 10 + "%" : "";
             final String label = this.fit(GameText.resolve(line.label()), f.w() - 60);
             this.say(g, label, f.x(), ty, done || i == running ? p.text() : p.dim());
@@ -917,7 +977,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             ty += step;
         }
         ty += step;
-        this.say(g, "About " + this.secondsLeft() + " seconds left. Leave the medium in.", f.x(), ty, p.dim());
+        this.say(g, of(SECONDS_LEFT_MEDIUM.with(this.secondsLeft())), f.x(), ty, p.dim());
     }
 
     /** The steps with a figure against each and one bar under them, as the newest installer shows them. */
@@ -944,8 +1004,8 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
          * Two lines rather than one that runs off the card. The sentence is long, the card is not wide, and a
          * time that grows a digit made it longer still.
          */
-        g.drawString(font, "Your PC restarts when setup is finished.", f.x(), ty + 12, p.dim(), false);
-        g.drawString(font, "About " + this.secondsLeft() + " seconds left.", f.x(), ty + 22, p.dim(), false);
+        g.drawString(font, of(RESTARTS_WHEN_FINISHED), f.x(), ty + 12, p.dim(), false);
+        g.drawString(font, of(SECONDS_LEFT_SENTENCE.with(this.secondsLeft())), f.x(), ty + 22, p.dim(), false);
     }
 
     /** The graphical phase, whose frame has already listed the steps down its own side. */
@@ -961,8 +1021,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
              * and this line was drawn at full length whatever the room: on a long name it ran out past the
              * edge of the glass and off the monitor.
              */
-            g.drawString(font, InstallerFrames.clip(font,
-                            "Installing on Disk " + disk.slot() + ", " + disk.label(), f.w()),
+            g.drawString(font, InstallerFrames.clip(font, of(INSTALLING_ON.with(disk.slot(), disk.label())), f.w()),
                     f.x(), f.y() + 12, p.dim(), false);
         }
     }
@@ -982,22 +1041,22 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         if (this.state != null) {
             for (final FirmwareStatePayload.Entry entry : this.state.entries()) {
                 if (entry.kind() == FirmwareStatePayload.KIND_MEDIA && !entry.osId().isEmpty()) {
-                    return "the " + GameText.resolve(entry.device());
+                    return of(THE_DRIVE.with(entry.device()));
                 }
             }
         }
-        return "the installation medium";
+        return of(THE_INSTALLATION_MEDIUM);
     }
 
     private void drawDone(final GuiGraphics g, final InstallerFrames.Frame f) {
         final InstallerFrames.Paint p = f.paint();
         final int step = this.row();
         int ty = f.y();
-        this.say(g, this.flow.systemName() + " is installed.", f.x(), ty, p.bright());
+        this.say(g, of(INSTALLED.with(this.flow.systemName())), f.x(), ty, p.bright());
         ty += step * 2;
-        this.say(g, "Take the installation medium out of the drive,", f.x(), ty, p.text());
-        this.say(g, "or the machine starts Setup again.", f.x(), ty + step, p.text());
-        this.say(g, "Restart to start " + this.flow.systemName() + ".", f.x(), ty + step * 3, p.accent());
+        this.say(g, of(TAKE_OUT_FIRST), f.x(), ty, p.text());
+        this.say(g, of(TAKE_OUT_SECOND), f.x(), ty + step, p.text());
+        this.say(g, of(RESTART_TO_START.with(this.flow.systemName())), f.x(), ty + step * 3, p.accent());
     }
 
     private void drawEraseAsk(final GuiGraphics g, final int x, final int y, final InstallerFrames.Frame f) {
@@ -1016,13 +1075,13 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         g.fill(bx, by + bh - 1, bx + bw, by + bh, 0xFFC0C4D2);
         g.fill(bx, by, bx + 1, by + bh, 0xFFC0C4D2);
         g.fill(bx + bw - 1, by, bx + bw, by + bh, 0xFFC0C4D2);
-        g.drawString(font, "Erase Disk " + disk.slot() + "?", bx + 10, by + 10, 0xFF202434, false);
-        g.drawString(font, (disk.hasSystem() ? disk.holds() + " and every file on" : "Every file on"),
+        g.drawString(font, of(ERASE_ASK.with(disk.slot())), bx + 10, by + 10, 0xFF202434, false);
+        g.drawString(font, of(disk.hasSystem() ? AND_EVERY_FILE.with(disk.holds()) : EVERY_FILE.text()),
                 bx + 10, by + 26, 0xFF202434, false);
-        g.drawString(font, InstallerFrames.clip(font, disk.label(), bw - 20) + " will be deleted.",
+        g.drawString(font, of(WILL_BE_DELETED.with(InstallerFrames.clip(font, disk.label(), bw - 20))),
                 bx + 10, by + 36, 0xFF202434, false);
-        g.drawString(font, "This cannot be undone.", bx + 10, by + 46, 0xFF6B7488, false);
-        g.drawString(font, "Y = erase        N = cancel", bx + 10, by + 60, 0xFFC42B1C, false);
+        g.drawString(font, of(CANNOT_UNDO), bx + 10, by + 46, 0xFF6B7488, false);
+        g.drawString(font, of(ERASE_KEYS), bx + 10, by + 60, 0xFFC42B1C, false);
     }
 
     private void right(final GuiGraphics g, final String text, final int rightEdge, final int y, final int colour) {
@@ -1036,7 +1095,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
 
     /** The system on a disk, or the plain words for one that carries none. */
     private static String holds(final InstallerFlow.Disk disk) {
-        return disk.hasSystem() ? disk.holds() : "no system";
+        return disk.hasSystem() ? disk.holds() : of(NO_SYSTEM);
     }
 
     /** Megabytes as a person reads them: whole gigabytes where they are whole, megabytes otherwise. */

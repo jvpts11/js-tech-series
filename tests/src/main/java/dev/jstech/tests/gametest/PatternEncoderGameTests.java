@@ -174,7 +174,8 @@ public final class PatternEncoderGameTests {
         helper.startSequence()
                 .thenExecuteAfter(10, () -> {
                     helper.assertFalse(encoder.busy(), "with no medium the job waits");
-                    helper.assertTrue("Insert media".equals(encoder.statusLine()), "the display says what is missing");
+                    helper.assertTrue("Insert media".equals(encoder.statusLine().english()),
+                            "the display says what is missing");
                     // The block goes away and comes back with its saved state: the job is still waiting.
                     final CompoundTag saved = encoder.saveWithFullMetadata(reg);
                     helper.setBlock(POS, Blocks.AIR);

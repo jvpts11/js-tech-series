@@ -71,15 +71,16 @@ public final class DiskUsageGameTests {
     @GameTest(template = ARENA)
     public static void summary_namesFluidInMillibucketsNeverInItems(final GameTestHelper helper) {
         final DiskUsage water = new DiskUsage(22_944, 0, 22_944, 0, 1);
-        final String line = water.summary(80);
+        final String line = water.summary(80).english();
         helper.assertTrue(line.equals("Used 28%: 22,944 mB of fluid across 1 type"), "got: " + line);
         final DiskUsage mixed = new DiskUsage(12_000 + 22_944 + 500, 12, 22_944, 500, 3);
-        final String both = mixed.summary(80);
+        final String both = mixed.summary(80).english();
         helper.assertTrue(both.equals("Used 44%: 12 items, 22,944 mB of fluid, 500 mB of chemical across 3 types"), "got: " + both);
         // Chemicals are named only while a chemical mod (Mekanism on the dev runtime) is present.
         final String capacity = "Holds 80 items, or 80,000 mB of fluid"
                 + (dev.jstech.computers.storage.ChemicalBridges.anyRegistered() ? " or chemical" : "");
-        helper.assertTrue(DiskUsage.capacityLine(80).equals(capacity), "got: " + DiskUsage.capacityLine(80));
+        helper.assertTrue(DiskUsage.capacityLine(80).english().equals(capacity),
+                "got: " + DiskUsage.capacityLine(80).english());
         helper.assertTrue(DiskUsage.EMPTY.isEmpty() && !water.isEmpty(), "emptiness follows the weight");
         helper.succeed();
     }

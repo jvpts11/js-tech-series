@@ -10,6 +10,9 @@ package dev.jstech.core.tier;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableIds;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.Sizes;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,22 +26,39 @@ import org.jetbrains.annotations.Nullable;
  * that keeps the Minecraft-aware property type out of this enum. Data files name an era by its
  * {@link #serializedName()}.
  */
+@TextHolder
 public enum HardwareEra implements IStableId, IStableName {
-    VINTAGE(0, "vintage"),
-    LEGACY(1, "legacy"),
-    STANDARD(2, "standard"),
-    ADVANCED(3, "advanced"),
-    EXA(4, "exa"),
-    SINGULARITY(5, "singularity");
-
-    private static final StableIds<HardwareEra> IDS = StableIds.of(HardwareEra.class);
+    VINTAGE(0, "vintage", TextKey.of("jscore.era.vintage", "Vintage")),
+    LEGACY(1, "legacy", TextKey.of("jscore.era.legacy", "Legacy")),
+    STANDARD(2, "standard", TextKey.of("jscore.era.standard", "Standard")),
+    ADVANCED(3, "advanced", TextKey.of("jscore.era.advanced", "Advanced")),
+    EXA(4, "exa", TextKey.of("jscore.era.exa", "Exa")),
+    SINGULARITY(5, "singularity", TextKey.of("jscore.era.singularity", "Singularity"));
 
     private final int level;
     private final String serializedName;
+    /** The era's name as a player reads it. */
+    private final TextKey name;
 
-    HardwareEra(final int level, final String serializedName) {
+    private static final StableIds<HardwareEra> IDS = StableIds.of(HardwareEra.class);
+
+    /** An era named as one: "Legacy era", with the name put where each language puts it. */
+    private static final TextKey NAMED = TextKey.of("jscore.era.named", "%s era");
+
+    HardwareEra(final int level, final String serializedName, final TextKey name) {
         this.level = level;
         this.serializedName = serializedName;
+        this.name = name;
+    }
+
+    /** The era's name: "Legacy". */
+    public Text text() {
+        return this.name.text();
+    }
+
+    /** The era as an era: "Legacy era". */
+    public Text named() {
+        return NAMED.with(this.name);
     }
 
     /**

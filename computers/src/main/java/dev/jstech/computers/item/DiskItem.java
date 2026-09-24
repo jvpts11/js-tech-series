@@ -18,6 +18,9 @@ import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.storage.DiskPrivacy;
 import dev.jstech.computers.storage.DiskUsage;
 import dev.jstech.computers.storage.DriveVolumes;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -30,17 +33,26 @@ import java.util.List;
 /**
  * A storage-disk component item.
  */
+@TextHolder
 public class DiskItem extends SpecItem<DiskSpec> {
-
-    public DiskItem(final Properties properties, final DiskSpec spec) {
-        super(properties, spec);
-    }
 
     /*
      * A fresh disk exposes nothing to the network until the owner publishes part of it; this keeps a
      * newly placed computer's storage private by default. Tunable.
      */
     public static final int DEFAULT_PUBLIC_PERMILLE = 0;
+
+    /* The drive's size, the word size of its era and what an item costs on it. */
+    private static final TextKey NAMEPLATE = TextKey.of("jsc.item.disk.nameplate", "%s drive  -  %s-bit: %s");
+    private static final TextKey SPEED = TextKey.of("jsc.item.disk.speed", "%s  -  %st latency  -  %sx speed");
+    private static final TextKey SYSTEM = TextKey.of("jsc.item.disk.system", "System: %s");
+    private static final TextKey DESKTOP = TextKey.of("jsc.item.disk.desktop", "Desktop: %s");
+    private static final TextKey PROGRAMS_ONE = TextKey.of("jsc.item.disk.programs_one", "%s program installed");
+    private static final TextKey PROGRAMS_MANY = TextKey.of("jsc.item.disk.programs_many", "%s programs installed");
+
+    public DiskItem(final Properties properties, final DiskSpec spec) {
+        super(properties, spec);
+    }
 
     /**
      * The public-share permille stored on a disk stack, or the private default if the component is absent or the stack is not a disk.
@@ -70,14 +82,12 @@ public class DiskItem extends SpecItem<DiskSpec> {
          * The nameplate, and the one budget in both units its data comes in: what an item costs on the
          * drive follows from the word size of the era it was made for.
          */
-        tooltip.add(Component.literal(DiskSpec.sizeLabel(spec.capacityMb()) + " drive  -  " + spec.era().bits()
-                + "-bit: " + spec.era().mbPerItem() + " MB per item").withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.literal(DiskUsage.capacityLine(spec.capacityItems())).withStyle(ChatFormatting.GRAY));
+        tooltip.add(GameText.component(NAMEPLATE.with(DiskSpec.sizeLabel(spec.capacityMb()), spec.era().bits(),
+                HardwareTooltip.MB_PER_ITEM.with(spec.era().mbPerItem()))).withStyle(ChatFormatting.GRAY));
+        tooltip.add(GameText.component(DiskUsage.capacityLine(spec.capacityItems())).withStyle(ChatFormatting.GRAY));
         HardwareTooltip.appendEra(tooltip, spec.era());
-        tooltip.add(Component.literal(
-                spec.tier() + "  -  " + spec.tier().latencyTicks() + "t latency  -  "
-                        + spec.tier().speedMultiplier() + "x speed")
-                .withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(GameText.component(SPEED.with(spec.tier(), spec.tier().latencyTicks(),
+                spec.tier().speedMultiplier())).withStyle(ChatFormatting.DARK_GRAY));
         appendSystem(stack, tooltip);
         /*
          * Files on the disk's filesystem (e.g. .iql scripts, .craft recipes), separate from the
@@ -103,7 +113,7 @@ public class DiskItem extends SpecItem<DiskSpec> {
         }
         final OsDef os =
                 OsRegistry.getOs(osId);
-        tooltip.add(Component.literal("System: " + (os != null ? os.displayName() : osId.getPath()))
+        tooltip.add(GameText.component(SYSTEM.with(os != null ? os.displayName() : osId.getPath()))
                 .withStyle(ChatFormatting.AQUA));
 
         final CompoundTag software = stack.get(ComputingComponents.DISK_CONSOLE.get());
@@ -117,13 +127,12 @@ public class DiskItem extends SpecItem<DiskSpec> {
                 OsDisks.installedDesktopId(os, state);
         if (desktop != null) {
             final var def = OsRegistry.getDesktop(desktop);
-            tooltip.add(Component.literal("Desktop: "
-                            + (def != null ? def.displayName() : desktop.getPath()))
+            tooltip.add(GameText.component(DESKTOP.with(def != null ? def.displayName() : desktop.getPath()))
                     .withStyle(ChatFormatting.DARK_AQUA));
         }
         final int programs = state.installed().size();
         if (programs > 0) {
-            tooltip.add(Component.literal(programs + " program" + (programs == 1 ? "" : "s") + " installed")
+            tooltip.add(GameText.component((programs == 1 ? PROGRAMS_ONE : PROGRAMS_MANY).with(programs))
                     .withStyle(ChatFormatting.DARK_AQUA));
         }
     }
@@ -139,6 +148,6 @@ public class DiskItem extends SpecItem<DiskSpec> {
         if (usage.isEmpty()) {
             return;
         }
-        tooltip.add(Component.literal(usage.summary(capacityItems)).withStyle(ChatFormatting.AQUA));
+        tooltip.add(GameText.component(usage.summary(capacityItems)).withStyle(ChatFormatting.AQUA));
     }
 }

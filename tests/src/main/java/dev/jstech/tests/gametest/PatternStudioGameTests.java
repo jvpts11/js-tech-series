@@ -19,6 +19,7 @@ import dev.jstech.computers.operation.payload.PatternStudioStatePayload;
 import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.CraftFiles;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -149,12 +150,12 @@ public final class PatternStudioGameTests {
                     studio.refreshPreview(helper.getLevel());
                     helper.assertTrue(studio.preview().is(Items.CHEST), "eight planks preview a chest");
                     final PatternStudioStatePayload state =
-                            PatternStudioPayloads.buildState(helper.getLevel(), net.cc(), "", -1);
+                            PatternStudioPayloads.buildState(helper.getLevel(), net.cc(), Text.EMPTY, -1);
                     final PatternStudioStatePayload.BenchCell cell = state.bench().get(0);
                     helper.assertTrue(cell.resolved().is(Items.BIRCH_PLANKS) && cell.stock() == 20L,
                             "an any-planks cell resolves to the planks the network has most of; got "
                                     + cell.resolved() + " x" + cell.stock());
-                    helper.assertTrue(state.encoder().linked() && "Standard".equals(state.encoder().era())
+                    helper.assertTrue(state.encoder().linked() && "Standard".equals(state.encoder().era().english())
                             && !state.encoder().media().isEmpty(), "the linked encoder is reported; got " + state.encoder());
                     boolean discListed = false;
                     for (final PatternStudioStatePayload.Drive d : state.drives()) {
@@ -167,7 +168,7 @@ public final class PatternStudioGameTests {
                             "a Crafting Computer with a card, the draft not yet in the ROM");
                     helper.assertTrue(net.cc().loadPattern(studio.benchPattern()), "the draft loads into the ROM");
                     final PatternStudioStatePayload after =
-                            PatternStudioPayloads.buildState(helper.getLevel(), net.cc(), "", -1);
+                            PatternStudioPayloads.buildState(helper.getLevel(), net.cc(), Text.EMPTY, -1);
                     helper.assertTrue(after.romHasBench(), "the state says the draft is in the ROM now");
                 })
                 .thenSucceed();

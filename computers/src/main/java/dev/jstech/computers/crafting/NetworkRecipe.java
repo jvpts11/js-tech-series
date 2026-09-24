@@ -10,6 +10,7 @@ package dev.jstech.computers.crafting;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.Text;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -83,16 +84,21 @@ public record NetworkRecipe(Optional<CraftingPattern> bench, Optional<Processing
 
     /** What the recipe is called where it is listed: its author's name, or its result's name when it has none. */
     public String displayName() {
+        return displayText().english();
+    }
+
+    /** The same, as text: a result's name reaches each player in their own language. */
+    public Text displayText() {
         if (bench.isPresent()) {
-            return bench.get().displayName();
+            return bench.get().displayText();
         }
         if (proc.isPresent()) {
-            return proc.get().displayName();
+            return proc.get().displayText();
         }
         if (multi.isPresent()) {
-            return multi.get().displayName();
+            return multi.get().displayText();
         }
-        return "recipe";
+        return RecipeTexts.UNNAMED_RECIPE.text();
     }
 
     /** Same recipe = same kind producing the same result, used to dedupe loads into the ROM. */

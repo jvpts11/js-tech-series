@@ -8,6 +8,9 @@
 package dev.jstech.computers.item;
 
 import dev.jstech.computers.hardware.RamSpec;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -18,7 +21,10 @@ import java.util.List;
 /**
  * A RAM module item.
  */
+@TextHolder
 public class RamItem extends SpecItem<RamSpec> {
+
+    private static final TextKey BUFFER = TextKey.of("jsc.item.ram.buffer", "%s items buffer  -  %s");
 
     public RamItem(final Properties properties, final RamSpec spec) {
         super(properties, spec);
@@ -28,10 +34,9 @@ public class RamItem extends SpecItem<RamSpec> {
     public void appendHoverText(final ItemStack stack, final TooltipContext context,
                                 final List<Component> tooltip, final TooltipFlag flag) {
         final RamSpec spec = spec();
-        tooltip.add(Component.literal(
-                spec.bufferItems() + " items buffer  -  " + spec.generation())
+        tooltip.add(GameText.component(BUFFER.with(spec.bufferItems(), spec.generation()))
                 .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.literal(spec.tdpWatts() + " W").withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(GameText.component(HardwareTooltip.WATTS.with(spec.tdpWatts())).withStyle(ChatFormatting.DARK_GRAY));
         HardwareTooltip.appendEra(tooltip, spec.era());
     }
 }

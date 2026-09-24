@@ -17,6 +17,9 @@ import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -53,15 +56,29 @@ import org.jetbrains.annotations.Nullable;
  * per hardware era, each writing the media of its day. A click with a disc the era accepts puts it in the bay,
  * a sneak-click takes it out (unless a job holds it), and a plain click opens the bay's small panel.
  */
+@TextHolder
 public class PatternEncoderBlock extends HorizontalDirectionalBlock implements EntityBlock, IPeripheralConnectable,
         IEraChassisBlock {
+
+    private final HardwareEra era;
 
     public static final MapCodec<PatternEncoderBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
             StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(b -> b.era)
     ).apply(i, PatternEncoderBlock::new));
 
-    private final HardwareEra era;
+    private static final TextKey WRITING_WAIT = TextKey.of("jsc.pattern_encoder.writing_wait",
+            "The encoder is writing - wait for it to finish.");
+    private static final TextKey BAY_FULL = TextKey.of("jsc.pattern_encoder.bay_full",
+            "The bay already holds a disc - sneak-click to eject it.");
+    private static final TextKey READ_ONLY = TextKey.of("jsc.pattern_encoder.read_only",
+            "That disc is read-only and cannot be written.");
+    private static final TextKey VINTAGE_ONLY =
+            TextKey.of("jsc.pattern_encoder.vintage_only", "A Vintage encoder writes floppy disks only.");
+    private static final TextKey LEGACY_ONLY =
+            TextKey.of("jsc.pattern_encoder.legacy_only", "A Legacy encoder writes CDs only.");
+    private static final TextKey STANDARD_ONLY = TextKey.of("jsc.pattern_encoder.standard_only",
+            "This encoder writes DVDs, CDs and USB sticks, not that.");
 
     public PatternEncoderBlock(final Properties properties, final HardwareEra era) {
         super(properties);
@@ -128,7 +145,7 @@ public class PatternEncoderBlock extends HorizontalDirectionalBlock implements E
         }
         if (player.isShiftKeyDown()) {
             if (encoder.locked()) {
-                player.displayClientMessage(Component.literal("The encoder is writing - wait for it to finish."), true);
+                player.displayClientMessage(GameText.component(WRITING_WAIT), true);
                 return ItemInteractionResult.SUCCESS;
             }
             final ItemStack ejected = encoder.ejectMedia();
@@ -143,27 +160,27 @@ public class PatternEncoderBlock extends HorizontalDirectionalBlock implements E
                 heldStack.shrink(1);
                 return ItemInteractionResult.SUCCESS;
             }
-            player.displayClientMessage(Component.literal("The bay already holds a disc - sneak-click to eject it."), true);
+            player.displayClientMessage(GameText.component(BAY_FULL), true);
             return ItemInteractionResult.SUCCESS;
         }
         if (heldStack.getItem() instanceof MediaItem) {
             // A refused disc says why; a silent click reads as a broken block.
-            player.displayClientMessage(Component.literal(refusal(heldStack)), true);
+            player.displayClientMessage(GameText.component(refusal(heldStack)), true);
             return ItemInteractionResult.SUCCESS;
         }
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
     /** What to tell a player whose disc the bay refused. */
-    private String refusal(final ItemStack held) {
+    private TextKey refusal(final ItemStack held) {
         if (held.getItem() instanceof FormattedMediaItem fmt
                 && !fmt.writable()) {
-            return "That disc is read-only and cannot be written.";
+            return READ_ONLY;
         }
         return switch (era) {
-            case VINTAGE -> "A Vintage encoder writes floppy disks only.";
-            case LEGACY -> "A Legacy encoder writes CDs only.";
-            default -> "This encoder writes DVDs, CDs and USB sticks, not that.";
+            case VINTAGE -> VINTAGE_ONLY;
+            case LEGACY -> LEGACY_ONLY;
+            default -> STANDARD_ONLY;
         };
     }
 
@@ -174,7 +191,7 @@ public class PatternEncoderBlock extends HorizontalDirectionalBlock implements E
                 && level.getBlockEntity(pos) instanceof PatternEncoderBlockEntity encoder) {
             if (player.isShiftKeyDown()) {
                 if (encoder.locked()) {
-                    player.displayClientMessage(Component.literal("The encoder is writing - wait for it to finish."), true);
+                    player.displayClientMessage(GameText.component(WRITING_WAIT), true);
                     return InteractionResult.sidedSuccess(false);
                 }
                 final ItemStack ejected = encoder.ejectMedia();
