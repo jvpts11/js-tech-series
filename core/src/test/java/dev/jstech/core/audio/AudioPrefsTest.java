@@ -51,9 +51,12 @@ class AudioPrefsTest {
     }
 
     @Test
-    void flags_startWithWallsMufflingAndNoVisualCues() {
+    void flags_startWithWallsMufflingAlertsLoweringTheRestAndNoVisualCues() {
         final AudioPrefs prefs = new AudioPrefs();
         assertTrue(prefs.occlusion());
+        assertTrue(prefs.ducking());
         assertFalse(prefs.visualCues());
+        prefs.setDucking(false);
+        assertFalse(prefs.ducking());
     }
 }

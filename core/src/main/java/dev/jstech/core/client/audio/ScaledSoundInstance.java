@@ -20,8 +20,9 @@ import net.minecraft.sounds.SoundSource;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A sound as the game asked for it, played at the volume the player gives its channel, read each time the game asks
- * how loud it is, so turning a channel down reaches the sounds already running. It is the sound in every other
+ * A sound as the game asked for it, played at the volume the player gives its channel and lowered while an alert
+ * plays, read each time the game asks how loud it is, so turning a channel down reaches the sounds already running
+ * once the mixer has the game ask again ({@link AudioMixer#refreshVolumes()}). It is the sound in every other
  * respect, where it comes from and what it plays included, so the game cannot tell it apart from the one it asked for
  * except by how loud it is.
  */
@@ -84,7 +85,7 @@ class ScaledSoundInstance implements SoundInstance {
 
     @Override
     public float getVolume() {
-        return sound.getVolume() * AudioPrefsStore.prefs().volume(channel);
+        return sound.getVolume() * AudioPrefsStore.prefs().volume(channel) * AudioMixer.duck(channel);
     }
 
     @Override

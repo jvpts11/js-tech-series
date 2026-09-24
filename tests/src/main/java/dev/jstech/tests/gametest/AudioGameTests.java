@@ -88,11 +88,13 @@ public final class AudioGameTests {
         prefs.setMuted("jsc:computer/fan", true);
         prefs.setVisualCues(true);
         prefs.setOcclusion(false);
+        prefs.setDucking(false);
         final AudioPrefs back = AudioPrefsJson.read(AudioPrefsJson.write(prefs));
         helper.assertTrue(back.volume("jscore:machines") == 0.5F && back.isMuted("jsc:computer/fan")
-                && back.visualCues() && !back.occlusion(), "what the file kept comes back as it was");
+                && back.visualCues() && !back.occlusion() && !back.ducking(),
+                "what the file kept comes back as it was");
         final AudioPrefs broken = AudioPrefsJson.read("{ this is not json");
-        helper.assertTrue(broken.volume("jscore:machines") == 1.0F && broken.occlusion(),
+        helper.assertTrue(broken.volume("jscore:machines") == 1.0F && broken.occlusion() && broken.ducking(),
                 "a file that cannot be read gives the defaults");
         final AudioPrefs odd = AudioPrefsJson.read("{\"volumes\": {\"jscore:machines\": \"loud\"}, \"muted\": 4}");
         helper.assertTrue(odd.volume("jscore:machines") == 1.0F && odd.mutedSounds().isEmpty(),

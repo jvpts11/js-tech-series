@@ -5,6 +5,9 @@
   "item.jscore.copper_plate": "Copper Plate",
   "item.jscore.iron_dust": "Iron Dust",
   "item.jscore.iron_plate": "Iron Plate",
+  "jscore.audio.back_on": "Turned back on: %s.",
+  "jscore.audio.nothing_heard": "No sound has played yet.",
+  "jscore.audio.turned_off": "Turned off: %s. Press %s again to undo.",
   "jscore.audio_channel.alerts": "Alerts",
   "jscore.audio_channel.ambience": "Ambience",
   "jscore.audio_channel.devices": "Devices",
@@ -29,5 +32,7 @@
   "jscore.priority.medium": "MED",
   "jscore.priority.medium_high": "MED+",
   "jscore.priority.medium_low": "MED-",
-  "jscore.text.joined": "%s%s%s"
+  "jscore.text.joined": "%s%s%s",
+  "key.categories.jstech": "J's Tech Series",
+  "key.jscore.turn_off_last_sound": "Turn Off Last Sound"
 }

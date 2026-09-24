@@ -5,6 +5,9 @@
   "item.jscore.copper_plate": "Chapa de Cobre",
   "item.jscore.iron_dust": "Pó de Ferro",
   "item.jscore.iron_plate": "Chapa de Ferro",
+  "jscore.audio.back_on": "Religado: %s.",
+  "jscore.audio.nothing_heard": "Nenhum som tocou ainda.",
+  "jscore.audio.turned_off": "Desligado: %s. Aperte %s de novo para desfazer.",
   "jscore.audio_channel.alerts": "Alertas",
   "jscore.audio_channel.ambience": "Ambiente",
   "jscore.audio_channel.devices": "Dispositivos",
@@ -29,5 +32,7 @@
   "jscore.priority.medium": "MÉD",
   "jscore.priority.medium_high": "MÉD+",
   "jscore.priority.medium_low": "MÉD-",
-  "jscore.text.joined": "%s%s%s"
+  "jscore.text.joined": "%s%s%s",
+  "key.categories.jstech": "J's Tech Series",
+  "key.jscore.turn_off_last_sound": "Desligar o Último Som"
 }

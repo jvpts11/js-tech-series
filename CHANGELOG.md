@@ -24,6 +24,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   The server sends a tune as its notes, heard by the players near where it plays, and each client makes the
   sound itself. Such a sound has a subtitle and a channel like any other and the player can turn it off the same
   way; heard from a place in the world, a stereo recording is played in mono so it comes from that place.
+- A "Turn Off Last Sound" key in the game's controls, under J's Tech Series, with no key until the player picks
+  one: it turns off the last sound heard around the player (never their own footsteps or a click of the screen)
+  and says which on the action bar; pressed again within five seconds, it brings that sound back.
+- While an alert plays, the series' other sound channels are lowered so the alert is heard over them, and come back
+  up over a second once it ends; the player may turn this off in `config/jstech-audio.json`.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.

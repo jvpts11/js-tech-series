@@ -18,6 +18,7 @@ import dev.jstech.core.audio.pcm.PcmFormat;
 import dev.jstech.core.audio.pcm.SynthSource;
 import dev.jstech.core.audio.pcm.Tone;
 import dev.jstech.core.client.audio.AudioEngine;
+import dev.jstech.core.client.audio.AudioKeys;
 import dev.jstech.core.client.audio.AudioMixer;
 import dev.jstech.core.client.audio.AudioPrefsStore;
 import dev.jstech.core.client.audio.CapturingAudioSink;
@@ -33,8 +34,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.AudioStream;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -189,6 +192,45 @@ public final class AudioClientTests {
                 .then(0, () -> {
                     prefs.setMuted(BEEP, false);
                     prefs.setVolume(DEVICES, 1.0F);
+                    AudioEngine.restoreSink();
+                });
+    }
+
+    /**
+     * The key turns off the last sound heard around the player, never their own footsteps or the screen's clicks,
+     * says which on the action bar, and brings it back when pressed again at once; everything heard is kept as recent.
+     */
+    @ClientTest(timeoutTicks = 400)
+    public static void key_turnsOffTheLastSoundAroundThePlayerAndBringsItBack(final ClientTestContext ctx) {
+        final CapturingAudioSink sink = new CapturingAudioSink();
+        final AudioPrefs prefs = AudioPrefsStore.prefs();
+        final String hum = TestSounds.HUM.id().toString();
+        final String step = SoundEvents.STONE_STEP.getLocation().toString();
+        final Component[] said = new Component[2];
+        ctx.then(0, () -> {
+                    AudioEngine.useSink(sink);
+                    final Vec3 at = ctx.player().position();
+                    sink.play(new SimpleSoundInstance(TestSounds.HUM.event().get(), SoundSource.BLOCKS, 1.0F, 1.0F,
+                            SoundInstance.createUnseededRandom(), at.x + 2, at.y, at.z));
+                    sink.play(new SimpleSoundInstance(SoundEvents.STONE_STEP, SoundSource.PLAYERS, 1.0F, 1.0F,
+                            SoundInstance.createUnseededRandom(), at.x, at.y, at.z));
+                    AudioEngine.playOnScreen(TestSounds.CLICK);
+                    said[0] = AudioKeys.turnOffLastSound();
+                })
+                .thenAssert(0, () -> {
+                    final List<String> recent = AudioMixer.recent(60_000L);
+                    return recent.indexOf(CLICK) >= 0 && recent.indexOf(CLICK) < recent.indexOf(step)
+                            && recent.indexOf(step) < recent.indexOf(hum);
+                }, "everything heard is recent, newest first, the player's own step and the screen's click too")
+                .thenAssert(0, () -> prefs.isMuted(hum) && !prefs.isMuted(step) && !prefs.isMuted(CLICK)
+                                && said[0].getString().startsWith("Turned off: A test hum."),
+                        "but the key turns off the hum, the last sound around the player, and says so by its subtitle")
+                .then(0, () -> said[1] = AudioKeys.turnOffLastSound())
+                .thenAssert(0, () -> !prefs.isMuted(hum) && said[1].getString().equals("Turned back on: A test hum."),
+                        "and pressed again at once, brings it back")
+                .then(0, () -> {
+                    prefs.setMuted(hum, false);
+                    AudioPrefsStore.save();
                     AudioEngine.restoreSink();
                 });
     }

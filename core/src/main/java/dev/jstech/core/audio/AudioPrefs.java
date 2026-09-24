@@ -15,7 +15,8 @@ import java.util.TreeSet;
 
 /**
  * What a player has asked of the series' sounds on their own machine: how loud each channel is, which sounds they
- * never want to hear, and whether alerts are also shown and walls muffle what is behind them.
+ * never want to hear, whether alerts are also shown, whether walls muffle what is behind them, and whether the other
+ * channels are lowered while an alert plays.
  *
  * <p>It is the player's and not the world's, so it lives in a file of their own beside the game's options
  * ({@link AudioPrefsJson}). A volume is a share of the channel's sound, from nothing to all of it, and anything outside
@@ -27,6 +28,7 @@ public final class AudioPrefs {
     private final Set<String> muted = new TreeSet<>();
     private boolean visualCues;
     private boolean occlusion = true;
+    private boolean ducking = true;
 
     /** How loud a channel plays, from 0 to 1; 1 when the player has not said. */
     public synchronized float volume(final String channel) {
@@ -83,5 +85,14 @@ public final class AudioPrefs {
 
     public synchronized void setOcclusion(final boolean muffle) {
         this.occlusion = muffle;
+    }
+
+    /** Whether the other channels are lowered while an alert plays, so the alert is heard over them. */
+    public synchronized boolean ducking() {
+        return ducking;
+    }
+
+    public synchronized void setDucking(final boolean lower) {
+        this.ducking = lower;
     }
 }

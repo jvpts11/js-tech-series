@@ -37,6 +37,7 @@ public final class AudioPrefsJson {
         root.add("muted", off);
         root.addProperty("visual_cues", prefs.visualCues());
         root.addProperty("occlusion", prefs.occlusion());
+        root.addProperty("duck_under_alerts", prefs.ducking());
         return GSON.toJson(root);
     }
 
@@ -69,6 +70,7 @@ public final class AudioPrefsJson {
         }
         prefs.setVisualCues(flag(root, "visual_cues", false));
         prefs.setOcclusion(flag(root, "occlusion", true));
+        prefs.setDucking(flag(root, "duck_under_alerts", true));
         return prefs;
     }
 
