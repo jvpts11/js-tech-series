@@ -55,8 +55,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   one with a solid-state disk stays quiet. A monitor sounds as it lights. The drives sound as media go in and come
   out: a floppy disk slides in and is ejected, a disc rides the tray of a CD or DVD drive and of the Pattern
   Encoder, a USB drive is plugged into and pulled out of a Dock Station, and a Floppy Drive's head is heard
-  stepping while a system installs from its disk. Each running server in a rack is heard by its fans, and five or
-  more running close together, in any number of racks, are heard as the hum of the room instead.
+  stepping while a system or a program installs from its disk. Each running server in a rack is heard by its fans,
+  and five or more running close together, in any number of racks, are heard as the hum of the room instead.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.

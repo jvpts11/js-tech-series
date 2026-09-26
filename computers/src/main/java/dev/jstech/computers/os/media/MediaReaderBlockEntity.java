@@ -14,6 +14,8 @@ import dev.jstech.computers.audio.MediaBaySounds;
 import dev.jstech.computers.client.audio.MachineSoundSources;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.install.OsInstallJob;
+import dev.jstech.computers.os.install.SetupJob;
+import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.storage.ServerStorageContents;
 import dev.jstech.core.audio.IAudible;
 import dev.jstech.core.audio.LoopRequest;
@@ -70,8 +72,8 @@ public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEn
     private final MediaBaySounds baySounds = new MediaBaySounds();
 
     /*
-     * Whether the linked computer is installing a system from the medium in this drive, on both sides: the server
-     * works it out and the client hears a floppy drive's head stepping while it is true.
+     * Whether the linked computer is installing a system or a program from the medium in this drive, on both
+     * sides: the server works it out and the client hears a floppy drive's head stepping while it is true.
      */
     private boolean reading;
 
@@ -192,14 +194,23 @@ public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEn
         }
     }
 
-    /* Whether the linked computer is installing a system from the medium in this very drive. */
+    /*
+     * Whether the linked computer is installing something from the medium in this very drive: a system, whose
+     * job names the drive it reads from, or a program, whose setup is for the one this medium carries.
+     */
     private boolean installingFromHere(final ServerLevel level) {
         if (linkedOwner == null || slot.getStackInSlot(0).isEmpty()
                 || !(level.getBlockEntity(BlockPos.of(linkedOwner)) instanceof IOsHost host)) {
             return false;
         }
         final OsInstallJob job = host.installing();
-        return job != null && job.hasReader() && job.readerPos() == worldPosition.asLong();
+        if (job != null && job.hasReader() && job.readerPos() == worldPosition.asLong()) {
+            return true;
+        }
+        final ComputerConsoleState console = host.console();
+        final SetupJob setup = console == null ? null : console.setup();
+        final ResourceLocation program = insertedPayload();
+        return setup != null && !setup.removing() && program != null && program.toString().equals(setup.programId());
     }
 
     @Override
@@ -235,7 +246,7 @@ public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEn
         return worldPosition.getZ() + 0.5;
     }
 
-    /** A floppy drive's head stepping while a system installs from its disk; nothing from the other drives. */
+    /** A floppy drive's head stepping while a system or a program installs from its disk; no other drive's. */
     @Override
     public List<LoopRequest> loops() {
         return reading && insertedFormat() == MediaFormat.FLOPPY

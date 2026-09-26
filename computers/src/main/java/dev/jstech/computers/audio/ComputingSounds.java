@@ -59,7 +59,7 @@ public final class ComputingSounds {
     public static final SoundKey FLOPPY_INSERT = CONTENT.sound("media/floppy_insert")
             .channel(AudioChannels.DEVICES).subtitle("Floppy disk slides in").register();
 
-    /** The drive's head stepping across a disk while a system installs from it. */
+    /** The drive's head stepping across a disk while a system or a program installs from it. */
     public static final SoundKey FLOPPY_READ = CONTENT.sound("media/floppy_read").loop()
             .range(8).subtitle("Floppy drive reads").register();
 

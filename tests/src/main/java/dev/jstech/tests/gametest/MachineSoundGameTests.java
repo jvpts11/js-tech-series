@@ -13,9 +13,14 @@ import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.os.install.SetupJob;
+import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.audio.SoundKey;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -37,7 +42,8 @@ import java.util.function.Consumer;
 /**
  * The sounds the machines make as machines, heard where the server plays them: a computer's power button, an old
  * machine's start-up, a hard drive spinning up, turning and winding down while a solid-state disk stays quiet, the
- * self-test's beep on the two ages that had one, and a floppy disk going into a drive and coming out.
+ * self-test's beep on the two ages that had one, a floppy disk going into a drive and coming out, and the drive
+ * heard reading while a program on its disk installs.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -48,6 +54,11 @@ public final class MachineSoundGameTests {
     private static final int SETTLE = 3;
     /** Past the end of a hard drive's spin-up, when it is heard turning. */
     private static final int SPUN_UP = 180;
+    /** On a free side of the crafting network's computer, where a drive links to it. */
+    private static final BlockPos DRIVE_BESIDE_COMPUTER = new BlockPos(5, 2, 3);
+    /** A program that installs from a floppy disk. */
+    private static final ResourceLocation FLOPPY_PROGRAM =
+            ResourceLocation.fromNamespaceAndPath("jsc", "minesweeper");
 
     private MachineSoundGameTests() {
     }
@@ -151,6 +162,34 @@ public final class MachineSoundGameTests {
                 .thenSucceed();
     }
 
+    @GameTest(template = ARENA)
+    public static void floppyDrive_programInstallingFromItsDisk_isHeardReading(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        world.setBlock(DRIVE_BESIDE_COMPUTER, ComputingModule.FLOPPY_DRIVE.get());
+        final MediaReaderBlockEntity drive = world.blockEntity(DRIVE_BESIDE_COMPUTER, MediaReaderBlockEntity.class);
+        final ItemStack disk = new ItemStack(ComputingModule.FLOPPY_DISK.get());
+        MediaItem.setKind(disk, MediaKind.PROGRAM_INSTALL);
+        MediaItem.setPayload(disk, FLOPPY_PROGRAM);
+        drive.mediaSlot().setStackInSlot(0, disk);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 3, () -> {
+                    helper.assertTrue(net.cc().getBlockPos().equals(drive.ownerPos()),
+                            "the drive links to the computer beside it; got " + drive.ownerPos());
+                    helper.assertFalse(reading(helper, drive), "a drive nobody installs from is not heard reading");
+                    net.cc().console().beginSetup(new SetupJob(FLOPPY_PROGRAM.toString(), "Minesweeper", "Midsoft",
+                            1, Text.literal("Floppy"), false, 400));
+                })
+                .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertTrue(reading(helper, drive),
+                            "the drive is heard reading while the program on its disk installs");
+                    net.cc().console().clearSetup();
+                })
+                .thenExecuteAfter(SETTLE, () -> helper.assertFalse(reading(helper, drive),
+                        "and falls quiet when the setup is over"))
+                .thenSucceed();
+    }
+
     private static PersonalComputerBlockEntity legacy(final GameTestHelper helper, final StorageTier disk) {
         return computer(helper, ComputingModule.LEGACY_PERSONAL_COMPUTER.get(),
                 HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get(), HardwareItems.CPU_INTEGRA_DUO_E4300.get(),
@@ -172,6 +211,11 @@ public final class MachineSoundGameTests {
         hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(disk, DiskSize.GB_500)));
         return pc;
+    }
+
+    /** Whether the client is told the drive is reading, read from what it is sent. */
+    private static boolean reading(final GameTestHelper helper, final MediaReaderBlockEntity drive) {
+        return drive.getUpdateTag(helper.getLevel().registryAccess()).getBoolean("Reading");
     }
 
     /** Whether the client is told the machine's hard drive is turning, read from what it is sent. */
