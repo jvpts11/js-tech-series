@@ -9,6 +9,7 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.audio.ComputingAudioDevices;
 import dev.jstech.computers.audio.ComputingSounds;
+import dev.jstech.computers.audio.SoundOutput;
 import dev.jstech.computers.audio.SpeakerSides;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.MonitorBlock;
@@ -40,8 +41,9 @@ import java.util.List;
  * A computer as the source of its system's sound: the device that plays it and where it comes out. A sound card, or
  * the sound built into a Standard board, plays out of the monitors linked to the machine and out of its speakers,
  * which add to the monitors. Two or more speakers play a stereo recording a side each, by where they stand against
- * the monitor; a Legacy speaker plays it coarser than a Standard one. With no monitor and no speaker there is only
- * the speaker inside the case, which beeps and plays no recording.
+ * the monitor; a Legacy speaker plays it coarser than a Standard one. The system chooses among them and sets how loud
+ * they play. With no monitor and no speaker there is only the speaker inside the case, which beeps and plays no
+ * recording.
  */
 final class ComputerAudioHost implements IAudioHost {
 
@@ -69,9 +71,10 @@ final class ComputerAudioHost implements IAudioHost {
                 ? ComputingAudioDevices.ON_BOARD : ComputingAudioDevices.PC_SPEAKER;
     }
 
+    /** The system's own volume, and nothing while it is muted. */
     @Override
     public float audioVolume() {
-        return 1.0F;
+        return machine.console().settings().soundLevel();
     }
 
     @Override
@@ -79,16 +82,23 @@ final class ComputerAudioHost implements IAudioHost {
         return outputs().stream().map(AudioOutput::position).toList();
     }
 
+    /** Where the sound comes out, by the output the system chose: its monitors, its speakers, or both. */
     @Override
     public List<AudioOutput> outputs() {
         final List<AudioOutput> outputs = new ArrayList<>();
-        for (final BlockPos monitor : monitors()) {
-            outputs.add(AudioOutput.at(Vec3.atCenterOf(monitor)));
-        }
+        final List<BlockPos> monitors = monitors();
         final List<SpeakerBlockEntity> speakers = speakers();
-        for (final SpeakerBlockEntity speaker : speakers) {
-            outputs.add(new AudioOutput(Vec3.atCenterOf(speaker.getBlockPos()),
-                    sideOf(speaker.getBlockPos(), speakers.size()), speaker.response()));
+        final SoundOutput choice = machine.console().settings().soundOutput();
+        if (choice.monitorsPlay(!monitors.isEmpty(), !speakers.isEmpty())) {
+            for (final BlockPos monitor : monitors) {
+                outputs.add(AudioOutput.at(Vec3.atCenterOf(monitor)));
+            }
+        }
+        if (choice.speakersPlay(!monitors.isEmpty(), !speakers.isEmpty())) {
+            for (final SpeakerBlockEntity speaker : speakers) {
+                outputs.add(new AudioOutput(Vec3.atCenterOf(speaker.getBlockPos()),
+                        sideOf(speaker.getBlockPos(), speakers.size()), speaker.response()));
+            }
         }
         if (outputs.isEmpty()) {
             outputs.add(AudioOutput.at(Vec3.atCenterOf(machine.getBlockPos())));

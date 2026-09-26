@@ -8,8 +8,10 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
+import dev.jstech.core.audio.Audio;
 import dev.jstech.core.audio.AudioOutput;
 import dev.jstech.core.audio.FrequencyResponse;
 import dev.jstech.core.audio.StereoSide;
@@ -28,7 +30,8 @@ import java.util.List;
 
 /**
  * The speakers: linked to a computer beside its monitor, each plays a side of a stereo recording by where it stands,
- * a Legacy one plays coarser than a Standard one, and a name is unique among one computer's speakers.
+ * a Legacy one plays coarser than a Standard one, and a name is unique among one computer's speakers. The system
+ * chooses whether its sound comes out of the monitor, the speakers or both, and how loud.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -104,6 +107,56 @@ public final class SpeakerGameTests {
                     second.takeAskedName();
                     helper.assertTrue(second.name().equals("Hall"), "but when the screen closes; got "
                             + second.name());
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void systemOutput_choosesTheMonitorOrTheSpeakers(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = computerWithMonitor(helper);
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        world.setBlock(NORTH_SPEAKER, ComputingModule.SPEAKER.get());
+        world.setBlock(SOUTH_SPEAKER, ComputingModule.SPEAKER.get());
+        helper.startSequence()
+                .thenExecuteAfter(LINKED, () -> {
+                    final AudioOutput monitor = AudioOutput.at(centre(helper, MONITOR));
+                    pc.console().settings().applySetting("output", "monitor");
+                    final List<AudioOutput> monitorOnly = pc.audioHost().outputs();
+                    helper.assertTrue(monitorOnly.equals(List.of(monitor)),
+                            "the monitor alone plays when the system chooses it; got " + monitorOnly);
+                    pc.console().settings().applySetting("output", "speakers");
+                    final List<AudioOutput> speakersOnly = pc.audioHost().outputs();
+                    helper.assertTrue(speakersOnly.size() == 2 && !speakersOnly.contains(monitor),
+                            "the two speakers play and the monitor does not; got " + speakersOnly);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void systemOutput_speakersWithNoneLinkedPlayOutOfTheMonitor(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = computerWithMonitor(helper);
+        helper.startSequence()
+                .thenExecuteAfter(LINKED, () -> {
+                    pc.console().settings().applySetting("output", "speakers");
+                    final List<AudioOutput> outputs = pc.audioHost().outputs();
+                    helper.assertTrue(outputs.equals(List.of(AudioOutput.at(centre(helper, MONITOR)))),
+                            "with no speaker to play it, the sound gives way to the monitor; got " + outputs);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void systemVolume_setsHowLoudAndMuteSilences(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = computerWithMonitor(helper);
+        helper.startSequence()
+                .thenExecuteAfter(LINKED, () -> {
+                    pc.console().settings().applySetting("volume", "25");
+                    helper.assertTrue(pc.audioHost().audioVolume() == 0.25F,
+                            "the system plays at a quarter; got " + pc.audioHost().audioVolume());
+                    pc.console().settings().applySetting("mute", "on");
+                    helper.assertTrue(pc.audioHost().audioVolume() == 0.0F, "muted, it plays nothing");
+                    helper.assertTrue(Audio.cue(helper.getLevel(), pc.audioHost(), SystemSound.STARTUP.cue()) == 0,
+                            "and a muted system raises no chime");
                 })
                 .thenSucceed();
     }

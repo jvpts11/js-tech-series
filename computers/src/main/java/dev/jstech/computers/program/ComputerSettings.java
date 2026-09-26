@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program;
 
+import dev.jstech.computers.audio.SoundOutput;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
@@ -85,6 +86,12 @@ public final class ComputerSettings {
     private int guiScale;
     /** Screen brightness 0..100. */
     private int brightness = 100;
+    /** How loud the system plays its sound, 0..100; the machine's own noises (its drives, its fans) are not its. */
+    private int volume = 100;
+    /** Whether the system's sound is muted, which keeps the volume for when it is turned back on. */
+    private boolean muted;
+    /** Where the system sends its sound. */
+    private SoundOutput soundOutput = SoundOutput.BOTH;
     /** The drive letter files save to by default. */
     private char defaultSaveDrive = 'C';
     /** Whether inserting removable media opens its folder automatically. */
@@ -154,6 +161,35 @@ public final class ComputerSettings {
 
     public void setBrightness(final int value) {
         this.brightness = clamp(value, 0, 100);
+    }
+
+    public int volume() {
+        return volume;
+    }
+
+    public void setVolume(final int value) {
+        this.volume = clamp(value, 0, 100);
+    }
+
+    public boolean muted() {
+        return muted;
+    }
+
+    public void setMuted(final boolean value) {
+        this.muted = value;
+    }
+
+    public SoundOutput soundOutput() {
+        return soundOutput;
+    }
+
+    public void setSoundOutput(final SoundOutput output) {
+        this.soundOutput = output == null ? SoundOutput.BOTH : output;
+    }
+
+    /** How loud the system's sound plays, 0 to 1: nothing while it is muted. */
+    public float soundLevel() {
+        return muted ? 0.0F : volume / 100.0F;
     }
 
     public char defaultSaveDrive() {
@@ -498,6 +534,9 @@ public final class ComputerSettings {
         lines.add(pad(SettingKey.DARKMODE) + (darkMode ? "on" : "off"));
         lines.add(pad(SettingKey.GUISCALE) + (guiScale == 0 ? DEFAULT_VALUE.with("75%").english() : guiScale + "%"));
         lines.add(pad(SettingKey.BRIGHTNESS) + brightness + "%");
+        lines.add(pad(SettingKey.VOLUME) + volume + "%");
+        lines.add(pad(SettingKey.MUTE) + (muted ? "on" : "off"));
+        lines.add(pad(SettingKey.OUTPUT) + soundOutput.id());
         lines.add(pad(SettingKey.SAVEDRIVE) + defaultSaveDrive + ":");
         lines.add(pad(SettingKey.AUTOOPEN) + (removableAutoOpen ? "on" : "off"));
         lines.add(pad(SettingKey.ACCENT)

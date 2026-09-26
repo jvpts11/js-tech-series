@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program;
 
+import dev.jstech.computers.audio.SoundOutput;
 import java.util.Locale;
 import java.util.Set;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +50,25 @@ public enum SettingKey {
             s.setBrightness(n);
         }
         return n != null;
+    }),
+
+    /** A percentage, with or without the sign after it. */
+    VOLUME("volume", (s, v) -> {
+        final Integer n = parseInt(v.endsWith("%") ? v.substring(0, v.length() - 1) : v);
+        if (n != null) {
+            s.setVolume(n);
+        }
+        return n != null;
+    }),
+
+    MUTE("mute", (s, v) -> choose(v, Set.of("on", "true", "yes"), Set.of("off", "false", "no"), s::setMuted)),
+
+    OUTPUT("output", (s, v) -> {
+        final SoundOutput output = SoundOutput.byId(v);
+        if (output != null) {
+            s.setSoundOutput(output);
+        }
+        return output != null;
     }),
 
     SAVEDRIVE("savedrive", (s, v) -> {

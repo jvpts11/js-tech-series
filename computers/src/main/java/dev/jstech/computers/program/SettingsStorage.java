@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program;
 
+import dev.jstech.computers.audio.SoundOutput;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,6 +33,9 @@ final class SettingsStorage {
         s.putBoolean("Clock12h", settings.clock12h());
         s.putInt("GuiScale", settings.guiScale());
         s.putInt("Brightness", settings.brightness());
+        s.putInt("Volume", settings.volume());
+        s.putBoolean("Muted", settings.muted());
+        s.putString("SoundOutput", settings.soundOutput().id());
         s.putString("SaveDrive", String.valueOf(settings.defaultSaveDrive()));
         s.putBoolean("RemovableAutoOpen", settings.removableAutoOpen());
         s.putBoolean("RemoteAllowed", settings.remoteAllowed());
@@ -80,6 +84,9 @@ final class SettingsStorage {
         settings.setClock12h(s.getBoolean("Clock12h"));
         settings.setGuiScale(s.getInt("GuiScale"));
         settings.setBrightness(s.contains("Brightness") ? s.getInt("Brightness") : 100);
+        settings.setVolume(s.contains("Volume") ? s.getInt("Volume") : 100);
+        settings.setMuted(s.getBoolean("Muted"));
+        settings.setSoundOutput(SoundOutput.byId(s.getString("SoundOutput")));
         final String saveDrive = s.getString("SaveDrive");
         if (!saveDrive.isEmpty()) {
             settings.setDefaultSaveDrive(saveDrive.charAt(0));

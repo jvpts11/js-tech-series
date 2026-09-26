@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program;
 
+import dev.jstech.computers.audio.SoundOutput;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,6 +51,51 @@ class ComputerSettingsTest {
     void setBrightness_clampsBelowZeroToZero() {
         settings.setBrightness(-40);
         assertEquals(0, settings.brightness());
+    }
+
+    @Test
+    void setVolume_holdsBetweenSilentAndFull() {
+        settings.setVolume(-5);
+        assertEquals(0, settings.volume());
+        settings.setVolume(150);
+        assertEquals(100, settings.volume());
+    }
+
+    @Test
+    void soundLevel_followsTheVolumeAndIsNothingWhileMuted() {
+        settings.setVolume(40);
+        assertEquals(0.4F, settings.soundLevel(), 1.0E-6F);
+        settings.setMuted(true);
+        assertEquals(0.0F, settings.soundLevel(), "muted plays nothing");
+        settings.setMuted(false);
+        assertEquals(0.4F, settings.soundLevel(), 1.0E-6F, "and turning it back on keeps the volume");
+    }
+
+    @Test
+    void applySetting_volumeTakesAPercentageWithOrWithoutItsSign() {
+        assertTrue(settings.applySetting("volume", "60%"));
+        assertEquals(60, settings.volume());
+        assertTrue(settings.applySetting("VOLUME", "35"));
+        assertEquals(35, settings.volume());
+        assertFalse(settings.applySetting("volume", "loud"));
+    }
+
+    @Test
+    void applySetting_muteReadsOnAndOff() {
+        assertTrue(settings.applySetting("mute", "on"));
+        assertTrue(settings.muted());
+        assertTrue(settings.applySetting("mute", "off"));
+        assertFalse(settings.muted());
+        assertFalse(settings.applySetting("mute", "maybe"));
+    }
+
+    @Test
+    void applySetting_outputTakesMonitorSpeakersOrBoth() {
+        assertEquals(SoundOutput.BOTH, settings.soundOutput(), "a fresh machine plays out of both");
+        assertTrue(settings.applySetting("output", "speakers"));
+        assertEquals(SoundOutput.SPEAKERS, settings.soundOutput());
+        assertFalse(settings.applySetting("output", "headphones"));
+        assertEquals(SoundOutput.SPEAKERS, settings.soundOutput(), "a refused value changes nothing");
     }
 
     @Test
@@ -313,5 +359,8 @@ class ComputerSettingsTest {
         assertTrue(joined.contains("accent"));
         assertTrue(joined.contains("taskbar"));
         assertTrue(joined.contains("left"));
+        assertTrue(joined.contains("volume"));
+        assertTrue(joined.contains("mute"));
+        assertTrue(joined.contains("output"));
     }
 }

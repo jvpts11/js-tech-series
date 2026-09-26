@@ -80,6 +80,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   screen, in its era's look: the name a program finds it by, taken when the screen closes and refused while another
   speaker of the same computer has it, whatever the case of its letters; the computer it plays for; the side it
   plays; and how well.
+- Each system keeps its own sound settings on its disk: how loud it plays, whether it is muted, and where its sound
+  goes, out of the monitors, the speakers or both (both on a fresh system). A choice with nothing linked to play it
+  gives way to what is linked, so a machine with somewhere to play is never silenced by it. On every system,
+  `config volume 60`, `config mute on` and `config output speakers` change them and `config` lists them. They
+  touch only what the system plays; a machine's own noises, its drives and fans, stay as they are.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.
