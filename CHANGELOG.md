@@ -79,7 +79,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   ToneWorks plays at 22 kHz with its bass and treble cut, a Cobble the whole range. Using a speaker opens its
   screen, in its era's look: the name a program finds it by, taken when the screen closes and refused while another
   speaker of the same computer has it, whatever the case of its letters; the computer it plays for; the side it
-  plays; and how well.
+  plays; and how well. Set down, stepped on or broken, a speaker sounds like metal, as the other devices do.
 - Each system keeps its own sound settings on its disk: how loud it plays, whether it is muted, and where its sound
   goes, out of the monitors, the speakers or both (both on a fresh system). A choice with nothing linked to play it
   gives way to what is linked, so a machine with somewhere to play is never silenced by it. On every system,

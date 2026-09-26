@@ -695,7 +695,7 @@ public final class ComputingModule {
                                                       final MapColor color) {
         final String face = "block/" + textures + "_";
         return CONTENT.block(id, properties -> new SpeakerBlock(properties, era))
-                .properties(properties -> properties.mapColor(color).strength(1.0F).sound(SoundType.WOOD))
+                .properties(properties -> properties.mapColor(color).strength(1.0F).sound(SoundType.METAL))
                 .look(IBlockLook.facing(new IBlockModel.SixFaces(id, face + "top", face + "top", face + "front",
                         face + "back", face + "side", face + "side", face + "side")))
                 .item().tab(DEVICES);
