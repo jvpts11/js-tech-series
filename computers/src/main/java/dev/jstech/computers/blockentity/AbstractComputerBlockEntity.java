@@ -366,6 +366,35 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     /**
+     * Shuts the machine down from inside its system: the system says goodbye in front of whoever is watching, and
+     * the power goes when it has finished. A machine with nothing running, or with a system of an age that had no
+     * such screen, goes dark at once.
+     */
+    @Override
+    public void shutDown() {
+        if (!(level instanceof ServerLevel server) || !isRunning()) {
+            setPowered(false);
+            return;
+        }
+        final int ticks = showShutdown(false);
+        if (ticks <= 0) {
+            power.setPowered(false);
+            return;
+        }
+        power.beginDown(server.getGameTime(), ticks, true);
+    }
+
+    @Override
+    public boolean poweringOff() {
+        return power.poweringOff();
+    }
+
+    @Override
+    public void finishShutdown() {
+        power.setPowered(false);
+    }
+
+    /**
      * Puts the system's own goodbye in front of whoever is watching, and answers how long it runs for.
      *
      * <p>Only the two ways a machine really stops: switched off, or started over. A machine that went dark

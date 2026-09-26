@@ -407,14 +407,17 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
      * Sends the client the system this machine is closing down, at the point it has reached.
      *
      * <p>The same screen as a system coming up and for the same reason: the machine is the one keeping the
-     * time, so a monitor opened half way through a restart joins the goodbye where it is rather than starting
-     * it over or missing it. Nothing dark follows it, because what follows it is the self-test.
+     * time, so a monitor opened half way through a restart or a shut-down joins the goodbye where it is rather than
+     * starting it over or missing it. After a restart the self-test follows it; after a shut-down the screen ends
+     * dark.
      */
     public static void openSystemDown(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                       final BlockPos owner, final IOsHost computer) {
+        // On its way off the system says so and the screen ends dark; on its way round it says it is restarting.
+        final boolean off = computer.poweringOff();
         PacketDistributor.sendToPlayer(player, new OpenSystemBootPayload(
                 owner, monitorPos, computer.downRemaining(), computer.downTotal(),
-                BootLines.shutdownFor(computer, true), false, splashOf(computer),
+                BootLines.shutdownFor(computer, !off), off, splashOf(computer),
                 identityOf(computer).goingDown()));
         openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.SYSTEM_BOOT);
     }

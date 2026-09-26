@@ -49,6 +49,14 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
     void setPowered(boolean on);
 
     /**
+     * Shuts the machine down from inside its system: whatever is running says goodbye first, and the power goes
+     * when it has finished. A host with nothing to show switches off at once, which is what the plain form does.
+     */
+    default void shutDown() {
+        setPowered(false);
+    }
+
+    /**
      * Whether an installation is waiting for this machine to finish testing itself.
      *
      * <p>A machine told to install something is not a machine booting its own system: it was restarted in

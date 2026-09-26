@@ -111,12 +111,11 @@ public final class BootRunner {
     }
 
     /**
-     * Carries a restart's closing-down along, and starts the self-test when the system has finished saying
-     * goodbye.
+     * Carries a closing-down along, and when the system has finished saying goodbye switches the machine off or
+     * starts its self-test, whichever the closing-down was for.
      *
-     * <p>A restart used to jump straight to the self-test, which meant the one screen a system of any age put
-     * up on its way down was the one screen a player could never see: switching a machine off showed it and
-     * restarting one did not, although restarting is the way anybody actually reboots a computer here.
+     * <p>A restart used to jump straight to the self-test, and a shut-down straight to the dark, which meant the
+     * one screen a system of any age put up on its way down was the one screen a player could never see.
      */
     private static void down(final IOsHost machine, final BootPhases phases, final ServerLevel level,
                              final BlockPos pos) {
@@ -130,7 +129,13 @@ public final class BootRunner {
         if (!phases.downDone(level.getGameTime())) {
             return;
         }
+        final boolean off = phases.poweringOff();
         phases.endDown();
+        if (off) {
+            // The goodbye was the last thing on the screen; the monitor goes dark on its own as the power goes.
+            machine.finishShutdown();
+            return;
+        }
         machine.setNeedsPost(true);
         /*
          * Timed here rather than on the next tick, so the screen put in front of whoever is watching joins a

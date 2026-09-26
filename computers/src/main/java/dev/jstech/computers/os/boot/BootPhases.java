@@ -46,13 +46,16 @@ public final class BootPhases {
     private long menuEndsAt;
 
     /*
-     * The machine closing its programs on its way to starting over. A restart is not a power cut: the system
-     * that is running gets to say goodbye first, and only when it has finished does the self-test begin. The
-     * clock is its own because nothing else about the machine is happening while it runs.
+     * The machine closing its programs on its way to starting over or to switching off. Neither is a power cut:
+     * the system that is running gets to say goodbye first, and only when it has finished does the self-test
+     * begin or the power go. The clock is its own because nothing else about the machine is happening while it
+     * runs.
      */
     private boolean goingDown;
     private long downEndsAt;
     private int downTicksTotal;
+    /** Whether the closing-down ends with the machine switched off rather than testing itself again. */
+    private boolean poweringOff;
 
     /* The system coming up, after the self-test and before the desktop or the prompt. */
     private boolean booting;
@@ -82,9 +85,14 @@ public final class BootPhases {
         }
     }
 
-    /** Whether the machine is closing down before starting over. */
+    /** Whether the machine is closing down before starting over or switching off. */
     public boolean goingDown() {
         return this.goingDown;
+    }
+
+    /** Whether the closing-down under way ends with the machine switched off. */
+    public boolean poweringOff() {
+        return this.goingDown && this.poweringOff;
     }
 
     /**
@@ -93,15 +101,21 @@ public final class BootPhases {
      * <p>Whatever it was standing at or bringing up is over: a machine on its way down is not on its way up.
      */
     public void beginDown(final long now, final int ticks) {
+        beginDown(now, ticks, false);
+    }
+
+    /** The same, ending with the machine switched off when {@code off}, and in a self-test otherwise. */
+    public void beginDown(final long now, final int ticks, final boolean off) {
         this.halted = false;
         endMenu();
         endBoot();
         this.goingDown = true;
+        this.poweringOff = off;
         this.downTicksTotal = Math.max(1, ticks);
         this.downEndsAt = now + this.downTicksTotal;
     }
 
-    /** Whether the machine has finished closing down and it is time to test itself again. */
+    /** Whether the machine has finished closing down and it is time to test itself again or to switch off. */
     public boolean downDone(final long now) {
         return this.goingDown && now >= this.downEndsAt;
     }
@@ -119,6 +133,7 @@ public final class BootPhases {
     /** Leaves the closing-down, whichever way it was left. */
     public void endDown() {
         this.goingDown = false;
+        this.poweringOff = false;
         this.downEndsAt = 0L;
         this.downTicksTotal = 0;
     }

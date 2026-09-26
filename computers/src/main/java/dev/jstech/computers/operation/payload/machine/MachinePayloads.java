@@ -209,23 +209,38 @@ public final class MachinePayloads {
             return;
         }
         /*
-         * The screen closes either way: a machine that just powered off has nothing to show, and
-         * a restart comes back through the power-on self-test like any other cold start.
+         * The desktop closes either way. Shutting down and restarting then put the system's own goodbye in front
+         * of the player who asked, since they sat at the desktop rather than at a monitor session the goodbye
+         * would reach by itself: the machine goes dark when it ends, or tests itself again.
          */
         player.closeContainer();
         switch (payload.action()) {
-            case MachinePowerPayload.ACTION_SHUTDOWN -> computer.setPowered(false);
+            case MachinePowerPayload.ACTION_SHUTDOWN -> {
+                computer.shutDown();
+                showGoodbye(computer, player, level, payload);
+            }
             case MachinePowerPayload.ACTION_RESTART -> {
-                computer.setPowered(false);
-                computer.setPowered(true);
+                computer.restart();
                 JscEvents.award(player, JscEvents.POWER_CYCLED);
-                MonitorBlock.openPost(
-                        player, level, payload.monitorPos(), payload.hostPos());
+                if (!showGoodbye(computer, player, level, payload)) {
+                    // A system with nothing to show on its way down starts over at once.
+                    MonitorBlock.openPost(player, level, payload.monitorPos(), payload.hostPos());
+                }
             }
             default -> {
                 // Logging off leaves the machine running; the screen is already closed.
             }
         }
+    }
+
+    /* The system's goodbye on the player's monitor, when it has one to say; true when it did. */
+    private static boolean showGoodbye(final IOsHost computer, final ServerPlayer player, final ServerLevel level,
+                                       final MachinePowerPayload payload) {
+        if (!computer.goingDown()) {
+            return false;
+        }
+        MonitorBlock.openSystemDown(player, level, payload.monitorPos(), payload.hostPos(), computer);
+        return true;
     }
 
     /*

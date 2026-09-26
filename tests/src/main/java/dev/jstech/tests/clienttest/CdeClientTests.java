@@ -314,6 +314,26 @@ public final class CdeClientTests {
     }
 
     /**
+     * Shut Down on the Exit dialog closes the desktop onto the system's goodbye, and the machine goes dark only when
+     * it has finished. It used to cut the power at once, dropping the player out of the computer with no screen.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void exit_shutDownSaysGoodbyeBeforeTheMachineGoesDark(final ClientTestContext ctx) {
+        atCde(ctx)
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).exitPoint()))
+                .thenWaitUntil(() -> desktop(ctx).powerDialogOpen(), SCREEN_WAIT, "EXIT to ask")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).exitDialogPoint(CdeExitLayout.SHUT_DOWN)))
+                .thenAwaitScreen(SystemBootScreen.class, SCREEN_WAIT)
+                .thenWaitUntilServer(level -> level.getBlockEntity(ctx.abs(MACHINE)) instanceof MainframeBlockEntity m
+                                && m.isRunning() && m.poweringOff(), SCREEN_WAIT,
+                        "the machine stays on while its system says goodbye", level -> "not on its way off")
+                .thenScreenshot(SETTLE, "cde-shutting-down")
+                .thenWaitUntilServer(level -> level.getBlockEntity(ctx.abs(MACHINE)) instanceof MainframeBlockEntity m
+                                && !m.isRunning(), BOOT_WAIT,
+                        "and switches off when the goodbye has ended", level -> "still running");
+    }
+
+    /**
      * The Terminal of a UNIX desktop is a UNIX terminal: it opens on the shell's own prompt and greets nobody,
      * and nothing in it speaks the way a Frames command prompt does.
      */

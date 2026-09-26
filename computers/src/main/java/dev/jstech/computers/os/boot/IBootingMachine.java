@@ -35,13 +35,22 @@ public interface IBootingMachine {
     }
 
     /**
-     * Whether the machine is closing its system down on its way to starting over.
+     * Whether the machine is closing its system down on its way to starting over or to switching off.
      *
      * <p>A phase of its own, and a monitor opened during it has to find the machine in it: without this, a
      * player who looked away mid-restart came back to the desktop of a system that was being closed.
      */
     default boolean goingDown() {
         return false;
+    }
+
+    /** Whether the closing-down under way ends with the machine switched off rather than starting over. */
+    default boolean poweringOff() {
+        return false;
+    }
+
+    /** The system has said goodbye on its way off: the power goes now, with nothing more to show. */
+    default void finishShutdown() {
     }
 
     /** How long that closing-down takes in all, so a screen joining it knows how far along it is. */

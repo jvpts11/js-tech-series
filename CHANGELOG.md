@@ -283,6 +283,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   System Monitor list each window by the name the desktop gives its program.
 
 ### Fixed
+- Shutting a computer down from its desktop shows the system's own goodbye, and the machine goes dark only when it
+  has finished; it used to cut the power at once, dropping the player out of the computer with no screen at all.
+  Restarting from the desktop shows the goodbye too before the self-test, as restarting from a prompt already did.
 - Typing a Server Router's name no longer closes its screen at the letter E, the key that closes an inventory:
   while the name is typed every key goes to it, and Escape leaves the field.
 - Saving an IQL file from the Network Management Studio to a full disk no longer fails to send its answer: the

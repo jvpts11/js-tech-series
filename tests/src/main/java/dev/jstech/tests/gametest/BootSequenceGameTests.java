@@ -324,6 +324,61 @@ public final class BootSequenceGameTests {
         helper.succeed();
     }
 
+    /**
+     * Shutting down from inside the system lets it say goodbye first, and the power goes only when it has.
+     *
+     * <p>The desktop's Shut Down used to cut the power where it stood, so the player was simply dropped out of the
+     * computer with no screen at all, while the same system said goodbye on the way to a restart.
+     */
+    @GameTest(template = ARENA, timeoutTicks = PATIENT)
+    public static void shutDown_saysGoodbyeBeforeThePowerGoes(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(WHERE);
+        computer.setNeedsPost(false);
+        final int closing = BootTiming.shutdownTicks(BootRunner.bootLength(computer));
+        computer.shutDown();
+        helper.assertTrue(computer.isRunning() && computer.goingDown() && computer.poweringOff(),
+                "a machine shutting down is still on, saying goodbye on its way off");
+        helper.assertTrue(MonitorBlock.entryFor(computer) == MonitorBlock.Entry.GOING_DOWN,
+                "and a monitor opened now joins the goodbye: " + MonitorBlock.entryFor(computer));
+        helper.startSequence()
+                .thenExecuteAfter(closing + 2, () -> {
+                    helper.assertFalse(computer.isRunning(), "once it has finished, the power has gone");
+                    helper.assertFalse(computer.goingDown(), "and nothing is closing down any more");
+                    helper.assertFalse(computer.needsPost() && computer.isManualOn(),
+                            "it switched off rather than starting over");
+                })
+                .thenSucceed();
+    }
+
+    /** A restart is still a restart: its goodbye ends in the self-test, not in the dark. */
+    @GameTest(template = ARENA)
+    public static void restart_isNotTakenForAShutDown(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(WHERE);
+        computer.setNeedsPost(false);
+        computer.restart();
+        helper.assertTrue(computer.goingDown() && !computer.poweringOff(),
+                "a restart closes down without switching off");
+        helper.succeed();
+    }
+
+    /** A machine of the earliest age has nothing to show on its way off, so it goes dark at once. */
+    @GameTest(template = ARENA)
+    public static void shutDown_withNothingToSay_goesDarkAtOnce(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = vintageWithDos(helper);
+        if (computer == null) {
+            return;
+        }
+        computer.setPowered(true);
+        computer.setNeedsPost(false);
+        computer.shutDown();
+        helper.assertFalse(computer.isRunning(), "nothing to say, so the power goes where it stands");
+        helper.succeed();
+    }
+
     /** A machine with no system has nothing to come up, and so nothing to say. */
     @GameTest(template = ARENA)
     public static void aMachineWithNoSystem_hasNoSequence(final GameTestHelper helper) {
