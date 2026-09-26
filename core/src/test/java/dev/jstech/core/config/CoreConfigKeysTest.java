@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.config;
 
+import dev.jstech.core.audio.media.MediaBalance;
 import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.operation.OperationBalance;
 import org.junit.jupiter.api.AfterEach;
@@ -22,19 +23,32 @@ class CoreConfigKeysTest {
     void restoreDefaults() {
         OperationBalance.reset();
         ExecutionBalance.reset();
+        MediaBalance.reset();
     }
 
     @Test
     void registry_whitelistsEveryBalanceKey() {
         final CoreConfigRegistry registry = CoreConfigKeys.registry();
-        assertEquals(9, registry.size());
+        assertEquals(12, registry.size());
         for (final String path : new String[] {
                 "balance.hdd_latency_ticks", "balance.ssd_latency_ticks", "balance.nvme_latency_ticks",
                 "balance.operation_waiting_timeout_ticks", "balance.operation_priority_aging_ticks",
                 "balance.subframe_efficiency_factor", "balance.orphaned_operations_expiry_hours",
-                "balance.program_machine_micros", "balance.program_server_micros"}) {
+                "balance.program_machine_micros", "balance.program_server_micros",
+                "media.download_kilobytes_per_second", "media.upload_kilobytes_per_second",
+                "media.max_file_megabytes"}) {
             assertTrue(registry.isWhitelisted(path), path + " must be whitelisted");
         }
+    }
+
+    @Test
+    void apply_pushesTheMediaLimitsIntoTheMediaBalance() {
+        CoreConfigKeys.apply(CoreConfigKeys.MEDIA_DOWNLOAD_KILOBYTES_PER_SECOND, 200);
+        CoreConfigKeys.apply(CoreConfigKeys.MEDIA_UPLOAD_KILOBYTES_PER_SECOND, 100);
+        CoreConfigKeys.apply(CoreConfigKeys.MEDIA_MAX_FILE_MEGABYTES, 0);
+        assertEquals(200 * 1024 / 20, MediaBalance.downloadBytesPerTick());
+        assertEquals(100 * 1024 / 20, MediaBalance.uploadBytesPerTick());
+        assertEquals(0L, MediaBalance.maxFileBytes(), "a server whose owner set none takes no recording at all");
     }
 
     @Test

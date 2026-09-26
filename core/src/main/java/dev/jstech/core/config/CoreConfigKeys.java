@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.config;
 
+import dev.jstech.core.audio.media.MediaBalance;
 import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.operation.OperationBalance;
 
@@ -23,6 +24,8 @@ public final class CoreConfigKeys {
     private static final CoreConfigRegistry REGISTRY = new CoreConfigRegistry();
 
     public static final String BALANCE = "balance";
+    /** The recordings players hear and bring: how much of the connection they take, and how big one may be. */
+    public static final String MEDIA = "media";
 
     private static final int MAX_LATENCY_TICKS = 200;
     private static final int MAX_TIMEOUT_TICKS = 72_000;
@@ -31,6 +34,9 @@ public final class CoreConfigKeys {
     private static final int MAX_MACHINE_MICROS = 1_000_000;
     private static final int MIN_SERVER_MICROS = 100;
     private static final int MAX_SERVER_MICROS = 10_000_000;
+    private static final int MIN_MEDIA_RATE = 16;
+    private static final int MAX_MEDIA_RATE = 65_536;
+    private static final int MAX_MEDIA_FILE_MEGABYTES = 1024;
 
     /** The seek latency of a hard disk drive, in ticks. */
     public static final ConfigKey<Integer> HDD_LATENCY_TICKS = REGISTRY.register(ConfigKey.ranged(
@@ -77,6 +83,21 @@ public final class CoreConfigKeys {
             List.of(BALANCE, "program_server_micros"), Integer.class,
             ExecutionBalance.DEFAULT_SERVER_MICROS, new ConfigKeyRange<>(MIN_SERVER_MICROS, MAX_SERVER_MICROS)));
 
+    /** Kilobytes a second the server sends each player of the recordings they are about to hear. */
+    public static final ConfigKey<Integer> MEDIA_DOWNLOAD_KILOBYTES_PER_SECOND = REGISTRY.register(ConfigKey.ranged(
+            List.of(MEDIA, "download_kilobytes_per_second"), Integer.class,
+            MediaBalance.DEFAULT_DOWNLOAD_KILOBYTES_PER_SECOND, new ConfigKeyRange<>(MIN_MEDIA_RATE, MAX_MEDIA_RATE)));
+
+    /** Kilobytes a second a player sends the server of a recording they bring. */
+    public static final ConfigKey<Integer> MEDIA_UPLOAD_KILOBYTES_PER_SECOND = REGISTRY.register(ConfigKey.ranged(
+            List.of(MEDIA, "upload_kilobytes_per_second"), Integer.class,
+            MediaBalance.DEFAULT_UPLOAD_KILOBYTES_PER_SECOND, new ConfigKeyRange<>(MIN_MEDIA_RATE, MAX_MEDIA_RATE)));
+
+    /** The biggest recording a player may bring, in megabytes; 0 takes none. */
+    public static final ConfigKey<Integer> MEDIA_MAX_FILE_MEGABYTES = REGISTRY.register(ConfigKey.ranged(
+            List.of(MEDIA, "max_file_megabytes"), Integer.class,
+            MediaBalance.DEFAULT_MAX_FILE_MEGABYTES, new ConfigKeyRange<>(0, MAX_MEDIA_FILE_MEGABYTES)));
+
     private CoreConfigKeys() {
     }
 
@@ -100,6 +121,10 @@ public final class CoreConfigKeys {
                     OperationBalance.setOrphanedOperationsExpiryHours((Integer) value);
             case "balance.program_machine_micros" -> ExecutionBalance.setMachineMicros((Integer) value);
             case "balance.program_server_micros" -> ExecutionBalance.setServerMicros((Integer) value);
+            case "media.download_kilobytes_per_second" ->
+                    MediaBalance.setDownloadKilobytesPerSecond((Integer) value);
+            case "media.upload_kilobytes_per_second" -> MediaBalance.setUploadKilobytesPerSecond((Integer) value);
+            case "media.max_file_megabytes" -> MediaBalance.setMaxFileMegabytes((Integer) value);
             default -> { }
         }
     }

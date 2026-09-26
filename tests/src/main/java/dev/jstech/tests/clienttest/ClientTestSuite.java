@@ -23,6 +23,7 @@ public final class ClientTestSuite {
             AudioClientTests.class,
             SoundMixerClientTests.class,
             MachineSoundClientTests.class,
+            MediaClientTests.class,
             SigmaEditorClientTests.class,
             CdeClientTests.class,
             CraftingChainClientTests.class,

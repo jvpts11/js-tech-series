@@ -97,6 +97,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the board's own sound or the speaker in the case), the speakers linked with the side each plays, and Test, which
   plays the system's startup sound the way the settings now have it. A speaker's screen says it is off while its
   computer plays only out of the monitor.
+- Recordings a server keeps, in J's Core, for any mod or addon to play. A player can bring a WAV or Ogg Vorbis file
+  from their own computer to the server, which keeps it once under a name taken from its bytes, however many bring
+  it, and reads its length and its title, artist and album from it. A recording played in the world is fetched by
+  the players near it, kept in a cache on their own computer (`jstech/media-cache`, 512 MB at most, the longest
+  unplayed going first) and heard out of the places it plays from, from wherever it has got to: a player who walks up
+  to one already playing hears it from there, and one who walks away lets it go. It can be paused, taken up again
+  and stopped. The server owner sets how fast recordings go to each player and come from them, and how big a file
+  the server takes, or that it takes none, under `media` in `jstech-balance.toml`.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.
