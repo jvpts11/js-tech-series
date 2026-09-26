@@ -17,6 +17,7 @@ import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.SoundCardSpec;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.IExpansionCardItem;
@@ -222,6 +223,10 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
              * until a board arrives.
              */
             return true;
+        }
+        if (card.cardSpec() instanceof SoundCardSpec sound && sound.era() != motherboard.spec().era()) {
+            // A sound card sits only on a board of its own age; a Standard board has its sound built in.
+            return false;
         }
         return card.cardSpec().bus().compatibleWith(motherboard.spec().pcieGeneration());
     }

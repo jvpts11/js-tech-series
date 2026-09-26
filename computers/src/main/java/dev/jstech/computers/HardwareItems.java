@@ -17,6 +17,7 @@ import dev.jstech.computers.hardware.PcieGeneration;
 import dev.jstech.computers.hardware.PsuSpec;
 import dev.jstech.computers.hardware.RamGeneration;
 import dev.jstech.computers.hardware.RamSpec;
+import dev.jstech.computers.hardware.SoundCardSpec;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.DiskItem;
@@ -24,6 +25,7 @@ import dev.jstech.computers.item.GpuItem;
 import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.item.PsuItem;
 import dev.jstech.computers.item.RamItem;
+import dev.jstech.computers.item.SoundCardItem;
 import dev.jstech.computers.registry.ComputingContent;
 import dev.jstech.core.content.ItemBuilder;
 import dev.jstech.core.tier.HardwareEra;
@@ -316,6 +318,28 @@ public final class HardwareItems {
                     CpuSocketId.LGA_2011, 1, Set.of(RamGeneration.DDR3), 8, PcieGeneration.PCIE_3_0, 7, 4, 4))
                     .named("MF EATX Standard Workstation Board").register();
 
+    /*
+     * The sound cards: one for each bus the boards of their era have. The two of an era sound the same and differ
+     * in the slot they take and how they look. The Vintage ones are really lo-fi, eight bits in one channel at 22
+     * kHz, making their notes by FM; the Legacy ones play recordings at CD quality from a bank of instruments.
+     * Standard boards have their sound built in, so there is no Standard card.
+     */
+    public static final DeferredItem<SoundCardItem> SOUND_CARD_TONE_BLASTER = soundCard("sound_card_tone_blaster",
+            new SoundCardSpec(HardwareEra.VINTAGE, PcieGeneration.ISA, 5, SoundCardSpec.Synthesis.FM, 9, 8, false,
+                    SoundCardSpec.SampleRate.KHZ_22)).named("Artisan Tone Blaster").register();
+    public static final DeferredItem<SoundCardItem> SOUND_CARD_TONE_BLASTER_128 =
+            soundCard("sound_card_tone_blaster_128", new SoundCardSpec(HardwareEra.VINTAGE, PcieGeneration.PCI, 5,
+                    SoundCardSpec.Synthesis.FM, 9, 8, false, SoundCardSpec.SampleRate.KHZ_22))
+                    .named("Artisan Tone Blaster 128").register();
+    public static final DeferredItem<SoundCardItem> SOUND_CARD_TONE_BLASTER_LIVE =
+            soundCard("sound_card_tone_blaster_live", new SoundCardSpec(HardwareEra.LEGACY, PcieGeneration.AGP_8X, 8,
+                    SoundCardSpec.Synthesis.WAVETABLE, 32, 16, true, SoundCardSpec.SampleRate.KHZ_44))
+                    .named("Artisan Tone Blaster Live").register();
+    public static final DeferredItem<SoundCardItem> SOUND_CARD_TONE_BLASTER_HI_FI =
+            soundCard("sound_card_tone_blaster_hi_fi", new SoundCardSpec(HardwareEra.LEGACY, PcieGeneration.PCIE_1_0,
+                    10, SoundCardSpec.Synthesis.WAVETABLE, 32, 16, true, SoundCardSpec.SampleRate.KHZ_44))
+                    .named("Artisan Tone Blaster Hi-Fi").register();
+
     private HardwareItems() {
     }
 
@@ -345,6 +369,10 @@ public final class HardwareItems {
 
     private static ItemBuilder<GpuItem> gpu(final String id, final GpuSpec spec) {
         return declare(id, properties -> new GpuItem(properties, spec));
+    }
+
+    private static ItemBuilder<SoundCardItem> soundCard(final String id, final SoundCardSpec spec) {
+        return declare(id, properties -> new SoundCardItem(properties, spec));
     }
 
     private static ItemBuilder<PsuItem> psu(final String id, final PsuSpec spec) {

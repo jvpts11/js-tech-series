@@ -129,4 +129,35 @@ class PerEraBuildTest {
         final RamSpec ddr2 = new RamSpec(HardwareEra.LEGACY, RamGeneration.DDR2, 512, 12);
         assertFalse(build(standardBoard(), standardCpu(), ddr2, psu(650)).isPowered());
     }
+
+    // Sound cards
+
+    private static SoundCardSpec soundCard(final HardwareEra era, final PcieGeneration bus) {
+        return new SoundCardSpec(era, bus, 5, SoundCardSpec.Synthesis.FM, 9, 8, false,
+                SoundCardSpec.SampleRate.KHZ_22);
+    }
+
+    private static ComputerBuild buildWithCard(final MotherboardSpec board, final CpuSpec cpu, final RamSpec ram,
+                                               final IExpansionCardSpec card) {
+        return new ComputerBuild(board, List.of(cpu), List.of(card), List.of(ram), psu(650));
+    }
+
+    @Test
+    void vintageBuild_withItsOwnPciSoundCard_isPowered() {
+        assertTrue(buildWithCard(vintageBoard(), vintageCpu(), vintageRam(),
+                soundCard(HardwareEra.VINTAGE, PcieGeneration.PCI)).isPowered());
+    }
+
+    @Test
+    void legacyBuild_withItsOwnPcieSoundCard_isPowered() {
+        assertTrue(buildWithCard(legacyBoard(), legacyCpu(), legacyRam(),
+                soundCard(HardwareEra.LEGACY, PcieGeneration.PCIE_1_0)).isPowered());
+    }
+
+    @Test
+    void standardBuild_withALegacySoundCard_isNotPowered() {
+        // The bus fits, the era does not: a Standard board has its sound built in and takes no card.
+        assertFalse(buildWithCard(standardBoard(), standardCpu(), standardRam(),
+                soundCard(HardwareEra.LEGACY, PcieGeneration.PCIE_1_0)).isPowered());
+    }
 }

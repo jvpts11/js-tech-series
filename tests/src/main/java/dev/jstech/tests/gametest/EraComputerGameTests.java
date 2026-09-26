@@ -14,14 +14,17 @@ import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * Verifies era-based hardware enforcement for the Vintage and Legacy Personal Computers:
- * a mismatched CPU socket prevents boot, a matching socket allows it, and breaking either
- * block drops the era-correct BlockItem back into the world.
+ * a mismatched CPU socket prevents boot, a matching socket allows it, breaking either
+ * block drops the era-correct BlockItem back into the world, and a sound card takes only a slot of
+ * its own era's board and bus.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -167,5 +170,39 @@ public final class EraComputerGameTests {
                 .thenExecuteAfter(SETTLE, () -> helper.assertItemEntityPresent(
                         ComputingModule.LEGACY_PERSONAL_COMPUTER.item(), pos, 3.0))
                 .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void soundCard_takesOnlyASlotOfItsOwnEraAndBus(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity vintage = withBoard(helper, new BlockPos(1, 2, 1),
+                ComputingModule.VINTAGE_PERSONAL_COMPUTER.get(), HardwareItems.MOTHERBOARD_BABYAT_VINTAGE.get());
+        final PersonalComputerBlockEntity legacy = withBoard(helper, new BlockPos(3, 2, 1),
+                ComputingModule.LEGACY_PERSONAL_COMPUTER.get(), HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get());
+        final PersonalComputerBlockEntity standard = withBoard(helper, new BlockPos(5, 2, 1),
+                ComputingModule.PERSONAL_COMPUTER.get(), ComputingModule.MOTHERBOARD_ATX_P.get());
+        final ItemStack isa = new ItemStack(HardwareItems.SOUND_CARD_TONE_BLASTER.get());
+        final ItemStack pci = new ItemStack(HardwareItems.SOUND_CARD_TONE_BLASTER_128.get());
+        final ItemStack agp = new ItemStack(HardwareItems.SOUND_CARD_TONE_BLASTER_LIVE.get());
+        final ItemStack pcie = new ItemStack(HardwareItems.SOUND_CARD_TONE_BLASTER_HI_FI.get());
+        final int card = PersonalComputerBlockEntity.GPU_SLOTS_START;
+
+        helper.assertTrue(vintage.isValidForSlot(card, isa), "the ISA card fits the Vintage ISA board");
+        helper.assertFalse(vintage.isValidForSlot(card, pci), "the PCI card does not fit an ISA board");
+        helper.assertFalse(vintage.isValidForSlot(card, agp), "a Legacy card does not fit a Vintage board");
+        helper.assertTrue(legacy.isValidForSlot(card, pcie), "the PCIe card fits the Legacy PCIe board");
+        helper.assertFalse(legacy.isValidForSlot(card, agp), "the AGP card does not fit a PCIe board");
+        helper.assertFalse(standard.isValidForSlot(card, pcie),
+                "a Standard board has its sound built in and takes no card, though the bus would fit");
+        helper.succeed();
+    }
+
+    private static PersonalComputerBlockEntity withBoard(final GameTestHelper helper, final BlockPos pos,
+                                                         final Block block, final Item board) {
+        helper.setBlock(pos, block);
+        if (!(helper.getBlockEntity(pos) instanceof PersonalComputerBlockEntity be)) {
+            throw new IllegalStateException("no personal computer at " + pos);
+        }
+        be.getHardware().setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT, new ItemStack(board));
+        return be;
     }
 }

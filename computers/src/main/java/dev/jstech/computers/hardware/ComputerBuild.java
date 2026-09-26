@@ -40,6 +40,8 @@ public record ComputerBuild(MotherboardSpec motherboard,
             TextKey.of("jsc.build.too_many_cards", "too many PCIe cards: %s installed, %s PCIe slots");
     private static final TextKey WRONG_BUS = TextKey.of("jsc.build.wrong_bus",
             "expansion card bus family %s is not compatible with board bus %s");
+    private static final TextKey SOUND_CARD_ERA = TextKey.of("jsc.build.sound_card_era",
+            "a sound card of the %s era does not sit on a board of the %s era");
     private static final TextKey TOO_MANY_RAM =
             TextKey.of("jsc.build.too_many_ram", "too many RAM modules: %s installed, %s slots");
     private static final TextKey WRONG_RAM =
@@ -238,6 +240,9 @@ public record ComputerBuild(MotherboardSpec motherboard,
         for (final IExpansionCardSpec card : pcieCards) {
             if (!card.bus().compatibleWith(motherboard.pcieGeneration())) {
                 problems.add(WRONG_BUS.with(card.bus().busFamily(), motherboard.pcieGeneration().busFamily()));
+            }
+            if (card instanceof SoundCardSpec sound && sound.era() != motherboard.era()) {
+                problems.add(SOUND_CARD_ERA.with(sound.era().named(), motherboard.era().named()));
             }
         }
 

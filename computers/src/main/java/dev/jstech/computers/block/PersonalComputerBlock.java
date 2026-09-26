@@ -9,7 +9,9 @@ package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.audio.SoundHardwareTexts;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.item.HardwareTooltip;
 import dev.jstech.computers.menu.PersonalComputerMenu;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.IRearFacingDataPort;
@@ -18,14 +20,19 @@ import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
+import java.util.List;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -75,6 +82,14 @@ public class PersonalComputerBlock extends HorizontalDirectionalBlock
     @Override
     protected MapCodec<? extends PersonalComputerBlock> codec() {
         return CODEC;
+    }
+
+    /** Where the machine's sound comes from, and its era. */
+    @Override
+    public void appendHoverText(final ItemStack stack, final Item.TooltipContext context,
+                                final List<Component> tooltip, final TooltipFlag flag) {
+        SoundHardwareTexts.appendComputer(tooltip, era());
+        HardwareTooltip.appendEra(tooltip, era());
     }
 
     @Override

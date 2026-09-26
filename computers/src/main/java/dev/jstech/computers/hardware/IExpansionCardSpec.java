@@ -13,7 +13,7 @@ package dev.jstech.computers.hardware;
  * <p>The card kinds are a closed set, so this is sealed to exactly the three concrete specs. That lets callers rely on {@link #kind()} being exhaustive and keeps a stray external implementation from claiming a slot.
  */
 public sealed interface IExpansionCardSpec
-        permits GpuSpec, CraftingCardSpec, PhiCoprocessorSpec, ClusterInterfaceCardSpec {
+        permits GpuSpec, CraftingCardSpec, PhiCoprocessorSpec, ClusterInterfaceCardSpec, SoundCardSpec {
 
     PcieGeneration bus();
 

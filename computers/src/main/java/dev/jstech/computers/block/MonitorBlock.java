@@ -13,8 +13,10 @@ import dev.jstech.computers.PeripheralLinks;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.JscTriggers;
 import dev.jstech.computers.advancement.MachineOperators;
+import dev.jstech.computers.audio.SoundHardwareTexts;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.item.HardwareTooltip;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
@@ -71,7 +73,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -119,6 +123,14 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
     @Override
     public HardwareEra chassisEra() {
         return era();
+    }
+
+    /** That its computer's sound comes out of it, and its era. */
+    @Override
+    public void appendHoverText(final ItemStack stack, final Item.TooltipContext context,
+                                final List<Component> tooltip, final TooltipFlag flag) {
+        SoundHardwareTexts.appendMonitor(tooltip);
+        HardwareTooltip.appendEra(tooltip, era());
     }
 
     @Override

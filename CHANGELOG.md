@@ -57,6 +57,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   Encoder, a USB drive is plugged into and pulled out of a Dock Station, and a Floppy Drive's head is heard
   stepping while a system or a program installs from its disk. Each running server in a rack is heard by its fans,
   and five or more running close together, in any number of racks, are heard as the hum of the room instead.
+- Four sound cards, one for each bus of the Vintage and Legacy boards: the Artisan Tone Blaster (ISA) and Tone
+  Blaster 128 (PCI), which make their notes by FM and play recordings at 8 bits in mono at 22 kHz, and the Tone
+  Blaster Live (AGP) and Tone Blaster Hi-Fi (PCIe), wavetable cards playing recordings at 16 bits in stereo at
+  44.1 kHz. A sound card sits only on a board of its own era, in a slot of that board's bus; a Standard board has
+  its sound built in, and its tooltip says so. A computer's tooltip says whether its case only beeps or its board
+  plays everything, and a monitor's that its computer's sound comes out of it.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.

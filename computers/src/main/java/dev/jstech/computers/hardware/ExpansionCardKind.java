@@ -19,5 +19,8 @@ public enum ExpansionCardKind {
     PHI,
 
     /** A cluster interface: what lets a Cluster Management Computer address racks over the network. */
-    CLUSTER_INTERFACE
+    CLUSTER_INTERFACE,
+
+    /** A sound card: what a Vintage or Legacy computer plays its sound through, beyond the beeps of its case. */
+    SOUND
 }

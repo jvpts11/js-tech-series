@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest;
 
+import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.MinSpecTooltip;
@@ -80,6 +81,40 @@ public final class HardwareTooltipGameTests {
         assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_VERTEX_700.get()), "x86, 32-bit");
         assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_APEX_5_4590.get()), "x86-64, 64-bit");
         helper.succeed();
+    }
+
+    /**
+     * A sound card says what it plays and the slot it fits; the case, the board and the monitor say where the
+     * sound comes from.
+     */
+    @GameTest(template = ARENA)
+    public static void soundTooltips_sayWhatPlaysAndWhereItFits(final GameTestHelper helper) {
+        final ItemStack isa = new ItemStack(HardwareItems.SOUND_CARD_TONE_BLASTER.get());
+        assertTooltipHas(helper, isa, "FM synthesis, 9 voices");
+        assertTooltipHas(helper, isa, "Recordings: 8-bit mono, 22 kHz");
+        assertTooltipHas(helper, isa, "Fits an ISA slot");
+        assertEraColour(helper, isa, HardwareEra.VINTAGE);
+        final ItemStack pcie = new ItemStack(HardwareItems.SOUND_CARD_TONE_BLASTER_HI_FI.get());
+        assertTooltipHas(helper, pcie, "Wavetable, 32 voices");
+        assertTooltipHas(helper, pcie, "Recordings: 16-bit stereo, 44.1 kHz");
+        assertTooltipHas(helper, pcie, "Fits a PCIe slot");
+        assertTooltipHas(helper, new ItemStack(ComputingModule.MOTHERBOARD_ATX_P.get()), "On-board audio");
+        assertTooltipLacks(helper, new ItemStack(HardwareItems.MOTHERBOARD_BABYAT_VINTAGE.get()), "On-board audio");
+        assertTooltipHas(helper, new ItemStack(ComputingModule.VINTAGE_PERSONAL_COMPUTER.item()),
+                "PC speaker: beeps only");
+        assertTooltipHas(helper, new ItemStack(ComputingModule.PERSONAL_COMPUTER.item()),
+                "Sound on the board: plays everything");
+        assertTooltipHas(helper, new ItemStack(ComputingModule.MONITOR.item()), "Plays the sound of its computer");
+        helper.succeed();
+    }
+
+    private static void assertTooltipLacks(final GameTestHelper helper, final ItemStack stack, final String text) {
+        final List<Component> tooltip = stack.getTooltipLines(Item.TooltipContext.of(helper.getLevel()), null,
+                TooltipFlag.NORMAL);
+        for (final Component line : tooltip) {
+            helper.assertFalse(line.getString().contains(text),
+                    stack.getHoverName().getString() + " should not say '" + text + "'");
+        }
     }
 
     private static void assertTooltipHas(final GameTestHelper helper, final ItemStack stack, final String text) {
