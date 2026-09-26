@@ -23,16 +23,30 @@ class CdeStyleLayoutTest {
 
     @Test
     void everyWindow_isCleanWithEverythingItLists() {
-        assertClean(CdeStyleLayout.stripLayout(2));
+        assertClean(CdeStyleLayout.stripLayout(3));
         assertClean(CdeStyleLayout.colorLayout(CdeScheme.ALL.size()));
         assertClean(CdeStyleLayout.backdropLayout(CdeBackdrop.values().length));
+        assertClean(CdeStyleLayout.audioLayout());
     }
 
     @Test
     void everyWindow_fitsTheWorkAreaOfTheGlass() {
         assertTrue(CdeStyleLayout.BACKDROP_H + CdeStyleLayout.FRAME_H <= WORK_H);
         assertTrue(CdeStyleLayout.COLOR_H + CdeStyleLayout.FRAME_H <= WORK_H);
+        assertTrue(CdeStyleLayout.AUDIO_H + CdeStyleLayout.FRAME_H <= WORK_H);
         assertTrue(CdeStyleLayout.BACKDROP_W + CdeStyleLayout.FRAME_W <= 384);
+    }
+
+    @Test
+    void audio_keepsItsOutputsAboveTheRuleAndItsButtonsApart() {
+        final Rect speakers = CdeStyleLayout.audioOutput(1);
+        assertTrue(speakers.y() + speakers.h() <= CdeStyleLayout.audioRule(), "the outputs end above the rule");
+        assertTrue(speakers.x() + speakers.w() <= CdeStyleLayout.AUDIO_W, "the second output stays inside");
+        final Rect ok = CdeStyleLayout.audioButton(0);
+        final Rect cancel = CdeStyleLayout.audioButton(1);
+        assertTrue(CdeStyleLayout.audioRule() < ok.y() - 2, "the rule runs above the buttons' rings");
+        assertEquals(0, CdeStyleLayout.audioButtonAt(ok.x() + 2, ok.y() + 2));
+        assertEquals(1, CdeStyleLayout.audioButtonAt(cancel.x() + 2, cancel.y() + 2));
     }
 
     @Test
@@ -68,12 +82,13 @@ class CdeStyleLayoutTest {
     }
 
     @Test
-    void pageAt_findsBothPagesOfTheStrip() {
-        for (int i = 0; i < 2; i++) {
+    void pageAt_findsEveryPageOfTheStrip() {
+        for (int i = 0; i < 3; i++) {
             final Rect r = CdeStyleLayout.page(i);
-            assertEquals(i, CdeStyleLayout.pageAt(r.x() + r.w() / 2.0, r.y() + r.h() / 2.0, 2));
+            assertEquals(i, CdeStyleLayout.pageAt(r.x() + r.w() / 2.0, r.y() + r.h() / 2.0, 3));
+            assertTrue(r.x() + r.w() <= CdeStyleLayout.STRIP_W, "page " + i + " stays on the strip");
         }
-        assertEquals(-1, CdeStyleLayout.pageAt(1, 1, 2));
+        assertEquals(-1, CdeStyleLayout.pageAt(1, 1, 3));
     }
 
     private static void assertClean(final GuiLayout l) {

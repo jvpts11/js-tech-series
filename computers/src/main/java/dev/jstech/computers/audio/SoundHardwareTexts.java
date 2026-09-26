@@ -28,7 +28,8 @@ public final class SoundHardwareTexts {
 
     private static final TextKey MONITOR_PLAYS =
             TextKey.of("jsc.audio.monitor_plays", "Plays the sound of its computer");
-    private static final TextKey PC_SPEAKER_ONLY = TextKey.of("jsc.audio.pc_speaker_only", "PC speaker: beeps only");
+    /** A case with nothing but the speaker inside it. */
+    public static final TextKey PC_SPEAKER_ONLY = TextKey.of("jsc.audio.pc_speaker_only", "PC speaker: beeps only");
     private static final TextKey SOUND_ON_BOARD =
             TextKey.of("jsc.audio.sound_on_board", "Sound on the board: plays everything");
 

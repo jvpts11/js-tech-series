@@ -36,6 +36,7 @@ import dev.jstech.computers.operation.payload.RenamePcPayload;
 import dev.jstech.computers.operation.payload.RenameServerPayload;
 import dev.jstech.computers.operation.payload.RenameSpeakerPayload;
 import dev.jstech.computers.operation.payload.SystemErrorSoundPayload;
+import dev.jstech.computers.operation.payload.TestSoundPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
@@ -52,7 +53,7 @@ import java.util.List;
 
 /**
  * The payloads that act on a machine itself: its power, remote control, the KVM switch, the power of a rack bay,
- * renaming a computer, a server or a speaker, and the sound of an error box on its desktop.
+ * renaming a computer, a server or a speaker, the sound of an error box on its desktop, and trying its sound.
  */
 public final class MachinePayloads {
 
@@ -69,6 +70,8 @@ public final class MachinePayloads {
                 ComputerAccess.machine(MachinePowerPayload::hostPos), MachinePayloads::handleMachinePower);
         ComputerAccess.accept(registrar, SystemErrorSoundPayload.TYPE, SystemErrorSoundPayload.STREAM_CODEC,
                 ComputerAccess.machine(SystemErrorSoundPayload::hostPos), MachinePayloads::handleSystemErrorSound);
+        ComputerAccess.accept(registrar, TestSoundPayload.TYPE, TestSoundPayload.STREAM_CODEC,
+                ComputerAccess.machine(TestSoundPayload::hostPos), MachinePayloads::handleTestSound);
         ComputerAccess.accept(registrar, RenameSpeakerPayload.TYPE, RenameSpeakerPayload.STREAM_CODEC,
                 ComputerAccess.menu(SpeakerMenu.class, SpeakerMenu::speakerPos, RenameSpeakerPayload::speakerPos),
                 MachinePayloads::handleRenameSpeaker);
@@ -106,6 +109,13 @@ public final class MachinePayloads {
                                                final ServerLevel level) {
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost host) {
             host.systemSound(level, SystemSound.ERROR);
+        }
+    }
+
+    private static void handleTestSound(final TestSoundPayload payload, final ServerPlayer player,
+                                        final ServerLevel level) {
+        if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost host) {
+            host.systemSound(level, SystemSound.STARTUP);
         }
     }
 

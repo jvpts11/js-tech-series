@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.core.audio.StereoSide;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextCodecs;
 import dev.jstech.core.text.TextHolder;
@@ -24,7 +25,8 @@ import java.util.List;
 /**
  * Server to client: the full state the Settings app draws: the editable per-computer knobs, the
  * read-only hardware/OS specs (System &amp; Display pages), the installed programs (Programs page),
- * the per-disk usage (Storage page) and the memory ledger (what holds RAM, for the System Monitor).
+ * the per-disk usage (Storage page), the memory ledger (what holds RAM, for the System Monitor) and the system's
+ * sound (the Sound page, and the volume control on the panel).
  * Sent in reply to {@link RequestSettingsPayload} and after every {@link SetSettingPayload}.
  *
  * <p>The stream codec is written by hand because the payload has more fields than
@@ -60,8 +62,28 @@ public record SettingsSnapshotPayload(
         int ramUsedMb,
         List<RamUse> ramUses,
         List<ShareRow> shares,
-        boolean remoteAllowed
+        boolean remoteAllowed,
+        Sound sound
 ) implements CustomPacketPayload {
+
+    /**
+     * The system's sound, for the Sound page and the panel's volume control: how loud it plays, whether it is muted,
+     * where it goes (a {@code SoundOutput} id), what plays it, whether that plays recordings at all rather than only
+     * beeps, and the speakers linked to the machine.
+     */
+    public record Sound(int volume, boolean muted, String output, Text hardware, boolean plays,
+                        List<SpeakerRow> speakers) {
+
+        /** A machine with no sound hardware of its own to set. */
+        public static final Sound NONE = new Sound(100, false, "both", Text.EMPTY, false, List.of());
+
+        public Sound {
+            speakers = List.copyOf(speakers);
+        }
+    }
+
+    /** One speaker linked to the machine: the name a program finds it by, empty while it has none, and its side. */
+    public record SpeakerRow(String name, StereoSide side) {}
 
     /** One disk's usage for the Storage page. */
     public record DiskUse(Text label, long capMb, long usedMb, boolean system) {}
@@ -101,6 +123,7 @@ public record SettingsSnapshotPayload(
         installed = List.copyOf(installed);
         ramUses = List.copyOf(ramUses);
         shares = List.copyOf(shares);
+        sound = sound == null ? Sound.NONE : sound;
     }
 
     @Override
@@ -110,6 +133,8 @@ public record SettingsSnapshotPayload(
 
     /** The most characters a label travels with; a longer one is cut, never refused. */
     public static final int LABEL_MAX = 48;
+    /** The longest name a speaker takes. */
+    private static final int SPEAKER_NAME_MAX = 32;
 
     /*
      * Every string is cut to its cap before it is written. A cap on writeUtf is a hard failure that
@@ -167,6 +192,18 @@ public record SettingsSnapshotPayload(
             buf.writeBoolean(s.writable());
         }
         buf.writeBoolean(p.remoteAllowed);
+        final Sound sound = p.sound;
+        buf.writeVarInt(sound.volume());
+        buf.writeBoolean(sound.muted());
+        buf.writeUtf(clip(sound.output(), 16), 16);
+        TextCodecs.STREAM_CODEC.encode(buf, sound.hardware());
+        buf.writeBoolean(sound.plays());
+        buf.writeVarInt(Math.min(sound.speakers().size(), MAX));
+        for (int i = 0; i < sound.speakers().size() && i < MAX; i++) {
+            final SpeakerRow speaker = sound.speakers().get(i);
+            buf.writeUtf(clip(speaker.name(), SPEAKER_NAME_MAX), SPEAKER_NAME_MAX);
+            buf.writeVarInt(speaker.side().id());
+        }
     }
 
     private static String clip(final String text, final int max) {
@@ -219,9 +256,19 @@ public record SettingsSnapshotPayload(
             shares.add(new ShareRow(buf.readUtf(48), buf.readUtf(128), buf.readBoolean()));
         }
         final boolean remoteAllowed = buf.readBoolean();
+        final int volume = buf.readVarInt();
+        final boolean muted = buf.readBoolean();
+        final String output = buf.readUtf(16);
+        final Text hardware = TextCodecs.STREAM_CODEC.decode(buf);
+        final boolean plays = buf.readBoolean();
+        final int speakerCount = Math.min(buf.readVarInt(), MAX);
+        final List<SpeakerRow> speakers = new ArrayList<>(speakerCount);
+        for (int i = 0; i < speakerCount; i++) {
+            speakers.add(new SpeakerRow(buf.readUtf(SPEAKER_NAME_MAX), StereoSide.byId(buf.readVarInt())));
+        }
         return new SettingsSnapshotPayload(pos, wallpaper, computerName, accent, clock12h, guiScale, brightness,
                 saveDrive, removableAutoOpen, themePreset, taskbarCentered, darkMode, netshare, cpuLabel, cpuMhz,
                 cpuArch, ramMb, vramMb, osLabel, platform, installed, disks, ramUsedMb, ramUses, shares,
-                remoteAllowed);
+                remoteAllowed, new Sound(volume, muted, output, hardware, plays, speakers));
     }
 }

@@ -146,8 +146,7 @@ public final class SpeakerScreen extends AbstractContainerScreen<SpeakerMenu> {
                 fit(computer, TILE_W - 6), linked ? JsTechTheme.accent2() : JsTechTheme.dim());
         final int channel = menu.channel();
         JsTechTheme.tileTextS(g, font, CHANNEL_X, TILE_Y, GameText.resolve(SpeakerTexts.CHANNEL),
-                fit(GameText.resolve(channelText(channel)), TILE_W - 6),
-                channel == SpeakerBlockEntity.CHANNEL_NONE ? JsTechTheme.dim() : JsTechTheme.green());
+                fit(GameText.resolve(channelText(channel)), TILE_W - 6), channelColor(channel));
         JsTechTheme.tileTextS(g, font, NAME_X, PLAYS_Y, GameText.resolve(SpeakerTexts.PLAYS),
                 fit(GameText.resolve(legacy ? SpeakerTexts.PLAYS_LEGACY : SpeakerTexts.PLAYS_WHOLE), PLAYS_W - 6),
                 JsTechTheme.text());
@@ -198,7 +197,17 @@ public final class SpeakerScreen extends AbstractContainerScreen<SpeakerMenu> {
             case SpeakerBlockEntity.CHANNEL_BOTH -> SpeakerTexts.CHANNEL_BOTH;
             case SpeakerBlockEntity.CHANNEL_LEFT -> SpeakerTexts.CHANNEL_LEFT;
             case SpeakerBlockEntity.CHANNEL_RIGHT -> SpeakerTexts.CHANNEL_RIGHT;
+            case SpeakerBlockEntity.CHANNEL_OFF -> SpeakerTexts.CHANNEL_OFF;
             default -> SpeakerTexts.CHANNEL_NONE;
+        };
+    }
+
+    /* Green while it plays, amber while its system leaves it out, dim while it plays for nothing. */
+    private static int channelColor(final int channel) {
+        return switch (channel) {
+            case SpeakerBlockEntity.CHANNEL_NONE -> JsTechTheme.dim();
+            case SpeakerBlockEntity.CHANNEL_OFF -> JsTechTheme.amber();
+            default -> JsTechTheme.green();
         };
     }
 }

@@ -31,6 +31,8 @@ final class SpeakerTexts {
     static final TextKey CHANNEL_BOTH = TextKey.of("jsc.speaker.channel_both", "Mono");
     static final TextKey CHANNEL_LEFT = TextKey.of("jsc.speaker.channel_left", "Left, by position");
     static final TextKey CHANNEL_RIGHT = TextKey.of("jsc.speaker.channel_right", "Right, by position");
+    /** Linked, but its computer's system plays only out of the monitor. */
+    static final TextKey CHANNEL_OFF = TextKey.of("jsc.speaker.channel_off", "Off: monitor only");
     static final TextKey PLAYS = TextKey.of("jsc.speaker.plays", "PLAYS");
     static final TextKey PLAYS_LEGACY = TextKey.of("jsc.speaker.plays_legacy", "22 kHz, bass and treble cut");
     static final TextKey PLAYS_WHOLE = TextKey.of("jsc.speaker.plays_whole", "The whole range");

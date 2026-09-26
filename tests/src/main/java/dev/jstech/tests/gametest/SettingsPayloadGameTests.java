@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.core.audio.StereoSide;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import io.netty.buffer.Unpooled;
@@ -48,7 +49,9 @@ public final class SettingsPayloadGameTests {
                 List.of("jsc:sgsc"),
                 List.of(new SettingsSnapshotPayload.DiskUse(Text.literal(longDisk), 500, 12, true)),
                 40, List.of(new SettingsSnapshotPayload.RamUse(longName, 12, 3_145_728L, "PROCESS", 7)),
-                List.of(new SettingsSnapshotPayload.ShareRow("pub", "C:\\pub", true)), false);
+                List.of(new SettingsSnapshotPayload.ShareRow("pub", "C:\\pub", true)), false,
+                new SettingsSnapshotPayload.Sound(60, true, "speakers", Text.literal("Artisan Tone Blaster Live"), true,
+                        List.of(new SettingsSnapshotPayload.SpeakerRow("Desk left", StereoSide.LEFT))));
         final RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), helper.getLevel().registryAccess());
         SettingsSnapshotPayload.STREAM_CODEC.encode(buf, snapshot);
         final SettingsSnapshotPayload back = SettingsSnapshotPayload.STREAM_CODEC.decode(buf);
@@ -77,7 +80,7 @@ public final class SettingsPayloadGameTests {
                 "win11", pastTheLimit, 0, false, 75, 100,
                 "C", true, "", true, false, 0, SettingsSnapshotPayload.ONE_CPU.with(1), 100,
                 Text.literal("x86-64, 64-bit"), 256, 0, "frames_11", "Frames",
-                List.of(), List.of(), 40, List.of(), List.of(), false);
+                List.of(), List.of(), 40, List.of(), List.of(), false, SettingsSnapshotPayload.Sound.NONE);
         final RegistryFriendlyByteBuf longBuf =
                 new RegistryFriendlyByteBuf(Unpooled.buffer(), helper.getLevel().registryAccess());
         SettingsSnapshotPayload.STREAM_CODEC.encode(longBuf, named);
@@ -87,6 +90,12 @@ public final class SettingsPayloadGameTests {
         helper.assertTrue(back.shares().size() == 1 && back.shares().get(0).path().equals("C:\\pub")
                         && back.shares().get(0).writable() && !back.remoteAllowed(),
                 "the shares and the remote switch travel too; got " + back.shares());
+        final SettingsSnapshotPayload.Sound sound = back.sound();
+        helper.assertTrue(sound.volume() == 60 && sound.muted() && sound.output().equals("speakers") && sound.plays()
+                        && sound.hardware().english().equals("Artisan Tone Blaster Live")
+                        && sound.speakers().equals(List.of(new SettingsSnapshotPayload.SpeakerRow("Desk left",
+                        StereoSide.LEFT))),
+                "the system's sound travels, its speakers with their names and sides; got " + sound);
         helper.succeed();
     }
 }

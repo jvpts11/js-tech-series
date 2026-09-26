@@ -12,21 +12,29 @@ import dev.jstech.core.gui.layout.GuiLayout;
 
 /**
  * Where CDE's Style Manager puts things inside its windows: the strip of pages, the Color page with its list of
- * palettes and the colours of the one picked, and the Backdrop page with its list of patterns and a preview of
- * the one picked.
+ * palettes and the colours of the one picked, the Backdrop page with its list of patterns and a preview of the one
+ * picked, and the Audio page with its volume scale, its Mute toggle and the outputs to play through.
  *
  * <p>Everything is measured from the top left of a window's content. The drawing and the click handling both ask
  * here, so what a player sees and what they hit are the same rectangle.
  */
 public final class CdeStyleLayout {
 
-    /** The content of each window, which the window adds its frame and title bar around. */
-    public static final int STRIP_W = 132;
+    /**
+     * The content of each window, which the window adds its frame and title bar around. The strip holds three pages,
+     * each a page wide with the gap before it, and the gap after the last.
+     */
+    public static final int STRIP_W = 196;
     public static final int STRIP_H = 52;
     public static final int COLOR_W = 230;
     public static final int COLOR_H = 124;
     public static final int BACKDROP_W = 238;
     public static final int BACKDROP_H = 138;
+    public static final int AUDIO_W = 196;
+    public static final int AUDIO_H = 112;
+    /** The side of a toggle's square, and how far its words stand from it. */
+    public static final int TOGGLE = 7;
+    public static final int TOGGLE_GAP = 4;
 
     /** How much a window's frame and title bar add to its content, across and down. */
     public static final int FRAME_W = 8;
@@ -50,6 +58,8 @@ public final class CdeStyleLayout {
     private static final int SWATCH_GAP = 4;
     private static final int LABEL_H = 9;
     private static final int BUTTON_GAP = 8;
+    /** How far the Audio page's content keeps from its sides. */
+    private static final int AUDIO_PAD = 10;
 
     private CdeStyleLayout() {
     }
@@ -134,6 +144,75 @@ public final class CdeStyleLayout {
             }
         }
         return -1;
+    }
+
+    /** Where the Audio page writes Volume, over its scale. */
+    public static Rect audioVolumeLabel() {
+        return new Rect(AUDIO_PAD, AUDIO_PAD, AUDIO_W - 2 * AUDIO_PAD, LABEL_H);
+    }
+
+    /** The scale's trough; its value is written over the slider, in the band above the trough. */
+    public static Rect audioScale() {
+        return new Rect(AUDIO_PAD, AUDIO_PAD + LABEL_H + 12, AUDIO_W - 2 * AUDIO_PAD, 10);
+    }
+
+    /** The Mute toggle, its square and its words. */
+    public static Rect audioMute() {
+        final Rect scale = audioScale();
+        return new Rect(AUDIO_PAD, scale.y() + scale.h() + 7, AUDIO_W / 2 - AUDIO_PAD, LABEL_H + 2);
+    }
+
+    /** Where the Audio page writes Output, over the two outputs. */
+    public static Rect audioOutputLabel() {
+        final Rect mute = audioMute();
+        return new Rect(AUDIO_PAD, mute.y() + mute.h() + 5, AUDIO_W - 2 * AUDIO_PAD, LABEL_H);
+    }
+
+    /** One of the two output toggles, the monitor's (0) or the speakers' (1), side by side under Output. */
+    public static Rect audioOutput(final int index) {
+        final Rect label = audioOutputLabel();
+        final int half = (AUDIO_W - 2 * AUDIO_PAD - 6) / 2;
+        return new Rect(AUDIO_PAD + 6 + index * half, label.y() + label.h() + 3, half - 4, LABEL_H + 2);
+    }
+
+    /** The line across the page above its buttons. */
+    public static int audioRule() {
+        return AUDIO_H - PAD - BUTTON_H - 6;
+    }
+
+    /** OK (0) or Cancel (1) along the Audio page's foot, OK being the default one. */
+    public static Rect audioButton(final int index) {
+        final int centre = AUDIO_W / 2;
+        final int x = index == 0 ? centre - BUTTON_W - BUTTON_GAP / 2 : centre + BUTTON_GAP / 2;
+        return new Rect(x, AUDIO_H - PAD - BUTTON_H, BUTTON_W, BUTTON_H);
+    }
+
+    /** The Audio page's button under that point, or -1 when the point is on neither. */
+    public static int audioButtonAt(final double px, final double py) {
+        for (int i = 0; i < 2; i++) {
+            if (audioButton(i).holds(px, py)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** The Audio page, as solids that may not overlap. */
+    public static GuiLayout audioLayout() {
+        final GuiLayout l = new GuiLayout(AUDIO_W, AUDIO_H);
+        box(l, "volume", audioVolumeLabel());
+        final Rect scale = audioScale();
+        // The value is written in the band over the trough, so the scale takes that band as well.
+        l.box("scale", scale.x(), scale.y() - 11, scale.w(), scale.h() + 11);
+        box(l, "mute", audioMute());
+        box(l, "output", audioOutputLabel());
+        box(l, "monitor", audioOutput(0));
+        box(l, "speakers", audioOutput(1));
+        for (int i = 0; i < 2; i++) {
+            final Rect r = audioButton(i);
+            l.box("button_" + i, r.x() - 2, r.y() - 2, r.w() + 4, r.h() + 4);
+        }
+        return l;
     }
 
     /** The strip with that many pages, as solids that may not overlap. */

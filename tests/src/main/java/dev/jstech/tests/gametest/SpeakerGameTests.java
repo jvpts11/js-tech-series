@@ -161,6 +161,43 @@ public final class SpeakerGameTests {
                 .thenSucceed();
     }
 
+    @GameTest(template = ARENA)
+    public static void speakerScreen_saysOffWhileTheSystemPlaysOnlyItsMonitor(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = computerWithMonitor(helper);
+        final SpeakerBlockEntity speaker = speaker(TestWorldBuilder.forGameTest(helper), NORTH_SPEAKER,
+                ComputingModule.SPEAKER.get());
+        helper.startSequence()
+                .thenExecuteAfter(LINKED, () -> {
+                    helper.assertTrue(speaker.dataAccess().get(SpeakerBlockEntity.DATA_CHANNEL)
+                            == SpeakerBlockEntity.CHANNEL_ALONE, "a speaker alone plays both sides");
+                    pc.console().settings().applySetting("output", "monitor");
+                    helper.assertTrue(speaker.dataAccess().get(SpeakerBlockEntity.DATA_CHANNEL)
+                                    == SpeakerBlockEntity.CHANNEL_OFF,
+                            "and its screen says it is off while the system plays only out of the monitor");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void soundSettings_nameTheHardwareAndTheSpeakers(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = computerWithMonitor(helper);
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final SpeakerBlockEntity named = speaker(world, NORTH_SPEAKER, ComputingModule.SPEAKER.get());
+        speaker(world, SOUTH_SPEAKER, ComputingModule.SPEAKER.get());
+        helper.startSequence()
+                .thenExecuteAfter(LINKED, () -> {
+                    named.ask(helper.getLevel(), "Desk left");
+                    named.takeAskedName();
+                    helper.assertTrue(pc.soundHardwareLabel().english().equals("On-board audio"),
+                            "a Standard board plays through its own sound; got " + pc.soundHardwareLabel().english());
+                    helper.assertTrue(pc.playsRecordings(), "which plays recordings, with a monitor to play them");
+                    helper.assertTrue(pc.linkedSpeakers().size() == 2
+                                    && pc.linkedSpeakers().getFirst().name().equals("Desk left"),
+                            "the two speakers are listed with their names, in a fixed order");
+                })
+                .thenSucceed();
+    }
+
     private static PersonalComputerBlockEntity computerWithMonitor(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final PersonalComputerBlockEntity pc = world.placeRunningPersonalComputer(COMPUTER);

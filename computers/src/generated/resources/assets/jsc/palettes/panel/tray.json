@@ -4,6 +4,7 @@
   "barHigh": "#FFF0B23A",
   "barLow": "#FF5FE07A",
   "barTrough": "#FF11151E",
+  "muted": "#FFEF6A5A",
   "tip": "#FFF2F4F8",
   "tipBorder": "#FF101318",
   "tipDim": "#FF505868",

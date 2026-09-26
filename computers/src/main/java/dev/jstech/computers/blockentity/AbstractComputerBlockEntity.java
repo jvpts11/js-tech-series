@@ -59,6 +59,7 @@ import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.audio.IAudioHost;
 import dev.jstech.core.audio.StereoSide;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
@@ -262,7 +263,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return hardware.handler();
     }
 
-    private static boolean isSoundCard(final ItemStack stack) {
+    static boolean isSoundCard(final ItemStack stack) {
         return stack.getItem() instanceof IExpansionCardItem card && card.cardSpec() instanceof SoundCardSpec;
     }
 
@@ -1099,6 +1100,26 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     /** Which side of a stereo recording the speaker at {@code speaker} plays for it. */
     public StereoSide speakerSide(final BlockPos speaker) {
         return audio.sideOf(speaker);
+    }
+
+    /** The speakers linked to it, in a fixed order. */
+    public List<SpeakerBlockEntity> linkedSpeakers() {
+        return audio.linkedSpeakers();
+    }
+
+    /** Whether its speakers play, by the output its system chose and what is linked. */
+    public boolean speakersPlay() {
+        return audio.speakersPlay();
+    }
+
+    /** What plays its system's sound, named for a screen: its sound card, the board's own sound, or the case's. */
+    public Text soundHardwareLabel() {
+        return audio.hardwareLabel();
+    }
+
+    /** Whether its system's sound plays recordings, rather than only the beeps of the speaker in its case. */
+    public boolean playsRecordings() {
+        return audio.audioDevice().samples();
     }
 
     @Override

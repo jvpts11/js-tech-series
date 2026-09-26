@@ -85,6 +85,18 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   gives way to what is linked, so a machine with somewhere to play is never silenced by it. On every system,
   `config volume 60`, `config mute on` and `config output speakers` change them and `config` lists them. They
   touch only what the system plays; a machine's own noises, its drives and fans, stay as they are.
+- Every desktop turns its sound from the speaker on its panel, each in its own way: Frames 95 and XP open the small
+  Volume popup with an upright slider and a Mute box; Frames 11 its quick settings, with an arrow that opens the
+  choice of output; KDE Plasma its Audio Volume applet; GNOME its system menu, dropped from the top bar; Cinnamon its
+  sound applet with a Mute output switch; and the period KDE and GNOME of a Legacy machine the mixer popup, whose
+  Mixer button goes to the settings. The speaker wears a red cross while the system is muted, tells the volume when
+  the pointer rests on it, turns it a step for each notch of the wheel, and opens a menu with Sound settings on the
+  right button. CDE, which keeps no speaker on its panel, has an Audio page in its Style Manager: the volume on a
+  scale, Mute, and the monitor and the speakers as toggles that may both be on.
+- The Settings window's Sound page: the volume, Mute, the output, what plays the sound (the sound card by its name,
+  the board's own sound or the speaker in the case), the speakers linked with the side each plays, and Test, which
+  plays the system's startup sound the way the settings now have it. A speaker's screen says it is off while its
+  computer plays only out of the monitor.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.

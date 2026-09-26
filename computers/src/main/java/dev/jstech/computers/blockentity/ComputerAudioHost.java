@@ -9,6 +9,7 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.audio.ComputingAudioDevices;
 import dev.jstech.computers.audio.ComputingSounds;
+import dev.jstech.computers.audio.SoundHardwareTexts;
 import dev.jstech.computers.audio.SoundOutput;
 import dev.jstech.computers.audio.SpeakerSides;
 import dev.jstech.computers.audio.SystemSound;
@@ -24,14 +25,18 @@ import dev.jstech.core.audio.AudioOutput;
 import dev.jstech.core.audio.IAudioHost;
 import dev.jstech.core.audio.SoundContext;
 import dev.jstech.core.audio.StereoSide;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.items.ItemStackHandler;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -130,6 +135,33 @@ final class ComputerAudioHost implements IAudioHost {
     /** How many speakers the machine has. */
     int speakerCount() {
         return speakers().size();
+    }
+
+    /** The speakers linked to the machine, in a fixed order. */
+    List<SpeakerBlockEntity> linkedSpeakers() {
+        return speakers();
+    }
+
+    /** Whether the speakers play, by the output the system chose and what is linked. */
+    boolean speakersPlay() {
+        return machine.console().settings().soundOutput().speakersPlay(!monitors().isEmpty(), !speakers().isEmpty());
+    }
+
+    /**
+     * What plays the system's sound, as a screen names it: the sound card by its own name, the sound on a Standard
+     * board, or the speaker in the case.
+     */
+    Text hardwareLabel() {
+        final ItemStackHandler slots = machine.getHardware();
+        for (int i = 0; i < slots.getSlots(); i++) {
+            final ItemStack stack = slots.getStackInSlot(i);
+            if (AbstractComputerBlockEntity.isSoundCard(stack)) {
+                return GameText.of(stack.getHoverName());
+            }
+        }
+        final ComputerBuild build = machine.currentBuild();
+        return build != null && build.motherboard().era() == HardwareEra.STANDARD
+                ? SoundHardwareTexts.ON_BOARD_AUDIO.text() : SoundHardwareTexts.PC_SPEAKER_ONLY.text();
     }
 
     /** Which side of a stereo recording the speaker at {@code speaker} plays for this machine. */

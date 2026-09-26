@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.audio.SoundOutput;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -23,6 +24,7 @@ import dev.jstech.computers.gui.TaskbarGroups;
 import dev.jstech.computers.gui.layout.CdeExitLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.gui.layout.CdeWindowIconLayout;
+import dev.jstech.computers.gui.layout.VolumePopupLayout;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
@@ -36,6 +38,7 @@ import dev.jstech.computers.operation.payload.NiShiftInsertPayload;
 import dev.jstech.computers.operation.payload.RequestDesktopFilesPayload;
 import dev.jstech.computers.operation.payload.SetIconPositionPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
+import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
 import dev.jstech.computers.operation.payload.SystemErrorSoundPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
@@ -145,6 +148,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private final FramesLaunchers framesLaunchers = new FramesLaunchers(this);
     /** The corner every panel reports the machine in: the network, the sound, the memory and the clock. */
     private final PanelTray tray = new PanelTray(this);
+    /** The volume control the speaker in that corner opens, in the form this desktop gives it. */
+    private final VolumePopup volumePopup = new VolumePopup(this);
     /** The bars the Linux desktops put their open windows on, and the period panel drawn out of relief. */
     private final LinuxPanels linuxPanels = new LinuxPanels(this);
     /** The Frames systems' two: the classic bottom taskbar, and Frames 11's centered band of icons. */
@@ -988,6 +993,43 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     /** The notification corner, which every panel draws at its right end. */
     PanelTray tray() {
         return tray;
+    }
+
+    /** The machine this desktop runs on. */
+    BlockPos host() {
+        return host;
+    }
+
+    /** Whether the system's sound is muted, which the speaker on the panel shows. */
+    boolean soundMuted() {
+        return volumePopup.muted();
+    }
+
+    /** What the panel's tip says on the speaker: the volume, or that the sound is muted. */
+    String volumeTip() {
+        return volumePopup.tip();
+    }
+
+    /** Where the system's sound goes, as the machine last said or the player last set. */
+    SoundOutput soundOutput() {
+        return volumePopup.output();
+    }
+
+    /** Sets the system's sound all at once, the way a dialog with an OK button does. */
+    void applySound(final int volume, final boolean muted, final SoundOutput output) {
+        volumePopup.apply(volume, muted, output);
+    }
+
+    /** Opens the Settings window on its Sound page, where every link to the sound settings leads. */
+    void openSoundSettings() {
+        openSettingsPage(SettingsApp.PAGE_SOUND);
+    }
+
+    /** Routes the machine's settings to the open desktop, whose panel shows its sound. */
+    public static void acceptSettings(final SettingsSnapshotPayload payload) {
+        if (active != null && active.host.equals(payload.hostPos())) {
+            active.volumePopup.accept(payload.sound());
+        }
     }
 
     /** Whether this desktop is drawn in that style, which decides what its panel and launcher look like. */
@@ -1867,6 +1909,18 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         return at == null ? null : screenPoint(at);
     }
 
+    /**
+     * Screen position of a part of the Style Manager's Audio page: {@code mute}, {@code monitor}, {@code speakers},
+     * {@code ok}, {@code cancel}, or {@code scale} at the volume {@code value}; null while the page is not up.
+     */
+    @Nullable
+    public int[] styleAudioPoint(final String part, final int value) {
+        final StyleManagerApp manager = styleManager();
+        final CdeAudioPage page = manager == null ? null : manager.audioPage();
+        final int[] at = page == null ? null : page.partCentre(part, value);
+        return at == null ? null : screenPoint(at);
+    }
+
     @Nullable
     private StyleManagerApp styleManager() {
         for (final DesktopWindow w : windows) {
@@ -1975,6 +2029,46 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     /** Screen position of a point on the panel clear of Start and of the task buttons: its empty stretch. */
     public int[] emptyPanelPoint() {
         return new int[] {sx(Math.max(TASK_X, taskStripRight(sw()) - 8)), sy(sh() - TASKBAR_H / 2)};
+    }
+
+    /** Where the speaker on the panel is, on the screen. */
+    public int[] speakerPoint() {
+        final boolean top = topPanel();
+        final int panelY = top ? 0 : sh() - panelBand();
+        return new int[] {sx(tray.speakerX(sw(), top) + 4), sy(panelY + TASKBAR_H / 2)};
+    }
+
+    /**
+     * Where a part of the open volume control is, on the screen: {@code track} at the volume {@code index},
+     * {@code mute}, {@code chevron}, {@code output} number {@code index}, or {@code footer}; null when it has none.
+     */
+    @Nullable
+    public int[] volumePoint(final String part, final int index) {
+        final int[] p = volumePopup.pointOf(part, index);
+        return p == null ? null : new int[] {sx(p[0]), sy(p[1])};
+    }
+
+    public boolean volumeControlOpen() {
+        return volumePopup.controlOpen();
+    }
+
+    public boolean volumeMenuOpen() {
+        return volumePopup.menuOpen();
+    }
+
+    /** The volume the panel shows, and whether it shows it muted. */
+    public int volumeShown() {
+        return volumePopup.volume();
+    }
+
+    public boolean mutedShown() {
+        return volumePopup.muted();
+    }
+
+    /** The volume control this desktop opens, by the name of its look, or empty on a desktop with none. */
+    public String volumeLook() {
+        final VolumePopupLayout.Look look = volumePopup.look();
+        return look == null ? "" : look.name();
     }
 
     /** The labels of the program windows this desktop has open (dialogs aside), back to front. */
@@ -2208,6 +2302,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         this.topPos = oy();
         this.titleLabelX = -10000;
         this.inventoryLabelY = -10000;
+        // The speaker on the panel says whether the system is muted from the first frame it is drawn in.
+        volumePopup.requestState();
 
         /*
          * Resolve the era skin before the first frame. The panel's placement now follows the skin (a
@@ -2760,7 +2856,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         }
     }
 
-    /** The three menus that share a height above the panel: the launcher, the panel's own, and the desktop's. */
+    /**
+     * The menus that share a height above the panel: the launcher, the panel's own, the desktop's, and the volume
+     * control with its menu.
+     */
     private void renderMenus(final GuiGraphics g, final int tbY, final int lmx, final int lmy,
                              final float partialTick) {
         // The name of a Front Panel control rides at the menus' height, so no window can stand over it.
@@ -2768,6 +2867,12 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.MENU);
             cdePanels.renderTip(g, sw(), sh(), cdePalette());
+            g.pose().popPose();
+        }
+        if (volumePopup.isOpen()) {
+            g.pose().pushPose();
+            g.pose().translate(0, 0, DesktopZ.MENU);
+            volumePopup.render(g, new UiContext(skin, font, lmx, lmy, partialTick), sw(), tbY, topPanel());
             g.pose().popPose();
         }
         if (!startOpen && !deskMenu.isOpen() && !panelCtxOpen && !cdeLaunchers.isOpen()) {
@@ -4823,6 +4928,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         if (clickPowerDialog(mouseXAbs, mouseYAbs)) {
             return true;
         }
+        // The volume control takes the next click like a menu: on it, it turns what it lands on; anywhere else it goes.
+        if (volumePopup.isOpen()) {
+            volumePopup.mouseClicked(lx(mouseXAbs), ly(mouseYAbs), button);
+            return true;
+        }
         if (taskMenu.isOpen()) {
             taskMenu.mouseClicked(lx(mouseXAbs), ly(mouseYAbs), button);
             return true;
@@ -4876,6 +4986,16 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             panelCtxOpen = false;
             if (entry >= 0) {
                 runPanelMenu(entry);
+            }
+            return true;
+        }
+
+        // The speaker on the panel: the left button opens the volume control, the right one its menu.
+        if (!is(PanelStyle.CDE) && tray.onSpeaker(mouseX, mouseY, sw(), topPanel() ? 0 : tbY, topPanel())) {
+            if (button == 1) {
+                volumePopup.openMenu((int) mouseX, tbY, topPanel());
+            } else if (button == 0) {
+                volumePopup.toggle();
             }
             return true;
         }
@@ -5180,6 +5300,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         if (popup != null) {
             return true;
         }
+        if (volumePopup.mouseDragged(lx(mouseXAbs), ly(mouseYAbs))) {
+            return true;
+        }
         if (dragging != null) {
             dragging.moveTo((int) (lx(mouseXAbs)) - dragOffsetX, (int) (ly(mouseYAbs)) - dragOffsetY,
                     workTop(), sw(), workBottom());
@@ -5224,6 +5347,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
 
     @Override
     public boolean mouseReleased(final double mouseX, final double mouseY, final int button) {
+        volumePopup.mouseReleased();
         if (popup != null) {
             popup.mouseReleased(lx(mouseX), ly(mouseY), button);
             return true;
@@ -5357,6 +5481,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             }
             return true;
         }
+        if (key == 256 && volumePopup.isOpen()) { // Escape
+            volumePopup.close();
+            return true;
+        }
         /*
          * The power dialog decides the fate of the whole machine, so it keeps the keyboard as it keeps the
          * mouse: Escape thinks again, and on CDE Enter takes the button that wears the ring, Shut Down.
@@ -5452,6 +5580,14 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     @Override
     public boolean mouseScrolled(final double mouseX, final double mouseY, final double dx, final double dy) {
         if (popup != null) {
+            return true;
+        }
+        // The wheel over the speaker, or over its open control, turns the volume a step a notch.
+        final double lmx = lx(mouseX);
+        final double lmy = ly(mouseY);
+        if (dy != 0 && !is(PanelStyle.CDE) && (volumePopup.over(lmx, lmy)
+                || tray.onSpeaker(lmx, lmy, sw(), topPanel() ? 0 : sh() - panelBand(), topPanel()))) {
+            volumePopup.nudge(dy > 0 ? 1 : -1);
             return true;
         }
         final DesktopWindow w = frontWindow();

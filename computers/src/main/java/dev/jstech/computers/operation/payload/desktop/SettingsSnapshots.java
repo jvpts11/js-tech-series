@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload.desktop;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.HardwareTooltip;
@@ -77,7 +78,23 @@ final class SettingsSnapshots {
                 st.taskbarCentered(), st.darkMode(),
                 netshare, cpuLabel, computer.maxCpuMhz(), architectureOf(computer),
                 computer.ramTotalMb(), computer.totalVramMb(),
-                osLabel, platform, installed, disks, ledger.usedMb(), ramUses, shares, st.remoteAllowed());
+                osLabel, platform, installed, disks, ledger.usedMb(), ramUses, shares, st.remoteAllowed(),
+                soundOf(computer, st));
+    }
+
+    /** The system's sound: its settings, and what plays it on a machine that has sound hardware of its own. */
+    static SettingsSnapshotPayload.Sound soundOf(final IOsHost computer, final ComputerSettings st) {
+        if (!(computer instanceof AbstractComputerBlockEntity machine)) {
+            return new SettingsSnapshotPayload.Sound(st.volume(), st.muted(), st.soundOutput().id(), Text.EMPTY,
+                    false, List.of());
+        }
+        final List<SettingsSnapshotPayload.SpeakerRow> speakers = new ArrayList<>();
+        for (final SpeakerBlockEntity speaker : machine.linkedSpeakers()) {
+            speakers.add(new SettingsSnapshotPayload.SpeakerRow(speaker.name(),
+                    machine.speakerSide(speaker.getBlockPos())));
+        }
+        return new SettingsSnapshotPayload.Sound(st.volume(), st.muted(), st.soundOutput().id(),
+                machine.soundHardwareLabel(), machine.playsRecordings(), speakers);
     }
 
     /**

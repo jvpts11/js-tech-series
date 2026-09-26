@@ -7,11 +7,13 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.audio.SoundOutput;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.operation.payload.RequestFirmwarePayload;
 import dev.jstech.computers.operation.payload.RequestSettingsPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
+import dev.jstech.computers.operation.payload.TestSoundPayload;
 import dev.jstech.computers.operation.payload.UninstallProgramPayload;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
@@ -45,7 +47,7 @@ import java.util.function.BooleanSupplier;
 /**
  * The Settings desktop app: one per-computer control panel, drawn through the running OS skin so its
  * form changes with the OS (a basic bevel on Frames 95, the richest layout on Frames 11). A left nav
- * lists eight pages, six live and two placeholders, and the right pane edits or shows each one.
+ * lists eight pages, seven live and one placeholder, and the right pane edits or shows each one.
  *
  * <p>All editable knobs round-trip through the server: opening the app requests a
  * {@link SettingsSnapshotPayload}, and every change sends a {@link SetSettingPayload} and rebuilds the
@@ -56,7 +58,9 @@ public final class SettingsApp implements IDesktopApp {
     private static final List<TextKey> NAV = List.of(SettingsTexts.PERSONALIZE, SettingsTexts.SYSTEM,
             SettingsTexts.NETWORK, SettingsTexts.STORAGE, SettingsTexts.DISPLAY, SettingsTexts.PROGRAMS,
             SettingsTexts.SOUND, SettingsTexts.USERS);
-    private static final int FIRST_SOON = 6;
+    private static final int FIRST_SOON = 7;
+    /** The most speakers the Sound page lists by name; past that it says how many more there are. */
+    private static final int SPEAKER_ROWS = 2;
     private static final int NAV_W = 78;
     private static final int NAV_ROW_H = 15;
     private static final int BTN_H = 13;
@@ -106,6 +110,9 @@ public final class SettingsApp implements IDesktopApp {
     @Nullable
     private Button remoteRefusedButton;
     private boolean remoteAllowed = true;
+    /** The Sound page's Test button, kept so the client tests can find it after a rebuild. */
+    @Nullable
+    private Button testButton;
 
     /** A wallpaper style or an accent colour as a small square that a click chooses. */
     private final class Swatch extends UiComponent {
@@ -280,6 +287,7 @@ public final class SettingsApp implements IDesktopApp {
             case 3 -> storage(px, py, pw, font);
             case 4 -> display(px, py, pw, font);
             case 5 -> programs(px, py, pw, font);
+            case PAGE_SOUND -> sound(px, py, pw, font);
             default -> comingSoon(px, py, pw, ph);
         }
     }
@@ -549,6 +557,16 @@ public final class SettingsApp implements IDesktopApp {
         return remoteAllowedButton == null ? new int[] {0, 0} : remoteAllowedButton.center();
     }
 
+    public int[] testSoundCenter() {
+        return testButton == null ? new int[] {0, 0} : testButton.center();
+    }
+
+    /** The sound the Sound page was last built from, or null before the first snapshot. */
+    @Nullable
+    public SettingsSnapshotPayload.Sound soundShown() {
+        return data == null ? null : data.sound();
+    }
+
     /** Shares the folder typed in the field, {@code mode} being {@code read} or {@code write}; nothing typed, nothing sent. */
     private void shareTyped(final String mode) {
         final String path = shareField == null ? "" : shareField.edit().strip();
@@ -610,6 +628,7 @@ public final class SettingsApp implements IDesktopApp {
     /** The pages, by the index the navigation lists them at, for a menu that opens one directly. */
     public static final int PAGE_PERSONALIZE = 0;
     public static final int PAGE_DISPLAY = 4;
+    public static final int PAGE_SOUND = 6;
 
     /** Opens on {@code index}'s page instead of the first one. */
     public SettingsApp showPage(final int index) {
@@ -644,6 +663,80 @@ public final class SettingsApp implements IDesktopApp {
             }).setLabelScale(0.85f)).setBounds(x + w - bw, y - 1, bw, 11);
             y += 12;
         }
+    }
+
+    /*
+     * The system's sound: its volume and whether it is muted, where it goes, what plays it and the speakers it has,
+     * and a button that plays the system's own sound through all of that, for the player to hear the change.
+     */
+    private void sound(final int x, final int top, final int w, final Font font) {
+        final SettingsSnapshotPayload.Sound s = data.sound();
+        int y = top;
+        heading(SettingsTexts.SOUND, x, y, w);
+        y += 13;
+        caption(SettingsTexts.VOLUME, x, y, w);
+        y += 10;
+        final int v = s.volume();
+        stepper(x, y, font, GameText.resolve(SettingsTexts.PERCENT.with(v)),
+                () -> set("volume", Integer.toString(Math.max(0, v - 10))),
+                () -> set("volume", Integer.toString(Math.min(100, v + 10))));
+        y += 17;
+        pagePanel.add(new ProgressBar(() -> v)).setBounds(x, y, Math.min(w, 150), 5);
+        y += 10;
+        caption(SettingsTexts.MUTE, x, y, w);
+        y += 10;
+        toggleButtons(x, y, font, SettingsTexts.ON, SettingsTexts.OFF, s.muted(),
+                () -> set("mute", "on"), () -> set("mute", "off"));
+        y += 18;
+        caption(SettingsTexts.OUTPUT, x, y, w);
+        y += 10;
+        final SoundOutput chosen = SoundOutput.byId(s.output());
+        int bx = x;
+        for (final SoundOutput output : SoundOutput.values()) {
+            final String label = GameText.resolve(switch (output) {
+                case MONITOR -> SettingsTexts.OUTPUT_MONITOR;
+                case SPEAKERS -> SettingsTexts.OUTPUT_SPEAKERS;
+                case BOTH -> SettingsTexts.OUTPUT_BOTH;
+            });
+            final int bw = font.width(label) + 12;
+            pagePanel.add(new Button(label, () -> set("output", output.id())).setPrimary(output == chosen))
+                    .setBounds(bx, y, bw, BTN_H);
+            bx += bw + 4;
+        }
+        y += 18;
+        caption(SettingsTexts.SOUND_HARDWARE, x, y, w);
+        y += 10;
+        pagePanel.add(new Label(s.hardware().isEmpty() ? GameText.resolve(SettingsTexts.NO_SOUND_HARDWARE)
+                : GameText.resolve(s.hardware()))).setBounds(x, y, w, 8);
+        y += 12;
+        caption(SettingsTexts.SPEAKERS, x, y, w);
+        y += 10;
+        if (s.speakers().isEmpty()) {
+            pagePanel.add(new Label(GameText.resolve(SettingsTexts.NO_SPEAKERS), Label.Tone.DIM)).setBounds(x, y, w, 8);
+            y += 10;
+        }
+        for (int i = 0; i < s.speakers().size() && i < SPEAKER_ROWS; i++) {
+            final SettingsSnapshotPayload.SpeakerRow speaker = s.speakers().get(i);
+            final String name = speaker.name().isEmpty() ? GameText.resolve(SettingsTexts.UNNAMED_SPEAKER)
+                    : speaker.name();
+            final String side = GameText.resolve(switch (speaker.side()) {
+                case LEFT -> SettingsTexts.SIDE_LEFT;
+                case RIGHT -> SettingsTexts.SIDE_RIGHT;
+                case BOTH -> SettingsTexts.SIDE_BOTH;
+            });
+            pagePanel.add(new Label(name)).setBounds(x, y, w - font.width(side) - 6, 8);
+            pagePanel.add(new Label(side, Label.Tone.DIM).setAlign(Label.Align.RIGHT)).setBounds(x, y, w, 8);
+            y += 10;
+        }
+        if (s.speakers().size() > SPEAKER_ROWS) {
+            caption(SettingsTexts.MORE_SPEAKERS.with(s.speakers().size() - SPEAKER_ROWS), x, y, w);
+            y += 10;
+        }
+        y += 3;
+        final String test = GameText.resolve(SettingsTexts.TEST);
+        testButton = pagePanel.add(new Button(test, () -> PacketDistributor.sendToServer(new TestSoundPayload(host))));
+        testButton.setEnabled(s.plays());
+        testButton.setBounds(x, y, font.width(test) + 16, BTN_H);
     }
 
     private void comingSoon(final int x, final int y, final int w, final int h) {

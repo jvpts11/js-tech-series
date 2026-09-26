@@ -23,8 +23,9 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
- * CDE's Style Manager: a strip of pages, and a click on one opens it. There are two, the two that mean something
- * here: Color, which the whole desktop is drawn from, and Backdrop, which each workspace wears.
+ * CDE's Style Manager: a strip of pages, and a click on one opens it. There are three, the ones that mean something
+ * here: Color, which the whole desktop is drawn from, Backdrop, which each workspace wears, and Audio, the system's
+ * volume and where its sound goes, which the other desktops keep on their panel.
  *
  * <p>This is what a CDE desktop has where the others have their settings. Everything else a machine keeps about
  * itself is still set at its prompt with {@code config}.
@@ -37,14 +38,20 @@ final class StyleManagerApp implements IDesktopApp {
     private CdeColorPage color;
     @Nullable
     private CdeBackdropPage backdrop;
+    @Nullable
+    private CdeAudioPage audio;
 
     private OsSkin skin;
     private int left;
     private int top;
 
     private static final List<TextKey> PAGE_KEYS =
-            List.of(StyleManagerTexts.COLOR_PAGE, StyleManagerTexts.BACKDROP_PAGE);
+            List.of(StyleManagerTexts.COLOR_PAGE, StyleManagerTexts.BACKDROP_PAGE, StyleManagerTexts.AUDIO_PAGE);
     private static final int COLOR = 0;
+    private static final int BACKDROP = 1;
+    /** The speaker on the Audio page's picture, drawn twice its size. */
+    private static final int SPEAKER_SCALE = 2;
+    private static final int SPEAKER_SIZE = 9;
 
     /** The four colours the Color page's picture is made of, the way the real one showed a palette. */
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/style_manager",
@@ -77,6 +84,12 @@ final class StyleManagerApp implements IDesktopApp {
     @Nullable
     CdeBackdropPage backdropPage() {
         return this.backdrop;
+    }
+
+    /** The Audio page, while it is open. */
+    @Nullable
+    CdeAudioPage audioPage() {
+        return this.audio;
     }
 
     @Override
@@ -132,12 +145,20 @@ final class StyleManagerApp implements IDesktopApp {
             final int iy = py + 4;
             if (i == COLOR) {
                 paints(g, ix, iy);
-            } else {
+            } else if (i == BACKDROP) {
                 MotifChrome.sunken(g, ix, iy, CdeStyleLayout.PAGE_ICON, CdeStyleLayout.PAGE_ICON, p.backdropA(), p);
                 g.pose().pushPose();
                 g.pose().translate(ix + 1, iy + 1, 0);
                 MotifChrome.backdrop(g, CdeStyleLayout.PAGE_ICON - 2, CdeStyleLayout.PAGE_ICON - 2, p,
                         desktop.cdeStyle().backdrop(desktop.workspace()));
+                g.pose().popPose();
+            } else {
+                MotifChrome.sunken(g, ix, iy, CdeStyleLayout.PAGE_ICON, CdeStyleLayout.PAGE_ICON, p.inset(), p);
+                final int inset = (CdeStyleLayout.PAGE_ICON - SPEAKER_SIZE * SPEAKER_SCALE) / 2;
+                g.pose().pushPose();
+                g.pose().translate(ix + inset, iy + inset, 0);
+                g.pose().scale(SPEAKER_SCALE, SPEAKER_SCALE, 1.0F);
+                PanelTray.speaker(g, 0, 0, this.skin.text(), desktop.soundMuted());
                 g.pose().popPose();
             }
             final String name = GameText.resolve(PAGE_KEYS.get(i));
@@ -169,19 +190,29 @@ final class StyleManagerApp implements IDesktopApp {
                 this.color = new CdeColorPage(desktop.cdeStyle().palette(), () -> this.color = null);
             }
             opening = this.color;
-        } else {
+        } else if (page == BACKDROP) {
             if (this.backdrop == null) {
                 this.backdrop = new CdeBackdropPage(desktop.cdeStyle().backdrop(desktop.workspace()),
                         () -> this.backdrop = null);
             }
             opening = this.backdrop;
+        } else {
+            if (this.audio == null) {
+                this.audio = new CdeAudioPage(desktop.volumeShown(), desktop.mutedShown(), desktop.soundOutput(),
+                        () -> this.audio = null);
+            }
+            opening = this.audio;
         }
         opening.applySkin(this.skin);
         DesktopScreen.openDialogFor(this, opening);
     }
 
     private boolean open(final int page) {
-        return page == COLOR ? this.color != null : this.backdrop != null;
+        return switch (page) {
+            case COLOR -> this.color != null;
+            case BACKDROP -> this.backdrop != null;
+            default -> this.audio != null;
+        };
     }
 
     /** The Color page's picture: four paints in a square, one to each corner. */

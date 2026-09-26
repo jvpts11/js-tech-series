@@ -88,6 +88,27 @@ final class SettingsTexts {
     static final TextKey NO_PROGRAMS = TextKey.of("jsc.settings.no_programs", "No programs installed");
     static final TextKey UNINSTALL = TextKey.of("jsc.settings.uninstall", "Uninstall");
 
+    // Sound.
+    static final TextKey VOLUME = TextKey.of("jsc.settings.volume", "Volume");
+    static final TextKey MUTE = TextKey.of("jsc.settings.mute", "Mute");
+    static final TextKey ON = TextKey.of("jsc.settings.on", "On");
+    static final TextKey OFF = TextKey.of("jsc.settings.off", "Off");
+    static final TextKey OUTPUT = TextKey.of("jsc.settings.output", "Output");
+    static final TextKey OUTPUT_MONITOR = TextKey.of("jsc.settings.output_monitor", "Monitor");
+    static final TextKey OUTPUT_SPEAKERS = TextKey.of("jsc.settings.output_speakers", "Speakers");
+    static final TextKey OUTPUT_BOTH = TextKey.of("jsc.settings.output_both", "Both");
+    static final TextKey SOUND_HARDWARE = TextKey.of("jsc.settings.sound_hardware", "Sound hardware");
+    static final TextKey NO_SOUND_HARDWARE = TextKey.of("jsc.settings.no_sound_hardware", "No sound hardware");
+    static final TextKey SPEAKERS = TextKey.of("jsc.settings.speakers", "Speakers");
+    static final TextKey NO_SPEAKERS = TextKey.of("jsc.settings.no_speakers", "No speakers linked");
+    /** A speaker nobody has named yet, the way its own screen calls it. */
+    static final TextKey UNNAMED_SPEAKER = TextKey.of("jsc.settings.unnamed_speaker", "Speaker");
+    static final TextKey SIDE_LEFT = TextKey.of("jsc.settings.side_left", "Left");
+    static final TextKey SIDE_RIGHT = TextKey.of("jsc.settings.side_right", "Right");
+    static final TextKey SIDE_BOTH = TextKey.of("jsc.settings.side_both", "Both sides");
+    static final TextKey MORE_SPEAKERS = TextKey.of("jsc.settings.more_speakers", "and %s more");
+    static final TextKey TEST = TextKey.of("jsc.settings.test", "Test");
+
     private SettingsTexts() {
     }
 }

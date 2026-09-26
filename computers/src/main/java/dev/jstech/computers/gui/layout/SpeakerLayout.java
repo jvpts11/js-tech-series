@@ -47,7 +47,7 @@ public final class SpeakerLayout {
         l.text("model", WIDTH - 12 - 9 * 6, 10, 9, 1.0f);      // "TONEWORKS", right-aligned
         l.text("nameLabel", 10, NAME_LABEL_Y, 4, 0.75f);        // "NAME"
         l.text("note", 10, NOTE_Y, 38, 0.75f);                  // "Programs find this speaker by its name"
-        l.text("channel", CHANNEL_X + 3, TILE_Y + 11, 17, 0.75f);  // "Right, by position"
+        l.text("channel", CHANNEL_X + 3, TILE_Y + 11, 18, 0.75f);  // "Right, by position", "Off: monitor only"
         l.text("plays", NAME_X + 3, PLAYS_Y + 11, 27, 0.75f);   // "22 kHz, bass and treble cut"
         return l;
     }

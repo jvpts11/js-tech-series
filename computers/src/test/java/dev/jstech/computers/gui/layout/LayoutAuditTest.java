@@ -46,7 +46,8 @@ class LayoutAuditTest {
             "CraftingSwitchLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
             "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout",
-            "CdeStyleLayout", "WorkstationInfoLayout", "TrashLayout", "HelpViewerLayout", "SpeakerLayout");
+            "CdeStyleLayout", "WorkstationInfoLayout", "TrashLayout", "HelpViewerLayout", "SpeakerLayout",
+            "VolumePopupLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -111,6 +112,16 @@ class LayoutAuditTest {
                     dev.jstech.computers.gui.layout.ThisPcLayout.programGrid(size[0], 7), false));
         }
         c.add(new AuditCase("SpeakerLayout", SpeakerLayout.layout(), true));
+        // Every volume control a panel opens, open and folded, with the English words at six pixels a letter.
+        final VolumePopupLayout.Labels volumeWords = new VolumePopupLayout.Labels("Audio Volume", "Mute output",
+                "Sound output", List.of("Monitor", "Speakers", "Monitor and speakers"), "Desk left, Desk right",
+                "Configure Audio Devices...");
+        for (final VolumePopupLayout.Look look : VolumePopupLayout.Look.values()) {
+            for (final boolean open : new boolean[] {true, false}) {
+                c.add(new AuditCase("VolumePopupLayout(" + look + (open ? ", open)" : ", folded)"),
+                        VolumePopupLayout.of(look, open, volumeWords, s -> s.length() * 6).toGuiLayout(), true));
+            }
+        }
         // The Server Router tiles one section per output face; audit every count up to the maximum.
         for (int s = 0; s <= ServerRouterLayout.MAX_SECTIONS; s++) {
             c.add(new AuditCase("ServerRouterLayout(" + s + ")", ServerRouterLayout.layout(s), true));
@@ -155,7 +166,8 @@ class LayoutAuditTest {
         c.add(new AuditCase("CdeAppManagerLayout(groups)", CdeAppManagerLayout.layout(4, false, 284, 62), true));
         c.add(new AuditCase("CdeAppManagerLayout(group)", CdeAppManagerLayout.layout(8, true, 292, 128), true));
         // CDE's Style Manager: the strip of pages, and each page with everything it lists.
-        c.add(new AuditCase("CdeStyleLayout(strip)", CdeStyleLayout.stripLayout(2), true));
+        c.add(new AuditCase("CdeStyleLayout(strip)", CdeStyleLayout.stripLayout(3), true));
+        c.add(new AuditCase("CdeStyleLayout(audio)", CdeStyleLayout.audioLayout(), true));
         c.add(new AuditCase("CdeStyleLayout(color)", CdeStyleLayout.colorLayout(CdeScheme.ALL.size()), true));
         c.add(new AuditCase("CdeStyleLayout(backdrop)",
                 CdeStyleLayout.backdropLayout(CdeBackdrop.values().length), true));

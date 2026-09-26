@@ -23,9 +23,9 @@ import net.minecraft.resources.ResourceLocation;
  * splits it up, keeping its clock in the middle of the top bar and only the status group at the right end,
  * which is why the group can be drawn on its own.
  *
- * <p>Of the three status icons, only the network one says something true about the machine. It is drawn
- * greyed and badged when this computer is on no network, which is the fastest way a player has of telling
- * whether the cable behind the case is doing anything.
+ * <p>The network icon is drawn greyed and badged when this computer is on no network, which is the fastest way a
+ * player has of telling whether the cable behind the case is doing anything. The speaker loses its waves to a cross
+ * while the system is muted, and opens the system's volume control.
  *
  * <p>How wide all this runs matters beyond the corner itself: it is where a panel's task buttons have to
  * stop, so the clock can never be written over by a row of open windows.
@@ -54,7 +54,10 @@ final class PanelTray {
 
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "panel/tray",
             new Colours(0xFF101318, 0xFFF2F4F8, 0xFF202430, 0xFF505868, 0xFF2A2F3A, 0xFF11151E, 0xFF5FE07A,
-                    0xFFF0B23A, 0xFFEF6A5A));
+                    0xFFF0B23A, 0xFFEF6A5A, 0xFFEF6A5A));
+    /** How many columns of the speaker picture are its body; the rest are the waves a muted speaker loses. */
+    private static final int SPEAKER_BODY = 4;
+    private static final int MUTE_MARK = 4;
 
     private final DesktopScreen desktop;
 
@@ -99,13 +102,55 @@ final class PanelTray {
     void drawStatus(final GuiGraphics g, final int x, final int panelY, final int textColor) {
         final int iconY = panelY + (DesktopScreen.TASKBAR_H - ICON) / 2;
         drawNetworkIcon(g, x, iconY, desktop.onNetwork(), textColor);
-        tinted(g, SPEAKER, x + ICON + GAP, iconY, textColor);
+        speaker(g, x + ICON + GAP, iconY, textColor, desktop.soundMuted());
         drawRamBar(g, x + 2 * (ICON + GAP), panelY + (DesktopScreen.TASKBAR_H - RAM_BAR_H) / 2);
+    }
+
+    /**
+     * The speaker, in the panel's own tone; a muted one keeps its body and loses its waves to a red cross. The
+     * volume control draws it too, beside its slider.
+     */
+    static void speaker(final GuiGraphics g, final int x, final int y, final int argb, final boolean muted) {
+        if (!muted) {
+            tinted(g, SPEAKER, x, y, argb);
+            return;
+        }
+        g.setColor((argb >> 16 & 0xFF) / 255.0F, (argb >> 8 & 0xFF) / 255.0F, (argb & 0xFF) / 255.0F, 1.0F);
+        g.blit(SPEAKER, x, y, 0.0F, 0.0F, SPEAKER_BODY, ICON, ICON, ICON);
+        g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        final int mark = PALETTE.get().muted();
+        for (int i = 0; i < MUTE_MARK; i++) {
+            g.fill(x + 5 + i, y + 3 + i, x + 6 + i, y + 4 + i, mark);
+            g.fill(x + 8 - i, y + 3 + i, x + 9 - i, y + 4 + i, mark);
+        }
+    }
+
+    /** Where the speaker stands on a panel {@code sw} wide: in the notification area, or at the top bar's end. */
+    int speakerX(final int sw, final boolean topBar) {
+        return (topBar ? sw - PAD - statusWidth() : left(sw) + PAD) + ICON + GAP;
+    }
+
+    /** Whether a desktop-local point is on the speaker of the panel whose band starts at {@code panelY}. */
+    boolean onSpeaker(final double mx, final double my, final int sw, final int panelY, final boolean topBar) {
+        final int x = speakerX(sw, topBar);
+        return mx >= x - 2 && mx < x + ICON + 2 && my >= panelY && my < panelY + DesktopScreen.TASKBAR_H;
     }
 
     /** The figures behind the tray, shown while the cursor rests on it: the link and the memory. */
     void drawTip(final GuiGraphics g, final int panelY, final int sw) {
         if (!desktop.hoverBeyond(left(sw), panelY)) {
+            return;
+        }
+        // On the speaker itself the tip is the volume, alone.
+        if (desktop.hoverIn(speakerX(sw, false) - 2, panelY, ICON + 4, DesktopScreen.TASKBAR_H)) {
+            final String volume = desktop.volumeTip();
+            final int w = desktop.textFont().width(volume) + 8;
+            final int x = Math.max(2, sw - w - 2);
+            final int y = panelY - 13 - 2;
+            final Colours c = PALETTE.get();
+            g.fill(x - 1, y - 1, x + w + 1, y + 14, c.tipBorder());
+            g.fill(x, y, x + w, y + 13, c.tip());
+            g.drawString(desktop.textFont(), volume, x + 4, y + 3, c.tipInk(), false);
             return;
         }
         final String link =
@@ -182,10 +227,11 @@ final class PanelTray {
     }
 
     /**
-     * The tray's own colours: the tip's border, paper and two inks, and the memory bar's edge and trough with the
-     * green it starts at, the amber it shades to and the red of a machine that is nearly full.
+     * The tray's own colours: the tip's border, paper and two inks, the memory bar's edge and trough with the
+     * green it starts at, the amber it shades to and the red of a machine that is nearly full, and the cross of a
+     * muted speaker.
      */
     private record Colours(int tipBorder, int tip, int tipInk, int tipDim, int barEdge, int barTrough, int barLow,
-                           int barHigh, int barFull) {
+                           int barHigh, int barFull, int muted) {
     }
 }

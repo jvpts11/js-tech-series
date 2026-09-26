@@ -134,6 +134,7 @@ public final class DesktopPayloads {
     }
 
     private static void handleSettingsSnapshot(final SettingsSnapshotPayload payload, final Player player) {
+        DesktopScreen.acceptSettings(payload);
         SettingsApp.accept(payload);
         SystemMonitorApp.accept(payload);
         TaskManagerApp.accept(payload);

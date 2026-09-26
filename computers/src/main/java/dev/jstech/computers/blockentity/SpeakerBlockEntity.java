@@ -83,6 +83,8 @@ public class SpeakerBlockEntity extends BlockEntity implements IPeripheralEndpoi
     public static final int CHANNEL_BOTH = 2;
     public static final int CHANNEL_LEFT = 3;
     public static final int CHANNEL_RIGHT = 4;
+    /** Linked, but its computer's system plays only out of the monitor. */
+    public static final int CHANNEL_OFF = 5;
     private static final String NBT_LINKED_OWNER = "LinkedOwner";
     private static final String NBT_NAME = "SpeakerName";
 
@@ -233,8 +235,13 @@ public class SpeakerBlockEntity extends BlockEntity implements IPeripheralEndpoi
         if (linkedOwner == null || !(level instanceof ServerLevel server)) {
             return CHANNEL_NONE;
         }
-        if (!(server.getBlockEntity(BlockPos.of(linkedOwner)) instanceof AbstractComputerBlockEntity computer)
-                || computer.speakerCount() < 2) {
+        if (!(server.getBlockEntity(BlockPos.of(linkedOwner)) instanceof AbstractComputerBlockEntity computer)) {
+            return CHANNEL_ALONE;
+        }
+        if (!computer.speakersPlay()) {
+            return CHANNEL_OFF;
+        }
+        if (computer.speakerCount() < 2) {
             return CHANNEL_ALONE;
         }
         final StereoSide side = computer.speakerSide(worldPosition);

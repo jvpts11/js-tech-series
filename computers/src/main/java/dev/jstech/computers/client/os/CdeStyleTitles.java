@@ -16,6 +16,7 @@ final class CdeStyleTitles {
 
     static final TextKey BACKDROP_PAGE = TextKey.of("jsc.cde.style.backdrop_title", "Style Manager - Backdrop");
     static final TextKey COLOR_PAGE = TextKey.of("jsc.cde.style.color_title", "Style Manager - Color");
+    static final TextKey AUDIO_PAGE = TextKey.of("jsc.cde.style.audio_title", "Style Manager - Audio");
 
     private CdeStyleTitles() {
     }
