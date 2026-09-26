@@ -63,6 +63,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   44.1 kHz. A sound card sits only on a board of its own era, in a slot of that board's bus; a Standard board has
   its sound built in, and its tooltip says so. A computer's tooltip says whether its case only beeps or its board
   plays everything, and a monitor's that its computer's sound comes out of it.
+- Frames 95, XP and 11 have their own sounds: a chime when the desktop comes up, the same chime when the system
+  shuts down, and an error sound when it raises an error box. They come out of the computer's monitors, heard by
+  everyone near them, and only through a sound card or the sound on a Standard board: a machine with neither, or
+  with no monitor, only beeps. They are sound cues picked by the system a machine runs, so a resource pack can give
+  any other system chimes of its own.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.

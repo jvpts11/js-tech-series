@@ -16,6 +16,7 @@ import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.client.audio.AudioEngine;
+import dev.jstech.core.client.audio.AudioMixer;
 import dev.jstech.core.client.audio.CapturingAudioSink;
 import dev.jstech.core.client.audio.SoundDirector;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -26,9 +27,9 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
- * The running sounds of the machines, heard where the player stands: a computer's hard drive turning while it runs
- * and stopping when it goes off, and the servers of a rack heard by their fans until five of them run close together,
- * when the room is heard instead.
+ * The sounds of the machines, heard where the player stands: a computer's hard drive turning while it runs and
+ * stopping when it goes off, the servers of a rack heard by their fans until five of them run close together, when
+ * the room is heard instead, and a system's chime out of its monitor when its desktop comes up.
  */
 public final class MachineSoundClientTests {
 
@@ -40,6 +41,8 @@ public final class MachineSoundClientTests {
     /** A hard drive's spin-up and the look after it, with room to spare. */
     private static final int SPIN_UP_WAIT = 400;
     private static final int ROOM_SERVERS = 5;
+    private static final long RECENT_MILLIS = 60_000L;
+    private static final String FRAMES_11_CHIME = ComputingSounds.FRAMES_11_STARTUP.id().toString();
 
     private MachineSoundClientTests() {
     }
@@ -80,6 +83,18 @@ public final class MachineSoundClientTests {
                         "five running servers close together are heard as the room, and their fans no more",
                         () -> "playing " + SoundDirector.playing() + ", rooms " + SoundDirector.stats().rooms())
                 .then(0, AudioEngine::restoreSink);
+    }
+
+    @ClientTest(timeoutTicks = 700)
+    public static void standardPc_chimesOutOfItsMonitorWhenItsDesktopComesUp(final ClientTestContext ctx) {
+        ctx.thenTeleport(SETTLE, STAND, Direction.SOUTH)
+                .thenBuild(SETTLE, builder -> {
+                    builder.placeRunningPersonalComputer(COMPUTER);
+                    builder.placeMonitor(COMPUTER.east(), Direction.EAST);
+                })
+                .thenWaitUntil(() -> AudioMixer.recent(RECENT_MILLIS).contains(FRAMES_11_CHIME), 600,
+                        "the Frames 11 chime is heard when the desktop comes up",
+                        () -> "heard " + AudioMixer.recent(RECENT_MILLIS));
     }
 
     private static PersonalComputerBlockEntity legacyWithHardDrive(final TestWorldBuilder builder) {

@@ -11,6 +11,7 @@ import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.advancement.HardwareMilestones;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.IEraChassisBlock;
 import dev.jstech.computers.client.audio.MachineSoundSources;
 import dev.jstech.computers.crafting.PatternWorkbench;
@@ -56,6 +57,7 @@ import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.audio.IAudioHost;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
@@ -125,6 +127,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     private final TerminalFeed terminalFeed = TerminalFeed.of(this);
     /** What it sounds like as a machine: its power button, its start-up, its hard drive. */
     private final ComputerSounds sounds = new ComputerSounds(this);
+    /** What its system's sound plays through, and where it comes out. */
+    private final ComputerAudioHost audio = new ComputerAudioHost(this);
 
     /** The name a player gave this computer: the machine's own, and no part's. */
     private String computerName = "";
@@ -364,6 +368,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         }
         final int ticks = BootTiming.shutdownTicks(
                 BootRunner.bootLength(this));
+        // A system that says goodbye on its screen says it out loud too.
+        systemSound(server, SystemSound.SHUTDOWN);
         ScreenSessions.eachWatcher(server, worldPosition, (player, monitor) -> {
             PacketDistributor.sendToPlayer(player,
                     new OpenSystemBootPayload(
@@ -1057,6 +1063,16 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     /** Hears the machine come on and go off, and keeps its hard drive turning in between. */
     protected void tickSounds(final ServerLevel level) {
         sounds.tick(level);
+    }
+
+    /** What its system's sound plays through and where it comes out. */
+    public IAudioHost audioHost() {
+        return audio;
+    }
+
+    @Override
+    public void systemSound(final ServerLevel level, final SystemSound sound) {
+        audio.play(level, sound);
     }
 
     @Override

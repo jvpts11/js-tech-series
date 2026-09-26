@@ -10,6 +10,7 @@ package dev.jstech.computers.operation.payload.machine;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.audio.ComputingSounds;
+import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.IKvmScreenOpener;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
@@ -31,6 +32,7 @@ import dev.jstech.computers.operation.payload.RemoteControlPayload;
 import dev.jstech.computers.operation.payload.RemoteHostsPayload;
 import dev.jstech.computers.operation.payload.RenamePcPayload;
 import dev.jstech.computers.operation.payload.RenameServerPayload;
+import dev.jstech.computers.operation.payload.SystemErrorSoundPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
@@ -62,6 +64,8 @@ public final class MachinePayloads {
                 MachinePayloads::handleRackBayPower);
         ComputerAccess.accept(registrar, MachinePowerPayload.TYPE, MachinePowerPayload.STREAM_CODEC,
                 ComputerAccess.machine(MachinePowerPayload::hostPos), MachinePayloads::handleMachinePower);
+        ComputerAccess.accept(registrar, SystemErrorSoundPayload.TYPE, SystemErrorSoundPayload.STREAM_CODEC,
+                ComputerAccess.machine(SystemErrorSoundPayload::hostPos), MachinePayloads::handleSystemErrorSound);
         registrar.playToClient(OpenKvmPayload.TYPE, OpenKvmPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(MachinePayloads::handleOpenKvm));
         ComputerAccess.accept(registrar, RemoteControlPayload.TYPE, RemoteControlPayload.STREAM_CODEC,
@@ -83,6 +87,13 @@ public final class MachinePayloads {
                                 ClusterManagementComputerMenu::computerPos,
                                 RenamePcPayload::pcPos)),
                 MachinePayloads::handleRenamePc);
+    }
+
+    private static void handleSystemErrorSound(final SystemErrorSoundPayload payload, final ServerPlayer player,
+                                               final ServerLevel level) {
+        if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost host) {
+            host.systemSound(level, SystemSound.ERROR);
+        }
     }
 
     private static void handleRackBayPower(final RackBayPowerPayload payload, final ServerPlayer player,

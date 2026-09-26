@@ -37,6 +37,7 @@ import dev.jstech.computers.operation.payload.RequestDesktopFilesPayload;
 import dev.jstech.computers.operation.payload.SetIconPositionPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
+import dev.jstech.computers.operation.payload.SystemErrorSoundPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.os.CdeAppGroup;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
@@ -501,9 +502,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         }
     }
 
-    /** Opens a modal error dialog with the given title and message over this desktop. */
+    /** Opens a modal error dialog with the given title and message over this desktop, and the machine sounds it. */
     void showError(final String title, final String message) {
         this.popup = new DesktopPopup(title, message, this.font);
+        PacketDistributor.sendToServer(new SystemErrorSoundPayload(host));
     }
 
     /*

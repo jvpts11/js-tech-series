@@ -478,6 +478,10 @@
   "jsc.audio.on_board": "Áudio na placa",
   "jsc.audio.pc_speaker_only": "PC speaker: só bipes",
   "jsc.audio.sound_on_board": "Som na placa: toca tudo",
+  "jsc.audio_device.fm_card": "Placa de som FM",
+  "jsc.audio_device.on_board": "Áudio na placa",
+  "jsc.audio_device.pc_speaker": "PC speaker",
+  "jsc.audio_device.wavetable_card": "Placa de som wavetable",
   "jsc.automation.act_column": "AÇÃO",
   "jsc.automation.batch_craft": "Fabricação em Lote",
   "jsc.automation.contacting": "Contatando o Mainframe...",
@@ -5075,6 +5079,12 @@
   "subtitles.jsc.media.usb_insert": "Pendrive conectado",
   "subtitles.jsc.media.usb_remove": "Pendrive removido",
   "subtitles.jsc.monitor.power_on": "Monitor liga",
+  "subtitles.jsc.os.frames_11.error": "Erro do Frames 11",
+  "subtitles.jsc.os.frames_11.startup": "Frames 11 toca",
+  "subtitles.jsc.os.frames_95.error": "Erro do Frames 95",
+  "subtitles.jsc.os.frames_95.startup": "Frames 95 toca",
+  "subtitles.jsc.os.frames_xp.error": "Erro do Frames XP",
+  "subtitles.jsc.os.frames_xp.startup": "Frames XP toca",
   "subtitles.jsc.server.fan": "Ventoinhas do servidor zumbem",
   "subtitles.jsc.server.room": "Sala de servidores zumbe"
 }

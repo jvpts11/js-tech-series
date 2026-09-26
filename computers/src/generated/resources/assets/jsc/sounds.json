@@ -89,6 +89,42 @@
     ],
     "subtitle": "subtitles.jsc.monitor.power_on"
   },
+  "os/frames_11/error": {
+    "sounds": [
+      "jsc:os/frames_11/error"
+    ],
+    "subtitle": "subtitles.jsc.os.frames_11.error"
+  },
+  "os/frames_11/startup": {
+    "sounds": [
+      "jsc:os/frames_11/startup"
+    ],
+    "subtitle": "subtitles.jsc.os.frames_11.startup"
+  },
+  "os/frames_95/error": {
+    "sounds": [
+      "jsc:os/frames_95/error"
+    ],
+    "subtitle": "subtitles.jsc.os.frames_95.error"
+  },
+  "os/frames_95/startup": {
+    "sounds": [
+      "jsc:os/frames_95/startup"
+    ],
+    "subtitle": "subtitles.jsc.os.frames_95.startup"
+  },
+  "os/frames_xp/error": {
+    "sounds": [
+      "jsc:os/frames_xp/error"
+    ],
+    "subtitle": "subtitles.jsc.os.frames_xp.error"
+  },
+  "os/frames_xp/startup": {
+    "sounds": [
+      "jsc:os/frames_xp/startup"
+    ],
+    "subtitle": "subtitles.jsc.os.frames_xp.startup"
+  },
   "server/fan": {
     "sounds": [
       "jsc:server/fan"

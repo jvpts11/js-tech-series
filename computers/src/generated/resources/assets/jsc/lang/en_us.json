@@ -478,6 +478,10 @@
   "jsc.audio.on_board": "On-board audio",
   "jsc.audio.pc_speaker_only": "PC speaker: beeps only",
   "jsc.audio.sound_on_board": "Sound on the board: plays everything",
+  "jsc.audio_device.fm_card": "FM sound card",
+  "jsc.audio_device.on_board": "On-board audio",
+  "jsc.audio_device.pc_speaker": "PC speaker",
+  "jsc.audio_device.wavetable_card": "Wavetable sound card",
   "jsc.automation.act_column": "ACT",
   "jsc.automation.batch_craft": "Batch Craft",
   "jsc.automation.contacting": "Contacting Mainframe...",
@@ -5075,6 +5079,12 @@
   "subtitles.jsc.media.usb_insert": "USB drive plugged in",
   "subtitles.jsc.media.usb_remove": "USB drive pulled out",
   "subtitles.jsc.monitor.power_on": "Monitor switches on",
+  "subtitles.jsc.os.frames_11.error": "Frames 11 error",
+  "subtitles.jsc.os.frames_11.startup": "Frames 11 chimes",
+  "subtitles.jsc.os.frames_95.error": "Frames 95 error",
+  "subtitles.jsc.os.frames_95.startup": "Frames 95 chimes",
+  "subtitles.jsc.os.frames_xp.error": "Frames XP error",
+  "subtitles.jsc.os.frames_xp.startup": "Frames XP chimes",
   "subtitles.jsc.server.fan": "Server fans whir",
   "subtitles.jsc.server.room": "Server room hums"
 }

@@ -11,6 +11,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.core.audio.AmbientField;
 import dev.jstech.core.audio.AmbientFields;
 import dev.jstech.core.audio.AudioChannels;
+import dev.jstech.core.audio.SoundCue;
 import dev.jstech.core.audio.SoundKey;
 import net.minecraft.resources.ResourceLocation;
 
@@ -21,7 +22,8 @@ import static dev.jstech.computers.registry.ComputingContent.CONTENT;
  * spinning up, turning and winding down, the drives taking and giving back their media, a monitor coming on, and the
  * fans of the servers in their racks, which a room full of them turns into one hum.
  *
- * <p>What a system plays through a sound card is not here: those are the system's sounds, not the machine's.
+ * <p>A system's own sounds are here too, as cues picked by the system the machine runs: they come out of its
+ * monitor, through its sound card or the sound on its board.
  */
 public final class ComputingSounds {
 
@@ -77,6 +79,46 @@ public final class ComputingSounds {
     /** Many running servers close together, heard as the room they fill. */
     public static final SoundKey SERVER_ROOM = CONTENT.sound("server/room").loop()
             .channel(AudioChannels.AMBIENCE).range(24).subtitle("Server room hums").register();
+
+    /**
+     * The sound context's name for the system a machine runs, by its id ({@code jsc:frames_xp}): what picks a
+     * system's own chime. A resource pack gives another system its chimes by adding a rule for its id.
+     */
+    public static final String SYSTEM = "system";
+
+    public static final SoundKey FRAMES_95_STARTUP = CONTENT.sound("os/frames_95/startup")
+            .channel(AudioChannels.INTERFACE).subtitle("Frames 95 chimes").register();
+    public static final SoundKey FRAMES_95_ERROR = CONTENT.sound("os/frames_95/error")
+            .channel(AudioChannels.INTERFACE).subtitle("Frames 95 error").register();
+    public static final SoundKey FRAMES_XP_STARTUP = CONTENT.sound("os/frames_xp/startup")
+            .channel(AudioChannels.INTERFACE).subtitle("Frames XP chimes").register();
+    public static final SoundKey FRAMES_XP_ERROR = CONTENT.sound("os/frames_xp/error")
+            .channel(AudioChannels.INTERFACE).subtitle("Frames XP error").register();
+    public static final SoundKey FRAMES_11_STARTUP = CONTENT.sound("os/frames_11/startup")
+            .channel(AudioChannels.INTERFACE).subtitle("Frames 11 chimes").register();
+    public static final SoundKey FRAMES_11_ERROR = CONTENT.sound("os/frames_11/error")
+            .channel(AudioChannels.INTERFACE).subtitle("Frames 11 error").register();
+
+    /** A system reaching its desktop. Systems with no chime of their own stay silent. */
+    public static final SoundCue SYSTEM_STARTUP = CONTENT.cue("system/startup").world()
+            .channel(AudioChannels.INTERFACE)
+            .when(SYSTEM, "jsc:frames_95", FRAMES_95_STARTUP)
+            .when(SYSTEM, "jsc:frames_xp", FRAMES_XP_STARTUP)
+            .when(SYSTEM, "jsc:frames_11", FRAMES_11_STARTUP).register();
+
+    /** A system shutting down, which plays its chime again. */
+    public static final SoundCue SYSTEM_SHUTDOWN = CONTENT.cue("system/shutdown").world()
+            .channel(AudioChannels.INTERFACE)
+            .when(SYSTEM, "jsc:frames_95", FRAMES_95_STARTUP)
+            .when(SYSTEM, "jsc:frames_xp", FRAMES_XP_STARTUP)
+            .when(SYSTEM, "jsc:frames_11", FRAMES_11_STARTUP).register();
+
+    /** A system raising an error box. */
+    public static final SoundCue SYSTEM_ERROR = CONTENT.cue("system/error").world()
+            .channel(AudioChannels.INTERFACE)
+            .when(SYSTEM, "jsc:frames_95", FRAMES_95_ERROR)
+            .when(SYSTEM, "jsc:frames_xp", FRAMES_XP_ERROR)
+            .when(SYSTEM, "jsc:frames_11", FRAMES_11_ERROR).register();
 
     /*
      * Five running servers within sixteen blocks of one another are a room: their fans stop and the room is heard

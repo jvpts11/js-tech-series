@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.machine.MachinePrograms;
@@ -21,6 +22,7 @@ import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -175,6 +177,13 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
      */
     default boolean settleLiveInstall() {
         return false;
+    }
+
+    /**
+     * Plays one of its system's own sounds out of its monitors, when its sound hardware plays recordings. A machine
+     * with no sound of its own, such as a server in a rack, plays none.
+     */
+    default void systemSound(final ServerLevel level, final SystemSound sound) {
     }
 
     /** The per-machine console state: history, installed programs, settings. */

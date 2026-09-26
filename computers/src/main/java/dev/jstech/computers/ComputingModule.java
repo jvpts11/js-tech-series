@@ -19,6 +19,7 @@ import static dev.jstech.computers.registry.ComputingContent.RACK_EQUIPMENT;
 import static dev.jstech.computers.registry.ComputingContent.SERVERS;
 
 import dev.jstech.computers.advancement.JscTriggers;
+import dev.jstech.computers.audio.ComputingAudioDevices;
 import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.ClusterManagementComputerBlock;
 import dev.jstech.computers.block.CraftingComputerBlock;
@@ -570,6 +571,7 @@ public final class ComputingModule {
          */
         HardwareItems.init();
         ComputingSounds.init();
+        ComputingAudioDevices.init();
         CONTENT.register(modEventBus);
         ComputingComponents.register(modEventBus);
         ComputingMenus.register(modEventBus);

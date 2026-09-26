@@ -9,6 +9,7 @@ package dev.jstech.computers.os.boot;
 
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.audio.ComputingSounds;
+import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.hardware.ComputerBuild;
@@ -335,6 +336,7 @@ public final class BootRunner {
             return;
         }
         phases.endBoot();
+        machine.systemSound(level, SystemSound.STARTUP);
         final boolean balloon = greet(machine);
         if (machine.onScreen()) {
             ScreenSessions.bootWatchers(level, pos);

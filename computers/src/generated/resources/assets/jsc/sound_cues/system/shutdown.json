@@ -1,0 +1,22 @@
+{
+  "sounds": [
+    {
+      "sound": "jsc:os/frames_95/startup",
+      "when": {
+        "system": "jsc:frames_95"
+      }
+    },
+    {
+      "sound": "jsc:os/frames_xp/startup",
+      "when": {
+        "system": "jsc:frames_xp"
+      }
+    },
+    {
+      "sound": "jsc:os/frames_11/startup",
+      "when": {
+        "system": "jsc:frames_11"
+      }
+    }
+  ]
+}
