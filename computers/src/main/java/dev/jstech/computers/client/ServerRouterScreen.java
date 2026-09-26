@@ -20,6 +20,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * Config GUI for the Server Router: a flat-dark panel matching the computer-OS theme.
@@ -53,7 +54,6 @@ public final class ServerRouterScreen extends AbstractContainerScreen<ServerRout
                 GameText.component(ServerRouterTexts.NAME_FIELD));
         nameBox.setBordered(false);
         nameBox.setMaxLength(RenameServerRouterPayload.MAX_LEN);
-        nameBox.setTextColor(JsTechTheme.text());
         nameBox.setValue(menu.initialName());
         nameBox.setResponder(s ->
                 PacketDistributor.sendToServer(new RenameServerRouterPayload(menu.routerPos(), s)));
@@ -145,7 +145,35 @@ public final class ServerRouterScreen extends AbstractContainerScreen<ServerRout
     }
 
     @Override
+    public boolean keyPressed(final int key, final int scan, final int mods) {
+        /*
+         * While the name field has focus, route typing to it and never let a key (the inventory key 'E') reach the
+         * screen and close the GUI. ESC just unfocuses the field.
+         */
+        if (nameBox.isFocused()) {
+            if (key == GLFW.GLFW_KEY_ESCAPE) {
+                nameBox.setFocused(false);
+                setFocused(null);
+                return true;
+            }
+            nameBox.keyPressed(key, scan, mods);
+            return true;
+        }
+        return super.keyPressed(key, scan, mods);
+    }
+
+    @Override
+    public boolean charTyped(final char c, final int mods) {
+        if (nameBox.isFocused()) {
+            return nameBox.charTyped(c, mods);
+        }
+        return super.charTyped(c, mods);
+    }
+
+    @Override
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
+        // The field takes its colour from the theme drawing this frame, the same as every label around it.
+        nameBox.setTextColor(JsTechTheme.text());
         super.render(g, mouseX, mouseY, partialTick);
         renderTooltip(g, mouseX, mouseY);
     }

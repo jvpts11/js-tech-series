@@ -266,6 +266,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   System Monitor list each window by the name the desktop gives its program.
 
 ### Fixed
+- Typing a Server Router's name no longer closes its screen at the letter E, the key that closes an inventory:
+  while the name is typed every key goes to it, and Escape leaves the field.
 - Saving an IQL file from the Network Management Studio to a full disk no longer fails to send its answer: the
   reason was longer than the answer could carry, which is now text of any length. A long answer to a statement is
   carried whole for the same reason.

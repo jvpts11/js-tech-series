@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.ClusterManagementComputerScreen;
 import dev.jstech.computers.client.CraftingSwitchScreen;
 import dev.jstech.computers.client.ServerRackScreen;
+import dev.jstech.computers.client.ServerRouterScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
@@ -43,6 +44,10 @@ public final class UiSweepClientTests {
     private static final BlockPos SWITCH = new BlockPos(5, 2, 2);
     private static final BlockPos CLUSTER_MANAGER = new BlockPos(8, 2, 2);
     private static final BlockPos NODE = new BlockPos(11, 2, 2);
+    private static final BlockPos ROUTER = new BlockPos(14, 2, 2);
+    /** A point inside the router screen's name field, relative to the screen. */
+    private static final int ROUTER_NAME_X = 30;
+    private static final int ROUTER_NAME_Y = 43;
 
     /** Right-clicks {@code block}, waits for {@code screen}, screenshots it, asserts it stays open, then closes. */
     private static void open(final ClientTestContext ctx, final BlockPos block, final Class<? extends Screen> screen,
@@ -68,11 +73,26 @@ public final class UiSweepClientTests {
             world.setBlock(SWITCH, ComputingModule.CRAFTING_SWITCH.get());
             world.setBlock(CLUSTER_MANAGER, ComputingModule.CLUSTER_MANAGEMENT_COMPUTER.get());
             world.setBlock(NODE, ComputingModule.SUPERCOMPUTER_RACK.get());
+            world.setBlock(ROUTER, ComputingModule.SERVER_ROUTER.get());
         });
         open(ctx, RACK, ServerRackScreen.class, "server-rack");
         open(ctx, SWITCH, CraftingSwitchScreen.class, "crafting-switch");
         open(ctx, CLUSTER_MANAGER, ClusterManagementComputerScreen.class, "cluster-management-computer");
         open(ctx, NODE, ServerRackScreen.class, "supercomputer-rack");
+        // The router's name field: typing in it, the inventory key included, keeps the screen open.
+        ctx.thenTeleport(SETTLE, ROUTER.south(), Direction.NORTH)
+                .thenRightClick(SETTLE, ROUTER)
+                .thenAwaitScreen(ServerRouterScreen.class, SCREEN_WAIT)
+                .then(2, () -> ctx.clickGui(ROUTER_NAME_X, ROUTER_NAME_Y))
+                .then(2, () -> ctx.type("Row east"))
+                .then(2, () -> ctx.key(GLFW.GLFW_KEY_E))
+                .thenAssert(2, () -> ctx.screen(ServerRouterScreen.class) != null,
+                        "the inventory key pressed while the router's name is typed must not close its screen")
+                .thenScreenshot(2, "server-router")
+                // The first Escape leaves the field, the second closes the screen.
+                .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                .then(2, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                .thenAwaitNoScreen(SCREEN_WAIT);
         /*
          * A rack server's desktop through a monitor. The rack names its era to the client only once its unit has
          * travelled over, and the monitor frame (which the recipe viewer asks for every frame) must cope before.
