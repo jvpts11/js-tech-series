@@ -18,8 +18,14 @@ final class GameAudioSink implements IAudioSink {
         Minecraft.getInstance().getSoundManager().play(sound);
     }
 
+    /* The game knows only what the mixer played in its place, so that is what it is told to stop. */
     @Override
     public void stop(final SoundInstance sound) {
-        Minecraft.getInstance().getSoundManager().stop(sound);
+        Minecraft.getInstance().getSoundManager().stop(AudioMixer.playedAs(sound));
+    }
+
+    @Override
+    public boolean active(final SoundInstance sound) {
+        return Minecraft.getInstance().getSoundManager().isActive(AudioMixer.playedAs(sound));
     }
 }

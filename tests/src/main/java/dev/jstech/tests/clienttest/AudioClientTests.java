@@ -23,6 +23,7 @@ import dev.jstech.core.audio.pcm.IPcmSource;
 import dev.jstech.core.audio.pcm.PcmFormat;
 import dev.jstech.core.audio.pcm.SynthSource;
 import dev.jstech.core.audio.pcm.Tone;
+import dev.jstech.core.audio.pcm.Waveform;
 import dev.jstech.core.client.audio.AlertSigns;
 import dev.jstech.core.client.audio.AudioDebugLines;
 import dev.jstech.core.client.audio.AudioEngine;
@@ -215,6 +216,25 @@ public final class AudioClientTests {
      * The key turns off the last sound heard around the player, never their own footsteps or the screen's clicks,
      * says which on the action bar, and brings it back when pressed again at once; everything heard is kept as recent.
      */
+    /**
+     * A sound the series started is heard until it is stopped, and stopping it stops it. The game plays what the
+     * mixer made of the sound rather than the sound itself, so asking it about the one the series holds used to reach
+     * nothing: a stopped sound played on to its end.
+     */
+    @ClientTest(timeoutTicks = 200)
+    public static void made_isHeardUntilItIsStopped(final ClientTestContext ctx) {
+        final SoundInstance[] beep = new SoundInstance[1];
+        final List<Tone> held = List.of(new Tone(Waveform.SQUARE, 440.0, 5000, 0.2F));
+        ctx.then(0, () -> {
+                    final Vec3 at = ctx.player().position();
+                    beep[0] = AudioEngine.playMade(TestSounds.BEEP, () -> new SynthSource(held), at.x, at.y, at.z,
+                            1.0F);
+                })
+                .thenWaitUntil(() -> AudioEngine.isPlaying(beep[0]), 40, "the beep is heard")
+                .then(10, () -> AudioEngine.stop(beep[0]))
+                .thenWaitUntil(() -> !AudioEngine.isPlaying(beep[0]), 20, "and stops when it is told to");
+    }
+
     @ClientTest(timeoutTicks = 400)
     public static void key_turnsOffTheLastSoundAroundThePlayerAndBringsItBack(final ClientTestContext ctx) {
         final CapturingAudioSink sink = new CapturingAudioSink();

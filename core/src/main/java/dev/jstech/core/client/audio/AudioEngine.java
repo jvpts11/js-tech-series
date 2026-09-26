@@ -182,6 +182,11 @@ public final class AudioEngine {
         sink.stop(sound);
     }
 
+    /** Whether a sound this engine started is still being heard. */
+    public static boolean isPlaying(final SoundInstance sound) {
+        return sink.active(sound);
+    }
+
     /** Starts a sound the engine's own parts made, the director's running sounds, through the same sink. */
     static void play(final SoundInstance sound) {
         sink.play(sound);

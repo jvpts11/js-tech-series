@@ -39,6 +39,13 @@ public final class CapturingAudioSink implements IAudioSink {
         stopped.add(sound);
     }
 
+    /** Heard until it is stopped: nothing here ever ends by itself. */
+    @Override
+    public synchronized boolean active(final SoundInstance sound) {
+        final SoundInstance played = AudioMixer.playedAs(sound);
+        return this.played.contains(played) && !stopped.contains(sound);
+    }
+
     /** What would have been heard, in order, as the mixer let it through. */
     public synchronized List<SoundInstance> played() {
         return List.copyOf(played);

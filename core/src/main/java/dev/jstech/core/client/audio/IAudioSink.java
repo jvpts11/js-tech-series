@@ -20,4 +20,7 @@ public interface IAudioSink {
 
     /** Stops a sound that is playing; nothing happens when it is not. */
     void stop(SoundInstance sound);
+
+    /** Whether a sound started here is still being heard. */
+    boolean active(SoundInstance sound);
 }

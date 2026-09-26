@@ -13,8 +13,10 @@ import dev.jstech.core.audio.DuckEnvelope;
 import dev.jstech.core.audio.RecentSounds;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.audio.SoundKeys;
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import net.minecraft.Util;
@@ -48,6 +50,12 @@ public final class AudioMixer {
     private static final Set<SoundInstance> ALERTS = Collections.newSetFromMap(new WeakHashMap<>());
     private static final int RECENT_CAPACITY = 256;
     private static final RecentSounds RECENT = new RecentSounds(RECENT_CAPACITY);
+    /*
+     * What each sound the series asked for was played as. Both ends are held weakly: the game keeps the sound it plays
+     * alive while it plays, and that sound keeps the one it was made from, so neither outlives the playing.
+     */
+    private static final Map<SoundInstance, WeakReference<SoundInstance>> PLAYED_AS =
+            Collections.synchronizedMap(new WeakHashMap<>());
     private static final String ALERTS_CHANNEL = AudioChannels.ALERTS.id().toString();
 
     private static volatile @Nullable ResourceLocation lastHeard;
@@ -108,7 +116,23 @@ public final class AudioMixer {
             return watched(already);
         }
         final SoundKey key = SoundKeys.find(id);
-        return key == null ? sound : watched(ScaledSoundInstance.of(sound, key.spec().channel().id().toString()));
+        if (key == null) {
+            return sound;
+        }
+        final ScaledSoundInstance scaled = ScaledSoundInstance.of(sound, key.spec().channel().id().toString());
+        PLAYED_AS.put(sound, new WeakReference<>(scaled));
+        return watched(scaled);
+    }
+
+    /**
+     * The sound the game is playing for one the series asked for: the one the mixer made of it, or the same one. The
+     * game knows only the sound it was handed, so stopping a series' sound, or asking whether it still plays, has to
+     * name that one.
+     */
+    public static SoundInstance playedAs(final SoundInstance sound) {
+        final WeakReference<SoundInstance> reference = PLAYED_AS.get(sound);
+        final SoundInstance played = reference == null ? null : reference.get();
+        return played == null ? sound : played;
     }
 
     /** How much of its volume a channel keeps now: all of it for the alerts, less for the others while one plays. */
