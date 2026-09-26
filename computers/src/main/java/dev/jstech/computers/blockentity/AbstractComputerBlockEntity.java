@@ -58,6 +58,7 @@ import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.audio.IAudioHost;
+import dev.jstech.core.audio.StereoSide;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
@@ -249,7 +250,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
             return isValidRam(stack);
         }
         if (layout().isPcie(slot)) {
-            return isValidPcieCard(stack);
+            return isValidPcieCard(stack) && !(isSoundCard(stack) && anotherSoundCardSeated(slot));
         }
         if (layout().isDisk(slot)) {
             return stack.getItem() instanceof DiskItem;
@@ -259,6 +260,21 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
 
     public ItemStackHandler getHardware() {
         return hardware.handler();
+    }
+
+    private static boolean isSoundCard(final ItemStack stack) {
+        return stack.getItem() instanceof IExpansionCardItem card && card.cardSpec() instanceof SoundCardSpec;
+    }
+
+    /* A machine plays its sound through one card: a second one would take a slot and power and play nothing. */
+    private boolean anotherSoundCardSeated(final int slot) {
+        final ItemStackHandler slots = getHardware();
+        for (int i = 0; i < slots.getSlots(); i++) {
+            if (i != slot && layout().isPcie(i) && isSoundCard(slots.getStackInSlot(i))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Where this computer's slots are: which one takes the board, which ones take disks, and how many. */
@@ -1073,6 +1089,16 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     @Override
     public void systemSound(final ServerLevel level, final SystemSound sound) {
         audio.play(level, sound);
+    }
+
+    /** How many speakers are linked to it. */
+    public int speakerCount() {
+        return audio.speakerCount();
+    }
+
+    /** Which side of a stereo recording the speaker at {@code speaker} plays for it. */
+    public StereoSide speakerSide(final BlockPos speaker) {
+        return audio.sideOf(speaker);
     }
 
     @Override

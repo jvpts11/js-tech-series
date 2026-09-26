@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "jsc:block/legacy_speaker",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "jsc:block/legacy_speaker"
+    },
+    "facing=south": {
+      "model": "jsc:block/legacy_speaker",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "jsc:block/legacy_speaker",
+      "y": 270
+    }
+  }
+}

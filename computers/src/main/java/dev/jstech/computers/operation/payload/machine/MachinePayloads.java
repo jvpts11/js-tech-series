@@ -15,6 +15,7 @@ import dev.jstech.computers.block.IKvmScreenOpener;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.client.os.RemoteControlApp;
 import dev.jstech.computers.machine.RemoteComputerService;
 import dev.jstech.computers.menu.ClusterManagementComputerMenu;
@@ -22,6 +23,7 @@ import dev.jstech.computers.menu.CraftingComputerMenu;
 import dev.jstech.computers.menu.PersonalComputerMenu;
 import dev.jstech.computers.menu.ServerAssemblyMenu;
 import dev.jstech.computers.menu.ServerRackMenu;
+import dev.jstech.computers.menu.SpeakerMenu;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.KvmSelectPayload;
@@ -32,6 +34,7 @@ import dev.jstech.computers.operation.payload.RemoteControlPayload;
 import dev.jstech.computers.operation.payload.RemoteHostsPayload;
 import dev.jstech.computers.operation.payload.RenamePcPayload;
 import dev.jstech.computers.operation.payload.RenameServerPayload;
+import dev.jstech.computers.operation.payload.RenameSpeakerPayload;
 import dev.jstech.computers.operation.payload.SystemErrorSoundPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.ServerCliComputer;
@@ -48,8 +51,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The payloads that act on a machine itself: its power, remote control, the KVM switch, the power of a rack bay and
- * renaming a computer or a server.
+ * The payloads that act on a machine itself: its power, remote control, the KVM switch, the power of a rack bay,
+ * renaming a computer, a server or a speaker, and the sound of an error box on its desktop.
  */
 public final class MachinePayloads {
 
@@ -66,6 +69,9 @@ public final class MachinePayloads {
                 ComputerAccess.machine(MachinePowerPayload::hostPos), MachinePayloads::handleMachinePower);
         ComputerAccess.accept(registrar, SystemErrorSoundPayload.TYPE, SystemErrorSoundPayload.STREAM_CODEC,
                 ComputerAccess.machine(SystemErrorSoundPayload::hostPos), MachinePayloads::handleSystemErrorSound);
+        ComputerAccess.accept(registrar, RenameSpeakerPayload.TYPE, RenameSpeakerPayload.STREAM_CODEC,
+                ComputerAccess.menu(SpeakerMenu.class, SpeakerMenu::speakerPos, RenameSpeakerPayload::speakerPos),
+                MachinePayloads::handleRenameSpeaker);
         registrar.playToClient(OpenKvmPayload.TYPE, OpenKvmPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(MachinePayloads::handleOpenKvm));
         ComputerAccess.accept(registrar, RemoteControlPayload.TYPE, RemoteControlPayload.STREAM_CODEC,
@@ -87,6 +93,13 @@ public final class MachinePayloads {
                                 ClusterManagementComputerMenu::computerPos,
                                 RenamePcPayload::pcPos)),
                 MachinePayloads::handleRenamePc);
+    }
+
+    private static void handleRenameSpeaker(final RenameSpeakerPayload payload, final ServerPlayer player,
+                                            final ServerLevel level) {
+        if (level.getBlockEntity(payload.speakerPos()) instanceof SpeakerBlockEntity speaker) {
+            speaker.ask(level, payload.name());
+        }
     }
 
     private static void handleSystemErrorSound(final SystemErrorSoundPayload payload, final ServerPlayer player,

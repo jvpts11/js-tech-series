@@ -29,6 +29,7 @@ import dev.jstech.computers.menu.ReceivingBusMenu;
 import dev.jstech.computers.menu.ServerAssemblyMenu;
 import dev.jstech.computers.menu.ServerRackMenu;
 import dev.jstech.computers.menu.ServerRouterMenu;
+import dev.jstech.computers.menu.SpeakerMenu;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
@@ -92,6 +93,9 @@ public final class ComputingMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<ServerRouterMenu>> SERVER_ROUTER_MENU =
             menu("server_router", ServerRouterMenu::fromNetwork);
+
+    public static final DeferredHolder<MenuType<?>, MenuType<SpeakerMenu>> SPEAKER_MENU =
+            menu("speaker", SpeakerMenu::fromNetwork);
 
     // What a monitor shows
 

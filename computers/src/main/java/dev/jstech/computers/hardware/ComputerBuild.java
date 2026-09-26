@@ -42,6 +42,8 @@ public record ComputerBuild(MotherboardSpec motherboard,
             "expansion card bus family %s is not compatible with board bus %s");
     private static final TextKey SOUND_CARD_ERA = TextKey.of("jsc.build.sound_card_era",
             "a sound card of the %s era does not sit on a board of the %s era");
+    private static final TextKey TOO_MANY_SOUND_CARDS = TextKey.of("jsc.build.too_many_sound_cards",
+            "one sound card per machine: %s installed");
     private static final TextKey TOO_MANY_RAM =
             TextKey.of("jsc.build.too_many_ram", "too many RAM modules: %s installed, %s slots");
     private static final TextKey WRONG_RAM =
@@ -244,6 +246,10 @@ public record ComputerBuild(MotherboardSpec motherboard,
             if (card instanceof SoundCardSpec sound && sound.era() != motherboard.era()) {
                 problems.add(SOUND_CARD_ERA.with(sound.era().named(), motherboard.era().named()));
             }
+        }
+        final int soundCards = cardsOfKind(ExpansionCardKind.SOUND).size();
+        if (soundCards > 1) {
+            problems.add(TOO_MANY_SOUND_CARDS.with(soundCards));
         }
 
         if (rams.size() > motherboard.ramSlots()) {

@@ -129,6 +129,16 @@ public final class Audio {
      */
     public static boolean cue(final ServerLevel level, final double x, final double y, final double z,
                               final SoundCue cue, final SoundContext context, final float volume, final float pitch) {
+        return cue(level, x, y, z, cue, context, volume, pitch, StereoSide.BOTH, FrequencyResponse.FULL);
+    }
+
+    /**
+     * Raises {@code cue} at a point in the world through a speaker that plays {@code side} of a stereo recording and
+     * reproduces what {@code response} lets it: one of a pair, or a cheap one.
+     */
+    public static boolean cue(final ServerLevel level, final double x, final double y, final double z,
+                              final SoundCue cue, final SoundContext context, final float volume, final float pitch,
+                              final StereoSide side, final FrequencyResponse response) {
         if (cue.space() != SoundSpace.WORLD) {
             throw new IllegalArgumentException(cue.id() + " is a cue of the interface, not of the world");
         }
@@ -137,7 +147,7 @@ public final class Audio {
             return false;
         }
         PacketDistributor.sendToPlayersNear(level, null, x, y, z, cue.range(),
-                new CueSoundPayload(cue.id(), false, x, y, z, context, volume, pitch));
+                new CueSoundPayload(cue.id(), false, x, y, z, context, volume, pitch, side, response));
         return true;
     }
 
@@ -167,8 +177,12 @@ public final class Audio {
         }
         final SoundContext context = host.soundContext().with(SoundContext.DEVICE, device.id());
         int raised = 0;
-        for (final Vec3 speaker : host.audioOutputs()) {
-            if (cue(level, speaker.x, speaker.y, speaker.z, cue, context, Math.min(1.0F, volume), 1.0F)) {
+        for (final AudioOutput speaker : host.outputs()) {
+            final Vec3 at = speaker.position();
+            // What the device keeps of a recording reaches every speaker, and a mono device has no sides to give.
+            final StereoSide side = device.stereo() ? speaker.side() : StereoSide.BOTH;
+            if (cue(level, at.x, at.y, at.z, cue, context, Math.min(1.0F, volume), 1.0F, side,
+                    device.response().through(speaker.response()))) {
                 raised++;
             }
         }

@@ -27,6 +27,14 @@ public interface IAudioHost {
     /** Where its sound comes from: its speakers, or itself when it has none wired. Never empty. */
     List<Vec3> audioOutputs();
 
+    /**
+     * Where its sound comes from and how each place plays it: which side of a stereo recording, and what it can
+     * reproduce. A host whose speakers all play a recording whole needs say no more than {@link #audioOutputs()}.
+     */
+    default List<AudioOutput> outputs() {
+        return audioOutputs().stream().map(AudioOutput::at).toList();
+    }
+
     /** What its sounds are picked by (its era, its system's family); its device is added to it when it plays. */
     SoundContext soundContext();
 }

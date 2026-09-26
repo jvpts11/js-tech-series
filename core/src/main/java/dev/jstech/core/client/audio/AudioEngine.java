@@ -9,14 +9,18 @@ package dev.jstech.core.client.audio;
 
 import dev.jstech.core.audio.AudioChannel;
 import dev.jstech.core.audio.CueSoundPayload;
+import dev.jstech.core.audio.FrequencyResponse;
 import dev.jstech.core.audio.SoundContext;
 import dev.jstech.core.audio.SoundCue;
 import dev.jstech.core.audio.SoundCues;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.audio.SoundKeys;
 import dev.jstech.core.audio.SoundSpace;
+import dev.jstech.core.audio.StereoSide;
 import dev.jstech.core.audio.ToneSoundPayload;
 import dev.jstech.core.audio.pcm.IPcmOpener;
+import dev.jstech.core.audio.pcm.ResponseFilter;
+import dev.jstech.core.audio.pcm.StereoSelect;
 import dev.jstech.core.audio.pcm.SynthSource;
 import java.util.Locale;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -116,7 +120,8 @@ public final class AudioEngine {
     public static void playCue(final CueSoundPayload payload) {
         final SoundCue cue = SoundCues.find(payload.cue());
         if (cue != null && payload.onScreen() == (cue.space() == SoundSpace.INTERFACE)) {
-            playCue(cue, payload.context(), payload.x(), payload.y(), payload.z(), payload.volume(), payload.pitch());
+            playCue(cue, payload.context(), payload.x(), payload.y(), payload.z(), payload.volume(), payload.pitch(),
+                    payload.side(), payload.response());
         }
     }
 
@@ -130,6 +135,17 @@ public final class AudioEngine {
     @Nullable
     public static SoundInstance playCue(final SoundCue cue, final SoundContext context, final double x,
                                         final double y, final double z, final float volume, final float pitch) {
+        return playCue(cue, context, x, y, z, volume, pitch, StereoSide.BOTH, FrequencyResponse.FULL);
+    }
+
+    /**
+     * Plays {@code cue} out of a speaker that plays {@code side} of a stereo recording and reproduces what
+     * {@code response} lets it. A declared sound that is a stereo recording, or one such a speaker changes, is read
+     * from its file and played as it is read, one channel at the point; anything else plays as the game plays it.
+     */
+    public static SoundInstance playCue(final SoundCue cue, final SoundContext context, final double x,
+                                        final double y, final double z, final float volume, final float pitch,
+                                        final StereoSide side, final FrequencyResponse response) {
         final String picked = SoundCueBindings.of(cue).pick(context);
         final ResourceLocation id = picked == null ? null : ResourceLocation.tryParse(picked);
         final SoundKey declared = id == null ? null : SoundKeys.find(id);
@@ -137,6 +153,14 @@ public final class AudioEngine {
             return null;
         }
         final boolean screen = cue.space() == SoundSpace.INTERFACE;
+        if (!screen && declared != null
+                && (declared.spec().stereo() || side != StereoSide.BOTH || !response.full())) {
+            final SoundInstance recorded = new MadeSoundInstance(declared,
+                    () -> ResponseFilter.of(StereoSelect.of(RecordingFiles.open(declared), side), response),
+                    volume, false, x, y, z);
+            sink.play(recorded);
+            return recorded;
+        }
         final AudioChannel channel = declared != null ? declared.spec().channel() : cue.channel();
         final SoundInstance sound = ScaledSoundInstance.of(new SimpleSoundInstance(id, channel.source(), volume, pitch,
                 SoundInstance.createUnseededRandom(), false, 0,

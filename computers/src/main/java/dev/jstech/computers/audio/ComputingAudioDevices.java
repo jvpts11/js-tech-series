@@ -10,6 +10,7 @@ package dev.jstech.computers.audio;
 import dev.jstech.computers.hardware.SoundCardSpec;
 import dev.jstech.core.audio.AudioDevice;
 import dev.jstech.core.audio.AudioDevices;
+import dev.jstech.core.audio.FrequencyResponse;
 import dev.jstech.core.audio.pcm.Waveform;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -32,8 +33,13 @@ public final class ComputingAudioDevices {
 
     public static final AudioDevice PC_SPEAKER = AudioDevices.register(
             new AudioDevice("jsc:pc_speaker", PC_SPEAKER_NAME, Set.of(Waveform.SQUARE), false, 1));
+    /*
+     * The early card: eight bits in one channel at 22 kHz, so a recording comes out of it really lo-fi, and the same
+     * out of every speaker, which have no sides to play from a card that has none.
+     */
     public static final AudioDevice FM_CARD = AudioDevices.register(
-            new AudioDevice("jsc:fm_card", FM_CARD_NAME, EnumSet.allOf(Waveform.class), true, 9));
+            new AudioDevice("jsc:fm_card", FM_CARD_NAME, EnumSet.allOf(Waveform.class), true, 9,
+                    new FrequencyResponse(22_050, 8, 0, 0), false));
     public static final AudioDevice WAVETABLE_CARD = AudioDevices.register(
             new AudioDevice("jsc:wavetable_card", WAVETABLE_CARD_NAME, EnumSet.allOf(Waveform.class), true, 32));
     public static final AudioDevice ON_BOARD = AudioDevices.register(

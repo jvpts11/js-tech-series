@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "jsc:block/speaker_legacy_top",
+    "east": "jsc:block/speaker_legacy_side",
+    "north": "jsc:block/speaker_legacy_front",
+    "particle": "jsc:block/speaker_legacy_side",
+    "south": "jsc:block/speaker_legacy_back",
+    "up": "jsc:block/speaker_legacy_top",
+    "west": "jsc:block/speaker_legacy_side"
+  }
+}

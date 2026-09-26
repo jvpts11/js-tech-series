@@ -131,6 +131,7 @@ public final class ComputingClientSetup {
         event.register(ComputingMenus.NET_TERMINAL_MENU.get(), NetTerminalScreen::new);
         event.register(ComputingMenus.SERVER_RACK_MENU.get(), ServerRackScreen::new);
         event.register(ComputingMenus.SERVER_ROUTER_MENU.get(), ServerRouterScreen::new);
+        event.register(ComputingMenus.SPEAKER_MENU.get(), SpeakerScreen::new);
         event.register(ComputingMenus.SERVER_ASSEMBLY_MENU.get(), ServerAssemblyScreen::new);
         /*
          * The one place an operating space is chosen. The mod's own is registered through the same door an

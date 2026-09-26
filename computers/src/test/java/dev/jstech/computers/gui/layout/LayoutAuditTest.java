@@ -46,7 +46,7 @@ class LayoutAuditTest {
             "CraftingSwitchLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
             "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout",
-            "CdeStyleLayout", "WorkstationInfoLayout", "TrashLayout", "HelpViewerLayout");
+            "CdeStyleLayout", "WorkstationInfoLayout", "TrashLayout", "HelpViewerLayout", "SpeakerLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -110,6 +110,7 @@ class LayoutAuditTest {
             c.add(new AuditCase("ThisPcLayout.programGrid(" + size[0] + ")",
                     dev.jstech.computers.gui.layout.ThisPcLayout.programGrid(size[0], 7), false));
         }
+        c.add(new AuditCase("SpeakerLayout", SpeakerLayout.layout(), true));
         // The Server Router tiles one section per output face; audit every count up to the maximum.
         for (int s = 0; s <= ServerRouterLayout.MAX_SECTIONS; s++) {
             c.add(new AuditCase("ServerRouterLayout(" + s + ")", ServerRouterLayout.layout(s), true));

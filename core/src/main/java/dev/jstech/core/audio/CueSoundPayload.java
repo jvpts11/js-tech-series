@@ -28,9 +28,18 @@ import net.minecraft.resources.ResourceLocation;
  * @param context  what its sound is picked by
  * @param volume   how loud, from 0 to 1
  * @param pitch    how high, 1 as recorded
+ * @param side     which side of a stereo recording the speaker it comes out of plays
+ * @param response what that speaker can reproduce
  */
 public record CueSoundPayload(ResourceLocation cue, boolean onScreen, double x, double y, double z,
-                              SoundContext context, float volume, float pitch) implements CustomPacketPayload {
+                              SoundContext context, float volume, float pitch, StereoSide side,
+                              FrequencyResponse response) implements CustomPacketPayload {
+
+    /** A cue played whole, both sides together and nothing taken away. */
+    public CueSoundPayload(final ResourceLocation cue, final boolean onScreen, final double x, final double y,
+                           final double z, final SoundContext context, final float volume, final float pitch) {
+        this(cue, onScreen, x, y, z, context, volume, pitch, StereoSide.BOTH, FrequencyResponse.FULL);
+    }
 
     public static final CustomPacketPayload.Type<CueSoundPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "cue_sound"));
@@ -56,11 +65,17 @@ public record CueSoundPayload(ResourceLocation cue, boolean onScreen, double x, 
         VALUES.encode(buf, context.values());
         buf.writeFloat(volume);
         buf.writeFloat(pitch);
+        buf.writeVarInt(side.id());
+        buf.writeVarInt(response.maxSampleRate());
+        buf.writeVarInt(response.bits());
+        buf.writeVarInt(response.lowCutHz());
+        buf.writeVarInt(response.highCutHz());
     }
 
     private static CueSoundPayload read(final RegistryFriendlyByteBuf buf) {
         return new CueSoundPayload(ResourceLocation.STREAM_CODEC.decode(buf), buf.readBoolean(), buf.readDouble(),
                 buf.readDouble(), buf.readDouble(), new SoundContext(VALUES.decode(buf)), buf.readFloat(),
-                buf.readFloat());
+                buf.readFloat(), StereoSide.byId(buf.readVarInt()),
+                new FrequencyResponse(buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt()));
     }
 }

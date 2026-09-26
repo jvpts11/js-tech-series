@@ -12,6 +12,9 @@ import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.blockentity.SpeakerBlockEntity;
+import dev.jstech.computers.client.SpeakerScreen;
+import dev.jstech.computers.gui.layout.SpeakerLayout;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.core.audio.SoundKey;
@@ -25,11 +28,13 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.ItemStackHandler;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * The sounds of the machines, heard where the player stands: a computer's hard drive turning while it runs and
  * stopping when it goes off, the servers of a rack heard by their fans until five of them run close together, when
- * the room is heard instead, and a system's chime out of its monitor when its desktop comes up.
+ * the room is heard instead, a system's chime out of its monitor when its desktop comes up, and the screen a speaker
+ * is named on.
  */
 public final class MachineSoundClientTests {
 
@@ -95,6 +100,43 @@ public final class MachineSoundClientTests {
                 .thenWaitUntil(() -> AudioMixer.recent(RECENT_MILLIS).contains(FRAMES_11_CHIME), 600,
                         "the Frames 11 chime is heard when the desktop comes up",
                         () -> "heard " + AudioMixer.recent(RECENT_MILLIS));
+    }
+
+    @ClientTest(timeoutTicks = 600)
+    public static void speakerScreens_nameThemAndRefuseANameTaken(final ClientTestContext ctx) {
+        final BlockPos north = COMPUTER.north();
+        final BlockPos south = COMPUTER.south();
+        final SpeakerBlockEntity[] speakers = new SpeakerBlockEntity[2];
+        ctx.thenTeleport(SETTLE, STAND, Direction.SOUTH)
+                .thenBuild(SETTLE, builder -> {
+                    builder.placeRunningPersonalComputer(COMPUTER);
+                    builder.placeMonitor(COMPUTER.east(), Direction.EAST);
+                    builder.setBlock(north, ComputingModule.SPEAKER.get());
+                    builder.setBlock(south, ComputingModule.LEGACY_SPEAKER.get());
+                    speakers[0] = builder.blockEntity(north, SpeakerBlockEntity.class);
+                    speakers[1] = builder.blockEntity(south, SpeakerBlockEntity.class);
+                })
+                .thenRightClick(20, north)
+                .thenAwaitScreen(SpeakerScreen.class, 40)
+                .then(2, () -> ctx.clickGui(SpeakerLayout.NAME_X + 20, SpeakerLayout.NAME_Y + 6))
+                .then(2, () -> ctx.type("Desk left"))
+                .then(2, () -> ctx.key(GLFW.GLFW_KEY_E, 0))
+                .thenAssert(2, () -> ctx.mc().screen instanceof SpeakerScreen,
+                        "the inventory key pressed while a name is typed does not close the screen")
+                .thenScreenshot(10, "speaker_standard_named")
+                .then(0, () -> ctx.player().closeContainer())
+                .thenWaitUntilServer(level -> "Desk left".equals(speakers[0].name()), 40,
+                        "the Cobble takes the name typed when its screen closes",
+                        level -> "named " + speakers[0].name())
+                .thenRightClick(5, south)
+                .thenAwaitScreen(SpeakerScreen.class, 40)
+                .then(2, () -> ctx.clickGui(SpeakerLayout.NAME_X + 20, SpeakerLayout.NAME_Y + 6))
+                .then(2, () -> ctx.type("desk left"))
+                .thenAssert(20, () -> ctx.screen(SpeakerScreen.class).getMenu().nameClashes(),
+                        "the ToneWorks is told its computer already has a speaker by that name")
+                .thenScreenshot(2, "speaker_legacy_clash")
+                .then(0, () -> ctx.player().closeContainer())
+                .thenAssert(10, () -> speakers[1].name().isEmpty(), "and closing it keeps the name it had");
     }
 
     private static PersonalComputerBlockEntity legacyWithHardDrive(final TestWorldBuilder builder) {

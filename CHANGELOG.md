@@ -24,6 +24,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   The server sends a tune as its notes, heard by the players near where it plays, and each client makes the
   sound itself. Such a sound has a subtitle and a channel like any other and the player can turn it off the same
   way; heard from a place in the world, a stereo recording is played in mono so it comes from that place.
+- A sound can come out of several places at once, each playing one side of a stereo recording or both, and each
+  as well as the speaker there reproduces it: no faster a sample rate and no more bits than it manages, with its
+  bass and treble cut where it cuts them. A mod marks a recording as stereo, and a sound device's own limits (a
+  card that plays in mono at 8 bits) apply on top of the speaker's.
 - A "Turn Off Last Sound" key in the game's controls, under J's Tech Series, with no key until the player picks
   one: it turns off the last sound heard around the player (never their own footsteps or a click of the screen)
   and says which on the action bar; pressed again within five seconds, it brings that sound back.
@@ -60,14 +64,22 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Four sound cards, one for each bus of the Vintage and Legacy boards: the Artisan Tone Blaster (ISA) and Tone
   Blaster 128 (PCI), which make their notes by FM and play recordings at 8 bits in mono at 22 kHz, and the Tone
   Blaster Live (AGP) and Tone Blaster Hi-Fi (PCIe), wavetable cards playing recordings at 16 bits in stereo at
-  44.1 kHz. A sound card sits only on a board of its own era, in a slot of that board's bus; a Standard board has
-  its sound built in, and its tooltip says so. A computer's tooltip says whether its case only beeps or its board
+  44.1 kHz. A sound card sits only on a board of its own era, in a slot of that board's bus, and a machine takes
+  one; a Standard board has its sound built in, and its tooltip says so. A computer's tooltip says whether its case only beeps or its board
   plays everything, and a monitor's that its computer's sound comes out of it.
 - Frames 95, XP and 11 have their own sounds: a chime when the desktop comes up, the same chime when the system
-  shuts down, and an error sound when it raises an error box. They come out of the computer's monitors, heard by
-  everyone near them, and only through a sound card or the sound on a Standard board: a machine with neither, or
-  with no monitor, only beeps. They are sound cues picked by the system a machine runs, so a resource pack can give
-  any other system chimes of its own.
+  shuts down, and an error sound when it raises an error box. They come out of the computer's monitors and
+  speakers, heard by everyone near them, and only through a sound card or the sound on a Standard board: a machine
+  with neither, or with no monitor and no speaker, only beeps. They are sound cues picked by the system a machine
+  runs, so a resource pack can give any other system chimes of its own.
+- Speakers: the Artisan ToneWorks (Legacy) and the Artisan Cobble (Standard), linked to a computer over the
+  peripheral cable like a monitor, each taking one of its board's peripheral ports. A computer's sound comes out of
+  its monitors and its speakers; with two or more speakers, the one to the left of whoever sits at its monitor plays
+  the left side of a stereo recording and the one to the right the right, and a speaker alone plays both. A
+  ToneWorks plays at 22 kHz with its bass and treble cut, a Cobble the whole range. Using a speaker opens its
+  screen, in its era's look: the name a program finds it by, taken when the screen closes and refused while another
+  speaker of the same computer has it, whatever the case of its letters; the computer it plays for; the side it
+  plays; and how well.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.

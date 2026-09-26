@@ -43,6 +43,7 @@ import dev.jstech.computers.block.PersonalRouterBlock;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRackPartBlock;
 import dev.jstech.computers.block.ServerRouterBlock;
+import dev.jstech.computers.block.SpeakerBlock;
 import dev.jstech.computers.block.SupercomputerRackBlock;
 import dev.jstech.computers.block.TankBlock;
 import dev.jstech.computers.block.VintageClusterManagementComputerBlock;
@@ -68,6 +69,7 @@ import dev.jstech.computers.blockentity.PersonalRouterBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
 import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
+import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.blockentity.TankBlockEntity;
 import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
 import dev.jstech.computers.hardware.CpuSocketId;
@@ -361,6 +363,16 @@ public final class ComputingModule {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MediaReaderBlockEntity>> MEDIA_READER_BE =
             CONTENT.blockEntity("media_reader", MediaReaderBlockEntity::new,
                     FLOPPY_DRIVE, CD_DRIVE, DVD_DRIVE, DOCK_STATION);
+
+    /* The speakers, which carry a computer's sound out beside its monitor: a Legacy model and a Standard one. */
+    public static final BlockEntry<SpeakerBlock> LEGACY_SPEAKER =
+            speaker("legacy_speaker", "speaker_legacy", HardwareEra.LEGACY, MapColor.COLOR_LIGHT_GRAY)
+                    .named("Artisan ToneWorks").register();
+    public static final BlockEntry<SpeakerBlock> SPEAKER =
+            speaker("speaker", "speaker_standard", HardwareEra.STANDARD, MapColor.COLOR_BLACK)
+                    .named("Artisan Cobble").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SpeakerBlockEntity>> SPEAKER_BE =
+            CONTENT.blockEntity("speaker", SpeakerBlockEntity::new, LEGACY_SPEAKER, SPEAKER);
 
     /*
      * The Network Gateway: a peripheral of one of our computers that is, on its other face, a ComputerCraft
@@ -675,6 +687,17 @@ public final class ComputingModule {
                 .look(IBlockLook.facing(IBlockModel.orientable(id, casing, "block/" + id + "_front", casing))
                         .whileOn(MediaReaderBlock.LOADED,
                                 IBlockModel.orientable(id + "_active", casing, "block/" + id + "_active", casing)))
+                .item().tab(DEVICES);
+    }
+
+    /** A speaker: its grille in front, its sockets behind, set down facing whoever places it. */
+    private static BlockBuilder<SpeakerBlock> speaker(final String id, final String textures, final HardwareEra era,
+                                                      final MapColor color) {
+        final String face = "block/" + textures + "_";
+        return CONTENT.block(id, properties -> new SpeakerBlock(properties, era))
+                .properties(properties -> properties.mapColor(color).strength(1.0F).sound(SoundType.WOOD))
+                .look(IBlockLook.facing(new IBlockModel.SixFaces(id, face + "top", face + "top", face + "front",
+                        face + "back", face + "side", face + "side", face + "side")))
                 .item().tab(DEVICES);
     }
 

@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -25,12 +26,22 @@ import java.util.Set;
  * @param id      what it is known by, {@code namespace:path}
  * @param name    what a player reads it as
  * @param waves   the shapes it can synthesise; none for a device that synthesises nothing
- * @param samples whether it plays recordings, and not only notes
- * @param voices  how many sounds it plays at once
+ * @param samples  whether it plays recordings, and not only notes
+ * @param voices   how many sounds it plays at once
+ * @param response what it keeps of a recording on the way out, before any speaker: an early card's coarse sampling
+ * @param stereo   whether it plays a recording in two channels; one that does not mixes them before its speakers
  */
-public record AudioDevice(String id, TextKey name, Set<Waveform> waves, boolean samples, int voices) {
+public record AudioDevice(String id, TextKey name, Set<Waveform> waves, boolean samples, int voices,
+                          FrequencyResponse response, boolean stereo) {
+
+    /** A device that plays a recording as it was made, in stereo. */
+    public AudioDevice(final String id, final TextKey name, final Set<Waveform> waves, final boolean samples,
+                       final int voices) {
+        this(id, name, waves, samples, voices, FrequencyResponse.FULL, true);
+    }
 
     public AudioDevice {
+        Objects.requireNonNull(response, "response");
         waves = Collections.unmodifiableSet(waves.isEmpty() ? EnumSet.noneOf(Waveform.class) : EnumSet.copyOf(waves));
         if (voices < 0) {
             throw new IllegalArgumentException("a device plays no fewer than no sounds: " + voices);

@@ -26,14 +26,27 @@ import net.minecraft.resources.ResourceLocation;
  * @param range    how many blocks it carries before it fades out, for a sound of the world
  * @param priority how much it matters beside other sounds when there are too many to play, higher first
  * @param made     whether it is made as it plays, from samples handed over each time, and so has no files
+ * @param stereo   whether its files are stereo recordings: heard from a place in the world they are mixed down to one
+ *                 channel as they play, and the speakers of a pair can each play one side
  */
 public record SoundSpec(SoundSpace space, boolean loop, AudioChannel channel, List<ResourceLocation> files,
-                        boolean stream, int range, int priority, boolean made) {
+                        boolean stream, int range, int priority, boolean made, boolean stereo) {
 
     /** The priority a sound has when its declaration says nothing about it. */
     public static final int NORMAL = 50;
 
+    /** A sound whose files hold one channel, as a sound of the world's files do. */
+    public SoundSpec(final SoundSpace space, final boolean loop, final AudioChannel channel,
+                     final List<ResourceLocation> files, final boolean stream, final int range, final int priority,
+                     final boolean made) {
+        this(space, loop, channel, files, stream, range, priority, made, false);
+    }
+
     public SoundSpec {
+        if (stereo && (made || loop)) {
+            throw new IllegalArgumentException("a stereo recording is a file played once; what is made as it plays,"
+                    + " or runs on, keeps to one channel so the world can place it");
+        }
         files = List.copyOf(files);
         if (made && !files.isEmpty()) {
             throw new IllegalArgumentException("a sound made as it plays has no files of its own");

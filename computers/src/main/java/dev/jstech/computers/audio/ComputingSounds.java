@@ -87,17 +87,17 @@ public final class ComputingSounds {
     public static final String SYSTEM = "system";
 
     public static final SoundKey FRAMES_95_STARTUP = CONTENT.sound("os/frames_95/startup")
-            .channel(AudioChannels.INTERFACE).subtitle("Frames 95 chimes").register();
+            .stereo().channel(AudioChannels.INTERFACE).subtitle("Frames 95 chimes").register();
     public static final SoundKey FRAMES_95_ERROR = CONTENT.sound("os/frames_95/error")
-            .channel(AudioChannels.INTERFACE).subtitle("Frames 95 error").register();
+            .stereo().channel(AudioChannels.INTERFACE).subtitle("Frames 95 error").register();
     public static final SoundKey FRAMES_XP_STARTUP = CONTENT.sound("os/frames_xp/startup")
-            .channel(AudioChannels.INTERFACE).subtitle("Frames XP chimes").register();
+            .stereo().channel(AudioChannels.INTERFACE).subtitle("Frames XP chimes").register();
     public static final SoundKey FRAMES_XP_ERROR = CONTENT.sound("os/frames_xp/error")
-            .channel(AudioChannels.INTERFACE).subtitle("Frames XP error").register();
+            .stereo().channel(AudioChannels.INTERFACE).subtitle("Frames XP error").register();
     public static final SoundKey FRAMES_11_STARTUP = CONTENT.sound("os/frames_11/startup")
-            .channel(AudioChannels.INTERFACE).subtitle("Frames 11 chimes").register();
+            .stereo().channel(AudioChannels.INTERFACE).subtitle("Frames 11 chimes").register();
     public static final SoundKey FRAMES_11_ERROR = CONTENT.sound("os/frames_11/error")
-            .channel(AudioChannels.INTERFACE).subtitle("Frames 11 error").register();
+            .stereo().channel(AudioChannels.INTERFACE).subtitle("Frames 11 error").register();
 
     /** A system reaching its desktop. Systems with no chime of their own stay silent. */
     public static final SoundCue SYSTEM_STARTUP = CONTENT.cue("system/startup").world()

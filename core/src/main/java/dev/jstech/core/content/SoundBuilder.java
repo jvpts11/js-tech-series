@@ -41,6 +41,7 @@ public final class SoundBuilder {
     private int range = DEFAULT_RANGE;
     private int priority = SoundSpec.NORMAL;
     private boolean made;
+    private boolean stereo;
     private final List<ResourceLocation> files = new ArrayList<>();
     private @Nullable String english;
 
@@ -113,6 +114,15 @@ public final class SoundBuilder {
         return this;
     }
 
+    /**
+     * Its files are stereo recordings. Heard from a place in the world, one is mixed down to one channel as it
+     * plays, so the world can place it; the speakers of a pair can each play one side of it.
+     */
+    public SoundBuilder stereo() {
+        this.stereo = true;
+        return this;
+    }
+
     /** Plays that file, which already exists, instead of one of its own; call it again for more than one. */
     public SoundBuilder file(final ResourceLocation existing) {
         this.files.add(existing);
@@ -136,7 +146,7 @@ public final class SoundBuilder {
             throw new IllegalStateException(id + " needs a subtitle");
         }
         final List<ResourceLocation> played = made || !files.isEmpty() ? files : ownFiles(id);
-        final SoundSpec spec = new SoundSpec(space, loop, channel, played, stream, range, priority, made);
+        final SoundSpec spec = new SoundSpec(space, loop, channel, played, stream, range, priority, made, stereo);
         final Supplier<SoundEvent> event = made ? () -> {
             throw new IllegalStateException(id + " is made as it plays and has no event");
         } : content.soundRegister().register(path, () -> SoundEvent.createFixedRangeEvent(id, range));
