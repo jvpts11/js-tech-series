@@ -12,7 +12,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,
   devices, interface, alerts, ambience, music, voice) with a volume each, and any sound of the game, not only the
   series', can be turned off in `config/jstech-audio.json`. The same sound from the same place plays once in a
-  short while, however many times it is asked for. Nothing in the mods makes a sound yet.
+  short while, however many times it is asked for.
 - The sound system keeps the world's running sounds: a machine says what it wants heard (a fan, a disk) at the
   volume and pitch its state calls for, and the client starts, retunes, fades and stops the sounds to match. It
   keeps to a share of the game's sound channels, the sounds that matter most and are nearest first; many machines
@@ -49,6 +49,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The game's debug screen (F3) shows the sound system under Sound Mixer: the running sounds out of their budget,
   the rooms many machines make, what walls muffle, how far the other channels are lowered under an alert, the last
   sound heard and how many sounds are turned off.
+- J's Computers' machines make their sounds, from real recordings. A computer's power button clicks; a Vintage or
+  Legacy computer beeps once when its self-test passes; a Vintage computer comes on with the noise of its fan and
+  drives; a computer with a hard drive hears it spin up, turn while it runs and wind down when it goes off, while
+  one with a solid-state disk stays quiet. A monitor sounds as it lights. The drives sound as media go in and come
+  out: a floppy disk slides in and is ejected, a disc rides the tray of a CD or DVD drive and of the Pattern
+  Encoder, a USB drive is plugged into and pulled out of a Dock Station, and a Floppy Drive's head is heard
+  stepping while a system installs from its disk. Each running server in a rack is heard by its fans, and five or
+  more running close together, in any number of racks, are heard as the hum of the room instead.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.

@@ -12,6 +12,7 @@ import dev.jstech.computers.advancement.HardwareMilestones;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.block.IEraChassisBlock;
+import dev.jstech.computers.client.audio.MachineSoundSources;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
@@ -121,6 +122,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     private final ClientReplication replication = new ClientReplication(this);
     /** What moves the tool in front of its terminal along, and sends what that tool prints. */
     private final TerminalFeed terminalFeed = TerminalFeed.of(this);
+    /** What it sounds like as a machine: its power button, its start-up, its hard drive. */
+    private final ComputerSounds sounds = new ComputerSounds(this);
 
     /** The name a player gave this computer: the machine's own, and no part's. */
     private String computerName = "";
@@ -296,6 +299,9 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
 
     public void togglePower() {
         final boolean wasOn = isRunning();
+        if (level instanceof ServerLevel server) {
+            sounds.pressed(server);
+        }
         power.toggle();
         if (wasOn && !isRunning()) {
             showShutdown(false);
@@ -1031,6 +1037,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     protected void tickNode(final ServerLevel level) {
         tickTerminal(level);
         tickBootPhases(level);
+        tickSounds(level);
         OsInstallRunner.tick(this, level, worldPosition);
         // What the machine's programs and jobs ask the network for is the doing of whoever works it.
         Acting.asOperatorOf(this, sigmaTick);
@@ -1040,6 +1047,19 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
 
     public void onBroken(final ServerLevel level) {
         attachment.leave(level);
+    }
+
+    /** Hears the machine come on and go off, and keeps its hard drive turning in between. */
+    protected void tickSounds(final ServerLevel level) {
+        sounds.tick(level);
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null && level.isClientSide()) {
+            MachineSoundSources.track(sounds);
+        }
     }
 
     @Override
@@ -1052,6 +1072,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
          */
         if (level instanceof ServerLevel serverLevel) {
             onBroken(serverLevel);
+        } else if (level != null && level.isClientSide()) {
+            MachineSoundSources.untrack(sounds);
         }
     }
 
@@ -1240,6 +1262,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         diskConsole.loadLegacy(tag);
         loadExtra(tag, registries);
         hardware.markDirty();
+        sounds.loaded();
     }
 
     @Override
@@ -1276,6 +1299,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
             tag.putString("ComputerName", computerName);
         }
         attachment.saveForClient(tag);
+        sounds.saveForClient(tag);
         return tag;
     }
 
@@ -1301,5 +1325,13 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         final CompoundTag tag = packet.getTag();
         computerName = tag != null ? tag.getString("ComputerName") : "";
         attachment.loadFromClient(tag);
+        sounds.loadFromClient(tag);
+    }
+
+    @Override
+    public void handleUpdateTag(final CompoundTag tag, final HolderLookup.Provider registries) {
+        // The chunk-load path carries the same: whether the disk is heard turning as the player arrives.
+        super.handleUpdateTag(tag, registries);
+        sounds.loadFromClient(tag);
     }
 }

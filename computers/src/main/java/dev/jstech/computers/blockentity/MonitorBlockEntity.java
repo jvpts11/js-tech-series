@@ -10,9 +10,11 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
 import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.core.audio.Audio;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.peripheral.PeripheralLinkValidator;
@@ -185,6 +187,7 @@ public class MonitorBlockEntity extends BlockEntity implements IPeripheralEndpoi
         }
         if (++bootTicks >= BOOT_DELAY) {
             level.setBlock(worldPosition, state.setValue(MonitorBlock.LIT, true), Block.UPDATE_CLIENTS);
+            Audio.at(level, worldPosition, ComputingSounds.MONITOR_POWER_ON);
             bootTicks = 0;
         }
     }

@@ -35,3 +35,23 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## Sounds of J's Computers
+
+The machine sounds in `computers/src/main/resources/assets/jsc/sounds/` are recordings made by other people. Each was
+cut to length, made mono where the game places it in the world, levelled and saved as Ogg Vorbis; the two running
+loops were seamed, and the floppy disk's eject joins two recordings. [ASSET_REGISTRY.md](ASSET_REGISTRY.md) lists
+which recording each file comes from.
+
+From Freesound, under the Creative Commons CC0 1.0 Universal Public Domain Dedication
+(https://creativecommons.org/publicdomain/zero/1.0/), which asks for no notice; the authors are named with thanks:
+Pixel_Stick (the power button), 607freesound (the old computer starting up and the floppy drive reading), conath
+(the hard drive), griffinjennings (the disc tray), micropolis (the floppy disk going in and being drawn out),
+asiekierka (the floppy disk ejected) and soundandmelodies (the server room).
+
+From Pixabay, under the Pixabay Content License (https://pixabay.com/service/license-summary/), which asks for no
+notice either: EdR (the monitor), EagleStealthTeam (the server fan), BigKahuna360 (the USB drive pulled out) and a
+Pixabay sound of a USB drive plugged in.
+
+The self-test beep comes from an old YouTube video (https://www.youtube.com/watch?v=eTvft2-afpo) that states no
+licence. It will be replaced if its owner asks.

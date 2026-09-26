@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload.machine;
 
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.MachineOperators;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.IKvmScreenOpener;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
@@ -33,6 +34,7 @@ import dev.jstech.computers.operation.payload.RenameServerPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.audio.Audio;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -87,6 +89,8 @@ public final class MachinePayloads {
                                            final ServerLevel level) {
         if (level.getBlockEntity(payload.rackPos())
                 instanceof ServerRackBlockEntity rack) {
+            // The bay switch is the server's power button, pressed by the player.
+            Audio.at(level, payload.rackPos(), ComputingSounds.POWER_BUTTON);
             rack.toggleBayPower(payload.slot());
         }
     }

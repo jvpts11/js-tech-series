@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
 import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.audio.MediaBaySounds;
 import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.block.PatternEncoderBlock;
 import dev.jstech.computers.os.FilesystemKind;
@@ -151,6 +152,9 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
 
     private static final String NBT_LINKED_OWNER = "LinkedOwner";
 
+    /** What the bay sounds like taking a disc or a USB drive in and giving it back. */
+    private final MediaBaySounds baySounds = new MediaBaySounds();
+
     private final ItemStackHandler media = new ItemStackHandler(1) {
         @Override
         public boolean isItemValid(final int slot, final ItemStack stack) {
@@ -173,8 +177,14 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
 
         @Override
         protected void onContentsChanged(final int slot) {
+            baySounds.changed(level, worldPosition, getStackInSlot(0));
             setChanged();
             sync();
+        }
+
+        @Override
+        protected void onLoad() {
+            baySounds.settle(getStackInSlot(0));
         }
     };
 
@@ -573,7 +583,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
         final ItemStack disc = media.getStackInSlot(0);
         if (!disc.isEmpty()) {
             Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, disc);
-            media.setStackInSlot(0, ItemStack.EMPTY);
+            baySounds.quietly(() -> media.setStackInSlot(0, ItemStack.EMPTY));
         }
     }
 

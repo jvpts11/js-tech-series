@@ -408,6 +408,8 @@ public class ServerRackBlockEntity extends BlockEntity
 
     /** Who is at the rack's glass, and what keeps each server's terminal moving. */
     private final RackTerminals terminals = new RackTerminals(this);
+    /** The fans of the servers running in it. */
+    private final RackSounds sounds = new RackSounds(this);
 
     @Override
     public void consoleOpenedBy(final ServerPlayer viewer) {
@@ -986,6 +988,7 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     private void tick(final ServerLevel level) {
+        sounds.tick();
         final NetworkSystem system = NetworkSystem.get(level);
         final NetworkUuid network = adjacentNetwork(level, system);
         data.set(DATA_LINKED, network != null || fabricLinked ? 1 : 0);
@@ -1137,6 +1140,14 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null && level.isClientSide()) {
+            sounds.track();
+        }
+    }
+
+    @Override
     public void setRemoved() {
         super.setRemoved();
         /*
@@ -1145,6 +1156,8 @@ public class ServerRackBlockEntity extends BlockEntity
          */
         if (level instanceof ServerLevel serverLevel) {
             onBroken(serverLevel);
+        } else if (level != null && level.isClientSide()) {
+            sounds.untrack();
         }
     }
 
@@ -2224,6 +2237,7 @@ public class ServerRackBlockEntity extends BlockEntity
         tag.putBoolean("ServicePanelOff", servicePanelOff);
         // Whether the rack is on a data network, for the notification area of a mounted server's desktop.
         tag.putBoolean("Networked", !registered.isEmpty());
+        sounds.saveForClient(tag);
         return tag;
     }
 
@@ -2262,6 +2276,7 @@ public class ServerRackBlockEntity extends BlockEntity
         clientBayPowerOff = tag.getInt("BayPowerOff");
         clientServicePanelOff = tag.getBoolean("ServicePanelOff");
         clientNetworked = tag.getBoolean("Networked");
+        sounds.loadFromClient(tag);
     }
 
     /** The client's copy of whether the rack is on a network; the server answers from its registered nodes. */

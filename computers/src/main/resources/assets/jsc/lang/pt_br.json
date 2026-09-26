@@ -5041,5 +5041,20 @@
   "program.jsc.virtual_studio_code": "Virtual Studio Code",
   "program.jsc.virtual_studio_code.desc": "Um editor leve para Σ# com o console embutido: escreva, compile e execute sem sair dele.",
   "program.jsc.workstation_info": "Informações da Estação de Trabalho",
-  "program.jsc.workstation_info.desc": "Quem está nesta estação de trabalho, o sistema que ela executa e o hardware em que roda."
+  "program.jsc.workstation_info.desc": "Quem está nesta estação de trabalho, o sistema que ela executa e o hardware em que roda.",
+  "subtitles.jsc.computer.hard_drive_idle": "Disco rígido gira",
+  "subtitles.jsc.computer.hard_drive_spin_down": "Disco rígido para",
+  "subtitles.jsc.computer.hard_drive_spin_up": "Disco rígido arranca",
+  "subtitles.jsc.computer.post_beep": "Computador apita",
+  "subtitles.jsc.computer.power_button": "Botão de ligar estala",
+  "subtitles.jsc.computer.vintage_startup": "Computador antigo liga",
+  "subtitles.jsc.media.disc_tray": "Bandeja do drive desliza",
+  "subtitles.jsc.media.floppy_eject": "Disquete ejetado",
+  "subtitles.jsc.media.floppy_insert": "Disquete entra no drive",
+  "subtitles.jsc.media.floppy_read": "Drive de disquete lê",
+  "subtitles.jsc.media.usb_insert": "Pendrive conectado",
+  "subtitles.jsc.media.usb_remove": "Pendrive removido",
+  "subtitles.jsc.monitor.power_on": "Monitor liga",
+  "subtitles.jsc.server.fan": "Ventoinhas do servidor zumbem",
+  "subtitles.jsc.server.room": "Sala de servidores zumbe"
 }

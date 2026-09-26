@@ -1,0 +1,107 @@
+{
+  "computer/hard_drive_idle": {
+    "sounds": [
+      {
+        "attenuation_distance": 8,
+        "name": "jsc:computer/hard_drive_idle"
+      }
+    ],
+    "subtitle": "subtitles.jsc.computer.hard_drive_idle"
+  },
+  "computer/hard_drive_spin_down": {
+    "sounds": [
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:computer/hard_drive_spin_down"
+      }
+    ],
+    "subtitle": "subtitles.jsc.computer.hard_drive_spin_down"
+  },
+  "computer/hard_drive_spin_up": {
+    "sounds": [
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:computer/hard_drive_spin_up"
+      }
+    ],
+    "subtitle": "subtitles.jsc.computer.hard_drive_spin_up"
+  },
+  "computer/post_beep": {
+    "sounds": [
+      "jsc:computer/post_beep"
+    ],
+    "subtitle": "subtitles.jsc.computer.post_beep"
+  },
+  "computer/power_button": {
+    "sounds": [
+      "jsc:computer/power_button"
+    ],
+    "subtitle": "subtitles.jsc.computer.power_button"
+  },
+  "computer/vintage_startup": {
+    "sounds": [
+      "jsc:computer/vintage_startup"
+    ],
+    "subtitle": "subtitles.jsc.computer.vintage_startup"
+  },
+  "media/disc_tray": {
+    "sounds": [
+      "jsc:media/disc_tray"
+    ],
+    "subtitle": "subtitles.jsc.media.disc_tray"
+  },
+  "media/floppy_eject": {
+    "sounds": [
+      "jsc:media/floppy_eject"
+    ],
+    "subtitle": "subtitles.jsc.media.floppy_eject"
+  },
+  "media/floppy_insert": {
+    "sounds": [
+      "jsc:media/floppy_insert"
+    ],
+    "subtitle": "subtitles.jsc.media.floppy_insert"
+  },
+  "media/floppy_read": {
+    "sounds": [
+      {
+        "attenuation_distance": 8,
+        "name": "jsc:media/floppy_read"
+      }
+    ],
+    "subtitle": "subtitles.jsc.media.floppy_read"
+  },
+  "media/usb_insert": {
+    "sounds": [
+      "jsc:media/usb_insert"
+    ],
+    "subtitle": "subtitles.jsc.media.usb_insert"
+  },
+  "media/usb_remove": {
+    "sounds": [
+      "jsc:media/usb_remove"
+    ],
+    "subtitle": "subtitles.jsc.media.usb_remove"
+  },
+  "monitor/power_on": {
+    "sounds": [
+      "jsc:monitor/power_on"
+    ],
+    "subtitle": "subtitles.jsc.monitor.power_on"
+  },
+  "server/fan": {
+    "sounds": [
+      "jsc:server/fan"
+    ],
+    "subtitle": "subtitles.jsc.server.fan"
+  },
+  "server/room": {
+    "sounds": [
+      {
+        "attenuation_distance": 24,
+        "name": "jsc:server/room"
+      }
+    ],
+    "subtitle": "subtitles.jsc.server.room"
+  }
+}

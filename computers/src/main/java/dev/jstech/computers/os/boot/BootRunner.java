@@ -8,6 +8,7 @@
 package dev.jstech.computers.os.boot;
 
 import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.hardware.ComputerBuild;
@@ -18,6 +19,7 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.install.OsInstallRunner;
+import dev.jstech.core.audio.Audio;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -29,6 +31,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Carries a machine up: the power-on self-test, the wait at a boot manager, and the system coming up.
@@ -165,6 +168,9 @@ public final class BootRunner {
         }
         machine.setNeedsPost(false);
         JscEvents.awardOperatorAt(level, pos, JscEvents.POST_PASSED);
+        if (beepsAfterSelfTest(machine.installedEra())) {
+            Audio.at(level, pos, ComputingSounds.POST_BEEP);
+        }
         /*
          * The self-test is the moment the machine settles what it is running, which is what makes a desktop
          * installed a moment ago wait for a restart instead of turning up on the next look at the monitor.
@@ -409,5 +415,13 @@ public final class BootRunner {
     private static int postDevices(final IOsHost machine) {
         final ComputerBuild build = machine.currentBuild();
         return build == null ? 0 : build.disks().size() + build.pcieCards().size();
+    }
+
+    /*
+     * The speaker inside the case gives one short beep when the self-test passes, on the machines of the two ages
+     * that had one; a Standard machine comes up without it.
+     */
+    private static boolean beepsAfterSelfTest(@Nullable final HardwareEra era) {
+        return era == HardwareEra.VINTAGE || era == HardwareEra.LEGACY;
     }
 }

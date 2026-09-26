@@ -5041,5 +5041,20 @@
   "program.jsc.virtual_studio_code": "Virtual Studio Code",
   "program.jsc.virtual_studio_code.desc": "A light editor for Σ# with the console built in: write, compile and run without leaving it.",
   "program.jsc.workstation_info": "Workstation Info",
-  "program.jsc.workstation_info.desc": "Who is at this workstation, the system it runs and the hardware it runs on."
+  "program.jsc.workstation_info.desc": "Who is at this workstation, the system it runs and the hardware it runs on.",
+  "subtitles.jsc.computer.hard_drive_idle": "Hard drive whirs",
+  "subtitles.jsc.computer.hard_drive_spin_down": "Hard drive winds down",
+  "subtitles.jsc.computer.hard_drive_spin_up": "Hard drive spins up",
+  "subtitles.jsc.computer.post_beep": "Computer beeps",
+  "subtitles.jsc.computer.power_button": "Power button clicks",
+  "subtitles.jsc.computer.vintage_startup": "Old computer starts up",
+  "subtitles.jsc.media.disc_tray": "Disc tray slides",
+  "subtitles.jsc.media.floppy_eject": "Floppy disk ejected",
+  "subtitles.jsc.media.floppy_insert": "Floppy disk slides in",
+  "subtitles.jsc.media.floppy_read": "Floppy drive reads",
+  "subtitles.jsc.media.usb_insert": "USB drive plugged in",
+  "subtitles.jsc.media.usb_remove": "USB drive pulled out",
+  "subtitles.jsc.monitor.power_on": "Monitor switches on",
+  "subtitles.jsc.server.fan": "Server fans whir",
+  "subtitles.jsc.server.room": "Server room hums"
 }

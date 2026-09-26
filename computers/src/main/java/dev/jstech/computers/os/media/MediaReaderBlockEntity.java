@@ -9,7 +9,14 @@ package dev.jstech.computers.os.media;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
+import dev.jstech.computers.audio.ComputingSounds;
+import dev.jstech.computers.audio.MediaBaySounds;
+import dev.jstech.computers.client.audio.MachineSoundSources;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.storage.ServerStorageContents;
+import dev.jstech.core.audio.IAudible;
+import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.peripheral.PeripheralLinkValidator;
@@ -31,6 +38,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -48,13 +56,24 @@ import java.util.Optional;
  * to the nearest computer, mirroring the monitor pattern. The linked owner position is stored in
  * NBT and restored on world reload.
  */
-public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEndpoint {
+public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEndpoint, IAudible {
 
     private static final String NBT_SLOT = "MediaSlot";
     private static final String NBT_LINKED_OWNER = "LinkedOwner";
 
+    private static final String NBT_READING = "Reading";
+
     @Nullable
     private Long linkedOwner;
+
+    /** What the drive sounds like taking a medium in and giving it back. */
+    private final MediaBaySounds baySounds = new MediaBaySounds();
+
+    /*
+     * Whether the linked computer is installing a system from the medium in this drive, on both sides: the server
+     * works it out and the client hears a floppy drive's head stepping while it is true.
+     */
+    private boolean reading;
 
     private final ItemStackHandler slot = new ItemStackHandler(1) {
         @Override
@@ -69,8 +88,14 @@ public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEn
 
         @Override
         protected void onContentsChanged(final int slotIndex) {
+            baySounds.changed(level, worldPosition, getStackInSlot(0));
             setChanged();
             syncToClients();
+        }
+
+        @Override
+        protected void onLoad() {
+            baySounds.settle(getStackInSlot(0));
         }
     };
 
@@ -160,6 +185,61 @@ public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEn
                 unlink(level);
             }
         }
+        final boolean nowReading = installingFromHere(level);
+        if (nowReading != reading) {
+            reading = nowReading;
+            syncToClients();
+        }
+    }
+
+    /* Whether the linked computer is installing a system from the medium in this very drive. */
+    private boolean installingFromHere(final ServerLevel level) {
+        if (linkedOwner == null || slot.getStackInSlot(0).isEmpty()
+                || !(level.getBlockEntity(BlockPos.of(linkedOwner)) instanceof IOsHost host)) {
+            return false;
+        }
+        final OsInstallJob job = host.installing();
+        return job != null && job.hasReader() && job.readerPos() == worldPosition.asLong();
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null && level.isClientSide()) {
+            MachineSoundSources.track(this);
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (level != null && level.isClientSide()) {
+            MachineSoundSources.untrack(this);
+        }
+    }
+
+    // ─── IAudible ─────────────────────────────────────────────────────────────
+
+    @Override
+    public double audioX() {
+        return worldPosition.getX() + 0.5;
+    }
+
+    @Override
+    public double audioY() {
+        return worldPosition.getY() + 0.5;
+    }
+
+    @Override
+    public double audioZ() {
+        return worldPosition.getZ() + 0.5;
+    }
+
+    /** A floppy drive's head stepping while a system installs from its disk; nothing from the other drives. */
+    @Override
+    public List<LoopRequest> loops() {
+        return reading && insertedFormat() == MediaFormat.FLOPPY
+                ? List.of(LoopRequest.of(ComputingSounds.FLOPPY_READ)) : List.of();
     }
 
     /**
@@ -246,7 +326,7 @@ public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEn
         final ItemStack held = slot.getStackInSlot(0);
         if (!held.isEmpty()) {
             Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), held);
-            slot.setStackInSlot(0, ItemStack.EMPTY);
+            baySounds.quietly(() -> slot.setStackInSlot(0, ItemStack.EMPTY));
         }
     }
 
@@ -273,6 +353,8 @@ public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEn
             slot.deserializeNBT(registries, tag.getCompound(NBT_SLOT));
         }
         linkedOwner = tag.contains(NBT_LINKED_OWNER) ? tag.getLong(NBT_LINKED_OWNER) : null;
+        // Only the client's copy is ever sent this; the saved drive has none, and works it out again.
+        reading = tag.getBoolean(NBT_READING);
     }
 
     // ─── Client sync (1.21.1 forms) ──────────────────────────────────────────
@@ -284,6 +366,7 @@ public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEn
         if (linkedOwner != null) {
             tag.putLong(NBT_LINKED_OWNER, linkedOwner);
         }
+        tag.putBoolean(NBT_READING, reading);
         return tag;
     }
 
