@@ -112,6 +112,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the disk keeps a file naming it, but that file weighs what the song weighs, by the disk's era like any other
   file, and an archive with songs packed in it weighs them too; the Archiver shows their sizes in megabytes. A song
   cannot be edited or added to, renamed into text, or made out of text.
+- The server's music catalogue: the albums its owner puts in `config/jstech/soundfoundry/catalog/`, a folder
+  each, and those a data pack carries in `soundfoundry/catalog/`, named by an optional `album.json`, else by what
+  their songs' tags say, else by the folder. It is read when the server starts and when its data packs are
+  reloaded, and `/soundfoundry catalog reload` reads it again for an operator, saying how many albums and songs it
+  found; a file it cannot read is passed over and named in the server log. `catalog` under `[soundfoundry]` in
+  `jscomputers-server.toml` turns it off. The documentation has a page on music on a server.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.

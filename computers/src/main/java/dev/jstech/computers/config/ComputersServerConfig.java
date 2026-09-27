@@ -33,12 +33,14 @@ public final class ComputersServerConfig {
     private static final ModConfigSpec.BooleanValue GENTOO_EVERY_STEP_VALUE;
     private static final ModConfigSpec.BooleanValue ARCH_EVERY_STEP_VALUE;
     private static final ModConfigSpec.BooleanValue LIST_COMMANDS_VALUE;
+    private static final ModConfigSpec.BooleanValue SOUNDFOUNDRY_CATALOG_VALUE;
 
     /** Held apart from the file so a machine can ask while the world is still coming up. */
     private static boolean showBootMenu = true;
     private static boolean gentooEveryStep;
     private static boolean archEveryStep;
     private static boolean listCommands;
+    private static boolean soundfoundryCatalog = true;
 
     static {
         final ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -80,6 +82,15 @@ public final class ComputersServerConfig {
                                 + "would rather read one list than learn each system's own habits.")
                 .define("list_commands", false);
         builder.pop();
+        builder.push("soundfoundry");
+        SOUNDFOUNDRY_CATALOG_VALUE = builder
+                .comment("Whether the server offers its music catalogue: the albums put in "
+                                + "config/jstech/soundfoundry/catalog/, a folder each, and those the data packs carry in "
+                                + "soundfoundry/catalog/.",
+                        "Off, neither is read and the catalogue is empty. A change is taken up by "
+                                + "'/soundfoundry catalog reload' or the next start.")
+                .define("catalog", true);
+        builder.pop();
         SPEC = builder.build();
     }
 
@@ -113,6 +124,11 @@ public final class ComputersServerConfig {
         return listCommands;
     }
 
+    /** Whether the server offers its music catalogue. */
+    public static boolean soundfoundryCatalog() {
+        return soundfoundryCatalog;
+    }
+
     private static void onLoad(final ModConfigEvent.Loading event) {
         apply(event.getConfig());
     }
@@ -130,6 +146,7 @@ public final class ComputersServerConfig {
         gentooEveryStep = GENTOO_EVERY_STEP_VALUE.get();
         archEveryStep = ARCH_EVERY_STEP_VALUE.get();
         listCommands = LIST_COMMANDS_VALUE.get();
+        soundfoundryCatalog = SOUNDFOUNDRY_CATALOG_VALUE.get();
         JsComputers.LOGGER.debug("Boot menu is {}", showBootMenu ? "shown" : "hidden");
     }
 }

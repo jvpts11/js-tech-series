@@ -14,5 +14,7 @@ repository for the first time. What each mod does is on its own page: [J's Core]
   the clock it runs under, and everything a program can reach.
 - [ComputerCraft](COMPUTERCRAFT.md): the bridge to CC: Tweaked: the Network Gateway, what each side can
   ask of the other, the agent their computers carry, and what it costs.
+- [Music on a server](SOUNDFOUNDRY.md): where songs are kept, how a server's owner offers albums in the
+  music catalogue, and the settings that bound it.
 
 Design documents and balancing notes are not part of the repository.
