@@ -7,7 +7,7 @@
  */
 package dev.jstech.industrial.client;
 
-import dev.jstech.core.client.gui.screen.AbstractMachineScreen;
+import dev.jstech.core.client.gui.screen.CoreContainerScreen;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.industrial.blockentity.CoalGeneratorBlockEntity;
 import dev.jstech.industrial.gui.layout.CoalGeneratorLayout;
@@ -20,7 +20,7 @@ import net.minecraft.world.entity.player.Inventory;
  * The Coal Generator's screen: its fuel slot, a flame that burns down with the fuel and an FE gauge showing the
  * energy made, all placed by the generator's layout, which the menu placed the slot by too.
  */
-public class CoalGeneratorScreen extends AbstractMachineScreen<CoalGeneratorMenu> {
+public class CoalGeneratorScreen extends CoreContainerScreen<CoalGeneratorMenu> {
 
     private final GuiLayout layout = CoalGeneratorLayout.layout();
 

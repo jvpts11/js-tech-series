@@ -31,7 +31,7 @@ public class ProcessingMachineMenu extends CoreMenu {
 
     public ProcessingMachineMenu(final MenuType<?> type, final int containerId, final Inventory inventory,
                                  final ProcessingMachineBlockEntity machine) {
-        super(type, containerId, MenuValidity.blockEntity(machine));
+        super(type, containerId, inventory, MenuValidity.blockEntity(machine));
         this.machine = machine;
         final GuiLayout layout = ProcessingMachineLayout.layout();
         final SlotGroup input = slots(slot(machine.getInventory(), ProcessingMachineBlockEntity.INPUT_SLOT,

@@ -11,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.function.Predicate;
 
@@ -25,6 +26,24 @@ public final class MenuValidity {
     private static final double REACH_MARGIN = 4.0;
 
     private MenuValidity() {
+    }
+
+    /**
+     * Valid while a block of {@code kind} (a class or an interface every variant of it shares) stands at {@code pos}
+     * and the player can reach it, for a menu opened on a block with nothing of its own behind it.
+     */
+    public static Predicate<Player> block(final Level level, final BlockPos pos, final Class<?> kind) {
+        return player -> player.level() == level && kind.isInstance(level.getBlockState(pos).getBlock())
+                && player.canInteractWithBlock(pos, REACH_MARGIN);
+    }
+
+    /**
+     * Valid while the player stands within {@code blocks} of the centre of {@code pos} in the same level, for a menu
+     * that reaches further than the hand does, such as one shown on a monitor read from across a room.
+     */
+    public static Predicate<Player> near(final Level level, final BlockPos pos, final double blocks) {
+        final Vec3 centre = Vec3.atCenterOf(pos);
+        return player -> player.level() == level && player.distanceToSqr(centre) <= blocks * blocks;
     }
 
     /** Valid while {@code blockEntity} still stands where it was and the player can reach it. */

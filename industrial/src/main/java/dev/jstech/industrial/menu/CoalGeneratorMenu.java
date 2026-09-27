@@ -29,7 +29,7 @@ public class CoalGeneratorMenu extends CoreMenu {
 
     public CoalGeneratorMenu(final int containerId, final Inventory inventory,
                              final CoalGeneratorBlockEntity generator) {
-        super(IndustrialModule.COAL_GENERATOR_MENU.get(), containerId, MenuValidity.blockEntity(generator));
+        super(IndustrialModule.COAL_GENERATOR_MENU.get(), containerId, inventory, MenuValidity.blockEntity(generator));
         this.generator = generator;
         final GuiLayout layout = CoalGeneratorLayout.layout();
         final SlotGroup fuel = slots(slot(generator.getInventory(), CoalGeneratorBlockEntity.FUEL_SLOT,

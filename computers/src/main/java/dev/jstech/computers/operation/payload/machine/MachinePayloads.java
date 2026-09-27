@@ -22,6 +22,7 @@ import dev.jstech.computers.client.os.RemoteControlApp;
 import dev.jstech.computers.machine.RemoteComputerService;
 import dev.jstech.computers.menu.ClusterManagementComputerMenu;
 import dev.jstech.computers.menu.CraftingComputerMenu;
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.menu.PersonalComputerMenu;
 import dev.jstech.computers.menu.ServerAssemblyMenu;
 import dev.jstech.computers.menu.ServerRackMenu;
@@ -84,7 +85,9 @@ public final class MachinePayloads {
         registrar.playToClient(RemoteHostsPayload.TYPE, RemoteHostsPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(MachinePayloads::handleRemoteHosts));
         ComputerAccess.accept(registrar, KvmSelectPayload.TYPE, KvmSelectPayload.STREAM_CODEC,
-                ComputerAccess.screen(KvmSelectPayload::rackPos), MachinePayloads::handleKvmSelect);
+                ComputerAccess.screenAt(KvmSelectPayload::rackPos, KvmSelectPayload::monitorPos,
+                        MonitorSessionMenu.Phase.KVM),
+                MachinePayloads::handleKvmSelect);
         ComputerAccess.accept(registrar, RenameServerPayload.TYPE, RenameServerPayload.STREAM_CODEC,
                 ComputerAccess.menu(ServerAssemblyMenu.class),
                 MachinePayloads::handleRenameServer);

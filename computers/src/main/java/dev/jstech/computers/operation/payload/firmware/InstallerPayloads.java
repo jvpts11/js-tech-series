@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload.firmware;
 
 import dev.jstech.computers.block.IInstallerScreenOpener;
 import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -37,9 +38,11 @@ public final class InstallerPayloads {
         registrar.playToClient(OpenInstallerPayload.TYPE, OpenInstallerPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
                         IInstallerScreenOpener.Holder.open(payload)));
-        // The installer is a plain screen, like the setup and the self-test, so it answers to the screen gate.
+        // The installer is one of the monitor's own sessions, like the setup and the self-test.
         ComputerAccess.accept(registrar, InstallerActionPayload.TYPE, InstallerActionPayload.STREAM_CODEC,
-                ComputerAccess.screen(InstallerActionPayload::hostPos), InstallerPayloads::handleAction);
+                ComputerAccess.screenAt(InstallerActionPayload::hostPos, InstallerActionPayload::monitorPos,
+                        MonitorSessionMenu.Phase.INSTALLER),
+                InstallerPayloads::handleAction);
     }
 
     private static void handleAction(final InstallerActionPayload payload, final ServerPlayer player,

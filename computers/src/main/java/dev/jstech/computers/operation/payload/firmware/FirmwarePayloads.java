@@ -106,10 +106,12 @@ public final class FirmwarePayloads {
     public static void register(final PayloadRegistrar registrar) {
         /*
          * The firmware boot manager: state request/reply, boot/install/boot-order actions, restart into setup.
-         * The setup, the installer and the self-test are plain screens, so they answer to the screen gate.
+         * The setup, the installer and the self-test are the monitor's own sessions, so each answers to the screen
+         * gate, in the phases whose screens send it.
          */
         ComputerAccess.accept(registrar, RequestFirmwareStatePayload.TYPE, RequestFirmwareStatePayload.STREAM_CODEC,
-                ComputerAccess.screen(RequestFirmwareStatePayload::hostPos),
+                ComputerAccess.screen(RequestFirmwareStatePayload::hostPos, MonitorSessionMenu.Phase.POST,
+                        MonitorSessionMenu.Phase.FIRMWARE, MonitorSessionMenu.Phase.INSTALLER),
                 FirmwarePayloads::handleRequestFirmwareState);
         registrar.playToClient(FirmwareStatePayload.TYPE, FirmwareStatePayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) -> {
@@ -122,11 +124,16 @@ public final class FirmwarePayloads {
                     InstallerScreen.accept(payload);
                 }));
         ComputerAccess.accept(registrar, FirmwareActionPayload.TYPE, FirmwareActionPayload.STREAM_CODEC,
-                ComputerAccess.screen(FirmwareActionPayload::hostPos), FirmwarePayloads::handleFirmwareAction);
-        // Setup is asked for from a running system's settings as well as from the installer.
+                ComputerAccess.screenAt(FirmwareActionPayload::hostPos, FirmwareActionPayload::monitorPos,
+                        MonitorSessionMenu.Phase.POST, MonitorSessionMenu.Phase.BOOT_MENU,
+                        MonitorSessionMenu.Phase.FIRMWARE, MonitorSessionMenu.Phase.INSTALL_PROGRESS),
+                FirmwarePayloads::handleFirmwareAction);
+        // Setup is asked for from a running system's settings as well as from the copy's last page.
         ComputerAccess.accept(registrar, RequestFirmwarePayload.TYPE, RequestFirmwarePayload.STREAM_CODEC,
-                ComputerAccess.anyOf(ComputerAccess.machine(RequestFirmwarePayload::hostPos),
-                        ComputerAccess.screen(RequestFirmwarePayload::hostPos)),
+                ComputerAccess.anyOf(
+                        ComputerAccess.machineAt(RequestFirmwarePayload::hostPos, RequestFirmwarePayload::monitorPos),
+                        ComputerAccess.screenAt(RequestFirmwarePayload::hostPos, RequestFirmwarePayload::monitorPos,
+                                MonitorSessionMenu.Phase.INSTALL_PROGRESS)),
                 FirmwarePayloads::handleRequestFirmware);
         /*
          * The power-on self-test: the server asks the monitor to play what is left of it. The machine ends it
@@ -169,7 +176,9 @@ public final class FirmwarePayloads {
                                 payload.osName(), GameText.resolve(payload.targetLabel()), payload.ticksLeft(),
                                 payload.ticksTotal())));
         ComputerAccess.accept(registrar, PostCompletePayload.TYPE, PostCompletePayload.STREAM_CODEC,
-                ComputerAccess.screen(PostCompletePayload::hostPos), FirmwarePayloads::handlePostComplete);
+                ComputerAccess.screenAt(PostCompletePayload::hostPos, PostCompletePayload::monitorPos,
+                        MonitorSessionMenu.Phase.POST),
+                FirmwarePayloads::handlePostComplete);
     }
 
     private static void handleRequestFirmwareState(final RequestFirmwareStatePayload payload, final ServerPlayer player,

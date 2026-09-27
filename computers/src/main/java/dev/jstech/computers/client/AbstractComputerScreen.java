@@ -12,17 +12,21 @@ import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.EraThemes;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.client.gui.screen.CoreContainerScreen;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Base for the computing container screens, holding the two hand-rolled helpers every one of them repeated: a hit-test against a rectangle in this screen's local space, and a menu-button send to the server. It also resolves the screen's per-era skin and binds it for the render pass, so every computing screen paints in the host computer's hardware-era theme. A screen with no host era (a topology element, a board-less assembly, a program with no era source) falls back to the frozen STANDARD skin, which renders exactly as before.
+ * Base for the computing container screens. It resolves the screen's per-era skin and binds it for the render pass,
+ * so every computing screen paints in the host computer's hardware-era theme; a screen with no host era (a topology
+ * element, a board-less assembly, a program with no era source) falls back to the frozen STANDARD skin. It also
+ * writes a machine's own words as a text wall. The mouse test against a rectangle and the menu buttons come from
+ * J's Core's container screen.
  */
-public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> extends AbstractContainerScreen<T> {
+public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> extends CoreContainerScreen<T> {
 
     /** The skin this screen paints with for the current render pass; STANDARD until {@link #init} resolves it. */
     protected EraTheme theme = EraThemes.STANDARD;
@@ -116,25 +120,8 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
         JsTechTheme.bind(theme);
         try {
             super.render(graphics, mouseX, mouseY, partialTick);
-            renderTooltip(graphics, mouseX, mouseY);
         } finally {
             JsTechTheme.unbind();
-        }
-    }
-
-    /**
-     * Whether the mouse is inside the rectangle at {@code (rx, ry)} sized {@code w x h}, with the rectangle given in this screen's local coordinates (relative to its top-left).
-     */
-    protected boolean hover(final int mouseX, final int mouseY, final int rx, final int ry, final int w, final int h) {
-        final int mx = mouseX - leftPos;
-        final int my = mouseY - topPos;
-        return mx >= rx && mx < rx + w && my >= ry && my < ry + h;
-    }
-
-    /** Tells the server the player clicked the menu button with the given id. */
-    protected void sendButton(final int id) {
-        if (minecraft != null && minecraft.gameMode != null) {
-            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, id);
         }
     }
 }

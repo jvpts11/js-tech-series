@@ -276,14 +276,21 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   peripheral's link to the computer at the other end of its cable, and what happens when the block is broken.
 - J's Core declares a menu once: its slots in groups, placed from the screen's layout; where a shift-click in each
   group sends the stack; its buttons; and that it stays open while its block entity stands and the player can reach
-  it, which holds for every variant of a block that makes the same block entity. A block that makes a block entity
-  is declared the same way, with what it ticks and which menu it opens, and faces whoever placed it.
+  it, which holds for every variant of a block that makes the same block entity; the values it shows that the server
+  works out; and the screen that draws it, which frames its slots and presses its buttons. A block that makes a block
+  entity is declared the same way, with what it ticks and which menu it opens, and faces whoever placed it.
+- J's Core registers every payload a client sends with a gate that checks, on the server, that the player really has
+  that screen open on what the payload names; a payload that acts on the menu the player has open is handed that
+  menu, already checked, and a refused one is dropped and noted in the server log.
 
 ### Changed
 - J's Computers' blocks keep their state as J's Core's declared fields: the computers, the server racks, the drives,
   the Pattern Encoders, monitors, speakers, Network Gateways, data cables, Crafting Switches, Server Routers, HBW
   Interfaces and tanks. The players who see one are sent one update a tick however much of it changed, and the
   settings of a Crafting Switch's faces reach everyone looking at it as soon as they are set.
+- A monitor's own sessions (the self-test, the boot menu, the firmware setup, the installers and the KVM) take from a
+  player only what the session they have open sends, and only for the monitor it is on; a system's settings asking
+  for the firmware setup must be on the monitor they name.
 - The Standard Mainframe's roof fans look like fans: each is a square housing that stays still, with a dark well
   in its opening and a five-bladed rotor turning in it, where before the whole square turned with a cross painted
   on it.

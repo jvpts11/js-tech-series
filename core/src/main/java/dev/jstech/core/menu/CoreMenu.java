@@ -22,7 +22,9 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.IntSupplier;
 import java.util.function.Predicate;
 
 /**
@@ -33,6 +35,7 @@ import java.util.function.Predicate;
 public abstract class CoreMenu extends AbstractContainerMenu {
 
     private final Predicate<Player> validity;
+    private final boolean onClient;
     private final Map<SlotGroup, List<SlotGroup>> shiftClicks = new LinkedHashMap<>();
     private final Map<Integer, Consumer<Player>> buttons = new HashMap<>();
 
@@ -41,9 +44,15 @@ public abstract class CoreMenu extends AbstractContainerMenu {
     /** The distance from one slot to the next. */
     private static final int PITCH = 18;
 
-    protected CoreMenu(final MenuType<?> type, final int containerId, final Predicate<Player> validity) {
+    /**
+     * A menu of {@code type} for the player whose {@code inventory} it is, open while {@code validity} holds for them.
+     * The inventory tells the menu whether it is the server's or the client's copy.
+     */
+    protected CoreMenu(final MenuType<?> type, final int containerId, final Inventory inventory,
+                       final Predicate<Player> validity) {
         super(type, containerId);
         this.validity = validity;
+        this.onClient = inventory.player.level().isClientSide();
     }
 
     @Override
@@ -148,6 +157,27 @@ public abstract class CoreMenu extends AbstractContainerMenu {
     /** Declares what the button of that id does when the player presses it. */
     protected final void button(final int id, final Consumer<Player> action) {
         buttons.put(id, action);
+    }
+
+    /**
+     * Declares an int the menu shows that the server works out with {@code onServer}, carried to the client's copy
+     * of the menu as it changes. On the client {@code onServer} is never asked, so it may read things only the server
+     * has.
+     */
+    protected final MenuValue value(final IntSupplier onServer) {
+        final MenuValue value = new MenuValue(onServer, onClient);
+        addDataSlot(value);
+        return value;
+    }
+
+    /** The same, for a yes or no, carried as 1 or 0. */
+    protected final MenuValue flag(final BooleanSupplier onServer) {
+        return value(() -> onServer.getAsBoolean() ? 1 : 0);
+    }
+
+    /** Whether this is the client's copy of the menu. */
+    protected final boolean onClient() {
+        return onClient;
     }
 
     private List<SlotGroup> routeFrom(final int index) {

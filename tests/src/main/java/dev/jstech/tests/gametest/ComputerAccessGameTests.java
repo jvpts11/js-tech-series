@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.ComputerAccess;
+import dev.jstech.core.network.payload.IPayloadGate;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -59,7 +60,7 @@ public final class ComputerAccessGameTests {
     @GameTest(template = ARENA)
     public static void machine_admitsOnlyADesktopOfThatMachineWithinReach(final GameTestHelper helper) {
         final Desk desk = desk(helper);
-        final ComputerAccess.IGate<BlockPos> gate = ComputerAccess.machine(pos -> pos);
+        final IPayloadGate<BlockPos> gate = ComputerAccess.machine(pos -> pos);
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(linked(helper, desk), "the monitor links to the computer"))
                 .thenExecute(() -> {
@@ -83,7 +84,8 @@ public final class ComputerAccessGameTests {
     @GameTest(template = ARENA)
     public static void screen_admitsOnlyThePlayerHoldingThatMachinesSession(final GameTestHelper helper) {
         final Desk desk = desk(helper);
-        final ComputerAccess.IGate<BlockPos> gate = ComputerAccess.screen(pos -> pos);
+        final IPayloadGate<BlockPos> gate = ComputerAccess.screen(pos -> pos, MonitorSessionMenu.Phase.FIRMWARE);
+        final IPayloadGate<BlockPos> selfTestOnly = ComputerAccess.screen(pos -> pos, MonitorSessionMenu.Phase.POST);
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(linked(helper, desk), "the monitor links to the computer"))
                 .thenExecute(() -> {
@@ -92,6 +94,8 @@ public final class ComputerAccessGameTests {
                     player.containerMenu = sessionOf(desk, desk.computer());
                     helper.assertTrue(gate.admits(player, desk.computer()),
                             "the machine's own session: admitted");
+                    helper.assertFalse(selfTestOnly.admits(player, desk.computer()),
+                            "the machine's session in a phase that does not send this payload: refused");
                     helper.assertFalse(gate.admits(player, desk.elsewhere()),
                             "a payload naming another machine: refused");
                     player.containerMenu = sessionOf(desk, desk.elsewhere());
@@ -128,8 +132,8 @@ public final class ComputerAccessGameTests {
     @GameTest(template = ARENA)
     public static void closingDesktop_admitsItsLastLayoutForAMomentOnly(final GameTestHelper helper) {
         final Desk desk = desk(helper);
-        final ComputerAccess.IGate<BlockPos> machine = ComputerAccess.machine(pos -> pos);
-        final ComputerAccess.IGate<BlockPos> gate = ComputerAccess.machineOrClosingDesktop(pos -> pos);
+        final IPayloadGate<BlockPos> machine = ComputerAccess.machine(pos -> pos);
+        final IPayloadGate<BlockPos> gate = ComputerAccess.machineOrClosingDesktop(pos -> pos);
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(linked(helper, desk), "the monitor links to the computer"))
                 .thenExecute(() -> {

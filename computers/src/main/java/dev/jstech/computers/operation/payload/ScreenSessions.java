@@ -116,6 +116,5 @@ public final class ScreenSessions {
     @SubscribeEvent
     public static void onLoggedOut(final PlayerEvent.PlayerLoggedOutEvent event) {
         CLOSED_DESKTOPS.remove(event.getEntity().getUUID());
-        ComputerAccess.forget(event.getEntity().getUUID());
     }
 }

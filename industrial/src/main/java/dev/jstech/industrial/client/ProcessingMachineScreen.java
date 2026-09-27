@@ -7,7 +7,7 @@
  */
 package dev.jstech.industrial.client;
 
-import dev.jstech.core.client.gui.screen.AbstractMachineScreen;
+import dev.jstech.core.client.gui.screen.CoreContainerScreen;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.industrial.blockentity.ProcessingMachineBlockEntity;
 import dev.jstech.industrial.gui.layout.ProcessingMachineLayout;
@@ -22,7 +22,7 @@ import java.util.function.ToIntFunction;
  * The screen of a processing machine: its slots, a progress bar in the machine's own colour and an FE gauge, all
  * placed by the machine's layout, which the menu placed the slots by too.
  */
-public class ProcessingMachineScreen extends AbstractMachineScreen<ProcessingMachineMenu> {
+public class ProcessingMachineScreen extends CoreContainerScreen<ProcessingMachineMenu> {
 
     private final ToIntFunction<MachineScreenSupport.Colours> progressColour;
     private final GuiLayout layout = ProcessingMachineLayout.layout();
