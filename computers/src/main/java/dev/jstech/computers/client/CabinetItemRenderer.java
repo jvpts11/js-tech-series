@@ -47,6 +47,10 @@ public final class CabinetItemRenderer extends GeoItemRenderer<CabinetBlockItem>
         final float scale = FILL * 16.0F / fit.span();
         poseStack.scale(scale, scale, scale);
         poseStack.translate(fit.offsetX(), fit.offsetY(), fit.offsetZ());
+        // The baked model is the world's too, so its lamps are dark here whatever the last machine drawn showed.
+        for (final String lamp : item.lamps()) {
+            model.getBone(lamp).ifPresent(bone -> bone.setHidden(true));
+        }
     }
 
     /** The model of the cabinet the item places, and the atlas painted for it. */

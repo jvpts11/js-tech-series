@@ -674,7 +674,8 @@ public final class ComputingModule {
                         .noOcclusion())
                 .look(ENCODER_BODY)
                 .item((block, properties) -> new CabinetBlockItem(block, properties, "pattern_encoder", id,
-                        "pattern_encoder", ENCODER_FIT))
+                        "pattern_encoder", ENCODER_FIT,
+                        Set.of(PatternEncoderBlockEntity.POWER_LAMP, PatternEncoderBlockEntity.BUSY_LAMP)))
                 .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(DEVICES);
     }
 
@@ -711,7 +712,8 @@ public final class ComputingModule {
     private static <B extends Block> BlockBuilder<B> rack(final String id,
                                                          final Function<BlockBehaviour.Properties, B> factory) {
         return CONTENT.block(id, factory).properties(ComputingModule::rackProperties).look(RACK_BODY)
-                .item((block, properties) -> new CabinetBlockItem(block, properties, "rack", id, "rack", RACK_FIT))
+                .item((block, properties) -> new CabinetBlockItem(block, properties, "rack", id, "rack", RACK_FIT,
+                        Set.of()))
                 .itemLook(IItemLook.DRAWN_BY_ENTITY).drops(Drops.NONE).tab(RACKS);
     }
 

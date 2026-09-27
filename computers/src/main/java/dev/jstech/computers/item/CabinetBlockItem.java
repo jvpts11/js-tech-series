@@ -19,6 +19,7 @@ import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -50,14 +51,20 @@ public class CabinetBlockItem extends BlockItem implements GeoItem {
     /** The animation file the family shares, e.g. {@code rack}. */
     private final String animation;
     private final Fit fit;
+    /**
+     * The bones of the lamps the world lights while the machine works. The slot shows the machine switched off,
+     * so they are hidden there; the world's renderer sets them again on every frame it draws.
+     */
+    private final Set<String> lamps;
 
     public CabinetBlockItem(final Block block, final Properties properties, final String folder,
-                            final String model, final String animation, final Fit fit) {
+                            final String model, final String animation, final Fit fit, final Set<String> lamps) {
         super(block, properties);
         this.folder = folder;
         this.model = model;
         this.animation = animation;
         this.fit = fit;
+        this.lamps = Set.copyOf(lamps);
     }
 
     public ResourceLocation modelResource() {
@@ -76,6 +83,10 @@ public class CabinetBlockItem extends BlockItem implements GeoItem {
 
     public Fit fit() {
         return fit;
+    }
+
+    public Set<String> lamps() {
+        return lamps;
     }
 
     @Override

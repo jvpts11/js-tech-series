@@ -276,6 +276,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   over one reel and a painted glint over the rest, and the reels are aluminium reels with three windows and the
   tape showing through them. They run in bursts, as a tape drive reads: forward, a stop, a short rewind, a stop,
   forward again, the take-up reel a little faster.
+- The Pattern Encoders are the devices of their day, each a full block: the Vintage one a beige floppy drive, the
+  Legacy one a grey CD writer with a tray, the Standard one a black writer with a tray and a USB port. The medium in
+  the bay is the very item the player put in, seen where it sits: a floppy slides in and out of the slot, a disc
+  rides in and out on the tray, the eject button pressed as it comes out, a stick goes into the port, and one taken
+  out is seen on its way out. Two lamps on the front say what the encoder does: the power lamp is lit while a computer is
+  at the other end of its cable, and the activity lamp blinks while a pattern is written and stays lit on an error.
+  The body no longer has a status screen.
 - J's Core's page lists everything it holds today (the sound system, recordings, translatable text, palettes, the
   declaration of blocks and items, the slowest cable of a network) and says in plain words that anyone may use
   the Core in their own project, open or closed, free or paid, with credit, and what its licence, the LGPL 3.0,
@@ -409,6 +416,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The service panel of every Mainframe no longer flickers where it meets the edges of its opening: its edges lay on
   the walls of the opening and fought them for the surface, which showed through the grille, the louvres and the
   glass. The window over the Vintage Mainframe's tape reels flickered the same way and no longer does.
+- A Pattern Encoder's item shows the encoder switched off. It is drawn with the same model as the encoders in the
+  world, and it took on their lamps: lit, or blinking, as the last encoder drawn showed them.
 - Shutting a computer down from its desktop shows the system's own goodbye, and the machine goes dark only when it
   has finished; it used to cut the power at once, dropping the player out of the computer with no screen at all.
   Restarting from the desktop shows the goodbye too before the self-test, as restarting from a prompt already did.

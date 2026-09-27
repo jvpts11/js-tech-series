@@ -18,6 +18,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.block.Block;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Block item for the Mainframe: the cabinet's own model in the slot, plus the machine's tooltip.
@@ -36,7 +37,7 @@ public class MainframeBlockItem extends CabinetBlockItem {
             TextKey.of("item.jsc.mainframe.tooltip", "Forms a 3x2x2 structure when placed");
 
     public MainframeBlockItem(final Block block, final Item.Properties properties, final String model) {
-        super(block, properties, "mainframe", model, "mainframe", MAINFRAME_FIT);
+        super(block, properties, "mainframe", model, "mainframe", MAINFRAME_FIT, Set.of());
     }
 
     @Override
