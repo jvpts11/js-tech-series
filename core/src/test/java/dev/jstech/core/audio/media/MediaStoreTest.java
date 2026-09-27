@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -25,6 +27,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MediaStoreTest {
 
     private static final int RATE = 8000;
+    private static final UUID PLAYER = new UUID(7L, 7L);
+    private static final long DAY = 24L * 60L * 60L * 1000L;
 
     @Test
     void put_keepsARecordingOnceUnderItsHash(@TempDir final Path root) throws IOException {
@@ -76,6 +80,53 @@ class MediaStoreTest {
         Files.write(store.newIncoming(MediaId.of(new byte[] {1}, "wav")), new byte[] {1});
         store.sweepIncoming();
         assertEquals(0, countFiles(root));
+    }
+
+    @Test
+    void prune_takesOutWhatNothingUsedAndGivesTheRoomBack(@TempDir final Path root) throws IOException {
+        final long[] now = {0L};
+        final MediaStore store = new MediaStore(root, () -> now[0]);
+        final MediaId old = store.put(wav(RATE), "wav");
+        store.broughtBy(old, PLAYER);
+        now[0] = 10 * DAY;
+        final MediaId recent = store.put(wav(RATE * 2), "wav");
+        final MediaStore.Held pruned = store.prune(5 * DAY, Set.of());
+        assertEquals(1, pruned.count());
+        assertEquals(old.bytes(), pruned.bytes());
+        assertFalse(store.has(old), "the recording nothing used is gone");
+        assertTrue(store.has(recent), "and the one used lately stays");
+        assertEquals(0L, store.broughtBytes(PLAYER), "whoever brought it has its room back");
+    }
+
+    @Test
+    void prune_leavesWhatAModStillNeeds(@TempDir final Path root) throws IOException {
+        final long[] now = {0L};
+        final MediaStore store = new MediaStore(root, () -> now[0]);
+        final MediaId offered = store.put(wav(RATE), "wav");
+        now[0] = 100 * DAY;
+        assertEquals(0, store.prune(DAY, Set.of(offered)).count());
+        assertTrue(store.has(offered));
+    }
+
+    @Test
+    void flush_keepsWhoBroughtWhatForTheNextStart(@TempDir final Path root) throws IOException {
+        final MediaStore store = new MediaStore(root);
+        final MediaId song = store.put(wav(RATE), "wav");
+        store.broughtBy(song, PLAYER);
+        store.flush();
+        final MediaStore again = new MediaStore(root);
+        assertEquals(song.bytes(), again.broughtBytes(PLAYER));
+        assertEquals(1, again.size().count());
+    }
+
+    @Test
+    void newStore_writesDownRecordingsKeptBeforeThereWasALedger(@TempDir final Path root) throws IOException {
+        final MediaStore first = new MediaStore(root);
+        first.put(wav(RATE), "wav");
+        first.put(wav(RATE * 3), "wav");
+        final MediaStore.Held held = new MediaStore(root).size();
+        assertEquals(2, held.count());
+        assertEquals(wav(RATE).length + wav(RATE * 3).length, held.bytes());
     }
 
     /* Every file under the store, the incoming folder's included. */

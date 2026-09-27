@@ -11,7 +11,9 @@ import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.audio.media.MediaPlace;
 import dev.jstech.core.audio.media.MediaSessions;
 import dev.jstech.core.audio.AudioPrefs;
+import dev.jstech.core.audio.media.MediaBalance;
 import dev.jstech.core.audio.media.MediaStore;
+import dev.jstech.core.audio.media.MediaTexts;
 import dev.jstech.core.client.audio.AudioMixer;
 import dev.jstech.core.client.audio.AudioPrefsStore;
 import dev.jstech.core.client.audio.media.MediaCache;
@@ -137,6 +139,25 @@ public final class MediaClientTests {
                 end[0] = ok;
             }
         });
+    }
+
+    /** A player whose recordings already fill their share of the server is refused a new one before it is sent. */
+    @ClientTest(timeoutTicks = 400)
+    public static void upload_isRefusedPastThePlayersShareOfTheServer(final ClientTestContext ctx) {
+        // Eighty seconds of 16-bit samples at 8 kHz, over a megabyte, so a share of one megabyte cannot take it.
+        final byte[] wav = TestMedia.wav(80_000, "share " + System.nanoTime());
+        final Object[] end = {null, null};
+        ctx.thenServer(0, level -> {
+                    TestMedia.register();
+                    MediaBalance.setPlayerQuotaMegabytes(1);
+                })
+                .then(0, () -> upload(write(wav), end))
+                .thenWaitUntil(() -> end[0] != null, WAIT, "the upload to end")
+                .thenServer(0, level -> MediaBalance.setPlayerQuotaMegabytes(
+                        MediaBalance.DEFAULT_PLAYER_QUOTA_MEGABYTES))
+                .thenAssert(0, () -> Boolean.FALSE.equals(end[0]) && end[1] instanceof Text.Translated said
+                                && said.key().key().equals(MediaTexts.QUOTA_FULL.key()),
+                        "it is refused, and the player is told their share is full");
     }
 
     /**

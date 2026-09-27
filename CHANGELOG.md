@@ -106,7 +106,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   unplayed going first) and heard out of the places it plays from, from wherever it has got to: a player who walks up
   to one already playing hears it from there, and one who walks away lets it go. It can be paused, taken up again
   and stopped. The server owner sets how fast recordings go to each player and come from them, and how big a file
-  the server takes, or that it takes none, under `media` in `jstech-balance.toml`.
+  the server takes, or that it takes none, under `media` in `jstech-balance.toml`. The server remembers who brought
+  each recording and when anything last used it: the recordings one player brought may take up to
+  `player_quota_megabytes` of it together (512 unless the owner says otherwise, a recording it already kept costing
+  nothing), `/jstech media` tells an operator how much it keeps, and `/jstech media prune <days>` takes out every
+  recording nothing has used for that many days, leaving what a mod still offers and what is playing, and gives
+  each player back the room theirs took.
 - Music files on a computer's disk: Ogg Vorbis (`.ogg`) and Wave (`.wav`), with an icon of their own in every
   desktop's style. A song is brought from the player's own computer, picked in their system's file dialog, into
   the system's music folder (`Users/Public/Music` on Frames, `Music` in the home folder on Linux, FreeBSD and

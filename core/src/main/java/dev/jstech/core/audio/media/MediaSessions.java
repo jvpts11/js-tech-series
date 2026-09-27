@@ -73,6 +73,7 @@ public final class MediaSessions {
         }
         stop(level, key);
         final long duration = MediaStore.current().map(store -> {
+            store.used(media);
             try {
                 return store.info(media).millis();
             } catch (final IOException unreadable) {
@@ -206,6 +207,17 @@ public final class MediaSessions {
     /** Everything stops, as the server does. */
     public static synchronized void clear() {
         SESSIONS.clear();
+    }
+
+    /** The recordings playing right now, paused ones included, in every world. */
+    public static synchronized Set<MediaId> playingMedia() {
+        final Set<MediaId> playing = new HashSet<>();
+        for (final Map<String, Session> here : SESSIONS.values()) {
+            for (final Session session : here.values()) {
+                playing.add(session.media);
+            }
+        }
+        return playing;
     }
 
     /** The places a machine's recording is heard from: its outputs, as its device plays them. */

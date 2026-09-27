@@ -24,6 +24,7 @@ import dev.jstech.core.audio.media.IMediaUploadHandler;
 import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.audio.media.MediaInfo;
 import dev.jstech.core.audio.media.MediaReceipt;
+import dev.jstech.core.audio.media.MediaStore;
 import dev.jstech.core.audio.media.MediaUploads;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -145,6 +146,9 @@ public final class MusicImports implements IMediaUploadHandler {
         // The same song brought again to the same folder lands on itself, so what it held is room it hands back.
         final DiskFilesystem.WriteResult result = DiskFilesystem.write(disk, path, type, content,
                 computer.systemDiskFreeWeight() + DiskFilesystem.weightOf(disk, path), kind, level.getGameTime());
+        if (result == DiskFilesystem.WriteResult.OK) {
+            MediaStore.current().ifPresent(store -> store.used(media));
+        }
         if (result == DiskFilesystem.WriteResult.OK && playlist
                 && computer instanceof AbstractComputerBlockEntity machine) {
             machine.console().soundfoundry().add(List.of(path));

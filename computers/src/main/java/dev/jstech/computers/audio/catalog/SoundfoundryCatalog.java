@@ -88,6 +88,17 @@ public final class SoundfoundryCatalog {
         return current;
     }
 
+    /** Every recording the catalogue offers, which the server keeps however long nobody plays it. */
+    public static List<MediaId> media() {
+        final List<MediaId> media = new ArrayList<>();
+        for (final CatalogAlbum album : current.albums()) {
+            for (final CatalogTrack track : album.tracks()) {
+                media.add(track.media());
+            }
+        }
+        return media;
+    }
+
     /** The folder the server's own albums are in. */
     public static Path configFolder() {
         return FMLPaths.CONFIGDIR.get().resolve("jstech").resolve(FOLDER);

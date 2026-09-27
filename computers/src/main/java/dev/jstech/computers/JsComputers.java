@@ -12,6 +12,7 @@ import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.advancement.ProgramTravels;
 import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.computers.audio.MusicImports;
+import dev.jstech.computers.audio.catalog.SoundfoundryCatalog;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.integration.mekanism.MekanismIntegration;
 import dev.jstech.computers.machine.MachineListing;
@@ -19,6 +20,7 @@ import dev.jstech.computers.machine.SigmaLanguage;
 import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.core.api.CoreRegisterEvent;
+import dev.jstech.core.audio.media.MediaKeepers;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModLoader;
@@ -63,6 +65,8 @@ public class JsComputers {
         ProgramTravels.register(modEventBus);
         // Songs players bring from their own computers, kept on a computer's disk.
         MusicImports.register();
+        // The catalogue's songs stay on the server however long nobody plays them.
+        MediaKeepers.register(SoundfoundryCatalog::media);
 
         // Soft integrations: each one checks for its mod and stays a no-op without it.
         MekanismIntegration.bootstrap();

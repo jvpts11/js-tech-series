@@ -69,6 +69,30 @@ Under `[media]` in `jstech-balance.toml`:
 | `download_kilobytes_per_second` | 1024 | How fast the server sends songs to each player. |
 | `upload_kilobytes_per_second` | 512 | How fast each player sends a song they bring. |
 | `max_file_megabytes` | 32 | The largest song a player may bring; 0 takes none from players at all. |
+| `player_quota_megabytes` | 512 | How much the songs one player brought may take together; 0 sets no limit. |
 
 These bound the server's own traffic. How fast a song moves from one computer to another inside the
 game is the game's business, and is set by the cables between them.
+
+A song counts towards the player who brought it first; bringing a song the server already keeps costs
+nothing. A song taken out of a disk stays on the server, since the disk may have been copied, and
+counts until the server's owner clears it out.
+
+## Clearing out songs nobody uses
+
+The server remembers when each song was last used: played, fetched by a player, put on a disk or
+offered in the catalogue. An operator sees how much the server keeps with:
+
+```
+/jstech media
+```
+
+and clears out every song nothing has used for a number of days with:
+
+```
+/jstech media prune <days>
+```
+
+The catalogue's songs and those playing stay whatever their age. The player who brought a song that
+goes gets its room back. A disk that still names it says the server does not keep that song when it
+is played.

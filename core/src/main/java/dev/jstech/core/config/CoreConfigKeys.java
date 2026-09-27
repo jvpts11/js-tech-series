@@ -37,6 +37,7 @@ public final class CoreConfigKeys {
     private static final int MIN_MEDIA_RATE = 16;
     private static final int MAX_MEDIA_RATE = 65_536;
     private static final int MAX_MEDIA_FILE_MEGABYTES = 1024;
+    private static final int MAX_MEDIA_QUOTA_MEGABYTES = 1_048_576;
 
     /** The seek latency of a hard disk drive, in ticks. */
     public static final ConfigKey<Integer> HDD_LATENCY_TICKS = REGISTRY.register(ConfigKey.ranged(
@@ -98,6 +99,11 @@ public final class CoreConfigKeys {
             List.of(MEDIA, "max_file_megabytes"), Integer.class,
             MediaBalance.DEFAULT_MAX_FILE_MEGABYTES, new ConfigKeyRange<>(0, MAX_MEDIA_FILE_MEGABYTES)));
 
+    /** How much of the store the recordings one player brought may take, in megabytes; 0 sets no limit. */
+    public static final ConfigKey<Integer> MEDIA_PLAYER_QUOTA_MEGABYTES = REGISTRY.register(ConfigKey.ranged(
+            List.of(MEDIA, "player_quota_megabytes"), Integer.class,
+            MediaBalance.DEFAULT_PLAYER_QUOTA_MEGABYTES, new ConfigKeyRange<>(0, MAX_MEDIA_QUOTA_MEGABYTES)));
+
     private CoreConfigKeys() {
     }
 
@@ -125,6 +131,7 @@ public final class CoreConfigKeys {
                     MediaBalance.setDownloadKilobytesPerSecond((Integer) value);
             case "media.upload_kilobytes_per_second" -> MediaBalance.setUploadKilobytesPerSecond((Integer) value);
             case "media.max_file_megabytes" -> MediaBalance.setMaxFileMegabytes((Integer) value);
+            case "media.player_quota_megabytes" -> MediaBalance.setPlayerQuotaMegabytes((Integer) value);
             default -> { }
         }
     }

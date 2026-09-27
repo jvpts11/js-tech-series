@@ -27,6 +27,16 @@ public final class MediaTexts {
             TextKey.of("jscore.media.store_closed", "The server keeps no recordings right now");
     public static final TextKey BUSY =
             TextKey.of("jscore.media.busy", "Wait for the recordings already on their way");
+    public static final TextKey QUOTA_FULL = TextKey.of("jscore.media.quota_full",
+            "You have brought %s MB of the %s MB this server keeps for each player");
+
+    /* What the server's owner is told of its recordings. */
+    public static final TextKey HELD = TextKey.of("jscore.media.held",
+            "The server keeps %s recordings, %s MB in all");
+    public static final TextKey PRUNED = TextKey.of("jscore.media.pruned",
+            "Took out %s recordings nothing had used for %s days, %s MB in all");
+    public static final TextKey PRUNE_FAILED = TextKey.of("jscore.media.prune_failed",
+            "The recordings could not all be taken out: %s");
 
     private MediaTexts() {
     }

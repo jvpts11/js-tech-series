@@ -23,6 +23,8 @@ public final class MediaBalance {
     public static final int DEFAULT_UPLOAD_KILOBYTES_PER_SECOND = 512;
     /** The biggest recording a player may bring, in megabytes; 0 takes none. */
     public static final int DEFAULT_MAX_FILE_MEGABYTES = 32;
+    /** How much of the store the recordings one player brought may take, in megabytes; 0 sets no limit. */
+    public static final int DEFAULT_PLAYER_QUOTA_MEGABYTES = 512;
 
     private static final int TICKS_PER_SECOND = 20;
     private static final int KILOBYTE = 1024;
@@ -30,6 +32,7 @@ public final class MediaBalance {
     private static volatile int downloadKilobytesPerSecond = DEFAULT_DOWNLOAD_KILOBYTES_PER_SECOND;
     private static volatile int uploadKilobytesPerSecond = DEFAULT_UPLOAD_KILOBYTES_PER_SECOND;
     private static volatile int maxFileMegabytes = DEFAULT_MAX_FILE_MEGABYTES;
+    private static volatile int playerQuotaMegabytes = DEFAULT_PLAYER_QUOTA_MEGABYTES;
 
     private MediaBalance() {
     }
@@ -66,10 +69,25 @@ public final class MediaBalance {
         maxFileMegabytes = Math.max(0, megabytes);
     }
 
+    /** How much of the store the recordings one player brought may take, in bytes; 0 when there is no limit. */
+    public static long playerQuotaBytes() {
+        return (long) playerQuotaMegabytes * KILOBYTE * KILOBYTE;
+    }
+
+    /** The same, in megabytes, as the owner wrote it. */
+    public static int playerQuotaMegabytes() {
+        return playerQuotaMegabytes;
+    }
+
+    public static void setPlayerQuotaMegabytes(final int megabytes) {
+        playerQuotaMegabytes = Math.max(0, megabytes);
+    }
+
     /** Back to the design estimates, for tests. */
     public static void reset() {
         setDownloadKilobytesPerSecond(DEFAULT_DOWNLOAD_KILOBYTES_PER_SECOND);
         setUploadKilobytesPerSecond(DEFAULT_UPLOAD_KILOBYTES_PER_SECOND);
         setMaxFileMegabytes(DEFAULT_MAX_FILE_MEGABYTES);
+        setPlayerQuotaMegabytes(DEFAULT_PLAYER_QUOTA_MEGABYTES);
     }
 }

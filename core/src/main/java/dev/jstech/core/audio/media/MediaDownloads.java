@@ -42,6 +42,7 @@ public final class MediaDownloads {
             PacketDistributor.sendToPlayer(player, new MediaMissingPayload(media.hash()));
             return;
         }
+        store.get().used(media);
         final Deque<Outgoing> queue = QUEUES.computeIfAbsent(player.getUUID(), uuid -> new ArrayDeque<>());
         for (final Outgoing waiting : queue) {
             if (waiting.media.equals(media)) {

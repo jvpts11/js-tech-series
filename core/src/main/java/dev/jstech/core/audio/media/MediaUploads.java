@@ -14,6 +14,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -63,6 +64,7 @@ public final class MediaUploads {
         if (store.has(offer.media())) {
             // Somebody brought this very recording before: it is taken without a byte of it being sent again.
             try {
+                store.broughtBy(offer.media(), player.getUUID());
                 final MediaReceipt done = handler.received(player, offer.context(), offer.name(), offer.media(),
                         store.info(offer.media()));
                 reply(player, offer.token(),
@@ -115,6 +117,7 @@ public final class MediaUploads {
         final MediaOfferPayload offer = incoming.offer;
         try {
             final MediaId kept = store.get().adopt(incoming.file, offer.media());
+            store.get().broughtBy(kept, player.getUUID());
             final MediaReceipt done = HANDLERS.get(offer.purpose()).received(player, offer.context(), offer.name(),
                     kept, store.get().info(kept));
             end(player, theirs, incoming, done.accepted(), done.message());
@@ -147,11 +150,24 @@ public final class MediaUploads {
         if (offer.media().bytes() > MediaBalance.maxFileBytes()) {
             return MediaTexts.TOO_BIG.with(MediaBalance.maxFileMegabytes());
         }
+        // A recording the server already keeps costs nobody anything more, so only a new one counts.
+        final MediaStore store = MediaStore.current().orElseThrow();
+        final long quota = MediaBalance.playerQuotaBytes();
+        if (quota > 0 && !store.has(offer.media())
+                && store.broughtBytes(player.getUUID()) + offer.media().bytes() > quota) {
+            return MediaTexts.QUOTA_FULL.with(megabytes(store.broughtBytes(player.getUUID())),
+                    MediaBalance.playerQuotaMegabytes());
+        }
         final Map<Integer, Incoming> theirs = INCOMING.get(player.getUUID());
         if (theirs != null && theirs.size() >= MOST_AT_ONCE) {
             return MediaTexts.BUSY.text();
         }
         return handler.refuse(player, offer.context(), offer.name(), offer.media());
+    }
+
+    /* Bytes as megabytes to a tenth, the way a player reads a share of the store. */
+    private static String megabytes(final long bytes) {
+        return String.format(Locale.ROOT, "%.1f", bytes / (1024.0 * 1024.0));
     }
 
     private static void reply(final ServerPlayer player, final int token, final int verdict, final Text reason) {

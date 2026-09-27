@@ -29,6 +29,8 @@ import org.slf4j.Logger;
 public final class MediaServerEvents {
 
     private static final Logger LOGGER = LogUtils.getLogger();
+    /** How often the ledger is written out when something in it changed: once a minute. */
+    private static final int FLUSH_EVERY = 1200;
 
     private MediaServerEvents() {
     }
@@ -49,6 +51,7 @@ public final class MediaServerEvents {
 
     @SubscribeEvent
     public static void onServerStopped(final ServerStoppedEvent event) {
+        MediaStore.current().ifPresent(MediaServerEvents::flush);
         MediaStore.use(null);
         MediaSessions.clear();
     }
@@ -57,6 +60,18 @@ public final class MediaServerEvents {
     public static void onServerTick(final ServerTickEvent.Post event) {
         MediaDownloads.tick(event.getServer());
         MediaSessions.tick(event.getServer());
+        if (event.getServer().getTickCount() % FLUSH_EVERY == 0) {
+            MediaStore.current().ifPresent(MediaServerEvents::flush);
+        }
+    }
+
+    /* The ledger of who brought what and when it was used is written out now and then, and when the server stops. */
+    private static void flush(final MediaStore store) {
+        try {
+            store.flush();
+        } catch (final IOException cannotWrite) {
+            LOGGER.warn("The ledger of the world's recordings could not be written: {}", cannotWrite.getMessage());
+        }
     }
 
     @SubscribeEvent
