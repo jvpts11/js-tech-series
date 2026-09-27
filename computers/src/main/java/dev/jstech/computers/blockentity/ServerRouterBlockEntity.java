@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
+import com.mojang.serialization.Codec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.advancement.JscEvents;
@@ -15,6 +16,10 @@ import dev.jstech.computers.block.ServerRouterBlock;
 import dev.jstech.computers.datacenter.DatacenterSection;
 import dev.jstech.computers.datacenter.LoadBalanceMode;
 import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.core.blockentity.IFieldPart;
+import dev.jstech.core.blockentity.PartField;
+import dev.jstech.core.blockentity.SyncedBlockEntity;
+import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.network.ConnectivityIndex;
 import dev.jstech.core.network.INetworkBridge;
 import dev.jstech.core.network.NetworkSystem;
@@ -29,7 +34,6 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -46,15 +50,33 @@ import java.util.Set;
 
 /**
  * BlockEntity backing the Server Router, the first network topology element.
+ *
+ * <p>Its screen reads a summary of the sections it found, declared as menu fields in the order of the {@code DATA_}
+ * indices: the uplink face, the rack count and budget, whether it is over budget, and four values for each of up to
+ * {@link #MAX_SECTIONS} sections.
  */
-public class ServerRouterBlockEntity extends BlockEntity {
+public class ServerRouterBlockEntity extends SyncedBlockEntity {
+
+    private final ValueField<String> customName = fields().value("CustomName", Codec.STRING, "").save();
+    private final Map<Direction, LoadBalanceMode> loadBalanceModes = new EnumMap<>(Direction.class);
+    // Player-given section names by face, shown by the Cluster Manager instead of "Router · EAST".
+    private final Map<Direction, String> sectionNames = new EnumMap<>(Direction.class);
+    // Where the next spreading write on each face starts, so round-robin actually takes turns.
+    private final Map<Direction, Integer> balanceCursors = new EnumMap<>(Direction.class);
+    private final PartField faces = fields().part("Faces", new FacesPart()).save();
+    @Nullable
+    private NetworkUuid registeredNetwork;
+    @Nullable
+    private Direction inputFace;
+    private List<DatacenterSection> sections = List.of();
+    private Set<Long> unmanagedRacks = Set.of();
+    private boolean overCapacity;
+    private int recomputeCooldown;
+    private int warnCooldown;
 
     public static final IndustrialTier TIER = IndustrialTier.T3;
 
-    private static final int RECOMPUTE_INTERVAL = 20;
-    private static final int WARN_INTERVAL = 200;
-
-    // Synced summary (server -> client) for the config GUI; section rows are flattened into the array.
+    // The summary the config GUI reads, in menu order; section rows are flattened after the five totals.
     public static final int DATA_INPUT_FACE = 0;      // input face 3D value, or -1 if none
     public static final int DATA_MANAGED_RACKS = 1;
     public static final int DATA_MAX_RACKS = 2;
@@ -65,28 +87,35 @@ public class ServerRouterBlockEntity extends BlockEntity {
     public static final int MAX_SECTIONS = 5;         // the 6 faces minus the one input face
     public static final int DATA_COUNT = DATA_SECTION_BASE + MAX_SECTIONS * DATA_PER_SECTION;
 
-    private final SimpleContainerData data = new SimpleContainerData(DATA_COUNT);
-
-    private String customName = "";
-    private final Map<Direction, LoadBalanceMode> loadBalanceModes = new EnumMap<>(Direction.class);
-    // Player-given section names by face, shown by the Cluster Manager instead of "Router · EAST".
-    private final Map<Direction, String> sectionNames = new EnumMap<>(Direction.class);
-    // Where the next spreading write on each face starts, so round-robin actually takes turns.
-    private final Map<Direction, Integer> balanceCursors = new EnumMap<>(Direction.class);
-
-    @Nullable
-    private NetworkUuid registeredNetwork;
-
-    @Nullable
-    private Direction inputFace;
-    private List<DatacenterSection> sections = List.of();
-    private Set<Long> unmanagedRacks = Set.of();
-    private boolean overCapacity;
-    private int recomputeCooldown;
-    private int warnCooldown;
+    private static final int RECOMPUTE_INTERVAL = 20;
+    private static final int WARN_INTERVAL = 200;
 
     public ServerRouterBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.SERVER_ROUTER_BE.get(), pos, state);
+        fields().derived("InputFace", () -> inputFace == null ? -1 : inputFace.get3DDataValue()).toMenu();
+        fields().derived("ManagedRacks", () -> managedRackCount()).toMenu();
+        fields().derived("MaxRacks", () -> maxRacks()).toMenu();
+        fields().derived("OverCapacity", () -> overCapacity).toMenu();
+        fields().derived("SectionCount", () -> Math.min(sections.size(), MAX_SECTIONS)).toMenu();
+        for (int i = 0; i < MAX_SECTIONS; i++) {
+            final int section = i;
+            fields().derived("Section" + i + "Face", () -> sectionFace(section)).toMenu();
+            fields().derived("Section" + i + "Racks",
+                    () -> sectionRow(section, DatacenterSection::rackCount)).toMenu();
+            fields().derived("Section" + i + "Servers",
+                    () -> sectionRow(section, DatacenterSection::serverCount)).toMenu();
+            fields().derived("Section" + i + "Mode",
+                    () -> sectionRow(section, row -> loadBalanceMode(row.face()).id())).toMenu();
+        }
+        // A router broken or replaced leaves its network's topology at once, not when its chunk unloads.
+        fields().whenBroken((level, at) -> onBroken(level));
+    }
+
+    public static void serverTick(final Level level, final BlockPos pos,
+                                  final BlockState state, final ServerRouterBlockEntity be) {
+        if (level instanceof ServerLevel serverLevel) {
+            be.tick(serverLevel);
+        }
     }
 
     @Override
@@ -101,6 +130,109 @@ public class ServerRouterBlockEntity extends BlockEntity {
         }
     }
 
+    public void recomputeNow() {
+        if (level instanceof ServerLevel serverLevel && registeredNetwork != null) {
+            recomputeSections(serverLevel, NetworkSystem.get(serverLevel), registeredNetwork);
+            recomputeCooldown = RECOMPUTE_INTERVAL;
+        }
+    }
+
+    public void onBroken(final ServerLevel level) {
+        if (registeredNetwork != null) {
+            NetworkSystem.get(level).unregisterRouter(registeredNetwork, worldPosition.asLong());
+            registeredNetwork = null;
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        /*
+         * Also unregister on chunk unload, not just on destruction, so the router never lingers in the
+         * still-loaded per-level network. onBroken is idempotent.
+         */
+        if (level instanceof ServerLevel serverLevel) {
+            onBroken(serverLevel);
+        }
+    }
+
+    // Accessors for the config GUI and the Datacenter Station
+
+    public ContainerData getDataAccess() {
+        return fields().menuData();
+    }
+
+    public String customName() {
+        return customName.get();
+    }
+
+    public void setCustomName(@Nullable final String name) {
+        customName.set(name == null ? "" : name);
+    }
+
+    /**
+     * Which server a spreading write on {@code face} should start from, advancing the rotation by one.
+     * Kept per face and written with the router, so successive writes really do take turns.
+     */
+    public int nextBalanceStart(final Direction face) {
+        final int start = balanceCursors.getOrDefault(face, 0);
+        balanceCursors.put(face, start == Integer.MAX_VALUE ? 0 : start + 1);
+        faces.changed();
+        return start;
+    }
+
+    /** The player's name for the section on {@code face}, or empty when it goes by the router and face. */
+    public String sectionName(final Direction face) {
+        return sectionNames.getOrDefault(face, "");
+    }
+
+    public void setSectionName(final Direction face, @Nullable final String name) {
+        if (name == null || name.isEmpty()) {
+            sectionNames.remove(face);
+        } else {
+            sectionNames.put(face, name);
+        }
+        faces.changed();
+    }
+
+    public List<DatacenterSection> sections() {
+        return sections;
+    }
+
+    @Nullable
+    public Direction inputFace() {
+        return inputFace;
+    }
+
+    public Set<Long> unmanagedRacks() {
+        return unmanagedRacks;
+    }
+
+    public boolean isOverCapacity() {
+        return overCapacity;
+    }
+
+    public int maxRacks() {
+        return ServerRouterElement.maxRacksFor(TIER);
+    }
+
+    public int managedRackCount() {
+        int count = 0;
+        for (final DatacenterSection section : sections) {
+            count += section.rackCount();
+        }
+        return count;
+    }
+
+    public LoadBalanceMode loadBalanceMode(final Direction face) {
+        return loadBalanceModes.getOrDefault(face, LoadBalanceMode.ROUND_ROBIN);
+    }
+
+    public void cycleLoadBalanceMode(final Direction face) {
+        loadBalanceModes.put(face, loadBalanceMode(face).next());
+        faces.changed();
+    }
+
     private Set<Long> bridgeNeighbors(final ServerLevel serverLevel) {
         final Set<Long> neighbors = new HashSet<>();
         for (final Direction direction : Direction.values()) {
@@ -111,13 +243,6 @@ public class ServerRouterBlockEntity extends BlockEntity {
             }
         }
         return neighbors;
-    }
-
-    public static void serverTick(final Level level, final BlockPos pos,
-                                  final BlockState state, final ServerRouterBlockEntity be) {
-        if (level instanceof ServerLevel serverLevel) {
-            be.tick(serverLevel);
-        }
     }
 
     private void tick(final ServerLevel level) {
@@ -140,7 +265,6 @@ public class ServerRouterBlockEntity extends BlockEntity {
             unmanagedRacks = Set.of();
             inputFace = null;
             overCapacity = false;
-            writeData();
             return;
         }
         if (registeredNetwork != null && !registeredNetwork.equals(network)) {
@@ -234,7 +358,6 @@ public class ServerRouterBlockEntity extends BlockEntity {
         for (final DatacenterSection section : found) {
             loadBalanceModes.putIfAbsent(section.face(), LoadBalanceMode.ROUND_ROBIN);
         }
-        writeData();
     }
 
     private BranchScan scanBranch(final ServerLevel level, final Set<Long> branchCables) {
@@ -267,195 +390,70 @@ public class ServerRouterBlockEntity extends BlockEntity {
         return new BranchScan(racks, hasMainframe);
     }
 
+    /* The face of the section in row {@code index} of the summary, or -1 past the last section. */
+    private int sectionFace(final int index) {
+        return index < Math.min(sections.size(), MAX_SECTIONS) ? sections.get(index).face().get3DDataValue() : -1;
+    }
+
+    /* A value of the section in row {@code index} of the summary, or 0 past the last section. */
+    private int sectionRow(final int index, final ISectionValue value) {
+        return index < Math.min(sections.size(), MAX_SECTIONS) ? value.of(sections.get(index)) : 0;
+    }
+
     /**
      * Result of walking one router branch: the racks it contains and whether it reaches the Mainframe.
      */
     private record BranchScan(Set<Long> rackControllers, boolean hasMainframe) {
     }
 
-    public void recomputeNow() {
-        if (level instanceof ServerLevel serverLevel && registeredNetwork != null) {
-            recomputeSections(serverLevel, NetworkSystem.get(serverLevel), registeredNetwork);
-            recomputeCooldown = RECOMPUTE_INTERVAL;
-        }
+    /** One of the values a summary row shows of its section. */
+    @FunctionalInterface
+    private interface ISectionValue {
+        int of(DatacenterSection section);
     }
 
-    public void onBroken(final ServerLevel level) {
-        if (registeredNetwork != null) {
-            NetworkSystem.get(level).unregisterRouter(registeredNetwork, worldPosition.asLong());
-            registeredNetwork = null;
-        }
-    }
+    /** What the router keeps for each face: the section's name, its balancing mode and its turn. */
+    private final class FacesPart implements IFieldPart {
 
-    @Override
-    public void setRemoved() {
-        super.setRemoved();
-        /*
-         * Also unregister on chunk unload, not just on destruction (the block's onRemove), so the router
-         * never lingers in the still-loaded per-level network. onBroken is idempotent.
-         */
-        if (level instanceof ServerLevel serverLevel) {
-            onBroken(serverLevel);
-        }
-    }
-
-    // Accessors for the config GUI and the Datacenter Station
-
-    public ContainerData getDataAccess() {
-        return data;
-    }
-
-    private void writeData() {
-        data.set(DATA_INPUT_FACE, inputFace == null ? -1 : inputFace.get3DDataValue());
-        data.set(DATA_MANAGED_RACKS, managedRackCount());
-        data.set(DATA_MAX_RACKS, maxRacks());
-        data.set(DATA_OVER_CAPACITY, overCapacity ? 1 : 0);
-        data.set(DATA_SECTION_COUNT, Math.min(sections.size(), MAX_SECTIONS));
-        for (int i = 0; i < MAX_SECTIONS; i++) {
-            final int base = DATA_SECTION_BASE + i * DATA_PER_SECTION;
-            if (i < sections.size()) {
-                final DatacenterSection section = sections.get(i);
-                data.set(base, section.face().get3DDataValue());
-                data.set(base + 1, section.rackCount());
-                data.set(base + 2, section.serverCount());
-                data.set(base + 3, loadBalanceMode(section.face()).id());
-            } else {
-                data.set(base, -1);
-                data.set(base + 1, 0);
-                data.set(base + 2, 0);
-                data.set(base + 3, 0);
+        @Override
+        public void save(final CompoundTag tag, final HolderLookup.Provider registries) {
+            final CompoundTag names = new CompoundTag();
+            sectionNames.forEach((face, name) -> names.putString(face.getName(), name));
+            if (!names.isEmpty()) {
+                tag.put("SectionNames", names);
+            }
+            final CompoundTag cursors = new CompoundTag();
+            balanceCursors.forEach((face, cursor) -> cursors.putInt(face.getName(), cursor));
+            if (!cursors.isEmpty()) {
+                tag.put("BalanceCursors", cursors);
+            }
+            final CompoundTag modes = new CompoundTag();
+            for (final Map.Entry<Direction, LoadBalanceMode> entry : loadBalanceModes.entrySet()) {
+                modes.putByte(entry.getKey().getName(), (byte) entry.getValue().id());
+            }
+            if (!modes.isEmpty()) {
+                tag.put("LoadBalance", modes);
             }
         }
-    }
 
-    public String customName() {
-        return customName;
-    }
-
-    public void setCustomName(@Nullable final String name) {
-        this.customName = name == null ? "" : name;
-        setChanged();
-    }
-
-    /**
-     * Which server a spreading write on {@code face} should start from, advancing the rotation by one.
-     * Kept per face and written with the router, so successive writes really do take turns.
-     */
-    public int nextBalanceStart(final Direction face) {
-        final int start = balanceCursors.getOrDefault(face, 0);
-        balanceCursors.put(face, start == Integer.MAX_VALUE ? 0 : start + 1);
-        setChanged();
-        return start;
-    }
-
-    /** The player's name for the section on {@code face}, or empty when it goes by the router and face. */
-    public String sectionName(final Direction face) {
-        return sectionNames.getOrDefault(face, "");
-    }
-
-    public void setSectionName(final Direction face, @Nullable final String name) {
-        if (name == null || name.isEmpty()) {
-            sectionNames.remove(face);
-        } else {
-            sectionNames.put(face, name);
-        }
-        setChanged();
-    }
-
-    public List<DatacenterSection> sections() {
-        return sections;
-    }
-
-    @Nullable
-    public Direction inputFace() {
-        return inputFace;
-    }
-
-    public Set<Long> unmanagedRacks() {
-        return unmanagedRacks;
-    }
-
-    public boolean isOverCapacity() {
-        return overCapacity;
-    }
-
-    public int maxRacks() {
-        return ServerRouterElement.maxRacksFor(TIER);
-    }
-
-    public int managedRackCount() {
-        int count = 0;
-        for (final DatacenterSection section : sections) {
-            count += section.rackCount();
-        }
-        return count;
-    }
-
-    public LoadBalanceMode loadBalanceMode(final Direction face) {
-        return loadBalanceModes.getOrDefault(face, LoadBalanceMode.ROUND_ROBIN);
-    }
-
-    public void cycleLoadBalanceMode(final Direction face) {
-        loadBalanceModes.put(face, loadBalanceMode(face).next());
-        setChanged();
-        writeData();
-    }
-
-    // Persistence
-
-    @Override
-    protected void saveAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        if (!customName.isEmpty()) {
-            tag.putString("CustomName", customName);
-        }
-        final CompoundTag names = new CompoundTag();
-        sectionNames.forEach((face, name) -> names.putString(face.getName(), name));
-        if (!names.isEmpty()) {
-            tag.put("SectionNames", names);
-        }
-        final CompoundTag cursors = new CompoundTag();
-        balanceCursors.forEach((face, cursor) -> cursors.putInt(face.getName(), cursor));
-        if (!cursors.isEmpty()) {
-            tag.put("BalanceCursors", cursors);
-        }
-        final CompoundTag modes = new CompoundTag();
-        for (final Map.Entry<Direction, LoadBalanceMode> entry : loadBalanceModes.entrySet()) {
-            modes.putByte(entry.getKey().getName(), (byte) entry.getValue().id());
-        }
-        if (!modes.isEmpty()) {
-            tag.put("LoadBalance", modes);
-        }
-    }
-
-    @Override
-    protected void loadAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        customName = tag.getString("CustomName");
-        sectionNames.clear();
-        if (tag.contains("SectionNames")) {
+        @Override
+        public void load(final CompoundTag tag, final HolderLookup.Provider registries) {
+            sectionNames.clear();
             final CompoundTag names = tag.getCompound("SectionNames");
-            for (final Direction direction : Direction.values()) {
-                if (names.contains(direction.getName())) {
-                    sectionNames.put(direction, names.getString(direction.getName()));
-                }
-            }
-        }
-        balanceCursors.clear();
-        if (tag.contains("BalanceCursors")) {
+            balanceCursors.clear();
             final CompoundTag cursors = tag.getCompound("BalanceCursors");
-            for (final Direction direction : Direction.values()) {
-                if (cursors.contains(direction.getName())) {
-                    balanceCursors.put(direction, cursors.getInt(direction.getName()));
-                }
-            }
-        }
-        loadBalanceModes.clear();
-        if (tag.contains("LoadBalance")) {
+            loadBalanceModes.clear();
             final CompoundTag modes = tag.getCompound("LoadBalance");
             for (final Direction direction : Direction.values()) {
-                if (modes.contains(direction.getName())) {
-                    loadBalanceModes.put(direction, LoadBalanceMode.byId(modes.getByte(direction.getName())));
+                final String key = direction.getName();
+                if (names.contains(key)) {
+                    sectionNames.put(direction, names.getString(key));
+                }
+                if (cursors.contains(key)) {
+                    balanceCursors.put(direction, cursors.getInt(key));
+                }
+                if (modes.contains(key)) {
+                    loadBalanceModes.put(direction, LoadBalanceMode.byId(modes.getByte(key)));
                 }
             }
         }

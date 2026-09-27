@@ -57,6 +57,15 @@ public abstract class SyncedBlockEntity extends BlockEntity {
         }
     }
 
+    /* A block entity whose chunk unloads is no longer checked or sent; loaded again, it is watched again. */
+    @Override
+    public void onChunkUnloaded() {
+        super.onChunkUnloaded();
+        if (level instanceof ServerLevel server) {
+            ClientUpdates.forget(server, this);
+        }
+    }
+
     @Override
     public final CompoundTag getUpdateTag(final HolderLookup.Provider registries) {
         return fields.writeClient(registries);

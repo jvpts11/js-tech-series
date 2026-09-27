@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
+import com.mojang.serialization.Codec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.DataCableBlock;
@@ -15,6 +16,8 @@ import dev.jstech.computers.item.PhiCoprocessorItem;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.core.blockentity.SyncedBlockEntity;
+import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -23,8 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
@@ -43,7 +45,7 @@ import java.util.UUID;
 /**
  * The HBW Interface: the uplink of a Supercomputer cluster.
  */
-public class HbwInterfaceBlockEntity extends BlockEntity {
+public class HbwInterfaceBlockEntity extends SyncedBlockEntity {
 
     public static final int SLOT_NO_NODE = 0;
     public static final int SLOT_EMPTY = 1;
@@ -72,11 +74,15 @@ public class HbwInterfaceBlockEntity extends BlockEntity {
         return nodes;
     }
 
-    private NodeUuid nodeUuid;
+    /** The cluster's identity on the network, made the first time it is asked for and kept from then on. */
+    private final ValueField<NodeUuid> nodeUuid = fields().nullable("NodeUuid", NODE_UUID).save();
     private NetworkUuid networkUuid;
     private NetworkUuid registeredNetwork;
     // The player's name for the cluster; empty means the manager numbers it (SC-1, SC-2 ...).
-    private String customName = "";
+    private final ValueField<String> customName = fields().value("CustomName", Codec.STRING, "").save();
+
+    /** A node id saved the way a plain UUID is, as four ints. */
+    private static final Codec<NodeUuid> NODE_UUID = UUIDUtil.CODEC.xmap(NodeUuid::new, NodeUuid::value);
 
     private List<ClusterSlot> slots = List.of();
     private int unslottedNodes;
@@ -248,11 +254,13 @@ public class HbwInterfaceBlockEntity extends BlockEntity {
     }
 
     public NodeUuid nodeUuid() {
-        if (nodeUuid == null) {
-            nodeUuid = new NodeUuid(UUID.randomUUID());
-            setChanged();
+        final NodeUuid known = nodeUuid.get();
+        if (known != null) {
+            return known;
         }
-        return nodeUuid;
+        final NodeUuid made = new NodeUuid(UUID.randomUUID());
+        nodeUuid.set(made);
+        return made;
     }
 
     @Nullable
@@ -335,31 +343,10 @@ public class HbwInterfaceBlockEntity extends BlockEntity {
     }
 
     public String customName() {
-        return customName;
+        return customName.get();
     }
 
     public void setCustomName(@Nullable final String name) {
-        this.customName = name == null ? "" : name;
-        setChanged();
-    }
-
-    @Override
-    protected void loadAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.hasUUID("NodeUuid")) {
-            nodeUuid = new NodeUuid(tag.getUUID("NodeUuid"));
-        }
-        customName = tag.getString("CustomName");
-    }
-
-    @Override
-    protected void saveAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        if (nodeUuid != null) {
-            tag.putUUID("NodeUuid", nodeUuid.value());
-        }
-        if (!customName.isEmpty()) {
-            tag.putString("CustomName", customName);
-        }
+        customName.set(name == null ? "" : name);
     }
 }

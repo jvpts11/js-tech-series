@@ -19,7 +19,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,9 +136,7 @@ final class NetworkAttachment {
              * laid has to reach the client rather than wait for the next time the monitor is opened.
              */
             this.machine.setChanged();
-            final BlockPos pos = this.machine.getBlockPos();
-            final BlockState state = this.machine.getBlockState();
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+            this.machine.fields().syncToClients();
             /*
              * A system up at its desktop hears its network come and go as it hears a device, which is the sound the
              * desktops that had one gave it. A machine coming on joins before its system is up, so that is silent.

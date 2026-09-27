@@ -14,42 +14,31 @@ import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.menu.PatternEncoderMenu;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.core.content.Device;
+import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.id.StableCodecs;
-import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
+import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
-import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * The Pattern Encoder block: the burner a computer's Pattern Studio sends finished recipe files to. One block
@@ -57,8 +46,7 @@ import org.jetbrains.annotations.Nullable;
  * a sneak-click takes it out (unless a job holds it), and a plain click opens the bay's small panel.
  */
 @TextHolder
-public class PatternEncoderBlock extends HorizontalDirectionalBlock implements EntityBlock, IPeripheralConnectable,
-        IEraChassisBlock {
+public class PatternEncoderBlock extends DeviceBlock implements IPeripheralConnectable, IEraChassisBlock {
 
     private final HardwareEra era;
 
@@ -66,6 +54,12 @@ public class PatternEncoderBlock extends HorizontalDirectionalBlock implements E
             propertiesCodec(),
             StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(b -> b.era)
     ).apply(i, PatternEncoderBlock::new));
+
+    /** The encoder's block entity, ticking its link and its jobs, with the bay's panel as its menu. */
+    private static final Device<PatternEncoderBlockEntity> DEVICE =
+            Device.of(() -> ComputingModule.PATTERN_ENCODER_BE.get())
+                    .ticks(PatternEncoderBlockEntity::serverTick)
+                    .opensMenu(PatternEncoderMenu::new);
 
     private static final TextKey WRITING_WAIT = TextKey.of("jsc.pattern_encoder.writing_wait",
             "The encoder is writing - wait for it to finish.");
@@ -81,9 +75,8 @@ public class PatternEncoderBlock extends HorizontalDirectionalBlock implements E
             "This encoder writes DVDs, CDs and USB sticks, not that.");
 
     public PatternEncoderBlock(final Properties properties, final HardwareEra era) {
-        super(properties);
+        super(properties, DEVICE);
         this.era = era;
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
     /** The era of this encoder, which decides which media it writes. */
@@ -97,18 +90,13 @@ public class PatternEncoderBlock extends HorizontalDirectionalBlock implements E
     }
 
     @Override
-    protected MapCodec<PatternEncoderBlock> codec() {
-        return CODEC;
-    }
-
-    @Override
     public PeripheralCableType peripheralType() {
         return PeripheralCableType.COMPUTING;
     }
 
     @Override
-    protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+    protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
+        return CODEC;
     }
 
     /** The body is one model drawn by the block entity; the block itself paints nothing over it. */
@@ -129,11 +117,6 @@ public class PatternEncoderBlock extends HorizontalDirectionalBlock implements E
     }
 
     @Override
-    public BlockState getStateForPlacement(final BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
-    }
-
-    @Override
     protected ItemInteractionResult useItemOn(final ItemStack heldStack, final BlockState state, final Level level,
                                               final BlockPos pos, final Player player, final InteractionHand hand,
                                               final BlockHitResult hit) {
@@ -144,14 +127,7 @@ public class PatternEncoderBlock extends HorizontalDirectionalBlock implements E
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         if (player.isShiftKeyDown()) {
-            if (encoder.locked()) {
-                player.displayClientMessage(GameText.component(WRITING_WAIT), true);
-                return ItemInteractionResult.SUCCESS;
-            }
-            final ItemStack ejected = encoder.ejectMedia();
-            if (!ejected.isEmpty() && !player.addItem(ejected)) {
-                Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, ejected);
-            }
+            eject(encoder, level, pos, player);
             return ItemInteractionResult.SUCCESS;
         }
         if (encoder.acceptsMedia(heldStack)) {
@@ -171,6 +147,31 @@ public class PatternEncoderBlock extends HorizontalDirectionalBlock implements E
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
+    @Override
+    protected InteractionResult useWithoutItem(final BlockState state, final Level level, final BlockPos pos,
+                                               final Player player, final BlockHitResult hit) {
+        if (!player.isShiftKeyDown()) {
+            return super.useWithoutItem(state, level, pos, player, hit);
+        }
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof PatternEncoderBlockEntity encoder) {
+            eject(encoder, level, pos, player);
+        }
+        return InteractionResult.sidedSuccess(level.isClientSide());
+    }
+
+    /** Gives the medium back to {@code player}, or says why the bay keeps it. */
+    private static void eject(final PatternEncoderBlockEntity encoder, final Level level, final BlockPos pos,
+                              final Player player) {
+        if (encoder.locked()) {
+            player.displayClientMessage(GameText.component(WRITING_WAIT), true);
+            return;
+        }
+        final ItemStack ejected = encoder.ejectMedia();
+        if (!ejected.isEmpty() && !player.addItem(ejected)) {
+            Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, ejected);
+        }
+    }
+
     /** What to tell a player whose disc the bay refused. */
     private TextKey refusal(final ItemStack held) {
         if (held.getItem() instanceof FormattedMediaItem fmt
@@ -182,62 +183,5 @@ public class PatternEncoderBlock extends HorizontalDirectionalBlock implements E
             case LEGACY -> LEGACY_ONLY;
             default -> STANDARD_ONLY;
         };
-    }
-
-    @Override
-    protected InteractionResult useWithoutItem(final BlockState state, final Level level, final BlockPos pos,
-                                               final Player player, final BlockHitResult hit) {
-        if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof PatternEncoderBlockEntity encoder) {
-            if (player.isShiftKeyDown()) {
-                if (encoder.locked()) {
-                    player.displayClientMessage(GameText.component(WRITING_WAIT), true);
-                    return InteractionResult.sidedSuccess(false);
-                }
-                final ItemStack ejected = encoder.ejectMedia();
-                if (!ejected.isEmpty() && !player.addItem(ejected)) {
-                    Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, ejected);
-                }
-                return InteractionResult.sidedSuccess(false);
-            }
-            serverPlayer.openMenu(
-                    new SimpleMenuProvider(
-                            (id, inventory, p) -> new PatternEncoderMenu(
-                                    id, inventory, encoder),
-                            Component.translatable(getDescriptionId())),
-                    buf -> buf.writeBlockPos(pos));
-        }
-        return InteractionResult.sidedSuccess(level.isClientSide());
-    }
-
-    @Override
-    protected void onRemove(final BlockState state, final Level level, final BlockPos pos,
-                            final BlockState newState, final boolean movedByPiston) {
-        if (!state.is(newState.getBlock())
-                && level.getBlockEntity(pos) instanceof PatternEncoderBlockEntity encoder) {
-            encoder.dropContents(level, pos);
-            if (level instanceof ServerLevel serverLevel) {
-                encoder.unlink(serverLevel); // free the computer's endpoint slot
-            }
-        }
-        super.onRemove(state, level, pos, newState, movedByPiston);
-    }
-
-    @Override
-    @Nullable
-    public BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
-        return new PatternEncoderBlockEntity(pos, state);
-    }
-
-    @Override
-    @Nullable
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(final Level level, final BlockState state,
-                                                                  final BlockEntityType<T> type) {
-        if (level.isClientSide()) {
-            return null;
-        }
-        return type == ComputingModule.PATTERN_ENCODER_BE.get()
-                ? (lvl, pos, st, be) -> PatternEncoderBlockEntity.serverTick(lvl, pos, st, (PatternEncoderBlockEntity) be)
-                : null;
     }
 }

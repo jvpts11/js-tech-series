@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
+import com.mojang.serialization.Codec;
 import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.advancement.HardwareMilestones;
 import dev.jstech.computers.advancement.JscEvents;
@@ -65,6 +66,9 @@ import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.audio.IAudioHost;
 import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.audio.StereoSide;
+import dev.jstech.core.blockentity.IFieldPart;
+import dev.jstech.core.blockentity.SyncedBlockEntity;
+import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.DataTier;
@@ -76,16 +80,10 @@ import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.Connection;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -109,7 +107,7 @@ import java.util.Set;
  * mod has always called, decides what THIS kind of computer accepts in a slot, which is the one thing each
  * kind settles for itself, and saves each part in turn.
  */
-public abstract class AbstractComputerBlockEntity extends BlockEntity
+public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         implements IPeripheralOwnerSupport, IOsHost, IWatchedConsole {
 
     /** The parts installed and what they add up to; it is built with the layout, so the constructor sets it. */
@@ -146,8 +144,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     /** What the programs running on it play: their tunes, their beeps and their recordings. */
     private final ProgramSounds programSounds = new ProgramSounds(this);
 
-    /** The name a player gave this computer: the machine's own, and no part's. */
-    private String computerName = "";
+    /** The name a player gave this computer: the machine's own, and no part's; the players who see it are sent it. */
+    private final ValueField<String> computerName;
 
     /*
      * The recipe drafts the Pattern Studio edits, kept out of the session deliberately: a power cut ends a
@@ -157,10 +155,36 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     private final PatternWorkbench studio =
             new PatternWorkbench();
 
+    /*
+     * Each part is saved in turn, in the order declared here: the hardware first, because the console rides on the
+     * system disk and has to be pushed onto it before the disk stacks are written.
+     */
     protected AbstractComputerBlockEntity(final BlockEntityType<?> type, final BlockPos pos,
                                           final BlockState state, final ComputerHardwareLayout layout) {
         super(type, pos, state);
         this.hardware = new ComputerHardware(this, layout);
+        fields().part("Hardware", IFieldPart.of((tag, registries) -> {
+            diskConsole.flush();
+            hardware.save(tag, registries, hardwareNbtKey());
+        }, (tag, registries) -> {
+            hardware.load(tag, registries, hardwareNbtKey());
+            hardware.markDirty();
+        })).save();
+        fields().part("Power", IFieldPart.of((tag, registries) -> power.save(tag),
+                (tag, registries) -> power.load(tag))).save();
+        fields().part("Session", IFieldPart.of((tag, registries) -> session.save(tag),
+                (tag, registries) -> session.load(tag))).save();
+        this.computerName = fields().value("ComputerName", Codec.STRING, "").save().toClient();
+        fields().part("Attachment", new AttachmentPart()).save().toClient();
+        fields().part("Peripherals", IFieldPart.of((tag, registries) -> peripherals.save(tag),
+                (tag, registries) -> peripherals.load(tag))).save();
+        fields().part("Studio", IFieldPart.of(this::saveStudio, this::loadStudio)).save();
+        fields().part("Programs", IFieldPart.of((tag, registries) -> host.save(tag),
+                (tag, registries) -> host.load(tag))).save();
+        // The console now rides on the disk; a machine saved before that still carries its own, read once here.
+        fields().part("LegacyConsole", IFieldPart.of((tag, registries) -> { },
+                (tag, registries) -> diskConsole.loadLegacy(tag))).save();
+        fields().part("Sounds", new SoundsPart()).save().toClient();
     }
 
     /* The parts installed have changed: the build is worked out again and the power reconsidered. */
@@ -882,19 +906,12 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     public String customName() {
-        return computerName;
+        return computerName.get();
     }
 
     public void setCustomName(final String name) {
         final String trimmed = name.strip();
-        final String capped = trimmed.length() > 32 ? trimmed.substring(0, 32) : trimmed;
-        if (!capped.equals(computerName)) {
-            computerName = capped;
-            setChanged();
-            if (level != null) {
-                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
-            }
-        }
+        computerName.set(trimmed.length() > 32 ? trimmed.substring(0, 32) : trimmed);
     }
 
     /*
@@ -1428,7 +1445,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         super.setChanged();
     }
 
-    // Persistence (common fields; subclasses add their own via the hooks)
+    // Persistence: each part is declared in the constructor, and the players are sent what each part says
 
     /**
      * The NBT key the hardware {@link ItemStackHandler} is stored under. Overridable so a subclass with
@@ -1439,98 +1456,65 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return "Hardware";
     }
 
-    protected void saveExtra(final CompoundTag tag, final HolderLookup.Provider registries) {
-    }
-
-    protected void loadExtra(final CompoundTag tag, final HolderLookup.Provider registries) {
-    }
-
-    @Override
-    protected void loadAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        hardware.load(tag, registries, hardwareNbtKey());
-        power.load(tag);
-        session.load(tag);
-        computerName = tag.getString("ComputerName");
-        attachment.load(tag);
-        peripherals.load(tag);
-        if (tag.contains("Studio")) {
-            studio.load(tag.getCompound("Studio"), registries);
-        }
-        host.load(tag);
-        diskConsole.loadLegacy(tag);
-        loadExtra(tag, registries);
-        hardware.markDirty();
-        sounds.loaded();
-    }
-
-    @Override
-    protected void saveAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        /*
-         * Push the software onto the disk first: the hardware handler below serializes the disk stacks,
-         * and a flush after that point would be written to a copy and lost.
-         */
-        diskConsole.flush();
-        hardware.save(tag, registries, hardwareNbtKey());
-        power.save(tag);
-        session.save(tag);
-        if (!computerName.isEmpty()) {
-            tag.putString("ComputerName", computerName);
-        }
-        attachment.save(tag);
+    private void saveStudio(final CompoundTag tag, final HolderLookup.Provider registries) {
         final CompoundTag studioTag = new CompoundTag();
         studio.save(studioTag, registries);
         tag.put("Studio", studioTag);
-        host.save(tag);
-        peripherals.save(tag);
-        /*
-         * The console rides on the system disk, so flush it there BEFORE the hardware handler is
-         * serialized above, or the write would land on a disk stack that was already copied.
-         */
-        saveExtra(tag, registries);
     }
 
-    @Override
-    public CompoundTag getUpdateTag(final HolderLookup.Provider registries) {
-        final CompoundTag tag = super.getUpdateTag(registries);
-        if (!computerName.isEmpty()) {
-            tag.putString("ComputerName", computerName);
+    private void loadStudio(final CompoundTag tag, final HolderLookup.Provider registries) {
+        if (tag.contains("Studio")) {
+            studio.load(tag.getCompound("Studio"), registries);
         }
-        attachment.saveForClient(tag);
-        sounds.saveForClient(tag);
-        return tag;
     }
 
-    @Override
-    public Packet<ClientGamePacketListener>
-            getUpdatePacket() {
-        /*
-         * Without this, a mid-session rename (which calls sendBlockUpdated) never reaches the client, so
-         * reopening the assembly screen reads a stale, empty name from the client copy of this block entity.
-         */
-        return ClientboundBlockEntityDataPacket.create(this);
+    /** Where the machine stands on the network: saved whole, and whether it is on one sent to the players. */
+    private final class AttachmentPart implements IFieldPart {
+
+        @Override
+        public void save(final CompoundTag tag, final HolderLookup.Provider registries) {
+            attachment.save(tag);
+        }
+
+        @Override
+        public void load(final CompoundTag tag, final HolderLookup.Provider registries) {
+            attachment.load(tag);
+        }
+
+        @Override
+        public void writeClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+            attachment.saveForClient(tag);
+        }
+
+        @Override
+        public void readClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+            attachment.loadFromClient(tag);
+        }
     }
 
-    @Override
-    public void onDataPacket(final Connection connection,
-                             final ClientboundBlockEntityDataPacket packet,
-                             final HolderLookup.Provider registries) {
-        /*
-         * Apply only the display name from a live block update. The rest of the client state is kept in sync
-         * through the menu's ContainerData; running the full loadAdditional here would reset transient fields
-         * (power, autostart, linked monitors) to their defaults because the update tag is intentionally minimal.
-         */
-        final CompoundTag tag = packet.getTag();
-        computerName = tag != null ? tag.getString("ComputerName") : "";
-        attachment.loadFromClient(tag);
-        sounds.loadFromClient(tag);
-    }
+    /**
+     * What the machine sounds like: nothing of it is saved, and a machine read back from a save listens afresh for
+     * whether it runs; the players are sent whether its disk is turning and seeking, which they hear.
+     */
+    private final class SoundsPart implements IFieldPart {
 
-    @Override
-    public void handleUpdateTag(final CompoundTag tag, final HolderLookup.Provider registries) {
-        // The chunk-load path carries the same: whether the disk is heard turning as the player arrives.
-        super.handleUpdateTag(tag, registries);
-        sounds.loadFromClient(tag);
+        @Override
+        public void save(final CompoundTag tag, final HolderLookup.Provider registries) {
+        }
+
+        @Override
+        public void load(final CompoundTag tag, final HolderLookup.Provider registries) {
+            sounds.loaded();
+        }
+
+        @Override
+        public void writeClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+            sounds.saveForClient(tag);
+        }
+
+        @Override
+        public void readClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+            sounds.loadFromClient(tag);
+        }
     }
 }

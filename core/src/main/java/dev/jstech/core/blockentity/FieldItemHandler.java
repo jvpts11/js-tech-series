@@ -15,6 +15,7 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiPredicate;
+import java.util.function.BooleanSupplier;
 import java.util.function.IntConsumer;
 
 /**
@@ -29,6 +30,7 @@ public final class FieldItemHandler extends ItemStackHandler implements IField {
     private final List<Runnable> loadListeners = new ArrayList<>();
     private int slotLimit = STACK;
     private BiPredicate<Integer, ItemStack> accepts = (slot, stack) -> true;
+    private BooleanSupplier locked = () -> false;
     private boolean exposed;
     private boolean drops;
 
@@ -76,6 +78,12 @@ public final class FieldItemHandler extends ItemStackHandler implements IField {
         return this;
     }
 
+    /** Gives nothing out while {@code rule} holds, as a burner keeps the disc it is writing. */
+    public FieldItemHandler lockedWhile(final BooleanSupplier rule) {
+        locked = rule;
+        return this;
+    }
+
     /** Runs whenever a slot's contents change, with that slot, on whichever side changed it. */
     public FieldItemHandler onChange(final IntConsumer listener) {
         changeListeners.add(listener);
@@ -104,6 +112,11 @@ public final class FieldItemHandler extends ItemStackHandler implements IField {
     @Override
     public boolean isItemValid(final int slot, final ItemStack stack) {
         return accepts.test(slot, stack);
+    }
+
+    @Override
+    public ItemStack extractItem(final int slot, final int amount, final boolean simulate) {
+        return locked.getAsBoolean() ? ItemStack.EMPTY : super.extractItem(slot, amount, simulate);
     }
 
     @Override

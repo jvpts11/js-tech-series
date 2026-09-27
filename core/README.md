@@ -66,10 +66,11 @@ The things two or more mods of the series need, or that define the language they
   section and tags, from which the data generation writes the block state, the models, the English, the loot
   and the tags, so none of them is a list kept by hand. Sounds and cues are declared the same way.
 - Block entities, their blocks and their menus, declared the same way: a block entity's state as fields, each
-  saved, sent to the players who see the block or shown to its menu as it says, with inventories and energy that
-  pipes and cables reach and that spill when the block breaks; a block that ticks its block entity and opens its
-  menu; and a menu whose slots, shift-clicks, buttons and validity are said once, its slots placed from the
-  screen's own layout.
+  saved, sent to the players who see the block or shown to its menu as it says, with inventories, energy and
+  tanks that pipes and cables reach and that spill when the block breaks, values of any kind a codec writes,
+  parts that write themselves, block state properties that follow a value, and a peripheral's link to its owner;
+  a block that ticks its block entity and opens its menu; and a menu whose slots, shift-clicks, buttons and
+  validity are said once, its slots placed from the screen's own layout.
 
 ### Screens and the rest
 

@@ -54,18 +54,18 @@ import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.content.Device;
+import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
 import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
-import dev.jstech.core.util.BlockEntityTickers;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalLong;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -79,18 +79,13 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.network.PacketDistributor;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * The Monitor: a peripheral that displays the interface of the computer it is linked to (over a Peripheral Cable, ≤ 16 blocks).
@@ -99,15 +94,19 @@ import org.jetbrains.annotations.Nullable;
  * {@link LegacyMonitorBlock}) each wear their own era's textures and the {@code LIT} blockstate
  * texture resolves to the correct on-screen OS style.
  */
-public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBlock, IPeripheralConnectable, IEraChassisBlock {
+public class MonitorBlock extends DeviceBlock implements IPeripheralConnectable, IEraChassisBlock {
 
     public static final MapCodec<MonitorBlock> CODEC = simpleCodec(MonitorBlock::new);
 
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
+    /** The monitor's block entity, ticking to keep its link and to light its screen. */
+    private static final Device<MonitorBlockEntity> DEVICE =
+            Device.of(() -> ComputingModule.MONITOR_BE.get()).ticks(MonitorBlockEntity::serverTick);
+
     public MonitorBlock(final Properties properties) {
-        super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(LIT, false));
+        super(properties, DEVICE);
+        registerDefaultState(defaultBlockState().setValue(LIT, false));
     }
 
     @Override
@@ -140,7 +139,8 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
 
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, LIT);
+        super.createBlockStateDefinition(builder);
+        builder.add(LIT);
     }
 
     @Override
@@ -759,31 +759,4 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         }
         return GameText.component(MonitorTexts.UNLINKED);
     }
-
-    @Override
-    protected void onRemove(final BlockState state, final Level level, final BlockPos pos,
-                            final BlockState newState, final boolean movedByPiston) {
-        if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel
-                && level.getBlockEntity(pos) instanceof MonitorBlockEntity monitor) {
-            monitor.unlink(serverLevel); // free the computer's endpoint slot
-        }
-        super.onRemove(state, level, pos, newState, movedByPiston);
-    }
-
-    @Override
-    @Nullable
-    public BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
-        return new MonitorBlockEntity(pos, state);
-    }
-
-    @Override
-    @Nullable
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
-            final Level level, final BlockState state, final BlockEntityType<T> type) {
-        if (level.isClientSide()) {
-            return null;
-        }
-        return BlockEntityTickers.create(type, ComputingModule.MONITOR_BE.get(), MonitorBlockEntity::serverTick);
-    }
-
 }

@@ -12,17 +12,14 @@ import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.block.part.CablePartType;
 import dev.jstech.computers.crafting.MachineCategory;
+import dev.jstech.core.blockentity.IFieldPart;
+import dev.jstech.core.blockentity.PartField;
+import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextTags;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -30,19 +27,20 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.capabilities.Capabilities;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -50,17 +48,11 @@ import java.util.Set;
  * network can route crafts through; the sixth face carries the crafting cable to a Crafting Computer (found by a
  * BFS through that cable, exactly like the supercomputer cluster discovers its nodes over the HPC cable). The
  * switch never receives Operations itself; the Crafting Computer discovers it and aggregates its machines.
+ *
+ * <p>Its screen is drawn on the client from what the players who see it are sent: each face's settings, and what
+ * the last survey found.
  */
-public class CraftingSwitchBlockEntity extends BlockEntity {
-
-    private static final int FACES = 6;
-    /*
-     * Every side, held once, because asking the enum hands back a fresh array on every call. Kept as a
-     * list rather than as that array: an array of enum constants is a mutable thing to leave lying about,
-     * and nothing here wants more than to walk it.
-     */
-    private static final List<Direction> SIDES = List.of(Direction.values());
-    private static final int BFS_STEPS = 64;
+public class CraftingSwitchBlockEntity extends SyncedBlockEntity {
 
     /*
      * Persistent per-face config: a player-set name (referenced by PROCESSING patterns), an active toggle, and a
@@ -70,26 +62,30 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
     private final String[] faceNames = new String[FACES];
     private final boolean[] faceActive = new boolean[FACES];
     private final String[] faceCategories = new String[FACES];
-
+    private final PartField faces = fields().part("Faces", new FacesPart()).save().toClient();
     // Transient, recomputed every tick: which faces touch a machine, the cable face, and the linked computer.
     private final boolean[] machinePresent = new boolean[FACES];
     private Direction cableFace;
     private BlockPos linkedComputer;
-    private boolean clientLinked; // client mirror of "linkedComputer != null", carried by the update tag
-    private int busMachineCount;  // machines discovered over the cables via crafting buses (synced for the GUI)
+    private boolean clientLinked; // client mirror of "linkedComputer != null"
+    private int busMachineCount;  // machines discovered over the cables via crafting buses
     /*
-     * One line per bus-discovered machine, synced so the GUI lists WHICH machines the switch found, where
+     * One line per bus-discovered machine, sent so the GUI lists WHICH machines the switch found, where
      * (absolute coordinates), and through which bus (whose name is editable from the switch screen).
      */
     private List<BusMachineLine> busMachineLines = List.of();
+    private final PartField survey = fields().part("Survey", new SurveyPart()).toClient();
 
-    /**
-     * A machine discovered over the cables: its block name, the bus's name, where both sit, and the switch
-     * face whose cable run reaches it, and the GUI lists the machine ON that face row.
+    private static final int FACES = 6;
+    /*
+     * Every side, held once, because asking the enum hands back a fresh array on every call. Kept as a
+     * list rather than as that array: an array of enum constants is a mutable thing to leave lying about,
+     * and nothing here wants more than to walk it.
      */
-    public record BusMachineLine(Text blockName, String busName, BlockPos machinePos,
-                                 BlockPos cablePos, int busFace, int switchFace) {
-    }
+    private static final List<Direction> SIDES = List.of(Direction.values());
+    private static final int BFS_STEPS = 64;
+    /** The most bus-discovered machines a player is sent; the screen lists no more. */
+    private static final int LINES_SENT = 8;
 
     public CraftingSwitchBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.CRAFTING_SWITCH_BE.get(), pos, state);
@@ -100,7 +96,6 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
         }
     }
 
-
     public static void serverTick(final Level level, final BlockPos pos, final BlockState state,
                                   final CraftingSwitchBlockEntity be) {
         if (level instanceof ServerLevel serverLevel) {
@@ -108,10 +103,104 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
         }
     }
 
+    // accessors for the GUI / the Crafting Computer
+
+    public boolean machineOnFace(final Direction face) {
+        return machinePresent[face.get3DDataValue()];
+    }
+
+    public Direction cableFace() {
+        return cableFace;
+    }
+
+    public BlockPos linkedComputer() {
+        return linkedComputer;
+    }
+
+    /** Whether a Crafting Computer is reachable over the crafting cable, valid on both sides. */
+    public boolean isLinked() {
+        return linkedComputer != null || clientLinked;
+    }
+
+    public String faceName(final Direction face) {
+        return faceNames[face.get3DDataValue()];
+    }
+
+    public void setFaceName(final Direction face, final String name) {
+        faceNames[face.get3DDataValue()] = name == null ? "" : name;
+        faces.changed();
+    }
+
+    public boolean faceActive(final Direction face) {
+        return faceActive[face.get3DDataValue()];
+    }
+
+    public void setFaceActive(final Direction face, final boolean active) {
+        faceActive[face.get3DDataValue()] = active;
+        faces.changed();
+    }
+
+    /** The face's generic category, a recipe type id such as {@code minecraft:smelting}, or empty for none. */
+    public String faceCategory(final Direction face) {
+        return faceCategories[face.get3DDataValue()];
+    }
+
+    public void setFaceCategory(final Direction face, final String category) {
+        faceCategories[face.get3DDataValue()] = category == null ? "" : category;
+        faces.changed();
+    }
+
+    /**
+     * Every machine this switch currently offers the network, from two sources: active faces (excluding the
+     * cable face) that touch a block with an item handler, and machines reached over the crafting cables, any
+     * block a mounted Crafting Input/Receiving Bus points at. The engine uses {@code machineType}/{@code name}
+     * to find a machine for a processing pattern and {@code machinePos}/{@code face} to drive its I/O.
+     */
+    public List<DeclaredMachine> declaredMachines() {
+        final List<DeclaredMachine> out = new ArrayList<>();
+        if (level == null) {
+            return out;
+        }
+        final Set<BlockPos> declared = new HashSet<>();
+        for (final Direction direction : SIDES) {
+            final int i = direction.get3DDataValue();
+            if (direction == cableFace || !machinePresent[i] || !faceActive[i]) {
+                continue;
+            }
+            final BlockPos machinePos = worldPosition.relative(direction);
+            final var key = BuiltInRegistries.BLOCK
+                    .getKey(level.getBlockState(machinePos).getBlock());
+            out.add(new DeclaredMachine(faceNames[i], key.toString(), faceCategories[i], machinePos, direction));
+            declared.add(machinePos);
+        }
+        /*
+         * Machines reached over the cables belong to the switch face their cable run hangs from: they inherit
+         * that face's category (so generic patterns match them) and are gated by that face's active toggle.
+         */
+        for (final BusMachineLine line : collectBusMachines(declared)) {
+            final var key = BuiltInRegistries.BLOCK
+                    .getKey(level.getBlockState(line.machinePos()).getBlock());
+            out.add(new DeclaredMachine(line.busName(), key.toString(), faceCategories[line.switchFace()],
+                    line.machinePos(), Direction.from3DDataValue(line.busFace())));
+        }
+        return out;
+    }
+
+    /** How many machines this switch discovered over its cables via crafting buses, valid on both sides. */
+    public int busMachineCount() {
+        return busMachineCount;
+    }
+
+    /** The bus-discovered machines (block name, bus name, absolute positions), valid on both sides. */
+    public List<BusMachineLine> busMachineLines() {
+        return busMachineLines;
+    }
+
     /** Recomputes the cable face, the linked Crafting Computer, and which faces touch a machine. */
     private void survey(final ServerLevel level) {
         final boolean[] before = machinePresent.clone();
         final BlockPos linkedBefore = linkedComputer;
+        final Direction cableBefore = cableFace;
         Direction cable = null;
         for (final Direction direction : SIDES) {
             final BlockPos neighbor = worldPosition.relative(direction);
@@ -142,12 +231,11 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
         final List<BusMachineLine> lines = collectBusMachines(adjacent);
         this.busMachineLines = lines;
         this.busMachineCount = lines.size();
-        // The GUI reads this block entity on the client, so push an update tag whenever the survey changes.
         if (!Arrays.equals(before, machinePresent)
                 || !Objects.equals(linkedBefore, linkedComputer)
+                || cableBefore != cableFace
                 || !busBefore.equals(busMachineLines)) {
-            final BlockState state = getBlockState();
-            level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
+            survey.changed();
         }
     }
 
@@ -190,94 +278,6 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
             }
         }
         return null;
-    }
-
-    // accessors for the GUI / the Crafting Computer
-
-    public boolean machineOnFace(final Direction face) {
-        return machinePresent[face.get3DDataValue()];
-    }
-
-    public Direction cableFace() {
-        return cableFace;
-    }
-
-    public BlockPos linkedComputer() {
-        return linkedComputer;
-    }
-
-    /** Whether a Crafting Computer is reachable over the crafting cable, valid on both sides. */
-    public boolean isLinked() {
-        return linkedComputer != null || clientLinked;
-    }
-
-    public String faceName(final Direction face) {
-        return faceNames[face.get3DDataValue()];
-    }
-
-    public void setFaceName(final Direction face, final String name) {
-        faceNames[face.get3DDataValue()] = name == null ? "" : name;
-        setChanged();
-    }
-
-    public boolean faceActive(final Direction face) {
-        return faceActive[face.get3DDataValue()];
-    }
-
-    public void setFaceActive(final Direction face, final boolean active) {
-        faceActive[face.get3DDataValue()] = active;
-        setChanged();
-    }
-
-    /** The face's generic category, a recipe type id such as {@code minecraft:smelting}, or empty for none. */
-    public String faceCategory(final Direction face) {
-        return faceCategories[face.get3DDataValue()];
-    }
-
-    public void setFaceCategory(final Direction face, final String category) {
-        faceCategories[face.get3DDataValue()] = category == null ? "" : category;
-        setChanged();
-    }
-
-    /** A machine declared on an active face: its name, block type, category, world position, and touched face. */
-    public record DeclaredMachine(String name, String machineType, String category,
-                                  BlockPos machinePos, Direction face) {
-    }
-
-    /**
-     * Every machine this switch currently offers the network, from two sources: active faces (excluding the
-     * cable face) that touch a block with an item handler, and machines reached over the crafting cables, any
-     * block a mounted Crafting Input/Receiving Bus points at. The engine uses {@code machineType}/{@code name}
-     * to find a machine for a processing pattern and {@code machinePos}/{@code face} to drive its I/O.
-     */
-    public List<DeclaredMachine> declaredMachines() {
-        final List<DeclaredMachine> out = new ArrayList<>();
-        if (level == null) {
-            return out;
-        }
-        final Set<BlockPos> declared = new HashSet<>();
-        for (final Direction direction : SIDES) {
-            final int i = direction.get3DDataValue();
-            if (direction == cableFace || !machinePresent[i] || !faceActive[i]) {
-                continue;
-            }
-            final BlockPos machinePos = worldPosition.relative(direction);
-            final var key = BuiltInRegistries.BLOCK
-                    .getKey(level.getBlockState(machinePos).getBlock());
-            out.add(new DeclaredMachine(faceNames[i], key.toString(), faceCategories[i], machinePos, direction));
-            declared.add(machinePos);
-        }
-        /*
-         * Machines reached over the cables belong to the switch face their cable run hangs from: they inherit
-         * that face's category (so generic patterns match them) and are gated by that face's active toggle.
-         */
-        for (final BusMachineLine line : collectBusMachines(declared)) {
-            final var key = BuiltInRegistries.BLOCK
-                    .getKey(level.getBlockState(line.machinePos()).getBlock());
-            out.add(new DeclaredMachine(line.busName(), key.toString(), faceCategories[line.switchFace()],
-                    line.machinePos(), Direction.from3DDataValue(line.busFace())));
-        }
-        return out;
     }
 
     /**
@@ -334,18 +334,91 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
         return lines;
     }
 
-    // persistence + client sync
+    /**
+     * A machine discovered over the cables: its block name, the bus's name, where both sit, and the switch
+     * face whose cable run reaches it, and the GUI lists the machine ON that face row.
+     */
+    public record BusMachineLine(Text blockName, String busName, BlockPos machinePos,
+                                 BlockPos cablePos, int busFace, int switchFace) {
+    }
 
-    @Override
-    protected void loadAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        for (int i = 0; i < FACES; i++) {
-            faceNames[i] = tag.getString("Name" + i);
-            faceActive[i] = !tag.contains("Active" + i) || tag.getBoolean("Active" + i);
-            faceCategories[i] = tag.getString("Category" + i);
+    /** A machine declared on an active face: its name, block type, category, world position, and touched face. */
+    public record DeclaredMachine(String name, String machineType, String category,
+                                  BlockPos machinePos, Direction face) {
+    }
+
+    /** Each face's name, toggle and category, saved and sent under the same keys. */
+    private final class FacesPart implements IFieldPart {
+
+        @Override
+        public void save(final CompoundTag tag, final HolderLookup.Provider registries) {
+            for (int i = 0; i < FACES; i++) {
+                tag.putString("Name" + i, faceNames[i]);
+                tag.putBoolean("Active" + i, faceActive[i]);
+                tag.putString("Category" + i, faceCategories[i]);
+            }
         }
-        // Present only in the update tag (client sync of the transient survey), never in the saved chunk data.
-        if (tag.contains("MachineMask")) {
+
+        @Override
+        public void load(final CompoundTag tag, final HolderLookup.Provider registries) {
+            for (int i = 0; i < FACES; i++) {
+                faceNames[i] = tag.getString("Name" + i);
+                faceActive[i] = !tag.contains("Active" + i) || tag.getBoolean("Active" + i);
+                faceCategories[i] = tag.getString("Category" + i);
+            }
+        }
+
+        @Override
+        public void writeClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+            save(tag, registries);
+        }
+
+        @Override
+        public void readClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+            load(tag, registries);
+        }
+    }
+
+    /** What the last survey found, for the screen; the server redoes it every tick, so it is never saved. */
+    private final class SurveyPart implements IFieldPart {
+
+        @Override
+        public void save(final CompoundTag tag, final HolderLookup.Provider registries) {
+        }
+
+        @Override
+        public void load(final CompoundTag tag, final HolderLookup.Provider registries) {
+        }
+
+        @Override
+        public void writeClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+            int presentMask = 0;
+            for (int i = 0; i < FACES; i++) {
+                if (machinePresent[i]) {
+                    presentMask |= 1 << i;
+                }
+            }
+            tag.putInt("MachineMask", presentMask);
+            tag.putBoolean("Linked", linkedComputer != null);
+            tag.putInt("CableFace", cableFace == null ? -1 : cableFace.get3DDataValue());
+            tag.putInt("BusMachines", busMachineCount);
+            final ListTag lines = new ListTag();
+            for (int i = 0; i < busMachineLines.size() && i < LINES_SENT; i++) {
+                final BusMachineLine line = busMachineLines.get(i);
+                final CompoundTag entry = new CompoundTag();
+                entry.put("Block", TextTags.write(line.blockName()));
+                entry.putString("Bus", line.busName());
+                entry.putLong("MPos", line.machinePos().asLong());
+                entry.putLong("CPos", line.cablePos().asLong());
+                entry.putInt("Face", line.busFace());
+                entry.putInt("SFace", line.switchFace());
+                lines.add(entry);
+            }
+            tag.put("BusMachineLines", lines);
+        }
+
+        @Override
+        public void readClient(final CompoundTag tag, final HolderLookup.Provider registries) {
             final int mask = tag.getInt("MachineMask");
             for (int i = 0; i < FACES; i++) {
                 machinePresent[i] = (mask & (1 << i)) != 0;
@@ -354,8 +427,7 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
             final int cf = tag.getInt("CableFace");
             cableFace = cf < 0 ? null : Direction.from3DDataValue(cf);
             busMachineCount = tag.getInt("BusMachines");
-            final ListTag lines =
-                    tag.getList("BusMachineLines", Tag.TAG_COMPOUND);
+            final ListTag lines = tag.getList("BusMachineLines", Tag.TAG_COMPOUND);
             final List<BusMachineLine> parsed = new ArrayList<>(lines.size());
             for (int i = 0; i < lines.size(); i++) {
                 final CompoundTag entry = lines.getCompound(i);
@@ -365,65 +437,5 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
             }
             busMachineLines = parsed;
         }
-    }
-
-    /** How many machines this switch discovered over its cables via crafting buses, valid on both sides. */
-    public int busMachineCount() {
-        return busMachineCount;
-    }
-
-    /** The bus-discovered machines (block name, bus name, absolute positions), valid on both sides. */
-    public List<BusMachineLine> busMachineLines() {
-        return busMachineLines;
-    }
-
-    @Override
-    protected void saveAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        for (int i = 0; i < FACES; i++) {
-            tag.putString("Name" + i, faceNames[i]);
-            tag.putBoolean("Active" + i, faceActive[i]);
-            tag.putString("Category" + i, faceCategories[i]);
-        }
-    }
-
-    @Override
-    public CompoundTag getUpdateTag(final HolderLookup.Provider registries) {
-        final CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries);
-        /*
-         * The survey results are transient (recomputed server-side every tick) but the GUI reads them on the
-         * client, so the update tag carries them; without this the screen always shows UNLINKED / no machine.
-         */
-        int presentMask = 0;
-        for (int i = 0; i < FACES; i++) {
-            if (machinePresent[i]) {
-                presentMask |= 1 << i;
-            }
-        }
-        tag.putInt("MachineMask", presentMask);
-        tag.putBoolean("Linked", linkedComputer != null);
-        tag.putInt("CableFace", cableFace == null ? -1 : cableFace.get3DDataValue());
-        tag.putInt("BusMachines", busMachineCount);
-        final ListTag lines = new ListTag();
-        for (int i = 0; i < busMachineLines.size() && i < 8; i++) {
-            final BusMachineLine line = busMachineLines.get(i);
-            final CompoundTag entry = new CompoundTag();
-            entry.put("Block", TextTags.write(line.blockName()));
-            entry.putString("Bus", line.busName());
-            entry.putLong("MPos", line.machinePos().asLong());
-            entry.putLong("CPos", line.cablePos().asLong());
-            entry.putInt("Face", line.busFace());
-            entry.putInt("SFace", line.switchFace());
-            lines.add(entry);
-        }
-        tag.put("BusMachineLines", lines);
-        return tag;
-    }
-
-
-    @Override
-    public Packet<ClientGamePacketListener> getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this);
     }
 }

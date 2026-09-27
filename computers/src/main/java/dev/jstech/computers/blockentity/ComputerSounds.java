@@ -16,12 +16,9 @@ import dev.jstech.core.audio.Audio;
 import dev.jstech.core.audio.IAudible;
 import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.tier.HardwareEra;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -209,18 +206,12 @@ final class ComputerSounds implements IAudible {
             return;
         }
         turning = value;
-        tellClients(level);
+        machine.fields().syncToClients();
     }
 
     private void setSeeking(final ServerLevel level, final boolean value) {
         seeking = value;
-        tellClients(level);
-    }
-
-    private void tellClients(final ServerLevel level) {
-        final BlockPos pos = machine.getBlockPos();
-        final BlockState state = machine.getBlockState();
-        level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+        machine.fields().syncToClients();
     }
 
     /* Coming up, putting a system on the disk or a program in: work the disk is doing for as long as it lasts. */

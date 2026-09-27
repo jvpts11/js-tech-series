@@ -11,66 +11,50 @@ import com.mojang.serialization.MapCodec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
 import dev.jstech.computers.menu.ServerRouterMenu;
+import dev.jstech.core.content.Device;
+import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.INetworkBridge;
 import dev.jstech.core.network.NetworkSystem;
-import dev.jstech.core.util.BlockEntityTickers;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.BlockHitResult;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * The Server Router: a network topology element that switches the network and groups Server Racks into datacenter sections, one per output face.
+ * The Server Router: a network topology element that switches the network and groups Server Racks into datacenter
+ * sections, one per output face. Its facing is purely cosmetic (the port banks); sections still bind per face
+ * regardless.
  */
-public class ServerRouterBlock extends HorizontalDirectionalBlock
-        implements EntityBlock, IDataNetworkConnectable, INetworkBridge {
+public class ServerRouterBlock extends DeviceBlock implements IDataNetworkConnectable, INetworkBridge {
 
     public static final MapCodec<ServerRouterBlock> CODEC = simpleCodec(ServerRouterBlock::new);
 
+    /** The router's block entity, ticking to keep its place in the network and its sections. */
+    private static final Device<ServerRouterBlockEntity> DEVICE =
+            Device.of(() -> ComputingModule.SERVER_ROUTER_BE.get()).ticks(ServerRouterBlockEntity::serverTick);
+
     public ServerRouterBlock(final Properties properties) {
-        super(properties);
-        // Facing is purely cosmetic (the port banks); sections still bind per face regardless.
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        super(properties, DEVICE);
     }
 
     @Override
-    protected MapCodec<ServerRouterBlock> codec() {
+    protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
         return CODEC;
-    }
-
-    @Override
-    protected void createBlockStateDefinition(
-            final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
-    }
-
-    @Override
-    public BlockState getStateForPlacement(final BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
     }
 
     // acceptedCableTiers() defaults to every tier: the router input takes any cable family.
 
+    /* Its screen opens with a fresh topology summary and with its name, which the plain device menu does not carry. */
     @Override
     protected InteractionResult useWithoutItem(final BlockState state, final Level level, final BlockPos pos,
-                                               final Player player,
-                                               final BlockHitResult hit) {
+                                               final Player player, final BlockHitResult hit) {
         if (!(level.getBlockEntity(pos) instanceof ServerRouterBlockEntity router)) {
             return InteractionResult.PASS;
         }
@@ -78,10 +62,10 @@ public class ServerRouterBlock extends HorizontalDirectionalBlock
             return InteractionResult.SUCCESS;
         }
         if (player instanceof ServerPlayer serverPlayer) {
-            router.recomputeNow(); // open with a fresh topology summary
+            router.recomputeNow();
             serverPlayer.openMenu(new SimpleMenuProvider(
                             (id, inv, p) -> new ServerRouterMenu(id, inv, router, router.customName()),
-                            state.getBlock().getName()),
+                            getName()),
                     buf -> {
                         buf.writeBlockPos(pos);
                         buf.writeUtf(router.customName());
@@ -90,33 +74,13 @@ public class ServerRouterBlock extends HorizontalDirectionalBlock
         return InteractionResult.CONSUME;
     }
 
+    /* The router is a node of the connectivity index as well, which it leaves with the block. */
     @Override
     protected void onRemove(final BlockState state, final Level level, final BlockPos pos,
                             final BlockState newState, final boolean movedByPiston) {
+        super.onRemove(state, level, pos, newState, movedByPiston);
         if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel) {
-            if (serverLevel.getBlockEntity(pos) instanceof ServerRouterBlockEntity router) {
-                router.onBroken(serverLevel);
-            }
             NetworkSystem.get(serverLevel).connectivity().onCableRemovedIfRegistered(pos.asLong());
         }
-        super.onRemove(state, level, pos, newState, movedByPiston);
     }
-
-    @Override
-    @Nullable
-    public BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
-        return new ServerRouterBlockEntity(pos, state);
-    }
-
-    @Override
-    @Nullable
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
-            final Level level, final BlockState state, final BlockEntityType<T> type) {
-        if (level.isClientSide()) {
-            return null;
-        }
-        return BlockEntityTickers.create(type, ComputingModule.SERVER_ROUTER_BE.get(),
-                ServerRouterBlockEntity::serverTick);
-    }
-
 }

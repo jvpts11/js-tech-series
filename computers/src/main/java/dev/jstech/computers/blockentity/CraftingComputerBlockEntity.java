@@ -22,6 +22,7 @@ import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.persistence.SavedValue;
@@ -79,6 +80,8 @@ public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
 
     public CraftingComputerBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.CRAFTING_COMPUTER_BE.get(), pos, state, LAYOUT);
+        // The recipes it holds and how each machine it drives is set up: what only a Crafting Computer keeps.
+        fields().part("Recipes", IFieldPart.of(this::saveRecipes, this::loadRecipes)).save();
     }
 
     @Override
@@ -348,9 +351,7 @@ public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
         }
     }
 
-    @Override
-    protected void saveExtra(final CompoundTag tag,
-                             final HolderLookup.Provider registries) {
+    private void saveRecipes(final CompoundTag tag, final HolderLookup.Provider registries) {
         if (!rom.isEmpty()) {
             final var ops = RegistryOps.create(NbtOps.INSTANCE, registries);
             SavedValue.written(CraftingPattern.CODEC.listOf().encodeStart(ops, rom),
@@ -376,9 +377,7 @@ public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
         }
     }
 
-    @Override
-    protected void loadExtra(final CompoundTag tag,
-                             final HolderLookup.Provider registries) {
+    private void loadRecipes(final CompoundTag tag, final HolderLookup.Provider registries) {
         rom.clear();
         if (tag.contains("RecipeRom")) {
             final var ops = RegistryOps.create(NbtOps.INSTANCE, registries);

@@ -18,6 +18,7 @@ import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -73,7 +74,14 @@ public final class ClientUpdates {
         private final Set<SyncedBlockEntity> watched = new LinkedHashSet<>();
 
         void flush(final ServerLevel level) {
-            for (final SyncedBlockEntity blockEntity : watched) {
+            final Iterator<SyncedBlockEntity> polled = watched.iterator();
+            while (polled.hasNext()) {
+                final SyncedBlockEntity blockEntity = polled.next();
+                // One whose chunk has gone is not ticked either; it is watched again when the chunk comes back.
+                if (blockEntity.isRemoved() || !level.isLoaded(blockEntity.getBlockPos())) {
+                    polled.remove();
+                    continue;
+                }
                 blockEntity.fields().poll();
             }
             if (dirty.isEmpty()) {
@@ -83,12 +91,21 @@ public final class ClientUpdates {
             dirty.clear();
             for (final SyncedBlockEntity blockEntity : toSend) {
                 final BlockPos pos = blockEntity.getBlockPos();
-                // A block entity broken this tick, or replaced by another, has nothing left to send.
-                if (blockEntity.isRemoved() || level.getBlockEntity(pos) != blockEntity) {
+                /*
+                 * A block entity broken this tick, replaced by another, or whose chunk has gone has nothing left to
+                 * send; asked only while its chunk is loaded, so a send never loads a chunk back.
+                 */
+                if (blockEntity.isRemoved() || !level.isLoaded(pos) || level.getBlockEntity(pos) != blockEntity) {
                     continue;
                 }
                 final BlockState state = level.getBlockState(pos);
-                level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+                final BlockState wanted = blockEntity.fields().mirrored(state);
+                if (wanted != state) {
+                    // Setting the new state sends it, and the block entity's update with it.
+                    level.setBlock(pos, wanted, Block.UPDATE_CLIENTS);
+                } else {
+                    level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+                }
             }
         }
     }

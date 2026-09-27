@@ -11,11 +11,11 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.core.network.ConnectivityIndex;
 import dev.jstech.core.network.INetworkBridge;
+import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.network.NetworkSystem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.HashSet;
@@ -24,7 +24,7 @@ import java.util.Set;
 /**
  * BlockEntity backing the Personal Router.
  */
-public class PersonalRouterBlockEntity extends BlockEntity {
+public class PersonalRouterBlockEntity extends SyncedBlockEntity {
 
     public PersonalRouterBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.PERSONAL_ROUTER_BE.get(), pos, state);

@@ -30,7 +30,6 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -114,8 +113,7 @@ public final class FileAccess {
         if (level.getBlockEntity(BlockPos.of(readerPos))
                 instanceof MediaReaderBlockEntity reader) {
             reader.setChanged();
-            level.sendBlockUpdated(BlockPos.of(readerPos),
-                    reader.getBlockState(), reader.getBlockState(), Block.UPDATE_CLIENTS);
+            reader.fields().syncToClients();
         }
     }
 

@@ -34,7 +34,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
@@ -192,12 +191,9 @@ public final class DriveTable {
         return Math.max(0L, capacity - storageUsed - fsUsed - osReserved);
     }
 
-    /** Pushes a block update so players see a medium whose filesystem was just changed. */
+    /** Saves and sends a medium whose filesystem was just changed in place, so players see it. */
     private static void syncReader(final MediaReaderBlockEntity reader) {
         reader.setChanged();
-        if (reader.getLevel() != null) {
-            reader.getLevel().sendBlockUpdated(reader.getBlockPos(), reader.getBlockState(),
-                    reader.getBlockState(), Block.UPDATE_CLIENTS);
-        }
+        reader.fields().syncToClients();
     }
 }

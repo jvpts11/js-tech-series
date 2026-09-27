@@ -17,9 +17,9 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
 /**
- * Offers every declared inventory and energy store marked {@code exposed()} to pipes, cables and machines, for every
- * block entity type any mod of the series declares, so no mod registers them one by one. A block entity that exposes
- * nothing answers none, and any capability a mod registers itself still stands beside these.
+ * Offers every declared inventory, energy store and tank marked {@code exposed()} to pipes, cables and machines,
+ * for every block entity type any mod of the series declares, so no mod registers them one by one. A block entity
+ * that exposes nothing answers none, and any capability a mod registers itself still stands beside these.
  */
 @EventBusSubscriber(modid = JsCore.MODID)
 public final class FieldCapabilities {
@@ -45,5 +45,8 @@ public final class FieldCapabilities {
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, any, (blockEntity, side) ->
                 blockEntity instanceof SyncedBlockEntity synced
                         ? synced.fields().capability(Capabilities.EnergyStorage.BLOCK) : null);
+        event.registerBlockEntity(Capabilities.FluidHandler.BLOCK, any, (blockEntity, side) ->
+                blockEntity instanceof SyncedBlockEntity synced
+                        ? synced.fields().capability(Capabilities.FluidHandler.BLOCK) : null);
     }
 }

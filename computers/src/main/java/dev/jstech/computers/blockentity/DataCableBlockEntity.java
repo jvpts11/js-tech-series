@@ -9,9 +9,12 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.DataCableBlock;
-import dev.jstech.computers.block.part.ICablePart;
 import dev.jstech.computers.block.part.CablePartType;
+import dev.jstech.computers.block.part.ICablePart;
 import dev.jstech.computers.storage.ExternalDataPort;
+import dev.jstech.core.blockentity.IFieldPart;
+import dev.jstech.core.blockentity.PartField;
+import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.network.ConnectivityIndex;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.INetworkBridge;
@@ -23,15 +26,10 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.Connection;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,17 +38,20 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * BlockEntity backing a {@link DataCableBlock}.
+ * BlockEntity backing a {@link DataCableBlock}: the parts mounted on its faces, saved whole, of which the players who
+ * see it are sent only which kind sits on which face, enough to draw and shape the cable.
  */
-public class DataCableBlockEntity extends BlockEntity {
+public class DataCableBlockEntity extends SyncedBlockEntity {
 
     private final ICablePart[] parts = new ICablePart[6];
     private final byte[] partTypes = {-1, -1, -1, -1, -1, -1};
+    private final PartField mounted = fields().part("Parts", new PartsPart()).save().toClient();
     @Nullable
     private NetworkUuid loadedNetwork;
 
     public DataCableBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.DATA_CABLE_BE.get(), pos, state);
+        fields().part("Network", new NetworkPart()).save();
     }
 
     public static void serverTick(final Level level, final BlockPos pos,
@@ -132,8 +133,7 @@ public class DataCableBlockEntity extends BlockEntity {
         part.attach(this, face);
         parts[idx] = part;
         partTypes[idx] = (byte) part.type().id();
-        setChanged();
-        syncToClients();
+        mounted.changed();
     }
 
     @Nullable
@@ -143,8 +143,7 @@ public class DataCableBlockEntity extends BlockEntity {
         parts[idx] = null;
         partTypes[idx] = -1;
         if (removed != null) {
-            setChanged();
-            syncToClients();
+            mounted.changed();
         }
         return removed;
     }
@@ -180,13 +179,6 @@ public class DataCableBlockEntity extends BlockEntity {
         }
     }
 
-    private void syncToClients() {
-        if (level != null && !level.isClientSide()) {
-            final BlockState state = getBlockState();
-            level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
-        }
-    }
-
     // Connectivity (transient runtime index)
 
     @Override
@@ -198,10 +190,19 @@ public class DataCableBlockEntity extends BlockEntity {
             if (!index.contains(encodedPos)) {
                 index.onCablePlaced(encodedPos, networkNeighbors(serverLevel), tier());
             }
-            // Restore this cable's persisted network identity when its segment has none yet, so an
+            // Restore this cable's persisted network identity when its segment has none yet.
             if (loadedNetwork != null && index.networkOf(encodedPos).isEmpty()) {
                 index.assignUuid(encodedPos, loadedNetwork);
             }
+        }
+    }
+
+    /* The parts changed on the client: the render mesh and the collision and selection shape follow them. */
+    @Override
+    protected void afterClientUpdate() {
+        if (level != null) {
+            final BlockState state = getBlockState();
+            level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
         }
     }
 
@@ -220,96 +221,84 @@ public class DataCableBlockEntity extends BlockEntity {
         return neighbors;
     }
 
-    // Persistence (full parts on disk; type array over the wire)
+    /** The mounted parts: saved whole, face by face; the players are sent only the kind on each face. */
+    private final class PartsPart implements IFieldPart {
 
-    @Override
-    protected void saveAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        final ListTag list = new ListTag();
-        for (int i = 0; i < parts.length; i++) {
-            final ICablePart part = parts[i];
-            if (part == null) {
-                continue;
+        @Override
+        public void save(final CompoundTag tag, final HolderLookup.Provider registries) {
+            final ListTag list = new ListTag();
+            for (int i = 0; i < parts.length; i++) {
+                final ICablePart part = parts[i];
+                if (part == null) {
+                    continue;
+                }
+                final CompoundTag entry = new CompoundTag();
+                entry.putByte("Face", (byte) i);
+                entry.putByte("Type", (byte) part.type().id());
+                final CompoundTag data = new CompoundTag();
+                part.save(data, registries);
+                entry.put("Data", data);
+                list.add(entry);
             }
-            final CompoundTag entry = new CompoundTag();
-            entry.putByte("Face", (byte) i);
-            entry.putByte("Type", (byte) part.type().id());
-            final CompoundTag data = new CompoundTag();
-            part.save(data, registries);
-            entry.put("Data", data);
-            list.add(entry);
-        }
-        if (!list.isEmpty()) {
-            tag.put("Parts", list);
-        }
-        // Persist the network identity so an orphaned segment keeps it across a reload (see onLoad).
-        final NetworkUuid network = network();
-        if (network != null) {
-            tag.putString("Network", network.asString());
-        }
-    }
-
-    @Override
-    protected void loadAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        Arrays.fill(parts, null);
-        Arrays.fill(partTypes, (byte) -1);
-        final ListTag list = tag.getList("Parts", Tag.TAG_COMPOUND);
-        for (int i = 0; i < list.size(); i++) {
-            final CompoundTag entry = list.getCompound(i);
-            final int idx = entry.getByte("Face") & 0xFF;
-            final CablePartType type = CablePartType.find(entry.getByte("Type"));
-            if (idx < 0 || idx >= parts.length || type == null) {
-                continue;
+            if (!list.isEmpty()) {
+                tag.put("Parts", list);
             }
-            final Direction face = Direction.from3DDataValue(idx);
-            final ICablePart part = type.create();
-            part.attach(this, face);
-            part.load(entry.getCompound("Data"), registries);
-            parts[idx] = part;
-            partTypes[idx] = (byte) type.id();
         }
-        loadedNetwork = tag.contains("Network")
-                ? NetworkUuid.fromString(tag.getString("Network"))
-                : null;
-    }
 
-    @Override
-    public CompoundTag getUpdateTag(final HolderLookup.Provider registries) {
-        final CompoundTag tag = super.getUpdateTag(registries);
-        tag.putByteArray("PartTypes", partTypes.clone());
-        return tag;
-    }
-
-    @Override
-    public void handleUpdateTag(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.handleUpdateTag(tag, registries);
-        readPartTypes(tag);
-    }
-
-    @Override
-    @Nullable
-    public Packet<ClientGamePacketListener> getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this);
-    }
-
-    @Override
-    public void onDataPacket(final Connection net, final ClientboundBlockEntityDataPacket pkt,
-                             final HolderLookup.Provider registries) {
-        readPartTypes(pkt.getTag());
-        if (level != null) {
-            // Refresh the render mesh and the collision/selection shape with the new parts.
-            final BlockState state = getBlockState();
-            level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
-        }
-    }
-
-    private void readPartTypes(@Nullable final CompoundTag tag) {
-        if (tag != null && tag.contains("PartTypes")) {
-            final byte[] incoming = tag.getByteArray("PartTypes");
-            for (int i = 0; i < partTypes.length; i++) {
-                partTypes[i] = i < incoming.length ? incoming[i] : (byte) -1;
+        @Override
+        public void load(final CompoundTag tag, final HolderLookup.Provider registries) {
+            Arrays.fill(parts, null);
+            Arrays.fill(partTypes, (byte) -1);
+            final ListTag list = tag.getList("Parts", Tag.TAG_COMPOUND);
+            for (int i = 0; i < list.size(); i++) {
+                final CompoundTag entry = list.getCompound(i);
+                final int idx = entry.getByte("Face") & 0xFF;
+                final CablePartType type = CablePartType.find(entry.getByte("Type"));
+                if (idx >= parts.length || type == null) {
+                    continue;
+                }
+                final Direction face = Direction.from3DDataValue(idx);
+                final ICablePart part = type.create();
+                part.attach(DataCableBlockEntity.this, face);
+                part.load(entry.getCompound("Data"), registries);
+                parts[idx] = part;
+                partTypes[idx] = (byte) type.id();
             }
+        }
+
+        @Override
+        public void writeClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+            tag.putByteArray("PartTypes", partTypes.clone());
+        }
+
+        @Override
+        public void readClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+            if (tag.contains("PartTypes")) {
+                final byte[] incoming = tag.getByteArray("PartTypes");
+                for (int i = 0; i < partTypes.length; i++) {
+                    partTypes[i] = i < incoming.length ? incoming[i] : (byte) -1;
+                }
+            }
+        }
+    }
+
+    /**
+     * The network identity of the cable's segment, saved so an orphaned segment keeps it across a reload; the live
+     * index is what holds it while the world runs.
+     */
+    private final class NetworkPart implements IFieldPart {
+
+        @Override
+        public void save(final CompoundTag tag, final HolderLookup.Provider registries) {
+            final NetworkUuid network = network();
+            if (network != null) {
+                tag.putString("Network", network.asString());
+            }
+        }
+
+        @Override
+        public void load(final CompoundTag tag, final HolderLookup.Provider registries) {
+            loadedNetwork = tag.contains("Network") ? NetworkUuid.fromString(tag.getString("Network")) : null;
         }
     }
 }

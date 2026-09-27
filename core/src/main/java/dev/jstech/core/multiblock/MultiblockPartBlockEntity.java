@@ -7,21 +7,21 @@
  */
 package dev.jstech.core.multiblock;
 
+import dev.jstech.core.blockentity.SyncedBlockEntity;
+import dev.jstech.core.blockentity.ValueField;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Shared base for the non-controller parts of a multiblock structure. Each part remembers its controller's position so a break or an interaction on the part can reach the controller, and that single field saves and loads the same way for every structure that uses it.
+ * Shared base for the non-controller parts of a multiblock structure. Each part remembers its controller's position
+ * so a break or an interaction on the part can reach the controller, declared once here as a saved field for every
+ * structure that uses it.
  */
-public abstract class MultiblockPartBlockEntity extends BlockEntity {
+public abstract class MultiblockPartBlockEntity extends SyncedBlockEntity {
 
-    @Nullable
-    private BlockPos controllerPos;
+    private final ValueField<BlockPos> controller = fields().nullable("Controller", BlockPos.CODEC).save();
 
     protected MultiblockPartBlockEntity(final BlockEntityType<?> type, final BlockPos pos,
                                         final BlockState state) {
@@ -30,30 +30,10 @@ public abstract class MultiblockPartBlockEntity extends BlockEntity {
 
     @Nullable
     public BlockPos controllerPos() {
-        return controllerPos;
+        return controller.get();
     }
 
     public void setController(final BlockPos pos) {
-        this.controllerPos = pos.immutable();
-        setChanged();
-    }
-
-    @Override
-    protected void loadAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.contains("ControllerX")) {
-            controllerPos = new BlockPos(tag.getInt("ControllerX"),
-                    tag.getInt("ControllerY"), tag.getInt("ControllerZ"));
-        }
-    }
-
-    @Override
-    protected void saveAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        if (controllerPos != null) {
-            tag.putInt("ControllerX", controllerPos.getX());
-            tag.putInt("ControllerY", controllerPos.getY());
-            tag.putInt("ControllerZ", controllerPos.getZ());
-        }
+        controller.set(pos.immutable());
     }
 }

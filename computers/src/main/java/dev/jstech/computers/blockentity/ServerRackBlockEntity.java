@@ -60,6 +60,8 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.audio.Audio;
+import dev.jstech.core.blockentity.IFieldPart;
+import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
@@ -75,10 +77,6 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.Connection;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -89,7 +87,6 @@ import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -123,7 +120,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * them. All server-side storage is therefore held by the bay drives (each drive's own disk
  * components), never by the Server item.
  */
-public class ServerRackBlockEntity extends BlockEntity
+public class ServerRackBlockEntity extends SyncedBlockEntity
         implements IPeripheralOwnerSupport,
         IOsHost,
         IComputerTerminalHost,
@@ -265,12 +262,9 @@ public class ServerRackBlockEntity extends BlockEntity
         syncVisuals();
     }
 
-    /** Pushes the row contents, the bay power and the panel state to watching clients. */
+    /** Sends the row contents, the bay power and the panel state to watching clients, at the end of the tick. */
     public void syncVisuals() {
-        if (level != null && !level.isClientSide()) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
-                    Block.UPDATE_CLIENTS);
-        }
+        fields().syncToClients();
     }
 
     /** Runs {@code emptying} without a sound: the rack is being emptied because its block is going. */
@@ -835,6 +829,8 @@ public class ServerRackBlockEntity extends BlockEntity
 
     public ServerRackBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.SERVER_RACK_BE.get(), pos, state);
+        fields().part("Rack", IFieldPart.of(this::saveRack, this::loadRack)).save();
+        fields().part("Cabinet", new CabinetPart()).toClient();
     }
 
     public ItemStackHandler getServers() {
@@ -1842,9 +1838,8 @@ public class ServerRackBlockEntity extends BlockEntity
         if (installed && OsDisks.installBundledSpace(OsRegistry.getOs(osId), console())) {
             setChanged();
         }
-        if (installed && level != null) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
-                    Block.UPDATE_CLIENTS);
+        if (installed) {
+            fields().syncToClients();
         }
         return installed;
     }
@@ -2207,9 +2202,7 @@ public class ServerRackBlockEntity extends BlockEntity
         return positions;
     }
 
-    @Override
-    protected void loadAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
+    private void loadRack(final CompoundTag tag, final HolderLookup.Provider registries) {
         servers.deserializeNBT(registries, tag.getCompound("Servers"));
         resizeAfterLoad(servers, CAPACITY_U);
         // Loading replaces the units without telling the handler's change hook, so what was kept of them goes.
@@ -2247,9 +2240,7 @@ public class ServerRackBlockEntity extends BlockEntity
         }
     }
 
-    @Override
-    protected void saveAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
+    private void saveRack(final CompoundTag tag, final HolderLookup.Provider registries) {
         /*
          * Console state persists WITH each Server item, so flush the live sessions onto their
          * stacks before the stacks themselves are serialized.
@@ -2271,70 +2262,6 @@ public class ServerRackBlockEntity extends BlockEntity
     @Nullable
     private HardwareEra clientEra;
 
-    @Override
-    public CompoundTag getUpdateTag(final HolderLookup.Provider registries) {
-        final CompoundTag tag = super.getUpdateTag(registries);
-        /*
-         * Only the active channel's era travels. Sending the mounted stacks would put every server's
-         * full build on the wire on every block update, for one enum the screens need.
-         */
-        final HardwareEra era = installedEra();
-        tag.putInt("DisplayEra", era == null ? -1 : era.id());
-        /*
-         * The cabinet model: one byte per row says what is seated there, the mask says which bays are
-         * off, and the panel flag whether the supercomputer's livery is on. Enough to draw it all.
-         */
-        final byte[] units = new byte[CAPACITY_U];
-        for (int slot = 0; slot < CAPACITY_U; slot++) {
-            units[slot] = (byte) unitCodeAt(slot);
-        }
-        tag.putByteArray("Units", units);
-        tag.putInt("BayPowerOff", bayPowerOff);
-        tag.putBoolean("ServicePanelOff", servicePanelOff);
-        // Whether the rack is on a data network, for the notification area of a mounted server's desktop.
-        tag.putBoolean("Networked", !registered.isEmpty());
-        sounds.saveForClient(tag);
-        return tag;
-    }
-
-    @Override
-    public Packet<ClientGamePacketListener>
-            getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this);
-    }
-
-    @Override
-    public void onDataPacket(final Connection connection,
-                             final ClientboundBlockEntityDataPacket packet,
-                             final HolderLookup.Provider registries) {
-        /*
-         * Apply only the era. Running the full loadAdditional here would deserialize empty inventories
-         * over the client copy and reset the transient rack state to its defaults.
-         */
-        final CompoundTag tag = packet.getTag();
-        clientEra = HardwareEra.find(tag != null ? tag.getInt("DisplayEra") : -1);
-        if (tag != null) {
-            applyVisualTag(tag);
-        }
-    }
-
-    @Override
-    public void handleUpdateTag(final CompoundTag tag, final HolderLookup.Provider registries) {
-        // The chunk-load path: the same visual state the block-update path carries.
-        super.handleUpdateTag(tag, registries);
-        applyVisualTag(tag);
-    }
-
-    private void applyVisualTag(final CompoundTag tag) {
-        final byte[] units = tag.getByteArray("Units");
-        Arrays.fill(clientUnits, (byte) UNIT_NONE);
-        System.arraycopy(units, 0, clientUnits, 0, Math.min(units.length, clientUnits.length));
-        clientBayPowerOff = tag.getInt("BayPowerOff");
-        clientServicePanelOff = tag.getBoolean("ServicePanelOff");
-        clientNetworked = tag.getBoolean("Networked");
-        sounds.loadFromClient(tag);
-    }
-
     /** The client's copy of whether the rack is on a network; the server answers from its registered nodes. */
     private boolean clientNetworked;
 
@@ -2343,11 +2270,59 @@ public class ServerRackBlockEntity extends BlockEntity
         return level != null && level.isClientSide ? clientNetworked : networkUuid() != null;
     }
 
-    /** Pushes the active channel's era to watching clients, so era-dressed screens match the machine. */
+    /** Sends the active channel's era to watching clients, so era-dressed screens match the machine. */
     private void syncDisplayEra() {
-        if (level != null && !level.isClientSide()) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
-                    Block.UPDATE_CLIENTS);
+        fields().syncToClients();
+    }
+
+    /**
+     * What the players who see the cabinet are sent to draw it and dress its screens; none of it is saved, since the
+     * server works all of it out from what the rack holds.
+     */
+    private final class CabinetPart implements IFieldPart {
+
+        @Override
+        public void save(final CompoundTag tag, final HolderLookup.Provider registries) {
+        }
+
+        @Override
+        public void load(final CompoundTag tag, final HolderLookup.Provider registries) {
+        }
+
+        @Override
+        public void writeClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+            /*
+             * Only the active channel's era travels. Sending the mounted stacks would put every server's
+             * full build on the wire on every block update, for one enum the screens need.
+             */
+            final HardwareEra era = installedEra();
+            tag.putInt("DisplayEra", era == null ? -1 : era.id());
+            /*
+             * The cabinet model: one byte per row says what is seated there, the mask says which bays are
+             * off, and the panel flag whether the supercomputer's livery is on. Enough to draw it all.
+             */
+            final byte[] units = new byte[CAPACITY_U];
+            for (int slot = 0; slot < CAPACITY_U; slot++) {
+                units[slot] = (byte) unitCodeAt(slot);
+            }
+            tag.putByteArray("Units", units);
+            tag.putInt("BayPowerOff", bayPowerOff);
+            tag.putBoolean("ServicePanelOff", servicePanelOff);
+            // Whether the rack is on a data network, for the notification area of a mounted server's desktop.
+            tag.putBoolean("Networked", !registered.isEmpty());
+            sounds.saveForClient(tag);
+        }
+
+        @Override
+        public void readClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+            clientEra = HardwareEra.find(tag.getInt("DisplayEra"));
+            final byte[] units = tag.getByteArray("Units");
+            Arrays.fill(clientUnits, (byte) UNIT_NONE);
+            System.arraycopy(units, 0, clientUnits, 0, Math.min(units.length, clientUnits.length));
+            clientBayPowerOff = tag.getInt("BayPowerOff");
+            clientServicePanelOff = tag.getBoolean("ServicePanelOff");
+            clientNetworked = tag.getBoolean("Networked");
+            sounds.loadFromClient(tag);
         }
     }
 }

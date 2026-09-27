@@ -39,6 +39,9 @@ import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.blockentity.BoolField;
+import dev.jstech.core.blockentity.DerivedInt;
+import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.FailoverRole;
 import dev.jstech.core.network.NetworkSystem;
@@ -69,17 +72,13 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.Connection;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -137,9 +136,11 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
      * the cabinet as one model: what the renderer needs to know
      *
      * The Mainframe is drawn as a single GeckoLib cabinet by its controller, with a bone per installed
-     * part. The client copy of a computer only carries its name (the hardware handler is deliberately
-     * not synced), so the visual state travels as three small numbers in the block update: which
-     * hardware slots are filled, which disks carry a system, and the machine's own condition.
+     * part. The client copy of a computer does not carry the hardware handler, so the visual state
+     * travels as three small numbers the server works out and sends when they change: which hardware
+     * slots are filled, which disks carry a system, and the machine's own condition. Worked out every
+     * tick rather than pushed from each place that installs a part or flips the power, no path can
+     * leave the model showing hardware that is no longer there.
      */
 
     private static final int FLAG_RUNNING = 1;
@@ -153,15 +154,11 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     private final AnimatableInstanceCache geckoCache =
             GeckoLibUtil.createInstanceCache(this);
 
-    private int clientHardwareMask;
-    private int clientDiskSystemMask;
-    private int clientFlags;
-
     /** The service panel taken off, showing the card bay and everything seated in it. */
-    private boolean servicePanelOff;
-
-    /** The last visual state pushed to clients, so a tick only sends a packet when something changed. */
-    private long sentVisuals = -1L;
+    private final BoolField servicePanelOff = fields().flag("ServicePanelOff", false).save();
+    private final DerivedInt visualHardware = fields().derived("VisualHardware", () -> hardwareMask()).toClient();
+    private final DerivedInt visualSystems = fields().derived("VisualSystems", () -> systemsMask()).toClient();
+    private final DerivedInt visualFlags = fields().derived("VisualFlags", () -> machineFlags()).toClient();
 
     @Override
     public void registerControllers(
@@ -200,7 +197,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             return false;
         }
         if (level != null && level.isClientSide()) {
-            return (clientHardwareMask & (1 << slot)) != 0;
+            return (visualHardware.getAsInt() & (1 << slot)) != 0;
         }
         return !getHardware().getStackInSlot(slot).isEmpty();
     }
@@ -211,43 +208,46 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             return false;
         }
         if (level != null && level.isClientSide()) {
-            return (clientDiskSystemMask & (1 << bay)) != 0;
+            return (visualSystems.getAsInt() & (1 << bay)) != 0;
         }
         return OsDisks.hasSystem(
                 getHardware().getStackInSlot(DISK_SLOTS_START + bay));
     }
 
     public boolean visualRunning() {
-        return level != null && level.isClientSide() ? (clientFlags & FLAG_RUNNING) != 0 : isRunning();
+        return (visualFlags.getAsInt() & FLAG_RUNNING) != 0;
     }
 
     public boolean visualBuildValid() {
-        return level != null && level.isClientSide() ? (clientFlags & FLAG_BUILD_VALID) != 0 : buildValid();
+        return (visualFlags.getAsInt() & FLAG_BUILD_VALID) != 0;
     }
 
     public boolean visualNetworked() {
-        return level != null && level.isClientSide() ? (clientFlags & FLAG_NETWORKED) != 0 : networkUuid() != null;
+        return (visualFlags.getAsInt() & FLAG_NETWORKED) != 0;
     }
 
     public boolean servicePanelOff() {
-        return level != null && level.isClientSide() ? (clientFlags & FLAG_PANEL_OFF) != 0 : servicePanelOff;
+        return (visualFlags.getAsInt() & FLAG_PANEL_OFF) != 0;
     }
 
     /** Takes the service panel off the card bay or puts it back. */
     public void toggleServicePanel() {
-        servicePanelOff = !servicePanelOff;
-        setChanged();
-        syncVisuals();
+        servicePanelOff.set(!servicePanelOff.get());
     }
 
-    /** Everything the renderer reads, packed so a tick can tell at a glance whether it moved. */
-    private long visualState() {
+    /* Which hardware slots hold a part, a bit each. */
+    private int hardwareMask() {
         int hardware = 0;
         for (int slot = 0; slot < TOTAL_SLOTS; slot++) {
             if (!getHardware().getStackInSlot(slot).isEmpty()) {
                 hardware |= 1 << slot;
             }
         }
+        return hardware;
+    }
+
+    /* Which disk bays hold a disk carrying a system, a bit each. */
+    private int systemsMask() {
         int systems = 0;
         for (int bay = 0; bay < DISK_SLOTS; bay++) {
             if (OsDisks.hasSystem(
@@ -255,32 +255,17 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
                 systems |= 1 << bay;
             }
         }
+        return systems;
+    }
+
+    /* The machine's own condition as the lamps and the panel show it. */
+    private int machineFlags() {
         int flags = 0;
         flags |= isRunning() ? FLAG_RUNNING : 0;
         flags |= buildValid() ? FLAG_BUILD_VALID : 0;
         flags |= networkUuid() != null ? FLAG_NETWORKED : 0;
-        flags |= servicePanelOff ? FLAG_PANEL_OFF : 0;
-        return ((long) hardware << 8) | ((long) systems << 4) | flags;
-    }
-
-    /**
-     * Pushes the cabinet's look to watching clients when it changed. Called every server tick rather
-     * than from each place that installs a part or flips the power, so no path can leave the model
-     * showing hardware that is no longer there.
-     */
-    private void syncVisualsIfChanged() {
-        final long state = visualState();
-        if (state != sentVisuals) {
-            sentVisuals = state;
-            syncVisuals();
-        }
-    }
-
-    public void syncVisuals() {
-        if (level != null && !level.isClientSide()) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
-                    Block.UPDATE_CLIENTS);
-        }
+        flags |= servicePanelOff.get() ? FLAG_PANEL_OFF : 0;
+        return flags;
     }
 
     /** The whole 3 x 2 x 2 footprint: the renderer draws the cabinet from this block alone. */
@@ -295,41 +280,6 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             box = box.minmax(new AABB(part));
         }
         return box;
-    }
-
-    @Override
-    public CompoundTag getUpdateTag(final HolderLookup.Provider registries) {
-        final CompoundTag tag = super.getUpdateTag(registries);
-        final long state = visualState();
-        tag.putInt("VisualHardware", (int) (state >>> 8));
-        tag.putInt("VisualSystems", (int) ((state >>> 4) & 0xF));
-        tag.putInt("VisualFlags", (int) (state & 0xF));
-        return tag;
-    }
-
-    @Override
-    public void onDataPacket(final Connection connection,
-                             final ClientboundBlockEntityDataPacket packet,
-                             final HolderLookup.Provider registries) {
-        super.onDataPacket(connection, packet, registries);
-        final CompoundTag tag = packet.getTag();
-        if (tag != null) {
-            clientHardwareMask = tag.getInt("VisualHardware");
-            clientDiskSystemMask = tag.getInt("VisualSystems");
-            clientFlags = tag.getInt("VisualFlags");
-        }
-    }
-
-    @Override
-    public void handleUpdateTag(final CompoundTag tag, final HolderLookup.Provider registries) {
-        /*
-         * A chunk arriving carries the same three numbers as a live update; without this the cabinet
-         * would render empty until something changed and pushed a packet.
-         */
-        super.handleUpdateTag(tag, registries);
-        clientHardwareMask = tag.getInt("VisualHardware");
-        clientDiskSystemMask = tag.getInt("VisualSystems");
-        clientFlags = tag.getInt("VisualFlags");
     }
 
     /** Which network this Mainframe owns, who else is claiming it, and whose turn it is to run it. */
@@ -370,6 +320,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     public MainframeBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.MAINFRAME_BE.get(), pos, state, LAYOUT);
+        // What only a Mainframe keeps: its network, its Operations and their log, its holds and its services.
+        fields().part("Mainframe", IFieldPart.of(this::saveMainframe, this::loadMainframe)).save();
     }
 
     @Override
@@ -452,7 +404,6 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             be.tickBootPhases(serverLevel);
             be.tickSounds(serverLevel);
             OsInstallRunner.tick(be, serverLevel, be.getBlockPos());
-            be.syncVisualsIfChanged();
             be.tick(serverLevel);
         }
     }
@@ -1503,14 +1454,12 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         }
     }
 
-    @Override
-    protected void loadExtra(final CompoundTag tag, final HolderLookup.Provider registries) {
-        /*
-         * Hardware (under the "Inventory" key), ManualOn, AutoStart, NodeUuid, LinkedMonitors and
-         * Console are loaded by the base; only the Mainframe-only state is restored here.
-         */
+    /*
+     * Hardware (under the "Inventory" key), ManualOn, AutoStart, NodeUuid, LinkedMonitors and
+     * Console are parts of every computer; only the Mainframe-only state is restored here.
+     */
+    private void loadMainframe(final CompoundTag tag, final HolderLookup.Provider registries) {
         networking.load(tag);
-        servicePanelOff = tag.getBoolean("ServicePanelOff");
         // Kept until the catalog has been read, since a hold can only be taken against what is there.
         heldOnLoad = null;
         if (tag.contains("ManualLocks")) {
@@ -1544,10 +1493,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         services.load(tag);
     }
 
-    @Override
-    protected void saveExtra(final CompoundTag tag, final HolderLookup.Provider registries) {
+    private void saveMainframe(final CompoundTag tag, final HolderLookup.Provider registries) {
         networking.save(tag);
-        tag.putBoolean("ServicePanelOff", servicePanelOff);
         if (nativeNetworkUuid != null) {
             tag.putString("NetworkUuid", nativeNetworkUuid.asString());
         }

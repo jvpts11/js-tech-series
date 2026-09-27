@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.blockentity;
 
+import com.mojang.serialization.Codec;
 import dev.jstech.core.util.BlockDrops;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -14,6 +15,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Property;
 import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import org.jetbrains.annotations.Nullable;
@@ -22,8 +25,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 
 /**
  * The fields of one {@link SyncedBlockEntity}: declared once, each with where it goes, and from then on saved,
@@ -38,8 +43,14 @@ public final class BlockEntityFields {
     private final List<IField> fields = new ArrayList<>();
     private final Set<String> keys = new HashSet<>();
     private final List<IField> polled = new ArrayList<>();
+    private final List<StateMirror<?>> mirrors = new ArrayList<>();
+    private final List<BiConsumer<ServerLevel, BlockPos>> brokenListeners = new ArrayList<>();
     private boolean closed;
     private @Nullable MenuData menuData;
+    /* What the block offers to pipes and cables, found once when the declarations close: asked on every lookup. */
+    private @Nullable FieldItemHandler exposedItems;
+    private @Nullable FieldEnergyStorage exposedEnergy;
+    private @Nullable FieldFluidTank exposedFluid;
 
     BlockEntityFields(final SyncedBlockEntity owner) {
         this.owner = owner;
@@ -81,6 +92,35 @@ public final class BlockEntityFields {
         return add(new FieldEnergyStorage(flags(key), capacity, maxReceive, maxExtract));
     }
 
+    /** Declares a fluid tank of {@code capacity} millibuckets. */
+    public FieldFluidTank fluid(final String key, final int capacity) {
+        return add(new FieldFluidTank(flags(key), capacity));
+    }
+
+    /** Declares a value {@code codec} writes, which always holds one, starting at {@code initial}. */
+    public <T> ValueField<T> value(final String key, final Codec<T> codec, final T initial) {
+        return add(new ValueField<>(flags(key), codec, initial, false));
+    }
+
+    /** Declares a value {@code codec} writes, which may hold nothing, and starts with nothing. */
+    public <T> ValueField<T> nullable(final String key, final Codec<T> codec) {
+        return add(new ValueField<>(flags(key), codec, null, true));
+    }
+
+    /** Declares a part that writes itself under keys of its own; {@code name} only tells it from the others. */
+    public PartField part(final String name, final IFieldPart part) {
+        return add(new PartField(flags(name), part));
+    }
+
+    /**
+     * Keeps a property of the block's state at what {@code value} says: whether a drive holds a medium, whether a
+     * screen is lit. It is checked each tick and set, for the players to see, when it differs.
+     */
+    public <T extends Comparable<T>> void mirror(final Property<T> property, final Supplier<T> value) {
+        checkOpen(property.getName());
+        mirrors.add(new StateMirror<>(property, value));
+    }
+
     /**
      * The data a menu open on the block carries: every field declared {@code toMenu()}, in the order declared, an
      * int each (a long takes two). On the server it reads the fields; on the client the values the menu receives
@@ -100,21 +140,34 @@ public final class BlockEntityFields {
      */
     @SuppressWarnings("unchecked")
     public <T> @Nullable T capability(final BlockCapability<T, ?> capability) {
-        for (final IField field : fields) {
-            if (capability == Capabilities.ItemHandler.BLOCK
-                    && field instanceof FieldItemHandler items && items.isExposed()) {
-                return (T) items;
-            }
-            if (capability == Capabilities.EnergyStorage.BLOCK
-                    && field instanceof FieldEnergyStorage energy && energy.isExposed()) {
-                return (T) energy;
-            }
+        close();
+        if (capability == Capabilities.ItemHandler.BLOCK) {
+            return (T) exposedItems;
         }
-        return null;
+        if (capability == Capabilities.EnergyStorage.BLOCK) {
+            return (T) exposedEnergy;
+        }
+        return capability == Capabilities.FluidHandler.BLOCK ? (T) exposedFluid : null;
     }
 
-    /** Spills every inventory declared {@code dropsWhenBroken()} on the ground at {@code pos}. */
-    public void spill(final Level level, final BlockPos pos) {
+    /**
+     * Runs {@code listener} on the server when the block is broken or replaced, before its inventories spill: a
+     * peripheral frees its place on its owner, a drive keeps the sound of a medium coming out for a real eject.
+     */
+    public void whenBroken(final BiConsumer<ServerLevel, BlockPos> listener) {
+        brokenListeners.add(listener);
+    }
+
+    /**
+     * The block at {@code pos} was broken or replaced: what was declared to happen then happens, and every inventory
+     * declared {@code dropsWhenBroken()} spills on the ground.
+     */
+    public void broken(final Level level, final BlockPos pos) {
+        if (level instanceof ServerLevel server) {
+            for (final BiConsumer<ServerLevel, BlockPos> listener : brokenListeners) {
+                listener.accept(server, pos);
+            }
+        }
         for (final IField field : fields) {
             if (field instanceof FieldItemHandler items && items.dropsOnBreak()) {
                 BlockDrops.spill(level, pos, items);
@@ -141,8 +194,13 @@ public final class BlockEntityFields {
     void load(final CompoundTag tag, final HolderLookup.Provider registries) {
         close();
         for (final IField field : fields) {
-            if (field.flags().saved() && tag.contains(field.flags().key())) {
+            if (!field.flags().saved()) {
+                continue;
+            }
+            if (!field.keyed() || tag.contains(field.flags().key())) {
                 field.read(tag, registries);
+            } else {
+                field.absent();
             }
         }
     }
@@ -152,7 +210,7 @@ public final class BlockEntityFields {
         final CompoundTag tag = new CompoundTag();
         for (final IField field : fields) {
             if (field.flags().client()) {
-                field.write(tag, registries);
+                field.writeClient(tag, registries);
             }
         }
         return tag;
@@ -161,26 +219,44 @@ public final class BlockEntityFields {
     void readClient(final CompoundTag tag, final HolderLookup.Provider registries) {
         close();
         for (final IField field : fields) {
-            if (field.flags().client() && tag.contains(field.flags().key())) {
-                field.read(tag, registries);
+            if (!field.flags().client()) {
+                continue;
+            }
+            if (!field.keyed() || tag.contains(field.flags().key())) {
+                field.readClient(tag, registries);
+            } else {
+                field.absent();
             }
         }
     }
 
-    /** Whether the server has to check this block entity each tick for worked-out values that changed. */
+    /** Whether the server has to check this block entity each tick for what the players see changing. */
     boolean polls() {
         close();
-        return !polled.isEmpty();
+        return !polled.isEmpty() || !mirrors.isEmpty();
     }
 
-    /** Schedules the players' update when a worked-out value they see has changed. */
+    /**
+     * Schedules the players' update when a worked-out value they see, or a mirrored property, has changed. Every
+     * worked-out value is looked at, so each one that moved is counted as sent with the one update.
+     */
     void poll() {
+        boolean changed = false;
         for (final IField field : polled) {
-            if (field.pollChanged()) {
-                syncToClients();
-                return;
-            }
+            changed |= field.pollChanged();
         }
+        if (changed || (!mirrors.isEmpty() && mirrored(owner.getBlockState()) != owner.getBlockState())) {
+            syncToClients();
+        }
+    }
+
+    /** {@code state} with every mirrored property at what its value says. */
+    BlockState mirrored(final BlockState state) {
+        BlockState wanted = state;
+        for (final StateMirror<?> mirror : mirrors) {
+            wanted = mirror.apply(wanted);
+        }
+        return wanted;
     }
 
     @Nullable Level level() {
@@ -224,6 +300,31 @@ public final class BlockEntityFields {
             if (field instanceof DerivedInt && field.flags().client()) {
                 polled.add(field);
             }
+            if (exposedItems == null && field instanceof FieldItemHandler items && items.isExposed()) {
+                exposedItems = items;
+            }
+            if (exposedEnergy == null && field instanceof FieldEnergyStorage energy && energy.isExposed()) {
+                exposedEnergy = energy;
+            }
+            if (exposedFluid == null && field instanceof FieldFluidTank tank && tank.isExposed()) {
+                exposedFluid = tank;
+            }
+        }
+    }
+
+    /**
+     * A property of the block's state kept at what a value says.
+     *
+     * @param <T> the property's values
+     */
+    private record StateMirror<T extends Comparable<T>>(Property<T> property, Supplier<T> value) {
+
+        BlockState apply(final BlockState state) {
+            if (!state.hasProperty(property)) {
+                return state;
+            }
+            final T wanted = value.get();
+            return state.getValue(property).equals(wanted) ? state : state.setValue(property, wanted);
         }
     }
 

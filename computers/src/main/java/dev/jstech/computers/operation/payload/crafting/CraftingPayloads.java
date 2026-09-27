@@ -53,8 +53,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -419,8 +417,6 @@ public final class CraftingPayloads {
             sw.setFaceName(face, payload.name());
             sw.setFaceActive(face, payload.active());
             sw.setFaceCategory(face, payload.category());
-            final BlockState st = level.getBlockState(pos);
-            level.sendBlockUpdated(pos, st, st, Block.UPDATE_CLIENTS);
         }
     }
 }

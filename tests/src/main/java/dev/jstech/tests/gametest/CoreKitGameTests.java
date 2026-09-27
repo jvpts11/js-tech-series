@@ -7,6 +7,11 @@
  */
 package dev.jstech.tests.gametest;
 
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.blockentity.SpeakerBlockEntity;
+import dev.jstech.computers.blockentity.TankBlockEntity;
 import dev.jstech.core.material.MaterialForm;
 import dev.jstech.core.material.MaterialItems;
 import dev.jstech.core.material.ModMaterial;
@@ -29,15 +34,20 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The Core's construction kit as the machines use it: fields declared once and saved, loaded, sent and shown to the
- * menu from the declaration; exposed inventories and energy offered to every side; a device block that spills its
- * inventories; and a menu whose shift-clicks follow its declared routes and that closes once its machine is gone.
+ * menu from the declaration; exposed inventories, energy and tanks offered to every side; values that may hold
+ * nothing, and parts that write themselves; a device block that spills its inventories and frees a peripheral's
+ * place as it is broken; and a menu whose shift-clicks follow its declared routes and that closes once its machine
+ * is gone.
  * That using a machine opens its menu is shown by a client test, with a real player.
  */
 @GameTestHolder(JsTests.MODID)
@@ -46,6 +56,8 @@ public final class CoreKitGameTests {
 
     private static final String ARENA = "empty";
     private static final BlockPos MACHINE = new BlockPos(2, 2, 2);
+    /** Where a peripheral's owner stands, beside the machine. */
+    private static final BlockPos OWNER = new BlockPos(4, 2, 2);
     /** Where a player stands to use the machine: in front of it, within reach. */
     private static final Vec3 IN_FRONT = new Vec3(2.5, 2, 4.5);
 
@@ -160,6 +172,86 @@ public final class CoreKitGameTests {
         helper.assertTrue(menu.stillValid(player), "the menu stays open beside its machine");
         helper.setBlock(MACHINE, Blocks.AIR);
         helper.assertFalse(menu.stillValid(player), "the menu closes once its machine is gone");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void nullableValue_isLeftOutWhileItHoldsNothing(final GameTestHelper helper) {
+        helper.setBlock(MACHINE, ComputingModule.SPEAKER.get());
+        final SpeakerBlockEntity speaker = machine(helper, SpeakerBlockEntity.class);
+        final HolderLookup.Provider registries = helper.getLevel().registryAccess();
+        final long owner = helper.absolutePos(OWNER).asLong();
+
+        helper.assertFalse(speaker.saveWithoutMetadata(registries).contains("LinkedOwner"),
+                "a speaker linked to nothing saves no owner");
+        speaker.onOwnerLinked(owner);
+        final CompoundTag saved = speaker.saveWithoutMetadata(registries);
+        helper.assertTrue(saved.getLong("LinkedOwner") == owner, "a linked speaker saves its owner");
+
+        final BlockEntity loaded = BlockEntity.loadStatic(speaker.getBlockPos(), speaker.getBlockState(),
+                speaker.saveWithFullMetadata(registries), registries);
+        helper.assertTrue(loaded instanceof SpeakerBlockEntity copy && copy.ownerPos() != null
+                && copy.ownerPos().asLong() == owner, "the owner loads back");
+        speaker.loadWithComponents(new CompoundTag(), registries);
+        helper.assertTrue(speaker.ownerPos() == null, "an owner missing from the save reads back as none");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void fields_offerTheExposedTankOnEverySideAndSaveIt(final GameTestHelper helper) {
+        helper.setBlock(MACHINE, ComputingModule.TANK.get());
+        final TankBlockEntity tank = machine(helper, TankBlockEntity.class);
+        final BlockPos at = helper.absolutePos(MACHINE);
+        for (final Direction side : Direction.values()) {
+            helper.assertTrue(helper.getLevel().getCapability(Capabilities.FluidHandler.BLOCK, at, side)
+                    == tank.fluidHandler(), "the tank is offered on the " + side + " side");
+        }
+        tank.fluidHandler().fill(new FluidStack(Fluids.WATER, 3_000), IFluidHandler.FluidAction.EXECUTE);
+        final HolderLookup.Provider registries = helper.getLevel().registryAccess();
+
+        final BlockEntity loaded = BlockEntity.loadStatic(tank.getBlockPos(), tank.getBlockState(),
+                tank.saveWithFullMetadata(registries), registries);
+        helper.assertTrue(loaded instanceof TankBlockEntity copy && copy.fluid().getAmount() == 3_000
+                && copy.fluid().is(Fluids.WATER), "the fluid is saved");
+        helper.assertTrue(tank.getUpdateTag(registries).contains("Tank"), "the players are sent the fluid");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void partField_savesAndSendsWhatItWrites(final GameTestHelper helper) {
+        helper.setBlock(MACHINE, ComputingModule.CRAFTING_SWITCH.get());
+        final CraftingSwitchBlockEntity craftingSwitch = machine(helper, CraftingSwitchBlockEntity.class);
+        craftingSwitch.setFaceName(Direction.EAST, "Furnace");
+        craftingSwitch.setFaceActive(Direction.EAST, false);
+        final HolderLookup.Provider registries = helper.getLevel().registryAccess();
+
+        final BlockEntity loaded = BlockEntity.loadStatic(craftingSwitch.getBlockPos(),
+                craftingSwitch.getBlockState(), craftingSwitch.saveWithFullMetadata(registries), registries);
+        helper.assertTrue(loaded instanceof CraftingSwitchBlockEntity copy
+                && "Furnace".equals(copy.faceName(Direction.EAST)) && !copy.faceActive(Direction.EAST),
+                "the faces' settings are saved by the part that writes them");
+        final CompoundTag update = craftingSwitch.getUpdateTag(registries);
+        helper.assertTrue(update.contains("MachineMask") && update.contains("Name" + Direction.EAST.get3DDataValue()),
+                "the players are sent the survey and the faces' settings");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void peripheralLink_freesItsPlaceTheMomentItsBlockIsBroken(final GameTestHelper helper) {
+        helper.setBlock(OWNER, ComputingModule.PERSONAL_COMPUTER.get());
+        helper.setBlock(MACHINE, ComputingModule.SPEAKER.get());
+        if (!(helper.getBlockEntity(OWNER) instanceof PersonalComputerBlockEntity computer)) {
+            helper.fail("no computer at " + OWNER);
+            return;
+        }
+        final long speakerAt = helper.absolutePos(MACHINE).asLong();
+        computer.onEndpointLinked(speakerAt);
+        machine(helper, SpeakerBlockEntity.class).onOwnerLinked(helper.absolutePos(OWNER).asLong());
+
+        helper.setBlock(MACHINE, Blocks.AIR);
+
+        helper.assertFalse(computer.linkedEndpoints().contains(speakerAt),
+                "the computer frees the speaker's place as the speaker is broken, not a tick later");
         helper.succeed();
     }
 

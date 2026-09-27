@@ -7,24 +7,26 @@
  */
 package dev.jstech.computers.blockentity;
 
+import com.mojang.serialization.Codec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
 import dev.jstech.computers.block.SpeakerBlock;
 import dev.jstech.computers.menu.SpeakerMenu;
 import dev.jstech.core.audio.FrequencyResponse;
 import dev.jstech.core.audio.StereoSide;
+import dev.jstech.core.blockentity.BoolField;
+import dev.jstech.core.blockentity.DerivedInt;
+import dev.jstech.core.blockentity.SyncedBlockEntity;
+import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.peripheral.PeripheralCableType;
-import dev.jstech.core.peripheral.PeripheralLinkValidator;
+import dev.jstech.core.peripheral.PeripheralLink;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,38 +39,19 @@ import java.util.Optional;
  * screen, it is taken when the screen closes, and one another speaker already has is refused, the speaker keeping the
  * name it had.
  */
-public class SpeakerBlockEntity extends BlockEntity implements IPeripheralEndpoint {
+public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint {
 
-    @Nullable
-    private Long linkedOwner;
+    private final PeripheralLink link = new PeripheralLink(fields(), PeripheralCableType.COMPUTING,
+            PeripheralLinks.COMPUTING);
     /** The name a player gave it; empty until one is given, when it is called by the word for a speaker. */
-    private String name = "";
-    /** Whether the last name asked for is one another speaker of its computer already has. */
-    private boolean clash;
+    private final ValueField<String> name = fields().value("SpeakerName", Codec.STRING, "").save();
+    /** Whether the last name asked for is one another speaker of its computer already has; its screen shows it. */
+    private final BoolField clash = fields().flag("NameClash", false).toMenu();
+    /** Which side it plays for its computer, as its screen shows it. */
+    private final DerivedInt channel = fields().derived("Channel", () -> workOutChannel()).toMenu();
     /** The name being typed on its screen, taken when the screen closes; null while nothing is being typed. */
     @Nullable
     private String asked;
-    /** What its screen reads while it is open: whether the name clashes, and which side it plays. */
-    private final ContainerData data = new ContainerData() {
-        @Override
-        public int get(final int index) {
-            return switch (index) {
-                case DATA_CLASH -> clash ? 1 : 0;
-                case DATA_CHANNEL -> channel();
-                default -> 0;
-            };
-        }
-
-        @Override
-        public void set(final int index, final int value) {
-            // Read only: the server works both out.
-        }
-
-        @Override
-        public int getCount() {
-            return DATA_COUNT;
-        }
-    };
 
     /** The longest name a speaker takes, the same as a computer's. */
     public static final int MAX_NAME = 32;
@@ -85,52 +68,48 @@ public class SpeakerBlockEntity extends BlockEntity implements IPeripheralEndpoi
     public static final int CHANNEL_RIGHT = 4;
     /** Linked, but its computer's system plays only out of the monitor. */
     public static final int CHANNEL_OFF = 5;
-    private static final String NBT_LINKED_OWNER = "LinkedOwner";
-    private static final String NBT_NAME = "SpeakerName";
 
     public SpeakerBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.SPEAKER_BE.get(), pos, state);
     }
 
     public static void serverTick(final Level level, final BlockPos pos, final BlockState state,
-                                  final SpeakerBlockEntity be) {
-        if (level instanceof ServerLevel serverLevel) {
-            be.tick(serverLevel);
+                                  final SpeakerBlockEntity speaker) {
+        if (level instanceof ServerLevel server) {
+            speaker.link.tick(server, pos);
         }
     }
 
     @Override
     public PeripheralCableType cableType() {
-        return PeripheralCableType.COMPUTING;
+        return link.cableType();
     }
 
     @Override
     public Optional<Long> linkedOwner() {
-        return Optional.ofNullable(linkedOwner);
+        return link.linkedOwner();
     }
 
     @Override
     public void onOwnerLinked(final long ownerPos) {
-        linkedOwner = ownerPos;
-        setChanged();
+        link.linked(ownerPos);
     }
 
     @Override
     public void onOwnerUnlinked() {
-        linkedOwner = null;
-        clash = false;
-        setChanged();
+        link.unlinked();
+        clash.set(false);
     }
 
     /** The computer it is linked to, or null. */
     @Nullable
     public BlockPos ownerPos() {
-        return linkedOwner == null ? null : BlockPos.of(linkedOwner);
+        return link.ownerPos();
     }
 
     /** The name a player gave it; empty while it has none. */
     public String name() {
-        return name;
+        return name.get();
     }
 
     /** The era of its model, which decides how well it plays. */
@@ -144,8 +123,14 @@ public class SpeakerBlockEntity extends BlockEntity implements IPeripheralEndpoi
                 : FrequencyResponse.FULL;
     }
 
+    /** What its screen reads while it is open: whether the name clashes ({@link #DATA_CLASH}), and its channel. */
     public ContainerData dataAccess() {
-        return data;
+        return fields().menuData();
+    }
+
+    /** Which side it plays for its computer: one of the {@code CHANNEL_} values. */
+    public int channel() {
+        return channel.getAsInt();
     }
 
     /**
@@ -156,7 +141,7 @@ public class SpeakerBlockEntity extends BlockEntity implements IPeripheralEndpoi
     public void ask(final ServerLevel level, final String requested) {
         final String stripped = requested.strip();
         asked = stripped.length() > MAX_NAME ? stripped.substring(0, MAX_NAME) : stripped;
-        clash = !asked.isEmpty() && anotherSpeakerIsCalled(level, asked);
+        clash.set(!asked.isEmpty() && anotherSpeakerIsCalled(level, asked));
     }
 
     /**
@@ -164,78 +149,32 @@ public class SpeakerBlockEntity extends BlockEntity implements IPeripheralEndpoi
      * empty name gives it back its default and never clashes.
      */
     public void takeAskedName() {
-        if (asked != null && !clash && !asked.equals(name)) {
-            name = asked;
-            setChanged();
+        if (asked != null && !clash.get()) {
+            name.set(asked);
         }
         asked = null;
-        clash = false;
+        clash.set(false);
     }
 
     /** What its screen opens with: its name, and the computer it plays for. */
     public SpeakerMenu.Opening opening(final ServerLevel level) {
         String computerName = "";
         String computerKind = "";
-        if (linkedOwner != null && level.getBlockEntity(BlockPos.of(linkedOwner))
-                instanceof AbstractComputerBlockEntity computer) {
+        final BlockPos owner = link.ownerPos();
+        if (owner != null && level.getBlockEntity(owner) instanceof AbstractComputerBlockEntity computer) {
             computerName = computer.customName();
             computerKind = computer.getBlockState().getBlock().getDescriptionId();
         }
-        return new SpeakerMenu.Opening(worldPosition, name, computerName, computerKind, era());
+        return new SpeakerMenu.Opening(worldPosition, name.get(), computerName, computerKind, era());
     }
 
-    /**
-     * Breaks the peripheral link from this speaker's side, notifying the owner so it frees the port.
-     * Safe to call when no link exists (no-op).
-     */
-    public void unlink(final ServerLevel level) {
-        if (linkedOwner != null
-                && level.getBlockEntity(BlockPos.of(linkedOwner)) instanceof IPeripheralOwner owner) {
-            owner.onEndpointUnlinked(worldPosition.asLong());
-        }
-        onOwnerUnlinked();
-    }
-
-    @Override
-    protected void saveAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        if (linkedOwner != null) {
-            tag.putLong(NBT_LINKED_OWNER, linkedOwner);
-        }
-        if (!name.isEmpty()) {
-            tag.putString(NBT_NAME, name);
-        }
-    }
-
-    @Override
-    protected void loadAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        linkedOwner = tag.contains(NBT_LINKED_OWNER) ? tag.getLong(NBT_LINKED_OWNER) : null;
-        name = tag.getString(NBT_NAME);
-    }
-
-    private void tick(final ServerLevel level) {
-        final long self = worldPosition.asLong();
-        final PeripheralLinkValidator validator = PeripheralLinks.validator(level);
-        if (linkedOwner == null) {
-            PeripheralLinks.discoverOwner(level, self)
-                    .ifPresent(ownerPos -> validator.tryEstablishLink(ownerPos, self));
-        } else {
-            final boolean ownerPresent =
-                    level.getBlockEntity(BlockPos.of(linkedOwner)) instanceof IPeripheralOwner;
-            if (!ownerPresent
-                    || !validator.isLinkStillValid(linkedOwner, self, PeripheralCableType.COMPUTING)) {
-                unlink(level);
-            }
-        }
-    }
-
-    /* Which side it plays for its computer, as its screen shows it. */
-    private int channel() {
-        if (linkedOwner == null || !(level instanceof ServerLevel server)) {
+    /* Which side it plays for its computer, worked out on the server. */
+    private int workOutChannel() {
+        final BlockPos owner = link.ownerPos();
+        if (owner == null || !(level instanceof ServerLevel server)) {
             return CHANNEL_NONE;
         }
-        if (!(server.getBlockEntity(BlockPos.of(linkedOwner)) instanceof AbstractComputerBlockEntity computer)) {
+        if (!(server.getBlockEntity(owner) instanceof AbstractComputerBlockEntity computer)) {
             return CHANNEL_ALONE;
         }
         if (!computer.speakersPlay()) {
@@ -253,15 +192,15 @@ public class SpeakerBlockEntity extends BlockEntity implements IPeripheralEndpoi
     }
 
     private boolean anotherSpeakerIsCalled(final ServerLevel level, final String wanted) {
-        if (linkedOwner == null
-                || !(level.getBlockEntity(BlockPos.of(linkedOwner)) instanceof IPeripheralOwner owner)) {
+        final BlockPos owner = link.ownerPos();
+        if (owner == null || !(level.getBlockEntity(owner) instanceof IPeripheralOwner linkedTo)) {
             return false;
         }
         final String folded = wanted.toLowerCase(Locale.ROOT);
-        for (final long endpoint : owner.linkedEndpoints()) {
+        for (final long endpoint : linkedTo.linkedEndpoints()) {
             if (endpoint != worldPosition.asLong()
                     && level.getBlockEntity(BlockPos.of(endpoint)) instanceof SpeakerBlockEntity other
-                    && other.name.toLowerCase(Locale.ROOT).equals(folded)) {
+                    && other.name().toLowerCase(Locale.ROOT).equals(folded)) {
                 return true;
             }
         }

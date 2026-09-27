@@ -28,6 +28,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.PlayLevelSoundEvent;
@@ -152,7 +153,7 @@ public final class MachineSoundGameTests {
                 })
                 .thenExecuteAfter(SETTLE, () -> {
                     // A drive being broken lets its disk fall out without the sound of ejecting it.
-                    drive.dropContents(helper.getLevel(), helper.absolutePos(WHERE));
+                    helper.setBlock(WHERE, Blocks.AIR);
                 })
                 .thenExecuteAfter(SETTLE, () -> {
                     heard.stop();

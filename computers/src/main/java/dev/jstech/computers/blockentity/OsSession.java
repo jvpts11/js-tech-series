@@ -24,14 +24,11 @@ import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.tier.HardwareEra;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -557,13 +554,7 @@ final class OsSession {
 
     /** The disks changed under the players watching this block, who are drawing what is in them. */
     private void tellClients() {
-        final Level level = this.machine.getLevel();
-        if (level == null) {
-            return;
-        }
-        final BlockPos pos = this.machine.getBlockPos();
-        level.sendBlockUpdated(pos, this.machine.getBlockState(), this.machine.getBlockState(),
-                Block.UPDATE_CLIENTS);
+        this.machine.fields().syncToClients();
     }
 
     /** The era a disk was made for, which sets what an item and a system image cost on it; standard for none. */

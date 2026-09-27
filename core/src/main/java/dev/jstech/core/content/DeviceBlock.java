@@ -90,7 +90,7 @@ public class DeviceBlock extends HorizontalDirectionalBlock implements EntityBlo
     protected void onRemove(final BlockState state, final Level level, final BlockPos pos, final BlockState newState,
                             final boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof SyncedBlockEntity synced) {
-            synced.fields().spill(level, pos);
+            synced.fields().broken(level, pos);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }

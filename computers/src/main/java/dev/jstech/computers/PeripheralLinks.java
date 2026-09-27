@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.MainframePartBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
+import dev.jstech.core.peripheral.PeripheralLink;
 import dev.jstech.core.peripheral.PeripheralLinkValidator;
 import dev.jstech.core.peripheral.IPeripheralOwner;
 import net.minecraft.core.BlockPos;
@@ -32,6 +33,22 @@ import java.util.Set;
  * World adapter that wires the pure {@link PeripheralLinkValidator} to live blocks and BlockEntities, plus owner discovery from an endpoint.
  */
 public final class PeripheralLinks {
+
+    /**
+     * How a peripheral declared with a {@link PeripheralLink} finds its computer: by walking the computing cables
+     * from all six of its faces.
+     */
+    public static final PeripheralLink.ILinkWorld COMPUTING = new PeripheralLink.ILinkWorld() {
+        @Override
+        public OptionalLong discoverOwner(final ServerLevel level, final long endpoint) {
+            return PeripheralLinks.discoverOwner(level, endpoint);
+        }
+
+        @Override
+        public PeripheralLinkValidator validator(final ServerLevel level) {
+            return PeripheralLinks.validator(level);
+        }
+    };
 
     private PeripheralLinks() {
     }

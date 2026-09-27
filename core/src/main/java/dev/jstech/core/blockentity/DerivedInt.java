@@ -81,8 +81,17 @@ public final class DerivedInt implements IField {
         mirror = to;
     }
 
+    /*
+     * A change is counted as sent the moment it is found, not when a player's update is written: with nobody near
+     * the block no update is written at all, and a value never marked sent would schedule a send every tick.
+     */
     @Override
     public boolean pollChanged() {
-        return value.getAsInt() != sent;
+        final int now = value.getAsInt();
+        if (now == sent) {
+            return false;
+        }
+        sent = now;
+        return true;
     }
 }

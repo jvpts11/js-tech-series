@@ -270,14 +270,20 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - J's Core gives a block entity its state as fields declared once, each saying where it goes: into the save, to the
   players who see the block, to the menu open on it. The saving, the update the players are sent, the client's
   reading of it and the menu's data all follow from those declarations, and the players are sent one update per
-  block entity a tick however many fields changed. Inventories and energy stores are declared the same way, with
-  whether pipes and cables reach them and whether they spill when the block is broken.
+  block entity a tick however many fields changed. Inventories, energy stores and fluid tanks are declared the same
+  way, with whether pipes and cables reach them and whether they spill when the block is broken; so are a value of
+  any kind a codec writes, a part that writes itself, a property of the block's state kept at what a value says, a
+  peripheral's link to the computer at the other end of its cable, and what happens when the block is broken.
 - J's Core declares a menu once: its slots in groups, placed from the screen's layout; where a shift-click in each
   group sends the stack; its buttons; and that it stays open while its block entity stands and the player can reach
   it, which holds for every variant of a block that makes the same block entity. A block that makes a block entity
   is declared the same way, with what it ticks and which menu it opens, and faces whoever placed it.
 
 ### Changed
+- J's Computers' blocks keep their state as J's Core's declared fields: the computers, the server racks, the drives,
+  the Pattern Encoders, monitors, speakers, Network Gateways, data cables, Crafting Switches, Server Routers, HBW
+  Interfaces and tanks. The players who see one are sent one update a tick however much of it changed, and the
+  settings of a Crafting Switch's faces reach everyone looking at it as soon as they are set.
 - The Standard Mainframe's roof fans look like fans: each is a square housing that stays still, with a dark well
   in its opening and a five-bladed rotor turning in it, where before the whole square turned with a cross painted
   on it.
