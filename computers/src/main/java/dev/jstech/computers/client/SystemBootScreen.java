@@ -9,6 +9,7 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.MonitorGlass;
+import dev.jstech.computers.gui.layout.SystemBootLayout;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootSequence;
@@ -42,9 +43,6 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
     /** Drawn for this long when the machine did not say, which only a stale packet leaves. */
     private static final int FALLBACK_TICKS = 60;
 
-    /** Where the wall of text begins, and how much air is left at the right edge. */
-    private static final int MARGIN = 12;
-
     /**
      * The screen's colours, {@code jsc:boot/system}: its ground; the earliest tube's text, quiet lines and good
      * steps, in greys its phosphor lights; the later machines' white on black, their quiet lines, and the one colour
@@ -63,6 +61,16 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
      */
     @Nullable
     private static Starting pending;
+
+    static {
+        /*
+         * The layout keeps the wall's step and scale so it can be tested without the game, while the lines are drawn
+         * through TextWall: the two must agree, or the layout would check lines the screen does not draw.
+         */
+        if (SystemBootLayout.LINE_STEP != TextWall.ROW || SystemBootLayout.TEXT_SCALE != TextWall.SCALE) {
+            throw new IllegalStateException("SystemBootLayout's line step and scale must be TextWall's");
+        }
+    }
 
     private final BootSequence sequence;
     private final BootSplash splash;
@@ -179,38 +187,40 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
          * the top corner, the way a machine reading out its own start does.
          */
         if (this.sequence.lines().isEmpty()) {
-            g.drawCenteredString(font, GameText.resolve(this.sequence.title()), x + W / 2, y + H / 2 - 22, text);
-            g.drawCenteredString(font, GameText.resolve(this.sequence.subtitle()), x + W / 2, y + H / 2 - 10,
-                    dim);
+            g.drawCenteredString(font, GameText.resolve(this.sequence.title()), x + W / 2,
+                    y + H / 2 + SystemBootLayout.TITLE_CENTER_DY, text);
+            g.drawCenteredString(font, GameText.resolve(this.sequence.subtitle()), x + W / 2,
+                    y + H / 2 + SystemBootLayout.SUBTITLE_CENTER_DY, dim);
             drawBar(g, x, y);
             return;
         }
 
-        int ty = y + 12;
+        int ty = y + SystemBootLayout.WALL_TOP;
         if (!this.sequence.title().isEmpty()) {
-            wall(g, GameText.resolve(this.sequence.title()), x + MARGIN, ty, text);
-            ty += WALL_ROW;
+            wall(g, GameText.resolve(this.sequence.title()), x + SystemBootLayout.MARGIN, ty, text);
+            ty += SystemBootLayout.LINE_STEP;
         }
         if (!this.sequence.subtitle().isEmpty()) {
-            wall(g, GameText.resolve(this.sequence.subtitle()), x + MARGIN, ty, dim);
-            ty += WALL_ROW;
+            wall(g, GameText.resolve(this.sequence.subtitle()), x + SystemBootLayout.MARGIN, ty, dim);
+            ty += SystemBootLayout.LINE_STEP;
         }
-        ty += 4;
+        ty += SystemBootLayout.AFTER_HEADER_GAP;
 
-        final int labelAt = x + MARGIN + markColumn();
-        final int valueAt = x + MARGIN + valueColumn();
+        final int labelAt = x + SystemBootLayout.MARGIN + markColumn();
+        final int valueAt = x + SystemBootLayout.MARGIN + valueColumn();
         // Each step appears once the machine has got that far, so the screen fills as the work is done.
         final int shown = this.sequence.shownAt(this.ticks, this.totalTicks);
         for (int i = 0; i < shown; i++) {
             final BootSequence.Line line = this.sequence.lines().get(i);
             if (!line.mark().isEmpty()) {
-                wall(g, line.mark(), x + MARGIN, ty, line.good() ? good : dim);
+                wall(g, line.mark(), x + SystemBootLayout.MARGIN, ty, line.good() ? good : dim);
             }
             /*
              * Cut to whatever is left of the line: a step that names a drive carries a name somebody else
              * chose the length of, and at full length it runs through the column beside it or off the glass.
              */
-            final int room = (line.value().isEmpty() ? x + W - MARGIN : valueAt - 4) - labelAt;
+            final int room = (line.value().isEmpty() ? x + W - SystemBootLayout.MARGIN
+                    : valueAt - SystemBootLayout.VALUE_GAP) - labelAt;
             final String label = GameText.resolve(line.label());
             wall(g, wallClip(label, room), labelAt, ty, text);
             if (!line.value().isEmpty()) {
@@ -223,7 +233,7 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
                 }
                 wall(g, GameText.resolve(line.value()), valueAt, ty, line.good() ? good : dim);
             }
-            ty += WALL_ROW;
+            ty += SystemBootLayout.LINE_STEP;
         }
     }
 
@@ -247,8 +257,8 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
             widest = Math.max(widest, wallWidth(GameText.resolve(line.label())));
             widestValue = Math.max(widestValue, wallWidth(GameText.resolve(line.value())));
         }
-        final int room = W - 2 * MARGIN - widestValue;
-        return Math.min(room, markColumn() + widest + 10);
+        final int room = W - 2 * SystemBootLayout.MARGIN - widestValue;
+        return Math.min(room, markColumn() + widest + SystemBootLayout.LABEL_TO_VALUE_GAP);
     }
 
     /** The row of dots between a question and its answer, drawn to fill exactly the gap between them. */
@@ -263,12 +273,12 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
 
     /** The bar that fills over however long this machine takes: all a system that says nothing ever gave you. */
     private void drawBar(final GuiGraphics g, final int x, final int y) {
-        final int barW = 140;
-        final int bx = x + (W - barW) / 2;
-        final int by = y + H / 2 + 12;
+        final int bx = x + SystemBootLayout.barX();
+        final int by = y + SystemBootLayout.barY();
         final Colours c = PALETTE.get();
-        g.fill(bx, by, bx + barW, by + 3, c.barTrack());
-        g.fill(bx, by, bx + Math.min(barW, barW * this.ticks / this.totalTicks), by + 3, c.barFill());
+        g.fill(bx, by, bx + SystemBootLayout.BAR_W, by + SystemBootLayout.BAR_H, c.barTrack());
+        g.fill(bx, by, bx + Math.min(SystemBootLayout.BAR_W, SystemBootLayout.BAR_W * this.ticks / this.totalTicks),
+                by + SystemBootLayout.BAR_H, c.barFill());
     }
 
     /** The monitor this is drawn on, for whatever asks. */

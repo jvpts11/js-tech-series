@@ -33,6 +33,7 @@ import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerRouterElement;
@@ -44,7 +45,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -744,65 +744,67 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
         return NetworkSystem.get(serverLevel).serversOf(networkUuid()).size();
     }
 
-    // screen sync
+    /* Values the assembly menu shows: worked out on the server, received by the client while the menu is open. */
+    private final DerivedInt assemblyRunning = fields().derived("AssemblyRunning", this::isRunning).toMenu();
+    private final DerivedInt assemblyBuildValid = fields().derived("AssemblyBuildValid", this::buildValid).toMenu();
+    private final DerivedInt assemblyCapacity = fields().derived("AssemblyCapacity",
+            () -> (int) Math.min(Integer.MAX_VALUE, capacity())).toMenu();
+    private final DerivedInt assemblyRamBuffer = fields().derived("AssemblyRamBuffer",
+            () -> (int) Math.min(Integer.MAX_VALUE, ramBuffer())).toMenu();
+    private final DerivedInt assemblyAutoStart = fields().derived("AssemblyAutoStart", this::isAutoStart).toMenu();
+    private final DerivedInt assemblyOnNetwork = fields().derived("AssemblyOnNetwork",
+            () -> networkUuid() != null).toMenu();
+    private final DerivedInt assemblyHasCard = fields().derived("AssemblyHasCard",
+            () -> clusterCard() != null).toMenu();
+    private final DerivedInt assemblySupercomputers = fields().derived("AssemblySupercomputers",
+            () -> supercomputers().size()).toMenu();
+    private final DerivedInt assemblyDatacenters = fields().derived("AssemblyDatacenters",
+            () -> datacenterSections().size()).toMenu();
+    private final DerivedInt assemblyLanes = fields().derived("AssemblyLanes", this::parallelLanes).toMenu();
+    private final DerivedInt assemblyManagerInstalled = fields().derived("AssemblyManagerInstalled",
+            () -> console() != null && console().isInstalled(Programs.CLUSTER_MANAGER.toString())).toMenu();
 
-    public static final int DATA_RUNNING = 0;
-    public static final int DATA_BUILD_VALID = 1;
-    public static final int DATA_CAPACITY = 2;
-    public static final int DATA_RAM_BUFFER = 3;
-    public static final int DATA_AUTOSTART = 4;
-    public static final int DATA_ON_NETWORK = 5;
-    public static final int DATA_HAS_CARD = 6;
-    public static final int DATA_SUPERCOMPUTERS = 7;
-    public static final int DATA_DATACENTERS = 8;
-    public static final int DATA_LANES = 9;
-    public static final int DATA_MANAGER_INSTALLED = 10;
-    public static final int DATA_COUNT = DATA_MANAGER_INSTALLED + 1;
-
-    private final int[] clientData = new int[DATA_COUNT];
-
-    private int computeData(final int index) {
-        return switch (index) {
-            case DATA_RUNNING -> isRunning() ? 1 : 0;
-            case DATA_BUILD_VALID -> buildValid() ? 1 : 0;
-            case DATA_CAPACITY -> (int) Math.min(Integer.MAX_VALUE, capacity());
-            case DATA_RAM_BUFFER -> (int) Math.min(Integer.MAX_VALUE, ramBuffer());
-            case DATA_AUTOSTART -> isAutoStart() ? 1 : 0;
-            case DATA_ON_NETWORK -> networkUuid() != null ? 1 : 0;
-            case DATA_HAS_CARD -> clusterCard() != null ? 1 : 0;
-            case DATA_SUPERCOMPUTERS -> supercomputers().size();
-            case DATA_DATACENTERS -> datacenterSections().size();
-            case DATA_LANES -> parallelLanes();
-            case DATA_MANAGER_INSTALLED -> console() != null
-                    && console().isInstalled(Programs.CLUSTER_MANAGER.toString())
-                    ? 1 : 0;
-            default -> 0;
-        };
+    public boolean assemblyRunning() {
+        return assemblyRunning.isSet();
     }
 
-    private final ContainerData dataAccess = new ContainerData() {
-        @Override
-        public int get(final int index) {
-            if (level != null && level.isClientSide()) {
-                return index >= 0 && index < clientData.length ? clientData[index] : 0;
-            }
-            return computeData(index);
-        }
+    public boolean assemblyBuildValid() {
+        return assemblyBuildValid.isSet();
+    }
 
-        @Override
-        public void set(final int index, final int value) {
-            if (index >= 0 && index < clientData.length) {
-                clientData[index] = value;
-            }
-        }
+    public long assemblyCapacity() {
+        return assemblyCapacity.getAsInt();
+    }
 
-        @Override
-        public int getCount() {
-            return DATA_COUNT;
-        }
-    };
+    public long assemblyRamBuffer() {
+        return assemblyRamBuffer.getAsInt();
+    }
 
-    public ContainerData getDataAccess() {
-        return dataAccess;
+    public boolean assemblyAutoStart() {
+        return assemblyAutoStart.isSet();
+    }
+
+    public boolean assemblyOnNetwork() {
+        return assemblyOnNetwork.isSet();
+    }
+
+    public boolean assemblyHasCard() {
+        return assemblyHasCard.isSet();
+    }
+
+    public int assemblySupercomputers() {
+        return assemblySupercomputers.getAsInt();
+    }
+
+    public int assemblyDatacenters() {
+        return assemblyDatacenters.getAsInt();
+    }
+
+    public int assemblyLanes() {
+        return assemblyLanes.getAsInt();
+    }
+
+    public boolean assemblyManagerInstalled() {
+        return assemblyManagerInstalled.isSet();
     }
 }

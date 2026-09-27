@@ -20,9 +20,17 @@ public final class ServerRouterLayout {
     public static final int WIDTH = 190;
     public static final int HEIGHT = 176;
 
+    public static final int HEADER_X = 6;
+    public static final int HEADER_Y = 6;
+
+    public static final int TITLE_X = 12;
+    public static final int TITLE_Y = 10;
+
     public static final int NAME_X = 8;
     public static final int NAME_Y = 36;
     public static final int NAME_H = 14;
+    public static final int LABEL_X = 10;
+    public static final int NAME_LABEL_Y = 28;
 
     public static final int TILE_Y = 56;
     public static final int TILE_W = 84;
@@ -30,11 +38,19 @@ public final class ServerRouterLayout {
     public static final int TILE1_X = 8;
     public static final int TILE2_X = 98;
 
+    public static final int SECTIONS_LABEL_Y = 84;
+    public static final int SEPARATOR_Y = 93;
+
     public static final int ROW_Y0 = 96;
     public static final int ROW_PITCH = 15;
     public static final int MODE_X = 108;
     public static final int MODE_W = 74;
     public static final int MODE_H = 12;
+    public static final int ROW_FACE_X = 10;
+    public static final int ROW_COUNT_X = 40;
+    /** Where the line that says there are no sections yet is written, in the list's first row. */
+    public static final int NO_SECTIONS_X = 12;
+    public static final int NO_SECTIONS_Y = ROW_Y0 + 3;
 
     /** A block has six faces; one is the auto-detected input, leaving at most five output sections. */
     public static final int MAX_SECTIONS = 5;
@@ -50,10 +66,11 @@ public final class ServerRouterLayout {
         for (int i = 0; i < sections; i++) {
             l.box("modeBtn_" + i, MODE_X, ROW_Y0 + i * ROW_PITCH, MODE_W, MODE_H);
         }
-        l.text("title", 12, 10, 13, 1.0f);                 // "SERVER ROUTER"
-        l.text("tier", WIDTH - 12 - 12, 10, 2, 1.0f);      // "T3", right-aligned
-        l.text("nameLabel", 10, 28, 4, 1.0f);              // "NAME"
-        l.text("sectionsLabel", 10, 84, 8, 1.0f);          // "SECTIONS"
+        l.text("title", TITLE_X, TITLE_Y, 13, 1.0f);        // "SERVER ROUTER"
+        // "T3", right-aligned to the same margin as the title.
+        l.text("tier", WIDTH - TITLE_X - Math.round(2 * GuiLayout.GLYPH_WIDTH), TITLE_Y, 2, 1.0f);
+        l.text("nameLabel", LABEL_X, NAME_LABEL_Y, 4, 1.0f);              // "NAME"
+        l.text("sectionsLabel", LABEL_X, SECTIONS_LABEL_Y, 8, 1.0f);      // "SECTIONS"
         // Each section row: face label, rack/server count, centered mode caption (longest = "ROUND-ROBIN").
         for (int i = 0; i < sections; i++) {
             l.text("rowMode_" + i, MODE_X + MODE_W / 2 - Math.round(11 * GuiLayout.GLYPH_WIDTH) / 2,

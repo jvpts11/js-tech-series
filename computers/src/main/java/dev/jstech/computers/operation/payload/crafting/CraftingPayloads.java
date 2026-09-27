@@ -8,7 +8,9 @@
 package dev.jstech.computers.operation.payload.crafting;
 
 import dev.jstech.computers.audio.SystemSound;
+import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
+import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.os.CraftPlannerApp;
 import dev.jstech.computers.client.os.NetworkInteractorApp;
@@ -87,10 +89,12 @@ public final class CraftingPayloads {
                 ClientPayloadHandlers.onMainThread(CraftingPayloads::handleCraftPlan));
         ComputerAccess.accept(registrar, CraftSubmitPayload.TYPE, CraftSubmitPayload.STREAM_CODEC,
                 ComputerAccess.machine(CraftSubmitPayload::hostPos), CraftingPayloads::handleCraftSubmit);
-        ComputerAccess.accept(registrar, SetCraftingSwitchFacePayload.TYPE, SetCraftingSwitchFacePayload.STREAM_CODEC,
-                ComputerAccess.menu(CraftingSwitchMenu.class,
-                        CraftingSwitchMenu::switchPos, SetCraftingSwitchFacePayload::switchPos),
+        ComputerAccess.onMenu(registrar, SetCraftingSwitchFacePayload.TYPE, SetCraftingSwitchFacePayload.STREAM_CODEC,
+                CraftingSwitchMenu.class, CraftingSwitchMenu::switchPos, SetCraftingSwitchFacePayload::switchPos,
                 CraftingPayloads::handleSetCraftingSwitchFace);
+        ComputerAccess.onMenu(registrar, RenameSwitchBusPayload.TYPE, RenameSwitchBusPayload.STREAM_CODEC,
+                CraftingSwitchMenu.class, CraftingSwitchMenu::switchPos, RenameSwitchBusPayload::switchPos,
+                CraftingPayloads::handleRenameSwitchBus);
     }
 
     private static void handleCraftCatalog(final CraftCatalogPayload payload, final Player player) {
@@ -406,17 +410,33 @@ public final class CraftingPayloads {
     }
 
     private static void handleSetCraftingSwitchFace(final SetCraftingSwitchFacePayload payload,
-                                                    final ServerPlayer player, final ServerLevel level) {
-        final BlockPos pos = payload.switchPos();
-        if (player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > 64.0) {
-            return; // out of reach
-        }
-        if (level.getBlockEntity(pos) instanceof CraftingSwitchBlockEntity sw) {
-            final Direction face =
-                    Direction.from3DDataValue(payload.face());
+                                                    final CraftingSwitchMenu menu, final ServerPlayer player,
+                                                    final ServerLevel level) {
+        if (level.getBlockEntity(menu.switchPos()) instanceof CraftingSwitchBlockEntity sw) {
+            final Direction face = Direction.from3DDataValue(payload.face());
             sw.setFaceName(face, payload.name());
             sw.setFaceActive(face, payload.active());
             sw.setFaceCategory(face, payload.category());
+        }
+    }
+
+    /**
+     * Renames the machine a Crafting Switch reaches over a crafting bus: the bus is not the block the player has
+     * open, so the rename is only applied when the switch's own survey currently lists that bus.
+     */
+    private static void handleRenameSwitchBus(final RenameSwitchBusPayload payload, final CraftingSwitchMenu menu,
+                                              final ServerPlayer player, final ServerLevel level) {
+        if (!(level.getBlockEntity(menu.switchPos()) instanceof CraftingSwitchBlockEntity sw)) {
+            return;
+        }
+        final boolean discovered = sw.busMachineLines().stream().anyMatch(line ->
+                line.cablePos().equals(payload.cablePos()) && line.busFace() == payload.busFace());
+        if (!discovered) {
+            return;
+        }
+        if (level.getBlockEntity(payload.cablePos()) instanceof DataCableBlockEntity cable
+                && cable.getPart(Direction.from3DDataValue(payload.busFace())) instanceof AbstractBusPart bus) {
+            bus.setName(payload.name());
         }
     }
 }

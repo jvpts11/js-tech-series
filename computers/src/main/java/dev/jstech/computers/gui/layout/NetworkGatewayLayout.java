@@ -75,7 +75,7 @@ public final class NetworkGatewayLayout {
         layout.text("bufferCaption", BUFFER_X, BUFFER_CAPTION_Y, 11, INFO_SCALE);
         layout.text("bufferHint", BUFFER_HINT_X, BUFFER_CAPTION_Y, 18, INFO_SCALE);
         for (int i = 0; i < BUFFER_SLOTS; i++) {
-            layout.box("buffer" + i, bufferX(i), BUFFER_Y, SLOT, SLOT);
+            layout.slot("buffer" + i, bufferX(i) + 1, BUFFER_Y + 1);
         }
         layout.text("inventoryLabel", INV_X, INV_LABEL_Y, 9, 1.0f);
         layout.playerInventory(INV_X, INV_Y);

@@ -31,6 +31,7 @@ import static dev.jstech.computers.client.FirmwareScreenTexts.of;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.MonitorGlass;
+import dev.jstech.computers.gui.layout.BootSequenceLayout;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.PostCompletePayload;
@@ -425,30 +426,34 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
          * the one it names.
          */
         final int cx = x + W / 2;
-        SplashLogos.draw(g, SplashLogos.JSC, cx, y + H / 2 - 46);
-        wallCentered(g, machineTitle(), cx, y + H / 2 + 8, post().subtitle());
-        final int barW = 120;
-        final int bx = cx - barW / 2;
-        final int by = y + H / 2 + 24;
-        g.fill(bx, by, bx + barW, by + 3, post().track());
-        final int fill = Math.min(barW, barW * ticks / postTicks);
-        g.fill(bx, by, bx + fill, by + 3, accent);
+        SplashLogos.draw(g, SplashLogos.JSC, cx, y + H / 2 + BootSequenceLayout.LOGO_CENTER_DY);
+        wallCentered(g, machineTitle(), cx, y + H / 2 + BootSequenceLayout.TITLE_CENTER_DY, post().subtitle());
         if (completed && bootingFrom().isEmpty()) {
+            /*
+             * With nothing to boot the self-test is over and the bar has nothing left to say, so it goes: drawn
+             * under the dialog it would peek out below a short one and hide under a tall one.
+             */
             renderUefiNoBoot(g, x, y, text, dim);
             return;
         }
+        final int barW = BootSequenceLayout.BAR_W;
+        final int bx = x + BootSequenceLayout.barX();
+        final int by = y + BootSequenceLayout.barY();
+        g.fill(bx, by, bx + barW, by + BootSequenceLayout.BAR_H, post().track());
+        final int fill = Math.min(barW, barW * ticks / postTicks);
+        g.fill(bx, by, bx + fill, by + BootSequenceLayout.BAR_H, accent);
         /*
          * Along the foot: what the machine is made of where a board of this age prints it, and the two keys
          * at the other end, blinking as they do until one of them is pressed.
          */
-        final int fy = y + H - 16;
-        wall(g, buildSummary(), x + PostWall.MARGIN, fy, dim);
+        final int fy = y + BootSequenceLayout.footerY();
+        wall(g, buildSummary(), x + BootSequenceLayout.FOOTER_X, fy, dim);
         if (setupRequested) {
-            wallRight(g, of(ENTERING_SETUP_NOW), x + W - PostWall.MARGIN, fy, accent);
+            wallRight(g, of(ENTERING_SETUP_NOW), x + W - BootSequenceLayout.FOOTER_X, fy, accent);
         } else if ((ticks / 10) % 2 == 0) {
             final String setup = of(KEY_SETUP);
             final String bootMenu = of(KEY_BOOT_MENU);
-            int tx = x + W - PostWall.MARGIN - wallWidth("DEL" + setup + "F12" + bootMenu);
+            int tx = x + W - BootSequenceLayout.FOOTER_X - wallWidth("DEL" + setup + "F12" + bootMenu);
             tx = PostWall.run(g, font, "DEL", tx, fy, text);
             tx = PostWall.run(g, font, setup, tx, fy, dim);
             tx = PostWall.run(g, font, "F12", tx, fy, text);
@@ -465,35 +470,38 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
     private void renderUefiNoBoot(final GuiGraphics g, final int x, final int y, final int text, final int dim) {
         final List<FirmwareStatePayload.Entry> entries = state == null ? List.of() : state.entries();
         final int listed = Math.min(entries.size(), PostWall.MOST_DRIVES);
-        final int boxW = 224;
-        final int boxH = 16 + Math.max(1, listed) * WALL_ROW + 22;
-        final int bx = x + (W - boxW) / 2;
-        final int by = y + (H - boxH) / 2;
+        final int boxW = BootSequenceLayout.NO_BOOT_BOX_W;
+        final int boxH = BootSequenceLayout.noBootBoxH(listed);
+        final int bx = x + BootSequenceLayout.noBootBoxX();
+        final int by = y + BootSequenceLayout.noBootBoxY(boxH);
         final Post look = post();
         g.fill(bx, by, bx + boxW, by + boxH, look.box());
-        g.fill(bx, by, bx + boxW, by + 14, look.boxHead());
-        g.fill(bx, by, bx + 2, by + 14, look.alarm());
+        g.fill(bx, by, bx + boxW, by + BootSequenceLayout.NO_BOOT_HEADER_STRIP_H, look.boxHead());
+        g.fill(bx, by, bx + 2, by + BootSequenceLayout.NO_BOOT_HEADER_STRIP_H, look.alarm());
         /*
          * What is wrong, when the machine knows: "no bootable device" is true of an empty computer and a lie
          * about a wrecked one, whose device is right there and whose system will not start. A player who
          * deleted a file needs to be told which file, not that their disk has gone.
          */
         wall(g, this.complaint.isEmpty() ? of(NO_BOOTABLE) : this.complaint,
-                bx + 7, by + 4, look.alarm());
-        int ly = by + 18;
+                bx + BootSequenceLayout.NO_BOOT_COMPLAINT_X, by + BootSequenceLayout.NO_BOOT_COMPLAINT_DY,
+                look.alarm());
+        int ly = by + BootSequenceLayout.NO_BOOT_LIST_TOP;
         if (entries.isEmpty()) {
-            wall(g, of(NOTHING_ATTACHED), bx + 8, ly, dim);
-            ly += WALL_ROW;
+            wall(g, of(NOTHING_ATTACHED), bx + BootSequenceLayout.NO_BOOT_LIST_X, ly, dim);
+            ly += BootSequenceLayout.NO_BOOT_LIST_STEP;
         }
         int slot = 0;
         for (int i = 0; i < listed; i++) {
             final FirmwareStatePayload.Entry entry = entries.get(i);
             final Text where = entry.kind() == FirmwareStatePayload.KIND_DISK
                     ? DISK_NAMED.with(slot++, entry.device()) : entry.device();
-            wall(g, wallClip(of(ENTRY.with(where, entry.label())), boxW - 16), bx + 8, ly, text);
-            ly += WALL_ROW;
+            wall(g, wallClip(of(ENTRY.with(where, entry.label())), boxW - 2 * BootSequenceLayout.NO_BOOT_LIST_X),
+                    bx + BootSequenceLayout.NO_BOOT_LIST_X, ly, text);
+            ly += BootSequenceLayout.NO_BOOT_LIST_STEP;
         }
-        wall(g, of(INSERT_MEDIA), bx + 8, ly + 4, dim);
+        wall(g, of(INSERT_MEDIA), bx + BootSequenceLayout.NO_BOOT_LIST_X,
+                ly + BootSequenceLayout.NO_BOOT_INSERT_MEDIA_GAP, dim);
     }
 
     /* This machine's self-test colours, by the firmware it posts with. */

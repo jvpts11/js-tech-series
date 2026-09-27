@@ -41,7 +41,8 @@ public final class MoveDestinations {
     }
 
     /**
-     * A resolved SELECT destination: where the pulled items land, the provenance label, whether it is a MOVE (into another Server), and that target Server's node (so it can be excluded as a source).
+     * A resolved SELECT destination: where the pulled items land, the provenance label, whether it is a
+     * MOVE (into another Server), and that target Server's node (so it can be excluded as a source).
      */
     public record Dest(IDataSink handler, String label,
                        boolean move, @Nullable NodeUuid target) {

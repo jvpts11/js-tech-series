@@ -2322,8 +2322,8 @@ public final class NetworkGameTests {
         helper.assertTrue(back.getPart(Direction.EAST) instanceof ExportBusPart, "the part type must persist");
         final ExportBusPart reloadedPart = (ExportBusPart) back.getPart(Direction.EAST);
         helper.assertTrue(reloadedPart.filterItem() == Items.COBBLESTONE, "the filter must persist");
-        helper.assertTrue(reloadedPart.getDataAccess().get(0) == 5, "min must persist");
-        helper.assertTrue(reloadedPart.getDataAccess().get(1) == 20, "max must persist");
+        helper.assertTrue(reloadedPart.min() == 5, "min must persist");
+        helper.assertTrue(reloadedPart.max() == 20, "max must persist");
         helper.succeed();
     }
 

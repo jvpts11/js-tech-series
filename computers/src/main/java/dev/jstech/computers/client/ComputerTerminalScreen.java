@@ -51,7 +51,9 @@ import java.util.Locale;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Screen for the Monitor terminal: a left tab rail (icon over name) and a content area, drawn as a flat dark "computer OS" with square edges and a cyan accent, with the player inventory pinned along the bottom so every tab is usable.
+ * Screen for the Monitor terminal: a left tab rail (icon over name) and a content area, drawn as a flat dark
+ * "computer OS" with square edges and a cyan accent, with the player inventory pinned along the bottom so
+ * every tab is usable.
  */
 @PaletteHolder
 public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTerminalMenu> {
@@ -571,14 +573,8 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         // The rule that separates the machine's own screen from the player's own rows.
         g.fill(x + RAIL_X + RAIL_W, y + ComputerTerminalLayout.INV_LINE_Y,
                 x + imageWidth, y + ComputerTerminalLayout.INV_LINE_Y + 1, LINE);
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                slotBg(g, x + ComputerTerminalMenu.INV_X + col * 18, y + menu.invY() + row * 18);
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            slotBg(g, x + ComputerTerminalMenu.INV_X + col * 18, y + menu.hotbarY());
-        }
+        // Every slot this menu holds is a player-inventory slot, drawn at the position the menu itself placed it.
+        drawSlotFrames(g, SLOT_EDGE, SLOT_BG);
     }
 
     void inlineTrack(final GuiGraphics g, final int x, final int y, final int w,
@@ -1444,9 +1440,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         final int tab = rail[railScroll + row];
         if (tab != menu.activeTab()) {
             menu.setActiveTab(tab);
-            if (minecraft != null && minecraft.gameMode != null) {
-                minecraft.gameMode.handleInventoryButtonClick(menu.containerId, tab);
-            }
+            sendButton(tab);
             syncSearchBoxVisibility();
         }
         return true;
@@ -1623,10 +1617,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         }
         if (!onRail) {
             menu.setActiveTab(ComputerTerminalMenu.TAB_NETWORK);
-            if (minecraft != null && minecraft.gameMode != null) {
-                minecraft.gameMode.handleInventoryButtonClick(menu.containerId,
-                        ComputerTerminalMenu.TAB_NETWORK);
-            }
+            sendButton(ComputerTerminalMenu.TAB_NETWORK);
             syncSearchBoxVisibility();
         }
         craft.tick();
@@ -1639,11 +1630,11 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     @Override
     protected void slotClicked(final Slot slot, final int slotId, final int button, final ClickType type) {
         /*
-         * On the Network/Storage tabs, shift-clicking an inventory stack deposits it into the network
-         * or local storage respectively, instead of a (no-op) quick-move.
+         * On the Network/Storage tabs, shift-clicking an inventory stack deposits it into the network or local
+         * storage respectively, instead of a quick-move, which moves nothing here. Every slot in this menu is
+         * the player's own, so any one of them qualifies.
          */
-        if (isGridTab() && type == ClickType.QUICK_MOVE
-                && slot != null && slot.hasItem() && slot.index >= menu.storageSlotCount()) {
+        if (isGridTab() && type == ClickType.QUICK_MOVE && slot != null && slot.hasItem()) {
             if (menu.activeTab() == ComputerTerminalMenu.TAB_STORAGE) {
                 PacketDistributor.sendToServer(new TerminalLocalDepositPayload(
                         menu.monitorPos(), menu.hostPos(), slot.index, Optional.empty()));

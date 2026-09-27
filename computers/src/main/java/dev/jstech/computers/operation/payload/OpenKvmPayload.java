@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.gui.layout.KvmChannelLayout;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextCodecs;
 import net.minecraft.core.BlockPos;
@@ -32,7 +33,8 @@ public record OpenKvmPayload(BlockPos rackPos, BlockPos monitorPos, int activeCh
     public record Channel(int slot, Text name, boolean running) {
     }
 
-    public static final int MAX_CHANNELS = 8;
+    /** As many channels as the bar carries; the KVM Switch screen's own layout is the one source for this cap. */
+    public static final int MAX_CHANNELS = KvmChannelLayout.MOST_CHANNELS;
 
     public static final CustomPacketPayload.Type<OpenKvmPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "open_kvm"));

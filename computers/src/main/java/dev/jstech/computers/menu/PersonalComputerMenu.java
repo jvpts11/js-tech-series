@@ -7,74 +7,84 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.registry.ComputingMenus;
-import dev.jstech.computers.block.PersonalComputerBlock;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.gui.layout.PersonalComputerLayout;
+import dev.jstech.computers.registry.ComputingMenus;
+import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.menu.MenuOpening;
+import dev.jstech.core.menu.MenuValidity;
+import dev.jstech.core.menu.PlayerSlots;
+import dev.jstech.core.menu.SlotGroup;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Menu for the Personal Computer: a single hardware-assembly surface (motherboard, PSU, CPU, RAM, GPU, disks, each restricted to its component category and clamped to the count the installed motherboard offers) plus the player inventory.
+ * Menu for the Personal Computer: a single hardware-assembly surface (motherboard, PSU, CPU, RAM, GPU, disks, each
+ * restricted to its component category and clamped to the count the installed motherboard offers) plus the player
+ * inventory.
  */
-public class PersonalComputerMenu extends AbstractComputerMenu {
+public class PersonalComputerMenu extends AbstractAssemblyComputerMenu {
+
+    private final PersonalComputerBlockEntity blockEntity;
 
     public static final int BUTTON_POWER = 0;
     public static final int BUTTON_AUTOSTART = 1;
 
-    private static final int HARDWARE_SLOTS = PersonalComputerBlockEntity.HARDWARE_SLOTS;
-
-    private final PersonalComputerBlockEntity blockEntity;
-    private final ContainerData data;
-    private final ContainerLevelAccess access;
-
     public PersonalComputerMenu(final int containerId, final Inventory playerInventory,
                                 final PersonalComputerBlockEntity be) {
-        super(ComputingMenus.PERSONAL_COMPUTER_MENU.get(), containerId);
+        super(ComputingMenus.PERSONAL_COMPUTER_MENU.get(), containerId, playerInventory, MenuValidity.blockEntity(be));
         this.blockEntity = be;
-        this.data = be.getDataAccess();
-        this.access = ContainerLevelAccess.create(be.getLevel(), be.getBlockPos());
-
+        final GuiLayout layout = PersonalComputerLayout.layout();
         final IItemHandler hw = be.getHardware();
-        addSlot(new SlotItemHandler(hw, PersonalComputerBlockEntity.MOTHERBOARD_SLOT, 8, 40));
-        addSlot(new SlotItemHandler(hw, PersonalComputerBlockEntity.PSU_SLOT, 8, 73));
-        addSlot(new BoardSlot(hw, PersonalComputerBlockEntity.CPU_SLOT, 44, 40, 0, be::boardCpuSlots));
+
+        final List<Slot> hardwareSlots = new ArrayList<>();
+        hardwareSlots.add(slot(hw, PersonalComputerBlockEntity.MOTHERBOARD_SLOT, layout.slotAt("mobo")));
+        hardwareSlots.add(slot(hw, PersonalComputerBlockEntity.PSU_SLOT, layout.slotAt("psu")));
+        final GuiLayout.SlotPosition cpuAt = layout.slotAt("cpu");
+        hardwareSlots.add(new BoardSlot(hw, PersonalComputerBlockEntity.CPU_SLOT, cpuAt.x(), cpuAt.y(), 0,
+                be::boardCpuSlots));
         for (int i = 0; i < PersonalComputerBlockEntity.RAM_SLOTS; i++) {
-            addSlot(new BoardSlot(hw, PersonalComputerBlockEntity.RAM_SLOTS_START + i,
-                    44 + i * 18, 73, i, be::boardRamSlots));
+            final GuiLayout.SlotPosition at = layout.slotAt("ram_" + i);
+            hardwareSlots.add(new BoardSlot(hw, PersonalComputerBlockEntity.RAM_SLOTS_START + i, at.x(), at.y(), i,
+                    be::boardRamSlots));
         }
         for (int i = 0; i < PersonalComputerBlockEntity.GPU_SLOTS; i++) {
-            addSlot(new BoardSlot(hw, PersonalComputerBlockEntity.GPU_SLOTS_START + i,
-                    44 + i * 18, 106, i, be::boardPcieSlots));
+            final GuiLayout.SlotPosition at = layout.slotAt("gpu_" + i);
+            hardwareSlots.add(new BoardSlot(hw, PersonalComputerBlockEntity.GPU_SLOTS_START + i, at.x(), at.y(), i,
+                    be::boardPcieSlots));
         }
         for (int i = 0; i < PersonalComputerBlockEntity.DISK_SLOTS; i++) {
-            addSlot(new BoardSlot(hw, PersonalComputerBlockEntity.DISK_SLOTS_START + i,
-                    8 + i * 18, 106, i, be::boardDiskSlots));
+            final GuiLayout.SlotPosition at = layout.slotAt("disk_" + i);
+            hardwareSlots.add(new BoardSlot(hw, PersonalComputerBlockEntity.DISK_SLOTS_START + i, at.x(), at.y(), i,
+                    be::boardDiskSlots));
         }
+        final SlotGroup hardware = slots(hardwareSlots.toArray(Slot[]::new));
 
-        addPlayerInventory(playerInventory, 8, 138);
-        addDataSlots(this.data);
+        final PlayerSlots player = playerInventory(playerInventory, layout.playerInventoryAt());
+        shiftClick(hardware, player.all());
+        shiftClick(player.all(), hardware);
+
+        data(be.fields().menuData());
+
+        button(BUTTON_POWER, p -> blockEntity.togglePower());
+        button(BUTTON_AUTOSTART, p -> blockEntity.toggleAutoStart());
     }
 
-    @Nullable
     public static PersonalComputerMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                                    final RegistryFriendlyByteBuf buf) {
-        if (playerInventory.player.level().getBlockEntity(buf.readBlockPos())
-                instanceof PersonalComputerBlockEntity be) {
-            return new PersonalComputerMenu(containerId, playerInventory, be);
-        }
-        return null;
+        return new PersonalComputerMenu(containerId, playerInventory,
+                MenuOpening.blockEntity(playerInventory, buf, PersonalComputerBlockEntity.class));
     }
 
-    public BlockPos pcPos() {
+    @Override
+    public BlockPos computerPos() {
         return blockEntity.getBlockPos();
     }
 
@@ -112,62 +122,30 @@ public class PersonalComputerMenu extends AbstractComputerMenu {
     }
 
     public boolean isRunning() {
-        return data.get(PersonalComputerBlockEntity.DATA_RUNNING) != 0;
+        return blockEntity.assemblyRunning();
     }
 
     public boolean buildValid() {
-        return data.get(PersonalComputerBlockEntity.DATA_BUILD_VALID) != 0;
+        return blockEntity.assemblyBuildValid();
     }
 
     public long capacity() {
-        return data.get(PersonalComputerBlockEntity.DATA_CAPACITY);
+        return blockEntity.assemblyCapacity();
     }
 
     public long ramBuffer() {
-        return data.get(PersonalComputerBlockEntity.DATA_RAM_BUFFER);
+        return blockEntity.assemblyRamBuffer();
     }
 
     public boolean isAutoStart() {
-        return data.get(PersonalComputerBlockEntity.DATA_AUTOSTART) != 0;
+        return blockEntity.assemblyAutoStart();
     }
 
     public boolean isOnNetwork() {
-        return data.get(PersonalComputerBlockEntity.DATA_ON_NETWORK) != 0;
+        return blockEntity.assemblyOnNetwork();
     }
 
     public int networkServerCount() {
-        return data.get(PersonalComputerBlockEntity.DATA_SERVER_COUNT);
-    }
-
-    @Override
-    public boolean clickMenuButton(final Player player, final int id) {
-        if (id == BUTTON_POWER) {
-            blockEntity.togglePower();
-            return true;
-        }
-        if (id == BUTTON_AUTOSTART) {
-            blockEntity.toggleAutoStart();
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean stillValid(final Player player) {
-        /*
-         * Validate against the block family, not a single block: the Standard, Vintage and Legacy
-         * Personal Computers are three distinct blocks that share this menu. Checking only the
-         * Standard block would make the server reject a Vintage/Legacy PC's menu as invalid and close
-         * it the instant it opens, so its GUI would never appear.
-         */
-        return access.evaluate((level, pos) ->
-                level.getBlockState(pos).getBlock()
-                        instanceof PersonalComputerBlock
-                        && player.canInteractWithBlock(pos, 4.0), true);
-    }
-
-    @Override
-    public ItemStack quickMoveStack(final Player player, final int index) {
-        return quickMoveBetweenContainerAndPlayer(player, index, HARDWARE_SLOTS);
+        return blockEntity.assemblyServerCount();
     }
 }

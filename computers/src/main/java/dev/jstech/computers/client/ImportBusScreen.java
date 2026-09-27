@@ -13,7 +13,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
- * Configuration screen for the Import Bus. All drawing lives in {@link AbstractBusScreen}; this only supplies the title and the filter hint (an empty filter imports everything).
+ * Configuration screen for the Import Bus. All drawing lives in {@link AbstractBusScreen}; this only
+ * supplies the title and the filter hint (an empty filter imports everything).
  */
 public class ImportBusScreen extends AbstractBusScreen<ImportBusMenu> {
 

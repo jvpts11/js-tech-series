@@ -33,6 +33,7 @@ import static dev.jstech.computers.client.FirmwareScreenTexts.VIDEO_ADAPTER;
 import static dev.jstech.computers.client.FirmwareScreenTexts.of;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.gui.layout.BootSequenceLayout;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.FirmwareKind;
@@ -78,9 +79,10 @@ public final class PostWall {
      * How many drives the self-test lists before it starts counting instead.
      *
      * <p>Enough for any computer a player builds, and few enough that the lines under the list, which are the
-     * ones that say what is about to boot or why nothing can, are still on the glass.
+     * ones that say what is about to boot or why nothing can, are still on the glass. The modern look's own
+     * no-boot dialog lists the same number, so this reads {@link BootSequenceLayout#MOST_LISTED_DEVICES}.
      */
-    public static final int MOST_DRIVES = 10;
+    public static final int MOST_DRIVES = BootSequenceLayout.MOST_LISTED_DEVICES;
 
     /** The amber those boards lifted a key out of a sentence with. */
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "firmware/post_wall",

@@ -70,14 +70,19 @@ public abstract class CoreMenu extends AbstractContainerMenu {
         if (slot == null || !slot.hasItem()) {
             return ItemStack.EMPTY;
         }
-        final List<SlotGroup> route = routeFrom(index);
+        final Map.Entry<SlotGroup, List<SlotGroup>> route = routeFrom(index);
         if (route == null) {
             return ItemStack.EMPTY;
         }
+        final boolean fromPlayer = route.getKey().playerSide();
         final ItemStack stack = slot.getItem();
         final ItemStack original = stack.copy();
-        for (final SlotGroup to : route) {
-            moveItemStackTo(stack, to.start(), to.end(), to.playerSide());
+        for (final SlotGroup to : route.getValue()) {
+            /*
+             * From a machine into the player's inventory the game fills from the end, the hotbar first; between the
+             * player's own groups it fills from the start, as the game's own menus do.
+             */
+            moveItemStackTo(stack, to.start(), to.end(), to.playerSide() && !fromPlayer);
             if (stack.isEmpty()) {
                 break;
             }
@@ -180,10 +185,11 @@ public abstract class CoreMenu extends AbstractContainerMenu {
         return onClient;
     }
 
-    private List<SlotGroup> routeFrom(final int index) {
+    /* The group the slot belongs to, with the route declared for it; null when its group has none. */
+    private Map.Entry<SlotGroup, List<SlotGroup>> routeFrom(final int index) {
         for (final Map.Entry<SlotGroup, List<SlotGroup>> entry : shiftClicks.entrySet()) {
             if (entry.getKey().contains(index)) {
-                return entry.getValue();
+                return entry;
             }
         }
         return null;

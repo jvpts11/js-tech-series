@@ -17,6 +17,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Finds the computer a terminal payload is about from the monitor and host positions it names.
@@ -35,6 +36,21 @@ public final class TerminalHosts {
             return host;
         }
         return null;
+    }
+
+    /**
+     * The computer a payload gated onto {@code menu} is about, resolved fresh from where the menu says it is: the
+     * gate already proved the menu is open and stands on the block the payload names, so nothing here re-checks that.
+     * The payload's own {@code monitorPos} is still checked against the menu's, so a payload that names a foreign
+     * monitor while riding a real terminal's gate is refused rather than acted on.
+     */
+    @Nullable
+    static IComputerTerminalHost hostOf(final ComputerTerminalMenu menu, final BlockPos monitorPos,
+                                        final ServerLevel level) {
+        if (!menu.monitorPos().equals(monitorPos)) {
+            return null;
+        }
+        return level.getBlockEntity(menu.hostPos()) instanceof IComputerTerminalHost host ? host : null;
     }
 
     /**

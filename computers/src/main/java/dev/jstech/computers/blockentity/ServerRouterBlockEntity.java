@@ -16,6 +16,7 @@ import dev.jstech.computers.block.ServerRouterBlock;
 import dev.jstech.computers.datacenter.DatacenterSection;
 import dev.jstech.computers.datacenter.LoadBalanceMode;
 import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.PartField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
@@ -33,7 +34,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -51,9 +51,9 @@ import java.util.Set;
 /**
  * BlockEntity backing the Server Router, the first network topology element.
  *
- * <p>Its screen reads a summary of the sections it found, declared as menu fields in the order of the {@code DATA_}
- * indices: the uplink face, the rack count and budget, whether it is over budget, and four values for each of up to
- * {@link #MAX_SECTIONS} sections.
+ * <p>Its screen reads a summary of the sections it found, declared as menu fields and exposed to the menu through
+ * named accessors: the uplink face, the rack count and budget, whether it is over budget, and four values for each
+ * of up to {@link #MAX_SECTIONS} sections.
  */
 public class ServerRouterBlockEntity extends SyncedBlockEntity {
 
@@ -74,37 +74,35 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
     private int recomputeCooldown;
     private int warnCooldown;
 
+    // Values the config GUI shows, worked out on the server and mirrored to the client while the menu is open.
+    private final DerivedInt inputFaceShown =
+            fields().derived("InputFace", () -> inputFace == null ? -1 : inputFace.get3DDataValue()).toMenu();
+    private final DerivedInt managedRacksShown = fields().derived("ManagedRacks", this::managedRackCount).toMenu();
+    private final DerivedInt maxRacksShown = fields().derived("MaxRacks", this::maxRacks).toMenu();
+    private final DerivedInt overCapacityShown = fields().derived("OverCapacity", () -> overCapacity).toMenu();
+    private final DerivedInt sectionCountShown =
+            fields().derived("SectionCount", () -> Math.min(sections.size(), MAX_SECTIONS)).toMenu();
+    /** One row per section: face 3D value, racks, servers, mode id, filled in the constructor. */
+    private final DerivedInt[][] sectionShown = new DerivedInt[MAX_SECTIONS][4];
+
     public static final IndustrialTier TIER = IndustrialTier.T3;
 
-    // The summary the config GUI reads, in menu order; section rows are flattened after the five totals.
-    public static final int DATA_INPUT_FACE = 0;      // input face 3D value, or -1 if none
-    public static final int DATA_MANAGED_RACKS = 1;
-    public static final int DATA_MAX_RACKS = 2;
-    public static final int DATA_OVER_CAPACITY = 3;   // 0 or 1
-    public static final int DATA_SECTION_COUNT = 4;
-    public static final int DATA_SECTION_BASE = 5;
-    public static final int DATA_PER_SECTION = 4;     // face 3D value, racks, servers, mode id
-    public static final int MAX_SECTIONS = 5;         // the 6 faces minus the one input face
-    public static final int DATA_COUNT = DATA_SECTION_BASE + MAX_SECTIONS * DATA_PER_SECTION;
+    /** A block has six faces; one is the auto-detected input, leaving at most five output sections. */
+    public static final int MAX_SECTIONS = 5;
 
     private static final int RECOMPUTE_INTERVAL = 20;
     private static final int WARN_INTERVAL = 200;
 
     public ServerRouterBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.SERVER_ROUTER_BE.get(), pos, state);
-        fields().derived("InputFace", () -> inputFace == null ? -1 : inputFace.get3DDataValue()).toMenu();
-        fields().derived("ManagedRacks", () -> managedRackCount()).toMenu();
-        fields().derived("MaxRacks", () -> maxRacks()).toMenu();
-        fields().derived("OverCapacity", () -> overCapacity).toMenu();
-        fields().derived("SectionCount", () -> Math.min(sections.size(), MAX_SECTIONS)).toMenu();
         for (int i = 0; i < MAX_SECTIONS; i++) {
             final int section = i;
-            fields().derived("Section" + i + "Face", () -> sectionFace(section)).toMenu();
-            fields().derived("Section" + i + "Racks",
+            sectionShown[i][0] = fields().derived("Section" + i + "Face", () -> sectionFace(section)).toMenu();
+            sectionShown[i][1] = fields().derived("Section" + i + "Racks",
                     () -> sectionRow(section, DatacenterSection::rackCount)).toMenu();
-            fields().derived("Section" + i + "Servers",
+            sectionShown[i][2] = fields().derived("Section" + i + "Servers",
                     () -> sectionRow(section, DatacenterSection::serverCount)).toMenu();
-            fields().derived("Section" + i + "Mode",
+            sectionShown[i][3] = fields().derived("Section" + i + "Mode",
                     () -> sectionRow(section, row -> loadBalanceMode(row.face()).id())).toMenu();
         }
         // A router broken or replaced leaves its network's topology at once, not when its chunk unloads.
@@ -158,8 +156,61 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
 
     // Accessors for the config GUI and the Datacenter Station
 
-    public ContainerData getDataAccess() {
-        return fields().menuData();
+    /** The uplink face the config GUI shows, as last shown to the open menu. */
+    @Nullable
+    public Direction inputFaceShown() {
+        final int v = inputFaceShown.getAsInt();
+        return v < 0 ? null : Direction.from3DDataValue(v);
+    }
+
+    /** The managed-rack count the config GUI shows, as last shown to the open menu. */
+    public int managedRacksShown() {
+        return managedRacksShown.getAsInt();
+    }
+
+    /** The rack budget the config GUI shows, as last shown to the open menu. */
+    public int maxRacksShown() {
+        return maxRacksShown.getAsInt();
+    }
+
+    /** Whether the config GUI shows the router over its rack budget, as last shown to the open menu. */
+    public boolean overCapacityShown() {
+        return overCapacityShown.isSet();
+    }
+
+    /** How many section rows the config GUI shows, as last shown to the open menu. */
+    public int sectionCountShown() {
+        return sectionCountShown.getAsInt();
+    }
+
+    /** The face of section row {@code i} the config GUI shows, or null past the last section. */
+    @Nullable
+    public Direction sectionFaceShown(final int i) {
+        if (i < 0 || i >= MAX_SECTIONS) {
+            return null;
+        }
+        final int v = sectionValueShown(i, 0);
+        return v < 0 ? null : Direction.from3DDataValue(v);
+    }
+
+    /** The rack count of section row {@code i} the config GUI shows, or 0 past the last section. */
+    public int sectionRacksShown(final int i) {
+        return sectionValueShown(i, 1);
+    }
+
+    /** The server count of section row {@code i} the config GUI shows, or 0 past the last section. */
+    public int sectionServersShown(final int i) {
+        return sectionValueShown(i, 2);
+    }
+
+    /** The load-balance mode of section row {@code i} the config GUI shows, or {@code ROUND_ROBIN} past it. */
+    public LoadBalanceMode sectionModeShown(final int i) {
+        return LoadBalanceMode.byId(sectionValueShown(i, 3));
+    }
+
+    /* The value at {@code field} of section row {@code section}'s menu tuple, or 0 for a row out of range. */
+    private int sectionValueShown(final int section, final int field) {
+        return section >= 0 && section < MAX_SECTIONS ? sectionShown[section][field].getAsInt() : 0;
     }
 
     public String customName() {

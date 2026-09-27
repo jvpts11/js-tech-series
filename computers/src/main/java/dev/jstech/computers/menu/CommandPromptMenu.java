@@ -15,28 +15,31 @@ import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellKind;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.menu.CoreMenu;
+import dev.jstech.core.menu.MenuValidity;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Predicate;
+
 /**
- * A slotless menu for the Command Prompt. It holds no inventory (the console is driven entirely by command payloads) but being a real menu lets the server validate that the player has this prompt open for this host before running a typed line, exactly as the graphical terminal does.
+ * A slotless menu for the Command Prompt. It holds no inventory (the console is driven entirely by command
+ * payloads) but being a real menu lets the server validate that the player has this prompt open for this
+ * host before running a typed line, exactly as the graphical terminal does.
  */
-public class CommandPromptMenu extends AbstractContainerMenu implements IMonitorMenu {
+public class CommandPromptMenu extends CoreMenu implements IMonitorMenu {
 
     private final BlockPos monitorPos;
     private final BlockPos hostPos;
     @Nullable
     private final HardwareEra era;
-    private final ContainerLevelAccess access;
     /*
      * Who the console says it is: the shell, the host name, the system and what it runs on, so the client can
      * draw the login banner and the initial prompt before the first server round-trip.
@@ -54,6 +57,8 @@ public class CommandPromptMenu extends AbstractContainerMenu implements IMonitor
     /** The longest a shell's or a family's name travels at, and the longest a machine's or a system's does. */
     private static final int SHORT_NAME = 16;
     private static final int LONG_NAME = 48;
+    /** How far a prompt's screen reaches, at the monitor showing it or, with none, at the machine itself. */
+    private static final double REACH = 8.0;
 
     public CommandPromptMenu(final int containerId, final Inventory playerInventory,
                              final BlockPos monitorPos, final BlockPos hostPos,
@@ -70,13 +75,12 @@ public class CommandPromptMenu extends AbstractContainerMenu implements IMonitor
                                 final Inventory playerInventory, final BlockPos monitorPos, final BlockPos hostPos,
                                 @Nullable final HardwareEra era, final ConsoleIdentity console,
                                 final long session) {
-        super(type, containerId);
+        super(type, containerId, playerInventory, validity(playerInventory.player.level(), monitorPos, hostPos));
         this.monitorPos = monitorPos;
         this.hostPos = hostPos;
         this.era = era;
         this.console = console == null ? ConsoleIdentity.NONE : console;
         this.session = session;
-        this.access = ContainerLevelAccess.create(playerInventory.player.level(), hostPos);
         IWatchedConsole.opened(playerInventory.player, hostPos);
     }
 
@@ -184,31 +188,28 @@ public class CommandPromptMenu extends AbstractContainerMenu implements IMonitor
         return era;
     }
 
+    // No slots: the console is driven only by command payloads, so there is nothing here to shift-click.
     @Override
     public ItemStack quickMoveStack(final Player player, final int index) {
         return ItemStack.EMPTY;
     }
 
-    @Override
-    public boolean stillValid(final Player player) {
-        /*
-         * The player sits at the MONITOR, not at the machine: reach is measured there, so a remote
-         * session over a screen keeps working however far the machine itself is. The machine still
-         * has to be alive and shown by that screen.
-         */
-        return access.evaluate((level, pos) -> {
-            if (!(level.getBlockEntity(pos) instanceof IComputerTerminalHost) || !sessionAlive(level, pos)) {
-                return false;
-            }
-            if (!(level.getBlockEntity(monitorPos)
-                    instanceof MonitorBlockEntity monitor)) {
-                // No monitor block (a firmware-opened prompt): fall back to standing at the machine.
-                return player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) <= 64.0;
-            }
-            return monitor.shows(pos)
-                    && player.distanceToSqr(monitorPos.getX() + 0.5, monitorPos.getY() + 0.5,
-                            monitorPos.getZ() + 0.5) <= 64.0;
-        }, true);
+    /**
+     * Valid while the host is still a running terminal host with a system to run, and the player can still see
+     * it: at the monitor showing it (the player sits at the MONITOR, not at the machine, so a remote session
+     * over a screen keeps working however far the machine itself is), or, for a prompt opened with no monitor
+     * block behind it (the firmware's own), at the machine itself.
+     */
+    private static Predicate<Player> validity(final Level level, final BlockPos monitorPos, final BlockPos hostPos) {
+        final Predicate<Player> hostAlive = player -> level.getBlockEntity(hostPos) instanceof IComputerTerminalHost
+                && sessionAlive(level, hostPos);
+        final Predicate<Player> nearMonitor = MenuValidity.near(level, monitorPos, REACH);
+        final Predicate<Player> nearHost = MenuValidity.near(level, hostPos, REACH);
+        final Predicate<Player> reachable = player -> level.getBlockEntity(monitorPos)
+                instanceof MonitorBlockEntity monitor
+                ? monitor.shows(hostPos) && nearMonitor.test(player)
+                : nearHost.test(player);
+        return hostAlive.and(reachable);
     }
 
     /**

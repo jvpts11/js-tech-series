@@ -7,74 +7,83 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.registry.ComputingMenus;
-import dev.jstech.computers.block.CraftingComputerBlock;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.gui.layout.CraftingComputerLayout;
+import dev.jstech.computers.registry.ComputingMenus;
+import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.menu.MenuOpening;
+import dev.jstech.core.menu.MenuValidity;
+import dev.jstech.core.menu.PlayerSlots;
+import dev.jstech.core.menu.SlotGroup;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Menu for the Crafting Computer's assembly surface: motherboard, PSU, CPU, RAM, PCIe (where the Crafting Card goes) and disks (each restricted to its component category and clamped to the count the installed motherboard offers) plus the player inventory.
+ * Menu for the Crafting Computer's assembly surface: motherboard, PSU, CPU, RAM, PCIe (where the Crafting Card goes)
+ * and disks (each restricted to its component category and clamped to the count the installed motherboard offers)
+ * plus the player inventory.
  */
-public class CraftingComputerMenu extends AbstractComputerMenu {
+public class CraftingComputerMenu extends AbstractAssemblyComputerMenu {
+
+    private final CraftingComputerBlockEntity blockEntity;
 
     public static final int BUTTON_POWER = 0;
     public static final int BUTTON_AUTOSTART = 1;
 
-    private static final int HARDWARE_SLOTS = CraftingComputerBlockEntity.HARDWARE_SLOTS;
-
-    private final CraftingComputerBlockEntity blockEntity;
-    private final ContainerData data;
-    private final ContainerLevelAccess access;
-
     public CraftingComputerMenu(final int containerId, final Inventory playerInventory,
                                 final CraftingComputerBlockEntity be) {
-        super(ComputingMenus.CRAFTING_COMPUTER_MENU.get(), containerId);
+        super(ComputingMenus.CRAFTING_COMPUTER_MENU.get(), containerId, playerInventory, MenuValidity.blockEntity(be));
         this.blockEntity = be;
-        this.data = be.getDataAccess();
-        this.access = ContainerLevelAccess.create(be.getLevel(), be.getBlockPos());
-
+        final GuiLayout layout = CraftingComputerLayout.layout();
         final IItemHandler hw = be.getHardware();
-        addSlot(new SlotItemHandler(hw, CraftingComputerBlockEntity.MOTHERBOARD_SLOT, 8, 40));
-        addSlot(new SlotItemHandler(hw, CraftingComputerBlockEntity.PSU_SLOT, 8, 73));
-        addSlot(new BoardSlot(hw, CraftingComputerBlockEntity.CPU_SLOT, 44, 40, 0, be::boardCpuSlots));
+
+        final List<Slot> hardwareSlots = new ArrayList<>();
+        hardwareSlots.add(slot(hw, CraftingComputerBlockEntity.MOTHERBOARD_SLOT, layout.slotAt("mobo")));
+        hardwareSlots.add(slot(hw, CraftingComputerBlockEntity.PSU_SLOT, layout.slotAt("psu")));
+        final GuiLayout.SlotPosition cpuAt = layout.slotAt("cpu");
+        hardwareSlots.add(new BoardSlot(hw, CraftingComputerBlockEntity.CPU_SLOT, cpuAt.x(), cpuAt.y(), 0,
+                be::boardCpuSlots));
         for (int i = 0; i < CraftingComputerBlockEntity.RAM_SLOTS; i++) {
-            addSlot(new BoardSlot(hw, CraftingComputerBlockEntity.RAM_SLOTS_START + i,
-                    44 + i * 18, 73, i, be::boardRamSlots));
+            final GuiLayout.SlotPosition at = layout.slotAt("ram_" + i);
+            hardwareSlots.add(new BoardSlot(hw, CraftingComputerBlockEntity.RAM_SLOTS_START + i, at.x(), at.y(), i,
+                    be::boardRamSlots));
         }
         for (int i = 0; i < CraftingComputerBlockEntity.PCIE_SLOTS; i++) {
-            addSlot(new BoardSlot(hw, CraftingComputerBlockEntity.PCIE_SLOTS_START + i,
-                    44 + i * 18, 106, i, be::boardPcieSlots));
+            final GuiLayout.SlotPosition at = layout.slotAt("pcie_" + i);
+            hardwareSlots.add(new BoardSlot(hw, CraftingComputerBlockEntity.PCIE_SLOTS_START + i, at.x(), at.y(), i,
+                    be::boardPcieSlots));
         }
         for (int i = 0; i < CraftingComputerBlockEntity.DISK_SLOTS; i++) {
-            addSlot(new BoardSlot(hw, CraftingComputerBlockEntity.DISK_SLOTS_START + i,
-                    8 + i * 18, 106, i, be::boardDiskSlots));
+            final GuiLayout.SlotPosition at = layout.slotAt("disk_" + i);
+            hardwareSlots.add(new BoardSlot(hw, CraftingComputerBlockEntity.DISK_SLOTS_START + i, at.x(), at.y(), i,
+                    be::boardDiskSlots));
         }
+        final SlotGroup hardware = slots(hardwareSlots.toArray(Slot[]::new));
 
-        addPlayerInventory(playerInventory, CraftingComputerLayout.INV_X, CraftingComputerLayout.INV_Y);
-        addDataSlots(this.data);
+        final PlayerSlots player = playerInventory(playerInventory, layout.playerInventoryAt());
+        shiftClick(hardware, player.all());
+        shiftClick(player.all(), hardware);
+
+        data(be.fields().menuData());
+
+        button(BUTTON_POWER, p -> blockEntity.togglePower());
+        button(BUTTON_AUTOSTART, p -> blockEntity.toggleAutoStart());
     }
 
-    @Nullable
     public static CraftingComputerMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                                    final RegistryFriendlyByteBuf buf) {
-        if (playerInventory.player.level().getBlockEntity(buf.readBlockPos())
-                instanceof CraftingComputerBlockEntity be) {
-            return new CraftingComputerMenu(containerId, playerInventory, be);
-        }
-        return null;
+        return new CraftingComputerMenu(containerId, playerInventory,
+                MenuOpening.blockEntity(playerInventory, buf, CraftingComputerBlockEntity.class));
     }
 
+    @Override
     public BlockPos computerPos() {
         return blockEntity.getBlockPos();
     }
@@ -113,77 +122,46 @@ public class CraftingComputerMenu extends AbstractComputerMenu {
     }
 
     public boolean isRunning() {
-        return data.get(CraftingComputerBlockEntity.DATA_RUNNING) != 0;
+        return blockEntity.assemblyRunning();
     }
 
     public boolean buildValid() {
-        return data.get(CraftingComputerBlockEntity.DATA_BUILD_VALID) != 0;
+        return blockEntity.assemblyBuildValid();
     }
 
     public long capacity() {
-        return data.get(CraftingComputerBlockEntity.DATA_CAPACITY);
+        return blockEntity.assemblyCapacity();
     }
 
     public long ramBuffer() {
-        return data.get(CraftingComputerBlockEntity.DATA_RAM_BUFFER);
+        return blockEntity.assemblyRamBuffer();
     }
 
     public boolean isAutoStart() {
-        return data.get(CraftingComputerBlockEntity.DATA_AUTOSTART) != 0;
+        return blockEntity.assemblyAutoStart();
     }
 
     public boolean isOnNetwork() {
-        return data.get(CraftingComputerBlockEntity.DATA_ON_NETWORK) != 0;
+        return blockEntity.assemblyOnNetwork();
     }
 
     public int craftFactorX100() {
-        return data.get(CraftingComputerBlockEntity.DATA_CRAFT_FACTOR_X100);
+        return blockEntity.assemblyCraftFactorX100();
     }
 
     public long craftThroughput() {
-        return data.get(CraftingComputerBlockEntity.DATA_CRAFT_THROUGHPUT);
+        return blockEntity.assemblyCraftThroughput();
     }
 
     public int craftThreads() {
-        return data.get(CraftingComputerBlockEntity.DATA_CRAFT_THREADS);
+        return blockEntity.assemblyCraftThreads();
     }
 
     public int romUsed() {
-        return data.get(CraftingComputerBlockEntity.DATA_ROM_USED);
+        return blockEntity.assemblyRomUsed();
     }
 
     public int romLimit() {
         return CraftingComputerBlockEntity.RECIPE_ROM_LIMIT;
-    }
-
-    @Override
-    public boolean clickMenuButton(final Player player, final int id) {
-        if (id == BUTTON_POWER) {
-            blockEntity.togglePower();
-            return true;
-        }
-        if (id == BUTTON_AUTOSTART) {
-            blockEntity.toggleAutoStart();
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean stillValid(final Player player) {
-        /*
-         * Validate against the block family, not a single block: the Standard, Vintage and Legacy
-         * Crafting Computers are distinct blocks that share this menu. Checking only the Standard block
-         * would make the server reject a Vintage/Legacy menu as invalid and close it the instant it opens.
-         */
-        return access.evaluate((level, pos) ->
-                level.getBlockState(pos).getBlock()
-                        instanceof CraftingComputerBlock
-                        && player.canInteractWithBlock(pos, 4.0), true);
-    }
-
-    @Override
-    public ItemStack quickMoveStack(final Player player, final int index) {
-        return quickMoveBetweenContainerAndPlayer(player, index, HARDWARE_SLOTS);
     }
 }

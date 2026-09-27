@@ -60,7 +60,17 @@ public final class CraftingSwitchLayout {
     public static final int INV_LABEL_Y = 106;
     public static final int INV_X = 19;
     public static final int INV_Y = 116;
-    public static final int HOTBAR_Y = INV_Y + 58;
+
+    // Category picker popup: a modal list of the installed recipe types (plus "none").
+    public static final int CP_X = 24;
+    public static final int CP_Y = 24;
+    public static final int CP_W = 152;
+    public static final int CP_ROW_H = 11;
+    public static final int CP_VISIBLE_ROWS = 7;
+    /** The picker's caption and the rule under it, above the first row. */
+    public static final int CP_HEADER_H = 15;
+    /** The inset of a row's hover box from the picker's sides, and the picker's foot under the last row. */
+    public static final int CP_PAD = 3;
 
     private CraftingSwitchLayout() {
     }
@@ -68,6 +78,16 @@ public final class CraftingSwitchLayout {
     /** The y of face row {@code i}'s top edge. */
     public static int rowY(final int row) {
         return FIRST_ROW_Y + row * ROW_H;
+    }
+
+    /** The y of the category picker's visible row {@code r}, counted from the first one shown. */
+    public static int cpRowY(final int r) {
+        return CP_Y + CP_HEADER_H + r * CP_ROW_H;
+    }
+
+    /** The category picker's full height: its caption, the rows that show at once and its foot. */
+    public static int cpHeight() {
+        return CP_HEADER_H + CP_VISIBLE_ROWS * CP_ROW_H + CP_PAD;
     }
 
     /**

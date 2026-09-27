@@ -8,12 +8,14 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
 import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.computers.gui.layout.CraftingSwitchLayout;
 import dev.jstech.computers.menu.CraftingSwitchMenu;
-import dev.jstech.computers.operation.payload.SetBusNamePayload;
 import dev.jstech.computers.operation.payload.SetCraftingSwitchFacePayload;
+import dev.jstech.computers.operation.payload.crafting.RenameSwitchBusPayload;
+import dev.jstech.core.client.gui.screen.CoreContainerScreen;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -25,10 +27,10 @@ import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
@@ -38,19 +40,12 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * back with {@link SetCraftingSwitchFacePayload}.
  */
 @PaletteHolder
-public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitchMenu> {
+public class CraftingSwitchScreen extends CoreContainerScreen<CraftingSwitchMenu> {
 
     /** The screen's colours, {@code jsc:screen/crafting_switch}. */
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "screen/crafting_switch",
             new Colours(0xFF0B0E13, 0xFF11161D, 0xFF1D2530, 0xFF15212A, 0xFF39D6C4, 0xFFCDD6E2, 0xFF7D8A9C,
                     0xFF5FE07A, 0xC0000000));
-
-    // Category picker popup: a modal list of the installed recipe types (plus "none").
-    private static final int CP_X = 24;
-    private static final int CP_Y = 24;
-    private static final int CP_W = 152;
-    private static final int CP_ROW_H = 11;
-    private static final int CP_VIS_ROWS = 7;
 
     private int selectedFace;
     private EditBox nameBox;
@@ -134,6 +129,12 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
         final Direction d = Direction.from3DDataValue(face);
         final boolean adjacent = be != null && be.machineOnFace(d);
         final var viaBus = busMachinesOnFace(face);
+        /*
+         * Widen before filling, then narrow: EditBox.setMaxLength truncates whatever text is already in the
+         * box and fires the responder at once, and selectedFace already points at the new face by then. A
+         * premature narrow would send a rename for the wrong bus with the previous face's text, truncated.
+         */
+        nameBox.setMaxLength(48);
         if (adjacent) {
             nameBox.setValue(be.faceName(d));
         } else if (!viaBus.isEmpty()) {
@@ -141,6 +142,8 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
         } else {
             nameBox.setValue(be == null ? "" : be.faceName(d));
         }
+        // A name reached over a bus is edited (and clamped) as a bus name, shorter than a face's own.
+        nameBox.setMaxLength(!adjacent && !viaBus.isEmpty() ? AbstractBusPart.MAX_NAME_LENGTH : 48);
         /*
          * Active + category govern the face's whole cable run too, so they stay editable when machines hang
          * off this face via buses.
@@ -214,7 +217,7 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
         if (!viaBus.isEmpty()) {
             final var line = viaBus.get(0);
             PacketDistributor.sendToServer(
-                    new SetBusNamePayload(line.cablePos(), line.busFace(), name));
+                    new RenameSwitchBusPayload(menu.switchPos(), line.cablePos(), line.busFace(), name));
         }
     }
 
@@ -261,11 +264,10 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
         // The category picker is modal: a row click tags the face, any other click closes it.
         if (categoryPickerOpen) {
             final List<String> list = categories();
-            final int px = leftPos + CP_X;
-            final int py = topPos + CP_Y;
-            for (int r = 0; r < CP_VIS_ROWS && categoryScroll + r < list.size(); r++) {
-                final int ry = py + 15 + r * CP_ROW_H;
-                if (mouseX >= px + 3 && mouseX < px + CP_W - 3 && mouseY >= ry && mouseY < ry + CP_ROW_H) {
+            for (int r = 0; r < CraftingSwitchLayout.CP_VISIBLE_ROWS && categoryScroll + r < list.size(); r++) {
+                if (hover((int) mouseX, (int) mouseY, CraftingSwitchLayout.CP_X + CraftingSwitchLayout.CP_PAD,
+                        CraftingSwitchLayout.cpRowY(r), CraftingSwitchLayout.CP_W - 2 * CraftingSwitchLayout.CP_PAD,
+                        CraftingSwitchLayout.CP_ROW_H)) {
                     selectCategory(list.get(categoryScroll + r));
                     return true;
                 }
@@ -275,10 +277,8 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
         }
         // Click a face row in the left list to select it.
         for (int i = 0; i < CraftingSwitchLayout.FACES; i++) {
-            final int ry = topPos + CraftingSwitchLayout.rowY(i);
-            if (mouseX >= leftPos + CraftingSwitchLayout.LIST_X
-                    && mouseX < leftPos + CraftingSwitchLayout.LIST_X + CraftingSwitchLayout.LIST_W
-                    && mouseY >= ry && mouseY < ry + CraftingSwitchLayout.ROW_BOX_H) {
+            if (hover((int) mouseX, (int) mouseY, CraftingSwitchLayout.LIST_X, CraftingSwitchLayout.rowY(i),
+                    CraftingSwitchLayout.LIST_W, CraftingSwitchLayout.ROW_BOX_H)) {
                 selectFace(i);
                 return true;
             }
@@ -290,7 +290,7 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
     public boolean mouseScrolled(final double mouseX, final double mouseY, final double scrollX,
                                  final double scrollY) {
         if (categoryPickerOpen && scrollY != 0) {
-            final int max = Math.max(0, categories().size() - CP_VIS_ROWS);
+            final int max = Math.max(0, categories().size() - CraftingSwitchLayout.CP_VISIBLE_ROWS);
             categoryScroll = Math.max(0, Math.min(max, categoryScroll - (int) Math.signum(scrollY)));
             return true;
         }
@@ -402,17 +402,13 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
         }
 
         /*
-         * Player inventory slot frames (3 main rows + hotbar). Without these, the empty creative-mode slots have
-         * nothing drawn behind them and the inventory looks like it vanished.
+         * Player inventory slot frames, drawn from the menu's own slots (its only slots). Without these, the
+         * empty creative-mode slots have nothing drawn behind them and the inventory looks like it vanished.
          */
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                JsTechTheme.slot(g, x + CraftingSwitchLayout.INV_X + col * 18,
-                        y + CraftingSwitchLayout.INV_Y + row * 18);
+        for (final Slot slot : menu.slots) {
+            if (slot.isActive()) {
+                JsTechTheme.slot(g, x + slot.x, y + slot.y);
             }
-        }
-        for (int col = 0; col < 9; col++) {
-            JsTechTheme.slot(g, x + CraftingSwitchLayout.INV_X + col * 18, y + CraftingSwitchLayout.HOTBAR_Y);
         }
     }
 
@@ -435,41 +431,51 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
             g.pose().translate(0, 0, 300);
             renderCategoryPicker(g, mouseX, mouseY);
             g.pose().popPose();
-        } else {
-            renderTooltip(g, mouseX, mouseY);
+        }
+    }
+
+    /** Skipped while the category picker is open, so a slot's tooltip never peeks out from behind the modal. */
+    @Override
+    protected void renderTooltip(final GuiGraphics g, final int mouseX, final int mouseY) {
+        if (!categoryPickerOpen) {
+            super.renderTooltip(g, mouseX, mouseY);
         }
     }
 
     /** Modal list of the dynamic machine categories (installed recipe types); a row click tags the face. */
     private void renderCategoryPicker(final GuiGraphics g, final int mouseX, final int mouseY) {
         final List<String> list = categories();
-        categoryScroll = Math.max(0, Math.min(Math.max(0, list.size() - CP_VIS_ROWS), categoryScroll));
-        final int px = leftPos + CP_X;
-        final int py = topPos + CP_Y;
-        final int ph = 15 + CP_VIS_ROWS * CP_ROW_H + 3;
+        final int shown = CraftingSwitchLayout.CP_VISIBLE_ROWS;
+        categoryScroll = Math.max(0, Math.min(Math.max(0, list.size() - shown), categoryScroll));
+        final int px = leftPos + CraftingSwitchLayout.CP_X;
+        final int py = topPos + CraftingSwitchLayout.CP_Y;
+        final int ph = CraftingSwitchLayout.cpHeight();
         g.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, colours().veil());
-        g.fill(px, py, px + CP_W, py + ph, colours().panel());
+        g.fill(px, py, px + CraftingSwitchLayout.CP_W, py + ph, colours().panel());
         g.fill(px, py, px + 1, py + ph, colours().line());
-        g.fill(px + CP_W - 1, py, px + CP_W, py + ph, colours().line());
+        g.fill(px + CraftingSwitchLayout.CP_W - 1, py, px + CraftingSwitchLayout.CP_W, py + ph, colours().line());
         g.drawString(font, GameText.resolve(CraftingSwitchTexts.MACHINE_CATEGORY), px + 6, py + 3,
                 colours().accent(), false);
-        g.fill(px + 4, py + 13, px + CP_W - 4, py + 14, colours().line());
-        for (int r = 0; r < CP_VIS_ROWS && categoryScroll + r < list.size(); r++) {
+        g.fill(px + 4, py + 13, px + CraftingSwitchLayout.CP_W - 4, py + 14, colours().line());
+        final int pad = CraftingSwitchLayout.CP_PAD;
+        for (int r = 0; r < shown && categoryScroll + r < list.size(); r++) {
             final String category = list.get(categoryScroll + r);
-            final int ry = py + 15 + r * CP_ROW_H;
-            final boolean hovered = mouseX >= px + 3 && mouseX < px + CP_W - 3
-                    && mouseY >= ry && mouseY < ry + CP_ROW_H;
+            final int ry = topPos + CraftingSwitchLayout.cpRowY(r);
+            final boolean hovered = hover(mouseX, mouseY, CraftingSwitchLayout.CP_X + pad,
+                    CraftingSwitchLayout.cpRowY(r), CraftingSwitchLayout.CP_W - 2 * pad,
+                    CraftingSwitchLayout.CP_ROW_H);
             if (hovered) {
-                g.fill(px + 3, ry, px + CP_W - 3, ry + CP_ROW_H, colours().selection());
+                g.fill(px + pad, ry, px + CraftingSwitchLayout.CP_W - pad, ry + CraftingSwitchLayout.CP_ROW_H,
+                        colours().selection());
             }
             JsTechTheme.textS(g, font, category.isEmpty() ? GameText.resolve(CraftingSwitchTexts.NONE) : category,
                     px + 8, ry + 2,
                     hovered ? colours().text() : colours().dim());
         }
-        if (list.size() > CP_VIS_ROWS) {
+        if (list.size() > shown) {
             JsTechTheme.textSRight(g, font, (categoryScroll + 1) + "-"
-                            + Math.min(list.size(), categoryScroll + CP_VIS_ROWS) + "/" + list.size(),
-                    px + CP_W - 6, py + 4, colours().dim());
+                            + Math.min(list.size(), categoryScroll + shown) + "/" + list.size(),
+                    px + CraftingSwitchLayout.CP_W - 6, py + 4, colours().dim());
         }
     }
 

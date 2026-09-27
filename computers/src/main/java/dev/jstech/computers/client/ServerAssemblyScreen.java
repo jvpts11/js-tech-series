@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.gui.layout.ServerAssemblyLayout;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.menu.ServerAssemblyMenu;
@@ -34,8 +35,8 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
 
     public ServerAssemblyScreen(final ServerAssemblyMenu menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
-        this.imageWidth = 244;
-        this.imageHeight = 294;
+        this.imageWidth = ServerAssemblyLayout.WIDTH;
+        this.imageHeight = ServerAssemblyLayout.HEIGHT;
         this.titleLabelX = -10000;
         this.inventoryLabelY = -10000;
     }
@@ -47,7 +48,8 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
          * Name field in the header, since renaming a computer happens here, in its assembly GUI, never via
          * an anvil. Each keystroke syncs the name to the held Server.
          */
-        setupNameBox(52, 8, 104, RenameServerPayload.MAX_LEN,
+        setupNameBox(ServerAssemblyLayout.NAME_BOX_X, ServerAssemblyLayout.NAME_BOX_Y,
+                ServerAssemblyLayout.NAME_BOX_W, RenameServerPayload.MAX_LEN,
                 GameText.component(AssemblyTexts.NAME_THIS_SERVER).withStyle(ChatFormatting.DARK_GRAY),
                 menu.serverName(),
                 s -> PacketDistributor.sendToServer(new RenameServerPayload(s)));
@@ -72,17 +74,23 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
         final int x = leftPos;
         final int y = topPos;
         JsTechTheme.window(g, x, y, imageWidth, imageHeight);
-        JsTechTheme.headerBar(g, x + 6, y + 6, 232);
+        JsTechTheme.headerBar(g, x + ServerAssemblyLayout.HEADER_X, y + ServerAssemblyLayout.HEADER_Y,
+                ServerAssemblyLayout.HEADER_W);
         // Name field background (the field itself is an EditBox drawn over this).
-        nameWell(g, x + 50, y + 7, x + 158);
+        nameWell(g, x + ServerAssemblyLayout.NAME_WELL_LEFT, y + ServerAssemblyLayout.NAME_WELL_TOP,
+                x + ServerAssemblyLayout.NAME_WELL_RIGHT);
 
         final ComputerBuild build = menu.currentBuild();
 
         // Spec tiles (4 across).
-        JsTechTheme.panel(g, x + 8, y + 26, 55, 18);
-        JsTechTheme.panel(g, x + 67, y + 26, 55, 18);
-        JsTechTheme.panel(g, x + 126, y + 26, 55, 18);
-        JsTechTheme.panel(g, x + 185, y + 26, 51, 18);
+        JsTechTheme.panel(g, x + ServerAssemblyLayout.TILE_X_ORCHESTRATION, y + ServerAssemblyLayout.TILE_Y,
+                ServerAssemblyLayout.TILE_W, ServerAssemblyLayout.TILE_H);
+        JsTechTheme.panel(g, x + ServerAssemblyLayout.TILE_X_QUEUES, y + ServerAssemblyLayout.TILE_Y,
+                ServerAssemblyLayout.TILE_W, ServerAssemblyLayout.TILE_H);
+        JsTechTheme.panel(g, x + ServerAssemblyLayout.TILE_X_RAM, y + ServerAssemblyLayout.TILE_Y,
+                ServerAssemblyLayout.TILE_W, ServerAssemblyLayout.TILE_H);
+        JsTechTheme.panel(g, x + ServerAssemblyLayout.TILE_X_DRAW, y + ServerAssemblyLayout.TILE_Y,
+                ServerAssemblyLayout.TILE_W_LAST, ServerAssemblyLayout.TILE_H);
 
         /*
          * Power-headroom track. There is no storage track any more: drives live in the rack's
@@ -91,12 +99,14 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
         final int draw = build == null ? 0 : build.powerDraw();
         final int watt = build == null ? 0 : build.psu().wattage();
         final double pf = watt <= 0 ? 0.0 : Math.min(1.0, (double) draw / watt);
-        JsTechTheme.track(g, x + 52, y + 49, 130, pf, draw > watt ? JsTechTheme.red() : JsTechTheme.green());
+        JsTechTheme.track(g, x + ServerAssemblyLayout.TRACK_X, y + ServerAssemblyLayout.TRACK_Y,
+                ServerAssemblyLayout.TRACK_W, pf, draw > watt ? JsTechTheme.red() : JsTechTheme.green());
 
         // Problems strip.
-        JsTechTheme.panel(g, x + 8, y + 68, 228, 12);
+        JsTechTheme.panel(g, x + ServerAssemblyLayout.PROBLEMS_X, y + ServerAssemblyLayout.PROBLEMS_Y,
+                ServerAssemblyLayout.PROBLEMS_W, ServerAssemblyLayout.PROBLEMS_H);
 
-        // Draw a cell behind every ACTIVE hardware slot, reading the menu's own slot positions. The
+        // Draw a cell behind every ACTIVE hardware slot, reading the menu's own slot positions.
         for (int i = 0; i < ServerHardwareHandler.SLOTS; i++) {
             final var slot = menu.getSlot(i);
             if (slot.isActive()) {
@@ -107,11 +117,13 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
         // Player inventory.
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                JsTechTheme.slot(g, x + 8 + col * 18, y + 214 + row * 18);
+                JsTechTheme.slot(g, x + ServerAssemblyLayout.INV_X + col * ServerAssemblyLayout.SLOT,
+                        y + ServerAssemblyLayout.INV_Y + row * ServerAssemblyLayout.SLOT);
             }
         }
         for (int col = 0; col < 9; col++) {
-            JsTechTheme.slot(g, x + 8 + col * 18, y + 272);
+            JsTechTheme.slot(g, x + ServerAssemblyLayout.INV_X + col * ServerAssemblyLayout.SLOT,
+                    y + ServerAssemblyLayout.INV_Y + ServerAssemblyLayout.HOTBAR_GAP);
         }
     }
 
@@ -135,60 +147,74 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
             status = GameText.resolve(AssemblyTexts.READY);
             statusColor = JsTechTheme.green();
         }
-        final int pillX = 232 - font.width(status);
+        final int pillX = ServerAssemblyLayout.HEADER_W - font.width(status);
         JsTechTheme.text(g, font, status, pillX, 11, statusColor);
         g.fill(pillX - 6, 11, pillX - 2, 15, statusColor);
 
         // Spec tiles.
-        JsTechTheme.tileTextS(g, font, 8, 26, GameText.resolve(AssemblyTexts.ORCHESTRATION),
+        JsTechTheme.tileTextS(g, font, ServerAssemblyLayout.TILE_X_ORCHESTRATION, ServerAssemblyLayout.TILE_Y,
+                GameText.resolve(AssemblyTexts.ORCHESTRATION),
                 build == null ? "0" : fmt.compact(build.totalCapacity(), Unit.IT_PER_TICK), JsTechTheme.text());
-        JsTechTheme.tileTextS(g, font, 67, 26, GameText.resolve(AssemblyTexts.QUEUES),
+        JsTechTheme.tileTextS(g, font, ServerAssemblyLayout.TILE_X_QUEUES, ServerAssemblyLayout.TILE_Y,
+                GameText.resolve(AssemblyTexts.QUEUES),
                 build == null ? "0" : String.valueOf(build.parallelQueues()), JsTechTheme.text());
-        JsTechTheme.tileTextS(g, font, 126, 26, GameText.resolve(AssemblyTexts.RAM_BUFFER_SHORT),
+        JsTechTheme.tileTextS(g, font, ServerAssemblyLayout.TILE_X_RAM, ServerAssemblyLayout.TILE_Y,
+                GameText.resolve(AssemblyTexts.RAM_BUFFER_SHORT),
                 build == null ? "0" : JsTechTheme.fmt(build.ramBuffer()), JsTechTheme.text());
-        JsTechTheme.tileTextS(g, font, 185, 26, GameText.resolve(AssemblyTexts.DRAW),
+        JsTechTheme.tileTextS(g, font, ServerAssemblyLayout.TILE_X_DRAW, ServerAssemblyLayout.TILE_Y,
+                GameText.resolve(AssemblyTexts.DRAW),
                 build == null ? "0" : GameText.resolve(AssemblyTexts.WATTS.with(build.powerDraw())),
                 JsTechTheme.text());
 
         // Track labels + values.
         final int draw = build == null ? 0 : build.powerDraw();
         final int watt = build == null ? 0 : build.psu().wattage();
-        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.POWER), 8, 49, JsTechTheme.text());
+        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.POWER), ServerAssemblyLayout.STAT_LABEL_X,
+                ServerAssemblyLayout.STAT_ROW_POWER_Y, JsTechTheme.text());
         JsTechTheme.textSRight(g, font, GameText.resolve(build == null ? AssemblyTexts.NO_WATTS.text()
-                        : AssemblyTexts.DRAW_OF.with(draw, watt)), 236, 49,
-                draw > watt ? JsTechTheme.red() : JsTechTheme.dim());
+                        : AssemblyTexts.DRAW_OF.with(draw, watt)), ServerAssemblyLayout.STAT_VALUE_X,
+                ServerAssemblyLayout.STAT_ROW_POWER_Y, draw > watt ? JsTechTheme.red() : JsTechTheme.dim());
         /*
          * Drives live in the rack's hotswap bays since the racks rework, so the assembly has no
          * storage of its own to report, so point the player at the right place instead.
          */
-        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.STORAGE), 8, 59, JsTechTheme.text());
-        JsTechTheme.textSRight(g, font, GameText.resolve(AssemblyTexts.DRIVES_IN_BAYS), 236, 59, JsTechTheme.dim());
+        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.STORAGE), ServerAssemblyLayout.STAT_LABEL_X,
+                ServerAssemblyLayout.STAT_ROW_STORAGE_Y, JsTechTheme.text());
+        JsTechTheme.textSRight(g, font, GameText.resolve(AssemblyTexts.DRIVES_IN_BAYS),
+                ServerAssemblyLayout.STAT_VALUE_X, ServerAssemblyLayout.STAT_ROW_STORAGE_Y, JsTechTheme.dim());
 
         // Problems strip.
         renderProblems(g, build);
 
         // Hardware bay labels (names only, the slots show installed vs available).
-        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.BOARD), 8, 87, JsTechTheme.dim());
-        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.CPU), 52, 87, JsTechTheme.dim());
-        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.RAM), 52, 117, JsTechTheme.dim());
-        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.GPU), 52, 165, JsTechTheme.dim());
+        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.BOARD), ServerAssemblyLayout.MOBO_X,
+                ServerAssemblyLayout.LABEL_ROW_1_Y, JsTechTheme.dim());
+        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.CPU), ServerAssemblyLayout.RIGHT_X,
+                ServerAssemblyLayout.LABEL_ROW_1_Y, JsTechTheme.dim());
+        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.RAM), ServerAssemblyLayout.RIGHT_X,
+                ServerAssemblyLayout.LABEL_ROW_2_Y, JsTechTheme.dim());
+        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.GPU), ServerAssemblyLayout.RIGHT_X,
+                ServerAssemblyLayout.LABEL_ROW_3_Y, JsTechTheme.dim());
     }
 
     private void renderProblems(final GuiGraphics g, final ComputerBuild build) {
         if (build == null) {
-            JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.INSERT_TO_BEGIN), 12, 71, JsTechTheme.dim());
+            JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.INSERT_TO_BEGIN),
+                    ServerAssemblyLayout.PROBLEMS_TEXT_X, ServerAssemblyLayout.PROBLEMS_TEXT_Y, JsTechTheme.dim());
             return;
         }
         final List<Text> problems = build.validate().problems();
         if (problems.isEmpty()) {
-            JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.ALL_CHECKS_PASSED), 12, 71, JsTechTheme.green());
+            JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.ALL_CHECKS_PASSED),
+                    ServerAssemblyLayout.PROBLEMS_TEXT_X, ServerAssemblyLayout.PROBLEMS_TEXT_Y, JsTechTheme.green());
             return;
         }
         final String first = font.plainSubstrByWidth(GameText.resolve(problems.get(0)), 250);
-        JsTechTheme.textS(g, font, first, 12, 71, JsTechTheme.red());
+        JsTechTheme.textS(g, font, first, ServerAssemblyLayout.PROBLEMS_TEXT_X, ServerAssemblyLayout.PROBLEMS_TEXT_Y,
+                JsTechTheme.red());
         if (problems.size() > 1) {
-            JsTechTheme.textSRight(g, font, GameText.resolve(AssemblyTexts.MORE.with(problems.size() - 1)), 234, 71,
-                    JsTechTheme.amber());
+            JsTechTheme.textSRight(g, font, GameText.resolve(AssemblyTexts.MORE.with(problems.size() - 1)),
+                    ServerAssemblyLayout.PROBLEMS_MORE_X, ServerAssemblyLayout.PROBLEMS_TEXT_Y, JsTechTheme.amber());
         }
     }
 
@@ -202,9 +228,8 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
         // super.render binds the era skin, draws the background and widgets, and renders the slot tooltip.
         super.render(g, mouseX, mouseY, partialTick);
         // Full problem list on hover over the strip.
-        final int relX = mouseX - leftPos;
-        final int relY = mouseY - topPos;
-        if (relX >= 8 && relX < 236 && relY >= 68 && relY < 80) {
+        if (hover(mouseX, mouseY, ServerAssemblyLayout.PROBLEMS_X, ServerAssemblyLayout.PROBLEMS_Y,
+                ServerAssemblyLayout.PROBLEMS_W, ServerAssemblyLayout.PROBLEMS_H)) {
             final ComputerBuild build = menu.currentBuild();
             if (build != null) {
                 final List<Text> problems = build.validate().problems();

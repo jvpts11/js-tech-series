@@ -7,52 +7,48 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.registry.ComputingMenus;
+import dev.jstech.computers.block.ServerRouterBlock;
 import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
 import dev.jstech.computers.datacenter.LoadBalanceMode;
+import dev.jstech.computers.registry.ComputingMenus;
+import dev.jstech.core.menu.CoreMenu;
+import dev.jstech.core.menu.MenuOpening;
+import dev.jstech.core.menu.MenuValidity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Menu for the Server Router's config GUI: no item slots; it exposes the live topology summary the router writes into its synced data (input face, managed-rack budget, and one row per output-face section with its rack/server counts and load-balance mode), and routes a row's mode-cycle click back to the router.
+ * Menu for the Server Router's config GUI: no item slots; it exposes the live topology summary the router writes
+ * into its declared fields (input face, managed-rack budget, and one row per output-face section with its
+ * rack/server counts and load-balance mode), and routes a row's mode-cycle click back to the router.
  */
-public class ServerRouterMenu extends AbstractContainerMenu {
+public class ServerRouterMenu extends CoreMenu {
 
     private final ServerRouterBlockEntity blockEntity;
-    private final ContainerData data;
-    private final ContainerLevelAccess access;
     private final BlockPos routerPos;
     private final String initialName;
 
     public ServerRouterMenu(final int containerId, final Inventory playerInventory,
                             final ServerRouterBlockEntity be, final String initialName) {
-        super(ComputingMenus.SERVER_ROUTER_MENU.get(), containerId);
+        super(ComputingMenus.SERVER_ROUTER_MENU.get(), containerId, playerInventory,
+                MenuValidity.block(be.getLevel(), be.getBlockPos(), ServerRouterBlock.class));
         this.blockEntity = be;
-        this.data = be.getDataAccess();
-        this.access = ContainerLevelAccess.create(be.getLevel(), be.getBlockPos());
         this.routerPos = be.getBlockPos();
         this.initialName = initialName;
-        addDataSlots(data);
+        data(be.fields().menuData());
+        for (final Direction face : Direction.values()) {
+            button(face.get3DDataValue(), player -> blockEntity.cycleLoadBalanceMode(face));
+        }
     }
 
-    @Nullable
     public static ServerRouterMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                                final RegistryFriendlyByteBuf buf) {
-        final BlockPos pos = buf.readBlockPos();
+        final ServerRouterBlockEntity be = MenuOpening.blockEntity(playerInventory, buf, ServerRouterBlockEntity.class);
         final String name = buf.readUtf();
-        if (playerInventory.player.level().getBlockEntity(pos) instanceof ServerRouterBlockEntity be) {
-            return new ServerRouterMenu(containerId, playerInventory, be, name);
-        }
-        return null;
+        return new ServerRouterMenu(containerId, playerInventory, be, name);
     }
 
     public BlockPos routerPos() {
@@ -65,66 +61,39 @@ public class ServerRouterMenu extends AbstractContainerMenu {
 
     @Nullable
     public Direction inputFace() {
-        final int v = data.get(ServerRouterBlockEntity.DATA_INPUT_FACE);
-        return v < 0 ? null : Direction.from3DDataValue(v);
+        return blockEntity.inputFaceShown();
     }
 
     public int managedRacks() {
-        return data.get(ServerRouterBlockEntity.DATA_MANAGED_RACKS);
+        return blockEntity.managedRacksShown();
     }
 
     public int maxRacks() {
-        return data.get(ServerRouterBlockEntity.DATA_MAX_RACKS);
+        return blockEntity.maxRacksShown();
     }
 
     public boolean overCapacity() {
-        return data.get(ServerRouterBlockEntity.DATA_OVER_CAPACITY) != 0;
+        return blockEntity.overCapacityShown();
     }
 
     public int sectionCount() {
-        return data.get(ServerRouterBlockEntity.DATA_SECTION_COUNT);
-    }
-
-    private int sectionField(final int section, final int field) {
-        return data.get(ServerRouterBlockEntity.DATA_SECTION_BASE
-                + section * ServerRouterBlockEntity.DATA_PER_SECTION + field);
+        return blockEntity.sectionCountShown();
     }
 
     @Nullable
     public Direction sectionFace(final int i) {
-        final int v = sectionField(i, 0);
-        return v < 0 ? null : Direction.from3DDataValue(v);
+        return blockEntity.sectionFaceShown(i);
     }
 
     public int sectionRacks(final int i) {
-        return sectionField(i, 1);
+        return blockEntity.sectionRacksShown(i);
     }
 
     public int sectionServers(final int i) {
-        return sectionField(i, 2);
+        return blockEntity.sectionServersShown(i);
     }
 
     public LoadBalanceMode sectionMode(final int i) {
-        return LoadBalanceMode.byId(sectionField(i, 3));
-    }
-
-    @Override
-    public boolean clickMenuButton(final Player player, final int id) {
-        // The button id is the output face's 3D data value; cycle that section's load-balance mode.
-        if (id >= 0 && id < Direction.values().length) {
-            blockEntity.cycleLoadBalanceMode(Direction.from3DDataValue(id));
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean stillValid(final Player player) {
-        return stillValid(access, player, ComputingModule.SERVER_ROUTER.get());
-    }
-
-    @Override
-    public ItemStack quickMoveStack(final Player player, final int index) {
-        return ItemStack.EMPTY; // no slots to shift between
+        return blockEntity.sectionModeShown(i);
     }
 }

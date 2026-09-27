@@ -17,7 +17,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.level.Level;
 
 /**
- * Menu for configuring an Import Bus part mounted on a data cable. All behavior lives in {@link AbstractBusMenu}; this only binds the import menu type and the create/fromNetwork factories.
+ * Menu for configuring an Import Bus part mounted on a data cable. All behavior lives in
+ * {@link AbstractBusMenu}; this only binds the import menu type and the create/fromNetwork factories.
  */
 public class ImportBusMenu extends AbstractBusMenu {
 

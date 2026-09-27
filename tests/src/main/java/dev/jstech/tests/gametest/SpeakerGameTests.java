@@ -95,14 +95,13 @@ public final class SpeakerGameTests {
                     first.takeAskedName();
                     helper.assertTrue(first.name().equals("Desk"), "the first takes the name; got " + first.name());
                     second.ask(helper.getLevel(), "desk");
-                    helper.assertTrue(second.dataAccess().get(SpeakerBlockEntity.DATA_CLASH) == 1,
+                    helper.assertTrue(second.nameClashes(),
                             "the second's screen says the name clashes, whatever the case");
                     second.takeAskedName();
                     helper.assertTrue(second.name().isEmpty(),
                             "and closing it keeps the name it had; got " + second.name());
                     second.ask(helper.getLevel(), "Hall");
-                    helper.assertTrue(second.dataAccess().get(SpeakerBlockEntity.DATA_CLASH) == 0,
-                            "another name does not clash");
+                    helper.assertTrue(!second.nameClashes(), "another name does not clash");
                     helper.assertTrue(second.name().isEmpty(), "and is not taken while it is being typed");
                     second.takeAskedName();
                     helper.assertTrue(second.name().equals("Hall"), "but when the screen closes; got "
@@ -168,11 +167,10 @@ public final class SpeakerGameTests {
                 ComputingModule.SPEAKER.get());
         helper.startSequence()
                 .thenExecuteAfter(LINKED, () -> {
-                    helper.assertTrue(speaker.dataAccess().get(SpeakerBlockEntity.DATA_CHANNEL)
-                            == SpeakerBlockEntity.CHANNEL_ALONE, "a speaker alone plays both sides");
+                    helper.assertTrue(speaker.channel() == SpeakerBlockEntity.CHANNEL_ALONE,
+                            "a speaker alone plays both sides");
                     pc.console().settings().applySetting("output", "monitor");
-                    helper.assertTrue(speaker.dataAccess().get(SpeakerBlockEntity.DATA_CHANNEL)
-                                    == SpeakerBlockEntity.CHANNEL_OFF,
+                    helper.assertTrue(speaker.channel() == SpeakerBlockEntity.CHANNEL_OFF,
                             "and its screen says it is off while the system plays only out of the monitor");
                 })
                 .thenSucceed();

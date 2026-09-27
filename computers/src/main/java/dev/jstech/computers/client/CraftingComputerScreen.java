@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.gui.layout.CraftingComputerLayout;
 import dev.jstech.computers.menu.CraftingComputerMenu;
 import dev.jstech.computers.operation.payload.RenamePcPayload;
@@ -28,25 +29,6 @@ import java.util.Locale;
  */
 public class CraftingComputerScreen extends AbstractAssemblyScreen<CraftingComputerMenu> {
 
-    /*
-     * All position/size constants live in CraftingComputerLayout so the menu, the screen
-     * and the layout unit test share one source of truth.
-     */
-    private static final int COL_R     = CraftingComputerLayout.COL_R;
-    private static final int COL_R_W   = CraftingComputerLayout.COL_R_W;
-    private static final int BTN_H     = CraftingComputerLayout.BTN_H;
-    private static final int TILE_H    = CraftingComputerLayout.TILE_H;
-    private static final int TILE_Y0   = CraftingComputerLayout.TILE_Y0;
-    private static final int TILE_Y1   = CraftingComputerLayout.TILE_Y1;
-    private static final int TILE_Y2   = CraftingComputerLayout.TILE_Y2;
-    private static final int POWER_X   = CraftingComputerLayout.POWER_X;
-    private static final int POWER_Y   = CraftingComputerLayout.POWER_Y;
-    private static final int AUTO_X    = CraftingComputerLayout.AUTO_X;
-    private static final int AUTO_Y    = CraftingComputerLayout.AUTO_Y;
-    private static final int INV_X     = CraftingComputerLayout.INV_X;
-    private static final int INV_Y     = CraftingComputerLayout.INV_Y;
-    private static final int NETWORK_Y = 95;
-
     public CraftingComputerScreen(final CraftingComputerMenu menu, final Inventory inventory,
                                   final Component title) {
         super(menu, inventory, title);
@@ -60,7 +42,8 @@ public class CraftingComputerScreen extends AbstractAssemblyScreen<CraftingCompu
     protected void init() {
         super.init();
         // Name field in the header, since computers are renamed here, never via an anvil.
-        setupNameBox(28, 8, 126, RenamePcPayload.MAX_LEN,
+        setupNameBox(CraftingComputerLayout.NAME_BOX_X, CraftingComputerLayout.NAME_BOX_Y,
+                CraftingComputerLayout.NAME_BOX_W, RenamePcPayload.MAX_LEN,
                 GameText.component(AssemblyTexts.NAME_THIS_COMPUTER).withStyle(ChatFormatting.DARK_GRAY),
                 menu.customName(),
                 s -> PacketDistributor.sendToServer(new RenamePcPayload(menu.computerPos(), s)));
@@ -71,47 +54,49 @@ public class CraftingComputerScreen extends AbstractAssemblyScreen<CraftingCompu
         final int x = leftPos;
         final int y = topPos;
         JsTechTheme.window(g, x, y, imageWidth, imageHeight);
-        JsTechTheme.headerBar(g, x + 6, y + 6, 232);
+        JsTechTheme.headerBar(g, x + CraftingComputerLayout.HEADER_X, y + CraftingComputerLayout.HEADER_Y,
+                CraftingComputerLayout.HEADER_W);
         // Name field background (the EditBox is drawn over this).
-        nameWell(g, x + 26, y + 7, x + 158);
-        JsTechTheme.vLine(g, x + COL_R - 5, y + 24, 108);
+        nameWell(g, x + CraftingComputerLayout.NAME_WELL_LEFT, y + CraftingComputerLayout.NAME_WELL_TOP,
+                x + CraftingComputerLayout.NAME_WELL_RIGHT);
+        JsTechTheme.vLine(g, x + CraftingComputerLayout.VLINE_X, y + CraftingComputerLayout.VLINE_Y,
+                CraftingComputerLayout.VLINE_H);
 
-        JsTechTheme.slot(g, x + 8, y + 40);  // motherboard
-        JsTechTheme.slot(g, x + 8, y + 73);  // psu
-        if (menu.boardCpuSlots() > 0) {
-            JsTechTheme.slot(g, x + 44, y + 40);
-        }
-        final int ram = menu.boardRamSlots();
-        final int pcie = menu.boardPcieSlots();
-        final int disk = menu.boardDiskSlots();
-        for (int i = 0; i < ram; i++) {
-            JsTechTheme.slot(g, x + 44 + i * 18, y + 73);
-        }
-        for (int i = 0; i < pcie; i++) {
-            JsTechTheme.slot(g, x + 44 + i * 18, y + 106);
-        }
-        for (int i = 0; i < disk; i++) {
-            JsTechTheme.slot(g, x + 8 + i * 18, y + 106);
+        // A cell behind every active hardware slot, reading the menu's own slot positions.
+        for (int i = 0; i < CraftingComputerBlockEntity.HARDWARE_SLOTS; i++) {
+            final var slot = menu.getSlot(i);
+            if (slot.isActive()) {
+                JsTechTheme.slot(g, x + slot.x, y + slot.y);
+            }
         }
 
-        JsTechTheme.panel(g, x + COL_R, y + TILE_Y0, COL_R_W, TILE_H);  // CAPACITY
-        JsTechTheme.panel(g, x + COL_R, y + TILE_Y1, COL_R_W, TILE_H);  // CRAFTING
-        JsTechTheme.panel(g, x + COL_R, y + TILE_Y2, COL_R_W, TILE_H);  // RECIPE ROM
+        JsTechTheme.panel(g, x + CraftingComputerLayout.COL_R, y + CraftingComputerLayout.TILE_Y0,
+                CraftingComputerLayout.COL_R_W, CraftingComputerLayout.TILE_H);  // CAPACITY
+        JsTechTheme.panel(g, x + CraftingComputerLayout.COL_R, y + CraftingComputerLayout.TILE_Y1,
+                CraftingComputerLayout.COL_R_W, CraftingComputerLayout.TILE_H);  // CRAFTING
+        JsTechTheme.panel(g, x + CraftingComputerLayout.COL_R, y + CraftingComputerLayout.TILE_Y2,
+                CraftingComputerLayout.COL_R_W, CraftingComputerLayout.TILE_H);  // RECIPE ROM
 
         final boolean auto = menu.isAutoStart();
-        JsTechTheme.button(g, x + POWER_X, y + POWER_Y, COL_R_W, BTN_H,
-                !auto && hover(mouseX, mouseY, POWER_X, POWER_Y, COL_R_W, BTN_H));
-        JsTechTheme.button(g, x + AUTO_X, y + AUTO_Y, COL_R_W, BTN_H,
-                hover(mouseX, mouseY, AUTO_X, AUTO_Y, COL_R_W, BTN_H));
+        JsTechTheme.button(g, x + CraftingComputerLayout.POWER_X, y + CraftingComputerLayout.POWER_Y,
+                CraftingComputerLayout.COL_R_W, CraftingComputerLayout.BTN_H,
+                !auto && hover(mouseX, mouseY, CraftingComputerLayout.POWER_X, CraftingComputerLayout.POWER_Y,
+                        CraftingComputerLayout.COL_R_W, CraftingComputerLayout.BTN_H));
+        JsTechTheme.button(g, x + CraftingComputerLayout.AUTO_X, y + CraftingComputerLayout.AUTO_Y,
+                CraftingComputerLayout.COL_R_W, CraftingComputerLayout.BTN_H,
+                hover(mouseX, mouseY, CraftingComputerLayout.AUTO_X, CraftingComputerLayout.AUTO_Y,
+                        CraftingComputerLayout.COL_R_W, CraftingComputerLayout.BTN_H));
 
         // Player inventory slots.
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                JsTechTheme.slot(g, x + INV_X + col * 18, y + INV_Y + row * 18);
+                JsTechTheme.slot(g, x + CraftingComputerLayout.INV_X + col * CraftingComputerLayout.SLOT,
+                        y + CraftingComputerLayout.INV_Y + row * CraftingComputerLayout.SLOT);
             }
         }
         for (int col = 0; col < 9; col++) {
-            JsTechTheme.slot(g, x + INV_X + col * 18, y + INV_Y + 58);
+            JsTechTheme.slot(g, x + CraftingComputerLayout.INV_X + col * CraftingComputerLayout.SLOT,
+                    y + CraftingComputerLayout.INV_Y + CraftingComputerLayout.HOTBAR_GAP);
         }
     }
 
@@ -130,55 +115,69 @@ public class CraftingComputerScreen extends AbstractAssemblyScreen<CraftingCompu
             status = GameText.resolve(AssemblyTexts.READY);
             statusColor = JsTechTheme.amber();
         }
-        final int pillX = 232 - font.width(status);
+        final int pillX = CraftingComputerLayout.HEADER_W - font.width(status);
         JsTechTheme.text(g, font, status, pillX, 11, statusColor);
         g.fill(pillX - 6, 11, pillX - 2, 15, statusColor);
 
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.BOARD), 8, 27,
-                menu.hasBoard() ? JsTechTheme.accent() : JsTechTheme.dim());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.CPU), 44, 27, JsTechTheme.dim());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.PSU), 8, 60, JsTechTheme.dim());
-        g.fill(30, 61, 34, 65, psuColor());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.RAM), 44, 60, JsTechTheme.dim());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.DISK), 8, 93, JsTechTheme.dim());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.PCIE), 44, 93,
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.BOARD), CraftingComputerLayout.MOBO_X,
+                CraftingComputerLayout.LABEL_ROW_1_Y, menu.hasBoard() ? JsTechTheme.accent() : JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.CPU), CraftingComputerLayout.RIGHT_X,
+                CraftingComputerLayout.LABEL_ROW_1_Y, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.PSU), CraftingComputerLayout.MOBO_X,
+                CraftingComputerLayout.LABEL_ROW_2_Y, JsTechTheme.dim());
+        g.fill(CraftingComputerLayout.PSU_LED_X, CraftingComputerLayout.PSU_LED_Y,
+                CraftingComputerLayout.PSU_LED_X + CraftingComputerLayout.PSU_LED_SIZE,
+                CraftingComputerLayout.PSU_LED_Y + CraftingComputerLayout.PSU_LED_SIZE, psuColor());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.RAM), CraftingComputerLayout.RIGHT_X,
+                CraftingComputerLayout.LABEL_ROW_2_Y, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.DISK), CraftingComputerLayout.MOBO_X,
+                CraftingComputerLayout.LABEL_ROW_3_Y, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.PCIE), CraftingComputerLayout.RIGHT_X,
+                CraftingComputerLayout.LABEL_ROW_3_Y,
                 menu.craftFactorX100() > 0 ? JsTechTheme.amber() : JsTechTheme.dim());
 
         final String perTick = GameText.resolve(AssemblyTexts.ITEMS_PER_TICK);
-        JsTechTheme.tileText(g, font, COL_R, TILE_Y0, GameText.resolve(AssemblyTexts.CAPACITY),
-                JsTechTheme.fmt(menu.capacity()), perTick, JsTechTheme.text());
+        JsTechTheme.tileText(g, font, CraftingComputerLayout.COL_R, CraftingComputerLayout.TILE_Y0,
+                GameText.resolve(AssemblyTexts.CAPACITY), JsTechTheme.fmt(menu.capacity()), perTick,
+                JsTechTheme.text());
         final int factor = menu.craftFactorX100();
         if (factor > 0) {
             /*
              * The Crafting Card is an accelerator with two stats: throughput (this tile's value, factor x CPU) and
              * threads (how many of a craft's stages this computer runs at once, summed over the installed cards).
              */
-            JsTechTheme.tileText(g, font, COL_R, TILE_Y1,
+            JsTechTheme.tileText(g, font, CraftingComputerLayout.COL_R, CraftingComputerLayout.TILE_Y1,
                     GameText.resolve(AssemblyTexts.CRAFT_CARD.with(menu.craftThreads(), formatFactor(factor))),
                     JsTechTheme.fmt(menu.craftThroughput()), perTick, JsTechTheme.accent());
         } else {
             // No Crafting Card installed: the computer runs but cannot craft.
-            JsTechTheme.tileText(g, font, COL_R, TILE_Y1, GameText.resolve(AssemblyTexts.CRAFT),
-                    GameText.resolve(AssemblyTexts.NO_CARD), "", JsTechTheme.dim());
+            JsTechTheme.tileText(g, font, CraftingComputerLayout.COL_R, CraftingComputerLayout.TILE_Y1,
+                    GameText.resolve(AssemblyTexts.CRAFT), GameText.resolve(AssemblyTexts.NO_CARD), "",
+                    JsTechTheme.dim());
         }
-        JsTechTheme.tileText(g, font, COL_R, TILE_Y2, GameText.resolve(AssemblyTexts.RECIPE_ROM),
+        JsTechTheme.tileText(g, font, CraftingComputerLayout.COL_R, CraftingComputerLayout.TILE_Y2,
+                GameText.resolve(AssemblyTexts.RECIPE_ROM),
                 GameText.resolve(AssemblyTexts.OF.with(menu.romUsed(), menu.romLimit())), "", JsTechTheme.text());
 
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.NETWORK), COL_R, NETWORK_Y, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.NETWORK), CraftingComputerLayout.COL_R,
+                CraftingComputerLayout.NETWORK_Y, JsTechTheme.dim());
         if (menu.isOnNetwork()) {
-            JsTechTheme.textRight(g, font, GameText.resolve(AssemblyTexts.LINKED), COL_R + COL_R_W, NETWORK_Y,
+            JsTechTheme.textRight(g, font, GameText.resolve(AssemblyTexts.LINKED),
+                    CraftingComputerLayout.COL_R + CraftingComputerLayout.COL_R_W, CraftingComputerLayout.NETWORK_Y,
                     JsTechTheme.green());
         } else {
-            JsTechTheme.textRight(g, font, "--", COL_R + COL_R_W, NETWORK_Y, JsTechTheme.dim());
+            JsTechTheme.textRight(g, font, "--", CraftingComputerLayout.COL_R + CraftingComputerLayout.COL_R_W,
+                    CraftingComputerLayout.NETWORK_Y, JsTechTheme.dim());
         }
 
         final boolean auto = menu.isAutoStart();
         final String powerCap = GameText.resolve(auto ? AssemblyTexts.AUTO
                 : menu.isRunning() ? AssemblyTexts.TURN_OFF : AssemblyTexts.TURN_ON);
-        JsTechTheme.textCenter(g, font, powerCap, POWER_X + COL_R_W / 2, POWER_Y + 4,
-                auto ? JsTechTheme.dim() : JsTechTheme.accent());
+        JsTechTheme.textCenter(g, font, powerCap, CraftingComputerLayout.POWER_X + CraftingComputerLayout.COL_R_W / 2,
+                CraftingComputerLayout.POWER_Y + 4, auto ? JsTechTheme.dim() : JsTechTheme.accent());
         JsTechTheme.textCenter(g, font, GameText.resolve(auto ? AssemblyTexts.AUTO_ON : AssemblyTexts.AUTO_OFF),
-                AUTO_X + COL_R_W / 2, AUTO_Y + 4, auto ? JsTechTheme.accent() : JsTechTheme.dim());
+                CraftingComputerLayout.AUTO_X + CraftingComputerLayout.COL_R_W / 2,
+                CraftingComputerLayout.AUTO_Y + 4, auto ? JsTechTheme.accent() : JsTechTheme.dim());
     }
 
     private static String formatFactor(final int factorX100) {
@@ -207,11 +206,13 @@ public class CraftingComputerScreen extends AbstractAssemblyScreen<CraftingCompu
             nameBox.setFocused(false);
         }
         if (button == 0) {
-            if (!menu.isAutoStart() && hover((int) mouseX, (int) mouseY, POWER_X, POWER_Y, COL_R_W, BTN_H)) {
+            if (!menu.isAutoStart() && hover((int) mouseX, (int) mouseY, CraftingComputerLayout.POWER_X,
+                    CraftingComputerLayout.POWER_Y, CraftingComputerLayout.COL_R_W, CraftingComputerLayout.BTN_H)) {
                 sendButton(CraftingComputerMenu.BUTTON_POWER);
                 return true;
             }
-            if (hover((int) mouseX, (int) mouseY, AUTO_X, AUTO_Y, COL_R_W, BTN_H)) {
+            if (hover((int) mouseX, (int) mouseY, CraftingComputerLayout.AUTO_X, CraftingComputerLayout.AUTO_Y,
+                    CraftingComputerLayout.COL_R_W, CraftingComputerLayout.BTN_H)) {
                 sendButton(CraftingComputerMenu.BUTTON_AUTOSTART);
                 return true;
             }

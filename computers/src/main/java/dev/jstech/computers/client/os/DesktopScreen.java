@@ -69,6 +69,7 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.ContextMenu;
 import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.client.gui.screen.CoreContainerScreen;
 import dev.jstech.core.gui.layout.DesktopZ;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
@@ -88,7 +89,6 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -116,7 +116,7 @@ import org.jetbrains.annotations.Nullable;
  * menu, and stackable program windows with a draggable title bar and a close box. Program content is
  * delegated to {@link IDesktopApp} instances. Visual polish is tuned in-game.
  */
-public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
+public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         implements MachineKeyboard.ITakesKeysFirst {
 
     private final BlockPos host;

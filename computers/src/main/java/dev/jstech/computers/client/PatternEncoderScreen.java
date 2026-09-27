@@ -23,20 +23,19 @@ import static dev.jstech.computers.client.PatternTexts.TITLE;
 import static dev.jstech.computers.client.PatternTexts.VINTAGE_WRITES;
 
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
+import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.layout.PatternEncoderLayout;
 import dev.jstech.computers.menu.PatternEncoderMenu;
 import dev.jstech.computers.os.VolumeLabel;
-import dev.jstech.core.client.gui.theme.EraTheme;
-import dev.jstech.core.client.gui.theme.EraThemes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,11 +47,10 @@ import org.jetbrains.annotations.Nullable;
  * <p>Every info line is clipped to its column; a clipped line shows its full text as a tooltip when hovered,
  * so a long file name never runs out of the frame.
  */
-public class PatternEncoderScreen extends AbstractContainerScreen<PatternEncoderMenu> {
+public class PatternEncoderScreen extends AbstractComputerScreen<PatternEncoderMenu> {
 
     private static final int LINES = 4;
 
-    private EraTheme theme = EraThemes.STANDARD;
     private Button ejectBtn;
     private Button cancelBtn;
     /** The full text of each info line as last drawn, or null where the line was not clipped. */
@@ -66,22 +64,21 @@ public class PatternEncoderScreen extends AbstractContainerScreen<PatternEncoder
         this.inventoryLabelY = -10000;
     }
 
+    /** The encoder's own era, which decides the media it writes and the skin its panel wears. */
+    @Override
+    protected HardwareEra screenEra() {
+        return era();
+    }
+
     @Override
     protected void init() {
         super.init();
-        theme = EraThemes.of(era());
         ejectBtn = addRenderableWidget(new EraButton(leftPos + PatternEncoderLayout.EJECT_X,
                 topPos + PatternEncoderLayout.BTN_Y, PatternEncoderLayout.EJECT_W, PatternEncoderLayout.BTN_H,
-                GameText.component(EJECT), b -> press(PatternEncoderMenu.BUTTON_EJECT)));
+                GameText.component(EJECT), b -> sendButton(PatternEncoderMenu.BUTTON_EJECT)));
         cancelBtn = addRenderableWidget(new EraButton(leftPos + PatternEncoderLayout.CANCEL_X,
                 topPos + PatternEncoderLayout.BTN_Y, PatternEncoderLayout.CANCEL_W, PatternEncoderLayout.BTN_H,
-                GameText.component(CANCEL_QUEUE), b -> press(PatternEncoderMenu.BUTTON_CANCEL)));
-    }
-
-    private void press(final int id) {
-        if (minecraft != null && minecraft.gameMode != null) {
-            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, id);
-        }
+                GameText.component(CANCEL_QUEUE), b -> sendButton(PatternEncoderMenu.BUTTON_CANCEL)));
     }
 
     @Nullable
@@ -110,15 +107,11 @@ public class PatternEncoderScreen extends AbstractContainerScreen<PatternEncoder
         final int x = leftPos;
         final int y = topPos;
         theme.window(g, x, y, imageWidth, imageHeight);
-        // Slot frames sit around the slots' own positions (the menu places each slot one pixel inside its frame).
-        theme.slot(g, x + PatternEncoderLayout.MEDIA_X + 1, y + PatternEncoderLayout.MEDIA_Y + 1);
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                theme.slot(g, x + PatternEncoderLayout.INV_X + col * 18, y + PatternEncoderLayout.INV_Y + row * 18);
+        // Slot frames come straight from the menu's own slots, so a moved slot always draws its frame with it.
+        for (final Slot slot : menu.slots) {
+            if (slot.isActive()) {
+                theme.slot(g, x + slot.x, y + slot.y);
             }
-        }
-        for (int col = 0; col < 9; col++) {
-            theme.slot(g, x + PatternEncoderLayout.INV_X + col * 18, y + PatternEncoderLayout.INV_Y + 58);
         }
 
         final PatternEncoderBlockEntity be = encoder();
@@ -203,17 +196,22 @@ public class PatternEncoderScreen extends AbstractContainerScreen<PatternEncoder
     @Override
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
         super.render(g, mouseX, mouseY, partialTick);
-        renderTooltip(g, mouseX, mouseY);
-        final int ix = leftPos + PatternEncoderLayout.INFO_X;
-        final int iy = topPos + PatternEncoderLayout.INFO_Y;
-        if (mouseX >= ix && mouseX < ix + PatternEncoderLayout.INFO_W) {
-            for (int i = 0; i < LINES; i++) {
-                final int ly = iy + i * PatternEncoderLayout.LINE_H;
-                if (clippedLines[i] != null && mouseY >= ly && mouseY < ly + PatternEncoderLayout.LINE_H) {
-                    g.renderTooltip(font, Component.literal(clippedLines[i]), mouseX, mouseY);
-                }
+        for (int i = 0; i < LINES; i++) {
+            final int ly = PatternEncoderLayout.INFO_Y + i * PatternEncoderLayout.LINE_H;
+            if (clippedLines[i] != null && hover(mouseX, mouseY, PatternEncoderLayout.INFO_X, ly,
+                    PatternEncoderLayout.INFO_W, PatternEncoderLayout.LINE_H)) {
+                g.renderTooltip(font, Component.literal(clippedLines[i]), mouseX, mouseY);
             }
         }
+    }
+
+    /**
+     * The plain panel, with no monitor bezel: this screen is a bay panel, not a monitor, so a recipe viewer
+     * placing its own panel beside it should sit against the panel's edge rather than an unclaimed bezel.
+     */
+    @Override
+    public MonitorFrameStyle.Geometry frameBounds() {
+        return new MonitorFrameStyle.Geometry(leftPos, topPos, imageWidth, imageHeight, topPos + imageHeight);
     }
 
     /** A button painted through the encoder's era theme, so the panel's controls match its frame. */

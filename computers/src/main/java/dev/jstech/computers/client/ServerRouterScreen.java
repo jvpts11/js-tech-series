@@ -8,14 +8,15 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.datacenter.LoadBalanceMode;
+import dev.jstech.computers.gui.layout.ServerRouterLayout;
 import dev.jstech.computers.menu.ServerRouterMenu;
 import dev.jstech.computers.operation.payload.RenameServerRouterPayload;
+import dev.jstech.core.client.gui.screen.CoreContainerScreen;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -25,22 +26,14 @@ import org.lwjgl.glfw.GLFW;
 /**
  * Config GUI for the Server Router: a flat-dark panel matching the computer-OS theme.
  */
-public final class ServerRouterScreen extends AbstractContainerScreen<ServerRouterMenu> {
-
-    private static final int W = 190;
-    private static final int H = 176;
-    private static final int ROW_Y0 = 96;
-    private static final int ROW_PITCH = 15;
-    private static final int MODE_X = 108;
-    private static final int MODE_W = 74;
-    private static final int MODE_H = 12;
+public final class ServerRouterScreen extends CoreContainerScreen<ServerRouterMenu> {
 
     private EditBox nameBox;
 
     public ServerRouterScreen(final ServerRouterMenu menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
-        this.imageWidth = W;
-        this.imageHeight = H;
+        this.imageWidth = ServerRouterLayout.WIDTH;
+        this.imageHeight = ServerRouterLayout.HEIGHT;
     }
 
     @Override
@@ -50,7 +43,8 @@ public final class ServerRouterScreen extends AbstractContainerScreen<ServerRout
         this.titleLabelY = -1000;
         this.inventoryLabelY = -1000;
 
-        nameBox = new EditBox(font, leftPos + 10, topPos + 39, 170, 10,
+        nameBox = new EditBox(font, leftPos + ServerRouterLayout.NAME_X + 2, topPos + ServerRouterLayout.NAME_Y + 3,
+                ServerRouterLayout.WIDTH - 2 * ServerRouterLayout.NAME_X - 4, ServerRouterLayout.NAME_H - 4,
                 GameText.component(ServerRouterTexts.NAME_FIELD));
         nameBox.setBordered(false);
         nameBox.setMaxLength(RenameServerRouterPayload.MAX_LEN);
@@ -64,64 +58,80 @@ public final class ServerRouterScreen extends AbstractContainerScreen<ServerRout
     protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
         final int x = leftPos;
         final int y = topPos;
-        JsTechTheme.window(g, x, y, W, H);
-        JsTechTheme.headerBar(g, x + 6, y + 6, W - 12);
+        JsTechTheme.window(g, x, y, ServerRouterLayout.WIDTH, ServerRouterLayout.HEIGHT);
+        JsTechTheme.headerBar(g, x + ServerRouterLayout.HEADER_X, y + ServerRouterLayout.HEADER_Y,
+                ServerRouterLayout.WIDTH - 2 * ServerRouterLayout.HEADER_X);
 
         // Name field background (the EditBox is drawn over this).
-        g.fill(x + 8, y + 36, x + W - 8, y + 50, JsTechTheme.slotBg());
-        g.fill(x + 8, y + 36, x + W - 8, y + 37, JsTechTheme.line());
+        g.fill(x + ServerRouterLayout.NAME_X, y + ServerRouterLayout.NAME_Y,
+                x + ServerRouterLayout.WIDTH - ServerRouterLayout.NAME_X,
+                y + ServerRouterLayout.NAME_Y + ServerRouterLayout.NAME_H, JsTechTheme.slotBg());
+        g.fill(x + ServerRouterLayout.NAME_X, y + ServerRouterLayout.NAME_Y,
+                x + ServerRouterLayout.WIDTH - ServerRouterLayout.NAME_X, y + ServerRouterLayout.NAME_Y + 1,
+                JsTechTheme.line());
 
         // Two status tiles.
-        JsTechTheme.panel(g, x + 8, y + 56, 84, 22);
-        JsTechTheme.panel(g, x + 98, y + 56, 84, 22);
+        JsTechTheme.panel(g, x + ServerRouterLayout.TILE1_X, y + ServerRouterLayout.TILE_Y,
+                ServerRouterLayout.TILE_W, ServerRouterLayout.TILE_H);
+        JsTechTheme.panel(g, x + ServerRouterLayout.TILE2_X, y + ServerRouterLayout.TILE_Y,
+                ServerRouterLayout.TILE_W, ServerRouterLayout.TILE_H);
 
         // Section list separator.
-        JsTechTheme.hLine(g, x + 8, y + 93, W - 16);
+        JsTechTheme.hLine(g, x + ServerRouterLayout.NAME_X, y + ServerRouterLayout.SEPARATOR_Y,
+                ServerRouterLayout.WIDTH - 2 * ServerRouterLayout.NAME_X);
 
         // One mode button per section row.
         for (int i = 0; i < menu.sectionCount(); i++) {
-            final int by = y + ROW_Y0 + i * ROW_PITCH;
-            final boolean hovered = mouseX >= x + MODE_X && mouseX < x + MODE_X + MODE_W
-                    && mouseY >= by && mouseY < by + MODE_H;
-            JsTechTheme.button(g, x + MODE_X, by, MODE_W, MODE_H, hovered);
+            final int rowY = ServerRouterLayout.ROW_Y0 + i * ServerRouterLayout.ROW_PITCH;
+            final boolean hovered = hover(mouseX, mouseY, ServerRouterLayout.MODE_X, rowY,
+                    ServerRouterLayout.MODE_W, ServerRouterLayout.MODE_H);
+            JsTechTheme.button(g, x + ServerRouterLayout.MODE_X, y + rowY, ServerRouterLayout.MODE_W,
+                    ServerRouterLayout.MODE_H, hovered);
         }
     }
 
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
         // Header.
-        JsTechTheme.text(g, font, GameText.resolve(ServerRouterTexts.TITLE), 12, 10, JsTechTheme.text());
-        JsTechTheme.textRight(g, font, GameText.resolve(ServerRouterTexts.TIER), W - 12, 10, JsTechTheme.accent());
+        JsTechTheme.text(g, font, GameText.resolve(ServerRouterTexts.TITLE), ServerRouterLayout.TITLE_X,
+                ServerRouterLayout.TITLE_Y, JsTechTheme.text());
+        JsTechTheme.textRight(g, font, GameText.resolve(ServerRouterTexts.TIER),
+                ServerRouterLayout.WIDTH - ServerRouterLayout.TITLE_X, ServerRouterLayout.TITLE_Y,
+                JsTechTheme.accent());
 
-        JsTechTheme.textS(g, font, GameText.resolve(ServerRouterTexts.NAME), 10, 28, JsTechTheme.dim());
+        JsTechTheme.textS(g, font, GameText.resolve(ServerRouterTexts.NAME), ServerRouterLayout.LABEL_X,
+                ServerRouterLayout.NAME_LABEL_Y, JsTechTheme.dim());
 
         // Input + rack-budget tiles.
         final Direction in = menu.inputFace();
-        JsTechTheme.tileTextS(g, font, 8, 56, GameText.resolve(ServerRouterTexts.INPUT),
+        JsTechTheme.tileTextS(g, font, ServerRouterLayout.TILE1_X, ServerRouterLayout.TILE_Y,
+                GameText.resolve(ServerRouterTexts.INPUT),
                 GameText.resolve(in == null ? ServerRouterTexts.NONE : inputName(in)), JsTechTheme.accent2());
         final int max = menu.maxRacks();
         final String racks = GameText.resolve(ServerRouterTexts.RACKS_OF.with(menu.managedRacks(), max));
-        JsTechTheme.tileTextS(g, font, 98, 56, GameText.resolve(ServerRouterTexts.RACKS),
+        JsTechTheme.tileTextS(g, font, ServerRouterLayout.TILE2_X, ServerRouterLayout.TILE_Y,
+                GameText.resolve(ServerRouterTexts.RACKS),
                 racks, menu.overCapacity() ? JsTechTheme.red() : JsTechTheme.green());
 
-        JsTechTheme.textS(g, font, GameText.resolve(ServerRouterTexts.SECTIONS), 10, 84, JsTechTheme.dim());
+        JsTechTheme.textS(g, font, GameText.resolve(ServerRouterTexts.SECTIONS), ServerRouterLayout.LABEL_X,
+                ServerRouterLayout.SECTIONS_LABEL_Y, JsTechTheme.dim());
 
         final int count = menu.sectionCount();
         if (count == 0) {
-            JsTechTheme.textS(g, font, GameText.resolve(ServerRouterTexts.NO_SECTIONS), 12, ROW_Y0 + 3,
-                    JsTechTheme.dim());
+            JsTechTheme.textS(g, font, GameText.resolve(ServerRouterTexts.NO_SECTIONS),
+                    ServerRouterLayout.NO_SECTIONS_X, ServerRouterLayout.NO_SECTIONS_Y, JsTechTheme.dim());
             return;
         }
         for (int i = 0; i < count; i++) {
-            final int ry = ROW_Y0 + i * ROW_PITCH;
+            final int ry = ServerRouterLayout.ROW_Y0 + i * ServerRouterLayout.ROW_PITCH;
             final Direction face = menu.sectionFace(i);
             JsTechTheme.textS(g, font, face == null ? "?" : GameText.resolve(faceName(face)),
-                    10, ry + 3, JsTechTheme.text());
+                    ServerRouterLayout.ROW_FACE_X, ry + 3, JsTechTheme.text());
             JsTechTheme.textS(g, font, GameText.resolve(ServerRouterTexts.SECTION_SIZE.with(menu.sectionRacks(i),
-                    menu.sectionServers(i))), 40, ry + 3, JsTechTheme.dim());
+                    menu.sectionServers(i))), ServerRouterLayout.ROW_COUNT_X, ry + 3, JsTechTheme.dim());
             final LoadBalanceMode mode = menu.sectionMode(i);
-            JsTechTheme.textSCenter(g, font, GameText.resolve(mode.text()), MODE_X + MODE_W / 2, ry + 3,
-                    modeColor(mode));
+            JsTechTheme.textSCenter(g, font, GameText.resolve(mode.text()),
+                    ServerRouterLayout.MODE_X + ServerRouterLayout.MODE_W / 2, ry + 3, modeColor(mode));
         }
     }
 
@@ -129,13 +139,13 @@ public final class ServerRouterScreen extends AbstractContainerScreen<ServerRout
     public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
         if (button == 0) {
             for (int i = 0; i < menu.sectionCount(); i++) {
-                final int by = topPos + ROW_Y0 + i * ROW_PITCH;
-                if (mouseX >= leftPos + MODE_X && mouseX < leftPos + MODE_X + MODE_W
-                        && mouseY >= by && mouseY < by + MODE_H) {
+                final int rowY = ServerRouterLayout.ROW_Y0 + i * ServerRouterLayout.ROW_PITCH;
+                if (hover((int) mouseX, (int) mouseY, ServerRouterLayout.MODE_X, rowY, ServerRouterLayout.MODE_W,
+                        ServerRouterLayout.MODE_H)) {
                     final Direction face = menu.sectionFace(i);
-                    if (face != null && minecraft != null && minecraft.gameMode != null) {
+                    if (face != null) {
                         // Cycle this section's load-balance mode via the menu button channel.
-                        minecraft.gameMode.handleInventoryButtonClick(menu.containerId, face.get3DDataValue());
+                        sendButton(face.get3DDataValue());
                         return true;
                     }
                 }
@@ -175,7 +185,6 @@ public final class ServerRouterScreen extends AbstractContainerScreen<ServerRout
         // The field takes its colour from the theme drawing this frame, the same as every label around it.
         nameBox.setTextColor(JsTechTheme.text());
         super.render(g, mouseX, mouseY, partialTick);
-        renderTooltip(g, mouseX, mouseY);
     }
 
     private static int modeColor(final LoadBalanceMode mode) {

@@ -13,7 +13,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
- * Configuration screen for the Export Bus. All drawing lives in {@link AbstractBusScreen}; this only supplies the title and the filter hint.
+ * Configuration screen for the Export Bus. All drawing lives in {@link AbstractBusScreen}; this only
+ * supplies the title and the filter hint.
  */
 public class ExportBusScreen extends AbstractBusScreen<ExportBusMenu> {
 

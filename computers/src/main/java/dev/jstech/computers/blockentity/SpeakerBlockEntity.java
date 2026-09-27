@@ -25,7 +25,6 @@ import dev.jstech.core.peripheral.PeripheralLink;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -55,9 +54,6 @@ public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheral
 
     /** The longest name a speaker takes, the same as a computer's. */
     public static final int MAX_NAME = 32;
-    public static final int DATA_CLASH = 0;
-    public static final int DATA_CHANNEL = 1;
-    public static final int DATA_COUNT = 2;
     /** Not linked to a computer, so it plays nothing. */
     public static final int CHANNEL_NONE = 0;
     /** The computer's only speaker, which plays both sides. */
@@ -123,9 +119,9 @@ public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheral
                 : FrequencyResponse.FULL;
     }
 
-    /** What its screen reads while it is open: whether the name clashes ({@link #DATA_CLASH}), and its channel. */
-    public ContainerData dataAccess() {
-        return fields().menuData();
+    /** Whether the name last asked for is one another speaker of its computer already has. */
+    public boolean nameClashes() {
+        return clash.get();
     }
 
     /** Which side it plays for its computer: one of the {@code CHANNEL_} values. */

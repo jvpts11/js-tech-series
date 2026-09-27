@@ -12,15 +12,18 @@ import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.StableIds;
+import dev.jstech.core.menu.CoreMenu;
+import dev.jstech.core.menu.MenuValidity;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Predicate;
 
 /**
  * A session on a monitor that is not a system: the self-test, the boot manager, the firmware setup, a system
@@ -37,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
  * arriving by its own packet, and this carries only who is being looked at, on which monitor, and which of
  * the sessions it is, so the client knows which screen to open and the server knows who is still watching.
  */
-public class MonitorSessionMenu extends AbstractContainerMenu implements IMonitorMenu {
+public class MonitorSessionMenu extends CoreMenu implements IMonitorMenu {
 
     private final BlockPos monitorPos;
     private final BlockPos hostPos;
@@ -46,11 +49,12 @@ public class MonitorSessionMenu extends AbstractContainerMenu implements IMonito
     private final Phase phase;
 
     /** How far from the glass a session survives, the vanilla reach a container is closed past. */
-    private static final double REACH_SQUARED = 64.0;
+    private static final double REACH = 8.0;
 
     public MonitorSessionMenu(final int containerId, final Inventory playerInventory, final BlockPos monitorPos,
                               final BlockPos hostPos, @Nullable final HardwareEra era, final Phase phase) {
-        super(ComputingMenus.MONITOR_SESSION_MENU.get(), containerId);
+        super(ComputingMenus.MONITOR_SESSION_MENU.get(), containerId, playerInventory,
+                validity(playerInventory.player.level(), monitorPos, hostPos));
         this.monitorPos = monitorPos;
         this.hostPos = hostPos;
         this.era = era;
@@ -107,6 +111,7 @@ public class MonitorSessionMenu extends AbstractContainerMenu implements IMonito
                 && open.hostPos().equals(host) && open.phase() == phase;
     }
 
+    // No slots: what is on the glass keeps arriving by its own packet, so there is nothing here to shift-click.
     @Override
     public ItemStack quickMoveStack(final Player player, final int index) {
         return ItemStack.EMPTY;
@@ -121,24 +126,17 @@ public class MonitorSessionMenu extends AbstractContainerMenu implements IMonito
      * all hand over to the next screen themselves, and closing this on them would take the monitor dark in
      * between.
      */
-    @Override
-    public boolean stillValid(final Player player) {
-        final Level level = player.level();
-        if (!(level.getBlockEntity(this.hostPos) instanceof IOsHost)) {
-            return false;
-        }
-        final BlockPos standingAt = this.monitorPos.equals(this.hostPos) ? this.hostPos : this.monitorPos;
-        if (player.distanceToSqr(standingAt.getX() + 0.5, standingAt.getY() + 0.5, standingAt.getZ() + 0.5)
-                > REACH_SQUARED) {
-            return false;
-        }
+    private static Predicate<Player> validity(final Level level, final BlockPos monitorPos, final BlockPos hostPos) {
+        final Predicate<Player> hostIsMachine = player -> level.getBlockEntity(hostPos) instanceof IOsHost;
+        final BlockPos standingAt = monitorPos.equals(hostPos) ? hostPos : monitorPos;
         /*
          * A monitor switched to another machine of the same rack is no longer showing this one, and what is
          * drawn here belongs to a machine the player is not looking at any more.
          */
-        return this.monitorPos.equals(this.hostPos)
-                || !(level.getBlockEntity(this.monitorPos) instanceof MonitorBlockEntity monitor)
-                || monitor.shows(this.hostPos);
+        final Predicate<Player> monitorStillShows = player -> monitorPos.equals(hostPos)
+                || !(level.getBlockEntity(monitorPos) instanceof MonitorBlockEntity monitor)
+                || monitor.shows(hostPos);
+        return hostIsMachine.and(MenuValidity.near(level, standingAt, REACH)).and(monitorStillShows);
     }
 
     /**

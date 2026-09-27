@@ -47,7 +47,10 @@ class LayoutAuditTest {
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
             "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout",
             "CdeStyleLayout", "WorkstationInfoLayout", "TrashLayout", "HelpViewerLayout", "SpeakerLayout",
-            "VolumePopupLayout", "SoundfoundryLayout", "SoundfoundryShareLayout", "SoundfoundryStandardLayout");
+            "VolumePopupLayout", "SoundfoundryLayout", "SoundfoundryShareLayout", "SoundfoundryStandardLayout",
+            "PersonalComputerLayout", "MainframeLayout", "ServerAssemblyLayout", "KvmChannelLayout",
+            "SystemBootLayout", "CommandPromptLayout", "OsInstallLayout", "InstallerLayout",
+            "BootSequenceLayout", "FirmwareLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -95,6 +98,43 @@ class LayoutAuditTest {
         c.add(new AuditCase("OpenWithLayout", OpenWithLayout.layout(), true));
         c.add(new AuditCase("ClusterManagementComputerLayout", ClusterManagementComputerLayout.layout(), true));
         c.add(new AuditCase("CraftingComputerLayout", CraftingComputerLayout.layout(), true));
+        c.add(new AuditCase("PersonalComputerLayout", PersonalComputerLayout.layout(), true));
+        /*
+         * The Mainframe (262px) and the Server assembly (294px) panels are taller than SCREEN_H_BUDGET, so,
+         * like a resizable window, they are held to cleanliness only (no overlaps, nothing out of frame)
+         * until their size is revisited.
+         */
+        c.add(new AuditCase("MainframeLayout", MainframeLayout.layout(), false));
+        c.add(new AuditCase("ServerAssemblyLayout", ServerAssemblyLayout.layout(), false));
+        // The KVM channel bar grows a row per channel; audit an empty bar and the most a switch reports.
+        c.add(new AuditCase("KvmChannelLayout(0)", KvmChannelLayout.layout(0), true));
+        c.add(new AuditCase("KvmChannelLayout(most)", KvmChannelLayout.layout(KvmChannelLayout.MOST_CHANNELS), true));
+        c.add(AuditCase.onTheGlass("SystemBootLayout", SystemBootLayout.layout()));
+        /*
+         * The Command Prompt window is resizable, so audit it at the full glass size and at a compact one
+         * that still leaves the console panel and the input strip room to draw; a bare terminal (MC-DOS, the
+         * Linux TTY, MC-NET with nothing installed) draws no chrome and is always the empty layout.
+         */
+        c.add(AuditCase.onTheGlass("CommandPromptLayout(384x256)", CommandPromptLayout.layout(384, 256, false)));
+        final int compactW = MonitorGlass.width(320);
+        final int compactH = MonitorGlass.height(240);
+        c.add(new AuditCase("CommandPromptLayout(" + compactW + "x" + compactH + ")",
+                CommandPromptLayout.layout(compactW, compactH, false), false));
+        c.add(new AuditCase("CommandPromptLayout(bare)", CommandPromptLayout.layout(384, 256, true), false));
+        // The OS install dialog never shows two of its three bodies together, so each is its own case.
+        c.add(new AuditCase("OsInstallLayout(working)", OsInstallLayout.workingLayout(), true));
+        c.add(new AuditCase("OsInstallLayout(done)", OsInstallLayout.doneLayout(), true));
+        c.add(new AuditCase("OsInstallLayout(failed)",
+                OsInstallLayout.failedLayout(OsInstallLayout.mostFailureLines()), true));
+        c.add(AuditCase.onTheGlass("InstallerLayout", InstallerLayout.layout()));
+        // The no-boot dialog takes the bar's place and is drawn over the title, so it is audited on its own.
+        c.add(AuditCase.onTheGlass("BootSequenceLayout", BootSequenceLayout.layout()));
+        c.add(AuditCase.onTheGlass("BootSequenceLayout.noBoot",
+                BootSequenceLayout.noBootLayout(BootSequenceLayout.MOST_LISTED_DEVICES)));
+        // The firmware setup never shows two of its three eras' shapes together.
+        c.add(AuditCase.onTheGlass("FirmwareLayout(cli)", FirmwareLayout.cliLayout()));
+        c.add(AuditCase.onTheGlass("FirmwareLayout(bios)", FirmwareLayout.biosLayout()));
+        c.add(AuditCase.onTheGlass("FirmwareLayout(uefi)", FirmwareLayout.uefiLayout()));
         c.add(new AuditCase("NmsLayout", NmsLayout.layout(), true));
         c.add(new AuditCase("ServerRackLayout", ServerRackLayout.layout(), true));
         c.add(AuditCase.onTheGlass("ComputerTerminalLayout", ComputerTerminalLayout.layout()));

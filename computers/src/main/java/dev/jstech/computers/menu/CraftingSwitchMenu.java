@@ -7,16 +7,15 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.block.CraftingSwitchBlock;
 import dev.jstech.computers.gui.layout.CraftingSwitchLayout;
+import dev.jstech.computers.registry.ComputingMenus;
+import dev.jstech.core.menu.CoreMenu;
+import dev.jstech.core.menu.MenuValidity;
+import dev.jstech.core.menu.PlayerSlots;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
 /**
@@ -24,17 +23,19 @@ import net.minecraft.world.level.Level;
  * from the block entity, which the server keeps in sync via its update tag, and edited back through
  * {@code SetCraftingSwitchFacePayload}. Only the player inventory is wired here, from the shared layout.
  */
-public class CraftingSwitchMenu extends AbstractComputerMenu {
+public class CraftingSwitchMenu extends CoreMenu {
 
-    private final ContainerLevelAccess access;
     private final BlockPos switchPos;
 
     public CraftingSwitchMenu(final int containerId, final Inventory playerInventory,
                               final Level level, final BlockPos switchPos) {
-        super(ComputingMenus.CRAFTING_SWITCH_MENU.get(), containerId);
-        this.access = ContainerLevelAccess.create(level, switchPos);
+        super(ComputingMenus.CRAFTING_SWITCH_MENU.get(), containerId, playerInventory,
+                MenuValidity.block(level, switchPos, CraftingSwitchBlock.class));
         this.switchPos = switchPos;
-        addPlayerInventory(playerInventory, CraftingSwitchLayout.INV_X, CraftingSwitchLayout.INV_Y);
+        final PlayerSlots player = playerInventory(playerInventory, CraftingSwitchLayout.layout().playerInventoryAt());
+        // No item slots beyond the player's own: shift-click just moves between its main grid and hotbar.
+        shiftClick(player.main(), player.hotbar());
+        shiftClick(player.hotbar(), player.main());
     }
 
     public static CraftingSwitchMenu fromNetwork(final int containerId, final Inventory playerInventory,
@@ -45,43 +46,5 @@ public class CraftingSwitchMenu extends AbstractComputerMenu {
 
     public BlockPos switchPos() {
         return switchPos;
-    }
-
-    @Override
-    public boolean stillValid(final Player player) {
-        return access.evaluate((level, pos) ->
-                level.getBlockState(pos).getBlock() instanceof CraftingSwitchBlock
-                        && player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) <= 64.0,
-                true);
-    }
-
-    @Override
-    public ItemStack quickMoveStack(final Player player, final int index) {
-        // Only the player inventory holds items here; shift-click just moves between main and hotbar.
-        final Slot slot = slots.get(index);
-        if (slot == null || !slot.hasItem()) {
-            return ItemStack.EMPTY;
-        }
-        final ItemStack stack = slot.getItem();
-        final ItemStack original = stack.copy();
-        final int end = slots.size();
-        final int hotbarStart = end - 9;
-        if (index < hotbarStart) {
-            if (!moveItemStackTo(stack, hotbarStart, end, false)) {
-                return ItemStack.EMPTY;
-            }
-        } else if (!moveItemStackTo(stack, 0, hotbarStart, false)) {
-            return ItemStack.EMPTY;
-        }
-        if (stack.isEmpty()) {
-            slot.setByPlayer(ItemStack.EMPTY);
-        } else {
-            slot.setChanged();
-        }
-        if (stack.getCount() == original.getCount()) {
-            return ItemStack.EMPTY;
-        }
-        slot.onTake(player, stack);
-        return original;
     }
 }

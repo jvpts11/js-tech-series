@@ -233,7 +233,7 @@ public final class ChemicalDataGameTests {
                         final var bus = new dev.jstech.computers.block.part.ExportBusPart();
                         cable.addPart(Direction.WEST, bus);
                         bus.setFilter(filterItem[0]);
-                        bus.getDataAccess().set(1, 300); // max: keep the faced block at 300 mB
+                        bus.adjustMax(300); // max: keep the faced block at 300 mB (a fresh part starts at 0)
                     }
                 })
                 .thenWaitUntil(() -> {

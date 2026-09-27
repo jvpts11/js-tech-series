@@ -10,28 +10,46 @@ package dev.jstech.computers.menu;
 import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.block.part.CablePartType;
+import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.gui.layout.BusLayout;
+import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.menu.CoreMenu;
+import dev.jstech.core.menu.MenuValidity;
+import dev.jstech.core.menu.MenuValue;
+import dev.jstech.core.menu.PlayerSlots;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickType;
-import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
 
+import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
+
 /**
- * Shared menu for the two bus parts: a single ghost filter slot, the min/max stock steppers, the mode toggle,
- * and the player inventory. Both buses expose an identical configuration surface, so the slot wiring, the
- * stepper buttons, the synced data and the shift-click transfer all live here; the subclasses only register
- * their own {@link MenuType} and the create/fromNetwork factories. The bus name rides in the open packet and
- * is edited back to the server by a dedicated payload, not through the {@link ContainerData} (which is ints).
+ * Shared menu for the four bus parts (Import, Export, Input, Receiving): a single ghost filter slot, the
+ * min/max stock steppers, the mode toggle, and the player inventory. Every bus exposes an identical
+ * configuration surface, so the slot wiring, the stepper buttons, the synced values and the shift-click
+ * transfer all live here; the subclasses only register their own {@link MenuType} and the create/fromNetwork
+ * factories. The bus name rides in the open packet and is edited back to the server by a dedicated payload,
+ * not through the synced values (which are ints).
  */
-public abstract class AbstractBusMenu extends AbstractComputerMenu {
+public abstract class AbstractBusMenu extends CoreMenu {
+
+    private final AbstractBusPart part;
+    private final BlockPos cablePos;
+    private final Direction face;
+    private final MenuValue minValue;
+    private final MenuValue maxValue;
+    private final MenuValue modeValue;
+    private final MenuValue linkedFlag;
+    private String busName;
 
     public static final int FILTER_SLOT = 0;
 
@@ -46,46 +64,45 @@ public abstract class AbstractBusMenu extends AbstractComputerMenu {
     public static final int BTN_MAX_UP16 = 7;
     public static final int BTN_MODE = 8;
 
-    private final AbstractBusPart part;
-    private final ContainerData data;
-    private final ContainerLevelAccess access;
-    private final BlockPos cablePos;
-    private final Direction face;
-    private String busName;
+    /** How far a player may stand from the cable and keep this menu open, in blocks. */
+    private static final double REACH_BLOCKS = 8.0;
 
     protected AbstractBusMenu(final MenuType<?> type, final int containerId, final Inventory playerInventory,
                               final AbstractBusPart part, final Level level, final BlockPos cablePos,
                               final Direction face, final String busName) {
-        super(type, containerId);
+        super(type, containerId, playerInventory, validity(level, cablePos, face, part));
         this.part = part;
-        this.data = part.getDataAccess();
-        this.access = ContainerLevelAccess.create(level, cablePos);
         this.cablePos = cablePos;
         this.face = face;
         this.busName = busName == null ? "" : busName;
 
-        addSlot(new SlotItemHandler(part.getFilterHandler(), 0, BusLayout.FILTER_X, BusLayout.FILTER_Y) {
-            @Override
-            public boolean mayPlace(final ItemStack stack) {
-                return false; // the filter is set by a click, never by dropping an item in
-            }
+        final GuiLayout layout = BusLayout.layout();
+        slots(filterSlot(part.getFilterHandler(), layout.slotAt("filterSlot"), this::filterApplies));
+        final PlayerSlots playerSlots = playerInventory(playerInventory, layout.playerInventoryAt());
+        shiftClick(playerSlots.main(), playerSlots.hotbar());
+        shiftClick(playerSlots.hotbar(), playerSlots.main());
 
-            @Override
-            public boolean mayPickup(final Player player) {
-                return false;
-            }
+        this.minValue = value(part::min);
+        this.maxValue = value(part::max);
+        this.modeValue = value(part::mode);
+        this.linkedFlag = flag(part::linked);
 
-            @Override
-            public boolean isActive() {
-                /*
-                 * Every bus has a filter: on a crafting bus it pins what the face carries so the engine routes
-                 * per face. Only the stock controls (min/max/mode) hide on the passive buses.
-                 */
-                return filterApplies();
-            }
-        });
-        addPlayerInventory(playerInventory, BusLayout.INV_X, BusLayout.INV_Y);
-        addDataSlots(this.data);
+        /*
+         * The passive crafting buses (Input, Receiving) have no stock window, so these ids are registered only
+         * where one exists: on a passive bus the server refuses them (clickMenuButton answers false) instead of
+         * accepting a press that does nothing.
+         */
+        if (stockControlsApply()) {
+            button(BTN_MIN_DOWN1, player -> part.adjustMin(-1));
+            button(BTN_MIN_UP1, player -> part.adjustMin(1));
+            button(BTN_MIN_DOWN16, player -> part.adjustMin(-16));
+            button(BTN_MIN_UP16, player -> part.adjustMin(16));
+            button(BTN_MAX_DOWN1, player -> part.adjustMax(-1));
+            button(BTN_MAX_UP1, player -> part.adjustMax(1));
+            button(BTN_MAX_DOWN16, player -> part.adjustMax(-16));
+            button(BTN_MAX_UP16, player -> part.adjustMax(16));
+            button(BTN_MODE, player -> part.toggleMode());
+        }
     }
 
     /**
@@ -104,25 +121,24 @@ public abstract class AbstractBusMenu extends AbstractComputerMenu {
      * the crafting engine, so those controls hide and their buttons are refused server-side.
      */
     public boolean stockControlsApply() {
-        final var kind = part.type();
-        return kind != CablePartType.INPUT
-                && kind != CablePartType.RECEIVING;
+        final CablePartType kind = part.type();
+        return kind != CablePartType.INPUT && kind != CablePartType.RECEIVING;
     }
 
     public int min() {
-        return data.get(0);
+        return minValue.get();
     }
 
     public int max() {
-        return data.get(1);
+        return maxValue.get();
     }
 
     public int mode() {
-        return data.get(2);
+        return modeValue.get();
     }
 
     public boolean linked() {
-        return data.get(3) != 0;
+        return linkedFlag.isSet();
     }
 
     public ItemStack filterStack() {
@@ -161,65 +177,40 @@ public abstract class AbstractBusMenu extends AbstractComputerMenu {
         super.clicked(slotId, button, type, player);
     }
 
-    @Override
-    public boolean clickMenuButton(final Player player, final int id) {
-        if (!stockControlsApply()) {
-            return false; // passive crafting buses have no stock settings to edit
-        }
-        switch (id) {
-            case BTN_MIN_DOWN1 -> part.adjustMin(-1);
-            case BTN_MIN_UP1 -> part.adjustMin(1);
-            case BTN_MIN_DOWN16 -> part.adjustMin(-16);
-            case BTN_MIN_UP16 -> part.adjustMin(16);
-            case BTN_MAX_DOWN1 -> part.adjustMax(-1);
-            case BTN_MAX_UP1 -> part.adjustMax(1);
-            case BTN_MAX_DOWN16 -> part.adjustMax(-16);
-            case BTN_MAX_UP16 -> part.adjustMax(16);
-            case BTN_MODE -> part.toggleMode();
-            default -> {
+    /**
+     * A slot the player only ever sets by clicking (never by dropping an item in), shown only while
+     * {@code active} says this bus carries a filter.
+     */
+    private static Slot filterSlot(final ItemStackHandler handler, final GuiLayout.SlotPosition at,
+                                   final BooleanSupplier active) {
+        return new SlotItemHandler(handler, 0, at.x(), at.y()) {
+            @Override
+            public boolean mayPlace(final ItemStack stack) {
                 return false;
             }
-        }
-        return true;
-    }
 
-    @Override
-    public boolean stillValid(final Player player) {
-        return access.evaluate((level, pos) ->
-                level.getBlockState(pos).getBlock() instanceof DataCableBlock
-                        && player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) <= 64.0,
-                true);
-    }
-
-    @Override
-    public ItemStack quickMoveStack(final Player player, final int index) {
-        // Only the player inventory holds real items; shift-click just reorganizes it.
-        final Slot slot = slots.get(index);
-        if (slot == null || !slot.hasItem() || index == FILTER_SLOT) {
-            return ItemStack.EMPTY;
-        }
-        final ItemStack stack = slot.getItem();
-        final ItemStack original = stack.copy();
-        final int invStart = 1;
-        final int invEnd = slots.size();
-        // Move between the main inventory and the hotbar.
-        final int hotbarStart = invEnd - 9;
-        if (index < hotbarStart) {
-            if (!moveItemStackTo(stack, hotbarStart, invEnd, false)) {
-                return ItemStack.EMPTY;
+            @Override
+            public boolean mayPickup(final Player player) {
+                return false;
             }
-        } else if (!moveItemStackTo(stack, invStart, hotbarStart, false)) {
-            return ItemStack.EMPTY;
-        }
-        if (stack.isEmpty()) {
-            slot.setByPlayer(ItemStack.EMPTY);
-        } else {
-            slot.setChanged();
-        }
-        if (stack.getCount() == original.getCount()) {
-            return ItemStack.EMPTY;
-        }
-        slot.onTake(player, stack);
-        return original;
+
+            @Override
+            public boolean isActive() {
+                return active.getAsBoolean();
+            }
+        };
+    }
+
+    /**
+     * Valid while the cable at {@code cablePos} still stands within reach and the part this menu was opened on is
+     * still mounted on {@code face} of it: a part swapped out (or picked off) from under an open menu closes it,
+     * rather than going on editing a bus that is no longer there.
+     */
+    private static Predicate<Player> validity(final Level level, final BlockPos cablePos, final Direction face,
+                                              final AbstractBusPart part) {
+        return MenuValidity.near(level, cablePos, REACH_BLOCKS)
+                .and(player -> level.getBlockState(cablePos).getBlock() instanceof DataCableBlock)
+                .and(player -> level.getBlockEntity(cablePos) instanceof DataCableBlockEntity cable
+                        && cable.getPart(face) == part);
     }
 }

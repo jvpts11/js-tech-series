@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.gui.layout.CommandPromptLayout;
 import dev.jstech.computers.client.os.CodeFileReplies;
 import dev.jstech.computers.client.os.ParkedEditors;
 import dev.jstech.computers.client.os.TtyEditor;
@@ -67,7 +68,10 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * The Command Prompt: a full CLI over the computer the Monitor is bound to. A typed line is echoed, sent to the server to run through the shell, and the styled result is appended to the scrollback. Up/Down walk the input history; the mouse wheel scrolls back through output. The same OS skin as the rest of the computing GUIs, square corners and all.
+ * The Command Prompt: a full CLI over the computer the Monitor is bound to. A typed line is echoed, sent to
+ * the server to run through the shell, and the styled result is appended to the scrollback. Up/Down walk the
+ * input history; the mouse wheel scrolls back through output. The same OS skin as the rest of the computing
+ * GUIs, square corners and all.
  */
 @PaletteHolder
 public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractComputerScreen<M>
@@ -98,7 +102,6 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
      */
     private static final int MOST_PASTED_LINES = 16;
     private static final int MOST_PASTED_LETTERS = 512;
-    private static final int LINE_H = 9;
 
     /**
      * What each machine's prompt has printed, kept while the game runs.
@@ -214,7 +217,8 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
          * cells stays laid out.
          */
         this.textScale = Math.min(TEXT_SCALE,
-                (this.imageWidth - 20) / (float) (TermBuffer.MONITOR_COLUMNS * TermPainter.CELL));
+                (this.imageWidth - CommandPromptLayout.GLASS_LEFT - CommandPromptLayout.GLASS_RIGHT_MARGIN)
+                        / (float) (TermBuffer.MONITOR_COLUMNS * TermPainter.CELL));
         super.init();
         /*
          * The box holds what is being typed and takes the keys that edit it, and that is all it does. It is
@@ -453,29 +457,39 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             return;
         }
         JsTechTheme.window(g, x, y, imageWidth, imageHeight);
-        JsTechTheme.headerBar(g, x + 6, y + 6, imageWidth - 12);
+        JsTechTheme.headerBar(g, x + CommandPromptLayout.HEADER_X, y + CommandPromptLayout.HEADER_Y,
+                imageWidth - 2 * CommandPromptLayout.HEADER_X);
         // The console panel.
-        final int top = y + 26;
-        final int bottom = y + imageHeight - 22;
-        g.fill(x + 6, top, x + imageWidth - 6, bottom, PALETTE.get().ground());
-        g.fill(x + 6, top, x + imageWidth - 6, top + 1, JsTechTheme.line());
+        final int top = y + CommandPromptLayout.CONSOLE_TOP;
+        final int bottom = y + CommandPromptLayout.consoleBottom(imageHeight);
+        g.fill(x + CommandPromptLayout.CONSOLE_X, top, x + imageWidth - CommandPromptLayout.CONSOLE_X, bottom,
+                PALETTE.get().ground());
+        g.fill(x + CommandPromptLayout.CONSOLE_X, top, x + imageWidth - CommandPromptLayout.CONSOLE_X, top + 1,
+                JsTechTheme.line());
         // Input strip.
-        g.fill(x + 6, y + imageHeight - 20, x + imageWidth - 6, y + imageHeight - 8, JsTechTheme.panel());
-        g.fill(x + 6, y + imageHeight - 20, x + imageWidth - 6, y + imageHeight - 19, JsTechTheme.line());
+        final int stripTop = y + CommandPromptLayout.inputStripTop(imageHeight);
+        final int stripBottom = y + CommandPromptLayout.inputStripBottom(imageHeight);
+        g.fill(x + CommandPromptLayout.CONSOLE_X, stripTop, x + imageWidth - CommandPromptLayout.CONSOLE_X,
+                stripBottom, JsTechTheme.panel());
+        g.fill(x + CommandPromptLayout.CONSOLE_X, stripTop, x + imageWidth - CommandPromptLayout.CONSOLE_X,
+                y + CommandPromptLayout.inputLineBottom(imageHeight), JsTechTheme.line());
     }
 
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
         if (!bareTerminal()) {
-            JsTechTheme.text(g, font, GameText.resolve(CommandPromptTexts.TITLE), 12, 11, JsTechTheme.text());
-            JsTechTheme.textRight(g, font, GameText.resolve(CommandPromptTexts.PROGRAM), imageWidth - 10, 11,
+            JsTechTheme.text(g, font, GameText.resolve(CommandPromptTexts.TITLE), CommandPromptLayout.TITLE_X,
+                    CommandPromptLayout.TITLE_Y, JsTechTheme.text());
+            JsTechTheme.textRight(g, font, GameText.resolve(CommandPromptTexts.PROGRAM),
+                    imageWidth - CommandPromptLayout.PROGRAM_RIGHT_MARGIN, CommandPromptLayout.TITLE_Y,
                     JsTechTheme.accent());
         }
 
         // Console scrollback, newest at the bottom, honoring the scroll offset.
         final TermInput.Laid typing = typing();
         final int top = scrollbackTop();
-        final int bottom = imageHeight - 23 - Math.round((typing.rows().size() - 1) * rowPitch() * textScale);
+        final int bottom = CommandPromptLayout.glassBottom(imageHeight)
+                - Math.round((typing.rows().size() - 1) * rowPitch() * textScale);
         final int visible = visibleRows();
         final List<TermRow> all = scrollback.rows();
         final int end = Math.max(0, all.size() - scrollOffset);
@@ -485,7 +499,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
          * whatever size the text comes out at, and the whole glass goes to the card in one batch.
          */
         g.pose().pushPose();
-        g.pose().translate(10, top, 0);
+        g.pose().translate(CommandPromptLayout.GLASS_LEFT, top, 0);
         g.pose().scale(textScale, textScale, 1.0f);
         TermPainter.highlight(g, all.subList(start, end), 0, 0, rowPitch(), start, selector.selection(),
                 TermPalette.selectionOn(glass()));
@@ -493,7 +507,8 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         g.pose().popPose();
         if (scrollOffset > 0) {
             JsTechTheme.textSRight(g, font, GameText.resolve(CommandPromptTexts.SCROLLED.with(scrollOffset)),
-                    imageWidth - 10, bottom - 7, JsTechTheme.dim());
+                    imageWidth - CommandPromptLayout.GLASS_RIGHT_MARGIN,
+                    bottom - CommandPromptLayout.SCROLLED_ABOVE, JsTechTheme.dim());
         }
 
         if (this.editor != null) {
@@ -513,7 +528,8 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
              * short rather than drawn over the prompt when a long usage does not fit.
              */
             final int used = Math.round((typing.rows().get(0).length() + 2) * TermPainter.CELL * textScale);
-            final int room = imageWidth - 10 - (10 + used);
+            final int room = imageWidth - CommandPromptLayout.GLASS_RIGHT_MARGIN
+                    - (CommandPromptLayout.GLASS_LEFT + used);
             if (room >= 40) {
                 String hint = verb + " " + usage;
                 if (JsTechTheme.widthS(font, hint) > room) {
@@ -523,12 +539,13 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
                     }
                     hint = cut + "..";
                 }
-                JsTechTheme.textSRight(g, font, hint, imageWidth - 10, imageHeight - 17, JsTechTheme.dim());
+                JsTechTheme.textSRight(g, font, hint, imageWidth - CommandPromptLayout.GLASS_RIGHT_MARGIN,
+                        CommandPromptLayout.usageY(imageHeight), JsTechTheme.dim());
             }
         }
         JsTechTheme.textS(g, font,
                 GameText.resolve(keyboard.busy() ? CommandPromptTexts.KEYS_BUSY : CommandPromptTexts.KEYS),
-                10, imageHeight - 7, JsTechTheme.dim());
+                CommandPromptLayout.KEYS_X, CommandPromptLayout.keysY(imageHeight), JsTechTheme.dim());
     }
 
     /**
@@ -570,14 +587,16 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         final int last = typing.rows().size() - 1;
         for (int i = 0; i <= last; i++) {
             g.pose().pushPose();
-            g.pose().translate(10, imageHeight - 17 - (last - i) * rowHeight, 0);
+            g.pose().translate(CommandPromptLayout.GLASS_LEFT,
+                    CommandPromptLayout.usageY(imageHeight) - (last - i) * rowHeight, 0);
             g.pose().scale(textScale, textScale, 1.0f);
             TermPainter.highlight(g, typing.rows().subList(i, i + 1), 0, 0, rowPitch(), i, typing.selection(),
                     TermPalette.selectionOn(typingGround()));
             painter.drawOnce(g, font, typing.rows().get(i), 0, 0, this::colorOf, typingGround());
             if (i == typing.cursorRow() && (Util.getMillis() / CURSOR_BLINK_MS) % 2 == 0) {
                 final int at = typing.cursorColumn() * TermPainter.CELL;
-                g.fill(at, LINE_H - 1, at + TermPainter.CELL - 1, LINE_H, colorOf(CliStyle.PROMPT));
+                g.fill(at, CommandPromptLayout.LINE_STEP - 1, at + TermPainter.CELL - 1,
+                        CommandPromptLayout.LINE_STEP, colorOf(CliStyle.PROMPT));
             }
             g.pose().popPose();
         }
@@ -590,7 +609,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
      * pixels of the scaled grid, which is what makes small text look smeared.
      */
     private int rowPitch() {
-        return Math.round(LINE_H / textScale);
+        return Math.round(CommandPromptLayout.LINE_STEP / textScale);
     }
 
     /** What the scrollback is written on, which is what the shadow under it is worked out against. */
@@ -789,8 +808,10 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
     /** Whether the pointer is over the rows the machine has printed, which is what can be picked out. */
     private boolean overGlass(final double mx, final double my) {
-        return mx >= leftPos + 10 && mx < leftPos + imageWidth - 10
-                && my >= topPos + scrollbackTop() && my < topPos + imageHeight - 23;
+        return mx >= leftPos + CommandPromptLayout.GLASS_LEFT
+                && mx < leftPos + imageWidth - CommandPromptLayout.GLASS_RIGHT_MARGIN
+                && my >= topPos + scrollbackTop()
+                && my < topPos + CommandPromptLayout.glassBottom(imageHeight);
     }
 
     /** Which row of the buffer the pointer is over, counting from the top of the buffer and not of the glass. */
@@ -799,7 +820,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     }
 
     private int columnUnder(final double mx) {
-        return TermPainter.columnAt(mx - leftPos - 10, textScale);
+        return TermPainter.columnAt(mx - leftPos - CommandPromptLayout.GLASS_LEFT, textScale);
     }
 
     /** The row of the buffer the top of the glass is showing, which is where what is drawn starts. */
@@ -823,7 +844,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
      * so it starts higher and fits more rows than one drawn in the window with a title bar.
      */
     private int scrollbackTop() {
-        return bareTerminal() ? 8 : 27;
+        return CommandPromptLayout.glassTop(bareTerminal());
     }
 
     /**
@@ -837,7 +858,8 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     private int visibleRows() {
         // The line being typed is one row as a rule; every row past that comes out of what the scrollback has.
         final int typingRows = typing().rows().size() - 1;
-        return Math.max(1, (int) ((imageHeight - 23 - scrollbackTop()) / (rowPitch() * textScale)) - typingRows);
+        return Math.max(1, (int) ((CommandPromptLayout.glassBottom(imageHeight) - scrollbackTop())
+                / (rowPitch() * textScale)) - typingRows);
     }
 
 
@@ -864,10 +886,13 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
              */
             this.editor.setRowPitch(rowPitch());
             g.pose().pushPose();
-            g.pose().translate(leftPos + 8, topPos + 8, 0);
+            g.pose().translate(leftPos + CommandPromptLayout.EDITOR_MARGIN, topPos + CommandPromptLayout.EDITOR_MARGIN,
+                    0);
             g.pose().scale(textScale, textScale, 1.0f);
-            this.editor.render(g, font, 0, 0, Math.round((imageWidth - 16) / textScale),
-                    Math.round((imageHeight - 16) / textScale), InkPalette.GLASS.get());
+            this.editor.render(g, font, 0, 0,
+                    Math.round((imageWidth - 2 * CommandPromptLayout.EDITOR_MARGIN) / textScale),
+                    Math.round((imageHeight - 2 * CommandPromptLayout.EDITOR_MARGIN) / textScale),
+                    InkPalette.GLASS.get());
             g.pose().popPose();
         }
     }

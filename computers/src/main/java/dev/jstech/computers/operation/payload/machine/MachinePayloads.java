@@ -20,10 +20,8 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.client.os.RemoteControlApp;
 import dev.jstech.computers.machine.RemoteComputerService;
-import dev.jstech.computers.menu.ClusterManagementComputerMenu;
-import dev.jstech.computers.menu.CraftingComputerMenu;
+import dev.jstech.computers.menu.AbstractAssemblyComputerMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
-import dev.jstech.computers.menu.PersonalComputerMenu;
 import dev.jstech.computers.menu.ServerAssemblyMenu;
 import dev.jstech.computers.menu.ServerRackMenu;
 import dev.jstech.computers.menu.SpeakerMenu;
@@ -65,9 +63,8 @@ public final class MachinePayloads {
 
     /** Registers the payloads this class handles. */
     public static void register(final PayloadRegistrar registrar) {
-        ComputerAccess.accept(registrar, RackBayPowerPayload.TYPE, RackBayPowerPayload.STREAM_CODEC,
-                ComputerAccess.menu(ServerRackMenu.class,
-                        ServerRackMenu::rackPos, RackBayPowerPayload::rackPos),
+        ComputerAccess.onMenu(registrar, RackBayPowerPayload.TYPE, RackBayPowerPayload.STREAM_CODEC,
+                ServerRackMenu.class, ServerRackMenu::rackPos, RackBayPowerPayload::rackPos,
                 MachinePayloads::handleRackBayPower);
         ComputerAccess.accept(registrar, MachinePowerPayload.TYPE, MachinePowerPayload.STREAM_CODEC,
                 ComputerAccess.machine(MachinePowerPayload::hostPos), MachinePayloads::handleMachinePower);
@@ -75,8 +72,8 @@ public final class MachinePayloads {
                 ComputerAccess.machine(MachineSoundPayload::hostPos), MachinePayloads::handleMachineSound);
         ComputerAccess.accept(registrar, TestSoundPayload.TYPE, TestSoundPayload.STREAM_CODEC,
                 ComputerAccess.machine(TestSoundPayload::hostPos), MachinePayloads::handleTestSound);
-        ComputerAccess.accept(registrar, RenameSpeakerPayload.TYPE, RenameSpeakerPayload.STREAM_CODEC,
-                ComputerAccess.menu(SpeakerMenu.class, SpeakerMenu::speakerPos, RenameSpeakerPayload::speakerPos),
+        ComputerAccess.onMenu(registrar, RenameSpeakerPayload.TYPE, RenameSpeakerPayload.STREAM_CODEC,
+                SpeakerMenu.class, SpeakerMenu::speakerPos, RenameSpeakerPayload::speakerPos,
                 MachinePayloads::handleRenameSpeaker);
         registrar.playToClient(OpenKvmPayload.TYPE, OpenKvmPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(MachinePayloads::handleOpenKvm));
@@ -88,24 +85,16 @@ public final class MachinePayloads {
                 ComputerAccess.screenAt(KvmSelectPayload::rackPos, KvmSelectPayload::monitorPos,
                         MonitorSessionMenu.Phase.KVM),
                 MachinePayloads::handleKvmSelect);
-        ComputerAccess.accept(registrar, RenameServerPayload.TYPE, RenameServerPayload.STREAM_CODEC,
-                ComputerAccess.menu(ServerAssemblyMenu.class),
-                MachinePayloads::handleRenameServer);
-        // A desk computer, a crafting computer and a cluster management computer are each renamed in their own assembly.
-        ComputerAccess.accept(registrar, RenamePcPayload.TYPE, RenamePcPayload.STREAM_CODEC,
-                ComputerAccess.anyOf(
-                        ComputerAccess.menu(PersonalComputerMenu.class, PersonalComputerMenu::pcPos, RenamePcPayload::pcPos),
-                        ComputerAccess.menu(CraftingComputerMenu.class, CraftingComputerMenu::computerPos,
-                                RenamePcPayload::pcPos),
-                        ComputerAccess.menu(ClusterManagementComputerMenu.class,
-                                ClusterManagementComputerMenu::computerPos,
-                                RenamePcPayload::pcPos)),
-                MachinePayloads::handleRenamePc);
+        ComputerAccess.onMenu(registrar, RenameServerPayload.TYPE, RenameServerPayload.STREAM_CODEC,
+                ServerAssemblyMenu.class, MachinePayloads::handleRenameServer);
+        ComputerAccess.onMenu(registrar, RenamePcPayload.TYPE, RenamePcPayload.STREAM_CODEC,
+                AbstractAssemblyComputerMenu.class, AbstractAssemblyComputerMenu::computerPos,
+                RenamePcPayload::pcPos, MachinePayloads::handleRenamePc);
     }
 
-    private static void handleRenameSpeaker(final RenameSpeakerPayload payload, final ServerPlayer player,
-                                            final ServerLevel level) {
-        if (level.getBlockEntity(payload.speakerPos()) instanceof SpeakerBlockEntity speaker) {
+    private static void handleRenameSpeaker(final RenameSpeakerPayload payload, final SpeakerMenu menu,
+                                            final ServerPlayer player, final ServerLevel level) {
+        if (level.getBlockEntity(menu.speakerPos()) instanceof SpeakerBlockEntity speaker) {
             speaker.ask(level, payload.name());
         }
     }
@@ -131,12 +120,12 @@ public final class MachinePayloads {
         }
     }
 
-    private static void handleRackBayPower(final RackBayPowerPayload payload, final ServerPlayer player,
-                                           final ServerLevel level) {
-        if (level.getBlockEntity(payload.rackPos())
+    private static void handleRackBayPower(final RackBayPowerPayload payload, final ServerRackMenu menu,
+                                           final ServerPlayer player, final ServerLevel level) {
+        if (level.getBlockEntity(menu.rackPos())
                 instanceof ServerRackBlockEntity rack) {
             // The bay switch is the server's power button, pressed by the player.
-            Audio.at(level, payload.rackPos(), ComputingSounds.POWER_BUTTON);
+            Audio.at(level, menu.rackPos(), ComputingSounds.POWER_BUTTON);
             rack.toggleBayPower(payload.slot());
         }
     }
@@ -255,21 +244,16 @@ public final class MachinePayloads {
         return true;
     }
 
-    /*
-     * Its gate has already made sure the player is in that computer's assembly. A supercomputer node is a
-     * rack computer: it is renamed through the Server assembly like any other server.
-     */
-    private static void handleRenamePc(final RenamePcPayload payload, final ServerPlayer player,
-                                       final ServerLevel level) {
-        if (level.getBlockEntity(payload.pcPos()) instanceof IOsHost computer) {
+    // A supercomputer node is a rack computer: it is renamed through the Server assembly like any other server.
+    private static void handleRenamePc(final RenamePcPayload payload, final AbstractAssemblyComputerMenu menu,
+                                       final ServerPlayer player, final ServerLevel level) {
+        if (level.getBlockEntity(menu.computerPos()) instanceof IOsHost computer) {
             computer.setCustomName(payload.name());
         }
     }
 
-    private static void handleRenameServer(final RenameServerPayload payload, final ServerPlayer player,
-                                           final ServerLevel level) {
-        if (player.containerMenu instanceof ServerAssemblyMenu menu) {
-            menu.setServerName(payload.name());
-        }
+    private static void handleRenameServer(final RenameServerPayload payload, final ServerAssemblyMenu menu,
+                                           final ServerPlayer player, final ServerLevel level) {
+        menu.setServerName(payload.name());
     }
 }

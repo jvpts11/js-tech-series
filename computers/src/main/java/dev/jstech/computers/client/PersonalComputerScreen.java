@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.gui.layout.PersonalComputerLayout;
 import dev.jstech.computers.menu.PersonalComputerMenu;
 import dev.jstech.computers.operation.payload.RenamePcPayload;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
@@ -19,24 +21,16 @@ import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
- * Screen for the Personal Computer: a flat-dark "computer OS" hardware-assembly surface, the same skin as the Mainframe.
+ * Screen for the Personal Computer: a flat-dark "computer OS" hardware-assembly surface, the same skin as
+ * the Mainframe.
  */
 public class PersonalComputerScreen extends AbstractAssemblyScreen<PersonalComputerMenu> {
-
-    private static final int COL_R = 126;
-    private static final int COL_R_W = 110;
-    private static final int BTN_H = 14;
-
-    private static final int POWER_X = COL_R;
-    private static final int POWER_Y = 98;
-    private static final int AUTO_X = COL_R;
-    private static final int AUTO_Y = 116;
 
     public PersonalComputerScreen(final PersonalComputerMenu menu, final Inventory inventory,
                                   final Component title) {
         super(menu, inventory, title);
-        this.imageWidth = 244;
-        this.imageHeight = 218;
+        this.imageWidth = PersonalComputerLayout.WIDTH;
+        this.imageHeight = PersonalComputerLayout.HEIGHT;
         this.titleLabelX = -10000;
         this.inventoryLabelY = -10000;
     }
@@ -45,10 +39,11 @@ public class PersonalComputerScreen extends AbstractAssemblyScreen<PersonalCompu
     protected void init() {
         super.init();
         // Name field in the header, since a PC is renamed here, in its assembly GUI, never via an anvil.
-        setupNameBox(28, 8, 126, RenamePcPayload.MAX_LEN,
+        setupNameBox(PersonalComputerLayout.NAME_BOX_X, PersonalComputerLayout.NAME_BOX_Y,
+                PersonalComputerLayout.NAME_BOX_W, RenamePcPayload.MAX_LEN,
                 GameText.component(AssemblyTexts.NAME_THIS_PC).withStyle(ChatFormatting.DARK_GRAY),
                 menu.customName(),
-                s -> PacketDistributor.sendToServer(new RenamePcPayload(menu.pcPos(), s)));
+                s -> PacketDistributor.sendToServer(new RenamePcPayload(menu.computerPos(), s)));
     }
 
     @Override
@@ -56,48 +51,46 @@ public class PersonalComputerScreen extends AbstractAssemblyScreen<PersonalCompu
         final int x = leftPos;
         final int y = topPos;
         JsTechTheme.window(g, x, y, imageWidth, imageHeight);
-        JsTechTheme.headerBar(g, x + 6, y + 6, 232);
+        JsTechTheme.headerBar(g, x + PersonalComputerLayout.HEADER_X, y + PersonalComputerLayout.HEADER_Y,
+                PersonalComputerLayout.HEADER_W);
         // Name field background (the EditBox is drawn over this).
-        nameWell(g, x + 26, y + 7, x + 158);
-        JsTechTheme.vLine(g, x + COL_R - 5, y + 24, 108);
+        nameWell(g, x + PersonalComputerLayout.NAME_WELL_LEFT, y + PersonalComputerLayout.NAME_WELL_TOP,
+                x + PersonalComputerLayout.NAME_WELL_RIGHT);
+        JsTechTheme.vLine(g, x + PersonalComputerLayout.VLINE_X, y + PersonalComputerLayout.VLINE_Y,
+                PersonalComputerLayout.VLINE_H);
 
-        JsTechTheme.slot(g, x + 8, y + 40);  // motherboard
-        JsTechTheme.slot(g, x + 8, y + 73);  // psu
-        if (menu.boardCpuSlots() > 0) {
-            JsTechTheme.slot(g, x + 44, y + 40);
-        }
-        /*
-         * The board-derived counts are already clamped to the chassis bays in the BlockEntity, so the
-         * screen draws exactly what the menu exposes, one source of truth, no duplicated cap literal.
-         */
-        final int ram = menu.boardRamSlots();
-        final int gpu = menu.boardPcieSlots();
-        final int disk = menu.boardDiskSlots();
-        for (int i = 0; i < ram; i++) {
-            JsTechTheme.slot(g, x + 44 + i * 18, y + 73);
-        }
-        for (int i = 0; i < gpu; i++) {
-            JsTechTheme.slot(g, x + 44 + i * 18, y + 106);
-        }
-        for (int i = 0; i < disk; i++) {
-            JsTechTheme.slot(g, x + 8 + i * 18, y + 106);
+        // A cell behind every active hardware slot, reading the menu's own slot positions.
+        for (int i = 0; i < PersonalComputerBlockEntity.HARDWARE_SLOTS; i++) {
+            final var slot = menu.getSlot(i);
+            if (slot.isActive()) {
+                JsTechTheme.slot(g, x + slot.x, y + slot.y);
+            }
         }
 
-        JsTechTheme.panel(g, x + COL_R, y + 27, COL_R_W, 22);  // CAPACITY
-        JsTechTheme.panel(g, x + COL_R, y + 52, COL_R_W, 18);  // RAM BUFFER
+        JsTechTheme.panel(g, x + PersonalComputerLayout.COL_R, y + PersonalComputerLayout.TILE_Y_CAPACITY,
+                PersonalComputerLayout.COL_R_W, PersonalComputerLayout.TILE_H_CAPACITY);
+        JsTechTheme.panel(g, x + PersonalComputerLayout.COL_R, y + PersonalComputerLayout.TILE_Y_RAM_BUFFER,
+                PersonalComputerLayout.COL_R_W, PersonalComputerLayout.TILE_H_RAM_BUFFER);
 
         final boolean auto = menu.isAutoStart();
-        JsTechTheme.button(g, x + POWER_X, y + POWER_Y, COL_R_W, BTN_H,
-                !auto && hover(mouseX, mouseY, POWER_X, POWER_Y, COL_R_W, BTN_H));
-        JsTechTheme.button(g, x + AUTO_X, y + AUTO_Y, COL_R_W, BTN_H, hover(mouseX, mouseY, AUTO_X, AUTO_Y, COL_R_W, BTN_H));
+        JsTechTheme.button(g, x + PersonalComputerLayout.POWER_X, y + PersonalComputerLayout.POWER_Y,
+                PersonalComputerLayout.COL_R_W, PersonalComputerLayout.BTN_H,
+                !auto && hover(mouseX, mouseY, PersonalComputerLayout.POWER_X, PersonalComputerLayout.POWER_Y,
+                        PersonalComputerLayout.COL_R_W, PersonalComputerLayout.BTN_H));
+        JsTechTheme.button(g, x + PersonalComputerLayout.AUTO_X, y + PersonalComputerLayout.AUTO_Y,
+                PersonalComputerLayout.COL_R_W, PersonalComputerLayout.BTN_H,
+                hover(mouseX, mouseY, PersonalComputerLayout.AUTO_X, PersonalComputerLayout.AUTO_Y,
+                        PersonalComputerLayout.COL_R_W, PersonalComputerLayout.BTN_H));
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                JsTechTheme.slot(g, x + 8 + col * 18, y + 138 + row * 18);
+                JsTechTheme.slot(g, x + PersonalComputerLayout.INV_X + col * PersonalComputerLayout.SLOT,
+                        y + PersonalComputerLayout.INV_Y + row * PersonalComputerLayout.SLOT);
             }
         }
         for (int col = 0; col < 9; col++) {
-            JsTechTheme.slot(g, x + 8 + col * 18, y + 196);
+            JsTechTheme.slot(g, x + PersonalComputerLayout.INV_X + col * PersonalComputerLayout.SLOT,
+                    y + PersonalComputerLayout.INV_Y + PersonalComputerLayout.HOTBAR_GAP);
         }
     }
 
@@ -116,41 +109,56 @@ public class PersonalComputerScreen extends AbstractAssemblyScreen<PersonalCompu
             status = GameText.resolve(AssemblyTexts.READY);
             statusColor = JsTechTheme.amber();
         }
-        final int pillX = 232 - font.width(status);
+        final int pillX = PersonalComputerLayout.HEADER_W - font.width(status);
         JsTechTheme.text(g, font, status, pillX, 11, statusColor);
         g.fill(pillX - 6, 11, pillX - 2, 15, statusColor);
 
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.BOARD), 8, 27,
-                menu.hasBoard() ? JsTechTheme.accent() : JsTechTheme.dim());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.CPU), 44, 27, JsTechTheme.dim());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.PSU), 8, 60, JsTechTheme.dim());
-        g.fill(30, 61, 34, 65, psuColor());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.RAM), 44, 60, JsTechTheme.dim());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.DISK), 8, 93, JsTechTheme.dim());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.GPU), 44, 93, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.BOARD), PersonalComputerLayout.MOBO_X,
+                PersonalComputerLayout.LABEL_ROW_1_Y, menu.hasBoard() ? JsTechTheme.accent() : JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.CPU), PersonalComputerLayout.RIGHT_X,
+                PersonalComputerLayout.LABEL_ROW_1_Y, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.PSU), PersonalComputerLayout.MOBO_X,
+                PersonalComputerLayout.LABEL_ROW_2_Y, JsTechTheme.dim());
+        g.fill(PersonalComputerLayout.PSU_LED_X, PersonalComputerLayout.PSU_LED_Y,
+                PersonalComputerLayout.PSU_LED_X + PersonalComputerLayout.PSU_LED_SIZE,
+                PersonalComputerLayout.PSU_LED_Y + PersonalComputerLayout.PSU_LED_SIZE, psuColor());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.RAM), PersonalComputerLayout.RIGHT_X,
+                PersonalComputerLayout.LABEL_ROW_2_Y, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.DISK), PersonalComputerLayout.MOBO_X,
+                PersonalComputerLayout.LABEL_ROW_3_Y, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.GPU), PersonalComputerLayout.RIGHT_X,
+                PersonalComputerLayout.LABEL_ROW_3_Y, JsTechTheme.dim());
 
-        JsTechTheme.tileText(g, font, COL_R, 27, GameText.resolve(AssemblyTexts.CAPACITY),
-                JsTechTheme.fmt(menu.capacity()), GameText.resolve(AssemblyTexts.ITEMS_PER_TICK), JsTechTheme.text());
-        JsTechTheme.tileText(g, font, COL_R, 52, GameText.resolve(AssemblyTexts.RAM_BUFFER),
-                JsTechTheme.fmt(menu.ramBuffer()), GameText.resolve(AssemblyTexts.ITEMS), JsTechTheme.text());
+        JsTechTheme.tileText(g, font, PersonalComputerLayout.COL_R, PersonalComputerLayout.TILE_Y_CAPACITY,
+                GameText.resolve(AssemblyTexts.CAPACITY), JsTechTheme.fmt(menu.capacity()),
+                GameText.resolve(AssemblyTexts.ITEMS_PER_TICK), JsTechTheme.text());
+        JsTechTheme.tileText(g, font, PersonalComputerLayout.COL_R, PersonalComputerLayout.TILE_Y_RAM_BUFFER,
+                GameText.resolve(AssemblyTexts.RAM_BUFFER), JsTechTheme.fmt(menu.ramBuffer()),
+                GameText.resolve(AssemblyTexts.ITEMS), JsTechTheme.text());
 
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.NETWORK), COL_R, 74, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.NETWORK), PersonalComputerLayout.COL_R,
+                PersonalComputerLayout.NETWORK_Y, JsTechTheme.dim());
         if (menu.isOnNetwork()) {
-            JsTechTheme.textRight(g, font, GameText.resolve(AssemblyTexts.LINKED), COL_R + COL_R_W, 74,
+            JsTechTheme.textRight(g, font, GameText.resolve(AssemblyTexts.LINKED),
+                    PersonalComputerLayout.COL_R + PersonalComputerLayout.COL_R_W, PersonalComputerLayout.NETWORK_Y,
                     JsTechTheme.green());
             final int n = menu.networkServerCount();
             JsTechTheme.textRight(g, font, GameText.resolve((n == 1 ? AssemblyTexts.ONE_SERVER : AssemblyTexts.SERVERS)
-                    .with(n)), COL_R + COL_R_W, 85, JsTechTheme.dim());
+                    .with(n)), PersonalComputerLayout.COL_R + PersonalComputerLayout.COL_R_W,
+                    PersonalComputerLayout.NETWORK_VALUE_Y, JsTechTheme.dim());
         } else {
-            JsTechTheme.textRight(g, font, "--", COL_R + COL_R_W, 74, JsTechTheme.dim());
+            JsTechTheme.textRight(g, font, "--", PersonalComputerLayout.COL_R + PersonalComputerLayout.COL_R_W,
+                    PersonalComputerLayout.NETWORK_Y, JsTechTheme.dim());
         }
 
         final boolean auto = menu.isAutoStart();
         final String powerCap = GameText.resolve(auto ? AssemblyTexts.AUTO
                 : menu.isRunning() ? AssemblyTexts.TURN_OFF : AssemblyTexts.TURN_ON);
-        JsTechTheme.textCenter(g, font, powerCap, POWER_X + COL_R_W / 2, POWER_Y + 4, auto ? JsTechTheme.dim() : JsTechTheme.accent());
+        JsTechTheme.textCenter(g, font, powerCap, PersonalComputerLayout.POWER_X + PersonalComputerLayout.COL_R_W / 2,
+                PersonalComputerLayout.POWER_Y + 4, auto ? JsTechTheme.dim() : JsTechTheme.accent());
         JsTechTheme.textCenter(g, font, GameText.resolve(auto ? AssemblyTexts.AUTO_ON : AssemblyTexts.AUTO_OFF),
-                AUTO_X + COL_R_W / 2, AUTO_Y + 4, auto ? JsTechTheme.accent() : JsTechTheme.dim());
+                PersonalComputerLayout.AUTO_X + PersonalComputerLayout.COL_R_W / 2,
+                PersonalComputerLayout.AUTO_Y + 4, auto ? JsTechTheme.accent() : JsTechTheme.dim());
     }
 
     private int psuColor() {
@@ -172,11 +180,13 @@ public class PersonalComputerScreen extends AbstractAssemblyScreen<PersonalCompu
             nameBox.setFocused(false);
         }
         if (button == 0) {
-            if (!menu.isAutoStart() && hover((int) mouseX, (int) mouseY, POWER_X, POWER_Y, COL_R_W, BTN_H)) {
+            if (!menu.isAutoStart() && hover((int) mouseX, (int) mouseY, PersonalComputerLayout.POWER_X,
+                    PersonalComputerLayout.POWER_Y, PersonalComputerLayout.COL_R_W, PersonalComputerLayout.BTN_H)) {
                 sendButton(PersonalComputerMenu.BUTTON_POWER);
                 return true;
             }
-            if (hover((int) mouseX, (int) mouseY, AUTO_X, AUTO_Y, COL_R_W, BTN_H)) {
+            if (hover((int) mouseX, (int) mouseY, PersonalComputerLayout.AUTO_X, PersonalComputerLayout.AUTO_Y,
+                    PersonalComputerLayout.COL_R_W, PersonalComputerLayout.BTN_H)) {
                 sendButton(PersonalComputerMenu.BUTTON_AUTOSTART);
                 return true;
             }

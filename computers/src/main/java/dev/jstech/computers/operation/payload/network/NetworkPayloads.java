@@ -47,7 +47,6 @@ import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.Locale;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -87,28 +86,31 @@ public final class NetworkPayloads {
                 ClientPayloadHandlers.onMainThread(NetworkPayloads::handleStorageInsights));
         registrar.playToClient(NetworkServersPayload.TYPE, NetworkServersPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(NetworkPayloads::handleNetworkServers));
-        ComputerAccess.accept(registrar, RenameServerRouterPayload.TYPE, RenameServerRouterPayload.STREAM_CODEC,
-                ComputerAccess.menu(ServerRouterMenu.class, ServerRouterMenu::routerPos, RenameServerRouterPayload::routerPos),
+        ComputerAccess.onMenu(registrar, RenameServerRouterPayload.TYPE, RenameServerRouterPayload.STREAM_CODEC,
+                ServerRouterMenu.class, ServerRouterMenu::routerPos, RenameServerRouterPayload::routerPos,
                 NetworkPayloads::handleRenameServerRouter);
-        ComputerAccess.accept(registrar, SetBusNamePayload.TYPE, SetBusNamePayload.STREAM_CODEC,
-                ComputerAccess.menu(AbstractBusMenu.class, AbstractBusMenu::cablePos, SetBusNamePayload::cablePos),
+        ComputerAccess.onMenu(registrar, SetBusNamePayload.TYPE, SetBusNamePayload.STREAM_CODEC,
+                AbstractBusMenu.class, AbstractBusMenu::cablePos, SetBusNamePayload::cablePos,
                 NetworkPayloads::handleSetBusName);
     }
 
-    private static void handleRenameServerRouter(final RenameServerRouterPayload payload, final ServerPlayer player,
-                                                 final ServerLevel level) {
-        if (level.getBlockEntity(payload.routerPos()) instanceof ServerRouterBlockEntity router) {
+    private static void handleRenameServerRouter(final RenameServerRouterPayload payload, final ServerRouterMenu menu,
+                                                 final ServerPlayer player, final ServerLevel level) {
+        if (level.getBlockEntity(menu.routerPos()) instanceof ServerRouterBlockEntity router) {
             router.setCustomName(payload.name());
         }
     }
 
-    private static void handleSetBusName(final SetBusNamePayload payload, final ServerPlayer player,
-                                         final ServerLevel level) {
-        if (player.containerMenu instanceof AbstractBusMenu menu
-                && menu.cablePos().equals(payload.cablePos())
-                && menu.face().get3DDataValue() == payload.face()
-                && level.getBlockEntity(payload.cablePos()) instanceof DataCableBlockEntity cable
-                && cable.getPart(Direction.from3DDataValue(payload.face())) instanceof AbstractBusPart bus) {
+    /*
+     * The gate already proved the sender has an AbstractBusMenu open on this cable position; the face still has
+     * to be checked here since one cable can carry a bus on more than one face, and only the menu's own face (not
+     * whatever the payload claims) may be trusted to pick which mounted part to rename.
+     */
+    private static void handleSetBusName(final SetBusNamePayload payload, final AbstractBusMenu menu,
+                                         final ServerPlayer player, final ServerLevel level) {
+        if (menu.face().get3DDataValue() == payload.face()
+                && level.getBlockEntity(menu.cablePos()) instanceof DataCableBlockEntity cable
+                && cable.getPart(menu.face()) instanceof AbstractBusPart bus) {
             bus.setName(payload.name());
             menu.setBusNameLocal(bus.name());
         }

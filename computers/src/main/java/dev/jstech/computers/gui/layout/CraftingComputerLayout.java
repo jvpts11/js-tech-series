@@ -71,6 +71,8 @@ public final class CraftingComputerLayout {
     // Vertical separator
 
     public static final int VLINE_X = 121;  // COL_R - 5
+    public static final int VLINE_Y = 24;
+    public static final int VLINE_H = 108;
 
     // Right column: metrics tiles and control buttons
 
@@ -96,6 +98,26 @@ public final class CraftingComputerLayout {
      */
     public static final int INV_X = 8;
     public static final int INV_Y = 138;
+    public static final int HOTBAR_GAP = 58;
+
+    // Hardware caption rows, shared by the left column's labels and the layout's own text() entries.
+    public static final int LABEL_ROW_1_Y = 27;
+    public static final int LABEL_ROW_2_Y = 60;
+    public static final int LABEL_ROW_3_Y = 93;
+    public static final int NETWORK_Y = 95;
+
+    /* The PSU health dot drawn next to its caption. */
+    public static final int PSU_LED_X = 30;
+    public static final int PSU_LED_Y = LABEL_ROW_2_Y + 1;
+    public static final int PSU_LED_SIZE = 4;
+
+    // Header rename field: the well it sits over and the EditBox itself.
+    public static final int NAME_WELL_LEFT = 26;
+    public static final int NAME_WELL_TOP = 7;
+    public static final int NAME_WELL_RIGHT = 158;
+    public static final int NAME_BOX_X = 28;
+    public static final int NAME_BOX_Y = 8;
+    public static final int NAME_BOX_W = 126;
 
     private CraftingComputerLayout() {
     }
@@ -110,18 +132,18 @@ public final class CraftingComputerLayout {
     public static GuiLayout layout() {
         final GuiLayout l = new GuiLayout(WIDTH, HEIGHT)
                 // Left column: hardware slots (worst case: all slots present)
-                .box("mobo",  MOBO_X,              MOBO_Y, SLOT, SLOT)
-                .box("psu",   PSU_X,               PSU_Y,  SLOT, SLOT)
-                .box("cpu",   RIGHT_X,             CPU_Y,  SLOT, SLOT);
+                .slot("mobo",  MOBO_X,              MOBO_Y)
+                .slot("psu",   PSU_X,               PSU_Y)
+                .slot("cpu",   RIGHT_X,             CPU_Y);
 
         for (int i = 0; i < RAM_SLOTS; i++) {
-            l.box("ram_" + i, RIGHT_X + i * SLOT, RAM_Y,  SLOT, SLOT);
+            l.slot("ram_" + i, RIGHT_X + i * SLOT, RAM_Y);
         }
         for (int i = 0; i < PCIE_SLOTS; i++) {
-            l.box("pcie_" + i, RIGHT_X + i * SLOT, PCIE_Y, SLOT, SLOT);
+            l.slot("pcie_" + i, RIGHT_X + i * SLOT, PCIE_Y);
         }
         for (int i = 0; i < DISK_SLOTS; i++) {
-            l.box("disk_" + i, MOBO_X + i * SLOT, DISK_Y, SLOT, SLOT);
+            l.slot("disk_" + i, MOBO_X + i * SLOT, DISK_Y);
         }
 
         l
@@ -138,13 +160,13 @@ public final class CraftingComputerLayout {
         // Text labels (captions, excluded from overlap check, only checked for bounds)
         l.text("titleCC",     12,                    11, 2, 1.0f);
         l.text("statusPill",  WIDTH - 6 * 7,         11, 7, 1.0f);  // "OFFLINE" = 7 chars
-        l.text("lblBoard",     MOBO_X,               27, 5, 1.0f);  // "BOARD"
-        l.text("lblCpu",       RIGHT_X,              27, 3, 1.0f);  // "CPU"
-        l.text("lblPsu",       MOBO_X,               60, 3, 1.0f);  // "PSU"
-        l.text("lblRam",       RIGHT_X,              60, 3, 1.0f);  // "RAM"
-        l.text("lblDisk",      MOBO_X,               93, 4, 1.0f);  // "DISK"
-        l.text("lblPcie",      RIGHT_X,              93, 4, 1.0f);  // "PCIE"
-        l.text("lblNetwork",   COL_R,                95, 7, 1.0f);  // "NETWORK"
+        l.text("lblBoard",     MOBO_X,               LABEL_ROW_1_Y, 5, 1.0f);  // "BOARD"
+        l.text("lblCpu",       RIGHT_X,              LABEL_ROW_1_Y, 3, 1.0f);  // "CPU"
+        l.text("lblPsu",       MOBO_X,               LABEL_ROW_2_Y, 3, 1.0f);  // "PSU"
+        l.text("lblRam",       RIGHT_X,              LABEL_ROW_2_Y, 3, 1.0f);  // "RAM"
+        l.text("lblDisk",      MOBO_X,               LABEL_ROW_3_Y, 4, 1.0f);  // "DISK"
+        l.text("lblPcie",      RIGHT_X,              LABEL_ROW_3_Y, 4, 1.0f);  // "PCIE"
+        l.text("lblNetwork",   COL_R,                NETWORK_Y,     7, 1.0f);  // "NETWORK"
 
         return l;
     }

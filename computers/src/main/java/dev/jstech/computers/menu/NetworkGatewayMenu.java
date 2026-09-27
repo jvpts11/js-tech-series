@@ -7,49 +7,52 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.block.NetworkGatewayBlock;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.gui.layout.NetworkGatewayLayout;
+import dev.jstech.computers.registry.ComputingMenus;
+import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.menu.CoreMenu;
+import dev.jstech.core.menu.MenuOpening;
+import dev.jstech.core.menu.MenuValidity;
+import dev.jstech.core.menu.PlayerSlots;
+import dev.jstech.core.menu.SlotGroup;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.items.SlotItemHandler;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * The Network Gateway's own screen: its nine-slot item buffer and the player's inventory. Pulled items
  * land in the buffer and pushed items leave from it; everything else about the Gateway is set on the host
  * computer, so nothing here is a control.
  */
-public class NetworkGatewayMenu extends AbstractComputerMenu {
+public class NetworkGatewayMenu extends CoreMenu {
 
     private final NetworkGatewayBlockEntity blockEntity;
-    private final ContainerLevelAccess access;
 
     public NetworkGatewayMenu(final int containerId, final Inventory playerInventory,
                               final NetworkGatewayBlockEntity be) {
-        super(ComputingMenus.NETWORK_GATEWAY_MENU.get(), containerId);
+        super(ComputingMenus.NETWORK_GATEWAY_MENU.get(), containerId, playerInventory,
+                MenuValidity.block(be.getLevel(), be.getBlockPos(), NetworkGatewayBlock.class));
         this.blockEntity = be;
-        this.access = ContainerLevelAccess.create(be.getLevel(), be.getBlockPos());
-        for (int i = 0; i < NetworkGatewayBlockEntity.BUFFER_SLOTS; i++) {
-            addSlot(new SlotItemHandler(be.buffer(), i, NetworkGatewayLayout.bufferX(i) + 1,
-                    NetworkGatewayLayout.BUFFER_Y + 1));
+        final GuiLayout layout = NetworkGatewayLayout.layout();
+        final Slot[] bufferSlots = new Slot[NetworkGatewayBlockEntity.BUFFER_SLOTS];
+        for (int i = 0; i < bufferSlots.length; i++) {
+            final GuiLayout.SlotPosition at = layout.slotAt("buffer" + i);
+            bufferSlots[i] = new SlotItemHandler(be.buffer(), i, at.x(), at.y());
         }
-        addPlayerInventory(playerInventory, NetworkGatewayLayout.INV_X, NetworkGatewayLayout.INV_Y);
+        final SlotGroup buffer = slots(bufferSlots);
+        final PlayerSlots player = playerInventory(playerInventory, layout.playerInventoryAt());
+        shiftClick(buffer, player.all());
+        shiftClick(player.all(), buffer);
     }
 
-    @Nullable
     public static NetworkGatewayMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                                  final RegistryFriendlyByteBuf buf) {
-        if (playerInventory.player.level().getBlockEntity(buf.readBlockPos())
-                instanceof NetworkGatewayBlockEntity be) {
-            return new NetworkGatewayMenu(containerId, playerInventory, be);
-        }
-        return null;
+        return new NetworkGatewayMenu(containerId, playerInventory,
+                MenuOpening.blockEntity(playerInventory, buf, NetworkGatewayBlockEntity.class));
     }
 
     public NetworkGatewayBlockEntity blockEntity() {
@@ -58,16 +61,5 @@ public class NetworkGatewayMenu extends AbstractComputerMenu {
 
     public BlockPos blockEntityPos() {
         return blockEntity.getBlockPos();
-    }
-
-    @Override
-    public ItemStack quickMoveStack(final Player player, final int index) {
-        return quickMoveBetweenContainerAndPlayer(player, index, NetworkGatewayBlockEntity.BUFFER_SLOTS);
-    }
-
-    @Override
-    public boolean stillValid(final Player player) {
-        return access.evaluate((level, pos) -> level.getBlockState(pos).getBlock() instanceof NetworkGatewayBlock
-                && player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) <= 64.0, true);
     }
 }

@@ -10,7 +10,7 @@ package dev.jstech.computers.operation.payload.program;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.client.os.ShellViews;
 import dev.jstech.computers.machine.MachinePrograms;
-import dev.jstech.computers.menu.DesktopMenu;
+import dev.jstech.computers.menu.IMonitorMenu;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
@@ -160,19 +160,19 @@ public final class DesktopShellPayloads {
                 busy = busy || keyboard.busy();
             }
             /*
-             * The reboot verbs work from the desktop's terminal window too: the desktop closes and the
-             * monitor either replays the POST (plain reboot) or enters the firmware setup.
+             * The reboot verbs work from a shell window on any screen this machine shows, the desktop's terminal
+             * and the computer terminal's Console tab alike: the desktop (or terminal) closes and the monitor
+             * either replays the POST (plain reboot) or enters the firmware setup. The machine() gate that admits
+             * this payload only shows it to a desktop, a prompt or a terminal, and all three are IMonitorMenu.
              */
-            final BlockPos monitorPos = player.containerMenu
-                    instanceof DesktopMenu desktop
-                    ? desktop.monitorPos() : null;
-            if (monitorPos != null && computer.firmwareRebootRequested()) {
+            final BlockPos monitorPos = ((IMonitorMenu) player.containerMenu).monitorPos();
+            if (computer.firmwareRebootRequested()) {
                 player.closeContainer();
                 MonitorBlock.openFirmware(
                         player, level, monitorPos, payload.hostPos());
                 return;
             }
-            if (monitorPos != null && computer.rebootRequested()) {
+            if (computer.rebootRequested()) {
                 /*
                  * The system closes down in front of whoever is watching and the self-test follows when it has
                  * finished; one with nothing to show on its way down starts over at once, and then the POST is
@@ -181,9 +181,9 @@ public final class DesktopShellPayloads {
                 if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost be) {
                     be.restart();
                     /*
-                     * Whoever asked for it is at the desktop, not at a monitor session, so the machine's own
-                     * goodbye never reached them: the closing-down went on behind the desktop they were still
-                     * sitting in, and nothing moved until they left and came back.
+                     * Whoever asked for it is at the desktop or the terminal, not at a monitor session, so the
+                     * machine's own goodbye never reached them: the closing-down went on behind the window they
+                     * were still sitting in, and nothing moved until they left and came back.
                      */
                     if (be.goingDown()) {
                         player.closeContainer();

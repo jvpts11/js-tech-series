@@ -59,7 +59,7 @@ import static dev.jstech.computers.operation.payload.terminal.MoveDestinations.g
 import static dev.jstech.computers.operation.payload.terminal.MoveDestinations.resolveDest;
 import static dev.jstech.computers.operation.payload.terminal.MoveDestinations.sourcesWithout;
 import static dev.jstech.computers.operation.payload.terminal.MoveDestinations.toNodes;
-import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.openTerminal;
+import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.hostOf;
 
 /**
  * The network terminal's payloads: selecting, inserting and dropping items, storage maintenance, the server
@@ -97,18 +97,23 @@ public final class TerminalPayloads {
     public static void register(final PayloadRegistrar registrar) {
         registrar.playToClient(NetworkSnapshotPayload.TYPE, NetworkSnapshotPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(TerminalPayloads::handleSnapshot));
-        ComputerAccess.accept(registrar, TerminalSelectPayload.TYPE, TerminalSelectPayload.STREAM_CODEC,
-                ComputerAccess.machine(TerminalSelectPayload::hostPos), TerminalPayloads::handleTerminalSelect);
-        ComputerAccess.accept(registrar, TerminalInsertPayload.TYPE, TerminalInsertPayload.STREAM_CODEC,
-                ComputerAccess.machine(TerminalInsertPayload::hostPos), TerminalPayloads::handleTerminalInsert);
-        ComputerAccess.accept(registrar, RequestServerBreakdownPayload.TYPE, RequestServerBreakdownPayload.STREAM_CODEC,
-                ComputerAccess.machine(RequestServerBreakdownPayload::hostPos), TerminalPayloads::handleRequestBreakdown);
+        ComputerAccess.onMenu(registrar, TerminalSelectPayload.TYPE, TerminalSelectPayload.STREAM_CODEC,
+                ComputerTerminalMenu.class, ComputerTerminalMenu::hostPos, TerminalSelectPayload::hostPos,
+                TerminalPayloads::handleTerminalSelect);
+        ComputerAccess.onMenu(registrar, TerminalInsertPayload.TYPE, TerminalInsertPayload.STREAM_CODEC,
+                ComputerTerminalMenu.class, ComputerTerminalMenu::hostPos, TerminalInsertPayload::hostPos,
+                TerminalPayloads::handleTerminalInsert);
+        ComputerAccess.onMenu(registrar, RequestServerBreakdownPayload.TYPE, RequestServerBreakdownPayload.STREAM_CODEC,
+                ComputerTerminalMenu.class, ComputerTerminalMenu::hostPos, RequestServerBreakdownPayload::hostPos,
+                TerminalPayloads::handleRequestBreakdown);
         registrar.playToClient(ServerBreakdownPayload.TYPE, ServerBreakdownPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(TerminalPayloads::handleServerBreakdown));
-        ComputerAccess.accept(registrar, TerminalMaintenancePayload.TYPE, TerminalMaintenancePayload.STREAM_CODEC,
-                ComputerAccess.machine(TerminalMaintenancePayload::hostPos), TerminalPayloads::handleTerminalMaintenance);
-        ComputerAccess.accept(registrar, TerminalDropPayload.TYPE, TerminalDropPayload.STREAM_CODEC,
-                ComputerAccess.machine(TerminalDropPayload::hostPos), TerminalPayloads::handleTerminalDrop);
+        ComputerAccess.onMenu(registrar, TerminalMaintenancePayload.TYPE, TerminalMaintenancePayload.STREAM_CODEC,
+                ComputerTerminalMenu.class, ComputerTerminalMenu::hostPos, TerminalMaintenancePayload::hostPos,
+                TerminalPayloads::handleTerminalMaintenance);
+        ComputerAccess.onMenu(registrar, TerminalDropPayload.TYPE, TerminalDropPayload.STREAM_CODEC,
+                ComputerTerminalMenu.class, ComputerTerminalMenu::hostPos, TerminalDropPayload::hostPos,
+                TerminalPayloads::handleTerminalDrop);
     }
 
     public static boolean networkHasActiveOps(final ServerLevel level, final NetworkUuid network) {
@@ -116,9 +121,10 @@ public final class TerminalPayloads {
         return mainframe != null && mainframe.hasActiveOperations();
     }
 
-    private static void handleTerminalMaintenance(final TerminalMaintenancePayload payload, final ServerPlayer player,
+    private static void handleTerminalMaintenance(final TerminalMaintenancePayload payload,
+                                                  final ComputerTerminalMenu menu, final ServerPlayer player,
                                                   final ServerLevel level) {
-        final IComputerTerminalHost host = openTerminal(player, payload.monitorPos(), payload.hostPos());
+        final IComputerTerminalHost host = hostOf(menu, payload.monitorPos(), level);
         if (host == null || !host.isMainframeHost() || host.networkUuid() == null) {
             return;
         }
@@ -173,9 +179,9 @@ public final class TerminalPayloads {
         dispatchTerminalQuery(player, net, level); // the catalog may have changed, so refresh the grid
     }
 
-    private static void handleTerminalDrop(final TerminalDropPayload payload, final ServerPlayer player,
-                                           final ServerLevel level) {
-        final IComputerTerminalHost host = openTerminal(player, payload.monitorPos(), payload.hostPos());
+    private static void handleTerminalDrop(final TerminalDropPayload payload, final ComputerTerminalMenu menu,
+                                           final ServerPlayer player, final ServerLevel level) {
+        final IComputerTerminalHost host = hostOf(menu, payload.monitorPos(), level);
         if (host == null || !host.isMainframeHost() || host.networkUuid() == null) {
             return;
         }
@@ -251,9 +257,9 @@ public final class TerminalPayloads {
         }
     }
 
-    private static void handleTerminalSelect(final TerminalSelectPayload payload, final ServerPlayer player,
-                                             final ServerLevel level) {
-        final IComputerTerminalHost host = openTerminal(player, payload.monitorPos(), payload.hostPos());
+    private static void handleTerminalSelect(final TerminalSelectPayload payload, final ComputerTerminalMenu menu,
+                                             final ServerPlayer player, final ServerLevel level) {
+        final IComputerTerminalHost host = hostOf(menu, payload.monitorPos(), level);
         if (host == null || host.networkUuid() == null) {
             return;
         }
@@ -290,11 +296,10 @@ public final class TerminalPayloads {
         }
     }
 
-    private static void handleTerminalInsert(final TerminalInsertPayload payload, final ServerPlayer player,
-                                             final ServerLevel level) {
-        final IComputerTerminalHost host = openTerminal(player, payload.monitorPos(), payload.hostPos());
-        if (host == null || host.networkUuid() == null
-                || !(player.containerMenu instanceof ComputerTerminalMenu menu)) {
+    private static void handleTerminalInsert(final TerminalInsertPayload payload, final ComputerTerminalMenu menu,
+                                             final ServerPlayer player, final ServerLevel level) {
+        final IComputerTerminalHost host = hostOf(menu, payload.monitorPos(), level);
+        if (host == null || host.networkUuid() == null) {
             return;
         }
         final NetworkUuid net = host.networkUuid();
@@ -304,8 +309,8 @@ public final class TerminalPayloads {
         }
         final int idx = payload.slotIndex();
         final boolean fromCursor = idx == TerminalInsertPayload.CURSOR || idx == TerminalInsertPayload.CURSOR_ONE;
-        // A slot source must be a player-inventory slot, never a storage slot.
-        if (!fromCursor && (idx < menu.storageSlotCount() || idx >= menu.slots.size())) {
+        // A slot source must be a player-inventory slot: every slot in this menu is one.
+        if (!fromCursor && (idx < 0 || idx >= menu.slots.size())) {
             return;
         }
         final DataHandoff.ISource source = fromCursor
@@ -327,8 +332,9 @@ public final class TerminalPayloads {
     }
 
     private static void handleRequestBreakdown(final RequestServerBreakdownPayload payload,
-                                               final ServerPlayer player, final ServerLevel level) {
-        final IComputerTerminalHost host = openTerminal(player, payload.monitorPos(), payload.hostPos());
+                                               final ComputerTerminalMenu menu, final ServerPlayer player,
+                                               final ServerLevel level) {
+        final IComputerTerminalHost host = hostOf(menu, payload.monitorPos(), level);
         if (host != null && host.networkUuid() != null) {
             PacketDistributor.sendToPlayer(player, collectBreakdown(level, host.networkUuid(), payload.key()));
             /*

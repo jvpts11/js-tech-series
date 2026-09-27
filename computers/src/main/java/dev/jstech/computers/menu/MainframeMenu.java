@@ -7,62 +7,86 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.registry.ComputingMenus;
-import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.gui.layout.MainframeLayout;
+import dev.jstech.computers.registry.ComputingMenus;
+import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.menu.CoreMenu;
+import dev.jstech.core.menu.MenuOpening;
+import dev.jstech.core.menu.MenuValidity;
+import dev.jstech.core.menu.PlayerSlots;
+import dev.jstech.core.menu.SlotGroup;
 import dev.jstech.core.network.FailoverRole;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Menu for the Mainframe: the 18 hardware slots (motherboard, CPUs, RAM, GPUs, PSU, each restricted to its component category by the block entity's item handler) plus the player inventory, with powered/capacity/queues/buffer synced for the screen.
+ * Menu for the Mainframe: the 24 hardware slots (motherboard, CPUs, RAM, GPUs, PSU, disks, each restricted to its
+ * component category by the block entity's item handler) plus the player inventory, with powered/capacity/queues/
+ * buffer synced for the screen.
  */
-public class MainframeMenu extends AbstractComputerMenu {
-
-    private static final int HARDWARE_SLOTS = MainframeBlockEntity.TOTAL_SLOTS;
+public class MainframeMenu extends CoreMenu {
 
     private final MainframeBlockEntity blockEntity;
-    private final ContainerData data;
-    private final ContainerLevelAccess access;
+
+    public static final int BUTTON_POWER = 0;
+    public static final int BUTTON_AUTOSTART = 1;
+    public static final int BUTTON_FAILOVER = 2;
 
     public MainframeMenu(final int containerId, final Inventory playerInventory,
                          final MainframeBlockEntity be) {
-        super(ComputingMenus.MAINFRAME_MENU.get(), containerId);
+        super(ComputingMenus.MAINFRAME_MENU.get(), containerId, playerInventory, MenuValidity.blockEntity(be));
         this.blockEntity = be;
-        this.data = be.getDataAccess();
-        this.access = ContainerLevelAccess.create(be.getLevel(), be.getBlockPos());
-
+        final GuiLayout layout = MainframeLayout.layout();
         final IItemHandler hardware = be.getInventory();
-        addSlot(new SlotItemHandler(hardware, MainframeBlockEntity.MOTHERBOARD_SLOT, 8, 40));
-        addSlot(new SlotItemHandler(hardware, MainframeBlockEntity.PSU_SLOT, 8, 73));
+
+        final List<Slot> hardwareSlots = new ArrayList<>();
+        hardwareSlots.add(slot(hardware, MainframeBlockEntity.MOTHERBOARD_SLOT, layout.slotAt("mobo")));
+        hardwareSlots.add(slot(hardware, MainframeBlockEntity.PSU_SLOT, layout.slotAt("psu")));
         for (int i = 0; i < MainframeBlockEntity.CPU_SLOTS; i++) {
-            addSlot(new BoardSlot(hardware, MainframeBlockEntity.CPU_SLOTS_START + i,
-                    44 + i * 18, 40, i, be::boardCpuSlots));
+            final GuiLayout.SlotPosition at = layout.slotAt("cpu_" + i);
+            hardwareSlots.add(new BoardSlot(hardware, MainframeBlockEntity.CPU_SLOTS_START + i, at.x(), at.y(), i,
+                    be::boardCpuSlots));
         }
         for (int i = 0; i < MainframeBlockEntity.RAM_SLOTS; i++) {
-            addSlot(new BoardSlot(hardware, MainframeBlockEntity.RAM_SLOTS_START + i,
-                    44 + (i % 4) * 18, 73 + (i / 4) * 18, i, be::boardRamSlots));
+            final GuiLayout.SlotPosition at = layout.slotAt("ram_" + i);
+            hardwareSlots.add(new BoardSlot(hardware, MainframeBlockEntity.RAM_SLOTS_START + i, at.x(), at.y(), i,
+                    be::boardRamSlots));
         }
         for (int i = 0; i < MainframeBlockEntity.GPU_SLOTS; i++) {
-            addSlot(new BoardSlot(hardware, MainframeBlockEntity.GPU_SLOTS_START + i,
-                    44 + (i % 3) * 18, 124 + (i / 3) * 18, i, be::boardPcieSlots));
+            final GuiLayout.SlotPosition at = layout.slotAt("gpu_" + i);
+            hardwareSlots.add(new BoardSlot(hardware, MainframeBlockEntity.GPU_SLOTS_START + i, at.x(), at.y(), i,
+                    be::boardPcieSlots));
         }
         for (int i = 0; i < MainframeBlockEntity.DISK_SLOTS; i++) {
-            addSlot(new BoardSlot(hardware, MainframeBlockEntity.DISK_SLOTS_START + i,
-                    8 + (i % 2) * 18, 124 + (i / 2) * 18, i, be::boardDiskSlots));
+            final GuiLayout.SlotPosition at = layout.slotAt("disk_" + i);
+            hardwareSlots.add(new BoardSlot(hardware, MainframeBlockEntity.DISK_SLOTS_START + i, at.x(), at.y(), i,
+                    be::boardDiskSlots));
         }
+        final SlotGroup hw = slots(hardwareSlots.toArray(Slot[]::new));
 
-        addPlayerInventory(playerInventory, 8, 182);
-        addDataSlots(this.data);
+        final PlayerSlots player = playerInventory(playerInventory, layout.playerInventoryAt());
+        shiftClick(hw, player.all());
+        shiftClick(player.all(), hw);
+
+        data(be.fields().menuData());
+
+        button(BUTTON_POWER, p -> blockEntity.togglePower());
+        button(BUTTON_AUTOSTART, p -> blockEntity.toggleAutoStart());
+        button(BUTTON_FAILOVER, p -> blockEntity.toggleFailover());
+    }
+
+    public static MainframeMenu fromNetwork(final int containerId, final Inventory playerInventory,
+                                            final RegistryFriendlyByteBuf buf) {
+        return new MainframeMenu(containerId, playerInventory,
+                MenuOpening.blockEntity(playerInventory, buf, MainframeBlockEntity.class));
     }
 
     @Nullable
@@ -98,105 +122,55 @@ public class MainframeMenu extends AbstractComputerMenu {
         return blockEntity.boardDiskSlots();
     }
 
-    @Nullable
-    public static MainframeMenu fromNetwork(final int containerId, final Inventory playerInventory,
-                                            final RegistryFriendlyByteBuf buf) {
-        if (playerInventory.player.level().getBlockEntity(buf.readBlockPos())
-                instanceof MainframeBlockEntity be) {
-            return new MainframeMenu(containerId, playerInventory, be);
-        }
-        return null;
-    }
-
-    public static final int BUTTON_POWER = 0;
-    public static final int BUTTON_AUTOSTART = 1;
-    public static final int BUTTON_FAILOVER = 2;
-
     public boolean isRunning() {
-        return data.get(MainframeBlockEntity.DATA_RUNNING) != 0;
+        return blockEntity.assemblyRunning();
     }
 
     public boolean buildValid() {
-        return data.get(MainframeBlockEntity.DATA_BUILD_VALID) != 0;
+        return blockEntity.assemblyBuildValid();
     }
 
     public long capacity() {
-        return data.get(MainframeBlockEntity.DATA_CAPACITY);
+        return blockEntity.assemblyCapacity();
     }
 
     public int parallelQueues() {
-        return data.get(MainframeBlockEntity.DATA_PARALLEL_QUEUES);
+        return blockEntity.assemblyParallelQueues();
     }
 
     public long ramBuffer() {
-        return data.get(MainframeBlockEntity.DATA_RAM_BUFFER);
+        return blockEntity.assemblyRamBuffer();
     }
 
     public boolean isAutoStart() {
-        return data.get(MainframeBlockEntity.DATA_AUTOSTART) != 0;
+        return blockEntity.assemblyAutoStart();
     }
 
     public boolean isManualOn() {
-        return data.get(MainframeBlockEntity.DATA_MANUAL_ON) != 0;
+        return blockEntity.assemblyManualOn();
     }
 
     public int networkState() {
-        return data.get(MainframeBlockEntity.DATA_NETWORK_STATE);
+        return blockEntity.assemblyNetworkState();
     }
 
     public int pendingOps() {
-        return data.get(MainframeBlockEntity.DATA_PENDING_OPS);
+        return blockEntity.assemblyPendingOps();
     }
 
     public int runningOps() {
-        return data.get(MainframeBlockEntity.DATA_RUNNING_OPS);
+        return blockEntity.assemblyRunningOps();
     }
 
-    public int completedOps() {
-        return data.get(MainframeBlockEntity.DATA_COMPLETED_OPS);
+    public long completedOps() {
+        return blockEntity.assemblyCompletedOps();
     }
 
     public boolean failoverEnabled() {
-        return data.get(MainframeBlockEntity.DATA_FAILOVER_ENABLED) != 0;
+        return blockEntity.assemblyFailoverEnabled();
     }
 
     public FailoverRole failoverRole() {
-        return FailoverRole.byId(data.get(MainframeBlockEntity.DATA_FAILOVER_ROLE));
-    }
-
-    @Override
-    public boolean clickMenuButton(final Player player, final int id) {
-        if (id == BUTTON_POWER) {
-            blockEntity.togglePower();
-            return true;
-        }
-        if (id == BUTTON_AUTOSTART) {
-            blockEntity.toggleAutoStart();
-            return true;
-        }
-        if (id == BUTTON_FAILOVER) {
-            blockEntity.toggleFailover();
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean stillValid(final Player player) {
-        /*
-         * Validate against the block family, not a single block: the Standard, Vintage and Legacy
-         * Mainframe controllers are distinct blocks that share this menu. Checking only the Standard
-         * block would make the server reject a Vintage/Legacy menu as invalid and close it the instant
-         * it opens.
-         */
-        return access.evaluate((level, pos) ->
-                level.getBlockState(pos).getBlock()
-                        instanceof MainframeBlock
-                        && player.canInteractWithBlock(pos, 4.0), true);
-    }
-
-    @Override
-    public ItemStack quickMoveStack(final Player player, final int index) {
-        return quickMoveBetweenContainerAndPlayer(player, index, HARDWARE_SLOTS);
+        return blockEntity.assemblyFailoverRole();
     }
 }

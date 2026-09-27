@@ -37,8 +37,8 @@ import java.util.List;
 import java.util.Map;
 
 import static dev.jstech.computers.operation.payload.network.NetworkLookup.resolveMainframe;
+import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.hostOf;
 import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.inventoryRoomFor;
-import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.openTerminal;
 import static dev.jstech.computers.operation.payload.terminal.TerminalPayloads.sendSnapshot;
 
 /**
@@ -53,19 +53,23 @@ public final class TerminalLocalPayloads {
     public static void register(final PayloadRegistrar registrar) {
         registrar.playToClient(LocalStorageSnapshotPayload.TYPE, LocalStorageSnapshotPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(TerminalLocalPayloads::handleLocalSnapshot));
-        ComputerAccess.accept(registrar, TerminalLocalWithdrawPayload.TYPE, TerminalLocalWithdrawPayload.STREAM_CODEC,
-                ComputerAccess.machine(TerminalLocalWithdrawPayload::hostPos), TerminalLocalPayloads::handleLocalWithdraw);
-        ComputerAccess.accept(registrar, TerminalDiskPrivacyPayload.TYPE, TerminalDiskPrivacyPayload.STREAM_CODEC,
-                ComputerAccess.machine(TerminalDiskPrivacyPayload::hostPos), TerminalLocalPayloads::handleDiskPrivacy);
-        ComputerAccess.accept(registrar, TerminalLocalDepositPayload.TYPE, TerminalLocalDepositPayload.STREAM_CODEC,
-                ComputerAccess.machine(TerminalLocalDepositPayload::hostPos), TerminalLocalPayloads::handleLocalDeposit);
-        ComputerAccess.accept(registrar, TerminalLocalUploadPayload.TYPE, TerminalLocalUploadPayload.STREAM_CODEC,
-                ComputerAccess.machine(TerminalLocalUploadPayload::hostPos), TerminalLocalPayloads::handleLocalUpload);
+        ComputerAccess.onMenu(registrar, TerminalLocalWithdrawPayload.TYPE, TerminalLocalWithdrawPayload.STREAM_CODEC,
+                ComputerTerminalMenu.class, ComputerTerminalMenu::hostPos, TerminalLocalWithdrawPayload::hostPos,
+                TerminalLocalPayloads::handleLocalWithdraw);
+        ComputerAccess.onMenu(registrar, TerminalDiskPrivacyPayload.TYPE, TerminalDiskPrivacyPayload.STREAM_CODEC,
+                ComputerTerminalMenu.class, ComputerTerminalMenu::hostPos, TerminalDiskPrivacyPayload::hostPos,
+                TerminalLocalPayloads::handleDiskPrivacy);
+        ComputerAccess.onMenu(registrar, TerminalLocalDepositPayload.TYPE, TerminalLocalDepositPayload.STREAM_CODEC,
+                ComputerTerminalMenu.class, ComputerTerminalMenu::hostPos, TerminalLocalDepositPayload::hostPos,
+                TerminalLocalPayloads::handleLocalDeposit);
+        ComputerAccess.onMenu(registrar, TerminalLocalUploadPayload.TYPE, TerminalLocalUploadPayload.STREAM_CODEC,
+                ComputerTerminalMenu.class, ComputerTerminalMenu::hostPos, TerminalLocalUploadPayload::hostPos,
+                TerminalLocalPayloads::handleLocalUpload);
     }
 
-    private static void handleLocalUpload(final TerminalLocalUploadPayload payload, final ServerPlayer player,
-                                          final ServerLevel level) {
-        final IComputerTerminalHost host = openTerminal(player, payload.monitorPos(), payload.hostPos());
+    private static void handleLocalUpload(final TerminalLocalUploadPayload payload, final ComputerTerminalMenu menu,
+                                          final ServerPlayer player, final ServerLevel level) {
+        final IComputerTerminalHost host = hostOf(menu, payload.monitorPos(), level);
         if (host == null || host.networkUuid() == null || payload.quantity() <= 0L) {
             return;
         }
@@ -127,9 +131,10 @@ public final class TerminalLocalPayloads {
         PacketDistributor.sendToPlayer(player, new LocalStorageSnapshotPayload(entries, disks));
     }
 
-    private static void handleLocalWithdraw(final TerminalLocalWithdrawPayload payload, final ServerPlayer player,
+    private static void handleLocalWithdraw(final TerminalLocalWithdrawPayload payload,
+                                            final ComputerTerminalMenu menu, final ServerPlayer player,
                                             final ServerLevel level) {
-        final IComputerTerminalHost host = openTerminal(player, payload.monitorPos(), payload.hostPos());
+        final IComputerTerminalHost host = hostOf(menu, payload.monitorPos(), level);
         if (host == null || payload.quantity() <= 0L) {
             return;
         }
@@ -164,9 +169,9 @@ public final class TerminalLocalPayloads {
         dispatchLocalSnapshot(player, host);
     }
 
-    private static void handleDiskPrivacy(final TerminalDiskPrivacyPayload payload, final ServerPlayer player,
-                                          final ServerLevel level) {
-        final IComputerTerminalHost host = openTerminal(player, payload.monitorPos(), payload.hostPos());
+    private static void handleDiskPrivacy(final TerminalDiskPrivacyPayload payload, final ComputerTerminalMenu menu,
+                                          final ServerPlayer player, final ServerLevel level) {
+        final IComputerTerminalHost host = hostOf(menu, payload.monitorPos(), level);
         if (host == null) {
             return;
         }
@@ -191,17 +196,19 @@ public final class TerminalLocalPayloads {
         dispatchLocalSnapshot(player, host);
     }
 
-    private static void handleLocalDeposit(final TerminalLocalDepositPayload payload, final ServerPlayer player,
+    private static void handleLocalDeposit(final TerminalLocalDepositPayload payload,
+                                           final ComputerTerminalMenu menu, final ServerPlayer player,
                                            final ServerLevel level) {
-        final IComputerTerminalHost host = openTerminal(player, payload.monitorPos(), payload.hostPos());
-        if (host == null || !(player.containerMenu instanceof ComputerTerminalMenu menu)) {
+        final IComputerTerminalHost host = hostOf(menu, payload.monitorPos(), level);
+        if (host == null) {
             return;
         }
         final int idx = payload.slotIndex();
         final boolean fromCursor = idx == TerminalLocalDepositPayload.CURSOR
                 || idx == TerminalLocalDepositPayload.CURSOR_ONE;
-        if (!fromCursor && (idx < menu.storageSlotCount() || idx >= menu.slots.size())) {
-            return; // a slot source must be a player-inventory menu slot
+        // A slot source must be a player-inventory menu slot: every slot in this menu is one.
+        if (!fromCursor && (idx < 0 || idx >= menu.slots.size())) {
+            return;
         }
         final DataHandoff.ISource source = fromCursor
                 ? DataHandoff.cursor(player) : DataHandoff.slot(menu.getSlot(idx), player);

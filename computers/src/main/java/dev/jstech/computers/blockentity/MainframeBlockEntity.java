@@ -74,7 +74,6 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -1372,70 +1371,82 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         return NetworkSystem.get(serverLevel).totalStorageItemsOf(networkUuid());
     }
 
-    public static final int DATA_RUNNING = 0;
-    public static final int DATA_BUILD_VALID = 1;
-    public static final int DATA_CAPACITY = 2;
-    public static final int DATA_PARALLEL_QUEUES = 3;
-    public static final int DATA_RAM_BUFFER = 4;
-    public static final int DATA_AUTOSTART = 5;
-    public static final int DATA_MANUAL_ON = 6;
-    public static final int DATA_NETWORK_STATE = 7;
-    public static final int DATA_PENDING_OPS = 8;
-    public static final int DATA_RUNNING_OPS = 9;
-    public static final int DATA_COMPLETED_OPS = 10;
-    public static final int DATA_FAILOVER_ENABLED = 11;
-    public static final int DATA_FAILOVER_ROLE = 12;
-    public static final int DATA_COUNT = DATA_FAILOVER_ROLE + 1;
-
     public static final int NET_STATE_NONE = 0;
     public static final int NET_STATE_LINKED = 1;
     public static final int NET_STATE_CONFLICT = 2;
 
-    private final int[] clientData = new int[DATA_COUNT];
+    /* Values the assembly menu shows: worked out on the server, received by the client while the menu is open. */
+    private final DerivedInt assemblyRunning = fields().derived("AssemblyRunning", this::isRunning).toMenu();
+    private final DerivedInt assemblyBuildValid = fields().derived("AssemblyBuildValid", this::buildValid).toMenu();
+    private final DerivedInt assemblyCapacity = fields().derived("AssemblyCapacity",
+            () -> (int) Math.min(Integer.MAX_VALUE, capacity())).toMenu();
+    private final DerivedInt assemblyParallelQueues = fields().derived("AssemblyParallelQueues",
+            this::parallelQueues).toMenu();
+    private final DerivedInt assemblyRamBuffer = fields().derived("AssemblyRamBuffer",
+            () -> (int) Math.min(Integer.MAX_VALUE, ramBuffer())).toMenu();
+    private final DerivedInt assemblyAutoStart = fields().derived("AssemblyAutoStart", this::isAutoStart).toMenu();
+    private final DerivedInt assemblyManualOn = fields().derived("AssemblyManualOn", this::isManualOn).toMenu();
+    private final DerivedInt assemblyNetworkState = fields().derived("AssemblyNetworkState",
+            this::linkState).toMenu();
+    private final DerivedInt assemblyPendingOps = fields().derived("AssemblyPendingOps", this::pendingOps).toMenu();
+    private final DerivedInt assemblyRunningOps = fields().derived("AssemblyRunningOps", this::runningOps).toMenu();
+    private final DerivedInt assemblyCompletedOps = fields().derived("AssemblyCompletedOps",
+            () -> (int) Math.min(Integer.MAX_VALUE, completedOps())).toMenu();
+    private final DerivedInt assemblyFailoverEnabled = fields().derived("AssemblyFailoverEnabled",
+            () -> networking.failoverEnabled()).toMenu();
+    private final DerivedInt assemblyFailoverRole = fields().derived("AssemblyFailoverRole",
+            () -> networking.failoverRole().id()).toMenu();
 
-    private int computeData(final int index) {
-        return switch (index) {
-            case DATA_RUNNING -> isRunning() ? 1 : 0;
-            case DATA_BUILD_VALID -> buildValid() ? 1 : 0;
-            case DATA_CAPACITY -> (int) Math.min(Integer.MAX_VALUE, capacity());
-            case DATA_PARALLEL_QUEUES -> parallelQueues();
-            case DATA_RAM_BUFFER -> (int) Math.min(Integer.MAX_VALUE, ramBuffer());
-            case DATA_AUTOSTART -> isAutoStart() ? 1 : 0;
-            case DATA_MANUAL_ON -> isManualOn() ? 1 : 0;
-            case DATA_NETWORK_STATE -> linkState();
-            case DATA_PENDING_OPS -> pendingOps();
-            case DATA_RUNNING_OPS -> runningOps();
-            case DATA_COMPLETED_OPS -> (int) Math.min(Integer.MAX_VALUE, completedOps());
-            case DATA_FAILOVER_ENABLED -> networking.failoverEnabled() ? 1 : 0;
-            case DATA_FAILOVER_ROLE -> networking.failoverRole().id();
-            default -> 0;
-        };
+    public boolean assemblyRunning() {
+        return assemblyRunning.isSet();
     }
 
-    private final ContainerData dataAccess = new ContainerData() {
-        @Override
-        public int get(final int index) {
-            if (level != null && level.isClientSide) {
-                return index >= 0 && index < clientData.length ? clientData[index] : 0;
-            }
-            return computeData(index);
-        }
+    public boolean assemblyBuildValid() {
+        return assemblyBuildValid.isSet();
+    }
 
-        @Override
-        public void set(final int index, final int value) {
-            if (index >= 0 && index < clientData.length) {
-                clientData[index] = value;
-            }
-        }
+    public long assemblyCapacity() {
+        return assemblyCapacity.getAsInt();
+    }
 
-        @Override
-        public int getCount() {
-            return DATA_COUNT;
-        }
-    };
+    public int assemblyParallelQueues() {
+        return assemblyParallelQueues.getAsInt();
+    }
 
-    public ContainerData getDataAccess() {
-        return dataAccess;
+    public long assemblyRamBuffer() {
+        return assemblyRamBuffer.getAsInt();
+    }
+
+    public boolean assemblyAutoStart() {
+        return assemblyAutoStart.isSet();
+    }
+
+    public boolean assemblyManualOn() {
+        return assemblyManualOn.isSet();
+    }
+
+    public int assemblyNetworkState() {
+        return assemblyNetworkState.getAsInt();
+    }
+
+    public int assemblyPendingOps() {
+        return assemblyPendingOps.getAsInt();
+    }
+
+    public int assemblyRunningOps() {
+        return assemblyRunningOps.getAsInt();
+    }
+
+    public long assemblyCompletedOps() {
+        return assemblyCompletedOps.getAsInt();
+    }
+
+    public boolean assemblyFailoverEnabled() {
+        return assemblyFailoverEnabled.isSet();
+    }
+
+    public FailoverRole assemblyFailoverRole() {
+        return FailoverRole.byId(assemblyFailoverRole.getAsInt());
     }
 
     @Override

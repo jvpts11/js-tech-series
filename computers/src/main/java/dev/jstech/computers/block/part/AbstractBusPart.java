@@ -17,7 +17,6 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -61,35 +60,6 @@ public abstract sealed class AbstractBusPart implements ICablePart permits Impor
     protected boolean active = true;
     protected String name = "";
 
-    private final ContainerData data = new ContainerData() {
-        @Override
-        public int get(final int index) {
-            return switch (index) {
-                case 0 -> min;
-                case 1 -> max;
-                case 2 -> mode;
-                case 3 -> linked ? 1 : 0;
-                default -> 0;
-            };
-        }
-
-        @Override
-        public void set(final int index, final int value) {
-            switch (index) {
-                case 0 -> min = value;
-                case 1 -> max = value;
-                case 2 -> mode = value;
-                case 3 -> linked = value != 0;
-                default -> { /* no-op */ }
-            }
-        }
-
-        @Override
-        public int getCount() {
-            return 4;
-        }
-    };
-
     @Override
     public void attach(final DataCableBlockEntity host, final Direction face) {
         this.host = host;
@@ -109,8 +79,20 @@ public abstract sealed class AbstractBusPart implements ICablePart permits Impor
         return filter;
     }
 
-    public ContainerData getDataAccess() {
-        return data;
+    public int min() {
+        return min;
+    }
+
+    public int max() {
+        return max;
+    }
+
+    public int mode() {
+        return mode;
+    }
+
+    public boolean linked() {
+        return linked;
     }
 
     public String name() {

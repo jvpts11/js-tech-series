@@ -18,6 +18,12 @@ import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RaidMode;
+import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.menu.CoreMenu;
+import dev.jstech.core.menu.MenuOpening;
+import dev.jstech.core.menu.MenuValidity;
+import dev.jstech.core.menu.PlayerSlots;
+import dev.jstech.core.menu.SlotGroup;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -27,9 +33,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
@@ -42,52 +46,61 @@ import org.jetbrains.annotations.Nullable;
  * source the screen draws from.
  */
 @TextHolder
-public class ServerRackMenu extends AbstractComputerMenu {
+public class ServerRackMenu extends CoreMenu {
+
+    private final ServerRackBlockEntity rack;
 
     /** How a unit's drive array stands, which is what the rack's rows colour it by. */
     public enum ArrayHealth { NONE, HEALTHY, DEGRADED, FAILED }
 
     private static final TextKey RAID_DEGRADED = TextKey.of("jsc.rack.raid_degraded", "%s DEGRADED");
     private static final TextKey RAID_FAILED = TextKey.of("jsc.rack.raid_failed", "%s FAILED");
-    private static final int RACK_SLOTS = ServerRackBlockEntity.CAPACITY_U;
+    /**
+     * How many of the menu's slots are the rack's own (the server bays); the front hotswap bays follow them,
+     * and the player inventory follows those.
+     */
+    public static final int RACK_SLOTS = ServerRackBlockEntity.CAPACITY_U;
+    /** How many of the menu's slots are the rack's front hotswap bays, right after the server slots. */
+    public static final int FRONT_SLOT_COUNT = RACK_SLOTS * RackLayout.SLOTS_PER_U;
     private static final RackLayout LAYOUT = new RackLayout(RACK_SLOTS);
-    private static final int FRONT_SLOTS = RACK_SLOTS * RackLayout.SLOTS_PER_U;
-    private static final int CONTAINER_SLOTS = RACK_SLOTS + FRONT_SLOTS;
-
-    private final ServerRackBlockEntity rack;
-    private final ContainerLevelAccess access;
-    private final ContainerData data;
 
     public ServerRackMenu(final int containerId, final Inventory playerInventory,
                           final ServerRackBlockEntity be) {
-        super(ComputingMenus.SERVER_RACK_MENU.get(), containerId);
+        super(ComputingMenus.SERVER_RACK_MENU.get(), containerId, playerInventory,
+                MenuValidity.block(be.getLevel(), be.getBlockPos(), ServerRackBlock.class));
         this.rack = be;
-        this.access = ContainerLevelAccess.create(be.getLevel(), be.getBlockPos());
-        this.data = be.getDataAccess();
 
+        final GuiLayout layout = ServerRackLayout.layout();
         /*
          * Server slot i = rack-unit row i; a taller chassis claims the rows below its slot (the
          * handler rejects them).
          */
         final IItemHandler servers = be.getServers();
+        final Slot[] serverSlots = new Slot[RACK_SLOTS];
         for (int i = 0; i < RACK_SLOTS; i++) {
-            addSlot(new SlotItemHandler(servers, i,
-                    ServerRackLayout.serverItemX(), ServerRackLayout.itemY(i)));
+            final GuiLayout.SlotPosition at = layout.slotAt("server" + i);
+            serverSlots[i] = new SlotItemHandler(servers, i, at.x(), at.y());
         }
+        final SlotGroup serverGroup = slots(serverSlots);
         // The rack's hotswap slots, row-major: index = row * 5 + column.
         final IItemHandler front = be.getFrontSlots();
-        for (int index = 0; index < FRONT_SLOTS; index++) {
+        final Slot[] frontSlots = new Slot[FRONT_SLOT_COUNT];
+        for (int index = 0; index < FRONT_SLOT_COUNT; index++) {
             final int row = index / RackLayout.SLOTS_PER_U;
             final int column = index % RackLayout.SLOTS_PER_U;
-            addSlot(new SlotItemHandler(front, index,
-                    ServerRackLayout.frontItemX(column), ServerRackLayout.itemY(row)));
+            final GuiLayout.SlotPosition at = layout.slotAt("front" + row + "_" + column);
+            frontSlots[index] = new SlotItemHandler(front, index, at.x(), at.y());
         }
-        addPlayerInventory(playerInventory, ServerRackLayout.INV_X, ServerRackLayout.INV_Y);
-        addDataSlots(data);
+        final SlotGroup frontGroup = slots(frontSlots);
+        final PlayerSlots player = playerInventory(playerInventory, layout.playerInventoryAt());
+        shiftClick(serverGroup, player.all());
+        shiftClick(frontGroup, player.all());
+        shiftClick(player.all(), serverGroup, frontGroup);
+        data(be.fields().menuData());
     }
 
     public boolean networkLinked() {
-        return data.get(ServerRackBlockEntity.DATA_LINKED) != 0;
+        return rack.linkedShown();
     }
 
     /** The cabinet's era, so its screen wears that decade's materials rather than one look for all three. */
@@ -101,19 +114,18 @@ public class ServerRackMenu extends AbstractComputerMenu {
     }
 
     public boolean bayPowerOn(final int slot) {
-        return (data.get(ServerRackBlockEntity.DATA_BAY_POWER) & (1 << slot)) != 0;
+        return (rack.bayPowerShown() & (1 << slot)) != 0;
     }
 
     /** The cabinet's thermal throttle in percent (100 = running free). */
     public int throttlePercent() {
-        final int percent = data.get(ServerRackBlockEntity.DATA_THROTTLE);
+        final int percent = rack.throttleShown();
         return percent <= 0 ? 100 : percent;
     }
 
     /** Rebuild progress of the unit's array in permille, or 0 when it is not rebuilding. */
     public int rebuildPermille(final int slot) {
-        return slot < 0 || slot >= RACK_SLOTS ? 0
-                : data.get(ServerRackBlockEntity.DATA_REBUILD_0 + slot);
+        return slot < 0 || slot >= RACK_SLOTS ? 0 : rack.rebuildShown(slot);
     }
 
     public ItemStack serverInBay(final int i) {
@@ -121,7 +133,7 @@ public class ServerRackMenu extends AbstractComputerMenu {
     }
 
     public ItemStack frontSlotStack(final int index) {
-        return index >= 0 && index < FRONT_SLOTS ? slots.get(RACK_SLOTS + index).getItem() : ItemStack.EMPTY;
+        return index >= 0 && index < FRONT_SLOT_COUNT ? slots.get(RACK_SLOTS + index).getItem() : ItemStack.EMPTY;
     }
 
     /**
@@ -227,29 +239,9 @@ public class ServerRackMenu extends AbstractComputerMenu {
         return members > present ? ArrayHealth.DEGRADED : ArrayHealth.HEALTHY;
     }
 
-    @Nullable
     public static ServerRackMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                              final RegistryFriendlyByteBuf buf) {
-        if (playerInventory.player.level().getBlockEntity(buf.readBlockPos())
-                instanceof ServerRackBlockEntity be) {
-            return new ServerRackMenu(containerId, playerInventory, be);
-        }
-        return null;
-    }
-
-    @Override
-    public boolean stillValid(final Player player) {
-        /*
-         * The FAMILY, not the one block: the Supercomputer Rack shares this menu, and checking the
-         * Server Rack alone would open its GUI for a single tick and then close it.
-         */
-        return access.evaluate((level, pos) -> level.getBlockState(pos).getBlock()
-                        instanceof ServerRackBlock
-                        && player.canInteractWithBlock(pos, 4.0), true);
-    }
-
-    @Override
-    public ItemStack quickMoveStack(final Player player, final int index) {
-        return quickMoveBetweenContainerAndPlayer(player, index, CONTAINER_SLOTS);
+        return new ServerRackMenu(containerId, playerInventory,
+                MenuOpening.blockEntity(playerInventory, buf, ServerRackBlockEntity.class));
     }
 }

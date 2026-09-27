@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.gui.layout.ClusterManagementComputerLayout;
 import dev.jstech.computers.menu.ClusterManagementComputerMenu;
 import dev.jstech.computers.operation.payload.RenamePcPayload;
@@ -27,21 +28,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
  */
 public class ClusterManagementComputerScreen extends AbstractAssemblyScreen<ClusterManagementComputerMenu> {
 
-    private static final int COL_R = ClusterManagementComputerLayout.COL_R;
-    private static final int COL_R_W = ClusterManagementComputerLayout.COL_R_W;
-    private static final int BTN_H = ClusterManagementComputerLayout.BTN_H;
-    private static final int TILE_H = ClusterManagementComputerLayout.TILE_H;
-    private static final int TILE_Y0 = ClusterManagementComputerLayout.TILE_Y0;
-    private static final int TILE_Y1 = ClusterManagementComputerLayout.TILE_Y1;
-    private static final int TILE_Y2 = ClusterManagementComputerLayout.TILE_Y2;
-    private static final int TILE_Y3 = ClusterManagementComputerLayout.TILE_Y3;
-    private static final int POWER_X = ClusterManagementComputerLayout.POWER_X;
-    private static final int POWER_Y = ClusterManagementComputerLayout.POWER_Y;
-    private static final int AUTO_X = ClusterManagementComputerLayout.AUTO_X;
-    private static final int AUTO_Y = ClusterManagementComputerLayout.AUTO_Y;
-    private static final int INV_X = ClusterManagementComputerLayout.INV_X;
-    private static final int INV_Y = ClusterManagementComputerLayout.INV_Y;
-
     public ClusterManagementComputerScreen(final ClusterManagementComputerMenu menu, final Inventory inventory,
                                            final Component title) {
         super(menu, inventory, title);
@@ -54,7 +40,8 @@ public class ClusterManagementComputerScreen extends AbstractAssemblyScreen<Clus
     @Override
     protected void init() {
         super.init();
-        setupNameBox(28, 8, 126, RenamePcPayload.MAX_LEN,
+        setupNameBox(ClusterManagementComputerLayout.NAME_BOX_X, ClusterManagementComputerLayout.NAME_BOX_Y,
+                ClusterManagementComputerLayout.NAME_BOX_W, RenamePcPayload.MAX_LEN,
                 GameText.component(AssemblyTexts.NAME_THIS_COMPUTER).withStyle(ChatFormatting.DARK_GRAY),
                 menu.customName(),
                 s -> PacketDistributor.sendToServer(new RenamePcPayload(menu.computerPos(), s)));
@@ -65,39 +52,51 @@ public class ClusterManagementComputerScreen extends AbstractAssemblyScreen<Clus
         final int x = leftPos;
         final int y = topPos;
         JsTechTheme.window(g, x, y, imageWidth, imageHeight);
-        JsTechTheme.headerBar(g, x + 6, y + 6, 232);
-        nameWell(g, x + 26, y + 7, x + 158);
-        JsTechTheme.vLine(g, x + COL_R - 5, y + 24, 108);
-        JsTechTheme.slot(g, x + ClusterManagementComputerLayout.MOBO_X, y + ClusterManagementComputerLayout.MOBO_Y);
-        JsTechTheme.slot(g, x + ClusterManagementComputerLayout.PSU_X, y + ClusterManagementComputerLayout.PSU_Y);
-        if (menu.boardCpuSlots() > 0) {
-            JsTechTheme.slot(g, x + ClusterManagementComputerLayout.RIGHT_X, y + ClusterManagementComputerLayout.CPU_Y);
+        JsTechTheme.headerBar(g, x + ClusterManagementComputerLayout.HEADER_X,
+                y + ClusterManagementComputerLayout.HEADER_Y, ClusterManagementComputerLayout.HEADER_W);
+        nameWell(g, x + ClusterManagementComputerLayout.NAME_WELL_LEFT,
+                y + ClusterManagementComputerLayout.NAME_WELL_TOP, x + ClusterManagementComputerLayout.NAME_WELL_RIGHT);
+        JsTechTheme.vLine(g, x + ClusterManagementComputerLayout.VLINE_X, y + ClusterManagementComputerLayout.VLINE_Y,
+                ClusterManagementComputerLayout.VLINE_H);
+
+        // A cell behind every active hardware slot, reading the menu's own slot positions.
+        for (int i = 0; i < ClusterManagementComputerBlockEntity.HARDWARE_SLOTS; i++) {
+            final var slot = menu.getSlot(i);
+            if (slot.isActive()) {
+                JsTechTheme.slot(g, x + slot.x, y + slot.y);
+            }
         }
-        for (int i = 0; i < menu.boardRamSlots(); i++) {
-            JsTechTheme.slot(g, x + ClusterManagementComputerLayout.RIGHT_X + i * 18, y + ClusterManagementComputerLayout.RAM_Y);
-        }
-        for (int i = 0; i < menu.boardPcieSlots(); i++) {
-            JsTechTheme.slot(g, x + ClusterManagementComputerLayout.RIGHT_X + i * 18, y + ClusterManagementComputerLayout.PCIE_Y);
-        }
-        for (int i = 0; i < menu.boardDiskSlots(); i++) {
-            JsTechTheme.slot(g, x + ClusterManagementComputerLayout.MOBO_X + i * 18, y + ClusterManagementComputerLayout.DISK_Y);
-        }
-        JsTechTheme.panel(g, x + COL_R, y + TILE_Y0, COL_R_W, TILE_H);
-        JsTechTheme.panel(g, x + COL_R, y + TILE_Y1, COL_R_W, TILE_H);
-        JsTechTheme.panel(g, x + COL_R, y + TILE_Y2, COL_R_W, TILE_H);
-        JsTechTheme.panel(g, x + COL_R, y + TILE_Y3, COL_R_W, TILE_H);
+
+        JsTechTheme.panel(g, x + ClusterManagementComputerLayout.COL_R, y + ClusterManagementComputerLayout.TILE_Y0,
+                ClusterManagementComputerLayout.COL_R_W, ClusterManagementComputerLayout.TILE_H);
+        JsTechTheme.panel(g, x + ClusterManagementComputerLayout.COL_R, y + ClusterManagementComputerLayout.TILE_Y1,
+                ClusterManagementComputerLayout.COL_R_W, ClusterManagementComputerLayout.TILE_H);
+        JsTechTheme.panel(g, x + ClusterManagementComputerLayout.COL_R, y + ClusterManagementComputerLayout.TILE_Y2,
+                ClusterManagementComputerLayout.COL_R_W, ClusterManagementComputerLayout.TILE_H);
+        JsTechTheme.panel(g, x + ClusterManagementComputerLayout.COL_R, y + ClusterManagementComputerLayout.TILE_Y3,
+                ClusterManagementComputerLayout.COL_R_W, ClusterManagementComputerLayout.TILE_H);
+
         final boolean auto = menu.isAutoStart();
-        JsTechTheme.button(g, x + POWER_X, y + POWER_Y, COL_R_W, BTN_H,
-                !auto && hover(mouseX, mouseY, POWER_X, POWER_Y, COL_R_W, BTN_H));
-        JsTechTheme.button(g, x + AUTO_X, y + AUTO_Y, COL_R_W, BTN_H,
-                hover(mouseX, mouseY, AUTO_X, AUTO_Y, COL_R_W, BTN_H));
+        JsTechTheme.button(g, x + ClusterManagementComputerLayout.POWER_X, y + ClusterManagementComputerLayout.POWER_Y,
+                ClusterManagementComputerLayout.COL_R_W, ClusterManagementComputerLayout.BTN_H,
+                !auto && hover(mouseX, mouseY, ClusterManagementComputerLayout.POWER_X,
+                        ClusterManagementComputerLayout.POWER_Y, ClusterManagementComputerLayout.COL_R_W,
+                        ClusterManagementComputerLayout.BTN_H));
+        JsTechTheme.button(g, x + ClusterManagementComputerLayout.AUTO_X, y + ClusterManagementComputerLayout.AUTO_Y,
+                ClusterManagementComputerLayout.COL_R_W, ClusterManagementComputerLayout.BTN_H,
+                hover(mouseX, mouseY, ClusterManagementComputerLayout.AUTO_X, ClusterManagementComputerLayout.AUTO_Y,
+                        ClusterManagementComputerLayout.COL_R_W, ClusterManagementComputerLayout.BTN_H));
+
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                JsTechTheme.slot(g, x + INV_X + col * 18, y + INV_Y + row * 18);
+                JsTechTheme.slot(g,
+                        x + ClusterManagementComputerLayout.INV_X + col * ClusterManagementComputerLayout.SLOT,
+                        y + ClusterManagementComputerLayout.INV_Y + row * ClusterManagementComputerLayout.SLOT);
             }
         }
         for (int col = 0; col < 9; col++) {
-            JsTechTheme.slot(g, x + INV_X + col * 18, y + INV_Y + 58);
+            JsTechTheme.slot(g, x + ClusterManagementComputerLayout.INV_X + col * ClusterManagementComputerLayout.SLOT,
+                    y + ClusterManagementComputerLayout.INV_Y + ClusterManagementComputerLayout.HOTBAR_GAP);
         }
     }
 
@@ -116,37 +115,50 @@ public class ClusterManagementComputerScreen extends AbstractAssemblyScreen<Clus
             status = GameText.resolve(AssemblyTexts.READY);
             statusColor = JsTechTheme.amber();
         }
-        final int pillX = 232 - font.width(status);
+        final int pillX = ClusterManagementComputerLayout.HEADER_W - font.width(status);
         JsTechTheme.text(g, font, status, pillX, 11, statusColor);
         g.fill(pillX - 6, 11, pillX - 2, 15, statusColor);
 
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.BOARD), 8, 27,
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.BOARD), ClusterManagementComputerLayout.MOBO_X,
+                ClusterManagementComputerLayout.LABEL_ROW_1_Y,
                 menu.hasBoard() ? JsTechTheme.accent() : JsTechTheme.dim());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.CPU), 44, 27, JsTechTheme.dim());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.PSU), 8, 60, JsTechTheme.dim());
-        g.fill(30, 61, 34, 65, !menu.hasPsu() ? JsTechTheme.dim() : menu.buildValid() ? JsTechTheme.green() : JsTechTheme.amber());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.RAM), 44, 60, JsTechTheme.dim());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.DISK), 8, 93, JsTechTheme.dim());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.PCIE), 44, 93,
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.CPU), ClusterManagementComputerLayout.RIGHT_X,
+                ClusterManagementComputerLayout.LABEL_ROW_1_Y, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.PSU), ClusterManagementComputerLayout.MOBO_X,
+                ClusterManagementComputerLayout.LABEL_ROW_2_Y, JsTechTheme.dim());
+        g.fill(ClusterManagementComputerLayout.PSU_LED_X, ClusterManagementComputerLayout.PSU_LED_Y,
+                ClusterManagementComputerLayout.PSU_LED_X + ClusterManagementComputerLayout.PSU_LED_SIZE,
+                ClusterManagementComputerLayout.PSU_LED_Y + ClusterManagementComputerLayout.PSU_LED_SIZE, psuColor());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.RAM), ClusterManagementComputerLayout.RIGHT_X,
+                ClusterManagementComputerLayout.LABEL_ROW_2_Y, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.DISK), ClusterManagementComputerLayout.MOBO_X,
+                ClusterManagementComputerLayout.LABEL_ROW_3_Y, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.PCIE), ClusterManagementComputerLayout.RIGHT_X,
+                ClusterManagementComputerLayout.LABEL_ROW_3_Y,
                 menu.hasCard() ? JsTechTheme.accent() : JsTechTheme.dim());
 
         // Small-font tiles: four fit where the crafting computer keeps three.
-        JsTechTheme.tileTextS(g, font, COL_R, TILE_Y0, GameText.resolve(AssemblyTexts.CAPACITY),
+        JsTechTheme.tileTextS(g, font, ClusterManagementComputerLayout.COL_R, ClusterManagementComputerLayout.TILE_Y0,
+                GameText.resolve(AssemblyTexts.CAPACITY),
                 GameText.resolve(AssemblyTexts.CAPACITY_AND_BUFFER.with(JsTechTheme.fmt(menu.capacity()),
                         JsTechTheme.fmt(menu.ramBuffer()))), JsTechTheme.text());
-        JsTechTheme.tileTextS(g, font, COL_R, TILE_Y1, GameText.resolve(AssemblyTexts.NETWORK),
+        JsTechTheme.tileTextS(g, font, ClusterManagementComputerLayout.COL_R, ClusterManagementComputerLayout.TILE_Y1,
+                GameText.resolve(AssemblyTexts.NETWORK),
                 GameText.resolve(menu.isOnNetwork() ? AssemblyTexts.LINKED : AssemblyTexts.NO_LINK),
                 menu.isOnNetwork() ? JsTechTheme.green() : JsTechTheme.dim());
         if (!menu.hasCard()) {
-            JsTechTheme.tileTextS(g, font, COL_R, TILE_Y2, GameText.resolve(AssemblyTexts.CLUSTERS_IN_REACH),
+            JsTechTheme.tileTextS(g, font, ClusterManagementComputerLayout.COL_R,
+                    ClusterManagementComputerLayout.TILE_Y2, GameText.resolve(AssemblyTexts.CLUSTERS_IN_REACH),
                     GameText.resolve(AssemblyTexts.NO_INTERFACE_CARD), JsTechTheme.amber());
         } else {
-            JsTechTheme.tileTextS(g, font, COL_R, TILE_Y2, GameText.resolve(AssemblyTexts.CLUSTERS_IN_REACH),
+            JsTechTheme.tileTextS(g, font, ClusterManagementComputerLayout.COL_R,
+                    ClusterManagementComputerLayout.TILE_Y2, GameText.resolve(AssemblyTexts.CLUSTERS_IN_REACH),
                     GameText.resolve(
                             AssemblyTexts.CLUSTERS.with(menu.supercomputers(), menu.datacenters(), menu.lanes())),
                     JsTechTheme.text());
         }
-        JsTechTheme.tileTextS(g, font, COL_R, TILE_Y3, GameText.resolve(AssemblyTexts.MANAGEMENT),
+        JsTechTheme.tileTextS(g, font, ClusterManagementComputerLayout.COL_R, ClusterManagementComputerLayout.TILE_Y3,
+                GameText.resolve(AssemblyTexts.MANAGEMENT),
                 GameText.resolve(
                         menu.managerInstalled() ? AssemblyTexts.MANAGER_INSTALLED : AssemblyTexts.MANAGER_MISSING),
                 menu.managerInstalled() ? JsTechTheme.accent() : JsTechTheme.dim());
@@ -154,10 +166,19 @@ public class ClusterManagementComputerScreen extends AbstractAssemblyScreen<Clus
         final boolean auto = menu.isAutoStart();
         final String powerCap = GameText.resolve(auto ? AssemblyTexts.AUTO
                 : menu.isRunning() ? AssemblyTexts.TURN_OFF : AssemblyTexts.TURN_ON);
-        JsTechTheme.textCenter(g, font, powerCap, POWER_X + COL_R_W / 2, POWER_Y + 4,
+        JsTechTheme.textCenter(g, font, powerCap, ClusterManagementComputerLayout.POWER_X
+                + ClusterManagementComputerLayout.COL_R_W / 2, ClusterManagementComputerLayout.POWER_Y + 4,
                 auto ? JsTechTheme.dim() : JsTechTheme.accent());
         JsTechTheme.textCenter(g, font, GameText.resolve(auto ? AssemblyTexts.AUTO_ON : AssemblyTexts.AUTO_OFF),
-                AUTO_X + COL_R_W / 2, AUTO_Y + 4, auto ? JsTechTheme.accent() : JsTechTheme.dim());
+                ClusterManagementComputerLayout.AUTO_X + ClusterManagementComputerLayout.COL_R_W / 2,
+                ClusterManagementComputerLayout.AUTO_Y + 4, auto ? JsTechTheme.accent() : JsTechTheme.dim());
+    }
+
+    private int psuColor() {
+        if (!menu.hasPsu()) {
+            return JsTechTheme.dim();
+        }
+        return menu.buildValid() ? JsTechTheme.green() : JsTechTheme.amber();
     }
 
     @Override
@@ -171,11 +192,15 @@ public class ClusterManagementComputerScreen extends AbstractAssemblyScreen<Clus
             nameBox.setFocused(false);
         }
         if (button == 0) {
-            if (!menu.isAutoStart() && hover((int) mouseX, (int) mouseY, POWER_X, POWER_Y, COL_R_W, BTN_H)) {
+            if (!menu.isAutoStart() && hover((int) mouseX, (int) mouseY, ClusterManagementComputerLayout.POWER_X,
+                    ClusterManagementComputerLayout.POWER_Y, ClusterManagementComputerLayout.COL_R_W,
+                    ClusterManagementComputerLayout.BTN_H)) {
                 sendButton(ClusterManagementComputerMenu.BUTTON_POWER);
                 return true;
             }
-            if (hover((int) mouseX, (int) mouseY, AUTO_X, AUTO_Y, COL_R_W, BTN_H)) {
+            if (hover((int) mouseX, (int) mouseY, ClusterManagementComputerLayout.AUTO_X,
+                    ClusterManagementComputerLayout.AUTO_Y, ClusterManagementComputerLayout.COL_R_W,
+                    ClusterManagementComputerLayout.BTN_H)) {
                 sendButton(ClusterManagementComputerMenu.BUTTON_AUTOSTART);
                 return true;
             }

@@ -60,13 +60,14 @@ public final class ConsolePayloads {
 
     /** Registers the payloads this class handles. */
     public static void register(final PayloadRegistrar registrar) {
-        ComputerAccess.accept(registrar, RunCommandPayload.TYPE, RunCommandPayload.STREAM_CODEC,
-                ComputerAccess.machine(RunCommandPayload::hostPos), ConsolePayloads::handleRunCommand,
-                (player, payload) -> notListening(player));
+        ComputerAccess.onMenu(registrar, RunCommandPayload.TYPE, RunCommandPayload.STREAM_CODEC,
+                CommandPromptMenu.class, CommandPromptMenu::hostPos, RunCommandPayload::hostPos,
+                ConsolePayloads::handleRunCommand, (player, payload) -> notListening(player));
         registrar.playToClient(CommandOutputPayload.TYPE, CommandOutputPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(ConsolePayloads::handleCommandOutput));
-        ComputerAccess.accept(registrar, RequestConsoleInitPayload.TYPE, RequestConsoleInitPayload.STREAM_CODEC,
-                ComputerAccess.machine(RequestConsoleInitPayload::hostPos), ConsolePayloads::handleRequestConsoleInit);
+        ComputerAccess.onMenu(registrar, RequestConsoleInitPayload.TYPE, RequestConsoleInitPayload.STREAM_CODEC,
+                CommandPromptMenu.class, CommandPromptMenu::hostPos, RequestConsoleInitPayload::hostPos,
+                ConsolePayloads::handleRequestConsoleInit);
         registrar.playToClient(ConsoleInitPayload.TYPE, ConsoleInitPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(ConsolePayloads::handleConsoleInit));
     }
@@ -84,12 +85,9 @@ public final class ConsolePayloads {
                 List.of(new WireLine(ConsoleTexts.NOT_ATTACHED.text(), CliStyle.ERROR.id())), "", ""));
     }
 
-    private static void handleRunCommand(final RunCommandPayload payload, final ServerPlayer player,
-                                         final ServerLevel level) {
-        if (!(player.containerMenu instanceof CommandPromptMenu menu)
-                || !menu.hostPos().equals(payload.hostPos())
-                || !(level.getBlockEntity(payload.hostPos())
-                        instanceof IComputerTerminalHost host)) {
+    private static void handleRunCommand(final RunCommandPayload payload, final CommandPromptMenu menu,
+                                         final ServerPlayer player, final ServerLevel level) {
+        if (!(level.getBlockEntity(menu.hostPos()) instanceof IComputerTerminalHost host)) {
             notListening(player);
             return;
         }
@@ -111,7 +109,7 @@ public final class ConsolePayloads {
             if (host.console() != null && !payload.line().isBlank()) {
                 host.console().pushHistory(payload.line().trim());
             }
-            launchProgram(player, host, menu.monitorPos(), payload.hostPos(), parts[1].trim());
+            launchProgram(player, host, menu.monitorPos(), menu.hostPos(), parts[1].trim());
             return;
         }
         /*
@@ -162,7 +160,7 @@ public final class ConsolePayloads {
             // "reboot --firmware": leave the terminal and enter the boot manager on the same monitor.
             player.closeContainer();
             MonitorBlock.openFirmware(
-                    player, level, menu.monitorPos(), payload.hostPos());
+                    player, level, menu.monitorPos(), menu.hostPos());
             return;
         }
         if (computer.rebootRequested()) {
@@ -172,7 +170,7 @@ public final class ConsolePayloads {
              * installed OS included) comes up. A machine whose system has nothing to show on its way down goes
              * straight to the self-test, which is what the restart itself falls back to.
              */
-            if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost be) {
+            if (level.getBlockEntity(menu.hostPos()) instanceof IOsHost be) {
                 be.restart();
                 /*
                  * Whoever typed it is at a terminal, not at a monitor session, so the machine's own goodbye
@@ -181,13 +179,13 @@ public final class ConsolePayloads {
                  */
                 if (be.goingDown()) {
                     player.closeContainer();
-                    MonitorBlock.openSystemDown(player, level, menu.monitorPos(), payload.hostPos(), be);
+                    MonitorBlock.openSystemDown(player, level, menu.monitorPos(), menu.hostPos(), be);
                     return;
                 }
             }
             player.closeContainer();
             MonitorBlock.openPost(
-                    player, level, menu.monitorPos(), payload.hostPos());
+                    player, level, menu.monitorPos(), menu.hostPos());
             return;
         }
         // Persist the typed line on the computer so the history survives closing the prompt or Monitor.
@@ -260,12 +258,10 @@ public final class ConsolePayloads {
                 List.of(new WireLine(text, style.id()))));
     }
 
-    private static void handleRequestConsoleInit(final RequestConsoleInitPayload payload, final ServerPlayer player,
+    private static void handleRequestConsoleInit(final RequestConsoleInitPayload payload,
+                                                 final CommandPromptMenu menu, final ServerPlayer player,
                                                  final ServerLevel level) {
-        if (player.containerMenu instanceof CommandPromptMenu menu
-                && menu.hostPos().equals(payload.hostPos())
-                && level.getBlockEntity(payload.hostPos())
-                        instanceof IComputerTerminalHost host) {
+        if (level.getBlockEntity(menu.hostPos()) instanceof IComputerTerminalHost host) {
             sendConsoleInit(player, host);
         }
     }

@@ -102,9 +102,9 @@ public final class ServerRackLayout {
         final GuiLayout l = new GuiLayout(WIDTH, HEIGHT);
         for (int row = 0; row < ROWS; row++) {
             final int y = rowY(row);
-            l.box("server" + row, SERVER_X, y, SLOT, SLOT);
+            l.slot("server" + row, serverItemX(), itemY(row));
             for (int column = 0; column < FRONT_SLOTS; column++) {
-                l.box("front" + row + "_" + column, frontSlotX(column), y, SLOT, SLOT);
+                l.slot("front" + row + "_" + column, frontItemX(column), itemY(row));
             }
             l.box("pwr" + row, PWR_X, y + PWR_DY, PWR_W, PWR_H);
             l.text("ruler" + row, RULER_X, y + 6, 2, 0.75f);          // "8U"

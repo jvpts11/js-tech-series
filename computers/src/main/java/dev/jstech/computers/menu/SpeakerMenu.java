@@ -10,64 +10,50 @@ package dev.jstech.computers.menu;
 import dev.jstech.computers.block.SpeakerBlock;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.registry.ComputingMenus;
+import dev.jstech.core.menu.CoreMenu;
+import dev.jstech.core.menu.MenuValidity;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.inventory.SimpleContainerData;
-import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * A speaker's screen: its name, the computer it plays for, the side it plays and how well. The name and the computer
- * come with the screen; whether a name asked for clashes, and the side, are kept up to date while it is open.
+ * come with the screen; whether a name asked for clashes, and the side, are the speaker's own fields, carried to the
+ * client's copy of the same block entity while the screen is open.
  */
-public class SpeakerMenu extends AbstractContainerMenu {
+public class SpeakerMenu extends CoreMenu {
 
-    private final ContainerData data;
-    private final ContainerLevelAccess access;
-    private final Opening opening;
-    /** The speaker itself, on the server; null on the client, which only shows it. */
-    @Nullable
     private final SpeakerBlockEntity speaker;
+    private final Opening opening;
 
-    /** The server's menu, reading the speaker as it is. */
-    public SpeakerMenu(final int containerId, final Inventory playerInventory, final SpeakerBlockEntity be,
+    /** The server's menu, reading the speaker as it is; the client's, once it resolved its own block entity too. */
+    public SpeakerMenu(final int containerId, final Inventory playerInventory, final SpeakerBlockEntity speaker,
                        final Opening opening) {
-        this(containerId, be.dataAccess(), ContainerLevelAccess.create(be.getLevel(), be.getBlockPos()), opening,
-                be);
-    }
-
-    private SpeakerMenu(final int containerId, final ContainerData data, final ContainerLevelAccess access,
-                        final Opening opening, @Nullable final SpeakerBlockEntity speaker) {
-        super(ComputingMenus.SPEAKER_MENU.get(), containerId);
-        this.data = data;
-        this.access = access;
-        this.opening = opening;
+        super(ComputingMenus.SPEAKER_MENU.get(), containerId, playerInventory,
+                MenuValidity.block(speaker.getLevel(), speaker.getBlockPos(), SpeakerBlock.class));
         this.speaker = speaker;
-        addDataSlots(data);
+        this.opening = opening;
+        data(speaker.fields().menuData());
     }
 
-    /** The client's menu, holding what the server sends it. */
-    @Nullable
+    /** The client's menu, on the client's own copy of the speaker standing at the opening's position. */
     public static SpeakerMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                           final RegistryFriendlyByteBuf buf) {
         final Opening opening = Opening.read(buf);
-        return new SpeakerMenu(containerId, new SimpleContainerData(SpeakerBlockEntity.DATA_COUNT),
-                ContainerLevelAccess.create(playerInventory.player.level(), opening.pos()), opening, null);
+        if (!(playerInventory.player.level().getBlockEntity(opening.pos()) instanceof SpeakerBlockEntity speaker)) {
+            throw new IllegalStateException("a menu was opened on a Speaker at " + opening.pos()
+                    + " the client does not have");
+        }
+        return new SpeakerMenu(containerId, playerInventory, speaker, opening);
     }
 
     /** The screen closed: the name typed on it is taken, unless another speaker of its computer has it. */
     @Override
     public void removed(final Player player) {
         super.removed(player);
-        if (speaker != null) {
-            speaker.takeAskedName();
-        }
+        speaker.takeAskedName();
     }
 
     public BlockPos speakerPos() {
@@ -81,23 +67,12 @@ public class SpeakerMenu extends AbstractContainerMenu {
 
     /** Whether the name last typed is one another speaker of its computer already has. */
     public boolean nameClashes() {
-        return data.get(SpeakerBlockEntity.DATA_CLASH) != 0;
+        return speaker.nameClashes();
     }
 
     /** Which side it plays, as one of {@link SpeakerBlockEntity}'s channel numbers. */
     public int channel() {
-        return data.get(SpeakerBlockEntity.DATA_CHANNEL);
-    }
-
-    @Override
-    public boolean stillValid(final Player player) {
-        return access.evaluate((level, pos) -> level.getBlockState(pos).getBlock() instanceof SpeakerBlock
-                && player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) <= 64.0, true);
-    }
-
-    @Override
-    public ItemStack quickMoveStack(final Player player, final int index) {
-        return ItemStack.EMPTY;
+        return speaker.channel();
     }
 
     /**

@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.gui.layout.OsInstallLayout;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.RequestFirmwarePayload;
@@ -19,12 +20,15 @@ import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -41,9 +45,6 @@ import org.jetbrains.annotations.Nullable;
  */
 @PaletteHolder
 public final class OsInstallScreen extends AbstractComputerScreen<MonitorSessionMenu> {
-
-    private static final int W = 320;
-    private static final int H = 176;
 
     /* The installer in each firmware's look; the Vintage one is written in greys its phosphor lights. */
     private static final Palette<Look> CLI = Palettes.declare(JsComputers.MODID, "firmware/install_cli",
@@ -65,7 +66,8 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
      */
     private enum Phase { WORKING, DONE, FAILED }
 
-    /** The steps the progress walks through, each claiming a quarter of the work. */
+    /** The steps the progress walks through, each claiming a quarter of the work; as many as
+     *  {@link OsInstallLayout#STEP_COUNT} reserves rows for. */
     private static final TextKey[] STEPS = {
             InstallerScreenTexts.COPY_PREPARING,
             InstallerScreenTexts.COPY_COPYING,
@@ -76,6 +78,14 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
     /** The copy the machine last reported, kept until the session that shows it is built. */
     @Nullable
     private static Copying pending;
+
+    static {
+        // The layout reserves a row per step; a list of another length would draw past it or leave a row empty.
+        if (STEPS.length != OsInstallLayout.STEP_COUNT) {
+            throw new IllegalStateException("OsInstallScreen has " + STEPS.length + " steps, the layout has rows for "
+                    + OsInstallLayout.STEP_COUNT);
+        }
+    }
 
     private final BlockPos computerPos;
     private final BlockPos monitorPos;
@@ -95,8 +105,8 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
 
     public OsInstallScreen(final MonitorSessionMenu session, final Inventory inventory, final Component title) {
         super(session, inventory, title);
-        this.imageWidth = W;
-        this.imageHeight = H;
+        this.imageWidth = OsInstallLayout.WIDTH;
+        this.imageHeight = OsInstallLayout.HEIGHT;
         this.titleLabelX = OFF_SCREEN;
         this.inventoryLabelY = OFF_SCREEN;
         this.computerPos = session.hostPos();
@@ -233,68 +243,99 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
         final int y = top();
         final Look p = Look.of(kind);
 
-        g.fill(x, y, x + W, y + H, p.back);
-        g.fill(x, y, x + W, y + 1, p.edge);
-        g.fill(x, y + H - 1, x + W, y + H, p.edge);
-        g.fill(x, y, x + 1, y + H, p.edge);
-        g.fill(x + W - 1, y, x + W, y + H, p.edge);
-        g.fill(x + 1, y + 1, x + W - 1, y + 17, p.bar);
+        g.fill(x, y, x + OsInstallLayout.WIDTH, y + OsInstallLayout.HEIGHT, p.back);
+        g.fill(x, y, x + OsInstallLayout.WIDTH, y + 1, p.edge);
+        g.fill(x, y + OsInstallLayout.HEIGHT - 1, x + OsInstallLayout.WIDTH, y + OsInstallLayout.HEIGHT, p.edge);
+        g.fill(x, y, x + 1, y + OsInstallLayout.HEIGHT, p.edge);
+        g.fill(x + OsInstallLayout.WIDTH - 1, y, x + OsInstallLayout.WIDTH, y + OsInstallLayout.HEIGHT, p.edge);
+        g.fill(x + 1, y + 1, x + OsInstallLayout.WIDTH - 1, y + 1 + OsInstallLayout.TITLE_BAR_H, p.bar);
         final String title = GameText.resolve(switch (phase) {
             case WORKING -> InstallerScreenTexts.COPY_INSTALLING.with(osName.toUpperCase(Locale.ROOT));
             case DONE -> InstallerScreenTexts.COPY_COMPLETE.text();
             case FAILED -> InstallerScreenTexts.COPY_FAILED.text();
         });
-        g.drawString(font, title, x + 8, y + 5, p.bright, false);
+        g.drawString(font, title, x + OsInstallLayout.TITLE_X, y + OsInstallLayout.TITLE_Y, p.bright, false);
 
-        int ty = y + 26;
+        int ty = y + OsInstallLayout.CONTENT_TOP;
         switch (phase) {
             case WORKING -> {
-                final int done = permille() * STEPS.length / 1000;
-                for (int i = 0; i < STEPS.length; i++) {
+                final int done = permille() * OsInstallLayout.STEP_COUNT / 1000;
+                for (int i = 0; i < OsInstallLayout.STEP_COUNT; i++) {
                     final boolean finished = i < done;
                     final boolean current = i == done;
-                    g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_STEP.with(STEPS[i])), x + 10, ty,
-                            finished || current ? p.text : p.dim, false);
+                    g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_STEP.with(STEPS[i])),
+                            x + OsInstallLayout.STEP_LABEL_X, ty, finished || current ? p.text : p.dim, false);
                     if (finished) {
-                        g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_DONE), x + W - 60, ty, p.ok,
-                                false);
+                        g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_DONE),
+                                x + OsInstallLayout.stepStatusX(), ty, p.ok, false);
                     } else if (current) {
-                        g.drawString(font, (permille() % 1000) / 10 + "%", x + W - 60, ty, p.bright, false);
+                        g.drawString(font, (permille() % 1000) / 10 + "%", x + OsInstallLayout.stepStatusX(), ty,
+                                p.bright, false);
                     }
-                    ty += 12;
+                    ty += OsInstallLayout.STEP_ROW_H;
                 }
-                ty += 12;
-                g.fill(x + 10, ty, x + W - 10, ty + 8, p.trackBg);
-                g.fill(x + 10, ty, x + 10 + (W - 20) * permille() / 1000, ty + 8, p.bright);
-                g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_KEEP_MEDIUM), x + 10, ty + 16, p.dim,
-                        false);
+                ty += OsInstallLayout.AFTER_STEPS_GAP;
+                g.fill(x + OsInstallLayout.BAR_X, ty, x + OsInstallLayout.BAR_X + OsInstallLayout.barW(),
+                        ty + OsInstallLayout.BAR_H, p.trackBg);
+                g.fill(x + OsInstallLayout.BAR_X, ty,
+                        x + OsInstallLayout.BAR_X + OsInstallLayout.barW() * permille() / 1000,
+                        ty + OsInstallLayout.BAR_H, p.bright);
+                g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_KEEP_MEDIUM), x + OsInstallLayout.BAR_X,
+                        ty + OsInstallLayout.BAR_TO_HINT_DY, p.dim, false);
             }
             case DONE -> {
                 g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_INSTALLED_ON.with(osName, targetLabel)),
-                        x + 10, ty, p.text, false);
+                        x + OsInstallLayout.STEP_LABEL_X, ty, p.text, false);
                 g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_TAKE_OUT_FIRST),
-                        x + 10, ty + 16, p.dim, false);
-                g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_TAKE_OUT_SECOND), x + 10, ty + 27, p.dim,
-                        false);
-                primary = button(g, x + 10, y + H - 26, 96, 16, GameText.resolve(InstallerScreenTexts.COPY_REBOOT), p,
-                        true, mouseX, mouseY);
-                secondary = button(g, x + 114, y + H - 26, 110, 16,
+                        x + OsInstallLayout.STEP_LABEL_X, ty + OsInstallLayout.LINE2_DY, p.dim, false);
+                g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_TAKE_OUT_SECOND),
+                        x + OsInstallLayout.STEP_LABEL_X, ty + OsInstallLayout.LINE3_DY, p.dim, false);
+                primary = button(g, x + OsInstallLayout.DONE_PRIMARY_X, y + OsInstallLayout.buttonY(),
+                        OsInstallLayout.DONE_PRIMARY_W, OsInstallLayout.BUTTON_H,
+                        GameText.resolve(InstallerScreenTexts.COPY_REBOOT), p, true, mouseX, mouseY);
+                secondary = button(g, x + OsInstallLayout.DONE_SECONDARY_X, y + OsInstallLayout.buttonY(),
+                        OsInstallLayout.DONE_SECONDARY_W, OsInstallLayout.BUTTON_H,
                         GameText.resolve(InstallerScreenTexts.COPY_BACK_TO_SETUP), p, false, mouseX, mouseY);
             }
             case FAILED -> {
                 g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_NOTHING_WRITTEN.with(targetLabel)),
-                        x + 10, ty, p.dim, false);
-                int ly = ty + 16;
-                for (final FormattedCharSequence line : font.split(Component.literal(failure), W - 20)) {
-                    g.drawString(font, line, x + 10, ly, p.text, false);
-                    ly += 11;
+                        x + OsInstallLayout.STEP_LABEL_X, ty, p.dim, false);
+                int ly = ty + OsInstallLayout.LINE2_DY;
+                for (final String line : failureLines()) {
+                    g.drawString(font, line, x + OsInstallLayout.STEP_LABEL_X, ly, p.text, false);
+                    ly += OsInstallLayout.FAILURE_WRAP_LINE_H;
                 }
-                primary = button(g, x + 10, y + H - 26, 110, 16,
+                primary = button(g, x + OsInstallLayout.FAILED_PRIMARY_X, y + OsInstallLayout.buttonY(),
+                        OsInstallLayout.FAILED_PRIMARY_W, OsInstallLayout.BUTTON_H,
                         GameText.resolve(InstallerScreenTexts.COPY_BACK_TO_SETUP), p, true, mouseX, mouseY);
-                secondary = button(g, x + 128, y + H - 26, 96, 16, GameText.resolve(InstallerScreenTexts.COPY_CLOSE), p,
-                        false, mouseX, mouseY);
+                secondary = button(g, x + OsInstallLayout.FAILED_SECONDARY_X, y + OsInstallLayout.buttonY(),
+                        OsInstallLayout.FAILED_SECONDARY_W, OsInstallLayout.BUTTON_H,
+                        GameText.resolve(InstallerScreenTexts.COPY_CLOSE), p, false, mouseX, mouseY);
             }
         }
+    }
+
+    /**
+     * The failure reason wrapped to the dialog's width, capped at as many lines as fit above the button row; a
+     * reason longer than that loses its tail, the last line shown ending in dots instead of running under the
+     * buttons.
+     */
+    private List<String> failureLines() {
+        final int width = OsInstallLayout.FAILURE_WRAP_W;
+        final List<FormattedText> wrapped = font.getSplitter().splitLines(failure, width, Style.EMPTY);
+        final int shown = Math.min(wrapped.size(), OsInstallLayout.mostFailureLines());
+        final List<String> lines = new ArrayList<>(shown);
+        for (int i = 0; i < shown; i++) {
+            String line = wrapped.get(i).getString();
+            if (i == shown - 1 && wrapped.size() > shown) {
+                while (!line.isEmpty() && font.width(line + "...") > width) {
+                    line = line.substring(0, line.length() - 1);
+                }
+                line = line + "...";
+            }
+            lines.add(line);
+        }
+        return lines;
     }
 
     private void row(final GuiGraphics g, final int x, final int y, final Look p,

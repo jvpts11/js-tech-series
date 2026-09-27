@@ -7,77 +7,80 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.registry.ComputingMenus;
-import dev.jstech.computers.block.ClusterManagementComputerBlock;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.gui.layout.ClusterManagementComputerLayout;
+import dev.jstech.computers.registry.ComputingMenus;
+import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.menu.MenuOpening;
+import dev.jstech.core.menu.MenuValidity;
+import dev.jstech.core.menu.PlayerSlots;
+import dev.jstech.core.menu.SlotGroup;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
 import org.jetbrains.annotations.Nullable;
 
 /** The Cluster Management Computer's assembly menu: the hardware slots and the screen's numbers. */
-public class ClusterManagementComputerMenu extends AbstractComputerMenu {
+public class ClusterManagementComputerMenu extends AbstractAssemblyComputerMenu {
+
+    private final ClusterManagementComputerBlockEntity blockEntity;
 
     public static final int BUTTON_POWER = 0;
     public static final int BUTTON_AUTOSTART = 1;
 
-    private static final int HARDWARE_SLOTS = ClusterManagementComputerBlockEntity.HARDWARE_SLOTS;
-
-    private final ClusterManagementComputerBlockEntity blockEntity;
-    private final ContainerData data;
-    private final ContainerLevelAccess access;
-
     public ClusterManagementComputerMenu(final int containerId, final Inventory playerInventory,
                                          final ClusterManagementComputerBlockEntity be) {
-        super(ComputingMenus.CLUSTER_MANAGEMENT_COMPUTER_MENU.get(), containerId);
+        super(ComputingMenus.CLUSTER_MANAGEMENT_COMPUTER_MENU.get(), containerId, playerInventory,
+                MenuValidity.blockEntity(be));
         this.blockEntity = be;
-        this.data = be.getDataAccess();
-        this.access = ContainerLevelAccess.create(be.getLevel(), be.getBlockPos());
+        final GuiLayout layout = ClusterManagementComputerLayout.layout();
         final IItemHandler hw = be.getHardware();
-        final int slot = ClusterManagementComputerLayout.SLOT;
-        addSlot(new SlotItemHandler(hw, ClusterManagementComputerBlockEntity.MOTHERBOARD_SLOT,
-                ClusterManagementComputerLayout.MOBO_X, ClusterManagementComputerLayout.MOBO_Y));
-        addSlot(new SlotItemHandler(hw, ClusterManagementComputerBlockEntity.PSU_SLOT,
-                ClusterManagementComputerLayout.PSU_X, ClusterManagementComputerLayout.PSU_Y));
-        addSlot(new BoardSlot(hw, ClusterManagementComputerBlockEntity.CPU_SLOT,
-                ClusterManagementComputerLayout.RIGHT_X, ClusterManagementComputerLayout.CPU_Y, 0, be::boardCpuSlots));
+
+        final List<Slot> hardwareSlots = new ArrayList<>();
+        hardwareSlots.add(slot(hw, ClusterManagementComputerBlockEntity.MOTHERBOARD_SLOT, layout.slotAt("mobo")));
+        hardwareSlots.add(slot(hw, ClusterManagementComputerBlockEntity.PSU_SLOT, layout.slotAt("psu")));
+        final GuiLayout.SlotPosition cpuAt = layout.slotAt("cpu");
+        hardwareSlots.add(new BoardSlot(hw, ClusterManagementComputerBlockEntity.CPU_SLOT, cpuAt.x(), cpuAt.y(), 0,
+                be::boardCpuSlots));
         for (int i = 0; i < ClusterManagementComputerBlockEntity.RAM_SLOTS; i++) {
-            addSlot(new BoardSlot(hw, ClusterManagementComputerBlockEntity.RAM_SLOTS_START + i,
-                    ClusterManagementComputerLayout.RIGHT_X + i * slot, ClusterManagementComputerLayout.RAM_Y, i,
-                    be::boardRamSlots));
+            final GuiLayout.SlotPosition at = layout.slotAt("ram_" + i);
+            hardwareSlots.add(new BoardSlot(hw, ClusterManagementComputerBlockEntity.RAM_SLOTS_START + i, at.x(),
+                    at.y(), i, be::boardRamSlots));
         }
         for (int i = 0; i < ClusterManagementComputerBlockEntity.PCIE_SLOTS; i++) {
-            addSlot(new BoardSlot(hw, ClusterManagementComputerBlockEntity.PCIE_SLOTS_START + i,
-                    ClusterManagementComputerLayout.RIGHT_X + i * slot, ClusterManagementComputerLayout.PCIE_Y, i,
-                    be::boardPcieSlots));
+            final GuiLayout.SlotPosition at = layout.slotAt("pcie_" + i);
+            hardwareSlots.add(new BoardSlot(hw, ClusterManagementComputerBlockEntity.PCIE_SLOTS_START + i, at.x(),
+                    at.y(), i, be::boardPcieSlots));
         }
         for (int i = 0; i < ClusterManagementComputerBlockEntity.DISK_SLOTS; i++) {
-            addSlot(new BoardSlot(hw, ClusterManagementComputerBlockEntity.DISK_SLOTS_START + i,
-                    ClusterManagementComputerLayout.MOBO_X + i * slot, ClusterManagementComputerLayout.DISK_Y, i,
-                    be::boardDiskSlots));
+            final GuiLayout.SlotPosition at = layout.slotAt("disk_" + i);
+            hardwareSlots.add(new BoardSlot(hw, ClusterManagementComputerBlockEntity.DISK_SLOTS_START + i, at.x(),
+                    at.y(), i, be::boardDiskSlots));
         }
-        addPlayerInventory(playerInventory, ClusterManagementComputerLayout.INV_X, ClusterManagementComputerLayout.INV_Y);
-        addDataSlots(this.data);
+        final SlotGroup hardware = slots(hardwareSlots.toArray(Slot[]::new));
+
+        final PlayerSlots player = playerInventory(playerInventory, layout.playerInventoryAt());
+        shiftClick(hardware, player.all());
+        shiftClick(player.all(), hardware);
+
+        data(be.fields().menuData());
+
+        button(BUTTON_POWER, p -> blockEntity.togglePower());
+        button(BUTTON_AUTOSTART, p -> blockEntity.toggleAutoStart());
     }
 
-    @Nullable
     public static ClusterManagementComputerMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                                             final RegistryFriendlyByteBuf buf) {
-        if (playerInventory.player.level().getBlockEntity(buf.readBlockPos())
-                instanceof ClusterManagementComputerBlockEntity be) {
-            return new ClusterManagementComputerMenu(containerId, playerInventory, be);
-        }
-        return null;
+        return new ClusterManagementComputerMenu(containerId, playerInventory,
+                MenuOpening.blockEntity(playerInventory, buf, ClusterManagementComputerBlockEntity.class));
     }
 
+    @Override
     public BlockPos computerPos() {
         return blockEntity.getBlockPos();
     }
@@ -116,72 +119,46 @@ public class ClusterManagementComputerMenu extends AbstractComputerMenu {
     }
 
     public boolean isRunning() {
-        return data.get(ClusterManagementComputerBlockEntity.DATA_RUNNING) != 0;
+        return blockEntity.assemblyRunning();
     }
 
     public boolean buildValid() {
-        return data.get(ClusterManagementComputerBlockEntity.DATA_BUILD_VALID) != 0;
+        return blockEntity.assemblyBuildValid();
     }
 
     public long capacity() {
-        return data.get(ClusterManagementComputerBlockEntity.DATA_CAPACITY);
+        return blockEntity.assemblyCapacity();
     }
 
     public long ramBuffer() {
-        return data.get(ClusterManagementComputerBlockEntity.DATA_RAM_BUFFER);
+        return blockEntity.assemblyRamBuffer();
     }
 
     public boolean isAutoStart() {
-        return data.get(ClusterManagementComputerBlockEntity.DATA_AUTOSTART) != 0;
+        return blockEntity.assemblyAutoStart();
     }
 
     public boolean isOnNetwork() {
-        return data.get(ClusterManagementComputerBlockEntity.DATA_ON_NETWORK) != 0;
+        return blockEntity.assemblyOnNetwork();
     }
 
     public boolean hasCard() {
-        return data.get(ClusterManagementComputerBlockEntity.DATA_HAS_CARD) != 0;
+        return blockEntity.assemblyHasCard();
     }
 
     public int supercomputers() {
-        return data.get(ClusterManagementComputerBlockEntity.DATA_SUPERCOMPUTERS);
+        return blockEntity.assemblySupercomputers();
     }
 
     public int datacenters() {
-        return data.get(ClusterManagementComputerBlockEntity.DATA_DATACENTERS);
+        return blockEntity.assemblyDatacenters();
     }
 
     public int lanes() {
-        return data.get(ClusterManagementComputerBlockEntity.DATA_LANES);
+        return blockEntity.assemblyLanes();
     }
 
     public boolean managerInstalled() {
-        return data.get(ClusterManagementComputerBlockEntity.DATA_MANAGER_INSTALLED) != 0;
-    }
-
-    @Override
-    public boolean clickMenuButton(final Player player, final int id) {
-        if (id == BUTTON_POWER) {
-            blockEntity.togglePower();
-            return true;
-        }
-        if (id == BUTTON_AUTOSTART) {
-            blockEntity.toggleAutoStart();
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public ItemStack quickMoveStack(final Player player, final int index) {
-        return quickMoveBetweenContainerAndPlayer(player, index, HARDWARE_SLOTS);
-    }
-
-    @Override
-    public boolean stillValid(final Player player) {
-        return access.evaluate((level, pos) ->
-                level.getBlockState(pos).getBlock()
-                        instanceof ClusterManagementComputerBlock
-                        && player.canInteractWithBlock(pos, 4.0), true);
+        return blockEntity.assemblyManagerInstalled();
     }
 }

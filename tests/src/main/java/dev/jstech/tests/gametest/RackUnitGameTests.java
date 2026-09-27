@@ -132,7 +132,7 @@ public final class RackUnitGameTests {
         TestWorldBuilder.mountDefaultServer(rack, 0);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final int shown = rack.getDataAccess().get(ServerRackBlockEntity.DATA_THROTTLE);
+                    final int shown = rack.throttleShown();
                     helper.assertTrue(shown > 0 && shown == rack.thermalThrottlePercent(),
                             "the screen reads the cabinet's own throttle, " + rack.thermalThrottlePercent()
                                     + "%, with no network; it read " + shown);

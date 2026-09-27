@@ -60,6 +60,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.audio.Audio;
+import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.network.DataTier;
@@ -80,8 +81,6 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.Level;
@@ -313,6 +312,16 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     private final boolean[] seated = new boolean[CAPACITY_U];
     /** Whether the rack is being emptied because it is coming down, which its rails do not sound. */
     private boolean quiet;
+    /** Whether the cabinet's rear cable (or fabric uplink) sits on a network; set once each server tick. */
+    private boolean linked;
+
+    // Values the rack's screen shows, worked out on the server and mirrored to the client while it is open.
+    private final DerivedInt linkedShown = fields().derived("Linked", () -> linked).toMenu();
+    // Qualified with "this." because bayPowerOff is declared later in the file; a plain name would not compile.
+    private final DerivedInt bayPowerShown = fields().derived("BayPower", () -> ~this.bayPowerOff & 0xFF).toMenu();
+    private final DerivedInt throttleShown = fields().derived("Throttle", this::thermalThrottlePercent).toMenu();
+    /** Rebuild progress in permille, one handle per unit, filled in the constructor. */
+    private final DerivedInt[] rebuildShown = new DerivedInt[CAPACITY_U];
 
     private final ItemStackHandler servers = new ItemStackHandler(CAPACITY_U) {
         @Override
@@ -816,21 +825,14 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         setChanged();
     }
 
-    public static final int DATA_LINKED = 0;
-    public static final int DATA_BAY_POWER = 1;
-    /** The cabinet's thermal throttle in percent (100 = running free). */
-    public static final int DATA_THROTTLE = 2;
-    /** Rebuild progress in permille for unit i, at {@code DATA_REBUILD_0 + i}. */
-    public static final int DATA_REBUILD_0 = 3;
-    public static final int DATA_COUNT = DATA_REBUILD_0 + CAPACITY_U;
-
-    private final ContainerData data =
-            new SimpleContainerData(DATA_COUNT);
-
     public ServerRackBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.SERVER_RACK_BE.get(), pos, state);
         fields().part("Rack", IFieldPart.of(this::saveRack, this::loadRack)).save();
         fields().part("Cabinet", new CabinetPart()).toClient();
+        for (int slot = 0; slot < CAPACITY_U; slot++) {
+            final int row = slot;
+            rebuildShown[slot] = fields().derived("Rebuild" + row, () -> raidRebuildPermille(row)).toMenu();
+        }
     }
 
     public ItemStackHandler getServers() {
@@ -845,8 +847,24 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         return layout;
     }
 
-    public ContainerData getDataAccess() {
-        return data;
+    /** Whether the cabinet's rear cable or fabric uplink sits on a network, as last shown to the open menu. */
+    public boolean linkedShown() {
+        return linkedShown.isSet();
+    }
+
+    /** The bay power mask (bit {@code slot} set = that bay switched on), as last shown to the open menu. */
+    public int bayPowerShown() {
+        return bayPowerShown.getAsInt();
+    }
+
+    /** The cabinet's thermal throttle in percent, as last shown to the open menu. */
+    public int throttleShown() {
+        return throttleShown.getAsInt();
+    }
+
+    /** Rebuild progress of unit {@code slot}'s array in permille, as last shown to the open menu. */
+    public int rebuildShown(final int slot) {
+        return slot >= 0 && slot < CAPACITY_U ? rebuildShown[slot].getAsInt() : 0;
     }
 
     /** The occupancy and front-slot budgets of every mounted chassis. */
@@ -1042,14 +1060,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         sounds.tick();
         final NetworkSystem system = NetworkSystem.get(level);
         final NetworkUuid network = adjacentNetwork(level, system);
-        data.set(DATA_LINKED, network != null || fabricLinked ? 1 : 0);
-        data.set(DATA_BAY_POWER, ~bayPowerOff & 0xFF);
-        // How hot the cabinet runs is the cabinet's, cabled or not: a rack off the network still throttles.
-        data.set(DATA_THROTTLE, thermalThrottlePercent());
+        // Cached rather than worked out on every menu poll: the network lookup above bridges cable segments.
+        linked = network != null || fabricLinked;
         arrays.tick();
-        for (int slot = 0; slot < CAPACITY_U; slot++) {
-            data.set(DATA_REBUILD_0 + slot, raidRebuildPermille(slot));
-        }
 
         final Set<UUID> present = new HashSet<>();
         for (int i = 0; i < CAPACITY_U; i++) {

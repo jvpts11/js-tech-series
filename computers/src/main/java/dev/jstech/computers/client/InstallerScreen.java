@@ -71,7 +71,7 @@ import static dev.jstech.computers.client.InstallerScreenTexts.TO_SET_UP;
 import static dev.jstech.computers.client.InstallerScreenTexts.WILL_BE_DELETED;
 
 import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.gui.MonitorGlass;
+import dev.jstech.computers.gui.layout.InstallerLayout;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.InstallerActionPayload;
@@ -113,21 +113,6 @@ import java.util.List;
 @PaletteHolder
 public final class InstallerScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
-    private static final int W = MonitorGlass.WIDTH;
-    private static final int H = MonitorGlass.HEIGHT;
-
-    /** How far apart the rows of a list sit, which the mouse also has to know to find the one under it. */
-    private static final int ROW = 11;
-
-    /** Where the Size column ends, counted back from the right edge of the table. */
-    private static final int SIZE_COLUMN = 120;
-
-    /** The same for the Free column, which sits between Size and Holds. */
-    private static final int FREE_COLUMN = 60;
-
-    /** The clear space kept between a drive's name and whatever is written to the right of it. */
-    private static final int COLUMN_GAP = 6;
-
     /** The wash laid over the button under the cursor: enough to read as lit, not enough to change its style. */
     /** The colours the pages draw inside their frame, {@code jsc:installer/page}. */
     private static final Palette<PageColours> PAGE = Palettes.declare(JsComputers.MODID, "installer/page",
@@ -161,7 +146,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     private int listWidth;
     private int listRows;
     /** How tall a row of the list drawn last was, so a click lands on the one the player is looking at. */
-    private int listRowHeight = ROW;
+    private int listRowHeight = InstallerLayout.ROW;
     private int[] nextButton;
     private int[] backButton;
     private int[] cancelButton;
@@ -176,8 +161,8 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
 
     public InstallerScreen(final MonitorSessionMenu session, final Inventory inventory, final Component title) {
         super(session, inventory, title);
-        this.imageWidth = W;
-        this.imageHeight = H;
+        this.imageWidth = InstallerLayout.WIDTH;
+        this.imageHeight = InstallerLayout.HEIGHT;
         this.titleLabelX = OFF_SCREEN;
         this.inventoryLabelY = OFF_SCREEN;
         this.computerPos = session.hostPos();
@@ -391,11 +376,11 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
         final int x = this.leftPos;
         final int y = this.topPos;
-        MonitorFrame.renderBody(g, x, y, W, H, screenEra(), font);
+        MonitorFrame.renderBody(g, x, y, InstallerLayout.WIDTH, InstallerLayout.HEIGHT, screenEra(), font);
 
         this.listRows = 0;
-        final InstallerFrames.Frame frame =
-                InstallerFrames.paint(g, font, this.flow, this.ticksDone, x, y, W, H, this.held);
+        final InstallerFrames.Frame frame = InstallerFrames.paint(g, font, this.flow, this.ticksDone, x, y,
+                InstallerLayout.WIDTH, InstallerLayout.HEIGHT, this.held);
         this.nextButton = frame.next();
         this.backButton = frame.back();
         this.cancelButton = frame.cancel();
@@ -644,7 +629,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
 
     /** How far apart this page's rows sit, which the mouse also has to know to find the one under it. */
     private int row() {
-        return this.textMode() ? WALL_ROW + 2 : ROW;
+        return this.textMode() ? WALL_ROW + InstallerLayout.TEXT_ROW_EXTRA : InstallerLayout.ROW;
     }
 
     /** A label cut to the room it has, measured in the size this page is written at. */
@@ -716,8 +701,8 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
              * The dots between the question and the answer, which is how a check of that age tied the two
              * together across a screen that had no columns to line them up in.
              */
-            final int answerAt = f.x() + f.w() - 20 - this.width(line[1]);
-            this.leader(g, f.x() + this.width(label), answerAt - 3, ty, p.dim());
+            final int answerAt = f.x() + f.w() - InstallerLayout.LEADER_RIGHT_MARGIN - this.width(line[1]);
+            this.leader(g, f.x() + this.width(label), answerAt - InstallerLayout.LEADER_GAP, ty, p.dim());
             this.say(g, line[1], answerAt, ty, p.text());
             if (good) {
                 this.sayRight(g, of(OK), f.x() + f.w(), ty, p.accent());
@@ -745,12 +730,13 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         final int step = this.row();
         int ty = f.y();
         if (table) {
-            g.drawString(font, of(COLUMN_DISK), f.x() + 4, ty, p.dim(), false);
-            right(g, of(COLUMN_SIZE), f.x() + f.w() - SIZE_COLUMN, ty, p.dim());
-            right(g, of(COLUMN_FREE), f.x() + f.w() - FREE_COLUMN, ty, p.dim());
-            right(g, of(COLUMN_HOLDS), f.x() + f.w() - 4, ty, p.dim());
-            g.fill(f.x(), ty + 9, f.x() + f.w(), ty + 10, PAGE.get().columnRule());
-            ty += 13;
+            g.drawString(font, of(COLUMN_DISK), f.x() + InstallerLayout.TABLE_INSET, ty, p.dim(), false);
+            right(g, of(COLUMN_SIZE), f.x() + f.w() - InstallerLayout.SIZE_COLUMN, ty, p.dim());
+            right(g, of(COLUMN_FREE), f.x() + f.w() - InstallerLayout.FREE_COLUMN, ty, p.dim());
+            right(g, of(COLUMN_HOLDS), f.x() + f.w() - InstallerLayout.TABLE_INSET, ty, p.dim());
+            g.fill(f.x(), ty + InstallerLayout.TABLE_HEADER_RULE_DY, f.x() + f.w(),
+                    ty + InstallerLayout.TABLE_HEADER_RULE_DY + 1, PAGE.get().columnRule());
+            ty += InstallerLayout.TABLE_HEADER_GAP;
         }
         this.listAt(f.x(), ty, f.w(), this.flow.disks().size());
         for (int i = 0; i < this.flow.disks().size(); i++) {
@@ -772,16 +758,18 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
              */
             if (table) {
                 final String sizeText = size(disk.sizeMb());
-                final int sizeLeft = f.x() + f.w() - SIZE_COLUMN - font.width(sizeText);
+                final int sizeLeft = f.x() + f.w() - InstallerLayout.SIZE_COLUMN - font.width(sizeText);
                 g.drawString(font, InstallerFrames.clip(font, of(DISK_NARROW.with(disk.slot(), disk.label())),
-                        sizeLeft - COLUMN_GAP - (f.x() + 4)), f.x() + 4, ty, row, false);
-                right(g, sizeText, f.x() + f.w() - SIZE_COLUMN, ty, faint);
-                right(g, size(this.flow.freeOn(disk)), f.x() + f.w() - FREE_COLUMN, ty, faint);
-                right(g, disk.hasSystem() ? disk.holds() : of(NOTHING), f.x() + f.w() - 4, ty, faint);
+                        sizeLeft - InstallerLayout.COLUMN_GAP - (f.x() + InstallerLayout.TABLE_INSET)),
+                        f.x() + InstallerLayout.TABLE_INSET, ty, row, false);
+                right(g, sizeText, f.x() + f.w() - InstallerLayout.SIZE_COLUMN, ty, faint);
+                right(g, size(this.flow.freeOn(disk)), f.x() + f.w() - InstallerLayout.FREE_COLUMN, ty, faint);
+                right(g, disk.hasSystem() ? disk.holds() : of(NOTHING), f.x() + f.w() - InstallerLayout.TABLE_INSET,
+                        ty, faint);
             } else {
                 final String state = of(HOLDS_FREE.with(holds(disk), size(this.flow.freeOn(disk))));
                 this.say(g, this.fit(of(DISK_WIDE.with(disk.slot(), disk.label())),
-                        f.w() - this.width(state) - COLUMN_GAP), f.x(), ty, row);
+                        f.w() - this.width(state) - InstallerLayout.COLUMN_GAP), f.x(), ty, row);
                 this.sayRight(g, state, f.x() + f.w(), ty, faint);
             }
             ty += step;
@@ -810,11 +798,13 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         ty += step * 3;
         this.say(g, of(COMPUTER_NAME), f.x(), ty, p.text());
         final int fx = f.x();
-        final int fy = ty + step + 2;
-        final int fw = Math.min(150, f.w());
-        g.fill(fx, fy, fx + fw, fy + 13, PAGE.get().field());
-        g.fill(fx, fy + 12, fx + fw, fy + 13, p.accent());
-        this.say(g, this.tailThatFits(fw - 6) + this.caret(), fx + 3, fy + 3, PAGE.get().fieldInk());
+        final int fy = ty + step + InstallerLayout.NAME_FIELD_DY;
+        final int fw = Math.min(InstallerLayout.NAME_FIELD_W, f.w());
+        final int inset = InstallerLayout.NAME_FIELD_TEXT_INSET;
+        g.fill(fx, fy, fx + fw, fy + InstallerLayout.NAME_FIELD_H, PAGE.get().field());
+        g.fill(fx, fy + InstallerLayout.NAME_FIELD_H - 1, fx + fw, fy + InstallerLayout.NAME_FIELD_H, p.accent());
+        this.say(g, this.tailThatFits(fw - 2 * inset) + this.caret(), fx + inset, fy + inset,
+                PAGE.get().fieldInk());
     }
 
     /**
@@ -951,11 +941,11 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         this.say(g, GameText.resolve(running.label()), f.x(), ty, p.bright());
         ty += step + 4;
         /* The bar itself, sunk into the page the way those installers drew one. */
-        final int barH = 9;
+        final int barH = InstallerLayout.WORK_BAR_H;
         g.fill(f.x() - 1, ty - 1, f.x() + f.w() + 1, ty + barH + 1, p.dim());
         g.fill(f.x(), ty, f.x() + f.w(), ty + barH, PAGE.get().barTrough());
         g.fill(f.x(), ty, f.x() + f.w() * this.flow.permille(this.ticksDone) / 1000, ty + barH, p.accent());
-        ty += barH + 6;
+        ty += barH + InstallerLayout.WORK_BAR_GAP;
         this.say(g, of(COMPLETE.with(percent)), f.x(), ty, p.text());
         this.sayRight(g, of(SECONDS_LEFT.with(this.secondsLeft())), f.x() + f.w(), ty, p.dim());
         ty += step;
@@ -979,7 +969,8 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             this.say(g, label, f.x(), ty, done || i == running ? p.text() : p.dim());
             if (!answer.isEmpty()) {
                 final int answerAt = f.x() + f.w() - this.width(answer);
-                this.leader(g, f.x() + this.width(label) + 3, answerAt - 3, ty, p.dim());
+                this.leader(g, f.x() + this.width(label) + InstallerLayout.LEADER_GAP,
+                        answerAt - InstallerLayout.LEADER_GAP, ty, p.dim());
                 this.say(g, answer, answerAt, ty, done ? p.dim() : p.accent());
             }
             ty += step;
@@ -1003,17 +994,19 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             } else if (i == running) {
                 right(g, this.flow.stepPermille(this.ticksDone) / 10 + "%", f.x() + f.w(), ty, p.accent());
             }
-            ty += ROW;
+            ty += InstallerLayout.ROW;
         }
-        ty += 8;
-        g.fill(f.x(), ty, f.x() + f.w(), ty + 6, PAGE.get().cardTrack());
-        g.fill(f.x(), ty, f.x() + f.w() * this.flow.permille(this.ticksDone) / 1000, ty + 6, p.accent());
+        ty += InstallerLayout.CARD_BAR_GAP;
+        g.fill(f.x(), ty, f.x() + f.w(), ty + InstallerLayout.CARD_BAR_H, PAGE.get().cardTrack());
+        g.fill(f.x(), ty, f.x() + f.w() * this.flow.permille(this.ticksDone) / 1000,
+                ty + InstallerLayout.CARD_BAR_H, p.accent());
         /*
          * Two lines rather than one that runs off the card. The sentence is long, the card is not wide, and a
          * time that grows a digit made it longer still.
          */
-        g.drawString(font, of(RESTARTS_WHEN_FINISHED), f.x(), ty + 12, p.dim(), false);
-        g.drawString(font, of(SECONDS_LEFT_SENTENCE.with(this.secondsLeft())), f.x(), ty + 22, p.dim(), false);
+        g.drawString(font, of(RESTARTS_WHEN_FINISHED), f.x(), ty + InstallerLayout.CARD_LINE1_DY, p.dim(), false);
+        g.drawString(font, of(SECONDS_LEFT_SENTENCE.with(this.secondsLeft())), f.x(),
+                ty + InstallerLayout.CARD_LINE2_DY, p.dim(), false);
     }
 
     /** The graphical phase, whose frame has already listed the steps down its own side. */
@@ -1073,24 +1066,28 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             this.erasePrompt = InstallerFlow.NO_DISK;
             return;
         }
-        final int bw = 250;
-        final int bh = 74;
-        final int bx = x + (W - bw) / 2;
-        final int by = y + (H - bh) / 2;
+        final int bw = InstallerLayout.ERASE_DIALOG_W;
+        final int bh = InstallerLayout.ERASE_DIALOG_H;
+        final int bx = x + InstallerLayout.eraseDialogX();
+        final int by = y + InstallerLayout.eraseDialogY();
         final PageColours c = PAGE.get();
-        g.fill(x, y, x + W, y + H, c.veil());
+        g.fill(x, y, x + InstallerLayout.WIDTH, y + InstallerLayout.HEIGHT, c.veil());
         g.fill(bx, by, bx + bw, by + bh, c.dialog());
         g.fill(bx, by, bx + bw, by + 1, c.alarm());
         g.fill(bx, by + bh - 1, bx + bw, by + bh, c.dialogEdge());
         g.fill(bx, by, bx + 1, by + bh, c.dialogEdge());
         g.fill(bx + bw - 1, by, bx + bw, by + bh, c.dialogEdge());
-        g.drawString(font, of(ERASE_ASK.with(disk.slot())), bx + 10, by + 10, c.dialogInk(), false);
+        g.drawString(font, of(ERASE_ASK.with(disk.slot())), bx + InstallerLayout.ERASE_TEXT_X,
+                by + InstallerLayout.ERASE_LINE1_DY, c.dialogInk(), false);
         g.drawString(font, of(disk.hasSystem() ? AND_EVERY_FILE.with(disk.holds()) : EVERY_FILE.text()),
-                bx + 10, by + 26, c.dialogInk(), false);
-        g.drawString(font, of(WILL_BE_DELETED.with(InstallerFrames.clip(font, disk.label(), bw - 20))),
-                bx + 10, by + 36, c.dialogInk(), false);
-        g.drawString(font, of(CANNOT_UNDO), bx + 10, by + 46, c.dialogDim(), false);
-        g.drawString(font, of(ERASE_KEYS), bx + 10, by + 60, c.alarm(), false);
+                bx + InstallerLayout.ERASE_TEXT_X, by + InstallerLayout.ERASE_LINE2_DY, c.dialogInk(), false);
+        g.drawString(font, of(WILL_BE_DELETED.with(
+                InstallerFrames.clip(font, disk.label(), bw - 2 * InstallerLayout.ERASE_TEXT_X))),
+                bx + InstallerLayout.ERASE_TEXT_X, by + InstallerLayout.ERASE_LINE3_DY, c.dialogInk(), false);
+        g.drawString(font, of(CANNOT_UNDO), bx + InstallerLayout.ERASE_TEXT_X, by + InstallerLayout.ERASE_LINE4_DY,
+                c.dialogDim(), false);
+        g.drawString(font, of(ERASE_KEYS), bx + InstallerLayout.ERASE_TEXT_X, by + InstallerLayout.ERASE_LINE5_DY,
+                c.alarm(), false);
     }
 
     /**

@@ -66,19 +66,23 @@ public final class ProgramPayloads {
                 ComputerAccess.machine(RunProgramPayload::hostPos), ProgramPayloads::handleRunProgram);
         registrar.playToClient(UiWindowPayload.TYPE, UiWindowPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(ProgramPayloads::handleUiWindow));
-        ComputerAccess.accept(registrar, UiEventPayload.TYPE, UiEventPayload.STREAM_CODEC,
-                ComputerAccess.machine(UiEventPayload::hostPos), ProgramPayloads::handleUiEvent);
+        ComputerAccess.onMenu(registrar, UiEventPayload.TYPE, UiEventPayload.STREAM_CODEC,
+                DesktopMenu.class, DesktopMenu::hostPos, UiEventPayload::hostPos, ProgramPayloads::handleUiEvent);
         registrar.playToClient(ProcessListPayload.TYPE, ProcessListPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(ProgramPayloads::handleProcessList));
-        ComputerAccess.accept(registrar, ProcessActionPayload.TYPE, ProcessActionPayload.STREAM_CODEC,
-                ComputerAccess.machine(ProcessActionPayload::hostPos), ProgramPayloads::handleProcessAction);
+        ComputerAccess.onMenu(registrar, ProcessActionPayload.TYPE, ProcessActionPayload.STREAM_CODEC,
+                ComputerTerminalMenu.class, ComputerTerminalMenu::hostPos, ProcessActionPayload::hostPos,
+                ProgramPayloads::handleProcessAction);
         ComputerAccess.accept(registrar, UninstallProgramPayload.TYPE, UninstallProgramPayload.STREAM_CODEC,
                 ComputerAccess.machine(UninstallProgramPayload::hostPos), ProgramPayloads::handleUninstallProgram);
         registrar.playToClient(OpenComputerUiPayload.TYPE, OpenComputerUiPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(ProgramPayloads::handleOpenComputerUi));
     }
 
-    /** The processes running on the host at {@code hostPos}: the IQL Engine and its jobs if it is a Mainframe with the Engine installed, else an empty list (a computer with no service). */
+    /**
+     * The processes running on the host at {@code hostPos}: the IQL Engine and its jobs if it is a Mainframe
+     * with the Engine installed, else an empty list (a computer with no service).
+     */
     public static void dispatchProcesses(final ServerPlayer player, final BlockPos hostPos,
                                          final ServerLevel level) {
         final List<ProcessListPayload.ProcessLine> lines = new ArrayList<>();
@@ -116,11 +120,9 @@ public final class ProgramPayloads {
         }
     }
 
-    private static void handleProcessAction(final ProcessActionPayload payload, final ServerPlayer player,
-                                            final ServerLevel level) {
-        if (!(player.containerMenu instanceof ComputerTerminalMenu menu)
-                || !menu.hostPos().equals(payload.hostPos())
-                || !(level.getBlockEntity(payload.hostPos()) instanceof MainframeBlockEntity mainframe)) {
+    private static void handleProcessAction(final ProcessActionPayload payload, final ComputerTerminalMenu menu,
+                                            final ServerPlayer player, final ServerLevel level) {
+        if (!(level.getBlockEntity(menu.hostPos()) instanceof MainframeBlockEntity mainframe)) {
             return;
         }
         if (payload.kind() == ProcessListPayload.KIND_SERVICE) {
@@ -140,7 +142,7 @@ public final class ProgramPayloads {
                 default -> { /* a job has only End/Restart */ }
             }
         }
-        dispatchProcesses(player, payload.hostPos(), level);
+        dispatchProcesses(player, menu.hostPos(), level);
     }
 
     private static void handleOpenComputerUi(final OpenComputerUiPayload payload, final Player player) {
@@ -159,13 +161,10 @@ public final class ProgramPayloads {
      * What a player did to a widget of a program's window, handed to the program that owns it. Only what a
      * keyboard and a mouse can do is taken, and only from a player at that machine's desktop.
      */
-    private static void handleUiEvent(final UiEventPayload payload, final ServerPlayer player,
-                                      final ServerLevel level) {
-        if (!(player.containerMenu instanceof DesktopMenu desktop)
-                || !payload.hostPos().equals(desktop.hostPos())
-                || !UiEventPayload.KINDS.contains(payload.kind())
-                || !(level.getBlockEntity(payload.hostPos())
-                        instanceof AbstractComputerBlockEntity computer)) {
+    private static void handleUiEvent(final UiEventPayload payload, final DesktopMenu menu,
+                                      final ServerPlayer player, final ServerLevel level) {
+        if (!UiEventPayload.KINDS.contains(payload.kind())
+                || !(level.getBlockEntity(menu.hostPos()) instanceof AbstractComputerBlockEntity computer)) {
             return;
         }
         computer.programs().deliverUiEvent(payload.program(), payload.window(), payload.widget(),

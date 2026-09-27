@@ -22,6 +22,7 @@ import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
@@ -44,7 +45,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -403,63 +403,62 @@ public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
         }
     }
 
-    // Screen sync (ContainerData wire layout, single source of truth shared with the Menu)
+    /* Values the assembly menu shows: worked out on the server, received by the client while the menu is open. */
+    private final DerivedInt assemblyRunning = fields().derived("AssemblyRunning", this::isRunning).toMenu();
+    private final DerivedInt assemblyBuildValid = fields().derived("AssemblyBuildValid", this::buildValid).toMenu();
+    private final DerivedInt assemblyCapacity = fields().derived("AssemblyCapacity",
+            () -> (int) Math.min(Integer.MAX_VALUE, capacity())).toMenu();
+    private final DerivedInt assemblyRamBuffer = fields().derived("AssemblyRamBuffer",
+            () -> (int) Math.min(Integer.MAX_VALUE, ramBuffer())).toMenu();
+    private final DerivedInt assemblyAutoStart = fields().derived("AssemblyAutoStart", this::isAutoStart).toMenu();
+    private final DerivedInt assemblyOnNetwork = fields().derived("AssemblyOnNetwork",
+            () -> networkUuid() != null).toMenu();
+    private final DerivedInt assemblyCraftFactorX100 = fields().derived("AssemblyCraftFactorX100",
+            () -> (int) Math.round(craftingCardFactor() * 100.0)).toMenu();
+    private final DerivedInt assemblyCraftThroughput = fields().derived("AssemblyCraftThroughput",
+            () -> (int) Math.min(Integer.MAX_VALUE, craftingThroughput())).toMenu();
+    private final DerivedInt assemblyRomUsed = fields().derived("AssemblyRomUsed", this::romUsed).toMenu();
+    private final DerivedInt assemblyCraftThreads = fields().derived("AssemblyCraftThreads",
+            this::craftingThreads).toMenu();
 
-    public static final int DATA_RUNNING = 0;
-    public static final int DATA_BUILD_VALID = 1;
-    public static final int DATA_CAPACITY = 2;
-    public static final int DATA_RAM_BUFFER = 3;
-    public static final int DATA_AUTOSTART = 4;
-    public static final int DATA_ON_NETWORK = 5;
-    public static final int DATA_CRAFT_FACTOR_X100 = 6;
-    public static final int DATA_CRAFT_THROUGHPUT = 7;
-    public static final int DATA_ROM_USED = 8;
-    public static final int DATA_CRAFT_THREADS = 9;
-    public static final int DATA_COUNT = DATA_CRAFT_THREADS + 1;
-
-    private final int[] clientData = new int[DATA_COUNT];
-
-    private int computeData(final int index) {
-        return switch (index) {
-            case DATA_RUNNING -> isRunning() ? 1 : 0;
-            case DATA_BUILD_VALID -> buildValid() ? 1 : 0;
-            case DATA_CAPACITY -> (int) Math.min(Integer.MAX_VALUE, capacity());
-            case DATA_RAM_BUFFER -> (int) Math.min(Integer.MAX_VALUE, ramBuffer());
-            case DATA_AUTOSTART -> isAutoStart() ? 1 : 0;
-            case DATA_ON_NETWORK -> networkUuid() != null ? 1 : 0;
-            case DATA_CRAFT_FACTOR_X100 -> (int) Math.round(craftingCardFactor() * 100.0);
-            case DATA_CRAFT_THROUGHPUT -> (int) Math.min(Integer.MAX_VALUE, craftingThroughput());
-            case DATA_ROM_USED -> romUsed();
-            case DATA_CRAFT_THREADS -> craftingThreads();
-            default -> 0;
-        };
+    public boolean assemblyRunning() {
+        return assemblyRunning.isSet();
     }
 
-    private final ContainerData dataAccess =
-            new ContainerData() {
-        @Override
-        public int get(final int index) {
-            if (level != null && level.isClientSide) {
-                return index >= 0 && index < clientData.length ? clientData[index] : 0;
-            }
-            return computeData(index);
-        }
+    public boolean assemblyBuildValid() {
+        return assemblyBuildValid.isSet();
+    }
 
-        @Override
-        public void set(final int index, final int value) {
-            if (index >= 0 && index < clientData.length) {
-                clientData[index] = value;
-            }
-        }
+    public long assemblyCapacity() {
+        return assemblyCapacity.getAsInt();
+    }
 
-        @Override
-        public int getCount() {
-            return DATA_COUNT;
-        }
-    };
+    public long assemblyRamBuffer() {
+        return assemblyRamBuffer.getAsInt();
+    }
 
-    public ContainerData getDataAccess() {
-        return dataAccess;
+    public boolean assemblyAutoStart() {
+        return assemblyAutoStart.isSet();
+    }
+
+    public boolean assemblyOnNetwork() {
+        return assemblyOnNetwork.isSet();
+    }
+
+    public int assemblyCraftFactorX100() {
+        return assemblyCraftFactorX100.getAsInt();
+    }
+
+    public long assemblyCraftThroughput() {
+        return assemblyCraftThroughput.getAsInt();
+    }
+
+    public int assemblyRomUsed() {
+        return assemblyRomUsed.getAsInt();
+    }
+
+    public int assemblyCraftThreads() {
+        return assemblyCraftThreads.getAsInt();
     }
 
     /*

@@ -10,13 +10,14 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.gui.layout.NetworkGatewayLayout;
 import dev.jstech.computers.menu.NetworkGatewayMenu;
+import dev.jstech.core.client.gui.screen.CoreContainerScreen;
 import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.EraThemes;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Each status line is clipped to the panel; a clipped line shows its full text as a tooltip.
  */
-public class NetworkGatewayScreen extends AbstractContainerScreen<NetworkGatewayMenu> {
+public class NetworkGatewayScreen extends CoreContainerScreen<NetworkGatewayMenu> {
 
     private static final int LINES = 3;
 
@@ -53,16 +54,11 @@ public class NetworkGatewayScreen extends AbstractContainerScreen<NetworkGateway
         final int x = leftPos;
         final int y = topPos;
         theme.window(g, x, y, imageWidth, imageHeight);
-        for (int i = 0; i < NetworkGatewayLayout.BUFFER_SLOTS; i++) {
-            theme.slot(g, x + NetworkGatewayLayout.bufferX(i) + 1, y + NetworkGatewayLayout.BUFFER_Y + 1);
-        }
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                theme.slot(g, x + NetworkGatewayLayout.INV_X + col * 18, y + NetworkGatewayLayout.INV_Y + row * 18);
+        // Slot frames come straight from the menu's own slots, so a moved slot always draws its frame with it.
+        for (final Slot slot : menu.slots) {
+            if (slot.isActive()) {
+                theme.slot(g, x + slot.x, y + slot.y);
             }
-        }
-        for (int col = 0; col < 9; col++) {
-            theme.slot(g, x + NetworkGatewayLayout.INV_X + col * 18, y + NetworkGatewayLayout.INV_Y + 58);
         }
 
         final NetworkGatewayBlockEntity be = gateway();
@@ -138,15 +134,11 @@ public class NetworkGatewayScreen extends AbstractContainerScreen<NetworkGateway
     @Override
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
         super.render(g, mouseX, mouseY, partialTick);
-        renderTooltip(g, mouseX, mouseY);
-        final int ix = leftPos + NetworkGatewayLayout.INFO_X;
-        final int iy = topPos + NetworkGatewayLayout.INFO_Y;
-        if (mouseX >= ix && mouseX < ix + NetworkGatewayLayout.INFO_W) {
-            for (int i = 0; i < LINES; i++) {
-                final int ly = iy + i * NetworkGatewayLayout.LINE_H;
-                if (clippedLines[i] != null && mouseY >= ly && mouseY < ly + NetworkGatewayLayout.LINE_H) {
-                    g.renderTooltip(font, Component.literal(clippedLines[i]), mouseX, mouseY);
-                }
+        for (int i = 0; i < LINES; i++) {
+            final int ly = NetworkGatewayLayout.INFO_Y + i * NetworkGatewayLayout.LINE_H;
+            if (clippedLines[i] != null && hover(mouseX, mouseY, NetworkGatewayLayout.INFO_X, ly,
+                    NetworkGatewayLayout.INFO_W, NetworkGatewayLayout.LINE_H)) {
+                g.renderTooltip(font, Component.literal(clippedLines[i]), mouseX, mouseY);
             }
         }
     }

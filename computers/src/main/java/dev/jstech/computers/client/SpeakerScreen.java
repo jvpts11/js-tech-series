@@ -8,12 +8,11 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
+import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.menu.SpeakerMenu;
 import dev.jstech.computers.operation.payload.RenameSpeakerPayload;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
-import dev.jstech.core.client.gui.theme.EraTheme;
-import dev.jstech.core.client.gui.theme.EraThemes;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
@@ -21,7 +20,6 @@ import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -47,9 +45,8 @@ import static dev.jstech.computers.gui.layout.SpeakerLayout.WIDTH;
  * the screen closes, unless its computer already has a speaker by that name, which the screen says while it is typed;
  * then the computer it plays for, the side it plays, and how well.
  */
-public final class SpeakerScreen extends AbstractContainerScreen<SpeakerMenu> {
+public final class SpeakerScreen extends AbstractComputerScreen<SpeakerMenu> {
 
-    private EraTheme theme = EraThemes.STANDARD;
     private EditBox nameBox;
 
     private static final long CARET_BLINK_MILLIS = 500L;
@@ -60,15 +57,19 @@ public final class SpeakerScreen extends AbstractContainerScreen<SpeakerMenu> {
         this.imageHeight = HEIGHT;
     }
 
+    /** The speaker's model era, which this screen wears as its skin. */
     @Override
-    public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
-        JsTechTheme.bind(theme);
-        try {
-            super.render(g, mouseX, mouseY, partialTick);
-            renderTooltip(g, mouseX, mouseY);
-        } finally {
-            JsTechTheme.unbind();
-        }
+    protected HardwareEra screenEra() {
+        return menu.opening().era();
+    }
+
+    /**
+     * The plain panel, with no monitor bezel: this screen is a speaker's own panel, not a monitor, so a recipe
+     * viewer placing its own panel beside it should sit against the panel's edge rather than an unclaimed bezel.
+     */
+    @Override
+    public MonitorFrameStyle.Geometry frameBounds() {
+        return new MonitorFrameStyle.Geometry(leftPos, topPos, imageWidth, imageHeight, topPos + imageHeight);
     }
 
     @Override
@@ -76,7 +77,6 @@ public final class SpeakerScreen extends AbstractContainerScreen<SpeakerMenu> {
         super.init();
         this.titleLabelY = -1000;
         this.inventoryLabelY = -1000;
-        theme = EraThemes.of(menu.opening().era());
         /*
          * The box takes the keyboard and the click that focuses it, but is never drawn: vanilla draws its text with
          * a dark copy of the letters as the shadow, a smear on a light era's field. The field is drawn in

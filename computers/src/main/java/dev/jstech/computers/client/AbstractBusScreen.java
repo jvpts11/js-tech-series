@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.gui.layout.BusLayout;
 import dev.jstech.computers.menu.AbstractBusMenu;
@@ -19,19 +20,24 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
- * Shared configuration screen for the two bus parts, in the flat-dark "computer OS" theme: an editable name
- * field (so a query can address the bus), a ghost filter slot, the min/max stock steppers (shift for ×16),
- * and the continuous/redstone mode toggle, over the player inventory. Every element position comes from
- * {@link BusLayout}, the same source the layout test validates for overlaps and overflow; the subclasses only
- * supply the window title and the filter-slot hint.
+ * Shared configuration screen for the four bus parts (Import, Export, Input, Receiving), in the flat-dark
+ * "computer OS" theme: an editable name field (so a query can address the bus), a ghost filter slot, the
+ * min/max stock steppers (shift for ×16), and the continuous/redstone mode toggle, over the player
+ * inventory. Every element position comes from {@link BusLayout}, the same source the layout test
+ * validates for overlaps and overflow; the subclasses only supply the window title and the filter-slot
+ * hint.
  */
 public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends AbstractComputerScreen<T> {
 
     private EditBox nameBox;
     private String nameValue;
+
+    /** How much brighter the lamp's lens corner is than its light, per channel. */
+    private static final int LENS_LIFT = 70;
 
     protected AbstractBusScreen(final T menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
@@ -84,13 +90,6 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
         JsTechTheme.vLine(g, nx, ny, BusLayout.NAME_H);
         JsTechTheme.vLine(g, nx + BusLayout.NAME_W - 1, ny, BusLayout.NAME_H);
 
-        /*
-         * Every bus shows its filter slot (on a crafting bus it routes the mounted face). Only the stock
-         * controls (min/max window, mode) vanish on the passive crafting buses rather than lie.
-         */
-        if (menu.filterApplies()) {
-            JsTechTheme.slot(g, x + BusLayout.FILTER_X, y + BusLayout.FILTER_Y); // ghost filter slot
-        }
         if (menu.stockControlsApply()) {
             stepperBg(g, x, y, BusLayout.MIN_Y, mouseX, mouseY);
             stepperBg(g, x, y, BusLayout.MAX_Y, mouseX, mouseY);
@@ -98,14 +97,16 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
                     hover(mouseX, mouseY, BusLayout.MODE_X, BusLayout.MODE_Y, BusLayout.MODE_W, BusLayout.MODE_H));
         }
 
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                JsTechTheme.slot(g, x + BusLayout.INV_X + col * BusLayout.SLOT,
-                        y + BusLayout.INV_Y + row * BusLayout.SLOT);
+        /*
+         * Every active slot the menu placed: the ghost filter (hidden on a bus where filterApplies() is
+         * false) and the 36 player-inventory slots. Drawing from the menu's own slots, rather than
+         * re-deriving the grid here, means a Core inventory-gap change can never leave a frame drifted off
+         * its slot.
+         */
+        for (final Slot slot : menu.slots) {
+            if (slot.isActive()) {
+                JsTechTheme.slot(g, x + slot.x, y + slot.y);
             }
-        }
-        for (int col = 0; col < 9; col++) {
-            JsTechTheme.slot(g, x + BusLayout.INV_X + col * BusLayout.SLOT, y + BusLayout.HOTBAR_Y);
         }
     }
 
@@ -122,13 +123,9 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
 
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
-        JsTechTheme.text(g, font, GameText.resolve(windowTitle()), 12, 11, JsTechTheme.text());
-        final boolean linked = menu.linked();
-        final String pill = GameText.resolve(linked ? BusTexts.LINKED : BusTexts.OFFLINE);
-        final int pillColor = linked ? JsTechTheme.green() : JsTechTheme.red();
-        final int pillX = BusLayout.HEADER_W - font.width(pill);
-        JsTechTheme.text(g, font, pill, pillX, 11, pillColor);
-        g.fill(pillX - 6, 11, pillX - 2, 15, pillColor);
+        JsTechTheme.text(g, font, GameText.resolve(windowTitle()), BusLayout.TITLE_X, BusLayout.TITLE_Y,
+                JsTechTheme.text());
+        drawStatusLamp(g, menu.linked());
 
         JsTechTheme.text(g, font, GameText.resolve(BusTexts.NAME), BusLayout.NAME_LABEL_X, BusLayout.NAME_LABEL_Y,
                 JsTechTheme.dim());
@@ -175,11 +172,12 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
                 g.pose().scale(JsTechTheme.small(), JsTechTheme.small(), 1.0f);
                 g.drawString(font, line, 0, 0, JsTechTheme.dim(), false);
                 g.pose().popPose();
-                lineY += 9;
+                lineY += font.lineHeight;
             }
         }
 
-        JsTechTheme.text(g, font, GameText.resolve(BusTexts.INVENTORY), 8, BusLayout.INV_LABEL_Y, JsTechTheme.dim());
+        JsTechTheme.text(g, font, GameText.resolve(BusTexts.INVENTORY), BusLayout.INV_LABEL_X, BusLayout.INV_LABEL_Y,
+                JsTechTheme.dim());
     }
 
     @Override
@@ -189,7 +187,7 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
          * a character instead of closing the GUI; ESC just unfocuses the field.
          */
         if (nameBox != null && nameBox.isFocused()) {
-            if (key == 256) {
+            if (key == InputConstants.KEY_ESCAPE) {
                 nameBox.setFocused(false);
                 setFocused(null);
                 return true;
@@ -220,7 +218,8 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
                 sendButton(shift ? AbstractBusMenu.BTN_MAX_UP16 : AbstractBusMenu.BTN_MAX_UP1);
                 return true;
             }
-            if (hover((int) mouseX, (int) mouseY, BusLayout.MODE_X, BusLayout.MODE_Y, BusLayout.MODE_W, BusLayout.MODE_H)) {
+            if (hover((int) mouseX, (int) mouseY, BusLayout.MODE_X, BusLayout.MODE_Y,
+                    BusLayout.MODE_W, BusLayout.MODE_H)) {
                 sendButton(AbstractBusMenu.BTN_MODE);
                 return true;
             }
@@ -233,8 +232,35 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
         super.render(g, mouseX, mouseY, partialTick);
         // Hint on the empty ghost filter slot (a held item sets the filter, not consumed).
         if (menu.filterApplies() && menu.filterStack().isEmpty()
-                && hover(mouseX, mouseY, BusLayout.FILTER_X, BusLayout.FILTER_Y, 16, 16)) {
+                && hoveredSlot != null && hoveredSlot.index == AbstractBusMenu.FILTER_SLOT) {
             g.renderTooltip(font, GameText.component(filterHint()), mouseX, mouseY);
         }
+        if (hover(mouseX, mouseY, BusLayout.LAMP_X, BusLayout.LAMP_Y, BusLayout.LAMP_SIZE, BusLayout.LAMP_SIZE)) {
+            g.renderTooltip(font, GameText.component(menu.linked() ? BusTexts.LINKED : BusTexts.OFFLINE), mouseX,
+                    mouseY);
+        }
+    }
+
+    /**
+     * The bus's link as a lamp at the header's right end, green when it reaches the network and red when it does
+     * not: a lit square in a dark bezel, with a lighter corner so it reads as a lens. The word is in its tooltip,
+     * which leaves the header to the title, the longest of which runs most of its width.
+     */
+    private static void drawStatusLamp(final GuiGraphics g, final boolean linked) {
+        final int colour = linked ? JsTechTheme.green() : JsTechTheme.red();
+        final int x = BusLayout.LAMP_X;
+        final int y = BusLayout.LAMP_Y;
+        final int size = BusLayout.LAMP_SIZE;
+        g.fill(x, y, x + size, y + size, JsTechTheme.outer());
+        g.fill(x + 1, y + 1, x + size - 1, y + size - 1, colour);
+        g.fill(x + 1, y + 1, x + 2, y + 2, lens(colour));
+    }
+
+    /** The colour lit a step brighter, for the lamp's lens. */
+    private static int lens(final int argb) {
+        final int r = Math.min(255, ((argb >> 16) & 0xFF) + LENS_LIFT);
+        final int gr = Math.min(255, ((argb >> 8) & 0xFF) + LENS_LIFT);
+        final int b = Math.min(255, (argb & 0xFF) + LENS_LIFT);
+        return (argb >>> 24) << 24 | r << 16 | gr << 8 | b;
     }
 }

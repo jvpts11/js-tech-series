@@ -401,10 +401,9 @@ public final class ClusterManagerGameTests {
                             "the data cable draws no connection into a compute cabinet");
                     helper.assertTrue(NetworkSystem.get(helper.getLevel()).serversOf(mainframe.networkUuid()).isEmpty(),
                             "a node in a cabinet on a data cable is not a server on the network");
-                    helper.assertTrue(onData.getDataAccess().get(ServerRackBlockEntity.DATA_LINKED) == 0,
+                    helper.assertTrue(!onData.linkedShown(),
                             "the data cable does not light the compute cabinet's link");
-                    helper.assertTrue(onFabric.getDataAccess().get(ServerRackBlockEntity.DATA_LINKED) == 1,
-                            "the fabric behind a networked interface does");
+                    helper.assertTrue(onFabric.linkedShown(), "the fabric behind a networked interface does");
                 })
                 .thenSucceed();
     }

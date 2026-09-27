@@ -9,6 +9,7 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.layout.ServerRackLayout;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.item.ServerItem;
@@ -16,8 +17,6 @@ import dev.jstech.computers.menu.ServerRackMenu;
 import dev.jstech.computers.operation.payload.RackBayPowerPayload;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
-import dev.jstech.core.client.gui.theme.EraTheme;
-import dev.jstech.core.client.gui.theme.EraThemes;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -30,9 +29,9 @@ import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -46,7 +45,7 @@ import java.util.UUID;
  * terminal live here: software access always goes through a monitor cabled to the rack.
  */
 @PaletteHolder
-public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
+public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
 
     private static final int ROWS = ServerRackLayout.ROWS;
 
@@ -141,11 +140,15 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
 
     /** What this cabinet is made of; resolved from its era every tick, so a rebuild repaints it live. */
     private Materials mat = STANDARD_RACK.get();
-    private EraTheme theme = EraThemes.STANDARD;
 
-    private void resolveEra() {
+    /** The cabinet's own era, so its screen (labels included) wears that decade's skin. */
+    @Override
+    protected HardwareEra screenEra() {
+        return menu.rackEra();
+    }
+
+    private void resolveMaterials() {
         final HardwareEra era = menu.rackEra();
-        this.theme = EraThemes.ofNullable(era);
         this.mat = (era == HardwareEra.VINTAGE ? VINTAGE_RACK
                 : era == HardwareEra.LEGACY ? LEGACY_RACK : STANDARD_RACK).get();
     }
@@ -153,13 +156,13 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
     @Override
     protected void init() {
         super.init();
-        resolveEra();
+        resolveMaterials();
     }
 
     @Override
     protected void containerTick() {
         super.containerTick();
-        resolveEra();
+        resolveMaterials();
     }
 
     /** What this cabinet is called: a compute cabinet is not a server rack, and each era has its own name. */
@@ -280,17 +283,28 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
             }
         }
 
-        // Player inventory, in the same material as the bays so the panel reads as one object.
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                raised(g, x + ServerRackLayout.INV_X + col * 18, y + ServerRackLayout.INV_Y + row * 18,
-                        18, 18, mat.slotTop(), mat.slotBottom(), mat.slotEdge(), mat.slotGloss());
+        /*
+         * Player inventory, in the same material as the bays so the panel reads as one object. Drawn from the
+         * menu's own slots (everything past the rack's server and front slots), so a moved slot always draws
+         * its frame with it.
+         */
+        for (int i = ServerRackMenu.RACK_SLOTS + ServerRackMenu.FRONT_SLOT_COUNT; i < menu.slots.size(); i++) {
+            final Slot slot = menu.slots.get(i);
+            if (slot.isActive()) {
+                raised(g, x + slot.x - 1, y + slot.y - 1, 18, 18,
+                        mat.slotTop(), mat.slotBottom(), mat.slotEdge(), mat.slotGloss());
             }
         }
-        for (int col = 0; col < 9; col++) {
-            raised(g, x + ServerRackLayout.INV_X + col * 18, y + ServerRackLayout.HOTBAR_Y,
-                    18, 18, mat.slotTop(), mat.slotBottom(), mat.slotEdge(), mat.slotGloss());
-        }
+    }
+
+    /**
+     * The plain panel, with no monitor bezel: this screen is a physical cabinet panel, not a monitor, so a
+     * recipe viewer placing its own panel beside it should sit against the panel's edge rather than an
+     * unclaimed bezel.
+     */
+    @Override
+    public MonitorFrameStyle.Geometry frameBounds() {
+        return new MonitorFrameStyle.Geometry(leftPos, topPos, imageWidth, imageHeight, topPos + imageHeight);
     }
 
     @Override
@@ -409,18 +423,9 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
 
     @Override
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
-        /*
-         * The cabinet's labels are drawn in its era's skin, and the default is always restored so an
-         * unthemed draw elsewhere still gets the frozen Standard look.
-         */
-        JsTechTheme.bind(theme);
-        try {
-            super.render(g, mouseX, mouseY, partialTick);
-            renderTooltip(g, mouseX, mouseY);
-            renderRackTooltip(g, mouseX, mouseY);
-        } finally {
-            JsTechTheme.unbind();
-        }
+        // The base binds the cabinet's era skin for the whole pass and renders the hovered slot's own tooltip.
+        super.render(g, mouseX, mouseY, partialTick);
+        renderRackTooltip(g, mouseX, mouseY);
     }
 
     private void renderRackTooltip(final GuiGraphics g, final int mouseX, final int mouseY) {

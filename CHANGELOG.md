@@ -291,6 +291,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A monitor's own sessions (the self-test, the boot menu, the firmware setup, the installers and the KVM) take from a
   player only what the session they have open sends, and only for the monitor it is on; a system's settings asking
   for the firmware setup must be on the monitor they name.
+- J's Computers' menus are J's Core's declared menus: the computers', the devices', the buses', the terminal's, the
+  Command Prompt's and the monitors' sessions. Each stays open only while its block stands and the player can reach
+  it, for every variant of the block, and every screen draws its slots and answers its buttons from the one layout
+  its menu places them by. What a client sends from one of them acts on the menu the player has open, never on a
+  block the message names that the player is not looking at.
+- The buses say whether they reach the network with a lamp at the right end of their window's title bar, green or
+  red, the word in its tooltip. The Crafting Receiving Bus's title no longer runs into it.
+- A Standard computer with nothing to boot shows its dialog over the maker's mark and the machine's name, and the
+  self-test's bar is gone, where it showed below a short dialog and hid under a tall one.
 - The Standard Mainframe's roof fans look like fans: each is a square housing that stays still, with a dark well
   in its opening and a five-bladed rotor turning in it, where before the whole square turned with a cross painted
   on it.
@@ -554,6 +563,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   already was; a Vintage machine could be given a desktop that needs Legacy hardware while it was being built.
 - A desktop opens on a machine with more than sixteen programs installed. The list of them it is sent was
   capped at sixteen and refused whole past that, so installing a seventeenth took the desktop away.
+- Going from one face to another on a Crafting Switch's screen no longer renames the machine a crafting bus reaches
+  with the first letters of the other face's name.
+- A system's copy that fails with a long reason shows as much of it as fits above the buttons, the last line ending
+  in dots, where it ran on under them.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 
