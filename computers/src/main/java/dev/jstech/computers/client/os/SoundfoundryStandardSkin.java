@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.client.audio.SoundfoundryCoverArt;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -15,6 +16,7 @@ import dev.jstech.core.palette.Palettes;
 import java.util.Locale;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.BlockPos;
 
 /**
  * The skin the Standard Soundfoundry wears on every desktop: Voidsoft grown up into a streaming service, flat
@@ -174,6 +176,20 @@ final class SoundfoundryStandardSkin {
                 fill(g, x + 2, y + 7, 4, 1, colour);
             }
         }
+    }
+
+    /**
+     * The cover a page names: the picture the server sent for it, drawn to the square, else one made of the album's
+     * colours and initials while it is on its way or when there is none.
+     */
+    static void cover(final GuiGraphics g, final Font font, final BlockPos host, final int x, final int y,
+                      final int size, final String name, final String key) {
+        final SoundfoundryCoverArt.Cover art = SoundfoundryCoverArt.of(host, key);
+        if (art == null) {
+            cover(g, font, x, y, size, name);
+            return;
+        }
+        g.blit(art.texture(), x, y, size, size, 0.0F, 0.0F, art.width(), art.height(), art.width(), art.height());
     }
 
     /**

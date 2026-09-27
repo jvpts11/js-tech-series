@@ -552,7 +552,7 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
     private void card(final GuiGraphics g, final Font font, final int cx, final int cy, final Album album,
                       final SoundfoundryStandardSkin.Colours c) {
         final int size = SoundfoundryStandardLayout.CARD;
-        SoundfoundryStandardSkin.cover(g, font, cx, cy, size, album.title());
+        SoundfoundryStandardSkin.cover(g, font, host, cx, cy, size, album.title(), album.cover());
         final int room = SoundfoundryStandardLayout.CARD_STEP - 6;
         SoundfoundryStandardSkin.text(g, font, Texts.clip(font, album.title(), room), cx,
                 cy + SoundfoundryStandardLayout.CARD_TITLE_Y - SoundfoundryStandardLayout.CARD_Y, c.ink(), c.base());
@@ -564,7 +564,8 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
     private void homeRow(final GuiGraphics g, final Font font, final int rx, final int ry, final int room,
                          final Row row, final String second, final boolean playing,
                          final SoundfoundryStandardSkin.Colours c) {
-        SoundfoundryStandardSkin.cover(g, font, rx, ry, SoundfoundryStandardLayout.ROW_COVER, coverName(row));
+        SoundfoundryStandardSkin.cover(g, font, host, rx, ry, SoundfoundryStandardLayout.ROW_COVER, coverName(row),
+                row.cover());
         final String title = Texts.clip(font, row.title(), room);
         SoundfoundryStandardSkin.text(g, font, title, rx + 28, ry + 2, playing ? c.orange() : c.ink(), c.base());
         arrowFor(g, rx + 28 + font.width(title) + 5, ry + 2, row.state(), c);
@@ -582,7 +583,8 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
             return;
         }
         final Rect cover = SoundfoundryStandardLayout.ALBUM_COVER;
-        SoundfoundryStandardSkin.cover(g, font, px + cover.x(), py + cover.y(), cover.w(), album.title());
+        SoundfoundryStandardSkin.cover(g, font, host, px + cover.x(), py + cover.y(), cover.w(), album.title(),
+                album.cover());
         final int tx = px + SoundfoundryStandardLayout.HEAD_TEXT_X;
         final int room = pw - SoundfoundryStandardLayout.HEAD_TEXT_X - PAD;
         SoundfoundryStandardSkin.text(g, font, words(SoundfoundryStandardTexts.ALBUM), tx,
@@ -827,8 +829,8 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
         final SoundfoundryStatePayload.Song song = current(state);
         final Rect cover = SoundfoundryStandardLayout.FOOT_COVER;
         if (song != null) {
-            SoundfoundryStandardSkin.cover(g, font, x + cover.x(), fy + cover.y(), cover.w(),
-                    song.album().isEmpty() ? song.title() : song.album());
+            SoundfoundryStandardSkin.cover(g, font, host, x + cover.x(), fy + cover.y(), cover.w(),
+                    song.album().isEmpty() ? song.title() : song.album(), song.cover());
             final int room = SoundfoundryStandardLayout.footTitleRoom(w);
             final String title = Texts.clip(font, song.title(), room - 12);
             final int tx = x + SoundfoundryStandardLayout.FOOT_TEXT_X;

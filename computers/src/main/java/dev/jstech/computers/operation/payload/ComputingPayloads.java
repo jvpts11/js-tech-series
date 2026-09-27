@@ -22,6 +22,7 @@ import dev.jstech.computers.operation.payload.desktop.WorkstationInfoPayloads;
 import dev.jstech.computers.operation.payload.files.ArchivePayloads;
 import dev.jstech.computers.operation.payload.files.FileEditPayloads;
 import dev.jstech.computers.operation.payload.sheet.SheetPayloads;
+import dev.jstech.computers.operation.payload.music.SoundfoundryCoverPayloads;
 import dev.jstech.computers.operation.payload.music.SoundfoundryPagePayloads;
 import dev.jstech.computers.operation.payload.music.SoundfoundryPayloads;
 import dev.jstech.computers.operation.payload.music.SoundfoundrySharePayloads;
@@ -72,6 +73,7 @@ public final class ComputingPayloads {
         SoundfoundryPayloads.register(registrar);
         SoundfoundrySharePayloads.register(registrar);
         SoundfoundryPagePayloads.register(registrar);
+        SoundfoundryCoverPayloads.register(registrar);
         FileTransferPayloads.register(registrar);
         TrashPayloads.register(registrar);
         DesktopPayloads.register(registrar);

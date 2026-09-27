@@ -12,6 +12,7 @@ import dev.jstech.computers.audio.MusicImports;
 import dev.jstech.computers.audio.SongFiles;
 import dev.jstech.computers.audio.SongSearch;
 import dev.jstech.computers.audio.SongSources;
+import dev.jstech.computers.audio.SoundfoundryCovers;
 import dev.jstech.computers.audio.SoundfoundryPlaylists;
 import dev.jstech.computers.audio.SoundfoundryServers;
 import dev.jstech.computers.audio.SoundfoundryShare;
@@ -375,13 +376,15 @@ public final class SoundfoundryPagePayloads {
                 }
             }
             return new Album(album.id(), album.title(), album.artist(), album.year(), album.tracks().size(),
-                    album.millis(), downloaded);
+                    album.millis(), downloaded,
+                    SoundfoundryCovers.catalogKey(album.id(), album.tracks().getFirst().media()));
         }
 
         Row track(final CatalogAlbum album, final CatalogTrack track, final int section) {
             final String ref = SongRefs.catalog(album.id(), track.file());
             return new Row(ref, track.title(), track.artist().isEmpty() ? album.artist() : track.artist(),
-                    album.title(), track.info().millis(), "", stateOf(track.media()), section, liked(ref));
+                    album.title(), track.info().millis(), "", stateOf(track.media()), section, liked(ref),
+                    SoundfoundryCovers.catalogKey(album.id(), track.media()));
         }
 
         void network(final String path, final int section, final List<Row> rows) {
@@ -390,7 +393,7 @@ public final class SoundfoundryPagePayloads {
                 final String ref = SongRefs.network(path);
                 rows.add(new Row(ref, SongSources.titleOf(song, path), song.info().tags().artist(),
                         song.info().tags().album(), song.info().millis(), SoundfoundryServers.fromOf(server, path),
-                        stateOf(song.media()), section, liked(ref)));
+                        stateOf(song.media()), section, liked(ref), SoundfoundryCovers.mediaKey(song.media())));
             }
         }
 
@@ -398,7 +401,8 @@ public final class SoundfoundryPagePayloads {
             final RecordingFile song = SongFiles.read(level, computer, path);
             if (song != null) {
                 rows.add(new Row(path, SongSources.titleOf(song, path), song.info().tags().artist(),
-                        song.info().tags().album(), song.info().millis(), "", state, section, liked(path)));
+                        song.info().tags().album(), song.info().millis(), "", state, section, liked(path),
+                        SoundfoundryCovers.mediaKey(song.media())));
             }
         }
 
@@ -407,11 +411,11 @@ public final class SoundfoundryPagePayloads {
             final SongSources.Described song = SongSources.describe(level, computer, ref);
             if (song == null) {
                 return new Row(ref, SongFiles.nameOf(SongRefs.pathOf(ref)), "", "", 0L, "",
-                        SoundfoundryPagePayload.LOCAL, SoundfoundryPagePayload.TRACKS, liked(ref));
+                        SoundfoundryPagePayload.LOCAL, SoundfoundryPagePayload.TRACKS, liked(ref), "");
             }
             final int state = SongRefs.streamed(ref) ? stateOf(song.media()) : SoundfoundryPagePayload.LOCAL;
-            return new Row(ref, song.title(), song.artist(), song.info().tags().album(), song.info().millis(),
-                    "", state, SoundfoundryPagePayload.TRACKS, liked(ref));
+            return new Row(ref, song.title(), song.artist(), song.album(), song.info().millis(), "", state,
+                    SoundfoundryPagePayload.TRACKS, liked(ref), song.cover());
         }
 
         private boolean liked(final String ref) {

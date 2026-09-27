@@ -169,6 +169,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   songs puts them on the list; a song on the disk plays without a server. Songs download and go up at the speed of
   the slowest cable between the computer and the server. Its window wears Voidsoft's graphite and orange on every
   desktop, and is the first window drawn in its own skin that can fill the desktop.
+- Covers on the Standard Soundfoundry: a catalogue album shows the `cover.png` (or `cover.jpg`) beside its songs,
+  any other song the picture its own file carries, and a song with neither a cover made of its album's colours and
+  initials. J's Core reads the picture an Ogg Vorbis file or a Wave file's ID3 tag carries.
 - The data network tells which cables a device joins, in J's Core, which is how the way to a server in a rack is
   measured.
 - Programs make sound. Sigma Sharp and Sigma have `Sound.Beep`, a beep out of the speaker inside the case;

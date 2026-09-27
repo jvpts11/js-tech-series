@@ -19,6 +19,7 @@ import dev.jstech.computers.block.IPostScreenOpener;
 import dev.jstech.computers.block.ISystemBootScreenOpener;
 import dev.jstech.computers.api.client.IOperatingSpaceScreen;
 import dev.jstech.computers.api.client.OperatingSpaceScreens;
+import dev.jstech.computers.client.audio.SoundfoundryCoverArt;
 import dev.jstech.computers.client.audio.SoundfoundryPages;
 import dev.jstech.computers.client.audio.SoundfoundryShares;
 import dev.jstech.computers.client.audio.SoundfoundryStates;
@@ -59,6 +60,7 @@ public final class ComputingClientSetup {
         SoundfoundryStates.clear();
         SoundfoundryShares.clear();
         SoundfoundryPages.clear();
+        SoundfoundryCoverArt.clear();
     }
 
     @SubscribeEvent

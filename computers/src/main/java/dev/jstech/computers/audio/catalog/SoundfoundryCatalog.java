@@ -13,6 +13,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.audio.SoundfoundryCovers;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.core.audio.media.MediaId;
@@ -24,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -66,6 +68,8 @@ public final class SoundfoundryCatalog {
     public static final String FOLDER = "soundfoundry/catalog";
     /** What an album's own notes are called, beside its songs. */
     public static final String NOTES = "album.json";
+    /** What an album's cover is called, beside its songs: a PNG, or a JPEG under the same name. */
+    public static final String COVER = "cover";
 
     private static final Logger LOGGER = LogUtils.getLogger();
     /* The largest song read into the catalogue: far past any real one, well short of what memory holds. */
@@ -130,6 +134,7 @@ public final class SoundfoundryCatalog {
                 .thenAcceptAsync(read -> {
                     if (reading == READING.get()) {
                         current = read;
+                        SoundfoundryCovers.forget();
                         LOGGER.info("Soundfoundry catalogue: {} albums, {} songs, {} files passed over",
                                 read.albums().size(), read.songs(), read.skipped());
                     }
@@ -154,7 +159,7 @@ public final class SoundfoundryCatalog {
         for (final CatalogAlbum album : albums) {
             songs += album.tracks().size();
         }
-        return new Snapshot(albums, songs, reading.skipped);
+        return new Snapshot(albums, songs, reading.skipped, reading.covers);
     }
 
     @SubscribeEvent
@@ -199,6 +204,8 @@ public final class SoundfoundryCatalog {
                 final String fileName = file.getFileName().toString();
                 if (fileName.equalsIgnoreCase(NOTES)) {
                     notes = notesOf(Files.readString(file, StandardCharsets.UTF_8), file.toString());
+                } else if (isCover(fileName)) {
+                    reading.cover(FROM_CONFIG + "/" + name, Files.readAllBytes(file), file.toString());
                 } else if (songKind(fileName) != null) {
                     if (Files.size(file) > MOST_BYTES) {
                         reading.tooLarge(file.toString());
@@ -238,6 +245,8 @@ public final class SoundfoundryCatalog {
                     final byte[] bytes = in.readNBytes((int) Math.min(Integer.MAX_VALUE - 8L, MOST_BYTES + 1L));
                     if (fileName.equalsIgnoreCase(NOTES)) {
                         notes = notesOf(new String(bytes, StandardCharsets.UTF_8), file.getKey().toString());
+                    } else if (isCover(fileName)) {
+                        reading.cover(id, bytes, file.getKey().toString());
                     } else if (bytes.length > MOST_BYTES) {
                         reading.tooLarge(file.getKey().toString());
                     } else {
@@ -253,7 +262,13 @@ public final class SoundfoundryCatalog {
 
     private static boolean wanted(final String path) {
         final String name = path.substring(path.lastIndexOf('/') + 1);
-        return name.equalsIgnoreCase(NOTES) || songKind(name) != null;
+        return name.equalsIgnoreCase(NOTES) || isCover(name) || songKind(name) != null;
+    }
+
+    /* Whether a file beside the songs is the album's cover. */
+    private static boolean isCover(final String fileName) {
+        final String name = fileName.toLowerCase(Locale.ROOT);
+        return name.equals(COVER + ".png") || name.equals(COVER + ".jpg") || name.equals(COVER + ".jpeg");
     }
 
     /* The kind of song a file is by its name, or null for a file that is not one. */
@@ -291,14 +306,22 @@ public final class SoundfoundryCatalog {
      * @param albums  its albums, by title
      * @param songs   how many songs they hold together
      * @param skipped how many files could not be read and were passed over
+     * @param covers  the covers of the albums that have one beside their songs, by album, each a small PNG
      */
-    public record Snapshot(List<CatalogAlbum> albums, int songs, int skipped) {
+    public record Snapshot(List<CatalogAlbum> albums, int songs, int skipped, Map<String, byte[]> covers) {
 
         /** A catalogue with nothing in it. */
-        public static final Snapshot EMPTY = new Snapshot(List.of(), 0, 0);
+        public static final Snapshot EMPTY = new Snapshot(List.of(), 0, 0, Map.of());
 
         public Snapshot {
             albums = List.copyOf(albums);
+            covers = Map.copyOf(covers);
+        }
+
+        /** The cover of that album, or null when it has none of its own. */
+        @Nullable
+        public byte[] cover(final String album) {
+            return covers.get(album);
         }
     }
 
@@ -307,6 +330,7 @@ public final class SoundfoundryCatalog {
 
         private final MediaStore store;
         private final List<CatalogAlbum> albums = new ArrayList<>();
+        private final Map<String, byte[]> covers = new HashMap<>();
         private int skipped;
 
         Reading(final MediaStore store) {
@@ -321,6 +345,18 @@ public final class SoundfoundryCatalog {
                 found.add(new CatalogAssembly.Found(fileName, media, store.info(media)));
             } catch (final IOException notASong) {
                 passOver(where, notASong.getMessage());
+            }
+        }
+
+        /* An album's cover, made small; one that is no picture is passed over like a song that is no song. */
+        void cover(final String album, final byte[] bytes, final String where) {
+            final byte[] small = SoundfoundryCovers.scaled(bytes);
+            if (small.length == 0) {
+                skipped++;
+                LOGGER.warn("Soundfoundry catalogue: {} was passed over: it is not a picture that can be read",
+                        where);
+            } else {
+                covers.put(album, small);
             }
         }
 

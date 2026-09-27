@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.audio.MusicImports;
 import dev.jstech.computers.audio.MusicPlayer;
 import dev.jstech.computers.audio.SongFiles;
+import dev.jstech.computers.audio.SoundfoundryCovers;
 import dev.jstech.computers.audio.SoundfoundryPlaylists;
 import dev.jstech.computers.audio.SoundfoundryServers;
 import dev.jstech.computers.audio.SoundfoundryTexts;
@@ -36,8 +37,12 @@ import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestMedia;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import io.netty.buffer.Unpooled;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import javax.imageio.ImageIO;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -64,6 +69,8 @@ public final class SoundfoundryServerGameTests {
     private static final BlockPos MONITOR = new BlockPos(6, 2, 2);
     private static final String SERVER_NAME = "sf-server-01";
     private static final String COMPUTER_NAME = "attic-pc";
+    /** The album of the test mod's own catalogue, which has a cover beside its songs. */
+    private static final String TEST_ALBUM = "jstests/test_tones";
 
     private SoundfoundryServerGameTests() {
     }
@@ -316,6 +323,38 @@ public final class SoundfoundryServerGameTests {
                 .thenSucceed();
     }
 
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void cover_ofACatalogueAlbumIsTheCoverBesideItsSongs(final GameTestHelper helper) {
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(SoundfoundryCatalog.current().cover(TEST_ALBUM) != null,
+                        "the test album's cover is read with the catalogue"))
+                .thenExecute(() -> {
+                    final byte[] cover = SoundfoundryCovers.cover(SoundfoundryCovers.albumKey(TEST_ALBUM));
+                    helper.assertTrue(png(cover), "the cover travels as a PNG");
+                    final MediaId track = SoundfoundryCatalog.current().albums().stream()
+                            .filter(album -> album.id().equals(TEST_ALBUM)).findFirst().orElseThrow()
+                            .tracks().getFirst().media();
+                    helper.assertTrue(SoundfoundryCovers.catalogKey(TEST_ALBUM, track)
+                                    .equals(SoundfoundryCovers.albumKey(TEST_ALBUM)),
+                            "and its songs are shown with it");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void cover_ofARecordingIsThePictureItCarries(final GameTestHelper helper) {
+        final MediaId plain = put(TestMedia.wav(300, "a song with no picture " + helper.absolutePos(COMPUTER)));
+        final MediaId pictured = put(withPicture(TestMedia.wav(300, "a song with a picture "
+                + helper.absolutePos(COMPUTER))));
+        helper.assertTrue(png(SoundfoundryCovers.cover(SoundfoundryCovers.mediaKey(pictured))),
+                "a recording that carries a picture has it for its cover, made a PNG");
+        helper.assertTrue(SoundfoundryCovers.cover(SoundfoundryCovers.mediaKey(plain)).length == 0,
+                "and one that carries none has no cover, which the window makes of colours");
+        helper.assertTrue(SoundfoundryCovers.cover("media:not a recording").length == 0,
+                "a key that names nothing is no cover either");
+        helper.succeed();
+    }
+
     /*
      * A Mainframe with a server rack and a Standard personal computer with its monitor on one network, the server
      * named and given a system, and running the Soundfoundry Server when {@code serving}.
@@ -382,6 +421,55 @@ public final class SoundfoundryServerGameTests {
 
     private static List<SongDownload> downloads(final PersonalComputerBlockEntity pc) {
         return pc.console().soundfoundry().downloads();
+    }
+
+    private static boolean png(final byte[] bytes) {
+        return bytes.length > 8 && bytes[0] == (byte) 0x89 && bytes[1] == 'P' && bytes[2] == 'N' && bytes[3] == 'G';
+    }
+
+    /* The Wave file with an ID3 tag of its own attaching a small picture as its front cover. */
+    private static byte[] withPicture(final byte[] wav) {
+        final ByteArrayOutputStream picture = new ByteArrayOutputStream();
+        try {
+            ImageIO.write(new BufferedImage(8, 8, BufferedImage.TYPE_INT_ARGB), "png", picture);
+        } catch (final IOException unexpected) {
+            throw new IllegalStateException(unexpected);
+        }
+        final ByteArrayOutputStream frame = new ByteArrayOutputStream();
+        frame.write(0);
+        frame.writeBytes("image/png".getBytes(StandardCharsets.US_ASCII));
+        frame.write(0);
+        frame.write(3);
+        frame.write(0);
+        frame.writeBytes(picture.toByteArray());
+        final byte[] body = frame.toByteArray();
+        final ByteArrayOutputStream tag = new ByteArrayOutputStream();
+        tag.writeBytes("ID3".getBytes(StandardCharsets.US_ASCII));
+        tag.writeBytes(new byte[] {3, 0, 0});
+        final int size = 10 + body.length;
+        tag.writeBytes(new byte[] {(byte) (size >> 21 & 0x7F), (byte) (size >> 14 & 0x7F),
+                (byte) (size >> 7 & 0x7F), (byte) (size & 0x7F)});
+        tag.writeBytes("APIC".getBytes(StandardCharsets.US_ASCII));
+        tag.writeBytes(new byte[] {(byte) (body.length >> 24), (byte) (body.length >> 16),
+                (byte) (body.length >> 8), (byte) body.length, 0, 0});
+        tag.writeBytes(body);
+        final byte[] id3 = tag.toByteArray();
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        out.writeBytes(wav);
+        out.writeBytes("id3 ".getBytes(StandardCharsets.US_ASCII));
+        out.writeBytes(new byte[] {(byte) id3.length, (byte) (id3.length >> 8), (byte) (id3.length >> 16),
+                (byte) (id3.length >> 24)});
+        out.writeBytes(id3);
+        if ((id3.length & 1) == 1) {
+            out.write(0);
+        }
+        final byte[] whole = out.toByteArray();
+        final int riff = whole.length - 8;
+        whole[4] = (byte) riff;
+        whole[5] = (byte) (riff >> 8);
+        whole[6] = (byte) (riff >> 16);
+        whole[7] = (byte) (riff >> 24);
+        return whole;
     }
 
     private static MediaId put(final byte[] wav) {

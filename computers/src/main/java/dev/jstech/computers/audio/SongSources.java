@@ -61,8 +61,12 @@ public final class SongSources {
         }
     }
 
-    /** What a song is, as a screen lists it: the recording, what it is called and the album it is on. */
-    public record Described(MediaId media, String title, String artist, String album, MediaInfo info) {
+    /**
+     * What a song is, as a screen lists it: the recording, what it is called, the album it is on and its cover, as
+     * {@link SoundfoundryCovers} keys it.
+     */
+    public record Described(MediaId media, String title, String artist, String album, MediaInfo info,
+                            String cover) {
     }
 
     /**
@@ -77,7 +81,9 @@ public final class SongSources {
             final CatalogTrack track = SoundfoundryShare.catalogTrack(path);
             final CatalogAlbum album = SoundfoundryShare.catalogAlbum(path);
             return track == null ? null : new Described(track.media(), track.title(), track.artist(),
-                    album == null ? track.info().tags().album() : album.title(), track.info());
+                    album == null ? track.info().tags().album() : album.title(), track.info(),
+                    album == null ? SoundfoundryCovers.mediaKey(track.media())
+                            : SoundfoundryCovers.catalogKey(album.id(), track.media()));
         }
         final RecordingFile song;
         if (SongRefs.fromNetwork(ref)) {
@@ -87,7 +93,7 @@ public final class SongSources {
             song = SongFiles.read(level, computer, path);
         }
         return song == null ? null : new Described(song.media(), titleOf(song, path), song.info().tags().artist(),
-                song.info().tags().album(), song.info());
+                song.info().tags().album(), song.info(), SoundfoundryCovers.mediaKey(song.media()));
     }
 
     /** Where the song the list names so plays from on that computer. */

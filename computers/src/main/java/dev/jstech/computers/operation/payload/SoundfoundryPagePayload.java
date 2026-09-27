@@ -75,6 +75,7 @@ public record SoundfoundryPagePayload(BlockPos hostPos, int page, String arg, Si
      */
     private static final int MAX_TEXT = MediaTags.MAX_TEXT / 2;
     private static final int MAX_ID = SoundfoundryBrowsePayload.MAX_ARG;
+    private static final int MAX_COVER = SoundfoundryCoverPayload.MAX_KEY;
 
     public static final CustomPacketPayload.Type<SoundfoundryPagePayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
@@ -124,9 +125,10 @@ public record SoundfoundryPagePayload(BlockPos hostPos, int page, String arg, Si
      * An album of the catalogue.
      *
      * @param downloaded how many of its songs the machine has on its disk
+     * @param cover      the key of its cover, which the window asks for
      */
     public record Album(String id, String title, String artist, String year, int songs, long millis,
-                        int downloaded) {
+                        int downloaded, String cover) {
     }
 
     /**
@@ -138,9 +140,10 @@ public record SoundfoundryPagePayload(BlockPos hostPos, int page, String arg, Si
      * @param state   {@link #STREAM}, {@link #ON_DISK}, {@link #COMING}, {@link #LOCAL} or {@link #SENDING}
      * @param section {@link #TRACKS}, {@link #NETWORK} or {@link #DOWNLOADED}
      * @param liked   whether the song is in the liked songs
+     * @param cover   the key of its cover, which the window asks for
      */
     public record Row(String ref, String title, String artist, String album, long millis, String from, int state,
-                      int section, boolean liked) {
+                      int section, boolean liked, String cover) {
     }
 
     /** The songs of one section, in the order the page lists them. */
@@ -185,6 +188,7 @@ public record SoundfoundryPagePayload(BlockPos hostPos, int page, String arg, Si
             buf.writeVarInt(album.songs());
             buf.writeVarLong(album.millis());
             buf.writeVarInt(album.downloaded());
+            buf.writeUtf(clip(album.cover(), MAX_COVER), MAX_COVER);
         }
         buf.writeVarInt(p.rows.size());
         for (final Row row : p.rows) {
@@ -197,6 +201,7 @@ public record SoundfoundryPagePayload(BlockPos hostPos, int page, String arg, Si
             buf.writeVarInt(row.state());
             buf.writeVarInt(row.section());
             buf.writeBoolean(row.liked());
+            buf.writeUtf(clip(row.cover(), MAX_COVER), MAX_COVER);
         }
     }
 
@@ -220,14 +225,15 @@ public record SoundfoundryPagePayload(BlockPos hostPos, int page, String arg, Si
         final List<Album> albums = new ArrayList<>(albumCount);
         for (int i = 0; i < albumCount; i++) {
             albums.add(new Album(buf.readUtf(MAX_ID), buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT),
-                    buf.readUtf(MAX_TEXT), buf.readVarInt(), buf.readVarLong(), buf.readVarInt()));
+                    buf.readUtf(MAX_TEXT), buf.readVarInt(), buf.readVarLong(), buf.readVarInt(),
+                    buf.readUtf(MAX_COVER)));
         }
         final int rowCount = Math.min(buf.readVarInt(), MAX_ROWS);
         final List<Row> rows = new ArrayList<>(rowCount);
         for (int i = 0; i < rowCount; i++) {
             rows.add(new Row(buf.readUtf(MAX_REF), buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT),
                     buf.readUtf(MAX_TEXT), buf.readVarLong(), buf.readUtf(MAX_TEXT), buf.readVarInt(),
-                    buf.readVarInt(), buf.readBoolean()));
+                    buf.readVarInt(), buf.readBoolean(), buf.readUtf(MAX_COVER)));
         }
         return new SoundfoundryPagePayload(host, page, arg, sidebar, albums, rows);
     }

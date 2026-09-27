@@ -43,6 +43,10 @@ The folder is made the first time the server starts. Nothing has to be filled in
 { "title": "Harbour Lights", "artist": "The Tin Radios", "year": "2004" }
 ```
 
+A `cover.png` (or `cover.jpg`) beside the songs is the album's cover, of any size. An album with none
+shows the picture its songs carry in their own files, when they carry one, and otherwise a cover made of
+its colours and initials.
+
 A data pack can carry albums in the same shape, in `data/<namespace>/soundfoundry/catalog/<album>/`.
 Its folders and files follow the rules of any data pack path: lower case, digits, `_`, `-` and `.`,
 with no spaces, so their titles come from their tags or their `album.json`.

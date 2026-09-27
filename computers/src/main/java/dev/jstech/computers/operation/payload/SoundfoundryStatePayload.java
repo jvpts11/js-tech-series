@@ -80,8 +80,10 @@ public record SoundfoundryStatePayload(BlockPos hostPos, int revision, Optional<
      * @param album   the album it is on, or empty
      * @param millis  how long it runs
      * @param present whether its file is still there to play
+     * @param cover   the key of its cover, which a window of the later desktops asks for; empty for none
      */
-    public record Song(String path, String title, String artist, String album, long millis, boolean present) {
+    public record Song(String path, String title, String artist, String album, long millis, boolean present,
+                       String cover) {
     }
 
     /**
@@ -119,6 +121,7 @@ public record SoundfoundryStatePayload(BlockPos hostPos, int revision, Optional<
                 buf.writeUtf(clip(song.album(), MediaTags.MAX_TEXT), MediaTags.MAX_TEXT);
                 buf.writeVarLong(song.millis());
                 buf.writeBoolean(song.present());
+                buf.writeUtf(clip(song.cover(), SoundfoundryCoverPayload.MAX_KEY), SoundfoundryCoverPayload.MAX_KEY);
             }
         }
         buf.writeVarInt(p.current);
@@ -148,7 +151,7 @@ public record SoundfoundryStatePayload(BlockPos hostPos, int revision, Optional<
             for (int i = 0; i < count; i++) {
                 read.add(new Song(buf.readUtf(MAX_PATH), buf.readUtf(MediaTags.MAX_TEXT),
                         buf.readUtf(MediaTags.MAX_TEXT), buf.readUtf(MediaTags.MAX_TEXT), buf.readVarLong(),
-                        buf.readBoolean()));
+                        buf.readBoolean(), buf.readUtf(SoundfoundryCoverPayload.MAX_KEY)));
             }
             songs = Optional.of(read);
         }

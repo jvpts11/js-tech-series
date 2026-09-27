@@ -282,10 +282,10 @@ public final class SoundfoundryPayloads {
         if (song == null) {
             final String fileName = FsPaths.fileName(SongRefs.pathOf(path));
             return new SoundfoundryStatePayload.Song(path, RecordingFile.stemOf(fileName, fileName), "", "", 0L,
-                    false);
+                    false, "");
         }
         return new SoundfoundryStatePayload.Song(path, song.title(), song.artist(), song.album(),
-                song.info().millis(), true);
+                song.info().millis(), true, song.cover());
     }
 
     private static String shownAs(final SoundfoundryStatePayload.Song song) {
