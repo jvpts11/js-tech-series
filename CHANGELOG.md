@@ -125,6 +125,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   It shuffles through the whole list before a song comes round again, repeats the list or stops after the last,
   and keeps playlists as `.m3u` files. Songs open in it, and songs brought from the player's own computer can go
   straight onto its playlist. A machine whose sound only beeps has nothing to play a song on, and says so.
+  Its window wears a skin of its own, the same on every desktop: dark iron plates with rivets and displays lit in
+  amber, the time in seven-segment figures, an analyser whose bars move with what is being heard, the song
+  scrolling by with its rate and whether it is stereo, where the sound comes out, sliders for the volume, the
+  balance and the point in the song, and the buttons to play, pause, stop and skip. The eject button opens a song
+  or a folder of them, or imports songs from the player's own computer; the playlist under it adds, removes, picks,
+  sorts and keeps lists from its buttons, plays a song on a double click, and can be put away with PL, and either
+  part folds down to its bar. The keys Z, X, C, V and B go back, play, pause, stop and go on.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.

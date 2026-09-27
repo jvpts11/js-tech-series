@@ -53,6 +53,9 @@ public record SoundfoundryActionPayload(BlockPos hostPos, int action, int index,
     public static final int OPEN_LIST = 19;
     public static final int SAVE_LIST = 20;
 
+    /** Given as the index of {@link #ADD}: play the first of the songs added, as opening a song does. */
+    public static final int AND_PLAY = 1;
+
     /** The most files one action names. */
     public static final int MAX_PATHS = 64;
     /** The longest path one names: a file's path, behind the drive a medium is in. */

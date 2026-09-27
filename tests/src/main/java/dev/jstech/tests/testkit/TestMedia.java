@@ -72,6 +72,25 @@ public final class TestMedia {
         }
     }
 
+    /**
+     * A mono 16-bit WAV of that many milliseconds of a tone that climbs from 200 Hz to 3 kHz and back, so an analyser
+     * has something to show, which {@code salt} makes a recording of its own.
+     */
+    public static byte[] tone(final int millis, final String salt) {
+        final byte[] made = wav(millis, salt);
+        final int samples = RATE * millis / 1000;
+        final int data = made.length - samples * 2;
+        double phase = 0.0;
+        for (int i = 0; i < samples; i++) {
+            final double sweep = 0.5 - 0.5 * Math.cos(2.0 * Math.PI * i / (RATE * 4.0));
+            phase += 2.0 * Math.PI * (200.0 + 2800.0 * sweep) / RATE;
+            final int value = (int) (Math.sin(phase) * 12_000);
+            made[data + i * 2] = (byte) (value & 0xFF);
+            made[data + i * 2 + 1] = (byte) (value >> 8 & 0xFF);
+        }
+        return made;
+    }
+
     /** A mono 16-bit WAV of that many milliseconds of silence, which {@code salt} makes a recording of its own. */
     public static byte[] wav(final int millis, final String salt) {
         final byte[] tag = salt.getBytes(StandardCharsets.US_ASCII);

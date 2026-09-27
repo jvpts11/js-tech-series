@@ -53,7 +53,12 @@ public final class MusicPlayer {
 
     /** What this computer's music plays under, among every recording playing in its world. */
     public String key() {
-        return KEY + computer.getBlockPos().asLong();
+        return keyOf(computer.getBlockPos());
+    }
+
+    /** What the music of the computer at {@code host} plays under, which is how a screen finds it to show it. */
+    public static String keyOf(final BlockPos host) {
+        return KEY + host.asLong();
     }
 
     /** Why the last song could not play, or empty when it could. */

@@ -47,7 +47,7 @@ class LayoutAuditTest {
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
             "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout",
             "CdeStyleLayout", "WorkstationInfoLayout", "TrashLayout", "HelpViewerLayout", "SpeakerLayout",
-            "VolumePopupLayout");
+            "VolumePopupLayout", "SoundfoundryLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -72,6 +72,7 @@ class LayoutAuditTest {
     private static List<AuditCase> cases() {
         final List<AuditCase> c = new ArrayList<>();
         c.add(new AuditCase("BusLayout", BusLayout.layout(), true));
+        c.add(new AuditCase("SoundfoundryLayout", SoundfoundryLayout.layout(), true));
         c.add(new AuditCase("CraftingSwitchLayout", CraftingSwitchLayout.layout(), true));
         c.add(new AuditCase("PatternEncoderLayout", PatternEncoderLayout.layout(), true));
         c.add(new AuditCase("NetworkGatewayLayout", NetworkGatewayLayout.layout(), true));

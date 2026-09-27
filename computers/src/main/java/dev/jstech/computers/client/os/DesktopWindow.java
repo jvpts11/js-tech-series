@@ -167,6 +167,11 @@ public final class DesktopWindow {
         }
     }
 
+    /** Whether the program draws this whole window itself; see {@link IDesktopApp#drawsOwnFrame()}. */
+    public boolean ownFrame() {
+        return app.drawsOwnFrame();
+    }
+
     public int x() {
         return curX;
     }
@@ -236,7 +241,7 @@ public final class DesktopWindow {
      * A maximized window cannot be resized. Edges within {@link #BORDER_MARGIN} pixels combine into corners.
      */
     public int resizeHitTest(final double mx, final double my) {
-        if (maximized) {
+        if (maximized || ownFrame()) {
             return RESIZE_NONE;
         }
         final int left = curX;
@@ -342,6 +347,10 @@ public final class DesktopWindow {
      * size is clamped up to the app's minimum so the content never collapses.
      */
     public void snapTo(final int nx, final int ny, final int nw, final int nh) {
+        // A window drawn in its program's own shape keeps that shape: it is not stretched over half the screen.
+        if (ownFrame()) {
+            return;
+        }
         if (maximized) {
             maximized = false;
         }
@@ -357,6 +366,9 @@ public final class DesktopWindow {
 
     /** Toggles maximize, saving/restoring the floating geometry. */
     public void toggleMaximize() {
+        if (ownFrame()) {
+            return;
+        }
         if (maximized) {
             maximized = false;
             x = restoreX;
@@ -387,6 +399,12 @@ public final class DesktopWindow {
      * top panel), so a maximized window starts under it.
      */
     public void resolveGeometry(final int screenW, final int screenH, final int taskbarH, final int workTop) {
+        if (ownFrame()) {
+            // Its size is whatever shape the program is in right now: a part folded away makes the window smaller.
+            this.w = app.defaultWidth();
+            this.h = app.defaultHeight();
+            this.maximized = false;
+        }
         /*
          * The minimum-size clamp lives in the unit-tested WindowGeometry so it can never silently go missing
          * again (the bug where a stale small geometry squashed the content and clipped the details panel).
@@ -431,6 +449,10 @@ public final class DesktopWindow {
         final int wy = curY;
         final int ww = curW;
         final int wh = curH;
+        if (ownFrame()) {
+            renderOwnFrame(g, font, skin, mouseX, mouseY, partialTick);
+            return;
+        }
 
         /*
          * A soft drop shadow lifts the window off the wallpaper, then the frame (border + body) and title bar,
@@ -555,10 +577,11 @@ public final class DesktopWindow {
         if (minimized) {
             return;
         }
-        final int contentX = curX + 4;
-        final int contentY = curY + TITLE_H + 4;
-        final int contentW = curW - 8;
-        final int contentH = curH - TITLE_H - 8;
+        final boolean own = ownFrame();
+        final int contentX = own ? curX : curX + 4;
+        final int contentY = own ? curY : curY + TITLE_H + 4;
+        final int contentW = own ? curW : curW - 8;
+        final int contentH = own ? curH : curH - TITLE_H - 8;
         if (mouseX >= contentX && mouseX < contentX + contentW
                 && mouseY >= contentY && mouseY < contentY + contentH) {
             app.renderTooltip(g, font, contentX, contentY, contentW, contentH, mouseX, mouseY);
@@ -582,19 +605,22 @@ public final class DesktopWindow {
     }
 
     public boolean closeBoxHit(final double mx, final double my) {
-        return inBtn(mx, my, closeX());
+        return ownFrame() ? ownControlAt(mx, my) == BUTTON_CLOSE : inBtn(mx, my, closeX());
     }
 
     public boolean maximizeBoxHit(final double mx, final double my) {
-        return !dialog() && inBtn(mx, my, maxX());
+        return !ownFrame() && !dialog() && inBtn(mx, my, maxX());
     }
 
     public boolean minimizeBoxHit(final double mx, final double my) {
-        return !dialog() && inBtn(mx, my, minX());
+        return ownFrame() ? ownControlAt(mx, my) == BUTTON_MINIMIZE : !dialog() && inBtn(mx, my, minX());
     }
 
     /** The middle of a title-bar button, in desktop pixels, by the numbers {@link #buttonAt} answers with. */
     public int[] buttonCentre(final int button) {
+        if (ownFrame()) {
+            return ownControlCentre(button);
+        }
         final int bx = button == BUTTON_MINIMIZE ? minX() : button == BUTTON_MAXIMIZE ? maxX() : closeX();
         return new int[] {bx + BTN / 2, curY + 2 + BTN / 2};
     }
@@ -657,12 +683,63 @@ public final class DesktopWindow {
     }
 
     public boolean titleBarHit(final double mx, final double my) {
+        if (ownFrame()) {
+            return inside(mx, my) && ownControlAt(mx, my) == BUTTON_NONE
+                    && app.frameDragAt((int) Math.floor(mx) - curX, (int) Math.floor(my) - curY);
+        }
         return mx >= curX && mx <= curX + curW && my >= curY && my <= curY + TITLE_H
                 && !closeBoxHit(mx, my) && !maximizeBoxHit(mx, my) && !minimizeBoxHit(mx, my);
     }
 
     public boolean bodyHit(final double mx, final double my) {
+        if (ownFrame()) {
+            return inside(mx, my) && !titleBarHit(mx, my) && ownControlAt(mx, my) == BUTTON_NONE;
+        }
         return mx >= curX && mx <= curX + curW && my >= curY + TITLE_H && my <= curY + curH;
+    }
+
+    /*
+     * A window its program draws: the program is handed all of it, clipped to it, and is told first whether it is in
+     * front and which of its buttons is held.
+     */
+    private void renderOwnFrame(final GuiGraphics g, final Font font, final OsSkin skin, final int mouseX,
+                                final int mouseY, final float partialTick) {
+        app.frameState(focused, pressedBtn);
+        final Matrix4f mat = g.pose().last().pose();
+        final WindowGeometry.Rect clip = WindowGeometry.scissor(mat.m30(), mat.m31(), mat.m00(), mat.m11(),
+                curX, curY, curX + curW, curY + curH);
+        g.enableScissor(clip.x(), clip.y(), clip.x() + clip.w(), clip.y() + clip.h());
+        app.applySkin(skin);
+        app.renderContent(g, font, curX, curY, curW, curH, mouseX, mouseY, partialTick);
+        g.disableScissor();
+    }
+
+    private boolean inside(final double mx, final double my) {
+        return mx >= curX && mx < curX + curW && my >= curY && my < curY + curH;
+    }
+
+    private int ownControlAt(final double mx, final double my) {
+        return inside(mx, my) ? app.frameControlAt((int) Math.floor(mx) - curX, (int) Math.floor(my) - curY)
+                : BUTTON_NONE;
+    }
+
+    /* The middle of one of a program's own buttons, found by asking it where they are. */
+    private int[] ownControlCentre(final int button) {
+        int minX = Integer.MAX_VALUE;
+        int minY = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxY = Integer.MIN_VALUE;
+        for (int y = 0; y < curH; y++) {
+            for (int x = 0; x < curW; x++) {
+                if (app.frameControlAt(x, y) == button) {
+                    minX = Math.min(minX, x);
+                    minY = Math.min(minY, y);
+                    maxX = Math.max(maxX, x);
+                    maxY = Math.max(maxY, y);
+                }
+            }
+        }
+        return minX > maxX ? new int[] {curX, curY} : new int[] {curX + (minX + maxX) / 2, curY + (minY + maxY) / 2};
     }
 
     /** An unfocused window's title ink. */

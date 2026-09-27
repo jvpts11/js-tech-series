@@ -129,7 +129,14 @@ public final class SoundfoundryPayloads {
             }
             case SoundfoundryActionPayload.SHUFFLE -> state.setShuffle(payload.index() != 0);
             case SoundfoundryActionPayload.REPEAT -> state.setRepeat(payload.index() != 0);
-            case SoundfoundryActionPayload.ADD -> note = add(state, songsAmong(level, computer, payload.paths()));
+            case SoundfoundryActionPayload.ADD -> {
+                final int before = state.size();
+                note = add(state, songsAmong(level, computer, payload.paths()));
+                // A song opened rather than added is played as well, the first of them if there are several.
+                if (payload.index() == SoundfoundryActionPayload.AND_PLAY && state.size() > before) {
+                    music.play(level, before);
+                }
+            }
             case SoundfoundryActionPayload.ADD_FOLDER -> note = addFolders(level, computer, state, payload.paths());
             case SoundfoundryActionPayload.REMOVE -> {
                 final Set<Integer> gone = new HashSet<>(payload.indexes());

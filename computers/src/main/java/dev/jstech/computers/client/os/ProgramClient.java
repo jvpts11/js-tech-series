@@ -103,6 +103,7 @@ public final class ProgramClient {
         register(rl("snake"), (host, mon, os) -> new SnakeApp());
         register(rl("ark"), (host, mon, os) -> new ArchiverApp(host));
         register(rl("paint"), (host, mon, os) -> new PaintApp(host));
+        register(rl("soundfoundry"), (host, mon, os) -> new SoundfoundryApp(host));
         register(rl("exceed"), (host, mon, os) -> new ExceedApp(host, mon));
         register(rl("messenger"), (host, mon, os) -> new MessengerApp(host, mon));
         register(rl("knot"), (host, mon, os) -> new KnotApp(host, mon));
