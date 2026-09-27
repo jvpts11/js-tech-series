@@ -8,6 +8,7 @@
 package dev.jstech.core.client.audio;
 
 import java.util.concurrent.CompletableFuture;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.resources.sounds.TickableSoundInstance;
@@ -30,6 +31,9 @@ class ScaledSoundInstance implements SoundInstance {
 
     private final SoundInstance sound;
     private final String channel;
+
+    /** A volume far below hearing, but not nothing, which the game would stop a sound for. */
+    private static final float UNHEARD = 1.0E-4F;
 
     ScaledSoundInstance(final SoundInstance sound, final String channel) {
         this.sound = sound;
@@ -88,9 +92,17 @@ class ScaledSoundInstance implements SoundInstance {
         return sound.getDelay();
     }
 
+    /*
+     * The game stops a playing sound for good once its volume comes to nothing, so a channel turned all the way down
+     * and up again left a song or a loop silent until it next started. One already playing is kept at a volume nobody
+     * hears instead, and comes back when the channel does; one about to start with its channel down still does not.
+     */
     @Override
     public float getVolume() {
-        return sound.getVolume() * AudioPrefsStore.prefs().volume(channel) * AudioMixer.duck(channel);
+        final float own = sound.getVolume();
+        final float mixed = own * AudioPrefsStore.prefs().volume(channel) * AudioMixer.duck(channel);
+        return mixed <= 0.0F && own > 0.0F && Minecraft.getInstance().getSoundManager().isActive(this) ? UNHEARD
+                : mixed;
     }
 
     @Override

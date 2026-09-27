@@ -23,6 +23,7 @@ import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.core.audio.media.IMediaUploadHandler;
 import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.audio.media.MediaInfo;
+import dev.jstech.core.audio.media.MediaReceipt;
 import dev.jstech.core.audio.media.MediaUploads;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -116,26 +117,27 @@ public final class MusicImports implements IMediaUploadHandler {
      * Puts a file naming the recording on the computer's system disk, in {@code folder}, or the system's music folder
      * when that is empty, under the name the song was brought with; a second song of the same name gets a number.
      *
-     * @return what the player is told it did
+     * @return whether the song is on the disk, and what the player is told
      */
-    public static Text keep(final ServerLevel level, final BlockPos host, final String folder, final String name,
-                            final MediaId media, final MediaInfo info) {
+    public static MediaReceipt keep(final ServerLevel level, final BlockPos host, final String folder,
+                                    final String name, final MediaId media, final MediaInfo info) {
         return keep(level, host, folder, false, name, media, info);
     }
 
     /** The same, putting the song at the end of Soundfoundry's playlist too when {@code playlist}. */
-    public static Text keep(final ServerLevel level, final BlockPos host, final String folder, final boolean playlist,
-                            final String name, final MediaId media, final MediaInfo info) {
+    public static MediaReceipt keep(final ServerLevel level, final BlockPos host, final String folder,
+                                    final boolean playlist, final String name, final MediaId media,
+                                    final MediaInfo info) {
         final Text why = whyNot(level, host, name, media);
         if (why != null || !(level.getBlockEntity(host) instanceof IOsHost computer)) {
-            return why != null ? why : NO_COMPUTER.text();
+            return MediaReceipt.refused(why != null ? why : NO_COMPUTER.text());
         }
         final ItemStack disk = computer.systemDisk();
         final FilesystemKind kind = FileAccess.filesystemKindOf(computer);
         final FileType type = FileType.forRecording(media.format()).orElseThrow();
         final String dir = folder.isEmpty() ? musicFolderOf(computer) : folder;
         if (!DiskFilesystem.mkdirs(disk, dir, kind)) {
-            return NOT_WRITTEN.with(name, dir);
+            return MediaReceipt.refused(NOT_WRITTEN.with(name, dir));
         }
         final String content = new RecordingFile(media, info).write();
         final String path = DiskFilesystem.uniquePath(disk,
@@ -149,9 +151,9 @@ public final class MusicImports implements IMediaUploadHandler {
         }
         computer.setChanged();
         return switch (result) {
-            case OK -> KEPT.with(FsPaths.fileName(path), dir);
-            case DISK_FULL -> NO_ROOM.with(name);
-            case INVALID_PATH, READ_ONLY -> NOT_WRITTEN.with(name, dir);
+            case OK -> MediaReceipt.accepted(KEPT.with(FsPaths.fileName(path), dir));
+            case DISK_FULL -> MediaReceipt.refused(NO_ROOM.with(name));
+            case INVALID_PATH, READ_ONLY -> MediaReceipt.refused(NOT_WRITTEN.with(name, dir));
         };
     }
 
@@ -173,15 +175,15 @@ public final class MusicImports implements IMediaUploadHandler {
 
     /*
      * Not asked again whether the player is still at the screen: they may close it while a long song is on its way,
-     * and it was theirs to bring when they started.
+     * and it was theirs to bring when they started. Whether the disk still has room is asked again, by keeping it.
      */
     @Override
-    public Text received(final ServerPlayer player, final String context, final String name, final MediaId media,
-                         final MediaInfo info) {
+    public MediaReceipt received(final ServerPlayer player, final String context, final String name,
+                                 final MediaId media, final MediaInfo info) {
         return Target.parse(context)
                 .map(target -> keep(player.serverLevel(), target.host(), target.folder(), target.playlist(), name,
                         media, info))
-                .orElseGet(NO_COMPUTER::text);
+                .orElseGet(() -> MediaReceipt.refused(NO_COMPUTER.text()));
     }
 
     /** The computer a song is for, whether the playlist takes it, and the folder it goes in, as a program wrote them. */

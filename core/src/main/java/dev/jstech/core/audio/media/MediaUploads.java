@@ -63,9 +63,11 @@ public final class MediaUploads {
         if (store.has(offer.media())) {
             // Somebody brought this very recording before: it is taken without a byte of it being sent again.
             try {
-                final Text done = handler.received(player, offer.context(), offer.name(), offer.media(),
+                final MediaReceipt done = handler.received(player, offer.context(), offer.name(), offer.media(),
                         store.info(offer.media()));
-                reply(player, offer.token(), MediaOfferReplyPayload.TAKEN, done);
+                reply(player, offer.token(),
+                        done.accepted() ? MediaOfferReplyPayload.TAKEN : MediaOfferReplyPayload.REFUSED,
+                        done.message());
             } catch (final IOException unreadable) {
                 reply(player, offer.token(), MediaOfferReplyPayload.REFUSED, MediaTexts.UNREADABLE.text());
             }
@@ -113,9 +115,9 @@ public final class MediaUploads {
         final MediaOfferPayload offer = incoming.offer;
         try {
             final MediaId kept = store.get().adopt(incoming.file, offer.media());
-            final Text done = HANDLERS.get(offer.purpose()).received(player, offer.context(), offer.name(), kept,
-                    store.get().info(kept));
-            end(player, theirs, incoming, true, done);
+            final MediaReceipt done = HANDLERS.get(offer.purpose()).received(player, offer.context(), offer.name(),
+                    kept, store.get().info(kept));
+            end(player, theirs, incoming, done.accepted(), done.message());
         } catch (final IOException unreadable) {
             end(player, theirs, incoming, false, MediaTexts.UNREADABLE.text());
         }

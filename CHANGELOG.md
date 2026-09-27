@@ -42,7 +42,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The Sound Mixer, reached from Sound Mixer... beside Done in the game's Music & Sound Options. Its Channels tab has
   a slider for each channel (machines, devices, interface, alerts, ambience, music, voice), with a tooltip saying
   what the channel carries and which of the game's volumes it also follows, and moving one reaches the sounds
-  already playing. Its Sounds tab lists every sound the game knows, the game's own and every mod's, searchable by
+  already playing; a song or a loop playing while its channel is turned all the way down goes quiet and is heard
+  again when the channel comes back up, where the game would have stopped it for good. Its Sounds tab lists every sound the game knows, the game's own and every mod's, searchable by
   name or id and filtered to all, recent, the series', the game's or those turned off, each with Play to hear it
   once and ON/OFF to turn it off, and Turn All Back On. Its Options tab turns walls muffling sounds, alerts shown on
   screen and the lowering under alerts on and off, and opens the game's controls to pick the Turn Off Last Sound
@@ -99,7 +100,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   computer plays only out of the monitor.
 - Recordings a server keeps, in J's Core, for any mod or addon to play. A player can bring a WAV or Ogg Vorbis file
   from their own computer to the server, which keeps it once under a name taken from its bytes, however many bring
-  it, and reads its length and its title, artist and album from it. A recording played in the world is fetched by
+  it, and reads its length and its title, artist and album from it; whoever takes a recording says whether it was
+  put to use, and the player is told it went in only when it was. A recording played in the world is fetched by
   the players near it, kept in a cache on their own computer (`jstech/media-cache`, 512 MB at most, the longest
   unplayed going first) and heard out of the places it plays from, from wherever it has got to: a player who walks up
   to one already playing hears it from there, and one who walks away lets it go. It can be paused, taken up again
@@ -108,7 +110,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Music files on a computer's disk: Ogg Vorbis (`.ogg`) and Wave (`.wav`), with an icon of their own in every
   desktop's style. A song is brought from the player's own computer, picked in their system's file dialog, into
   the system's music folder (`Users/Public/Music` on Frames, `Music` in the home folder on Linux, FreeBSD and
-  UNIX), and is refused before it is sent when the disk has no room for it. The recording stays on the server and
+  UNIX), and is refused before it is sent when the disk has no room for it; one that finds the room gone by the
+  time it has arrived is said not to have gone in, rather than to have. The recording stays on the server and
   the disk keeps a file naming it, but that file weighs what the song weighs, by the disk's era like any other
   file, and an archive with songs packed in it weighs them too; the Archiver shows their sizes in megabytes. A song
   cannot be edited or added to, renamed into text, or made out of text.

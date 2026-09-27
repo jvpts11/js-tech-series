@@ -10,6 +10,7 @@ package dev.jstech.tests.testkit;
 import dev.jstech.core.audio.media.IMediaUploadHandler;
 import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.audio.media.MediaInfo;
+import dev.jstech.core.audio.media.MediaReceipt;
 import dev.jstech.core.audio.media.MediaUploads;
 import dev.jstech.core.text.Text;
 import java.io.ByteArrayOutputStream;
@@ -30,6 +31,13 @@ public final class TestMedia {
     public static final String PURPOSE = "jstests:echo";
     /** A context the taker refuses, so a test can see a refusal come back. */
     public static final String REFUSE = "refuse";
+    /**
+     * A context the taker lets be sent and then cannot put to use once it has come, the way a disk that filled up
+     * while a song was on its way does.
+     */
+    public static final String REFUSE_ON_ARRIVAL = "refuse on arrival";
+    /** What the taker says when it could not put a recording to use. */
+    public static final String NOT_USED = "not put to use by the test";
     public static final int RATE = 8000;
 
     private static final AtomicBoolean REGISTERED = new AtomicBoolean();
@@ -54,12 +62,13 @@ public final class TestMedia {
                 }
 
                 @Override
-                public Text received(final ServerPlayer player, final String context, final String name,
-                                     final MediaId media, final MediaInfo info) {
+                public MediaReceipt received(final ServerPlayer player, final String context, final String name,
+                                             final MediaId media, final MediaInfo info) {
                     synchronized (RECEIVED) {
                         RECEIVED.add(new Received(context, name, media, info));
                     }
-                    return Text.EMPTY;
+                    return REFUSE_ON_ARRIVAL.equals(context) ? MediaReceipt.refused(Text.literal(NOT_USED))
+                            : MediaReceipt.accepted(Text.EMPTY);
                 }
             });
         }

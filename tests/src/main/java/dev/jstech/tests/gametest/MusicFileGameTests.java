@@ -23,6 +23,7 @@ import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.audio.media.MediaInfo;
+import dev.jstech.core.audio.media.MediaReceipt;
 import dev.jstech.core.audio.media.MediaStore;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
@@ -58,12 +59,12 @@ public final class MusicFileGameTests {
         final MediaId song = put(TestMedia.wav(1200, "kept " + helper.absolutePos(COMPUTER).asLong()));
         final ItemStack disk = pc.systemDisk();
         final long before = DiskFilesystem.filesWeight(disk);
-        final Text said = MusicImports.keep(helper.getLevel(), helper.absolutePos(COMPUTER), "", "My Song.wav", song,
-                info(song));
+        final MediaReceipt said = MusicImports.keep(helper.getLevel(), helper.absolutePos(COMPUTER), "",
+                "My Song.wav", song, info(song));
         final String path = MUSIC + "/My Song.wav";
         final StoredFile file = fileAt(disk, path);
-        helper.assertTrue(file != null && file.type() == FileType.WAV,
-                "the song is in the music folder as a wave file; said " + said.english());
+        helper.assertTrue(said.accepted() && file != null && file.type() == FileType.WAV,
+                "the song is in the music folder as a wave file; said " + said.message().english());
         final RecordingFile named = RecordingFile.read(file.content());
         helper.assertTrue(named != null && named.media().equals(song), "and it names the recording the server keeps");
         final long grew = DiskFilesystem.filesWeight(disk) - before;

@@ -10,7 +10,10 @@ package dev.jstech.tests.clienttest;
 import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.audio.media.MediaPlace;
 import dev.jstech.core.audio.media.MediaSessions;
+import dev.jstech.core.audio.AudioPrefs;
 import dev.jstech.core.audio.media.MediaStore;
+import dev.jstech.core.client.audio.AudioMixer;
+import dev.jstech.core.client.audio.AudioPrefsStore;
 import dev.jstech.core.client.audio.media.MediaCache;
 import dev.jstech.core.client.audio.media.MediaPlayer;
 import dev.jstech.core.client.audio.media.MediaUploader;
@@ -37,6 +40,8 @@ public final class MediaClientTests {
     private static final BlockPos AWAY = new BlockPos(40, 2, 0);
     private static final int SETTLE = 5;
     private static final int WAIT = 200;
+    /** Longer than the second the game keeps a sound it has stopped before forgetting it. */
+    private static final int FORGETS_STOPPED = 30;
 
     private MediaClientTests() {
     }
@@ -71,6 +76,27 @@ public final class MediaClientTests {
     }
 
     @ClientTest(timeoutTicks = 600)
+    public static void upload_saysItDidNotGoInWhenItCouldNotBePutToUse(final ClientTestContext ctx) {
+        final byte[] wav = TestMedia.wav(500, "unused " + System.nanoTime());
+        final MediaId id = MediaId.of(wav, "wav");
+        final Object[] first = {null, null};
+        final Object[] again = {null, null};
+        ctx.thenServer(0, level -> TestMedia.register())
+                .then(0, () -> upload(write(wav), first))
+                .thenWaitUntil(() -> first[0] != null, WAIT, "the upload to end")
+                .thenAssert(0, () -> Boolean.FALSE.equals(first[0])
+                                && TestMedia.NOT_USED.equals(((Text) first[1]).english()),
+                        "the bytes came, but what they were for was not done, so it did not go in")
+                .thenWaitUntilServer(level -> MediaStore.current().map(store -> store.has(id)).orElse(false),
+                        WAIT, "the server keeps the bytes all the same", level -> "not kept")
+                .then(0, () -> upload(write(wav), again))
+                .thenWaitUntil(() -> again[0] != null, WAIT, "the same file brought again to end")
+                .thenAssert(0, () -> Boolean.FALSE.equals(again[0])
+                                && TestMedia.NOT_USED.equals(((Text) again[1]).english()),
+                        "a file the server already keeps is not said to go in either when it could not be used");
+    }
+
+    @ClientTest(timeoutTicks = 600)
     public static void session_isHeardNearByLetGoAwayAndStopped(final ClientTestContext ctx) {
         final byte[] wav = TestMedia.wav(20_000, "heard " + System.nanoTime());
         final MediaId id = MediaId.of(wav, "wav");
@@ -95,6 +121,63 @@ public final class MediaClientTests {
                 .thenWaitUntil(() -> MediaPlayer.heard(key), WAIT, "coming back hears it again from where it is")
                 .thenServer(0, level -> MediaSessions.stop(level, key))
                 .thenWaitUntil(() -> !MediaPlayer.heard(key), WAIT, "and the server stopping it stops it");
+    }
+
+    /* Brings the file for the test's taker, told to refuse it once it has come; how it ended lands in {@code end}. */
+    private static void upload(final Path file, final Object[] end) {
+        MediaUploader.upload(file, TestMedia.PURPOSE, TestMedia.REFUSE_ON_ARRIVAL, new MediaUploader.IListener() {
+            @Override
+            public void progress(final long sent, final long total) {
+                // Only the end matters here.
+            }
+
+            @Override
+            public void finished(final boolean ok, final Text message) {
+                end[1] = message;
+                end[0] = ok;
+            }
+        });
+    }
+
+    /**
+     * A recording playing goes quiet with its channel turned all the way down and is heard again when the channel
+     * comes back up: the game stops a sound whose volume comes to nothing for good, and a song used to stay silent
+     * until the next one started.
+     */
+    @ClientTest(timeoutTicks = 600)
+    public static void session_outlastsItsChannelTurnedAllTheWayDown(final ClientTestContext ctx) {
+        final byte[] wav = TestMedia.wav(20_000, "channel " + System.nanoTime());
+        final MediaId id = MediaId.of(wav, "wav");
+        final String key = "jstests:channel";
+        final String channel = TestSounds.BEEP.spec().channel().id().toString();
+        final AudioPrefs prefs = AudioPrefsStore.prefs();
+        ctx.thenTeleport(SETTLE, STAND, Direction.SOUTH)
+                .thenServer(0, level -> {
+                    try {
+                        MediaStore.current().orElseThrow().put(wav, "wav");
+                    } catch (final IOException unexpected) {
+                        throw new IllegalStateException(unexpected);
+                    }
+                    final BlockPos at = ctx.abs(STAND);
+                    MediaSessions.play(level, key, TestSounds.BEEP, id,
+                            List.of(new MediaPlace(at.getX() + 0.5, at.getY() + 1.0, at.getZ() + 2.5, null, null)),
+                            1.0F, 0L, null);
+                })
+                .thenWaitUntil(() -> MediaPlayer.heard(key), WAIT, "the recording to be heard")
+                // The game forgets a stopped sound only a second after it started, so the test waits past that.
+                .then(FORGETS_STOPPED, () -> {
+                    prefs.setVolume(channel, 0.0F);
+                    AudioMixer.refreshVolumes();
+                })
+                .thenAssert(FORGETS_STOPPED, () -> MediaPlayer.heard(key),
+                        "it keeps playing with its channel all the way down")
+                .then(0, () -> {
+                    prefs.setVolume(channel, 1.0F);
+                    AudioMixer.refreshVolumes();
+                })
+                .thenAssert(SETTLE, () -> MediaPlayer.heard(key), "and is heard again when the channel comes back")
+                .thenServer(0, level -> MediaSessions.stop(level, key))
+                .thenWaitUntil(() -> !MediaPlayer.heard(key), WAIT, "until the server stops it");
     }
 
     private static Path write(final byte[] content) {

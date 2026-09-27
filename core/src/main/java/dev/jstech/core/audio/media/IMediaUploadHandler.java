@@ -28,7 +28,11 @@ public interface IMediaUploadHandler {
     /**
      * The recording has come whole and the server keeps it: do with it what it was brought for.
      *
-     * @return what the player is told it did, or {@link Text#EMPTY}
+     * <p>What was checked when it was offered may no longer hold by now: a large recording takes a while to come, and
+     * the room it was going into may have gone in the meantime. So this says whether it was put to use, and the player
+     * is told it went in only when it was.
+     *
+     * @return whether it was put to use, and what the player is told
      */
-    Text received(ServerPlayer player, String context, String name, MediaId media, MediaInfo info);
+    MediaReceipt received(ServerPlayer player, String context, String name, MediaId media, MediaInfo info);
 }
