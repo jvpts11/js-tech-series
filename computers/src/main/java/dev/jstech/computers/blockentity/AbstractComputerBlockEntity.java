@@ -88,6 +88,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -826,6 +827,21 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     /** Where this computer stands on the data network, for a Mainframe, which owns its network itself. */
     protected NetworkAttachment attachment() {
         return attachment;
+    }
+
+    /** The data cables this computer is wired to the network by: for most, the one cable at its side. */
+    public Set<Long> networkCables(final ServerLevel level) {
+        final long cable = attachment.cable(level);
+        return cable == NetworkAttachment.NO_CABLE ? Set.of() : Set.of(cable);
+    }
+
+    /**
+     * The slowest cable between this computer and that one, which is as fast as data can go between them, or
+     * empty when no cable joins them.
+     */
+    public Optional<DataTier> slowestCableTo(final ServerLevel level, final AbstractComputerBlockEntity other) {
+        return NetworkSystem.get(level).connectivity()
+                .slowestBetween(networkCables(level), other.networkCables(level));
     }
 
     public String customName() {

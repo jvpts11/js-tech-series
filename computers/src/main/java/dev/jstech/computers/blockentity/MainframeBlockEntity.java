@@ -551,6 +551,12 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         return attachment();
     }
 
+    /** Every cable around the cabinet, since the Mainframe is wired in by all of them at once. */
+    @Override
+    public Set<Long> networkCables(final ServerLevel level) {
+        return networking.adjacentCables(level);
+    }
+
     /** Whether a cable of that tier is one this Mainframe will talk over. */
     boolean acceptsDataTier(final DataTier tier) {
         return acceptsTier(tier);

@@ -140,7 +140,7 @@ final class MainframeNetworking {
         final NetworkSystem system = NetworkSystem.get(level);
         final ConnectivityIndex index = system.connectivity();
         final Set<Long> cables = adjacentCables(level);
-        index.bridge(cables);
+        index.bridge(mainframe.getBlockPos().asLong(), cables);
 
         NetworkUuid adopted = null;
         for (final long cable : cables) {
@@ -261,11 +261,11 @@ final class MainframeNetworking {
         }
     }
 
-    /** Lets go of the network, which is what a Mainframe losing power does. */
+    /** Lets go of the network, which is what a Mainframe losing power does: data no longer passes through it. */
     void leave(final ServerLevel level) {
         mainframe.networkAttachment().attachTo(null);
         setConflict(level, false);
-        unregister(NetworkSystem.get(level));
+        unregisterFrom(NetworkSystem.get(level));
     }
 
     /**
@@ -319,8 +319,10 @@ final class MainframeNetworking {
     }
 
     /** Takes this Mainframe off the network's register, for a caller tearing the machine down itself. */
+    /** Takes this Mainframe off the network, and off every way through it: it is switched off, broken or unloaded. */
     void unregisterFrom(final NetworkSystem system) {
         unregister(system);
+        system.connectivity().forgetBridge(mainframe.getBlockPos().asLong());
     }
 
     private void unregister(final NetworkSystem system) {
@@ -386,7 +388,7 @@ final class MainframeNetworking {
      * <p>The Mainframe is 3x2x2, so it looks across its whole footprint rather than at one side, and it takes
      * every cable it finds rather than the first, because it bridges all of them into its single network.
      */
-    private Set<Long> adjacentCables(final ServerLevel level) {
+    Set<Long> adjacentCables(final ServerLevel level) {
         final Direction facing = mainframe.getBlockState().getValue(HorizontalDirectionalBlock.FACING);
         final BlockPos origin = mainframe.getBlockPos();
         final Set<Long> inside = new HashSet<>();

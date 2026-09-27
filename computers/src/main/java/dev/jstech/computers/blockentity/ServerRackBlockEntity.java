@@ -1114,7 +1114,7 @@ public class ServerRackBlockEntity extends BlockEntity
          * Bridge the cable runs this rack touches into one segment, so a Mainframe on one side and a
          * standby on the other are on a single network connected through the rack.
          */
-        system.connectivity().bridge(cables);
+        system.connectivity().bridge(worldPosition.asLong(), cables);
         for (final long cable : cables) {
             final var net = system.connectivity().networkOf(cable);
             if (net.isPresent()) {
@@ -1137,6 +1137,7 @@ public class ServerRackBlockEntity extends BlockEntity
         final NetworkSystem system = NetworkSystem.get(level);
         registered.forEach((node, network) -> system.unregisterServer(network, new NodeUuid(node)));
         registered.clear();
+        system.connectivity().forgetBridge(worldPosition.asLong());
     }
 
     @Override

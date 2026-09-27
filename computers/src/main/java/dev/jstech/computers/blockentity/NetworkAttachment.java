@@ -180,7 +180,7 @@ final class NetworkAttachment {
      * <p>The one it found last time is asked after first, which is a single block to look at rather than six;
      * only when that one has gone, or when there was none, is every face looked at again.
      */
-    private long cable(final ServerLevel level) {
+    long cable(final ServerLevel level) {
         if (this.cable != NO_CABLE && cableAt(level, BlockPos.of(this.cable))) {
             return this.cable;
         }

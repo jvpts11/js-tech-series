@@ -132,6 +132,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   or a folder of them, or imports songs from the player's own computer; the playlist under it adds, removes, picks,
   sorts and keeps lists from its buttons, plays a song on a double click, and can be put away with PL, and either
   part folds down to its bar. The keys Z, X, C, V and B go back, play, pause, stop and go on.
+- The data network knows the slowest cable between any two points of it, in J's Core, for any mod or addon to ask:
+  of every way between them, over cables and routers and through the Mainframes and racks that join cable runs, it
+  takes the one whose slowest cable is fastest, which is as fast as data can go between them. A router slows
+  nothing down, and a Mainframe that is switched off passes nothing through.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.

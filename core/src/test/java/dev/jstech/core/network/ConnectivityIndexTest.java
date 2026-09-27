@@ -27,6 +27,9 @@ class ConnectivityIndexTest {
 
     private ConnectivityIndex index;
 
+    /** Where a device that bridges cable runs stands, such as a Mainframe; not a position of the index. */
+    private static final long DEVICE = pos(0, 50, 0);
+
     private static long pos(int x, int y, int z) {
         return ((long) x & 0xFFFFFFFL) << 38
                 | ((long) y & 0xFFFL)
@@ -390,7 +393,7 @@ class ConnectivityIndexTest {
         index.onCablePlaced(pos(10, 0, 0), Set.of());
         assertEquals(2, index.componentCount());
         assertFalse(index.inSameNetwork(pos(0, 0, 0), pos(10, 0, 0)));
-        index.bridge(Set.of(pos(0, 0, 0), pos(10, 0, 0)));
+        index.bridge(DEVICE, Set.of(pos(0, 0, 0), pos(10, 0, 0)));
         assertEquals(1, index.componentCount());
         assertTrue(index.inSameNetwork(pos(0, 0, 0), pos(10, 0, 0)),
                 "a device bridges the two runs it touches into one network");
@@ -402,7 +405,7 @@ class ConnectivityIndexTest {
         index.onCablePlaced(pos(10, 0, 0), Set.of());
         var uuid = NetworkUuid.random();
         index.assignUuid(pos(0, 0, 0), uuid); // one run carries the network; the other is UUID-less
-        index.bridge(Set.of(pos(0, 0, 0), pos(10, 0, 0)));
+        index.bridge(DEVICE, Set.of(pos(0, 0, 0), pos(10, 0, 0)));
         assertEquals(uuid, index.networkOf(pos(0, 0, 0)).orElseThrow());
         assertEquals(uuid, index.networkOf(pos(10, 0, 0)).orElseThrow(),
                 "the bridged run inherits the merged network's UUID");
@@ -411,14 +414,14 @@ class ConnectivityIndexTest {
     @Test
     void bridge_singlePosition_isNoOp() {
         index.onCablePlaced(pos(0, 0, 0), Set.of());
-        index.bridge(Set.of(pos(0, 0, 0)));
+        index.bridge(DEVICE, Set.of(pos(0, 0, 0)));
         assertEquals(1, index.componentCount());
     }
 
     @Test
     void bridge_ignoresUnregisteredPositions() {
         index.onCablePlaced(pos(0, 0, 0), Set.of());
-        index.bridge(Set.of(pos(0, 0, 0), pos(99, 0, 0))); // the second is not registered
+        index.bridge(DEVICE, Set.of(pos(0, 0, 0), pos(99, 0, 0))); // the second is not registered
         assertEquals(1, index.componentCount());
         assertTrue(index.contains(pos(0, 0, 0)));
     }
@@ -516,5 +519,66 @@ class ConnectivityIndexTest {
         index.assignUuid(pos(0, 0, 0), uuid);
         index.onCableRemoved(pos(0, 0, 0));
         assertEquals(uuid, index.networkOf(pos(1, 0, 0)).orElseThrow());
+    }
+
+    @Test
+    void slowestBetween_isTheSlowestCableOnTheWay() {
+        // Ethernet into a router, HBW out of it: the router limits nothing, the Ethernet does.
+        index.onCablePlaced(pos(0, 0, 0), Set.of(), DataTier.T1_ETHERNET);
+        index.onCablePlaced(pos(1, 0, 0), Set.of(pos(0, 0, 0)), DataTier.T1_ETHERNET);
+        index.onCablePlaced(pos(2, 0, 0), Set.of(pos(1, 0, 0)));
+        index.onCablePlaced(pos(3, 0, 0), Set.of(pos(2, 0, 0)), DataTier.T2_HBW);
+        index.onCablePlaced(pos(4, 0, 0), Set.of(pos(3, 0, 0)), DataTier.T2_HBW);
+        assertEquals(DataTier.T1_ETHERNET, index.slowestBetween(Set.of(pos(0, 0, 0)), Set.of(pos(4, 0, 0)))
+                .orElseThrow());
+        assertEquals(DataTier.T2_HBW, index.slowestBetween(Set.of(pos(3, 0, 0)), Set.of(pos(4, 0, 0)))
+                .orElseThrow(), "between two HBW cables nothing slower is in the way");
+    }
+
+    @Test
+    void slowestBetween_takesTheFasterOfTwoWays() {
+        // From router A to router B once through Ethernet and once through HBW: the data takes the HBW.
+        index.onCablePlaced(pos(0, 0, 0), Set.of());
+        index.onCablePlaced(pos(1, 0, 0), Set.of(pos(0, 0, 0)), DataTier.T1_ETHERNET);
+        index.onCablePlaced(pos(0, 1, 0), Set.of(pos(0, 0, 0)), DataTier.T2_HBW);
+        index.onCablePlaced(pos(1, 1, 0), Set.of(pos(0, 1, 0)), DataTier.T2_HBW);
+        index.onCablePlaced(pos(2, 0, 0), Set.of(pos(1, 0, 0), pos(1, 1, 0)));
+        assertEquals(DataTier.T2_HBW, index.slowestBetween(Set.of(pos(0, 0, 0)), Set.of(pos(2, 0, 0)))
+                .orElseThrow());
+        index.onCableRemoved(pos(1, 1, 0));
+        assertEquals(DataTier.T1_ETHERNET, index.slowestBetween(Set.of(pos(0, 0, 0)), Set.of(pos(2, 0, 0)))
+                .orElseThrow(), "with the fast way cut, the slow one is all there is");
+    }
+
+    @Test
+    void slowestBetween_crossesADeviceThatBridgesRuns() {
+        index.onCablePlaced(pos(0, 0, 0), Set.of(), DataTier.T2_HBW);
+        index.onCablePlaced(pos(10, 0, 0), Set.of(), DataTier.T2_HBW);
+        assertTrue(index.slowestBetween(Set.of(pos(0, 0, 0)), Set.of(pos(10, 0, 0))).isEmpty(),
+                "two runs nothing joins");
+        index.bridge(DEVICE, Set.of(pos(0, 0, 0), pos(10, 0, 0)));
+        assertEquals(DataTier.T2_HBW, index.slowestBetween(Set.of(pos(0, 0, 0)), Set.of(pos(10, 0, 0)))
+                .orElseThrow(), "a Mainframe joining two runs carries data between them");
+        index.forgetBridge(DEVICE);
+        assertTrue(index.slowestBetween(Set.of(pos(0, 0, 0)), Set.of(pos(10, 0, 0))).isEmpty(),
+                "and a device gone joins nothing");
+    }
+
+    @Test
+    void slowestBetween_ofACableWithItselfIsThatCable() {
+        index.onCablePlaced(pos(0, 0, 0), Set.of(), DataTier.HPC);
+        assertEquals(DataTier.HPC, index.slowestBetween(Set.of(pos(0, 0, 0)), Set.of(pos(0, 0, 0))).orElseThrow());
+        assertTrue(index.slowestBetween(Set.of(pos(0, 0, 0)), Set.of(pos(9, 9, 9))).isEmpty(),
+                "and nothing reaches a position the index does not hold");
+    }
+
+    @Test
+    void tierOf_isForgottenWithTheCable() {
+        index.onCablePlaced(pos(0, 0, 0), Set.of(), DataTier.T1_ETHERNET);
+        index.onCablePlaced(pos(1, 0, 0), Set.of(pos(0, 0, 0)));
+        assertEquals(DataTier.T1_ETHERNET, index.tierOf(pos(0, 0, 0)).orElseThrow());
+        assertTrue(index.tierOf(pos(1, 0, 0)).isEmpty(), "a router is no cable and has no tier");
+        index.onCableRemoved(pos(0, 0, 0));
+        assertTrue(index.tierOf(pos(0, 0, 0)).isEmpty());
     }
 }

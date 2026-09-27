@@ -196,7 +196,7 @@ public class DataCableBlockEntity extends BlockEntity {
             final ConnectivityIndex index = NetworkSystem.get(serverLevel).connectivity();
             final long encodedPos = worldPosition.asLong();
             if (!index.contains(encodedPos)) {
-                index.onCablePlaced(encodedPos, networkNeighbors(serverLevel));
+                index.onCablePlaced(encodedPos, networkNeighbors(serverLevel), tier());
             }
             // Restore this cable's persisted network identity when its segment has none yet, so an
             if (loadedNetwork != null && index.networkOf(encodedPos).isEmpty()) {

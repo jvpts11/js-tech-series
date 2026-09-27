@@ -13,6 +13,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,7 +21,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.PriorityQueue;
 import java.util.Set;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Spatial connectivity index for the J's Computers computation network.
@@ -48,6 +51,17 @@ public final class ConnectivityIndex {
      * this index, so these are what let a removal tell the fragment that still reaches it from one it cut away.
      */
     private final Map<Long, Anchor> anchors = new HashMap<>();
+
+    /* What kind of cable each position is; a position with none (a router) limits nothing that passes through it. */
+    private final Map<Long, DataTier> tiers = new HashMap<>();
+
+    /*
+     * The cable runs each bridging device joins, by the device's own position, and the other way round. A Mainframe
+     * or a rack is not a position of this index, so these are how a search for a way through the network crosses
+     * one: from any cable it touches to any other.
+     */
+    private final Map<Long, Set<Long>> bridges = new HashMap<>();
+    private final Map<Long, Set<Long>> bridgedBy = new HashMap<>();
 
     // Queries
 
@@ -123,12 +137,83 @@ public final class ConnectivityIndex {
         return result;
     }
 
+    /** What kind of cable is at that position, or empty for a position that is no cable (a router) or none. */
+    public Optional<DataTier> tierOf(final long encodedPos) {
+        return Optional.ofNullable(tiers.get(encodedPos));
+    }
+
+    /**
+     * The slowest cable on the fastest way from any of {@code from} to any of {@code to}: what data between them
+     * travels no faster than, since it is only as fast as the slowest cable it has to pass.
+     *
+     * <p>Of every way between them, the one whose slowest cable is fastest is taken, the way traffic takes the best
+     * route it has. Through the devices that bridge cable runs (a Mainframe, a rack) the way goes from any cable the
+     * device touches to any other; a position that is no cable, such as a router, slows nothing down. Cables are
+     * compared by their {@link DataTier#maxThroughput()}.
+     *
+     * @return the slowest cable on that way, or empty when nothing joins the two, or nothing but devices lies between
+     */
+    public Optional<DataTier> slowestBetween(final Collection<Long> from, final Collection<Long> to) {
+        final Set<Long> goals = new HashSet<>();
+        for (final long pos : to) {
+            if (posToId.containsKey(pos)) {
+                goals.add(pos);
+            }
+        }
+        if (goals.isEmpty()) {
+            return Optional.empty();
+        }
+        /*
+         * A widest-path search: every position is reached first along the way whose slowest cable is fastest, so the
+         * first goal taken off the queue is reached as fast as it can be.
+         */
+        final Map<Long, Long> best = new HashMap<>();
+        final Map<Long, DataTier> slowest = new HashMap<>();
+        final PriorityQueue<Reach> queue = new PriorityQueue<>(
+                Comparator.comparingLong(Reach::throughput).reversed());
+        for (final long pos : from) {
+            if (posToId.containsKey(pos)) {
+                offer(pos, null, best, slowest, queue);
+            }
+        }
+        final Set<Long> done = new HashSet<>();
+        while (!queue.isEmpty()) {
+            final Reach reach = queue.poll();
+            if (!done.add(reach.pos())) {
+                continue;
+            }
+            if (goals.contains(reach.pos())) {
+                return Optional.ofNullable(slowest.get(reach.pos()));
+            }
+            final DataTier sofar = slowest.get(reach.pos());
+            for (final long next : neighboursOf(reach.pos())) {
+                if (!done.contains(next) && posToId.containsKey(next)) {
+                    offer(next, sofar, best, slowest, queue);
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
     // Mutations
 
+    /** Puts in a position that carries the network but is no cable, such as a router. */
     public IPlacementResult onCablePlaced(long encodedPos, Set<Long> neighbors) {
+        return onCablePlaced(encodedPos, neighbors, null);
+    }
+
+    /**
+     * Puts in a cable of that tier, joined to those of its neighbours already in.
+     *
+     * @param tier the kind of cable, or null for a position that carries the network without being a cable
+     */
+    public IPlacementResult onCablePlaced(long encodedPos, Set<Long> neighbors, @Nullable DataTier tier) {
         if (posToId.containsKey(encodedPos)) {
             throw new IllegalStateException(
                     "Position already registered: " + encodedPos);
+        }
+        if (tier != null) {
+            tiers.put(encodedPos, tier);
         }
 
         // 1. Allocate a fresh DSU element for the new cable.
@@ -216,7 +301,45 @@ public final class ConnectivityIndex {
         }
     }
 
-    public void bridge(Collection<Long> positions) {
+    /**
+     * Joins the cable runs a device touches into one network, and remembers that it does, so a search for a way
+     * through the network crosses the device. Reporting the same cables again changes nothing, so a device can
+     * report them every tick.
+     *
+     * @param device where the device stands, which is no position of this index
+     */
+    public void bridge(final long device, final Collection<Long> positions) {
+        final Set<Long> touched = Set.copyOf(positions);
+        if (!touched.equals(bridges.get(device))) {
+            forgetBridge(device);
+            if (!touched.isEmpty()) {
+                bridges.put(device, touched);
+                for (final long cable : touched) {
+                    bridgedBy.computeIfAbsent(cable, pos -> new HashSet<>()).add(device);
+                }
+            }
+        }
+        join(positions);
+    }
+
+    /** The device at {@code device} is gone: it joins nothing any more on a way through the network. */
+    public void forgetBridge(final long device) {
+        final Set<Long> touched = bridges.remove(device);
+        if (touched == null) {
+            return;
+        }
+        for (final long cable : touched) {
+            final Set<Long> devices = bridgedBy.get(cable);
+            if (devices != null) {
+                devices.remove(device);
+                if (devices.isEmpty()) {
+                    bridgedBy.remove(cable);
+                }
+            }
+        }
+    }
+
+    private void join(final Collection<Long> positions) {
         final List<Integer> ids = new ArrayList<>();
         NetworkUuid surviving = null;
         for (final long pos : positions) {
@@ -317,6 +440,7 @@ public final class ConnectivityIndex {
             }
         }
         adjacency.remove(encodedPos);
+        tiers.remove(encodedPos);
 
         // Rebuild the DSU from scratch over the surviving cables.
         final Set<Long> survivors = new LinkedHashSet<>(posToId.keySet());
@@ -435,10 +559,53 @@ public final class ConnectivityIndex {
         dsu.clear();
         componentCache.clear();
         anchors.clear();
+        tiers.clear();
+        bridges.clear();
+        bridgedBy.clear();
+    }
+
+    /* The positions a way through the network steps to from {@code pos}: its neighbours, and across its devices. */
+    private Set<Long> neighboursOf(final long pos) {
+        final Set<Long> devices = bridgedBy.get(pos);
+        if (devices == null) {
+            return adjacency.getOrDefault(pos, Set.of());
+        }
+        final Set<Long> out = new HashSet<>(adjacency.getOrDefault(pos, Set.of()));
+        for (final long device : devices) {
+            out.addAll(bridges.getOrDefault(device, Set.of()));
+        }
+        out.remove(pos);
+        return out;
+    }
+
+    /* Offers {@code pos} to the search, reached along a way whose slowest cable so far is {@code before}. */
+    private void offer(final long pos, @Nullable final DataTier before, final Map<Long, Long> best,
+                       final Map<Long, DataTier> slowest, final PriorityQueue<Reach> queue) {
+        final DataTier here = tiers.get(pos);
+        final DataTier limit = throughputOf(here) < throughputOf(before) ? here : before;
+        final long throughput = throughputOf(limit);
+        if (throughput > best.getOrDefault(pos, -1L)) {
+            best.put(pos, throughput);
+            if (limit == null) {
+                slowest.remove(pos);
+            } else {
+                slowest.put(pos, limit);
+            }
+            queue.add(new Reach(pos, throughput));
+        }
+    }
+
+    /* How much a cable carries; a position that is no cable limits nothing. */
+    private static long throughputOf(@Nullable final DataTier tier) {
+        return tier == null ? Long.MAX_VALUE : tier.maxThroughput();
     }
 
     /** The network an owner holds and the cables it touches. */
     private record Anchor(NetworkUuid network, Set<Long> cables) {
+    }
+
+    /** A position the search has reached, and how fast the best way to it is. */
+    private record Reach(long pos, long throughput) {
     }
 
     /**
