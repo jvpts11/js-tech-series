@@ -399,6 +399,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   System Monitor list each window by the name the desktop gives its program.
 
 ### Fixed
+- The service panel of every Mainframe no longer flickers where it meets the edges of its opening: its edges lay on
+  the walls of the opening and fought them for the surface, which showed through the grille, the louvres and the
+  glass.
 - Shutting a computer down from its desktop shows the system's own goodbye, and the machine goes dark only when it
   has finished; it used to cut the power at once, dropping the player out of the computer with no screen at all.
   Restarting from the desktop shows the goodbye too before the self-test, as restarting from a prompt already did.
