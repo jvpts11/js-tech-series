@@ -299,7 +299,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The buses say whether they reach the network with a lamp at the right end of their window's title bar, green or
   red, the word in its tooltip. The Crafting Receiving Bus's title no longer runs into it.
 - The drives and the Pattern Encoders take their cable in the middle of their back, where a cable comes up to them,
-  instead of low down.
+  instead of low down, and the port there is their era's: a DB-25 on the Vintage ones, a USB port on the Legacy ones,
+  a blue USB 3 port on the Standard ones.
 - A Standard computer with nothing to boot shows its dialog over the maker's mark and the machine's name, and the
   self-test's bar is gone, where it showed below a short dialog and hid under a tall one.
 - The Standard Mainframe's roof fans look like fans: each is a square housing that stays still, with a dark well
