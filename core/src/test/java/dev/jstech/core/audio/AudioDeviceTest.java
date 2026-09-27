@@ -59,6 +59,24 @@ class AudioDeviceTest {
     }
 
     @Test
+    void voiced_playsATuneInTheDevicesOwnVoice() {
+        final AudioDevice fm = new AudioDevice("x:fm", NAME, Set.of(Waveform.values()), true, 9,
+                FrequencyResponse.FULL, false, Waveform.FM);
+        final List<Tone> played = fm.voiced(TUNE);
+        assertEquals(TUNE.size(), played.size());
+        assertTrue(played.stream().allMatch(tone -> tone.wave() == Waveform.FM), "every note in the chip's voice");
+        assertEquals(TUNE.get(0).frequency(), played.get(0).frequency());
+        assertEquals(TUNE.get(1).volume(), played.get(1).volume(), "a rest stays a rest");
+    }
+
+    @Test
+    void voiced_fallsToAShapeTheDeviceHasWhenItsVoiceIsNotAmongThem() {
+        final AudioDevice speaker = new AudioDevice("x:speaker", NAME, Set.of(Waveform.SQUARE), false, 1);
+        assertEquals(Waveform.SQUARE, speaker.timbre(), "a device given no voice speaks in its first shape");
+        assertTrue(speaker.voiced(TUNE).stream().allMatch(tone -> tone.wave() == Waveform.SQUARE));
+    }
+
+    @Test
     void constructor_refusesFewerThanNoVoices() {
         assertThrows(IllegalArgumentException.class, () -> new AudioDevice("x:y", NAME, Set.of(), false, -1));
     }

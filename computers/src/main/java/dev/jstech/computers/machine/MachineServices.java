@@ -86,6 +86,9 @@ public final class MachineServices implements IHost {
     @Nullable
     private GatewayBridgeService gateways;
 
+    @Nullable
+    private SoundService sound;
+
     public MachineServices(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
     }
@@ -303,6 +306,17 @@ public final class MachineServices implements IHost {
         return this.gateways;
     }
 
+    /**
+     * The machine's sound, through which its programs beep, play tunes and play recordings.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public SoundService sound() {
+        this.follow();
+        return this.sound;
+    }
+
     /** Makes the shell and what goes through it again when the machine is in another world than before. */
     private void follow() {
         final Level level = this.machine.getLevel();
@@ -327,6 +341,7 @@ public final class MachineServices implements IHost {
             this.config = new MachineConfigService(terminal, server, this.files);
             this.programs = new ProgramService(this.machine, terminal, server, this.files, this.remotes);
             this.gateways = new GatewayBridgeService(this.machine, server);
+            this.sound = new SoundService(this.machine, server);
         } else {
             this.shell = null;
             this.files = null;
@@ -341,6 +356,7 @@ public final class MachineServices implements IHost {
             this.programs = null;
             this.remotes = null;
             this.gateways = null;
+            this.sound = null;
         }
     }
 }

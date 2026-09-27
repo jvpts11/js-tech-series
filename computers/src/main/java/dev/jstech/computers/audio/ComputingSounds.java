@@ -106,6 +106,14 @@ public final class ComputingSounds {
     public static final SoundKey MUSIC = CONTENT.sound("music/song").made()
             .channel(AudioChannels.MUSIC).range(24).subtitle("Music plays").register();
 
+    /** The notes a program beeps out of the speaker inside the case, square and one at a time. */
+    public static final SoundKey PC_SPEAKER = CONTENT.sound("computer/pc_speaker").made()
+            .channel(AudioChannels.DEVICES).range(16).subtitle("Computer beeps a tune").register();
+
+    /** The tunes a program plays through the machine's sound card, in its voice, out of its monitors and speakers. */
+    public static final SoundKey PROGRAM_TONES = CONTENT.sound("computer/tones").made()
+            .channel(AudioChannels.DEVICES).range(24).subtitle("Computer plays a tune").register();
+
     /** A system reaching its desktop. Systems with no chime of their own stay silent. */
     public static final SoundCue SYSTEM_STARTUP = CONTENT.cue("system/startup").world()
             .channel(AudioChannels.INTERFACE)

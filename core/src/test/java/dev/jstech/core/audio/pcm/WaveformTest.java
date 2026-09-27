@@ -50,6 +50,14 @@ class WaveformTest {
     }
 
     @Test
+    void at_cardVoicesRepeatEveryPeriodAndAreNotPlainShapes() {
+        for (final Waveform wave : new Waveform[] {Waveform.FM, Waveform.WAVETABLE}) {
+            assertEquals(wave.at(0.1, 0), wave.at(1.1, 0), 1e-9, wave + " repeats each period");
+            assertTrue(Math.abs(wave.at(0.1, 0) - Waveform.SINE.at(0.1, 0)) > 1e-3, wave + " is richer than a sine");
+        }
+    }
+
+    @Test
     void at_noiseFollowsTheRandomItIsGiven() {
         assertEquals(-1.0, Waveform.NOISE.at(0.3, 0.0));
         assertEquals(1.0, Waveform.NOISE.at(0.3, 1.0));

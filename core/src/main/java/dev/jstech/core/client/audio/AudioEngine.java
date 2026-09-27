@@ -22,7 +22,11 @@ import dev.jstech.core.audio.pcm.IPcmOpener;
 import dev.jstech.core.audio.pcm.ResponseFilter;
 import dev.jstech.core.audio.pcm.StereoSelect;
 import dev.jstech.core.audio.pcm.SynthSource;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.resources.ResourceLocation;
@@ -37,6 +41,8 @@ import org.jetbrains.annotations.Nullable;
 public final class AudioEngine {
 
     private static final IAudioSink GAME = new GameAudioSink();
+    /** The notes playing in each voice the server named, which it may stop; touched on the client's thread only. */
+    private static final Map<String, List<SoundInstance>> VOICES = new HashMap<>();
 
     private static volatile IAudioSink sink = GAME;
 
@@ -99,18 +105,43 @@ public final class AudioEngine {
         return playing;
     }
 
-    /** Synthesises the notes the server sent; a sound this client does not know as one made as it plays is ignored. */
+    /**
+     * Synthesises the notes the server sent; a sound this client does not know as one made as it plays is ignored.
+     * Notes played in a voice are kept by it, so the server can stop them when another sound takes the voice.
+     */
     public static void playTones(final ToneSoundPayload payload) {
         final SoundKey sound = SoundKeys.find(payload.sound());
         if (sound == null || !sound.spec().made() || payload.tones().isEmpty()) {
             return;
         }
         final IPcmOpener notes = () -> new SynthSource(payload.tones());
+        SoundInstance playing = null;
         if (payload.onScreen() && sound.spec().space() == SoundSpace.INTERFACE) {
-            playMadeOnScreen(sound, notes, 1.0F);
+            playing = playMadeOnScreen(sound, notes, 1.0F);
         } else if (!payload.onScreen() && sound.spec().space() == SoundSpace.WORLD) {
-            playMade(sound, notes, payload.x(), payload.y(), payload.z(), 1.0F);
+            playing = playMade(sound, notes, payload.x(), payload.y(), payload.z(), 1.0F);
         }
+        if (playing != null && !payload.voice().isEmpty()) {
+            VOICES.values().removeIf(sounds -> {
+                sounds.removeIf(one -> !isPlaying(one));
+                return sounds.isEmpty();
+            });
+            VOICES.computeIfAbsent(payload.voice(), voice -> new ArrayList<>()).add(playing);
+        }
+    }
+
+    /** Stops the notes playing in that voice, another sound having taken it; nothing happens when none play. */
+    public static void stopVoice(final String voice) {
+        final List<SoundInstance> sounds = VOICES.remove(voice);
+        if (sounds != null) {
+            sounds.forEach(AudioEngine::stop);
+        }
+    }
+
+    /** Whether notes are still playing in that voice, for a test. */
+    public static boolean voicePlaying(final String voice) {
+        final List<SoundInstance> sounds = VOICES.get(voice);
+        return sounds != null && sounds.stream().anyMatch(AudioEngine::isPlaying);
     }
 
     /**

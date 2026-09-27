@@ -155,6 +155,21 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   of every way between them, over cables and routers and through the Mainframes and racks that join cable runs, it
   takes the one whose slowest cable is fastest, which is as fast as data can go between them. A router slows
   nothing down, and a Mainframe that is switched off passes nothing through.
+- Programs make sound. Sigma Sharp and Sigma have `Sound.Beep`, a beep out of the speaker inside the case;
+  `Sound.Tones`, a tune through the sound card, written as notes by name or pitch (`C4:250 E4 G4 C4+E4+G4:500`)
+  with rests, chords and lengths; `Sound.Play` and `Sound.Stop`, a song from the machine's disks out of its monitors
+  and speakers; and `Speaker.Named`, a linked speaker found by its name, which plays a song out of itself alone. A
+  tune holding something that is no note stops the program, naming it. A machine with no sound card plays its tunes
+  out of the case, one square note at a time. The documentation of the language has a section on it.
+- A computer's sound hardware plays as many sounds at once as it has voices: 9 on an FM card, 32 on a wavetable
+  card, 64 on a Standard board, and one in the case. A stereo song takes two voices of a card that plays both sides
+  and a mono one takes one, each note of a chord one and each chime of the system one. A sound that finds no voice
+  free takes those of the sound that started first, which stops, and Soundfoundry says so when it was its song; a
+  new beep cuts the one before it off. A paused song holds no voice.
+- The sound system's synthesiser has two voices more, for any mod: the bright, metallic ring of frequency
+  modulation and the rounder note played from a table of harmonics. A sound device says which one its notes take
+  (an FM card the first, a wavetable card and a Standard board's sound the second), and a tune the server sent can
+  be stopped before its end.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.

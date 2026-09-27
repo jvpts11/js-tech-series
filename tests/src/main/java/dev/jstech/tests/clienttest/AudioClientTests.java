@@ -9,6 +9,7 @@ package dev.jstech.tests.clienttest;
 
 import com.mojang.blaze3d.audio.ListenerTransform;
 import dev.jstech.core.audio.AlertSignBoard;
+import dev.jstech.core.audio.Audio;
 import dev.jstech.core.audio.AudioChannels;
 import dev.jstech.core.audio.AudioPrefs;
 import dev.jstech.core.audio.CueSoundPayload;
@@ -233,6 +234,26 @@ public final class AudioClientTests {
                 .thenWaitUntil(() -> AudioEngine.isPlaying(beep[0]), 40, "the beep is heard")
                 .then(10, () -> AudioEngine.stop(beep[0]))
                 .thenWaitUntil(() -> !AudioEngine.isPlaying(beep[0]), 20, "and stops when it is told to");
+    }
+
+    /**
+     * Notes the server sends in a voice of a sound device play until the server says another sound took the voice,
+     * and then stop, while the notes of another voice play on.
+     */
+    @ClientTest(timeoutTicks = 200)
+    public static void voice_stopsItsNotesWhenTheServerSaysItWasTaken(final ClientTestContext ctx) {
+        final List<Tone> held = List.of(new Tone(Waveform.SQUARE, 440.0, 5000, 0.2F));
+        ctx.thenServer(0, level -> {
+                    Audio.tones(level, ctx.serverPlayer().blockPosition(), TestSounds.BEEP, held, "jstests:taken");
+                    Audio.tones(level, ctx.serverPlayer().blockPosition(), TestSounds.BEEP, held, "jstests:kept");
+                })
+                .thenWaitUntil(() -> AudioEngine.voicePlaying("jstests:taken")
+                        && AudioEngine.voicePlaying("jstests:kept"), 40, "the notes of both voices are heard")
+                .thenServer(10, level -> Audio.stopVoice(level, "jstests:taken"))
+                .thenWaitUntil(() -> !AudioEngine.voicePlaying("jstests:taken")
+                        && AudioEngine.voicePlaying("jstests:kept"), 20, "the voice taken falls silent, the other not")
+                .thenServer(0, level -> Audio.stopVoice(level, "jstests:kept"))
+                .thenWaitUntil(() -> !AudioEngine.voicePlaying("jstests:kept"), 20, "and it stops when it is told");
     }
 
     @ClientTest(timeoutTicks = 400)

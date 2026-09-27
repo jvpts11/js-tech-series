@@ -197,6 +197,14 @@ class SubsetLevelTest {
         assertInBoth(source);
     }
 
+    /** The earliest machines beeped and played tunes too, so the subset has the whole of the sound. */
+    @Test
+    void subset_beepsAndPlaysThroughItsLibrary() {
+        assertInBoth("class M { static void Main() { Sound.Beep(440, 100); bool played = Sound.Tones(\"C4 E4\"); "
+                + "Speaker desk = Speaker.Named(\"Desk\"); if (desk != null) { played = desk.Play(\"a.wav\"); } "
+                + "Sound.Stop(); } }");
+    }
+
     @Test
     void subset_hasOnlyPartOfEachTypeItHas() {
         assertOnlyInTheFullLanguage("class M { static void Main() { long n = Console.ReadLong(); } }");

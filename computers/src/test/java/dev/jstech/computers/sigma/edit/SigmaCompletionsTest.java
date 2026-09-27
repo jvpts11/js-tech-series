@@ -364,8 +364,8 @@ class SigmaCompletionsTest {
     void within_theSmallerLanguage_onlyTheTypesOfItsLibraryAreOffered() {
         final List<SigmaCompletions.Item> types = SigmaCompletions.within(LanguageLevel.SIGMA,
                 SigmaCompletions.types(this.builtIns, null, ""));
-        assertEquals(List.of("Computer", "Console", "Convert", "File", "Math", "Program", "Script", "Time"),
-                labels(types));
+        assertEquals(List.of("Computer", "Console", "Convert", "File", "Math", "Program", "Script", "Sound",
+                "Speaker", "Time"), labels(types));
         assertEquals("Standard", named(types, "Console").owner());
         assertTrue(labels(SigmaCompletions.types(this.builtIns, null, "")).contains("Network"),
                 "which the full language still has");

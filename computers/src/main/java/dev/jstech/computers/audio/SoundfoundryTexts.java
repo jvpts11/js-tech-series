@@ -36,6 +36,8 @@ public final class SoundfoundryTexts {
             "%s is not in the catalogue any more");
     public static final TextKey NOT_SHARED = TextKey.of("jsc.soundfoundry.not_shared",
             "%s is not shared by %s any more");
+    public static final TextKey VOICES_TAKEN = TextKey.of("jsc.soundfoundry.voices_taken",
+            "Another sound took the sound card's voices");
 
     private SoundfoundryTexts() {
     }

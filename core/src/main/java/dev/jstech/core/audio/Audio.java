@@ -89,6 +89,15 @@ public final class Audio {
      */
     public static void tones(final ServerLevel level, final BlockPos pos, final SoundKey sound,
                              final List<Tone> tones) {
+        tones(level, pos, sound, tones, "");
+    }
+
+    /**
+     * The same, the notes playing in a voice of a sound device, which {@link #stopVoice} stops before their end when
+     * another sound takes it: a PC speaker's next beep cuts the last one off.
+     */
+    public static void tones(final ServerLevel level, final BlockPos pos, final SoundKey sound,
+                             final List<Tone> tones, final String voice) {
         requireMade(sound, tones);
         if (sound.spec().space() != SoundSpace.WORLD) {
             throw new IllegalArgumentException(sound.id() + " is a sound of the interface, not of the world");
@@ -97,7 +106,12 @@ public final class Audio {
         final double y = pos.getY() + 0.5;
         final double z = pos.getZ() + 0.5;
         PacketDistributor.sendToPlayersNear(level, null, x, y, z, sound.spec().range(),
-                new ToneSoundPayload(sound.id(), false, x, y, z, tones));
+                new ToneSoundPayload(sound.id(), false, x, y, z, tones, voice));
+    }
+
+    /** Stops the notes playing in that voice for every player of the world that hears them. */
+    public static void stopVoice(final ServerLevel level, final String voice) {
+        PacketDistributor.sendToPlayersInDimension(level, new ToneStopPayload(voice));
     }
 
     /**
@@ -199,6 +213,12 @@ public final class Audio {
      */
     public static int tones(final ServerLevel level, final IAudioHost host, final SoundKey sound,
                             final List<Tone> tones) {
+        return tones(level, host, sound, tones, "");
+    }
+
+    /** The same, the notes playing in a voice of the machine's device, which {@link #stopVoice} can stop. */
+    public static int tones(final ServerLevel level, final IAudioHost host, final SoundKey sound,
+                            final List<Tone> tones, final String voice) {
         requireMade(sound, tones);
         if (sound.spec().space() != SoundSpace.WORLD) {
             throw new IllegalArgumentException(sound.id() + " is a sound of the interface, not of the world");
@@ -213,7 +233,7 @@ public final class Audio {
         }
         for (final Vec3 speaker : host.audioOutputs()) {
             PacketDistributor.sendToPlayersNear(level, null, speaker.x, speaker.y, speaker.z, sound.spec().range(),
-                    new ToneSoundPayload(sound.id(), false, speaker.x, speaker.y, speaker.z, played));
+                    new ToneSoundPayload(sound.id(), false, speaker.x, speaker.y, speaker.z, played, voice));
         }
         return host.audioOutputs().size();
     }

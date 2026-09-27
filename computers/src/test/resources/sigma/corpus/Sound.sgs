@@ -1,0 +1,18 @@
+using System.*;
+using System.IO.*;
+using System.Sound.*;
+namespace Corpus;
+class SoundCorpus {
+    static void Main() {
+        Sound.Beep(880, 200);
+        bool tune = Sound.Tones("C4:250 E4 G4 C4+E4+G4:500");
+        bool song = Sound.Play("Users/Public/Music/intro.ogg");
+        Sound.Stop();
+        Speaker desk = Speaker.Named("Desk left");
+        if (desk != null) {
+            bool alone = desk.Play("Users/Public/Music/alarm.wav");
+            Console.PrintLine(desk.Name + alone);
+        }
+        Console.PrintLine("" + tune + song);
+    }
+}

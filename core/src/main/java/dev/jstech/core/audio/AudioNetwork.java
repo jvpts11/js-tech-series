@@ -34,6 +34,12 @@ public final class AudioNetwork {
         registrar.playToClient(ScreenSoundPayload.TYPE, ScreenSoundPayload.STREAM_CODEC, AudioNetwork::onScreenSound);
         registrar.playToClient(ToneSoundPayload.TYPE, ToneSoundPayload.STREAM_CODEC, AudioNetwork::onToneSound);
         registrar.playToClient(CueSoundPayload.TYPE, CueSoundPayload.STREAM_CODEC, AudioNetwork::onCueSound);
+        registrar.playToClient(ToneStopPayload.TYPE, ToneStopPayload.STREAM_CODEC, AudioNetwork::onToneStop);
+    }
+
+    /* Runs on a client only, as the ones below. */
+    private static void onToneStop(final ToneStopPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> AudioEngine.stopVoice(payload.voice()));
     }
 
     /* Runs on a client only: the payload is only ever sent to one. */

@@ -30,22 +30,40 @@ import java.util.Set;
  * @param voices   how many sounds it plays at once
  * @param response what it keeps of a recording on the way out, before any speaker: an early card's coarse sampling
  * @param stereo   whether it plays a recording in two channels; one that does not mixes them before its speakers
+ * @param timbre   the voice its notes have when nothing asks for a shape: the square of a PC speaker, the metallic
+ *                 note of an FM chip, the rounder one of a wavetable
  */
 public record AudioDevice(String id, TextKey name, Set<Waveform> waves, boolean samples, int voices,
-                          FrequencyResponse response, boolean stereo) {
+                          FrequencyResponse response, boolean stereo, Waveform timbre) {
 
-    /** A device that plays a recording as it was made, in stereo. */
+    /** A device that plays a recording as it was made, in stereo, its notes in the first shape it has. */
     public AudioDevice(final String id, final TextKey name, final Set<Waveform> waves, final boolean samples,
                        final int voices) {
         this(id, name, waves, samples, voices, FrequencyResponse.FULL, true);
     }
 
+    /** A device whose notes take the first shape it has. */
+    public AudioDevice(final String id, final TextKey name, final Set<Waveform> waves, final boolean samples,
+                       final int voices, final FrequencyResponse response, final boolean stereo) {
+        this(id, name, waves, samples, voices, response, stereo, firstOf(waves));
+    }
+
     public AudioDevice {
         Objects.requireNonNull(response, "response");
+        Objects.requireNonNull(timbre, "timbre");
         waves = Collections.unmodifiableSet(waves.isEmpty() ? EnumSet.noneOf(Waveform.class) : EnumSet.copyOf(waves));
         if (voices < 0) {
             throw new IllegalArgumentException("a device plays no fewer than no sounds: " + voices);
         }
+    }
+
+    /** The notes of a tune, each in this device's own voice. */
+    public List<Tone> voiced(final List<Tone> tones) {
+        final List<Tone> out = new ArrayList<>(tones.size());
+        for (final Tone tone : tones) {
+            out.add(new Tone(timbre, tone.frequency(), tone.millis(), tone.volume()));
+        }
+        return adapt(out);
     }
 
     /** Whether it can make any sound at all. */
@@ -61,12 +79,16 @@ public record AudioDevice(String id, TextKey name, Set<Waveform> waves, boolean 
         if (waves.isEmpty() || voices == 0) {
             return List.of();
         }
-        final Waveform fallback = waves.iterator().next();
+        final Waveform fallback = waves.contains(timbre) ? timbre : waves.iterator().next();
         final List<Tone> out = new ArrayList<>(tones.size());
         for (final Tone tone : tones) {
             out.add(waves.contains(tone.wave()) ? tone
                     : new Tone(fallback, tone.frequency(), tone.millis(), tone.volume()));
         }
         return out;
+    }
+
+    private static Waveform firstOf(final Set<Waveform> waves) {
+        return waves.isEmpty() ? Waveform.SQUARE : EnumSet.copyOf(waves).iterator().next();
     }
 }

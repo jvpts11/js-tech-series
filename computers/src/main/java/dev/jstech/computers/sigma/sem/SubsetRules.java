@@ -56,7 +56,9 @@ public final class SubsetRules {
             "Convert", Set.of("ToInt", "ToDouble", "ToBool", "ToString"),
             "Time", Set.of("Tick", "Day"),
             "Computer", Set.of("Name", "RamMb", "Online"),
-            "Script", Set.of("OnInit", "OnTick", "OnDestroy"));
+            "Script", Set.of("OnInit", "OnTick", "OnDestroy"),
+            "Sound", Set.of("Beep", "Tones", "Play", "Stop"),
+            "Speaker", Set.of("Named", "Name", "Play"));
 
     /*
      * What the subset does not have, and what to write instead, in pairs: the first fills "Sigma has no %s", the

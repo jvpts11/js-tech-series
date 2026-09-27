@@ -11,8 +11,10 @@ import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.advancement.HardwareMilestones;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.audio.MachineVoices;
 import dev.jstech.computers.audio.MusicDownloads;
 import dev.jstech.computers.audio.MusicPlayer;
+import dev.jstech.computers.audio.ProgramSounds;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.IEraChassisBlock;
 import dev.jstech.computers.client.audio.MachineSoundSources;
@@ -134,9 +136,13 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     private final ComputerSounds sounds = new ComputerSounds(this);
     /** What its system's sound plays through, and where it comes out. */
     private final ComputerAudioHost audio = new ComputerAudioHost(this);
+    /** The voices of its sound hardware and the sounds holding them; before the music, which takes them. */
+    private final MachineVoices voices = new MachineVoices(this);
     private final MusicPlayer music = new MusicPlayer(this);
     /** The songs Soundfoundry is fetching over the network. */
     private final MusicDownloads musicDownloads = new MusicDownloads(this);
+    /** What the programs running on it play: their tunes, their beeps and their recordings. */
+    private final ProgramSounds programSounds = new ProgramSounds(this);
 
     /** The name a player gave this computer: the machine's own, and no part's. */
     private String computerName = "";
@@ -1135,11 +1141,26 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         sounds.tick(level);
         music.tick(level);
         musicDownloads.tick(level);
+        programSounds.tick(level);
+        // A machine that is off plays nothing, so whatever held its voices has stopped.
+        if (!isRunning()) {
+            voices.silence(level);
+        }
     }
 
     /** Soundfoundry playing on this machine. */
     public MusicPlayer musicPlayer() {
         return music;
+    }
+
+    /** The voices of its sound hardware, and the sounds holding them. */
+    public MachineVoices voices() {
+        return voices;
+    }
+
+    /** What the programs running on it play. */
+    public ProgramSounds programSounds() {
+        return programSounds;
     }
 
     /** The songs Soundfoundry is fetching over this machine's network. */
@@ -1211,6 +1232,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (level instanceof ServerLevel serverLevel) {
             onBroken(serverLevel);
             music.removed(serverLevel);
+            voices.silence(serverLevel);
         } else if (level != null && level.isClientSide()) {
             MachineSoundSources.untrack(sounds);
         }

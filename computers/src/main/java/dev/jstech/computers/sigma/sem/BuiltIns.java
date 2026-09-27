@@ -153,6 +153,7 @@ public final class BuiltIns {
     private static final String OPERATIONS = "System.Operations";
     private static final String EXECUTION = "System.Execution";
     private static final String UI = "System.UI";
+    private static final String SOUND = "System.Sound";
 
     private static final Map<String, String> HOMES = Map.ofEntries(
             Map.entry("IScript", SYSTEM), Map.entry("Script", SUBSET_LIBRARY),
@@ -167,7 +168,7 @@ public final class BuiltIns {
      * thing with nothing gained, and a program moved between the languages would have to be rewritten to say it.
      */
     private static final Set<String> SUBSET_TYPES =
-            Set.of("Console", "File", "Program", "Math", "Convert", "Time", "Computer", "Script");
+            Set.of("Console", "File", "Program", "Math", "Convert", "Time", "Computer", "Script", "Sound", "Speaker");
 
     /**
      * The type known by exactly {@code fullName}, its namespace in front ({@code System.IO.Console}),
@@ -238,7 +239,8 @@ public final class BuiltIns {
 
     /** Every namespace the language has, System first, for a list that offers them. */
     public List<String> namespaces() {
-        return List.of(SYSTEM, COLLECTIONS, IO, UTILS, MACHINE, NETWORK, OPERATIONS, EXECUTION, UI, SUBSET_LIBRARY);
+        return List.of(SYSTEM, COLLECTIONS, IO, UTILS, MACHINE, NETWORK, OPERATIONS, EXECUTION, UI, SOUND,
+                SUBSET_LIBRARY);
     }
 
     private static String key(final String name, final int arity) {

@@ -9,6 +9,7 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.audio.ComputingAudioDevices;
 import dev.jstech.computers.audio.ComputingSounds;
+import dev.jstech.computers.audio.MachineVoices;
 import dev.jstech.computers.audio.SoundHardwareTexts;
 import dev.jstech.computers.audio.SoundOutput;
 import dev.jstech.computers.audio.SpeakerSides;
@@ -125,9 +126,15 @@ final class ComputerAudioHost implements IAudioHost {
         return context;
     }
 
-    /** Plays one of the system's own sounds, when the machine's sound hardware plays recordings at all. */
+    /**
+     * Plays one of the system's own sounds, when the machine's sound hardware plays recordings at all. It holds a voice
+     * of the sound card while it rings, and lets it go when another sound wants it; a muted system rings nothing and
+     * takes no voice.
+     */
     void play(final ServerLevel level, final SystemSound sound) {
-        if (audioDevice().samples()) {
+        final MachineVoices voices = machine.voices();
+        if (audioDevice().samples() && audioVolume() > 0.0F && voices.take(level, false, voices.name("system"), 1,
+                level.getGameTime() + sound.voiceTicks(), MachineVoices.LET_RING)) {
             Audio.cue(level, this, sound.cue());
         }
     }

@@ -24,4 +24,15 @@ public enum SystemSound {
             case ERROR -> ComputingSounds.SYSTEM_ERROR;
         };
     }
+
+    /**
+     * How long it holds a voice of the machine's sound hardware, in ticks: as long as the longest chime a system of
+     * the series plays for it, six seconds to come up or go down and one for an error.
+     */
+    public int voiceTicks() {
+        return switch (this) {
+            case STARTUP, SHUTDOWN -> 120;
+            case ERROR -> 20;
+        };
+    }
 }

@@ -43,6 +43,7 @@ public final class MusicPlayer {
     private Text trouble = Text.EMPTY;
 
     private static final String KEY = JsComputers.MODID + ":soundfoundry/";
+    private static final long TICK_MILLIS = 50L;
     /** How often the machine is looked at while it plays, in ticks: its power, its outputs, its volume. */
     private static final int LOOK_EVERY = 10;
     private static final RandomGenerator SHUFFLING = new Random();
@@ -102,24 +103,26 @@ public final class MusicPlayer {
             return;
         }
         if (MediaSessions.paused(level, key())) {
-            MediaSessions.resume(level, key());
+            resume(level);
         } else if (!MediaSessions.has(level, key())) {
             start(level, Math.max(0, state().current()), 0L);
         }
     }
 
-    /** Pauses the song, or takes a paused one up again. */
+    /** Pauses the song, or takes a paused one up again; a paused song holds no voice of the sound card. */
     public void pause(final ServerLevel level) {
         if (MediaSessions.paused(level, key())) {
-            MediaSessions.resume(level, key());
+            resume(level);
         } else if (MediaSessions.has(level, key())) {
             MediaSessions.pause(level, key());
+            computer.voices().release(key());
         }
     }
 
     /** Stops the song; it stays the one it is on, to play from the start. */
     public void stop(final ServerLevel level) {
         MediaSessions.stop(level, key());
+        computer.voices().release(key());
     }
 
     /** Goes to the next song: playing it if one was playing, else only choosing it. */
@@ -177,6 +180,29 @@ public final class MusicPlayer {
     /** The machine is gone from the world, broken or unloaded: its music stops. */
     public void removed(final ServerLevel level) {
         MediaSessions.stop(level, key());
+        computer.voices().release(key());
+    }
+
+    /* A paused song taken up again takes its voices again, for what is left of it. */
+    private void resume(final ServerLevel level) {
+        MediaSessions.resume(level, key());
+        final MediaInfo info = info(level);
+        if (info != null) {
+            takeVoices(level, info, MediaSessions.position(level, key()));
+        }
+    }
+
+    /*
+     * The song takes voices of the sound card, two for a stereo song on a card that plays both sides and one
+     * otherwise, until its end; another sound taking them stops it, and says so on the screen.
+     */
+    private void takeVoices(final ServerLevel level, final MediaInfo info, final long from) {
+        final boolean stereo = computer.audioHost().audioDevice().stereo() && info.channels() >= 2;
+        final long left = Math.max(1L, (info.millis() - Math.max(0L, from)) / TICK_MILLIS);
+        computer.voices().take(level, false, key(), stereo ? 2 : 1, level.getGameTime() + left, stopped -> {
+            MediaSessions.stop(stopped, key());
+            trouble = SoundfoundryTexts.VOICES_TAKEN.text();
+        });
     }
 
     private void go(final ServerLevel level, final int index) {
@@ -222,6 +248,7 @@ public final class MusicPlayer {
         final BlockPos at = computer.getBlockPos();
         MediaSessions.play(level, key(), ComputingSounds.MUSIC, song.media(), heardFrom, heardAt, from,
                 () -> ended(level, at));
+        takeVoices(level, song.info(), from);
     }
 
     /* A song played to its end: the next one, as the list's order and repeat say, or silence after the last. */

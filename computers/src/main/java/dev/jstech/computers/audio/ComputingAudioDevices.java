@@ -35,15 +35,19 @@ public final class ComputingAudioDevices {
             new AudioDevice("jsc:pc_speaker", PC_SPEAKER_NAME, Set.of(Waveform.SQUARE), false, 1));
     /*
      * The early card: eight bits in one channel at 22 kHz, so a recording comes out of it really lo-fi, and the same
-     * out of every speaker, which have no sides to play from a card that has none.
+     * out of every speaker, which have no sides to play from a card that has none. Its notes have the bright,
+     * metallic voice of frequency modulation.
      */
     public static final AudioDevice FM_CARD = AudioDevices.register(
             new AudioDevice("jsc:fm_card", FM_CARD_NAME, EnumSet.allOf(Waveform.class), true, 9,
-                    new FrequencyResponse(22_050, 8, 0, 0), false));
+                    new FrequencyResponse(22_050, 8, 0, 0), false, Waveform.FM));
+    /* The later card and the sound on a Standard board, whose notes are played from a table of harmonics. */
     public static final AudioDevice WAVETABLE_CARD = AudioDevices.register(
-            new AudioDevice("jsc:wavetable_card", WAVETABLE_CARD_NAME, EnumSet.allOf(Waveform.class), true, 32));
+            new AudioDevice("jsc:wavetable_card", WAVETABLE_CARD_NAME, EnumSet.allOf(Waveform.class), true, 32,
+                    FrequencyResponse.FULL, true, Waveform.WAVETABLE));
     public static final AudioDevice ON_BOARD = AudioDevices.register(
-            new AudioDevice("jsc:on_board", ON_BOARD_NAME, EnumSet.allOf(Waveform.class), true, 64));
+            new AudioDevice("jsc:on_board", ON_BOARD_NAME, EnumSet.allOf(Waveform.class), true, 64,
+                    FrequencyResponse.FULL, true, Waveform.WAVETABLE));
 
     private ComputingAudioDevices() {
     }

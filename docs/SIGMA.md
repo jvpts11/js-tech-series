@@ -36,7 +36,8 @@ It keeps classes with inheritance, `virtual` and `override`, structs, enums, arr
 and `as`. It has no interfaces, records, delegates, events, properties, lambdas, `foreach`, `List`, `Map`,
 generics, `var`, `lock`, threads, windows, `abstract`, or strings with holes in them, and every refusal says
 what to write instead. Its whole library is one namespace, `Standard` (`using Standard.*;`), with
-`Console`, `File`, `Program`, `Math`, `Convert`, `Time`, `Computer` and `Script`, each a handful of members.
+`Console`, `File`, `Program`, `Math`, `Convert`, `Time`, `Computer`, `Script`, `Sound` and `Speaker`, each a
+handful of members.
 
 It prints the way the languages of those machines printed, with `printf`, the one call written with no type
 in front of it: `printf("%s has %d items\n", name, count);`. The format has to be written out in quotes,
@@ -117,6 +118,7 @@ whether the text was a number.
 | `System.Operations` | `Operations`: pull, push, craft, cancel, ask after an operation |
 | `System.Execution` | `Program`, `Process`, `ProcessMessage` |
 | `System.Threading` | `Thread`, and the `lock` statement |
+| `System.Sound` | `Sound` (beeps, tunes, songs), `Speaker` (one speaker by its name) |
 
 ## Programs starting programs: `System.Execution`
 
@@ -237,6 +239,39 @@ with everything else it does. At most 256 calls wait their turn at once, holding
 them: a click that finds no room is dropped and counted in `Program.DroppedEvents`, while closing a window
 always gets in, ahead of the rest. A window is a thing of the machine, not of the screen: closing the desktop
 does not close it, and a program that ends with a window open ends.
+
+## Sound: `System.Sound`
+
+A program plays through the machine it runs on, and what comes out is what the machine is made of.
+
+```
+Sound.Beep(880, 200)                              a beep out of the speaker inside the case
+Sound.Tones("C4:250 E4 G4 C4+E4+G4:500") -> bool  a tune through the sound card
+Sound.Play("Users/Public/Music/intro.ogg") -> bool a song from the disks, out of the monitors and speakers
+Sound.Stop()                                      stops the songs the machine's programs are playing
+Speaker.Named("Desk left") -> Speaker             the linked speaker of that name, or null
+desk.Name                                         its name
+desk.Play("Users/Public/Music/alarm.wav") -> bool a song out of that speaker alone
+```
+
+A tune is a line of items, each a note by its name (`C4`, `F#3`, `Bb5`), a pitch in hertz (`440`) or a
+rest (`R`). Notes played together are joined by `+`, and how long an item lasts, in milliseconds, follows a
+colon; an item that does not say lasts as long as the one before it, the first a quarter of a second. A tune
+holds at most 1,024 items and 16 notes to a chord, and an item that is no note halts the program, naming
+it. A beep is kept between 20 Hz and 20 kHz and to a minute at most.
+
+The notes have the voice of the card: the bright, metallic ring of an FM card, the rounder one of a
+wavetable card or of the sound on a Standard board. A machine with no card plays its tunes out of the speaker
+in the case, as square notes, and of each chord only the first note. `Play` answers false when the file is
+no song, when the server no longer keeps it, or when the machine has nothing to play a recording through: a
+Legacy machine needs a sound card, and every machine a monitor linked to it.
+
+Everything the machine plays shares the voices of its sound hardware: 9 on an FM card, 32 on a wavetable
+card, 64 on a Standard board, and one in the case. A stereo song takes two voices of a card that plays both
+sides and a mono one takes one, each note of a chord takes one, and so does each of the system's chimes. A
+sound that finds no voice free takes the voices of the sound that started first, which stops; Soundfoundry
+says so when it is its song. A new beep cuts the one before it off. Beeps, tunes and songs follow the
+system's volume and mute, and all of them stop when the machine goes off.
 
 ## The ComputerCraft side: `Gateway`
 

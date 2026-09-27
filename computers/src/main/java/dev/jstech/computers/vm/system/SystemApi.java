@@ -30,6 +30,7 @@ public final class SystemApi {
     private static final String NETWORK = "System.Network";
     private static final String OPERATIONS = "System.Operations";
     private static final String UI = "System.UI";
+    private static final String SOUND = "System.Sound";
 
     private static final String VOID = "void";
     private static final String INT = "int";
@@ -48,7 +49,7 @@ public final class SystemApi {
             computer(), holdingInfo(), serverInfo(), network(), stockEvent(), subscription(), remoteComputer(),
             iqlResult(), iql(), workStat(), mainframe(), askResult(), operationInfo(), operations(), ccComputer(),
             ccPeripheral(), gatewayMessage(), gateway(), widget(), window(), box("Row"), box("Column"), label(),
-            button(), textBox(), checkBox(), progressBar(), listBox(), canvas(), messageBox());
+            button(), textBox(), checkBox(), progressBar(), listBox(), canvas(), messageBox(), sound(), speaker());
 
     private static final Map<String, TypeSpec> BY_TYPE = new HashMap<>();
     /** Every way of writing a call, under its owner and name, so a lookup does not walk the whole system. */
@@ -695,6 +696,38 @@ public final class SystemApi {
         final Members messageBox = new Members("MessageBox");
         messageBox.onType(VOID, "Show", MemberKind.PROCESS, CallCost.of(SigmaCosts.WRITE), STRING, STRING);
         return new TypeSpec(UI, "MessageBox", messageBox.members);
+    }
+
+    /**
+     * The machine's sound. A beep comes out of the speaker inside the case and cuts the one before it off; a tune plays
+     * through the sound card in the card's own voice, a note of a chord to each of its voices, or from the case on a
+     * machine with none; a recording from the machine's disks comes out of its monitors and speakers as its system
+     * says. Everything takes voices of the hardware, and a sound that finds none free takes the oldest sound's.
+     *
+     * <p>A tune is written as notes one after another, each by its name or its pitch in hertz, or R for a rest, several
+     * played together joined by a plus, each lasting as many milliseconds as written after a colon:
+     * {@code "C4:250 E4 G4 C4+E4+G4:500"}. A tune that holds something that is no note stops the program, naming it.
+     * Playing makes the machine read the song from its disk, which is why it costs a read.
+     */
+    private static TypeSpec sound() {
+        final Members sound = new Members("Sound");
+        sound.onType(VOID, "Beep", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), INT, INT);
+        sound.onType(BOOL, "Tones", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), STRING);
+        sound.onType(BOOL, "Play", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
+        sound.onType(VOID, "Stop", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        return new TypeSpec(SOUND, "Sound", sound.members);
+    }
+
+    /**
+     * One of the speakers linked to the machine, found by the name its owner gave it, or null when none is called so. A
+     * recording played on it comes out of it alone, whatever the system chose to play through.
+     */
+    private static TypeSpec speaker() {
+        final Members speaker = new Members("Speaker");
+        speaker.onType("Speaker", "Named", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), STRING);
+        speaker.recordValue(STRING, "Name");
+        speaker.onObject(BOOL, "Play", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
+        return new TypeSpec(SOUND, "Speaker", speaker.members);
     }
 
     /** Gathers the members of one type, in the order they are declared. */
