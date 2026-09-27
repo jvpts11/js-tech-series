@@ -17,6 +17,38 @@
       "when": {
         "system": "jsc:frames_11"
       }
+    },
+    {
+      "sound": "jsc:os/kde_plasma_legacy/error",
+      "when": {
+        "desktop": "jsc:kde_plasma",
+        "era": "legacy"
+      }
+    },
+    {
+      "sound": "jsc:os/kde_plasma/error",
+      "when": {
+        "desktop": "jsc:kde_plasma"
+      }
+    },
+    {
+      "sound": "jsc:os/gnome_legacy/error",
+      "when": {
+        "desktop": "jsc:gnome",
+        "era": "legacy"
+      }
+    },
+    {
+      "sound": "jsc:os/gnome/error",
+      "when": {
+        "desktop": "jsc:gnome"
+      }
+    },
+    {
+      "sound": "jsc:os/gnome/error",
+      "when": {
+        "desktop": "jsc:cinnamon"
+      }
     }
   ]
 }

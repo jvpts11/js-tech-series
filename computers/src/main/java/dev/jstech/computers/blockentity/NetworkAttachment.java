@@ -8,6 +8,7 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.NetworkSystem;
@@ -139,6 +140,14 @@ final class NetworkAttachment {
             final BlockPos pos = this.machine.getBlockPos();
             final BlockState state = this.machine.getBlockState();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+            /*
+             * A system up at its desktop hears its network come and go as it hears a device, which is the sound the
+             * desktops that had one gave it. A machine coming on joins before its system is up, so that is silent.
+             */
+            if (this.machine.isRunning() && this.machine.bootedDesktopId() != null) {
+                this.machine.systemSound(level,
+                        resolved != null ? SystemSound.DEVICE_CONNECT : SystemSound.DEVICE_DISCONNECT);
+            }
         }
     }
 

@@ -8,6 +8,7 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.block.ServerRackBlock;
@@ -58,6 +59,7 @@ import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.audio.Audio;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
@@ -271,6 +273,27 @@ public class ServerRackBlockEntity extends BlockEntity
         }
     }
 
+    /** Runs {@code emptying} without a sound: the rack is being emptied because its block is going. */
+    public void quietly(final Runnable emptying) {
+        quiet = true;
+        try {
+            emptying.run();
+        } finally {
+            quiet = false;
+        }
+    }
+
+    /* A unit went into a rack unit or came out of it, which its rails are heard doing. */
+    private void railsMoved(final int slot, final boolean full) {
+        if (slot < 0 || slot >= seated.length || seated[slot] == full) {
+            return;
+        }
+        seated[slot] = full;
+        if (!quiet && level instanceof ServerLevel server) {
+            Audio.at(server, worldPosition, full ? ComputingSounds.RACK_SLIDE_IN : ComputingSounds.RACK_SLIDE_OUT);
+        }
+    }
+
     /** The whole 2 x 3 x 2 footprint: the renderer draws the cabinet from this block alone. */
     public AABB renderBox() {
         final BlockState state = getBlockState();
@@ -291,6 +314,11 @@ public class ServerRackBlockEntity extends BlockEntity
 
     /** The drives of a bay treated as one volume: the arrays, what a pull costs, and the rebuilds. */
     private final RackArrays arrays = new RackArrays(this, CAPACITY_U);
+
+    /** Which rack units hold something, so that only a unit going in or coming out is heard on its rails. */
+    private final boolean[] seated = new boolean[CAPACITY_U];
+    /** Whether the rack is being emptied because it is coming down, which its rails do not sound. */
+    private boolean quiet;
 
     private final ItemStackHandler servers = new ItemStackHandler(CAPACITY_U) {
         @Override
@@ -325,7 +353,15 @@ public class ServerRackBlockEntity extends BlockEntity
         }
 
         @Override
+        protected void onLoad() {
+            for (int i = 0; i < Math.min(getSlots(), seated.length); i++) {
+                seated[i] = !getStackInSlot(i).isEmpty();
+            }
+        }
+
+        @Override
         protected void onContentsChanged(final int slot) {
+            railsMoved(slot, !getStackInSlot(slot).isEmpty());
             /*
              * A freshly mounted (or swapped) machine runs POST on its next session; whatever
              * console state the old occupant left in memory dies with the swap.

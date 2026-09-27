@@ -48,7 +48,35 @@ From Freesound, under the Creative Commons CC0 1.0 Universal Public Domain Dedic
 Pixel_Stick (the power button), 607freesound (the old computer starting up and the floppy drive reading), conath
 (the hard drive), griffinjennings (the disc tray), micropolis (the floppy disk going in and being drawn out),
 asiekierka (the floppy disk ejected), soundandmelodies (the server room), Johnmode (Frames 95's chime), Lumineve
-(Frames XP's chime), marlonnnnnn (Frames 11's chime) and Kastenfrosch (Frames 11's error).
+(Frames XP's chime), marlonnnnnn (Frames 11's chime and the Frames notice), Kastenfrosch (Frames 11's error), CZghost
+(the failed self-test), Klerrp (the hard drive seeking), Sanderboah (the monitor switching off), leocb (a server on
+its rails), SamsterBirdies (the disc drive turning), kyles (the Vintage Mainframe's tapes), dland (a device plugged in
+and pulled out on Frames), Breviceps (the minefield's click), Tony B kksm (the mine exploding) and Fupicat (the
+minefield cleared). From Kenney's Interface Sounds (https://kenney.nl/assets/interface-sounds), under CC0 as well: the
+Frames bell.
+
+### The desktops' own sound themes
+
+The Unix desktops sound like themselves: their sounds are taken from the themes those desktops ship, under the licences
+their authors gave them. Each file was cut of its silence, levelled and saved as Ogg Vorbis, and nothing else was
+changed; a file shared alike stays under its licence, changes included.
+
+- GNOME today (`os/gnome/`), from the freedesktop.org sound theme
+  (https://gitlab.freedesktop.org/xdg/xdg-sound-theme): the error, the notice and the device sounds from Ivica Ico
+  Bukvic's Borealis theme, under the Creative Commons Attribution-ShareAlike 3.0 licence
+  (https://creativecommons.org/licenses/by-sa/3.0/); the bell by Dr. Richard Boulanger et al., under the Creative
+  Commons Attribution 3.0 Unported licence (https://creativecommons.org/licenses/by/3.0/).
+- GNOME as it looked on Legacy machines (`os/gnome_legacy/`), from gnome-audio 2.22.2
+  (https://download.gnome.org/sources/gnome-audio/2.22/): the start-up and shut-down sounds from Andreas Karlsson's
+  Silvertheme, under the Creative Commons Attribution-ShareAlike 2.0 licence
+  (https://creativecommons.org/licenses/by-sa/2.0/); the error and the notice from Ivica Ico Bukvic's Borealis theme,
+  under the Creative Commons Attribution 3.0 licence (https://creativecommons.org/licenses/by/3.0/).
+- KDE as it looked on Legacy machines (`os/kde_plasma_legacy/`), from KDE's Oxygen sound theme
+  (https://invent.kde.org/plasma/oxygen-sounds): Copyright (C) 2008 Nuno Filipe Povoa, under the GNU Lesser General
+  Public License, version 3 or later, whose text ships with this mod (`COPYING.LESSER` and `COPYING`).
+- KDE Plasma today (`os/kde_plasma/`), from KDE's Ocean sound theme (https://invent.kde.org/plasma/ocean-sound-theme):
+  Copyright (C) 2023 Guilherme Marçal Silva, under the Creative Commons Attribution-ShareAlike 4.0 licence
+  (https://creativecommons.org/licenses/by-sa/4.0/).
 
 From Pixabay, under the Pixabay Content License (https://pixabay.com/service/license-summary/), which asks for no
 notice either: EdR (the monitor), EagleStealthTeam (the server fan), BigKahuna360 (the USB drive pulled out), a

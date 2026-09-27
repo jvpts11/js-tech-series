@@ -1,0 +1,36 @@
+{
+  "sounds": [
+    {
+      "sound": "jsc:os/frames/device_disconnect",
+      "when": {
+        "system": "jsc:frames_xp"
+      }
+    },
+    {
+      "sound": "jsc:os/frames/device_disconnect",
+      "when": {
+        "system": "jsc:frames_11"
+      }
+    },
+    {
+      "sound": "jsc:os/kde_plasma/device_disconnect",
+      "when": {
+        "desktop": "jsc:kde_plasma",
+        "era": "standard"
+      }
+    },
+    {
+      "sound": "jsc:os/gnome/device_disconnect",
+      "when": {
+        "desktop": "jsc:gnome",
+        "era": "standard"
+      }
+    },
+    {
+      "sound": "jsc:os/gnome/device_disconnect",
+      "when": {
+        "desktop": "jsc:cinnamon"
+      }
+    }
+  ]
+}

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.machine;
 
+import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.FilesystemKind;
@@ -128,6 +129,18 @@ public final class FileService {
         return this.machine instanceof IOsHost host ? host : null;
     }
 
+    /*
+     * Reading or writing a hard drive of this machine is heard: its heads seek. A floppy, a disc and a solid-state disk
+     * make no such sound, and a machine with no sound of its own is silent.
+     */
+    private void heard(final Resolved r) {
+        final IOsHost host = this.osHost();
+        if (host != null && r.drive() != null && r.drive().disk().getItem() instanceof DiskItem disk
+                && disk.spec().tier() == StorageTier.HDD) {
+            host.diskWorked(this.level);
+        }
+    }
+
     /** What the drive a path lands on answers when it is not there or has nothing in it, or null when it is ready. */
     @Nullable
     private static ICliComputer.FsResult unready(final Resolved r) {
@@ -212,6 +225,7 @@ public final class FileService {
         if (unready != null) {
             return unready;
         }
+        this.heard(r);
         final DriveTable.Drive drive = r.drive();
         final String real = r.path();
         // A file on an install disc has no stored bytes: its text is generated from the disc's stamp.
@@ -254,6 +268,7 @@ public final class FileService {
         if (unready != null) {
             return unready;
         }
+        this.heard(r);
         final DriveTable.Drive drive = r.drive();
         final String real = r.path();
         // Any extension will do: a kind the machine does not know is kept as text under the name it was given.
@@ -284,6 +299,7 @@ public final class FileService {
         if (unready != null) {
             return unready;
         }
+        this.heard(r);
         final DriveTable.Drive drive = r.drive();
         final FileType type = FileType.of(extensionOf(path));
         if (!type.userEditable()) {
@@ -321,6 +337,7 @@ public final class FileService {
         if (unready != null) {
             return unready;
         }
+        this.heard(r);
         final DriveTable.Drive drive = r.drive();
         final String real = r.path();
         // Reject .dat entries before attempting deletion so we surface a clear message.
@@ -424,6 +441,8 @@ public final class FileService {
         if (destUnready != null) {
             return destUnready;
         }
+        this.heard(s);
+        this.heard(d);
         // A destination that is an existing directory means "copy into it", keeping the source name.
         String realDest = d.path();
         if (DriveTable.dirExists(this.osHost(), d.drive(), realDest)) {
@@ -516,6 +535,8 @@ public final class FileService {
         if (destUnready != null) {
             return destUnready;
         }
+        this.heard(s);
+        this.heard(d);
         if (!d.path().isEmpty() && !DriveTable.dirExists(this.osHost(), d.drive(), d.path())) {
             return ICliComputer.FsResult.fail(CliTexts.PATH_NOT_FOUND.text());
         }

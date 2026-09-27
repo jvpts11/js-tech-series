@@ -40,25 +40,32 @@ public final class MediaBaySounds {
         format = formatOf(held);
     }
 
-    /** The bay's slot changed: plays the medium going in or coming out, when that is what happened. */
-    public void changed(@Nullable final Level level, final BlockPos pos, final ItemStack held) {
+    /**
+     * The bay's slot changed: plays the medium going in or coming out, when that is what happened, and says what
+     * moved so the bay can tell whoever else cares.
+     *
+     * @return the medium that went in or came out, or null when none did, or when it moved without a sound
+     */
+    @Nullable
+    public Move changed(@Nullable final Level level, final BlockPos pos, final ItemStack held) {
         final boolean nowFull = !held.isEmpty();
         if (nowFull == full) {
             if (nowFull) {
                 format = formatOf(held);
             }
-            return;
+            return null;
         }
         final MediaFormat moved = nowFull ? formatOf(held) : format;
         full = nowFull;
         format = nowFull ? moved : null;
         if (quiet || !(level instanceof ServerLevel server)) {
-            return;
+            return null;
         }
         final SoundKey sound = soundOf(moved, nowFull);
         if (sound != null) {
             Audio.at(server, pos, sound);
         }
+        return moved == null ? null : new Move(moved, nowFull);
     }
 
     /** Runs {@code emptying} without a sound: the bay is being emptied because its block is going. */
@@ -91,5 +98,14 @@ public final class MediaBaySounds {
     @Nullable
     private static MediaFormat formatOf(final ItemStack stack) {
         return stack.getItem() instanceof FormattedMediaItem media ? media.format() : null;
+    }
+
+    /**
+     * A medium that went into the bay or came out of it.
+     *
+     * @param format what it is
+     * @param in     whether it went in rather than came out
+     */
+    public record Move(MediaFormat format, boolean in) {
     }
 }

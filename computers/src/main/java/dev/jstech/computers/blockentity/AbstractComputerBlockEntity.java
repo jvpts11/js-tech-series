@@ -14,6 +14,7 @@ import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.audio.MachineVoices;
 import dev.jstech.computers.audio.MusicDownloads;
 import dev.jstech.computers.audio.MusicPlayer;
+import dev.jstech.computers.audio.ProgramCue;
 import dev.jstech.computers.audio.ProgramSounds;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.IEraChassisBlock;
@@ -62,6 +63,7 @@ import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.audio.IAudioHost;
+import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.audio.StereoSide;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.network.IDataNetworkConnectable;
@@ -344,15 +346,34 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (wasOn && !isRunning()) {
             showShutdown(false);
         }
+        testedInvalidBuild();
     }
 
     @Override
     public void setPowered(final boolean on) {
         final boolean wasOn = isRunning();
+        final boolean wasSwitchedOn = power.on();
         power.setPowered(on);
         if (wasOn && !on) {
             showShutdown(false);
         }
+        if (!wasSwitchedOn) {
+            testedInvalidBuild();
+        }
+    }
+
+    /** The machine used its disk: a turning hard drive is heard seeking for a moment. */
+    @Override
+    public void diskWorked(final ServerLevel level) {
+        sounds.diskWorked(level);
+    }
+
+    /**
+     * What else the machine keeps sounding while it does it, over its disk, heard from its block: nothing for most
+     * machines. Read on the client, from what the server sent it.
+     */
+    public List<LoopRequest> machineLoops() {
+        return List.of();
     }
 
     /**
@@ -446,6 +467,13 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
 
     public void toggleAutoStart() {
         power.toggleAutoStart(buildValid());
+    }
+
+    /* Switched on with parts that do not make a computer: the board tests itself all the same and beeps its failure. */
+    private void testedInvalidBuild() {
+        if (power.on() && !buildValid() && level instanceof ServerLevel server) {
+            sounds.postFailed(server);
+        }
     }
 
     private void endSession() {
@@ -1176,6 +1204,16 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     @Override
     public void systemSound(final ServerLevel level, final SystemSound sound) {
         audio.play(level, sound);
+    }
+
+    @Override
+    public void programSound(final ServerLevel level, final ProgramCue sound) {
+        audio.play(level, sound);
+    }
+
+    @Override
+    public void bell(final ServerLevel level) {
+        audio.bell(level);
     }
 
     /** How many speakers are linked to it. */

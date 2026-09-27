@@ -8,6 +8,15 @@
     ],
     "subtitle": "subtitles.jsc.computer.hard_drive_idle"
   },
+  "computer/hard_drive_seek": {
+    "sounds": [
+      {
+        "attenuation_distance": 8,
+        "name": "jsc:computer/hard_drive_seek"
+      }
+    ],
+    "subtitle": "subtitles.jsc.computer.hard_drive_seek"
+  },
   "computer/hard_drive_spin_down": {
     "sounds": [
       {
@@ -32,6 +41,12 @@
     ],
     "subtitle": "subtitles.jsc.computer.post_beep"
   },
+  "computer/post_fail": {
+    "sounds": [
+      "jsc:computer/post_fail"
+    ],
+    "subtitle": "subtitles.jsc.computer.post_fail"
+  },
   "computer/power_button": {
     "sounds": [
       "jsc:computer/power_button"
@@ -43,6 +58,15 @@
       "jsc:computer/vintage_startup"
     ],
     "subtitle": "subtitles.jsc.computer.vintage_startup"
+  },
+  "mainframe/tape": {
+    "sounds": [
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:mainframe/tape"
+      }
+    ],
+    "subtitle": "subtitles.jsc.mainframe.tape"
   },
   "media/disc_tray": {
     "sounds": [
@@ -71,6 +95,15 @@
     ],
     "subtitle": "subtitles.jsc.media.floppy_read"
   },
+  "media/optical_read": {
+    "sounds": [
+      {
+        "attenuation_distance": 8,
+        "name": "jsc:media/optical_read"
+      }
+    ],
+    "subtitle": "subtitles.jsc.media.optical_read"
+  },
   "media/usb_insert": {
     "sounds": [
       "jsc:media/usb_insert"
@@ -83,11 +116,41 @@
     ],
     "subtitle": "subtitles.jsc.media.usb_remove"
   },
+  "monitor/power_off": {
+    "sounds": [
+      "jsc:monitor/power_off"
+    ],
+    "subtitle": "subtitles.jsc.monitor.power_off"
+  },
   "monitor/power_on": {
     "sounds": [
       "jsc:monitor/power_on"
     ],
     "subtitle": "subtitles.jsc.monitor.power_on"
+  },
+  "os/frames/beep": {
+    "sounds": [
+      "jsc:os/frames/beep"
+    ],
+    "subtitle": "subtitles.jsc.os.frames.beep"
+  },
+  "os/frames/device_connect": {
+    "sounds": [
+      "jsc:os/frames/device_connect"
+    ],
+    "subtitle": "subtitles.jsc.os.frames.device_connect"
+  },
+  "os/frames/device_disconnect": {
+    "sounds": [
+      "jsc:os/frames/device_disconnect"
+    ],
+    "subtitle": "subtitles.jsc.os.frames.device_disconnect"
+  },
+  "os/frames/notify": {
+    "sounds": [
+      "jsc:os/frames/notify"
+    ],
+    "subtitle": "subtitles.jsc.os.frames.notify"
   },
   "os/frames_11/error": {
     "sounds": [
@@ -124,6 +187,162 @@
       "jsc:os/frames_xp/startup"
     ],
     "subtitle": "subtitles.jsc.os.frames_xp.startup"
+  },
+  "os/gnome/bell": {
+    "sounds": [
+      "jsc:os/gnome/bell"
+    ],
+    "subtitle": "subtitles.jsc.os.gnome.bell"
+  },
+  "os/gnome/device_connect": {
+    "sounds": [
+      "jsc:os/gnome/device_connect"
+    ],
+    "subtitle": "subtitles.jsc.os.gnome.device_connect"
+  },
+  "os/gnome/device_disconnect": {
+    "sounds": [
+      "jsc:os/gnome/device_disconnect"
+    ],
+    "subtitle": "subtitles.jsc.os.gnome.device_disconnect"
+  },
+  "os/gnome/error": {
+    "sounds": [
+      "jsc:os/gnome/error"
+    ],
+    "subtitle": "subtitles.jsc.os.gnome.error"
+  },
+  "os/gnome/notify": {
+    "sounds": [
+      "jsc:os/gnome/notify"
+    ],
+    "subtitle": "subtitles.jsc.os.gnome.notify"
+  },
+  "os/gnome_legacy/error": {
+    "sounds": [
+      "jsc:os/gnome_legacy/error"
+    ],
+    "subtitle": "subtitles.jsc.os.gnome_legacy.error"
+  },
+  "os/gnome_legacy/notify": {
+    "sounds": [
+      "jsc:os/gnome_legacy/notify"
+    ],
+    "subtitle": "subtitles.jsc.os.gnome_legacy.notify"
+  },
+  "os/gnome_legacy/shutdown": {
+    "sounds": [
+      "jsc:os/gnome_legacy/shutdown"
+    ],
+    "subtitle": "subtitles.jsc.os.gnome_legacy.shutdown"
+  },
+  "os/gnome_legacy/startup": {
+    "sounds": [
+      "jsc:os/gnome_legacy/startup"
+    ],
+    "subtitle": "subtitles.jsc.os.gnome_legacy.startup"
+  },
+  "os/kde_plasma/bell": {
+    "sounds": [
+      "jsc:os/kde_plasma/bell"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma.bell"
+  },
+  "os/kde_plasma/device_connect": {
+    "sounds": [
+      "jsc:os/kde_plasma/device_connect"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma.device_connect"
+  },
+  "os/kde_plasma/device_disconnect": {
+    "sounds": [
+      "jsc:os/kde_plasma/device_disconnect"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma.device_disconnect"
+  },
+  "os/kde_plasma/error": {
+    "sounds": [
+      "jsc:os/kde_plasma/error"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma.error"
+  },
+  "os/kde_plasma/notify": {
+    "sounds": [
+      "jsc:os/kde_plasma/notify"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma.notify"
+  },
+  "os/kde_plasma/shutdown": {
+    "sounds": [
+      "jsc:os/kde_plasma/shutdown"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma.shutdown"
+  },
+  "os/kde_plasma/startup": {
+    "sounds": [
+      "jsc:os/kde_plasma/startup"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma.startup"
+  },
+  "os/kde_plasma_legacy/bell": {
+    "sounds": [
+      "jsc:os/kde_plasma_legacy/bell"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma_legacy.bell"
+  },
+  "os/kde_plasma_legacy/error": {
+    "sounds": [
+      "jsc:os/kde_plasma_legacy/error"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma_legacy.error"
+  },
+  "os/kde_plasma_legacy/notify": {
+    "sounds": [
+      "jsc:os/kde_plasma_legacy/notify"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma_legacy.notify"
+  },
+  "os/kde_plasma_legacy/shutdown": {
+    "sounds": [
+      "jsc:os/kde_plasma_legacy/shutdown"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma_legacy.shutdown"
+  },
+  "os/kde_plasma_legacy/startup": {
+    "sounds": [
+      "jsc:os/kde_plasma_legacy/startup"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma_legacy.startup"
+  },
+  "program/minesweeper_click": {
+    "sounds": [
+      "jsc:program/minesweeper_click"
+    ],
+    "subtitle": "subtitles.jsc.program.minesweeper_click"
+  },
+  "program/minesweeper_explode": {
+    "sounds": [
+      "jsc:program/minesweeper_explode"
+    ],
+    "subtitle": "subtitles.jsc.program.minesweeper_explode"
+  },
+  "program/minesweeper_win": {
+    "sounds": [
+      "jsc:program/minesweeper_win"
+    ],
+    "subtitle": "subtitles.jsc.program.minesweeper_win"
+  },
+  "rack/slide_in": {
+    "sounds": [
+      "jsc:rack/slide_in"
+    ],
+    "subtitle": "subtitles.jsc.rack.slide_in"
+  },
+  "rack/slide_out": {
+    "sounds": [
+      "jsc:rack/slide_out"
+    ],
+    "subtitle": "subtitles.jsc.rack.slide_out"
   },
   "server/fan": {
     "sounds": [

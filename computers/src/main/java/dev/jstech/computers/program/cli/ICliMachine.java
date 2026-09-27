@@ -74,6 +74,10 @@ public interface ICliMachine {
         return ShellFamily.DOS;
     }
 
+    /** Rings the terminal's bell, as a program printing the bell character does; nothing where there is none. */
+    default void bell() {
+    }
+
     /**
      * The family of the installed system, which is what its tools name the kernel after; Linux when nothing
      * says otherwise, since that is the family most Unix prompts here belong to.

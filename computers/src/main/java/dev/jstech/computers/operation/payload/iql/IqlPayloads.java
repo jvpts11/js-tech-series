@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.iql;
 
+import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.NmsApp;
 import dev.jstech.computers.item.DiskItem;
@@ -132,6 +133,10 @@ public final class IqlPayloads {
         }
         PacketDistributor.sendToPlayer(player,
                 new IqlResultPayload(outcome.ok(), outcome.said(), rows));
+        // A query that fails is an error of the program's, which the machine sounds as its system sounds one.
+        if (!outcome.ok() && host instanceof IOsHost machine) {
+            machine.systemSound(level, SystemSound.ERROR);
+        }
     }
 
     private static void handleIqlResult(final IqlResultPayload payload, final Player player) {

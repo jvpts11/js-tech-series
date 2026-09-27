@@ -8,7 +8,9 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.operation.payload.DeleteFilePayload;
+import dev.jstech.computers.operation.payload.MachineSoundPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.FolderContentPayload;
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
@@ -1038,8 +1040,13 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             PacketDistributor.sendToServer(new SaveFilePayload(this.host, outputPath, result.binary()));
             FilesApps.diskChanged();
             this.workspace.say(GameText.resolve(VirtualStudioTexts.BUILD_SUCCEEDED));
+            // The machine sounds the end of the build once, when the last project in line has built.
+            if (this.buildQueue.isEmpty()) {
+                PacketDistributor.sendToServer(new MachineSoundPayload(this.host, SystemSound.NOTIFY));
+            }
             return;
         }
+        PacketDistributor.sendToServer(new MachineSoundPayload(this.host, SystemSound.ERROR));
         for (final IProgrammingLanguage.Complaint complaint : result.complaints()) {
             print(VirtualStudioTexts.COMPLAINT.with(what, complaint.text()), Tone.FAILED);
             // The complaint names the source as the compiler saw it; the row needs the path on the disk.

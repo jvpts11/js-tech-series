@@ -165,7 +165,8 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
     protected void dropContents(final ServerLevel level, final BlockPos controller) {
         Block.popResource(level, controller, new ItemStack(blockItem()));
         if (level.getBlockEntity(controller) instanceof ServerRackBlockEntity rack) {
-            BlockDrops.spill(level, controller, rack.getServers());
+            // The servers fall out with the cabinet rather than slide out of it, which is heard as the cabinet.
+            rack.quietly(() -> BlockDrops.spill(level, controller, rack.getServers()));
             // The hotswap drives belong to the rack, not to the servers, so they spill too.
             BlockDrops.spill(level, controller, rack.getFrontSlots());
         }

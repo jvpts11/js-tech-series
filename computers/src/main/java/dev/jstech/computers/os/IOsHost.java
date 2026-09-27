@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.computers.audio.ProgramCue;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
@@ -192,6 +193,21 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
      * with no sound of its own, such as a server in a rack, plays none.
      */
     default void systemSound(final ServerLevel level, final SystemSound sound) {
+    }
+
+    /** Plays one of the series' programs' own sounds out of its monitors, as it plays its system's. */
+    default void programSound(final ServerLevel level, final ProgramCue sound) {
+    }
+
+    /**
+     * Rings its system's bell: the system's own through the sound card, or the speaker in the case where the system
+     * has none. A machine with no sound of its own, such as a server in a rack, rings nothing.
+     */
+    default void bell(final ServerLevel level) {
+    }
+
+    /** It read or wrote its disk, which a hard drive is heard doing. A machine with no sound of its own is silent. */
+    default void diskWorked(final ServerLevel level) {
     }
 
     /** The per-machine console state: history, installed programs, settings. */

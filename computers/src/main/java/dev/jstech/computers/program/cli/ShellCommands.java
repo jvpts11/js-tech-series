@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.program.cli.man.ManPage;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -133,6 +134,10 @@ final class ShellCommands {
 
         private static final TextKey SUMMARY = TextKey.of("jsc.cli.shell.echo.summary", "print the given text");
         private static final TextKey USAGE = TextKey.of("jsc.cli.shell.echo.usage", "<text>");
+        /** The switch that has the Unix shells read the backslash escapes in the text. */
+        private static final String ESCAPES = "-e";
+        /** How many columns apart a terminal's tab stops are. */
+        private static final int TAB = 8;
 
         @Override public CommandScope scope() {
             return CommandScope.everywhere();
@@ -155,7 +160,43 @@ final class ShellCommands {
         }
 
         @Override public void run(final CliContext ctx) {
+            if (ctx.computer().shellFamily() == ShellFamily.POSIX && ESCAPES.equals(ctx.arg(0))) {
+                escaped(ctx, ctx.rest(1));
+                return;
+            }
             ctx.out().line(ctx.rest(0));
+        }
+
+        /*
+         * On the Unix shells -e reads the backslash escapes in the text: \a rings the terminal's bell, \n starts a
+         * new line, \t moves to the next tab stop and \\ is a backslash. The DOS family has no such switch and
+         * prints it as it was typed.
+         */
+        private static void escaped(final CliContext ctx, final String text) {
+            final StringBuilder line = new StringBuilder();
+            boolean bell = false;
+            for (int i = 0; i < text.length(); i++) {
+                final char c = text.charAt(i);
+                if (c != '\\' || i + 1 == text.length()) {
+                    line.append(c);
+                    continue;
+                }
+                final char next = text.charAt(++i);
+                switch (next) {
+                    case 'a' -> bell = true;
+                    case 'n' -> {
+                        ctx.out().line(line.toString());
+                        line.setLength(0);
+                    }
+                    case 't' -> line.append(" ".repeat(TAB - line.length() % TAB));
+                    case '\\' -> line.append('\\');
+                    default -> line.append('\\').append(next);
+                }
+            }
+            ctx.out().line(line.toString());
+            if (bell) {
+                ctx.computer().bell();
+            }
         }
     }
 

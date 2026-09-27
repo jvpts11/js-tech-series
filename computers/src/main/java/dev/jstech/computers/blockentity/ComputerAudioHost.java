@@ -9,6 +9,7 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.audio.ComputingAudioDevices;
 import dev.jstech.computers.audio.ComputingSounds;
+import dev.jstech.computers.audio.IMachineCue;
 import dev.jstech.computers.audio.MachineVoices;
 import dev.jstech.computers.audio.SoundHardwareTexts;
 import dev.jstech.computers.audio.SoundOutput;
@@ -123,20 +124,37 @@ final class ComputerAudioHost implements IAudioHost {
         if (system != null) {
             context = context.with(ComputingSounds.SYSTEM, system.toString());
         }
+        final ResourceLocation desktop = machine.bootedDesktopId();
+        if (desktop != null) {
+            context = context.with(ComputingSounds.DESKTOP, desktop.toString());
+        }
         return context;
     }
 
     /**
-     * Plays one of the system's own sounds, when the machine's sound hardware plays recordings at all. It holds a voice
-     * of the sound card while it rings, and lets it go when another sound wants it; a muted system rings nothing and
-     * takes no voice.
+     * Plays one of the system's or its programs' own sounds, when the machine's sound hardware plays recordings at
+     * all. It holds a voice of the sound card while it rings, and lets it go when another sound wants it; a muted
+     * system rings nothing and takes no voice.
      */
-    void play(final ServerLevel level, final SystemSound sound) {
+    void play(final ServerLevel level, final IMachineCue sound) {
         final MachineVoices voices = machine.voices();
         if (audioDevice().samples() && audioVolume() > 0.0F && voices.take(level, false, voices.name("system"), 1,
                 level.getGameTime() + sound.voiceTicks(), MachineVoices.LET_RING)) {
             Audio.cue(level, this, sound.cue());
         }
+    }
+
+    /**
+     * Rings the system's bell. A system with a bell of its own rings it through the sound card, and not at all while
+     * it is muted; the text systems, a desktop with no bell of its own and a machine with no sound card to play one
+     * ring the speaker in the case instead, which no volume setting reaches.
+     */
+    void bell(final ServerLevel level) {
+        if (audioDevice().samples() && SystemSound.BEEP.cue().defaults().pick(soundContext()) != null) {
+            play(level, SystemSound.BEEP);
+            return;
+        }
+        Audio.at(level, machine.getBlockPos(), ComputingSounds.POST_BEEP);
     }
 
     /** How many speakers the machine has. */

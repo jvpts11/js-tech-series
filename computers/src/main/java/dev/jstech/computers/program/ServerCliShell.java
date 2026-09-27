@@ -181,6 +181,14 @@ abstract class ServerCliShell implements ICliComputer {
         return ServerCliComputer.shellFamilyOf(hostBlock);
     }
 
+    /** The machine's system rings its bell, or its case's speaker beeps where the system has none. */
+    @Override
+    public void bell() {
+        if (hostBlock instanceof IOsHost machine) {
+            machine.bell(level);
+        }
+    }
+
     @Override
     public Platform platform() {
         final OsDef os = hostBlock instanceof IOsHost computer ? computer.installedOs() : null;

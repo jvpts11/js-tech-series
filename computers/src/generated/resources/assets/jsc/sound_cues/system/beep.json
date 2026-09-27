@@ -1,0 +1,47 @@
+{
+  "sounds": [
+    {
+      "sound": "jsc:os/frames/beep",
+      "when": {
+        "system": "jsc:frames_95"
+      }
+    },
+    {
+      "sound": "jsc:os/frames/beep",
+      "when": {
+        "system": "jsc:frames_xp"
+      }
+    },
+    {
+      "sound": "jsc:os/frames/beep",
+      "when": {
+        "system": "jsc:frames_11"
+      }
+    },
+    {
+      "sound": "jsc:os/kde_plasma_legacy/bell",
+      "when": {
+        "desktop": "jsc:kde_plasma",
+        "era": "legacy"
+      }
+    },
+    {
+      "sound": "jsc:os/kde_plasma/bell",
+      "when": {
+        "desktop": "jsc:kde_plasma"
+      }
+    },
+    {
+      "sound": "jsc:os/gnome/bell",
+      "when": {
+        "desktop": "jsc:gnome"
+      }
+    },
+    {
+      "sound": "jsc:os/gnome/bell",
+      "when": {
+        "desktop": "jsc:cinnamon"
+      }
+    }
+  ]
+}

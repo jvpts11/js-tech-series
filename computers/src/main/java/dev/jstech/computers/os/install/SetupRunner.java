@@ -8,6 +8,7 @@
 package dev.jstech.computers.os.install;
 
 import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.blockentity.IMainframeService;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.menu.CommandPromptMenu;
@@ -195,6 +196,11 @@ public final class SetupRunner {
             console.clearSetup();
             finish(host, console, job);
             host.setChanged();
+            // A setup program says it is done the way its system says anything, with a notice; a package manager at
+            // the prompt finishes as quietly as the real ones do.
+            if (job.manager() == PackageManagerKind.NONE) {
+                host.systemSound(level, SystemSound.NOTIFY);
+            }
             pushWindow(host, level, pos, progress(pos, job, SetupProgressPayload.STATE_DONE, Text.EMPTY));
             // The bar reaches its end where it stands, then the lines that say what was done follow it.
             promptLines(level, pos, List.of(line(bar(job), CliStyle.PLAIN)), !job.drawBar());

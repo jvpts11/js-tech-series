@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
 import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.audio.MediaBaySounds;
+import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.client.audio.MachineSoundSources;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.install.OsInstallJob;
@@ -90,7 +91,10 @@ public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEn
 
         @Override
         protected void onContentsChanged(final int slotIndex) {
-            baySounds.changed(level, worldPosition, getStackInSlot(0));
+            final MediaBaySounds.Move move = baySounds.changed(level, worldPosition, getStackInSlot(0));
+            if (move != null && move.format() == MediaFormat.USB && level instanceof ServerLevel server) {
+                deviceMoved(server, move.in());
+            }
             setChanged();
             syncToClients();
         }
@@ -246,11 +250,33 @@ public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEn
         return worldPosition.getZ() + 0.5;
     }
 
-    /** A floppy drive's head stepping while a system or a program installs from its disk; no other drive's. */
+    /**
+     * A floppy drive's head stepping, or a disc turning, while a system or a program installs from what the drive
+     * holds. A USB drive has nothing that moves.
+     */
     @Override
     public List<LoopRequest> loops() {
-        return reading && insertedFormat() == MediaFormat.FLOPPY
-                ? List.of(LoopRequest.of(ComputingSounds.FLOPPY_READ)) : List.of();
+        final MediaFormat format = insertedFormat();
+        if (!reading || format == null) {
+            return List.of();
+        }
+        return switch (format) {
+            case FLOPPY -> List.of(LoopRequest.of(ComputingSounds.FLOPPY_READ));
+            case CD, DVD -> List.of(LoopRequest.of(ComputingSounds.OPTICAL_READ));
+            case USB -> List.of();
+        };
+    }
+
+    /*
+     * A USB drive plugged in or pulled out is a device coming and going for the system of the computer it is linked
+     * to, which says so with its own sound when it is up at its desktop.
+     */
+    private void deviceMoved(final ServerLevel server, final boolean in) {
+        final BlockPos owner = ownerPos();
+        if (owner != null && server.getBlockEntity(owner) instanceof IOsHost host && host.isRunning()
+                && host.bootedDesktopId() != null) {
+            host.systemSound(server, in ? SystemSound.DEVICE_CONNECT : SystemSound.DEVICE_DISCONNECT);
+        }
     }
 
     /**

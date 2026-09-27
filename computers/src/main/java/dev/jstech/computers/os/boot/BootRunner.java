@@ -424,11 +424,11 @@ public final class BootRunner {
         return build == null ? 0 : build.disks().size() + build.pcieCards().size();
     }
 
-    /*
-     * The speaker inside the case gives one short beep when the self-test passes, on the machines of the two ages
-     * that had one; a Standard machine comes up without it.
+    /**
+     * Whether the speaker inside the case beeps the self-test's outcome: one short beep when it passes, a pattern
+     * when it fails, on the machines of the two ages that had one; a Standard machine comes up without it.
      */
-    private static boolean beepsAfterSelfTest(@Nullable final HardwareEra era) {
+    public static boolean beepsAfterSelfTest(@Nullable final HardwareEra era) {
         return era == HardwareEra.VINTAGE || era == HardwareEra.LEGACY;
     }
 }

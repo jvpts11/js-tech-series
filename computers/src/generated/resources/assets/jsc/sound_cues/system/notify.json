@@ -1,0 +1,54 @@
+{
+  "sounds": [
+    {
+      "sound": "jsc:os/frames/notify",
+      "when": {
+        "system": "jsc:frames_95"
+      }
+    },
+    {
+      "sound": "jsc:os/frames/notify",
+      "when": {
+        "system": "jsc:frames_xp"
+      }
+    },
+    {
+      "sound": "jsc:os/frames/notify",
+      "when": {
+        "system": "jsc:frames_11"
+      }
+    },
+    {
+      "sound": "jsc:os/kde_plasma_legacy/notify",
+      "when": {
+        "desktop": "jsc:kde_plasma",
+        "era": "legacy"
+      }
+    },
+    {
+      "sound": "jsc:os/kde_plasma/notify",
+      "when": {
+        "desktop": "jsc:kde_plasma"
+      }
+    },
+    {
+      "sound": "jsc:os/gnome_legacy/notify",
+      "when": {
+        "desktop": "jsc:gnome",
+        "era": "legacy"
+      }
+    },
+    {
+      "sound": "jsc:os/gnome/notify",
+      "when": {
+        "desktop": "jsc:gnome"
+      }
+    },
+    {
+      "sound": "jsc:os/gnome/notify",
+      "when": {
+        "desktop": "jsc:cinnamon"
+      }
+    }
+  ]
+}

@@ -8,7 +8,9 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.audio.ProgramCue;
 import dev.jstech.computers.operation.payload.GameWonPayload;
+import dev.jstech.computers.operation.payload.MachineSoundPayload;
 import dev.jstech.computers.operation.payload.desktop.GamePayloads;
 import dev.jstech.computers.program.MinesweeperGame;
 import dev.jstech.core.client.gui.component.Button;
@@ -132,13 +134,19 @@ public final class MinesweeperApp implements IDesktopApp {
             } else if (button == 1) {
                 game.toggleFlag(r, c);
             }
+            ProgramCue sound = ProgramCue.MINESWEEPER_CLICK;
             if (game.isFinished()) {
                 frozenSeconds = timing ? Math.min(999, (System.currentTimeMillis() - startMs) / 1000) : 0;
                 if (game.state() == MinesweeperGame.State.WON) {
                     PacketDistributor.sendToServer(new GameWonPayload(host, GamePayloads.MINESWEEPER,
                             difficulty.name().toLowerCase(Locale.ROOT)));
+                    sound = ProgramCue.MINESWEEPER_WIN;
+                } else {
+                    sound = ProgramCue.MINESWEEPER_EXPLODE;
                 }
             }
+            // The machine plays it, so whoever stands by the computer hears the game too.
+            PacketDistributor.sendToServer(new MachineSoundPayload(host, sound));
             return true;
         }
     }

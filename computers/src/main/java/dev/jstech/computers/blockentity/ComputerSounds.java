@@ -10,6 +10,8 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.os.boot.BootRunner;
+import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.core.audio.Audio;
 import dev.jstech.core.audio.IAudible;
 import dev.jstech.core.audio.LoopRequest;
@@ -22,6 +24,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -46,8 +49,14 @@ final class ComputerSounds implements IAudible {
     private long turnsFrom = NOT_SPINNING_UP;
     /** Whether the disk is heard turning: worked out on the server and sent to the client. */
     private boolean turning;
+    /** The game time the heads stop being heard seeking, a moment after the machine last used its disk. */
+    private long seeksUntil;
+    /** Whether the heads are heard seeking: worked out on the server and sent to the client. */
+    private boolean seeking;
 
     private static final long NOT_SPINNING_UP = -1L;
+    /** A burst of work on the disk is heard for this long after it, so a run of small reads is one sound. */
+    private static final int SEEK_TICKS = 30;
     /** The spin-up runs eight and a half seconds; the turning is heard from its end. */
     private static final int SPIN_UP_TICKS = 170;
     /** An old machine's own start-up carries its drives; the disk is heard turning just before that sound ends. */
@@ -55,6 +64,7 @@ final class ComputerSounds implements IAudible {
     /** How often a running machine checks whether a hard drive went in or came out. */
     private static final int DISK_CHECK_TICKS = 20;
     private static final String NBT_TURNING = "DiskTurning";
+    private static final String NBT_SEEKING = "DiskSeeking";
 
     ComputerSounds(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
@@ -77,7 +87,17 @@ final class ComputerSounds implements IAudible {
 
     @Override
     public List<LoopRequest> loops() {
-        return turning ? List.of(LoopRequest.of(ComputingSounds.HARD_DRIVE_IDLE)) : List.of();
+        final List<LoopRequest> own = machine.machineLoops();
+        if (!turning) {
+            return own;
+        }
+        final List<LoopRequest> all = new ArrayList<>(own.size() + 2);
+        all.add(LoopRequest.of(ComputingSounds.HARD_DRIVE_IDLE));
+        if (seeking) {
+            all.add(LoopRequest.of(ComputingSounds.HARD_DRIVE_SEEK));
+        }
+        all.addAll(own);
+        return all;
     }
 
     /** The machine was read back from the world: whatever it is doing, it was doing it before anyone came near. */
@@ -108,6 +128,12 @@ final class ComputerSounds implements IAudible {
         } else if (running && now % DISK_CHECK_TICKS == 0) {
             reconsiderDisk(level);
         }
+        if (running && busyWithDisk()) {
+            diskWorked(level);
+        }
+        if (seeking && (now >= seeksUntil || !turning)) {
+            setSeeking(level, false);
+        }
     }
 
     /** The player pressed the power button. */
@@ -115,12 +141,34 @@ final class ComputerSounds implements IAudible {
         Audio.at(level, machine.getBlockPos(), ComputingSounds.POWER_BUTTON);
     }
 
+    /**
+     * The machine was switched on with parts that do not make a computer: a board and a power supply, but no
+     * processor, no memory, or parts the board does not take. The board still tests itself and beeps the failure out
+     * of the speaker in the case, on the machines of the two ages whose self-test beeped at all. With no board or no
+     * power supply nothing comes on to beep.
+     */
+    void postFailed(final ServerLevel level) {
+        if (machine.currentBuild() != null && BootRunner.beepsAfterSelfTest(machine.installedEra())) {
+            Audio.at(level, machine.getBlockPos(), ComputingSounds.POST_FAIL);
+        }
+    }
+
+    /** The machine read or wrote its disk: a turning hard drive is heard seeking for a moment after. */
+    void diskWorked(final ServerLevel level) {
+        seeksUntil = level.getGameTime() + SEEK_TICKS;
+        if (turning && !seeking) {
+            setSeeking(level, true);
+        }
+    }
+
     void saveForClient(final CompoundTag tag) {
         tag.putBoolean(NBT_TURNING, turning);
+        tag.putBoolean(NBT_SEEKING, seeking);
     }
 
     void loadFromClient(@Nullable final CompoundTag tag) {
         turning = tag != null && tag.getBoolean(NBT_TURNING);
+        seeking = tag != null && tag.getBoolean(NBT_SEEKING);
     }
 
     private void cameOn(final ServerLevel level) {
@@ -161,9 +209,24 @@ final class ComputerSounds implements IAudible {
             return;
         }
         turning = value;
+        tellClients(level);
+    }
+
+    private void setSeeking(final ServerLevel level, final boolean value) {
+        seeking = value;
+        tellClients(level);
+    }
+
+    private void tellClients(final ServerLevel level) {
         final BlockPos pos = machine.getBlockPos();
         final BlockState state = machine.getBlockState();
         level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+    }
+
+    /* Coming up, putting a system on the disk or a program in: work the disk is doing for as long as it lasts. */
+    private boolean busyWithDisk() {
+        final ComputerConsoleState console = machine.console();
+        return machine.booting() || machine.installing() != null || (console != null && console.setup() != null);
     }
 
     private boolean hasHardDrive() {

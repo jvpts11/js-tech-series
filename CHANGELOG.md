@@ -73,6 +73,26 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   speakers, heard by everyone near them, and only through a sound card or the sound on a Standard board: a machine
   with neither, or with no monitor and no speaker, only beeps. They are sound cues picked by the system a machine
   runs, so a resource pack can give any other system chimes of its own.
+- The Unix desktops have their own sounds, taken from the sound themes they ship: GNOME and Cinnamon the
+  freedesktop.org theme's error, notice, bell and device sounds, and GNOME on a Legacy machine the start-up,
+  shut-down, error and notice of its second series; KDE Plasma the Ocean theme's chimes, error, notice, bell and
+  device sounds, and on a Legacy machine the Oxygen theme's. GNOME today, like the real one, makes no sound coming up
+  or going down. The Frames editions gain a notice and a bell, and XP and 11 their device sounds. A system sounds its
+  notice when its desktop raises a notice, and when a craft, a program's setup window or a build in Virtual Studio
+  finishes; its error when a craft, a query or a build fails; its bell when a click lands beside a box waiting for an
+  answer, or a Unix shell prints the bell character; and its device sounds when a USB drive goes into or comes out of
+  a Dock Station of a computer up at its desktop, or when its network comes up or goes down. The systems with no
+  bell of their own (MC-DOS, MC-NET, FreeBSD and UNIX at their console, and CDE) ring the speaker in the case
+  instead, as does a machine with no sound to play one.
+- More machine sounds: a Vintage or Legacy computer switched on with parts that do not make a computer (no
+  processor, no memory, parts its board does not take) beeps its self-test failing; a hard drive is heard seeking
+  while its machine boots, installs, or reads and writes files on it; a Vintage or Legacy monitor is heard going
+  dark; a server or a rack unit slides into and out of its bay on its rails, and a rack that is broken drops them
+  quietly; a CD or DVD drive is heard turning while a system or a program installs from its disc; and a running
+  Vintage Mainframe's tape reels are heard turning.
+- The minefield clicks as its cells are opened and flagged, goes off when a mine is opened and plays a jingle when it
+  is cleared, out of the computer's monitors like the system's sounds.
+- The Unix shells' `echo` takes `-e`, reading `\a` (the bell), `\n`, `\t` and `\\` in its text.
 - Speakers: the Artisan ToneWorks (Legacy) and the Artisan Cobble (Standard), linked to a computer over the
   peripheral cable like a monitor, each taking one of its board's peripheral ports. A computer's sound comes out of
   its monitors and its speakers; with two or more speakers, the one to the left of whoever sits at its monitor plays

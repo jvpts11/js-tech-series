@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.audio.SoundOutput;
+import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -40,7 +41,7 @@ import dev.jstech.computers.operation.payload.SetIconPositionPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
-import dev.jstech.computers.operation.payload.SystemErrorSoundPayload;
+import dev.jstech.computers.operation.payload.MachineSoundPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.os.CdeAppGroup;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
@@ -534,7 +535,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     /** Opens a modal error dialog with the given title and message over this desktop, and the machine sounds it. */
     void showError(final String title, final String message) {
         this.popup = new DesktopPopup(title, message, this.font);
-        PacketDistributor.sendToServer(new SystemErrorSoundPayload(host));
+        PacketDistributor.sendToServer(new MachineSoundPayload(host, SystemSound.ERROR));
     }
 
     /*
@@ -586,6 +587,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
      */
     void showBalloon(final String title, final String body, final String opens) {
         this.balloon = new Balloon(title, body, System.currentTimeMillis() + BALLOON_MS, opens);
+        PacketDistributor.sendToServer(new MachineSoundPayload(host, SystemSound.NOTIFY));
     }
 
     /** Raises that balloon on whichever desktop is looking at that machine, if one is. */
@@ -4968,8 +4970,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         if (taskPopup.key() != null && taskPopup.click(lx(mouseXAbs), ly(mouseYAbs), button)) {
             return true;
         }
-        // A modal dialog swallows every click; only its OK button dismisses it.
+        // A modal dialog swallows every click; only its OK button dismisses it, and a click beside it rings the bell.
         if (popup != null) {
+            if (!popup.contains(lx(mouseXAbs), ly(mouseYAbs))) {
+                PacketDistributor.sendToServer(new MachineSoundPayload(host, SystemSound.BEEP));
+            }
             popup.mouseClicked(lx(mouseXAbs), ly(mouseYAbs), button);
             if (!popup.isOpen()) {
                 popup = null;

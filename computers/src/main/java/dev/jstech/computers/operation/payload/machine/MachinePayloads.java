@@ -10,6 +10,8 @@ package dev.jstech.computers.operation.payload.machine;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.audio.ComputingSounds;
+import dev.jstech.computers.audio.IMachineCue;
+import dev.jstech.computers.audio.ProgramCue;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.IKvmScreenOpener;
 import dev.jstech.computers.block.MonitorBlock;
@@ -35,7 +37,7 @@ import dev.jstech.computers.operation.payload.RemoteHostsPayload;
 import dev.jstech.computers.operation.payload.RenamePcPayload;
 import dev.jstech.computers.operation.payload.RenameServerPayload;
 import dev.jstech.computers.operation.payload.RenameSpeakerPayload;
-import dev.jstech.computers.operation.payload.SystemErrorSoundPayload;
+import dev.jstech.computers.operation.payload.MachineSoundPayload;
 import dev.jstech.computers.operation.payload.TestSoundPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.ServerCliComputer;
@@ -53,7 +55,7 @@ import java.util.List;
 
 /**
  * The payloads that act on a machine itself: its power, remote control, the KVM switch, the power of a rack bay,
- * renaming a computer, a server or a speaker, the sound of an error box on its desktop, and trying its sound.
+ * renaming a computer, a server or a speaker, the sounds its desktop and programs raise, and trying its sound.
  */
 public final class MachinePayloads {
 
@@ -68,8 +70,8 @@ public final class MachinePayloads {
                 MachinePayloads::handleRackBayPower);
         ComputerAccess.accept(registrar, MachinePowerPayload.TYPE, MachinePowerPayload.STREAM_CODEC,
                 ComputerAccess.machine(MachinePowerPayload::hostPos), MachinePayloads::handleMachinePower);
-        ComputerAccess.accept(registrar, SystemErrorSoundPayload.TYPE, SystemErrorSoundPayload.STREAM_CODEC,
-                ComputerAccess.machine(SystemErrorSoundPayload::hostPos), MachinePayloads::handleSystemErrorSound);
+        ComputerAccess.accept(registrar, MachineSoundPayload.TYPE, MachineSoundPayload.STREAM_CODEC,
+                ComputerAccess.machine(MachineSoundPayload::hostPos), MachinePayloads::handleMachineSound);
         ComputerAccess.accept(registrar, TestSoundPayload.TYPE, TestSoundPayload.STREAM_CODEC,
                 ComputerAccess.machine(TestSoundPayload::hostPos), MachinePayloads::handleTestSound);
         ComputerAccess.accept(registrar, RenameSpeakerPayload.TYPE, RenameSpeakerPayload.STREAM_CODEC,
@@ -105,10 +107,17 @@ public final class MachinePayloads {
         }
     }
 
-    private static void handleSystemErrorSound(final SystemErrorSoundPayload payload, final ServerPlayer player,
-                                               final ServerLevel level) {
-        if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost host) {
-            host.systemSound(level, SystemSound.ERROR);
+    /* A sound a screen raised: the bell rings through the system's own or the case's speaker, the rest as they are. */
+    private static void handleMachineSound(final MachineSoundPayload payload, final ServerPlayer player,
+                                           final ServerLevel level) {
+        final IMachineCue cue = payload.cue();
+        if (cue == null || !(level.getBlockEntity(payload.hostPos()) instanceof IOsHost host)) {
+            return;
+        }
+        switch (cue) {
+            case SystemSound system when system == SystemSound.BEEP -> host.bell(level);
+            case SystemSound system -> host.systemSound(level, system);
+            case ProgramCue program -> host.programSound(level, program);
         }
     }
 

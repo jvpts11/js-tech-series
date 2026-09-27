@@ -9,6 +9,7 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.advancement.Acting;
+import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.MainframeStructure;
 import dev.jstech.computers.crafting.CraftPlanner;
@@ -47,6 +48,7 @@ import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.operation.IOperationTask;
 import dev.jstech.core.operation.OperationStatistics;
 import dev.jstech.core.operation.SelfTestOperationTask;
+import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -176,6 +178,13 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return geckoCache;
+    }
+
+    /** A Vintage cabinet's tape reels are heard turning while it runs, as they are seen turning. */
+    @Override
+    public List<LoopRequest> machineLoops() {
+        return mainframeEra() == HardwareEra.VINTAGE && visualRunning()
+                ? List.of(LoopRequest.of(ComputingSounds.MAINFRAME_TAPE)) : List.of();
     }
 
     /** The era of this cabinet, read from its block; it picks the model and the atlas. */

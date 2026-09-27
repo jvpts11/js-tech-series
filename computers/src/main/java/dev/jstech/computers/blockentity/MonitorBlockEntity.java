@@ -15,6 +15,7 @@ import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.core.audio.Audio;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.peripheral.PeripheralLinkValidator;
@@ -179,6 +180,10 @@ public class MonitorBlockEntity extends BlockEntity implements IPeripheralEndpoi
             bootTicks = 0;
             if (lit) {
                 level.setBlock(worldPosition, state.setValue(MonitorBlock.LIT, false), Block.UPDATE_CLIENTS);
+                // A picture tube is heard going dark; a Standard flat panel goes dark without a sound.
+                if (state.getBlock() instanceof MonitorBlock monitor && monitor.era() != HardwareEra.STANDARD) {
+                    Audio.at(level, worldPosition, ComputingSounds.MONITOR_POWER_OFF);
+                }
             }
             return;
         }

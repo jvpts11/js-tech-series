@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.crafting;
 
+import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.os.CraftPlannerApp;
@@ -19,6 +20,7 @@ import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.crafting.RecipeChoice;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.CraftingSwitchMenu;
+import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
@@ -34,6 +36,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.operation.IOperationResult;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.operation.OperationStatus;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextLists;
@@ -41,6 +44,7 @@ import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
@@ -363,15 +367,44 @@ public final class CraftingPayloads {
          * the dialog named runs as picked; without one, the multiStage flag picks the pipeline over the flat
          * recursive path when a result has both.
          */
+        /*
+         * A craft is a long task the player starts and walks away from, so the machine it was asked from sounds its
+         * end the way its system sounds a notice or an error box: a notice when it made what it could, an error when
+         * it made nothing.
+         */
+        final AtomicReference<INetworkOperation> asked = new AtomicReference<>();
+        final Runnable settled = () -> {
+            refresh.run();
+            final INetworkOperation ended = asked.get();
+            if (ended != null) {
+                soundEnd(level, payload.hostPos(), ended);
+            }
+        };
         final var op = payload.recipe() >= 0
                 ? mainframe.submitCraftRequest(resultKey, payload.quantity(), payload.partial(),
-                        host.originLabel(MoveLabels.TERMINAL), refresh, payload.recipe())
+                        host.originLabel(MoveLabels.TERMINAL), settled, payload.recipe())
                 : mainframe.submitCraftRequest(resultKey, payload.quantity(), payload.partial(),
-                        host.originLabel(MoveLabels.TERMINAL), refresh, payload.multiStage());
+                        host.originLabel(MoveLabels.TERMINAL), settled, payload.multiStage());
         if (op != null) {
             op.setPriority(payload.priority());
+            asked.set(op);
+            // One that settled before it was handed back could not be heard then.
+            if (op.isDone()) {
+                soundEnd(level, payload.hostPos(), op);
+            }
         }
         refresh.run();
+    }
+
+    private static void soundEnd(final ServerLevel level, final BlockPos hostPos, final INetworkOperation op) {
+        // A machine switched off since it asked has no system left to say anything.
+        if (!(level.getBlockEntity(hostPos) instanceof IOsHost machine) || !machine.isRunning()) {
+            return;
+        }
+        final boolean made = OperationStatus.of(op.toRecord().status())
+                .map(status -> status == OperationStatus.COMPLETED || status == OperationStatus.COMPLETED_PARTIAL)
+                .orElse(false);
+        machine.systemSound(level, made ? SystemSound.NOTIFY : SystemSound.ERROR);
     }
 
     private static void handleSetCraftingSwitchFace(final SetCraftingSwitchFacePayload payload,
