@@ -151,4 +151,41 @@ class GuiLayoutTest {
         assertThrows(IllegalArgumentException.class,
                 () -> new GuiLayout(100, 100).box("bad", 0, 0, -5, 10));
     }
+
+    @Test
+    void slot_isASolidOfASlotsSizeReadBackByName() {
+        final GuiLayout l = new GuiLayout(176, 166).slot("input", 56, 35);
+        assertEquals(new GuiLayout.SlotPosition(56, 35), l.slotAt("input"));
+        assertEquals(new GuiLayout.Box("input", 56, 35, GuiLayout.SLOT_SIZE, GuiLayout.SLOT_SIZE, true),
+                l.boxAt("input"));
+    }
+
+    @Test
+    void slot_overlapsLikeAnyOtherSolid() {
+        final GuiLayout l = new GuiLayout(176, 166).slot("a", 10, 10).slot("b", 20, 10);
+        assertEquals(List.of("a x b"), l.overlaps());
+    }
+
+    @Test
+    void slotAt_rejectsANameTheLayoutLacks() {
+        assertThrows(IllegalArgumentException.class, () -> new GuiLayout(100, 100).slotAt("missing"));
+    }
+
+    @Test
+    void playerInventoryAt_isWhereTheGridWasPlaced() {
+        final GuiLayout l = new GuiLayout(176, 166).playerInventory(8, 84);
+        assertEquals(new GuiLayout.SlotPosition(8, 84), l.playerInventoryAt());
+    }
+
+    @Test
+    void playerInventoryAt_rejectsALayoutWithoutOne() {
+        assertThrows(IllegalStateException.class, () -> new GuiLayout(100, 100).playerInventoryAt());
+    }
+
+    @Test
+    void boxAt_findsAnElementByName() {
+        final GuiLayout l = new GuiLayout(176, 166).box("energy", 8, 16, 10, 52);
+        assertEquals(52, l.boxAt("energy").height());
+        assertThrows(IllegalArgumentException.class, () -> l.boxAt("missing"));
+    }
 }

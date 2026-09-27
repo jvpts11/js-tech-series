@@ -54,6 +54,8 @@ public final class ModContent {
     private final List<ContentTab> declaredTabs = new ArrayList<>();
     private final List<SoundKey> declaredSounds = new ArrayList<>();
     private final List<SoundCue> declaredCues = new ArrayList<>();
+    private final List<DeferredHolder<BlockEntityType<?>, ? extends BlockEntityType<?>>> declaredBlockEntities =
+            new ArrayList<>();
 
     /* Every mod's content, by mod id, in the order the mods made theirs. */
     private static final Map<String, ModContent> BY_MOD = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -113,8 +115,16 @@ public final class ModContent {
             final String id, final BlockEntityType.BlockEntitySupplier<? extends T> factory,
             final DeferredBlock<?>... madeBy) {
         final List<DeferredBlock<?>> makers = List.of(madeBy);
-        return blockEntities.register(id, () -> BlockEntityType.Builder.<T>of(factory,
-                makers.stream().map(DeferredBlock::get).toArray(Block[]::new)).build(null));
+        final DeferredHolder<BlockEntityType<?>, BlockEntityType<T>> type = blockEntities.register(id,
+                () -> BlockEntityType.Builder.<T>of(factory,
+                        makers.stream().map(DeferredBlock::get).toArray(Block[]::new)).build(null));
+        declaredBlockEntities.add(type);
+        return type;
+    }
+
+    /** The block entity types this mod declared, once they are registered. */
+    public List<BlockEntityType<?>> declaredBlockEntityTypes() {
+        return declaredBlockEntities.stream().<BlockEntityType<?>>map(DeferredHolder::get).toList();
     }
 
     /** Declares a creative tab, called that in English, showing that icon. */

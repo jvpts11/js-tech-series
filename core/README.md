@@ -65,6 +65,11 @@ The things two or more mods of the series need, or that define the language they
 - The way every mod declares its blocks and items: once each, with its name, look, drops, creative tab
   section and tags, from which the data generation writes the block state, the models, the English, the loot
   and the tags, so none of them is a list kept by hand. Sounds and cues are declared the same way.
+- Block entities, their blocks and their menus, declared the same way: a block entity's state as fields, each
+  saved, sent to the players who see the block or shown to its menu as it says, with inventories and energy that
+  pipes and cables reach and that spill when the block breaks; a block that ticks its block entity and opens its
+  menu; and a menu whose slots, shift-clicks, buttons and validity are said once, its slots placed from the
+  screen's own layout.
 
 ### Screens and the rest
 

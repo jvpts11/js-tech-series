@@ -7,76 +7,45 @@
  */
 package dev.jstech.industrial.menu;
 
+import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.menu.CoreMenu;
+import dev.jstech.core.menu.MenuOpening;
+import dev.jstech.core.menu.MenuValidity;
+import dev.jstech.core.menu.PlayerSlots;
+import dev.jstech.core.menu.SlotGroup;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.blockentity.CoalGeneratorBlockEntity;
-import net.minecraft.core.BlockPos;
+import dev.jstech.industrial.gui.layout.CoalGeneratorLayout;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
 
 /**
- * Menu for the Coal Generator: a fuel slot plus the player inventory, with synced burn progress and FE data for the screen.
+ * The Coal Generator's menu: its fuel slot and the player's inventory, with the burn time and the stored energy.
+ * Shift-clicking the fuel sends it to the player; shift-clicking in the player's inventory sends it to the fuel slot.
  */
-public class CoalGeneratorMenu extends AbstractMachineMenu {
+public class CoalGeneratorMenu extends CoreMenu {
 
-    private static final int MACHINE_SLOTS = 1;
+    private final CoalGeneratorBlockEntity generator;
 
-    private final CoalGeneratorBlockEntity blockEntity;
-    private final ContainerData data;
-    private final ContainerLevelAccess access;
-
-    public CoalGeneratorMenu(final int containerId, final Inventory playerInventory,
-                             final CoalGeneratorBlockEntity be) {
-        super(IndustrialModule.COAL_GENERATOR_MENU.get(), containerId);
-        this.blockEntity = be;
-        this.data = be.getDataAccess();
-        this.access = ContainerLevelAccess.create(be.getLevel(), be.getBlockPos());
-
-        final IItemHandler machine = be.getInventory();
-        addSlot(new SlotItemHandler(machine, CoalGeneratorBlockEntity.FUEL_SLOT, 80, 53));
-
-        addPlayerInventory(playerInventory);
-        addDataSlots(this.data);
+    public CoalGeneratorMenu(final int containerId, final Inventory inventory,
+                             final CoalGeneratorBlockEntity generator) {
+        super(IndustrialModule.COAL_GENERATOR_MENU.get(), containerId, MenuValidity.blockEntity(generator));
+        this.generator = generator;
+        final GuiLayout layout = CoalGeneratorLayout.layout();
+        final SlotGroup fuel = slots(slot(generator.getInventory(), CoalGeneratorBlockEntity.FUEL_SLOT,
+                layout.slotAt("fuel")));
+        final PlayerSlots player = playerInventory(inventory, layout.playerInventoryAt());
+        shiftClick(fuel, player.all());
+        shiftClick(player.all(), fuel);
+        data(generator.fields().menuData());
     }
 
-    public CoalGeneratorMenu(final int containerId, final Inventory playerInventory,
-                             final RegistryFriendlyByteBuf buf) {
-        this(containerId, playerInventory, resolve(playerInventory, buf.readBlockPos()));
+    public CoalGeneratorMenu(final int containerId, final Inventory inventory, final RegistryFriendlyByteBuf buf) {
+        this(containerId, inventory, MenuOpening.blockEntity(inventory, buf, CoalGeneratorBlockEntity.class));
     }
 
-    private static CoalGeneratorBlockEntity resolve(final Inventory inv, final BlockPos pos) {
-        return (CoalGeneratorBlockEntity) inv.player.level().getBlockEntity(pos);
-    }
-
-    public int getBurnScaled() {
-        final int max = data.get(1);
-        return max > 0 ? data.get(0) * 13 / max : 0;
-    }
-
-    public boolean isBurning() {
-        return data.get(0) > 0;
-    }
-
-    public int getEnergy() {
-        return data.get(2);
-    }
-
-    public int getMaxEnergy() {
-        return blockEntity.getEnergy().getMaxEnergyStored();
-    }
-
-    @Override
-    public boolean stillValid(final Player player) {
-        return stillValid(access, player, IndustrialModule.COAL_GENERATOR.get());
-    }
-
-    @Override
-    public ItemStack quickMoveStack(final Player player, final int index) {
-        return quickMove(player, index, MACHINE_SLOTS, CoalGeneratorBlockEntity.FUEL_SLOT);
+    /** The generator the menu is open on; on the client its menu values are the server's. */
+    public CoalGeneratorBlockEntity generator() {
+        return generator;
     }
 }

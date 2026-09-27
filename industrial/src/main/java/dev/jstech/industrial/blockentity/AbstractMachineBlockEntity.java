@@ -7,63 +7,36 @@
  */
 package dev.jstech.industrial.blockentity;
 
+import dev.jstech.core.blockentity.FieldEnergyStorage;
+import dev.jstech.core.blockentity.FieldItemHandler;
+import dev.jstech.core.blockentity.SyncedBlockEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
- * Base for Category-A industrial machines: an item inventory plus an internal FE buffer, both persisted to NBT.
+ * Base for the industrial machines: an item inventory and an FE buffer, both saved, both offered to pipes and cables
+ * on every side, the stored energy shown to the machine's menu and the items spilled when the machine is broken.
  */
-public abstract class AbstractMachineBlockEntity extends BlockEntity {
+public abstract class AbstractMachineBlockEntity extends SyncedBlockEntity {
 
-    protected final ItemStackHandler inventory;
-    protected final MachineEnergyStorage energy;
+    private final FieldItemHandler inventory;
+    private final FieldEnergyStorage energy;
 
-    protected AbstractMachineBlockEntity(final BlockEntityType<?> type,
-                                         final BlockPos pos,
-                                         final BlockState state,
-                                         final int inventorySize,
-                                         final int energyCapacity,
-                                         final int energyMaxReceive,
-                                         final int energyMaxExtract) {
+    protected AbstractMachineBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state,
+                                         final int inventorySize, final int energyCapacity,
+                                         final int energyMaxReceive, final int energyMaxExtract) {
         super(type, pos, state);
-        this.inventory = new ItemStackHandler(inventorySize) {
-            @Override
-            protected void onContentsChanged(final int slot) {
-                setChanged();
-            }
-        };
-        this.energy = new MachineEnergyStorage(
-                energyCapacity, energyMaxReceive, energyMaxExtract, this::setChanged);
+        this.inventory = fields().items("Inventory", inventorySize).save().exposed().dropsWhenBroken();
+        this.energy = fields().energy("Energy", energyCapacity, energyMaxReceive, energyMaxExtract)
+                .save().toMenu().exposed();
     }
 
-    public ItemStackHandler getInventory() {
+    public FieldItemHandler getInventory() {
         return inventory;
     }
 
-    public MachineEnergyStorage getEnergy() {
+    public FieldEnergyStorage getEnergy() {
         return energy;
-    }
-
-    @Override
-    protected void loadAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.contains("Inventory")) {
-            inventory.deserializeNBT(registries, tag.getCompound("Inventory"));
-        }
-        if (tag.contains("Energy")) {
-            energy.deserializeNBT(registries, tag.get("Energy"));
-        }
-    }
-
-    @Override
-    protected void saveAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.put("Inventory", inventory.serializeNBT(registries));
-        tag.put("Energy", energy.serializeNBT(registries));
     }
 }

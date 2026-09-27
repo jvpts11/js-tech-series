@@ -8,59 +8,57 @@
 package dev.jstech.industrial.client;
 
 import dev.jstech.core.client.gui.screen.AbstractMachineScreen;
+import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.industrial.blockentity.CoalGeneratorBlockEntity;
+import dev.jstech.industrial.gui.layout.CoalGeneratorLayout;
 import dev.jstech.industrial.menu.CoalGeneratorMenu;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
- * Screen for the Coal Generator: a fuel slot, a burn indicator and an FE gauge showing the energy produced.
+ * The Coal Generator's screen: its fuel slot, a flame that burns down with the fuel and an FE gauge showing the
+ * energy made, all placed by the generator's layout, which the menu placed the slot by too.
  */
 public class CoalGeneratorScreen extends AbstractMachineScreen<CoalGeneratorMenu> {
 
-    private static final int ENERGY_X = 8;
-    private static final int ENERGY_Y = 16;
-    private static final int ENERGY_W = 10;
-    private static final int ENERGY_H = 52;
+    private final GuiLayout layout = CoalGeneratorLayout.layout();
 
     public CoalGeneratorScreen(final CoalGeneratorMenu menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
-        this.imageWidth = 176;
-        this.imageHeight = 166;
-        this.inventoryLabelY = this.imageHeight - 94;
-    }
-
-    @Override
-    protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
-        final int x = leftPos;
-        final int y = topPos;
-
-        MachineScreenSupport.drawPanel(g, x, y, imageWidth, imageHeight);
-        MachineScreenSupport.drawPlayerInventory(g, x, y);
-        MachineScreenSupport.drawSlot(g, x + 80, y + 53);
-
-        final int flameX = x + 81;
-        final int flameY = y + 38;
-        final int flameW = 14;
-        final int flameH = 14;
-        g.fill(flameX, flameY, flameX + flameW, flameY + flameH, MachineScreenSupport.colours().flameEmpty());
-        final int lit = menu.getBurnScaled();
-        if (lit > 0) {
-            g.fill(flameX, flameY + (flameH - lit), flameX + flameW, flameY + flameH,
-                    MachineScreenSupport.colours().flameFull());
-        }
-
-        MachineScreenSupport.drawEnergyBar(g, x + ENERGY_X, y + ENERGY_Y, ENERGY_W, ENERGY_H,
-                menu.getEnergy(), menu.getMaxEnergy());
+        this.imageWidth = CoalGeneratorLayout.WIDTH;
+        this.imageHeight = CoalGeneratorLayout.HEIGHT;
+        this.inventoryLabelY = CoalGeneratorLayout.INVENTORY_LABEL_Y;
     }
 
     @Override
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
         super.render(g, mouseX, mouseY, partialTick);
-        if (hover(mouseX, mouseY, ENERGY_X, ENERGY_Y, ENERGY_W, ENERGY_H)) {
-            g.renderTooltip(font,
-                    Component.literal(menu.getEnergy() + " / " + menu.getMaxEnergy() + " FE"),
-                    mouseX, mouseY);
+        final GuiLayout.Box energy = layout.boxAt("energy");
+        if (hover(mouseX, mouseY, energy.x(), energy.y(), energy.width(), energy.height())) {
+            final CoalGeneratorBlockEntity generator = menu.generator();
+            g.renderTooltip(font, Component.literal(generator.getEnergy().getEnergyStored() + " / "
+                    + generator.getEnergy().getMaxEnergyStored() + " FE"), mouseX, mouseY);
         }
+    }
+
+    @Override
+    protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
+        final MachineScreenSupport.Colours colours = MachineScreenSupport.colours();
+        final CoalGeneratorBlockEntity generator = menu.generator();
+        MachineScreenSupport.drawPanel(g, leftPos, topPos, imageWidth, imageHeight);
+        drawSlotFrames(g, colours.slotBorder(), colours.slotFill());
+        final GuiLayout.Box flame = layout.boxAt("flame");
+        final int x = leftPos + flame.x();
+        final int y = topPos + flame.y();
+        g.fill(x, y, x + flame.width(), y + flame.height(), colours.flameEmpty());
+        final int max = generator.getMaxBurnTime();
+        final int lit = max > 0 ? generator.getBurnTime() * flame.height() / max : 0;
+        if (lit > 0) {
+            g.fill(x, y + flame.height() - lit, x + flame.width(), y + flame.height(), colours.flameFull());
+        }
+        final GuiLayout.Box energy = layout.boxAt("energy");
+        MachineScreenSupport.drawEnergyBar(g, leftPos + energy.x(), topPos + energy.y(), energy.width(),
+                energy.height(), generator.getEnergy().getEnergyStored(), generator.getEnergy().getMaxEnergyStored());
     }
 }

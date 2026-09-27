@@ -10,35 +10,29 @@ package dev.jstech.industrial;
 import dev.jstech.core.content.BlockBuilder;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ContentTab;
+import dev.jstech.core.content.Device;
+import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.material.MaterialForm;
 import dev.jstech.core.material.MaterialItems;
 import dev.jstech.core.material.ModMaterial;
-import dev.jstech.industrial.block.CoalGeneratorBlock;
-import dev.jstech.industrial.block.CompressorBlock;
-import dev.jstech.industrial.block.ElectricFurnaceBlock;
-import dev.jstech.industrial.block.MaceratorBlock;
 import dev.jstech.industrial.blockentity.CoalGeneratorBlockEntity;
 import dev.jstech.industrial.blockentity.CompressorBlockEntity;
 import dev.jstech.industrial.blockentity.ElectricFurnaceBlockEntity;
 import dev.jstech.industrial.blockentity.MaceratorBlockEntity;
+import dev.jstech.industrial.blockentity.ProcessingMachineBlockEntity;
 import dev.jstech.industrial.menu.CoalGeneratorMenu;
-import dev.jstech.industrial.menu.CompressorMenu;
-import dev.jstech.industrial.menu.ElectricFurnaceMenu;
-import dev.jstech.industrial.menu.MaceratorMenu;
+import dev.jstech.industrial.menu.ProcessingMachineMenu;
 import dev.jstech.industrial.recipe.CompressingRecipe;
 import dev.jstech.industrial.recipe.MaceratingRecipe;
-import java.util.function.Function;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
@@ -99,20 +93,31 @@ public final class IndustrialModule {
     public static final DeferredHolder<RecipeSerializer<?>, CompressingRecipe.Serializer> COMPRESSING_SERIALIZER =
             RECIPE_SERIALIZERS.register("compressing", CompressingRecipe.Serializer::new);
 
-    // Machines, in the order the tab shows them
+    // Machines, in the order the tab shows them: each ticks its block entity and opens its menu when used
 
-    public static final BlockEntry<MaceratorBlock> MACERATOR = machine("macerator", MaceratorBlock::new)
+    public static final BlockEntry<DeviceBlock> MACERATOR = machine("macerator",
+            Device.of(() -> IndustrialModule.MACERATOR_BE.get()).ticks(ProcessingMachineBlockEntity::serverTick)
+                    .opensMenu((id, inventory, machine) ->
+                            new ProcessingMachineMenu(IndustrialModule.MACERATOR_MENU.get(), id, inventory, machine)))
             .named("Macerator").machineFor(MACERATING_TYPE.getId()).register();
 
-    public static final BlockEntry<ElectricFurnaceBlock> ELECTRIC_FURNACE =
-            machine("electric_furnace", ElectricFurnaceBlock::new)
-                    .named("Electric Furnace").machineFor(ResourceLocation.withDefaultNamespace("smelting")).register();
+    public static final BlockEntry<DeviceBlock> ELECTRIC_FURNACE = machine("electric_furnace",
+            Device.of(() -> IndustrialModule.ELECTRIC_FURNACE_BE.get())
+                    .ticks(ProcessingMachineBlockEntity::serverTick)
+                    .opensMenu((id, inventory, machine) -> new ProcessingMachineMenu(
+                            IndustrialModule.ELECTRIC_FURNACE_MENU.get(), id, inventory, machine)))
+            .named("Electric Furnace").machineFor(ResourceLocation.withDefaultNamespace("smelting")).register();
 
-    public static final BlockEntry<CompressorBlock> COMPRESSOR = machine("compressor", CompressorBlock::new)
+    public static final BlockEntry<DeviceBlock> COMPRESSOR = machine("compressor",
+            Device.of(() -> IndustrialModule.COMPRESSOR_BE.get()).ticks(ProcessingMachineBlockEntity::serverTick)
+                    .opensMenu((id, inventory, machine) ->
+                            new ProcessingMachineMenu(IndustrialModule.COMPRESSOR_MENU.get(), id, inventory, machine)))
             .named("Compressor").machineFor(COMPRESSING_TYPE.getId()).register();
 
-    public static final BlockEntry<CoalGeneratorBlock> COAL_GENERATOR =
-            machine("coal_generator", CoalGeneratorBlock::new).named("Coal Generator").register();
+    public static final BlockEntry<DeviceBlock> COAL_GENERATOR = machine("coal_generator",
+            Device.of(() -> IndustrialModule.COAL_GENERATOR_BE.get()).ticks(CoalGeneratorBlockEntity::serverTick)
+                    .opensMenu(CoalGeneratorMenu::new))
+            .named("Coal Generator").register();
 
     // Block entities
 
@@ -130,17 +135,21 @@ public final class IndustrialModule {
 
     // Menus
 
-    public static final DeferredHolder<MenuType<?>, MenuType<MaceratorMenu>> MACERATOR_MENU =
-            MENUS.register("macerator", () -> IMenuTypeExtension.create(MaceratorMenu::new));
+    public static final DeferredHolder<MenuType<?>, MenuType<ProcessingMachineMenu>> MACERATOR_MENU =
+            MENUS.register("macerator", () -> IMenuTypeExtension.create((id, inventory, buf) ->
+                    ProcessingMachineMenu.fromNetwork(IndustrialModule.MACERATOR_MENU.get(), id, inventory, buf)));
 
     public static final DeferredHolder<MenuType<?>, MenuType<CoalGeneratorMenu>> COAL_GENERATOR_MENU =
             MENUS.register("coal_generator", () -> IMenuTypeExtension.create(CoalGeneratorMenu::new));
 
-    public static final DeferredHolder<MenuType<?>, MenuType<ElectricFurnaceMenu>> ELECTRIC_FURNACE_MENU =
-            MENUS.register("electric_furnace", () -> IMenuTypeExtension.create(ElectricFurnaceMenu::new));
+    public static final DeferredHolder<MenuType<?>, MenuType<ProcessingMachineMenu>> ELECTRIC_FURNACE_MENU =
+            MENUS.register("electric_furnace", () -> IMenuTypeExtension.create((id, inventory, buf) ->
+                    ProcessingMachineMenu.fromNetwork(IndustrialModule.ELECTRIC_FURNACE_MENU.get(), id, inventory,
+                            buf)));
 
-    public static final DeferredHolder<MenuType<?>, MenuType<CompressorMenu>> COMPRESSOR_MENU =
-            MENUS.register("compressor", () -> IMenuTypeExtension.create(CompressorMenu::new));
+    public static final DeferredHolder<MenuType<?>, MenuType<ProcessingMachineMenu>> COMPRESSOR_MENU =
+            MENUS.register("compressor", () -> IMenuTypeExtension.create((id, inventory, buf) ->
+                    ProcessingMachineMenu.fromNetwork(IndustrialModule.COMPRESSOR_MENU.get(), id, inventory, buf)));
 
     private IndustrialModule() {
     }
@@ -153,12 +162,11 @@ public final class IndustrialModule {
     }
 
     /**
-     * A machine: a metal box that faces the way it was placed, needs a pickaxe to come away with its contents, and
-     * is shown with the other machines.
+     * A machine: a metal box that faces the way it was placed, does what its device says, needs a pickaxe to come
+     * away with its contents, and is shown with the other machines.
      */
-    private static <B extends Block> BlockBuilder<B> machine(final String id,
-                                                            final Function<BlockBehaviour.Properties, B> factory) {
-        return CONTENT.block(id, factory)
+    private static BlockBuilder<DeviceBlock> machine(final String id, final Device<?> device) {
+        return CONTENT.block(id, device::block)
                 .properties(properties -> properties.mapColor(MapColor.METAL).strength(3.5F)
                         .requiresCorrectToolForDrops())
                 .look(IBlockLook::orientable)

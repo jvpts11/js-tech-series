@@ -8,7 +8,9 @@
 package dev.jstech.core.gui.layout;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A pure, Minecraft-free model of a screen's layout, so the layout can be unit-tested. A screen builds
@@ -40,6 +42,9 @@ public final class GuiLayout {
     /** Approximate height, in pixels, of one vanilla text line at font scale 1.0. */
     public static final float LINE_HEIGHT = 9.0f;
 
+    /** The room a slot takes: its 16 px item and the frame around it. */
+    public static final int SLOT_SIZE = 18;
+
     /**
      * A named rectangle in the screen's local space (origin at the panel's top-left corner).
      * {@code solid} elements take part in the overlap check; text lines ({@code solid == false}) do not.
@@ -62,9 +67,18 @@ public final class GuiLayout {
         }
     }
 
+    /**
+     * Where a slot's item sits in the screen's local space. A menu places its real slot here and a screen draws the
+     * slot's frame one pixel outside it, so both read the one position this layout validated.
+     */
+    public record SlotPosition(int x, int y) {
+    }
+
     private final int panelWidth;
     private final int panelHeight;
     private final List<Box> boxes = new ArrayList<>();
+    private final Map<String, SlotPosition> slots = new LinkedHashMap<>();
+    private SlotPosition inventoryOrigin;
 
     public GuiLayout(final int panelWidth, final int panelHeight) {
         this.panelWidth = panelWidth;
@@ -115,6 +129,7 @@ public final class GuiLayout {
      * screens that carry the player inventory, so a layout need not re-list 36 slots by hand.
      */
     public GuiLayout playerInventory(final int x, final int invY) {
+        inventoryOrigin = new SlotPosition(x, invY);
         final int pitch = 18;
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
@@ -125,6 +140,55 @@ public final class GuiLayout {
             box("hotbar_" + col, x + col * pitch, invY + 58, pitch, pitch);
         }
         return this;
+    }
+
+    /**
+     * Records a slot: a solid element of {@value #SLOT_SIZE} px whose item sits at {@code (x, y)}, which the menu
+     * places its slot at and the screen draws its frame around, both reading it back by name.
+     */
+    public GuiLayout slot(final String name, final int x, final int y) {
+        box(name, x, y, SLOT_SIZE, SLOT_SIZE);
+        slots.put(name, new SlotPosition(x, y));
+        return this;
+    }
+
+    /**
+     * Where the slot of that name sits.
+     *
+     * @throws IllegalArgumentException when the layout has no slot of that name
+     */
+    public SlotPosition slotAt(final String name) {
+        final SlotPosition at = slots.get(name);
+        if (at == null) {
+            throw new IllegalArgumentException("the layout has no slot '" + name + "'");
+        }
+        return at;
+    }
+
+    /**
+     * The top-left of the player's inventory grid, as {@link #playerInventory} placed it.
+     *
+     * @throws IllegalStateException when the layout carries no player inventory
+     */
+    public SlotPosition playerInventoryAt() {
+        if (inventoryOrigin == null) {
+            throw new IllegalStateException("the layout carries no player inventory");
+        }
+        return inventoryOrigin;
+    }
+
+    /**
+     * The element of that name, the first one recorded under it.
+     *
+     * @throws IllegalArgumentException when the layout has no element of that name
+     */
+    public Box boxAt(final String name) {
+        for (final Box b : boxes) {
+            if (b.name().equals(name)) {
+                return b;
+            }
+        }
+        throw new IllegalArgumentException("the layout has no element '" + name + "'");
     }
 
     /** Names of every element (solid or text) that spills outside the panel; empty when everything fits. */

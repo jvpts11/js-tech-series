@@ -38,6 +38,7 @@ public final class ClientTestSuite {
             FreeBsdClientTests.class,
             FullJourneyClientTests.class,
             GatewayManagerClientTests.class,
+            IndustrialScreensClientTests.class,
             InstallMediaClientTests.class,
             InteracTuiClientTests.class,
             LeftoverProgramsClientTests.class,

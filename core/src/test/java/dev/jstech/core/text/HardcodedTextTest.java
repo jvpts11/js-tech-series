@@ -145,9 +145,7 @@ class HardcodedTextTest {
             data("core/src/main/java/dev/jstech/core/config/ConfigValidator.java", 11,
                     "why a configuration value was set aside, written to the log"),
             data(INDUSTRIAL + "client/CoalGeneratorScreen.java", 1, "the energy unit's symbol"),
-            data(INDUSTRIAL + "client/CompressorScreen.java", 1, "the energy unit's symbol"),
-            data(INDUSTRIAL + "client/ElectricFurnaceScreen.java", 1, "the energy unit's symbol"),
-            data(INDUSTRIAL + "client/MaceratorScreen.java", 1, "the energy unit's symbol"));
+            data(INDUSTRIAL + "client/ProcessingMachineScreen.java", 1, "the energy unit's symbol"));
 
     /** Who a line for the developer is written through. */
     private static final Set<String> LOGGERS = Set.of("LOGGER", "LOG", "logger", "log");

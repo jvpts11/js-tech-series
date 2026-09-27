@@ -267,6 +267,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   file, from folders and documents to Sigma source, programs, packages and pictures, each drawn at 16 by 16 for
   every desktop, in the explorer, the file dialog, the studios' trees and on the desktop itself. They are files a
   resource pack can replace, under `assets/jsc/textures/gui/file/`.
+- J's Core gives a block entity its state as fields declared once, each saying where it goes: into the save, to the
+  players who see the block, to the menu open on it. The saving, the update the players are sent, the client's
+  reading of it and the menu's data all follow from those declarations, and the players are sent one update per
+  block entity a tick however many fields changed. Inventories and energy stores are declared the same way, with
+  whether pipes and cables reach them and whether they spill when the block is broken.
+- J's Core declares a menu once: its slots in groups, placed from the screen's layout; where a shift-click in each
+  group sends the stack; its buttons; and that it stays open while its block entity stands and the player can reach
+  it, which holds for every variant of a block that makes the same block entity. A block that makes a block entity
+  is declared the same way, with what it ticks and which menu it opens, and faces whoever placed it.
 
 ### Changed
 - The Standard Mainframe's roof fans look like fans: each is a square housing that stays still, with a dark well
@@ -428,6 +437,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The Mainframes' and the racks' items show the machine as it comes, empty and switched off. They are drawn with the
   same models as the machines in the world, and took on the hardware, the servers and the lamps of the last one
   drawn, or showed every part at once, every kind of server in every row, before any was.
+- An Industrial machine spills what it holds however it goes: blown up, replaced, or broken in creative mode, where
+  before only a player breaking it in survival got its contents back.
 - Shutting a computer down from its desktop shows the system's own goodbye, and the machine goes dark only when it
   has finished; it used to cut the power at once, dropping the player out of the computer with no screen at all.
   Restarting from the desktop shows the goodbye too before the self-test, as restarting from a prompt already did.

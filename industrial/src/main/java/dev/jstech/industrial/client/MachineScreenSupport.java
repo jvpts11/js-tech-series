@@ -41,23 +41,6 @@ final class MachineScreenSupport {
         g.fill(x + w - 1, y, x + w, y + h, c.bevelDark());
     }
 
-    static void drawSlot(final GuiGraphics g, final int x, final int y) {
-        final Colours c = colours();
-        g.fill(x - 1, y - 1, x + 17, y + 17, c.slotBorder());
-        g.fill(x, y, x + 16, y + 16, c.slotFill());
-    }
-
-    static void drawPlayerInventory(final GuiGraphics g, final int left, final int top) {
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                drawSlot(g, left + 8 + col * 18, top + 84 + row * 18);
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            drawSlot(g, left + 8 + col * 18, top + 142);
-        }
-    }
-
     static void drawEnergyBar(final GuiGraphics g, final int x, final int y, final int w, final int h,
                               final int energy, final int maxEnergy) {
         final Colours c = colours();
