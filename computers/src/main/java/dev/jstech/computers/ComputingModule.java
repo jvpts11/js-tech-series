@@ -102,6 +102,7 @@ import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.item.ServerCaseItem;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.os.media.FormattedMediaItem;
+import dev.jstech.computers.os.media.MediaBay;
 import dev.jstech.computers.os.media.MediaDriveType;
 import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.os.media.MediaReaderBlock;
@@ -167,10 +168,12 @@ public final class ComputingModule {
     private static final CabinetBlockItem.Fit RACK_FIT = new CabinetBlockItem.Fit(48.0F, 0.5F, -1.5F, -0.5F);
 
     /**
-     * How an encoder body sits in an item slot: the body is one full block (x -0.5..0.5, y 0..1,
-     * z -0.5..0.5 around its origin), so only the height needs re-centring.
+     * How a device's body (an encoder, a drive) sits in an item slot: the body is one full block (x -0.5..0.5,
+     * y 0..1, z -0.5..0.5 around its origin), so only the height needs re-centring.
      */
-    private static final CabinetBlockItem.Fit ENCODER_FIT = new CabinetBlockItem.Fit(16.0F, 0.0F, -0.5F, 0.0F);
+    private static final CabinetBlockItem.Fit DEVICE_FIT = new CabinetBlockItem.Fit(16.0F, 0.0F, -0.5F, 0.0F);
+    /** A device's lamps, dark on its item, whatever the devices in the world show. */
+    private static final Set<String> DEVICE_LAMPS = Set.of(MediaBay.POWER_LAMP, MediaBay.BUSY_LAMP);
 
     // Cables. The data cables are one block entity; the Crafting cable links a Crafting Switch to its computer.
 
@@ -342,14 +345,16 @@ public final class ComputingModule {
                     PATTERN_ENCODER, LEGACY_PATTERN_ENCODER, VINTAGE_PATTERN_ENCODER);
 
     /*
-     * Media drives: one block per drive type, each linked to a computer over the Peripheral Cable. A loaded drive
-     * lights its front; the Dock Station is a low hub on the desk, drawn by hand, with the stick standing in it.
+     * Media drives: one block per drive type, each linked to a computer over the Peripheral Cable. A drive is drawn
+     * by its block entity as the drive of its day, the medium in it the player's own; the Dock Station is a low hub
+     * on the desk, drawn by hand, with the stick standing in it.
      */
 
     public static final BlockEntry<MediaReaderBlock> FLOPPY_DRIVE =
-            drive("floppy_drive", MediaDriveType.FLOPPY_DRIVE, MapColor.COLOR_GRAY).named("Floppy Drive").register();
+            drive("floppy_drive", MediaDriveType.FLOPPY_DRIVE, MapColor.TERRACOTTA_WHITE).named("Floppy Drive")
+                    .register();
     public static final BlockEntry<MediaReaderBlock> CD_DRIVE =
-            drive("cd_drive", MediaDriveType.CD_DRIVE, MapColor.COLOR_GRAY).named("CD Drive").register();
+            drive("cd_drive", MediaDriveType.CD_DRIVE, MapColor.COLOR_LIGHT_GRAY).named("CD Drive").register();
     public static final BlockEntry<MediaReaderBlock> DVD_DRIVE =
             drive("dvd_drive", MediaDriveType.DVD_DRIVE, MapColor.COLOR_BLACK).named("DVD Drive").register();
     public static final BlockEntry<MediaReaderBlock> DOCK_STATION =
@@ -674,21 +679,23 @@ public final class ComputingModule {
                         .noOcclusion())
                 .look(ENCODER_BODY)
                 .item((block, properties) -> new CabinetBlockItem(block, properties, "pattern_encoder", id,
-                        "pattern_encoder", ENCODER_FIT,
-                        Set.of(PatternEncoderBlockEntity.POWER_LAMP, PatternEncoderBlockEntity.BUSY_LAMP)))
+                        "pattern_encoder", DEVICE_FIT, DEVICE_LAMPS))
                 .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(DEVICES);
     }
 
-    /** A drive with its casing on the sides and top, and its front lit while it holds a medium. */
+    /**
+     * A drive, whose body its block entity draws: the block shows nothing but the particles a break scatters, and
+     * without noOcclusion the full cube would block its own light and cull the faces of its neighbours.
+     */
     private static BlockBuilder<MediaReaderBlock> drive(final String id, final MediaDriveType type,
                                                         final MapColor color) {
-        final String casing = "block/" + id + "_casing";
         return CONTENT.block(id, properties -> new MediaReaderBlock(type, properties))
-                .properties(properties -> properties.mapColor(color).strength(1.5F).sound(SoundType.METAL))
-                .look(IBlockLook.facing(IBlockModel.orientable(id, casing, "block/" + id + "_front", casing))
-                        .whileOn(MediaReaderBlock.LOADED,
-                                IBlockModel.orientable(id + "_active", casing, "block/" + id + "_active", casing)))
-                .item().tab(DEVICES);
+                .properties(properties -> properties.mapColor(color).strength(1.5F).sound(SoundType.METAL)
+                        .noOcclusion())
+                .look(IBlockLook.fixed(new IBlockModel.ParticleOnly(id + "_body", "block/" + id + "_particle")))
+                .item((block, properties) -> new CabinetBlockItem(block, properties, "media_drive", id,
+                        "media_drive", DEVICE_FIT, DEVICE_LAMPS))
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(DEVICES);
     }
 
     /** A speaker: its grille in front, its sockets behind, set down facing whoever places it. */

@@ -27,6 +27,7 @@ import dev.jstech.core.peripheral.IPeripheralOwner;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -40,6 +41,10 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
+import software.bernie.geckolib.animatable.GeoBlockEntity;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.List;
 import java.util.Optional;
@@ -58,8 +63,12 @@ import java.util.Optional;
  * Each server tick the reader runs a BFS via {@link PeripheralLinks#discoverOwner} to auto-link
  * to the nearest computer, mirroring the monitor pattern. The linked owner position is stored in
  * NBT and restored on world reload.
+ *
+ * <p>The floppy, CD and DVD drives are drawn as models of the drives of their day: the medium in the drive is the
+ * very item the player put in, the tray or the slot plays its clip as a medium goes in or comes out, and the lamps
+ * say whether a computer is linked and whether it is reading the drive. The Dock Station keeps its block model.
  */
-public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEndpoint, IAudible {
+public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEndpoint, IAudible, GeoBlockEntity {
 
     private static final String NBT_SLOT = "MediaSlot";
     private static final String NBT_LINKED_OWNER = "LinkedOwner";
@@ -71,6 +80,9 @@ public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEn
 
     /** What the drive sounds like taking a medium in and giving it back. */
     private final MediaBaySounds baySounds = new MediaBaySounds();
+    /** On the client, the medium drawn in the drive, kept a moment after it is taken so its way out is seen. */
+    private final MediaBay bay = new MediaBay();
+    private final AnimatableInstanceCache geckoCache = GeckoLibUtil.createInstanceCache(this);
 
     /*
      * Whether the linked computer is installing a system or a program from the medium in this drive, on both
@@ -94,6 +106,9 @@ public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEn
             final MediaBaySounds.Move move = baySounds.changed(level, worldPosition, getStackInSlot(0));
             if (move != null && move.format() == MediaFormat.USB && level instanceof ServerLevel server) {
                 deviceMoved(server, move.in());
+            }
+            if (move != null && move.format() != null && modelled()) {
+                triggerAnim(MediaBay.CONTROLLER, MediaBay.clip(move.format(), move.in()));
             }
             setChanged();
             syncToClients();
@@ -152,12 +167,15 @@ public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEn
     public void onOwnerLinked(final long ownerPos) {
         linkedOwner = ownerPos;
         setChanged();
+        // The drive's power lamp shows the link, so the client has to hear of it.
+        syncToClients();
     }
 
     @Override
     public void onOwnerUnlinked() {
         linkedOwner = null;
         setChanged();
+        syncToClients();
     }
 
     /**
@@ -291,6 +309,33 @@ public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEn
         onOwnerUnlinked();
     }
 
+    // ─── Model ───────────────────────────────────────────────────────────────
+
+    @Override
+    public void registerControllers(final AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(MediaBay.controller(this, "media_drive"));
+    }
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return geckoCache;
+    }
+
+    /** Whether this reader is drawn as a model: the drives are, the Dock Station keeps its block model. */
+    public boolean modelled() {
+        return driveType() != MediaDriveType.DOCK_STATION;
+    }
+
+    /** Whether the linked computer is reading this drive now, which its activity lamp shows by blinking. */
+    public boolean reading() {
+        return reading;
+    }
+
+    /** The medium the client draws in the drive, kept a moment after it is taken so its way out is seen. */
+    public ItemStack drawnMedium() {
+        return bay.drawn(slot.getStackInSlot(0), level);
+    }
+
     // ─── Public API ──────────────────────────────────────────────────────────
 
     /**
@@ -411,6 +456,21 @@ public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEn
     @Nullable
     public Packet<ClientGamePacketListener> getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void handleUpdateTag(final CompoundTag tag, final HolderLookup.Provider registries) {
+        final ItemStack before = slot.getStackInSlot(0).copy();
+        super.handleUpdateTag(tag, registries);
+        bay.seen(before, slot.getStackInSlot(0), level);
+    }
+
+    @Override
+    public void onDataPacket(final Connection connection, final ClientboundBlockEntityDataPacket packet,
+                             final HolderLookup.Provider registries) {
+        final ItemStack before = slot.getStackInSlot(0).copy();
+        super.onDataPacket(connection, packet, registries);
+        bay.seen(before, slot.getStackInSlot(0), level);
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────

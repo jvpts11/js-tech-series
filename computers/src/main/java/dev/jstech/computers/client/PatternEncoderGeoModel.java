@@ -14,9 +14,9 @@ import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.model.GeoModel;
 
 /**
- * Picks the body model for a Pattern Encoder: one per hardware era, because a floppy burner, a CD burner
- * and a slot-in DVD/USB burner are different machines and not a repaint. Every model shares one animation
- * file (the disc spin and the activity lamp); textures are one atlas per model.
+ * Picks the body model for a Pattern Encoder: one per hardware era, because a floppy burner, a CD burner and a
+ * DVD and USB burner are different machines and not a repaint. Every model shares one animation file (the medium
+ * going in and coming out); textures are one atlas per model.
  */
 public final class PatternEncoderGeoModel extends GeoModel<PatternEncoderBlockEntity> {
 

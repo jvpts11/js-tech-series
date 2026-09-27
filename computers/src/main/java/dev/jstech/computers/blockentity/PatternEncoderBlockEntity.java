@@ -19,6 +19,7 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.media.FormattedMediaItem;
+import dev.jstech.computers.os.media.MediaBay;
 import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.id.IStableId;
@@ -59,9 +60,6 @@ import java.util.Optional;
 import software.bernie.geckolib.animatable.GeoBlockEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.PlayState;
-import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 /**
@@ -80,10 +78,6 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
 
     /** The most jobs waiting behind the one being written. */
     public static final int QUEUE_MAX = 8;
-    /** The bone of the power lamp, lit while a computer is at the other end of the cable. */
-    public static final String POWER_LAMP = "led_power";
-    /** The bone of the activity lamp, blinking while a pattern is written and held lit on an error. */
-    public static final String BUSY_LAMP = "led_busy";
 
     private static final TextKey READY = TextKey.of("jsc.pattern_encoder.ready", "Ready");
     private static final TextKey STARTING = TextKey.of("jsc.pattern_encoder.starting", "Starting...");
@@ -99,29 +93,18 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
     private static final TextKey NO_MEDIUM = TextKey.of("jsc.pattern_encoder.no_medium", "no medium");
     private static final TextKey VERIFY_FAILED = TextKey.of("jsc.pattern_encoder.verify_failed", "Verify failed: %s");
 
+    private final AnimatableInstanceCache geckoCache =
+            GeckoLibUtil.createInstanceCache(this);
+
     /*
      * The body's only motion is the medium going in and coming out: the tray riding out and back, a floppy
      * sliding through its slot, a stick going into its port. Each plays once, triggered by the server when the
      * bay's slot fills or empties; the lamps are bone visibility set by the renderer, which blinks them.
      */
-    private static final String BAY = "bay";
-    private static final String[] BAY_CLIPS = {"insert_tray", "eject_tray", "insert_floppy", "eject_floppy",
-            "insert_usb", "eject_usb"};
-    /** How long a medium taken out is still drawn, for its way out to be seen: the longest eject clip, and more. */
-    private static final int LEAVING_TICKS = 40;
-
-    private final AnimatableInstanceCache geckoCache =
-            GeckoLibUtil.createInstanceCache(this);
-
     @Override
     public void registerControllers(
             final AnimatableManager.ControllerRegistrar controllers) {
-        final AnimationController<PatternEncoderBlockEntity> bay =
-                new AnimationController<>(this, BAY, 0, state -> PlayState.STOP);
-        for (final String clip : BAY_CLIPS) {
-            bay.triggerableAnim(clip, RawAnimation.begin().thenPlay("animation.pattern_encoder." + clip));
-        }
-        controllers.add(bay);
+        controllers.add(MediaBay.controller(this, "pattern_encoder"));
     }
 
     @Override
@@ -167,9 +150,8 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
 
     /** What the bay sounds like taking a disc or a USB drive in and giving it back. */
     private final MediaBaySounds baySounds = new MediaBaySounds();
-    /** On the client, the medium last taken out of the bay, and when, so its way out can still be drawn. */
-    private ItemStack leaving = ItemStack.EMPTY;
-    private long leftAt = Long.MIN_VALUE / 2;
+    /** On the client, the medium drawn in the bay, kept a moment after it is taken so its way out is seen. */
+    private final MediaBay bay = new MediaBay();
 
     private final ItemStackHandler media = new ItemStackHandler(1) {
         @Override
@@ -194,8 +176,8 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
         @Override
         protected void onContentsChanged(final int slot) {
             final MediaBaySounds.Move move = baySounds.changed(level, worldPosition, getStackInSlot(0));
-            if (move != null) {
-                triggerAnim(BAY, (move.in() ? "insert_" : "eject_") + bayWay(move.format()));
+            if (move != null && move.format() != null) {
+                triggerAnim(MediaBay.CONTROLLER, MediaBay.clip(move.format(), move.in()));
             }
             setChanged();
             sync();
@@ -298,20 +280,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
      * so its way out is seen; the eject clip hides it at the moment it is taken.
      */
     public ItemStack drawnMedium() {
-        final ItemStack held = media.getStackInSlot(0);
-        if (!held.isEmpty() || level == null || level.getGameTime() - leftAt > LEAVING_TICKS) {
-            return held;
-        }
-        return leaving;
-    }
-
-    /* The way a medium of that format goes in and out of the bay: on the tray, through the slot, into the port. */
-    private static String bayWay(final MediaFormat format) {
-        return switch (format) {
-            case FLOPPY -> "floppy";
-            case CD, DVD -> "tray";
-            case USB -> "usb";
-        };
+        return bay.drawn(media.getStackInSlot(0), level);
     }
 
     public ItemStack mediaStack() {
@@ -717,7 +686,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
         final ItemStack before = media.getStackInSlot(0).copy();
         super.handleUpdateTag(tag, registries);
         syncedQueue = tag.getInt("QueueSize");
-        rememberLeaving(before);
+        bay.seen(before, media.getStackInSlot(0), level);
     }
 
     @Override
@@ -725,15 +694,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
                              final HolderLookup.Provider registries) {
         final ItemStack before = media.getStackInSlot(0).copy();
         super.onDataPacket(connection, packet, registries);
-        rememberLeaving(before);
-    }
-
-    /* The client saw the bay empty: the medium that was in it is drawn a moment longer, on its way out. */
-    private void rememberLeaving(final ItemStack before) {
-        if (!before.isEmpty() && media.getStackInSlot(0).isEmpty() && level != null) {
-            leaving = before;
-            leftAt = level.getGameTime();
-        }
+        bay.seen(before, media.getStackInSlot(0), level);
     }
 
     /** The queue length a client display shows: the synced count off the server, the real one on it. */

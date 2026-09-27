@@ -283,6 +283,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   out is seen on its way out. Two lamps on the front say what the encoder does: the power lamp is lit while a computer is
   at the other end of its cable, and the activity lamp blinks while a pattern is written and stays lit on an error.
   The body no longer has a status screen.
+- The Floppy, CD and DVD Drives are the drives of their day, each a full block in the colours of the Pattern Encoder
+  of its era: the Floppy Drive a cream external drive with its bezel low on the front, the CD Drive a pale grey
+  external CD-ROM drive with darker end caps, the tray at the top and the headphone jack, the volume slider and the
+  eject button under it, and the DVD Drive a black writer with a diamond-cut top and a silver trim. The medium in a
+  drive is the very item the player put in: a floppy slides in and out of the slot, and a disc rides in and out on
+  the tray. The power lamp is lit while a computer is linked, and the activity lamp blinks while the computer reads
+  the drive.
 - J's Core's page lists everything it holds today (the sound system, recordings, translatable text, palettes, the
   declaration of blocks and items, the slowest cable of a network) and says in plain words that anyone may use
   the Core in their own project, open or closed, free or paid, with credit, and what its licence, the LGPL 3.0,
