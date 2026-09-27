@@ -18,7 +18,6 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.block.Block;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Block item for the Mainframe: the cabinet's own model in the slot, plus the machine's tooltip.
@@ -32,12 +31,17 @@ public class MainframeBlockItem extends CabinetBlockItem {
      * the bottom front row, so only the height and the depth need re-centring.
      */
     private static final Fit MAINFRAME_FIT = new Fit(48.0F, 0.0F, -1.0F, -0.5F);
+    /**
+     * A Mainframe's parts shown only when fitted or lit: its CPUs, memory, GPUs, disks with their lamps and power
+     * supply, its run, network and fault lamps and its light bars.
+     */
+    private static final List<String> FITTED = List.of("cpu_", "ram_", "gpu_", "disk_", "psu", "lamp_", "lightbar_");
 
     private static final TextKey TOOLTIP =
             TextKey.of("item.jsc.mainframe.tooltip", "Forms a 3x2x2 structure when placed");
 
     public MainframeBlockItem(final Block block, final Item.Properties properties, final String model) {
-        super(block, properties, "mainframe", model, "mainframe", MAINFRAME_FIT, Set.of());
+        super(block, properties, "mainframe", model, "mainframe", MAINFRAME_FIT, FITTED);
     }
 
     @Override

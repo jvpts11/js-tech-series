@@ -19,11 +19,12 @@ import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-import java.util.Set;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * The item of a multiblock cabinet (a rack or a Mainframe) which shows the cabinet itself.
+ * The item of a machine drawn by its block entity (a rack, a Mainframe, a drive, a Pattern Encoder) which shows the
+ * machine itself, as it comes: empty and switched off.
  *
  * <p>A cabinet's block model is a GeckoLib model drawn by the block entity, so the block itself renders
  * nothing, and its item, having no block model to fall back on, showed a flat icon that looked like a
@@ -52,19 +53,22 @@ public class CabinetBlockItem extends BlockItem implements GeoItem {
     private final String animation;
     private final Fit fit;
     /**
-     * The bones of the lamps the world lights while the machine works. The slot shows the machine switched off,
-     * so they are hidden there; the world's renderer sets them again on every frame it draws.
+     * How the names of the parts the world shows only when they are fitted or lit begin (a CPU, a server in a row, a
+     * lamp). The slot shows the machine as it comes, empty and switched off, so those parts are hidden there and every
+     * other part is shown. The model is the one the world draws, whose renderer shows and hides parts on it by what
+     * each machine holds, so the item sets every part again on every frame it draws.
      */
-    private final Set<String> lamps;
+    private final List<String> fittedParts;
 
     public CabinetBlockItem(final Block block, final Properties properties, final String folder,
-                            final String model, final String animation, final Fit fit, final Set<String> lamps) {
+                            final String model, final String animation, final Fit fit,
+                            final List<String> fittedParts) {
         super(block, properties);
         this.folder = folder;
         this.model = model;
         this.animation = animation;
         this.fit = fit;
-        this.lamps = Set.copyOf(lamps);
+        this.fittedParts = List.copyOf(fittedParts);
     }
 
     public ResourceLocation modelResource() {
@@ -85,8 +89,14 @@ public class CabinetBlockItem extends BlockItem implements GeoItem {
         return fit;
     }
 
-    public Set<String> lamps() {
-        return lamps;
+    /** Whether the slot shows this part of the model: every part but the fitted and the lit ones. */
+    public boolean shownInSlot(final String part) {
+        for (final String fitted : fittedParts) {
+            if (part.startsWith(fitted)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

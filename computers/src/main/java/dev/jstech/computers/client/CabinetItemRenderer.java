@@ -13,6 +13,7 @@ import dev.jstech.computers.item.CabinetBlockItem;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
+import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeoItemRenderer;
 
@@ -47,9 +48,17 @@ public final class CabinetItemRenderer extends GeoItemRenderer<CabinetBlockItem>
         final float scale = FILL * 16.0F / fit.span();
         poseStack.scale(scale, scale, scale);
         poseStack.translate(fit.offsetX(), fit.offsetY(), fit.offsetZ());
-        // The baked model is the world's too, so its lamps are dark here whatever the last machine drawn showed.
-        for (final String lamp : item.lamps()) {
-            model.getBone(lamp).ifPresent(bone -> bone.setHidden(true));
+        // The baked model is the world's too: the machine as it comes, whatever the last one drawn held.
+        for (final GeoBone bone : model.topLevelBones()) {
+            asItComes(item, bone);
+        }
+    }
+
+    /* Shows the parts of the machine as it comes and hides the fitted and the lit ones, the whole tree down. */
+    private static void asItComes(final CabinetBlockItem item, final GeoBone bone) {
+        bone.setHidden(!item.shownInSlot(bone.getName()));
+        for (final GeoBone child : bone.getChildBones()) {
+            asItComes(item, child);
         }
     }
 

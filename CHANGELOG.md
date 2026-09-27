@@ -425,6 +425,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   glass. The window over the Vintage Mainframe's tape reels flickered the same way and no longer does.
 - A Pattern Encoder's item shows the encoder switched off. It is drawn with the same model as the encoders in the
   world, and it took on their lamps: lit, or blinking, as the last encoder drawn showed them.
+- The Mainframes' and the racks' items show the machine as it comes, empty and switched off. They are drawn with the
+  same models as the machines in the world, and took on the hardware, the servers and the lamps of the last one
+  drawn, or showed every part at once, every kind of server in every row, before any was.
 - Shutting a computer down from its desktop shows the system's own goodbye, and the machine goes dark only when it
   has finished; it used to cut the power at once, dropping the player out of the computer with no screen at all.
   Restarting from the desktop shows the goodbye too before the self-test, as restarting from a prompt already did.

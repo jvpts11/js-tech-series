@@ -166,6 +166,8 @@ public final class ComputingModule {
      * x -1.5..0.5, y 0..3, z -0.5..1.5 blocks around the controller, so its middle moves by this much.
      */
     private static final CabinetBlockItem.Fit RACK_FIT = new CabinetBlockItem.Fit(48.0F, 0.5F, -1.5F, -0.5F);
+    /** A rack's parts shown only when fitted or lit: the units seated in its rows and its light bars. */
+    private static final List<String> RACK_FITTED = List.of("row_", "lightbar_");
 
     /**
      * How a device's body (an encoder, a drive) sits in an item slot: the body is one full block (x -0.5..0.5,
@@ -173,7 +175,7 @@ public final class ComputingModule {
      */
     private static final CabinetBlockItem.Fit DEVICE_FIT = new CabinetBlockItem.Fit(16.0F, 0.0F, -0.5F, 0.0F);
     /** A device's lamps, dark on its item, whatever the devices in the world show. */
-    private static final Set<String> DEVICE_LAMPS = Set.of(MediaBay.POWER_LAMP, MediaBay.BUSY_LAMP);
+    private static final List<String> DEVICE_LAMPS = List.of(MediaBay.POWER_LAMP, MediaBay.BUSY_LAMP);
 
     // Cables. The data cables are one block entity; the Crafting cable links a Crafting Switch to its computer.
 
@@ -720,7 +722,7 @@ public final class ComputingModule {
                                                          final Function<BlockBehaviour.Properties, B> factory) {
         return CONTENT.block(id, factory).properties(ComputingModule::rackProperties).look(RACK_BODY)
                 .item((block, properties) -> new CabinetBlockItem(block, properties, "rack", id, "rack", RACK_FIT,
-                        Set.of()))
+                        RACK_FITTED))
                 .itemLook(IItemLook.DRAWN_BY_ENTITY).drops(Drops.NONE).tab(RACKS);
     }
 
