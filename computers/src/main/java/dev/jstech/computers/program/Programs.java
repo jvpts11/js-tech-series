@@ -110,6 +110,10 @@ public final class Programs {
     public static final ResourceLocation INTEGRITY_MONITOR =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "integrity_monitor");
 
+    /** Soundfoundry: Voidsoft's music player. */
+    public static final ResourceLocation SOUNDFOUNDRY =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "soundfoundry");
+
     private Programs() {
     }
 

@@ -64,6 +64,8 @@ public final class FileOpeners {
          */
         BY_TYPE.put(FileType.ARK, List.of("ark"));
         BY_TYPE.put(FileType.PIX, List.of("paint"));
+        BY_TYPE.put(FileType.OGG, List.of("soundfoundry"));
+        BY_TYPE.put(FileType.WAV, List.of("soundfoundry"));
         BY_TYPE.put(FileType.TXT, List.of(EDITOR));
         BY_TYPE.put(FileType.CFG, List.of(EDITOR));
         BY_TYPE.put(FileType.CSV, List.of(EDITOR));

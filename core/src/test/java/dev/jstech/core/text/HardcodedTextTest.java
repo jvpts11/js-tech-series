@@ -119,7 +119,7 @@ class HardcodedTextTest {
             data(COMPUTERS + "os/KernelNames.java", 3, "kernel names as a system reports them"),
             data(COMPUTERS + "os/OsBootstrap.java", 5, PRODUCTS),
             data(COMPUTERS + "os/OsRegistry.java", 2, "the kind of entry a registration names in the log"),
-            data(COMPUTERS + "os/SoftwareHouse.java", 31, PRODUCTS),
+            data(COMPUTERS + "os/SoftwareHouse.java", 32, PRODUCTS),
             data(COMPUTERS + "os/edit/NanoWords.java", 1, "an editor's name and version on its title row"),
             data(COMPUTERS + "os/edit/project/ProjectTemplate.java", 6, "the source files a new project starts with"),
             data(COMPUTERS + "os/fs/InstallerLayout.java", 29, FILES),

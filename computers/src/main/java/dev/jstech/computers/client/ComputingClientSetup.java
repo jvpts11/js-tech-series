@@ -19,6 +19,7 @@ import dev.jstech.computers.block.IPostScreenOpener;
 import dev.jstech.computers.block.ISystemBootScreenOpener;
 import dev.jstech.computers.api.client.IOperatingSpaceScreen;
 import dev.jstech.computers.api.client.OperatingSpaceScreens;
+import dev.jstech.computers.client.audio.SoundfoundryStates;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
@@ -53,6 +54,7 @@ public final class ComputingClientSetup {
     public static void onLoggingOut(final ClientPlayerNetworkEvent.LoggingOut event) {
         // The desktop's per-machine caches belong to the world being left.
         DesktopScreen.forgetClientState();
+        SoundfoundryStates.clear();
     }
 
     @SubscribeEvent

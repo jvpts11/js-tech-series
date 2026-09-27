@@ -118,6 +118,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   reloaded, and `/soundfoundry catalog reload` reads it again for an operator, saying how many albums and songs it
   found; a file it cannot read is passed over and named in the server log. `catalog` under `[soundfoundry]` in
   `jscomputers-server.toml` turns it off. The documentation has a page on music on a server.
+- Soundfoundry, Voidsoft's music player, for the desktops of the Legacy era and later. Its playlist and how it
+  plays belong to the machine, so the music plays on with the screen closed, the next song follows when one ends,
+  and it stops when the machine goes off. It plays out of the machine's monitors and speakers as its sound hardware
+  plays them, at its own volume on top of the system's, with a balance that turns the left or right speaker down.
+  It shuffles through the whole list before a song comes round again, repeats the list or stops after the last,
+  and keeps playlists as `.m3u` files. Songs open in it, and songs brought from the player's own computer can go
+  straight onto its playlist. A machine whose sound only beeps has nothing to play a song on, and says so.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.

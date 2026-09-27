@@ -65,12 +65,15 @@ public final class SoftwareHouseGameTests {
 
     @GameTest(template = ARENA)
     public static void programs_nameTheirMakersAndBundledOnesTheirShipper(final GameTestHelper helper) {
-        final Map<String, SoftwareHouse> programs = Map.of(
-                "nms", SoftwareHouse.MIDSOFT, "iqlengine", SoftwareHouse.MIDSOFT,
-                "crafting_manager", SoftwareHouse.AUTODECK, "craft_planner", SoftwareHouse.AUTODECK,
-                "automation_engine", SoftwareHouse.RED_CAP, "storage_insights", SoftwareHouse.VAULTIS,
-                "predictive_cache", SoftwareHouse.VAULTIS, "network", SoftwareHouse.JSC,
-                "mirror", SoftwareHouse.JSC, "screenfetch", SoftwareHouse.ARCH_COLLECTIVE);
+        final Map<String, SoftwareHouse> programs = Map.ofEntries(
+                Map.entry("nms", SoftwareHouse.MIDSOFT), Map.entry("iqlengine", SoftwareHouse.MIDSOFT),
+                Map.entry("crafting_manager", SoftwareHouse.AUTODECK),
+                Map.entry("craft_planner", SoftwareHouse.AUTODECK),
+                Map.entry("automation_engine", SoftwareHouse.RED_CAP),
+                Map.entry("storage_insights", SoftwareHouse.VAULTIS),
+                Map.entry("predictive_cache", SoftwareHouse.VAULTIS), Map.entry("network", SoftwareHouse.JSC),
+                Map.entry("mirror", SoftwareHouse.JSC), Map.entry("screenfetch", SoftwareHouse.ARCH_COLLECTIVE),
+                Map.entry("soundfoundry", SoftwareHouse.VOIDSOFT));
         programs.forEach((id, house) -> helper.assertTrue(OsRegistry.getProgram(rl(id)).house().equals(house),
                 id + " is " + house.name() + "'s; got " + OsRegistry.getProgram(rl(id)).house().name()));
         // A bundled program is credited to the desktop that ships it; an explicit house stays its own.

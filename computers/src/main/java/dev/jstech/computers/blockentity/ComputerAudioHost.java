@@ -142,6 +142,13 @@ final class ComputerAudioHost implements IAudioHost {
         return speakers();
     }
 
+    /** Whether a monitor plays, by the output the system chose and what is linked. */
+    boolean monitorsPlay() {
+        final boolean hasMonitors = !monitors().isEmpty();
+        return hasMonitors
+                && machine.console().settings().soundOutput().monitorsPlay(true, !speakers().isEmpty());
+    }
+
     /** Whether the speakers play, by the output the system chose and what is linked. */
     boolean speakersPlay() {
         return machine.console().settings().soundOutput().speakersPlay(!monitors().isEmpty(), !speakers().isEmpty());

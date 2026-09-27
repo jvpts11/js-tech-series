@@ -8,6 +8,7 @@
 package dev.jstech.computers.audio;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.files.FileAccess;
 import dev.jstech.computers.os.FilesystemKind;
@@ -26,6 +27,7 @@ import dev.jstech.core.audio.media.MediaUploads;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -62,8 +64,9 @@ public final class MusicImports implements IMediaUploadHandler {
 
     /* The name a song is kept under when nothing of the name it was brought with is left. */
     private static final String FALLBACK_NAME = "Track";
-    /* The context's two parts, the computer and the folder, on a line each. */
+    /* The context's parts, the computer, whether the playlist takes it and the folder, on a line each. */
     private static final char SEPARATOR = '\n';
+    private static final String PLAYLIST = "playlist";
 
     private MusicImports() {
     }
@@ -76,10 +79,11 @@ public final class MusicImports implements IMediaUploadHandler {
     /**
      * What a program sends with a song it brings.
      *
-     * @param folder the folder to put it in, or {@code ""} for the system's music folder
+     * @param folder   the folder to put it in, or {@code ""} for the system's music folder
+     * @param playlist whether to put it at the end of Soundfoundry's playlist too
      */
-    public static String context(final BlockPos host, final String folder) {
-        return Long.toString(host.asLong()) + SEPARATOR + folder;
+    public static String context(final BlockPos host, final String folder, final boolean playlist) {
+        return Long.toString(host.asLong()) + SEPARATOR + (playlist ? PLAYLIST : "") + SEPARATOR + folder;
     }
 
     /**
@@ -116,6 +120,12 @@ public final class MusicImports implements IMediaUploadHandler {
      */
     public static Text keep(final ServerLevel level, final BlockPos host, final String folder, final String name,
                             final MediaId media, final MediaInfo info) {
+        return keep(level, host, folder, false, name, media, info);
+    }
+
+    /** The same, putting the song at the end of Soundfoundry's playlist too when {@code playlist}. */
+    public static Text keep(final ServerLevel level, final BlockPos host, final String folder, final boolean playlist,
+                            final String name, final MediaId media, final MediaInfo info) {
         final Text why = whyNot(level, host, name, media);
         if (why != null || !(level.getBlockEntity(host) instanceof IOsHost computer)) {
             return why != null ? why : NO_COMPUTER.text();
@@ -133,6 +143,10 @@ public final class MusicImports implements IMediaUploadHandler {
         // The same song brought again to the same folder lands on itself, so what it held is room it hands back.
         final DiskFilesystem.WriteResult result = DiskFilesystem.write(disk, path, type, content,
                 computer.systemDiskFreeWeight() + DiskFilesystem.weightOf(disk, path), kind, level.getGameTime());
+        if (result == DiskFilesystem.WriteResult.OK && playlist
+                && computer instanceof AbstractComputerBlockEntity machine) {
+            machine.console().soundfoundry().add(List.of(path));
+        }
         computer.setChanged();
         return switch (result) {
             case OK -> KEPT.with(FsPaths.fileName(path), dir);
@@ -165,21 +179,23 @@ public final class MusicImports implements IMediaUploadHandler {
     public Text received(final ServerPlayer player, final String context, final String name, final MediaId media,
                          final MediaInfo info) {
         return Target.parse(context)
-                .map(target -> keep(player.serverLevel(), target.host(), target.folder(), name, media, info))
+                .map(target -> keep(player.serverLevel(), target.host(), target.folder(), target.playlist(), name,
+                        media, info))
                 .orElseGet(NO_COMPUTER::text);
     }
 
-    /** The computer a song is for and the folder it goes in, as a program wrote them. */
-    private record Target(BlockPos host, String folder) {
+    /** The computer a song is for, whether the playlist takes it, and the folder it goes in, as a program wrote them. */
+    private record Target(BlockPos host, boolean playlist, String folder) {
 
         static Optional<Target> parse(final String context) {
-            final int split = context.indexOf(SEPARATOR);
-            if (split < 0) {
+            final int first = context.indexOf(SEPARATOR);
+            final int second = first < 0 ? -1 : context.indexOf(SEPARATOR, first + 1);
+            if (second < 0) {
                 return Optional.empty();
             }
             try {
-                return Optional.of(new Target(BlockPos.of(Long.parseLong(context.substring(0, split))),
-                        context.substring(split + 1)));
+                return Optional.of(new Target(BlockPos.of(Long.parseLong(context.substring(0, first))),
+                        PLAYLIST.equals(context.substring(first + 1, second)), context.substring(second + 1)));
             } catch (final NumberFormatException malformed) {
                 return Optional.empty();
             }

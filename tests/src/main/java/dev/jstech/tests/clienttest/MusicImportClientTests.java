@@ -62,7 +62,8 @@ public final class MusicImportClientTests {
                 .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
                 .thenRightClick(SETTLE, MONITOR)
                 .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
-                .then(SETTLE, () -> MusicImporter.bring(List.of(song, notes), ctx.abs(COMPUTER), "", outcome))
+                .then(SETTLE, () -> MusicImporter.bring(List.of(song, notes), ctx.abs(COMPUTER), "", false,
+                        outcome))
                 .thenWaitUntil(() -> outcome.done, WAIT, "both files to be dealt with")
                 .thenAssert(0, () -> outcome.results.equals(List.of(true, false)),
                         "the song is kept and the notes are passed over")
@@ -78,7 +79,7 @@ public final class MusicImportClientTests {
         final CraftingComputerBlockEntity[] machine = new CraftingComputerBlockEntity[1];
         final Outcome outcome = new Outcome();
         ctx.thenBuild(0, world -> machine[0] = world.placeRunningCraftingComputer(COMPUTER))
-                .then(SETTLE, () -> MusicImporter.bring(List.of(song), ctx.abs(COMPUTER), "", outcome))
+                .then(SETTLE, () -> MusicImporter.bring(List.of(song), ctx.abs(COMPUTER), "", false, outcome))
                 .thenWaitUntil(() -> outcome.done, WAIT, "the song to be answered")
                 .thenAssert(0, () -> outcome.results.equals(List.of(false))
                                 && GameText.resolve(outcome.messages.getFirst()).contains("screen"),

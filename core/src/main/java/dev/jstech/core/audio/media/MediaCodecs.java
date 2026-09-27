@@ -41,6 +41,7 @@ public final class MediaCodecs {
             ByteBufCodecs.DOUBLE, MediaPlace::z,
             SIDE, MediaPlace::side,
             RESPONSE, MediaPlace::response,
+            ByteBufCodecs.FLOAT, MediaPlace::gain,
             MediaPlace::new);
 
     private MediaCodecs() {

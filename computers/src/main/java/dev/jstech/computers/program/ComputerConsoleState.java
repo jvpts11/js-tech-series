@@ -50,6 +50,8 @@ public final class ComputerConsoleState {
     private final ComputerSettings settings = new ComputerSettings();
     private final ShellLocations locations = new ShellLocations();
     private final DesktopLayout desktop = new DesktopLayout();
+    /** Soundfoundry's playlist and how it plays, which go on with the screen closed. */
+    private final SoundfoundryState soundfoundry = new SoundfoundryState();
     /*
      * The tool running in front of this machine's terminal, if one is: a fetch, an unpack, a compile. Kept
      * apart from this class because it is a thing of its own, with its own rules about what is written down.
@@ -108,6 +110,11 @@ public final class ComputerConsoleState {
     /** The per-computer settings owned by the Settings app and the {@code config} command. */
     public ComputerSettings settings() {
         return settings;
+    }
+
+    /** What Soundfoundry plays on this machine. */
+    public SoundfoundryState soundfoundry() {
+        return soundfoundry;
     }
 
     /** The work this machine does with nobody at it. */
@@ -303,6 +310,8 @@ public final class ComputerConsoleState {
         programs.clear();
         // Whatever was being built went with the system it was being built for.
         foreground.clear();
+        // And the playlist named songs on that disk.
+        SoundfoundryStorage.load(soundfoundry, new CompoundTag());
     }
 
     public void save(final CompoundTag tag) {
@@ -341,6 +350,7 @@ public final class ComputerConsoleState {
             tag.putString("ComputerName", computerName);
         }
         SettingsStorage.save(settings, tag);
+        SoundfoundryStorage.save(soundfoundry, tag);
     }
 
     /**
@@ -377,5 +387,6 @@ public final class ComputerConsoleState {
         desktop.load(tag);
         computerName = tag.getString("ComputerName");
         SettingsStorage.load(settings, tag);
+        SoundfoundryStorage.load(soundfoundry, tag);
     }
 }

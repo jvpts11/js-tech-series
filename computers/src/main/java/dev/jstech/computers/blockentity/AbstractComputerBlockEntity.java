@@ -11,6 +11,7 @@ import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.advancement.HardwareMilestones;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.audio.MusicPlayer;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.IEraChassisBlock;
 import dev.jstech.computers.client.audio.MachineSoundSources;
@@ -131,6 +132,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     private final ComputerSounds sounds = new ComputerSounds(this);
     /** What its system's sound plays through, and where it comes out. */
     private final ComputerAudioHost audio = new ComputerAudioHost(this);
+    private final MusicPlayer music = new MusicPlayer(this);
 
     /** The name a player gave this computer: the machine's own, and no part's. */
     private String computerName = "";
@@ -1109,6 +1111,12 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     /** Hears the machine come on and go off, and keeps its hard drive turning in between. */
     protected void tickSounds(final ServerLevel level) {
         sounds.tick(level);
+        music.tick(level);
+    }
+
+    /** Soundfoundry playing on this machine. */
+    public MusicPlayer musicPlayer() {
+        return music;
     }
 
     /** What its system's sound plays through and where it comes out. */
@@ -1141,6 +1149,11 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return audio.speakersPlay();
     }
 
+    /** Whether its monitors play, by the output its system chose and what is linked. */
+    public boolean monitorsPlay() {
+        return audio.monitorsPlay();
+    }
+
     /** What plays its system's sound, named for a screen: its sound card, the board's own sound, or the case's. */
     public Text soundHardwareLabel() {
         return audio.hardwareLabel();
@@ -1169,6 +1182,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
          */
         if (level instanceof ServerLevel serverLevel) {
             onBroken(serverLevel);
+            music.removed(serverLevel);
         } else if (level != null && level.isClientSide()) {
             MachineSoundSources.untrack(sounds);
         }

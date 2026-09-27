@@ -93,7 +93,7 @@ public final class FileAccess {
     }
 
     /** Strips the {@code media:<readerPos>/} prefix from a media path, leaving the path within the medium. */
-    static String mediaSubPath(final String mediaPath) {
+    public static String mediaSubPath(final String mediaPath) {
         final String rest = mediaPath.substring("media:".length());
         final int slash = rest.indexOf('/');
         return slash < 0 ? "" : rest.substring(slash + 1);

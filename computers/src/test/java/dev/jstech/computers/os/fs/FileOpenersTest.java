@@ -57,6 +57,14 @@ class FileOpenersTest {
     }
 
     @Test
+    void defaultFor_opensASongInTheMusicPlayerAndNeverInTheEditor() {
+        assertEquals("soundfoundry", FileOpeners.defaultFor("Music/song.ogg", List.of("soundfoundry")));
+        assertEquals("soundfoundry", FileOpeners.defaultFor("Music/song.wav", List.of("soundfoundry")));
+        assertEquals("", FileOpeners.defaultFor("Music/song.ogg", EVERYTHING));
+        assertEquals(List.of(), FileOpeners.choices("Music/song.ogg", EVERYTHING));
+    }
+
+    @Test
     void defaultFor_saysNothingOpensAKindNobodyClaims() {
         assertEquals("", FileOpeners.defaultFor("noextension", EVERYTHING));
         assertEquals("", FileOpeners.defaultFor("trailing.", EVERYTHING));

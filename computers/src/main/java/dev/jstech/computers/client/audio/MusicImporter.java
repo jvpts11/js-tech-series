@@ -59,14 +59,16 @@ public final class MusicImporter {
      * <p>The dialog belongs to the player's system and holds whoever opens it until it is closed, so it is opened on a
      * thread of its own and the game goes on drawing behind it.
      *
-     * @param folder the folder to put the songs in, or {@code ""} for the system's music folder
+     * @param folder   the folder to put the songs in, or {@code ""} for the system's music folder
+     * @param playlist whether they go at the end of Soundfoundry's playlist too
      */
-    public static void pick(final BlockPos host, final String folder, final IListener listener) {
+    public static void pick(final BlockPos host, final String folder, final boolean playlist,
+                            final IListener listener) {
         final String title = GameText.resolve(PICK_TITLE.text());
         final String filter = GameText.resolve(PICK_FILTER.text());
         final Thread picker = new Thread(() -> {
             final List<Path> picked = openDialog(title, filter);
-            Minecraft.getInstance().execute(() -> bring(picked, host, folder, listener));
+            Minecraft.getInstance().execute(() -> bring(picked, host, folder, playlist, listener));
         }, "jsc-music-picker");
         picker.setDaemon(true);
         picker.start();
@@ -76,11 +78,12 @@ public final class MusicImporter {
      * Brings those files to the computer at {@code host}, one after another; a file that is not a song is passed over
      * with the reason.
      *
-     * @param folder the folder to put them in, or {@code ""} for the system's music folder
+     * @param folder   the folder to put them in, or {@code ""} for the system's music folder
+     * @param playlist whether they go at the end of Soundfoundry's playlist too
      */
     public static void bring(final List<Path> files, final BlockPos host, final String folder,
-                             final IListener listener) {
-        next(List.copyOf(files), 0, MusicImports.context(host, folder), listener);
+                             final boolean playlist, final IListener listener) {
+        next(List.copyOf(files), 0, MusicImports.context(host, folder, playlist), listener);
     }
 
     /** Whether the file is of a kind a song is kept as, judged by its name. */

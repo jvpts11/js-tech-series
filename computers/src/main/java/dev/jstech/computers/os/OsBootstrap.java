@@ -443,6 +443,12 @@ public final class OsBootstrap {
             ProgramSpec.of(rl("paint"), "paint", false, DESKTOPS, 48, ProgramKind.APP, 0, HostScope.ANY)
                     .named("Paint").described("Draw a picture, and hang it on the desktop.")
                     .withEra(LEGACY).withHouse(SoftwareHouse.BELLWETHER_LABS).withRam(32),
+            // Soundfoundry: the music player, in a skin of its own that looks the same on any desktop of its age.
+            ProgramSpec.of(rl("soundfoundry"), "soundfoundry", false, LATER_DESKTOPS, 4, ProgramKind.APP, 0,
+                            HostScope.ANY)
+                    .named("Soundfoundry")
+                    .described("Play the songs on this computer, and bring more from your own.")
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.VOIDSOFT).withRam(16),
             // Exceed: a sheet whose cells can ask the network what it is holding.
             ProgramSpec.of(rl("exceed"), "exceed", false, DESKTOPS, 64, ProgramKind.APP, 2, HostScope.ANY)
                     .named("Exceed").described("A sheet of cells that can ask the network what it is holding.")

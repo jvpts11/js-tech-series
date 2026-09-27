@@ -64,7 +64,7 @@ public final class MediaPlayer {
             final List<SoundInstance> sounds = new ArrayList<>();
             for (final MediaPlace place : payload.places()) {
                 sounds.add(AudioEngine.playMade(sound, opener(file, payload.media().fileName(), offset, place),
-                        place.x(), place.y(), place.z(), payload.volume()));
+                        place.x(), place.y(), place.z(), payload.volume() * place.gain()));
             }
             PLAYING.put(payload.key(), new Playing(sounds));
         });

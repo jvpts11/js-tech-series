@@ -99,6 +99,13 @@ public final class ComputingSounds {
     public static final SoundKey FRAMES_11_ERROR = CONTENT.sound("os/frames_11/error")
             .stereo().channel(AudioChannels.INTERFACE).subtitle("Frames 11 error").register();
 
+    /**
+     * A song a computer plays, out of its monitors and speakers: a recording the server keeps rather than a file of
+     * the mod's, handed over as it plays. Each place picks its own side of a stereo song as it plays it.
+     */
+    public static final SoundKey MUSIC = CONTENT.sound("music/song").made()
+            .channel(AudioChannels.MUSIC).range(24).subtitle("Music plays").register();
+
     /** A system reaching its desktop. Systems with no chime of their own stay silent. */
     public static final SoundCue SYSTEM_STARTUP = CONTENT.cue("system/startup").world()
             .channel(AudioChannels.INTERFACE)
