@@ -32,6 +32,9 @@ public final class SystemLayout {
     /** The directory whose files are shown as icons on the desktop background. */
     public static final String DESKTOP_DIR = "Users/Public/Desktop";
 
+    /** The directory songs are kept in on a Frames system, made the first time one is brought. */
+    public static final String MUSIC_DIR = "Users/Public/Music";
+
     /** The ordered system directories a full desktop OS provides (parents before children). */
     /** The folder the system itself lives in, named after the system line rather than after somebody else's. */
     public static final String SYSTEM_DIR = "Frames";
@@ -72,6 +75,14 @@ public final class SystemLayout {
             return DESKTOP_DIR;
         }
         return os == null ? POSIX_DESKTOP_DIR : UnixTree.of(os.platform()).desktopPath();
+    }
+
+    /** The music folder for an OS: under that system's own home on a POSIX kernel, the Windows-style one otherwise. */
+    public static String musicDirFor(final OsDef os, final KernelDef kernel) {
+        if (kernel == null || kernel.shellFamily() != ShellFamily.POSIX) {
+            return MUSIC_DIR;
+        }
+        return (os == null ? UnixTree.HOME_AND_MEDIA : UnixTree.of(os.platform())).musicPath();
     }
 
     /**

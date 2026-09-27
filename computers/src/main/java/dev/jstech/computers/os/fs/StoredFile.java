@@ -34,10 +34,21 @@ public record StoredFile(String path, FileType type, String content, long modifi
     }
 
     /**
-     * Returns the file size in raw bytes (UTF-8 encoding of {@link #content}).
+     * What a file of that type holding that content weighs, in bytes: its text, except that a recording weighs the
+     * recording it names and an archive adds the recordings packed into it.
      */
-    public int byteSize() {
-        return content.getBytes(StandardCharsets.UTF_8).length;
+    public static long bytesOf(final FileType type, final String content) {
+        final long text = content.getBytes(StandardCharsets.UTF_8).length;
+        if (type.recording()) {
+            final RecordingFile recording = RecordingFile.read(content);
+            return recording == null ? text : recording.bytes();
+        }
+        return type == FileType.ARK ? text + Archive.recordingBytes(content) : text;
+    }
+
+    /** The file's size in bytes, as {@link #bytesOf} weighs it. */
+    public long byteSize() {
+        return bytesOf(type, content);
     }
 
     /**

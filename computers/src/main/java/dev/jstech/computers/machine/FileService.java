@@ -27,7 +27,6 @@ import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -263,10 +262,7 @@ public final class FileService {
             return ICliComputer.FsResult.fail(NOT_EDITABLE.with(path, type.extension()));
         }
         // Free space available, crediting back the file being overwritten so a same-size rewrite fits.
-        final long oldWeight = DiskFilesystem.read(drive.disk(), real)
-                .map(c -> FsPaths.sizeMbEq(c.getBytes(StandardCharsets.UTF_8).length,
-                        DiskFilesystem.eraOf(drive.disk())))
-                .orElse(0L);
+        final long oldWeight = DiskFilesystem.weightOf(drive.disk(), real);
         final DiskFilesystem.WriteResult result = DiskFilesystem.write(drive.disk(), real, type, content,
                 DriveTable.freeWeightOf(drive.disk()) + oldWeight, drive.kind(), this.level.getGameTime());
         return written(result, drive, path, type);

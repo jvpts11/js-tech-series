@@ -12,6 +12,8 @@ import dev.jstech.computers.operation.payload.ArchiveFilesPayload;
 import dev.jstech.computers.operation.payload.ExtractArchivePayload;
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.os.fs.Archive;
+import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
@@ -25,7 +27,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -73,8 +74,8 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
     /* The archive being looked at. */
     private String archivePath = "";
     private List<Archive.Entry> entries = List.of();
-    private int packedBytes;
-    private int originalBytes;
+    private long packedBytes;
+    private long originalBytes;
     private int selected = -1;
     private int scroll;
 
@@ -154,7 +155,7 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
             return;
         }
         this.entries = Archive.entries(content);
-        this.packedBytes = content.getBytes(StandardCharsets.UTF_8).length;
+        this.packedBytes = StoredFile.bytesOf(FileType.ARK, content);
         this.originalBytes = Archive.originalBytes(content);
         this.status = (entries.size() == 1 ? ArchiverTexts.ONE_FILE_INSIDE : ArchiverTexts.FILES_INSIDE)
                 .with(entries.size());
@@ -424,7 +425,7 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
             final int ink = skin.listRowText(on);
             g.drawString(font, font.plainSubstrByWidth(entry.name(), cols[1] - cols[0] - 6),
                     cols[0], ry + 2, ink, false);
-            right(g, font, bytes(entry.originalBytes()), cols[1], ry + 2, ink);
+            right(g, font, bytes(entry.weighs()), cols[1], ry + 2, ink);
             right(g, font, entry.type().extension().isEmpty() ? GameText.resolve(ArchiverTexts.FILE)
                     : entry.type().extension(), cols[2], ry + 2, on ? ink : skin.dim());
         }
@@ -462,7 +463,7 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
                 y + 2, statusGood ? PALETTE.get().savedGood() : skin.dim(), false);
         if (mode == Mode.LIST && originalBytes > 0) {
             // What the archive is for, said as one number: how much of the disk it handed back.
-            final long saved = 100L - Math.min(100L, (long) packedBytes * 100L / originalBytes);
+            final long saved = 100L - Math.min(100L, packedBytes * 100L / originalBytes);
             right(g, font, GameText.resolve(ArchiverTexts.PERCENT_SAVED.with(saved)), x + width - MARGIN, y + 2,
                     PALETTE.get().savedGood());
         }
@@ -480,11 +481,15 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
         g.drawString(font, text, rightEdge - font.width(text), y, colour, false);
     }
 
-    private static String bytes(final int value) {
-        if (value < 1024) {
+    private static String bytes(final long value) {
+        if (value < 1024L) {
             return GameText.resolve(ArchiverTexts.BYTES.with(value));
         }
-        return GameText.resolve(ArchiverTexts.KILOBYTES.with(String.format(Locale.ROOT, "%.1f", value / 1024.0)));
+        if (value < 1024L * 1024L) {
+            return GameText.resolve(ArchiverTexts.KILOBYTES.with(String.format(Locale.ROOT, "%.1f", value / 1024.0)));
+        }
+        return GameText.resolve(ArchiverTexts.MEGABYTES.with(
+                String.format(Locale.ROOT, "%.1f", value / (1024.0 * 1024.0))));
     }
 
     private static String folderOf(final String path) {

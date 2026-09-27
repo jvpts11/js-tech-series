@@ -105,6 +105,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   to one already playing hears it from there, and one who walks away lets it go. It can be paused, taken up again
   and stopped. The server owner sets how fast recordings go to each player and come from them, and how big a file
   the server takes, or that it takes none, under `media` in `jstech-balance.toml`.
+- Music files on a computer's disk: Ogg Vorbis (`.ogg`) and Wave (`.wav`), with an icon of their own in every
+  desktop's style. A song is brought from the player's own computer, picked in their system's file dialog, into
+  the system's music folder (`Users/Public/Music` on Frames, `Music` in the home folder on Linux, FreeBSD and
+  UNIX), and is refused before it is sent when the disk has no room for it. The recording stays on the server and
+  the disk keeps a file naming it, but that file weighs what the song weighs, by the disk's era like any other
+  file, and an archive with songs packed in it weighs them too; the Archiver shows their sizes in megabytes. A song
+  cannot be edited or added to, renamed into text, or made out of text.
 - Brazilian Portuguese (pt_br) for J's Core, J's Computers and J's Industrial: every word the mods show, from the
   blocks and items to the desktops, the programs, the terminals and the installers. The names of the fictional
   products and makers, the commands a player types and the files on a virtual disk stay as they are.

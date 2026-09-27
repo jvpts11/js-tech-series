@@ -11,6 +11,7 @@ import com.mojang.logging.LogUtils;
 import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.advancement.ProgramTravels;
 import dev.jstech.computers.api.ComputersRegisterEvent;
+import dev.jstech.computers.audio.MusicImports;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.integration.mekanism.MekanismIntegration;
 import dev.jstech.computers.machine.MachineListing;
@@ -60,6 +61,8 @@ public class JsComputers {
         ComputingModule.register(modEventBus);
         MachineOperators.register(modEventBus);
         ProgramTravels.register(modEventBus);
+        // Songs players bring from their own computers, kept on a computer's disk.
+        MusicImports.register();
 
         // Soft integrations: each one checks for its mod and stays a no-op without it.
         MekanismIntegration.bootstrap();

@@ -56,6 +56,19 @@ class FileTypeTest {
     }
 
     @Test
+    void forRecording_isTheKindASongIsKeptAsAndNothingElse() {
+        assertEquals(FileType.OGG, FileType.forRecording("ogg").orElseThrow());
+        assertEquals(FileType.WAV, FileType.forRecording("WAV").orElseThrow());
+        assertTrue(FileType.forRecording("txt").isEmpty());
+        assertTrue(FileType.forRecording("mp3").isEmpty());
+        for (final FileType type : FileType.values()) {
+            if (type.recording()) {
+                assertFalse(type.userEditable() || type.virtualProjection(), type + " is a real file nobody types");
+            }
+        }
+    }
+
+    @Test
     void datIsNotUserEditable() {
         assertFalse(FileType.DAT.userEditable());
         assertFalse(FileType.LOG.userEditable());

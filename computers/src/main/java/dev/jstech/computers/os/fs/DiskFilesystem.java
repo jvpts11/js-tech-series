@@ -14,6 +14,7 @@ import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.storage.DriveVolumes;
+import dev.jstech.core.audio.media.MediaStore;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.world.item.ItemStack;
 
@@ -56,6 +57,16 @@ public final class DiskFilesystem {
     public static long filesWeight(final ItemStack volume) {
         return volume.getOrDefault(ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY)
                 .usedWeight(eraOf(volume));
+    }
+
+    /**
+     * What the file at {@code path} weighs on {@code volume}, in mB-equivalents, or 0 when there is none: the room a
+     * write over it hands back.
+     */
+    public static long weightOf(final ItemStack volume, final String path) {
+        final StoredFile file = volume.getOrDefault(ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY)
+                .files().get(path);
+        return file == null ? 0L : file.weight(eraOf(volume));
     }
 
     private DiskFilesystem() {
@@ -202,9 +213,10 @@ public final class DiskFilesystem {
      * <ol>
      *   <li>If {@code path} is not valid for {@code kind} ({@link FsPaths#isValidPath}),
      *       returns {@link WriteResult#INVALID_PATH} without mutation.</li>
-     *   <li>If {@code type} is a virtual projection ({@link FileType#virtualProjection()}),
-     *       returns {@link WriteResult#READ_ONLY} without mutation.</li>
-     *   <li>If the file's byte cost ({@link FsPaths#sizeMbEq} of the UTF-8-encoded content)
+     *   <li>If {@code type} is a virtual projection ({@link FileType#virtualProjection()}), or the content is not
+     *       what a file of that type may hold (a recording the server does not keep, or a recording's lines under
+     *       another type), returns {@link WriteResult#READ_ONLY} without mutation.</li>
+     *   <li>If the file's byte cost ({@link FsPaths#sizeMbEq} of {@link StoredFile#bytesOf})
      *       exceeds {@code freeWeight}, returns {@link WriteResult#DISK_FULL} without
      *       mutation.</li>
      *   <li>Otherwise, updates the {@code FILESYSTEM} component on {@code disk} and returns
@@ -236,11 +248,10 @@ public final class DiskFilesystem {
         if (!FsPaths.isValidPath(path, kind)) {
             return WriteResult.INVALID_PATH;
         }
-        if (type.virtualProjection() || installerLocked(disk)) {
+        if (type.virtualProjection() || installerLocked(disk) || !holdsItsKind(type, content)) {
             return WriteResult.READ_ONLY;
         }
-        final int byteCount = content.getBytes(StandardCharsets.UTF_8).length;
-        final long cost = FsPaths.sizeMbEq(byteCount, eraOf(disk));
+        final long cost = FsPaths.sizeMbEq(StoredFile.bytesOf(type, content), eraOf(disk));
         if (cost > freeWeight) {
             return WriteResult.DISK_FULL;
         }
@@ -267,20 +278,21 @@ public final class DiskFilesystem {
         if (!FsPaths.isValidPath(path, kind)) {
             return WriteResult.INVALID_PATH;
         }
-        if (type.virtualProjection() || installerLocked(disk)) {
+        // A recording is only ever the song it names: nothing is added to the end of one.
+        if (type.virtualProjection() || type.recording() || installerLocked(disk)) {
             return WriteResult.READ_ONLY;
         }
         final FilesystemContents current = disk.getOrDefault(
                 ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         final StoredFile had = current.files().get(path);
-        if (had != null && had.type().virtualProjection()) {
+        if (had != null && (had.type().virtualProjection() || had.type().recording())) {
             return WriteResult.READ_ONLY;
         }
         if (namesAFolder(current, path)) {
             return WriteResult.INVALID_PATH;
         }
-        final int held = had == null ? 0 : had.byteSize();
-        final int added = addition.getBytes(StandardCharsets.UTF_8).length;
+        final long held = had == null ? 0L : had.byteSize();
+        final long added = addition.getBytes(StandardCharsets.UTF_8).length;
         final long grows = FsPaths.sizeMbEq(held + added, eraOf(disk)) - FsPaths.sizeMbEq(held, eraOf(disk));
         if (grows > freeWeight) {
             return WriteResult.DISK_FULL;
@@ -392,6 +404,32 @@ public final class DiskFilesystem {
             return false;
         }
         disk.set(ComputingComponents.FILESYSTEM.get(), fs.withDir(path));
+        return true;
+    }
+
+    /**
+     * Makes the folder at {@code path} and every folder above it that is not there yet, so a program can put a file
+     * in a folder the system never laid down.
+     *
+     * @return whether the folder is there afterwards; false when the kind has no folders, the path is invalid or a
+     *         file stands where one of the folders would go
+     */
+    public static boolean mkdirs(final ItemStack disk, final String path, final FilesystemKind kind) {
+        if (kind != FilesystemKind.HIERARCHICAL || !FsPaths.isValidPath(path, kind) || installerLocked(disk)) {
+            return false;
+        }
+        String at = "";
+        for (final String segment : path.split("/")) {
+            at = FsPaths.join(at, segment);
+            final FilesystemContents fs = disk.getOrDefault(
+                    ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
+            if (fs.files().containsKey(at)) {
+                return false;
+            }
+            if (!namesAFolder(fs, at) && !mkdir(disk, at, kind)) {
+                return false;
+            }
+        }
         return true;
     }
 
@@ -541,6 +579,23 @@ public final class DiskFilesystem {
     }
 
     /**
+     * Whether {@code content} may be written as a file of {@code type}.
+     *
+     * <p>A recording file names a recording the server keeps and weighs what that recording weighs, so one is only
+     * written when the server really keeps the recording it names, of the kind the file is. And a recording's lines
+     * are never written as any other kind: as text they would weigh a few bytes, and could be written back as the
+     * song, leaving a disk that holds music for nothing.
+     */
+    private static boolean holdsItsKind(final FileType type, final String content) {
+        final RecordingFile recording = RecordingFile.read(content);
+        if (!type.recording()) {
+            return recording == null;
+        }
+        return recording != null && type.extension().equals(recording.media().format())
+                && MediaStore.current().map(store -> store.has(recording.media())).orElse(false);
+    }
+
+    /**
      * Whether {@code path} is a folder: one made on its own, or one that exists because files sit inside it.
      *
      * <p>A file is never put at such a path. The disk would then hold a file and a folder of the same name, which
@@ -583,6 +638,13 @@ public final class DiskFilesystem {
              */
             final FileType newType = typeOfPath(dest, file.type());
             if (newType.virtualProjection()) {
+                return false;
+            }
+            /*
+             * A recording keeps its kind. Renamed to text it would weigh a few bytes and could be renamed back into
+             * the song, and text renamed into one would be a song nobody brought.
+             */
+            if (newType != file.type() && (newType.recording() || file.type().recording())) {
                 return false;
             }
             disk.set(ComputingComponents.FILESYSTEM.get(),

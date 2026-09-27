@@ -21,11 +21,9 @@ import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
-import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.core.text.Text;
-import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -105,12 +103,7 @@ public final class FileEditPayloads {
             } else if (!type.userEditable()) {
                 msg = FileSavedPayload.TYPE_READ_ONLY.with(type.extension());
             } else {
-                final long oldWeight = DiskFilesystem
-                        .read(vol, real)
-                        .map(c -> FsPaths.sizeMbEq(
-                                c.getBytes(StandardCharsets.UTF_8).length,
-                                DiskFilesystem.eraOf(vol)))
-                        .orElse(0L);
+                final long oldWeight = DiskFilesystem.weightOf(vol, real);
                 final long free = media ? mediaFreeWeight(vol) + oldWeight
                         : computer.systemDiskFreeWeight() + oldWeight;
                 final var result = DiskFilesystem.write(

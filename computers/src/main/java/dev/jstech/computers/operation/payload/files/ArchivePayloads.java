@@ -31,7 +31,6 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -185,8 +184,8 @@ public final class ArchivePayloads {
             }
         }
         computer.setChanged();
-        final int before = Archive.originalBytes(packed);
-        final int after = packed.getBytes(StandardCharsets.UTF_8).length;
+        final long before = Archive.originalBytes(packed);
+        final long after = StoredFile.bytesOf(FileType.ARK, packed);
         final String into = Archive.leaf(payload.archivePath());
         return Outcome.done(removed > 0
                 ? ArchiveTexts.PACKED_REMOVED.with(files.size(), into, before, after, removed)

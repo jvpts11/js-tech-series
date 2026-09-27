@@ -97,9 +97,17 @@ public final class MediaStore {
         return Files.createTempFile(incoming, id.hash(), ".part");
     }
 
-    /** Whether the recording is kept here. */
+    /**
+     * Whether the recording is kept here: a file under its name with as many bytes as it says. A name with the right
+     * hash and another size is not this recording, however it came to be written.
+     */
     public boolean has(final MediaId id) {
-        return Files.isRegularFile(path(id));
+        final Path file = path(id);
+        try {
+            return Files.isRegularFile(file) && Files.size(file) == id.bytes();
+        } catch (final IOException unreadable) {
+            return false;
+        }
     }
 
     /** Where the recording's file is, whether or not it is there. */

@@ -62,6 +62,15 @@ class MediaStoreTest {
     }
 
     @Test
+    void has_isFalseForTheRightHashWithAnotherSize(@TempDir final Path root) throws IOException {
+        final MediaStore store = new MediaStore(root);
+        final MediaId kept = store.put(wav(RATE), "wav");
+        assertTrue(store.has(kept));
+        assertFalse(store.has(new MediaId(kept.hash(), kept.format(), 1L)),
+                "a name that says the song is one byte long is not the song");
+    }
+
+    @Test
     void sweepIncoming_clearsWhatAStoppedServerLeftHalfArrived(@TempDir final Path root) throws IOException {
         final MediaStore store = new MediaStore(root);
         Files.write(store.newIncoming(MediaId.of(new byte[] {1}, "wav")), new byte[] {1});

@@ -54,4 +54,9 @@ public record UnixTree(List<String> home, String mounts, List<String> directorie
     public String desktopPath() {
         return homePath() + "/Desktop";
     }
+
+    /** The folder songs are kept in, made the first time one is brought. */
+    public String musicPath() {
+        return homePath() + "/Music";
+    }
 }

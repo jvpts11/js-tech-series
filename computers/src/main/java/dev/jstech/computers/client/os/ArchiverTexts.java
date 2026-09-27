@@ -49,6 +49,7 @@ final class ArchiverTexts {
     static final TextKey ROOT = TextKey.of("jsc.archiver.root", "root");
     static final TextKey BYTES = TextKey.of("jsc.archiver.bytes", "%s B");
     static final TextKey KILOBYTES = TextKey.of("jsc.archiver.kilobytes", "%s KB");
+    static final TextKey MEGABYTES = TextKey.of("jsc.archiver.megabytes", "%s MB");
 
     // The status line.
     static final TextKey OPEN_OR_MAKE = TextKey.of("jsc.archiver.open_or_make", "Open an archive, or make one");

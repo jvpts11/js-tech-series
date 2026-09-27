@@ -29,7 +29,7 @@ public final class FileIcons {
 
     /** What an icon stands for. Its name, in lower case, is the folder its pictures are in. */
     public enum Kind { UP, FOLDER, HOME, IQL, DOC, DAT, EXE, PKG, INF, BIN, CFG, LOG, CRAFT, SOURCE, PROGRAM,
-        BUNDLE, IMAGE }
+        BUNDLE, IMAGE, AUDIO }
 
     private FileIcons() {
     }
@@ -61,6 +61,7 @@ public final class FileIcons {
             // An archive is a thing with other things inside it, which is what the parcel already stands for.
             case CPK, SLN, SGSPROJ, SGPROJ, ARK -> Kind.BUNDLE;
             case PIX -> Kind.IMAGE;
+            case OGG, WAV -> Kind.AUDIO;
             case TXT, CSV, CMD, SGS, SG, ASM, OTHER -> Kind.DOC;
         };
     }

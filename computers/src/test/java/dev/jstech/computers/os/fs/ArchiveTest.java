@@ -14,6 +14,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.core.audio.media.MediaId;
+import dev.jstech.core.audio.media.MediaInfo;
+import dev.jstech.core.audio.media.MediaTags;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -21,8 +24,15 @@ import java.util.List;
 
 class ArchiveTest {
 
+    private static final long SONG_BYTES = 3_000_000L;
+
     private static StoredFile file(final String name, final FileType type, final String content) {
         return new StoredFile(name, type, content);
+    }
+
+    private static StoredFile song() {
+        return file("song.ogg", FileType.OGG, new RecordingFile(new MediaId("cd".repeat(32), "ogg", SONG_BYTES),
+                new MediaInfo(180_000L, 44_100, 2, 128, MediaTags.EMPTY)).write());
     }
 
     private static int bytes(final String text) {
@@ -120,7 +130,26 @@ class ArchiveTest {
         final String packed = Archive.pack(List.of(
                 file("a.txt", FileType.TXT, "12345"),
                 file("b.txt", FileType.TXT, "678")));
-        assertEquals(8, Archive.originalBytes(packed));
+        assertEquals(8L, Archive.originalBytes(packed));
+    }
+
+    @Test
+    void pack_keepsWhatARecordingWeighsInTheListing() {
+        final StoredFile song = song();
+        final String packed = Archive.pack(List.of(song, file("a.txt", FileType.TXT, "12345")));
+        final Archive.Entry entry = Archive.entries(packed).get(0);
+        assertEquals(FileType.OGG, entry.type());
+        assertEquals(SONG_BYTES, entry.recordingBytes());
+        assertEquals(SONG_BYTES, entry.weighs());
+        assertEquals(SONG_BYTES, Archive.recordingBytes(packed));
+        assertEquals(SONG_BYTES + 5L, Archive.originalBytes(packed));
+        assertEquals(song.content(), Archive.unpack(packed).get(0).content(), "and it comes back out whole");
+    }
+
+    @Test
+    void recordingBytes_isNothingForAnArchiveOfText() {
+        assertEquals(0L, Archive.recordingBytes(Archive.pack(List.of(file("a.txt", FileType.TXT, "12345")))));
+        assertEquals(0L, Archive.recordingBytes("not an archive"));
     }
 
     @Test

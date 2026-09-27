@@ -34,6 +34,8 @@ final class FileTypeNames {
     static final TextKey SLN = TextKey.of("jsc.file_type.sln", "Solution");
     static final TextKey SGSPROJ = TextKey.of("jsc.file_type.sgsproj", "Σ# project");
     static final TextKey SGPROJ = TextKey.of("jsc.file_type.sgproj", "Σ project");
+    static final TextKey OGG = TextKey.of("jsc.file_type.ogg", "Ogg Vorbis audio");
+    static final TextKey WAV = TextKey.of("jsc.file_type.wav", "Wave audio");
 
     private FileTypeNames() {
     }

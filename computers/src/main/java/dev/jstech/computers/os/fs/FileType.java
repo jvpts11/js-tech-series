@@ -129,6 +129,14 @@ public enum FileType {
     PIX("pix", false, false, null),
 
     /**
+     * A song or any other sound kept as Ogg Vorbis. The file names a recording the server keeps and weighs what the
+     * recording does; see {@link RecordingFile}. A player never writes one by hand: they bring it, or a program does.
+     */
+    OGG("ogg", false, false, FileTypeNames.OGG, true),
+    /** The same, kept as an uncompressed wave, which weighs many times what the Ogg of it would. */
+    WAV("wav", false, false, FileTypeNames.WAV, true),
+
+    /**
      * A file of a kind the machines do not know: whatever a player or a program chose to call it, such as
      * {@code thing.fk}.
      *
@@ -142,13 +150,20 @@ public enum FileType {
     private final boolean virtualProjection;
     @Nullable
     private final TextKey typeName;
+    private final boolean recording;
 
     FileType(final String extension, final boolean userEditable, final boolean virtualProjection,
              @Nullable final TextKey typeName) {
+        this(extension, userEditable, virtualProjection, typeName, false);
+    }
+
+    FileType(final String extension, final boolean userEditable, final boolean virtualProjection,
+             @Nullable final TextKey typeName, final boolean recording) {
         this.extension = extension;
         this.userEditable = userEditable;
         this.virtualProjection = virtualProjection;
         this.typeName = typeName;
+        this.recording = recording;
     }
 
     /** The lowercase extension, without a leading dot (e.g. {@code "iql"}). */
@@ -179,6 +194,20 @@ public enum FileType {
      */
     public boolean virtualProjection() {
         return virtualProjection;
+    }
+
+    /**
+     * Whether a file of this type is a recording: it names a recording the server keeps rather than holding it, and
+     * weighs what that recording weighs. Such a file is only ever the recording it was made as; it never turns into
+     * text, and text never turns into one.
+     */
+    public boolean recording() {
+        return recording;
+    }
+
+    /** The type a recording of that kind of file is kept as on a disk, or empty for a kind no recording is kept as. */
+    public static Optional<FileType> forRecording(final String format) {
+        return fromExtension(format).filter(FileType::recording);
     }
 
     /**

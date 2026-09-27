@@ -78,8 +78,14 @@ public final class Archive {
         }
     }
 
-    /** One file inside an archive, as the listing at the top of it says. */
-    public record Entry(String name, FileType type, int originalBytes) {
+    /**
+     * One file inside an archive, as the listing at the top of it says.
+     *
+     * @param originalBytes  how many bytes of the packed text are this file's
+     * @param recordingBytes for a recording, what the recording it names weighs, which packing does not shrink;
+     *                       0 for any other file
+     */
+    public record Entry(String name, FileType type, int originalBytes, long recordingBytes) {
 
         public Entry {
             if (name == null || name.isBlank()) {
@@ -88,9 +94,19 @@ public final class Archive {
             if (type == null) {
                 throw new IllegalArgumentException("an archived file must have a type");
             }
-            if (originalBytes < 0) {
+            if (originalBytes < 0 || recordingBytes < 0) {
                 throw new IllegalArgumentException("an archived file cannot have negative size");
             }
+        }
+
+        /** A file that is not a recording. */
+        public Entry(final String name, final FileType type, final int originalBytes) {
+            this(name, type, originalBytes, 0L);
+        }
+
+        /** What the file weighed before it was packed: its text, or the recording it names. */
+        public long weighs() {
+            return type.recording() && recordingBytes > 0 ? recordingBytes : originalBytes;
         }
     }
 
@@ -133,7 +149,15 @@ public final class Archive {
             final int bytes = file.content().getBytes(StandardCharsets.UTF_8).length;
             header.append(name).append(SEPARATOR)
                     .append(file.type().extension()).append(SEPARATOR)
-                    .append(bytes).append(NEWLINE);
+                    .append(bytes);
+            /*
+             * A recording packs down to the few lines naming it, but the song itself is already as small as it
+             * gets, so the listing says what it weighs and the archive keeps weighing that.
+             */
+            if (file.type().recording()) {
+                header.append(SEPARATOR).append(file.byteSize());
+            }
+            header.append(NEWLINE);
             joined.append(file.content());
         }
         header.append(NEWLINE);
@@ -159,12 +183,12 @@ public final class Archive {
                 break; // the blank line ends the listing and the payload follows it
             }
             final String[] parts = lines[i].split(SEPARATOR, -1);
-            if (parts.length != 3) {
+            if (parts.length != 3 && parts.length != 4) {
                 continue;
             }
             try {
                 out.add(new Entry(parts[0], FileType.of(parts[1].toLowerCase(Locale.ROOT)),
-                        Integer.parseInt(parts[2])));
+                        Integer.parseInt(parts[2]), parts.length == 4 ? Long.parseLong(parts[3]) : 0L));
             } catch (final IllegalArgumentException malformed) {
                 // One unreadable line does not make the rest of the listing unreadable.
             }
@@ -222,10 +246,24 @@ public final class Archive {
     }
 
     /** What the files inside weighed before they were packed, in raw bytes. */
-    public static int originalBytes(final String content) {
-        int total = 0;
+    public static long originalBytes(final String content) {
+        long total = 0L;
         for (final Entry entry : entries(content)) {
-            total += entry.originalBytes();
+            total += entry.weighs();
+        }
+        return total;
+    }
+
+    /** What the recordings inside weigh, which the archive weighs on top of its own text. */
+    public static long recordingBytes(final String content) {
+        if (!isArchive(content)) {
+            return 0L;
+        }
+        long total = 0L;
+        for (final Entry entry : entries(content)) {
+            if (entry.type().recording()) {
+                total += entry.recordingBytes();
+            }
         }
         return total;
     }
