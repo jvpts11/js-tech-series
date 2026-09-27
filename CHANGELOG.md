@@ -249,6 +249,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   resource pack can replace, under `assets/jsc/textures/gui/file/`.
 
 ### Changed
+- J's Core's page lists everything it holds today (the sound system, recordings, translatable text, palettes, the
+  declaration of blocks and items, the slowest cable of a network) and says in plain words that anyone may use
+  the Core in their own project, open or closed, free or paid, with credit, and what its licence, the LGPL 3.0,
+  asks in return.
 - The three advancements of the old Computers tab moved into the Operating Systems tab, so a world that had
   earned them shows them unearned there.
 - A desktop's terminal window opens eighty columns by twenty-four rows, as terminals do, and smaller only when
