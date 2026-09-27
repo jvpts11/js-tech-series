@@ -269,6 +269,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   resource pack can replace, under `assets/jsc/textures/gui/file/`.
 
 ### Changed
+- The Standard Mainframe's roof fans look like fans: each is a square housing that stays still, with a dark well
+  in its opening and a five-bladed rotor turning in it, where before the whole square turned with a cross painted
+  on it.
+- The Vintage Mainframe's tape reels can be seen: the window in front of them is a clear pane, where a handle stood
+  over one reel and a painted glint over the rest, and the reels are aluminium reels with three windows and the
+  tape showing through them. They run in bursts, as a tape drive reads: forward, a stop, a short rewind, a stop,
+  forward again, the take-up reel a little faster.
 - J's Core's page lists everything it holds today (the sound system, recordings, translatable text, palettes, the
   declaration of blocks and items, the slowest cable of a network) and says in plain words that anyone may use
   the Core in their own project, open or closed, free or paid, with credit, and what its licence, the LGPL 3.0,
@@ -401,7 +408,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ### Fixed
 - The service panel of every Mainframe no longer flickers where it meets the edges of its opening: its edges lay on
   the walls of the opening and fought them for the surface, which showed through the grille, the louvres and the
-  glass.
+  glass. The window over the Vintage Mainframe's tape reels flickered the same way and no longer does.
 - Shutting a computer down from its desktop shows the system's own goodbye, and the machine goes dark only when it
   has finished; it used to cut the power at once, dropping the player out of the computer with no screen at all.
   Restarting from the desktop shows the goodbye too before the self-test, as restarting from a prompt already did.
