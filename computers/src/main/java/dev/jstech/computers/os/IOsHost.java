@@ -323,6 +323,14 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
     }
 
     /**
+     * What a service running here holds in memory past the floor it declares, from what it is doing now: a server
+     * streaming to many computers holds more than one streaming to none. Nothing, unless the machine says.
+     */
+    default int serviceLoadMb(final ProgramSpec service) {
+        return 0;
+    }
+
+    /**
      * Told after a service was taken off this machine, so whatever it was keeping can go with it.
      *
      * <p>A service that holds something of its own, a history or a body of source, has to be able to let go

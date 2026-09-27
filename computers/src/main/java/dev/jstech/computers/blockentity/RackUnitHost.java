@@ -12,6 +12,7 @@ import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.OsInstallJob;
@@ -52,6 +53,11 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     @Override
     public void serviceUninstalled(final ResourceLocation program) {
         rack.serviceUninstalled(row, program);
+    }
+
+    @Override
+    public int serviceLoadMb(final ProgramSpec service) {
+        return rack.asUnit(row, () -> rack.serviceLoadMb(service));
     }
 
     @Override

@@ -209,6 +209,12 @@ public final class TestWorldBuilder {
 
     /** Places a Personal Computer next to a cable (rear toward it), installs its hardware and powers it on. */
     public PersonalComputerBlockEntity placeRunningPersonalComputer(final BlockPos relative) {
+        return placeRunningPersonalComputer(relative, DESKTOP_OS);
+    }
+
+    /** The same, with that system on its disk rather than the default desktop one. */
+    public PersonalComputerBlockEntity placeRunningPersonalComputer(final BlockPos relative,
+                                                                    final ResourceLocation os) {
         setBlock(relative, ComputingModule.PERSONAL_COMPUTER.get());
         faceRearTowardCable(relative);
         final PersonalComputerBlockEntity be = blockEntity(relative, PersonalComputerBlockEntity.class);
@@ -232,7 +238,7 @@ public final class TestWorldBuilder {
          */
         hw.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
-        be.installOs(DESKTOP_OS);
+        be.installOs(os);
         be.togglePower();
         return be;
     }

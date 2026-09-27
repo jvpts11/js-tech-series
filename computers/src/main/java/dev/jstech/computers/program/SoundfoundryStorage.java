@@ -31,6 +31,7 @@ final class SoundfoundryStorage {
     private static final String KEY = "Soundfoundry";
     private static final String DOWNLOADS = "Downloads";
     private static final StableNames<SongDownload.Status> STATUSES = StableNames.of(SongDownload.Status.class);
+    private static final StableNames<SongDownload.Kind> KINDS = StableNames.of(SongDownload.Kind.class);
     private static final StableNames<DataTier> TIERS = StableNames.of(DataTier.class);
 
     private SoundfoundryStorage() {
@@ -39,7 +40,7 @@ final class SoundfoundryStorage {
     static void save(final SoundfoundryState state, final CompoundTag tag) {
         if (state.size() == 0 && !state.shuffle() && !state.repeat()
                 && state.volume() == SoundfoundryState.DEFAULT_VOLUME && state.balance() == 0
-                && state.downloads().isEmpty()) {
+                && state.downloads().isEmpty() && state.server().isEmpty()) {
             return;
         }
         final CompoundTag s = new CompoundTag();
@@ -53,6 +54,9 @@ final class SoundfoundryStorage {
         s.putBoolean("Repeat", state.repeat());
         s.putInt("Volume", state.volume());
         s.putInt("Balance", state.balance());
+        if (!state.server().isEmpty()) {
+            s.putString("Server", state.server());
+        }
         if (!state.downloads().isEmpty()) {
             final ListTag downloads = new ListTag();
             for (final SongDownload download : state.downloads()) {
@@ -77,6 +81,7 @@ final class SoundfoundryStorage {
         state.setRepeat(s.getBoolean("Repeat"));
         state.setVolume(s.contains("Volume") ? s.getInt("Volume") : SoundfoundryState.DEFAULT_VOLUME);
         state.setBalance(s.getInt("Balance"));
+        state.setServer(s.getString("Server"));
         state.forgetDownloads();
         for (final Tag download : s.getList(DOWNLOADS, Tag.TAG_COMPOUND)) {
             final SongDownload read = load((CompoundTag) download);
@@ -88,6 +93,10 @@ final class SoundfoundryStorage {
 
     private static CompoundTag save(final SongDownload download) {
         final CompoundTag d = new CompoundTag();
+        d.putString("Kind", download.kind().serializedName());
+        if (!download.server().isEmpty()) {
+            d.putString("Server", download.server());
+        }
         d.putString("Name", download.name());
         d.putString("Hash", download.media().hash());
         d.putString("Format", download.media().format());
@@ -116,8 +125,11 @@ final class SoundfoundryStorage {
         } catch (final IllegalArgumentException malformed) {
             return null;
         }
-        final SongDownload download = new SongDownload(d.getString("Name"), media, d.getLong("Source"),
-                d.getString("Path"), d.getString("From"), d.getBoolean("Playlist"));
+        final long source = d.getLong("Source");
+        final SongDownload.Kind kind = KINDS.byName(d.getString("Kind"),
+                source == SongDownload.FROM_CATALOG ? SongDownload.Kind.CATALOG : SongDownload.Kind.PEER);
+        final SongDownload download = SongDownload.restored(kind, d.getString("Name"), media, source,
+                d.getString("Server"), d.getString("Path"), d.getString("From"), d.getBoolean("Playlist"));
         download.restore(d.getLong("Done"), STATUSES.byName(d.getString("Status"), SongDownload.Status.WAITING),
                 TIERS.find(d.getString("Link")), d.contains("Trouble") ? textOf(d.getByteArray("Trouble")) : Text.EMPTY);
         return download;

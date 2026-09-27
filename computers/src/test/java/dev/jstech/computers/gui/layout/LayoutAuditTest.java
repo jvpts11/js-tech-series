@@ -47,7 +47,7 @@ class LayoutAuditTest {
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
             "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout",
             "CdeStyleLayout", "WorkstationInfoLayout", "TrashLayout", "HelpViewerLayout", "SpeakerLayout",
-            "VolumePopupLayout", "SoundfoundryLayout", "SoundfoundryShareLayout");
+            "VolumePopupLayout", "SoundfoundryLayout", "SoundfoundryShareLayout", "SoundfoundryStandardLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -78,6 +78,17 @@ class LayoutAuditTest {
                 List.of("SEARCH", "DOWNLOADS (999)", "SHARED (9999)"), s -> s.length() * 6), false));
         c.add(new AuditCase("SoundfoundryShareLayout.list", SoundfoundryShareLayout.listLayout(
                 List.of("SEARCH", "DOWNLOADS (999)", "SHARED (9999)"), s -> s.length() * 6), false));
+        // A desktop window drawn at any size it is given: the smallest it allows, the one it opens at, a whole desktop.
+        for (final int[] size : new int[][] {{SoundfoundryStandardLayout.MIN_W, SoundfoundryStandardLayout.MIN_H},
+                {SoundfoundryStandardLayout.DEFAULT_W, SoundfoundryStandardLayout.DEFAULT_H}, {960, 540}}) {
+            final String at = "(" + size[0] + "x" + size[1] + ")";
+            c.add(new AuditCase("SoundfoundryStandardLayout" + at,
+                    SoundfoundryStandardLayout.layout(size[0], size[1]), false));
+            c.add(new AuditCase("SoundfoundryStandardLayout.album" + at,
+                    SoundfoundryStandardLayout.albumLayout(size[0], size[1]), false));
+            c.add(new AuditCase("SoundfoundryStandardLayout.local" + at,
+                    SoundfoundryStandardLayout.localLayout(size[0], size[1], true), false));
+        }
         c.add(new AuditCase("CraftingSwitchLayout", CraftingSwitchLayout.layout(), true));
         c.add(new AuditCase("PatternEncoderLayout", PatternEncoderLayout.layout(), true));
         c.add(new AuditCase("NetworkGatewayLayout", NetworkGatewayLayout.layout(), true));

@@ -103,7 +103,9 @@ public final class ProgramClient {
         register(rl("snake"), (host, mon, os) -> new SnakeApp());
         register(rl("ark"), (host, mon, os) -> new ArchiverApp(host));
         register(rl("paint"), (host, mon, os) -> new PaintApp(host));
-        register(rl("soundfoundry"), (host, mon, os) -> new SoundfoundryApp(host));
+        // A streaming player on the Standard era's desktops, the Legacy one's on the desktops before them.
+        register(rl("soundfoundry"), (host, mon, os) -> SoundfoundryStandardApp.onStandardDesktop()
+                ? new SoundfoundryStandardApp(host) : new SoundfoundryApp(host));
         // Soundfoundry's second window, which its NET button opens and which comes back with the session.
         register(rl("soundfoundry/share"), (host, mon, os) -> new SoundfoundryShareApp(host));
         register(rl("exceed"), (host, mon, os) -> new ExceedApp(host, mon));

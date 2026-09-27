@@ -27,6 +27,7 @@ import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootPhases;
@@ -44,6 +45,7 @@ import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.KnotRepository;
 import dev.jstech.computers.program.MessengerLog;
 import dev.jstech.computers.program.Programs;
+import dev.jstech.computers.program.SoundfoundryListeners;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackChassis;
@@ -365,6 +367,8 @@ public class ServerRackBlockEntity extends BlockEntity
          */
         final MessengerLog messenger = new MessengerLog();
         final KnotRepository knot = new KnotRepository("main");
+        /* The computers streaming from this machine's Soundfoundry Server; held only while they listen. */
+        final SoundfoundryListeners listeners = new SoundfoundryListeners();
         /** Which of that desktop's workspaces is up, which goes wherever the windows it sorts go. */
         int desktopWorkspace;
         /** A guided installer that wrote the system but is still waiting for its reboot. */
@@ -513,6 +517,21 @@ public class ServerRackBlockEntity extends BlockEntity
     @Nullable
     public KnotRepository knotAt(final int slot) {
         return consoleOf(slot) == null ? null : unitState(slot).knot;
+    }
+
+    /** The computers listening to the machine at {@code slot}, or null when that row holds no machine. */
+    @Nullable
+    public SoundfoundryListeners listenersAt(final int slot) {
+        return consoleOf(slot) == null ? null : unitState(slot).listeners;
+    }
+
+    /* A Soundfoundry Server holds a stream open for every computer listening to it. */
+    @Override
+    public int serviceLoadMb(final ProgramSpec service) {
+        final int slot = soleComputerSlot();
+        final SoundfoundryListeners listeners = listenersAt(slot);
+        return listeners != null && level != null && Programs.SOUNDFOUNDRY_SERVER.equals(service.id())
+                ? listeners.ramMb(level.getGameTime()) : 0;
     }
 
     /** Writes what the machine at {@code slot} holds back onto its item, after a service changed it. */

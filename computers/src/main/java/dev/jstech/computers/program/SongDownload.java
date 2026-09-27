@@ -14,17 +14,20 @@ import dev.jstech.core.text.Text;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A song Soundfoundry is fetching over the network: from the server's catalogue, or from the folder another computer
- * of the network shares. It comes in at the speed of the slowest cable on its way and is kept in the machine's music
- * folder once the last byte is in.
+ * A song Soundfoundry is moving over the network: fetching it from the server's catalogue, from the folder another
+ * computer of the network shares or from a Soundfoundry Server's library, or sending one of its own to a Soundfoundry
+ * Server. It goes at the speed of the slowest cable on its way and is kept, once the last byte is in, in the music
+ * folder of the machine it was going to.
  *
  * <p>This class is pure and carries no Minecraft dependency.
  */
 public final class SongDownload {
 
+    private final Kind kind;
     private final String name;
     private final MediaId media;
     private final long source;
+    private final String server;
     private final String path;
     private final String from;
     private final boolean playlist;
@@ -39,6 +42,8 @@ public final class SongDownload {
     public static final long FROM_CATALOG = Long.MIN_VALUE;
 
     /**
+     * A song fetched from the catalogue or from another computer's shared folder.
+     *
      * @param name     what the song's file is to be called once it is kept
      * @param media    the recording
      * @param source   where the sharing computer stands, or {@link #FROM_CATALOG}
@@ -48,12 +53,72 @@ public final class SongDownload {
      */
     public SongDownload(final String name, final MediaId media, final long source, final String path,
                         final String from, final boolean playlist) {
+        this(source == FROM_CATALOG ? Kind.CATALOG : Kind.PEER, name, media, source, "", path, from, playlist);
+    }
+
+    private SongDownload(final Kind kind, final String name, final MediaId media, final long source,
+                         final String server, final String path, final String from, final boolean playlist) {
+        this.kind = kind;
         this.name = name;
         this.media = media;
         this.source = source;
+        this.server = server;
         this.path = path;
         this.from = from;
         this.playlist = playlist;
+    }
+
+    /**
+     * A song fetched from a Soundfoundry Server's library.
+     *
+     * @param server the server, as the network knows it
+     * @param path   where the song is on the server
+     * @param from   what the server is called
+     */
+    public static SongDownload fromServer(final String name, final MediaId media, final String server,
+                                          final String path, final String from, final boolean playlist) {
+        return new SongDownload(Kind.SERVER, name, media, 0L, server, path, from, playlist);
+    }
+
+    /**
+     * One of the machine's own songs sent to a Soundfoundry Server, for the rest of the network to hear.
+     *
+     * @param path where the song is on this machine
+     * @param to   what the server is called
+     */
+    public static SongDownload toServer(final String name, final MediaId media, final String server,
+                                        final String path, final String to) {
+        return new SongDownload(Kind.UPLOAD, name, media, 0L, server, path, to, false);
+    }
+
+    /** Puts a song back as a machine's save kept it. */
+    public static SongDownload restored(final Kind kind, final String name, final MediaId media, final long source,
+                                        final String server, final String path, final String from,
+                                        final boolean playlist) {
+        return new SongDownload(kind, name, media, source, server, path, from, playlist);
+    }
+
+    /** Which way a song goes, and from where. */
+    public enum Kind implements IStableName {
+        /** From another computer's shared folder. */
+        PEER("peer"),
+        /** From the server's catalogue. */
+        CATALOG("catalog"),
+        /** From a Soundfoundry Server's library. */
+        SERVER("server"),
+        /** From this machine to a Soundfoundry Server. */
+        UPLOAD("upload");
+
+        private final String serializedName;
+
+        Kind(final String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        @Override
+        public String serializedName() {
+            return serializedName;
+        }
     }
 
     /** What happens to a song on its way. */
@@ -92,13 +157,27 @@ public final class SongDownload {
         return media;
     }
 
+    public Kind kind() {
+        return kind;
+    }
+
     public long source() {
         return source;
     }
 
+    /** The Soundfoundry Server it comes from or goes to, as the network knows it; empty for the other kinds. */
+    public String server() {
+        return server;
+    }
+
     /** Whether the song comes from the server's catalogue rather than from another computer. */
     public boolean fromCatalog() {
-        return source == FROM_CATALOG;
+        return kind == Kind.CATALOG;
+    }
+
+    /** Whether the song goes from this machine to a Soundfoundry Server rather than coming to it. */
+    public boolean upload() {
+        return kind == Kind.UPLOAD;
     }
 
     public String path() {

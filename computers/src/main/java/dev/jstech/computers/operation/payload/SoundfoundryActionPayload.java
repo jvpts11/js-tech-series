@@ -52,14 +52,38 @@ public record SoundfoundryActionPayload(BlockPos hostPos, int action, int index,
     public static final int REVERSE = 18;
     public static final int OPEN_LIST = 19;
     public static final int SAVE_LIST = 20;
+    /**
+     * Plays a page's songs in place of the list, from the one picked: {@code index} the page, {@code value} the
+     * song's place among the section's, the first of {@code paths} what the page is of, the first of
+     * {@code indexes} the section.
+     */
+    public static final int PLAY_PAGE = 21;
+    /** Downloads the song the first of {@code paths} names. */
+    public static final int DOWNLOAD = 22;
+    /** Downloads every song of the catalogue's album the first of {@code paths} names. */
+    public static final int DOWNLOAD_ALBUM = 23;
+    /** Sends the machine's song at the first of {@code paths} to its Soundfoundry Server. */
+    public static final int UPLOAD = 24;
+    /** Streams from the Soundfoundry Server the first of {@code paths} names. */
+    public static final int PICK_SERVER = 25;
+    /** Puts the song the first of {@code paths} names in the liked songs, or takes it out if it is there. */
+    public static final int LIKE = 26;
+    /** Puts the song the second of {@code paths} names at the end of the playlist the first names. */
+    public static final int PLAYLIST_ADD = 27;
+    /** Takes the song at {@code index} out of the playlist the first of {@code paths} names. */
+    public static final int PLAYLIST_REMOVE = 28;
+    /** Makes a playlist of the name the first of {@code paths} is. */
+    public static final int PLAYLIST_NEW = 29;
+    /** Throws away the playlist the first of {@code paths} names. */
+    public static final int PLAYLIST_DELETE = 30;
 
     /** Given as the index of {@link #ADD}: play the first of the songs added, as opening a song does. */
     public static final int AND_PLAY = 1;
 
     /** The most files one action names. */
     public static final int MAX_PATHS = 64;
-    /** The longest path one names: a file's path, behind the drive a medium is in. */
-    public static final int MAX_PATH = 200;
+    /** The longest path one names: a file's path, behind the drive a medium is in or what it is streamed from. */
+    public static final int MAX_PATH = 256;
 
     public static final CustomPacketPayload.Type<SoundfoundryActionPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,

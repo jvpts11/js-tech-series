@@ -95,9 +95,13 @@ public final class MusicImports implements IMediaUploadHandler {
      */
     @Nullable
     public static Text whyNot(final ServerLevel level, final BlockPos host, final String name, final MediaId media) {
-        if (!(level.getBlockEntity(host) instanceof IOsHost computer)) {
-            return NO_COMPUTER.text();
-        }
+        return level.getBlockEntity(host) instanceof IOsHost computer ? whyNot(computer, name, media)
+                : NO_COMPUTER.text();
+    }
+
+    /** The same, for a machine already in hand, such as one server of a rack. */
+    @Nullable
+    public static Text whyNot(final IOsHost computer, final String name, final MediaId media) {
         final ItemStack disk = computer.systemDisk();
         if (disk.isEmpty()) {
             return NO_DISK.text();
@@ -129,9 +133,18 @@ public final class MusicImports implements IMediaUploadHandler {
     public static MediaReceipt keep(final ServerLevel level, final BlockPos host, final String folder,
                                     final boolean playlist, final String name, final MediaId media,
                                     final MediaInfo info) {
-        final Text why = whyNot(level, host, name, media);
-        if (why != null || !(level.getBlockEntity(host) instanceof IOsHost computer)) {
-            return MediaReceipt.refused(why != null ? why : NO_COMPUTER.text());
+        return level.getBlockEntity(host) instanceof IOsHost computer
+                ? keep(level, computer, folder, playlist, name, media, info)
+                : MediaReceipt.refused(NO_COMPUTER.text());
+    }
+
+    /** The same, for a machine already in hand, such as one server of a rack. */
+    public static MediaReceipt keep(final ServerLevel level, final IOsHost computer, final String folder,
+                                    final boolean playlist, final String name, final MediaId media,
+                                    final MediaInfo info) {
+        final Text why = whyNot(computer, name, media);
+        if (why != null) {
+            return MediaReceipt.refused(why);
         }
         final ItemStack disk = computer.systemDisk();
         final FilesystemKind kind = FileAccess.filesystemKindOf(computer);

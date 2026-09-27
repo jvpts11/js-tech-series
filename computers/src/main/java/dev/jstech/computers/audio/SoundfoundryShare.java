@@ -230,6 +230,22 @@ public final class SoundfoundryShare {
         return null;
     }
 
+    /** The album of the catalogue song at that path, or null when the catalogue has none. */
+    @Nullable
+    public static CatalogAlbum catalogAlbum(final String path) {
+        final int slash = path.lastIndexOf('/');
+        if (slash <= 0) {
+            return null;
+        }
+        final String albumId = path.substring(0, slash);
+        for (final CatalogAlbum album : SoundfoundryCatalog.current().albums()) {
+            if (album.id().equals(albumId)) {
+                return album;
+            }
+        }
+        return null;
+    }
+
     /** What a catalogue song's file is called once it is kept: its artist and title, and its kind. */
     public static String keptName(final CatalogTrack track) {
         final String listed = track.artist().isEmpty() ? track.title() : track.artist() + " - " + track.title();

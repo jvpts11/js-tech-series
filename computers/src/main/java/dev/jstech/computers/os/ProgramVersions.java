@@ -29,6 +29,7 @@ public final class ProgramVersions {
             Map.entry("ark", "6.7"),
             Map.entry("paint", "5.1"),
             Map.entry("soundfoundry", "2.9"),
+            Map.entry("soundfoundry_server", "2.6"),
             Map.entry("exceed", "12.0"),
             Map.entry("messenger", "7.5"),
             Map.entry("messenger_service", "7.5"),

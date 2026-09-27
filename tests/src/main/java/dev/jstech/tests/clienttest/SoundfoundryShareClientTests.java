@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -114,7 +115,9 @@ public final class SoundfoundryShareClientTests {
                     final PersonalComputerBlockEntity sharer = builder.placeRunningPersonalComputer(SHARER);
                     sharer.console().install(Programs.SOUNDFOUNDRY.toString());
                     sharer.console().setComputerName(SHARER_NAME);
-                    final PersonalComputerBlockEntity asker = builder.placeRunningPersonalComputer(ASKER);
+                    // A Legacy desktop, whose Soundfoundry is the player with the NET button.
+                    final PersonalComputerBlockEntity asker = builder.placeRunningPersonalComputer(ASKER,
+                            ResourceLocation.fromNamespaceAndPath("jsc", "frames_xp"));
                     asker.console().install(Programs.SOUNDFOUNDRY.toString());
                     builder.placeMonitor(MONITOR, Direction.EAST);
                 })

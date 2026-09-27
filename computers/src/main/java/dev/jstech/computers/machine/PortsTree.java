@@ -68,6 +68,7 @@ final class PortsTree {
             Map.entry("paint", new Known("graphics", "")),
             Map.entry("exposure", new Known("graphics", "")),
             Map.entry("soundfoundry", new Known("audio", "")),
+            Map.entry("soundfoundry_server", new Known("audio", "")),
             Map.entry("ark", new Known("archivers", "")),
             Map.entry("scc", new Known("lang", "")),
             Map.entry("sgsc", new Known("lang", "")),

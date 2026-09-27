@@ -54,8 +54,8 @@ public final class MachineMemory {
                  */
                 if (spec.kind() == ProgramKind.SERVICE && console.isInstalled(spec.id().toString())
                         && host.serviceRunning(spec)) {
-                    ledger.add(spec.displayName(), spec.ramMbOn(os, builtHere(console, spec)),
-                            RamLedger.Kind.SERVICE);
+                    ledger.add(spec.displayName(), spec.ramMbOn(os, builtHere(console, spec))
+                            + host.serviceLoadMb(spec), RamLedger.Kind.SERVICE);
                 }
             }
         }

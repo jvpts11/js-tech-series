@@ -100,6 +100,8 @@ class HardcodedTextTest {
             data(COMPUTERS + "client/os/ExposureApp.java", 1, COMMANDS),
             data(COMPUTERS + "client/os/VirtualStudioApp.java", 6, COMMANDS + "; and the studio's own name"),
             data(COMPUTERS + "client/os/VirtualStudioCodeApp.java", 7, COMMANDS + "; and the editor's own name"),
+            data(COMPUTERS + "audio/SoundfoundryPlaylists.java", 1,
+                    FILES + ": the liked songs' playlist, whose name is translated where it is shown"),
             data(COMPUTERS + "blockentity/AbstractComputerBlockEntity.java", 1, SAVE_TAG),
             data(COMPUTERS + "blockentity/MainframeBlockEntity.java", 1, SAVE_TAG),
             data(COMPUTERS + "client/os/ItemCategories.java", 7,

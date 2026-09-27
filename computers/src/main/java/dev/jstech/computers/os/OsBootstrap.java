@@ -477,6 +477,17 @@ public final class OsBootstrap {
             ProgramSpec.of(rl("knot"), "knot", false, DESKTOPS, 48, ProgramKind.APP, 2, HostScope.ANY)
                     .named("Knot").described("Push a file to the network's repository, and see who changed what.")
                     .withEra(STANDARD).withHouse(SoftwareHouse.DAYLIGHT_FOUNDATION).withRam(32),
+            /*
+             * Soundfoundry Server: what a Standard Soundfoundry streams from. Its library is the songs in the
+             * server's own music folder, so its disk grows with what the network sends it; its memory grows with
+             * the computers listening to it, past the floor declared here.
+             */
+            ProgramSpec.of(rl("soundfoundry_server"), "sfserver", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 0,
+                            HostScope.SERVER)
+                    .named("Soundfoundry Server")
+                    .described("Streams the music catalogue and the songs this network sends it to every"
+                            + " Soundfoundry on the network.")
+                    .withEra(STANDARD).withHouse(SoftwareHouse.VOIDSOFT).withRam(16),
             // Storage Insights: a network dashboard -> Frames XP or newer.
             ProgramSpec.of(rl("storage_insights"), "insights", false, DESKTOPS, 64, ProgramKind.APP, 2, HostScope.ANY)
                     .named("Storage Insights")

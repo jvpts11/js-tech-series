@@ -9,6 +9,7 @@ package dev.jstech.computers.audio;
 
 import dev.jstech.computers.audio.catalog.CatalogTrack;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.blockentity.ServerServices;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.os.fs.RecordingFile;
 import dev.jstech.computers.program.SongDownload;
@@ -25,7 +26,8 @@ import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The songs Soundfoundry is fetching over one computer's network, brought in while the computer runs.
+ * The songs Soundfoundry is fetching over one computer's network, brought in while the computer runs, and the songs
+ * it is sending to a Soundfoundry Server for the network's library, which go the same way in the other direction.
  *
  * <p>A song comes at the speed of the slowest cable on its way, one from the catalogue at the speed of the cable the
  * computer itself is plugged into, and the songs coming in at once share that speed between them. Once a second each
@@ -93,13 +95,59 @@ public final class MusicDownloads {
         if (why != null) {
             return why;
         }
-        final SongDownload download = new SongDownload(name, media, source, path, from, playlist);
-        download.reached(link);
-        if (!state.addDownload(download)) {
-            return SoundfoundryTexts.TOO_MANY.with(SoundfoundryState.MAX_DOWNLOADS);
+        return listed(new SongDownload(name, media, source, path, from, playlist), link);
+    }
+
+    /**
+     * Starts fetching a song of the network's library from the Soundfoundry Server the computer picked.
+     *
+     * @param path     where the song is on the server
+     * @param playlist whether the song goes on the playlist once it is kept
+     * @return why it cannot be fetched, or empty when it is on its way
+     */
+    public Text startFromServer(final ServerLevel level, final String path, final boolean playlist) {
+        final ServerServices.Host host = SoundfoundryServers.chosen(level, computer);
+        if (host == null) {
+            return SoundfoundryTexts.NO_SERVER.with(SongFiles.nameOf(path));
         }
-        computer.setChanged();
-        return Text.EMPTY;
+        final RecordingFile song = SoundfoundryServers.song(level, host, path);
+        if (song == null) {
+            return SoundfoundryTexts.NOT_IN_LIBRARY.with(SongFiles.nameOf(path));
+        }
+        final String name = SongFiles.nameOf(path);
+        final Text why = MusicImports.whyNot(level, computer.getBlockPos(), name, song.media());
+        if (why != null) {
+            return why;
+        }
+        return listed(SongDownload.fromServer(name, song.media(), host.id(), path, host.hostname(), playlist),
+                SoundfoundryServers.linkTo(level, computer, host).orElse(null));
+    }
+
+    /**
+     * Starts sending one of the computer's own songs to the Soundfoundry Server it picked, for the network's library.
+     *
+     * @param path where the song is on this computer
+     * @return why it cannot be sent, or empty when it is on its way
+     */
+    public Text upload(final ServerLevel level, final String path) {
+        final String name = SongFiles.nameOf(path);
+        final ServerServices.Host host = SoundfoundryServers.chosen(level, computer);
+        if (host == null) {
+            return SoundfoundryTexts.NO_SERVER.with(name);
+        }
+        final RecordingFile song = SongFiles.read(level, computer, path);
+        if (song == null) {
+            return SoundfoundryTexts.MISSING.with(name);
+        }
+        if (inLibrary(level, host, song.media())) {
+            return SoundfoundryTexts.IN_LIBRARY.with(name);
+        }
+        final Text why = MusicImports.whyNot(host.machine(), name, song.media());
+        if (why != null) {
+            return why;
+        }
+        return listed(SongDownload.toServer(name, song.media(), host.id(), path, host.hostname()),
+                SoundfoundryServers.linkTo(level, computer, host).orElse(null));
     }
 
     /** Brings the songs on, once a tick while the computer runs. */
@@ -143,16 +191,65 @@ public final class MusicDownloads {
             }
             if (computer.networkUuid() == null) {
                 download.unreachable();
-            } else if (download.fromCatalog()) {
-                if (!ownKnown) {
-                    own = SoundfoundryShare.ownLink(level, computer);
-                    ownKnown = true;
+                continue;
+            }
+            switch (download.kind()) {
+                case CATALOG -> {
+                    if (!ownKnown) {
+                        own = SoundfoundryShare.ownLink(level, computer);
+                        ownKnown = true;
+                    }
+                    lookAtCatalog(download, own);
                 }
-                lookAtCatalog(download, own);
-            } else {
-                lookAtPeer(level, download);
+                case SERVER, UPLOAD -> lookAtServer(level, download);
+                case PEER -> lookAtPeer(level, download);
             }
         }
+    }
+
+    /*
+     * A song to or from a Soundfoundry Server waits while the server cannot be reached, and is given up on once the
+     * song it moves is not there any more: taken out of the library, or off this machine.
+     */
+    private void lookAtServer(final ServerLevel level, final SongDownload download) {
+        final ServerServices.Host host = SoundfoundryServers.byId(level, computer, download.server());
+        if (host == null) {
+            download.unreachable();
+            return;
+        }
+        final RecordingFile song = download.upload() ? SongFiles.read(level, computer, download.path())
+                : SoundfoundryServers.song(level, host, download.path());
+        if (song == null || !song.media().equals(download.media())) {
+            download.failed(download.upload() ? SoundfoundryTexts.MISSING.with(download.name())
+                    : SoundfoundryTexts.NOT_IN_LIBRARY.with(download.name()));
+        } else {
+            download.reached(SoundfoundryServers.linkTo(level, computer, host).orElse(null));
+        }
+    }
+
+    /* Lists a song on its way over a way whose slowest cable is that one; why it cannot be, or empty. */
+    private Text listed(final SongDownload download, @Nullable final DataTier link) {
+        final SoundfoundryState state = computer.console().soundfoundry();
+        if (state.downloading(download.media())) {
+            return SoundfoundryTexts.ALREADY.with(download.name());
+        }
+        download.reached(link);
+        if (!state.addDownload(download)) {
+            return SoundfoundryTexts.TOO_MANY.with(SoundfoundryState.MAX_DOWNLOADS);
+        }
+        computer.setChanged();
+        return Text.EMPTY;
+    }
+
+    /* Whether the server's library already holds that recording, under any name. */
+    private static boolean inLibrary(final ServerLevel level, final ServerServices.Host host, final MediaId media) {
+        for (final String path : SoundfoundryServers.library(level, host)) {
+            final RecordingFile song = SongFiles.read(level, host.machine(), path);
+            if (song != null && song.media().equals(media)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void lookAtCatalog(final SongDownload download, @Nullable final DataTier own) {
@@ -190,8 +287,24 @@ public final class MusicDownloads {
             download.failed(SoundfoundryTexts.NOT_KEPT.with(download.name()));
             return;
         }
-        final MediaReceipt told = MusicImports.keep(level, computer.getBlockPos(), "", download.playlist(),
-                download.name(), download.media(), info);
+        final MediaReceipt told;
+        if (download.upload()) {
+            // A server that went away as the last byte arrived is waited for, and the song finishes when it is back.
+            final ServerServices.Host host = SoundfoundryServers.byId(level, computer, download.server());
+            if (host == null) {
+                download.unreachable();
+                return;
+            }
+            told = MusicImports.keep(level, host.machine(),
+                    SoundfoundryServers.folderFor(host, SoundfoundryServers.hostnameOf(computer)), false,
+                    download.name(), download.media(), info);
+            if (told.accepted()) {
+                host.changed();
+            }
+        } else {
+            told = MusicImports.keep(level, computer.getBlockPos(), "", download.playlist(), download.name(),
+                    download.media(), info);
+        }
         if (told.accepted()) {
             download.kept();
         } else {

@@ -366,7 +366,7 @@ public final class DesktopWindow {
 
     /** Toggles maximize, saving/restoring the floating geometry. */
     public void toggleMaximize() {
-        if (ownFrame()) {
+        if (ownFrame() && !app.ownFrameFills()) {
             return;
         }
         if (maximized) {
@@ -403,7 +403,13 @@ public final class DesktopWindow {
             // Its size is whatever shape the program is in right now: a part folded away makes the window smaller.
             this.w = app.defaultWidth();
             this.h = app.defaultHeight();
-            this.maximized = false;
+            if (app.ownFrameFills()) {
+                // One that fills the desktop when asked also keeps within a desktop smaller than the size it wants.
+                this.w = Math.min(this.w, screenW);
+                this.h = Math.min(this.h, Math.max(0, screenH - taskbarH - workTop));
+            } else {
+                this.maximized = false;
+            }
         }
         /*
          * The minimum-size clamp lives in the unit-tested WindowGeometry so it can never silently go missing
@@ -609,7 +615,8 @@ public final class DesktopWindow {
     }
 
     public boolean maximizeBoxHit(final double mx, final double my) {
-        return !ownFrame() && !dialog() && inBtn(mx, my, maxX());
+        return ownFrame() ? app.ownFrameFills() && ownControlAt(mx, my) == BUTTON_MAXIMIZE
+                : !dialog() && inBtn(mx, my, maxX());
     }
 
     public boolean minimizeBoxHit(final double mx, final double my) {

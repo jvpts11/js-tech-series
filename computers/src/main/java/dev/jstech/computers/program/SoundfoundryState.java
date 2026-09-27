@@ -45,6 +45,8 @@ public final class SoundfoundryState {
     private int revision;
     /** The songs being fetched over the network, and those fetched or given up on, oldest first. */
     private final List<SongDownload> downloads = new ArrayList<>();
+    /** The Soundfoundry Server it streams from, as the network knows it; empty for the first one found. */
+    private String server = "";
 
     /** The most songs a playlist holds. */
     public static final int MAX_SONGS = 500;
@@ -112,6 +114,15 @@ public final class SoundfoundryState {
         };
     }
 
+    /** The Soundfoundry Server the player picked, or {@code ""} for whichever the network finds first. */
+    public String server() {
+        return server;
+    }
+
+    public void setServer(final String value) {
+        server = value == null ? "" : value;
+    }
+
     public void setShuffle(final boolean value) {
         shuffle = value;
         order.clear();
@@ -149,6 +160,18 @@ public final class SoundfoundryState {
             changed();
         }
         return added;
+    }
+
+    /**
+     * Puts those songs in place of the list, on the one at {@code index}: an album, a playlist or a page's songs,
+     * played from where the player picked, take the whole list the way a streaming player's queue is its context.
+     */
+    public void replace(final Collection<String> paths, final int index) {
+        songs.clear();
+        current = -1;
+        changed();
+        add(paths);
+        select(index);
     }
 
     /** Takes the songs at those places out of the list; the song it was on is forgotten if it is one of them. */

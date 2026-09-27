@@ -9,6 +9,7 @@ package dev.jstech.computers.audio;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.blockentity.ServerServices;
 import dev.jstech.computers.os.fs.RecordingFile;
 import dev.jstech.computers.program.SoundfoundryState;
 import dev.jstech.core.audio.media.MediaInfo;
@@ -41,6 +42,13 @@ public final class MusicPlayer {
     private float heardAt = -1.0F;
     /* Why the last song could not play, for the screen; empty when it could. */
     private Text trouble = Text.EMPTY;
+    /* What the song playing is, kept from when it started so a screen asking every second reads nothing. */
+    @Nullable
+    private SongSources.Source on;
+    /* The Soundfoundry Server the song streams from, or null for a song played from the machine's own disk. */
+    @Nullable
+    private String streamingFrom;
+    private String streamingName = "";
 
     private static final String KEY = JsComputers.MODID + ":soundfoundry/";
     private static final long TICK_MILLIS = 50L;
@@ -89,8 +97,16 @@ public final class MusicPlayer {
         if (state.current() < 0 || state.current() >= state.size()) {
             return null;
         }
-        final RecordingFile song = SongFiles.read(level, computer, state.song(state.current()));
+        if (on != null && MediaSessions.has(level, key())) {
+            return on.info();
+        }
+        final SongSources.Described song = SongSources.describe(level, computer, state.song(state.current()));
         return song == null ? null : song.info();
+    }
+
+    /** Whether the song playing streams from a Soundfoundry Server rather than playing from the machine's disk. */
+    public boolean streaming(final ServerLevel level) {
+        return streamingFrom != null && MediaSessions.has(level, key());
     }
 
     /**
@@ -123,6 +139,7 @@ public final class MusicPlayer {
     public void stop(final ServerLevel level) {
         MediaSessions.stop(level, key());
         computer.voices().release(key());
+        leaveServer(level);
     }
 
     /** Goes to the next song: playing it if one was playing, else only choosing it. */
@@ -168,6 +185,12 @@ public final class MusicPlayer {
             stop(level);
             return;
         }
+        final Text why = MediaSessions.paused(level, key()) ? Text.EMPTY : streamTrouble(level);
+        if (!why.isEmpty()) {
+            stop(level);
+            trouble = why;
+            return;
+        }
         final List<MediaPlace> places = places();
         final float volume = volume();
         if (!places.equals(heardFrom) || volume != heardAt) {
@@ -181,15 +204,54 @@ public final class MusicPlayer {
     public void removed(final ServerLevel level) {
         MediaSessions.stop(level, key());
         computer.voices().release(key());
+        leaveServer(level);
     }
 
-    /* A paused song taken up again takes its voices again, for what is left of it. */
+    /*
+     * A paused song taken up again takes its voices again, for what is left of it, and a streamed one asks its server
+     * to stream to it again, which a server with no memory left refuses.
+     */
     private void resume(final ServerLevel level) {
+        final Text why = streamTrouble(level);
+        if (!why.isEmpty()) {
+            stop(level);
+            trouble = why;
+            return;
+        }
         MediaSessions.resume(level, key());
         final MediaInfo info = info(level);
         if (info != null) {
             takeVoices(level, info, MediaSessions.position(level, key()));
         }
+    }
+
+    /*
+     * Tells the server the song streams from that this computer still listens, and answers why it will not stream
+     * any more, or empty when it will or the song plays from the disk.
+     */
+    private Text streamTrouble(final ServerLevel level) {
+        if (streamingFrom == null) {
+            return Text.EMPTY;
+        }
+        final ServerServices.Host host = SoundfoundryServers.byId(level, computer, streamingFrom);
+        if (host == null) {
+            return SoundfoundryTexts.SERVER_GONE.with(streamingName);
+        }
+        return SoundfoundryServers.listen(level, host, computer) ? Text.EMPTY
+                : SoundfoundryTexts.SERVER_FULL.with(streamingName);
+    }
+
+    /* The song no longer streams: the server it streamed from lets its stream go. */
+    private void leaveServer(final ServerLevel level) {
+        if (streamingFrom != null) {
+            final ServerServices.Host host = SoundfoundryServers.byId(level, computer, streamingFrom);
+            if (host != null) {
+                SoundfoundryServers.leave(host, computer);
+            }
+        }
+        streamingFrom = null;
+        streamingName = "";
+        on = null;
     }
 
     /*
@@ -226,23 +288,30 @@ public final class MusicPlayer {
         state.select(index);
         computer.setChanged();
         trouble = Text.EMPTY;
-        final String path = state.song(index);
         if (!computer.playsRecordings()) {
             trouble = SoundfoundryTexts.NO_DEVICE.text();
             stop(level);
             return;
         }
-        final RecordingFile song = SongFiles.read(level, computer, path);
+        final SongSources.Found found = SongSources.find(level, computer, state.song(index));
+        final SongSources.Source song = found.source();
+        // Whatever the last song streamed from is let go of first, so a server is not asked to hold two streams.
+        leaveServer(level);
         if (song == null) {
-            trouble = SoundfoundryTexts.MISSING.with(SongFiles.nameOf(path));
+            trouble = found.trouble();
             stop(level);
             return;
         }
-        if (!MediaStore.current().map(store -> store.has(song.media())).orElse(false)) {
-            trouble = SoundfoundryTexts.NOT_KEPT.with(SongFiles.nameOf(path));
-            stop(level);
-            return;
+        if (song.server() != null) {
+            if (!SoundfoundryServers.listen(level, song.server(), computer)) {
+                trouble = SoundfoundryTexts.SERVER_FULL.with(song.server().hostname());
+                stop(level);
+                return;
+            }
+            streamingFrom = song.server().id();
+            streamingName = song.server().hostname();
         }
+        on = song;
         heardFrom = places();
         heardAt = volume();
         final BlockPos at = computer.getBlockPos();

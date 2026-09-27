@@ -155,6 +155,22 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   of every way between them, over cables and routers and through the Mainframes and racks that join cable runs, it
   takes the one whose slowest cable is fastest, which is as fast as data can go between them. A router slows
   nothing down, and a Mainframe that is switched off passes nothing through.
+- Soundfoundry Server, a Voidsoft service for a server in a rack: it streams the music catalogue and the network's
+  own library, which is the songs in the server's music folder, to the computers of the network. A song a computer
+  sends it lands in a folder named after that computer. Each computer listening holds 4 MB of the server's memory,
+  which the server's memory listings show, and a server with none left turns the next one away; a song playing
+  from a server that goes off or leaves the network stops and says why. Several servers can serve one network.
+- Soundfoundry on the Standard desktops, Frames 11 and the Linux desktops of that era, is Voidsoft's streaming player:
+  a home page with the catalogue's albums, the network's songs and those downloaded; an album's page with its songs,
+  each marked as on the disk or only streamed, and a button that downloads the album; a search through the
+  catalogue, the network's library and the computer's own files; the computer's own files, brought from the
+  player's computer or sent to the network's library; playlists, the liked songs first, kept as `.m3u` files; and
+  the Soundfoundry Server streamed from, picked when there are several. Playing an album, a playlist or a page's
+  songs puts them on the list; a song on the disk plays without a server. Songs download and go up at the speed of
+  the slowest cable between the computer and the server. Its window wears Voidsoft's graphite and orange on every
+  desktop, and is the first window drawn in its own skin that can fill the desktop.
+- The data network tells which cables a device joins, in J's Core, which is how the way to a server in a rack is
+  measured.
 - Programs make sound. Sigma Sharp and Sigma have `Sound.Beep`, a beep out of the speaker inside the case;
   `Sound.Tones`, a tune through the sound card, written as notes by name or pitch (`C4:250 E4 G4 C4+E4+G4:500`)
   with rests, chords and lengths; `Sound.Play` and `Sound.Stop`, a song from the machine's disks out of its monitors

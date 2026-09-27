@@ -114,6 +114,10 @@ public final class Programs {
     public static final ResourceLocation SOUNDFOUNDRY =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "soundfoundry");
 
+    /** Soundfoundry Server: streams the catalogue and the network's own songs, on a server in a rack. */
+    public static final ResourceLocation SOUNDFOUNDRY_SERVER =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "soundfoundry_server");
+
     private Programs() {
     }
 

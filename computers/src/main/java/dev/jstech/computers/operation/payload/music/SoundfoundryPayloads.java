@@ -9,6 +9,8 @@ package dev.jstech.computers.operation.payload.music;
 
 import dev.jstech.computers.audio.MusicPlayer;
 import dev.jstech.computers.audio.SongFiles;
+import dev.jstech.computers.audio.SongSources;
+import dev.jstech.computers.audio.SoundfoundryPlaylists;
 import dev.jstech.computers.audio.SoundfoundryTexts;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.client.audio.SoundfoundryStates;
@@ -22,6 +24,7 @@ import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.fs.RecordingFile;
 import dev.jstech.computers.program.Programs;
+import dev.jstech.computers.program.SongRefs;
 import dev.jstech.computers.program.SoundfoundryState;
 import dev.jstech.core.audio.media.MediaInfo;
 import dev.jstech.core.text.Text;
@@ -48,10 +51,6 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
  * within a second even though nobody touched anything; the playlist travels only when it has changed.
  */
 public final class SoundfoundryPayloads {
-
-    /* A saved playlist's first line, which is how the players of the time recognised one. */
-    private static final String M3U_HEADER = "#EXTM3U";
-    private static final String M3U_ENTRY = "#EXTINF:";
 
     private SoundfoundryPayloads() {
     }
@@ -85,7 +84,7 @@ public final class SoundfoundryPayloads {
                 : monitors ? SoundfoundryStatePayload.OUT_MONITOR : SoundfoundryStatePayload.OUT_NONE;
         return new SoundfoundryStatePayload(computer.getBlockPos(), state.revision(), songs, state.current(), status,
                 music.position(level), playing, state.shuffle(), state.repeat(), state.volume(), state.balance(),
-                computer.playsRecordings(), output, music.trouble());
+                computer.playsRecordings(), output, music.trouble(), music.streaming(level));
     }
 
     private static void handleAction(final SoundfoundryActionPayload payload, final ServerPlayer player,
@@ -162,6 +161,12 @@ public final class SoundfoundryPayloads {
             case SoundfoundryActionPayload.REVERSE -> state.reverse();
             case SoundfoundryActionPayload.OPEN_LIST -> note = openList(level, computer, state, payload.paths());
             case SoundfoundryActionPayload.SAVE_LIST -> note = saveList(level, computer, state, payload.paths());
+            case SoundfoundryActionPayload.PLAY_PAGE, SoundfoundryActionPayload.DOWNLOAD,
+                 SoundfoundryActionPayload.DOWNLOAD_ALBUM, SoundfoundryActionPayload.UPLOAD,
+                 SoundfoundryActionPayload.PICK_SERVER, SoundfoundryActionPayload.LIKE,
+                 SoundfoundryActionPayload.PLAYLIST_ADD, SoundfoundryActionPayload.PLAYLIST_REMOVE,
+                 SoundfoundryActionPayload.PLAYLIST_NEW, SoundfoundryActionPayload.PLAYLIST_DELETE ->
+                    note = SoundfoundryPagePayloads.act(level, computer, payload);
             default -> {
                 return Text.EMPTY;
             }
@@ -215,13 +220,12 @@ public final class SoundfoundryPayloads {
             return Text.EMPTY;
         }
         final String target = paths.getFirst();
-        final StringBuilder list = new StringBuilder(M3U_HEADER).append('\n');
+        final List<SoundfoundryPlaylists.Line> lines = new ArrayList<>(state.size());
         for (final String path : state.songs()) {
             final SoundfoundryStatePayload.Song song = describe(level, computer, path);
-            list.append(M3U_ENTRY).append(song.millis() / 1000L).append(',').append(shownAs(song)).append('\n')
-                    .append(path).append('\n');
+            lines.add(new SoundfoundryPlaylists.Line(path, song.millis() / 1000L, shownAs(song)));
         }
-        final String content = list.toString();
+        final String content = SoundfoundryPlaylists.contentOf(lines);
         final ItemStack disk = computer.systemDisk();
         final DiskFilesystem.WriteResult result = DiskFilesystem.write(disk, target,
                 FileType.of(extensionOf(target)), content,
@@ -240,7 +244,7 @@ public final class SoundfoundryPayloads {
         }
         final String source = paths.getFirst();
         final String content = SongFiles.content(level, computer, source).orElse(null);
-        if (content == null || !content.startsWith(M3U_HEADER)) {
+        if (content == null || !content.startsWith(SoundfoundryPlaylists.HEADER)) {
             return SoundfoundryTexts.NOT_A_LIST.with(FsPaths.fileName(source));
         }
         final String folder = FsPaths.parentDir(source);
@@ -270,22 +274,22 @@ public final class SoundfoundryPayloads {
         return songs;
     }
 
+    /* A song of the list as the window shows it; one streamed from a server is read from the catalogue or server. */
     private static SoundfoundryStatePayload.Song describe(final ServerLevel level,
                                                           final AbstractComputerBlockEntity computer,
                                                           final String path) {
-        final RecordingFile song = SongFiles.read(level, computer, path);
-        final String fileName = FsPaths.fileName(path);
+        final SongSources.Described song = SongSources.describe(level, computer, path);
         if (song == null) {
-            return new SoundfoundryStatePayload.Song(path, RecordingFile.stemOf(fileName, fileName), "", 0L, false);
+            final String fileName = FsPaths.fileName(SongRefs.pathOf(path));
+            return new SoundfoundryStatePayload.Song(path, RecordingFile.stemOf(fileName, fileName), "", "", 0L,
+                    false);
         }
-        final String title = song.info().tags().title();
-        return new SoundfoundryStatePayload.Song(path, title.isEmpty() ? RecordingFile.stemOf(fileName, fileName)
-                : title, song.info().tags().artist(), song.info().millis(), true);
+        return new SoundfoundryStatePayload.Song(path, song.title(), song.artist(), song.album(),
+                song.info().millis(), true);
     }
 
-    /* How a song is listed: its artist and its title, or its title alone. */
     private static String shownAs(final SoundfoundryStatePayload.Song song) {
-        return song.artist().isEmpty() ? song.title() : song.artist() + " - " + song.title();
+        return SoundfoundryPlaylists.shownAs(song.title(), song.artist());
     }
 
     private static String extensionOf(final String path) {
@@ -297,6 +301,6 @@ public final class SoundfoundryPayloads {
     private static SoundfoundryStatePayload withTrouble(final SoundfoundryStatePayload state, final Text note) {
         return new SoundfoundryStatePayload(state.hostPos(), state.revision(), state.songs(), state.current(),
                 state.status(), state.position(), state.playing(), state.shuffle(), state.repeat(), state.volume(),
-                state.balance(), state.device(), state.output(), note);
+                state.balance(), state.device(), state.output(), note, state.stream());
     }
 }

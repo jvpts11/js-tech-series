@@ -51,6 +51,15 @@ public interface IDesktopApp {
     }
 
     /**
+     * For a program that draws its own frame: whether its window can also fill the desktop's work area, which its
+     * own maximize button asks for, and shrinks to a work area smaller than the size it asks for. A program that says
+     * so draws itself at whatever size its window is handed, the way the streaming players of the later desktops did.
+     */
+    default boolean ownFrameFills() {
+        return false;
+    }
+
+    /**
      * For a program that draws its own frame: which of the window's buttons is at that point, measured from the
      * window's top-left corner, as {@link DesktopWindow#BUTTON_MINIMIZE} or {@link DesktopWindow#BUTTON_CLOSE}. A
      * button of the program's own, which the window has no part in, is not one of these: its click reaches the

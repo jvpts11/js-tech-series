@@ -73,7 +73,8 @@ public final class SoftwareHouseGameTests {
                 Map.entry("storage_insights", SoftwareHouse.VAULTIS),
                 Map.entry("predictive_cache", SoftwareHouse.VAULTIS), Map.entry("network", SoftwareHouse.JSC),
                 Map.entry("mirror", SoftwareHouse.JSC), Map.entry("screenfetch", SoftwareHouse.ARCH_COLLECTIVE),
-                Map.entry("soundfoundry", SoftwareHouse.VOIDSOFT));
+                Map.entry("soundfoundry", SoftwareHouse.VOIDSOFT),
+                Map.entry("soundfoundry_server", SoftwareHouse.VOIDSOFT));
         programs.forEach((id, house) -> helper.assertTrue(OsRegistry.getProgram(rl(id)).house().equals(house),
                 id + " is " + house.name() + "'s; got " + OsRegistry.getProgram(rl(id)).house().name()));
         // A bundled program is credited to the desktop that ships it; an explicit house stays its own.

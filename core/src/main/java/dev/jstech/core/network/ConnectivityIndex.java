@@ -322,6 +322,12 @@ public final class ConnectivityIndex {
         join(positions);
     }
 
+    /** The cables the device at {@code device} last said it touches, which is how the network reaches it. */
+    public Set<Long> bridgedBy(final long device) {
+        final Set<Long> touched = bridges.get(device);
+        return touched == null ? Set.of() : touched;
+    }
+
     /** The device at {@code device} is gone: it joins nothing any more on a way through the network. */
     public void forgetBridge(final long device) {
         final Set<Long> touched = bridges.remove(device);

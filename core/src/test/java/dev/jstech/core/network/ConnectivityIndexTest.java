@@ -400,6 +400,17 @@ class ConnectivityIndexTest {
     }
 
     @Test
+    void bridgedBy_answersTheCablesADeviceTouchesUntilItIsForgotten() {
+        index.onCablePlaced(pos(0, 0, 0), Set.of());
+        index.onCablePlaced(pos(10, 0, 0), Set.of());
+        assertEquals(Set.of(), index.bridgedBy(DEVICE), "a device that never said touches nothing");
+        index.bridge(DEVICE, Set.of(pos(0, 0, 0), pos(10, 0, 0)));
+        assertEquals(Set.of(pos(0, 0, 0), pos(10, 0, 0)), index.bridgedBy(DEVICE));
+        index.forgetBridge(DEVICE);
+        assertEquals(Set.of(), index.bridgedBy(DEVICE), "and a device that is gone touches nothing again");
+    }
+
+    @Test
     void bridge_preservesTheNetworkUuid() {
         index.onCablePlaced(pos(0, 0, 0), Set.of());
         index.onCablePlaced(pos(10, 0, 0), Set.of());

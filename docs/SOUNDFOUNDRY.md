@@ -76,6 +76,28 @@ speed of the cable the computer itself is plugged into. Under `[soundfoundry]` i
 
 The songs coming into one computer at once share its speed.
 
+## The Soundfoundry Server
+
+On the Standard desktops (Frames 11 and the Linux desktops of that era) Soundfoundry is a streaming
+player, and it streams from a **Soundfoundry Server**: a service installed on a server in a rack of the
+network, like the Messenger Service. With none on the network, it plays the computer's own files and
+nothing else; the catalogue reaches a Standard computer only through one.
+
+- **The network's library** is the songs in the server machine's own music folder. A song a computer
+  sends it is kept in a folder named after that computer, which is how the library says who it is from,
+  and takes room on the server's disk like any file; the same song is not sent twice.
+- **Listening costs the server memory.** Each computer streaming from it holds 4 MB of the server's
+  memory for as long as it plays, and the server turns a computer away when it has none left.
+- **Streamed or downloaded.** A song of the catalogue or of the library plays through the server, or from
+  the computer's own disk once it is downloaded, which needs no server. Downloads and songs sent to the
+  server go at the speed of the slowest cable between the computer and the server; a catalogue song at the
+  speed of the computer's own cable.
+- **Several servers** on one network are fine: the player picks the one to stream from in the box at the
+  foot of Soundfoundry's sidebar, the first found until they do.
+
+Playlists are `.m3u` files in the `Playlists` folder of the computer's music folder, the liked songs one
+of them, and a playlist can hold streamed songs as well as files.
+
 ## Settings
 
 Under `[media]` in `jstech-balance.toml`:

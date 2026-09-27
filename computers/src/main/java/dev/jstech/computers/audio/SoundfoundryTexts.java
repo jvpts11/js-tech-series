@@ -38,6 +38,22 @@ public final class SoundfoundryTexts {
             "%s is not shared by %s any more");
     public static final TextKey VOICES_TAKEN = TextKey.of("jsc.soundfoundry.voices_taken",
             "Another sound took the sound card's voices");
+    public static final TextKey NO_SERVER = TextKey.of("jsc.soundfoundry.no_server",
+            "No Soundfoundry Server on this network plays %s");
+    public static final TextKey SERVER_FULL = TextKey.of("jsc.soundfoundry.server_full",
+            "%s has no memory left to stream to one more computer");
+    public static final TextKey SERVER_GONE = TextKey.of("jsc.soundfoundry.server_gone",
+            "%s cannot be reached any more");
+    public static final TextKey NOT_IN_LIBRARY = TextKey.of("jsc.soundfoundry.not_in_library",
+            "%s is not in the network's library any more");
+    public static final TextKey IN_LIBRARY = TextKey.of("jsc.soundfoundry.in_library",
+            "%s is already in the network's library");
+    public static final TextKey PLAYLIST_NAME = TextKey.of("jsc.soundfoundry.playlist_name",
+            "%s cannot be the name of a playlist");
+    public static final TextKey PLAYLIST_TAKEN = TextKey.of("jsc.soundfoundry.playlist_taken",
+            "There is already a playlist called %s");
+    public static final TextKey PLAYLIST_NOT_SAVED = TextKey.of("jsc.soundfoundry.playlist_not_saved",
+            "The playlist %s could not be saved");
 
     private SoundfoundryTexts() {
     }

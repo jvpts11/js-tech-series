@@ -40,10 +40,12 @@ import net.minecraft.resources.ResourceLocation;
  * @param output   where its sound comes out: {@link #OUT_NONE}, {@link #OUT_MONITOR}, {@link #OUT_SPEAKERS} or
  *                 {@link #OUT_BOTH}
  * @param trouble  why the last song could not play, or empty
+ * @param stream   whether the song playing streams from a Soundfoundry Server rather than playing from the disk
  */
 public record SoundfoundryStatePayload(BlockPos hostPos, int revision, Optional<List<Song>> songs, int current,
                                        int status, long position, Playing playing, boolean shuffle, boolean repeat,
-                                       int volume, int balance, boolean device, int output, Text trouble)
+                                       int volume, int balance, boolean device, int output, Text trouble,
+                                       boolean stream)
         implements CustomPacketPayload {
 
     public static final int STOPPED = 0;
@@ -75,10 +77,11 @@ public record SoundfoundryStatePayload(BlockPos hostPos, int revision, Optional<
      * @param path    where its file is
      * @param title   what it is called: its own title, or its file's name
      * @param artist  who made it, or empty
+     * @param album   the album it is on, or empty
      * @param millis  how long it runs
      * @param present whether its file is still there to play
      */
-    public record Song(String path, String title, String artist, long millis, boolean present) {
+    public record Song(String path, String title, String artist, String album, long millis, boolean present) {
     }
 
     /**
@@ -113,6 +116,7 @@ public record SoundfoundryStatePayload(BlockPos hostPos, int revision, Optional<
                 buf.writeUtf(clip(song.path(), MAX_PATH), MAX_PATH);
                 buf.writeUtf(clip(song.title(), MediaTags.MAX_TEXT), MediaTags.MAX_TEXT);
                 buf.writeUtf(clip(song.artist(), MediaTags.MAX_TEXT), MediaTags.MAX_TEXT);
+                buf.writeUtf(clip(song.album(), MediaTags.MAX_TEXT), MediaTags.MAX_TEXT);
                 buf.writeVarLong(song.millis());
                 buf.writeBoolean(song.present());
             }
@@ -131,6 +135,7 @@ public record SoundfoundryStatePayload(BlockPos hostPos, int revision, Optional<
         buf.writeBoolean(p.device);
         buf.writeVarInt(p.output);
         TextCodecs.STREAM_CODEC.encode(buf, p.trouble);
+        buf.writeBoolean(p.stream);
     }
 
     private static SoundfoundryStatePayload decode(final RegistryFriendlyByteBuf buf) {
@@ -142,7 +147,8 @@ public record SoundfoundryStatePayload(BlockPos hostPos, int revision, Optional<
             final List<Song> read = new ArrayList<>(count);
             for (int i = 0; i < count; i++) {
                 read.add(new Song(buf.readUtf(MAX_PATH), buf.readUtf(MediaTags.MAX_TEXT),
-                        buf.readUtf(MediaTags.MAX_TEXT), buf.readVarLong(), buf.readBoolean()));
+                        buf.readUtf(MediaTags.MAX_TEXT), buf.readUtf(MediaTags.MAX_TEXT), buf.readVarLong(),
+                        buf.readBoolean()));
             }
             songs = Optional.of(read);
         }
@@ -157,8 +163,9 @@ public record SoundfoundryStatePayload(BlockPos hostPos, int revision, Optional<
         final boolean device = buf.readBoolean();
         final int output = buf.readVarInt();
         final Text trouble = TextCodecs.STREAM_CODEC.decode(buf);
+        final boolean stream = buf.readBoolean();
         return new SoundfoundryStatePayload(host, revision, songs, current, status, position, playing, shuffle,
-                repeat, volume, balance, device, output, trouble);
+                repeat, volume, balance, device, output, trouble, stream);
     }
 
     private static String clip(final String text, final int max) {

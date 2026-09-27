@@ -149,6 +149,26 @@ class SoundfoundryStateTest {
     }
 
     @Test
+    void replace_putsTheSongsInPlaceOfTheListOnThePickedOne() {
+        final int before = state.revision();
+        state.replace(List.of("catalog://config/x/1.ogg", "catalog://config/x/2.ogg"), 1);
+        assertEquals(List.of("catalog://config/x/1.ogg", "catalog://config/x/2.ogg"), state.songs());
+        assertEquals(1, state.current());
+        assertTrue(state.revision() != before, "a window holding the old list is told it changed");
+        state.replace(List.of(), 0);
+        assertEquals(-1, state.current(), "an empty list is on no song");
+    }
+
+    @Test
+    void server_isKeptAsPickedAndEmptyForTheFirstFound() {
+        assertEquals("", state.server());
+        state.setServer("123:4");
+        assertEquals("123:4", state.server());
+        state.setServer(null);
+        assertEquals("", state.server());
+    }
+
+    @Test
     void clearFinishedDownloads_leavesThoseStillComing() {
         final SongDownload coming = download(1);
         final SongDownload done = download(2);
