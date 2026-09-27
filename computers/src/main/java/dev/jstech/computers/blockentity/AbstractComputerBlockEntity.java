@@ -11,6 +11,7 @@ import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.advancement.HardwareMilestones;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.audio.MusicDownloads;
 import dev.jstech.computers.audio.MusicPlayer;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.IEraChassisBlock;
@@ -134,6 +135,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     /** What its system's sound plays through, and where it comes out. */
     private final ComputerAudioHost audio = new ComputerAudioHost(this);
     private final MusicPlayer music = new MusicPlayer(this);
+    /** The songs Soundfoundry is fetching over the network. */
+    private final MusicDownloads musicDownloads = new MusicDownloads(this);
 
     /** The name a player gave this computer: the machine's own, and no part's. */
     private String computerName = "";
@@ -1124,15 +1127,24 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         attachment.leave(level);
     }
 
-    /** Hears the machine come on and go off, and keeps its hard drive turning in between. */
+    /**
+     * Hears the machine come on and go off, keeps its hard drive turning in between, and keeps Soundfoundry going:
+     * the song it plays and the songs it is fetching.
+     */
     protected void tickSounds(final ServerLevel level) {
         sounds.tick(level);
         music.tick(level);
+        musicDownloads.tick(level);
     }
 
     /** Soundfoundry playing on this machine. */
     public MusicPlayer musicPlayer() {
         return music;
+    }
+
+    /** The songs Soundfoundry is fetching over this machine's network. */
+    public MusicDownloads musicDownloads() {
+        return musicDownloads;
     }
 
     /** What its system's sound plays through and where it comes out. */

@@ -140,6 +140,17 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   or a folder of them, or imports songs from the player's own computer; the playlist under it adds, removes, picks,
   sorts and keeps lists from its buttons, plays a song on a double click, and can be put away with PL, and either
   part folds down to its bar. The keys Z, X, C, V and B go back, play, pause, stop and go on.
+- Soundfoundry's sharing window, which NET opens, in the same skin: a search finds songs by their title, artist,
+  album or file name among Voidsoft Music, the server's catalogue sold as the online store of the time, and the
+  songs the other computers of the network running Soundfoundry keep in the `Shared` folder of their music folder,
+  each listed with its size, the computer it is on and the slowest cable on the way to it. A song picked and
+  downloaded comes in at that cable's speed (Ethernet half a megabyte a second, HBW two, HPC eight, the songs coming
+  in at once sharing it; a catalogue song at the speed of the computer's own cable), with its progress and time left,
+  and is kept in the music folder, and on the playlist when asked. It waits while the computer sharing it is off,
+  goes on after the world is loaded again, and is given up on, saying why, when the song stops being shared. The
+  downloads and the songs this computer shares have a tab each, and the bar along the foot says how many songs it
+  shares, how many computers it reaches and how many songs are on their way. The speeds are under `[soundfoundry]`
+  in `jscomputers-server.toml`. A window now opens inside the desktop's work area wherever it fits.
 - The data network knows the slowest cable between any two points of it, in J's Core, for any mod or addon to ask:
   of every way between them, over cables and routers and through the Mainframes and racks that join cable runs, it
   takes the one whose slowest cable is fastest, which is as fast as data can go between them. A router slows

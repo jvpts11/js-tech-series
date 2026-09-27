@@ -30,11 +30,11 @@ public final class SoundfoundryLayout {
     /** How tall a plate folded to its bar is. */
     public static final int SHADE_H = 14;
 
-    /* The bar along the top of a plate and its three buttons. */
+    /* The bar along the top of the player and the playlist, and its three buttons. */
     public static final Rect BAR = new Rect(1, 1, WIDTH - 2, 11);
-    public static final Rect MINIMIZE = new Rect(WIDTH - 30, 3, 8, 7);
-    public static final Rect SHADE = new Rect(WIDTH - 21, 3, 8, 7);
-    public static final Rect CLOSE = new Rect(WIDTH - 12, 3, 8, 7);
+    public static final Rect MINIMIZE = minimize(WIDTH);
+    public static final Rect SHADE = shade(WIDTH);
+    public static final Rect CLOSE = close(WIDTH);
 
     /* The player. */
     public static final Rect DISPLAY = new Rect(6, 16, 94, 42);
@@ -107,6 +107,21 @@ public final class SoundfoundryLayout {
         public int bottom() {
             return y + h;
         }
+    }
+
+    /** The bar's first button, which puts the window away, on a plate that wide. */
+    public static Rect minimize(final int width) {
+        return new Rect(width - 30, 3, 8, 7);
+    }
+
+    /** The bar's middle button, which folds the plate to its bar, on a plate that wide. */
+    public static Rect shade(final int width) {
+        return new Rect(width - 21, 3, 8, 7);
+    }
+
+    /** The bar's last button, which closes, on a plate that wide. */
+    public static Rect close(final int width) {
+        return new Rect(width - 12, 3, 8, 7);
     }
 
     /** How tall the player stands, open or folded to its bar. */

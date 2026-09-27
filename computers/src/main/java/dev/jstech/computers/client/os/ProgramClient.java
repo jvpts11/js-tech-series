@@ -104,6 +104,8 @@ public final class ProgramClient {
         register(rl("ark"), (host, mon, os) -> new ArchiverApp(host));
         register(rl("paint"), (host, mon, os) -> new PaintApp(host));
         register(rl("soundfoundry"), (host, mon, os) -> new SoundfoundryApp(host));
+        // Soundfoundry's second window, which its NET button opens and which comes back with the session.
+        register(rl("soundfoundry/share"), (host, mon, os) -> new SoundfoundryShareApp(host));
         register(rl("exceed"), (host, mon, os) -> new ExceedApp(host, mon));
         register(rl("messenger"), (host, mon, os) -> new MessengerApp(host, mon));
         register(rl("knot"), (host, mon, os) -> new KnotApp(host, mon));

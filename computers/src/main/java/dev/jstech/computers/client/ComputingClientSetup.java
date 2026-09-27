@@ -19,6 +19,7 @@ import dev.jstech.computers.block.IPostScreenOpener;
 import dev.jstech.computers.block.ISystemBootScreenOpener;
 import dev.jstech.computers.api.client.IOperatingSpaceScreen;
 import dev.jstech.computers.api.client.OperatingSpaceScreens;
+import dev.jstech.computers.client.audio.SoundfoundryShares;
 import dev.jstech.computers.client.audio.SoundfoundryStates;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.menu.CommandPromptMenu;
@@ -55,6 +56,7 @@ public final class ComputingClientSetup {
         // The desktop's per-machine caches belong to the world being left.
         DesktopScreen.forgetClientState();
         SoundfoundryStates.clear();
+        SoundfoundryShares.clear();
     }
 
     @SubscribeEvent

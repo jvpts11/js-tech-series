@@ -8,9 +8,12 @@
 package dev.jstech.computers.program;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.core.audio.StereoSide;
+import dev.jstech.core.audio.media.MediaId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -118,5 +121,49 @@ class SoundfoundryStateTest {
         state.setBalance(-SoundfoundryState.MAX_BALANCE * 3);
         assertEquals(-SoundfoundryState.MAX_BALANCE, state.balance(), "kept to the most either way");
         assertEquals(0.0F, state.gainFor(StereoSide.RIGHT));
+    }
+
+    @Test
+    void addDownload_makesRoomByForgettingTheOldestFinished() {
+        for (int i = 0; i < SoundfoundryState.MAX_DOWNLOADS; i++) {
+            final SongDownload download = download(i);
+            if (i == 3) {
+                download.kept();
+            }
+            assertTrue(state.addDownload(download));
+        }
+        final SongDownload late = download(99);
+        assertTrue(state.addDownload(late), "the finished one makes room");
+        assertEquals(SoundfoundryState.MAX_DOWNLOADS, state.downloads().size());
+        assertFalse(state.downloads().stream().anyMatch(download -> download.status() == SongDownload.Status.DONE));
+        assertFalse(state.addDownload(download(100)), "a list full of songs still coming takes no more");
+    }
+
+    @Test
+    void downloading_isTrueOnlyWhileTheRecordingIsStillComing() {
+        final SongDownload download = download(1);
+        state.addDownload(download);
+        assertTrue(state.downloading(download.media()));
+        download.kept();
+        assertFalse(state.downloading(download.media()));
+    }
+
+    @Test
+    void clearFinishedDownloads_leavesThoseStillComing() {
+        final SongDownload coming = download(1);
+        final SongDownload done = download(2);
+        done.kept();
+        state.addDownload(coming);
+        state.addDownload(done);
+        state.clearFinishedDownloads();
+        assertEquals(List.of(coming), state.downloads());
+        state.removeDownloads(Set.of(0));
+        assertTrue(state.downloads().isEmpty());
+    }
+
+    private static SongDownload download(final int n) {
+        final String hash = String.format("%064x", n);
+        return new SongDownload("song " + n + ".ogg", new MediaId(hash, "ogg", 1_000L), SongDownload.FROM_CATALOG,
+                "config/Album/" + n + ".ogg", "", false);
     }
 }

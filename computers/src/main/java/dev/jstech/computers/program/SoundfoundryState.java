@@ -8,6 +8,7 @@
 package dev.jstech.computers.program;
 
 import dev.jstech.core.audio.StereoSide;
+import dev.jstech.core.audio.media.MediaId;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -18,8 +19,8 @@ import java.util.function.IntPredicate;
 import java.util.random.RandomGenerator;
 
 /**
- * What Soundfoundry keeps on a machine: its playlist, the song it is on, whether it shuffles and repeats, and how loud
- * it plays and to which side.
+ * What Soundfoundry keeps on a machine: its playlist, the song it is on, whether it shuffles and repeats, how loud it
+ * plays and to which side, and the songs it is fetching over the network.
  *
  * <p>It belongs to the machine rather than to the window: the music plays on with the screen closed, so it is the
  * machine that has to know what comes next when a song ends.
@@ -42,9 +43,13 @@ public final class SoundfoundryState {
     private int balance;
     /** Counts every change to the list, so a screen asks for the list only when it has changed. */
     private int revision;
+    /** The songs being fetched over the network, and those fetched or given up on, oldest first. */
+    private final List<SongDownload> downloads = new ArrayList<>();
 
     /** The most songs a playlist holds. */
     public static final int MAX_SONGS = 500;
+    /** The most downloads it lists, those coming in and those finished together. */
+    public static final int MAX_DOWNLOADS = 50;
     /** Its loudest, as a share out of this. */
     public static final int MAX_VOLUME = 100;
     /** How far its balance goes to either side: minus this is all left, this is all right. */
@@ -217,6 +222,60 @@ public final class SoundfoundryState {
         return order.getFirst();
     }
 
+    /** The downloads, oldest first: those coming in and those finished. */
+    public List<SongDownload> downloads() {
+        return Collections.unmodifiableList(downloads);
+    }
+
+    /** Whether that recording is already coming in. */
+    public boolean downloading(final MediaId media) {
+        for (final SongDownload download : downloads) {
+            if (download.active() && download.media().equals(media)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Lists a download, making room by forgetting the oldest finished one when the list is full.
+     *
+     * @return false when the list is full of downloads still coming in
+     */
+    public boolean addDownload(final SongDownload download) {
+        if (downloads.size() >= MAX_DOWNLOADS) {
+            final int finished = firstFinished();
+            if (finished < 0) {
+                return false;
+            }
+            downloads.remove(finished);
+        }
+        downloads.add(download);
+        return true;
+    }
+
+    /** Takes the downloads at those places off the list, stopping any still coming in. */
+    public void removeDownloads(final Set<Integer> indexes) {
+        final List<SongDownload> left = new ArrayList<>(downloads.size());
+        for (int i = 0; i < downloads.size(); i++) {
+            if (!indexes.contains(i)) {
+                left.add(downloads.get(i));
+            }
+        }
+        downloads.clear();
+        downloads.addAll(left);
+    }
+
+    /** Forgets every download that is finished, done or given up on. */
+    public void clearFinishedDownloads() {
+        downloads.removeIf(download -> !download.active());
+    }
+
+    /** Forgets every download, for a machine put back as it was saved. */
+    void forgetDownloads() {
+        downloads.clear();
+    }
+
     /** The place of the song before the one it is on, or the start of the list. */
     public int previous(final RandomGenerator random) {
         if (songs.isEmpty()) {
@@ -292,5 +351,14 @@ public final class SoundfoundryState {
     private void changed() {
         order.clear();
         revision++;
+    }
+
+    private int firstFinished() {
+        for (int i = 0; i < downloads.size(); i++) {
+            if (!downloads.get(i).active()) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

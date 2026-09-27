@@ -36,7 +36,9 @@ final class SoundfoundrySkin {
             0xFF08070A, 0xFFB8570F, 0xFF3A2A18, 0xFF6B3A12, 0xFF1D130A,
             0xFF1D130A, 0xFFE8702A, 0xFFFFB347, 0xFFFFE08A, 0xFFFFF1C9, 0xFF3B2A18,
             0xFF2A1A0C,
-            0xFFC9C0B2, 0xFF8C8478, 0xFF5F574E));
+            0xFFC9C0B2, 0xFF8C8478, 0xFF5F574E,
+            0xFF2A1A0C, 0xFF3B2410, 0xFF3B2A18, 0xFF3B2A18, 0xFF17151A,
+            0xFFE8892B, 0xFFFFD08A, 0xFF6B5A44, 0xFF8C7A60));
 
     /* Which segments of a seven-segment digit are lit for each figure: a to g, clockwise from the top, g the middle. */
     private static final String[] SEGMENTS = {"abcdef", "bc", "abged", "abgcd", "fgbc", "afgcd", "afgedc", "abc",
@@ -90,8 +92,13 @@ final class SoundfoundrySkin {
      */
     static void bar(final GuiGraphics g, final Font font, final int x, final int y, final String label,
                     final boolean active, final int pressed) {
+        bar(g, font, x, y, SoundfoundryLayout.WIDTH, label, active, pressed);
+    }
+
+    /** The same, along a plate {@code w} wide. */
+    static void bar(final GuiGraphics g, final Font font, final int x, final int y, final int w, final String label,
+                    final boolean active, final int pressed) {
         final Colours c = c();
-        final int w = SoundfoundryLayout.WIDTH;
         final int ground = active ? c.barActive() : c.barIdle();
         fill(g, x + 1, y + 1, w - 2, 11, ground);
         final int lw = font.width(label);
@@ -259,6 +266,41 @@ final class SoundfoundrySkin {
         fill(g, x + 6, y + 3, 2, 2, c.lcd());
     }
 
+    /** Voidsoft's mark at half its size, as a list row carries it beside the store's name. */
+    static void smallAnvil(final GuiGraphics g, final int x, final int y) {
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0.0F);
+        g.pose().scale(0.5F, 0.5F, 1.0F);
+        anvil(g, 0, 0);
+        g.pose().popPose();
+    }
+
+    /** How good a way is, as five bars rising to the right, {@code lit} of them lit. */
+    static void signal(final GuiGraphics g, final int x, final int y, final int lit) {
+        final Colours c = c();
+        for (int b = 0; b < 5; b++) {
+            fill(g, x + b * 5, y + 6 - b, 3, 2 + b, b < lit ? c.amber() : c.signalOff());
+        }
+    }
+
+    /** A song's way in: a dark slot filled as far as it has come, dimmed once it is all in. */
+    static void progress(final GuiGraphics g, final int x, final int y, final int w, final int h, final double done,
+                         final boolean finished) {
+        final Colours c = c();
+        final int filled = (int) Math.round(w * Math.clamp(done, 0.0, 1.0));
+        fill(g, x, y, w, h, c.track());
+        fill(g, x, y, filled, h, finished ? c.progressDone() : c.progress());
+        fill(g, x, y, filled, 1, finished ? c.progressDoneTop() : c.progressTop());
+    }
+
+    /** A little steel box that is ticked, with an amber square in it, or not. */
+    static void checkbox(final GuiGraphics g, final int x, final int y, final boolean ticked) {
+        button(g, x, y, 9, 9, true, false);
+        if (ticked) {
+            fill(g, x + 2, y + 2, 5, 5, c().amber());
+        }
+    }
+
     /** Text on a display, amber or dim, with its shadow worked out from the glass it is on. */
     static void lit(final GuiGraphics g, final Font font, final String text, final int x, final int y,
                     final int colour) {
@@ -299,6 +341,8 @@ final class SoundfoundrySkin {
                    int track, int fill, int fillDim, int positionFill, int positionDead,
                    int segmentOff, int barLow, int barMid, int barHigh, int peak, int peakDead,
                    int rowSelected,
-                   int anvilLight, int anvilMid, int anvilDark) {
+                   int anvilLight, int anvilMid, int anvilDark,
+                   int header, int rowPicked, int signalOff, int rule, int statusBar,
+                   int progress, int progressTop, int progressDone, int progressDoneTop) {
     }
 }

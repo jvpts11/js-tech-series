@@ -60,6 +60,22 @@ be read is passed over, and the server log says which one and why.
 To offer no catalogue at all, set `catalog = false` under `[soundfoundry]` in
 `jscomputers-server.toml`.
 
+## Sharing between computers
+
+Soundfoundry's NET window searches Voidsoft Music, which is the catalogue, and the songs the other
+computers of the network running Soundfoundry keep in the `Shared` folder of their music folder. A
+song downloaded comes in at the speed of the slowest cable on its way, and a catalogue song at the
+speed of the cable the computer itself is plugged into. Under `[soundfoundry]` in
+`jscomputers-server.toml`:
+
+| Setting | Default | What it sets |
+|---|---|---|
+| `ethernet_kilobytes_per_second` | 512 | How fast a song comes over Ethernet, and over a cable with no speed of its own. |
+| `hbw_kilobytes_per_second` | 2048 | How fast a song comes over HBW. |
+| `hpc_kilobytes_per_second` | 8192 | How fast a song comes over the HPC fabric. |
+
+The songs coming into one computer at once share its speed.
+
 ## Settings
 
 Under `[media]` in `jstech-balance.toml`:

@@ -26,6 +26,16 @@ public final class SoundfoundryTexts {
     public static final TextKey LIST_SAVED = TextKey.of("jsc.soundfoundry.list_saved", "The playlist is saved as %s");
     public static final TextKey LIST_NOT_SAVED = TextKey.of("jsc.soundfoundry.list_not_saved",
             "The playlist could not be saved as %s");
+    public static final TextKey NO_NETWORK = TextKey.of("jsc.soundfoundry.no_network",
+            "This computer is on no network");
+    public static final TextKey NOT_THERE = TextKey.of("jsc.soundfoundry.not_there", "%s is not there any more");
+    public static final TextKey ALREADY = TextKey.of("jsc.soundfoundry.already", "%s is already on its way");
+    public static final TextKey TOO_MANY = TextKey.of("jsc.soundfoundry.too_many",
+            "No more than %s downloads are listed: clear the finished ones first");
+    public static final TextKey NOT_IN_CATALOG = TextKey.of("jsc.soundfoundry.not_in_catalog",
+            "%s is not in the catalogue any more");
+    public static final TextKey NOT_SHARED = TextKey.of("jsc.soundfoundry.not_shared",
+            "%s is not shared by %s any more");
 
     private SoundfoundryTexts() {
     }

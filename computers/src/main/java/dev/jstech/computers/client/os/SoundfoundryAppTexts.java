@@ -64,6 +64,58 @@ final class SoundfoundryAppTexts {
     static final TextKey OPEN_LIST = TextKey.of("jsc.soundfoundry.menu.open_list", "Open Playlist...");
     static final TextKey SAVE_LIST = TextKey.of("jsc.soundfoundry.menu.save_list", "Save Playlist...");
 
+    /* The sharing window. */
+    static final TextKey SHARE_TITLE = TextKey.of("jsc.soundfoundry.share.title", "%s Share");
+    static final TextKey SHARE_BAR = TextKey.of("jsc.soundfoundry.skin.share", "SOUNDFOUNDRY SHARE");
+    static final TextKey TAB_SEARCH = TextKey.of("jsc.soundfoundry.skin.tab_search", "SEARCH");
+    static final TextKey TAB_DOWNLOADS = TextKey.of("jsc.soundfoundry.skin.tab_downloads", "DOWNLOADS (%s)");
+    static final TextKey TAB_SHARED = TextKey.of("jsc.soundfoundry.skin.tab_shared", "SHARED (%s)");
+    static final TextKey COLUMN_NAME = TextKey.of("jsc.soundfoundry.skin.column_name", "NAME");
+    static final TextKey COLUMN_SIZE = TextKey.of("jsc.soundfoundry.skin.column_size", "SIZE");
+    static final TextKey COLUMN_FROM = TextKey.of("jsc.soundfoundry.skin.column_from", "FROM");
+    static final TextKey COLUMN_LINK = TextKey.of("jsc.soundfoundry.skin.column_link", "LINK");
+    /** What the catalogue is listed as coming from, beside Voidsoft's mark. */
+    static final TextKey STORE = TextKey.of("jsc.soundfoundry.skin.store", "VOIDSOFT");
+    static final TextKey DOWNLOAD = TextKey.of("jsc.soundfoundry.skin.download", "DOWNLOAD");
+    static final TextKey DOWNLOADS = TextKey.of("jsc.soundfoundry.skin.downloads", "DOWNLOADS");
+    static final TextKey CANCEL = TextKey.of("jsc.soundfoundry.skin.cancel", "CANCEL");
+    static final TextKey CLEAR_DONE = TextKey.of("jsc.soundfoundry.skin.clear_done", "CLEAR");
+    static final TextKey ADD_WHEN_DONE = TextKey.of("jsc.soundfoundry.share.add_when_done",
+            "Add to the playlist when done");
+    static final TextKey MEGABYTES = TextKey.of("jsc.soundfoundry.share.megabytes", "%s MB");
+    static final TextKey AMOUNT = TextKey.of("jsc.soundfoundry.share.amount", "%s / %s MB");
+    static final TextKey LEFT = TextKey.of("jsc.soundfoundry.share.left", "%s left");
+    static final TextKey DONE = TextKey.of("jsc.soundfoundry.share.done", "Done");
+    static final TextKey WAITING = TextKey.of("jsc.soundfoundry.share.waiting", "Waiting");
+    static final TextKey FAILED = TextKey.of("jsc.soundfoundry.share.failed", "Failed");
+    static final TextKey FROM_STORE = TextKey.of("jsc.soundfoundry.share.from_store", "from Voidsoft Music");
+    static final TextKey FROM_VIA = TextKey.of("jsc.soundfoundry.share.from_via", "from %s via %s");
+    static final TextKey FROM_HOST = TextKey.of("jsc.soundfoundry.share.from_host", "from %s");
+    static final TextKey SHARING = TextKey.of("jsc.soundfoundry.share.sharing", "Sharing %s songs");
+    static final TextKey SHARING_ONE = TextKey.of("jsc.soundfoundry.share.sharing_one", "Sharing 1 song");
+    static final TextKey REACHES = TextKey.of("jsc.soundfoundry.share.reaches", "%s computers + Voidsoft Music");
+    static final TextKey REACHES_ONE = TextKey.of("jsc.soundfoundry.share.reaches_one",
+            "1 computer + Voidsoft Music");
+    static final TextKey REACHES_PEERS = TextKey.of("jsc.soundfoundry.share.reaches_peers", "%s computers");
+    static final TextKey REACHES_PEER = TextKey.of("jsc.soundfoundry.share.reaches_peer", "1 computer");
+    static final TextKey DOWNLOADING = TextKey.of("jsc.soundfoundry.share.downloading", "%s downloading");
+    static final TextKey HINT = TextKey.of("jsc.soundfoundry.share.hint",
+            "Search the network and Voidsoft Music");
+    static final TextKey NOTHING_FOUND = TextKey.of("jsc.soundfoundry.share.nothing_found", "Nothing found");
+    static final TextKey NO_DOWNLOADS = TextKey.of("jsc.soundfoundry.share.no_downloads", "Nothing downloaded yet");
+    static final TextKey SHARED_FROM = TextKey.of("jsc.soundfoundry.share.shared_from", "Shared from %s");
+    static final TextKey NOTHING_SHARED = TextKey.of("jsc.soundfoundry.share.nothing_shared",
+            "Put songs in %s to share them with the network");
+    /* The cables a song can come over, by the slowest on its way. */
+    static final TextKey LINK_CATALOG = TextKey.of("jsc.soundfoundry.link.catalog", "Catalog");
+    static final TextKey LINK_ETHERNET = TextKey.of("jsc.soundfoundry.link.ethernet", "Ethernet");
+    static final TextKey LINK_HBW = TextKey.of("jsc.soundfoundry.link.hbw", "HBW");
+    static final TextKey LINK_FIBER = TextKey.of("jsc.soundfoundry.link.fiber", "Fiber");
+    static final TextKey LINK_VLDC = TextKey.of("jsc.soundfoundry.link.vldc", "VLDC");
+    static final TextKey LINK_QUANTUM = TextKey.of("jsc.soundfoundry.link.quantum", "Quantum");
+    static final TextKey LINK_HPC = TextKey.of("jsc.soundfoundry.link.hpc", "HPC");
+    static final TextKey LINK_CRAFTING = TextKey.of("jsc.soundfoundry.link.crafting", "Crafting");
+
     /* The dialogs. */
     static final TextKey OPEN_TITLE = TextKey.of("jsc.soundfoundry.dialog.open", "Open Song");
     static final TextKey FOLDER_TITLE = TextKey.of("jsc.soundfoundry.dialog.folder", "Open Folder");

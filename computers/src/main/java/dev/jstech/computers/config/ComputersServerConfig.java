@@ -8,6 +8,7 @@
 package dev.jstech.computers.config;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.core.network.DataTier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
@@ -34,6 +35,15 @@ public final class ComputersServerConfig {
     private static final ModConfigSpec.BooleanValue ARCH_EVERY_STEP_VALUE;
     private static final ModConfigSpec.BooleanValue LIST_COMMANDS_VALUE;
     private static final ModConfigSpec.BooleanValue SOUNDFOUNDRY_CATALOG_VALUE;
+    private static final ModConfigSpec.IntValue ETHERNET_SPEED_VALUE;
+    private static final ModConfigSpec.IntValue HBW_SPEED_VALUE;
+    private static final ModConfigSpec.IntValue HPC_SPEED_VALUE;
+
+    /* How fast a song comes over each cable when nothing says otherwise, in kilobytes a second. */
+    private static final int ETHERNET_SPEED = 512;
+    private static final int HBW_SPEED = 2_048;
+    private static final int HPC_SPEED = 8_192;
+    private static final int MOST_SPEED = 1_048_576;
 
     /** Held apart from the file so a machine can ask while the world is still coming up. */
     private static boolean showBootMenu = true;
@@ -41,6 +51,9 @@ public final class ComputersServerConfig {
     private static boolean archEveryStep;
     private static boolean listCommands;
     private static boolean soundfoundryCatalog = true;
+    private static int ethernetSpeed = ETHERNET_SPEED;
+    private static int hbwSpeed = HBW_SPEED;
+    private static int hpcSpeed = HPC_SPEED;
 
     static {
         final ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -90,6 +103,13 @@ public final class ComputersServerConfig {
                         "Off, neither is read and the catalogue is empty. A change is taken up by "
                                 + "'/soundfoundry catalog reload' or the next start.")
                 .define("catalog", true);
+        builder.comment("How fast a song comes over the network into a computer, in kilobytes a second, by the "
+                        + "slowest cable on its way. A song from the catalogue comes at the speed of the cable the "
+                        + "computer itself is plugged into; the songs coming in at once share it.",
+                "A cable with no speed of its own below carries songs at Ethernet's.");
+        ETHERNET_SPEED_VALUE = builder.defineInRange("ethernet_kilobytes_per_second", ETHERNET_SPEED, 1, MOST_SPEED);
+        HBW_SPEED_VALUE = builder.defineInRange("hbw_kilobytes_per_second", HBW_SPEED, 1, MOST_SPEED);
+        HPC_SPEED_VALUE = builder.defineInRange("hpc_kilobytes_per_second", HPC_SPEED, 1, MOST_SPEED);
         builder.pop();
         SPEC = builder.build();
     }
@@ -129,6 +149,16 @@ public final class ComputersServerConfig {
         return soundfoundryCatalog;
     }
 
+    /** How fast a song comes over a way whose slowest cable is {@code tier}, in bytes a second. */
+    public static long songBytesPerSecond(final DataTier tier) {
+        final int kilobytes = switch (tier) {
+            case T2_HBW -> hbwSpeed;
+            case HPC -> hpcSpeed;
+            default -> ethernetSpeed;
+        };
+        return kilobytes * 1_024L;
+    }
+
     private static void onLoad(final ModConfigEvent.Loading event) {
         apply(event.getConfig());
     }
@@ -147,6 +177,9 @@ public final class ComputersServerConfig {
         archEveryStep = ARCH_EVERY_STEP_VALUE.get();
         listCommands = LIST_COMMANDS_VALUE.get();
         soundfoundryCatalog = SOUNDFOUNDRY_CATALOG_VALUE.get();
+        ethernetSpeed = ETHERNET_SPEED_VALUE.get();
+        hbwSpeed = HBW_SPEED_VALUE.get();
+        hpcSpeed = HPC_SPEED_VALUE.get();
         JsComputers.LOGGER.debug("Boot menu is {}", showBootMenu ? "shown" : "hidden");
     }
 }

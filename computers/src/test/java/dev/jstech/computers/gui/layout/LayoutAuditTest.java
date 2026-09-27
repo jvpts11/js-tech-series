@@ -47,7 +47,7 @@ class LayoutAuditTest {
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
             "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout",
             "CdeStyleLayout", "WorkstationInfoLayout", "TrashLayout", "HelpViewerLayout", "SpeakerLayout",
-            "VolumePopupLayout", "SoundfoundryLayout");
+            "VolumePopupLayout", "SoundfoundryLayout", "SoundfoundryShareLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -73,6 +73,11 @@ class LayoutAuditTest {
         final List<AuditCase> c = new ArrayList<>();
         c.add(new AuditCase("BusLayout", BusLayout.layout(), true));
         c.add(new AuditCase("SoundfoundryLayout", SoundfoundryLayout.layout(), true));
+        // A window on the desktop, not a panel over the game: held to its own frame, not to the panel budget.
+        c.add(new AuditCase("SoundfoundryShareLayout", SoundfoundryShareLayout.layout(
+                List.of("SEARCH", "DOWNLOADS (999)", "SHARED (9999)"), s -> s.length() * 6), false));
+        c.add(new AuditCase("SoundfoundryShareLayout.list", SoundfoundryShareLayout.listLayout(
+                List.of("SEARCH", "DOWNLOADS (999)", "SHARED (9999)"), s -> s.length() * 6), false));
         c.add(new AuditCase("CraftingSwitchLayout", CraftingSwitchLayout.layout(), true));
         c.add(new AuditCase("PatternEncoderLayout", PatternEncoderLayout.layout(), true));
         c.add(new AuditCase("NetworkGatewayLayout", NetworkGatewayLayout.layout(), true));

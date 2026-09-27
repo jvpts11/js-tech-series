@@ -275,6 +275,30 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     }
 
     /**
+     * Brings the window of that key forward, or opens it the way a session coming back would, for a program that has a
+     * second window of its own: Soundfoundry's sharing window, say. The key is the id its window factory is
+     * registered under ({@link ProgramClient#register}), so the window comes back with the session like any other.
+     */
+    public static void openOrFocus(final String key) {
+        if (active != null) {
+            active.openOrFocusWindow(key);
+        }
+    }
+
+    /** Whether a window of that key is up on the desktop in front of the player. */
+    public static boolean windowOpen(final String key) {
+        if (active == null) {
+            return false;
+        }
+        for (final DesktopWindow w : active.windows) {
+            if (!w.dialog() && w.appKey().equals(key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * The name this desktop gives that program, or empty when this machine has no such program.
      *
      * <p>The name is the desktop's, not the program's: the same prompt is called one thing on one edition and
@@ -5847,8 +5871,15 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         final int availH = workH - 16;
         final int w = availW >= app.minWidth() ? Math.min(app.defaultWidth(), availW) : availW;
         final int h = availH >= app.minHeight() ? Math.min(app.defaultHeight(), availH) : availH;
-        final int x = Math.max(48, (sw() - w) / 2 + windows.size() * 12);
-        final int y = Math.max(top + 6, top + (workH - h) / 2 + windows.size() * 12);
+        /*
+         * Each window opens a little further down and across than the last, but never past the edge of the work area
+         * where it fits: a window that draws its own frame keeps its own size, which may be more than was clamped.
+         */
+        final int shownW = app.drawsOwnFrame() ? app.defaultWidth() : w;
+        final int shownH = app.drawsOwnFrame() ? app.defaultHeight() : h;
+        final int x = Math.max(0, Math.min(Math.max(48, (sw() - w) / 2 + windows.size() * 12), sw() - shownW));
+        final int y = Math.max(top, Math.min(Math.max(top + 6, top + (workH - h) / 2 + windows.size() * 12),
+                workBottom() - shownH));
         final DesktopWindow opened = new DesktopWindow(app, key, x, y, w, h);
         // A program opens on the workspace that is up, which is where whoever started it is looking.
         opened.setWorkspaces(WorkspaceSet.only(shownWorkspace));
@@ -5910,6 +5941,20 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         if (open != null) {
             focusWindow(open);
             return;
+        }
+        final IDesktopApp app = factoryFor(key);
+        if (app != null && allowOpen(key)) {
+            app.applySkin(skin);
+            openApp(key, app);
+        }
+    }
+
+    private void openOrFocusWindow(final String key) {
+        for (final DesktopWindow w : windows) {
+            if (!w.dialog() && w.appKey().equals(key)) {
+                focusWindow(w);
+                return;
+            }
         }
         final IDesktopApp app = factoryFor(key);
         if (app != null && allowOpen(key)) {

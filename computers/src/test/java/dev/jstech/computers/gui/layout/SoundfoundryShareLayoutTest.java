@@ -1,0 +1,50 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Computers.
+ */
+package dev.jstech.computers.gui.layout;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import dev.jstech.computers.gui.layout.SoundfoundryLayout.Rect;
+import dev.jstech.core.network.DataTier;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+
+class SoundfoundryShareLayoutTest {
+
+    @Test
+    void tabs_eachAsWideAsItsWordAndThePadInARow() {
+        final List<Rect> tabs = SoundfoundryShareLayout.tabs(List.of("AB", "CDEF"), word -> word.length() * 6);
+        assertEquals(new Rect(6, 16, 26, 13), tabs.get(0));
+        assertEquals(new Rect(35, 16, 38, 13), tabs.get(1), "the next starts past the gap");
+    }
+
+    @Test
+    void signalOf_lightsMoreBarsForFasterCables() {
+        assertEquals(0, SoundfoundryShareLayout.signalOf(null));
+        assertEquals(2, SoundfoundryShareLayout.signalOf(DataTier.T1_ETHERNET));
+        assertEquals(4, SoundfoundryShareLayout.signalOf(DataTier.T2_HBW));
+        assertEquals(5, SoundfoundryShareLayout.signalOf(DataTier.HPC));
+        assertEquals(2, SoundfoundryShareLayout.signalOf(DataTier.CRAFTING),
+                "a cable songs go over at Ethernet's speed shows as Ethernet");
+    }
+
+    @Test
+    void resultAt_findsTheRowUnderAPointAndNothingOutsideTheList() {
+        assertEquals(0, SoundfoundryShareLayout.resultAt(20, SoundfoundryShareLayout.ROW_TOP));
+        assertEquals(2, SoundfoundryShareLayout.resultAt(20, SoundfoundryShareLayout.ROW_TOP + 2 * 11 + 3));
+        assertEquals(-1, SoundfoundryShareLayout.resultAt(2, SoundfoundryShareLayout.ROW_TOP));
+        assertEquals(-1, SoundfoundryShareLayout.resultAt(20, SoundfoundryShareLayout.ROW_TOP + 9 * 11));
+    }
+
+    @Test
+    void listDownloadAt_findsTheDownloadUnderAPoint() {
+        final int top = SoundfoundryShareLayout.listDownloadTop(1);
+        assertEquals(1, SoundfoundryShareLayout.listDownloadAt(30, top + 5));
+        assertEquals(-1, SoundfoundryShareLayout.listDownloadAt(30, SoundfoundryShareLayout.STATUS.y()));
+    }
+}

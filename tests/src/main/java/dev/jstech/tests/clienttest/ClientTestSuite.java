@@ -26,6 +26,7 @@ public final class ClientTestSuite {
             MediaClientTests.class,
             MusicImportClientTests.class,
             SoundfoundryClientTests.class,
+            SoundfoundryShareClientTests.class,
             SigmaEditorClientTests.class,
             CdeClientTests.class,
             CraftingChainClientTests.class,
