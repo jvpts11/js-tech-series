@@ -245,7 +245,7 @@ public final class FreeBsdGameTests {
                             "what is installed is what 'pkg info' lists");
                     helper.assertTrue(text(shell.run("pkg update", cli)).contains("All repositories are up to date."),
                             "'pkg update' ends the way it ends");
-                    helper.assertTrue(text(shell.run("apt install iqlengine", cli)).contains("command not found"),
+                    helper.assertTrue(text(shell.run("apt install iqlengine", cli)).contains("apt: not found"),
                             "and apt does not exist here");
                 })
                 .thenSucceed();
