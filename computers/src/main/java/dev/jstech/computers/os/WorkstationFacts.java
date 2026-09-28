@@ -119,11 +119,20 @@ public record WorkstationFacts(String userName, String hostName, String network,
         return this.memoryMb == 0L ? 0.0 : (double) this.memoryUsedMb / this.memoryMb;
     }
 
-    private Text processorText() {
-        if (this.processor.isEmpty()) {
+    /**
+     * A processor named with its clock, the way a system report says it: "%s, %s MHz", or just "None" for a
+     * machine with no processor seated. Public so another window that shows the same fact (This PC's About
+     * page on KDE, GNOME and Cinnamon) reads it the same way rather than formatting its own copy.
+     */
+    public static Text processorClock(final Text processor, final int mhz) {
+        if (processor == null || processor.isEmpty()) {
             return NO_PROCESSOR.text();
         }
-        return this.processorMhz == 0 ? this.processor : PROCESSOR_CLOCK.with(this.processor, this.processorMhz);
+        return mhz <= 0 ? processor : PROCESSOR_CLOCK.with(processor, mhz);
+    }
+
+    private Text processorText() {
+        return processorClock(this.processor, this.processorMhz);
     }
 
     private static String orNothing(final String text) {

@@ -79,7 +79,7 @@ public final class ProgramClient {
     private static void registerBuiltins() {
         // Built-in Frames apps.
         register(rl("network"), (host, mon, os) -> new NetworkInteractorApp(host, mon));
-        register(rl("this_pc"), (host, mon, os) -> new ThisPcApp(host));
+        register(rl("this_pc"), (host, mon, os) -> new ThisPcApp(host, os));
         // CDE's settings are its Style Manager, which the approved desktop keeps to what CDE itself offered.
         register(rl("settings"), (host, mon, os) -> onCde(os) ? new StyleManagerApp() : new SettingsApp(host, mon));
         register(rl("workstation_info"), (host, mon, os) -> new WorkstationInfoApp(host));

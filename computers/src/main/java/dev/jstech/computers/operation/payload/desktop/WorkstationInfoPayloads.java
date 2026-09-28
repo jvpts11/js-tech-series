@@ -74,8 +74,10 @@ public final class WorkstationInfoPayloads {
     /**
      * The system by name with its release: a Linux names its distribution and then the kernel under it, which is
      * where its release belongs, and the others put their release after their name, as their own report does.
+     * Package-visible so This PC's About page (KDE, GNOME, Cinnamon) reads the same line rather than another
+     * copy of it.
      */
-    private static String systemOf(final OsDef system) {
+    static String systemOf(final OsDef system) {
         if (system == null) {
             return "";
         }
@@ -86,10 +88,19 @@ public final class WorkstationInfoPayloads {
                 : system.displayName() + " " + release;
     }
 
-    /** The desktop the machine booted with, by name and version, or empty when it came up at a prompt. */
-    private static String windowSystemOf(final IOsHost computer) {
+    /**
+     * The desktop the machine booted with, its own plain name with no version ("KDE Plasma", not "KDE Plasma
+     * 5.27"), or empty when it came up at a prompt. Package-visible for the same reason as {@link #systemOf}.
+     */
+    static String desktopName(final IOsHost computer) {
         final ResourceLocation id = computer.bootedDesktopId();
         final DesktopEnvironmentDef desktop = id == null ? null : OsRegistry.getDesktop(id);
-        return desktop == null ? "" : desktop.displayName() + " " + ProgramVersions.of(id);
+        return desktop == null ? "" : desktop.displayName();
+    }
+
+    /** The desktop the machine booted with, by name and version, or empty when it came up at a prompt. */
+    private static String windowSystemOf(final IOsHost computer) {
+        final String name = desktopName(computer);
+        return name.isEmpty() ? "" : name + " " + ProgramVersions.of(computer.bootedDesktopId());
     }
 }

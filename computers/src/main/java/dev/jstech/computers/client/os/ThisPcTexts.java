@@ -80,6 +80,34 @@ final class ThisPcTexts {
     static final TextKey COMES_UP = TextKey.of("jsc.this_pc.comes_up", "OK, the machine comes up");
     static final TextKey NOT_VALID = TextKey.of("jsc.this_pc.not_valid", "not valid");
 
+    /*
+     * The About-style page KDE's Info Center, GNOME's About and Cinnamon's System Info draw instead of the
+     * drives explorer above: a hero (the system's mark, its name and its maker) over sections or lists of
+     * facts, each a plain key and value.
+     */
+    static final TextKey OPERATING_SYSTEM = TextKey.of("jsc.this_pc.about.operating_system", "Operating System");
+    static final TextKey KERNEL = TextKey.of("jsc.this_pc.about.kernel", "Kernel");
+    static final TextKey LINUX_KERNEL = TextKey.of("jsc.this_pc.about.linux_kernel", "Linux Kernel");
+    static final TextKey DESKTOP = TextKey.of("jsc.this_pc.about.desktop", "Desktop");
+    static final TextKey CINNAMON_VERSION = TextKey.of("jsc.this_pc.about.cinnamon_version", "Cinnamon Version");
+    static final TextKey SYSTEM_DISK = TextKey.of("jsc.this_pc.about.system_disk", "System Disk");
+    static final TextKey HOST_NAME = TextKey.of("jsc.this_pc.about.host_name", "Host Name");
+    static final TextKey SOFTWARE_SECTION = TextKey.of("jsc.this_pc.about.software", "Software");
+    static final TextKey COMPUTER_SECTION = TextKey.of("jsc.this_pc.about.computer", "Computer");
+    static final TextKey DEVICE_NAME = TextKey.of("jsc.this_pc.about.device_name", "Device Name");
+    static final TextKey DISK_CAPACITY = TextKey.of("jsc.this_pc.about.disk_capacity", "Disk Capacity");
+    static final TextKey OS_NAME = TextKey.of("jsc.this_pc.about.os_name", "OS Name");
+    static final TextKey OS_TYPE = TextKey.of("jsc.this_pc.about.os_type", "OS Type");
+    static final TextKey HARD_DRIVES = TextKey.of("jsc.this_pc.about.hard_drives", "Hard Drives");
+    static final TextKey GRAPHICS_CARD = TextKey.of("jsc.this_pc.about.graphics_card", "Graphics Card");
+    static final TextKey ABOUT_DISK_USE = TextKey.of("jsc.this_pc.about.disk_use", "%s, %s used");
+    static final TextKey ABOUT_MEMORY_VALUE = TextKey.of("jsc.this_pc.about.memory_value", "%s MB");
+    static final TextKey ABOUT_GRAPHICS_VALUE = TextKey.of("jsc.this_pc.about.graphics_value", "%s MB VRAM");
+    static final TextKey BITS_64 = TextKey.of("jsc.this_pc.about.bits_64", "64-bit");
+    static final TextKey BITS_32 = TextKey.of("jsc.this_pc.about.bits_32", "32-bit");
+    static final TextKey OS_TYPE_VALUE = TextKey.of("jsc.this_pc.about.os_type_value", "%s (%s)");
+    static final TextKey OS_WITH_ARCHITECTURE = TextKey.of("jsc.this_pc.about.os_with_arch", "%s %s");
+
     private ThisPcTexts() {
     }
 }

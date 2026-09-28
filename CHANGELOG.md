@@ -266,6 +266,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   command on an empty line, as sh and bash do. FreeBSD has no
   `help`: typed there, it is not found like any other unknown word, and the line points to `apropos` and
   `man intro` instead.
+- KDE Plasma, GNOME and Cinnamon on FreeBSD hang FreeBSD's own wallpaper for each, in FreeBSD's reds with its
+  orb, in place of the one they bring on a Linux.
+- This PC on KDE Plasma, GNOME and Cinnamon, on FreeBSD and on the Linux distributions alike, is the page each
+  desktop has for it: KDE's Info Center, GNOME's About and Cinnamon's System Info, each laid out its own way. They
+  show the system with its release, the kernel and its build, the architecture (vel64 or IA-32 on FreeBSD, x86_64
+  on a Linux), the desktop, the processor, the memory, the graphics card, the system disk and how much of it is
+  used, and the machine's host name.
+- The Personalize page of Settings scrolls when it holds more than its window does, such as every wallpaper a
+  system offers along with the flat skin's taskbar and appearance rows.
 - A resource pack can recolour the computing screens. Their colours are files under `assets/jscore/palettes/` and
   `assets/jsc/palettes/`: each hardware era's skin; each desktop's windows, panel and launcher; the chrome each style
   of desktop draws its title bars, buttons, fields and tabs with; CDE's eight colour schemes; the Network Management

@@ -11,6 +11,7 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextCodecs;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -27,9 +28,12 @@ import java.util.List;
  * <p>What the machine says in words travels as text, so each player reads the card in their own language: the kind
  * of machine, the era, the parts and the drives by their names, and what an installer needs. The player's own
  * name for the machine, the system's and the network's names stay as they are.
+ *
+ * @param host the block this reply is about, so a client with more than one "This PC" open at once (Linux offers
+ *             both Disks and an About-style page) can tell which window a reply belongs to
  */
 @TextHolder
-public record ThisPcPayload(WireMachine machine, List<WireDisk> disks, List<WireMedia> media,
+public record ThisPcPayload(BlockPos host, WireMachine machine, List<WireDisk> disks, List<WireMedia> media,
                             List<String> installedPrograms)
         implements CustomPacketPayload {
 
@@ -57,13 +61,13 @@ public record ThisPcPayload(WireMachine machine, List<WireDisk> disks, List<Wire
     public static final CustomPacketPayload.Type<ThisPcPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "this_pc"));
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, ThisPcPayload> STREAM_CODEC =
-            StreamCodec.composite(
-                    WireMachine.STREAM_CODEC, ThisPcPayload::machine,
-                    WireDisk.STREAM_CODEC.apply(ByteBufCodecs.list(MAX)), ThisPcPayload::disks,
-                    WireMedia.STREAM_CODEC.apply(ByteBufCodecs.list(MAX)), ThisPcPayload::media,
-                    ByteBufCodecs.stringUtf8(96).apply(ByteBufCodecs.list(MAX)), ThisPcPayload::installedPrograms,
-                    ThisPcPayload::new);
+    public static final StreamCodec<RegistryFriendlyByteBuf, ThisPcPayload> STREAM_CODEC = StreamCodec.composite(
+            BlockPos.STREAM_CODEC, ThisPcPayload::host,
+            WireMachine.STREAM_CODEC, ThisPcPayload::machine,
+            WireDisk.STREAM_CODEC.apply(ByteBufCodecs.list(MAX)), ThisPcPayload::disks,
+            WireMedia.STREAM_CODEC.apply(ByteBufCodecs.list(MAX)), ThisPcPayload::media,
+            ByteBufCodecs.stringUtf8(96).apply(ByteBufCodecs.list(MAX)), ThisPcPayload::installedPrograms,
+            ThisPcPayload::new);
 
     /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
     public ThisPcPayload {
@@ -96,16 +100,17 @@ public record ThisPcPayload(WireMachine machine, List<WireDisk> disks, List<Wire
      * @param psuLabel     the power supply's name, or empty
      * @param buildValid   whether the parts make a machine that comes up
      * @param peripherals  the linked peripherals, joined for display, or empty
+     * @param about        the extra facts an About-style page draws, {@link AboutFacts#EMPTY} everywhere else
      */
     public record WireMachine(String name, Text kind, Text era, String osLabel, int osYear,
                               String networkLabel, Text boardLabel, Text cpuLabel, int cpuCount,
                               Text cpuArch, int ramMb, int vramMb, int gpuCount, Text psuLabel,
-                              boolean buildValid, Text peripherals) {
+                              boolean buildValid, Text peripherals, AboutFacts about) {
 
         public static final WireMachine EMPTY = new WireMachine("", Text.EMPTY, Text.EMPTY, "", 0, "", Text.EMPTY,
-                Text.EMPTY, 0, Text.EMPTY, 0, 0, 0, Text.EMPTY, false, Text.EMPTY);
+                Text.EMPTY, 0, Text.EMPTY, 0, 0, 0, Text.EMPTY, false, Text.EMPTY, AboutFacts.EMPTY);
 
-        // Written by hand: composite() tops out at six pairs, and the card carries sixteen fields.
+        // Written by hand: composite() tops out at six pairs, and the card carries seventeen fields.
         public static final StreamCodec<RegistryFriendlyByteBuf, WireMachine> STREAM_CODEC =
                 StreamCodec.of((buf, m) -> {
                     buf.writeUtf(m.name(), 96);
@@ -124,11 +129,62 @@ public record ThisPcPayload(WireMachine machine, List<WireDisk> disks, List<Wire
                     TextCodecs.STREAM_CODEC.encode(buf, m.psuLabel());
                     buf.writeBoolean(m.buildValid());
                     TextCodecs.STREAM_CODEC.encode(buf, m.peripherals());
+                    AboutFacts.STREAM_CODEC.encode(buf, m.about());
                 }, buf -> new WireMachine(buf.readUtf(96), TextCodecs.STREAM_CODEC.decode(buf),
                         TextCodecs.STREAM_CODEC.decode(buf), buf.readUtf(64), buf.readVarInt(), buf.readUtf(64),
                         TextCodecs.STREAM_CODEC.decode(buf), TextCodecs.STREAM_CODEC.decode(buf), buf.readVarInt(),
                         TextCodecs.STREAM_CODEC.decode(buf), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
-                        TextCodecs.STREAM_CODEC.decode(buf), buf.readBoolean(), TextCodecs.STREAM_CODEC.decode(buf)));
+                        TextCodecs.STREAM_CODEC.decode(buf), buf.readBoolean(), TextCodecs.STREAM_CODEC.decode(buf),
+                        AboutFacts.STREAM_CODEC.decode(buf)));
+    }
+
+    /**
+     * The facts an About-style This PC page needs and a Frames "This PC" or a Linux "Disks" window never
+     * draws: KDE's Info Center, GNOME's About and Cinnamon's System Info all read this record, each in its
+     * own layout. Every field is empty (or zero, or {@code false}) on a platform none of those three desktops
+     * runs on, since nothing there ever reads it.
+     *
+     * @param operatingSystem the system by name with its release, as {@code uname} would put them together
+     * @param architecture    the system's own word for the processor's architecture (vel64, IA-32, x86_64...)
+     * @param kernel          the kernel's own version line
+     * @param desktop         the desktop environment's plain name, with no version
+     * @param hostName        the name the machine answers to at a prompt
+     * @param processor       the processor named with its clock, in real megahertz
+     * @param ramMb           the machine's real physical memory, in megabytes (the top-level {@code ramMb} is
+     *                        item-equivalents, which an About page never shows)
+     * @param diskMb          the system disk's capacity
+     * @param diskUsedMb      how much of the system disk is taken
+     * @param freeBsd         whether the platform is FreeBSD, whose kernel line reads "Kernel" rather than
+     *                        "Linux Kernel"
+     * @param bits64          whether the seated processor is 64-bit, read off the hardware itself rather than
+     *                        guessed from the words {@code architecture} happens to contain
+     */
+    public record AboutFacts(Text operatingSystem, Text architecture, Text kernel, Text desktop, Text hostName,
+                             Text processor, long ramMb, long diskMb, long diskUsedMb, boolean freeBsd,
+                             boolean bits64) {
+
+        public static final AboutFacts EMPTY = new AboutFacts(Text.EMPTY, Text.EMPTY, Text.EMPTY, Text.EMPTY,
+                Text.EMPTY, Text.EMPTY, 0L, 0L, 0L, false, false);
+
+        // Written by hand for the same reason as WireMachine's: eleven fields, past composite()'s six pairs.
+        public static final StreamCodec<RegistryFriendlyByteBuf, AboutFacts> STREAM_CODEC =
+                StreamCodec.of((buf, a) -> {
+                    TextCodecs.STREAM_CODEC.encode(buf, a.operatingSystem());
+                    TextCodecs.STREAM_CODEC.encode(buf, a.architecture());
+                    TextCodecs.STREAM_CODEC.encode(buf, a.kernel());
+                    TextCodecs.STREAM_CODEC.encode(buf, a.desktop());
+                    TextCodecs.STREAM_CODEC.encode(buf, a.hostName());
+                    TextCodecs.STREAM_CODEC.encode(buf, a.processor());
+                    buf.writeVarLong(a.ramMb());
+                    buf.writeVarLong(a.diskMb());
+                    buf.writeVarLong(a.diskUsedMb());
+                    buf.writeBoolean(a.freeBsd());
+                    buf.writeBoolean(a.bits64());
+                }, buf -> new AboutFacts(TextCodecs.STREAM_CODEC.decode(buf), TextCodecs.STREAM_CODEC.decode(buf),
+                        TextCodecs.STREAM_CODEC.decode(buf), TextCodecs.STREAM_CODEC.decode(buf),
+                        TextCodecs.STREAM_CODEC.decode(buf), TextCodecs.STREAM_CODEC.decode(buf),
+                        buf.readVarLong(), buf.readVarLong(), buf.readVarLong(), buf.readBoolean(),
+                        buf.readBoolean()));
     }
 
     /**

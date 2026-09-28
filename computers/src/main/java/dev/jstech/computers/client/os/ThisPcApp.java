@@ -9,12 +9,14 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.layout.ThisPcLayout;
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.operation.payload.EjectMediaPayload;
 import dev.jstech.computers.operation.payload.InstallFromMediaPayload;
 import dev.jstech.computers.operation.payload.RenameVolumePayload;
 import dev.jstech.computers.operation.payload.RequestThisPcPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.ThisPcPayload;
+import dev.jstech.computers.operation.payload.ThisPcPayload.AboutFacts;
 import dev.jstech.computers.operation.payload.ThisPcPayload.WireDisk;
 import dev.jstech.computers.operation.payload.ThisPcPayload.WireMedia;
 import dev.jstech.computers.os.Branding;
@@ -22,6 +24,7 @@ import dev.jstech.computers.os.MinSpecTooltip;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.os.media.MediaDriveType;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.core.client.gui.component.Button;
@@ -79,13 +82,23 @@ public final class ThisPcApp implements IDesktopApp {
     private static final int RENAME_W = 34;
     private static final int NAME_MAX = 32;
     private static final long DOUBLE_CLICK_MS = 300L;
+    /**
+     * FreeBSD's orb, drawn on the About-style page of KDE, GNOME and Cinnamon: the only system this page names
+     * that has a mark of its own here. A Linux distribution has none, so its hero shows its name with no
+     * picture over it.
+     */
+    private static final ResourceLocation FREEBSD_ORB =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/splash/freebsd_orb.png");
 
     private OsSkin skin = OsSkin.fallback();
 
     private final BlockPos host;
     /** The window's name, which differs by platform: "This PC" on Frames, "Disks" on Linux. */
     private final String title;
-    private ThisPcPayload data = new ThisPcPayload(ThisPcPayload.WireMachine.EMPTY, List.of(), List.of(), List.of());
+    /** Which About-style page this window draws instead of the drives explorer, or {@link AboutKind#NONE} for that. */
+    private final AboutKind about;
+    private ThisPcPayload data =
+            new ThisPcPayload(BlockPos.ZERO, ThisPcPayload.WireMachine.EMPTY, List.of(), List.of(), List.of());
     private int lastX;
     private int lastY;
     private int lastMouseX;
@@ -97,7 +110,8 @@ public final class ThisPcApp implements IDesktopApp {
     /** The volume the inline field renames, or empty while it renames the machine itself. */
     private String volumeRenameKey = "";
 
-    private static ThisPcApp active;
+    /** Every open This PC window, so a reply reaches every one open for its own host instead of just one of them. */
+    private static final List<ThisPcApp> OPEN = new ArrayList<>();
 
     // components
     private final Panel root = new Panel();
@@ -309,13 +323,38 @@ public final class ThisPcApp implements IDesktopApp {
         }
     }
 
-    public ThisPcApp(final BlockPos host) {
-        this(host, GameText.resolve(ThisPcTexts.TITLE));
+    /** Which About-style page this window draws instead of the drives explorer, or {@link #NONE} for that. */
+    private enum AboutKind {
+        NONE, KDE, GNOME, CINNAMON;
+
+        /** The kind a desktop's id draws, {@link #NONE} for every desktop that has no About page of its own. */
+        static AboutKind of(@Nullable final ResourceLocation desktopId) {
+            if (desktopId == null) {
+                return NONE;
+            }
+            return switch (desktopId.getPath()) {
+                case "kde_plasma" -> KDE;
+                case "gnome" -> GNOME;
+                case "cinnamon" -> CINNAMON;
+                default -> NONE;
+            };
+        }
     }
 
+    /** This PC on KDE Plasma, GNOME or Cinnamon: its About-style page, chosen from the desktop it opens on. */
+    public ThisPcApp(final BlockPos host, @Nullable final ResourceLocation desktopId) {
+        this(host, GameText.resolve(ThisPcTexts.TITLE), AboutKind.of(desktopId));
+    }
+
+    /** This PC on Frames, or Linux's Disks under its own title: the drives explorer, always. */
     public ThisPcApp(final BlockPos host, final String title) {
+        this(host, title, AboutKind.NONE);
+    }
+
+    private ThisPcApp(final BlockPos host, final String title, final AboutKind about) {
         this.host = host;
         this.title = title;
+        this.about = about;
 
         nameLabel = root.add(new Label(this::machineName));
         kindLabel = root.add(new Label(this::kindLine, Label.Tone.DIM));
@@ -350,15 +389,17 @@ public final class ThisPcApp implements IDesktopApp {
         nameField = root.add(new TextField(NAME_MAX).setOnCommit(this::commitRename));
         nameField.setVisible(false);
 
-        active = this;
+        OPEN.add(this);
         request();
     }
 
-    /** Routes a "This PC" listing reply to the open window. */
+    /** Routes a "This PC" listing reply to every open window asking about that host. */
     public static void accept(final ThisPcPayload payload) {
-        if (active != null) {
-            active.data = payload;
-            active.rebuildRows();
+        for (final ThisPcApp app : OPEN) {
+            if (app.host.equals(payload.host())) {
+                app.data = payload;
+                app.rebuildRows();
+            }
         }
     }
 
@@ -373,8 +414,20 @@ public final class ThisPcApp implements IDesktopApp {
 
     @Override
     public void onRestored() {
-        active = this;
+        if (!OPEN.contains(this)) {
+            OPEN.add(this);
+        }
         request();
+    }
+
+    @Override
+    public void onClosed() {
+        OPEN.remove(this);
+    }
+
+    /** Says every This PC window is gone, which is what a desktop closing means for the ones it held. */
+    static void forgetAll() {
+        OPEN.clear();
     }
 
     @Override
@@ -382,24 +435,39 @@ public final class ThisPcApp implements IDesktopApp {
         return title;
     }
 
+    /*
+     * An About-style page's layout is the room it draws in, so its window is that room plus the frame and the
+     * title bar around it; the explorer-style page's own sizes are already whole windows.
+     */
     @Override
     public int defaultWidth() {
-        return ThisPcLayout.DEFAULT_W;
+        return switch (about) {
+            case KDE -> DesktopWindow.windowWidthFor(ThisPcLayout.KdeAbout.W);
+            case GNOME -> DesktopWindow.windowWidthFor(ThisPcLayout.GnomeAbout.W);
+            case CINNAMON -> DesktopWindow.windowWidthFor(ThisPcLayout.CinnamonAbout.W);
+            case NONE -> ThisPcLayout.DEFAULT_W;
+        };
     }
 
     @Override
     public int defaultHeight() {
-        return ThisPcLayout.DEFAULT_H;
+        return switch (about) {
+            case KDE -> DesktopWindow.windowHeightFor(ThisPcLayout.KdeAbout.H);
+            case GNOME -> DesktopWindow.windowHeightFor(ThisPcLayout.GnomeAbout.H);
+            case CINNAMON -> DesktopWindow.windowHeightFor(ThisPcLayout.CinnamonAbout.H);
+            case NONE -> ThisPcLayout.DEFAULT_H;
+        };
     }
 
     @Override
     public int minWidth() {
-        return ThisPcLayout.MIN_W;
+        // The About-style page never reflows: its minimum is the only size it draws.
+        return about == AboutKind.NONE ? ThisPcLayout.MIN_W : defaultWidth();
     }
 
     @Override
     public int minHeight() {
-        return ThisPcLayout.MIN_H;
+        return about == AboutKind.NONE ? ThisPcLayout.MIN_H : defaultHeight();
     }
 
     private boolean linux() {
@@ -490,11 +558,15 @@ public final class ThisPcApp implements IDesktopApp {
     public void renderContent(final GuiGraphics g, final Font font, final int x, final int y,
                               final int width, final int height, final int mouseX, final int mouseY,
                               final float partialTick) {
-        active = this;
         lastX = x;
         lastY = y;
         lastMouseX = mouseX;
         lastMouseY = mouseY;
+        if (about != AboutKind.NONE) {
+            g.fill(x, y, x + width, y + height, skin.windowBg());
+            renderAbout(g, font, x, y);
+            return;
+        }
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
         g.fill(x, y, x + width, y + height, skin.windowBg());
         layout(x, y, width, height);
@@ -513,6 +585,219 @@ public final class ThisPcApp implements IDesktopApp {
         g.fill(x, page.y() - 1, x + width, page.y(), skin.edge());
 
         root.render(g, ctx);
+    }
+
+    // About-style rendering (KDE's Info Center, GNOME's About, Cinnamon's System Info)
+
+    private void renderAbout(final GuiGraphics g, final Font font, final int x, final int y) {
+        final AboutFacts about = data.machine().about();
+        switch (this.about) {
+            case KDE -> renderKdeAbout(g, font, x, y, about);
+            case GNOME -> renderGnomeAbout(g, font, x, y, about);
+            case CINNAMON -> renderCinnamonAbout(g, font, x, y, about);
+            case NONE -> {
+                // Unreachable: renderContent only calls here when this.about is not NONE.
+            }
+        }
+    }
+
+    /** KDE's Info Center: the orb and the system's name over Software, Hardware and Computer. */
+    private void renderKdeAbout(final GuiGraphics g, final Font font, final int x, final int y,
+                                final AboutFacts about) {
+        final String osFull = GameText.resolve(about.operatingSystem());
+        final String house = Branding.houseOf(data.machine().osLabel()).name();
+        if (about.freeBsd()) {
+            g.blit(FREEBSD_ORB, x + ThisPcLayout.KdeAbout.ORB_X, y + ThisPcLayout.KdeAbout.ORB_Y,
+                    ThisPcLayout.ABOUT_ORB, ThisPcLayout.ABOUT_ORB, 0, 0, 32, 32, 32, 32);
+        }
+        final float heroScale = ThisPcLayout.KdeAbout.HERO_SCALE;
+        final int heroMaxW = (int) ((ThisPcLayout.KdeAbout.W - ThisPcLayout.KdeAbout.TITLE_X - 4) / heroScale);
+        Draw.text(g, font, Texts.trim(font, osFull, heroMaxW), x + ThisPcLayout.KdeAbout.TITLE_X,
+                y + ThisPcLayout.KdeAbout.TITLE_Y, skin.text(), skin.windowBg(), heroScale);
+        Draw.text(g, font, house, x + ThisPcLayout.KdeAbout.TITLE_X, y + ThisPcLayout.KdeAbout.SUBTITLE_Y,
+                skin.dim(), skin.windowBg());
+
+        aboutHeader(g, font, x + ThisPcLayout.KdeAbout.LABEL_X, y + ThisPcLayout.KdeAbout.SOFTWARE_Y,
+                ThisPcLayout.KdeAbout.W - ThisPcLayout.KdeAbout.LABEL_X * 2, ThisPcTexts.SOFTWARE_SECTION);
+        aboutRow(g, font, x, y, ThisPcLayout.KdeAbout.rowY(ThisPcLayout.KdeAbout.SOFTWARE_Y, 0),
+                ThisPcLayout.KdeAbout.LABEL_X, ThisPcLayout.KdeAbout.VALUE_X, ThisPcLayout.KdeAbout.VALUE_W,
+                ThisPcTexts.OPERATING_SYSTEM, osFull);
+        aboutRow(g, font, x, y, ThisPcLayout.KdeAbout.rowY(ThisPcLayout.KdeAbout.SOFTWARE_Y, 1),
+                ThisPcLayout.KdeAbout.LABEL_X, ThisPcLayout.KdeAbout.VALUE_X, ThisPcLayout.KdeAbout.VALUE_W,
+                ThisPcTexts.KERNEL, GameText.resolve(about.kernel()));
+        aboutRow(g, font, x, y, ThisPcLayout.KdeAbout.rowY(ThisPcLayout.KdeAbout.SOFTWARE_Y, 2),
+                ThisPcLayout.KdeAbout.LABEL_X, ThisPcLayout.KdeAbout.VALUE_X, ThisPcLayout.KdeAbout.VALUE_W,
+                ThisPcTexts.ARCHITECTURE, GameText.resolve(about.architecture()));
+        aboutRow(g, font, x, y, ThisPcLayout.KdeAbout.rowY(ThisPcLayout.KdeAbout.SOFTWARE_Y, 3),
+                ThisPcLayout.KdeAbout.LABEL_X, ThisPcLayout.KdeAbout.VALUE_X, ThisPcLayout.KdeAbout.VALUE_W,
+                ThisPcTexts.DESKTOP, GameText.resolve(about.desktop()));
+
+        aboutHeader(g, font, x + ThisPcLayout.KdeAbout.LABEL_X, y + ThisPcLayout.KdeAbout.HARDWARE_Y,
+                ThisPcLayout.KdeAbout.W - ThisPcLayout.KdeAbout.LABEL_X * 2, ThisPcTexts.HARDWARE);
+        aboutRow(g, font, x, y, ThisPcLayout.KdeAbout.rowY(ThisPcLayout.KdeAbout.HARDWARE_Y, 0),
+                ThisPcLayout.KdeAbout.LABEL_X, ThisPcLayout.KdeAbout.VALUE_X, ThisPcLayout.KdeAbout.VALUE_W,
+                ThisPcTexts.PROCESSOR, GameText.resolve(about.processor()));
+        aboutRow(g, font, x, y, ThisPcLayout.KdeAbout.rowY(ThisPcLayout.KdeAbout.HARDWARE_Y, 1),
+                ThisPcLayout.KdeAbout.LABEL_X, ThisPcLayout.KdeAbout.VALUE_X, ThisPcLayout.KdeAbout.VALUE_W,
+                ThisPcTexts.MEMORY, GameText.resolve(ThisPcTexts.ABOUT_MEMORY_VALUE.with(about.ramMb())));
+        aboutRow(g, font, x, y, ThisPcLayout.KdeAbout.rowY(ThisPcLayout.KdeAbout.HARDWARE_Y, 2),
+                ThisPcLayout.KdeAbout.LABEL_X, ThisPcLayout.KdeAbout.VALUE_X, ThisPcLayout.KdeAbout.VALUE_W,
+                ThisPcTexts.GRAPHICS, graphicsLine());
+        aboutRow(g, font, x, y, ThisPcLayout.KdeAbout.rowY(ThisPcLayout.KdeAbout.HARDWARE_Y, 3),
+                ThisPcLayout.KdeAbout.LABEL_X, ThisPcLayout.KdeAbout.VALUE_X, ThisPcLayout.KdeAbout.VALUE_W,
+                ThisPcTexts.SYSTEM_DISK, diskLine(about));
+
+        aboutHeader(g, font, x + ThisPcLayout.KdeAbout.LABEL_X, y + ThisPcLayout.KdeAbout.COMPUTER_Y,
+                ThisPcLayout.KdeAbout.W - ThisPcLayout.KdeAbout.LABEL_X * 2, ThisPcTexts.COMPUTER_SECTION);
+        aboutRow(g, font, x, y, ThisPcLayout.KdeAbout.rowY(ThisPcLayout.KdeAbout.COMPUTER_Y, 0),
+                ThisPcLayout.KdeAbout.LABEL_X, ThisPcLayout.KdeAbout.VALUE_X, ThisPcLayout.KdeAbout.VALUE_W,
+                ThisPcTexts.HOST_NAME, GameText.resolve(about.hostName()));
+    }
+
+    /** GNOME's About: the orb centred over the machine's own facts, then the system's. */
+    private void renderGnomeAbout(final GuiGraphics g, final Font font, final int x, final int y,
+                                  final AboutFacts about) {
+        final String osFull = GameText.resolve(about.operatingSystem());
+        // The hero shortens FreeBSD's release ("14.1-RELEASE" to "14.1"); the OS Name row below keeps it in full.
+        final String heroTitle = about.freeBsd() ? osFull.replace("-RELEASE", "") : osFull;
+        final String house = Branding.houseOf(data.machine().osLabel()).name();
+        if (about.freeBsd()) {
+            g.blit(FREEBSD_ORB, x + ThisPcLayout.GnomeAbout.orbX(), y + ThisPcLayout.GnomeAbout.ORB_Y,
+                    ThisPcLayout.ABOUT_ORB_BIG, ThisPcLayout.ABOUT_ORB_BIG, 0, 0, 32, 32, 32, 32);
+        }
+        centredString(g, font, x, y + ThisPcLayout.GnomeAbout.TITLE_Y, ThisPcLayout.GnomeAbout.W, heroTitle,
+                skin.text(), ThisPcLayout.GnomeAbout.HERO_SCALE);
+        centredString(g, font, x, y + ThisPcLayout.GnomeAbout.SUBTITLE_Y, ThisPcLayout.GnomeAbout.W, house,
+                skin.dim(), 1.0f);
+
+        final String bits = GameText.resolve(about.bits64() ? ThisPcTexts.BITS_64 : ThisPcTexts.BITS_32);
+        final String osType = GameText.resolve(ThisPcTexts.OS_TYPE_VALUE.with(bits, about.architecture()));
+
+        gnomeListPanel(g, x + 4, y + ThisPcLayout.GnomeAbout.LIST1_Y, ThisPcLayout.GnomeAbout.W - 8,
+                ThisPcLayout.GnomeAbout.LIST1_H, ThisPcLayout.GnomeAbout.LIST1_ROWS);
+        gnomeListPanel(g, x + 4, y + ThisPcLayout.GnomeAbout.LIST2_Y, ThisPcLayout.GnomeAbout.W - 8,
+                ThisPcLayout.GnomeAbout.LIST2_H, ThisPcLayout.GnomeAbout.LIST2_ROWS);
+
+        final int list1 = ThisPcLayout.GnomeAbout.LIST1_Y;
+        gnomeRow(g, font, x, y, list1, 0, ThisPcTexts.DEVICE_NAME, GameText.resolve(about.hostName()));
+        gnomeRow(g, font, x, y, list1, 1, ThisPcTexts.MEMORY,
+                GameText.resolve(ThisPcTexts.ABOUT_MEMORY_VALUE.with(about.ramMb())));
+        gnomeRow(g, font, x, y, list1, 2, ThisPcTexts.PROCESSOR, GameText.resolve(about.processor()));
+        gnomeRow(g, font, x, y, list1, 3, ThisPcTexts.GRAPHICS, graphicsLine());
+        gnomeRow(g, font, x, y, list1, 4, ThisPcTexts.DISK_CAPACITY, diskLine(about));
+
+        final int list2 = ThisPcLayout.GnomeAbout.LIST2_Y;
+        gnomeRow(g, font, x, y, list2, 0, ThisPcTexts.OS_NAME, osFull);
+        gnomeRow(g, font, x, y, list2, 1, ThisPcTexts.OS_TYPE, osType);
+        gnomeRow(g, font, x, y, list2, 2, ThisPcTexts.DESKTOP, GameText.resolve(about.desktop()));
+    }
+
+    /** One row of a GNOME list: inside the list's outline, its letters shadowed on the list's own white. */
+    private void gnomeRow(final GuiGraphics g, final Font font, final int x, final int y, final int listY,
+                          final int index, final TextKey label, final String value) {
+        aboutRow(g, font, x, y, ThisPcLayout.GnomeAbout.rowY(listY, index), ThisPcLayout.GnomeAbout.LABEL_X,
+                ThisPcLayout.GnomeAbout.VALUE_X, ThisPcLayout.GnomeAbout.VALUE_W, label, value, skin.fieldBg());
+    }
+
+    /** Cinnamon's System Info: the mark and the maker beside one list of every fact. */
+    private void renderCinnamonAbout(final GuiGraphics g, final Font font, final int x, final int y,
+                                     final AboutFacts about) {
+        /*
+         * The logo well names the system by its bare name (FreeBSD, Ubuntu), which is short enough to centre;
+         * the full "Operating System" line with its release is the list's own first row.
+         */
+        final String osName = data.machine().osLabel();
+        final String house = Branding.houseOf(osName).name();
+        if (about.freeBsd()) {
+            g.blit(FREEBSD_ORB, x + ThisPcLayout.CinnamonAbout.orbX(), y + ThisPcLayout.CinnamonAbout.LOGO_ORB_Y,
+                    ThisPcLayout.ABOUT_ORB_BIG, ThisPcLayout.ABOUT_ORB_BIG, 0, 0, 32, 32, 32, 32);
+        }
+        centredString(g, font, x, y + ThisPcLayout.CinnamonAbout.LOGO_TITLE_Y, ThisPcLayout.CinnamonAbout.LOGO_W,
+                osName, skin.text(), 1.0f);
+        centredString(g, font, x, y + ThisPcLayout.CinnamonAbout.LOGO_SUBTITLE_Y, ThisPcLayout.CinnamonAbout.LOGO_W,
+                house, skin.dim(), 1.0f);
+
+        final TextKey kernelKey = about.freeBsd() ? ThisPcTexts.KERNEL : ThisPcTexts.LINUX_KERNEL;
+        final String osWithArch = GameText.resolve(ThisPcTexts.OS_WITH_ARCHITECTURE.with(about.operatingSystem(),
+                about.architecture()));
+        final int lx = ThisPcLayout.CinnamonAbout.LIST_X;
+        final int vx = ThisPcLayout.CinnamonAbout.VALUE_X;
+        final int vw = ThisPcLayout.CinnamonAbout.VALUE_W;
+        aboutRow(g, font, x, y, ThisPcLayout.CinnamonAbout.rowY(0), lx, vx, vw,
+                ThisPcTexts.OPERATING_SYSTEM, osWithArch);
+        aboutRow(g, font, x, y, ThisPcLayout.CinnamonAbout.rowY(1), lx, vx, vw,
+                ThisPcTexts.CINNAMON_VERSION, ProgramVersions.of("cinnamon"));
+        aboutRow(g, font, x, y, ThisPcLayout.CinnamonAbout.rowY(2), lx, vx, vw,
+                kernelKey, GameText.resolve(about.kernel()));
+        aboutRow(g, font, x, y, ThisPcLayout.CinnamonAbout.rowY(3), lx, vx, vw,
+                ThisPcTexts.PROCESSOR, GameText.resolve(about.processor()));
+        aboutRow(g, font, x, y, ThisPcLayout.CinnamonAbout.rowY(4), lx, vx, vw,
+                ThisPcTexts.MEMORY, GameText.resolve(ThisPcTexts.ABOUT_MEMORY_VALUE.with(about.ramMb())));
+        aboutRow(g, font, x, y, ThisPcLayout.CinnamonAbout.rowY(5), lx, vx, vw,
+                ThisPcTexts.HARD_DRIVES, diskLine(about));
+        aboutRow(g, font, x, y, ThisPcLayout.CinnamonAbout.rowY(6), lx, vx, vw,
+                ThisPcTexts.GRAPHICS_CARD, graphicsLine());
+        for (int i = 1; i < ThisPcLayout.CinnamonAbout.LIST_ROWS; i++) {
+            final int ruleY = y + ThisPcLayout.CinnamonAbout.rowY(i) - 1;
+            g.fill(x + lx, ruleY, x + ThisPcLayout.CinnamonAbout.W - 4, ruleY + 1, skin.edge());
+        }
+    }
+
+    /** A section title in the accent colour, ruled under its whole width, as KDE's Info Center draws it. */
+    private void aboutHeader(final GuiGraphics g, final Font font, final int x, final int y, final int w,
+                             final TextKey title) {
+        final String text = Texts.trim(font, GameText.resolve(title), w - 2);
+        Draw.text(g, font, text, x + 1, y, skin.accent(), skin.windowBg());
+        g.fill(x, y + 9, x + w, y + 10, skin.edge());
+    }
+
+    /** One label/value pair of an About page, the label dim and the value in the window's own text colour. */
+    private void aboutRow(final GuiGraphics g, final Font font, final int x, final int y, final int rowY,
+                          final int labelX, final int valueX, final int valueW, final TextKey label,
+                          final String value) {
+        aboutRow(g, font, x, y, rowY, labelX, valueX, valueW, label, value, skin.windowBg());
+    }
+
+    /** The same row on another ground, so the letters' shadow is cast on what they really sit on. */
+    private void aboutRow(final GuiGraphics g, final Font font, final int x, final int y, final int rowY,
+                          final int labelX, final int valueX, final int valueW, final TextKey label,
+                          final String value, final int ground) {
+        final String labelText = Texts.trim(font, GameText.resolve(label), valueX - labelX - 2);
+        Draw.text(g, font, labelText, x + labelX, y + rowY, skin.dim(), ground);
+        final String shownValue = Texts.trim(font, value, valueW);
+        Draw.text(g, font, shownValue, x + valueX, y + rowY, skin.text(), ground);
+    }
+
+    /** A line of text centred under the hero, GNOME's and Cinnamon's own way of naming the machine. */
+    private void centredString(final GuiGraphics g, final Font font, final int x, final int rowY, final int w,
+                               final String text, final int color, final float scale) {
+        final String shown = Texts.trim(font, text, (int) ((w - 4) / scale));
+        final int shownW = Math.round(font.width(shown) * scale);
+        Draw.text(g, font, shown, x + (w - shownW) / 2, rowY, color, skin.windowBg(), scale);
+    }
+
+    /** A bordered white panel behind a GNOME list of {@code rows} facts, with a rule under every row but the last. */
+    private void gnomeListPanel(final GuiGraphics g, final int x, final int y, final int w, final int h,
+                                final int rows) {
+        g.fill(x, y, x + w, y + h, skin.fieldBg());
+        Draw.outline(g, x, y, w, h, skin.edge());
+        final int pad = ThisPcLayout.GnomeAbout.LIST_PAD;
+        final int rowH = (h - pad * 2) / rows;
+        for (int i = 1; i < rows; i++) {
+            final int ruleY = y + pad + i * rowH - 1;
+            g.fill(x + 1, ruleY, x + w - 1, ruleY + 1, skin.edge());
+        }
+    }
+
+    /** The system disk as an About page shows it: "500 GB, 2.1 GB used". */
+    private static String diskLine(final AboutFacts about) {
+        return GameText.resolve(ThisPcTexts.ABOUT_DISK_USE.with(DiskSpec.sizeLabel(about.diskMb()),
+                DiskSpec.sizeLabel(about.diskUsedMb())));
+    }
+
+    /** The graphics card as an About page shows it: "3072 MB VRAM", with no card count on it. */
+    private String graphicsLine() {
+        return GameText.resolve(ThisPcTexts.ABOUT_GRAPHICS_VALUE.with(data.machine().vramMb()));
     }
 
     /** Places the card and lays the page out top to bottom, telling it how tall the whole content is. */
@@ -660,6 +945,11 @@ public final class ThisPcApp implements IDesktopApp {
 
     // inspection (client tests; points are content-local, i.e. relative to window.x()+4 / window.y()+18)
 
+    /** Whether this window draws the About-style page (KDE, GNOME or Cinnamon) rather than the drives explorer. */
+    public boolean isAboutPage() {
+        return about != AboutKind.NONE;
+    }
+
     /** The index of the first drive whose medium name contains {@code nameContains}, or -1. */
     public int mediaRowIndex(final String nameContains) {
         for (int i = 0; i < data.media().size(); i++) {
@@ -693,6 +983,10 @@ public final class ThisPcApp implements IDesktopApp {
 
     @Override
     public void mouseClicked(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
+        // The About-style page draws no widget of its own; the explorer underneath must not take the click either.
+        if (about != AboutKind.NONE) {
+            return;
+        }
         if (!root.mouseClicked(mouseX, mouseY, button)) {
             selectedKey = "";
         }
@@ -700,13 +994,16 @@ public final class ThisPcApp implements IDesktopApp {
 
     @Override
     public void mouseReleased(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
+        if (about != AboutKind.NONE) {
+            return;
+        }
         root.mouseReleased(mouseX, mouseY, button);
     }
 
     @Override
     public boolean mouseScrolled(final double delta) {
-        // The wheel anywhere in the window moves the page.
-        return page.mouseScrolled(lastMouseX, lastMouseY, delta);
+        // The wheel anywhere in the window moves the page; the About-style page has none to move.
+        return about == AboutKind.NONE && page.mouseScrolled(lastMouseX, lastMouseY, delta);
     }
 
     private void install(final long readerPos) {
@@ -772,11 +1069,14 @@ public final class ThisPcApp implements IDesktopApp {
 
     @Override
     public boolean charTyped(final char c) {
-        return root.charTyped(c);
+        return about == AboutKind.NONE && root.charTyped(c);
     }
 
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
+        if (about != AboutKind.NONE) {
+            return false;
+        }
         if (root.keyPressed(key, scanCode, modifiers)) {
             return true;
         }

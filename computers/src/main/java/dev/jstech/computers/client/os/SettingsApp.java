@@ -15,6 +15,7 @@ import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.TestSoundPayload;
 import dev.jstech.computers.operation.payload.UninstallProgramPayload;
+import dev.jstech.computers.gui.layout.SettingsLayout;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.Accents;
@@ -25,6 +26,7 @@ import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.ProgressBar;
+import dev.jstech.core.client.gui.component.ScrollPanel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
@@ -72,6 +74,8 @@ public final class SettingsApp implements IDesktopApp {
     private SettingsSnapshotPayload data;
     private int page;
     private int snapshots;
+    private int lastMouseX;
+    private int lastMouseY;
 
     private static SettingsApp active;
 
@@ -83,6 +87,8 @@ public final class SettingsApp implements IDesktopApp {
     private final Panel root = new Panel();
     private final ListView<TextKey> nav;
     private final Panel pagePanel = new Panel();
+    /** The Personalize page's own content, taller than its window once enough wallpapers are offered. */
+    private final ScrollPanel personalizeScroll = new ScrollPanel();
     private final Label loadingLabel;
     /** What the page was last built for; a change in any part rebuilds it. */
     private String builtFor = "";
@@ -113,6 +119,9 @@ public final class SettingsApp implements IDesktopApp {
     /** The Sound page's Test button, kept so the client tests can find it after a rebuild. */
     @Nullable
     private Button testButton;
+    /** The Personalize page's dark-mode button, kept so a client test can prove scrolling brings it into view. */
+    @Nullable
+    private Button appearanceDarkButton;
 
     /** A wallpaper style or an accent colour as a small square that a click chooses. */
     private final class Swatch extends UiComponent {
@@ -246,6 +255,8 @@ public final class SettingsApp implements IDesktopApp {
                               final int width, final int height, final int mouseX, final int mouseY,
                               final float partialTick) {
         lastFont = font;
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
         g.fill(x, y, x + width, y + height, skin.windowBg());
         nav.setBounds(x + 3, y + 4, NAV_W, NAV.size() * NAV_ROW_H);
@@ -264,7 +275,14 @@ public final class SettingsApp implements IDesktopApp {
 
     /** Rebuilds the page's components when the page, the snapshot, the skin or the space changed. */
     private void ensurePage(final int px, final int py, final int pw, final int ph, final Font font) {
-        final String key = page + "|" + snapshots + "|" + skin.form() + "|" + (monitorPos != null) + "|" + px + "," + py + "," + pw + "," + ph;
+        /*
+         * The scroll offset is part of the key: the Personalize page's rows are placed once, at build time,
+         * through personalizeScroll.contentY(...), and a plain scroll (which only moves the thumb, not the
+         * children) would leave them exactly where they were. Rebuilding on every scroll re-places them at
+         * their new position instead.
+         */
+        final String key = page + "|" + snapshots + "|" + skin.form() + "|" + (monitorPos != null) + "|"
+                + px + "," + py + "," + pw + "," + ph + "|" + personalizeScroll.scroll();
         if (key.equals(builtFor)) {
             return;
         }
@@ -281,7 +299,7 @@ public final class SettingsApp implements IDesktopApp {
             return;
         }
         switch (page) {
-            case 0 -> personalize(px, py, pw, font);
+            case 0 -> personalize(px, py, pw, ph, font);
             case 1 -> system(px, py, pw, font);
             case 2 -> network(px, py, pw, font);
             case 3 -> storage(px, py, pw, font);
@@ -293,13 +311,21 @@ public final class SettingsApp implements IDesktopApp {
     }
 
     private Label heading(final TextKey title, final int x, final int y, final int w) {
-        final Label label = pagePanel.add(new Label(GameText.resolve(title)));
+        return heading(pagePanel, title, x, y, w);
+    }
+
+    private Label heading(final Panel target, final TextKey title, final int x, final int y, final int w) {
+        final Label label = target.add(new Label(GameText.resolve(title)));
         label.setBounds(x, y, w, 8);
         return label;
     }
 
     private Label caption(final Text text, final int x, final int y, final int w) {
-        final Label label = pagePanel.add(new Label(GameText.resolve(text), Label.Tone.DIM));
+        return caption(pagePanel, text, x, y, w);
+    }
+
+    private Label caption(final Panel target, final Text text, final int x, final int y, final int w) {
+        final Label label = target.add(new Label(GameText.resolve(text), Label.Tone.DIM));
         label.setBounds(x, y, w, 8);
         return label;
     }
@@ -308,70 +334,84 @@ public final class SettingsApp implements IDesktopApp {
         return caption(text.text(), x, y, w);
     }
 
-    private void personalize(final int x, final int top, final int w, final Font font) {
+    private Label caption(final Panel target, final TextKey text, final int x, final int y, final int w) {
+        return caption(target, text.text(), x, y, w);
+    }
+
+    /**
+     * The Personalize page: the wallpaper grid, then the accent/theme/clock/taskbar/appearance rows below it, all
+     * placed from {@link SettingsLayout}'s own offsets so the page's geometry is the one that class's own test
+     * proves clean at the worst case. The content scrolls, since a growing table of wallpapers can outgrow even
+     * the tallest window this app is ever given: a fixed panel would silently clip whatever ran past its bottom.
+     */
+    private void personalize(final int x, final int top, final int w, final int h, final Font font) {
         final SettingsSnapshotPayload d = data;
-        int y = top;
-        heading(SettingsTexts.PERSONALIZE, x, y, w);
-        y += 13;
-        caption(SettingsTexts.WALLPAPER, x, y, w);
-        y += 10;
-        final int tw = 34;
-        final int th = 21;
+        appearanceDarkButton = null;
         // The desktop's own wallpaper first, then every style a player may hang instead.
         final List<String> styles = new ArrayList<>();
         styles.add("");
         for (final WallpaperStyle offered : WallpaperStyle.offered()) {
             styles.add(offered.id());
         }
+        final boolean richSkin = skin.form() != OsSkin.Form.BEVEL;
+        final boolean flatSkin = skin.form() == OsSkin.Form.FLAT;
+        final SettingsLayout.Offsets o = SettingsLayout.of(w, styles.size(), richSkin, flatSkin);
+
+        personalizeScroll.clear();
+        pagePanel.add(personalizeScroll);
+        personalizeScroll.setStep(SettingsLayout.SWATCH_H).setContentHeight(o.contentHeight());
+        personalizeScroll.setBounds(x, top, w, h);
+
+        heading(personalizeScroll, SettingsTexts.PERSONALIZE, x, personalizeScroll.contentY(0), w);
+        caption(personalizeScroll, SettingsTexts.WALLPAPER, x, personalizeScroll.contentY(o.wallpaperCaptionY()), w);
         for (int i = 0; i < styles.size(); i++) {
             final String style = styles.get(i);
-            pagePanel.add(new Swatch(style, 0, () -> style.equals(d.wallpaper()), () -> set("wallpaper", style)))
-                    .setBounds(x + i * (tw + 4), y, tw, th);
+            final int sx = x + SettingsLayout.swatchX(i, o.gridColumns());
+            final int sy = personalizeScroll.contentY(SettingsLayout.swatchY(o.gridY(), i, o.gridColumns()));
+            final Swatch swatch =
+                    new Swatch(style, 0, () -> style.equals(d.wallpaper()), () -> set("wallpaper", style));
+            personalizeScroll.add(swatch).setBounds(sx, sy, SettingsLayout.SWATCH_W, SettingsLayout.SWATCH_H);
         }
-        y += th + 8;
 
         // Accent and theme only on the richer skins (scales with the OS).
-        if (skin.form() != OsSkin.Form.BEVEL) {
-            caption(SettingsTexts.ACCENT, x, y, w);
-            y += 10;
+        if (richSkin) {
+            caption(personalizeScroll, SettingsTexts.ACCENT, x, personalizeScroll.contentY(o.accentCaptionY()), w);
             // Each swatch offers the colour it shows, which is the one a resource pack gives it.
             final List<Integer> accents = Accents.PALETTE.get().all();
+            final int accentY = personalizeScroll.contentY(o.accentY());
             for (int i = 0; i < accents.size(); i++) {
                 final int argb = accents.get(i);
-                pagePanel.add(new Swatch(null, argb, () -> (d.accent() & 0xFFFFFF) == (argb & 0xFFFFFF),
-                        () -> set("accent", String.format(Locale.ROOT, "%06X", argb & 0xFFFFFF)))).setBounds(x + i * 18, y, 14, 14);
+                personalizeScroll.add(new Swatch(null, argb, () -> (d.accent() & 0xFFFFFF) == (argb & 0xFFFFFF),
+                        () -> set("accent", String.format(Locale.ROOT, "%06X", argb & 0xFFFFFF))))
+                        .setBounds(x + i * 18, accentY, 14, 14);
             }
-            y += 22;
-            caption(SettingsTexts.THEME, x, y, w);
-            y += 10;
+            caption(personalizeScroll, SettingsTexts.THEME, x, personalizeScroll.contentY(o.themeCaptionY()), w);
             int tx = x;
+            final int themeY = personalizeScroll.contentY(o.themeY());
             final ThemePreset current = ThemePreset.byId(d.themePreset());
             for (final ThemePreset preset : ThemePreset.values()) {
                 final String theme = preset.id();
                 final int bw = font.width(theme) + 12;
-                pagePanel.add(new Button(theme, () -> set("theme", theme)).setPrimary(preset == current))
-                        .setBounds(tx, y, bw, BTN_H);
+                personalizeScroll.add(new Button(theme, () -> set("theme", theme)).setPrimary(preset == current))
+                        .setBounds(tx, themeY, bw, BTN_H);
                 tx += bw + 4;
             }
-            y += 19;
         }
-        caption(SettingsTexts.CLOCK, x, y, w);
-        y += 10;
-        toggleButtons(x, y, font, SettingsTexts.HOUR_24, SettingsTexts.HOUR_12, !d.clock12h(),
-                () -> set("clock", "24h"), () -> set("clock", "12h"));
-        y += 19;
+        caption(personalizeScroll, SettingsTexts.CLOCK, x, personalizeScroll.contentY(o.clockCaptionY()), w);
+        toggleButtons(personalizeScroll, x, personalizeScroll.contentY(o.clockY()), font, SettingsTexts.HOUR_24,
+                SettingsTexts.HOUR_12, !d.clock12h(), () -> set("clock", "24h"), () -> set("clock", "12h"));
 
         // Taskbar alignment and dark mode are Frames 11 concepts only, so they appear exclusively on the flat skin.
-        if (skin.form() == OsSkin.Form.FLAT) {
-            caption(SettingsTexts.TASKBAR, x, y, w);
-            y += 10;
-            toggleButtons(x, y, font, SettingsTexts.CENTER, SettingsTexts.LEFT, d.taskbarCentered(),
-                    () -> set("taskbar", "center"), () -> set("taskbar", "left"));
-            y += 19;
-            caption(SettingsTexts.APPEARANCE, x, y, w);
-            y += 10;
-            toggleButtons(x, y, font, SettingsTexts.LIGHT, SettingsTexts.DARK, !d.darkMode(),
-                    () -> set("darkmode", "off"), () -> set("darkmode", "on"));
+        if (flatSkin) {
+            caption(personalizeScroll, SettingsTexts.TASKBAR, x, personalizeScroll.contentY(o.taskbarCaptionY()), w);
+            toggleButtons(personalizeScroll, x, personalizeScroll.contentY(o.taskbarY()), font, SettingsTexts.CENTER,
+                    SettingsTexts.LEFT, d.taskbarCentered(), () -> set("taskbar", "center"),
+                    () -> set("taskbar", "left"));
+            caption(personalizeScroll, SettingsTexts.APPEARANCE, x,
+                    personalizeScroll.contentY(o.appearanceCaptionY()), w);
+            appearanceDarkButton = toggleButtons(personalizeScroll, x, personalizeScroll.contentY(o.appearanceY()),
+                    font, SettingsTexts.LIGHT, SettingsTexts.DARK, !d.darkMode(), () -> set("darkmode", "off"),
+                    () -> set("darkmode", "on"));
         }
     }
 
@@ -559,6 +599,22 @@ public final class SettingsApp implements IDesktopApp {
 
     public int[] testSoundCenter() {
         return testButton == null ? new int[] {0, 0} : testButton.center();
+    }
+
+    /** A point inside the Personalize page's own scrolling content, for a client test to aim the wheel at. */
+    public int[] personalizeScrollCenter() {
+        return personalizeScroll.center();
+    }
+
+    /** The flat skin's dark-mode button on the Personalize page, or the origin before it is ever built. */
+    public int[] appearanceDarkCenter() {
+        return appearanceDarkButton == null ? new int[] {0, 0} : appearanceDarkButton.center();
+    }
+
+    /** Whether the dark-mode button lies whole inside the Personalize page's visible area, not clipped by it. */
+    public boolean appearanceDarkFullyShown() {
+        return appearanceDarkButton != null && appearanceDarkButton.y() >= personalizeScroll.y()
+                && appearanceDarkButton.bottom() <= personalizeScroll.bottom();
     }
 
     /** The sound the Sound page was last built from, or null before the first snapshot. */
@@ -758,12 +814,20 @@ public final class SettingsApp implements IDesktopApp {
     /** Two buttons of which one is lit: the setting's two states. */
     private void toggleButtons(final int x, final int y, final Font font, final TextKey aKey, final TextKey bKey,
                                final boolean aOn, final Runnable onA, final Runnable onB) {
+        toggleButtons(pagePanel, x, y, font, aKey, bKey, aOn, onA, onB);
+    }
+
+    /** @return the second button, for the rare caller a client test needs to find afterwards */
+    private Button toggleButtons(final Panel target, final int x, final int y, final Font font, final TextKey aKey,
+                                 final TextKey bKey, final boolean aOn, final Runnable onA, final Runnable onB) {
         final String a = GameText.resolve(aKey);
         final String b = GameText.resolve(bKey);
         final int aw = font.width(a) + 12;
         final int bw = font.width(b) + 12;
-        pagePanel.add(new Button(a, onA).setPrimary(aOn)).setBounds(x, y, aw, BTN_H);
-        pagePanel.add(new Button(b, onB).setPrimary(!aOn)).setBounds(x + aw + 4, y, bw, BTN_H);
+        target.add(new Button(a, onA).setPrimary(aOn)).setBounds(x, y, aw, BTN_H);
+        final Button bButton = target.add(new Button(b, onB).setPrimary(!aOn));
+        bButton.setBounds(x + aw + 4, y, bw, BTN_H);
+        return bButton;
     }
 
     /** A value between a minus and a plus button. */
@@ -788,6 +852,12 @@ public final class SettingsApp implements IDesktopApp {
     @Override
     public void mouseReleased(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
         root.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseScrolled(final double delta) {
+        // Only the Personalize page ever nests a panel that scrolls; every other page ignores the wheel.
+        return root.mouseScrolled(lastMouseX, lastMouseY, delta);
     }
 
     @Override

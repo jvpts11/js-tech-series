@@ -46,6 +46,15 @@ public enum WallpaperStyle {
     /** Cinnamon's Mint-Y. */
     MINT_Y("minty", true),
 
+    /** FreeBSD's own wallpaper for KDE Plasma: the Next wall of blocks in FreeBSD's reds, with the orb. */
+    FREEBSD_PLASMA("freebsd_plasma", true),
+
+    /** FreeBSD's own wallpaper for GNOME: the dusk turned into a FreeBSD night, the orb rising as the sun. */
+    FREEBSD_GNOME("freebsd_gnome", true),
+
+    /** FreeBSD's own wallpaper for Cinnamon: the folded sheets in FreeBSD's crimson, with the orb. */
+    FREEBSD_CINNAMON("freebsd_cinnamon", true),
+
     /**
      * CDE's backdrop: no picture to hang, only a pattern in two colours of its palette. It is CDE's own and
      * no other desktop offers it.

@@ -15,6 +15,8 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.operation.payload.ThisPcPayload;
+import dev.jstech.computers.operation.payload.desktop.ThisPcPayloads;
 import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
 import dev.jstech.computers.operation.payload.firmware.InstallerPayloads;
 import dev.jstech.computers.os.FilesystemKind;
@@ -34,6 +36,7 @@ import dev.jstech.computers.os.fs.ProgramFilesProjection;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.InstallerPage;
 import dev.jstech.computers.os.install.InstallerStyle;
+import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.media.MediaItem;
@@ -79,6 +82,9 @@ public final class FreeBsdGameTests {
 
     private static final ResourceLocation FREEBSD =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "freebsd");
+
+    private static final ResourceLocation UBUNTU =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "ubuntu");
 
     private FreeBsdGameTests() {
     }
@@ -517,6 +523,89 @@ public final class FreeBsdGameTests {
         return mainframe;
     }
 
+    /**
+     * This PC's About-style page (Info Center on KDE, About on GNOME, System Info on Cinnamon) reads FreeBSD in
+     * its own words: the release in the "Operating System" line, Velocion's word for the architecture, the
+     * kernel's own build name, the desktop by its plain name with no version, and the machine's own hardware.
+     */
+    @GameTest(template = ARENA)
+    public static void thisPc_aboutPageReadsFreeBsdInItsOwnWords(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = mainframe(helper, WHERE);
+        final ResourceLocation kdePlasma = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "kde_plasma");
+        mainframe.console().install(kdePlasma.toString());
+        mainframe.setBootedDesktopId(kdePlasma);
+        final ThisPcPayload.AboutFacts about = ThisPcPayloads.aboutFactsOf(mainframe);
+        helper.assertTrue(about.operatingSystem().english().equals("FreeBSD 14.1-RELEASE"),
+                "the system by name and release; got " + about.operatingSystem().english());
+        helper.assertTrue(about.architecture().english().equals("vel64"),
+                "Velocion's word for a 64-bit processor; got " + about.architecture().english());
+        helper.assertTrue(about.kernel().english().equals("14.1-RELEASE GENERIC"),
+                "the kernel names its own build, as FreeBSD's uname does; got " + about.kernel().english());
+        helper.assertTrue(about.desktop().english().equals("KDE Plasma"),
+                "the desktop by its plain name, with no version on it; got " + about.desktop().english());
+        helper.assertTrue(about.hostName().english().equals(Installers.hostName(mainframe)),
+                "the machine's own host name; got " + about.hostName().english());
+        helper.assertTrue(about.freeBsd(), "the platform is named FreeBSD's own");
+        helper.assertTrue(about.ramMb() == mainframe.ramTotalMb() && about.diskMb() > 0,
+                "the machine's real memory and its system disk's real size, not item-equivalents");
+        helper.succeed();
+    }
+
+    /**
+     * A Linux is named by its distribution alone on the About page: the kernel keeps its own row, so the two
+     * never repeat the same fact, and its architecture and processor bits are read the Linux way.
+     */
+    @GameTest(template = ARENA)
+    public static void thisPc_aboutPageNamesALinuxByItsDistributionAlone(final GameTestHelper helper) {
+        final MainframeBlockEntity ubuntu = mainframeWithOs(helper, WHERE, UBUNTU);
+        final ResourceLocation gnome = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "gnome");
+        ubuntu.console().install(gnome.toString());
+        ubuntu.setBootedDesktopId(gnome);
+        final ThisPcPayload.AboutFacts about = ThisPcPayloads.aboutFactsOf(ubuntu);
+        helper.assertTrue(about.operatingSystem().english().equals("Ubuntu"),
+                "the distribution alone, not the kernel line a second time; got " + about.operatingSystem().english());
+        helper.assertTrue(about.kernel().english().equals("6.8-jsc"),
+                "a Linux's kernel has no build name of its own to add; got " + about.kernel().english());
+        helper.assertTrue(about.architecture().english().equals("x86_64"),
+                "a Linux names a 64-bit processor its own way; got " + about.architecture().english());
+        helper.assertFalse(about.freeBsd(), "the platform is not named FreeBSD's own");
+        helper.assertTrue(about.bits64(), "the seated processor is 64-bit");
+        helper.succeed();
+    }
+
+    /** A Legacy machine reads IA-32, the narrower word FreeBSD and UNIX give a 32-bit processor. */
+    @GameTest(template = ARENA)
+    public static void thisPc_aboutPageOnALegacyMachineReadsIa32(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = legacy(helper, WHERE);
+        if (computer == null) {
+            return;
+        }
+        helper.assertTrue(computer.installOs(FREEBSD), "FreeBSD installs on a Legacy machine");
+        final ResourceLocation kdePlasma = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "kde_plasma");
+        computer.console().install(kdePlasma.toString());
+        computer.setBootedDesktopId(kdePlasma);
+        final ThisPcPayload.AboutFacts about = ThisPcPayloads.aboutFactsOf(computer);
+        helper.assertTrue(about.architecture().english().equals("IA-32"),
+                "a 32-bit Legacy processor is IA-32, not the maker's 64-bit word; got "
+                        + about.architecture().english());
+        helper.assertFalse(about.bits64(), "the seated processor is not 64-bit");
+        helper.succeed();
+    }
+
+    /** A system with no About-style page of its own (every one but FreeBSD and a Linux) answers with nothing. */
+    @GameTest(template = ARENA)
+    public static void thisPc_aboutPageIsEmptyOnASystemWithNoneOfItsOwn(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = legacy(helper, new BlockPos(6, 2, 2));
+        if (computer == null) {
+            return;
+        }
+        helper.assertTrue(computer.installOs(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp")),
+                "Frames XP installs on the machine");
+        helper.assertTrue(ThisPcPayloads.aboutFactsOf(computer).equals(ThisPcPayload.AboutFacts.EMPTY),
+                "Frames has its own explorer-style This PC, and no About page beside it");
+        helper.succeed();
+    }
+
     private static boolean has(final BootSequence sequence, final String label) {
         for (final BootSequence.Line line : sequence.lines()) {
             if (line.label().english().equals(label)) {
@@ -559,6 +648,12 @@ public final class FreeBsdGameTests {
 
     /** A powered Mainframe with a full build and a disk, with FreeBSD installed on it. */
     private static MainframeBlockEntity mainframe(final GameTestHelper helper, final BlockPos pos) {
+        return mainframeWithOs(helper, pos, FREEBSD);
+    }
+
+    /** A powered Mainframe with a full, 64-bit build and a disk, with {@code osId} installed on it. */
+    private static MainframeBlockEntity mainframeWithOs(final GameTestHelper helper, final BlockPos pos,
+                                                         final ResourceLocation osId) {
         helper.setBlock(pos, ComputingModule.MAINFRAME.get());
         if (!(helper.getBlockEntity(pos) instanceof MainframeBlockEntity mainframe)) {
             throw new IllegalStateException("no MainframeBlockEntity at " + pos);
@@ -572,8 +667,8 @@ public final class FreeBsdGameTests {
         inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         mainframe.togglePower();
-        if (!mainframe.installOs(FREEBSD)) {
-            throw new IllegalStateException("failed to install FreeBSD on the test Mainframe");
+        if (!mainframe.installOs(osId)) {
+            throw new IllegalStateException("failed to install " + osId + " on the test Mainframe");
         }
         return mainframe;
     }

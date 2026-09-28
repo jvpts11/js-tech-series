@@ -56,8 +56,23 @@ public final class Draw {
      */
     public static void text(final GuiGraphics g, final Font font, final String text, final int x, final int y,
                             final int color, final int ground) {
+        // The common case draws straight, with no pose pushed: this runs for nearly every letter on a desktop.
         g.drawString(font, text, x + 1, y + 1, TextShadow.of(color, ground), false);
         g.drawString(font, text, x, y, color, false);
+    }
+
+    /**
+     * The same shadowed text, drawn at {@code scale} and anchored at its top-left corner: a hero title larger
+     * than the plain text around it, without losing the shadow that keeps it legible on any ground.
+     */
+    public static void text(final GuiGraphics g, final Font font, final String text, final int x, final int y,
+                            final int color, final int ground, final float scale) {
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0);
+        g.pose().scale(scale, scale, 1.0f);
+        g.drawString(font, text, 1, 1, TextShadow.of(color, ground), false);
+        g.drawString(font, text, 0, 0, color, false);
+        g.pose().popPose();
     }
 
     /** Fades a rectangle out, the way a disabled control is shown. */

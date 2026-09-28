@@ -26,6 +26,9 @@ public final class KernelNames {
     /** The FreeBSD release these machines run. */
     public static final String FREEBSD_RELEASE = "14.1-RELEASE";
 
+    /** The kernel configuration these machines are built from, the way FreeBSD names its own build. */
+    public static final String FREEBSD_KERNEL_CONFIG = "GENERIC";
+
     /** The System V release these machines run, and the version of it, which that system reports apart. */
     public static final String SYSTEM_V_RELEASE = "3.2";
     public static final String SYSTEM_V_VERSION = "2";
@@ -49,6 +52,16 @@ public final class KernelNames {
             case UNIX -> SYSTEM_V_RELEASE;
             default -> LINUX_VERSION;
         };
+    }
+
+    /**
+     * The kernel line a system report shows: FreeBSD names its build configuration after its release, where
+     * a Linux just gives its version. The one place this is spelled out, so {@code uname -a} and a system
+     * report can never drift apart on it.
+     */
+    public static String kernelLine(final Platform platform) {
+        final String release = release(platform);
+        return platform == Platform.FREEBSD ? release + " " + FREEBSD_KERNEL_CONFIG : release;
     }
 
     /**
@@ -112,8 +125,8 @@ public final class KernelNames {
     public static String everything(final Platform platform, final String host, final int bits) {
         final String arch = architecture(platform, bits);
         return switch (platform) {
-            case FREEBSD -> "FreeBSD " + host + " " + FREEBSD_RELEASE + " FreeBSD " + FREEBSD_RELEASE
-                    + " GENERIC " + arch;
+            case FREEBSD -> "FreeBSD " + host + " " + FREEBSD_RELEASE + " FreeBSD " + kernelLine(platform)
+                    + " " + arch;
             // System V gives the system, the node, the release, the version and the machine, and no more.
             case UNIX -> "UNIX " + host + " " + SYSTEM_V_RELEASE + " " + SYSTEM_V_VERSION + " " + arch;
             default -> "Linux " + host + " " + LINUX_VERSION + " #1 SMP " + arch + " GNU/Linux";

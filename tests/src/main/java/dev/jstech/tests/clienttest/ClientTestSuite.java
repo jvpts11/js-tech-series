@@ -54,6 +54,7 @@ public final class ClientTestSuite {
             OpenWithClientTests.class,
             PanelStylesClientTests.class,
             PatternEncoderClientTests.class,
+            SettingsPersonalizeClientTests.class,
             SettingsSharingClientTests.class,
             SourceBuildClientTests.class,
             SystemUiClientTests.class,

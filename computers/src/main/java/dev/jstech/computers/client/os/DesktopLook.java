@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,12 +23,16 @@ import org.jetbrains.annotations.Nullable;
  * declares with everything else it is. This is the part that is only seen, so it lives on the client, and a
  * desktop an add-on brings says how it looks by registering one of these under its id.
  *
- * @param skin       the skin its windows are drawn in
- * @param periodSkin the skin it wore on Legacy-era hardware, or null when it looked the same or never ran there
- * @param theme      the colours of its panel, launcher and windows
- * @param wallpaper  the wallpaper it ships with
+ * @param skin           the skin its windows are drawn in
+ * @param periodSkin     the skin it wore on Legacy-era hardware, or null when it looked the same or never ran there
+ * @param theme          the colours of its panel, launcher and windows
+ * @param wallpaper      the wallpaper it ships with
+ * @param freeBsdWallpaper the wallpaper it hangs when it comes from FreeBSD instead, or null when this desktop
+ *                         hangs the same one everywhere (a Frames edition, which is never on FreeBSD; CDE, which
+ *                         hangs no picture at all)
  */
-public record DesktopLook(OsSkin skin, @Nullable OsSkin periodSkin, DesktopTheme theme, WallpaperStyle wallpaper) {
+public record DesktopLook(OsSkin skin, @Nullable OsSkin periodSkin, DesktopTheme theme, WallpaperStyle wallpaper,
+                          @Nullable WallpaperStyle freeBsdWallpaper) {
 
     /** What a desktop nobody registered a look for is drawn as: the first Frames edition, the plainest. */
     private static final DesktopLook FALLBACK =
@@ -41,14 +46,22 @@ public record DesktopLook(OsSkin skin, @Nullable OsSkin periodSkin, DesktopTheme
         register("frames_11", new DesktopLook(OsSkin.FRAMES_11, null, DesktopTheme.WIN11, WallpaperStyle.BLOOM));
         /*
          * Of the Unix desktops only KDE and GNOME wore another face on Legacy hardware, because only those two
-         * install there at all: Cinnamon is a later desktop that needs a Standard machine.
+         * install there at all: Cinnamon is a later desktop that needs a Standard machine. Each also carries
+         * FreeBSD's own wallpaper for it, which a machine installed on FreeBSD hangs instead of the Linux one.
          */
         register("kde_plasma", new DesktopLook(OsSkin.KDE_PLASMA, OsSkin.KDE_PLASMA_LEGACY, DesktopTheme.KDE,
-                WallpaperStyle.BREEZE));
+                WallpaperStyle.BREEZE, WallpaperStyle.FREEBSD_PLASMA));
         register("gnome", new DesktopLook(OsSkin.GNOME, OsSkin.GNOME_LEGACY, DesktopTheme.GNOME,
-                WallpaperStyle.ADWAITA));
-        register("cinnamon", new DesktopLook(OsSkin.CINNAMON, null, DesktopTheme.CINNAMON, WallpaperStyle.MINT_Y));
+                WallpaperStyle.ADWAITA, WallpaperStyle.FREEBSD_GNOME));
+        register("cinnamon", new DesktopLook(OsSkin.CINNAMON, null, DesktopTheme.CINNAMON, WallpaperStyle.MINT_Y,
+                WallpaperStyle.FREEBSD_CINNAMON));
         register("cde", new DesktopLook(OsSkin.CDE, null, DesktopTheme.CDE_DEFAULT, WallpaperStyle.MOTIF));
+    }
+
+    /** The same look, with no FreeBSD wallpaper of its own (a Frames edition, or CDE). */
+    public DesktopLook(final OsSkin skin, @Nullable final OsSkin periodSkin, final DesktopTheme theme,
+                       final WallpaperStyle wallpaper) {
+        this(skin, periodSkin, theme, wallpaper, null);
     }
 
     /** The look of the desktop under that id, or the plainest one when none was registered for it. */
@@ -67,6 +80,14 @@ public record DesktopLook(OsSkin skin, @Nullable OsSkin periodSkin, DesktopTheme
      */
     public OsSkin skinOn(@Nullable final HardwareEra era) {
         return this.periodSkin != null && era != null && era.isAtMost(HardwareEra.LEGACY) ? this.periodSkin : this.skin;
+    }
+
+    /**
+     * The wallpaper this desktop ships with on {@code platform}: its FreeBSD one there when it has one, its
+     * usual one everywhere else. The wallpaper comes with the system, not with the desktop alone.
+     */
+    public WallpaperStyle wallpaperOn(final Platform platform) {
+        return platform == Platform.FREEBSD && this.freeBsdWallpaper != null ? this.freeBsdWallpaper : this.wallpaper;
     }
 
     private static void register(final String path, final DesktopLook look) {

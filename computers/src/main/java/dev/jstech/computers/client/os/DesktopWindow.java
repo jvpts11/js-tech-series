@@ -39,6 +39,8 @@ public final class DesktopWindow {
             new Colours(0xFF5B6674));
 
     public static final int TITLE_H = 14;
+    /** How far the frame keeps a program's area in from the window's edges, on every side. */
+    public static final int CONTENT_INSET = 4;
     private static final int BTN = 11;
     /** The program icon in the title bar, sized to sit inside the bar with a pixel of air above and below. */
     private static final int ICON = 10;
@@ -125,6 +127,16 @@ public final class DesktopWindow {
         this.curY = y;
         this.curW = w;
         this.curH = h;
+    }
+
+    /** How wide a window must be to give its program exactly that much room inside the frame. */
+    public static int windowWidthFor(final int contentW) {
+        return contentW + 2 * CONTENT_INSET;
+    }
+
+    /** How tall a window must be to give its program exactly that much room under the title bar. */
+    public static int windowHeightFor(final int contentH) {
+        return contentH + TITLE_H + 2 * CONTENT_INSET;
     }
 
     public IDesktopApp app() {
@@ -526,10 +538,10 @@ public final class DesktopWindow {
          * to the inner rect so nothing an app draws leaks past the frame when the window is resized smaller.
          * enableScissor ignores the pose in 1.21.1, so compensate for the desktop's translate.
          */
-        final int cx = wx + 4;
-        final int cy = wy + TITLE_H + 4;
-        final int cw = ww - 8;
-        final int ch = wh - TITLE_H - 8;
+        final int cx = wx + CONTENT_INSET;
+        final int cy = wy + TITLE_H + CONTENT_INSET;
+        final int cw = ww - 2 * CONTENT_INSET;
+        final int ch = wh - TITLE_H - 2 * CONTENT_INSET;
         final Matrix4f mat = g.pose().last().pose();
         final WindowGeometry.Rect clip =
                 WindowGeometry.scissor(

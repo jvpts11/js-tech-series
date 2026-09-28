@@ -10,6 +10,9 @@ package dev.jstech.tests.clienttest;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.client.os.DesktopWindow;
+import dev.jstech.computers.client.os.ThisPcApp;
+import dev.jstech.computers.client.os.WallpaperStyle;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -57,12 +60,23 @@ public final class PanelStylesClientTests {
     private static final String CALCULATOR = "Calculator";
     private static final String KCALC = "KCalc";
 
+    /** This PC's native names: Info Center on KDE, About on GNOME, System Info on Cinnamon. */
+    private static final String INFO_CENTER = "Info Center";
+    private static final String ABOUT = "About";
+    private static final String SYSTEM_INFO = "System Info";
+
     private static ResourceLocation jsc(final String path) {
         return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, path);
     }
 
     private static DesktopScreen desktop(final ClientTestContext ctx) {
         return ctx.screen(DesktopScreen.class);
+    }
+
+    /** The This PC window named {@code label}, or null while it is not open. */
+    private static ThisPcApp thisPc(final ClientTestContext ctx, final String label) {
+        final DesktopWindow window = desktop(ctx).windowFor(label);
+        return window != null && window.app() instanceof ThisPcApp app ? app : null;
     }
 
     /**
@@ -160,5 +174,65 @@ public final class PanelStylesClientTests {
                 .thenAssert(2, () -> desktop(ctx).isStartOpen(),
                         "the period launcher opens from its raised stud")
                 .thenScreenshot(2, "period-menu");
+    }
+
+    /**
+     * KDE Plasma on FreeBSD lists Info Center, opens FreeBSD's own wallpaper (the variant painted for this
+     * desktop) instead of Breeze, and its Info Center opens the About-style page rather than the drives
+     * explorer Frames draws under the same name.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void kdePlasma_onFreeBsdListsInfoCenterWithFreeBsdsWallpaper(final ClientTestContext ctx) {
+        booted(ctx, "freebsd", "jsc:kde_plasma", INFO_CENTER, false)
+                .thenAssert(0, () -> WallpaperStyle.FREEBSD_PLASMA.id().equals(DesktopScreen.currentWallpaperId()),
+                        "FreeBSD's own wallpaper hangs here; got " + DesktopScreen.currentWallpaperId())
+                .thenScreenshot(2, "freebsd-kde-desktop")
+                .then(0, () -> DesktopScreen.requestOpen(INFO_CENTER))
+                .thenWaitUntil(() -> desktop(ctx).windowFor(INFO_CENTER) != null, SCREEN_WAIT,
+                        "the Info Center window")
+                .thenAssert(0, () -> thisPc(ctx, INFO_CENTER) != null && thisPc(ctx, INFO_CENTER).isAboutPage(),
+                        "Info Center opens the About-style page, not the drives explorer")
+                .thenScreenshot(2, "freebsd-kde-info-center");
+    }
+
+    /** GNOME on FreeBSD lists About, wears FreeBSD's own wallpaper, and About opens the same About-style page. */
+    @ClientTest(timeoutTicks = 2400)
+    public static void gnome_onFreeBsdListsAboutWithFreeBsdsWallpaper(final ClientTestContext ctx) {
+        booted(ctx, "freebsd", "jsc:gnome", ABOUT, false)
+                .thenAssert(0, () -> WallpaperStyle.FREEBSD_GNOME.id().equals(DesktopScreen.currentWallpaperId()),
+                        "FreeBSD's own wallpaper hangs here; got " + DesktopScreen.currentWallpaperId())
+                .thenScreenshot(2, "freebsd-gnome-desktop")
+                .then(0, () -> DesktopScreen.requestOpen(ABOUT))
+                .thenWaitUntil(() -> desktop(ctx).windowFor(ABOUT) != null, SCREEN_WAIT, "the About window")
+                .thenAssert(0, () -> thisPc(ctx, ABOUT) != null && thisPc(ctx, ABOUT).isAboutPage(),
+                        "About opens the About-style page, not the drives explorer")
+                .thenScreenshot(2, "freebsd-gnome-about");
+    }
+
+    /** Cinnamon on FreeBSD lists System Info, wears FreeBSD's own wallpaper, and opens the same About-style page. */
+    @ClientTest(timeoutTicks = 2400)
+    public static void cinnamon_onFreeBsdListsSystemInfoWithFreeBsdsWallpaper(final ClientTestContext ctx) {
+        booted(ctx, "freebsd", "jsc:cinnamon", SYSTEM_INFO, false)
+                .thenAssert(0, () -> WallpaperStyle.FREEBSD_CINNAMON.id().equals(DesktopScreen.currentWallpaperId()),
+                        "FreeBSD's own wallpaper hangs here; got " + DesktopScreen.currentWallpaperId())
+                .thenScreenshot(2, "freebsd-cinnamon-desktop")
+                .then(0, () -> DesktopScreen.requestOpen(SYSTEM_INFO))
+                .thenWaitUntil(() -> desktop(ctx).windowFor(SYSTEM_INFO) != null, SCREEN_WAIT,
+                        "the System Info window")
+                .thenAssert(0, () -> thisPc(ctx, SYSTEM_INFO) != null && thisPc(ctx, SYSTEM_INFO).isAboutPage(),
+                        "System Info opens the About-style page, not the drives explorer")
+                .thenScreenshot(2, "freebsd-cinnamon-system-info");
+    }
+
+    /** This PC reaches KDE, GNOME and Cinnamon on a Linux distribution too, not only on FreeBSD. */
+    @ClientTest(timeoutTicks = 2400)
+    public static void kdePlasma_onLinuxAlsoListsInfoCenter(final ClientTestContext ctx) {
+        booted(ctx, "ubuntu", "jsc:kde_plasma", INFO_CENTER, false)
+                .then(0, () -> DesktopScreen.requestOpen(INFO_CENTER))
+                .thenWaitUntil(() -> desktop(ctx).windowFor(INFO_CENTER) != null, SCREEN_WAIT,
+                        "the Info Center window")
+                .thenAssert(0, () -> thisPc(ctx, INFO_CENTER) != null && thisPc(ctx, INFO_CENTER).isAboutPage(),
+                        "Info Center opens the About-style page on a Linux too")
+                .thenScreenshot(2, "linux-kde-info-center");
     }
 }

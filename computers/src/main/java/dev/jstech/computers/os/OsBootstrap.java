@@ -210,6 +210,12 @@ public final class OsBootstrap {
     private static final Set<Platform> FRAMES_ONLY = Set.of(Platform.FRAMES);
     /** Where screenfetch installs: the systems at a Unix prompt that take packages, and Frames. */
     private static final Set<Platform> SCREENFETCH_SYSTEMS = Set.of(Platform.LINUX, Platform.FREEBSD, Platform.FRAMES);
+    /**
+     * Where "This PC" runs: the Frames editions, and FreeBSD and a Linux distribution once one of KDE Plasma,
+     * GNOME or Cinnamon is on it (the desktop that bundles it). Not UNIX, whose only desktop is CDE and whose
+     * own answer to the question is Workstation Info.
+     */
+    private static final Set<Platform> THIS_PC_SYSTEMS = Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD);
 
     /** The nine built-in desktop apps every desktop environment can bundle, in rail order. */
     private static final List<ResourceLocation> BUILTIN_APPS = List.of(
@@ -327,11 +333,13 @@ public final class OsBootstrap {
                     .named("Network").described("Browse the storage and machines on this computer's network.")
                     .withHouse(SoftwareHouse.JSC),
             /*
-             * "This PC" is a Frames idea and stays one. Linux has no single such place: its volumes
-             * live in the file manager's device list and the detail in a disks utility, which is what
-             * the Disks program below is.
+             * "This PC" is a Frames idea: the machine itself, its disks and what fills them. KDE Plasma,
+             * GNOME and Cinnamon bundle it too, under their own names (Info Center, About, System Info),
+             * where it shows a plainer page instead: the system and the hardware it runs on, nothing to
+             * browse. Linux keeps its device list in the file manager and the detail in a disks utility,
+             * which is what the Disks program below is.
              */
-            ProgramSpec.of(rl("this_pc"), "thispc", true, FRAMES_ONLY, 0, ProgramKind.APP, 0, HostScope.ANY)
+            ProgramSpec.of(rl("this_pc"), "thispc", true, THIS_PC_SYSTEMS, 0, ProgramKind.APP, 0, HostScope.ANY)
                     .named("This PC").described("The machine itself: its hardware, its disks and what fills them."),
             ProgramSpec.of(rl("disks"), "disks", true, LINUX_ONLY, 0, ProgramKind.APP, 0, HostScope.ANY)
                     .named("Disks").described("The volumes attached to this machine, and what occupies each one."),

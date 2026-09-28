@@ -286,6 +286,18 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
     }
 
+    /**
+     * The id of the wallpaper actually hanging on the desktop right now: the player's own choice when they made
+     * one, else whatever the desktop ships with on the platform it runs on (FreeBSD's own picture there, the
+     * usual one everywhere else).
+     */
+    public static String currentWallpaperId() {
+        if (active == null) {
+            return "";
+        }
+        return WallpaperPainter.styleFor(active.desktopId, active.platform(), active.desktopWallpaper).id();
+    }
+
     /** Whether a window of that key is up on the desktop in front of the player. */
     public static boolean windowOpen(final String key) {
         if (active == null) {
@@ -2458,6 +2470,12 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return out;
     }
 
+    /** The platform the installed system stands on, Frames as the safe default for a machine with no system. */
+    private Platform platform() {
+        final OsDef os = OsRegistry.getOs(osId);
+        return os != null ? os.platform() : Platform.FRAMES;
+    }
+
     /**
      * (Re)builds the launcher rail from the single program registry: every registered Frames app that opens a
      * window and is present on this computer. A pre-installed app is gated here by its host scope and OS rank
@@ -2476,10 +2494,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         final boolean isClusterManager = hostIs(
                 ClusterManagementComputerBlockEntity.class);
         final int rank = OsRegistry.osVersionRank(osId);
-        final OsDef os =
-                OsRegistry.getOs(osId);
-        final Platform platform =
-                os != null ? os.platform() : Platform.FRAMES;
+        final Platform platform = platform();
         for (final ProgramSpec spec
                 : OsRegistry.programs()) {
             if (spec.kind() != ProgramKind.APP
@@ -2729,7 +2744,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
              */
             PixWallpaper.want(host, desktopWallpaper);
             if (!PixWallpaper.paint(g, sw, sh)) {
-                WallpaperPainter.paint(g, sw, sh, desktopId, desktopWallpaper,
+                WallpaperPainter.paint(g, sw, sh, desktopId, platform(), desktopWallpaper,
                         desktopDarkMode && is(PanelStyle.FRAMES_11));
             }
         }
@@ -5998,6 +6013,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          */
         FilesApps.forgetAll();
         TrashApp.forgetAll();
+        ThisPcApp.forgetAll();
         /*
          * And the picture on the wall is let go with them: another machine's desktop may open next, and a
          * wallpaper chosen there under the same file name would otherwise be shown this one's drawing.

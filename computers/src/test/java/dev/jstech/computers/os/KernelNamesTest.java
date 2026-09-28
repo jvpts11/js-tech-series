@@ -47,6 +47,12 @@ class KernelNamesTest {
     }
 
     @Test
+    void kernelLine_namesFreeBsdsBuildAndJustTheVersionElsewhere() {
+        assertEquals("14.1-RELEASE GENERIC", KernelNames.kernelLine(Platform.FREEBSD));
+        assertEquals("6.8-jsc", KernelNames.kernelLine(Platform.LINUX));
+    }
+
+    @Test
     void terminal_isTheFirstOneOnTheMachinesOwnScreenAsEachFamilyCallsIt() {
         assertEquals("ttyv0", KernelNames.terminal(Platform.FREEBSD));
         assertEquals("tty1", KernelNames.terminal(Platform.LINUX));

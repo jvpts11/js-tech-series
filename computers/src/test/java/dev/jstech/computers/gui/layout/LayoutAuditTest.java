@@ -50,7 +50,7 @@ class LayoutAuditTest {
             "VolumePopupLayout", "SoundfoundryLayout", "SoundfoundryShareLayout", "SoundfoundryStandardLayout",
             "PersonalComputerLayout", "MainframeLayout", "ServerAssemblyLayout", "KvmChannelLayout",
             "SystemBootLayout", "CommandPromptLayout", "OsInstallLayout", "InstallerLayout",
-            "BootSequenceLayout", "FirmwareLayout");
+            "BootSequenceLayout", "FirmwareLayout", "SettingsLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -175,6 +175,20 @@ class LayoutAuditTest {
             c.add(new AuditCase("ThisPcLayout.programGrid(" + size[0] + ")",
                     dev.jstech.computers.gui.layout.ThisPcLayout.programGrid(size[0], 7), false));
         }
+        // This PC's About-style page on KDE, GNOME and Cinnamon: fixed size, one layout each.
+        c.add(new AuditCase("ThisPcLayout.KdeAbout", ThisPcLayout.KdeAbout.layout(), true));
+        c.add(new AuditCase("ThisPcLayout.GnomeAbout", ThisPcLayout.GnomeAbout.layout(), true));
+        c.add(new AuditCase("ThisPcLayout.CinnamonAbout", ThisPcLayout.CinnamonAbout.layout(), true));
+        /*
+         * The Personalize page scrolls rather than being held to a budget, so it is audited for being clean
+         * (no overlaps, nothing spilling past its own content height) at the worst case: the flat skin (every
+         * row this page draws) at the narrowest window with every wallpaper offered, and the plain bevel skin
+         * (the fewest rows) with none of the extra wallpapers offered.
+         */
+        c.add(new AuditCase("SettingsLayout(flat, min width, most wallpapers)",
+                SettingsLayout.layout(135, 10, true, true), false));
+        c.add(new AuditCase("SettingsLayout(bevel, one wallpaper)",
+                SettingsLayout.layout(135, 1, false, false), false));
         c.add(new AuditCase("SpeakerLayout", SpeakerLayout.layout(), true));
         // Every volume control a panel opens, open and folded, with the English words at six pixels a letter.
         final VolumePopupLayout.Labels volumeWords = new VolumePopupLayout.Labels("Audio Volume", "Mute output",

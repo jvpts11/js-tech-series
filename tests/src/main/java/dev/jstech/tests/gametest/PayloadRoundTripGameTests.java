@@ -72,18 +72,22 @@ public final class PayloadRoundTripGameTests {
 
     @GameTest(template = ARENA)
     public static void desktop_thisPcRoundTrips(final GameTestHelper helper) {
+        final ThisPcPayload.AboutFacts about = new ThisPcPayload.AboutFacts(Text.literal("FreeBSD 14.1-RELEASE"),
+                Text.literal("vel64"), Text.literal("14.1-RELEASE GENERIC"), Text.literal("KDE Plasma"),
+                Text.literal("desk"), ThisPcPayload.WITH_CLOCK.with("Integra Apex 7 4790K", "4.0 GHz"), 8192L, 2000L,
+                120L, true, true);
         final ThisPcPayload.WireMachine machine = new ThisPcPayload.WireMachine("desk",
                 ThisPcPayload.PERSONAL_COMPUTER.text(), Text.literal("Standard"), "Frames 11", 2021, "on CORE",
                 Text.literal("MF ATX Standard"), ThisPcPayload.WITH_CLOCK.with("Integra Apex 7 4790K", "4.0 GHz"), 1,
                 Text.literal("x86-64, 64-bit"), 16384, 3072, 1, Text.literal("PSU 650G"), true,
-                ThisPcPayload.COUNTED.with(2, ThisPcPayload.MONITOR));
+                ThisPcPayload.COUNTED.with(2, ThisPcPayload.MONITOR), about);
         final ThisPcPayload.WireDisk disk = new ThisPcPayload.WireDisk(0, Text.literal("Vaultis Swift SSD 500 GB"),
                 2000L, 120L, true, "C:\\", 80L, 20L, 20L);
         final ThisPcPayload.WireMedia media = new ThisPcPayload.WireMedia(123L, "D:", Text.literal("Frames 11 USB"),
                 "OS", "FRAMES", true, "Frames 11", 2021, "jsc:frames_11",
                 List.of(Text.literal("Standard era or later"), Text.literal("64 it of memory")), 0L, 2);
         roundTrip(helper, ThisPcPayload.STREAM_CODEC,
-                new ThisPcPayload(machine, List.of(disk), List.of(media), List.of("jsc:nms")));
+                new ThisPcPayload(HOST, machine, List.of(disk), List.of(media), List.of("jsc:nms")));
         helper.succeed();
     }
 

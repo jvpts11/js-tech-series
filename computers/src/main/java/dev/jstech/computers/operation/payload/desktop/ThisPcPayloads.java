@@ -33,12 +33,16 @@ import dev.jstech.computers.operation.payload.SetupProgressPayload;
 import dev.jstech.computers.operation.payload.ThisPcPayload;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.MinSpecTooltip;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PackageManagerKind;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.WorkstationFacts;
 import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
@@ -134,12 +138,12 @@ public final class ThisPcPayloads {
                 }
             }
             installed.addAll(computer.console().installed());
-            PacketDistributor.sendToPlayer(player, new ThisPcPayload(machineCard(level, computer, payload.hostPos()),
-                    disks, media, installed));
+            PacketDistributor.sendToPlayer(player, new ThisPcPayload(payload.hostPos(),
+                    machineCard(level, computer, payload.hostPos()), disks, media, installed));
             return;
         }
         PacketDistributor.sendToPlayer(player,
-                new ThisPcPayload(ThisPcPayload.WireMachine.EMPTY, disks, media, installed));
+                new ThisPcPayload(payload.hostPos(), ThisPcPayload.WireMachine.EMPTY, disks, media, installed));
     }
 
     /** One drive row for This PC: what is in the drive and, for an installer, what it would install. */
@@ -241,6 +245,7 @@ public final class ThisPcPayloads {
             }
             valid = be.buildValid();
         }
+        final ThisPcPayload.AboutFacts about = aboutFactsOf(computer);
         final int mhz = computer.maxCpuMhz();
         if (!cpu.isEmpty() && mhz > 0) {
             cpu = ThisPcPayload.WITH_CLOCK.with(cpu,
@@ -250,7 +255,40 @@ public final class ThisPcPayloads {
                 MinSpecTooltip.eraLabel(computer.displayEra()),
                 osLabel, osYear, network == null ? "" : networkLabel(network), board, cpu, cpus, architecture,
                 (int) Math.min(Integer.MAX_VALUE, computer.ramBuffer()), computer.totalVramMb(), gpus, psu,
-                valid, peripherals(level, computer));
+                valid, peripherals(level, computer), about);
+    }
+
+    /**
+     * What an About-style This PC page needs (KDE's Info Center, GNOME's About, Cinnamon's System Info), reusing
+     * the same facts Workstation Info reads on CDE rather than asking the machine twice for the system's name,
+     * its architecture and its desktop. {@link ThisPcPayload.AboutFacts#EMPTY} on every other platform, since
+     * none of those three desktops ever bundles This PC there.
+     *
+     * <p>Public and self-contained (it asks nothing but the machine) so it is called the same way from a test as
+     * from {@link #machineCard}.
+     */
+    public static ThisPcPayload.AboutFacts aboutFactsOf(final IOsHost computer) {
+        final OsDef os = computer.installedOs();
+        final Platform platform = os == null ? Platform.FRAMES : os.platform();
+        if (platform != Platform.FREEBSD && platform != Platform.LINUX) {
+            return ThisPcPayload.AboutFacts.EMPTY;
+        }
+        final ItemStack disk = computer.systemDisk();
+        final long diskMb = disk.getItem() instanceof DiskItem item ? item.spec().capacityMb() : 0L;
+        /*
+         * A Linux names its distribution alone here: the kernel row already carries the version this system
+         * put beside its name, and repeating it in both places is the same fact twice.
+         */
+        final String operatingSystem = platform == Platform.LINUX ? os.displayName()
+                : WorkstationInfoPayloads.systemOf(os);
+        return new ThisPcPayload.AboutFacts(Text.literal(operatingSystem),
+                Text.literal(KernelNames.architecture(platform, computer.processorBits())),
+                Text.literal(KernelNames.kernelLine(platform)),
+                Text.literal(WorkstationInfoPayloads.desktopName(computer)),
+                Text.literal(Installers.hostName(computer)),
+                WorkstationFacts.processorClock(WelcomePayloads.cpuText(computer), computer.maxCpuMhz()),
+                computer.ramTotalMb(), diskMb, SettingsSnapshots.usedMb(disk), platform == Platform.FREEBSD,
+                computer.processorBits() >= 64);
     }
 
     /** The linked peripherals by name, each kind named once with how many there are. */
