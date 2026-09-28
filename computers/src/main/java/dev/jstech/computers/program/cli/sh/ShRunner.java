@@ -7,7 +7,9 @@
  */
 package dev.jstech.computers.program.cli.sh;
 
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
+import dev.jstech.computers.program.cli.ByNameProgram;
 import dev.jstech.computers.program.cli.CliContext;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliOutput;
@@ -56,7 +58,13 @@ public final class ShRunner {
          * anything that is not Unix.
          */
         final boolean dos = computer.shellFamily() == ShellFamily.DOS;
-        final Map<String, String> named = namesOf(computer);
+        /*
+         * A DOS machine's own PATH is read from its disk, so building it costs a real seek; every other name
+         * here is free. Asking for it only when a token could actually stand for it keeps a line with nothing
+         * between per cent signs, such as "cls" or "ver", from touching the disk at all.
+         */
+        final boolean needsPath = dos && holdsPercent(tokens);
+        final Map<String, String> named = namesOf(computer, needsPath);
         final List<String> out = new ArrayList<>(tokens.size());
         List<String> names = null;
         for (final String token : tokens) {
@@ -147,20 +155,30 @@ public final class ShRunner {
         return new CliShell.Response(out.lines(), false);
     }
 
+    /** Whether any word on the line holds a per cent sign, the only way a DOS line ever names %PATH%. */
+    private static boolean holdsPercent(final List<String> tokens) {
+        for (final String token : tokens) {
+            if (token != null && token.indexOf('%') >= 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * The names a shell knows: where it is, who it is and what it runs, and then whatever the player set.
      *
      * <p>What was set wins, because a shell that would not let you say what {@code HOME} means is a shell
      * arguing with the person typing at it.
      */
-    private static Map<String, String> namesOf(final ICliComputer computer) {
-        final Map<String, String> named = builtIn(computer);
+    private static Map<String, String> namesOf(final ICliComputer computer, final boolean needsPath) {
+        final Map<String, String> named = builtIn(computer, needsPath);
         named.putAll(computer.shellVariables());
         return named;
     }
 
     /** The ones nobody set, which the machine answers for out of what it is. */
-    private static Map<String, String> builtIn(final ICliComputer computer) {
+    private static Map<String, String> builtIn(final ICliComputer computer, final boolean needsPath) {
         final Map<String, String> named = new LinkedHashMap<>();
         named.put("HOSTNAME", computer.hostname());
         named.put("COMPUTERNAME", computer.hostname());
@@ -168,10 +186,23 @@ public final class ShRunner {
         named.put("USERNAME", "player");
         named.put("OS", computer.platform().label());
         switch (computer.shellFamily()) {
-            case DOS -> named.put("CD", computer.prompt());
+            case DOS -> {
+                named.put("CD", computer.prompt());
+                if (needsPath) {
+                    named.put("PATH", ByNameProgram.defaultPath(computer));
+                }
+            }
             case POSIX -> {
                 named.put("HOME", computer.tree().homePath());
                 named.put("PWD", computer.currentLocation().storagePath());
+                /*
+                 * Only the family a bare name is ever searched for on gets a PATH built this way; a FreeBSD or a
+                 * Linux installs its programs where its own tree says, not under this bare "bin"/"usr/bin" guess.
+                 * Nothing here reads a disk to build it, so it costs nothing to always answer for it.
+                 */
+                if (computer.platform() == Platform.UNIX) {
+                    named.put("PATH", ByNameProgram.defaultPath(computer));
+                }
             }
             /* A flat disk has no folder to be standing in and no home, so it answers for neither. */
             case NET -> { }

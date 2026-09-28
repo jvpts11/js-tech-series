@@ -47,6 +47,7 @@ import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -206,6 +207,12 @@ abstract class ServerCliShell implements ICliComputer {
     }
 
     @Override
+    public HardwareEra era() {
+        final HardwareEra installed = hostBlock instanceof IOsHost computer ? computer.installedEra() : null;
+        return installed == null ? HardwareEra.STANDARD : installed;
+    }
+
+    @Override
     public boolean hostIs(final HostScope scope) {
         return switch (scope) {
             case ANY -> true;
@@ -221,6 +228,15 @@ abstract class ServerCliShell implements ICliComputer {
     public boolean hasFiles() {
         return hostBlock instanceof IOsHost computer
                 && FileAccess.filesystemKindOf(computer) != FilesystemKind.NONE;
+    }
+
+    /*
+     * A rack's unit is an IOsHost with files of its own, but it is the rack block that runs no Sigma program: only
+     * a computer with a board of its own, which is what sigma() answers for, ever holds one.
+     */
+    @Override
+    public boolean canRunPrograms() {
+        return sigma() != null;
     }
 
     @Override

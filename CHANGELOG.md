@@ -275,6 +275,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   used, and the machine's host name.
 - The Personalize page of Settings scrolls when it holds more than its window does, such as every wallpaper a
   system offers along with the flat skin's taskbar and appearance rows.
+- A Vintage machine runs what `scc` compiles, though it can never hold the Sigma Runtime: a compiled listing runs
+  by its bare name at the prompt, on MC-DOS without its extension the way DOS finds a program, and on UNIX from
+  the current directory or the PATH. `scc` says how to run what it just built, and UNIX answers a word it cannot
+  find in its own shell's words, `hello: not found`.
 - A resource pack can recolour the computing screens. Their colours are files under `assets/jscore/palettes/` and
   `assets/jsc/palettes/`: each hardware era's skin; each desktop's windows, panel and launcher; the chrome each style
   of desktop draws its title bars, buttons, fields and tabs with; CDE's eight colour schemes; the Network Management

@@ -145,9 +145,14 @@ public final class ProgramService {
         final ProgramLauncher.Launch launch = ProgramLauncher.launch(this.machine, path, this.files::readFile,
                 arguments, IProgramParent.NONE, ProgramPriority.MEDIUM, heapMb);
         if (!launch.ok()) {
+            /*
+             * Named by the file itself rather than by any one caller's verb: the prompt reaches this from
+             * "sigma run" and from a bare name run by itself alike, and neither owns the words a refusal is
+             * said in.
+             */
             return ICliComputer.OpResult.fail(switch (launch.refusal()) {
                 case NO_RUNNER -> NO_RUNNER.with(path);
-                case NO_MEMORY -> NO_ROOM.with(Text.literal("sigma"), launch.roomMb(), launch.freeMb());
+                case NO_MEMORY -> NO_ROOM.with(path, launch.roomMb(), launch.freeMb());
                 case UNREADABLE, NOT_STARTED -> launch.said();
             });
         }

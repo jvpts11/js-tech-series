@@ -9,12 +9,15 @@ package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.program.iql.IqlVerb;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -53,6 +56,102 @@ class CliShellTest {
         final CliShell.Response response = shell.run("frobnicate now", computer);
         assertTrue(response.lines().stream().anyMatch(l -> l.style() == CliStyle.ERROR));
         assertTrue(response.lines().get(0).text().contains("frobnicate"));
+    }
+
+    /** MC-DOS runs a listing by its own name, no extension, found in the current directory. */
+    @Test
+    void run_dosRunsAListingByNameFromTheCurrentDirectory() {
+        computer.hasFiles = true;
+        computer.files.put("hello.asm", ".asm 1\n");
+        shell.run("hello", computer);
+        assertEquals("hello.asm", computer.startedListing);
+    }
+
+    /** With nothing in the current directory, MC-DOS falls back to the PATH, and the extension is never typed. */
+    @Test
+    void run_dosFallsBackToThePathWhenNothingIsInTheCurrentDirectory() {
+        computer.hasFiles = true;
+        computer.variables.put("PATH", "C:\\TOOLS");
+        computer.files.put("C:\\TOOLS\\hello.asm", ".asm 1\n");
+        shell.run("hello", computer);
+        assertEquals("C:\\TOOLS\\hello.asm", computer.startedListing);
+    }
+
+    /** A word neither a command nor a listing anywhere answers to is an unknown command on MC-DOS. */
+    @Test
+    void run_dosUnresolvedNameKeepsTheGenericNotFound() {
+        computer.hasFiles = true;
+        final String said = joined("nosuchthing");
+        assertTrue(said.contains("command not found: nosuchthing"), said);
+    }
+
+    /** UNIX runs a listing named with a slash exactly where it is written, current directory included. */
+    @Test
+    void run_unixRunsAnExplicitPathWithoutSearchingThePath() {
+        computer.hasFiles = true;
+        computer.platform = Platform.UNIX;
+        computer.shellFamily = ShellFamily.POSIX;
+        computer.files.put("./hello.asm", ".asm 1\n");
+        shell.run("./hello", computer);
+        assertEquals("./hello.asm", computer.startedListing);
+    }
+
+    /** A bare name on UNIX is never found beside the prompt: only a PATH directory answers to it. */
+    @Test
+    void run_unixBareNameIsNeverFoundInTheCurrentDirectory() {
+        computer.hasFiles = true;
+        computer.platform = Platform.UNIX;
+        computer.shellFamily = ShellFamily.POSIX;
+        computer.files.put("hello.asm", ".asm 1\n");
+        final String said = joined("hello");
+        assertTrue(said.contains("hello: not found"), said);
+        assertFalse(said.contains("command not found"), said);
+    }
+
+    /** A bare name on UNIX is found once its directory is on the PATH. */
+    @Test
+    void run_unixBareNameIsFoundOnThePath() {
+        computer.hasFiles = true;
+        computer.platform = Platform.UNIX;
+        computer.shellFamily = ShellFamily.POSIX;
+        computer.variables.put("PATH", "/tools");
+        computer.files.put("/tools/hello.asm", ".asm 1\n");
+        shell.run("hello", computer);
+        assertEquals("/tools/hello.asm", computer.startedListing);
+    }
+
+    /** A name this system has no command for runs by name when a listing answers to it, even if a package has one. */
+    @Test
+    void run_dosRunsAListingNamedLikeARegisteredButUnavailableCommand() {
+        computer.hasFiles = true;
+        // Nothing here installed the scc package, so the registered command is not available on this machine.
+        assertFalse(shell.find("scc").available(computer), "scc must be unavailable here");
+        computer.files.put("scc.asm", ".asm 1\n");
+        shell.run("scc", computer);
+        assertEquals("scc.asm", computer.startedListing);
+    }
+
+    /** A machine with no processor of its own to run a program on never blames the runtime for it. */
+    @Test
+    void run_byNameDeclinesWithoutSigmaWordingWhenTheHostCannotRunPrograms() {
+        computer.hasFiles = true;
+        computer.platform = Platform.UNIX;
+        computer.shellFamily = ShellFamily.POSIX;
+        computer.canRunPrograms = false;
+        computer.files.put("./hello.asm", ".asm 1\n");
+        final String said = joined("./hello");
+        assertTrue(said.contains("hello: not found"), said);
+        assertFalse(said.contains("sigma:"), said);
+    }
+
+    /** The by-name not-found line reads plain, not the shell's usual red error line. */
+    @Test
+    void run_unixByNameNotFoundPrintsInPlainStyleNotError() {
+        computer.hasFiles = true;
+        computer.platform = Platform.UNIX;
+        computer.shellFamily = ShellFamily.POSIX;
+        computer.files.put("hello.asm", ".asm 1\n");
+        assertFalse(anyStyle("hello", CliStyle.ERROR), "hello: not found must not be the shell's error style");
     }
 
     @Test
@@ -174,6 +273,17 @@ class CliShellTest {
         boolean explode;
         String lastCall = "";
         final List<StoredItem> stock = new ArrayList<>();
+        /*
+         * The shell these tests drive is the DOS command set by default, so the machine under it says it is a
+         * system that speaks DOS. A test of the by-name run on another family flips both together.
+         */
+        Platform platform = Platform.MC_DOS;
+        ShellFamily shellFamily = ShellFamily.DOS;
+        boolean hasFiles;
+        boolean canRunPrograms = true;
+        final Map<String, String> files = new LinkedHashMap<>();
+        final Map<String, String> variables = new LinkedHashMap<>();
+        String startedListing;
 
         @Override public String name() {
             return "TEST-MF";
@@ -183,14 +293,39 @@ class CliShellTest {
             return "Mainframe";
         }
 
-        /*
-         * The shell these tests drive is the DOS command set, so the machine under it says it is a system
-         * that speaks DOS. It used to say MC-NET and pass anyway, because MC-NET was counted among the
-         * DOS-speaking systems; it has its own words now, and a fixture claiming one family while running
-         * another's verbs tests nothing that is true of either.
-         */
         @Override public Platform platform() {
-            return Platform.MC_DOS;
+            return this.platform;
+        }
+
+        @Override public ShellFamily shellFamily() {
+            return this.shellFamily;
+        }
+
+        @Override public boolean hasFiles() {
+            return this.hasFiles;
+        }
+
+        @Override public boolean canRunPrograms() {
+            return this.canRunPrograms;
+        }
+
+        @Override public Map<String, String> shellVariables() {
+            return Map.copyOf(this.variables);
+        }
+
+        @Override public FsResult readFile(final String path) {
+            final String held = this.files.get(path);
+            return held == null ? FsResult.fail("no such file: " + path) : FsResult.content(held);
+        }
+
+        @Override public FsResult writeFile(final String path, final String content) {
+            this.files.put(path, content);
+            return FsResult.ok("wrote " + path);
+        }
+
+        @Override public OpResult startSigma(final String path, final int heapMb) {
+            this.startedListing = path;
+            return OpResult.ok("started " + path);
         }
 
         @Override public boolean hostIs(final HostScope scope) {

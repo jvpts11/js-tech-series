@@ -11,6 +11,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.computers.os.Platform;
+import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -295,6 +297,49 @@ class SigmaCommandsTest {
         assertFalse(this.run("sgsc Missing.sgs").contains("run it with"));
     }
 
+    /**
+     * A Vintage machine can never hold the runtime, so scc teaches the way that machine really runs what it
+     * wrote: by its own name, no extension, exactly as a program of that machine's day was started.
+     */
+    @Test
+    void compile_onAVintageDosMachine_saysToRunItByName() {
+        this.computer.add(SigmaCommands.SUBSET_COMPILER);
+        this.computer.era = HardwareEra.VINTAGE;
+        this.computer.platform = Platform.MC_DOS;
+        this.computer.files.put("Watch.sg", SUBSET);
+        assertTrue(this.run("scc Watch.sg").contains("run it with: Watch"));
+        assertFalse(this.run("scc Watch.sg").contains("sigma run"));
+    }
+
+    /** The same machine on UNIX teaches the shell's own way instead: the current directory spelled out. */
+    @Test
+    void compile_onAVintageUnixMachine_saysToRunItFromTheCurrentDirectory() {
+        this.computer.add(SigmaCommands.SUBSET_COMPILER);
+        this.computer.era = HardwareEra.VINTAGE;
+        this.computer.platform = Platform.UNIX;
+        this.computer.files.put("Watch.sg", SUBSET);
+        assertTrue(this.run("scc Watch.sg").contains("run it with: ./Watch"));
+    }
+
+    /** A target already inside a folder is run exactly as written, with no extra './' put in front of it. */
+    @Test
+    void compile_onAVintageUnixMachine_withATargetInAFolder_runsItAsWritten() {
+        this.computer.add(SigmaCommands.SUBSET_COMPILER);
+        this.computer.era = HardwareEra.VINTAGE;
+        this.computer.platform = Platform.UNIX;
+        this.computer.files.put("disk/Watch.sg", SUBSET);
+        assertTrue(this.run("scc disk/Watch.sg").contains("run it with: disk/Watch"));
+    }
+
+    /** Off a Vintage machine, the runtime's own verb is the way, since the runtime can be installed there. */
+    @Test
+    void compile_offAVintageMachine_saysTheRuntimesVerb() {
+        this.computer.add(SigmaCommands.SUBSET_COMPILER);
+        this.computer.platform = Platform.MC_DOS;
+        this.computer.files.put("Watch.sg", SUBSET);
+        assertTrue(this.run("scc Watch.sg").contains("run it with: sigma run Watch.asm"));
+    }
+
     @Test
     void compile_writesWhereItWasToldTo() {
         this.computer.add(SigmaCommands.COMPILER);
@@ -384,6 +429,8 @@ class SigmaCommandsTest {
         private String started;
         private int startedHeap = -1;
         private int stopped = -1;
+        private Platform platform = Platform.LINUX;
+        private HardwareEra era = HardwareEra.STANDARD;
 
         void add(final String id) {
             this.installed.add(new ProgramInfo(id.substring(id.indexOf(':') + 1), id));
@@ -391,6 +438,14 @@ class SigmaCommandsTest {
 
         @Override public String name() {
             return "TEST-PC";
+        }
+
+        @Override public Platform platform() {
+            return this.platform;
+        }
+
+        @Override public HardwareEra era() {
+            return this.era;
         }
 
         @Override public List<ProgramInfo> programs() {

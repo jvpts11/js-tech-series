@@ -127,20 +127,36 @@ public final class CliShell {
             return new Response(out.lines(), false);
         }
         final ICliCommand command = find(word);
+        final List<String> args = new ArrayList<>(tokens.subList(1, tokens.size()));
+        final boolean unresolved = command == null || !command.available(computer);
+        /*
+         * A word that answers to no command here, or to one this system does not have, may be the name of a
+         * listing on this machine: the current directory or the PATH, depending on what the family asks of a bare
+         * name. Tried only for a word nothing already runs, so a command this system does have is never shadowed
+         * by a file of the same name.
+         */
+        if (unresolved) {
+            final Response ranByName = ByNameProgram.tryRun(word, args, computer, out);
+            if (ranByName != null) {
+                return ranByName;
+            }
+        }
         /*
          * A command that is not available on this computer (another distribution's package manager, an
-         * uninstalled program's verbs) does not exist here, exactly like an unknown word.
+         * uninstalled program's verbs) does not exist here, exactly like an unknown word this system found no
+         * program under either.
          */
-        if (command == null || !command.available(computer)) {
+        if (unresolved) {
             if (computer.platform() == Platform.FREEBSD) {
                 out.error(NOT_FOUND_TRY_APROPOS.with(word));
+            } else if (command == null && ByNameProgram.ownsItsWording(computer)) {
+                out.line(CliTexts.PROGRAM_NOT_FOUND.with(word));
             } else {
                 out.error(CliTexts.NOT_FOUND.with(word));
                 out.dim(TRY_HELP);
             }
             return new Response(out.lines(), false);
         }
-        final List<String> args = new ArrayList<>(tokens.subList(1, tokens.size()));
         /*
          * Asking a command what it does: --help anywhere, and /? on the family that has written it that way
          * since there was a DOS. Answered here rather than by every command, so no command can be written

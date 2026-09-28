@@ -16,6 +16,7 @@ import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.tier.HardwareEra;
 import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
@@ -99,6 +100,15 @@ public interface ICliMachine {
         return 0;
     }
 
+    /**
+     * The hardware era of the board installed in this computer, which is what tells a Vintage machine, which
+     * never holds the Sigma Runtime, apart from every later one. {@link HardwareEra#STANDARD} on a machine with
+     * no board of its own to read one from (a network appliance, a computer made for a test).
+     */
+    default HardwareEra era() {
+        return HardwareEra.STANDARD;
+    }
+
     /** Whether this computer is of the kind a command asks for (any computer, a Mainframe, a Cluster Manager). */
     default boolean hostIs(final HostScope scope) {
         return scope == HostScope.ANY;
@@ -107,6 +117,16 @@ public interface ICliMachine {
     /** Whether the system keeps files at all, which a network system such as MC-NET does not. */
     default boolean hasFiles() {
         return false;
+    }
+
+    /**
+     * Whether this machine can run a program of its own at all, which is true of every computer with a
+     * processor of its own and false of a server that only holds a network's files and drives on a board with
+     * nothing to run one on. A word that answers to a listing on such a machine is not a program it runs either,
+     * so a shell asks this before trying one by its bare name.
+     */
+    default boolean canRunPrograms() {
+        return true;
     }
 
     /** Whether the computer has ports for peripherals. */
@@ -132,7 +152,7 @@ public interface ICliMachine {
     /**
      * The names the shell knows on this machine, by name in upper case.
      *
-     * <p>They belong to the machine and not to a prompt, so a name set at a monitor is still there in a
+     * <p>They belong to the machine and not to a prompt, so a name set at a monitor stays there in a
      * window on the desktop, in a session opened from another machine, and after a restart. That is what a
      * player means by setting one: a shell that forgot everything the moment a window closed would be a
      * shell nobody could use.

@@ -20,6 +20,7 @@ import dev.jstech.computers.sigma.pack.Packed;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -120,6 +121,13 @@ public final class SigmaCommands {
         private static final TextKey ERRORS = TextKey.of("jsc.cli.sigma.compile.errors",
                 "%s errors, nothing was written");
         private static final TextKey RUN_IT = TextKey.of("jsc.cli.sigma.compile.run_it", "run it with: sigma run %s");
+        /*
+         * A Vintage machine can never hold the runtime (it stays Legacy and up), so what it wrote is run by its
+         * own name at the prompt instead, exactly as a program of that machine's own day was: no extension on
+         * MC-DOS, and the current directory spelled out on the family that never runs one without being told to.
+         */
+        private static final TextKey RUN_IT_BY_NAME =
+                TextKey.of("jsc.cli.sigma.compile.run_it_by_name", "run it with: %s");
 
         Compile(final String verb, final String extension, final String packageId, final LanguageLevel level,
                 final String baseline) {
@@ -236,7 +244,25 @@ public final class SigmaCommands {
                 ctx.computer().report(JscEvents.SIGMA_ON_DOS, "");
             }
             // Compiling is not running, and the prompt is the place to say how the second is done.
-            ctx.out().dim(RUN_IT.with(target));
+            ctx.out().dim(runIt(ctx.computer(), target));
+        }
+
+        /**
+         * How the prompt says a listing is run: by name on a machine that will never hold the runtime, or the
+         * runtime's own verb everywhere else.
+         */
+        private static Text runIt(final ICliComputer computer, final String target) {
+            if (computer.era() != HardwareEra.VINTAGE) {
+                return RUN_IT.with(target);
+            }
+            final String bareName = target.toLowerCase(Locale.ROOT).endsWith(ASSEMBLY)
+                    ? target.substring(0, target.length() - ASSEMBLY.length()) : target;
+            return switch (computer.platform()) {
+                case MC_DOS -> RUN_IT_BY_NAME.with(bareName);
+                // Only a name with no slash of its own needs one put on it; one already there is run as written.
+                case UNIX -> RUN_IT_BY_NAME.with(bareName.indexOf('/') < 0 ? "./" + bareName : bareName);
+                default -> RUN_IT.with(target);
+            };
         }
 
         /** The architectures there are, by name, for the person who asked for one that is not there. */
@@ -374,7 +400,13 @@ public final class SigmaCommands {
             }
             final ICliComputer.OpResult started = ctx.computer().startSigma(path, heapMb, arguments);
             if (started.ok()) {
-                ctx.out().ok(started.message());
+                /*
+                 * A program that takes the terminal says nothing of its own; an empty line would sit under the
+                 * prompt for no reason, so only a message with something in it becomes a line on the glass.
+                 */
+                if (!started.message().isEmpty()) {
+                    ctx.out().ok(started.message());
+                }
             } else {
                 ctx.out().error(started.message());
             }

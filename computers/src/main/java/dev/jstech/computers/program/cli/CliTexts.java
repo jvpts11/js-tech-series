@@ -28,6 +28,12 @@ public final class CliTexts {
     /** A word no command answers to, said alike by the prompt and by a script the shell runs. */
     public static final TextKey NOT_FOUND = TextKey.of("jsc.cli.shell.not_found", "command not found: %s");
 
+    /**
+     * A word neither a command nor a file on the current directory or the PATH answers to, in a real shell's own
+     * words rather than this one's: what {@code sh} says of a name it never had a chance to run.
+     */
+    public static final TextKey PROGRAM_NOT_FOUND = TextKey.of("jsc.cli.shell.program_not_found", "%s: not found");
+
     /** A command that broke instead of answering, said alike by the prompt and by a script. */
     public static final TextKey FAILED = TextKey.of("jsc.cli.shell.failed", "error running '%s': %s");
 
