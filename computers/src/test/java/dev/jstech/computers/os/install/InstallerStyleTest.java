@@ -108,6 +108,60 @@ class InstallerStyleTest {
     }
 
     @Test
+    void stages_bsdInstall_putsTheDesktopPageAfterServicesAndAStepFreeCopyAfterThat() {
+        final List<InstallerStyle.Stage> stages = InstallerStyle.BSD_INSTALL.stages();
+        int services = -1;
+        int desktop = -1;
+        for (int i = 0; i < stages.size(); i++) {
+            if (stages.get(i).page() == InstallerPage.SERVICES) {
+                services = i;
+            }
+            if (stages.get(i).page() == InstallerPage.DESKTOP) {
+                desktop = i;
+            }
+        }
+        assertTrue(services >= 0 && desktop == services + 1,
+                "the desktop page comes right after the services page");
+        final InstallerStyle.Stage afterDesktop = stages.get(desktop + 1);
+        assertEquals(InstallerPage.COPY, afterDesktop.page(), "a second copy stage follows the desktop page");
+        assertTrue(afterDesktop.steps().isEmpty(),
+                "it starts with no steps of its own: a desktop chosen there adds the only one it ever gets");
+    }
+
+    @Test
+    void stages_bsdInstall_extractionNamesTheBaseKernelAndPorts() {
+        for (final InstallerStyle.Stage stage : InstallerStyle.BSD_INSTALL.stages()) {
+            if (stage.page() == InstallerPage.COPY && !stage.steps().isEmpty()) {
+                assertEquals(List.of("base.txz", "kernel.txz", "ports.txz"),
+                        stage.steps().stream().map(Text::english).toList());
+                return;
+            }
+        }
+        throw new AssertionError("bsdinstall's extraction names its three parts");
+    }
+
+    @Test
+    void stages_systemV_asksTheDiskAndNameTogetherThenCopiesFourNamedParts() {
+        final List<InstallerStyle.Stage> stages = InstallerStyle.SYSTEM_V.stages();
+        assertEquals(InstallerPage.SETTINGS, stages.get(0).page(), "the disk and the name are asked together");
+        assertEquals(List.of("Base system", "Utilities", "On-line help", "Manual pages"),
+                stages.get(1).steps().stream().map(Text::english).toList());
+    }
+
+    @Test
+    void offersDesktop_bsdInstallOffersOne_systemVDoesNot() {
+        assertTrue(InstallerStyle.BSD_INSTALL.offersDesktop());
+        assertFalse(InstallerStyle.SYSTEM_V.offersDesktop());
+    }
+
+    @Test
+    void title_bsdInstallAndSystemVNameThemselvesTheirOwnWay() {
+        assertEquals("FreeBSD Installer", InstallerStyle.BSD_INSTALL.title("FreeBSD").english());
+        assertEquals("UNIX System V Release 3.2 Installation - Bellwether Labs",
+                InstallerStyle.SYSTEM_V.title("UNIX System V").english());
+    }
+
+    @Test
     void heading_isEachInstallersOwnWords() {
         assertEquals("Partition disks", InstallerStyle.DEBIAN.heading(InstallerPage.DISK, "Debian").english());
         assertEquals("Guided storage configuration",

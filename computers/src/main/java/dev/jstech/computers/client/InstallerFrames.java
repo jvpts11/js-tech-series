@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.gui.layout.InstallerLayout;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
@@ -66,6 +67,16 @@ final class InstallerFrames {
                     0xFFFFFFFF, 0xFFFFFFFF, 0xFFDCE6FA, 0xFFF3A660, 0xFF00309C, 0xFFFFFFFF,
                     0xFFECE9D8, 0xFF0831D9, 0xFF3F8CF3, 0xFF0846C0, 0xFFFFFFFF,
                     0xFF000000, 0xFF000000, 0xFF505050, 0xFF0846C0, 0xFF0846C0, 0xFFFFFFFF));
+    private static final Palette<Bsd> BSD = Palettes.declare(JsComputers.MODID, "installer/bsd",
+            new Bsd(0xFF0000A8, 0xFFFFFFFF, 0xFFA8A8A8, 0xFF000000, 0xFF000000, 0xFFFFFFFF, 0xFF3C3C3C,
+                    0xFF0000A8, 0xFFFFFFFF, 0xFF000000, 0xFF3C3C3C, 0xFFC00000, 0xFF0000A8, 0xFFFFFFFF,
+                    0xFFFFFFFF, 0xFF0000A8, 0xFFFFE14D));
+    /*
+     * The one colour System V's console adds to its shared text ink: the green a finished part is named in. It is
+     * a palette of its own beside the frames' rather than under installer/text/, which holds one ink per style.
+     */
+    private static final Palette<SystemVOk> SYSTEM_V_OK = Palettes.declare(JsComputers.MODID,
+            "installer/system_v_ok", new SystemVOk(0xFF5FE07A));
     private static final Palette<Card> CARD = Palettes.declare(JsComputers.MODID, "installer/card",
             new Card(0xFF1E3E74, 0xFF0B1530, 0xFFFAFAFE, 0xFFC0C4D2, 0xFF6B7488, 0xFFE3E5EE, 0xFF202434,
                     0xFF202434, 0xFF202434, 0xFF6B7488, 0xFF3A6AE0, 0xFFE7EEFC, 0xFF202434,
@@ -101,6 +112,13 @@ final class InstallerFrames {
     private static final Palette<Ink> PLAIN_INK = Palettes.declare(JsComputers.MODID, "installer/text/plain",
             new Ink(0xFF10151B, 0xFFCDD6E2, 0xFF39D6C4, 0xFF7D8A9C, 0xFF19212B, 0xFFCDD6E2,
                     0xFF19212B, 0xFF39D6C4, 0xFF39D6C4, 0xFF10151B, 0xFFCDD6E2));
+    /*
+     * UNIX System V's own console: white on black, the one banner in reverse video the light grey the real
+     * terminal shows one in, and the accent a pale cyan for the few words this console picks out with it.
+     */
+    private static final Palette<Ink> SYSTEM_V_INK = Palettes.declare(JsComputers.MODID, "installer/text/system_v",
+            new Ink(0xFF000000, 0xFFBDBDBD, 0xFFFFFFFF, 0xFF8A8A8A, 0xFFBDBDBD, 0xFF000000,
+                    0xFFBDBDBD, 0xFF000000, 0xFF6FD3E0, 0xFFBDBDBD, 0xFF000000));
 
     private InstallerFrames() {
     }
@@ -116,15 +134,18 @@ final class InstallerFrames {
      * @param sw   how wide the picture is
      * @param sh   how tall it is
      * @param held the button the player is holding down, which is drawn pressed in
+     * @param asks whether the next button opens a question rather than moving on (bsdinstall's Auto row that
+     *             erases a disk), which makes it live even while the page itself cannot move on yet
      */
     static Frame paint(final GuiGraphics g, final Font font, final InstallerFlow flow, final int ticksDone,
-                       final int sx, final int sy, final int sw, final int sh, final Held held) {
+                       final int sx, final int sy, final int sw, final int sh, final Held held, final boolean asks) {
         return switch (flow.chrome()) {
             case FULL_TEXT -> fullText(g, font, flow, sx, sy, sw, sh);
             case BOXED_TEXT -> boxedText(g, font, flow, sx, sy, sw, sh);
             case WIZARD -> wizard(g, font, flow, sx, sy, sw, sh, held);
             case SIDE_PANEL -> sidePanel(g, font, flow, ticksDone, sx, sy, sw, sh, held);
             case CARD -> card(g, font, flow, sx, sy, sw, sh, held);
+            case DIALOG_BOX -> dialogBox(g, font, flow, sx, sy, sw, sh, held, asks);
         };
     }
 
@@ -153,6 +174,9 @@ final class InstallerFrames {
         g.fill(sx, sy, sx + sw, sy + sh, ink.back());
         if (flow.style() == InstallerStyle.UBUNTU) {
             return banded(g, font, flow, ink, sx, sy, sw, sh);
+        }
+        if (flow.style() == InstallerStyle.SYSTEM_V) {
+            return sysVConsole(g, font, flow, ink, sx, sy, sw, sh);
         }
         TextWall.draw(g, font, GameText.resolve(flow.style().title(flow.systemName())), sx + 8, sy + 8,
                 ink.bright());
@@ -190,6 +214,35 @@ final class InstallerFrames {
                     ink.text());
         }
         return new Frame(sx + 12, sy + band + 10, sw - 24, sh - band - 40, ink.paint(), null, null, null, null);
+    }
+
+    /**
+     * UNIX System V's own console: one banner in reverse video the whole way down, the page's own content under
+     * it, and a dim line of keys along the foot; the last page swaps that line for a reverse-video button instead,
+     * the one bsdinstall's neighbour prints its "Reboot" as.
+     */
+    private static Frame sysVConsole(final GuiGraphics g, final Font font, final InstallerFlow flow, final Ink ink,
+                                     final int sx, final int sy, final int sw, final int sh) {
+        final String banner = " " + GameText.resolve(flow.style().title(flow.systemName())) + " ";
+        final int barTop = sy + InstallerLayout.SYSV_BANNER_TOP;
+        final int barH = InstallerLayout.SYSV_BANNER_H;
+        g.fill(sx, barTop, sx + sw, barTop + barH, ink.panel());
+        TextWall.centered(g, font, banner, sx + sw / 2, barTop + 1, ink.panelText());
+        final boolean done = flow.page() == InstallerPage.DONE;
+        final int footTop = sy + sh - InstallerLayout.SYSV_FOOT_H;
+        if (done) {
+            final String reboot = " " + GameText.resolve(InstallerScreenTexts.FRAME_REBOOT) + " ";
+            final int rw = TextWall.width(font, reboot);
+            g.fill(sx + (sw - rw) / 2, footTop, sx + (sw + rw) / 2, sy + sh - 3, ink.panel());
+            TextWall.draw(g, font, reboot, sx + (sw - rw) / 2, footTop + 1, ink.panelText());
+        } else {
+            TextWall.draw(g, font, GameText.resolve(flow.style().hint(flow.page())),
+                    sx + InstallerLayout.SYSV_CONTENT_INSET, sy + sh - 9, ink.dim());
+        }
+        final int contentTop = barTop + barH + InstallerLayout.SYSV_CONTENT_GAP;
+        final int inset = InstallerLayout.SYSV_CONTENT_INSET;
+        return new Frame(sx + inset, contentTop, sw - 2 * inset, footTop - contentTop, ink.paint(),
+                done ? new int[]{sx, footTop, sw, barH} : null, null, null, null);
     }
 
     /** A grey window over a coloured ground, its title in a tab on the top edge. */
@@ -314,7 +367,7 @@ final class InstallerFrames {
             // Nothing to ask: the maker's name over the middle of the ground, the way it waits in life.
             /*
              * The whole lockup, not a mark with the name typed beside it: this is the one place in the install
-             * where the maker's name is the picture, and the mock has it as the thing itself.
+             * where the maker's name is the picture, on its own rather than beside a smaller mark.
              */
             SplashLogos.draw(g, SplashLogos.FRAMES_XP, cx + cw / 2, sy + 58);
             final Paint plain = new Paint(c.groundText(), c.groundBright(), c.groundDim(), c.groundAccent(),
@@ -378,6 +431,163 @@ final class InstallerFrames {
         return new Frame(cx + 10, cy + 42, cw - 20, ch - 68, paint, next, back, null, erase);
     }
 
+    /**
+     * bsdinstall's own look: a navy ground with the installer's name in its top corner, and a grey dialog box
+     * centred on it, its own page named in the top of its border the way the real dialogs are, with an OK-style
+     * button (named to fit the page) and, until the copy begins, a Cancel beside it. The copy itself draws no
+     * buttons at all: it runs to the end on its own.
+     */
+    private static Frame dialogBox(final GuiGraphics g, final Font font, final InstallerFlow flow,
+                                   final int sx, final int sy, final int sw, final int sh, final Held held,
+                                   final boolean asks) {
+        final Bsd c = BSD.get();
+        g.fill(sx, sy, sx + sw, sy + sh, c.ground());
+        g.drawString(font, GameText.resolve(flow.style().title(flow.systemName())), sx + 4, sy + 3, c.groundText(),
+                false);
+        g.fill(sx + 4, sy + 12, sx + sw - 4, sy + 13, c.groundText());
+
+        final int dx = sx + InstallerLayout.BSD_DIALOG_INSET_X;
+        final int dy = sy + InstallerLayout.BSD_DIALOG_INSET_TOP;
+        final int dw = sw - 2 * InstallerLayout.BSD_DIALOG_INSET_X;
+        final int dh = sh - InstallerLayout.BSD_DIALOG_INSET_BOTTOM;
+        final int shadow = InstallerLayout.BSD_DIALOG_SHADOW;
+        g.fill(dx + shadow, dy + shadow, dx + dw + shadow, dy + dh + shadow, c.shadow());
+        g.fill(dx, dy, dx + dw, dy + dh, c.face());
+        edgesBsd(g, dx, dy, dw, dh, c, true);
+        final String title = " " + GameText.resolve(flow.style().heading(flow.page(), flow.systemName())) + " ";
+        final int titleW = font.width(title);
+        final int titleX = dx + (dw - titleW) / 2;
+        g.fill(titleX, dy - 4, titleX + titleW, dy + 4, c.face());
+        g.drawString(font, title, titleX, dy - 3, c.select(), false);
+
+        final boolean copying = flow.page() == InstallerPage.COPY;
+        final boolean welcome = flow.page() == InstallerPage.WELCOME;
+        final boolean done = flow.page() == InstallerPage.DONE;
+        int[] next = null;
+        int[] cancel = null;
+        if (!copying) {
+            /*
+             * The plain OK label is padded a couple of spaces either side, the way the real dialogs draw it; a
+             * button with a word of its own (Install, Reboot) carries none, and its hotkey is that word's own
+             * first letter rather than the padded one.
+             */
+            final boolean plainOk = !welcome && !done;
+            final String okBody = plainOk ? "  " + GameText.resolve(InstallerScreenTexts.BSD_OK_BUTTON) + "  "
+                    : GameText.resolve(welcome ? InstallerScreenTexts.BSD_INSTALL_BUTTON
+                            : InstallerScreenTexts.FRAME_REBOOT);
+            final int okHotkey = plainOk ? 2 : 0;
+            final String cancelBody = GameText.resolve(InstallerScreenTexts.FRAME_CANCEL);
+            final int by = dy + dh - InstallerLayout.BSD_BUTTON_ROW_DY;
+            final boolean canGo = flow.canContinue() || done || asks;
+            /*
+             * Only the pages before anything is written offer a way out, and only the ones with a question of
+             * their own: the hostname page has nowhere else for the player to have come from but the page
+             * before it, so it carries none.
+             */
+            final boolean showCancel = flow.quittable() && (welcome || flow.page() == InstallerPage.COMPONENTS
+                    || flow.page() == InstallerPage.DISK || flow.page() == InstallerPage.MIRROR);
+            final int nextW = bsdButtonWidth(font, okBody);
+            final int cancelW = showCancel ? bsdButtonWidth(font, cancelBody) : 0;
+            int cursorX = InstallerLayout.bsdButtonRowX(dx, dw, nextW, cancelW);
+            // The button Enter presses is always this one, so it is the one drawn in the dialog's own navy.
+            next = bsdButton(g, font, cursorX, by, nextW, okBody, okHotkey, canGo, held == Held.NEXT, true, c);
+            if (showCancel) {
+                cursorX += nextW + InstallerLayout.BSD_BUTTON_GAP;
+                cancel = bsdButton(g, font, cursorX, by, cancelW, cancelBody, 0, true, held == Held.CANCEL, false, c);
+            }
+        }
+        final Paint paint = new Paint(c.text(), c.faceText(), c.dim(), c.hotkey(), c.select(), c.selectText());
+        // bsdinstall never draws a Back button of its own: every page's dialog offers only Cancel and its OK.
+        return new Frame(dx + InstallerLayout.BSD_DIALOG_CONTENT_X, dy + InstallerLayout.BSD_DIALOG_CONTENT_TOP,
+                dw - 2 * InstallerLayout.BSD_DIALOG_CONTENT_X,
+                dh - InstallerLayout.BSD_DIALOG_CONTENT_HEIGHT_MARGIN, paint, next, null, cancel, null);
+    }
+
+    /**
+     * A button in bsdinstall's own dialog style: raised, pressed a pixel in while held, its label between the
+     * angle brackets the real dialogs draw one in. The button Enter presses (the default) is drawn in the
+     * dialog's own navy with white letters and a yellow hotkey; every other one keeps the plain grey face,
+     * black letters and the hotkey's usual red.
+     *
+     * @param x           the button's own left edge, not a point measured back from the row's right end: the
+     *                    row is centred under the dialog rather than hung from its corner
+     * @param w           how wide the button stands, from {@link #bsdButtonWidth}, so the caller can lay out
+     *                    the whole row before any of it is drawn
+     * @param body        the label exactly as it is written between the angle brackets, padding and all
+     * @param hotkeyIndex which letter of {@code body} is the one picked out, since a padded label's hotkey
+     *                    does not sit at the start of the drawn string the way an unpadded one's does
+     */
+    private static int[] bsdButton(final GuiGraphics g, final Font font, final int x, final int y, final int w,
+                                   final String body, final int hotkeyIndex, final boolean enabled,
+                                   final boolean held, final boolean isDefault, final Bsd c) {
+        final String rendered = "<" + body + ">";
+        g.fill(x, y, x + w, y + BUTTON, isDefault && enabled ? c.select() : c.face());
+        edgesBsd(g, x, y, w, BUTTON, c, !held);
+        final int nudge = held ? 1 : 0;
+        final int ink = !enabled ? c.dim() : isDefault ? c.selectText() : c.faceText();
+        final int hotkeyInk = !enabled ? ink : isDefault ? c.hotkeyOn() : c.hotkey();
+        int cursor = x + (w - font.width(rendered)) / 2 + nudge;
+        final int textY = y + 3 + nudge;
+        cursor = drawLetter(g, font, "<", cursor, textY, ink);
+        for (int i = 0; i < body.length(); i++) {
+            final String letter = body.substring(i, i + 1);
+            cursor = drawLetter(g, font, letter, cursor, textY, i == hotkeyIndex && enabled ? hotkeyInk : ink);
+        }
+        drawLetter(g, font, ">", cursor, textY, ink);
+        return new int[]{x, y, w, BUTTON};
+    }
+
+    /** How wide a bsdinstall button comes out for that label, the angle brackets and the pad on both sides. */
+    private static int bsdButtonWidth(final Font font, final String body) {
+        return font.width("<" + body + ">") + 8;
+    }
+
+    /** One letter of a button's label, answering where the next one starts. */
+    private static int drawLetter(final GuiGraphics g, final Font font, final String letter, final int x,
+                                  final int y, final int ink) {
+        g.drawString(font, letter, x, y, ink, false);
+        return x + font.width(letter);
+    }
+
+    /** The navy a field being typed into sits on in bsdinstall's own dialogs, for the hostname page's own field. */
+    static int bsdField() {
+        return BSD.get().field();
+    }
+
+    /** The white a field being typed into is written in there. */
+    static int bsdFieldText() {
+        return BSD.get().fieldText();
+    }
+
+    /** The white a bsdinstall progress gauge is troughed in, empty or full. */
+    static int bsdGaugeTrough() {
+        return BSD.get().gaugeTrough();
+    }
+
+    /** The navy the same gauge fills with as it runs. */
+    static int bsdGaugeFill() {
+        return BSD.get().gaugeFill();
+    }
+
+    /** The green System V's own console names a finished part in. */
+    static int systemVDone() {
+        return SYSTEM_V_OK.get().done();
+    }
+
+    /**
+     * The two edges of a bevel in bsdinstall's own grey, since {@link #edges} always reads the wizard's palette:
+     * raised for the dialog's own border, which never presses in, and either way for a button, which does.
+     */
+    private static void edgesBsd(final GuiGraphics g, final int x, final int y, final int w, final int h,
+                                 final Bsd c, final boolean raised) {
+        final int light = raised ? c.light() : c.dark();
+        final int dark = raised ? c.dark() : c.light();
+        g.fill(x, y, x + w, y + 1, light);
+        g.fill(x, y, x + 1, y + h, light);
+        g.fill(x, y + h - 1, x + w, y + h, dark);
+        g.fill(x + w - 1, y, x + w, y + h, dark);
+    }
+
     /** The edition being installed, by the chrome of the desktop it comes with; the newest for any other. */
     private static PanelStyle editionOf(final InstallerFlow flow) {
         final ResourceLocation id = ResourceLocation.tryParse(flow.systemId());
@@ -398,6 +608,9 @@ final class InstallerFrames {
             case DEBIAN -> DEBIAN_INK.get();
             case FEDORA -> FEDORA_INK.get();
             case PLAIN -> PLAIN_INK.get();
+            case SYSTEM_V -> SYSTEM_V_INK.get();
+            /* bsdinstall paints its own navy ground in dialogBox() and never asks the plain-text ink for it. */
+            case BSD_INSTALL -> PLAIN_INK.get();
         };
     }
 
@@ -527,5 +740,21 @@ final class InstallerFrames {
                         int text, int bright, int dim, int accent, int select, int selectText,
                         int primary, int primaryHeld, int primaryOff, int primaryInk,
                         int pale, int paleHeld, int paleEdge, int paleHeldEdge, int paleInk) {
+    }
+
+    /**
+     * bsdinstall's own colours: the navy ground and its lettering, the grey dialog face and its text, the shadow
+     * under it and the two edges of its bevel, a selected row (navy, the way the real dialogs mark one), a field
+     * being typed into (navy too, white letters), plain body text and its dimmer note, the red a hotkey letter is
+     * picked out in, the white trough and navy fill of the extraction's own gauge, and the yellow a hotkey turns
+     * into on the button Enter presses.
+     */
+    private record Bsd(int ground, int groundText, int face, int faceText, int shadow, int light, int dark,
+                       int select, int selectText, int text, int dim, int hotkey, int field, int fieldText,
+                       int gaugeTrough, int gaugeFill, int hotkeyOn) {
+    }
+
+    /** System V's own console adds one colour to the shared text ink: the green a finished part is named in. */
+    private record SystemVOk(int done) {
     }
 }

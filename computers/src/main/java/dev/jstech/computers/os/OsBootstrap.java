@@ -147,7 +147,7 @@ public final class OsBootstrap {
             OsDef.terminalSystem(rl("freebsd"), rl("freebsd"), Platform.FREEBSD, HardwareEra.LEGACY, 2_048,
                     "FreeBSD", ShellKind.SH, PackageManagerKind.PKG, InstallMode.GUIDED,
                     SoftwareHouse.DAEMON_FOUNDATION)
-                    .withRam(16),
+                    .withRam(16).withInstaller(InstallerStyle.BSD_INSTALL),
             /*
              * UNIX System V: the one system of the first age that runs several programs at once, in ten
              * megabytes of disk and two of memory. It has no Mirror to install from, only media, which is the
@@ -156,7 +156,7 @@ public final class OsBootstrap {
             OsDef.terminalSystem(rl("unix"), rl("unix"), Platform.UNIX, HardwareEra.VINTAGE, 10,
                     "UNIX System V", ShellKind.SH, PackageManagerKind.NONE, InstallMode.GUIDED,
                     SoftwareHouse.BELLWETHER_LABS)
-                    .withRam(2)
+                    .withRam(2).withInstaller(InstallerStyle.SYSTEM_V)
             /*
              * OS case (c): PDA/Tablet/Smartphone portables ship with a factory mobile OS. Those item/block
              * types do not exist yet; register the mobile OS here once they do.

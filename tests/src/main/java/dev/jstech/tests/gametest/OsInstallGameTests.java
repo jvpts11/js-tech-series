@@ -18,7 +18,9 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
+import dev.jstech.computers.operation.payload.firmware.InstallerPayloads;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.media.MediaItem;
@@ -149,6 +151,49 @@ public final class OsInstallGameTests {
                     }
                     helper.assertTrue(job.ticksLeft() < job.ticksTotal(), "it moves whether or not anybody watches");
                     helper.assertTrue(!mainframe.hasOs(), "and still nothing is written part way through");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * Choosing a faster disk before the copy starts really does shorten it: the job is resized to the faster
+     * disk's own total, with nothing of it done yet, and the install still ends with the system written.
+     */
+    @GameTest(template = ARENA)
+    public static void guidedInstall_choosingAFasterDiskShortensTheCopyAndStillFinishes(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = placeMainframeWithInstaller(helper, pos);
+        // A second disk, faster than the first: SSD over HDD, so picking it really does cut the quote.
+        mainframe.getInventory().setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START + 1,
+                new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    mainframe.setNeedsPost(false);
+                    helper.assertTrue(FirmwarePayloads.beginInstall(helper.getLevel(), mainframe, -1L, -1) == null,
+                            "the installer opens");
+                    final InstallerFlow flow = mainframe.installer();
+                    helper.assertTrue(flow != null, "the machine opened an installer");
+                    helper.assertTrue(flow.targetSlot() == 0,
+                            "the first disk it read is chosen before anybody picks a faster one");
+                    final int slowTotal = flow.ticksTotal();
+                    InstallerPayloads.selectDiskAndResize(mainframe, flow, 1);
+                    helper.assertTrue(flow.targetSlot() == 1, "the faster disk is now the target");
+                    helper.assertTrue(flow.ticksTotal() < slowTotal,
+                            "a faster disk really does shorten the copy; got " + flow.ticksTotal()
+                                    + " was " + slowTotal);
+                    answerEveryQuestion(helper, mainframe);
+                    final OsInstallJob job = mainframe.installing();
+                    helper.assertTrue(job != null && job.ticksTotal() == flow.ticksTotal(),
+                            "the job was resized to the faster disk's own total before any of it ran");
+                    helper.assertTrue(job.targetSlot() == 1, "the job follows the disk that was chosen");
+                    for (int i = 0; i <= job.ticksTotal(); i++) {
+                        OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                    }
+                    helper.assertTrue(DEBIAN.equals(mainframe.installedOsId()),
+                            "the install still completes and writes the system");
+                    helper.assertTrue(mainframe.pendingInstallSlot() == 1,
+                            "on the disk it was retimed for, not the first one; got "
+                                    + mainframe.pendingInstallSlot());
                 })
                 .thenSucceed();
     }

@@ -67,7 +67,13 @@ public enum InstallerStyle implements IStableName {
     DEBIAN("debian"),
 
     /** The text hub: every answer in a numbered list, and a letter to begin. */
-    FEDORA("fedora");
+    FEDORA("fedora"),
+
+    /** FreeBSD's own: a navy ground and grey dialog boxes, their title flush in the top of their own border. */
+    BSD_INSTALL("bsd_install"),
+
+    /** UNIX System V's: one banner in reverse video and a settings page that asks the disk and the name together. */
+    SYSTEM_V("system_v");
 
     private static final TextKey TITLE_INSTALLER = TextKey.of("jsc.install.installer_style.title_installer",
             "%s installer");
@@ -128,6 +134,43 @@ public enum InstallerStyle implements IStableName {
             "Installing the base system");
     private static final TextKey DEBIAN_DONE = TextKey.of("jsc.install.installer_style.debian_done",
             "Finish the installation");
+    private static final TextKey TITLE_BSD = TextKey.of("jsc.install.installer_style.title_bsd", "%s Installer");
+    private static final TextKey BSD_WELCOME = TextKey.of("jsc.install.installer_style.bsd_welcome", "Welcome");
+    private static final TextKey BSD_NAME = TextKey.of("jsc.install.installer_style.bsd_name", "Set Hostname");
+    private static final TextKey BSD_COMPONENTS =
+            TextKey.of("jsc.install.installer_style.bsd_components", "Distribution Select");
+    private static final TextKey BSD_DISK = TextKey.of("jsc.install.installer_style.bsd_disk", "Partitioning");
+    private static final TextKey BSD_MIRROR = TextKey.of("jsc.install.installer_style.bsd_mirror",
+            "Mirror Selection");
+    private static final TextKey BSD_COPY = TextKey.of("jsc.install.installer_style.bsd_copy", "Archive Extraction");
+    private static final TextKey BSD_SERVICES = TextKey.of("jsc.install.installer_style.bsd_services",
+            "System Configuration");
+    private static final TextKey BSD_DESKTOP = TextKey.of("jsc.install.installer_style.bsd_desktop", "Desktop");
+    private static final TextKey BSD_DONE = TextKey.of("jsc.install.installer_style.bsd_done", "Complete");
+    /* What bsdinstall's archive extraction names the base system and its kernel, always copied. */
+    private static final TextKey STEP_BSD_BASE = TextKey.of("jsc.install.installer_style.step_bsd_base", "base.txz");
+    private static final TextKey STEP_BSD_KERNEL =
+            TextKey.of("jsc.install.installer_style.step_bsd_kernel", "kernel.txz");
+    /* Package-visible: InstallerFlow compares a running step's label against this one to leave it out of the copy
+     * when the ports component was not ticked, since the stages a style declares do not change at runtime. */
+    static final TextKey STEP_BSD_PORTS = TextKey.of("jsc.install.installer_style.step_bsd_ports", "ports.txz");
+
+    private static final TextKey TITLE_SYSTEM_V = TextKey.of("jsc.install.installer_style.title_system_v",
+            "%s Release 3.2 Installation - Bellwether Labs");
+    private static final TextKey SYSV_HINT_ASKING = TextKey.of("jsc.install.installer_style.sysv_hint_asking",
+            "Up and Down choose, Enter goes on, F3 leaves the installation.");
+    private static final TextKey SYSV_HINT_DONE = TextKey.of("jsc.install.installer_style.sysv_hint_done",
+            "Remove the medium and press Enter to reboot.");
+    /* What the one copy UNIX makes is named by, part by part, since there is one medium and so one copy to name. */
+    private static final TextKey STEP_SYSV_BASE = TextKey.of("jsc.install.installer_style.step_sysv_base",
+            "Base system");
+    private static final TextKey STEP_SYSV_UTILITIES = TextKey.of("jsc.install.installer_style.step_sysv_utilities",
+            "Utilities");
+    private static final TextKey STEP_SYSV_HELP = TextKey.of("jsc.install.installer_style.step_sysv_help",
+            "On-line help");
+    private static final TextKey STEP_SYSV_MANUAL = TextKey.of("jsc.install.installer_style.step_sysv_manual",
+            "Manual pages");
+
     private static final TextKey FEDORA_HUB = TextKey.of("jsc.install.installer_style.fedora_hub", "Installation");
     private static final TextKey FEDORA_DISK = TextKey.of("jsc.install.installer_style.fedora_disk",
             "Installation Destination");
@@ -290,6 +333,31 @@ public enum InstallerStyle implements IStableName {
                             STEP_INSTALLATION_ENVIRONMENT, STEP_PREPARING_DISK, STEP_COPYING_SYSTEM,
                             STEP_WRITING_BOOT_ENTRY, STEP_SETTING_HOST_NAME)),
                     new Stage(InstallerPage.DONE, InstallerChrome.FULL_TEXT, List.of()));
+            /*
+             * The real order: welcome, hostname, components, disk, Mirror, the extraction (base and kernel always,
+             * ports when ticked), services, a desktop only when the Mirror answered, and the end. A second COPY
+             * stage sits after DESKTOP with no steps of its own: a desktop chosen from the Mirror adds its fetch
+             * there rather than onto the extraction, which is already over by the time that page is reached.
+             */
+            case BSD_INSTALL -> List.of(
+                    new Stage(InstallerPage.WELCOME, InstallerChrome.DIALOG_BOX, List.of()),
+                    new Stage(InstallerPage.NAME, InstallerChrome.DIALOG_BOX, List.of()),
+                    new Stage(InstallerPage.COMPONENTS, InstallerChrome.DIALOG_BOX, List.of()),
+                    new Stage(InstallerPage.DISK, InstallerChrome.DIALOG_BOX, List.of()),
+                    new Stage(InstallerPage.MIRROR, InstallerChrome.DIALOG_BOX, List.of()),
+                    new Stage(InstallerPage.COPY, InstallerChrome.DIALOG_BOX,
+                            steps(STEP_BSD_BASE, STEP_BSD_KERNEL, STEP_BSD_PORTS)),
+                    new Stage(InstallerPage.SERVICES, InstallerChrome.DIALOG_BOX, List.of()),
+                    new Stage(InstallerPage.DESKTOP, InstallerChrome.DIALOG_BOX, List.of()),
+                    new Stage(InstallerPage.COPY, InstallerChrome.DIALOG_BOX, List.of()),
+                    new Stage(InstallerPage.DONE, InstallerChrome.DIALOG_BOX, List.of()));
+            /* The disk and the name asked together, the way the installers of the first age asked them, then the
+             * one copy, then the end. */
+            case SYSTEM_V -> List.of(
+                    new Stage(InstallerPage.SETTINGS, InstallerChrome.FULL_TEXT, List.of()),
+                    new Stage(InstallerPage.COPY, InstallerChrome.FULL_TEXT,
+                            steps(STEP_SYSV_BASE, STEP_SYSV_UTILITIES, STEP_SYSV_HELP, STEP_SYSV_MANUAL)),
+                    new Stage(InstallerPage.DONE, InstallerChrome.FULL_TEXT, List.of()));
         };
     }
 
@@ -317,6 +385,8 @@ public enum InstallerStyle implements IStableName {
     public Text title(final String systemName) {
         return switch (this) {
             case UBUNTU, DEBIAN, FEDORA -> TITLE_INSTALLER.with(systemName);
+            case BSD_INSTALL -> TITLE_BSD.with(systemName);
+            case SYSTEM_V -> TITLE_SYSTEM_V.with(systemName);
             default -> TITLE_SETUP.with(systemName);
         };
     }
@@ -385,6 +455,19 @@ public enum InstallerStyle implements IStableName {
                 case COPY -> FEDORA_COPY.text();
                 default -> FEDORA_DONE.text();
             };
+            case BSD_INSTALL -> switch (page) {
+                case WELCOME -> BSD_WELCOME.text();
+                case NAME -> BSD_NAME.text();
+                case COMPONENTS -> BSD_COMPONENTS.text();
+                case DISK -> BSD_DISK.text();
+                case MIRROR -> BSD_MIRROR.text();
+                case COPY -> BSD_COPY.text();
+                case SERVICES -> BSD_SERVICES.text();
+                case DESKTOP -> BSD_DESKTOP.text();
+                default -> BSD_DONE.text();
+            };
+            /* One banner in reverse video the whole way through: the page says what it is by its own content. */
+            case SYSTEM_V -> Text.EMPTY;
         };
     }
 
@@ -406,6 +489,9 @@ public enum InstallerStyle implements IStableName {
                     ? HINT_UBUNTU_REBOOT : HINT_UBUNTU_DONE_BACK).text();
             case DEBIAN -> HINT_DEBIAN.text();
             case FEDORA -> (page == InstallerPage.HUB ? HINT_FEDORA_HUB : HINT_FEDORA_PAGE).text();
+            /* Nothing is chosen and F3 no longer leaves once the copy has begun, so the page names neither. */
+            case SYSTEM_V -> page == InstallerPage.DONE ? SYSV_HINT_DONE.text()
+                    : page == InstallerPage.COPY ? Text.EMPTY : SYSV_HINT_ASKING.text();
             default -> Text.EMPTY;
         };
     }

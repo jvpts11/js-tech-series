@@ -83,6 +83,9 @@ public enum SettingKey {
 
     REMOTE("remote", (s, v) -> choose(v, Set.of("on", "true"), Set.of("off", "false"), s::setRemoteAllowed)),
 
+    /** FreeBSD's {@code cron_enable}: off, this machine's scheduled jobs do not run. On by default. */
+    CRON("cron", (s, v) -> choose(v, Set.of("on", "true"), Set.of("off", "false"), s::setCronEnabled)),
+
     /** Six hex digits, with or without a {@code #} in front. */
     ACCENT("accent", (s, v) -> {
         final Integer argb = parseAccent(v);

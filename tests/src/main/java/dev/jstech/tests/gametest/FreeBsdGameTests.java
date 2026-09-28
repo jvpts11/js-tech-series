@@ -15,6 +15,9 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
+import dev.jstech.computers.operation.payload.firmware.InstallerPayloads;
+import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsGating;
@@ -26,6 +29,16 @@ import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootManager;
 import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.fs.ProgramFilesProjection;
+import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.computers.os.install.InstallerPage;
+import dev.jstech.computers.os.install.InstallerStyle;
+import dev.jstech.computers.os.install.OsInstallJob;
+import dev.jstech.computers.os.install.OsInstallRunner;
+import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
@@ -306,6 +319,202 @@ public final class FreeBsdGameTests {
                             "and rc.conf names the machine it is on; got " + conf);
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * bsdinstall's own answers become the machine's own state: sshd is off unless ticked, cron is on, and a
+     * ticked ports component lays an empty tree ready for the first {@code portsnap fetch}.
+     */
+    @GameTest(template = ARENA)
+    public static void bsdinstall_setsSshdOffAndCronOnAndLaysAnEmptyPortsTree(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = mainframeWithBsdInstallMedia(helper, pos);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    mainframe.setNeedsPost(false);
+                    helper.assertTrue(FirmwarePayloads.beginInstall(helper.getLevel(), mainframe, -1L, -1) == null,
+                            "bsdinstall opens");
+                    final InstallerFlow flow = mainframe.installer();
+                    helper.assertTrue(flow != null && flow.style() == InstallerStyle.BSD_INSTALL,
+                            "the machine is in bsdinstall's own style");
+                    helper.assertTrue(flow.portsSelected(), "the ports component is ticked by default");
+                    helper.assertFalse(flow.sshdEnabled(), "sshd is off by default, unlike every other system");
+                    helper.assertTrue(flow.cronEnabled(), "cron is on by default");
+                    helper.assertTrue(!flow.disks().isEmpty() && "ada0".equals(flow.disks().get(0).label()),
+                            "the disk is named the way bsdinstall names one: " + flow.disks());
+                    for (int i = 0; i < flow.style().stages().size() && !flow.started(); i++) {
+                        flow.next();
+                    }
+                    final OsInstallJob job = mainframe.installing();
+                    helper.assertTrue(job != null, "the machine took the copy on");
+                    for (int i = 0; i <= job.ticksTotal(); i++) {
+                        OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                    }
+                    helper.assertTrue(flow.page() == InstallerPage.SERVICES,
+                            "the extraction stops on the page that still asks something, off any Mirror");
+                    helper.assertTrue(mainframe.installedOsId() == null,
+                            "and the system is not written while that page is unanswered");
+                    flow.next();
+                    for (int i = 0; i <= 10; i++) {
+                        OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                    }
+                    helper.assertTrue(FREEBSD.equals(mainframe.installedOsId()), "FreeBSD is on the disk");
+                    helper.assertFalse(mainframe.console().settings().remoteAllowed(),
+                            "the machine kept sshd off");
+                    helper.assertTrue(mainframe.console().settings().cronEnabled(), "and cron on");
+                    final String conf = ProgramFilesProjection.text(mainframe, "etc/rc.conf").orElse("");
+                    helper.assertTrue(conf.contains("sshd_enable=\"NO\"") && conf.contains("cron_enable=\"YES\""),
+                            "rc.conf reads back the same two switches; got " + conf);
+                    final ItemStack disk = mainframe.diskInSlot(0);
+                    helper.assertTrue(
+                            DiskFilesystem.listDirs(disk, "usr", FilesystemKind.HIERARCHICAL).contains("usr/ports"),
+                            "the ports tree's folder is there, empty, ready for the first fetch");
+                })
+                .thenSucceed();
+    }
+
+    /** Ticking sshd on and unticking ports on the services and components pages is carried all the way through. */
+    @GameTest(template = ARENA)
+    public static void bsdinstall_carriesTheServicesAndComponentsPagesAnswersThrough(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = mainframeWithBsdInstallMedia(helper, pos);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    mainframe.setNeedsPost(false);
+                    helper.assertTrue(FirmwarePayloads.beginInstall(helper.getLevel(), mainframe, -1L, -1) == null,
+                            "bsdinstall opens");
+                    final InstallerFlow flow = mainframe.installer();
+                    helper.assertTrue(flow != null, "the machine opened an installer");
+                    flow.setPortsSelected(false);
+                    flow.setSshdEnabled(true);
+                    flow.setCronEnabled(false);
+                    /*
+                     * The components page's own checkbox resizes the job the same way the disk and Mirror
+                     * pages do, since it changes how much the copy has to cover; done here by hand because this
+                     * answer is given straight to the flow rather than through the payload that pairs the two.
+                     */
+                    final OsInstallJob quoted = mainframe.installing();
+                    helper.assertTrue(quoted != null, "bsdinstall quoted a job the moment it opened");
+                    mainframe.setInstalling(new OsInstallJob(quoted.osId(), flow.targetSlot(), quoted.readerPos(),
+                            flow.ticksTotal(), flow.ticksTotal()));
+                    for (int i = 0; i < flow.style().stages().size() && !flow.started(); i++) {
+                        flow.next();
+                    }
+                    final OsInstallJob job = mainframe.installing();
+                    helper.assertTrue(job != null, "the copy started");
+                    for (int i = 0; i <= job.ticksTotal(); i++) {
+                        OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                    }
+                    helper.assertTrue(flow.page() == InstallerPage.SERVICES,
+                            "the extraction stops on the page that still asks something");
+                    flow.next();
+                    for (int i = 0; i <= 10; i++) {
+                        OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                    }
+                    helper.assertTrue(mainframe.console().settings().remoteAllowed(), "sshd was ticked on");
+                    helper.assertFalse(mainframe.console().settings().cronEnabled(), "cron was unticked");
+                    final ItemStack disk = mainframe.diskInSlot(0);
+                    helper.assertFalse(
+                            DiskFilesystem.listDirs(disk, "usr", FilesystemKind.HIERARCHICAL).contains("usr/ports"),
+                            "with ports unticked, no ports tree is laid down");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * With a Mirror in use, the extraction still has to stop on Services and then Desktop before the system is
+     * written, and the ports component comes down as the full tree the Mirror serves rather than an empty folder.
+     */
+    @GameTest(template = ARENA)
+    public static void bsdinstall_reachesServicesAndDesktopBeforeWritingTheSystem(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = mainframeWithBsdInstallMedia(helper, pos);
+        mainframe.installMirror();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    mainframe.setNeedsPost(false);
+                    helper.assertTrue(FirmwarePayloads.beginInstall(helper.getLevel(), mainframe, -1L, -1) == null,
+                            "bsdinstall opens");
+                    final InstallerFlow flow = mainframe.installer();
+                    helper.assertTrue(flow != null && flow.mirrorAnswers(), "the network's own Mirror answers");
+                    for (int i = 0; i < flow.style().stages().size() && !flow.started(); i++) {
+                        flow.next();
+                    }
+                    final OsInstallJob job = mainframe.installing();
+                    helper.assertTrue(job != null, "the copy started");
+                    for (int i = 0; i <= job.ticksTotal() && flow.page() != InstallerPage.SERVICES; i++) {
+                        OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                    }
+                    helper.assertTrue(flow.page() == InstallerPage.SERVICES,
+                            "the extraction stops on Services rather than finishing behind it: " + flow.page());
+                    helper.assertTrue(mainframe.installedOsId() == null,
+                            "the system is not written while a page that asks is still ahead");
+                    flow.setCronEnabled(true);
+                    flow.setSshdEnabled(true);
+                    flow.next();
+                    helper.assertTrue(flow.page() == InstallerPage.DESKTOP,
+                            "a Mirror in use puts the desktop page next: " + flow.page());
+                    helper.assertTrue(mainframe.installedOsId() == null,
+                            "and the system is still not written while the desktop page is unanswered");
+                    helper.assertTrue(!flow.desktops().isEmpty(), "the Mirror offers at least one desktop");
+                    final InstallerFlow.Desktop chosen = flow.desktops().get(0);
+                    final int beforeTotal = mainframe.installing().ticksTotal();
+                    // The same apply-and-resize a real ACTION_DESKTOP answer runs, not a bare flow mutation.
+                    InstallerPayloads.chooseDesktopAndResize(mainframe, flow, 0);
+                    final OsInstallJob resized = mainframe.installing();
+                    helper.assertTrue(resized != null && resized.ticksTotal() == beforeTotal + chosen.ticks(),
+                            "choosing the desktop grows the job by exactly its own ticks; got "
+                                    + (resized == null ? "none" : resized.ticksTotal()) + " for "
+                                    + (beforeTotal + chosen.ticks()));
+                    flow.next();
+                    helper.assertTrue(flow.page() == InstallerPage.COPY,
+                            "the desktop's fetch runs on the second copy stage, after the desktop page: "
+                                    + flow.page());
+                    helper.assertTrue(mainframe.installedOsId() == null,
+                            "and the system is still not written before that fetch ticks out");
+                    for (int i = 0; i <= resized.ticksTotal() && mainframe.installedOsId() == null; i++) {
+                        OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                    }
+                    helper.assertTrue(FREEBSD.equals(mainframe.installedOsId()),
+                            "the system is written once the fetch and both pages are answered");
+                    helper.assertTrue(mainframe.console().settings().cronEnabled(), "cron was answered on Services");
+                    helper.assertTrue(mainframe.console().settings().remoteAllowed(), "sshd was answered on Services");
+                    helper.assertTrue(mainframe.console().isInstalled(chosen.id()),
+                            "the desktop chosen from the Mirror is installed with the system");
+                    final ItemStack disk = mainframe.diskInSlot(0);
+                    helper.assertTrue(DiskFilesystem.exists(disk, "usr/ports/INDEX-14"),
+                            "with the Mirror in use, the ports tree is laid full rather than empty");
+                })
+                .thenSucceed();
+    }
+
+    /** A running Mainframe with an empty disk and, beside it, a CD drive holding FreeBSD's guided installer. */
+    private static MainframeBlockEntity mainframeWithBsdInstallMedia(final GameTestHelper helper, final BlockPos pos) {
+        helper.setBlock(pos, ComputingModule.MAINFRAME.get());
+        if (!(helper.getBlockEntity(pos) instanceof MainframeBlockEntity mainframe)) {
+            throw new IllegalStateException("no Mainframe at " + pos);
+        }
+        final ItemStackHandler inv = mainframe.getInventory();
+        inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
+                new ItemStack(ComputingModule.MOTHERBOARD_MTX_P.get()));
+        inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START, new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
+        inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START, new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
+        inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
+        inv.setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START, new ItemStack(ComputingModule.GPU_HD_7970.get()));
+        inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
+                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+        mainframe.togglePower();
+
+        final BlockPos readerPos = pos.east();
+        helper.setBlock(readerPos, ComputingModule.CD_DRIVE.get());
+        if (!(helper.getBlockEntity(readerPos) instanceof MediaReaderBlockEntity reader)) {
+            throw new IllegalStateException("no reader at " + readerPos);
+        }
+        final ItemStack disc = new ItemStack(ComputingModule.CD_ROM.get());
+        MediaItem.setKind(disc, MediaKind.OS_INSTALL);
+        MediaItem.setPayload(disc, FREEBSD);
+        reader.mediaSlot().setStackInSlot(0, disc);
+        return mainframe;
     }
 
     private static boolean has(final BootSequence sequence, final String label) {

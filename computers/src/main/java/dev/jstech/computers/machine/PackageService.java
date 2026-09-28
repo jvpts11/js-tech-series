@@ -128,7 +128,15 @@ public final class PackageService {
      */
     public List<ProgramSpec> offered() {
         final OsDef os = this.installedOs();
-        final Platform platform = os == null ? Platform.LINUX : os.platform();
+        return offeredFor(os == null ? Platform.LINUX : os.platform());
+    }
+
+    /**
+     * The packages a manager for that platform can offer: everything installable that runs there. Shared so a
+     * snapshot laid down whole at install time (before a manager on the machine itself could be asked) and this
+     * class's own packages menu never drift apart over which programs a platform is offered.
+     */
+    static List<ProgramSpec> offeredFor(final Platform platform) {
         final List<ProgramSpec> out = new ArrayList<>();
         for (final ProgramSpec spec : OsRegistry.programs()) {
             if (spec.installable() && spec.platforms().contains(platform)) {

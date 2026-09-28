@@ -84,6 +84,14 @@ public final class InstallerFlow {
     private int eraseSlot = NO_DISK;
     private int erasePrompt = NO_DISK;
     private String computerName;
+    /** Whether the optional parts of the system (bsdinstall's ports) go with the copy; ticked by default. */
+    private boolean portsSelected = true;
+    /** Whether a Mirror that answers is actually used, which the Mirror page lets the player turn down. */
+    private boolean useMirror;
+    /** Whether the installed system's own scheduler starts at boot; on by default, as the real system ships. */
+    private boolean cronEnabled = true;
+    /** Whether the installed system answers other computers on the network; off until the Services page ticks it. */
+    private boolean sshdEnabled;
 
     private InstallerFlow(final InstallerStyle style, final String systemId, final String systemName,
                           final int footprintMb, final int copyTicks, final double baseRate,
@@ -100,6 +108,7 @@ public final class InstallerFlow {
         this.mirrorHost = mirrorHost == null ? "" : mirrorHost;
         this.stages = style.stages();
         this.computerName = trimName(suggestedName);
+        this.useMirror = !this.mirrorHost.isEmpty();
         for (final Disk disk : this.disks) {
             if (this.targetSlot == NO_DISK && this.roomOn(disk)) {
                 this.targetSlot = disk.slot();
@@ -167,6 +176,21 @@ public final class InstallerFlow {
                                          final List<Desktop> desktops, final String mirrorHost,
                                          final int stageIndex, final int targetSlot, final String computerName,
                                          final String desktopId, final int eraseSlot) {
+        return restored(style, systemId, systemName, footprintMb, copyTicks, disks, desktops, mirrorHost, stageIndex,
+                targetSlot, computerName, desktopId, eraseSlot, true, !mirrorHost.isEmpty(), true, false);
+    }
+
+    /**
+     * The same, also carrying the answers bsdinstall's own pages add: whether the ports component is going with
+     * the copy, whether the Mirror that answered is actually being used, and the two services page.
+     */
+    public static InstallerFlow restored(final InstallerStyle style, final String systemId, final String systemName,
+                                         final int footprintMb, final int copyTicks, final List<Disk> disks,
+                                         final List<Desktop> desktops, final String mirrorHost,
+                                         final int stageIndex, final int targetSlot, final String computerName,
+                                         final String desktopId, final int eraseSlot, final boolean portsSelected,
+                                         final boolean useMirror, final boolean cronEnabled,
+                                         final boolean sshdEnabled) {
         /*
          * A restored installation keeps the time it was quoted rather than working one out again: the copy is
          * already under way at that speed, and a disk swapped underneath it must not make the bar jump.
@@ -175,6 +199,10 @@ public final class InstallerFlow {
                 computerName, desktops, mirrorHost);
         flow.restoreErase(eraseSlot);
         flow.select(targetSlot);
+        flow.cronEnabled = cronEnabled;
+        flow.sshdEnabled = sshdEnabled;
+        flow.portsSelected = portsSelected;
+        flow.useMirror = useMirror && flow.mirrorAnswers();
         flow.chooseDesktop(indexOfDesktop(flow, desktopId));
         flow.goToStage(stageIndex);
         return flow;
@@ -219,6 +247,62 @@ public final class InstallerFlow {
 
     public boolean mirrorAnswers() {
         return !this.mirrorHost.isEmpty();
+    }
+
+    /** Whether the optional parts of the system (bsdinstall's ports) are going with the copy. */
+    public boolean portsSelected() {
+        return this.portsSelected;
+    }
+
+    /** Ticks or unticks the optional parts of the system; changes what the copy's own steps come to. */
+    public void setPortsSelected(final boolean selected) {
+        this.portsSelected = selected;
+        this.rebuildSteps();
+    }
+
+    /** Whether a Mirror that answers is actually being used, as the Mirror page lets the player choose. */
+    public boolean useMirror() {
+        return this.useMirror;
+    }
+
+    /**
+     * Whether the desktop page is one this installation actually shows: a Mirror has to answer, and the player
+     * has to have kept it rather than choosing none on the Mirror page.
+     */
+    public boolean desktopStageActive() {
+        return this.mirrorAnswers() && this.useMirror;
+    }
+
+    /**
+     * Chooses whether the Mirror that answered is used at all; turning it down is choosing none, which drops
+     * whatever desktop was chosen along with it, since none is offered without one.
+     */
+    public void setUseMirror(final boolean use) {
+        this.useMirror = use && this.mirrorAnswers();
+        if (!this.useMirror) {
+            this.desktopIndex = NO_DESKTOP;
+        }
+        this.rebuildSteps();
+    }
+
+    /** Whether the installed system's own scheduler starts at boot. */
+    public boolean cronEnabled() {
+        return this.cronEnabled;
+    }
+
+    public void setCronEnabled(final boolean enabled) {
+        this.cronEnabled = enabled;
+    }
+
+    /**
+     * Whether the installed system answers other computers on the network, the same switch as {@code config remote}.
+     */
+    public boolean sshdEnabled() {
+        return this.sshdEnabled;
+    }
+
+    public void setSshdEnabled(final boolean enabled) {
+        this.sshdEnabled = enabled;
     }
 
     public int stageIndex() {
@@ -420,7 +504,11 @@ public final class InstallerFlow {
             this.goTo(InstallerPage.HUB);
             return;
         }
-        this.goToStage(this.stageIndex + 1);
+        int target = this.stageIndex + 1;
+        while (target < this.stages.size() - 1 && this.hiddenStage(target)) {
+            target++;
+        }
+        this.goToStage(target);
     }
 
     /** Moves back a page, or to the list of questions on the installer that keeps one. */
@@ -432,7 +520,33 @@ public final class InstallerFlow {
             this.goTo(InstallerPage.HUB);
             return;
         }
-        this.goToStage(this.stageIndex - 1);
+        int target = this.stageIndex - 1;
+        while (target > 0 && this.hiddenStage(target)) {
+            target--;
+        }
+        this.goToStage(target);
+    }
+
+    /**
+     * Whether that stage is one this installation is not showing right now: the desktop page of a style that asks
+     * about a Mirror at all, when no Mirror is being used to serve one. A style with no Mirror page of its own
+     * never hides its desktop page this way, so an installer that always offered one (off a network or on) keeps
+     * offering it exactly where it always did. Every stage a style declares stays in its fixed list; this is what
+     * lets one of them go unseen without the list itself changing under a page turned mid-installation.
+     */
+    private boolean hiddenStage(final int index) {
+        return this.stages.get(index).page() == InstallerPage.DESKTOP && this.hasMirrorStage()
+                && !this.desktopStageActive();
+    }
+
+    /** Whether this style's own pages ask where packages and ports come from, which is what makes a Mirror optional. */
+    private boolean hasMirrorStage() {
+        for (final InstallerStyle.Stage stage : this.stages) {
+            if (stage.page() == InstallerPage.MIRROR) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Jumps to a page by name, which is how the list of questions reaches the one being answered. */
@@ -530,9 +644,17 @@ public final class InstallerFlow {
         }
     }
 
-    /** Leaves the disk alone. */
+    /**
+     * Leaves the disk alone: undoes an offer not yet taken, and, as long as nothing has been written yet, an
+     * erase already agreed to as well, since one questions asked twice is answered no differently from being
+     * asked once inline, and neither ever destroys anything before the copy itself begins.
+     */
     public void cancelErase() {
         this.erasePrompt = NO_DISK;
+        if (!this.started()) {
+            this.eraseSlot = NO_DISK;
+            this.rebuildSteps();
+        }
     }
 
     /** Restores an erase that was agreed to before the world went away. */
@@ -551,22 +673,38 @@ public final class InstallerFlow {
     /*
      * The steps of the system's own copy share its time evenly, and what the Mirror adds keeps its own: a
      * desktop comes over the network at the network's speed, which is not the speed of the disc in the drive.
+     *
+     * <p>Every step declared, kept or not, is weighed against the whole: a component left out (bsdinstall's
+     * ports, when it was not ticked) simply drops its own even share off the total instead of being folded into
+     * the ones that stay, which is what makes leaving it out really shorten the copy.
      */
     private void rebuildSteps() {
         final List<Step> built = new ArrayList<>();
-        int own = 0;
+        int declared = 0;
         for (final InstallerStyle.Stage stage : this.stages) {
-            own += stage.steps().size();
+            declared += stage.steps().size();
         }
-        final int total = Math.max(1, own);
-        int written = 0;
+        final int total = Math.max(1, declared);
+        int position = 0;
         int lastWithSteps = 0;
+        /*
+         * bsdinstall's copy already runs before the Desktop page: a desktop chosen there adds a step of its own,
+         * and that step has to be gated behind the Desktop page rather than behind whichever earlier stage last
+         * had static steps of its own, or the fetch would finish before the player had chosen anything to fetch.
+         */
+        int afterDesktop = -1;
         for (int i = 0; i < this.stages.size(); i++) {
+            if (this.stages.get(i).page() == InstallerPage.DESKTOP) {
+                afterDesktop = i + 1;
+            }
             for (final Text label : this.stages.get(i).steps()) {
-                final int through = (int) ((long) this.copyTicks * (written + 1) / total);
-                final int before = (int) ((long) this.copyTicks * written / total);
+                final int through = (int) ((long) this.copyTicks * (position + 1) / total);
+                final int before = (int) ((long) this.copyTicks * position / total);
+                position++;
+                if (this.excluded(label)) {
+                    continue;
+                }
                 built.add(new Step(label, i, through - before));
-                written++;
                 lastWithSteps = i;
             }
         }
@@ -574,9 +712,17 @@ public final class InstallerFlow {
         if (chosen != null) {
             final Text label = this.mirrorAnswers() ? INSTALLING_FROM_MIRROR.with(chosen.name(), this.mirrorHost)
                     : INSTALLING_DESKTOP.with(chosen.name());
-            built.add(new Step(label, lastWithSteps, chosen.ticks()));
+            final int attachAt = afterDesktop < 0 ? lastWithSteps
+                    : Math.max(lastWithSteps, Math.min(afterDesktop, this.stages.size() - 1));
+            built.add(new Step(label, attachAt, chosen.ticks()));
         }
         this.steps = List.copyOf(built);
+    }
+
+    /** Whether that static step is left out of the copy: bsdinstall's ports, when the component was not ticked. */
+    private boolean excluded(final Text label) {
+        return this.style == InstallerStyle.BSD_INSTALL && !this.portsSelected
+                && label.equals(InstallerStyle.STEP_BSD_PORTS.text());
     }
 
     /**

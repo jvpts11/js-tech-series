@@ -8,8 +8,10 @@
 package dev.jstech.computers.os.install;
 
 import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.machine.PortsService;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.OpenInstallerPayload;
+import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
@@ -25,6 +27,7 @@ import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,6 +89,13 @@ public final class OsInstallRunner {
      *
      * <p>A screen watching this is not told every tick: it holds the same installer and walks the same clock,
      * and is only sent the page again when the page really changes, which is the one thing it cannot work out.
+     *
+     * <p>Ticking out every step the job was given is not the same as being over: a job is quoted from the steps
+     * an installer knows about when the copy starts, and a page later in the order can still add a step of its
+     * own (a desktop chosen from the Mirror, fetched after the extraction rather than during it) before that page
+     * is even reached. So the job is only really finished once the installer has landed on a page that does not
+     * itself ask something; landing on one that does pauses the clock there, however many of the job's own ticks
+     * are already spent, until an answer moves the installer on.
      */
     private static boolean carry(final IOsHost machine, final ServerLevel level,
                                  final BlockPos pos, final OsInstallJob job, final InstallerFlow flow) {
@@ -93,10 +103,12 @@ public final class OsInstallRunner {
             job.tick();
             machine.markChanged();
         }
-        if (flow.advance(job.ticksTotal() - job.ticksLeft()) && !job.finished()) {
+        final boolean moved = flow.advance(job.ticksTotal() - job.ticksLeft());
+        final boolean over = job.finished() && !flow.stage().asks();
+        if (moved && !over) {
             show(level, machine, pos, flow);
         }
-        return job.finished();
+        return over;
     }
 
     /** Writes the system, gives the machine the name it was asked for, and leaves the installer on its last page. */
@@ -122,6 +134,7 @@ public final class OsInstallRunner {
         }
         name(machine, flow);
         desktop(machine, flow);
+        services(machine, flow, slot, level);
         flow.goTo(InstallerPage.DONE);
         machine.markChanged();
         show(level, machine, pos, flow);
@@ -139,6 +152,37 @@ public final class OsInstallRunner {
         final InstallerFlow.Desktop chosen = flow.desktop();
         if (chosen != null && machine.console() != null) {
             machine.console().install(chosen.id());
+        }
+    }
+
+    /**
+     * bsdinstall's own answers become the system's own state: the services page's two switches, and the ports
+     * tree when the component was ticked, laid full from what the Mirror serves when it is the one being used, or
+     * empty and ready for the first {@code portsnap fetch} to fill otherwise.
+     *
+     * <p>Every other guided installer leaves both alone: {@code cron} stays on and {@code config remote} keeps
+     * whichever default that system already ships with, since only bsdinstall's services page ever asks.
+     */
+    private static void services(final IOsHost machine, final InstallerFlow flow, final int slot,
+                                 final ServerLevel level) {
+        if (flow.style() != InstallerStyle.BSD_INSTALL) {
+            return;
+        }
+        if (machine.console() != null) {
+            machine.console().settings().setCronEnabled(flow.cronEnabled());
+            machine.console().settings().setRemoteAllowed(flow.sshdEnabled());
+        }
+        if (flow.portsSelected()) {
+            final int target = slot >= 0 ? slot : machine.defaultInstallSlot();
+            final ItemStack disk = target >= 0 && target < machine.diskSlots()
+                    ? machine.diskInSlot(target) : ItemStack.EMPTY;
+            if (!disk.isEmpty()) {
+                if (flow.useMirror() && flow.mirrorAnswers()) {
+                    PortsService.layFullTree(disk, FilesystemKind.HIERARCHICAL, level);
+                } else {
+                    PortsService.layEmptyTree(disk, FilesystemKind.HIERARCHICAL);
+                }
+            }
         }
     }
 

@@ -34,7 +34,8 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
                                    String systemName, int footprintMb, int copyTicks, List<InstallerFlow.Disk> disks,
                                    List<InstallerFlow.Desktop> desktops, String mirrorHost, int stageIndex,
                                    int targetSlot, String computerName, String desktopId, int eraseSlot,
-                                   int ticksDone) implements CustomPacketPayload {
+                                   int ticksDone, boolean portsSelected, boolean useMirror, boolean cronEnabled,
+                                   boolean sshdEnabled) implements CustomPacketPayload {
 
     /** The longest a drive's name or the system on it may be, which is wider than any the game ships. */
     public static final int MAX_LABEL = 64;
@@ -54,7 +55,7 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
         return new OpenInstallerPayload(hostPos, monitorPos, flow.style(), flow.systemId(), flow.systemName(),
                 flow.footprintMb(), flow.copyTicks(), flow.disks(), flow.desktops(), flow.mirrorHost(),
                 flow.stageIndex(), flow.targetSlot(), flow.computerName(), flow.desktopId(), flow.eraseSlot(),
-                ticksDone);
+                ticksDone, flow.portsSelected(), flow.useMirror(), flow.cronEnabled(), flow.sshdEnabled());
     }
 
     /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
@@ -72,7 +73,8 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
     public InstallerFlow flow() {
         return InstallerFlow.restored(this.style, this.systemId, this.systemName, this.footprintMb, this.copyTicks,
                 this.disks, this.desktops, this.mirrorHost, this.stageIndex, this.targetSlot, this.computerName,
-                this.desktopId, this.eraseSlot);
+                this.desktopId, this.eraseSlot, this.portsSelected, this.useMirror, this.cronEnabled,
+                this.sshdEnabled);
     }
 
     private static void encode(final RegistryFriendlyByteBuf buf, final OpenInstallerPayload p) {
@@ -108,6 +110,10 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
         buf.writeUtf(cut(p.desktopId(), MAX_ID), MAX_ID);
         buf.writeVarInt(p.eraseSlot() + 1);
         buf.writeVarInt(p.ticksDone());
+        buf.writeBoolean(p.portsSelected());
+        buf.writeBoolean(p.useMirror());
+        buf.writeBoolean(p.cronEnabled());
+        buf.writeBoolean(p.sshdEnabled());
     }
 
     private static OpenInstallerPayload decode(final RegistryFriendlyByteBuf buf) {
@@ -137,9 +143,13 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
         final String desktopId = buf.readUtf(MAX_ID);
         final int eraseSlot = buf.readVarInt() - 1;
         final int ticksDone = buf.readVarInt();
+        final boolean portsSelected = buf.readBoolean();
+        final boolean useMirror = buf.readBoolean();
+        final boolean cronEnabled = buf.readBoolean();
+        final boolean sshdEnabled = buf.readBoolean();
         return new OpenInstallerPayload(host, monitor, style == null ? InstallerStyle.PLAIN : style, systemId,
                 systemName, footprintMb, copyTicks, disks, desktops, mirrorHost, stageIndex, targetSlot,
-                computerName, desktopId, eraseSlot, ticksDone);
+                computerName, desktopId, eraseSlot, ticksDone, portsSelected, useMirror, cronEnabled, sshdEnabled);
     }
 
     /** A string trimmed to what the wire takes, since writing one that is too long fails outright. */

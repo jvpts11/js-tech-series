@@ -1382,7 +1382,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         if (console == null || console.jobs().isEmpty() || !(this instanceof IComputerTerminalHost terminal)) {
             return;
         }
-        final List<MachineJobs.Job> due = console.jobs().due(server.getDayTime());
+        final List<MachineJobs.Job> due = console.jobs().due(server.getDayTime(), console.settings().cronEnabled());
         if (due.isEmpty()) {
             return;
         }

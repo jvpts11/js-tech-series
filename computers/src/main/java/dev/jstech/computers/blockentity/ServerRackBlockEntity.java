@@ -1596,7 +1596,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             if (system != null) {
                 state.installer = Installers.restored(unitHost(slot), level,
                         system, memo.getInt("Copy"), memo.getInt("Stage"), memo.getInt("Slot"),
-                        memo.getString("Name"), memo.getString("Desktop"), memo.getInt("Erase"));
+                        memo.getString("Name"), memo.getString("Desktop"), memo.getInt("Erase"),
+                        memo.getBoolean("Ports"), memo.getBoolean("UseMirror"), memo.getBoolean("Cron"),
+                        memo.getBoolean("Sshd"));
             }
         }
         return state.installer;
@@ -1645,6 +1647,10 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         pages.putString("Name", state.installer.computerName());
         pages.putString("Desktop", state.installer.desktopId());
         pages.putInt("Erase", state.installer.eraseSlot());
+        pages.putBoolean("Ports", state.installer.portsSelected());
+        pages.putBoolean("UseMirror", state.installer.useMirror());
+        pages.putBoolean("Cron", state.installer.cronEnabled());
+        pages.putBoolean("Sshd", state.installer.sshdEnabled());
         return pages;
     }
 

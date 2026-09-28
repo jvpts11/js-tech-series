@@ -73,6 +73,8 @@ final class InstallerScreenTexts {
             "No Mirror answers, so it comes up at its terminal.");
     static final TextKey TERMINAL_ONLY_CHOICE =
             TextKey.of("jsc.installer.screen.terminal_only_choice", "None, the terminal only");
+    /** bsdinstall's own, bare word for the same choice: its dialogs never spell out what leaving it does. */
+    static final TextKey BSD_DESKTOP_NONE = TextKey.of("jsc.installer.screen.bsd_desktop_none", "None");
 
     // The list of questions.
     static final TextKey HUB_FOOT = TextKey.of("jsc.installer.screen.hub_foot",
@@ -109,6 +111,8 @@ final class InstallerScreenTexts {
             TextKey.of("jsc.installer.screen.take_out_second", "or the machine starts Setup again.");
     static final TextKey RESTART_TO_START = TextKey.of("jsc.installer.screen.restart_to_start", "Restart to start %s.");
     static final TextKey ERASE_ASK = TextKey.of("jsc.installer.screen.erase_ask", "Erase Disk %s?");
+    /* The same question on an installer that calls its disks by device name (ada0) rather than by number. */
+    static final TextKey ERASE_ASK_NAMED = TextKey.of("jsc.installer.screen.erase_ask_named", "Erase %s?");
     static final TextKey AND_EVERY_FILE = TextKey.of("jsc.installer.screen.and_every_file", "%s and every file on");
     static final TextKey EVERY_FILE = TextKey.of("jsc.installer.screen.every_file", "Every file on");
     static final TextKey WILL_BE_DELETED = TextKey.of("jsc.installer.screen.will_be_deleted", "%s will be deleted.");
@@ -118,6 +122,8 @@ final class InstallerScreenTexts {
     // The frames around an installer's pages and the buttons they carry.
     static final TextKey FRAME_HELP = TextKey.of("jsc.installer.frame.help", "[ Help ]");
     static final TextKey FRAME_REBOOT_NOW = TextKey.of("jsc.installer.frame.reboot_now", "[ Reboot Now ]");
+    /* The bare word, for the two consoles that print their own brackets or reverse video around a button. */
+    static final TextKey FRAME_REBOOT = TextKey.of("jsc.installer.frame.reboot", "Reboot");
     /* Written-out buttons of a terminal installer, padded to one width so they line up. */
     static final TextKey FRAME_DONE = TextKey.of("jsc.installer.frame.done", "[ Done       ]");
     static final TextKey FRAME_BACK = TextKey.of("jsc.installer.frame.back", "[ Back       ]");
@@ -159,6 +165,101 @@ final class InstallerScreenTexts {
     static final TextKey COPY_NOTHING_WRITTEN =
             TextKey.of("jsc.installer.copy.nothing_written", "Nothing was written to %s.");
     static final TextKey COPY_CLOSE = TextKey.of("jsc.installer.copy.close", "CLOSE");
+
+    // bsdinstall's own pages.
+    static final TextKey BSD_INSTALL_BUTTON = TextKey.of("jsc.installer.screen.bsd_install_button", "Install");
+    static final TextKey BSD_OK_BUTTON = TextKey.of("jsc.installer.screen.bsd_ok_button", "OK");
+    static final TextKey BSD_WELCOME_BODY_1 = TextKey.of("jsc.installer.screen.bsd_welcome_body_1",
+            "Welcome to %s! This will install");
+    static final TextKey BSD_WELCOME_BODY_2 = TextKey.of("jsc.installer.screen.bsd_welcome_body_2",
+            "%s on this computer.");
+    static final TextKey BSD_NAME_BODY_1 = TextKey.of("jsc.installer.screen.bsd_name_body_1",
+            "Please choose a hostname for this");
+    static final TextKey BSD_NAME_BODY_2 = TextKey.of("jsc.installer.screen.bsd_name_body_2", "computer.");
+    static final TextKey BSD_COMPONENTS_INTRO_1 = TextKey.of("jsc.installer.screen.bsd_components_intro_1",
+            "Choose optional system components to");
+    static final TextKey BSD_COMPONENTS_INTRO_2 =
+            TextKey.of("jsc.installer.screen.bsd_components_intro_2", "install:");
+    static final TextKey BSD_COMPONENT_BASE = TextKey.of("jsc.installer.screen.bsd_component_base",
+            "base      the base system (always)");
+    static final TextKey BSD_COMPONENT_KERNEL = TextKey.of("jsc.installer.screen.bsd_component_kernel",
+            "kernel    the kernel (always)");
+    static final TextKey BSD_COMPONENT_PORTS = TextKey.of("jsc.installer.screen.bsd_component_ports",
+            "ports     the Ports Collection");
+    static final TextKey BSD_MIRROR_INTRO = TextKey.of("jsc.installer.screen.bsd_mirror_intro",
+            "Where should pkg and ports fetch from?");
+    static final TextKey BSD_MIRROR_OPTION = TextKey.of("jsc.installer.screen.bsd_mirror_option",
+            "mirror://mainframe   the network's Mirror");
+    static final TextKey BSD_MIRROR_NONE =
+            TextKey.of("jsc.installer.screen.bsd_mirror_none", "none                 install from CD only");
+    static final TextKey BSD_SERVICES_INTRO_1 = TextKey.of("jsc.installer.screen.bsd_services_intro_1",
+            "Choose the services you would like to be");
+    static final TextKey BSD_SERVICES_INTRO_2 =
+            TextKey.of("jsc.installer.screen.bsd_services_intro_2", "started at boot:");
+    static final TextKey BSD_SERVICE_CRON = TextKey.of("jsc.installer.screen.bsd_service_cron",
+            "cron   run commands on a schedule");
+    static final TextKey BSD_SERVICE_SSHD = TextKey.of("jsc.installer.screen.bsd_service_sshd",
+            "sshd   let other computers reach this one");
+    static final TextKey BSD_DESKTOP_INTRO_1 = TextKey.of("jsc.installer.screen.bsd_desktop_intro_1",
+            "The Mirror answered. Install a desktop");
+    static final TextKey BSD_DESKTOP_INTRO_2 = TextKey.of("jsc.installer.screen.bsd_desktop_intro_2", "now?");
+    static final TextKey BSD_DONE_LINE_1 = TextKey.of("jsc.installer.screen.bsd_done_line_1",
+            "%s is installed on %s.");
+    static final TextKey BSD_DONE_LINE_2 = TextKey.of("jsc.installer.screen.bsd_done_line_2",
+            "Remove the CD and reboot.");
+    static final TextKey BSD_DISK_INTRO = TextKey.of("jsc.installer.screen.bsd_disk_intro",
+            "How would you like to install %s?");
+    static final TextKey BSD_DISK_AUTO = TextKey.of("jsc.installer.screen.bsd_disk_auto",
+            "Auto (UFS)    use the whole of %s (%s, empty)");
+    /**
+     * The same row when no empty disk has room: real bsdinstall's Auto (UFS) still names a disk big enough and
+     * takes the whole of it, erasing the system that disk already holds rather than leaving the player with
+     * nothing to choose.
+     */
+    static final TextKey BSD_DISK_AUTO_ERASE = TextKey.of("jsc.installer.screen.bsd_disk_auto_erase",
+            "Auto (UFS)    use the whole of %s (%s, %s)");
+    /* The same again for a disk big enough that holds files but no system. */
+    static final TextKey BSD_DISK_AUTO_ERASE_FILES = TextKey.of("jsc.installer.screen.bsd_disk_auto_erase_files",
+            "Auto (UFS)    use the whole of %s (%s, its files erased)");
+    static final TextKey BSD_DISK_BESIDE = TextKey.of("jsc.installer.screen.bsd_disk_beside",
+            "Beside        share %s with %s (%s free)");
+    static final TextKey BSD_DISK_TABLE_ROW = TextKey.of("jsc.installer.screen.bsd_disk_table_row", "%s   %s   %s");
+    static final TextKey BSD_DISK_EMPTY = TextKey.of("jsc.installer.screen.bsd_disk_empty", "empty");
+    static final TextKey BSD_EXTRACT_DONE = TextKey.of("jsc.installer.screen.bsd_extract_done", "[   Done    ]");
+    static final TextKey BSD_EXTRACT_IN_PROGRESS =
+            TextKey.of("jsc.installer.screen.bsd_extract_in_progress", "[ In Progress ]");
+    static final TextKey BSD_EXTRACT_WAITING =
+            TextKey.of("jsc.installer.screen.bsd_extract_waiting", "[  Waiting  ]");
+    static final TextKey BSD_EXTRACTING = TextKey.of("jsc.installer.screen.bsd_extracting",
+            "Extracting distribution files...");
+    static final TextKey BSD_OVERALL_PROGRESS =
+            TextKey.of("jsc.installer.screen.bsd_overall_progress", "Overall Progress");
+
+    // UNIX System V's own page.
+    static final TextKey SYSV_CHOOSE_DISK = TextKey.of("jsc.installer.screen.sysv_choose_disk",
+            "Choose the disk to install the %s on:");
+    static final TextKey SYSV_HOLDS_QUESTION = TextKey.of("jsc.installer.screen.sysv_holds_question",
+            "%s holds %s. What should happen to it?");
+    static final TextKey SYSV_ERASE_OPTION = TextKey.of("jsc.installer.screen.sysv_erase_option",
+            "1  Erase %s and install the %s");
+    static final TextKey SYSV_BESIDE_OPTION = TextKey.of("jsc.installer.screen.sysv_beside_option",
+            "2  Install the %s beside %s");
+    static final TextKey SYSV_INSTALLING_BESIDE = TextKey.of("jsc.installer.screen.sysv_installing_beside",
+            "Installing the %s on %s (beside %s)");
+    static final TextKey SYSV_INSTALLING = TextKey.of("jsc.installer.screen.sysv_installing",
+            "Installing the %s on %s");
+    static final TextKey SYSV_DONE_LINE_1 =
+            TextKey.of("jsc.installer.screen.sysv_done_line_1", "The %s is installed on %s.");
+    static final TextKey SYSV_DONE_NAME = TextKey.of("jsc.installer.screen.sysv_done_name",
+            "Computer name     %s");
+    static final TextKey SYSV_DONE_SPACE = TextKey.of("jsc.installer.screen.sysv_done_space",
+            "Space used        %s of %s");
+    static final TextKey SYSV_DONE_BOOT_ORDER = TextKey.of("jsc.installer.screen.sysv_done_boot_order",
+            "Boot order        %s first, then %s");
+    static final TextKey SYSV_STATUS_COPYING = TextKey.of("jsc.installer.screen.sysv_status_copying", "copying");
+    static final TextKey SYSV_STATUS_WAITING = TextKey.of("jsc.installer.screen.sysv_status_waiting", "waiting");
+    static final TextKey SYSV_MONITOR_NOTE = TextKey.of("jsc.installer.screen.sysv_monitor_note",
+            "The copy carries on if the monitor is closed.");
 
     private InstallerScreenTexts() {
     }

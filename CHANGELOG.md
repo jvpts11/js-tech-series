@@ -240,6 +240,21 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   memory while it runs, a lesser processor, and less free disk to install. That goes for a port on FreeBSD and
   for everything Gentoo builds. The machine remembers which of its programs it built until the program is removed
   or the disk it was on is formatted; the same program installed again as a package asks what a package asks.
+- FreeBSD installs through bsdinstall, in its own grey dialogs on navy. It opens with Install, then asks for the
+  machine's hostname, whether to add the ports tree, the disk (the whole of an empty one, beside a system already
+  on one, or the whole of one that is erased first, after asking), where `pkg` and the ports fetch from (the
+  network's Mirror, or nowhere), which services start at boot (`cron` and `sshd`) and, when the Mirror answers, a
+  desktop to install with it, None always offered. It extracts the system with a gauge and ends with Reboot.
+  With no Mirror it fetches nothing, and a ports tree asked for is laid down empty for `portsnap fetch` to fill.
+- UNIX installs from its own console installer, which names the parts of its one copy as it writes them, offers
+  to erase a disk that already holds a system or to install beside it, and ends with Reboot.
+- `cron` is a switch, FreeBSD's `cron_enable` in `/etc/rc.conf`, on unless bsdinstall turned it off. Off, the jobs
+  in a machine's crontab wait instead of running, while a job put in the background with `&` runs anyway. FreeBSD
+  says "Starting cron." as it comes up and FreeBSD and UNIX say "Stopping cron." as they go down, while it is on.
+- On a FreeBSD installed through bsdinstall, other computers reach the machine only when `sshd` was ticked on the
+  services page; it shows as `sshd_enable` in `/etc/rc.conf` and is the same switch as `config remote`. Every
+  other system keeps letting them in, as before.
+- Choosing a faster disk on an installer's disk page makes the copy quicker, and the time left changes to match.
 - A resource pack can recolour the computing screens. Their colours are files under `assets/jscore/palettes/` and
   `assets/jsc/palettes/`: each hardware era's skin; each desktop's windows, panel and launcher; the chrome each style
   of desktop draws its title bars, buttons, fields and tabs with; CDE's eight colour schemes; the Network Management

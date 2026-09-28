@@ -224,6 +224,21 @@ public final class ComputerSettings {
         this.remoteAllowed = value;
     }
 
+    /**
+     * Whether this machine's own scheduler runs the jobs a player put on it with a schedule of their own,
+     * FreeBSD's {@code cron_enable}. On by default, as the real service ships; a bsdinstall install lets the
+     * player turn it off on the services page.
+     */
+    private boolean cronEnabled = true;
+
+    public boolean cronEnabled() {
+        return cronEnabled;
+    }
+
+    public void setCronEnabled(final boolean value) {
+        this.cronEnabled = value;
+    }
+
     public String themePreset() {
         return themePreset;
     }
@@ -549,6 +564,7 @@ public final class ComputerSettings {
         }
         lines.add(pad("shares") + (shared.isEmpty() ? "none" : String.join(", ", shared)));
         lines.add(pad(SettingKey.REMOTE) + (remoteAllowed ? REMOTE_ON.with("on").english() : "off"));
+        lines.add(pad(SettingKey.CRON) + (cronEnabled ? "on" : "off"));
         return lines;
     }
 

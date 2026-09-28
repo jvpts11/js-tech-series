@@ -56,6 +56,21 @@ public record InstallerActionPayload(BlockPos hostPos, BlockPos monitorPos, int 
     /** Restart into what was just installed. */
     public static final int ACTION_REBOOT = 9;
 
+    /** Leaves a disk that was offered for erasing exactly as it was, the choice bsdinstall's settings page draws. */
+    public static final int ACTION_CANCEL_ERASE = 10;
+
+    /** Ticks or unticks bsdinstall's one optional component: the value is {@code 1} for on, {@code 0} for off. */
+    public static final int ACTION_PORTS = 11;
+
+    /** Chooses whether the Mirror that answered is used: {@code 1} to use it, {@code 0} for none. */
+    public static final int ACTION_MIRROR = 12;
+
+    /** Ticks or unticks the {@code cron} service on the services page: {@code 1} for on, {@code 0} for off. */
+    public static final int ACTION_CRON = 13;
+
+    /** Ticks or unticks the {@code sshd} service on the services page: {@code 1} for on, {@code 0} for off. */
+    public static final int ACTION_SSHD = 14;
+
     public static final CustomPacketPayload.Type<InstallerActionPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "installer_action"));
 

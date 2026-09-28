@@ -11,6 +11,7 @@ import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.fs.DiskFilesystem;
@@ -117,6 +118,46 @@ public final class PortsService {
         this.terminal = terminal;
         this.level = level;
         this.packages = packages;
+    }
+
+    /**
+     * Lays the ports tree's folder down empty at install time, for the machine bsdinstall ticked it on: no
+     * {@code Makefile} in it and no snapshot tag, so {@code portsnap fetch} still has fetching to do the first
+     * time this machine reaches a Mirror, exactly as if the folder had been made by hand.
+     */
+    public static void layEmptyTree(final ItemStack disk, final FilesystemKind kind) {
+        DiskFilesystem.mkdirs(disk, PortsTree.ROOT, kind);
+    }
+
+    /**
+     * Lays the whole tree down at install time exactly as {@code portsnap fetch} followed by {@code extract}
+     * would: every port the Mirror serves FreeBSD, filed by category, with the day's snapshot tag, so the tree
+     * is ready for {@code make} the moment the machine boots, with no fetch of its own left to do.
+     */
+    public static void layFullTree(final ItemStack disk, final FilesystemKind kind, final ServerLevel level) {
+        final List<ProgramSpec> ports = PackageService.offeredFor(Platform.FREEBSD);
+        final long seconds = level.getGameTime() / SetupTiming.TICKS_PER_SECOND;
+        final Map<String, String> files = PortsTree.files(ports, seconds);
+        long free = DriveTable.freeWeightOf(disk);
+        for (final Map.Entry<String, String> file : files.entrySet()) {
+            final DiskFilesystem.WriteResult written = DiskFilesystem.write(disk, file.getKey(), FileType.OTHER,
+                    file.getValue(), free, kind, level.getGameTime());
+            if (written != DiskFilesystem.WriteResult.OK) {
+                return;
+            }
+            free -= weight(file.getValue(), disk);
+        }
+        final String tag = snapshotTag(WorldStamp.of(level.getDayTime()).day(), ports.size());
+        DiskFilesystem.write(disk, PortsTree.SNAPSHOT_TAG, FileType.OTHER, tag, free, kind, level.getGameTime());
+    }
+
+    /**
+     * The tag a fetched snapshot leaves: the day it came down and how many ports it held. Shared so a snapshot
+     * laid down whole at install time and one {@code portsnap fetch} brings later never spell the same day two
+     * different ways.
+     */
+    private static String snapshotTag(final long day, final int ports) {
+        return "portsnap|" + day + "|" + ports + "\n";
     }
 
     /**
@@ -339,7 +380,7 @@ public final class PortsService {
         if (system == null) {
             return;
         }
-        final String tag = "portsnap|" + WorldStamp.of(this.level.getDayTime()).day() + "|" + ports + "\n";
+        final String tag = snapshotTag(WorldStamp.of(this.level.getDayTime()).day(), ports);
         final ItemStack disk = system.disk();
         final long had = DiskFilesystem.read(disk, PortsTree.SNAPSHOT_TAG).map(text -> weight(text, disk)).orElse(0L);
         DiskFilesystem.write(disk, PortsTree.SNAPSHOT_TAG, FileType.OTHER, tag, DriveTable.freeWeightOf(disk) + had,

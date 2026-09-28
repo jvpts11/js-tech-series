@@ -127,6 +127,13 @@ class LayoutAuditTest {
         c.add(new AuditCase("OsInstallLayout(failed)",
                 OsInstallLayout.failedLayout(OsInstallLayout.mostFailureLines()), true));
         c.add(AuditCase.onTheGlass("InstallerLayout", InstallerLayout.layout()));
+        /*
+         * bsdinstall's own dialog, at its longest English heading and button word ("System Configuration",
+         * "Install"), padded a few letters longer to stand in for a translation running longer still, so this
+         * does not have to spell one out to be held to it.
+         */
+        c.add(AuditCase.onTheGlass("InstallerLayout.bsdDialog",
+                InstallerLayout.bsdDialogLayout("System Configuration....", "Install....")));
         // The no-boot dialog takes the bar's place and is drawn over the title, so it is audited on its own.
         c.add(AuditCase.onTheGlass("BootSequenceLayout", BootSequenceLayout.layout()));
         c.add(AuditCase.onTheGlass("BootSequenceLayout.noBoot",

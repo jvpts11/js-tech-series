@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -258,6 +259,111 @@ class InstallerFlowTest {
     void mirrorAnswers_saysWhetherThereIsOneToServeADesktop() {
         assertTrue(ubuntu(List.of(EMPTY_500)).mirrorAnswers());
         assertFalse(frames11(List.of(EMPTY_500)).mirrorAnswers());
+    }
+
+    @Test
+    void portsSelected_isTickedByDefaultAndUntickingItShortensTheCopy() {
+        final InstallerFlow flow = bsdInstall(List.of(EMPTY_500));
+        assertTrue(flow.portsSelected());
+        assertEquals(3, flow.steps().size(), "base, kernel and ports");
+        final int total = flow.ticksTotal();
+        flow.setPortsSelected(false);
+        assertEquals(2, flow.steps().size(), "ports is left out of the copy");
+        assertTrue(flow.ticksTotal() < total,
+                "leaving a component out drops its own even share of the time rather than folding it into the "
+                        + "rest: " + flow.ticksTotal() + " is not shorter than " + total);
+        flow.setPortsSelected(true);
+        assertEquals(3, flow.steps().size(), "and putting it back returns the step");
+        assertEquals(total, flow.ticksTotal(), "and the copy's whole time with it");
+    }
+
+    @Test
+    void cronAndSshd_defaultOnAndOffTheOppositeOfEveryOtherSystem() {
+        final InstallerFlow flow = bsdInstall(List.of(EMPTY_500));
+        assertTrue(flow.cronEnabled());
+        assertFalse(flow.sshdEnabled());
+        flow.setCronEnabled(false);
+        flow.setSshdEnabled(true);
+        assertFalse(flow.cronEnabled());
+        assertTrue(flow.sshdEnabled());
+    }
+
+    @Test
+    void useMirror_turnedDown_hidesTheDesktopPageAndDropsAnyDesktopAlreadyChosen() {
+        final InstallerFlow flow = bsdInstallWithDesktop(List.of(EMPTY_500));
+        assertTrue(flow.useMirror());
+        assertTrue(flow.desktopStageActive());
+        flow.chooseDesktop(0);
+        assertTrue(flow.desktop() != null);
+        flow.setUseMirror(false);
+        assertNull(flow.desktop(), "choosing none drops whatever desktop was picked");
+        assertFalse(flow.desktopStageActive());
+        for (int i = 0; i < 20 && flow.page() != InstallerPage.DONE; i++) {
+            assertNotEquals(InstallerPage.DESKTOP, flow.page(), "the desktop page is never landed on");
+            if (flow.stage().asks()) {
+                flow.next();
+            } else {
+                flow.advance(flow.ticksUnlocked());
+            }
+        }
+        assertEquals(InstallerPage.DONE, flow.page(), "the installer still reaches its last page");
+    }
+
+    @Test
+    void useMirror_cannotBeTurnedOnWhenNoMirrorAnswersAtAll() {
+        final InstallerFlow flow = bsdInstall(List.of(EMPTY_500));
+        assertFalse(flow.mirrorAnswers());
+        flow.setUseMirror(true);
+        assertFalse(flow.useMirror(), "there is nothing to use");
+    }
+
+    @Test
+    void next_ubuntuOffAnyNetwork_stillReachesTheDesktopPage() {
+        /*
+         * A style with no Mirror page of its own (Ubuntu, Debian, Fedora) never had a way to turn a Mirror down:
+         * it either answers or it does not. Its desktop page must show either way, unlike bsdinstall's own, which
+         * a Mirror turned down really does hide.
+         */
+        final InstallerFlow flow = InstallerFlow.quoted(InstallerStyle.UBUNTU, "jsc:ubuntu", "Ubuntu", 8_192, 100,
+                List.of(EMPTY_500), "RENDER-01", List.of(), "");
+        assertFalse(flow.mirrorAnswers());
+        flow.next();
+        assertEquals(InstallerPage.NAME, flow.page());
+        flow.next();
+        assertEquals(InstallerPage.DESKTOP, flow.page(),
+                "off any network, Ubuntu's desktop page comes up at its own terminal choice, not skipped");
+    }
+
+    @Test
+    void cancelErase_afterConfirming_undoesItBeforeAnythingIsWritten() {
+        final InstallerFlow flow = frames11(List.of(FULL_WITH_UBUNTU));
+        flow.askErase(1);
+        flow.confirmErase();
+        assertEquals(1, flow.eraseSlot());
+        flow.cancelErase();
+        assertEquals(InstallerFlow.NO_DISK, flow.eraseSlot(),
+                "a confirmed erase can still be taken back while nothing has been written");
+    }
+
+    @Test
+    void restored_carriesThePortsMirrorCronAndSshdAnswersThrough() {
+        final InstallerFlow flow = InstallerFlow.restored(InstallerStyle.BSD_INSTALL, "jsc:freebsd", "FreeBSD",
+                2_048, 100, List.of(EMPTY_500), List.of(GNOME), "CORE", 0, 0, "desk", "", InstallerFlow.NO_DISK,
+                false, true, false, true);
+        assertFalse(flow.portsSelected());
+        assertTrue(flow.useMirror());
+        assertFalse(flow.cronEnabled());
+        assertTrue(flow.sshdEnabled());
+    }
+
+    private static InstallerFlow bsdInstall(final List<InstallerFlow.Disk> disks) {
+        return InstallerFlow.quoted(InstallerStyle.BSD_INSTALL, "jsc:freebsd", "FreeBSD", 2_048, 100, disks,
+                "desk", List.of(), "");
+    }
+
+    private static InstallerFlow bsdInstallWithDesktop(final List<InstallerFlow.Disk> disks) {
+        return InstallerFlow.quoted(InstallerStyle.BSD_INSTALL, "jsc:freebsd", "FreeBSD", 2_048, 100, disks,
+                "desk", List.of(GNOME), "CORE");
     }
 
     private static InstallerFlow frames11(final List<InstallerFlow.Disk> disks) {

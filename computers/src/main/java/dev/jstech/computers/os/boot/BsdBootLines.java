@@ -54,7 +54,7 @@ final class BsdBootLines {
         for (int slot = 0; slot < machine.diskSlots(); slot++) {
             final ItemStack disk = machine.diskInSlot(slot);
             if (disk.getItem() instanceof DiskItem) {
-                out.line(Text.literal("ada" + drive++ + ": <" + disk.getHoverName().getString() + ">"));
+                out.line(Text.literal(Installers.adaLabel(drive++) + ": <" + disk.getHoverName().getString() + ">"));
             }
         }
         out.line(Text.literal("Trying to mount root from ufs:/dev/ada0p2 [rw]..."));
@@ -68,6 +68,12 @@ final class BsdBootLines {
         }
         out.line(Text.literal("Starting devd."));
         out.line(Text.literal("Starting syslogd."));
+        if (machine.console() != null && machine.console().settings().cronEnabled()) {
+            out.line(Text.literal("Starting cron."));
+        }
+        if (machine.console() != null && machine.console().settings().remoteAllowed()) {
+            out.line(Text.literal("Starting sshd."));
+        }
         final String desktop = desktopOf(machine);
         if (!desktop.isEmpty()) {
             out.line(Text.literal("Starting " + desktop + " display manager."));
@@ -85,6 +91,12 @@ final class BsdBootLines {
         final String desktop = desktopOf(machine);
         if (!desktop.isEmpty()) {
             out.line(Text.literal("Stopping " + desktop + " display manager."));
+        }
+        if (machine.console() != null && machine.console().settings().cronEnabled()) {
+            out.line(Text.literal("Stopping cron."));
+        }
+        if (machine.console() != null && machine.console().settings().remoteAllowed()) {
+            out.line(Text.literal("Stopping sshd."));
         }
         out.line(Text.literal("Stopping syslogd."));
         out.line(Text.literal("Stopping devd."));

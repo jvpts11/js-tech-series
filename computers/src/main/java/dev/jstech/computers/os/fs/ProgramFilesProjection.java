@@ -246,9 +246,14 @@ public final class ProgramFilesProjection {
                     + ProgramVersions.of(os.id()) + "\"\n");
         }
         if (path.equals("etc/rc.conf")) {
-            // What the startup scripts read, which is this machine: its name, and its network when it has one.
+            // What the startup scripts read, which is this machine: its name, its network, and its services.
+            final ComputerConsoleState console = host.console();
+            final boolean cron = console == null || console.settings().cronEnabled();
+            final boolean sshd = console != null && console.settings().remoteAllowed();
             return Optional.of("hostname=\"" + Installers.hostName(host) + "\"\n"
                     + (host.networkAttached() ? "ifconfig_em0=\"DHCP\"\n" : "")
+                    + "cron_enable=\"" + (cron ? "YES" : "NO") + "\"\n"
+                    + "sshd_enable=\"" + (sshd ? "YES" : "NO") + "\"\n"
                     + "dumpdev=\"AUTO\"\n");
         }
         if (path.equals("etc/inittab")) {

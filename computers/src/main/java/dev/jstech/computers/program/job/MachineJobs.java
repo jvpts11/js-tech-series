@@ -85,11 +85,18 @@ public final class MachineJobs {
      *
      * <p>A job that runs once leaves the list when it has; one on a schedule stays and waits for its hour to
      * come round again. Nothing is run twice in the same hour however often this is asked.
+     *
+     * <p>The machine's own scheduler can be turned off: {@code cron} switched off leaves a job on a schedule
+     * waiting rather than running it, exactly as the real service does when its own switch is off. A job put in
+     * the background with {@code &} is not {@code cron}'s and keeps running whatever this switch says.
      */
-    public List<Job> due(final long dayTime) {
+    public List<Job> due(final long dayTime, final boolean cronEnabled) {
         final List<Job> ready = new ArrayList<>();
         for (int i = 0; i < this.jobs.size(); i++) {
             final Job job = this.jobs.get(i);
+            if (!cronEnabled && !job.when().once()) {
+                continue;
+            }
             if (!job.when().dueAt(dayTime, job.lastRun())) {
                 continue;
             }

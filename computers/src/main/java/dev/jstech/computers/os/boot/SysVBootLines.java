@@ -51,7 +51,8 @@ final class SysVBootLines {
     }
 
     /**
-     * The same machine stopping: the warning to the console, the run level, and the last sentence.
+     * The same machine stopping: the warning to the console, the run level, the scheduler when it was running,
+     * and the last sentence.
      *
      * @param restarting the machine is coming straight back up, which is run level 6 and not 0
      */
@@ -63,6 +64,10 @@ final class SysVBootLines {
         out.line(Text.literal("INIT: New run level: " + (restarting ? "6" : "0")));
         out.line(Text.literal("The system is coming down.  Please wait."));
         out.line(Text.literal("System services are now being stopped."));
+        // Only a scheduler that was running has anything to stop.
+        if (machine.console() != null && machine.console().settings().cronEnabled()) {
+            out.line(Text.literal("Stopping cron."));
+        }
         out.line(Text.literal(restarting ? "The system is being restarted." : "The system is down."));
         return out.build();
     }

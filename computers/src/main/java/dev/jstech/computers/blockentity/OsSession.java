@@ -135,7 +135,8 @@ final class OsSession {
             if (system != null) {
                 this.installer = Installers.restored(this.machine, level, system, memo.getInt("Copy"),
                         memo.getInt("Stage"), memo.getInt("Slot"), memo.getString("Name"),
-                        memo.getString("Desktop"), memo.getInt("Erase"));
+                        memo.getString("Desktop"), memo.getInt("Erase"), memo.getBoolean("Ports"),
+                        memo.getBoolean("UseMirror"), memo.getBoolean("Cron"), memo.getBoolean("Sshd"));
             }
         }
         return this.installer;
@@ -520,6 +521,10 @@ final class OsSession {
             pages.putString("Name", this.installer.computerName());
             pages.putString("Desktop", this.installer.desktopId());
             pages.putInt("Erase", this.installer.eraseSlot());
+            pages.putBoolean("Ports", this.installer.portsSelected());
+            pages.putBoolean("UseMirror", this.installer.useMirror());
+            pages.putBoolean("Cron", this.installer.cronEnabled());
+            pages.putBoolean("Sshd", this.installer.sshdEnabled());
             tag.put("Installer", pages);
         } else if (this.installerMemo != null) {
             // Saved again without ever being asked for: a machine unloaded before anybody looked at it.

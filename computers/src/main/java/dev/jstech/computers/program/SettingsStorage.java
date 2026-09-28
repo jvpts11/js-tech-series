@@ -39,6 +39,7 @@ final class SettingsStorage {
         s.putString("SaveDrive", String.valueOf(settings.defaultSaveDrive()));
         s.putBoolean("RemovableAutoOpen", settings.removableAutoOpen());
         s.putBoolean("RemoteAllowed", settings.remoteAllowed());
+        s.putBoolean("CronEnabled", settings.cronEnabled());
         s.putBoolean("TaskbarCentered", settings.taskbarCentered());
         s.putBoolean("DarkMode", settings.darkMode());
         // Always written, even empty: a machine whose player unpinned everything must not get the default back.
@@ -93,6 +94,7 @@ final class SettingsStorage {
         }
         settings.setRemovableAutoOpen(!s.contains("RemovableAutoOpen") || s.getBoolean("RemovableAutoOpen"));
         settings.setRemoteAllowed(!s.contains("RemoteAllowed") || s.getBoolean("RemoteAllowed"));
+        settings.setCronEnabled(!s.contains("CronEnabled") || s.getBoolean("CronEnabled"));
         settings.setTaskbarCentered(!s.contains("TaskbarCentered") || s.getBoolean("TaskbarCentered"));
         settings.setDarkMode(s.getBoolean("DarkMode"));
         if (s.contains("Pinned")) {

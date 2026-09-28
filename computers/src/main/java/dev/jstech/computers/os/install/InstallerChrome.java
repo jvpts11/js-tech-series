@@ -30,5 +30,8 @@ public enum InstallerChrome {
     SIDE_PANEL,
 
     /** A pale card, the question at the top and the buttons at the bottom right. */
-    CARD
+    CARD,
+
+    /** A plain ground with a small grey dialog box centred on it, its title flush in the top of its own border. */
+    DIALOG_BOX
 }
