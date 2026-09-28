@@ -25,17 +25,26 @@ import dev.jstech.core.palette.Palettes;
  */
 @PaletteHolder
 public record InkPalette(int ground, int gutter, int gutterText, int caret, int currentLine,
-                         int plain, int keyword, int name, int text, int number, int comment, int symbol) {
+                         int plain, int keyword, int name, int text, int number, int comment, int symbol,
+                         int bright, int selection) {
 
-    /** For a window with a light client area: the Frames editions and every Linux desktop but a dark one. */
+    /**
+     * For a window with a light client area: the Frames editions and every Linux desktop but a dark one.
+     *
+     * <p>{@code bright} matches the string ink rather than black: on this ground the ordinary text is
+     * already close to black, so black would sit beside it almost unchanged, and an emphasis colour has to
+     * be more than merely darker to be told apart at a glance.
+     */
     public static final Palette<InkPalette> LIGHT = Palettes.declare(JsComputers.MODID, "ink/light", new InkPalette(
             0xFFFFFFFF, 0xFFF2F3F6, 0xFF8A8F9C, 0xFF1B2437, 0xFFF6F7FB,
-            0xFF1B2437, 0xFF0033B0, 0xFF1B2437, 0xFF9B1C1C, 0xFF8A4B00, 0xFF2F7A3F, 0xFF505A6B));
+            0xFF1B2437, 0xFF0033B0, 0xFF1B2437, 0xFF9B1C1C, 0xFF8A4B00, 0xFF2F7A3F, 0xFF505A6B,
+            0xFF9B1C1C, 0xFF105048));
 
     /** For a window with a dark client area: Frames 11 in its dark palette, and a terminal in a window. */
     public static final Palette<InkPalette> DARK = Palettes.declare(JsComputers.MODID, "ink/dark", new InkPalette(
             0xFF1E212A, 0xFF1A1D25, 0xFF7B8494, 0xFFE7E9EF, 0xFF242833,
-            0xFFD5DAE4, 0xFF8FA9F5, 0xFFD5DAE4, 0xFFDB9A72, 0xFFD3B475, 0xFF89939F, 0xFF9AA3B2));
+            0xFFD5DAE4, 0xFF8FA9F5, 0xFFD5DAE4, 0xFFDB9A72, 0xFFD3B475, 0xFF89939F, 0xFF9AA3B2,
+            0xFFFFFFFF, 0xFF39D6C4));
 
     /**
      * For the bare glass of a monitor, where a terminal is the whole screen: black, as that glass is, so an
@@ -44,7 +53,8 @@ public record InkPalette(int ground, int gutter, int gutterText, int caret, int 
      */
     public static final Palette<InkPalette> GLASS = Palettes.declare(JsComputers.MODID, "ink/glass", new InkPalette(
             0xFF000000, 0xFF0C0E13, 0xFF7B8494, 0xFFE7E9EF, 0xFF0C0E13,
-            0xFFD5DAE4, 0xFF8FA9F5, 0xFFD5DAE4, 0xFFDB9A72, 0xFFD3B475, 0xFF89939F, 0xFF9AA3B2));
+            0xFFD5DAE4, 0xFF8FA9F5, 0xFFD5DAE4, 0xFFDB9A72, 0xFFD3B475, 0xFF89939F, 0xFF9AA3B2,
+            0xFFFFFFFF, 0xFF39D6C4));
 
     /** The palette for a window whose client area is {@code dark}. */
     public static Palette<InkPalette> forGround(final boolean dark) {

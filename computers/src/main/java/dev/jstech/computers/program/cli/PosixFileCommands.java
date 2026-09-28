@@ -10,11 +10,13 @@ package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.program.cli.man.ManPage;
+import dev.jstech.computers.program.cli.man.ManTopics;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 /**
  * The Unix systems' file commands, in the words the distributions, UNIX and FreeBSD use.
@@ -504,15 +506,26 @@ final class PosixFileCommands {
                 return;
             }
             final ICliCommand command = ctx.shell().find(ctx.arg(0));
-            if (command == null || !command.available(ctx.computer())) {
-                ctx.out().error(NO_ENTRY.with(ctx.arg(0)));
+            if (command != null && command.available(ctx.computer())) {
+                ctx.out().accent(command.name().toUpperCase(Locale.ROOT) + "(1)");
+                for (final CliLine line : ManPage.lines(command, true)) {
+                    ctx.out().line(line);
+                }
+                ctx.computer().report(JscEvents.MAN_PAGE, command.name());
                 return;
             }
-            ctx.out().accent(command.name().toUpperCase(Locale.ROOT) + "(1)");
-            for (final CliLine line : ManPage.lines(command, true)) {
-                ctx.out().line(line);
+            final Optional<ManTopics.Topic> topic = ManTopics.find(ctx.arg(0), ctx.computer().platform());
+            if (topic.isPresent()) {
+                final ManTopics.Topic found = topic.get();
+                ctx.out().accent(found.name().toUpperCase(Locale.ROOT) + "(1)");
+                for (final CliLine line : ManPage.topicLines(found.name(), found.summary(), found.description(),
+                        found.seeAlso(), true)) {
+                    ctx.out().line(line);
+                }
+                ctx.computer().report(JscEvents.MAN_PAGE, found.name());
+                return;
             }
-            ctx.computer().report(JscEvents.MAN_PAGE, command.name());
+            ctx.out().error(NO_ENTRY.with(ctx.arg(0)));
         }
     }
 

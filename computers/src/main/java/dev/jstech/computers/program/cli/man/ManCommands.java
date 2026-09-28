@@ -16,6 +16,7 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The ways of finding out what a machine can do, each in the words of the family that has it.
@@ -88,11 +89,16 @@ public final class ManCommands {
                 return;
             }
             final ICliCommand found = ctx.shell().find(ctx.arg(0));
-            if (found == null || !found.available(ctx.computer())) {
-                ctx.out().error(NOTHING_APPROPRIATE.with(ctx.arg(0)));
+            if (found != null && found.available(ctx.computer())) {
+                ctx.out().line(ManPage.whatis(found));
                 return;
             }
-            ctx.out().line(ManPage.whatis(found));
+            final Optional<ManTopics.Topic> topic = ManTopics.find(ctx.arg(0), ctx.computer().platform());
+            if (topic.isPresent()) {
+                ctx.out().line(ManPage.whatisTopic(topic.get().name(), topic.get().summary()));
+                return;
+            }
+            ctx.out().error(NOTHING_APPROPRIATE.with(ctx.arg(0)));
         }
     }
 
@@ -152,6 +158,12 @@ public final class ManCommands {
             for (final ICliCommand command : ctx.shell().commands()) {
                 if (command.available(ctx.computer()) && ManPage.answersTo(command, wanted)) {
                     ctx.out().line(ManPage.whatis(command));
+                    found++;
+                }
+            }
+            for (final ManTopics.Topic topic : ManTopics.onPlatform(ctx.computer().platform())) {
+                if (topic.answersTo(wanted)) {
+                    ctx.out().line(ManPage.whatisTopic(topic.name(), topic.summary()));
                     found++;
                 }
             }

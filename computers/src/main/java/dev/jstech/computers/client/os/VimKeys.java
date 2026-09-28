@@ -7,9 +7,14 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.os.edit.TtyLineCount;
+import dev.jstech.computers.os.edit.TtyLook;
+import dev.jstech.computers.os.edit.ViDialect;
 import dev.jstech.computers.os.edit.VimCommand;
 import dev.jstech.core.client.gui.logic.TextDocument;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import java.util.List;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -23,6 +28,10 @@ import org.lwjgl.glfw.GLFW;
  * <p>What is here is what a person uses to write a program and get out: moving by character, word and
  * line, opening a line, deleting and yanking one, undoing, and the colon commands. It is not all of Vim
  * and does not pretend to be.
+ *
+ * <p>One engine answers to three names. With no dialect this is the modern clone every platform can
+ * install; given one, it is that system's own {@code vi} instead, over the same keys: no colour, no ruler
+ * in the corner, and that system's own words for opening and writing a file.
  */
 public final class VimKeys implements TtyEditor.IKeys {
 
@@ -37,16 +46,66 @@ public final class VimKeys implements TtyEditor.IKeys {
     /** The last line yanked or deleted whole, which is what p puts back. */
     private String register = "";
 
+    /** Which system's own {@code vi} this is, or null for the modern clone every platform can install. */
+    private final ViDialect dialect;
+
+    /** The modern clone: coloured, with a ruler in the corner, on every platform. */
+    public VimKeys() {
+        this(null);
+    }
+
+    /** A system's own {@code vi}: the same keys, that system's words, no colour and no ruler. */
+    public VimKeys(final ViDialect dialect) {
+        this.dialect = dialect;
+    }
+
     @Override
     public String status(final TtyEditor editor) {
         if (this.mode == Mode.COMMAND) {
             return ":" + this.command;
+        }
+        /*
+         * A system's own vi keeps no status line of Vim's: its last line is only ever what that system's
+         * own words say, which is empty until one of them has something to say.
+         */
+        if (this.dialect != null) {
+            return editor.message();
         }
         if (!editor.message().isEmpty()) {
             return editor.message();
         }
         final String name = "\"" + editor.name() + "\"" + (editor.dirty() ? " [+]" : "");
         return this.mode == Mode.INSERT ? GameText.resolve(TtyTexts.INSERT.with(name)) : name;
+    }
+
+    /**
+     * A system's own {@code vi} keeps no ruler in the corner and colours nothing: the modern clone keeps
+     * both, which is {@link TtyLook#PLAIN}.
+     */
+    @Override
+    public TtyLook look(final TtyEditor editor) {
+        if (this.dialect == null) {
+            return TtyLook.PLAIN;
+        }
+        return new TtyLook("", Text.EMPTY, Text.EMPTY, TtyLook.Status.MESSAGE, List.of(), List.of(), true,
+                false, true, Text.EMPTY);
+    }
+
+    /**
+     * What a system's own {@code vi} says on opening a file is that system's own words, whether the file
+     * was there before or not; the modern clone only ever says something about a name that named nothing.
+     */
+    @Override
+    public void opened(final TtyEditor editor, final boolean existed) {
+        if (this.dialect == null) {
+            if (!existed) {
+                editor.say(TtyTexts.NEW_FILE.with(editor.name()));
+            }
+            return;
+        }
+        editor.say(existed
+                ? this.dialect.opened(editor.name(), TtyLineCount.of(editor.document()), editor.text().length())
+                : this.dialect.openedNew(editor.name()));
     }
 
     @Override
@@ -409,6 +468,14 @@ public final class VimKeys implements TtyEditor.IKeys {
         }
         if (asked.write()) {
             editor.save();
+            /*
+             * The generic message editor.save() just wrote is the modern clone's own; a system's own
+             * vi says what it always says after a write, so its dialect has the last word here.
+             */
+            if (this.dialect != null) {
+                editor.say(this.dialect.written(editor.name(), TtyLineCount.of(editor.document()),
+                        editor.text().length()));
+            }
         }
         if (!asked.quit()) {
             return;

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.os.edit.ViDialect;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -39,6 +40,14 @@ public final class TtyEditors {
          * changes is the network.
          */
         register("interac", InteracTuiKeys::new);
+        /*
+         * vi is the same engine as vim, wearing a system's own voice: FreeBSD's nvi and UNIX System V's
+         * original. Which of these a hand-over names is the machine's choice, made from the platform it runs
+         * on, not the player's; the verb itself is typed the same on both.
+         */
+        register("vi-freebsd", () -> new VimKeys(ViDialect.NVI));
+        register("vi-unix", () -> new VimKeys(ViDialect.SYSTEM_V));
+        register("ee", EeKeys::new);
     }
 
     private TtyEditors() {

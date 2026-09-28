@@ -7,11 +7,13 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.program.cli.man.ManPage;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -36,8 +38,9 @@ final class ShellCommands {
         private static final TextKey DETAILS =
                 TextKey.of("jsc.cli.shell.help.details", "'help <command>' for details");
 
+        // FreeBSD's sh has no help builtin; its welcome and its not-found line point to apropos and man instead.
         @Override public CommandScope scope() {
-            return CommandScope.everywhere();
+            return CommandScope.on(EnumSet.complementOf(EnumSet.of(Platform.FREEBSD)));
         }
 
         @Override public String name() {

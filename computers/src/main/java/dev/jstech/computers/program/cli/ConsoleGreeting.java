@@ -10,6 +10,7 @@ package dev.jstech.computers.program.cli;
 import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 
@@ -48,6 +49,23 @@ public final class ConsoleGreeting {
     private static final TextKey WELCOME = TextKey.of("jsc.cli.greeting.welcome", "Welcome to %s (%s)");
     private static final TextKey WELCOME_PLAYER =
             TextKey.of("jsc.cli.greeting.welcome_player", "Welcome to %s, %s.");
+    /*
+     * FreeBSD has no help builtin, so its welcome names the three ways a newcomer finds a command instead,
+     * each label lined up on a column past the longest label any of the game's languages needs (the
+     * Portuguese label runs longer than every English one), leaving room for the gap before the command
+     * rather than falling back to a single cramped space.
+     */
+    private static final int DISCOVERY_COLUMN = 38;
+    private static final TextKey FIND_A_COMMAND_LABEL =
+            TextKey.of("jsc.cli.greeting.find_a_command_label", "Find a command by what it does:");
+    private static final TextKey LEARN_THE_SYSTEM_LABEL =
+            TextKey.of("jsc.cli.greeting.learn_the_system_label", "Learn the system:");
+    private static final TextKey SEE_EVERY_COMMAND_LABEL =
+            TextKey.of("jsc.cli.greeting.see_every_command_label", "See every command here:");
+    private static final TextKey APROPOS_WORD = TextKey.of("jsc.cli.greeting.apropos_word", " <word>");
+    private static final TextKey TAB_TWICE = TextKey.of("jsc.cli.greeting.tab_twice", ", twice");
+    private static final TextKey FREEBSD_TIP =
+            TextKey.of("jsc.cli.greeting.freebsd_tip", "Tip: pkg info lists every package installed here.");
 
     private ConsoleGreeting() {
     }
@@ -108,6 +126,16 @@ public final class ConsoleGreeting {
                 CliLine.plain("FreeBSD " + KernelNames.FREEBSD_RELEASE + " (GENERIC)"),
                 CliLine.plain(""),
                 new CliLine(WELCOME_PLAYER.with("FreeBSD", PLAYER), CliStyle.BRIGHT),
+                CliLine.of(CliSpan.pad(2), new CliSpan(FIND_A_COMMAND_LABEL.text(), CliStyle.PLAIN),
+                        CliSpan.pad(DISCOVERY_COLUMN), new CliSpan("apropos", CliStyle.CYAN),
+                        new CliSpan(APROPOS_WORD.text(), CliStyle.PLAIN)),
+                CliLine.of(CliSpan.pad(2), new CliSpan(LEARN_THE_SYSTEM_LABEL.text(), CliStyle.PLAIN),
+                        CliSpan.pad(DISCOVERY_COLUMN), new CliSpan(Text.literal("man intro"), CliStyle.CYAN)),
+                CliLine.of(CliSpan.pad(2), new CliSpan(SEE_EVERY_COMMAND_LABEL.text(), CliStyle.PLAIN),
+                        CliSpan.pad(DISCOVERY_COLUMN), new CliSpan("Tab", CliStyle.CYAN),
+                        new CliSpan(TAB_TWICE.text(), CliStyle.PLAIN)),
+                CliLine.plain(""),
+                new CliLine(FREEBSD_TIP.text(), CliStyle.DIM),
                 CliLine.plain(""));
     }
 }

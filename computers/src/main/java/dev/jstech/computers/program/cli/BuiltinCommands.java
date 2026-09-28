@@ -132,7 +132,14 @@ public final class BuiltinCommands {
                  * which is what lets a headless server be programmed at all.
                  */
                 new TtyEditorCommand("vim", TtyEditorCommand.EDITS_A_FILE, "vim"),
-                new TtyEditorCommand("emacs", TtyEditorCommand.EDITS_A_FILE, "emacs"));
+                new TtyEditorCommand("emacs", TtyEditorCommand.EDITS_A_FILE, "emacs"),
+                /*
+                 * vi and ee come bundled with the systems that have them (FreeBSD and UNIX, FreeBSD alone
+                 * for ee), so they need no install step: available() reads that straight off the machine's
+                 * own program list, the same way every other bundled program is found there.
+                 */
+                new TtyEditorCommand("vi", TtyEditorCommand.EDITS_A_FILE, "vi"),
+                new TtyEditorCommand("ee", TtyEditorCommand.EDITS_A_FILE, "ee"));
     }
 
     // meta

@@ -304,6 +304,12 @@ public final class OsBootstrap {
     private static final Set<Platform> PROMPT_PLATFORMS = Set.of(Platform.MC_DOS, Platform.FRAMES,
             Platform.LINUX, Platform.FREEBSD, Platform.UNIX);
 
+    /** Where {@code vi} comes bundled: the two systems that have their own, and nowhere else. */
+    private static final Set<Platform> FREEBSD_AND_UNIX = Set.of(Platform.FREEBSD, Platform.UNIX);
+
+    /** Where {@code ee} comes bundled: FreeBSD alone. */
+    private static final Set<Platform> FREEBSD_ONLY = Set.of(Platform.FREEBSD);
+
     /**
      * The built-in program descriptors, in desktop launcher order (the built-in apps first, then the
      * installables). Built eagerly as a static list so both the runtime registration and datagen (which does
@@ -639,6 +645,23 @@ public final class OsBootstrap {
                     .described("A text editor that splits the terminal, so the source and what the compiler said"
                             + " about it are read together.")
                     .withMinEra(VINTAGE).withEra(VINTAGE).withHouse(SoftwareHouse.BUNDLED).withRam(12),
+            /*
+             * vi comes bundled with both systems that have their own, so it is never installed and never
+             * takes a drive: FreeBSD's is nvi, UNIX System V's is the original, one engine behind both.
+             */
+            ProgramSpec.of(rl("vi"), "vi", true, FREEBSD_AND_UNIX, 2, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("vi")
+                    .described("The text editor that comes with the system: no colour, no ruler, just the file.")
+                    .withMinEra(VINTAGE).withEra(VINTAGE).withHouse(SoftwareHouse.BUNDLED).withRam(2),
+            /*
+             * ee is FreeBSD's own gift to newcomers: its shortcuts are written on the glass, so nobody has
+             * to have met a terminal editor before to leave it again.
+             */
+            ProgramSpec.of(rl("ee"), "ee", true, FREEBSD_ONLY, 2, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("ee")
+                    .described("The easy editor: its keys are written on the screen, so nothing has to be learned"
+                            + " before it can be left again.")
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.DAEMON_FOUNDATION).withRam(2),
             /*
              * The Linux desktop environments: packages that turn a TTY distribution into a graphical desktop.
              * Footprints are balancing estimates (Plasma is the heaviest, Cinnamon the lightest), and so is

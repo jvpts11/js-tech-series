@@ -255,6 +255,17 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   services page; it shows as `sshd_enable` in `/etc/rc.conf` and is the same switch as `config remote`. Every
   other system keeps letting them in, as before.
 - Choosing a faster disk on an installer's disk page makes the copy quicker, and the time left changes to match.
+- `ee` on FreeBSD, the editor it gives a newcomer: its five rows of shortcuts along the top, the row saying where
+  the caret stands, and its Esc menu drawn over the text, whose items all work (leave the editor, saving or not;
+  a page of every key, closed by any key; read a file in or save the one open; show or hide the rows of
+  shortcuts; search). `vi` on FreeBSD and UNIX speaks each system's own, with no Vim status line. Both come with
+  the system and are listed in `/usr/bin`.
+- FreeBSD's console welcome names the three ways to find things, `apropos` for a command by what it does,
+  `man intro` to learn the system and Tab twice for every command here, above the day's tip. `man intro` is a
+  real page, and on every Unix console a second Tab in a row lists what the first could complete to, every
+  command on an empty line, as sh and bash do. FreeBSD has no
+  `help`: typed there, it is not found like any other unknown word, and the line points to `apropos` and
+  `man intro` instead.
 - A resource pack can recolour the computing screens. Their colours are files under `assets/jscore/palettes/` and
   `assets/jsc/palettes/`: each hardware era's skin; each desktop's windows, panel and launcher; the chrome each style
   of desktop draws its title bars, buttons, fields and tabs with; CDE's eight colour schemes; the Network Management

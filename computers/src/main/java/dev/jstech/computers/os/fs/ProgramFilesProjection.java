@@ -45,6 +45,14 @@ public final class ProgramFilesProjection {
     public static final String FONTS = SystemLayout.SYSTEM_DIR + "/Fonts";
     public static final String HELP = SystemLayout.SYSTEM_DIR + "/Help";
 
+    /**
+     * The program ids a desktop environment bundles rather than the base system itself: on a platform with
+     * no desktop installed, none of these are there to find, no matter which platforms they declare.
+     */
+    private static final Set<String> DESKTOP_BUNDLE_PROGRAMS = Set.of("network", "this_pc", "settings", "files",
+            "editor", "command_prompt", "system_monitor", "calculator", "network_manager", "task_manager",
+            "workstation_info", "help_viewer", "disks");
+
     private ProgramFilesProjection() {
     }
 
@@ -77,7 +85,7 @@ public final class ProgramFilesProjection {
     private static void systemV(final IOsHost host, final List<InstallerLayout.Entry> out) {
         out.add(file("unix", FileType.BIN));
         out.add(file("etc/inittab", FileType.CFG));
-        for (final ProgramSpec spec : installed(host)) {
+        for (final ProgramSpec spec : shown(host, Platform.UNIX)) {
             out.add(file("usr/bin/" + spec.commandName(), FileType.BIN));
             out.add(dir("usr/lib/" + spec.commandName()));
             out.add(file("usr/lib/" + spec.commandName() + "/readme", FileType.TXT));
@@ -103,6 +111,10 @@ public final class ProgramFilesProjection {
         out.add(file("etc/rc.conf", FileType.CFG));
         out.add(dir("usr/local"));
         out.add(dir("usr/local/share"));
+        // The base system's own binaries, vi and ee among them, apart from anything a package brings in.
+        for (final ProgramSpec spec : preinstalledOn(Platform.FREEBSD)) {
+            out.add(file("usr/bin/" + spec.commandName(), FileType.BIN));
+        }
         for (final ProgramSpec spec : installed(host)) {
             out.add(file("usr/local/bin/" + spec.commandName(), FileType.BIN));
             out.add(dir("usr/local/share/" + spec.commandName()));
@@ -148,6 +160,41 @@ public final class ProgramFilesProjection {
             out.add(dir("usr/share/" + spec.commandName()));
             out.add(file("usr/share/" + spec.commandName() + "/readme", FileType.TXT));
         }
+    }
+
+    /**
+     * What the base system itself bundles for that platform, {@code vi} and {@code ee} among them: never a
+     * desktop's own apps, which reach that platform only once a desktop environment is installed on it.
+     */
+    private static List<ProgramSpec> preinstalledOn(final Platform platform) {
+        final List<ProgramSpec> out = new ArrayList<>();
+        for (final ProgramSpec spec : OsRegistry.programs()) {
+            if (spec.preinstalled() && spec.platforms().contains(platform)
+                    && !DESKTOP_BUNDLE_PROGRAMS.contains(spec.id().getPath())) {
+                out.add(spec);
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Every program a Unix listing that keeps only one folder for its binaries shows in it: what the system
+     * bundles for that platform, and then whatever was installed on top of it.
+     */
+    private static List<ProgramSpec> shown(final IOsHost host, final Platform platform) {
+        final List<ProgramSpec> out = new ArrayList<>();
+        final Set<ResourceLocation> seen = new LinkedHashSet<>();
+        for (final ProgramSpec spec : preinstalledOn(platform)) {
+            if (seen.add(spec.id())) {
+                out.add(spec);
+            }
+        }
+        for (final ProgramSpec spec : installed(host)) {
+            if (seen.add(spec.id())) {
+                out.add(spec);
+            }
+        }
+        return out;
     }
 
     /** The programs installed on the machine, in the order they were installed, that the registry knows. */

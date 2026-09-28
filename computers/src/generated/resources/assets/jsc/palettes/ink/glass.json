@@ -1,4 +1,5 @@
 {
+  "bright": "#FFFFFFFF",
   "caret": "#FFE7E9EF",
   "comment": "#FF89939F",
   "currentLine": "#FF0C0E13",
@@ -9,6 +10,7 @@
   "name": "#FFD5DAE4",
   "number": "#FFD3B475",
   "plain": "#FFD5DAE4",
+  "selection": "#FF39D6C4",
   "symbol": "#FF9AA3B2",
   "text": "#FFDB9A72"
 }

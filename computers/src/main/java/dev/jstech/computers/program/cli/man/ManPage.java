@@ -104,8 +104,43 @@ public final class ManPage {
      * @param upperHeadings whether the headings are the Unix manual's capitals rather than the DOS help's title case
      */
     public static List<CliLine> lines(final ICliCommand command, final boolean upperHeadings) {
+        return sectionLines(of(command), upperHeadings);
+    }
+
+    /**
+     * The whole page for something with a name, one line, a page's worth of paragraphs and related pages,
+     * but nothing to run: the same shape a command's page has, without a command behind it.
+     */
+    public static List<Section> ofTopic(final String name, final Text summary, final List<Text> description,
+                                        final List<String> seeAlso) {
+        final List<Section> page = new ArrayList<>();
+        page.add(new Section(Heading.NAME, List.of(CliLine.of(CliSpan.plain(name + " - "), CliSpan.plain(summary)))));
+        if (!description.isEmpty()) {
+            final List<CliLine> lines = new ArrayList<>();
+            for (final Text paragraph : description) {
+                if (!lines.isEmpty()) {
+                    lines.add(CliLine.plain(""));
+                }
+                lines.add(CliLine.plain(paragraph));
+            }
+            page.add(new Section(Heading.DESCRIPTION, lines));
+        }
+        if (!seeAlso.isEmpty()) {
+            page.add(new Section(Heading.SEE_ALSO, List.of(CliLine.plain(String.join(", ", seeAlso)))));
+        }
+        return page;
+    }
+
+    /** A topic's page as lines, laid out exactly the way a command's page is. */
+    public static List<CliLine> topicLines(final String name, final Text summary, final List<Text> description,
+                                           final List<String> seeAlso, final boolean upperHeadings) {
+        return sectionLines(ofTopic(name, summary, description, seeAlso), upperHeadings);
+    }
+
+    /** Either page's sections, set in under their headings. */
+    private static List<CliLine> sectionLines(final List<Section> sections, final boolean upperHeadings) {
         final List<CliLine> out = new ArrayList<>();
-        for (final Section section : of(command)) {
+        for (final Section section : sections) {
             out.add(CliLine.of(upperHeadings ? section.heading().upper() : section.heading().title(),
                     CliStyle.PLAIN));
             for (final CliLine line : section.lines()) {
@@ -126,6 +161,11 @@ public final class ManPage {
     /** The one line {@code whatis} answers with. */
     public static CliLine whatis(final ICliCommand command) {
         return CliLine.of(CliSpan.plain(command.name() + " (1) - "), CliSpan.plain(command.summary()));
+    }
+
+    /** The one line {@code whatis} answers with, for a topic rather than a command. */
+    public static CliLine whatisTopic(final String name, final Text summary) {
+        return CliLine.of(CliSpan.plain(name + " (1) - "), CliSpan.plain(summary));
     }
 
     /**

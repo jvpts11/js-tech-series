@@ -66,6 +66,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * The Command Prompt: a full CLI over the computer the Monitor is bound to. A typed line is echoed, sent to
@@ -156,6 +157,9 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     private int scrollOffset;
     private boolean programmaticEdit;
 
+    /** The last press of Tab found nothing to fill in, so a second one in a row lists what there is instead. */
+    private boolean tabFoundNothing;
+
     private EditBox input;
 
     /** The DOS prompt, synced from the server after each command so it tracks the current directory. */
@@ -234,6 +238,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         input.setResponder(s -> {
             if (!programmaticEdit) {
                 completion.typedByHand();
+                tabFoundNothing = false;
             }
         });
         setInitialFocus(input);
@@ -732,15 +737,40 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         return input != null && input.charTyped(c, mods);
     }
 
-    /** Tab: the command being typed, or the drive a command is being pointed at, a candidate a press. */
+    /**
+     * Tab: the command being typed, or the drive a command is being pointed at, a candidate a press. A
+     * second Tab in a row with nothing to fill in lists every candidate instead, as sh and bash do.
+     */
     private void complete() {
-        completion.next(input.getValue()).ifPresent(line -> {
+        final String line = input.getValue();
+        final Optional<String> filled = completion.next(line);
+        if (filled.isPresent()) {
+            tabFoundNothing = false;
             // Put there by the terminal and not typed, so it does not end the round of presses it is part of.
             programmaticEdit = true;
-            input.setValue(line);
+            input.setValue(filled.get());
             input.moveCursorToEnd(false);
             programmaticEdit = false;
-        });
+            return;
+        }
+        if (tabFoundNothing) {
+            listCandidates(line);
+        }
+        tabFoundNothing = true;
+    }
+
+    /**
+     * Every candidate a round of Tab would offer, printed above the prompt rather than filled into it: a
+     * bash habit the POSIX consoles have and the DOS family never did, so it stays off everywhere else.
+     */
+    private void listCandidates(final String line) {
+        if (!menu.posixShell()) {
+            return;
+        }
+        final List<String> names = completion.everyCommandFor(line);
+        if (!names.isEmpty()) {
+            push(String.join("  ", names), CliStyle.PLAIN);
+        }
     }
 
     private void recallHistory(final int direction) {
@@ -940,6 +970,26 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     /** Whether an editor has this terminal. */
     public boolean editing() {
         return this.editor != null;
+    }
+
+    /** The text the editor holding this terminal has, or empty when none has it. */
+    public String editorText() {
+        return this.editor == null ? "" : this.editor.document().text();
+    }
+
+    /** What the editor holding this terminal says on its status line, or empty when none has it. */
+    public String editorStatus() {
+        return this.editor == null ? "" : this.editor.status();
+    }
+
+    /** What the editor holding this terminal names as the caret's place, or empty when none has it or says none. */
+    public String editorPosition() {
+        return this.editor == null ? "" : this.editor.position();
+    }
+
+    /** Whether the editor holding this terminal writes its keys above the text. */
+    public boolean editorKeysOnTop() {
+        return this.editor != null && this.editor.keysOnTop();
     }
 
     /** Hands this terminal to an editor on {@code path}, which the machine is asked for. */

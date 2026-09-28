@@ -14,10 +14,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellKind;
+import dev.jstech.core.text.ITextLanguage;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
 class ConsoleGreetingTest {
+
+    /** pt_br as the mod ships it, so the alignment is held to the words a player really reads. */
+    private static final ITextLanguage PT_BR = shipped("pt_br.json");
 
     @Test
     void of_greetsFreeBsdInItsOwnShape() {
@@ -43,11 +54,61 @@ class ConsoleGreetingTest {
     }
 
     @Test
-    void of_onlyPromisesWhatTheSystemHas() {
-        for (final String line : words(installed(ShellKind.SH, "FreeBSD", Platform.FREEBSD, 64))) {
-            assertFalse(line.contains("apropos"), line);
-            assertFalse(line.contains("man "), line);
+    void of_pointsToAproposAndManIntro() {
+        final String joined = String.join("\n", words(installed(ShellKind.SH, "FreeBSD", Platform.FREEBSD, 64)));
+        assertTrue(joined.contains("apropos"), joined);
+        assertTrue(joined.contains("man intro"), joined);
+        assertTrue(joined.contains("Tab"), joined);
+    }
+
+    @Test
+    void of_pointsToPkgInfoForWhatIsInstalled() {
+        final String joined = String.join("\n", words(installed(ShellKind.SH, "FreeBSD", Platform.FREEBSD, 64)));
+        assertTrue(joined.contains("pkg info"), joined);
+    }
+
+    /** The three discovery lines name their command in cyan, above a dimmed tip, top to bottom. */
+    @Test
+    void of_setsTheThreeDiscoveryLinesInCyanAboveADimTip() {
+        final List<CliLine> lines = ConsoleGreeting.of(installed(ShellKind.SH, "FreeBSD", Platform.FREEBSD, 64));
+        final CliLine findsACommand = lines.get(6);
+        assertEquals("apropos", findsACommand.spans().get(3).text().english());
+        assertEquals(CliStyle.CYAN, findsACommand.spans().get(3).style());
+        final CliLine learnsTheSystem = lines.get(7);
+        assertEquals("man intro", learnsTheSystem.spans().get(3).text().english());
+        assertEquals(CliStyle.CYAN, learnsTheSystem.spans().get(3).style());
+        final CliLine everyCommand = lines.get(8);
+        assertEquals("Tab", everyCommand.spans().get(3).text().english());
+        assertEquals(CliStyle.CYAN, everyCommand.spans().get(3).style());
+        assertEquals(CliStyle.DIM, lines.get(10).style());
+    }
+
+    /** A label longer than English's own must still leave the three commands starting on the same column. */
+    @Test
+    void of_alignsTheThreeCommandsOnTheSameColumnInEveryLanguage() {
+        assertColumnsAlign(ITextLanguage.ENGLISH);
+        assertColumnsAlign(PT_BR);
+    }
+
+    private static void assertColumnsAlign(final ITextLanguage language) {
+        final List<CliLine> lines = ConsoleGreeting.of(installed(ShellKind.SH, "FreeBSD", Platform.FREEBSD, 64));
+        final int findsACommand = cyanColumn(lines.get(6), language);
+        final int learnsTheSystem = cyanColumn(lines.get(7), language);
+        final int everyCommand = cyanColumn(lines.get(8), language);
+        assertEquals(findsACommand, learnsTheSystem, "the second line's command drifted off the first's column");
+        assertEquals(findsACommand, everyCommand, "the third line's command drifted off the first's column");
+    }
+
+    /** Where the cyan run of that line begins, once every run before it is in that language. */
+    private static int cyanColumn(final CliLine line, final ITextLanguage language) {
+        int column = 0;
+        for (final CliRun run : line.resolve(language)) {
+            if (run.style() == CliStyle.CYAN) {
+                return column;
+            }
+            column += run.text().length();
         }
+        throw new IllegalStateException("no cyan run on this line: " + line);
     }
 
     @Test
@@ -95,5 +156,21 @@ class ConsoleGreetingTest {
 
     private static List<String> words(final ConsoleIdentity console) {
         return ConsoleGreeting.of(console).stream().map(CliLine::text).toList();
+    }
+
+    /** One of the mod's own language files, answering each key with the sentence it gives, or null. */
+    private static ITextLanguage shipped(final String file) {
+        final String json;
+        try {
+            json = Files.readString(Path.of("src", "main", "resources", "assets", "jsc", "lang", file),
+                    StandardCharsets.UTF_8);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return key -> {
+            final Matcher entry = Pattern.compile("\"" + Pattern.quote(key) + "\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"")
+                    .matcher(json);
+            return entry.find() ? entry.group(1) : null;
+        };
     }
 }

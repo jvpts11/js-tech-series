@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.program.cli.man.ManPage;
 import dev.jstech.computers.program.cli.sh.ShLine;
@@ -33,6 +34,9 @@ public final class CliShell {
     private final int width;
 
     private static final TextKey TRY_HELP = TextKey.of("jsc.cli.shell.try_help", "type 'help' to list commands");
+    /* FreeBSD's sh has no help to point to, so its not-found line points to the two ways it does have. */
+    private static final TextKey NOT_FOUND_TRY_APROPOS = TextKey.of("jsc.cli.shell.not_found_try_apropos",
+            "%s: not found. Try: apropos <word>, or man intro");
     private static final TextKey NO_JOB_MEMORY =
             TextKey.of("jsc.cli.shell.no_job_memory", "the machine has no memory left for another job");
     private static final TextKey NO_JOBS = TextKey.of("jsc.cli.shell.no_jobs", "this machine keeps no jobs");
@@ -128,8 +132,12 @@ public final class CliShell {
          * uninstalled program's verbs) does not exist here, exactly like an unknown word.
          */
         if (command == null || !command.available(computer)) {
-            out.error(CliTexts.NOT_FOUND.with(word));
-            out.dim(TRY_HELP);
+            if (computer.platform() == Platform.FREEBSD) {
+                out.error(NOT_FOUND_TRY_APROPOS.with(word));
+            } else {
+                out.error(CliTexts.NOT_FOUND.with(word));
+                out.dim(TRY_HELP);
+            }
             return new Response(out.lines(), false);
         }
         final List<String> args = new ArrayList<>(tokens.subList(1, tokens.size()));
@@ -165,8 +173,20 @@ public final class CliShell {
          * was just run with, which the shell already has, so nothing has to be remembered anywhere.
          */
         final String file = command instanceof IHandOver giving ? giving.fileOf(computer, args) : null;
-        final CliShell.HandOver handOver = file == null ? null : new HandOver(command.name(), file);
+        final CliShell.HandOver handOver =
+                file == null ? null : new HandOver(editorNameFor(command.name(), computer), file);
         return new Response(out.lines(), clear, handOver, out.started());
+    }
+
+    /**
+     * The verb a hand-over is opened under: the command's own name, except {@code vi}, which is one engine
+     * behind two systems' own voices and answers to whichever the machine is running.
+     */
+    private static String editorNameFor(final String commandName, final ICliComputer computer) {
+        if (!commandName.equals("vi")) {
+            return commandName;
+        }
+        return computer.platform() == Platform.UNIX ? "vi-unix" : "vi-freebsd";
     }
 
     /**

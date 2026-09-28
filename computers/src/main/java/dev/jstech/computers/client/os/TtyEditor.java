@@ -134,6 +134,11 @@ public final class TtyEditor {
     private int lineH = LINE_H;
 
     private int scroll;
+    /*
+     * A page shown in place of the file (a help page) scrolls on its own, so opening and closing one leaves the
+     * file's view, and the line count read from it, exactly where they were.
+     */
+    private int pageScroll;
     /** How far the rows are slid to the left, in pixels, to keep the caret on a long line in view. */
     private int shift;
 
@@ -223,6 +228,11 @@ public final class TtyEditor {
         return this.rows;
     }
 
+    /** How far the view has scrolled from the file's first line, for a flavour that names where it stands. */
+    public int scroll() {
+        return this.scroll;
+    }
+
     /** Whether it has been changed since it was last written. */
     public boolean dirty() {
         return this.dirty;
@@ -236,6 +246,21 @@ public final class TtyEditor {
     /** What the editor wants said at the bottom, beside whatever the flavour puts there. */
     public String message() {
         return this.message;
+    }
+
+    /** What the flavour's own status line says, for whoever must read it without drawing it. */
+    public String status() {
+        return this.keys.status(this);
+    }
+
+    /** What the flavour's own row naming the caret's place says, or empty for one that keeps none. */
+    public String position() {
+        return GameText.resolve(this.keys.look(this).positionLine());
+    }
+
+    /** Whether the flavour writes its keys above the text rather than below it. */
+    public boolean keysOnTop() {
+        return this.keys.look(this).keysOnTop();
     }
 
     /** Says something at the bottom. */
@@ -321,13 +346,25 @@ public final class TtyEditor {
                        final int width, final int height, final InkPalette palette) {
         g.fill(x, y, x + width, y + height, palette.ground());
         final TtyLook look = this.keys.look(this);
-        /* A title row across the top and rows of keys along the bottom, for an editor that keeps them. */
-        final int head = look.titled() ? this.lineH : 0;
+        /*
+         * A title row across the top, rows of keys either above the text or below it, and a row naming
+         * where the caret stands right under whichever keys sit on top: what is above the text is the
+         * head, and only what sits below it is taken out of the room the text itself gets.
+         */
+        final int titleH = look.titled() ? this.lineH : 0;
         final int keysH = look.keys().size() * this.lineH;
+        final int topKeysH = look.keysOnTop() ? keysH : 0;
+        final int bottomKeysH = look.keysOnTop() ? 0 : keysH;
+        final int positionH = GameText.resolve(look.positionLine()).isEmpty() ? 0 : this.lineH;
+        final int head = titleH + topKeysH + positionH;
         if (look.titled()) {
             TtyChrome.title(g, font, x, y, width, this.lineH, look, palette);
         }
-        TtyChrome.keys(g, font, x, y + height - keysH, width, this.lineH, look.keys(), palette);
+        TtyChrome.keys(g, font, x, look.keysOnTop() ? y + titleH : y + height - bottomKeysH, width, this.lineH,
+                look.keys(), palette, look.bareKeys());
+        if (positionH > 0) {
+            TtyChrome.message(g, font, x, y + titleH + topKeysH, width, paddedPosition(look, font, width), palette);
+        }
         /*
          * With a second buffer showing, the file gets the upper half and keeps its own mode line, and
          * what is under it gets the rest. The status line under them belongs to the editor either way,
@@ -335,25 +372,29 @@ public final class TtyEditor {
          */
         final int lowerH = this.lower.isEmpty() ? 0
                 : Math.min(height / 2, (this.lower.size() + 1) * this.lineH + PAD);
-        final int upperH = height - lowerH - keysH;
+        final int upperH = height - lowerH - bottomKeysH;
         if (lowerH > 0) {
             TtyChrome.lower(g, font, x, y + upperH, width, lowerH, this.lineH, this.lowerName, this.lower, palette);
         }
         final int rows = Math.max(1, (upperH - head - PAD - this.lineH) / this.lineH);
         measure(font, width, rows);
-        drawStatus(g, font, x, y + height - keysH - this.lineH, width, look, palette);
+        drawStatus(g, font, x, y + height - bottomKeysH - this.lineH, width, look, palette);
+        final int textBottom = y + height - bottomKeysH - this.lineH;
         if (!look.page().isEmpty()) {
-            Draw.pushScissor(g, x, y + head, x + width, y + height - keysH - this.lineH);
+            Draw.pushScissor(g, x, y + head, x + width, textBottom);
             drawPage(g, font, pageLines(font, look.page(), width - 2 * PAD), x + PAD, y + head + PAD, rows,
                     palette);
             Draw.popScissor(g);
+            if (look.menu().up()) {
+                TtyChrome.menu(g, font, x, y + head, width, textBottom - y - head, this.lineH, look.menu(), palette);
+            }
             return;
         }
         followCaret(rows);
         followCaretAcross(font, width - 2 * PAD);
 
-        final List<List<CodeRuns.Run>> runs = this.ink.of(this.path, this.doc);
-        Draw.pushScissor(g, x, y + head, x + width, y + height - keysH - this.lineH);
+        final List<List<CodeRuns.Run>> runs = look.plainInk() ? List.of() : this.ink.of(this.path, this.doc);
+        Draw.pushScissor(g, x, y + head, x + width, textBottom);
         final int startX = x + PAD - this.shift;
         int ry = y + head + PAD;
         for (int i = this.scroll; i < this.doc.lineCount() && i - this.scroll < rows; i++) {
@@ -375,6 +416,13 @@ public final class TtyEditor {
             Draw.text(g, font, "~", x + PAD, y + head + PAD + i * this.lineH, palette.gutterText(), palette.ground());
         }
         Draw.popScissor(g);
+        /*
+         * Drawn after the scissor closes and over the file already painted, rather than in place of it: a
+         * box open here is a menu asking a question, not a page replacing what is being edited.
+         */
+        if (look.menu().up()) {
+            TtyChrome.menu(g, font, x, y + head, width, textBottom - y - head, this.lineH, look.menu(), palette);
+        }
     }
 
     /**
@@ -422,10 +470,32 @@ public final class TtyEditor {
     /** Lines shown in place of the file, from wherever the wheel has left them. */
     private void drawPage(final GuiGraphics g, final Font font, final List<String> page, final int x,
                           final int y, final int rows, final InkPalette palette) {
-        this.scroll = Math.max(0, Math.min(Math.max(0, page.size() - rows), this.scroll));
-        for (int i = this.scroll; i < page.size() && i - this.scroll < rows; i++) {
-            Draw.text(g, font, page.get(i), x, y + (i - this.scroll) * this.lineH, palette.plain(), palette.ground());
+        this.pageScroll = Math.max(0, Math.min(Math.max(0, page.size() - rows), this.pageScroll));
+        for (int i = this.pageScroll; i < page.size() && i - this.pageScroll < rows; i++) {
+            Draw.text(g, font, page.get(i), x, y + (i - this.pageScroll) * this.lineH, palette.plain(),
+                    palette.ground());
         }
+    }
+
+    /**
+     * The row naming where the caret stands, its words read in the player's language and then padded with
+     * {@code =} out to the glass's width, the way the real editor that draws one fills the rest of the row
+     * with them: the padding is not a word of any language, so it is added after the words are, not before.
+     *
+     * <p>Padded by pixel width rather than by character count, since a terminal's font is not fixed-width
+     * and a count of characters would stop short of the edge it is meant to reach; whatever still runs over
+     * once the words are long is trimmed where the row is drawn.
+     */
+    private static String paddedPosition(final TtyLook look, final Font font, final int width) {
+        final String words = GameText.resolve(look.positionLine());
+        final int room = width - 2 * PAD;
+        // A generous ceiling on how many marks are ever added, so a font with no width to an "=" cannot hang here.
+        final int most = Math.max(0, room);
+        final StringBuilder padded = new StringBuilder(words);
+        for (int added = 0; added < most && font.width(padded.toString()) < room; added++) {
+            padded.append('=');
+        }
+        return padded.toString();
     }
 
     private void drawStatus(final GuiGraphics g, final Font font, final int x, final int y,
@@ -437,6 +507,10 @@ public final class TtyEditor {
         }
         if (look.status() == TtyLook.Status.BAR) {
             TtyChrome.bar(g, font, x, y, width, this.lineH, left, palette);
+            return;
+        }
+        if (look.status() == TtyLook.Status.MESSAGE) {
+            TtyChrome.message(g, font, x, y, width, left, palette);
             return;
         }
         g.fill(x, y, x + width, y + this.lineH, palette.gutter());
@@ -505,9 +579,9 @@ public final class TtyEditor {
         return this.keys.typed(this, c);
     }
 
-    /** Shows whatever is on the glass from its first line, for a flavour that has just put a page there. */
+    /** Shows a page from its first line, for a flavour that has just put one on the glass. */
     public void toTheTop() {
-        this.scroll = 0;
+        this.pageScroll = 0;
     }
 
     /**
@@ -526,9 +600,14 @@ public final class TtyEditor {
         return true;
     }
 
-    /** Moves the view without moving the caret, which is what a wheel does. */
+    /** Moves the view without moving the caret, which is what a wheel does: the page's when one is up. */
     public boolean scrolled(final double delta) {
-        this.scroll = Math.max(0, this.scroll - (int) Math.signum(delta) * 3);
+        final int by = (int) Math.signum(delta) * 3;
+        if (!this.keys.look(this).page().isEmpty()) {
+            this.pageScroll = Math.max(0, this.pageScroll - by);
+        } else {
+            this.scroll = Math.max(0, this.scroll - by);
+        }
         return true;
     }
 

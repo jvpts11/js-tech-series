@@ -9,8 +9,10 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.os.edit.TtyLook;
+import dev.jstech.computers.os.edit.TtyMenuBox;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -76,9 +78,25 @@ final class TtyChrome {
         g.fill(caret, y, caret + font.width("m"), y + LETTERS - 1, palette.ground());
     }
 
-    /** The rows of keys: each key written the way a terminal makes things stand out, and what it does after it. */
+    /**
+     * A row written plainly on the glass's own ground, with nothing behind it: the editors of an older age
+     * that never kept a ruler in the corner say what they have to say this way, and the same row is where
+     * one of them names where the caret stands, right under its keys.
+     */
+    static void message(final GuiGraphics g, final Font font, final int x, final int y, final int width,
+                        final String said, final InkPalette palette) {
+        Draw.text(g, font, font.plainSubstrByWidth(said, width - 2 * PAD), x + PAD, y, palette.plain(),
+                palette.ground());
+    }
+
+    /**
+     * The rows of keys: each key written the way a terminal makes things stand out, and what it does after
+     * it. A chord badged in a bar of its own is how most of these editors write one; {@code bare} is an
+     * editor that instead prints its chords in bright ink on the glass, with no bar behind them.
+     */
     static void keys(final GuiGraphics g, final Font font, final int x, final int y, final int width,
-                     final int rowHeight, final List<List<TtyLook.Key>> rows, final InkPalette palette) {
+                     final int rowHeight, final List<List<TtyLook.Key>> rows, final InkPalette palette,
+                     final boolean bare) {
         int ry = y;
         for (final List<TtyLook.Key> row : rows) {
             final int column = row.isEmpty() ? width : width / row.size();
@@ -86,17 +104,68 @@ final class TtyChrome {
             for (final TtyLook.Key key : row) {
                 if (!key.chord().isEmpty()) {
                     final int chordW = font.width(key.chord());
-                    // A pixel of the bar either side of the letters, without which they run into its edges.
-                    g.fill(cx - 1, ry - 1, cx + chordW + 1, ry + LETTERS - 1, palette.plain());
-                    g.drawString(font, key.chord(), cx, ry, palette.ground(), false);
+                    if (bare) {
+                        Draw.text(g, font, key.chord(), cx, ry, palette.bright(), palette.ground());
+                    } else {
+                        // A pixel of the bar either side of the letters, without which they run into its edges.
+                        g.fill(cx - 1, ry - 1, cx + chordW + 1, ry + LETTERS - 1, palette.plain());
+                        g.drawString(font, key.chord(), cx, ry, palette.ground(), false);
+                    }
                     Draw.text(g, font,
                             font.plainSubstrByWidth(GameText.resolve(key.does()), Math.max(0, column - chordW - 8)),
                             cx + chordW + 4, ry, palette.plain(), palette.ground());
+                } else if (!key.does().isEmpty()) {
+                    // A cell with no chord to badge, such as a tip written out whole rather than a key it names.
+                    Draw.text(g, font, font.plainSubstrByWidth(GameText.resolve(key.does()), Math.max(0, column)),
+                            cx, ry, palette.plain(), palette.ground());
                 }
                 cx += column;
             }
             ry += rowHeight;
         }
+    }
+
+    /**
+     * A box drawn over the text, sized to what it holds rather than counted in characters: a terminal's
+     * font is not fixed-width, so a border of {@code -} and {@code |} would not meet its own corners. A
+     * filled rectangle and a plain outline do the same job without needing to.
+     *
+     * <p>The box starts at the column and row {@link TtyMenuBox} works out, and never draws past what it is
+     * given: an item too long for it is trimmed, and a menu with more rows than it has room for scrolls the
+     * chosen one into view rather than spilling over whatever is drawn under it.
+     */
+    static void menu(final GuiGraphics g, final Font font, final int areaX, final int areaY, final int areaWidth,
+                     final int areaHeight, final int textRow, final TtyLook.Menu menu, final InkPalette palette) {
+        final int itemRow = LETTERS + 2;
+        final List<String> items = new ArrayList<>(menu.items().size());
+        int innerW = font.width(GameText.resolve(menu.title()));
+        for (int i = 0; i < menu.items().size(); i++) {
+            final String item = (char) ('a' + i) + ") " + GameText.resolve(menu.items().get(i));
+            items.add(item);
+            innerW = Math.max(innerW, font.width(item));
+        }
+        final int cell = Math.max(1, font.width("m"));
+        final TtyMenuBox box = TtyMenuBox.of(areaWidth, areaHeight, cell, textRow, PAD, itemRow, innerW,
+                items.size(), menu.selected());
+        final int bx = areaX + box.x();
+        final int by = areaY + box.y();
+        final int innerWidth = Math.max(0, box.width() - 4 * PAD);
+        g.fill(bx, by, bx + box.width(), by + box.height(), palette.ground());
+        Draw.outline(g, bx, by, box.width(), box.height(), palette.plain());
+        Draw.text(g, font, font.plainSubstrByWidth(GameText.resolve(menu.title()), innerWidth), bx + 2 * PAD,
+                by + PAD, palette.bright(), palette.ground());
+        Draw.pushScissor(g, bx, by, bx + box.width(), by + box.height());
+        for (int i = box.topRow(); i < items.size() && i - box.topRow() < box.visibleRows(); i++) {
+            final int iy = by + PAD + (i - box.topRow() + 2) * itemRow;
+            final String shown = font.plainSubstrByWidth(items.get(i), innerWidth);
+            if (i == menu.selected()) {
+                g.fill(bx + 1, iy - 1, bx + box.width() - 1, iy + LETTERS, palette.selection());
+                g.drawString(font, shown, bx + 2 * PAD, iy, palette.ground(), false);
+            } else {
+                Draw.text(g, font, shown, bx + 2 * PAD, iy, palette.plain(), palette.ground());
+            }
+        }
+        Draw.popScissor(g);
     }
 
     /**

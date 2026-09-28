@@ -63,7 +63,8 @@ public final class ClientTestSuite {
             UiSweepClientTests.class,
             VolumeClientTests.class,
             WreckedMachineClientTests.class,
-            UnixClientTests.class);
+            UnixClientTests.class,
+            UnixFreeBsdEditorsClientTests.class);
 
     private ClientTestSuite() {
     }

@@ -25,6 +25,13 @@ class InkPaletteTest {
     /** A line number or a rule may be quieter than code, but it still has to be seen. */
     private static final double VISIBLE = 2.0;
 
+    /**
+     * How much two inks drawn side by side on the same ground must differ to read as different colours
+     * rather than the same one at a slightly different weight: the floor bright and plain must clear, since an
+     * editor writes both of them on the glass at once.
+     */
+    private static final double DISTINCT = 1.38;
+
     /** The colours each set ships with, which is what a player without a resource pack reads. */
     private static final InkPalette LIGHT = InkPalette.LIGHT.declared();
     private static final InkPalette DARK = InkPalette.DARK.declared();
@@ -88,6 +95,35 @@ class InkPaletteTest {
     void forGround_picksThePaletteThatMatchesTheWindow() {
         assertSame(InkPalette.DARK, InkPalette.forGround(true));
         assertSame(InkPalette.LIGHT, InkPalette.forGround(false));
+    }
+
+    /** A menu's title, in an ink meant to stand out more than the plain text round it. */
+    @Test
+    void bright_standsOutOnEveryPalettesGround() {
+        for (final InkPalette palette : new InkPalette[] {LIGHT, DARK, GLASS}) {
+            assertTrue(ColorContrast.ratio(palette.bright(), palette.ground()) >= READABLE);
+        }
+    }
+
+    /**
+     * A bare chord is bright ink written right beside plain ink on the same ground, with no badge of its
+     * own to set it apart, so the two must actually read as different colours and not merely as the same
+     * dark or light corner of the palette.
+     */
+    @Test
+    void bright_isDistinguishableFromPlainOnEveryPalette() {
+        for (final InkPalette palette : new InkPalette[] {LIGHT, DARK, GLASS}) {
+            assertTrue(ColorContrast.ratio(palette.bright(), palette.plain()) >= DISTINCT,
+                    "bright reads as plain, so a bare chord would not stand out beside its own description");
+        }
+    }
+
+    /** A menu's chosen row, painted in its own ground's colour once it sits on this. */
+    @Test
+    void selection_readsTheGroundsColourOnIt() {
+        for (final InkPalette palette : new InkPalette[] {LIGHT, DARK, GLASS}) {
+            assertTrue(ColorContrast.ratio(palette.ground(), palette.selection()) >= READABLE);
+        }
     }
 
     @Test
