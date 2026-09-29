@@ -55,14 +55,15 @@ public final class EraThemes {
 
     /**
      * Early-PC beige/blue chrome: classic system-blue accents, dark text on warm-cream backgrounds, cream-white bevel
-     * highlights. The palette targets Windows 3.1 / early-90s PC BIOS aesthetics.
+     * highlights. The palette targets Windows 3.1 / early-90s PC BIOS aesthetics. The amber is a dark goldenrod rather
+     * than the bright one of a dark screen, so a caution still reads on the light panels.
      */
     public static final Palette<EraPalette> LEGACY_COLOURS = Palettes.declare(JsCore.MODID, "era/legacy",
             new EraPalette(
                     0xFF808070, 0xFFC8C4B0, 0xFFB8B4A0, 0xFFD6D2C0, 0xFF6E6A58, 0xFF969280,
                     0xFFE4E0D0, 0xFF8A8676,
                     0xFF1A3C8C, 0xFF2E5AB8,
-                    0xFF1E7A2E, 0xFFB8860B, 0xFFA01818,
+                    0xFF1E7A2E, 0xFF8A6200, 0xFFA01818,
                     0xFF1A1A14, 0xFF5A5648,
                     0xFF1A3C8C, 0xFFFFFFF0, 0xFFD4D0C0,
                     0xFFFFFFF0, 0xFF6E6A58, 0, 0, 0));

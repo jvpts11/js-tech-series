@@ -507,6 +507,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The unused hook for the Modonomicon guidebook: the series' manuals will be drawn by J's Core itself.
 
 ### Fixed
+- The amber of cautions on the Legacy computing screens was hard to read on their light panels; it is a darker
+  goldenrod now, which reads on every ground those screens draw.
 - The service panel of every Mainframe no longer flickers where it meets the edges of its opening: its edges lay on
   the walls of the opening and fought them for the surface, which showed through the grille, the louvres and the
   glass. The window over the Vintage Mainframe's tape reels flickered the same way and no longer does.

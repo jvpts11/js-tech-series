@@ -42,6 +42,10 @@ class EraThemeTest {
     private static final double BODY = 4.5;
     private static final double SECONDARY = 3.0;
 
+    /** Every skin an era can wear. */
+    private static final EraTheme[] EVERY_SKIN = {
+            EraThemes.VINTAGE, EraThemes.LEGACY, EraThemes.TRANSITION, EraThemes.STANDARD, EraThemes.ADVANCED};
+
     @Test
     void of_standard_returnsTheStandardSingleton() {
         assertSame(EraThemes.STANDARD, EraThemes.of(HardwareEra.STANDARD));
@@ -133,8 +137,8 @@ class EraThemeTest {
     }
 
     @Test
-    void newEraSkins_textIsReadableOnEveryGround() {
-        for (final EraTheme skin : new EraTheme[]{EraThemes.TRANSITION, EraThemes.ADVANCED}) {
+    void everyEraSkin_textIsReadableOnEveryGround() {
+        for (final EraTheme skin : EVERY_SKIN) {
             final EraPalette p = skin.palette();
             assertReadable(p.text(), p.screen(), BODY);
             assertReadable(p.text(), p.panel(), BODY);
@@ -146,8 +150,8 @@ class EraThemeTest {
     }
 
     @Test
-    void newEraSkins_statusAndAccentColoursReadOnAPanel() {
-        for (final EraTheme skin : new EraTheme[]{EraThemes.TRANSITION, EraThemes.ADVANCED}) {
+    void everyEraSkin_statusAndAccentColoursReadOnAPanel() {
+        for (final EraTheme skin : EVERY_SKIN) {
             final EraPalette p = skin.palette();
             assertReadable(p.accent(), p.panel(), SECONDARY);
             assertReadable(p.accent2(), p.panel(), SECONDARY);
