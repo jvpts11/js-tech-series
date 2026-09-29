@@ -63,7 +63,9 @@ class SetupTimingTest {
     void eraFactor_doublesWithEveryGenerationAndCutsTheTimeToMatch() {
         assertEquals(1, SetupTiming.eraFactor(dev.jstech.core.tier.HardwareEra.VINTAGE));
         assertEquals(2, SetupTiming.eraFactor(dev.jstech.core.tier.HardwareEra.LEGACY));
+        assertEquals(3, SetupTiming.eraFactor(dev.jstech.core.tier.HardwareEra.TRANSITION));
         assertEquals(4, SetupTiming.eraFactor(dev.jstech.core.tier.HardwareEra.STANDARD));
+        assertEquals(8, SetupTiming.eraFactor(dev.jstech.core.tier.HardwareEra.ADVANCED));
         assertEquals(1, SetupTiming.eraFactor(null));
         // A 128 MB program on a CD: 32 s on a Vintage machine, 8 s on a Standard one, never under the floor.
         assertEquals(32, seconds(SetupTiming.ticks(128, MediaFormat.CD, false, 1)));

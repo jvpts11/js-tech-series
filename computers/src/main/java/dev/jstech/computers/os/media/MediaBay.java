@@ -61,7 +61,7 @@ public final class MediaBay {
     public static String clip(final MediaFormat format, final boolean in) {
         final String way = switch (format) {
             case FLOPPY -> "floppy";
-            case CD, DVD -> "tray";
+            case CD, DVD, BLU_RAY -> "tray";
             case USB -> "usb";
         };
         return (in ? "insert_" : "eject_") + way;

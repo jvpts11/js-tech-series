@@ -171,7 +171,7 @@ public final class Architectures {
         return switch (era) {
             case VINTAGE -> X86_16;
             case LEGACY -> X86;
-            case STANDARD, ADVANCED, EXA, SINGULARITY -> X86_64;
+            case TRANSITION, STANDARD, ADVANCED, EXA, SINGULARITY -> X86_64;
         };
     }
 

@@ -13,7 +13,7 @@ package dev.jstech.core.client.gui.theme;
  * description of how a computing screen is painted. Pure data (no Minecraft types), so it can be selected and
  * compared without a running client.
  *
- * <p>The last four are the colours of the overlays an {@link EraStyle} switches on; a skin whose style leaves an
+ * <p>The last five are the colours of the overlays an {@link EraStyle} switches on; a skin whose style leaves an
  * overlay off gives it {@code 0}, and a transparent colour draws nothing even where the style asks for it.
  *
  * @param outer      the 1px border drawn just outside the window
@@ -38,6 +38,8 @@ package dev.jstech.core.client.gui.theme;
  * @param bevelDark  the shadow edge of a bevel
  * @param scanline   the low-alpha lines of the scanline finish
  * @param glow       the low-alpha halo around accent-coloured fills
+ * @param sheen      the low-alpha light laid over the upper half of a header, a button or a selected tab, which
+ *                   splits it into the two bands of a glass surface
  */
 public record EraPalette(
         int outer, int screen, int rail, int panel, int line, int track,
@@ -46,5 +48,5 @@ public record EraPalette(
         int green, int amber, int red,
         int text, int dim,
         int tabOn, int tabLabelOn, int hover,
-        int bevelLight, int bevelDark, int scanline, int glow) {
+        int bevelLight, int bevelDark, int scanline, int glow, int sheen) {
 }

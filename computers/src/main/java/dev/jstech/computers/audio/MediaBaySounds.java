@@ -90,7 +90,7 @@ public final class MediaBaySounds {
         }
         return switch (format) {
             case FLOPPY -> in ? ComputingSounds.FLOPPY_INSERT : ComputingSounds.FLOPPY_EJECT;
-            case CD, DVD -> ComputingSounds.DISC_TRAY;
+            case CD, DVD, BLU_RAY -> ComputingSounds.DISC_TRAY;
             case USB -> in ? ComputingSounds.USB_INSERT : ComputingSounds.USB_REMOVE;
         };
     }

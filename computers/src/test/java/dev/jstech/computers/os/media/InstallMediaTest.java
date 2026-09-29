@@ -19,7 +19,9 @@ public final class InstallMediaTest {
     public void forSystem_followsTheEra() {
         assertEquals(MediaFormat.FLOPPY, InstallMedia.forSystem(HardwareEra.VINTAGE));
         assertEquals(MediaFormat.CD, InstallMedia.forSystem(HardwareEra.LEGACY));
+        assertEquals(MediaFormat.DVD, InstallMedia.forSystem(HardwareEra.TRANSITION));
         assertEquals(MediaFormat.USB, InstallMedia.forSystem(HardwareEra.STANDARD));
+        assertEquals(MediaFormat.USB, InstallMedia.forSystem(HardwareEra.ADVANCED));
     }
 
     @Test
@@ -36,7 +38,16 @@ public final class InstallMediaTest {
         for (final ProgramKind kind : ProgramKind.values()) {
             assertEquals(MediaFormat.FLOPPY, InstallMedia.forProgram(HardwareEra.VINTAGE, kind), kind.name());
             assertEquals(MediaFormat.CD, InstallMedia.forProgram(HardwareEra.LEGACY, kind), kind.name());
+            assertEquals(MediaFormat.DVD, InstallMedia.forProgram(HardwareEra.TRANSITION, kind), kind.name());
         }
+    }
+
+    @Test
+    public void forProgram_advancedPutsApplicationsOnBluRayAndServicesOnTheStick() {
+        assertEquals(MediaFormat.USB, InstallMedia.forProgram(HardwareEra.ADVANCED, ProgramKind.SERVICE));
+        assertEquals(MediaFormat.BLU_RAY, InstallMedia.forProgram(HardwareEra.ADVANCED, ProgramKind.APP));
+        assertEquals(MediaFormat.BLU_RAY,
+                InstallMedia.forProgram(HardwareEra.ADVANCED, ProgramKind.DESKTOP_ENVIRONMENT));
     }
 
     @Test
@@ -52,5 +63,14 @@ public final class InstallMediaTest {
             assertEquals(false, InstallMedia.readerName(format).english().isBlank(), format.name());
         }
         assertEquals("Dock Station", InstallMedia.readerName(MediaFormat.USB).english());
+        assertEquals("Blu-ray Drive", InstallMedia.readerName(MediaFormat.BLU_RAY).english());
+    }
+
+    @Test
+    public void bluRay_isTheAdvancedDiscFourTimesAStick() {
+        assertEquals(HardwareEra.ADVANCED, MediaFormat.BLU_RAY.era());
+        assertEquals(1_048_576, MediaFormat.BLU_RAY.capacityItems());
+        assertEquals(4 * MediaFormat.USB.capacityItems(), MediaFormat.BLU_RAY.capacityItems());
+        assertEquals("Blu-ray", MediaFormat.BLU_RAY.text().english());
     }
 }

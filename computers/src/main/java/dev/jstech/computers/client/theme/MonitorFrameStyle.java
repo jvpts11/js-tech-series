@@ -61,7 +61,7 @@ public record MonitorFrameStyle(
     public static MonitorFrameStyle forEra(final HardwareEra era) {
         return switch (era) {
             case VINTAGE -> CRT;
-            case LEGACY -> LCD;
+            case LEGACY, TRANSITION -> LCD;
             case STANDARD, ADVANCED, EXA, SINGULARITY -> FLAT;
         };
     }

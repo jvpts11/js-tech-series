@@ -15,8 +15,8 @@ import dev.jstech.core.tier.HardwareEra;
  * The firmware variant shown when a computer has no operating system installed.
  *
  * <p>Each hardware era ships a distinct firmware presentation: command-line for Vintage hardware,
- * the classic blue-panel BIOS for Legacy hardware, and a modern UEFI interface for Standard and
- * any later era.
+ * the classic blue-panel BIOS for Legacy and Transition hardware (the Transition's is a later version of the
+ * same BIOS), and a modern UEFI interface for Standard and any later era.
  *
  * <p>This enum is pure (it depends only on {@link HardwareEra}, which is itself pure) so it
  * compiles and runs in the JUnit test sourceset without any Minecraft dependency.
@@ -24,7 +24,7 @@ import dev.jstech.core.tier.HardwareEra;
 public enum FirmwareKind implements IStableId {
     /** Text-mode command-line BIOS. Used on Vintage-era hardware. */
     CLI_BIOS(0),
-    /** Classic blue-panel visual BIOS. Used on Legacy-era hardware. */
+    /** Classic blue-panel visual BIOS. Used on Legacy-era and Transition-era hardware. */
     BLUE_BIOS(1),
     /** Modern UEFI interface. Used on Standard-era hardware and above. */
     UEFI(2);
@@ -47,13 +47,13 @@ public enum FirmwareKind implements IStableId {
      *
      * @param era the hardware era of the computer
      * @return {@link #CLI_BIOS} for {@link HardwareEra#VINTAGE}, {@link #BLUE_BIOS} for
-     *         {@link HardwareEra#LEGACY}, and {@link #UEFI} for {@link HardwareEra#STANDARD} or any
-     *         later era
+     *         {@link HardwareEra#LEGACY} and {@link HardwareEra#TRANSITION}, and {@link #UEFI} for
+     *         {@link HardwareEra#STANDARD} or any later era
      */
     public static FirmwareKind forEra(HardwareEra era) {
         return switch (era) {
             case VINTAGE -> CLI_BIOS;
-            case LEGACY -> BLUE_BIOS;
+            case LEGACY, TRANSITION -> BLUE_BIOS;
             default -> UEFI;
         };
     }

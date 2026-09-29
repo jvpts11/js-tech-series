@@ -74,6 +74,7 @@ public final class InstallService {
     private static final TextKey CD = TextKey.of("jsc.service.install.cd", "the CD");
     private static final TextKey DVD = TextKey.of("jsc.service.install.dvd", "the DVD");
     private static final TextKey USB = TextKey.of("jsc.service.install.usb", "the USB drive");
+    private static final TextKey BLU_RAY = TextKey.of("jsc.service.install.blu_ray", "the Blu-ray disc");
     private static final TextKey NOT_WRITTEN = TextKey.of("jsc.service.install.not_written",
             "The installation could not be written to the disk (no space or no disk).");
     private static final TextKey REBOOTING =
@@ -177,6 +178,7 @@ public final class InstallService {
             case CD -> CD;
             case DVD -> DVD;
             case USB -> USB;
+            case BLU_RAY -> BLU_RAY;
         };
     }
 

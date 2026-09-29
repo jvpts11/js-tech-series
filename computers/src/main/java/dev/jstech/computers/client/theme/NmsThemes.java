@@ -73,7 +73,7 @@ public final class NmsThemes {
                 base.green(), base.amber(), base.red(),
                 skin.text(), skin.dim(),
                 skin.accent(), PALETTE.get().activeTabLabel(), skin.listHover(),
-                0, 0, 0, 0);
+                0, 0, 0, 0, 0);
     }
 
     /** The Studio's own colours on top of a derived skin: the active tab's label, kept white for contrast. */

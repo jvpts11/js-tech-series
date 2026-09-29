@@ -49,6 +49,7 @@ public final class Branding {
         return switch (era) {
             case VINTAGE -> 1987;
             case LEGACY -> 1998;
+            case TRANSITION -> 2008;
             case STANDARD -> 2026;
             case ADVANCED -> 2044;
             case EXA -> 2071;
@@ -70,6 +71,8 @@ public final class Branding {
         return switch (era) {
             case VINTAGE -> "1.02";
             case LEGACY -> "2.41";
+            // The same blue BIOS as the Legacy boards, a later version of it.
+            case TRANSITION -> "3.10";
             default -> "4.06";
         };
     }

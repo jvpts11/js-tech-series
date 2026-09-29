@@ -34,8 +34,12 @@ final class PatternTexts {
             TextKey.of("jsc.pattern_encoder.screen.vintage_writes", "Vintage encoder: floppy disks");
     static final TextKey LEGACY_WRITES =
             TextKey.of("jsc.pattern_encoder.screen.legacy_writes", "Legacy encoder: CD-RW");
+    static final TextKey TRANSITION_WRITES =
+            TextKey.of("jsc.pattern_encoder.screen.transition_writes", "Transition encoder: DVD, CD");
     static final TextKey STANDARD_WRITES =
             TextKey.of("jsc.pattern_encoder.screen.standard_writes", "Standard encoder: DVD, CD, USB");
+    static final TextKey ADVANCED_WRITES =
+            TextKey.of("jsc.pattern_encoder.screen.advanced_writes", "Advanced encoder: Blu-ray, USB");
 
     // The Patterns heading.
     static final TextKey DRAFT = TextKey.of("jsc.terminal.patterns.draft", "Draft");

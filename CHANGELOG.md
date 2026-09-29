@@ -321,8 +321,19 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - J's Core registers every payload a client sends with a gate that checks, on the server, that the player really has
   that screen open on what the payload names; a payload that acts on the menu the player has open is handed that
   menu, already checked, and a refused one is dropped and noted in the server log.
+- Two hardware eras join the ladder: the Transition, between Legacy and Standard (the late 2000s, 64-bit, blue
+  BIOS, flat panels, systems and programs on DVD), and the Advanced, after Standard. Each has its own look on the
+  computing screens: the Transition in navy glass, its headers, buttons and selected tabs in two bands over a line
+  of sky blue; the Advanced light and flat, white panels on grey under a thin blue line. Both palettes can be
+  recoloured by a resource pack like the others.
+- Blu-ray discs, the Advanced era's medium: the BD-ROM and the rewritable BD-RE, each holding four times a USB
+  stick. Advanced programs ship on Blu-ray, and its systems and services on the stick.
 
 ### Changed
+- A medium's tooltip names its format in the player's language ("Floppy", "Blu-ray") instead of the code's name
+  for it.
+- A monitor going dark is heard only from a picture tube; the flat panels of the Transition and every later era
+  go dark silently, as the Standard ones always did.
 - J's Computers' blocks keep their state as J's Core's declared fields: the computers, the server racks, the drives,
   the Pattern Encoders, monitors, speakers, Network Gateways, data cables, Crafting Switches, Server Routers, HBW
   Interfaces and tanks. The players who see one are sent one update a tick however much of it changed, and the

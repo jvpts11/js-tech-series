@@ -180,6 +180,7 @@ public final class RamLedger {
         final int base = switch (era) {
             case VINTAGE -> 1;
             case LEGACY -> 16;
+            case TRANSITION -> 48;
             case STANDARD -> 96;
             case ADVANCED -> 256;
             case EXA -> 512;

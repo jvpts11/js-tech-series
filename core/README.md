@@ -16,8 +16,8 @@ What a technology mod needs, whichever mod it is.
 
 ### The world model
 
-- The two axes of progression: the hardware eras (Vintage, Legacy, Standard and the ones to come) and the
-  industrial tiers (T0 to T9), kept apart on purpose.
+- The two axes of progression: the hardware eras (Vintage, Legacy, Transition, Standard, Advanced and the ones
+  to come) and the industrial tiers (T0 to T9), kept apart on purpose.
 - The material catalogue: the dusts, plates and other forms of the metals the mods process, registered
   here so that every mod trades the same items. They are the one thing the core adds to the game; the
   industrial mod shows them in its creative tab and gives them their recipes.

@@ -15,6 +15,7 @@
   "red": "#FFC0392B",
   "scanline": "#00000000",
   "screen": "#FFECECEC",
+  "sheen": "#00000000",
   "slotBg": "#FFFFFFFF",
   "slotEdge": "#FFC4C4C4",
   "tabLabelOn": "#FF1E1E1E",

@@ -148,7 +148,11 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
         return switch (era) {
             case VINTAGE -> format == MediaFormat.FLOPPY;
             case LEGACY -> format == MediaFormat.CD;
-            default -> format == MediaFormat.DVD || format == MediaFormat.CD || format == MediaFormat.USB;
+            // A DVD burner, which writes CDs too; the stick comes with the Standard era's encoder.
+            case TRANSITION -> format == MediaFormat.DVD || format == MediaFormat.CD;
+            case STANDARD -> format == MediaFormat.DVD || format == MediaFormat.CD || format == MediaFormat.USB;
+            // A Blu-ray writer with a port for the sticks; the older discs are left to the older encoders.
+            case ADVANCED, EXA, SINGULARITY -> format == MediaFormat.BLU_RAY || format == MediaFormat.USB;
         };
     }
 
@@ -162,6 +166,7 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
             case FLOPPY -> 250;
             case CD -> 1024;
             case DVD -> 4096;
+            case BLU_RAY -> 16_384;
             case USB -> Integer.MAX_VALUE;
         };
     }
@@ -172,6 +177,7 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
             case FLOPPY -> 20;
             case CD -> 30;
             case DVD -> 15;
+            case BLU_RAY -> 12;
             case USB -> 4;
         };
     }
@@ -181,6 +187,7 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
         return switch (format) {
             case FLOPPY, CD -> 10;
             case DVD -> 5;
+            case BLU_RAY -> 4;
             case USB -> 2;
         };
     }

@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import static dev.jstech.computers.client.FirmwareScreenTexts.of;
+import static dev.jstech.computers.client.PatternTexts.ADVANCED_WRITES;
 import static dev.jstech.computers.client.PatternTexts.BAY;
 import static dev.jstech.computers.client.PatternTexts.BAY_EMPTY;
 import static dev.jstech.computers.client.PatternTexts.CANCEL_QUEUE;
@@ -20,6 +21,7 @@ import static dev.jstech.computers.client.PatternTexts.QUEUED;
 import static dev.jstech.computers.client.PatternTexts.REMOVABLE_MEDIUM;
 import static dev.jstech.computers.client.PatternTexts.STANDARD_WRITES;
 import static dev.jstech.computers.client.PatternTexts.TITLE;
+import static dev.jstech.computers.client.PatternTexts.TRANSITION_WRITES;
 import static dev.jstech.computers.client.PatternTexts.VINTAGE_WRITES;
 
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
@@ -159,7 +161,9 @@ public class PatternEncoderScreen extends AbstractComputerScreen<PatternEncoderM
         return switch (era) {
             case VINTAGE -> VINTAGE_WRITES;
             case LEGACY -> LEGACY_WRITES;
-            default -> STANDARD_WRITES;
+            case TRANSITION -> TRANSITION_WRITES;
+            case STANDARD -> STANDARD_WRITES;
+            case ADVANCED, EXA, SINGULARITY -> ADVANCED_WRITES;
         };
     }
 

@@ -42,6 +42,7 @@
   "jscore.era.named": "era %s",
   "jscore.era.singularity": "Singularity",
   "jscore.era.standard": "Standard",
+  "jscore.era.transition": "Transition",
   "jscore.era.vintage": "Vintage",
   "jscore.language.complaint": "%s(%s,%s): erro %s: %s",
   "jscore.media.broken": "A gravação não chegou inteira",

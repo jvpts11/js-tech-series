@@ -71,8 +71,12 @@ public class PatternEncoderBlock extends DeviceBlock implements IPeripheralConne
             TextKey.of("jsc.pattern_encoder.vintage_only", "A Vintage encoder writes floppy disks only.");
     private static final TextKey LEGACY_ONLY =
             TextKey.of("jsc.pattern_encoder.legacy_only", "A Legacy encoder writes CDs only.");
+    private static final TextKey TRANSITION_ONLY =
+            TextKey.of("jsc.pattern_encoder.transition_only", "A Transition encoder writes DVDs and CDs only.");
     private static final TextKey STANDARD_ONLY = TextKey.of("jsc.pattern_encoder.standard_only",
             "This encoder writes DVDs, CDs and USB sticks, not that.");
+    private static final TextKey ADVANCED_ONLY = TextKey.of("jsc.pattern_encoder.advanced_only",
+            "An Advanced encoder writes Blu-ray discs and USB sticks only.");
 
     public PatternEncoderBlock(final Properties properties, final HardwareEra era) {
         super(properties, DEVICE);
@@ -181,7 +185,9 @@ public class PatternEncoderBlock extends DeviceBlock implements IPeripheralConne
         return switch (era) {
             case VINTAGE -> VINTAGE_ONLY;
             case LEGACY -> LEGACY_ONLY;
-            default -> STANDARD_ONLY;
+            case TRANSITION -> TRANSITION_ONLY;
+            case STANDARD -> STANDARD_ONLY;
+            case ADVANCED, EXA, SINGULARITY -> ADVANCED_ONLY;
         };
     }
 }

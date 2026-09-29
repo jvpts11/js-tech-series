@@ -32,7 +32,7 @@ public final class NmsPalette {
                     0xFF2E8B2E, 0xFFE6B800, 0xFFC0392B,
                     0xFF1E1E1E, 0xFF8A8A8A,
                     0xFFFFFFFF, 0xFF1E1E1E, 0xFFCCE8FF,
-                    0, 0, 0, 0));
+                    0, 0, 0, 0, 0));
 
     private NmsPalette() {
     }

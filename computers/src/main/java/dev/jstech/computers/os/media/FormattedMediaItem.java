@@ -92,7 +92,7 @@ public class FormattedMediaItem extends MediaItem {
     @Override
     public void appendHoverText(final ItemStack stack, final TooltipContext context,
                                 final List<Component> tooltip, final TooltipFlag flag) {
-        tooltip.add(GameText.component((writable ? READ_WRITE : READ_ONLY).with(format.name()))
+        tooltip.add(GameText.component((writable ? READ_WRITE : READ_ONLY).with(format.text()))
                 .withStyle(ChatFormatting.GRAY));
         tooltip.add(GameText.component(CAPACITY.with(format.capacityItems()))
                 .withStyle(ChatFormatting.DARK_GRAY));

@@ -108,6 +108,7 @@ public final class ComputingContent {
             case CD -> ComputingModule.CD_ROM.get();
             case DVD -> ComputingModule.DVD_ROM.get();
             case USB -> ComputingModule.USB_FLASH_DRIVE.get();
+            case BLU_RAY -> ComputingModule.BD_ROM.get();
         };
     }
 }

@@ -151,6 +151,10 @@ public final class JsTechTheme {
         active.button(g, x, y, w, h, hovered);
     }
 
+    public static void selectedTab(final GuiGraphics g, final int x, final int y, final int w, final int h) {
+        active.selectedTab(g, x, y, w, h);
+    }
+
     public static void track(final GuiGraphics g, final int x, final int y, final int w,
                              final double frac, final int fillColor) {
         active.track(g, x, y, w, frac, fillColor);

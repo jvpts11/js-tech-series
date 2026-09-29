@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
@@ -66,8 +67,36 @@ public final class PatternEncoderGameTests {
                 "a Standard encoder takes DVD-RW, CD-RW and USB");
         helper.assertFalse(standard.acceptsMedia(floppy), "a Standard encoder refuses a floppy");
         helper.assertFalse(standard.acceptsMedia(cdRom), "read-only media is refused everywhere");
-        helper.assertTrue(PatternEncoderBlockEntity.eraAccepts(HardwareEra.ADVANCED, MediaFormat.USB),
-                "later eras write what the Standard one writes");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void encoder_ofTheNewErasWritesWhatItsEraBurned(final GameTestHelper helper) {
+        // The Transition's DVD burner writes DVDs and CDs, and has no port for a stick.
+        helper.assertTrue(PatternEncoderBlockEntity.eraAccepts(HardwareEra.TRANSITION, MediaFormat.DVD)
+                && PatternEncoderBlockEntity.eraAccepts(HardwareEra.TRANSITION, MediaFormat.CD),
+                "a Transition encoder writes DVDs and CDs");
+        helper.assertFalse(PatternEncoderBlockEntity.eraAccepts(HardwareEra.TRANSITION, MediaFormat.USB),
+                "a Transition encoder takes no stick");
+        // The Advanced one writes Blu-ray discs and sticks, and leaves the older discs to the older encoders.
+        helper.assertTrue(PatternEncoderBlockEntity.eraAccepts(HardwareEra.ADVANCED, MediaFormat.BLU_RAY)
+                && PatternEncoderBlockEntity.eraAccepts(HardwareEra.ADVANCED, MediaFormat.USB),
+                "an Advanced encoder writes Blu-ray and USB");
+        helper.assertFalse(PatternEncoderBlockEntity.eraAccepts(HardwareEra.ADVANCED, MediaFormat.DVD)
+                || PatternEncoderBlockEntity.eraAccepts(HardwareEra.ADVANCED, MediaFormat.CD),
+                "an Advanced encoder writes no DVD or CD");
+        helper.assertFalse(PatternEncoderBlockEntity.eraAccepts(HardwareEra.STANDARD, MediaFormat.BLU_RAY),
+                "a Standard encoder writes no Blu-ray");
+        final ItemStack bdRe = new ItemStack(ComputingModule.BD_RE.get());
+        final ItemStack bdRom = new ItemStack(ComputingModule.BD_ROM.get());
+        helper.assertTrue(bdRe.getItem() instanceof FormattedMediaItem re && re.writable()
+                && re.format() == MediaFormat.BLU_RAY, "a BD-RE is a rewritable Blu-ray");
+        helper.assertTrue(bdRom.getItem() instanceof FormattedMediaItem rom && !rom.writable()
+                && rom.format() == MediaFormat.BLU_RAY, "a BD-ROM is a pressed Blu-ray");
+        helper.assertTrue(PatternEncoderBlockEntity.seekTicks(MediaFormat.BLU_RAY) > 0
+                && PatternEncoderBlockEntity.bytesPerTick(MediaFormat.BLU_RAY)
+                > PatternEncoderBlockEntity.bytesPerTick(MediaFormat.DVD),
+                "a Blu-ray burns faster than a DVD");
         helper.succeed();
     }
 

@@ -62,6 +62,7 @@ public final class SetupRunner {
     private static final TextKey FROM_CD = TextKey.of("jsc.install.setup_runner.from_cd", "CD");
     private static final TextKey FROM_DVD = TextKey.of("jsc.install.setup_runner.from_dvd", "DVD");
     private static final TextKey FROM_USB = TextKey.of("jsc.install.setup_runner.from_usb", "USB drive");
+    private static final TextKey FROM_BLU_RAY = TextKey.of("jsc.install.setup_runner.from_blu_ray", "Blu-ray disc");
 
     private static final TextKey STILL_SETTING_UP = TextKey.of("jsc.install.setup_runner.still_setting_up",
             "This computer is still setting up %s.");
@@ -265,6 +266,7 @@ public final class SetupRunner {
             case CD -> FROM_CD.text();
             case DVD -> FROM_DVD.text();
             case USB -> FROM_USB.text();
+            case BLU_RAY -> FROM_BLU_RAY.text();
         };
     }
 

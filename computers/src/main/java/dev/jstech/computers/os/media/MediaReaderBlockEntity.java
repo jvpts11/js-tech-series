@@ -184,7 +184,7 @@ public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeriph
         }
         return switch (format) {
             case FLOPPY -> List.of(LoopRequest.of(ComputingSounds.FLOPPY_READ));
-            case CD, DVD -> List.of(LoopRequest.of(ComputingSounds.OPTICAL_READ));
+            case CD, DVD, BLU_RAY -> List.of(LoopRequest.of(ComputingSounds.OPTICAL_READ));
             case USB -> List.of();
         };
     }

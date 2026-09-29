@@ -30,10 +30,11 @@ import org.jetbrains.annotations.Nullable;
 public enum HardwareEra implements IStableId, IStableName {
     VINTAGE(0, "vintage", TextKey.of("jscore.era.vintage", "Vintage")),
     LEGACY(1, "legacy", TextKey.of("jscore.era.legacy", "Legacy")),
-    STANDARD(2, "standard", TextKey.of("jscore.era.standard", "Standard")),
-    ADVANCED(3, "advanced", TextKey.of("jscore.era.advanced", "Advanced")),
-    EXA(4, "exa", TextKey.of("jscore.era.exa", "Exa")),
-    SINGULARITY(5, "singularity", TextKey.of("jscore.era.singularity", "Singularity"));
+    TRANSITION(2, "transition", TextKey.of("jscore.era.transition", "Transition")),
+    STANDARD(3, "standard", TextKey.of("jscore.era.standard", "Standard")),
+    ADVANCED(4, "advanced", TextKey.of("jscore.era.advanced", "Advanced")),
+    EXA(5, "exa", TextKey.of("jscore.era.exa", "Exa")),
+    SINGULARITY(6, "singularity", TextKey.of("jscore.era.singularity", "Singularity"));
 
     private final int level;
     private final String serializedName;
@@ -63,14 +64,16 @@ public enum HardwareEra implements IStableId, IStableName {
 
     /**
      * The colour an era's screens are remembered by, as an RGB int for a tooltip: the green phosphor of a
-     * CRT terminal for Vintage, the blue of the Legacy desktop's chrome, the accent blue of the Standard
-     * desktop, and a colder cast for each generation past that. A part's era reads at a glance, before
-     * the word does, which is what a player sorting a chest of boards and chips needs.
+     * CRT terminal for Vintage, the blue of the Legacy desktop's chrome, the sky blue of the glass desktops of
+     * the Transition, the accent blue of the Standard desktop, and a colder cast for each generation past that.
+     * A part's era reads at a glance, before the word does, which is what a player sorting a chest of boards and
+     * chips needs.
      */
     public int screenColor() {
         return switch (this) {
             case VINTAGE -> 0x33FF33;
             case LEGACY -> 0x245EDC;
+            case TRANSITION -> 0x3FA9E0;
             case STANDARD -> 0x0078D4;
             case ADVANCED -> 0x9B59FF;
             case EXA -> 0x00E5FF;

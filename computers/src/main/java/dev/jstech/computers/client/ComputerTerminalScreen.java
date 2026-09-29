@@ -83,7 +83,6 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     private int RED;
     private int TEXT;
     private int DIM;
-    private int TAB_ON;
     private int TAB_LABEL_ON;
     private int HOVER;
 
@@ -104,7 +103,6 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         RED = JsTechTheme.red();
         TEXT = JsTechTheme.text();
         DIM = JsTechTheme.dim();
-        TAB_ON = JsTechTheme.tabOn();
         TAB_LABEL_ON = JsTechTheme.tabLabelOn();
         HOVER = JsTechTheme.hover();
     }
@@ -549,7 +547,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
             final int tx = x + RAIL_X;
             final int ty = y + TAB_Y0 + row * TAB_H;
             if (tab == menu.activeTab()) {
-                g.fill(tx, ty, tx + RAIL_W, ty + TAB_H, TAB_ON);
+                JsTechTheme.selectedTab(g, tx, ty, RAIL_W, TAB_H);
                 g.fill(tx, ty, tx + 2, ty + TAB_H, ACCENT);
             }
         }

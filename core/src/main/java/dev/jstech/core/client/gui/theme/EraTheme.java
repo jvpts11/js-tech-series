@@ -164,16 +164,25 @@ public final class EraTheme {
 
     public void headerBar(final GuiGraphics g, final int cx, final int cy, final int cw) {
         final EraPalette p = colours.get();
-        g.fill(cx, cy, cx + cw, cy + 16, p.panel());
-        g.fill(cx, cy + 16, cx + cw, cy + 17, p.line());
+        g.fill(cx, cy, cx + cw, cy + 16, s.glassBands() ? p.tabOn() : p.panel());
+        sheen(g, p, cx, cy, cw, 16);
+        g.fill(cx, cy + 16, cx + cw, cy + 17, s.accentRule() ? p.accent() : p.line());
     }
 
     public void button(final GuiGraphics g, final int x, final int y, final int w, final int h,
                        final boolean hovered) {
         final EraPalette p = colours.get();
         g.fill(x, y, x + w, y + h, hovered ? p.hover() : p.panel());
+        sheen(g, p, x, y, w, h);
         g.fill(x, y, x + w, y + 1, p.line());
         bevel(g, p, x, y, w, h, !hovered);
+    }
+
+    /** The ground of the selected tab, which its label is drawn over in {@link #tabLabelOn()}. */
+    public void selectedTab(final GuiGraphics g, final int x, final int y, final int w, final int h) {
+        final EraPalette p = colours.get();
+        g.fill(x, y, x + w, y + h, p.tabOn());
+        sheen(g, p, x, y, w, h);
     }
 
     public void track(final GuiGraphics g, final int x, final int y, final int w,
@@ -208,6 +217,16 @@ public final class EraTheme {
         if (p.bevelDark() != 0) {
             g.fill(x, y + h - 1, x + w, y + h, p.bevelDark());
             g.fill(x + w - 1, y, x + w, y + h, p.bevelDark());
+        }
+    }
+
+    /**
+     * Lays the glass sheen over the upper half of a rectangle, so it reads as two bands, the lighter over the
+     * darker. A no-op unless the style enables the bands and the palette gives the sheen a colour.
+     */
+    private void sheen(final GuiGraphics g, final EraPalette p, final int x, final int y, final int w, final int h) {
+        if (s.glassBands() && p.sheen() != 0) {
+            g.fill(x, y, x + w, y + h / 2, p.sheen());
         }
     }
 

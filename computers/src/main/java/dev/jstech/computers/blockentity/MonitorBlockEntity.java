@@ -162,9 +162,9 @@ public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheral
             bootTicks = 0;
             if (lit.get()) {
                 lit.set(false);
-                // A picture tube is heard going dark; a Standard flat panel goes dark without a sound.
+                // A picture tube is heard going dark; a flat panel, from the Transition on, goes dark without a sound.
                 if (getBlockState().getBlock() instanceof MonitorBlock monitor
-                        && monitor.era() != HardwareEra.STANDARD) {
+                        && monitor.era().isAtMost(HardwareEra.LEGACY)) {
                     Audio.at(level, worldPosition, ComputingSounds.MONITOR_POWER_OFF);
                 }
             }

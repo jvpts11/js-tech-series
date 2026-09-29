@@ -411,6 +411,10 @@ public final class ComputingModule {
             medium("dvd_rom", MediaFormat.DVD, false).named("DVD-ROM").register();
     public static final ItemEntry<FormattedMediaItem> DVD_RW =
             medium("dvd_rw", MediaFormat.DVD, true).named("DVD-RW").register();
+    public static final ItemEntry<FormattedMediaItem> BD_ROM =
+            medium("bd_rom", MediaFormat.BLU_RAY, false).named("BD-ROM").register();
+    public static final ItemEntry<FormattedMediaItem> BD_RE =
+            medium("bd_re", MediaFormat.BLU_RAY, true).named("BD-RE").register();
     // The flash drive is a model made by hand in three dimensions, not a flat sprite.
     public static final ItemEntry<FormattedMediaItem> USB_FLASH_DRIVE =
             medium("usb_flash_drive", MediaFormat.USB, true).look(IItemLook.HANDMADE).named("USB Flash Drive")
