@@ -45,9 +45,10 @@ What the words in the table mean, so that a phase change is a checkable fact and
 - **Half done**: every module keeps a closed list of milestones split into two halves; a module is half
   done when the whole first half is playable. For Industrial the halves are the tier ladder: tiers T0 to
   T4 of T0 to T9.
-- **Complete**: every milestone of the module's current design is implemented, with its chapter in the
-  in-game guide and its test battery. For Computing this means the network, the operating systems and
-  programs, storage, autocrafting and the servers, in the three hardware eras that exist today (Vintage,
+- **Complete**: every milestone of the module's current design is implemented, with its entries in the
+  in-game manuals (its own manual and its chapter of the series' Technical Reference) and its test
+  battery. For Computing this means the network, the operating systems and programs, storage,
+  autocrafting and the servers, in the three hardware eras that exist today (Vintage,
   Legacy, Standard); the later eras are milestones of later phases, because they only make sense once
   Industrial and Space feed them.
 

@@ -492,6 +492,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   layout comes back the same whatever desktop or language it is looked at under, and the Task Manager and the
   System Monitor list each window by the name the desktop gives its program.
 
+### Removed
+- The unused hook for the Modonomicon guidebook: the series' manuals will be drawn by J's Core itself.
+
 ### Fixed
 - The service panel of every Mainframe no longer flickers where it meets the edges of its opening: its edges lay on
   the walls of the opening and fought them for the surface, which showed through the grille, the louvres and the

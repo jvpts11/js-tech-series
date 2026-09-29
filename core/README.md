@@ -2,14 +2,17 @@
 
 # J's Core
 
-The shared library of the [J's Tech Series](../README.md); its id is `jscore`. Every mod of the series
-requires it, at the same version. It is not a mod to play on its own: install it because another mod of
-the series asks for it, or because your own project builds on it (see [Using the Core in your
-project](#using-the-core-in-your-project)).
+The shared library of the [J's Tech Series](../README.md), and a general-purpose library for building
+technology mods: the series is built on it, and any mod may use it. Its id is `jscore`, and every mod of the
+series requires it at the same version. It adds nothing to play on its own beyond the materials every mod
+trades (the shared cable block each mod registers its cables into, and the series' technical reference, are
+on their way): install it because another mod asks for it, or because your own project builds on it (see
+[Using the Core in your project](#using-the-core-in-your-project)). Everything in it is declared through
+explicit builders.
 
 ## What it holds
 
-The things two or more mods of the series need, or that define the language they share.
+What a technology mod needs, whichever mod it is.
 
 ### The world model
 
