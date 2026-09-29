@@ -8,7 +8,8 @@
 package dev.jstech.computers.api;
 
 import dev.jstech.computers.hardware.ArchitectureSpec;
-import dev.jstech.computers.hardware.Architectures;
+import dev.jstech.computers.hardware.IsaSpec;
+import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.OperatingSpaceDef;
@@ -35,19 +36,30 @@ public final class JsComputersApi {
      * <p>How settled it is, and how long something lives once it is marked as going, are the series'
      * answers rather than this mod's: see the Core's.
      */
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
 
     private JsComputersApi() {
     }
 
     /**
-     * Adds a kind of machine, with what it runs and how wide its words are.
+     * Adds an instruction set architecture, a kind of machine, with what it runs and how wide its words are.
      *
      * <p>A program built for an older machine of the same line runs on it; nothing runs what was built for
      * a machine that came after it.
      */
+    public static void registerIsa(final IsaSpec isa) {
+        Isas.add(isa);
+    }
+
+    /**
+     * Adds a kind of machine under the ISA's former name.
+     *
+     * @deprecated use {@link #registerIsa(IsaSpec)}; this goes in the next cycle of the series
+     */
+    @Deprecated(since = "0.5.0a", forRemoval = true)
+    @SuppressWarnings("removal")
     public static void registerArchitecture(final ArchitectureSpec architecture) {
-        Architectures.add(architecture);
+        registerIsa(architecture.toIsa());
     }
 
     /** Adds a kernel, which an operating system then names as the one it is built on. */

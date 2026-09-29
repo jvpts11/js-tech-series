@@ -48,9 +48,9 @@ public record FirmwareStatePayload(
      * @param cpuName    the processor by model
      * @param cores      how many cores it has
      * @param cpuMhz     its clock, zero when no processor is seated
-     * @param cpuArch    the architecture by name, "x86-64"; the self-test reads it out on its own and the
+     * @param cpuArch    the instruction set by name, "x86-64"; the self-test reads it out on its own and the
      *                   hardware page puts the word size beside it
-     * @param cpuBits    the architecture's word size
+     * @param cpuBits    the instruction set's word size
      * @param boardName  the motherboard by model
      * @param ramMb      the memory counted over the modules seated
      * @param ramModules how many modules are in

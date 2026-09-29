@@ -7,44 +7,22 @@
  */
 package dev.jstech.computers.hardware;
 
-import java.util.Objects;
 import java.util.Set;
 
 /**
- * A processor architecture: what a machine's instruction set is, and whose programs it will run.
+ * The former name of an {@link IsaSpec}, kept for one cycle so that an addon built against it still loads.
  *
- * <p>The word size is the architecture's own rather than the era's. The two agree for this mod's own chips, but
- * they are separate things, and a mod is free to bring a 64-bit processor of an early era or the other way round.
+ * <p>What the mod used to call a processor's architecture is its instruction set architecture, and the word
+ * architecture now belongs to the design of a chip (Haswell, Zen 2), which is another thing. Build an
+ * {@link IsaSpec} instead; this one only carries the same four values across to it.
  *
- * <p>Like a socket, the id is text in the {@code namespace:path} shape and nothing here touches Minecraft: which
- * programs a machine will run is worked out where the hardware is, and that is tested without the game.
+ * @deprecated use {@link IsaSpec}; this goes in the next cycle of the series
  */
+@Deprecated(since = "0.5.0a", forRemoval = true)
 public record ArchitectureSpec(String id, String name, int bits, Set<String> runs) {
 
-    public ArchitectureSpec {
-        Objects.requireNonNull(id, "an architecture must have an id");
-        Objects.requireNonNull(name, "an architecture must have a name");
-        Objects.requireNonNull(runs, "an architecture must say what it runs");
-        final int colon = id.indexOf(':');
-        if (colon <= 0 || colon == id.length() - 1) {
-            throw new IllegalArgumentException("an architecture id reads namespace:path; got '" + id + "'");
-        }
-        if (bits <= 0) {
-            throw new IllegalArgumentException("an architecture has a word size; got " + bits);
-        }
-        runs = Set.copyOf(runs);
-        if (!runs.contains(id)) {
-            throw new IllegalArgumentException("'" + id + "' must run its own programs, and its list says it does not");
-        }
-    }
-
-    /** Whether a program built for that architecture runs on a machine of this one. */
-    public boolean runs(final String architecture) {
-        return this.runs.contains(architecture);
-    }
-
-    /** Whether a program built for that architecture runs on a machine of this one. */
-    public boolean runs(final ArchitectureSpec architecture) {
-        return architecture != null && runs(architecture.id());
+    /** The same instruction set under its present name. */
+    public IsaSpec toIsa() {
+        return new IsaSpec(id, name, bits, runs);
     }
 }

@@ -37,7 +37,7 @@ import net.neoforged.neoforge.items.ItemStackHandler;
  *
  * <p>MC-DOS finds the listing by its name alone, current directory first and then the PATH; the family met at a
  * Unix prompt asks for the current directory by name ({@code ./hello}), and a bare name only from the PATH, as
- * the real shell always has. Either way, a listing built for another architecture is refused in the same words
+ * the real shell always has. Either way, a listing built for another instruction set is refused in the same words
  * the installed runtime already refuses one in.
  */
 @GameTestHolder(JsTests.MODID)
@@ -233,9 +233,9 @@ public final class SccRunGameTests {
                 .thenSucceed();
     }
 
-    /** A listing built for another architecture is refused in the runtime's own existing words. */
+    /** A listing built for another instruction set is refused in the runtime's own existing words. */
     @GameTest(template = ARENA)
-    public static void mcDos_aListingOfAnotherArchitecture_getsTheRuntimesExistingError(final GameTestHelper helper) {
+    public static void mcDos_aListingOfAnotherIsa_getsTheRuntimesExistingError(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = vintage(helper, WHERE, MC_DOS);
         if (computer == null) {
             return;
@@ -249,7 +249,7 @@ public final class SccRunGameTests {
                     final String said = text(shell.run("clock", cli));
                     helper.assertTrue(said.contains("A4015"), "the refusal is named; got " + said);
                     helper.assertTrue(said.contains("built for x86; this machine is x86-16"),
-                            "it names both architectures; got " + said);
+                            "it names both instruction sets; got " + said);
                 })
                 .thenSucceed();
     }
@@ -334,11 +334,11 @@ public final class SccRunGameTests {
                     helper.assertTrue(cli.writeFile("hello.asm", listing("jsc:x86_16", "Hello")).ok(),
                             "the current directory's own copy is built for this machine");
                     helper.assertTrue(cli.writeFile("SCC\\HELLO.ASM", listing("jsc:x86", "Hello")).ok(),
-                            "the PATH's copy is built for a different architecture on purpose");
+                            "the PATH's copy is built for a different instruction set on purpose");
                     final CliShell shell = CliCommands.shellFor(cli, 52);
                     final String said = text(shell.run("hello", cli));
                     helper.assertFalse(said.contains("A4015") || said.contains("not found"),
-                            "the current directory's copy ran, not the PATH's wrong-architecture one; got " + said);
+                            "the current directory's copy ran, not the PATH's wrong-instruction-set one; got " + said);
                 })
                 .thenSucceed();
     }
@@ -405,9 +405,9 @@ public final class SccRunGameTests {
                 .thenSucceed();
     }
 
-    /** A listing that does nothing, built for that architecture. */
-    private static String listing(final String architecture, final String className) {
-        return ".asm 3\n.arch " + architecture + "\n.start Programs." + className + " console\n\n.class Programs."
+    /** A listing that does nothing, built for that instruction set. */
+    private static String listing(final String isa, final String className) {
+        return ".asm 3\n.arch " + isa + "\n.start Programs." + className + " console\n\n.class Programs."
                 + className + "\n\n.method static void Main() slots 0\n    ret\n";
     }
 

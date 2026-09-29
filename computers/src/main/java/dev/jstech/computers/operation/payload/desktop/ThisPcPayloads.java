@@ -216,7 +216,7 @@ public final class ThisPcPayloads {
          */
         Text board = Text.EMPTY;
         Text cpu = Text.EMPTY;
-        Text architecture = Text.EMPTY;
+        Text isa = Text.EMPTY;
         int cpus = 0;
         int gpus = 0;
         Text psu = Text.EMPTY;
@@ -234,8 +234,8 @@ public final class ThisPcPayloads {
                     cpus++;
                     if (cpu.isEmpty()) {
                         cpu = GameText.of(part.getHoverName());
-                        // A machine has one architecture, so the first chip answers for all of them.
-                        architecture = HardwareTooltip.architecture(chip.spec());
+                        // A machine has one instruction set, so the first chip answers for all of them.
+                        isa = HardwareTooltip.isa(chip.spec());
                     }
                 } else if (part.getItem() instanceof GpuItem) {
                     gpus++;
@@ -253,7 +253,7 @@ public final class ThisPcPayloads {
         }
         return new ThisPcPayload.WireMachine(computer.customName(), kind.text(),
                 MinSpecTooltip.eraLabel(computer.displayEra()),
-                osLabel, osYear, network == null ? "" : networkLabel(network), board, cpu, cpus, architecture,
+                osLabel, osYear, network == null ? "" : networkLabel(network), board, cpu, cpus, isa,
                 (int) Math.min(Integer.MAX_VALUE, computer.ramBuffer()), computer.totalVramMb(), gpus, psu,
                 valid, peripherals(level, computer), about);
     }

@@ -129,13 +129,13 @@ public interface IProgrammingLanguage {
     CompileResult compile(List<SourceText> sources);
 
     /**
-     * The same, built for a named processor architecture.
+     * The same, built for a named instruction set architecture (ISA), such as {@code jsc:x86_64}.
      *
      * <p>A language that compiles for a processor overrides this. One that runs its own source on any machine that
-     * has it installed has no architecture to build for, and answers as it does without one, which is why this is
-     * not something every language has to implement.
+     * has it installed has no instruction set to build for, and answers as it does without one, which is why this
+     * is not something every language has to implement.
      */
-    default CompileResult compile(final List<SourceText> sources, final String architecture) {
+    default CompileResult compile(final List<SourceText> sources, final String isa) {
         return compile(sources);
     }
 

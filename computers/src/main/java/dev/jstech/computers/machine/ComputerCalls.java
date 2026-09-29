@@ -31,7 +31,8 @@ final class ComputerCalls {
             made.set("Mhz", cpu.mhz());
             made.set("Cores", cpu.cores());
             made.set("Era", cpu.era());
-            made.set("Architecture", cpu.architecture());
+            // A program reads the instruction set as Architecture, the word the runtime it imitates uses for it.
+            made.set("Architecture", cpu.isa());
             return made;
         });
         computer(bindings, "Os", (info, call, target, arguments, line) -> {

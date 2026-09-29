@@ -254,7 +254,7 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
      */
     default int processorBits() {
         final ComputerBuild build = this.currentBuild();
-        return build == null || build.cpus().isEmpty() ? 64 : build.cpus().getFirst().architecture().bits();
+        return build == null || build.cpus().isEmpty() ? 64 : build.cpus().getFirst().isa().bits();
     }
 
     /**

@@ -91,22 +91,22 @@ class ComputerBuildTest {
     }
 
     @Test
-    void architecture_isTheProcessors() {
+    void isa_isTheProcessors() {
         final ComputerBuild build = new ComputerBuild(mtxStandard(),
                 List.of(standardCpu()), List.of(), List.of(ddr3()), psu(650));
-        assertEquals(Architectures.X86_64, build.architecture());
+        assertEquals(Isas.X86_64, build.isa());
     }
 
     @Test
-    void architecture_withNoCpu_isNothing() {
+    void isa_withNoCpu_isNothing() {
         final ComputerBuild build = new ComputerBuild(mtxStandard(),
                 List.of(), List.of(), List.of(ddr3()), psu(650));
-        assertNull(build.architecture());
+        assertNull(build.isa());
     }
 
     @Test
-    void mixedArchitectures_isNotPowered() {
-        final CpuSpec odd = new CpuSpec(HardwareEra.STANDARD, Architectures.X86, CpuSocketId.LGA_2011,
+    void mixedIsas_isNotPowered() {
+        final CpuSpec odd = new CpuSpec(HardwareEra.STANDARD, Isas.X86, CpuSocketId.LGA_2011,
                 8, 3500, 130, false);
         final ComputerBuild build = new ComputerBuild(mtxStandard(),
                 List.of(standardCpu(), odd), List.of(), List.of(ddr3()), psu(650));
@@ -114,7 +114,7 @@ class ComputerBuildTest {
     }
 
     @Test
-    void sameArchitectureTwice_isPowered() {
+    void sameIsaTwice_isPowered() {
         final ComputerBuild build = new ComputerBuild(mtxStandard(),
                 List.of(standardCpu(), standardCpu()), List.of(), List.of(ddr3()), psu(650));
         assertTrue(build.isPowered());

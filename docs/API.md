@@ -19,7 +19,8 @@ that will break, and no release will be held back to avoid breaking it.
 Each mod opens its registries once, while the game loads, by firing one event on the mod bus:
 
 - `CoreRegisterEvent`, for languages and kinds of Operation.
-- `ComputersRegisterEvent`, for architectures, kernels, operating systems, programs and desktops.
+- `ComputersRegisterEvent`, for instruction set architectures (ISAs), kernels, operating systems, programs and
+  desktops.
 
 Listen for the one you need and add what you have. After the loading is done every registry is closed and
 refuses to change, so that what a world knows how to do does not change under it while somebody plays it.
@@ -40,8 +41,8 @@ machine of its line and on every world, which can only be true if the same listi
 everywhere. Let a mod add calls and it stops being true.
 
 What a mod adds instead is a **language** of its own, which brings whatever it likes and compiles to the
-assembly the machines already run, or an **architecture**, which is a new kind of machine. Both are open,
-and both keep the promise above.
+assembly the machines already run, or an **instruction set architecture** (ISA), which is a new kind of
+machine. Both are open, and both keep the promise above.
 
 **Sockets** need nothing. A `CpuSocketId` is an open id in the `namespace:path` shape, so a mod that brings
 processors of its own brings the socket they sit in by writing its id, with nothing to register.

@@ -44,7 +44,7 @@ class ProjectFileTest {
     void read_aProjectWithNoPlatformLine_isBuiltForTheOldestThatRunsIt() {
         final ProjectFile back = ProjectFile.read("name: Old\nkind: console\nlanguage: jsc:sigma_sharp\n"
                 + "sources: Old.sgs\nreferences: \nentry: build/Old.asm\n");
-        assertEquals(AsmProgram.DEFAULT_ARCHITECTURE, back.platform());
+        assertEquals(AsmProgram.DEFAULT_ISA, back.platform());
     }
 
     @Test

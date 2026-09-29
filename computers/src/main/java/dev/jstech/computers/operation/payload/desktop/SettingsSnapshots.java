@@ -76,7 +76,7 @@ final class SettingsSnapshots {
                 st.accent(), st.clock12h(), st.guiScale(), st.brightness(),
                 String.valueOf(st.defaultSaveDrive()), st.removableAutoOpen(), st.themePreset(),
                 st.taskbarCentered(), st.darkMode(),
-                netshare, cpuLabel, computer.maxCpuMhz(), architectureOf(computer),
+                netshare, cpuLabel, computer.maxCpuMhz(), isaOf(computer),
                 computer.ramTotalMb(), computer.totalVramMb(),
                 osLabel, platform, installed, disks, ledger.usedMb(), ramUses, shares, st.remoteAllowed(),
                 soundOf(computer, st));
@@ -113,13 +113,12 @@ final class SettingsSnapshots {
         return (DriveVolumes.usedWeight(stack) + DiskFilesystem.filesWeight(stack) + reserved) * mbPerItem / mbEq;
     }
 
-    /** How the machine's architecture reads on a screen, or empty when it has no processor to read it from. */
-    private static Text architectureOf(final IOsHost computer) {
+    /** How the machine's instruction set reads on a screen, or empty when it has no processor to read it from. */
+    private static Text isaOf(final IOsHost computer) {
         if (!(computer instanceof AbstractComputerBlockEntity machine)) {
             return Text.EMPTY;
         }
         final ComputerBuild build = machine.currentBuild();
-        return build == null || build.cpus().isEmpty() ? Text.EMPTY
-                : HardwareTooltip.architecture(build.cpus().getFirst());
+        return build == null || build.cpus().isEmpty() ? Text.EMPTY : HardwareTooltip.isa(build.cpus().getFirst());
     }
 }

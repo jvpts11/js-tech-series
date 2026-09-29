@@ -9,9 +9,9 @@ package dev.jstech.computers.machine;
 
 import com.mojang.logging.LogUtils;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
-import dev.jstech.computers.hardware.ArchitectureSpec;
-import dev.jstech.computers.hardware.Architectures;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.IsaSpec;
+import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingError;
@@ -165,17 +165,17 @@ public final class MachineListing {
             return null;
         }
         final ComputerBuild build = computer.currentBuild();
-        final ArchitectureSpec here = build == null ? null : build.architecture();
-        if (here == null || here.runs(program.architecture())) {
+        final IsaSpec here = build == null ? null : build.isa();
+        if (here == null || here.runs(program.isa())) {
             return null;
         }
-        return new ListingProblem(program.architectureLine(), 1, ListingError.ARCHITECTURE_MISMATCH.code(),
-                ListingError.ARCHITECTURE_MISMATCH.message(nameOf(program.architecture()), here.name()));
+        return new ListingProblem(program.isaLine(), 1, ListingError.ISA_MISMATCH.code(),
+                ListingError.ISA_MISMATCH.message(nameOf(program.isa()), here.name()));
     }
 
-    /** An architecture as a person reads it, falling back to its id when no mod has brought one under that name. */
-    private static String nameOf(final String architecture) {
-        return Architectures.byId(architecture).map(ArchitectureSpec::name).orElse(architecture);
+    /** An instruction set as a person reads it, falling back to its id when no mod has brought one under that name. */
+    private static String nameOf(final String isa) {
+        return Isas.byId(isa).map(IsaSpec::name).orElse(isa);
     }
 
     /** A listing made ready, with everything wrong with it; there is no image when the text could not be read. */

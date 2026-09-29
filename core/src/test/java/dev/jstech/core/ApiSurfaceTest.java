@@ -53,8 +53,9 @@ class ApiSurfaceTest {
             // what it adds to them
             "IProgrammingLanguage", "OperationType", "IOperationArgs",
             // the computers: what a machine is, and what can be installed on one
-            "ArchitectureSpec", "KernelDef", "OsDef", "ProgramSpec", "DesktopEnvironmentDef",
-            "OperatingSpaceDef",
+            "IsaSpec", "KernelDef", "OsDef", "ProgramSpec", "DesktopEnvironmentDef", "OperatingSpaceDef",
+            // the former name of IsaSpec, deprecated for one cycle before it goes
+            "ArchitectureSpec",
             /*
              * What a client-side addition is handed. An operating space is given the machine's own menu,
              * because the items in it are the server's and every space needs the same ones, so the menu is

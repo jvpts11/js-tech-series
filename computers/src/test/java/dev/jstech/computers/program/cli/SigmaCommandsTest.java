@@ -142,7 +142,7 @@ class SigmaCommandsTest {
 
     /** The oldest machines run the smaller language only, so the bigger one cannot be built for them. */
     @Test
-    void sgsc_willNotBuildForTheArchitectureThatRunsSigmaOnly() {
+    void sgsc_willNotBuildForTheIsaThatRunsSigmaOnly() {
         this.computer.add(SigmaCommands.COMPILER);
         this.computer.files.put("Monitor.sgs", SCRIPT);
         assertTrue(this.run("sgsc Monitor.sgs --arch x86-16").contains("scc"));
@@ -150,7 +150,7 @@ class SigmaCommandsTest {
     }
 
     @Test
-    void scc_buildsForTheArchitectureThatRunsSigmaOnly() {
+    void scc_buildsForTheIsaThatRunsSigmaOnly() {
         this.computer.add(SigmaCommands.SUBSET_COMPILER);
         this.computer.files.put("Watch.sg", SUBSET);
         assertTrue(this.run("scc Watch.sg --arch x86-16").contains("wrote Watch.asm"));
@@ -254,7 +254,7 @@ class SigmaCommandsTest {
     }
 
     @Test
-    void compile_leftAlone_buildsForTheOldestArchitectureThatRunsIt() {
+    void compile_leftAlone_buildsForTheOldestIsaThatRunsIt() {
         this.computer.add(SigmaCommands.COMPILER);
         this.computer.files.put("Monitor.sgs", SCRIPT);
         this.run("sgsc Monitor.sgs");
@@ -264,7 +264,7 @@ class SigmaCommandsTest {
     }
 
     @Test
-    void compile_withAnArchitectureAsked_buildsForThatOne() {
+    void compile_withAnIsaAsked_buildsForThatOne() {
         this.computer.add(SigmaCommands.COMPILER);
         this.computer.files.put("Monitor.sgs", SCRIPT);
         this.run("sgsc Monitor.sgs --arch jsc:x86_64");
@@ -272,7 +272,7 @@ class SigmaCommandsTest {
     }
 
     @Test
-    void compile_withAnArchitectureAskedByName_buildsForThatOne() {
+    void compile_withAnIsaAskedByName_buildsForThatOne() {
         this.computer.add(SigmaCommands.COMPILER);
         this.computer.files.put("Monitor.sgs", SCRIPT);
         this.run("sgsc Monitor.sgs --arch x86-64");
@@ -280,11 +280,11 @@ class SigmaCommandsTest {
     }
 
     @Test
-    void compile_withAnArchitectureNothingAnswersTo_writesNothing() {
+    void compile_withAnIsaNothingAnswersTo_writesNothing() {
         this.computer.add(SigmaCommands.COMPILER);
         this.computer.files.put("Monitor.sgs", SCRIPT);
         final String said = this.run("sgsc Monitor.sgs --arch risc");
-        assertTrue(said.contains("no architecture is called 'risc'"), said);
+        assertTrue(said.contains("no instruction set is called 'risc'"), said);
         assertTrue(said.contains("x86-64"), "it says what there is instead: " + said);
         assertFalse(this.computer.files.containsKey("Monitor.asm"), "and nothing was written");
     }

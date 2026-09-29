@@ -8,8 +8,8 @@
 package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.advancement.JscEvents;
-import dev.jstech.computers.hardware.ArchitectureSpec;
-import dev.jstech.computers.hardware.Architectures;
+import dev.jstech.computers.hardware.IsaSpec;
+import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.sigma.SigmaCompiler;
@@ -69,9 +69,9 @@ public final class SigmaCommands {
     public static List<ICliCommand> all() {
         return List.of(
                 new Compile(LanguageLevel.SIGMA_SHARP.compiler(), SOURCE, COMPILER, LanguageLevel.SIGMA_SHARP,
-                        Architectures.oldestFor(LanguageLevel.SIGMA_SHARP).id()),
+                        Isas.oldestFor(LanguageLevel.SIGMA_SHARP).id()),
                 new Compile(LanguageLevel.SIGMA.compiler(), SUBSET_SOURCE, SUBSET_COMPILER, LanguageLevel.SIGMA,
-                        Architectures.oldestFor(LanguageLevel.SIGMA).id()),
+                        Isas.oldestFor(LanguageLevel.SIGMA).id()),
                 new Run(), new Pack());
     }
 
@@ -111,9 +111,9 @@ public final class SigmaCommands {
                 "compile a %s program into the assembly a machine runs");
         /* The source's extension, then the assembly's. */
         private static final TextKey USAGE = TextKey.of("jsc.cli.sigma.compile.usage",
-                "<file%1$s> [more%1$s ...] [-o <out%2$s>] [--arch <architecture>]");
-        private static final TextKey NO_ARCHITECTURE = TextKey.of("jsc.cli.sigma.compile.no_architecture",
-                "no architecture is called '%s'; there is %s");
+                "<file%1$s> [more%1$s ...] [-o <out%2$s>] [--arch <isa>]");
+        private static final TextKey NO_ISA = TextKey.of("jsc.cli.sigma.compile.no_isa",
+                "no instruction set is called '%s'; there is %s");
         private static final TextKey SIGMA_ONLY = TextKey.of("jsc.cli.sigma.compile.sigma_only",
                 "%s runs Σ only; write it in Σ and build it with scc");
         private static final TextKey ONE_ERROR = TextKey.of("jsc.cli.sigma.compile.one_error",
@@ -186,24 +186,25 @@ public final class SigmaCommands {
             }
             /*
              * Asked for by id or by the name it is written under, and refused before anything is compiled: a
-             * listing built for an architecture nothing answers to would be a file no machine anywhere runs.
+             * listing built for an instruction set nothing answers to would be a file no machine anywhere runs. The
+             * flag keeps the name compilers of the real world give it.
              */
-            String architecture = this.baseline;
+            String isa = this.baseline;
             if (arch != null) {
-                final Optional<ArchitectureSpec> asked = Architectures.find(arch);
+                final Optional<IsaSpec> asked = Isas.find(arch);
                 if (asked.isEmpty()) {
-                    ctx.out().error(CliTexts.SAID_BY.with(this.verb, NO_ARCHITECTURE.with(arch, architectureNames())));
+                    ctx.out().error(CliTexts.SAID_BY.with(this.verb, NO_ISA.with(arch, isaNames())));
                     return;
                 }
-                architecture = asked.get().id();
+                isa = asked.get().id();
             }
             /*
              * The oldest machines run the smaller language and nothing else, and the way that is kept true is
              * here rather than at the machine: a listing they could load can only ever have been written from a
              * source they could have held. Refused before anything is compiled, with the way to do it.
              */
-            if (this.level.full() && Architectures.X86_16.id().equals(architecture)) {
-                ctx.out().error(CliTexts.SAID_BY.with(this.verb, SIGMA_ONLY.with(Architectures.X86_16.name())));
+            if (this.level.full() && Isas.X86_16.id().equals(isa)) {
+                ctx.out().error(CliTexts.SAID_BY.with(this.verb, SIGMA_ONLY.with(Isas.X86_16.name())));
                 return;
             }
 
@@ -217,7 +218,7 @@ public final class SigmaCommands {
                 sources.add(new SourceFile(leaf(path), read.message().english()));
             }
 
-            final SigmaCompiler.Result built = SigmaCompiler.compile(sources, architecture, this.level);
+            final SigmaCompiler.Result built = SigmaCompiler.compile(sources, isa, this.level);
             final List<Diagnostic> diagnostics = built.diagnostics();
             final String assembly = built.ok() ? built.assembly() : null;
             for (final Diagnostic diagnostic : diagnostics) {
@@ -265,10 +266,10 @@ public final class SigmaCommands {
             };
         }
 
-        /** The architectures there are, by name, for the person who asked for one that is not there. */
-        private static String architectureNames() {
+        /** The instruction sets there are, by name, for the person who asked for one that is not there. */
+        private static String isaNames() {
             final List<String> names = new ArrayList<>();
-            for (final ArchitectureSpec one : Architectures.all()) {
+            for (final IsaSpec one : Isas.all()) {
                 names.add(one.name());
             }
             return String.join(", ", names);

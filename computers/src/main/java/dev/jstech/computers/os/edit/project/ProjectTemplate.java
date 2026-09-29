@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.os.edit.project;
 
-import dev.jstech.computers.hardware.Architectures;
+import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -194,7 +194,7 @@ public enum ProjectTemplate {
                 first.isEmpty() ? List.of() : List.of(first), List.of(),
                 this.kind == ProjectFile.Kind.LIBRARY || this.kind == ProjectFile.Kind.EMPTY
                         ? "" : ProjectFile.defaultEntry(projectName),
-                Architectures.oldestFor(language).id());
+                Isas.oldestFor(language).id());
     }
 
     /**

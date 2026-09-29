@@ -248,7 +248,7 @@ public final class FirmwarePayloads {
      * What the firmware found when it powered the machine on, read off the parts rather than off the block.
      *
      * <p>A self-test reads out what is in the machine, so it has to be asked of the machine: the processor by its
-     * own model with its cores and its architecture, the memory counted over the modules, the board, the video
+     * own model with its cores and its instruction set, the memory counted over the modules, the board, the video
      * card, and the monitors that are really linked rather than a "connected" that was always true.
      */
     private static FirmwareStatePayload.Machine machineOf(final ServerLevel level, final IOsHost computer,
@@ -292,7 +292,7 @@ public final class FirmwarePayloads {
                 ? GameText.of(level.getBlockState(pos).getBlock().getName()) : Text.literal(computer.customName());
         return new FirmwareStatePayload.Machine(name, cpuName, cpu == null ? 0 : cpu.cores(),
                 cpu == null ? 0 : cpu.freqMhz(),
-                cpu == null ? "" : cpu.architecture().name(), cpu == null ? 0 : cpu.architecture().bits(),
+                cpu == null ? "" : cpu.isa().name(), cpu == null ? 0 : cpu.isa().bits(),
                 boardName, (int) Math.min(Integer.MAX_VALUE, computer.ramTotalMb()),
                 build == null ? 0 : build.rams().size(), machine.boardRamSlots(), ramName, gpuName, monitors,
                 machine.maxEndpoints(), era == null ? Text.EMPTY : era.text());

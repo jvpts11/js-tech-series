@@ -93,7 +93,7 @@ public record ThisPcPayload(BlockPos host, WireMachine machine, List<WireDisk> d
      * @param boardLabel   the motherboard's name, or empty
      * @param cpuLabel     the processor's name with its clock, or empty
      * @param cpuCount     how many processors are seated
-     * @param cpuArch      the architecture the processors are built on, or empty
+     * @param cpuArch      the instruction set the processors are built on, or empty
      * @param ramMb        installed memory
      * @param vramMb       installed video memory
      * @param gpuCount     how many graphics cards are seated

@@ -28,7 +28,7 @@ import java.util.Locale;
 public final class ComputerInfoService {
 
     /** A machine's processors taken as one: every core, the fastest clock among them, and the era of the first. */
-    public record Cpu(int mhz, int cores, String era, String architecture) {
+    public record Cpu(int mhz, int cores, String era, String isa) {
     }
 
     /** The system a machine has installed, with empty text for each part when it has none. */
@@ -64,7 +64,7 @@ public final class ComputerInfoService {
         int cores = 0;
         int mhz = 0;
         String era = "";
-        String architecture = "";
+        String isa = "";
         if (build != null && !build.cpus().isEmpty()) {
             for (final CpuSpec one : build.cpus()) {
                 cores += one.cores();
@@ -72,9 +72,9 @@ public final class ComputerInfoService {
             }
             era = build.cpus().getFirst().era().name().toLowerCase(Locale.ROOT);
             // The id rather than the name, so a program comparing it against a listing's .arch compares like to like.
-            architecture = build.cpus().getFirst().architecture().id();
+            isa = build.cpus().getFirst().isa().id();
         }
-        return new Cpu(mhz, cores, era, architecture);
+        return new Cpu(mhz, cores, era, isa);
     }
 
     /** The system the machine has installed. */

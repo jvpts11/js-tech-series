@@ -36,7 +36,7 @@ public final class AsmWriter {
          * Written even when it is the one a reader would assume, so that opening a listing answers what it runs on
          * without the reader having to know which name the format falls back to.
          */
-        text.append(".arch ").append(program.architecture()).append('\n');
+        text.append(".arch ").append(program.isa()).append('\n');
         if (program.entryPoint() != null) {
             text.append(".start ").append(program.entryPoint())
                     .append(' ').append(program.shape().written()).append('\n');

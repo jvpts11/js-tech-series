@@ -14,12 +14,12 @@ import java.util.Objects;
 /**
  * Immutable specification of a CPU.
  *
- * <p>The architecture is a field of its own rather than a reading of the era, because the two are separate
- * questions: the era says when the chip was made and the architecture says what it understands. They line up for
+ * <p>The instruction set architecture (ISA) is a field of its own rather than a reading of the era, because the two
+ * are separate questions: the era says when the chip was made and the ISA says what it understands. They line up for
  * this mod's own processors, and the shorter constructor is the one that says so.
  */
 public record CpuSpec(HardwareEra era,
-                      ArchitectureSpec architecture,
+                      IsaSpec isa,
                       CpuSocketId socket,
                       int cores,
                       int freqMhz,
@@ -30,7 +30,7 @@ public record CpuSpec(HardwareEra era,
 
     public CpuSpec {
         Objects.requireNonNull(era, "era must not be null");
-        Objects.requireNonNull(architecture, "architecture must not be null");
+        Objects.requireNonNull(isa, "isa must not be null");
         Objects.requireNonNull(socket, "socket must not be null");
         if (cores <= 0) {
             throw new IllegalArgumentException("cores must be > 0; got " + cores);
@@ -43,10 +43,10 @@ public record CpuSpec(HardwareEra era,
         }
     }
 
-    /** A processor of this mod's own hardware, built on the architecture its era is made of. */
+    /** A processor of this mod's own hardware, built on the instruction set its era is made of. */
     public CpuSpec(final HardwareEra era, final CpuSocketId socket, final int cores, final int freqMhz,
                    final int tdpWatts, final boolean alien) {
-        this(era, Architectures.of(era), socket, cores, freqMhz, tdpWatts, alien);
+        this(era, Isas.of(era), socket, cores, freqMhz, tdpWatts, alien);
     }
 
     public long orchestrationCapacity() {

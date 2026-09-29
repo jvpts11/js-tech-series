@@ -34,8 +34,8 @@ public record ComputerBuild(MotherboardSpec motherboard,
             TextKey.of("jsc.build.too_many_cpus", "too many CPUs: %s installed, %s sockets");
     private static final TextKey WRONG_SOCKET =
             TextKey.of("jsc.build.wrong_socket", "CPU socket %s does not fit board socket %s");
-    private static final TextKey MIXED_ARCHITECTURES = TextKey.of("jsc.build.mixed_architectures",
-            "CPU architecture %s does not match the %s of the other processors");
+    private static final TextKey MIXED_ISAS = TextKey.of("jsc.build.mixed_isas",
+            "CPU instruction set %s does not match the %s of the other processors");
     private static final TextKey TOO_MANY_CARDS =
             TextKey.of("jsc.build.too_many_cards", "too many PCIe cards: %s installed, %s PCIe slots");
     private static final TextKey WRONG_BUS = TextKey.of("jsc.build.wrong_bus",
@@ -69,13 +69,13 @@ public record ComputerBuild(MotherboardSpec motherboard,
     }
 
     /**
-     * The architecture this machine runs, which is its processors'. A build with no processor has none, and
+     * The instruction set this machine runs, which is its processors'. A build with no processor has none, and
      * {@link #validate()} says so; past validation every processor here answers the same, because a build whose
      * processors disagree is refused there as well.
      */
     @Nullable
-    public ArchitectureSpec architecture() {
-        return this.cpus.isEmpty() ? null : this.cpus.get(0).architecture();
+    public IsaSpec isa() {
+        return this.cpus.isEmpty() ? null : this.cpus.get(0).isa();
     }
 
     public List<GpuSpec> gpus() {
@@ -227,10 +227,10 @@ public record ComputerBuild(MotherboardSpec motherboard,
          * instructions, and a program cannot run on half a machine, so a build that mixes them is not a computer.
          */
         if (!cpus.isEmpty()) {
-            final ArchitectureSpec first = cpus.get(0).architecture();
+            final IsaSpec first = cpus.get(0).isa();
             for (final CpuSpec cpu : cpus) {
-                if (!cpu.architecture().equals(first)) {
-                    problems.add(MIXED_ARCHITECTURES.with(cpu.architecture().name(), first.name()));
+                if (!cpu.isa().equals(first)) {
+                    problems.add(MIXED_ISAS.with(cpu.isa().name(), first.name()));
                     break;
                 }
             }

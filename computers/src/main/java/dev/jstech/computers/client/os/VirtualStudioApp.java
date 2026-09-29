@@ -16,8 +16,8 @@ import dev.jstech.computers.operation.payload.FolderContentPayload;
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.operation.payload.RequestFolderContentPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
-import dev.jstech.computers.hardware.ArchitectureSpec;
-import dev.jstech.computers.hardware.Architectures;
+import dev.jstech.computers.hardware.IsaSpec;
+import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.os.edit.ProblemReport;
 import dev.jstech.computers.os.edit.project.ProjectFile;
@@ -98,7 +98,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     /** The key the studio's window goes by, which is the program's id. */
     private static final String KEY = "jsc:virtual_studio";
 
-    /** Wide enough for the longest architecture name there is at three quarters of the font. */
+    /** Wide enough for the longest instruction set name there is at three quarters of the font. */
     private static final int PLATFORM_BTN_W = 30;
     /**
      * The studio's own colours, {@code jsc:editor/virtual_studio}: a platform the project builds for and one it
@@ -259,7 +259,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             .setLayouter(this::layoutProperties);
     private final List<Label> propertyLines = new ArrayList<>();
     private final Label platformLabel;
-    /** One button per architecture there is, in the order the series was built. */
+    /** One button per instruction set there is, in the order the series was built. */
     private final List<Button> platformButtons = new ArrayList<>();
     private final Label platformHint;
     private final Button propertiesClose;
@@ -351,9 +351,9 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         }
         this.platformLabel = this.properties.add(new Label(GameText.resolve(VirtualStudioTexts.PLATFORM_TARGET),
                 Label.Tone.DIM));
-        for (final ArchitectureSpec architecture : Architectures.all()) {
-            this.platformButtons.add(this.properties.add(new Button(architecture.name(),
-                    () -> setPlatform(architecture.id())).setLabelScale(0.75f)));
+        for (final IsaSpec isa : Isas.all()) {
+            this.platformButtons.add(this.properties.add(new Button(isa.name(),
+                    () -> setPlatform(isa.id())).setLabelScale(0.75f)));
         }
         this.platformHint = this.properties.add(new Label(() -> GameText.resolve(platformHintText()))
                 .setColor(this::platformHintColor));
@@ -1532,7 +1532,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         y += 10;
         /*
          * The buttons take the row on their own rather than sitting beside the words, so that the row still holds
-         * every architecture when a mod has brought two of its own.
+         * every instruction set when a mod has brought two of its own.
          */
         int x = p.x() + 4;
         for (final Button button : this.platformButtons) {
@@ -1552,21 +1552,21 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         return project != null && project.buildsAListing();
     }
 
-    /** Builds the project for that architecture from now on, and lights the button that says so. */
-    private void setPlatform(final String architecture) {
+    /** Builds the project for that instruction set from now on, and lights the button that says so. */
+    private void setPlatform(final String isa) {
         final ProjectFile project = this.projects.get(this.propertiesOf);
         if (project == null) {
             return;
         }
-        saveProject(project.withPlatform(architecture));
+        saveProject(project.withPlatform(isa));
         refreshPlatformButtons();
     }
 
-    /** Lights the architecture the open project is built for, and unlights the rest. */
+    /** Lights the instruction set the open project is built for, and unlights the rest. */
     private void refreshPlatformButtons() {
         final ProjectFile project = this.projects.get(this.propertiesOf);
-        final String current = project == null ? AsmProgram.DEFAULT_ARCHITECTURE : project.platform();
-        final List<ArchitectureSpec> all = Architectures.all();
+        final String current = project == null ? AsmProgram.DEFAULT_ISA : project.platform();
+        final List<IsaSpec> all = Isas.all();
         for (int i = 0; i < this.platformButtons.size() && i < all.size(); i++) {
             this.platformButtons.get(i).setPrimary(all.get(i).id().equals(current));
         }
@@ -1578,12 +1578,12 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         if (project == null) {
             return Text.EMPTY;
         }
-        final ArchitectureSpec built = Architectures.byId(project.platform()).orElse(null);
+        final IsaSpec built = Isas.byId(project.platform()).orElse(null);
         if (built == null) {
             return VirtualStudioTexts.NOTHING_ANSWERS.with(project.platform());
         }
         final List<String> runners = new ArrayList<>();
-        for (final ArchitectureSpec machine : Architectures.all()) {
+        for (final IsaSpec machine : Isas.all()) {
             if (machine.runs(built)) {
                 runners.add(machine.name());
             }
@@ -1593,13 +1593,13 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     /*
-     * Green while the project is built for the architecture a program gets when nobody asks, which is the one that
-     * reaches every machine it could reach. Anything else is a decision to leave machines behind, and the line goes
-     * amber so that it is a decision somebody sees themselves making.
+     * Green while the project is built for the instruction set a program gets when nobody asks, which is the one
+     * that reaches every machine it could reach. Anything else is a decision to leave machines behind, and the line
+     * goes amber so that it is a decision somebody sees themselves making.
      */
     private int platformHintColor() {
         final ProjectFile project = this.projects.get(this.propertiesOf);
-        return project != null && AsmProgram.DEFAULT_ARCHITECTURE.equals(project.platform())
+        return project != null && AsmProgram.DEFAULT_ISA.equals(project.platform())
                 ? PALETTE.get().platformOn() : PALETTE.get().platformOff();
     }
 

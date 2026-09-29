@@ -76,24 +76,21 @@ class CpuSpecTest {
     }
 
     @Test
-    void architecture_ofOurOwnChips_followsTheEra() {
-        assertEquals(Architectures.X86_16,
-                new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 25, 3, false).architecture());
-        assertEquals(Architectures.X86,
-                new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_370, 1, 800, 25, false).architecture());
-        assertEquals(Architectures.X86_64,
-                new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 8, 3500, 130, false).architecture());
+    void isa_ofOurOwnChips_followsTheEra() {
+        assertEquals(Isas.X86_16, new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 25, 3, false).isa());
+        assertEquals(Isas.X86, new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_370, 1, 800, 25, false).isa());
+        assertEquals(Isas.X86_64,
+                new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 8, 3500, 130, false).isa());
     }
 
     @Test
-    void architecture_canBeToldInsteadOfDerived() {
-        final CpuSpec cpu = new CpuSpec(HardwareEra.VINTAGE, Architectures.X86_64, CpuSocketId.SOCKET_3,
-                1, 25, 3, false);
-        assertEquals(Architectures.X86_64, cpu.architecture());
+    void isa_canBeToldInsteadOfDerived() {
+        final CpuSpec cpu = new CpuSpec(HardwareEra.VINTAGE, Isas.X86_64, CpuSocketId.SOCKET_3, 1, 25, 3, false);
+        assertEquals(Isas.X86_64, cpu.isa());
     }
 
     @Test
-    void constructor_rejectsNullArchitecture() {
+    void constructor_rejectsNullIsa() {
         assertThrows(NullPointerException.class,
                 () -> new CpuSpec(HardwareEra.VINTAGE, null, CpuSocketId.SOCKET_3, 1, 25, 3, false));
     }

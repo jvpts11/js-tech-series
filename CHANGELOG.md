@@ -334,6 +334,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   for it.
 - A monitor going dark is heard only from a picture tube; the flat panels of the Transition and every later era
   go dark silently, as the Standard ones always did.
+- What a processor understands (x86-16, x86, x86-64) is its instruction set: the firmware lists it as the
+  Instruction Set, a build of mixed processors is refused for mixing instruction sets, and `sgsc --arch` asks for
+  an instruction set by the same ids and names as before. The word architecture is left for the design of a chip.
+- For addon authors: `ComputersRegisterEvent.isa`, `JsComputersApi.registerIsa` and `IsaSpec` take over from
+  `architecture`, `registerArchitecture` and `ArchitectureSpec`, and `JsComputersApi.VERSION` is 2.
 - J's Computers' blocks keep their state as J's Core's declared fields: the computers, the server racks, the drives,
   the Pattern Encoders, monitors, speakers, Network Gateways, data cables, Crafting Switches, Server Routers, HBW
   Interfaces and tanks. The players who see one are sent one update a tick however much of it changed, and the
@@ -502,6 +507,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A desktop's windows are known by the program they belong to rather than by the name they show, so a machine's
   layout comes back the same whatever desktop or language it is looked at under, and the Task Manager and the
   System Monitor list each window by the name the desktop gives its program.
+
+### Deprecated
+- `ComputersRegisterEvent.architecture`, `JsComputersApi.registerArchitecture` and `ArchitectureSpec`: they still
+  work, handing what they are given to the instruction set registration, and go in the next cycle.
 
 ### Removed
 - The unused hook for the Modonomicon guidebook: the series' manuals will be drawn by J's Core itself.

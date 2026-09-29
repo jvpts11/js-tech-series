@@ -43,7 +43,7 @@ public enum ListingError {
     UNKNOWN_MEMBER(TextKey.of("jsc.vm.listing.a4013", "nothing answers '%s'")),
     READ_ONLY_VALUE(TextKey.of("jsc.vm.listing.a4014", "'%s' can be read but not written")),
     /* Nothing is wrong with the listing here: it is the machine it was brought to that will not run it. */
-    ARCHITECTURE_MISMATCH(TextKey.of("jsc.vm.listing.a4015", "built for %s; this machine is %s"));
+    ISA_MISMATCH(TextKey.of("jsc.vm.listing.a4015", "built for %s; this machine is %s"));
 
     private final TextKey text;
 

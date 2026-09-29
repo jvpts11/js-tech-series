@@ -120,7 +120,7 @@ public final class AsmReader {
                     this.report(line, ListingError.MALFORMED_OPERAND, rest, ".arch");
                     return;
                 }
-                program.setArchitecture(rest, line);
+                program.setIsa(rest, line);
             }
             case "start" -> {
                 /*

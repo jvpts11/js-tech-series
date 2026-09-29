@@ -40,7 +40,6 @@ import static dev.jstech.computers.client.FirmwareScreenTexts.INSTALL_OS;
 import static dev.jstech.computers.client.FirmwareScreenTexts.INSTALL_SYSTEM;
 import static dev.jstech.computers.client.FirmwareScreenTexts.INSTALL_TO_DISK;
 import static dev.jstech.computers.client.FirmwareScreenTexts.ITEM_HELP;
-import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_ARCHITECTURE;
 import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_ARRAY_STATE;
 import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_BOARD;
 import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_BOOT_DISK;
@@ -49,6 +48,7 @@ import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_CORES;
 import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_GRAPHICS;
 import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_HARDWARE_ERA;
 import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_INSTALL_TARGET;
+import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_ISA;
 import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_MEMBER_DRIVES;
 import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_MEMORY;
 import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_MONITORS;
@@ -845,7 +845,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         final FirmwareStatePayload.Machine machine = state == null ? null : state.machine();
         final String detecting = of(DETECTING);
         /*
-         * What the firmware found, in its own words: the processor by model with its architecture beside it,
+         * What the firmware found, in its own words: the processor by model with its instruction set beside it,
          * memory in megabytes with the slots it fills, the board, the video card, and the monitors really
          * linked out of the board's ports. This page used to say "connected" whether one was or not.
          */
@@ -864,7 +864,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 : DISK.with(state.installTargetSlot()));
         final String[][] kv = {
                 {of(LABEL_PROCESSOR), cpu},
-                {of(LABEL_ARCHITECTURE), arch},
+                {of(LABEL_ISA), arch},
                 {of(LABEL_CORES), cores},
                 {of(LABEL_MEMORY), ram},
                 /* The newest firmware calls the card graphics; the boards before it called it the video adapter. */

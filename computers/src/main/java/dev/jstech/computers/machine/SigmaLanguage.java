@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.machine;
 
-import dev.jstech.computers.hardware.Architectures;
+import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.sigma.Diagnostic;
 import dev.jstech.computers.sigma.DiagnosticBag;
 import dev.jstech.computers.sigma.LanguageLevel;
@@ -57,7 +57,7 @@ public final class SigmaLanguage implements IProgrammingLanguage {
     private SigmaLanguage(final LanguageLevel level) {
         this.level = level;
         this.id = ResourceLocation.parse(level.id());
-        this.baseline = Architectures.oldestFor(level).id();
+        this.baseline = Isas.oldestFor(level).id();
     }
 
     @Override
@@ -92,23 +92,23 @@ public final class SigmaLanguage implements IProgrammingLanguage {
     }
 
     @Override
-    public CompileResult compile(final List<SourceText> sources, final String architecture) {
+    public CompileResult compile(final List<SourceText> sources, final String isa) {
         /*
          * The oldest machines run the smaller language and nothing else, and that is kept true where a listing is
          * made and not at the machine: one they could load can only have come from a source they could have held.
          * The prompt's compiler says the same thing, so a studio pointed at those machines is told as plainly.
          */
-        if (this.level.full() && Architectures.X86_16.id().equals(architecture)) {
+        if (this.level.full() && Isas.X86_16.id().equals(isa)) {
             final String first = sources.isEmpty() ? "" : sources.getFirst().name();
             return CompileResult.failed(List.of(new Complaint(first, 1, 1,
                     SigmaError.OLDEST_MACHINES_TAKE_SIGMA.code(),
-                    SigmaError.OLDEST_MACHINES_TAKE_SIGMA.message(Architectures.X86_16.name()))));
+                    SigmaError.OLDEST_MACHINES_TAKE_SIGMA.message(Isas.X86_16.name()))));
         }
         final List<SourceFile> files = new ArrayList<>();
         for (final SourceText source : sources) {
             files.add(new SourceFile(source.name(), source.text()));
         }
-        final SigmaCompiler.Result built = SigmaCompiler.compile(files, architecture, this.level);
+        final SigmaCompiler.Result built = SigmaCompiler.compile(files, isa, this.level);
         if (built.ok()) {
             return CompileResult.of(built.assembly());
         }

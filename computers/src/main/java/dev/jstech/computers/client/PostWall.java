@@ -305,7 +305,7 @@ public final class PostWall {
         return named.isEmpty() ? fallback : named;
     }
 
-    /** What the firmware says about the processor beside its model: cores, clock and architecture. */
+    /** What the firmware says about the processor beside its model: cores, clock and instruction set. */
     private static String cpuDetail(final FirmwareStatePayload.Machine machine, final boolean legacy) {
         if (legacy) {
             return of(CPU_OLD.with(machine.cpuMhz(), machine.cpuArch()));

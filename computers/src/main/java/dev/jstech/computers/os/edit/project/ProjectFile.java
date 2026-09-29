@@ -27,7 +27,7 @@ import java.util.Locale;
  * @param sources    its source files, relative to the project folder
  * @param references the names of the library projects it compiles with
  * @param entry      the listing it builds, relative to the project folder, or empty for a library
- * @param platform   the processor architecture it is built for, by id
+ * @param platform   the instruction set it is built for, by id (a platform target, as the studio it imitates says)
  */
 public record ProjectFile(String name, Kind kind, String language, List<String> sources,
                           List<String> references, String entry, String platform) {
@@ -69,16 +69,16 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         sources = List.copyOf(sources);
         references = List.copyOf(references);
         entry = entry == null ? "" : entry;
-        platform = platform == null || platform.isEmpty() ? AsmProgram.DEFAULT_ARCHITECTURE : platform;
+        platform = platform == null || platform.isEmpty() ? AsmProgram.DEFAULT_ISA : platform;
     }
 
     /**
-     * A project built for the architecture a program gets when nobody asks for one, which is the oldest that runs
-     * it. Every project written before the studio could be told otherwise is one of these.
+     * A project built for the instruction set a program gets when nobody asks for one, which is the oldest that
+     * runs it. Every project written before the studio could be told otherwise is one of these.
      */
     public ProjectFile(final String name, final Kind kind, final String language, final List<String> sources,
                        final List<String> references, final String entry) {
-        this(name, kind, language, sources, references, entry, AsmProgram.DEFAULT_ARCHITECTURE);
+        this(name, kind, language, sources, references, entry, AsmProgram.DEFAULT_ISA);
     }
 
     /** The file name a Σ# project of that name keeps itself in. */
@@ -154,13 +154,12 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
                 this.platform);
     }
 
-    /** The project built for that architecture instead, or the same one when it is already the one. */
-    public ProjectFile withPlatform(final String architecture) {
-        if (this.platform.equals(architecture)) {
+    /** The project built for that instruction set instead, or the same one when it is already the one. */
+    public ProjectFile withPlatform(final String isa) {
+        if (this.platform.equals(isa)) {
             return this;
         }
-        return new ProjectFile(this.name, this.kind, this.language, this.sources, this.references, this.entry,
-                architecture);
+        return new ProjectFile(this.name, this.kind, this.language, this.sources, this.references, this.entry, isa);
     }
 
     /** The file's text. */
@@ -187,7 +186,7 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         List<String> sources = List.of();
         List<String> references = List.of();
         String entry = "";
-        String platform = AsmProgram.DEFAULT_ARCHITECTURE;
+        String platform = AsmProgram.DEFAULT_ISA;
         for (final String raw : (text == null ? "" : text).split("\n")) {
             final String line = raw.trim();
             final int colon = line.indexOf(':');

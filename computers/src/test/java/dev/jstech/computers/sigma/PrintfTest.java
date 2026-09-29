@@ -35,7 +35,7 @@ class PrintfTest {
     private static SigmaCompiler.Result built(final String body, final LanguageLevel level) {
         final String source = PRELUDE + "class Says : Script { public override void OnTick() { " + body + " } }";
         return SigmaCompiler.compile(List.of(new SourceFile(level.full() ? "Says.sgs" : "Says.sg", source)),
-                level.full() ? AsmProgram.DEFAULT_ARCHITECTURE : "jsc:x86_16", level);
+                level.full() ? AsmProgram.DEFAULT_ISA : "jsc:x86_16", level);
     }
 
     /** What the program printed, a line to an entry, in the smaller language. */

@@ -84,7 +84,7 @@ public final class FirmwareScreenTexts {
     /* The two keys along a modern machine's foot, each followed by what it does. */
     static final TextKey KEY_SETUP = TextKey.of("jsc.firmware.screen.key_setup", " Setup   ");
     static final TextKey KEY_BOOT_MENU = TextKey.of("jsc.firmware.screen.key_boot_menu", " Boot Menu");
-    /* A machine summed up on one line: processor, cores, memory, architecture. */
+    /* A machine summed up on one line: processor, cores, memory, instruction set. */
     static final TextKey SUMMARY = TextKey.of("jsc.firmware.screen.summary", "%s · %s · %s · %s");
     static final TextKey CORE_COUNT_ONE = TextKey.of("jsc.firmware.screen.core_count_one", "%s core");
     static final TextKey CORE_COUNT_MANY = TextKey.of("jsc.firmware.screen.core_count_many", "%s cores");
@@ -150,7 +150,7 @@ public final class FirmwareScreenTexts {
     static final TextKey RAM_SLOTS = TextKey.of("jsc.firmware.screen.ram_slots", "%s MB  (%s of %s slots)");
     static final TextKey MONITORS_PORTS = TextKey.of("jsc.firmware.screen.monitors_ports", "%s of %s ports linked");
     static final TextKey LABEL_PROCESSOR = TextKey.of("jsc.firmware.screen.label_processor", "Processor");
-    static final TextKey LABEL_ARCHITECTURE = TextKey.of("jsc.firmware.screen.label_architecture", "Architecture");
+    static final TextKey LABEL_ISA = TextKey.of("jsc.firmware.screen.label_isa", "Instruction Set");
     static final TextKey LABEL_CORES = TextKey.of("jsc.firmware.screen.label_cores", "Cores");
     static final TextKey LABEL_MEMORY = TextKey.of("jsc.firmware.screen.label_memory", "Memory");
     static final TextKey LABEL_GRAPHICS = TextKey.of("jsc.firmware.screen.label_graphics", "Graphics");

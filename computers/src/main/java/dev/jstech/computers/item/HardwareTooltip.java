@@ -37,8 +37,8 @@ public final class HardwareTooltip {
     /** How much an item weighs on a disk of the part's era: "16 MB per item". */
     public static final TextKey MB_PER_ITEM = TextKey.of("jsc.item.hardware_tooltip.mb_per_item", "%s MB per item");
 
-    /** An architecture and the width of its word: "x86-64, 64-bit". */
-    private static final TextKey ARCHITECTURE = TextKey.of("jsc.item.hardware_tooltip.architecture", "%s, %s-bit");
+    /** An instruction set and the width of its word: "x86-64, 64-bit". */
+    private static final TextKey ISA = TextKey.of("jsc.item.hardware_tooltip.isa", "%s, %s-bit");
 
     private HardwareTooltip() {
     }
@@ -60,11 +60,11 @@ public final class HardwareTooltip {
     }
 
     /**
-     * How a processor's architecture reads wherever it is shown: "x86-64, 64-bit". The word size comes from the
-     * architecture rather than from the era, since it is the architecture's own, and one place says it so a chip's
-     * tooltip and a machine's screens cannot come to word it differently.
+     * How a processor's instruction set reads wherever it is shown: "x86-64, 64-bit". The word size comes from the
+     * instruction set rather than from the era, since it is the instruction set's own, and one place says it so a
+     * chip's tooltip and a machine's screens cannot come to word it differently.
      */
-    public static Text architecture(final CpuSpec cpu) {
-        return ARCHITECTURE.with(cpu.architecture().name(), cpu.architecture().bits());
+    public static Text isa(final CpuSpec cpu) {
+        return ISA.with(cpu.isa().name(), cpu.isa().bits());
     }
 }

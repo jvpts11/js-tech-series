@@ -29,15 +29,16 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
- * A program is instructions for a processor, so the processor a machine has decides what it will run.
+ * A program is instructions for a processor, so the instruction set a machine's processor has decides what it will run.
  *
  * <p>The rule is the real one: the 64-bit machines run what was built for the 32-bit ones and not the other way
  * about, and the earliest machines run only their own. These put a listing in front of a machine of each era and
- * check what happens, because the refusal has to reach the person at the terminal, with the two architectures named.
+ * check what happens, because the refusal has to reach the person at the terminal, with the two instruction sets
+ * named.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
-public final class ArchitectureGameTests {
+public final class IsaGameTests {
 
     private static final String ARENA = "empty";
 
@@ -58,11 +59,11 @@ public final class ArchitectureGameTests {
             }
             """;
 
-    private ArchitectureGameTests() {
+    private IsaGameTests() {
     }
 
     @GameTest(template = ARENA)
-    public static void legacyMachine_refusesAProgramBuiltForTheNewerArchitecture(final GameTestHelper helper) {
+    public static void legacyMachine_refusesAProgramBuiltForTheNewerIsa(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = legacy(helper);
         if (computer == null) {
             return;
@@ -71,7 +72,7 @@ public final class ArchitectureGameTests {
         helper.assertFalse(started.ok(), "a 32-bit machine cannot run what was built for the 64-bit one");
         helper.assertTrue(started.message().contains("A4015"), "it says which refusal it is: " + started.message());
         helper.assertTrue(started.message().contains("built for x86-64; this machine is x86"),
-                "it names both architectures: " + started.message());
+                "it names both instruction sets: " + started.message());
         helper.succeed();
     }
 
@@ -87,7 +88,7 @@ public final class ArchitectureGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void standardMachine_runsAProgramBuiltForTheOlderArchitecture(final GameTestHelper helper) {
+    public static void standardMachine_runsAProgramBuiltForTheOlderIsa(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = standard(helper);
         if (computer == null) {
             return;
@@ -99,13 +100,13 @@ public final class ArchitectureGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void standardMachine_refusesAnArchitectureNoModBrought(final GameTestHelper helper) {
+    public static void standardMachine_refusesAnIsaNoModBrought(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = standard(helper);
         if (computer == null) {
             return;
         }
         final MachinePrograms.Started started = run(computer, "other:risc");
-        helper.assertFalse(started.ok(), "a machine runs no architecture it has never heard of");
+        helper.assertFalse(started.ok(), "a machine runs no instruction set it has never heard of");
         helper.assertTrue(started.message().contains("built for other:risc"),
                 "with nothing registered under that name, the name itself is what it can say: " + started.message());
         helper.succeed();
@@ -206,14 +207,14 @@ public final class ArchitectureGameTests {
         helper.succeed();
     }
 
-    /** A listing that does nothing, built for that architecture. */
-    private static String listing(final String architecture) {
-        return ".asm 3\n.arch " + architecture + "\n.start Programs.Quiet console\n\n.class Programs.Quiet\n\n"
+    /** A listing that does nothing, built for that instruction set. */
+    private static String listing(final String isa) {
+        return ".asm 3\n.arch " + isa + "\n.start Programs.Quiet console\n\n.class Programs.Quiet\n\n"
                 + ".method static void Main() slots 0\n    ret\n";
     }
 
-    private static MachinePrograms.Started run(final PersonalComputerBlockEntity computer, final String architecture) {
-        return computer.programs().start("quiet.asm", listing(architecture), 1, computer);
+    private static MachinePrograms.Started run(final PersonalComputerBlockEntity computer, final String isa) {
+        return computer.programs().start("quiet.asm", listing(isa), 1, computer);
     }
 
     private static PersonalComputerBlockEntity vintage(final GameTestHelper helper) {

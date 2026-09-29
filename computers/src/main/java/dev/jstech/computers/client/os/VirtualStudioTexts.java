@@ -13,7 +13,7 @@ import dev.jstech.core.text.TextKey;
 /**
  * What Virtual Studio says in words of its own: the Start Window, the Solution Explorer, the New Project wizard, the
  * project's properties, its menus and what a build reports. Solution, project and file names, paths, language and
- * architecture names are data. Kept apart from the window so the language generator can read it on a server too,
+ * instruction set names are data. Kept apart from the window so the language generator can read it on a server too,
  * where windows do not exist.
  */
 @TextHolder

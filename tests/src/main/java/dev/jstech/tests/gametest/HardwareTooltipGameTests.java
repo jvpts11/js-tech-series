@@ -76,7 +76,7 @@ public final class HardwareTooltipGameTests {
      * checked by the compiler, so it is checked here.
      */
     @GameTest(template = ARENA)
-    public static void cpuTooltip_namesTheArchitectureAndItsWordSize(final GameTestHelper helper) {
+    public static void cpuTooltip_namesTheInstructionSetAndItsWordSize(final GameTestHelper helper) {
         assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_486SX.get()), "x86-16, 16-bit");
         assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_VERTEX_700.get()), "x86, 32-bit");
         assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_APEX_5_4590.get()), "x86-64, 64-bit");

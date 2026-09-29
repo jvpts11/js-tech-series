@@ -8,6 +8,7 @@
 package dev.jstech.computers.api;
 
 import dev.jstech.computers.hardware.ArchitectureSpec;
+import dev.jstech.computers.hardware.IsaSpec;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.OperatingSpaceDef;
@@ -31,9 +32,20 @@ import net.neoforged.fml.event.IModBusEvent;
  */
 public final class ComputersRegisterEvent extends Event implements IModBusEvent {
 
-    /** Adds a kind of machine, which programs can then be built for. */
+    /** Adds an instruction set architecture, a kind of machine that programs can then be built for. */
+    public void isa(final IsaSpec isa) {
+        JsComputersApi.registerIsa(isa);
+    }
+
+    /**
+     * Adds a kind of machine under the ISA's former name.
+     *
+     * @deprecated use {@link #isa(IsaSpec)}; this goes in the next cycle of the series
+     */
+    @Deprecated(since = "0.5.0a", forRemoval = true)
+    @SuppressWarnings("removal")
     public void architecture(final ArchitectureSpec architecture) {
-        JsComputersApi.registerArchitecture(architecture);
+        isa(architecture.toIsa());
     }
 
     /** Adds a kernel, which an operating system then names as the one it is built on. */

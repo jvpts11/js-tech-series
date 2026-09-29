@@ -27,7 +27,7 @@ public class CpuItem extends SpecItem<CpuSpec> {
     private static final TextKey CORES = TextKey.of("jsc.item.cpu.cores", "%s cores @ %s GHz");
     private static final TextKey THROUGHPUT = TextKey.of("jsc.item.cpu.throughput", "%s it/t  -  %s W");
     private static final TextKey SOCKET = TextKey.of("jsc.item.cpu.socket", "Socket %s");
-    /* The architecture, then what an item costs on the era's disks. */
+    /* The instruction set, then what an item costs on the era's disks. */
     private static final TextKey WORD = TextKey.of("jsc.item.cpu.word", "%s  -  %s");
 
     public CpuItem(final Properties properties, final CpuSpec spec) {
@@ -44,11 +44,11 @@ public class CpuItem extends SpecItem<CpuSpec> {
                 .withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(GameText.component(SOCKET.with(spec.socket().display())).withStyle(ChatFormatting.DARK_GRAY));
         /*
-         * The architecture is what decides which programs this chip will run, so it is named rather than left to be
+         * The instruction set is what decides which programs this chip will run, so it is named rather than left to be
          * guessed from the era. The word size beside it is what an item costs on that era's disks, so the player can
          * read the ladder off the chip.
          */
-        tooltip.add(GameText.component(WORD.with(HardwareTooltip.architecture(spec),
+        tooltip.add(GameText.component(WORD.with(HardwareTooltip.isa(spec),
                 HardwareTooltip.MB_PER_ITEM.with(spec.era().mbPerItem()))).withStyle(ChatFormatting.DARK_GRAY));
         HardwareTooltip.appendEra(tooltip, spec.era());
     }

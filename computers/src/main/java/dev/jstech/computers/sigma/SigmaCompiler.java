@@ -7,8 +7,8 @@
  */
 package dev.jstech.computers.sigma;
 
-import dev.jstech.computers.hardware.ArchitectureSpec;
-import dev.jstech.computers.hardware.Architectures;
+import dev.jstech.computers.hardware.IsaSpec;
+import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.sigma.emit.Emitter;
 import dev.jstech.computers.vm.listing.AsmMethod;
 import dev.jstech.computers.vm.listing.AsmProgram;
@@ -64,17 +64,18 @@ public final class SigmaCompiler {
 
     /** Compiles a whole program, which is a set of files with one class the runtime can start. */
     public static Result compile(final List<SourceFile> sources) {
-        return compile(sources, AsmProgram.DEFAULT_ARCHITECTURE);
+        return compile(sources, AsmProgram.DEFAULT_ISA);
     }
 
     /**
-     * The same, built for that architecture.
+     * The same, built for that instruction set.
      *
-     * <p>Left alone, a program is built for the oldest architecture that runs it, so that it runs on every machine
-     * it could have run on. Building for a newer one is a decision somebody makes, which is why it is asked for.
+     * <p>Left alone, a program is built for the oldest instruction set that runs it, so that it runs on every
+     * machine it could have run on. Building for a newer one is a decision somebody makes, which is why it is asked
+     * for.
      */
-    public static Result compile(final List<SourceFile> sources, final String architecture) {
-        return compile(sources, architecture, LanguageLevel.SIGMA_SHARP);
+    public static Result compile(final List<SourceFile> sources, final String isa) {
+        return compile(sources, isa, LanguageLevel.SIGMA_SHARP);
     }
 
     /**
@@ -84,8 +85,7 @@ public final class SigmaCompiler {
      * exactly what it means to the bigger one and is written out as exactly the same listing; the level decides
      * what a source may be, never what it compiles to.
      */
-    public static Result compile(final List<SourceFile> sources, final String architecture,
-                                 final LanguageLevel level) {
+    public static Result compile(final List<SourceFile> sources, final String isa, final LanguageLevel level) {
         final DiagnosticBag bag = new DiagnosticBag(sources.isEmpty() ? "" : sources.getFirst().name());
         final SigmaSemantics.Analysis analysis = SigmaSemantics.analyse(sources, bag, true, false, level);
         if (bag.hasErrors()) {
@@ -96,12 +96,12 @@ public final class SigmaCompiler {
         if (bag.hasErrors()) {
             return new Result(null, bag.sorted(), bag.wasCapped());
         }
-        program.setArchitecture(targetOf(program, architecture), 1);
+        program.setIsa(targetOf(program, isa), 1);
         return new Result(AsmWriter.write(program), bag.sorted(), bag.wasCapped());
     }
 
     /**
-     * The architecture the listing is written for: the one asked for, or the oldest that has what the program
+     * The instruction set the listing is written for: the one asked for, or the oldest that has what the program
      * turned out to need.
      *
      * <p>Asking for one is a decision somebody made and is left alone, even where an older one would have done.
@@ -109,13 +109,12 @@ public final class SigmaCompiler {
      * that has all of them, so it runs on everything it could have run on rather than on everything the newest
      * chip can.
      *
-     * <p>An architecture nothing knows is handed back untouched. It is not this stage's to refuse: a listing for
+     * <p>An instruction set nothing knows is handed back untouched. It is not this stage's to refuse: a listing for
      * a machine nobody has is refused where a machine reads it, with the name of the one it was built for.
      */
-    private static String targetOf(final AsmProgram program, final String architecture) {
-        final Optional<ArchitectureSpec> baseline = Architectures.byId(architecture);
-        return baseline.map(spec -> Architectures.oldestWith(spec, instructionsOf(program)).id())
-                .orElse(architecture);
+    private static String targetOf(final AsmProgram program, final String isa) {
+        final Optional<IsaSpec> baseline = Isas.byId(isa);
+        return baseline.map(spec -> Isas.oldestWith(spec, instructionsOf(program)).id()).orElse(isa);
     }
 
     /** Every kind of instruction the program turned out to be made of. */

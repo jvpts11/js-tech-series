@@ -73,7 +73,7 @@ public final class SettingsPayloadGameTests {
                         && back.installed().equals(List.of("jsc:sgsc")) && back.guiScale() == 75,
                 "everything else travels whole; got the name as " + back.computerName());
         helper.assertTrue(back.cpuArch().english().equals("x86-64, 64-bit"),
-                "the architecture the screens show travels whole; got " + back.cpuArch());
+                "the instruction set the screens show travels whole; got " + back.cpuArch());
         // And a name past even that length is cut to it rather than refused, which would drop the connection.
         final String pastTheLimit = "n".repeat(InstallerFlow.MOST_NAME_LETTERS + 40);
         final SettingsSnapshotPayload named = new SettingsSnapshotPayload(new BlockPos(1, 2, 3),
