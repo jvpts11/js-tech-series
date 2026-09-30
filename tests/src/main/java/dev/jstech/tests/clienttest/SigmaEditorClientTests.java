@@ -284,6 +284,55 @@ public final class SigmaEditorClientTests {
                 .thenScreenshot(2, "added-item");
     }
 
+    /**
+     * A project is held to a version of its language from its Properties: Default follows the installed compiler,
+     * a version's button writes that version into the project file, and Default takes the line out again.
+     */
+    @ClientTest(timeoutTicks = 3000)
+    public static void virtualStudio_holdsAProjectToAVersionFromItsProperties(final ClientTestContext ctx) {
+        final String mark = LanguageLevel.SIGMA_SHARP.mark();
+        final String defaultLabel = "Default (" + mark + " 2)";
+        final String first = mark + " 1";
+        studioOnFarm(ctx)
+                .then(SETTLE, () -> ctx.rightClickDesktop(studio(ctx).explorerRowPoint("v Farm *")))
+                .thenWaitUntil(() -> studio(ctx).treeMenuOpen(), SCREEN_WAIT, "the project's menu to open")
+                .then(SETTLE, () -> ctx.clickDesktop(studio(ctx).treeMenuPoint("Properties")))
+                .thenWaitUntil(() -> studio(ctx).propertiesOpen()
+                                && studio(ctx).versionButtonLabels().contains(defaultLabel),
+                        SCREEN_WAIT, "the Properties window to offer Default and every version")
+                .thenAssert(0, () -> studio(ctx).versionButtonLabels().equals(List.of(defaultLabel, first, mark + " 2")),
+                        "Default, then one button for each version, oldest first")
+                .thenAssert(0, () -> studio(ctx).versionHintLines().get(0).contains("sgsc 2.0"),
+                        "Default names the installed compiler it follows")
+                .thenAssert(0, () -> studio(ctx).versionHintLines().get(2).startsWith("Farm.sgs(4,5): error S3057"),
+                        "the example is the error a build of this project would print")
+                .thenScreenshot(2, "properties-default")
+                .then(SETTLE, () -> ctx.clickDesktop(studio(ctx).versionButtonPoint(first)))
+                .thenWaitUntilServer(level -> diskText(ctx, level, FARM_PROJECT + "/Farm.sgsproj")
+                                .contains("langversion: 1"),
+                        SCREEN_WAIT, "the version to be written into the project file",
+                        level -> "project=" + diskText(ctx, level, FARM_PROJECT + "/Farm.sgsproj"))
+                .thenAssert(0, () -> studio(ctx).versionHintLines().get(3).contains("langversion: 1"),
+                        "the window says the line it wrote")
+                .thenScreenshot(2, "properties-held-to-one")
+                // The tree's Dependencies lists the language at the version the project is now held to.
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                .thenWaitUntil(() -> !studio(ctx).propertiesOpen(), SCREEN_WAIT, "Escape to close the window")
+                .then(SETTLE, () -> ctx.clickDesktop(studio(ctx).explorerRowPoint("> Dependencies")))
+                .thenWaitUntil(() -> studio(ctx).explorerLabels().contains(first), SCREEN_WAIT,
+                        "the project's dependencies to list the version it is held to")
+                .then(SETTLE, () -> ctx.clickDesktop(studio(ctx).explorerRowPoint("Properties")))
+                .thenWaitUntil(() -> studio(ctx).propertiesOpen(), SCREEN_WAIT, "the Properties row to open it again")
+                .then(SETTLE, () -> ctx.clickDesktop(studio(ctx).versionButtonPoint(defaultLabel)))
+                .thenWaitUntilServer(level -> !diskText(ctx, level, FARM_PROJECT + "/Farm.sgsproj")
+                                .contains("langversion"),
+                        SCREEN_WAIT, "Default to take the line back out of the project file",
+                        level -> "project=" + diskText(ctx, level, FARM_PROJECT + "/Farm.sgsproj"))
+                .thenAssert(0, () -> studio(ctx).explorerLabels().contains(mark + " 2")
+                                && !studio(ctx).explorerLabels().contains(first),
+                        "and back at the installed compiler's once the project follows it again");
+    }
+
     /** The same program, run with F5: the editor builds it and runs it at its own terminal, in one key. */
     @ClientTest(timeoutTicks = 3000)
     public static void virtualStudioCode_runsTheOpenFileWithF5(final ClientTestContext ctx) {

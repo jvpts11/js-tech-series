@@ -438,6 +438,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - `strcpy(out dest, src)` and `strcat(ref dest, src)` in Σ 2, in C's order, compile to the assignment and the
   joining written by hand (`dest = src`, `dest = dest + src`), to the same listing. `ref` is written for `strcat`
   alone; a variable called `ref` is still a variable.
+- Virtual Studio's Project Properties has a Language version under the Platform target: Default, which follows the
+  installed compiler and says which one it is ("sgsc 2.0"), and a button for each version of the language. A
+  version's button writes `langversion: N` into the project and Default takes the line out again; under them, the
+  error a lower version gives for what came after it, and the line the choice wrote.
 
 ### Changed
 - The Vintage server boards hold the Integra Pentix Pro, as the boards of the time did: the MF MTX-V of the

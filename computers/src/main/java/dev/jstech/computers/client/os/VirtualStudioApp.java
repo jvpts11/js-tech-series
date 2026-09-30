@@ -16,14 +16,18 @@ import dev.jstech.computers.operation.payload.FolderContentPayload;
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.operation.payload.RequestFolderContentPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
+import dev.jstech.computers.gui.layout.StudioPropertiesLayout;
 import dev.jstech.computers.hardware.IsaSpec;
 import dev.jstech.computers.hardware.Isas;
+import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.os.edit.ProblemReport;
 import dev.jstech.computers.os.edit.project.ProjectFile;
 import dev.jstech.computers.os.edit.project.ProjectTemplate;
 import dev.jstech.computers.os.edit.project.SolutionFile;
 import dev.jstech.computers.sigma.LanguageLevel;
+import dev.jstech.computers.sigma.SigmaError;
+import dev.jstech.computers.sigma.SigmaVersions;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.AmountStepper;
@@ -97,9 +101,10 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private static final int MIN_CODE_H = 36;
     /** The key the studio's window goes by, which is the program's id. */
     private static final String KEY = "jsc:virtual_studio";
+    /** Where the example under the version buttons says the refused call is, inside the template's Main. */
+    private static final int EXAMPLE_LINE = 4;
+    private static final int EXAMPLE_COLUMN = 5;
 
-    /** Wide enough for the longest instruction set name there is at three quarters of the font. */
-    private static final int PLATFORM_BTN_W = 30;
     /**
      * The studio's own colours, {@code jsc:editor/virtual_studio}: a platform the project builds for and one it
      * does not, a complaint's code, and a build that succeeded or failed.
@@ -255,13 +260,18 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private final Button askOk;
     private String askTitle = "";
     private Consumer<String> askAction = value -> { };
-    private final Popup properties = new Popup(GameText.resolve(VirtualStudioTexts.PROPERTIES_TITLE), 170, 112)
-            .setLayouter(this::layoutProperties);
+    private final Popup properties = new Popup(GameText.resolve(VirtualStudioTexts.PROPERTIES_TITLE),
+            StudioPropertiesLayout.WIDTH, StudioPropertiesLayout.HEIGHT).setLayouter(this::layoutProperties);
     private final List<Label> propertyLines = new ArrayList<>();
     private final Label platformLabel;
     /** One button per instruction set there is, in the order the series was built. */
     private final List<Button> platformButtons = new ArrayList<>();
     private final Label platformHint;
+    private final Label versionLabel;
+    /** Default, which follows the installed compiler, then one button for each version of the language. */
+    private final List<Button> versionButtons = new ArrayList<>();
+    /** What Default follows, what a lower version refuses, an example of it, and the line a choice writes. */
+    private final List<Label> versionHints = new ArrayList<>();
     private final Button propertiesClose;
     private String propertiesOf = "";
     private final Popup options = new Popup(GameText.resolve(VirtualStudioTexts.OPTIONS_TITLE), 170, 60)
@@ -346,7 +356,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             this.ask.close();
             this.askAction.accept(this.askField.edit().trim());
         }).setPrimary(true));
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < StudioPropertiesLayout.LINES; i++) {
             final int line = i;
             this.propertyLines.add(this.properties.add(new Label(() -> GameText.resolve(propertyText(line)))));
         }
@@ -358,6 +368,21 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         }
         this.platformHint = this.properties.add(new Label(() -> GameText.resolve(platformHintText()))
                 .setColor(this::platformHintColor));
+        this.versionLabel = this.properties.add(new Label(GameText.resolve(VirtualStudioTexts.LANGUAGE_VERSION),
+                Label.Tone.DIM));
+        for (int version = 0; version <= SigmaVersions.NEWEST; version++) {
+            final int chosen = version;
+            this.versionButtons.add(this.properties.add(new Button(() -> versionButtonText(chosen),
+                    () -> setLanguageVersion(chosen)).setLabelScale(StudioPropertiesLayout.SMALL)));
+        }
+        for (int line = 0; line < StudioPropertiesLayout.VERSION_HINTS; line++) {
+            final int shown = line;
+            final Label hint = this.properties.add(new Label(() -> GameText.resolve(versionHintText(shown)))
+                    .setScale(StudioPropertiesLayout.SMALL));
+            // The example of what a lower version refuses is an error, in the colour of a decision that costs.
+            this.versionHints.add(shown == 2 ? hint.setColor(() -> PALETTE.get().platformOff())
+                    : hint.setTone(Label.Tone.DIM));
+        }
         this.propertiesClose = this.properties.add(new Button(GameText.resolve(StudioTexts.CLOSE),
                 this.properties::close).setPrimary(true));
         this.options.add(new Label(GameText.resolve(StudioTexts.TAB_SIZE), Label.Tone.DIM));
@@ -682,7 +707,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             out.add(new Node(2, (deps ? "v " : "> ") + GameText.resolve(VirtualStudioTexts.DEPENDENCIES),
                     NodeKind.DEPENDENCIES, project.name(), ""));
             if (deps) {
-                out.add(new Node(3, languageName(project.language()), NodeKind.DEPENDENCY, project.name(), ""));
+                out.add(new Node(3, dependencyName(project), NodeKind.DEPENDENCY, project.name(), ""));
                 for (final String reference : project.references()) {
                     out.add(new Node(3, reference, NodeKind.DEPENDENCY, project.name(), ""));
                 }
@@ -706,7 +731,17 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private String languageName(final String id) {
         final IProgrammingLanguage language = id.contains(":")
                 ? JsCore.languages().get(ResourceLocation.tryParse(id)) : null;
-        return language == null ? id : language.displayName() + " 1.0";
+        return language == null ? id : language.displayName();
+    }
+
+    /**
+     * The language a project builds against, as its Dependencies lists it: for a language with versions, the one
+     * the project is held to, which is the installed compiler's unless the project names a lower one.
+     */
+    private String dependencyName(final ProjectFile project) {
+        final LanguageLevel level = LanguageLevel.ofId(project.language());
+        return level == null ? languageName(project.language())
+                : level.mark() + " " + InstalledCompilers.held(level, project.languageVersion());
     }
 
     private String startupName() {
@@ -1500,6 +1535,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private void showProperties(final String name) {
         this.propertiesOf = name;
         refreshPlatformButtons();
+        refreshVersionButtons();
         this.properties.open();
     }
 
@@ -1519,34 +1555,119 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     private void layoutProperties(final Popup p) {
-        int y = p.contentTop() + 2;
-        for (final Label label : this.propertyLines) {
-            label.setBounds(p.x() + 4, y, p.width() - 8, 9);
-            y += 9;
+        final int x = p.x() + StudioPropertiesLayout.PAD;
+        final int wide = p.width() - StudioPropertiesLayout.PAD * 2;
+        for (int i = 0; i < this.propertyLines.size(); i++) {
+            this.propertyLines.get(i).setBounds(x, p.y() + StudioPropertiesLayout.LINES_Y
+                    + i * StudioPropertiesLayout.LINE_H, wide, StudioPropertiesLayout.LINE_H);
         }
         /*
          * A library has no platform of its own: it is compiled into whatever program references it, and that
          * program's target is the one that counts. So the row is not there rather than there and doing nothing.
          */
         final boolean shown = buildsForAPlatform();
-        y += 2;
         this.platformLabel.setVisible(shown);
-        this.platformLabel.setBounds(p.x() + 4, y, p.width() - 8, 9);
-        y += 10;
+        this.platformLabel.setBounds(x, p.y() + StudioPropertiesLayout.PLATFORM_LABEL_Y, wide,
+                StudioPropertiesLayout.LINE_H);
         /*
          * The buttons take the row on their own rather than sitting beside the words, so that the row still holds
          * every instruction set when a mod has brought two of its own.
          */
-        int x = p.x() + 4;
-        for (final Button button : this.platformButtons) {
-            button.setVisible(shown);
-            button.setBounds(x, y, PLATFORM_BTN_W, 11);
-            x += PLATFORM_BTN_W + 2;
+        for (int i = 0; i < this.platformButtons.size(); i++) {
+            this.platformButtons.get(i).setVisible(shown);
+            this.platformButtons.get(i).setBounds(p.x() + StudioPropertiesLayout.platformButtonX(i),
+                    p.y() + StudioPropertiesLayout.PLATFORM_BUTTONS_Y, StudioPropertiesLayout.PLATFORM_BUTTON_W,
+                    StudioPropertiesLayout.BUTTON_H);
         }
-        y += 13;
         this.platformHint.setVisible(shown);
-        this.platformHint.setBounds(p.x() + 4, y, p.width() - 8, 9);
-        this.propertiesClose.setBounds(p.right() - 38, p.bottom() - 14, 34, 11);
+        this.platformHint.setBounds(x, p.y() + StudioPropertiesLayout.PLATFORM_HINT_Y, wide,
+                StudioPropertiesLayout.LINE_H);
+        // Only the languages that have versions have a version to hold a project to.
+        final boolean versioned = shown && versionedLevel() != null;
+        this.versionLabel.setVisible(versioned);
+        this.versionLabel.setBounds(x, p.y() + StudioPropertiesLayout.VERSION_LABEL_Y, wide,
+                StudioPropertiesLayout.LINE_H);
+        for (int i = 0; i < this.versionButtons.size(); i++) {
+            this.versionButtons.get(i).setVisible(versioned);
+            this.versionButtons.get(i).setBounds(p.x() + StudioPropertiesLayout.versionButtonX(i),
+                    p.y() + StudioPropertiesLayout.VERSION_BUTTONS_Y, StudioPropertiesLayout.versionButtonW(i),
+                    StudioPropertiesLayout.BUTTON_H);
+        }
+        for (int i = 0; i < this.versionHints.size(); i++) {
+            this.versionHints.get(i).setVisible(versioned);
+            this.versionHints.get(i).setBounds(x, p.y() + StudioPropertiesLayout.versionHintY(i), wide,
+                    StudioPropertiesLayout.SMALL_LINE_H);
+        }
+        // From the corner the popup really has, since a narrow studio window gives it less than it asked for.
+        this.propertiesClose.setBounds(p.right() - (StudioPropertiesLayout.WIDTH - StudioPropertiesLayout.closeX()),
+                p.bottom() - (StudioPropertiesLayout.HEIGHT - StudioPropertiesLayout.CLOSE_Y),
+                StudioPropertiesLayout.CLOSE_W, StudioPropertiesLayout.BUTTON_H);
+    }
+
+    /** The language the open project is written in when it is one with versions, or null. */
+    private LanguageLevel versionedLevel() {
+        final ProjectFile project = this.projects.get(this.propertiesOf);
+        return project == null ? null : LanguageLevel.ofId(project.language());
+    }
+
+    /** What a version's button says: Default, with the version it follows, then each version by its number. */
+    private String versionButtonText(final int version) {
+        final LanguageLevel level = versionedLevel();
+        final String mark = level == null ? "" : level.mark();
+        if (version == 0) {
+            return GameText.resolve(VirtualStudioTexts.DEFAULT_VERSION.with(mark,
+                    level == null ? SigmaVersions.NEWEST : InstalledCompilers.version(level)));
+        }
+        return mark + " " + version;
+    }
+
+    /**
+     * The lines under the version buttons: what Default follows, the installed compiler named with its version;
+     * that a lower version refuses what came after it, with the error it gives; and the line a choice writes.
+     */
+    private Text versionHintText(final int line) {
+        final LanguageLevel level = versionedLevel();
+        final ProjectFile project = this.projects.get(this.propertiesOf);
+        if (level == null || project == null) {
+            return Text.EMPTY;
+        }
+        return switch (line) {
+            case 0 -> VirtualStudioTexts.VERSION_FOLLOWS.with(level.compiler(),
+                    installedPackageVersion(level));
+            case 1 -> VirtualStudioTexts.VERSION_REFUSES.text();
+            // Where a call would sit in the template's program, in the project's own source, as the build prints it.
+            case 2 -> VirtualStudioTexts.VERSION_EXAMPLE.with(project.name() + "." + level.sourceExtension(),
+                    EXAMPLE_LINE, EXAMPLE_COLUMN, SigmaError.NEEDS_A_LATER_VERSION.code(),
+                    SigmaError.NEEDS_A_LATER_VERSION.message("puts", level.mark(), SigmaVersions.NEWEST,
+                            level.mark(), SigmaVersions.FIRST));
+            default -> VirtualStudioTexts.VERSION_WRITTEN.with(project.languageVersion() > 0
+                    ? project.languageVersion() : SigmaVersions.FIRST);
+        };
+    }
+
+    /** The version the machine's compiler of that language is installed at, or the one it ships at. */
+    private static String installedPackageVersion(final LanguageLevel level) {
+        final String installed = ActiveDesktop.installedVersion(level.compilerPackage());
+        return installed == null || installed.isBlank() ? ProgramVersions.of(level.compilerPackage()) : installed;
+    }
+
+    /** Holds the project to that version of its language from now on; 0 lets it follow the compiler again. */
+    private void setLanguageVersion(final int version) {
+        final ProjectFile project = this.projects.get(this.propertiesOf);
+        if (project == null) {
+            return;
+        }
+        saveProject(project.withLanguageVersion(version));
+        refreshVersionButtons();
+    }
+
+    /** Lights the version the open project is held to, Default when it names none, and unlights the rest. */
+    private void refreshVersionButtons() {
+        final ProjectFile project = this.projects.get(this.propertiesOf);
+        final int current = project == null ? 0 : project.languageVersion();
+        for (int i = 0; i < this.versionButtons.size(); i++) {
+            this.versionButtons.get(i).setPrimary(i == current);
+        }
     }
 
     /** Whether the project the popup is open on builds something of its own, and so has a platform to pick. */
@@ -2167,6 +2288,43 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             this.askDelete.close();
             deleteNode();
         }
+    }
+
+    /** Whether a project's Properties window is up. */
+    public boolean propertiesOpen() {
+        return this.properties.isOpen();
+    }
+
+    /** What the version buttons say, Default first, while the open project's language has versions. */
+    public List<String> versionButtonLabels() {
+        final List<String> out = new ArrayList<>();
+        for (final Button button : this.versionButtons) {
+            if (button.visible()) {
+                out.add(button.label());
+            }
+        }
+        return out;
+    }
+
+    /** Where the version button that says {@code label} is drawn, for a test to click it, or null. */
+    public int[] versionButtonPoint(final String label) {
+        for (final Button button : this.versionButtons) {
+            if (button.visible() && button.label().equals(label)) {
+                return new int[] {button.x() + button.width() / 2, button.y() + button.height() / 2};
+            }
+        }
+        return null;
+    }
+
+    /** The lines under the version buttons, as the window shows them. */
+    public List<String> versionHintLines() {
+        final List<String> out = new ArrayList<>();
+        for (final Label hint : this.versionHints) {
+            if (hint.visible()) {
+                out.add(hint.text());
+            }
+        }
+        return out;
     }
 
     private void openAssembly() {

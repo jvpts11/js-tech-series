@@ -50,7 +50,7 @@ class LayoutAuditTest {
             "VolumePopupLayout", "SoundfoundryLayout", "SoundfoundryShareLayout", "SoundfoundryStandardLayout",
             "PersonalComputerLayout", "MainframeLayout", "ServerAssemblyLayout", "KvmChannelLayout",
             "SystemBootLayout", "CommandPromptLayout", "OsInstallLayout", "InstallerLayout",
-            "BootSequenceLayout", "FirmwareLayout", "SettingsLayout");
+            "BootSequenceLayout", "FirmwareLayout", "SettingsLayout", "StudioPropertiesLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -76,6 +76,8 @@ class LayoutAuditTest {
         final List<AuditCase> c = new ArrayList<>();
         c.add(new AuditCase("BusLayout", BusLayout.layout(), true));
         c.add(new AuditCase("SoundfoundryLayout", SoundfoundryLayout.layout(), true));
+        // Virtual Studio's Properties at the most it holds: every instruction set and every version beside Default.
+        c.add(new AuditCase("StudioPropertiesLayout", StudioPropertiesLayout.layout(5, 4), true));
         // A window on the desktop, not a panel over the game: held to its own frame, not to the panel budget.
         c.add(new AuditCase("SoundfoundryShareLayout", SoundfoundryShareLayout.layout(
                 List.of("SEARCH", "DOWNLOADS (999)", "SHARED (9999)"), s -> s.length() * 6), false));

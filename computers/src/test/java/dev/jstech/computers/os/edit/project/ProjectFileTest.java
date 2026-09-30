@@ -62,6 +62,13 @@ class ProjectFileTest {
     }
 
     @Test
+    void withLanguageVersion_zero_dropsTheLineSoTheProjectFollowsTheCompiler() {
+        final ProjectFile followed = stockWatch().withLanguageVersion(1).withLanguageVersion(0);
+        assertFalse(followed.write().contains("langversion"));
+        assertEquals(stockWatch(), followed);
+    }
+
+    @Test
     void read_aLanguageVersionThatIsNotANumber_isNone() {
         assertEquals(0, ProjectFile.read("name: X\nlangversion: two\n").languageVersion());
     }

@@ -177,6 +177,10 @@ Mine.sgs(4,5): error S3057: 'puts' needs Σ# 2; this project is Σ# 1
 The editors follow the machine's compiler, and Virtual Studio the project as well: the suggestions offer only
 what that version has, and the checks as you type hold a file to it.
 
+In Virtual Studio the version is chosen in the project's Properties, under Language version: Default follows the
+installed compiler, and a version's button writes the `langversion` line for you. Choosing Default again takes
+the line out, and the project's Dependencies in the Solution Explorer name the version it builds against.
+
 ## Classes standing on other classes
 
 A class may stand on one other class and on as many interfaces as it likes, written after a colon.

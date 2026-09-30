@@ -93,6 +93,17 @@ final class VirtualStudioTexts {
     static final TextKey NO_MACHINE = TextKey.of("jsc.virtual_studio.no_machine", "no machine here runs it");
     static final TextKey RUNS_ON = TextKey.of("jsc.virtual_studio.runs_on", "runs on %s machines");
     static final TextKey AND = TextKey.of("jsc.virtual_studio.and", " and ");
+    // The version of the language a project is held to, under its platform.
+    static final TextKey LANGUAGE_VERSION = TextKey.of("jsc.virtual_studio.language_version", "Language version");
+    static final TextKey DEFAULT_VERSION = TextKey.of("jsc.virtual_studio.default_version", "Default (%s %s)");
+    static final TextKey VERSION_FOLLOWS = TextKey.of("jsc.virtual_studio.version_follows",
+            "Default follows the installed compiler (%s %s).");
+    static final TextKey VERSION_REFUSES = TextKey.of("jsc.virtual_studio.version_refuses",
+            "A lower version refuses what came after it:");
+    static final TextKey VERSION_EXAMPLE = TextKey.of("jsc.virtual_studio.version_example",
+            "%s(%s,%s): error %s: %s");
+    static final TextKey VERSION_WRITTEN = TextKey.of("jsc.virtual_studio.version_written",
+            "Written to the project as langversion: %s.");
     static final TextKey OPTIONS_TITLE = TextKey.of("jsc.virtual_studio.options_title", "Options");
     static final TextKey SUGGEST = TextKey.of("jsc.virtual_studio.suggest", "Suggest what can follow a name");
 
