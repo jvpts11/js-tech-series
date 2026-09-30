@@ -26,7 +26,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  */
 final class WindowLayouts {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
     private final BlockPos host;
     /** Whether the machine's layout has been applied to this desktop. */
     private boolean restored;
@@ -54,7 +54,7 @@ final class WindowLayouts {
                 }
             };
 
-    WindowLayouts(final DesktopScreen desktop, final BlockPos host) {
+    WindowLayouts(final DesktopState desktop, final BlockPos host) {
         this.desktop = desktop;
         this.host = host;
     }

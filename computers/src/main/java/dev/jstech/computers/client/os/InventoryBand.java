@@ -21,9 +21,9 @@ import org.jetbrains.annotations.Nullable;
  */
 final class InventoryBand {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
 
-    InventoryBand(final DesktopScreen desktop) {
+    InventoryBand(final DesktopState desktop) {
         this.desktop = desktop;
     }
 
@@ -34,10 +34,14 @@ final class InventoryBand {
      * cheap to call that often.
      *
      * <p>The origin is window-local, and since the container draws and hit-tests a slot at the desktop's own corner
-     * plus the slot's position, that is exactly the offset it measures the slots from.
+     * plus the slot's position, that is exactly the offset it measures the slots from. A desktop drawn with no
+     * container has no slots to lay.
      */
     void sync() {
-        final DesktopMenu menu = desktop.getMenu();
+        final DesktopMenu menu = desktop.container();
+        if (menu == null) {
+            return;
+        }
         final DesktopWindow w = desktop.wm().front();
         if (w == null || !(w.app() instanceof IInventoryBandApp app)) {
             menu.setSlotsActive(false);
@@ -78,8 +82,8 @@ final class InventoryBand {
      */
     @Nullable
     Slot render(final GuiGraphics g, final int lmx, final int lmy) {
-        final DesktopMenu menu = desktop.getMenu();
-        if (!menu.slotsActive()) {
+        final DesktopMenu menu = desktop.container();
+        if (menu == null || !menu.slotsActive()) {
             return null;
         }
         /*
@@ -116,8 +120,8 @@ final class InventoryBand {
      */
     @Nullable
     Slot slotAt(final double absX, final double absY) {
-        final DesktopMenu menu = desktop.getMenu();
-        if (!menu.slotsActive()) {
+        final DesktopMenu menu = desktop.container();
+        if (menu == null || !menu.slotsActive()) {
             return null;
         }
         final double mx = desktop.view().localX(absX);
@@ -132,7 +136,7 @@ final class InventoryBand {
 
     /** Draws the stack on the cursor at the pointer, in desktop-local coordinates. */
     void renderCarried(final GuiGraphics g, final int lmx, final int lmy) {
-        final ItemStack carried = desktop.getMenu().getCarried();
+        final ItemStack carried = desktop.carried();
         if (!carried.isEmpty()) {
             g.renderItem(carried, lmx - 8, lmy - 8);
             g.renderItemDecorations(desktop.textFont(), carried, lmx - 8, lmy - 8);

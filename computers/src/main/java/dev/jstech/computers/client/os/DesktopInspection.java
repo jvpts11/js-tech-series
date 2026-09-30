@@ -76,7 +76,7 @@ interface DesktopInspection {
      */
     @Nullable
     default int[] taskEntryPoint(final String key) {
-        final DesktopScreen desktop = desktop();
+        final DesktopState desktop = desktop();
         final DesktopViewport view = desktop.view();
         final TaskStrip strip = desktop.taskbar().strip(view.width());
         final int index = TaskbarGroups.indexOf(strip.entries(), desktop.keyFor(key));
@@ -572,9 +572,9 @@ interface DesktopInspection {
         return open != null && open.app() instanceof TrashApp app ? app : null;
     }
 
-    /** The desktop these questions are asked of, which is the screen that answers them. */
-    private DesktopScreen desktop() {
-        return (DesktopScreen) this;
+    /** The desktop these questions are asked of: the one shown by the screen that answers them. */
+    private DesktopState desktop() {
+        return ((DesktopScreen) this).state();
     }
 
     /** A desktop-local point as the screen position a click is given in. */

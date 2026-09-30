@@ -175,7 +175,7 @@ final class TrashCdeLook implements ITrashLook {
     }
 
     private CdePalette palette() {
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         return desktop == null ? CdeScheme.DEFAULT.colours() : desktop.prefs().cdePalette();
     }
 

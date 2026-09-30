@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
  */
 final class PanelMenu {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
     private boolean open;
     /* Where the menu was raised, in desktop-local coordinates. */
     private int x;
@@ -31,7 +31,7 @@ final class PanelMenu {
     /** The rows in the order the menu shows them, which is a place on the screen and nothing more. */
     private static final List<Row> ROWS = List.of(Row.CASCADE, Row.SHOW_DESKTOP, Row.SEPARATOR, Row.TASK_MANAGER);
 
-    PanelMenu(final DesktopScreen desktop) {
+    PanelMenu(final DesktopState desktop) {
         this.desktop = desktop;
     }
 

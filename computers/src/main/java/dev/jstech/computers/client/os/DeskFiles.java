@@ -50,9 +50,9 @@ final class DeskFiles implements CodeFileReplies.IReader {
     /** How long a name may run, which is the cap the rename typing is held to. */
     private static final int MAX_NAME = 64;
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
 
-    DeskFiles(final DesktopScreen desktop) {
+    DeskFiles(final DesktopState desktop) {
         this.desktop = desktop;
     }
 
@@ -83,7 +83,7 @@ final class DeskFiles implements CodeFileReplies.IReader {
             return;
         }
         renaming = idx;
-        desktop.input().pick(desktop.deskIcons().size() + idx);
+        desktop.iconGrid().pick(desktop.deskIcons().size() + idx);
         typed.setLength(0);
         typed.append(DesktopIcons.baseName(f.path()));
     }

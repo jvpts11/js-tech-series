@@ -30,7 +30,7 @@ import net.minecraft.resources.ResourceLocation;
  */
 final class DesktopMemory {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
     private final ResourceLocation osId;
     /** The desktop's windows, read to weigh what is open. */
     private final List<DesktopWindow> windows;
@@ -45,7 +45,7 @@ final class DesktopMemory {
     /** How long the crash screen stays up before the machine reboots, in milliseconds. */
     private static final long CRASH_MS = 4200L;
 
-    DesktopMemory(final DesktopScreen desktop, final ResourceLocation osId, final List<DesktopWindow> windows,
+    DesktopMemory(final DesktopState desktop, final ResourceLocation osId, final List<DesktopWindow> windows,
                   final int totalMb, final int reservedMb) {
         this.desktop = desktop;
         this.osId = osId;

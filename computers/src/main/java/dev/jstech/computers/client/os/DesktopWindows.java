@@ -21,13 +21,13 @@ import org.jetbrains.annotations.Nullable;
  */
 final class DesktopWindows {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
     /** The windows, back to front. */
     private final List<DesktopWindow> windows = new ArrayList<>();
     /** Which workspace is up, counted from nought; always the first on a desktop that has only one. */
     private int shown;
 
-    DesktopWindows(final DesktopScreen desktop) {
+    DesktopWindows(final DesktopState desktop) {
         this.desktop = desktop;
     }
 

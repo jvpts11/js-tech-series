@@ -79,9 +79,9 @@ final class TaskPopup {
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/task_popup",
             new Colours(0xFFC04A3E, 0xFFFFFFFF));
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
 
-    TaskPopup(final DesktopScreen desktop) {
+    TaskPopup(final DesktopState desktop) {
         this.desktop = desktop;
     }
 

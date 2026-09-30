@@ -109,7 +109,7 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
      * one of the Legacy desktops: Frames 11 and the later Linux desktops, not their period forms.
      */
     static boolean onStandardDesktop() {
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (desktop == null) {
             return false;
         }

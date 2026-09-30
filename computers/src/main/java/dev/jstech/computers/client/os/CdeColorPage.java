@@ -172,7 +172,7 @@ final class CdeColorPage implements IDesktopApp {
 
     private void keep() {
         this.answered = true;
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (desktop != null) {
             desktop.prefs().keepCdeStyle(desktop.prefs().cdeStyle().withPalette(this.picked));
         }
@@ -187,7 +187,7 @@ final class CdeColorPage implements IDesktopApp {
 
     /* Only the palette changes: the backdrops may have been set on the other page in the meantime. */
     private static void wear(final String palette) {
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (desktop != null) {
             desktop.prefs().wearCdeStyle(desktop.prefs().cdeStyle().withPalette(palette));
         }

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  */
 final class DesktopDrags {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
     /** Whether the rubber band is being swept, from where, and to where the pointer has taken it. */
     private boolean bandActive;
     private double bandStartX;
@@ -46,7 +46,7 @@ final class DesktopDrags {
     /** How far the pointer must travel from the press before an icon click becomes a drag. */
     private static final double DRAG_THRESHOLD = 3.0;
 
-    DesktopDrags(final DesktopScreen desktop) {
+    DesktopDrags(final DesktopState desktop) {
         this.desktop = desktop;
     }
 

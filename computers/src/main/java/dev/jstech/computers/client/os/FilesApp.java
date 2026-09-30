@@ -992,7 +992,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
                 : isVolumeItem(item) ? isCurrentVolume(item.target()) : dir.equals(item.target());
         ctx.skin().listRow(g, x, y, w, h, hovered, cur);
         if (item.target().equals(TRASH_PLACE)) {
-            final DesktopScreen desktop = DesktopScreen.current();
+            final DesktopState desktop = DesktopScreen.current();
             final boolean full = desktop != null && desktop.trashFull();
             ProgramIcons.draw(g, x + 2, y, FilesLayout.ICON_W, FilesLayout.ROW_H,
                     ResourceLocation.fromNamespaceAndPath("jsc", full ? "trash_full" : "trash"), iconSet());
@@ -1020,7 +1020,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /** The look the pictures are drawn in: the desktop's own set, or this window's skin's when no desktop is open. */
     private String iconSet() {
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         return desktop == null ? skin.iconSet() : desktop.icons();
     }
 
@@ -1192,7 +1192,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         }
         final TreeItem item = items.get(index);
         if (item.target().equals(TRASH_PLACE)) {
-            final DesktopScreen desktop = DesktopScreen.current();
+            final DesktopState desktop = DesktopScreen.current();
             if (button == 0 && desktop != null) {
                 desktop.openTrash();
             }

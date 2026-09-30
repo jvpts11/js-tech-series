@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
  */
 final class DeskMenu {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
     /** The menu itself, the same component every program's menus are. */
     private final ContextMenu menu;
 
@@ -50,7 +50,7 @@ final class DeskMenu {
     private static final String THIS_PC_KEY =
             WindowKeys.of(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "this_pc"));
 
-    DeskMenu(final DesktopScreen desktop) {
+    DeskMenu(final DesktopState desktop) {
         this.desktop = desktop;
         this.menu = new ContextMenu(W, ITEM_H);
     }

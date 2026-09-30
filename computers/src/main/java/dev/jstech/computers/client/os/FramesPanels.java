@@ -38,7 +38,7 @@ import net.minecraft.client.gui.GuiGraphics;
 @PaletteHolder
 final class FramesPanels {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
 
     private static final Palette<Classic> CLASSIC = Palettes.declare(JsComputers.MODID, "panel/frames_95",
             new Classic(0xFFFFFFFF, 0xFFFFFFFF, 0xFF808080, 0xFF000000, 0x30FFFFFF, 0xFF606060));
@@ -53,7 +53,7 @@ final class FramesPanels {
             new Modern(0xF01E1F23, 0x18FFFFFF, 0x18FFFFFF, 0x26FFFFFF, 0x901E1F23, 0xFFE6E8EC, 0xFFE3E5EE,
                     0xFF4C84F0, 0xFF8A93A4, 0xFF5E6570));
 
-    FramesPanels(final DesktopScreen desktop) {
+    FramesPanels(final DesktopState desktop) {
         this.desktop = desktop;
     }
 

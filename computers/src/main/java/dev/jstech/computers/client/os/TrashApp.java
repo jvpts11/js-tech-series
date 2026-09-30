@@ -314,7 +314,7 @@ public final class TrashApp implements IDesktopApp {
 
     /** Opens a file manager at a place of the sidebar and puts this window away, as leaving the trash does. */
     void openPlace(final boolean desktopFolder) {
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (desktop != null) {
             desktop.opener().openFolder(desktopFolder ? desktop.desktopDirectory() : desktop.homeDir());
             DesktopScreen.closeWindowFor(this);
@@ -340,7 +340,7 @@ public final class TrashApp implements IDesktopApp {
 
     /** The icon set of the desktop the window is on. */
     String iconSet() {
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         return desktop == null ? this.skin.iconSet() : desktop.icons();
     }
 

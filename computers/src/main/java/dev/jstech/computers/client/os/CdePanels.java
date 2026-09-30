@@ -49,7 +49,7 @@ final class CdePanels {
     private static final String EDITOR = "editor";
     private static final String STYLE = "settings";
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
 
     /** The control the pointer rests on and since when, which is what a tip waits for; null while on none. */
     @Nullable
@@ -67,7 +67,7 @@ final class CdePanels {
     private static final int TIP_H = 12;
     private static final int TIP_PAD = 4;
 
-    CdePanels(final DesktopScreen desktop) {
+    CdePanels(final DesktopState desktop) {
         this.desktop = desktop;
     }
 
@@ -198,7 +198,7 @@ final class CdePanels {
         }
         final Rect exit = CdeFrontPanelLayout.exit(sw, sh);
         // Pushed in for as long as the question it raised is still up.
-        if (desktop.powerDialogOpen()) {
+        if (desktop.power().isOpen()) {
             MotifChrome.sunken(g, exit.x(), exit.y(), exit.w(), exit.h(), p.inset(), p);
         } else {
             MotifChrome.raised(g, exit.x(), exit.y(), exit.w(), exit.h(), p.window(), p);

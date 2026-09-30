@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
  */
 final class ProgramOpener {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
     private final BlockPos host;
     private final BlockPos monitorPos;
     private final ResourceLocation desktopId;
@@ -54,7 +54,7 @@ final class ProgramOpener {
     private static final String EDITOR_KEY =
             WindowKeys.of(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, FileOpeners.EDITOR));
 
-    ProgramOpener(final DesktopScreen desktop, final BlockPos host, final BlockPos monitorPos,
+    ProgramOpener(final DesktopState desktop, final BlockPos host, final BlockPos monitorPos,
                   final ResourceLocation desktopId) {
         this.desktop = desktop;
         this.host = host;

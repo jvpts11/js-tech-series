@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
  */
 final class DesktopLaunchers {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
     private final BlockPos host;
     private final BlockPos monitorPos;
     private final ResourceLocation desktopId;
@@ -59,7 +59,7 @@ final class DesktopLaunchers {
     /** What a player's own program is known by, ahead of the listing it starts at: it has no window to go by. */
     private static final String RUN_KEY = "run:";
 
-    DesktopLaunchers(final DesktopScreen desktop, final BlockPos host, final BlockPos monitorPos,
+    DesktopLaunchers(final DesktopState desktop, final BlockPos host, final BlockPos monitorPos,
                      final ResourceLocation desktopId, final ResourceLocation osId,
                      @Nullable final DesktopEnvironmentDef chrome) {
         this.desktop = desktop;

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  */
 final class TaskbarModel {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
     /** The programs pinned to the panel, by program id path, in the order the machine keeps them. */
     private final List<String> pinned = new ArrayList<>();
     /** A program's own menu, from its panel entry: the same component every menu on this desktop is. */
@@ -40,7 +40,7 @@ final class TaskbarModel {
     private static final int LAUNCHER_W = 22;
     private static final int MENU_W = 118;
 
-    TaskbarModel(final DesktopScreen desktop) {
+    TaskbarModel(final DesktopState desktop) {
         this.desktop = desktop;
         this.menu = new ContextMenu(MENU_W, DeskMenu.ITEM_H);
     }

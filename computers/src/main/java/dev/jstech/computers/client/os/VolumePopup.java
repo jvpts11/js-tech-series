@@ -49,7 +49,7 @@ import java.util.List;
 @PaletteHolder
 final class VolumePopup {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
     private final ContextMenu menu = new ContextMenu(MENU_W, MENU_ITEM_H);
     private boolean open;
     /** Whether the outputs are unfolded, on a control that keeps them behind an arrow. */
@@ -82,7 +82,7 @@ final class VolumePopup {
             new Colours(0xFF26262B, 0xFF3D3D45, 0xFFEDEDF0, 0xFF9A9AA4, 0xFF303036, 0xFF3A3A42, 0xFF55555E,
                     0xFFFFFFFF));
 
-    VolumePopup(final DesktopScreen desktop) {
+    VolumePopup(final DesktopState desktop) {
         this.desktop = desktop;
     }
 

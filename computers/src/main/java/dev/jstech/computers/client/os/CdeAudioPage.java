@@ -121,7 +121,7 @@ final class CdeAudioPage implements IDesktopApp {
                               final int h, final int mouseX, final int mouseY, final float partialTick) {
         this.left = x;
         this.top = y;
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (this.skin == null || desktop == null) {
             return;
         }
@@ -229,7 +229,7 @@ final class CdeAudioPage implements IDesktopApp {
     }
 
     private void ok() {
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (desktop != null) {
             desktop.applySound(this.volume, this.muted, output());
         }

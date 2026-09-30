@@ -26,7 +26,7 @@ import org.lwjgl.glfw.GLFW;
  */
 final class CdeWindowMenu {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
     private final MotifMenu menu = new MotifMenu();
 
     /** The window the open menu speaks for. */
@@ -41,7 +41,7 @@ final class CdeWindowMenu {
 
     private static final long DOUBLE_CLICK_MS = 300L;
 
-    CdeWindowMenu(final DesktopScreen desktop) {
+    CdeWindowMenu(final DesktopState desktop) {
         this.desktop = desktop;
     }
 

@@ -28,7 +28,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  */
 final class DesktopPrefs {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
     private final ResourceLocation desktopId;
     /** The accent the owner put over the skin's own, or 0 for the skin's. */
     private int accent;
@@ -45,7 +45,7 @@ final class DesktopPrefs {
     private CdeStyle cdeStyle = CdeStyle.DEFAULT;
     private OsSkin skin;
 
-    DesktopPrefs(final DesktopScreen desktop, final ResourceLocation desktopId) {
+    DesktopPrefs(final DesktopState desktop, final ResourceLocation desktopId) {
         this.desktop = desktop;
         this.desktopId = desktopId;
         // A provisional skin: rebuildSkin() refines it with the host's era once the level is reachable.

@@ -127,7 +127,7 @@ final class StyleManagerApp implements IDesktopApp {
                               final int h, final int mouseX, final int mouseY, final float partialTick) {
         this.left = x;
         this.top = y;
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (this.skin == null || desktop == null) {
             return;
         }
@@ -180,7 +180,7 @@ final class StyleManagerApp implements IDesktopApp {
 
     /** Opens a page over the strip, or brings it forward when it is already open. */
     private void openPage(final int page) {
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (desktop == null) {
             return;
         }
@@ -198,7 +198,7 @@ final class StyleManagerApp implements IDesktopApp {
             opening = this.backdrop;
         } else {
             if (this.audio == null) {
-                this.audio = new CdeAudioPage(desktop.volumeShown(), desktop.mutedShown(), desktop.soundOutput(),
+                this.audio = new CdeAudioPage(desktop.volume().volume(), desktop.soundMuted(), desktop.soundOutput(),
                         () -> this.audio = null);
             }
             opening = this.audio;

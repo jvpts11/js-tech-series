@@ -22,7 +22,7 @@ import net.minecraft.client.gui.GuiGraphics;
  */
 final class PowerDialog {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
     private boolean open;
     /* The desktop surface the dialog was centred on, so a click lands where it was drawn. */
     private int surfaceW;
@@ -37,7 +37,7 @@ final class PowerDialog {
             {DesktopTexts.LOG_OFF, DesktopTexts.LOG_OFF_HINT},
     };
 
-    PowerDialog(final DesktopScreen desktop) {
+    PowerDialog(final DesktopState desktop) {
         this.desktop = desktop;
     }
 

@@ -87,10 +87,22 @@ final class DesktopIcons {
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/icons",
             new Colours(0x804C84F0, 0x66000080, 0x28FFFFFF, 0xFF49E07A, 0xE0000080, 0xFFFFFFFF, 0xFF000000));
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
+    /** The icon a click has picked, which shows its whole name, or -1. */
+    private int picked = -1;
 
-    DesktopIcons(final DesktopScreen desktop) {
+    DesktopIcons(final DesktopState desktop) {
         this.desktop = desktop;
+    }
+
+    /** The icon a click has picked, which shows its whole name, or -1 while none is picked. */
+    int picked() {
+        return picked;
+    }
+
+    /** Picks an icon, or none with -1; a fresh file is picked so its name is ready to be typed over. */
+    void pick(final int slot) {
+        picked = slot;
     }
 
     /** The file name part of a path: its last segment, or the whole path when it has no separator. */
@@ -245,7 +257,7 @@ final class DesktopIcons {
             final int iy = yOf(cells[i]);
             drawCell(g, i, ix, iy, lmx, lmy, dragging, dropTarget, launchers.size(), files);
             final String label = labelOf(i, launchers, files);
-            if (i == desktop.input().picked()) {
+            if (i == picked) {
                 // Defer the full name to a pass after every icon so nothing overdraws it.
                 pickedLabel = label;
                 pickedX = ix;
@@ -287,7 +299,7 @@ final class DesktopIcons {
         final int cellX = ix + CELL_DX;
         final int cellY = iy + CELL_DY;
         final Colours c = PALETTE.get();
-        if (i == desktop.input().picked() || selected.contains(i)) {
+        if (i == picked || selected.contains(i)) {
             g.fill(cellX, cellY, cellX + CELL_W, cellY + CELL_H, c.picked());
         } else if (lmx >= cellX && lmx < cellX + CELL_W && lmy >= cellY && lmy < cellY + CELL_H && !dragging) {
             // Hover feedback so the player sees which icon the cursor is over.

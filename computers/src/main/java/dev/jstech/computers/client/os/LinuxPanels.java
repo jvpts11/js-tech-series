@@ -40,7 +40,7 @@ import net.minecraft.client.gui.GuiGraphics;
 @PaletteHolder
 final class LinuxPanels {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
 
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "panel/linux",
             new Colours(0x22FFFFFF, 0xFFFFFFFF, 0x30FFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFF7C838A, 0xFFFFFFFF));
@@ -49,7 +49,7 @@ final class LinuxPanels {
     private static final int FADED_LINE_ALPHA = 0x60;
     private static final int FADED_ICON_ALPHA = 0x90;
 
-    LinuxPanels(final DesktopScreen desktop) {
+    LinuxPanels(final DesktopState desktop) {
         this.desktop = desktop;
     }
 

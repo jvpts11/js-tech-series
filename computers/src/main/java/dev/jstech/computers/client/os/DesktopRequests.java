@@ -58,7 +58,7 @@ final class DesktopRequests {
      * Carries out every request on {@code desktop}. Each list is taken before it is worked through, so a request made
      * while carrying one out waits for the next frame instead of changing the list underneath.
      */
-    static void drain(final DesktopScreen desktop) {
+    static void drain(final DesktopState desktop) {
         final ProgramOpener opener = desktop.opener();
         for (final UiWindowPayload payload : take(WINDOWS)) {
             opener.acceptProgramWindow(payload);

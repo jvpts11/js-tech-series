@@ -28,12 +28,12 @@ import org.jetbrains.annotations.Nullable;
  */
 final class DesktopPainter {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
     /** The inventory slot under the pointer this frame, or null. */
     @Nullable
     private Slot hovered;
 
-    DesktopPainter(final DesktopScreen desktop) {
+    DesktopPainter(final DesktopState desktop) {
         this.desktop = desktop;
     }
 
@@ -255,7 +255,7 @@ final class DesktopPainter {
         if (front != null) {
             front.renderTooltip(g, font, lmx, lmy);
         }
-        if (hovered != null && desktop.getMenu().getCarried().isEmpty() && hovered.hasItem()) {
+        if (hovered != null && desktop.carried().isEmpty() && hovered.hasItem()) {
             g.renderTooltip(font, hovered.getItem(), lmx, lmy);
         }
         // The stack on the cursor rides above the tooltip, at the pointer.

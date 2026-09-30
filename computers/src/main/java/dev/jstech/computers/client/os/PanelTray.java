@@ -59,9 +59,9 @@ final class PanelTray {
     private static final int SPEAKER_BODY = 4;
     private static final int MUTE_MARK = 4;
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
 
-    PanelTray(final DesktopScreen desktop) {
+    PanelTray(final DesktopState desktop) {
         this.desktop = desktop;
     }
 

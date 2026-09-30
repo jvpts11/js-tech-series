@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  */
 final class DesktopNotices {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
     /** The dialog over the desktop, or null when none is up. */
     @Nullable
     private Popup popup;
@@ -40,7 +40,7 @@ final class DesktopNotices {
     private static final long BALLOON_MS = 9_000L;
     private static final int BALLOON_W = 152;
 
-    DesktopNotices(final DesktopScreen desktop) {
+    DesktopNotices(final DesktopState desktop) {
         this.desktop = desktop;
     }
 

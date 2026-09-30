@@ -146,7 +146,7 @@ public final class WorkstationInfoApp implements IDesktopApp {
         if (System.currentTimeMillis() - this.askedAt >= ASK_EVERY_MS) {
             ask();
         }
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (this.skin == null || desktop == null) {
             return;
         }

@@ -34,7 +34,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  */
 final class DeskTrash {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
 
     /** Whether anything is in the trash, as the machine last said, which is the picture its icon wears. */
     private boolean full;
@@ -45,7 +45,7 @@ final class DeskTrash {
     private static final ResourceLocation FULL_ICON =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "trash_full");
 
-    DeskTrash(final DesktopScreen desktop) {
+    DeskTrash(final DesktopState desktop) {
         this.desktop = desktop;
     }
 
@@ -90,7 +90,7 @@ final class DeskTrash {
 
     /** What the desktop that is up calls its trash, as the player reads it. */
     static Text titleTextHere() {
-        final DesktopScreen shown = DesktopScreen.current();
+        final DesktopState shown = DesktopScreen.current();
         return (shown == null ? TrashKind.RECYCLER : TrashApp.kindOf(shown.panelStyle())).titleText();
     }
 

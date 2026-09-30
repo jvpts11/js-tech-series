@@ -27,7 +27,7 @@ import net.minecraft.resources.ResourceLocation;
  */
 final class StartMenus {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
     /** The Frames systems' own: the classic Start menu, XP's two columns, Frames 11's floating panel. */
     private final FramesLaunchers frames;
     /** The Linux desktops' own ways of opening a program: Kickoff, the Mint menu, the Activities overview. */
@@ -51,7 +51,7 @@ final class StartMenus {
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "this_pc"), Programs.FILES, Programs.SETTINGS,
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "network"));
 
-    StartMenus(final DesktopScreen desktop) {
+    StartMenus(final DesktopState desktop) {
         this.desktop = desktop;
         this.frames = new FramesLaunchers(desktop);
         this.linux = new LinuxLaunchers(desktop);

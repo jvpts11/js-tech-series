@@ -21,14 +21,14 @@ import dev.jstech.computers.os.PanelStyle;
  */
 final class DesktopViewport {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
     /** How big the desktop draws everything, as a percentage of its designed size; 0 stands for the default. */
     private int scalePercent;
 
     /** The percentage the desktop is drawn at when the machine has not been told another: the size that reads best. */
     static final int DEFAULT_SCALE = 75;
 
-    DesktopViewport(final DesktopScreen desktop) {
+    DesktopViewport(final DesktopState desktop) {
         this.desktop = desktop;
     }
 
@@ -47,11 +47,11 @@ final class DesktopViewport {
      * centred window rather than the whole game's, which leaves room for the monitor's frame around it and its chin.
      */
     int glassWidth() {
-        return MonitorGlass.width(desktop.width);
+        return MonitorGlass.width(desktop.surface().surfaceWidth());
     }
 
     int glassHeight() {
-        return MonitorGlass.height(desktop.height);
+        return MonitorGlass.height(desktop.surface().surfaceHeight());
     }
 
     /**
@@ -68,11 +68,11 @@ final class DesktopViewport {
 
     /** The screen x of the glass's left edge, where the desktop's own x begins. */
     int left() {
-        return (desktop.width - glassWidth()) / 2;
+        return (desktop.surface().surfaceWidth() - glassWidth()) / 2;
     }
 
     int top() {
-        return (desktop.height - glassHeight()) / 2;
+        return (desktop.surface().surfaceHeight() - glassHeight()) / 2;
     }
 
     /** The screen x of a desktop-local x, for a hook that hands a test a point to click. */

@@ -95,7 +95,7 @@ final class CdeBackdropPage implements IDesktopApp {
                               final int h, final int mouseX, final int mouseY, final float partialTick) {
         this.left = x;
         this.top = y;
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (this.skin == null || desktop == null) {
             return;
         }
@@ -158,7 +158,7 @@ final class CdeBackdropPage implements IDesktopApp {
     }
 
     private void apply() {
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (desktop != null) {
             desktop.prefs().keepCdeStyle(desktop.prefs().cdeStyle().withBackdrop(desktop.workspace(), this.picked));
         }

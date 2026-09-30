@@ -38,7 +38,7 @@ final class CdeLaunchers {
     private record Row(String label, @Nullable ResourceLocation icon, Runnable action) {
     }
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
 
     /** The control whose subpanel is up, or null while none is. */
     @Nullable
@@ -55,7 +55,7 @@ final class CdeLaunchers {
     private static final ResourceLocation APPLICATION_MANAGER =
             ResourceLocation.fromNamespaceAndPath("jsc", "application_manager");
 
-    CdeLaunchers(final DesktopScreen desktop) {
+    CdeLaunchers(final DesktopState desktop) {
         this.desktop = desktop;
     }
 

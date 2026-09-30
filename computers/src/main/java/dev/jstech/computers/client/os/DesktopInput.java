@@ -30,7 +30,9 @@ import org.jetbrains.annotations.Nullable;
  */
 final class DesktopInput {
 
-    private final DesktopScreen desktop;
+    /** The screen the events arrive at, which a key nothing on the desktop took goes back to. */
+    private final DesktopScreen screen;
+    private final DesktopState desktop;
     /** The window being moved by its title bar, and where on it the pointer took hold; or null. */
     @Nullable
     private DesktopWindow dragging;
@@ -42,25 +44,15 @@ final class DesktopInput {
     /** The window whose title-bar button is held down, drawn pushed in until the button is let go; or null. */
     @Nullable
     private DesktopWindow pressedButton;
-    /** The icon a click has picked, which shows its whole name, or -1; and when, which tells a double click. */
-    private int picked = -1;
+    /** When the icon that is picked was clicked, which tells a double click. */
     private long pickedAt;
 
     /** How close two clicks on one icon must come to open it, in milliseconds. */
     private static final long DOUBLE_CLICK_MS = 300L;
 
-    DesktopInput(final DesktopScreen desktop) {
+    DesktopInput(final DesktopScreen screen, final DesktopState desktop) {
+        this.screen = screen;
         this.desktop = desktop;
-    }
-
-    /** The icon a click has picked, which shows its whole name, or -1 while none is picked. */
-    int picked() {
-        return picked;
-    }
-
-    /** Picks an icon, which is what a fresh file does so its name is ready to be typed over. */
-    void pick(final int slot) {
-        picked = slot;
     }
 
     /** A button pressed at a point on the game's screen. */
@@ -117,7 +109,7 @@ final class DesktopInput {
          * container's own spreading across slots, so it goes to the container, not the program.
          */
         final DesktopWindow w = desktop.wm().front();
-        if (w != null && w.app() instanceof IInventoryBandApp && !desktop.getMenu().getCarried().isEmpty()) {
+        if (w != null && w.app() instanceof IInventoryBandApp && !desktop.carried().isEmpty()) {
             return Click.CONTAINER;
         }
         if (w != null) {
@@ -209,7 +201,7 @@ final class DesktopInput {
         }
         if (notices.popupUp() || power.isOpen() || desktop.deskMenu().isOpen() || desktop.taskbar().menu().isOpen()
                 || desktop.fileActions().isRenaming() || desktop.start().isOpen()) {
-            return desktop.keyPressed(key, scanCode, modifiers);
+            return screen.keyPressed(key, scanCode, modifiers);
         }
         final DesktopWindow w = desktop.wm().front();
         return w != null && (key != 256 || w.app().wantsEscape()) && w.app().keyPressed(key, scanCode, modifiers);
@@ -557,7 +549,7 @@ final class DesktopInput {
          * stack, the right one a single item or what a held container holds, and a held empty container right-clicked
          * on a fluid or chemical entry fills from it, so the entry under the cursor travels with a right click.
          */
-        if (!ni.hasPopup() && !desktop.getMenu().getCarried().isEmpty() && (button == 0 || button == 1)) {
+        if (!ni.hasPopup() && !desktop.carried().isEmpty() && (button == 0 || button == 1)) {
             final double lx = mouseX - (w.x() + 4);
             final double ly = mouseY - (w.y() + 18);
             final int target = ni.cursorDepositTarget(lx, ly);
@@ -607,27 +599,27 @@ final class DesktopInput {
         final int slot = grid.slotAt(mouseX, mouseY, grid.perColumn());
         if (button == 1) {
             // The right button: the menu of whatever is under the cursor, or the wallpaper's own.
-            picked = slot;
+            grid.pick(slot);
             deskMenu.openFor(slot, (int) mouseX, (int) mouseY);
             return Click.TAKEN;
         }
         if (slot >= 0) {
             // One click picks an icon and a second one soon after opens it; either can start a drag.
             final long now = System.currentTimeMillis();
-            final boolean twice = picked == slot && now - pickedAt < DOUBLE_CLICK_MS;
-            picked = slot;
+            final boolean twice = grid.picked() == slot && now - pickedAt < DOUBLE_CLICK_MS;
+            grid.pick(slot);
             pickedAt = now;
             desktop.drags().armIcon(slot, mouseX, mouseY);
             if (twice) {
                 desktop.openSlot(slot);
-                picked = -1;
+                grid.pick(-1);
             }
             return Click.TAKEN;
         }
-        picked = -1;
+        grid.pick(-1);
         grid.selection().clear();
         // A click on bare wallpaper with a stack held would have the container throw it into the world.
-        if (!desktop.getMenu().getCarried().isEmpty()) {
+        if (!desktop.carried().isEmpty()) {
             return Click.TAKEN;
         }
         // Pressing on bare wallpaper starts a rubber band; a drag grows it from here.

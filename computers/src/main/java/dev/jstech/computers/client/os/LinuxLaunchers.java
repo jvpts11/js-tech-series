@@ -35,7 +35,7 @@ import net.minecraft.client.gui.GuiGraphics;
 @PaletteHolder
 final class LinuxLaunchers {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
 
     /** KDE Plasma: a Kickoff-style launcher (places column left, app list right, header, session footer). */
     static final int KDE_MENU_W = 214;
@@ -72,7 +72,7 @@ final class LinuxLaunchers {
             new MintMenu(0x40000000, 0xFF1F1F1F, 0xFF2F2F2F, 0xFF262626, 0x3369B03B, 0xFF3A3A3A,
                     0xFFFFFFFF, 0xFFBDBDBD, 0xFF222222, 0xFF444444, 0xFF9A9A9A, 0xFFE8E8E8));
 
-    LinuxLaunchers(final DesktopScreen desktop) {
+    LinuxLaunchers(final DesktopState desktop) {
         this.desktop = desktop;
     }
 

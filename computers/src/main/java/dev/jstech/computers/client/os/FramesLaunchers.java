@@ -41,7 +41,7 @@ import net.minecraft.resources.ResourceLocation;
 @PaletteHolder
 final class FramesLaunchers {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
 
     private static final Palette<Period> PERIOD = Palettes.declare(JsComputers.MODID, "launcher/period",
             new Period(0xFFFFFFFF));
@@ -83,7 +83,7 @@ final class FramesLaunchers {
     static final int W11_SEARCH_H = 14;
     static final int W11_FOOTER_H = 18;
 
-    FramesLaunchers(final DesktopScreen desktop) {
+    FramesLaunchers(final DesktopState desktop) {
         this.desktop = desktop;
     }
 

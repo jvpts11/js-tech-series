@@ -26,7 +26,7 @@ import net.minecraft.client.gui.GuiGraphics;
  */
 final class CdeWindowIcons {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
 
     /** The icon the last click landed on and when, which is what tells a double click from two clicks. */
     private DesktopWindow lastClicked;
@@ -36,7 +36,7 @@ final class CdeWindowIcons {
     private static final int NAME_PAD = 2;
     private static final String ELLIPSIS = "...";
 
-    CdeWindowIcons(final DesktopScreen desktop) {
+    CdeWindowIcons(final DesktopState desktop) {
         this.desktop = desktop;
     }
 

@@ -191,7 +191,7 @@ final class ApplicationManagerApp implements IDesktopApp {
 
     /** A group opens in a window of its own; a program starts. */
     private void open(final int index) {
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (desktop == null) {
             return;
         }
@@ -208,7 +208,7 @@ final class ApplicationManagerApp implements IDesktopApp {
         final Rect pic = CdeAppManagerLayout.picture(index, headed, this.width, this.height);
         final int px = this.left + pic.x();
         final int py = this.top + pic.y();
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (this.group == null) {
             folder(g, px, py);
         } else if (desktop != null) {
@@ -253,7 +253,7 @@ final class ApplicationManagerApp implements IDesktopApp {
 
     /** Every program of the desktop that is up, or none while no desktop is. */
     private static List<Launcher> launchers() {
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         return desktop == null ? List.of() : desktop.launcherList();
     }
 
