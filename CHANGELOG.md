@@ -432,6 +432,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   A file opened is one of the program's own objects, kept with it in a save; what it writes reaches the disk when
   the file is closed or when the program ends with it open. They stand for `File.Open`, `File.Move` and the new
   `FILE` type's `Close`, `ReadLine`, `Read`, `Scan`, `Write`, `Seek`, `Position` and `AtEnd`.
+- A program holds only so many files open at once, by its machine's era: 8 on a Vintage machine, 20 on a Legacy one
+  and 64 from the Transition on, after which `fopen` gives `null`, as C's does when a table of open files is full.
+  The count is of the files the program holds, so it is the same after a save and a load.
 - `strcpy(out dest, src)` and `strcat(ref dest, src)` in Σ 2, in C's order, compile to the assignment and the
   joining written by hand (`dest = src`, `dest = dest + src`), to the same listing. `ref` is written for `strcat`
   alone; a variable called `ref` is still a variable.

@@ -28,6 +28,7 @@ import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.language.ILanguageProcess;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -694,6 +695,105 @@ public final class SigmaProcessGameTests {
                                     + DiskFilesystem.read(computer.systemDisk(), "left.txt"));
                 })
                 .thenSucceed();
+    }
+
+    /** A program that writes part of a file, waits for a line with the file still open, and writes the rest. */
+    private static final String SAVED_OPEN = """
+            using System.*;
+            using System.IO.*;
+            namespace Programs;
+            class Saved {
+                static void Main() {
+                    FILE f = fopen("saved.txt", "w");
+                    fputs("before the save|", f);
+                    fputs(gets(), f);
+                }
+            }
+            """;
+
+    /** A file a program holds open is kept with it through a save, and what it writes after the load is not lost. */
+    @GameTest(template = ARENA)
+    public static void programs_carryAnOpenFileThroughASave(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2));
+        if (computer == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final MachinePrograms before = computer.programs();
+                    final MachinePrograms.Started started =
+                            before.start("saved.asm", listing(SAVED_OPEN), 1, computer);
+                    helper.assertTrue(started.ok(), "it starts: " + started.message());
+                    before.hold(started.id());
+                    before.tick(4096);
+                    helper.assertTrue(before.byId(started.id()).process().waitingForInput(),
+                            "it waits for a line with the file open");
+                    final CompoundTag tag = new CompoundTag();
+                    before.save(tag);
+                    final MachinePrograms after = new MachinePrograms();
+                    after.load(tag, computer);
+                    helper.assertTrue(after.offerInput("after it"), "the line typed after the load reaches it");
+                    int ticks = 0;
+                    while (after.byId(started.id()) != null
+                            && MachinePrograms.running(after.byId(started.id()).process()) && ticks++ < 12) {
+                        after.tick(4096);
+                    }
+                    helper.assertTrue(DiskFilesystem.read(computer.systemDisk(), "saved.txt")
+                                    .filter("before the save|after it"::equals).isPresent(),
+                            "what it wrote before the save and after it is on the disk; got "
+                                    + DiskFilesystem.read(computer.systemDisk(), "saved.txt"));
+                })
+                .thenSucceed();
+    }
+
+    /** A program that opens files until the machine says no, and says how many it had. */
+    private static final String OPENS_ALL = """
+            using System.*;
+            using System.IO.*;
+            namespace Programs;
+            class Opens {
+                static void Main() {
+                    int n = 0;
+                    while (n < 100 && fopen("open" + n + ".txt", "w") != null) {
+                        n++;
+                    }
+                    Console.PrintLine("" + n);
+                }
+            }
+            """;
+
+    /** A machine holds a program to so many files open at once, by its era: a Legacy one to 20, a Standard one to 64. */
+    @GameTest(template = ARENA)
+    public static void programs_openAsManyFilesAsTheirMachinesEraAllows(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity standard = computer(helper, new BlockPos(2, 2, 2));
+        if (standard == null) {
+            return;
+        }
+        final CraftingComputerBlockEntity legacy = TestWorldBuilder.forGameTest(helper)
+                .placeRunningLegacyCraftingComputer(new BlockPos(4, 2, 2));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertTrue(opened(helper, standard).equals(List.of("64")),
+                            "a Standard machine holds a program to 64 files open");
+                    helper.assertTrue(opened(helper, legacy).equals(List.of("20")),
+                            "a Legacy machine holds a program to 20 files open");
+                })
+                .thenSucceed();
+    }
+
+    /** What the program that opens files until it cannot said on that machine. */
+    private static List<String> opened(final GameTestHelper helper, final CraftingComputerBlockEntity machine) {
+        final SigmaCompiler.Result built = SigmaCompiler.compile(
+                List.of(new SourceFile("Opens.sgs", OPENS_ALL)), "jsc:x86_16");
+        final MachinePrograms programs = machine.programs();
+        final MachinePrograms.Started started = programs.start("opens.asm", built.assembly(), 1, machine);
+        helper.assertTrue(started.ok(), "it starts: " + started.message());
+        final IMachineRuntime opens = programs.byId(started.id()).process();
+        int ticks = 0;
+        while (MachinePrograms.running(opens) && ticks++ < 40) {
+            programs.tick(8192);
+        }
+        return opens.console();
     }
 
     /** A child whose Main is handed the arguments it was started with and gives back the code it ends with. */

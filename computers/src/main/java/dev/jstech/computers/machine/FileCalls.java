@@ -81,7 +81,8 @@ final class FileCalls {
                                final Object[] arguments, final int line) {
         final String path = path(arguments);
         final String mode = OpenFile.mode(text(arguments));
-        if (mode == null || path.isBlank()) {
+        // A machine holds a program to so many files open at once, and fopen says no to one more, as C's does.
+        if (mode == null || path.isBlank() || call.openFiles() >= files.openFileLimit()) {
             return null;
         }
         String held = "";

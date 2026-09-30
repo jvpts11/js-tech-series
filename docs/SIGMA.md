@@ -134,7 +134,9 @@ reaches the disk when the file is closed, or when the program ends with it still
 | `remove(path)`, `rename(from, to)` | `File.Delete(path)`, `File.Move(from, to)` |
 
 A file opened to read refuses to be written and one opened only to write refuses to be read, each saying so, and
-a closed file refuses everything. `feof` says whether the file is at its end already, rather than whether a read
+a closed file refuses everything. A program holds only so many files open at once, by its machine's era: 8 on a
+Vintage machine, 20 on a Legacy one and 64 from the Transition on; one more and `fopen` gives `null`. An open file
+is kept with the program through a save, where it is up to and what it wrote included. `feof` says whether the file is at its end already, rather than whether a read
 has gone past it as C's does, so `while (!feof(f))` reads exactly what is there.
 
 `strcpy` and `strcat` keep C's order, the place first: handed with `out` to `strcpy`, which only writes it, and

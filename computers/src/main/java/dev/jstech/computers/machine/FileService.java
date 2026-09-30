@@ -26,7 +26,9 @@ import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.NetPath;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -63,6 +65,10 @@ public final class FileService {
     private static final TextKey DAT_READ_ONLY = TextKey.of("jsc.service.file.dat_read_only",
             "%s: .dat files are read-only (use the Network Interactor to access items)");
     private static final TextKey NOT_FOUND = TextKey.of("jsc.service.file.not_found", "%s: file not found");
+    /* How many files one program may hold open at once, by the machine's era (estimates). */
+    private static final int VINTAGE_OPEN_FILES = 8;
+    private static final int LEGACY_OPEN_FILES = 20;
+    private static final int MOST_OPEN_FILES = 64;
     private static final TextKey NOT_EDITABLE =
             TextKey.of("jsc.service.file.not_editable", "%s: .%s files cannot be edited");
     private static final TextKey WROTE = TextKey.of("jsc.service.file.wrote", "wrote %s");
@@ -747,6 +753,22 @@ public final class FileService {
     /** Deletes the file at that path; false when it could not be deleted. */
     public boolean delete(final String path) {
         return this.deleteFile(path).ok();
+    }
+
+    /**
+     * How many files one program may hold open at once on this machine, by its era: the older machines kept a small
+     * table of open files, and later ones a larger one (estimates, to be tuned in play).
+     */
+    public int openFileLimit() {
+        final HardwareEra era = this.machine instanceof IComputerTerminalHost host ? host.displayEra() : null;
+        if (era == null) {
+            return MOST_OPEN_FILES;
+        }
+        return switch (era) {
+            case VINTAGE -> VINTAGE_OPEN_FILES;
+            case LEGACY -> LEGACY_OPEN_FILES;
+            default -> MOST_OPEN_FILES;
+        };
     }
 
     /**

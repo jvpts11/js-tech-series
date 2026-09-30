@@ -41,6 +41,11 @@ public interface IWorldCall {
         return 0;
     }
 
+    /** How many files the asking program holds open, which a machine holds to a number of its own. */
+    default int openFiles() {
+        return 0;
+    }
+
     /**
      * The name of the Gateway the asking program chose to reach the ComputerCraft side through, or empty for whichever
      * its machine lists first.
