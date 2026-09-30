@@ -358,7 +358,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   windows back to front and the workspace that is up; the layout the machine remembers, with the programs' insides
   this client keeps; how the desktop opens a program or a file, with the requests other screens make of it now
   typed rather than packed into strings; what the pointer drags across the wallpaper, icons, files out of a file
-  manager and the rubber band; and where a click, a key or the wheel goes, layer by layer.
+  manager and the rubber band; where a click, a key or the wheel goes, layer by layer; and how the desktop is painted,
+  back to front.
 - J's Computers' blocks keep their state as J's Core's declared fields: the computers, the server racks, the drives,
   the Pattern Encoders, monitors, speakers, Network Gateways, data cables, Crafting Switches, Server Routers, HBW
   Interfaces and tanks. The players who see one are sent one update a tick however much of it changed, and the

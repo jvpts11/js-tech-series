@@ -11,7 +11,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.audio.SoundOutput;
 import dev.jstech.computers.client.MachineKeyboard;
-import dev.jstech.computers.client.MonitorFrame;
 import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.TaskbarGroups;
@@ -42,12 +41,9 @@ import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.core.client.gui.component.ContextMenu;
-import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
-import dev.jstech.core.gui.layout.DesktopZ;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -400,6 +396,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     private final InventoryBand band = new InventoryBand(this);
     /** An icon or a file being dragged across the wallpaper, and the rubber band swept over it. */
     private final DesktopDrags drags = new DesktopDrags(this);
+    /** Paints the desktop, back to front, each layer at a depth of its own. */
+    private final DesktopPainter painter = new DesktopPainter(this);
     /** Where the pointer and the keyboard go, layer by layer. */
     private final DesktopInput input = new DesktopInput(this);
 
@@ -777,6 +775,20 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return monitorPos;
     }
 
+    /** The desktop environment drawn: the system's own (Frames) or the Linux one installed. */
+    ResourceLocation desktopId() {
+        return desktopId;
+    }
+
+    /** The bars the Frames systems and the Linux desktops put their programs on. */
+    FramesPanels framesPanels() {
+        return framesPanels;
+    }
+
+    LinuxPanels linuxPanels() {
+        return linuxPanels;
+    }
+
     /** The icons on the wallpaper: where each one sits, what it looks like, and which ones are picked. */
     DesktopIcons iconGrid() {
         return iconGrid;
@@ -911,7 +923,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     }
 
     /** Reboots after a crash: the session is lost (windows and their saved state), back to an empty desktop. */
-    private void reboot() {
+    void reboot() {
         memory.recover();
         notices.dismissBalloon();
         windows.clear();
@@ -1662,90 +1674,15 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * dragged window does not leave its slots a tick behind).
          */
         band.sync();
-        final int sw = view.width();
-        final int sh = view.height();
-        final int ox = view.left();
-        final int oy = view.top();
         final int lmx = (int) Math.floor(view.localX(mouseX));
         final int lmy = (int) Math.floor(view.localY(mouseY));
         // Cache the local cursor so the Start-menu draw (called deeper in this frame) can highlight the hovered row.
         this.hoverX = lmx;
         this.hoverY = lmy;
-        taskPopup.update(lmx, lmy, sw, sh - view.panelBand());
-        final HardwareEra eraNow = prefs.era();
-
-        /*
-         * The host computer's hardware-era monitor frame wraps the desktop glass, then translate so the desktop
-         * draws in local (0,0)-(sw,sh) coordinates.
-         */
-        MonitorFrame.renderBody(g, ox, oy, view.glassWidth(), view.glassHeight(), eraNow, font);
-        g.pose().pushPose();
-        g.pose().translate(ox, oy, 0);
-        // Everything on the desktop is drawn under its scale, so a smaller setting fits more on the glass.
-        g.pose().scale((float) view.scale(), (float) view.scale(), 1);
-        g.enableScissor(ox, oy, ox + view.glassWidth(), oy + view.glassHeight());
-
-        if (is(PanelStyle.CDE)) {
-            // CDE hangs no picture: each workspace wears a pattern of its own in the palette's backdrop colours.
-            MotifChrome.backdrop(g, sw, sh, prefs.cdePalette(), prefs.cdeStyle().backdrop(wm.workspace()));
-        } else {
-            /*
-             * A picture a player drew hangs in front of the built-in wallpapers, and falls back to them the
-             * moment it cannot be found, so a deleted drawing never leaves the desktop with a blank wall.
-             */
-            PixWallpaper.want(host, prefs.wallpaper());
-            if (!PixWallpaper.paint(g, sw, sh)) {
-                WallpaperPainter.paint(g, sw, sh, desktopId, platform(), prefs.wallpaper(),
-                        prefs.darkMode() && is(PanelStyle.FRAMES_11));
-            }
+        if (!painter.paint(g, lmx, lmy, partialTick)) {
+            return; // the crash screen is all there is until the machine reboots
         }
-
-        // A cooperative OS that ran out of memory shows its crash screen, then reboots to an empty session.
-        if (memory.crashing()) {
-            if (memory.crashOver()) {
-                reboot();
-            } else {
-                memory.renderCrash(g, sw, sh);
-                g.disableScissor();
-                g.pose().popPose();
-                return;
-            }
-        }
-
-        /*
-         * Desktop icons: program launchers first, then the desktop folder's files and folders, laid
-         * out in columns (top-down, then left-to-right) like a Windows desktop. Each icon's cell comes
-         * from the free-positioning layout (a pinned cell, else the next auto-flow cell).
-         */
-        final int perCol = iconGrid.perColumn();
-        /*
-         * Each desktop layer draws at its own strictly-increasing Z (DesktopZ): the depth buffer keeps a back
-         * layer behind a front one, so a back layer's batched text (an icon label) can never paint over a
-         * front layer (an open window). Flushing the text batch between layers does not work: g.flush() is a
-         * no-op outside a managed draw in 1.21.1, which is why the icon-label-over-window bug kept returning.
-         *
-         * Icons draw at DesktopZ.ICONS and the Start menu at DesktopZ.MENU, so the menu covers them via the
-         * depth buffer: the icons behind it stay drawn (they must not vanish) and just sit under the panel.
-         */
-        g.pose().pushPose();
-        g.pose().translate(0, 0, DesktopZ.ICONS);
-        iconGrid.render(g, lmx, lmy);
-        // CDE stands a window that was put away on its workspace as an icon, having no panel to list it on.
-        if (is(PanelStyle.CDE)) {
-            cdeWindowIcons.render(g, wm.putAwayHere(), sw, view.workAreaTop(), prefs.cdePalette());
-        }
-        g.pose().popPose();
-
-        renderWindows(g, lmx, lmy, partialTick, sw, sh);
-
-        final int tbY = sh - view.panelBand();
-        renderPanelLayer(g, tbY, sw, sh, lmx, lmy);
-        renderMenus(g, tbY, lmx, lmy, partialTick);
-        drags.render(g, sw, tbY, perCol);
-
-        g.disableScissor();
-        renderOverlays(g, sw, sh, lmx, lmy, partialTick);
-        g.pose().popPose(); // close the (ox, oy) desktop-origin translate
+        hoveredSlot = painter.hovered();
 
         /*
          * The container pass posts its foreground event with the pose at the gui origin and the depth test off,
@@ -1765,194 +1702,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      */
     @Override
     protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
-    }
-
-    /**
-     * The open windows, back to front, and the real container items of whichever one carries the player's
-     * inventory.
-     *
-     * <p>Each window draws in a depth band of its own. An item is a model standing well in front of the pose
-     * it is drawn at, so windows sharing one depth painted their items over one another.
-     */
-    private void renderWindows(final GuiGraphics g, final int lmx, final int lmy, final float partialTick,
-                               final int sw, final int sh) {
-        final DesktopWindow front = wm.front();
-        for (int i = 0; i < windows.size(); i++) {
-            final DesktopWindow w = windows.get(i);
-            // A window on a workspace that is not up is not drawn at all, which is what makes them cost nothing.
-            if (wm.away(w)) {
-                continue;
-            }
-            g.pose().pushPose();
-            g.pose().translate(0, 0, DesktopZ.windowZ(i, windows.size()));
-            w.setFocused(w == front);
-            w.render(g, font, prefs.skin(), lmx, lmy, partialTick, sw, sh, view.panelReserve(), view.workAreaTop());
-            g.pose().popPose();
-        }
-        /*
-         * Real container-slot items for the focused Network Interactor window's inventory zone, over the
-         * window the app already drew the slot backgrounds for.
-         */
-        g.pose().pushPose();
-        g.pose().translate(0, 0, DesktopZ.INVENTORY);
-        hoveredSlot = band.render(g, lmx, lmy);
-        g.pose().popPose();
-    }
-
-    /**
-     * The panel this desktop wears, and the three things that sit just above it: a tray balloon, the figures
-     * behind the notification area, and the popup listing one program's windows.
-     */
-    private void renderPanelLayer(final GuiGraphics g, final int tbY, final int sw, final int sh,
-                                  final int lmx, final int lmy) {
-        g.pose().pushPose();
-        g.pose().translate(0, 0, DesktopZ.TASKBAR);
-        if (is(PanelStyle.CDE)) {
-            // CDE has no bar at all: a slab of controls at the bottom centre, in its palette's relief.
-            cdePanels.render(g, sw, sh, prefs.cdePalette());
-        } else if (is(PanelStyle.FRAMES_11)) {
-            // Frames 11 taskbar: dark bar, centered Start + app icons with an active indicator, clock right.
-            framesPanels.renderModern(g, tbY, sw, lmx, lmy);
-        } else if (periodPanel()) {
-            renderPeriodPanel(g, tbY, sw, sh, lmx, lmy);
-        } else if (is(PanelStyle.GNOME)) {
-            renderGnomeTopBar(g, sw, lmx, lmy);
-        } else if (linuxDesktop()) {
-            renderLinuxPanel(g, tbY, sw, sh, lmx, lmy);
-        } else {
-            framesPanels.renderClassic(g, tbY, sw, sh, lmx, lmy);
-        }
-        g.pose().popPose();
-
-        // A tray balloon sits above the panel and under the menus, so opening the launcher covers it.
-        if (notices.balloonUp()) {
-            g.pose().pushPose();
-            g.pose().translate(0, 0, DesktopZ.TASKBAR + 10);
-            notices.renderBalloon(g, tbY, sw);
-            g.pose().popPose();
-        }
-        // The figures behind the notification area, while the cursor rests on it. CDE has no such area.
-        if (!view.panelOnTop() && !is(PanelStyle.CDE)) {
-            g.pose().pushPose();
-            g.pose().translate(0, 0, DesktopZ.TASKBAR + 8);
-            drawTrayTip(g, tbY, sw);
-            g.pose().popPose();
-        }
-        // The windows of one program, over the panel and the windows themselves.
-        if (taskPopup.key() != null) {
-            g.pose().pushPose();
-            g.pose().translate(0, 0, DesktopZ.MENU);
-            taskPopup.render(g, tbY, sw, sh, lmx, lmy);
-            g.pose().popPose();
-        }
-    }
-
-    /**
-     * The menus that share a height above the panel: the launcher, the panel's own, the desktop's, and the volume
-     * control with its menu.
-     */
-    private void renderMenus(final GuiGraphics g, final int tbY, final int lmx, final int lmy,
-                             final float partialTick) {
-        // The name of a Front Panel control rides at the menus' height, so no window can stand over it.
-        if (is(PanelStyle.CDE) && !menuOrDialogOpen()) {
-            g.pose().pushPose();
-            g.pose().translate(0, 0, DesktopZ.MENU);
-            cdePanels.renderTip(g, view.width(), view.height(), prefs.cdePalette());
-            g.pose().popPose();
-        }
-        if (volumePopup.isOpen()) {
-            g.pose().pushPose();
-            g.pose().translate(0, 0, DesktopZ.MENU);
-            volumePopup.render(g, new UiContext(prefs.skin(), font, lmx, lmy, partialTick), view.width(), tbY,
-                    view.panelOnTop());
-            g.pose().popPose();
-        }
-        if (!start.isOpen() && !deskMenu.isOpen() && !panelMenu.isOpen() && !cdeLaunchers.isOpen()) {
-            return;
-        }
-        g.pose().pushPose();
-        g.pose().translate(0, 0, DesktopZ.MENU);
-        start.render(g, tbY);
-        // A subpanel of CDE's Front Panel is no launcher that comes and goes: it stays up until its arrow says so.
-        cdeLaunchers.render(g, view.width(), view.height(), prefs.cdePalette());
-        panelMenu.render(g, lmx, lmy);
-        if (deskMenu.isOpen()) {
-            deskMenu.render(g, new UiContext(prefs.skin(), font, lmx, lmy, partialTick));
-        }
-        g.pose().popPose();
-    }
-
-    /**
-     * Everything that sits over the finished desktop, in the order it stacks: hover tooltips, the stack on
-     * the cursor, the brightness dim, a program's own modal dialog, a dialog over the whole desktop, the
-     * power dialog, and a program's menu from its panel entry.
-     */
-    private void renderOverlays(final GuiGraphics g, final int sw, final int sh, final int lmx, final int lmy,
-                                final float partialTick) {
-        /*
-         * Hover tooltips draw at the base pose because the vanilla tooltip renderer translates +400 itself,
-         * landing them at DesktopZ.TOOLTIP, above every window and the panel. The front window's app draws
-         * its own hover hints; the inventory zone defers to the real slot's item tooltip.
-         */
-        final DesktopWindow tooltipWin = wm.front();
-        if (tooltipWin != null) {
-            tooltipWin.renderTooltip(g, font, lmx, lmy);
-        }
-        if (hoveredSlot != null && menu.getCarried().isEmpty() && hoveredSlot.hasItem()) {
-            g.renderTooltip(font, hoveredSlot.getItem(), lmx, lmy);
-        }
-
-        // The carried (cursor) stack rides above the tooltip, at the mouse.
-        g.pose().pushPose();
-        g.pose().translate(0, 0, DesktopZ.CURSOR);
-        band.renderCarried(g, lmx, lmy);
-        g.pose().popPose();
-
-        // Brightness: a per-computer dim over the whole surface (100 = none, 0 = deeply dimmed).
-        if (prefs.brightness() < 100) {
-            final int alpha = Math.min(210, (100 - prefs.brightness()) * 21 / 10);
-            g.pose().pushPose();
-            g.pose().translate(0, 0, DesktopZ.POPUP - 1);
-            g.fill(0, 0, sw, sh, alpha << 24);
-            g.pose().popPose();
-        }
-
-        /*
-         * A focused app's modal dialog draws above every item icon and window, so the dialog and its own dim
-         * cover and darken the icons instead of them piercing through at their blit depth.
-         */
-        final DesktopWindow modalWin = wm.front();
-        if (modalWin != null && modalWin.app().modalActive()) {
-            g.pose().pushPose();
-            g.pose().translate(0, 0, DesktopZ.POPUP);
-            modalWin.app().renderModal(g, font,
-                    modalWin.x() + 4, modalWin.y() + DesktopWindow.TITLE_H + 4,
-                    modalWin.width() - 8, modalWin.height() - DesktopWindow.TITLE_H - 8, lmx, lmy);
-            g.pose().popPose();
-        }
-
-        notices.renderPopup(g, prefs.skin(), lmx, lmy, sw, sh);
-        // The power dialog rides at the same height: it is the one choice that ends the session.
-        if (power.isOpen()) {
-            g.pose().pushPose();
-            g.pose().translate(0, 0, DesktopZ.POPUP);
-            power.render(g, sw, sh, lmx, lmy);
-            g.pose().popPose();
-        }
-        // A program's own menu, from its panel entry, sits above the windows it acts on.
-        if (taskbar.menu().isOpen()) {
-            g.pose().pushPose();
-            g.pose().translate(0, 0, DesktopZ.POPUP);
-            taskbar.menu().render(g, new UiContext(prefs.skin(), font, lmx, lmy, partialTick));
-            g.pose().popPose();
-        }
-        // So does a window's own menu on CDE, which hangs from the button at the left of its title bar.
-        if (cdeWindowMenu.isOpen()) {
-            g.pose().pushPose();
-            g.pose().translate(0, 0, DesktopZ.POPUP);
-            cdeWindowMenu.render(g, lmx, lmy, prefs.cdePalette());
-            g.pose().popPose();
-        }
     }
 
     /** Opens an icon slot: a launcher starts its program; a desktop file/folder opens or navigates. */
@@ -2065,40 +1814,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                 && computer.networkAttached();
     }
 
-    private void drawTrayTip(final GuiGraphics g, final int panelY, final int sw) {
-        tray.drawTip(g, panelY, sw);
-    }
-
     /** Whether a desktop-local point is on the bottom panel's Start button. */
     boolean startButtonHit(final double mx, final double my, final int tbY) {
         return framesPanels.startButtonHit(mx, my, tbY);
-    }
-
-    // Linux desktop environments: panels
-
-    /**
-     * The KDE Plasma / Cinnamon bottom panel: a dark bar with the launcher button on the left, one task button
-     * per open window (icon + title, accent underline when focused) at the same 88px pitch the classic taskbar
-     * uses (so the shared click handling applies), and the clock and process meter on the right.
-     */
-    private void renderLinuxPanel(final GuiGraphics g, final int tbY, final int sw, final int sh,
-                                  final int lmx, final int lmy) {
-        linuxPanels.renderModern(g, tbY, sw, sh, lmx, lmy);
-    }
-
-
-    /**
-     * The panel of a Legacy-era Unix desktop, at the bottom for both KDE and GNOME. It is drawn entirely
-     * out of the skin's own primitives (a raised launcher stud, raised task buttons, a sunken clock)
-     * so the panel is made of the same relief the windows are, instead of the flat modern band.
-     */
-    private void renderPeriodPanel(final GuiGraphics g, final int tbY, final int sw, final int sh,
-                                   final int lmx, final int lmy) {
-        linuxPanels.renderPeriod(g, tbY, sw, sh, lmx, lmy);
-    }
-
-    private void renderGnomeTopBar(final GuiGraphics g, final int sw, final int lmx, final int lmy) {
-        linuxPanels.renderGnomeTopBar(g, sw, lmx, lmy);
     }
 
     /** A short account line for the Frames 11 Start footer: the computer's name, or a generic label. */
