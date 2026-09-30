@@ -90,6 +90,16 @@ final class ProgramIdentity {
         this.exitCode = code;
     }
 
+    /**
+     * Takes the code a Main gave back as the one the program ends with. A program that already ended itself keeps
+     * the code it ended with, as its Main never got to give one.
+     */
+    void gave(final int code) {
+        if (!this.exited) {
+            this.exitCode = code;
+        }
+    }
+
     /** Whether the program was halted. */
     boolean halted() {
         return this.halted;

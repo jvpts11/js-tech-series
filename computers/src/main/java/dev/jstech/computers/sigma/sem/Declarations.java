@@ -721,7 +721,8 @@ public final class Declarations {
      * Finds where the runtime starts, and which of the two kinds of program this is.
      *
      * <p>A class that implements the script interface is one that stays up; a class with a static
-     * {@code Main} that takes nothing and returns nothing is one that runs at a terminal. A program is
+     * {@code Main} is one that runs at a terminal, and from the second version that Main may give back the code
+     * the program ends with and may be handed the program's arguments. A program is
      * exactly one of those: none and there is nothing to run, more than one and there is no saying
      * which. A class that does both is a script, because implementing the interface is the deliberate
      * act and a method called Main is only a name.
@@ -746,22 +747,54 @@ public final class Declarations {
         }
         this.model.setEntryPoint(scripts.isEmpty() ? consoles.getFirst() : scripts.getFirst(),
                 scripts.isEmpty() ? Shape.CONSOLE : Shape.SCRIPT);
+        if (scripts.isEmpty()) {
+            this.reportIfLaterMain(mainOf(consoles.getFirst()), line, column);
+        }
     }
 
-    /** That class's {@code static void Main()}, or null when it has none of that exact shape. */
+    /**
+     * Reports a Main of a shape the first version did not start at: one that gives back the code the program ends
+     * with, or one handed the program's arguments.
+     */
+    private void reportIfLaterMain(final IMemberSymbol.MethodSymbol main, final int line, final int column) {
+        final boolean gives = main.returnType() != ITypeSymbol.Primitive.VOID;
+        final boolean takes = !main.parameters().isEmpty();
+        if (!gives && !takes) {
+            return;
+        }
+        final INode at = this.methodNodes.get(main);
+        this.reportIfLater((gives ? "int " : "") + MAIN + "(" + (takes ? ARGUMENTS : "") + ")", LATER_MAIN,
+                at == null ? line : at.line(), at == null ? column : at.column());
+    }
+
+    /**
+     * That class's Main: static, giving back nothing or the code the program ends with, taking nothing or the
+     * program's arguments as an array of text; or null when it has none of those shapes. When it has more than one,
+     * the one that takes nothing is where the program starts, as it is for the runtime.
+     */
     public static IMemberSymbol.MethodSymbol mainOf(final NamedType type) {
+        IMemberSymbol.MethodSymbol handed = null;
         for (final IMemberSymbol member : type.members()) {
-            if (member instanceof IMemberSymbol.MethodSymbol method
-                    && MAIN.equals(method.name())
-                    && method.isStatic()
-                    && method.parameters().isEmpty()
-                    && method.returnType() == ITypeSymbol.Primitive.VOID) {
+            if (!(member instanceof IMemberSymbol.MethodSymbol method) || !MAIN.equals(method.name())
+                    || !method.isStatic() || (method.returnType() != ITypeSymbol.Primitive.VOID
+                    && method.returnType() != ITypeSymbol.Primitive.INT)) {
+                continue;
+            }
+            if (method.parameters().isEmpty()) {
                 return method;
             }
+            if (handed == null && method.parameters().size() == 1 && !method.parameters().getFirst().outward()
+                    && ARGUMENTS.equals(method.parameters().getFirst().type().describe())) {
+                handed = method;
+            }
         }
-        return null;
+        return handed;
     }
 
     /** The name a program that runs at a terminal starts at. */
     public static final String MAIN = "Main";
+    /** The type a Main that is handed the program's arguments takes them as. */
+    public static final String ARGUMENTS = "string[]";
+    /** The version a Main that gives back a code or takes the arguments came in. */
+    private static final int LATER_MAIN = 2;
 }

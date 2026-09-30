@@ -114,6 +114,9 @@ public final class SigmaCompletions {
     /** What a using writes to bring in everything a namespace holds. */
     private static final String ALL = "*";
 
+    /** The one value an array has of its own. */
+    private static final String ARRAY_LENGTH = "Length";
+
     /** The line the star is listed with, naming the namespace it opens. */
     private static final TextKey EVERYTHING_IN = TextKey.of("jsc.sigma.completions.everything_in",
             "* : everything in %s");
@@ -321,6 +324,13 @@ public final class SigmaCompletions {
 
     /** The members of {@code target} whose names begin with {@code prefix}. */
     public static List<Item> members(final Target target, final String prefix) {
+        if (target.type() instanceof ITypeSymbol.ArrayType array && !target.staticSide()) {
+            // An array answers to how many places it has and to nothing else.
+            final boolean wanted = ARRAY_LENGTH.toLowerCase(Locale.ROOT)
+                    .startsWith(prefix == null ? "" : prefix.toLowerCase(Locale.ROOT));
+            return wanted ? List.of(new Item(ARRAY_LENGTH, ARRAY_LENGTH + " : int", Sort.PROPERTY, array.describe()))
+                    : List.of();
+        }
         final NamedType type = named(target.type());
         return type == null ? List.of() : membersOf(type, prefix, target.staticSide());
     }

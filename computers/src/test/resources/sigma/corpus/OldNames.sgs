@@ -2,7 +2,7 @@ using System.*;
 using System.IO.*;
 namespace Corpus;
 class OldNamesCorpus {
-    static void Main() {
+    static int Main(string[] args) {
         puts("How many ingots?");
         string line = gets();
         double asked = atof(line);
@@ -21,6 +21,9 @@ class OldNamesCorpus {
         bool kinds = isdigit(first) || isalpha(last) || isspace(' ') || char.ToLower(first) == 'a'
                 || char.IsDigit('1') || char.IsLetter('b') || char.IsWhiteSpace('\t');
         puts(itoa(order, 16) + Convert.ToString(lucky, 2) + first + last + kinds);
-        exit(0);
+        if (args.Length > 1) {
+            exit(0);
+        }
+        return args.Length;
     }
 }

@@ -247,6 +247,10 @@ final class ExpressionWriter {
         final IBinding binding = this.emitter.model.bindingOf(expression);
         if (binding instanceof IBinding.Member member) {
             this.loadMember(expression.target(), member.member());
+        } else if (this.emitter.model.typeOf(expression.target()) instanceof ITypeSymbol.ArrayType) {
+            // How many places an array has, the one thing it answers to.
+            this.value(expression.target(), null);
+            this.body.emit(Opcode.LDLEN);
         }
     }
 

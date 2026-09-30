@@ -19,6 +19,7 @@ import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.machine.IMachineRuntime;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.ServerTickDeadline;
+import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramConsole;
 import dev.jstech.computers.vm.program.ProgramPriority;
@@ -609,8 +610,7 @@ public final class SigmaProcessGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final dev.jstech.computers.program.ServerCliComputer shell =
-                            new dev.jstech.computers.program.ServerCliComputer(computer, helper.getLevel());
+                    final ServerCliComputer shell = new ServerCliComputer(computer, helper.getLevel());
                     helper.assertTrue(shell.writeFile("C:\\child.asm", listing(CHILD)).ok(),
                             "the child is on the disk");
                     final MachinePrograms programs = computer.programs();
@@ -631,6 +631,48 @@ public final class SigmaProcessGameTests {
                     programs.tick(2048);
                     helper.assertTrue(programs.isEmpty(),
                             "and both are gone once the parent is; " + programs.view().size() + " left");
+                })
+                .thenSucceed();
+    }
+
+    /** A child whose Main is handed the arguments it was started with and gives back the code it ends with. */
+    private static final String HANDED_CHILD = """
+            using System.*;
+            using System.IO.*;
+            namespace Programs;
+            class Tool {
+                static int Main(string[] args) {
+                    Console.PrintLine("args " + args.Length + " " + args[0]);
+                    return 7;
+                }
+            }
+            """;
+
+    @GameTest(template = ARENA)
+    public static void programs_aMainIsHandedItsArgumentsAndWhatItGivesBackIsTheExitCode(
+            final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2));
+        if (computer == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerCliComputer shell = new ServerCliComputer(computer, helper.getLevel());
+                    helper.assertTrue(shell.writeFile("C:\\child.asm", listing(HANDED_CHILD)).ok(),
+                            "the child is on the disk");
+                    final MachinePrograms programs = computer.programs();
+                    final MachinePrograms.Started started =
+                            programs.start("parent.asm", listing(PARENT), 1, computer);
+                    helper.assertTrue(started.ok(), "the parent starts: " + started.message());
+                    final IMachineRuntime parent = programs.byId(started.id()).process();
+                    int ticks = 0;
+                    while (parent.console().size() < 3 && ticks++ < 12) {
+                        programs.tick(2048);
+                    }
+                    helper.assertTrue(parent.console().equals(List.of("started child.asm", "child: args 1 a",
+                                    "code 7")),
+                            "the child's Main had the argument and its answer was the code; got "
+                                    + parent.console() + " (" + parent.message() + ")");
                 })
                 .thenSucceed();
     }
@@ -729,8 +771,7 @@ public final class SigmaProcessGameTests {
     private static IMachineRuntime startWaiting(final GameTestHelper helper,
                                                 final CraftingComputerBlockEntity computer, final String file,
                                                 final String source) {
-        final dev.jstech.computers.program.ServerCliComputer shell =
-                new dev.jstech.computers.program.ServerCliComputer(computer, helper.getLevel());
+        final ServerCliComputer shell = new ServerCliComputer(computer, helper.getLevel());
         helper.assertTrue(shell.writeFile("C:\\" + file, listing(source)).ok(), "the child is on the disk");
         final MachinePrograms programs = computer.programs();
         final MachinePrograms.Started started = programs.start("patient.asm", listing(waitingOn(file)), 1, computer);

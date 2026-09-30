@@ -66,6 +66,10 @@ public final class Process {
 
     /** What starting a thread costs beyond the call itself: a stack of its own is not a small thing. */
     private static final int START_COST = SigmaCosts.THREAD_START;
+    /** Where a program that runs at a terminal starts. */
+    private static final String MAIN = "Main";
+    /** Text, as a listing names its type. */
+    private static final String TEXT = "string";
 
     private static final TextKey FAULT = TextKey.of("jsc.vm.process.fault",
             "the runtime could not carry this out (%s)");
@@ -424,6 +428,17 @@ public final class Process {
         return this.self;
     }
 
+    /** The arguments as the array a {@code Main(string[] args)} is handed, the program's to hold like anything else. */
+    private Values.Arr argsArray() {
+        final List<String> args = this.identity.args();
+        final Values.Arr made = new Values.Arr(TEXT, args.size());
+        for (int i = 0; i < args.size(); i++) {
+            made.set(i, this.text(args.get(i), 0), 0);
+        }
+        this.heap.allocate(made, Heap.HEADER + (long) Heap.sizeOf(TEXT) * args.size(), 0);
+        return made;
+    }
+
     /** A fresh list of the arguments, the program's to hold and to free like anything else. */
     Values.ListValue argsList(final int line) {
         final Values.ListValue made = new Values.ListValue();
@@ -516,6 +531,43 @@ public final class Process {
             return;
         }
         this.waiting.add(new Frame(found, null), 0);
+    }
+
+    /**
+     * Puts the start of a program that runs at a terminal in the queue: its {@code Main} that takes nothing, or, when
+     * it has none, the one handed the program's arguments as an array of text.
+     */
+    public void beginMain(final String owner) {
+        final MethodImage bare = this.program.method(owner, MAIN, List.of());
+        final MethodImage handed = bare != null ? null : this.program.method(owner, MAIN, List.of(TEXT + "[]"));
+        if (bare == null && handed == null) {
+            this.halt(new Halt(Halt.Reason.NO_SUCH_MEMBER, 0, NOTHING_TO_RUN.with(owner, MAIN)));
+            return;
+        }
+        final Frame frame = new Frame(bare != null ? bare : handed, null);
+        if (handed != null) {
+            try {
+                frame.slots[0] = this.argsArray();
+            } catch (final Halt noRoom) {
+                this.halt(noRoom);
+                return;
+            }
+        }
+        this.waiting.add(frame, 0);
+    }
+
+    /**
+     * Whether a method is the Main a program that runs at a terminal started at, whose answer, when it gives one,
+     * is the code the program ends with.
+     */
+    boolean isMain(final MethodImage method) {
+        return this.program.shape() == Shape.CONSOLE && method.isStatic() && MAIN.equals(method.name())
+                && method.owner().equals(this.program.entryPoint());
+    }
+
+    /** Takes what the program's Main gave back as the code it ends with, unless it already ended itself with one. */
+    void mainGave(final int code) {
+        this.identity.gave(code);
     }
 
     /**

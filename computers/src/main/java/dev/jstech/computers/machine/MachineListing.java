@@ -74,7 +74,7 @@ public final class MachineListing {
         final Process process = new Process(program, heapBytes, hostOf(machine));
         process.setArgs(arguments);
         if (program.shape() == Shape.CONSOLE) {
-            process.beginStatic(program.entryPoint(), "Main");
+            process.beginMain(program.entryPoint());
         } else {
             final Values.Obj script = process.create(program.entryPoint());
             if (script == null) {

@@ -29,6 +29,9 @@ final class MemberChecker {
     private final BodyScope scope;
     private final ExpressionChecker expressions;
 
+    /** How many places an array has, the one thing an array answers to. */
+    static final String ARRAY_LENGTH = "Length";
+
     MemberChecker(final BodyScope scope, final ExpressionChecker expressions) {
         this.scope = scope;
         this.expressions = expressions;
@@ -69,6 +72,11 @@ final class MemberChecker {
                 this.scope.model().setBinding(member, new IBinding.TypeName(inside));
                 return inside;
             }
+        }
+        // An array's one value of its own is how many places it has, read the way C# reads it.
+        if (target instanceof ITypeSymbol.ArrayType && access == BodyScope.Access.INSTANCE
+                && ARRAY_LENGTH.equals(member.name())) {
+            return ITypeSymbol.Primitive.INT;
         }
         final List<IMemberSymbol> found = this.membersOf(target, member.name(), member);
         return found.isEmpty()

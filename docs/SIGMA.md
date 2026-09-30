@@ -14,7 +14,10 @@ up for the network's Mirror so other players can install it.
 A program is one of two shapes, and says which by how it is written:
 
 - A class with a `static void Main()` runs at the terminal that started it. It holds the prompt, prints
-  as it goes, and is gone when `Main` returns (or when it calls `Program.Exit`).
+  as it goes, and is gone when `Main` returns (or when it calls `Program.Exit`). From version 2 its Main may
+  be `static int Main()`, and what it returns is the code the program ends with, the one another program reads
+  from `Process.ExitCode`; and it may take `string[] args`, handed the words it was started with, the same ones
+  `Program.Args` reads. An array says how many places it has with `Length`, as `args.Length`.
 - A class that implements `IScript` stays up. `OnInit` runs once, `OnTick` every tick, `OnDestroy` when
   it is stopped, and it is still running after the world has been away and come back. It writes all three.
 
@@ -96,7 +99,8 @@ project cannot reference a Σ# one.
 
 Σ and Σ# have versions, one number for both, since Σ N is the subset of Σ# N. Version 1 is the language as it
 first shipped under these names; version 2 brings `Sound` and `Speaker`, the old names above with the calls
-they gained, the rest of `printf`'s holes, and `Random` in Σ's `Standard`. A version only ever adds: whatever
+they gained, the rest of `printf`'s holes, `int Main` and `Main(string[] args)`, and `Random` in Σ's
+`Standard`. A version only ever adds: whatever
 version 1 takes, version 2 takes too and compiles to the same listing, so a newer compiler never breaks an
 older program.
 

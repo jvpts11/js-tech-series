@@ -158,6 +158,35 @@ class ProcessTest {
     }
 
     @Test
+    void beginMain_handsTheArgumentsToAMainThatTakesThemAndTakesTheCodeItGives() {
+        final ProgramImage program = loadSource("class Tool { static int Main(string[] args) { "
+                + "Console.PrintLine(args.Length + \" \" + args[0] + args[1]); return 7; } }");
+        final Process process = new Process(program, ROOM, IHost.still());
+        process.setArgs(List.of("x", "y"));
+        process.beginMain(program.entryPoint());
+        process.step(PLENTY);
+        assertFinished(process);
+        assertEquals(List.of("2 xy"), process.console());
+        assertEquals(7, process.exitCode(), "what Main gave back is the code it ends with");
+        assertFalse(process.exited(), "it ended by returning, not by Program.Exit");
+    }
+
+    @Test
+    void beginMain_aProgramThatExitsKeepsItsOwnCodeAndOneThatGivesNothingEndsWithZero() {
+        final ProgramImage exits = loadSource("class Tool { static int Main() { Program.Exit(3); return 9; } }");
+        final Process exiting = new Process(exits, ROOM, IHost.still());
+        exiting.beginMain(exits.entryPoint());
+        exiting.step(PLENTY);
+        assertEquals(3, exiting.exitCode());
+        final ProgramImage plain = loadSource("class Tool { static void Main() { Console.PrintLine(\"hi\"); } }");
+        final Process quiet = new Process(plain, ROOM, IHost.still());
+        quiet.beginMain(plain.entryPoint());
+        quiet.step(PLENTY);
+        assertFinished(quiet);
+        assertEquals(0, quiet.exitCode());
+    }
+
+    @Test
     void step_tellsTheHostNothingWhileAScriptStaysUp() {
         final ProgramImage program = load("", "        Console.PrintLine(\"tick\");");
         final List<Integer> told = new ArrayList<>();

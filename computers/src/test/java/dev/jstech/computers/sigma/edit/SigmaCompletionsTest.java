@@ -247,6 +247,25 @@ class SigmaCompletionsTest {
         assertEquals("int", target.type().describe());
     }
 
+    /** An array offers how many places it has, the one thing it answers to. */
+    @Test
+    void members_ofAnArrayOffersItsLength() {
+        final String text = PRELUDE + """
+                class Tool {
+                    static int Main(string[] args) {
+                        args.
+                    }
+                }
+                """;
+        final Read read = readAt(text, 3);
+        final SigmaCompletions.Target target =
+                SigmaCompletions.resolve(this.builtIns, read.model(), read.scope(), List.of("args"));
+        assertEquals("string[]", target.type().describe());
+        assertEquals(List.of("Length : int"),
+                SigmaCompletions.members(target, "le").stream().map(SigmaCompletions.Item::signature).toList());
+        assertTrue(SigmaCompletions.members(target, "x").isEmpty());
+    }
+
     @Test
     void resolve_readsThisAndThenAChainThroughIt() {
         final Read read = readAt(FARM, BROKEN_LINE);

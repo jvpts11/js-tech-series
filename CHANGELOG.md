@@ -409,6 +409,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   `IsDigit`, `IsLetter` and `IsWhiteSpace`, `Convert.ToString(n, base)` and `Convert.ToInt(text, fallback)`. A
   member added to a type the first version had is refused there the way a later type is ("'string.Compare' needs
   Σ# 2"), and the editors do not offer it to a project held to that version.
+- A program's Main in Σ 2 may be `static int Main()`, whose answer is the code the program ends with (what a
+  parent reads from `Process.ExitCode`, unless the program ended itself with `Program.Exit`), and may take
+  `string[] args`, handed the words the program was started with. The first version refuses both shapes for the
+  version they need.
 
 ### Changed
 - The Vintage server boards hold the Integra Pentix Pro, as the boards of the time did: the MF MTX-V of the
@@ -668,6 +672,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The unused hook for the Modonomicon guidebook: the series' manuals will be drawn by J's Core itself.
 
 ### Fixed
+- An array in Σ and Σ# answers to `Length`, the number of places it has, which Σ's own advice for `foreach` told
+  a program to use and nothing let it read. It is only read: an array is as long as it was made.
 - The amber of cautions on the Legacy computing screens was hard to read on their light panels; it is a darker
   goldenrod now, which reads on every ground those screens draw.
 - The service panel of every Mainframe no longer flickers where it meets the edges of its opening: its edges lay on

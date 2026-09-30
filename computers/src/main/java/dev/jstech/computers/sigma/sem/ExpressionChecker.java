@@ -170,6 +170,12 @@ final class ExpressionChecker {
                     unary.operator().text(), operand.describe());
             return ITypeSymbol.Special.ERROR;
         }
+        if ((unary.operator() == Operator.INCREMENT || unary.operator() == Operator.DECREMENT)
+                && unary.operand() instanceof IExpr.Member read && MemberChecker.ARRAY_LENGTH.equals(read.name())
+                && this.scope.model().typeOf(read.target()) instanceof ITypeSymbol.ArrayType) {
+            this.scope.report(unary.line(), unary.column(), SigmaError.CANNOT_ASSIGN_READONLY, read.name());
+            return ITypeSymbol.Special.ERROR;
+        }
         return result;
     }
 
@@ -307,6 +313,12 @@ final class ExpressionChecker {
     }
 
     private boolean writable(final IExpr.Assign assign, final IBinding binding) {
+        if (assign.target() instanceof IExpr.Member read && MemberChecker.ARRAY_LENGTH.equals(read.name())
+                && this.scope.model().typeOf(read.target()) instanceof ITypeSymbol.ArrayType) {
+            // An array is as long as it was made, so its length is only ever read.
+            this.scope.report(assign.line(), assign.column(), SigmaError.CANNOT_ASSIGN_READONLY, read.name());
+            return false;
+        }
         if (!(binding instanceof IBinding.Member member)) {
             return true;
         }
