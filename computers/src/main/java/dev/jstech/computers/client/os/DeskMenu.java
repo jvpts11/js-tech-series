@@ -132,10 +132,11 @@ final class DeskMenu {
      */
     private void addProgramItems(final List<ContextMenu.Item> entries, final Launcher launcher) {
         entries.add(item(DesktopTexts.OPEN, true, () -> desktop.runLauncher(launcher)));
-        if (desktop.pinsOnPanel() && launcher.factory() != null) {
-            final boolean pinned = desktop.isPinned(launcher.programId().getPath());
+        final TaskbarModel taskbar = desktop.taskbar();
+        if (taskbar.pinsOnPanel() && launcher.factory() != null) {
+            final boolean pinned = taskbar.isPinned(launcher.programId().getPath());
             entries.add(item(pinned ? DesktopTexts.UNPIN : DesktopTexts.PIN, true,
-                    () -> desktop.togglePin(launcher.key())));
+                    () -> taskbar.togglePin(launcher.key())));
         }
         final ProgramSpec spec = Programs.get(launcher.programId());
         if (spec != null && spec.installable()) {

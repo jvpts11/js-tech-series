@@ -151,7 +151,7 @@ final class StartMenus {
         final DesktopViewport view = desktop.view();
         if (desktop.panelStyle() == PanelStyle.FRAMES_11) {
             final int w = width();
-            final int startCenter = desktop.modernStartLeft(view.width()) + DesktopScreen.WIN11_SLOT / 2;
+            final int startCenter = desktop.taskbar().modernStartLeft(view.width()) + DesktopScreen.WIN11_SLOT / 2;
             return Math.max(4, Math.min(view.width() - w - 4, startCenter - w / 2));
         }
         if (view.panelOnTop()) {

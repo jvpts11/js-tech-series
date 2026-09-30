@@ -67,7 +67,7 @@ final class FramesPanels {
         drawBand(g, tbY, sw, sh, xp);
         drawStart(g, tbY, sh, xp);
 
-        final DesktopScreen.TaskStrip strip = desktop.taskButtons(sw);
+        final TaskStrip strip = desktop.taskbar().strip(sw);
         if (xp) {
             drawQuickLaunch(g, strip, tbY, sh, lmx, lmy);
         }
@@ -92,7 +92,7 @@ final class FramesPanels {
          * Start: follows the taskbar alignment (centered as the leftmost of the centered group, or left
          * corner), with a hover highlight, the four-pane blue logo, no text.
          */
-        final int startX = desktop.modernStartLeft(sw);
+        final int startX = desktop.taskbar().modernStartLeft(sw);
         if (lmx >= startX && lmx < startX + DesktopScreen.WIN11_SLOT && lmy >= tbY) {
             g.fill(startX, tbY + 2, startX + DesktopScreen.WIN11_SLOT, bottom - 2, c.hover());
         }
@@ -105,7 +105,7 @@ final class FramesPanels {
          * program with several windows has its mark split in two; and a program whose windows are all
          * put away sits dimmed.
          */
-        final DesktopScreen.TaskStrip strip = desktop.taskButtons(sw);
+        final TaskStrip strip = desktop.taskbar().strip(sw);
         for (int i = 0; i < strip.entries().size(); i++) {
             final TaskbarGroups.Entry entry = strip.entries().get(i);
             final int ix = strip.x()[i];
@@ -170,7 +170,7 @@ final class FramesPanels {
      * always said which program you are actually looking at; one whose windows are all put away sits raised
      * and paler, so it reads as "on the panel only".
      */
-    private void drawTasks(final GuiGraphics g, final DesktopScreen.TaskStrip strip, final int tbY,
+    private void drawTasks(final GuiGraphics g, final TaskStrip strip, final int tbY,
                            final int sh, final boolean xp) {
         final Classic classic = CLASSIC.get();
         final Luna luna = LUNA.get();
@@ -200,10 +200,10 @@ final class FramesPanels {
                     ? (xp ? luna.minimizedInk() : classic.minimizedInk())
                     : desktop.themeColours().startText();
             g.drawString(desktop.textFont(),
-                    desktop.shorten(desktop.taskLabel(entry), desktop.taskTitleRoom(btnW - (several ? 8 : 0))),
+                    desktop.shorten(desktop.taskbar().label(entry), TaskbarModel.titleRoom(btnW - (several ? 8 : 0))),
                     bx + 20, tbY + 8, textColor, false);
             if (several) {
-                desktop.drawStackCaret(g, bx + btnW - 8, tbY + 10, textColor);
+                TaskbarModel.drawCaret(g, bx + btnW - 8, tbY + 10, textColor);
             }
         }
     }
@@ -232,7 +232,7 @@ final class FramesPanels {
      * The Frames XP quick launch: the pinned programs as small icons right after Start, with a rule
      * between them and the task buttons, the way that desktop kept them.
      */
-    private void drawQuickLaunch(final GuiGraphics g, final DesktopScreen.TaskStrip strip, final int tbY,
+    private void drawQuickLaunch(final GuiGraphics g, final TaskStrip strip, final int tbY,
                                  final int sh, final int lmx, final int lmy) {
         if (strip.quickCount() == 0) {
             return;
@@ -243,14 +243,14 @@ final class FramesPanels {
             if (!entry.pinned()) {
                 continue;
             }
-            final int qx = strip.quickX() + j * DesktopScreen.QL_W;
-            if (lmx >= qx && lmx < qx + DesktopScreen.QL_W && lmy >= tbY) {
-                g.fill(qx, tbY + 3, qx + DesktopScreen.QL_W, sh - 3, c.quickHover());
+            final int qx = strip.quickX() + j * TaskStrip.QL_W;
+            if (lmx >= qx && lmx < qx + TaskStrip.QL_W && lmy >= tbY) {
+                g.fill(qx, tbY + 3, qx + TaskStrip.QL_W, sh - 3, c.quickHover());
             }
             ProgramIcons.draw(g, qx + 2, tbY + 6, 12, 12, desktop.programIdFor(entry.key()), desktop.icons());
             j++;
         }
-        final int rule = strip.quickX() + strip.quickCount() * DesktopScreen.QL_W + 2;
+        final int rule = strip.quickX() + strip.quickCount() * TaskStrip.QL_W + 2;
         g.fill(rule, tbY + 5, rule + 1, sh - 5, c.ruleDark());
         g.fill(rule + 1, tbY + 5, rule + 2, sh - 5, c.ruleLight());
     }

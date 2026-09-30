@@ -144,7 +144,7 @@ final class LinuxPanels {
      */
     private void drawModernTasks(final GuiGraphics g, final int tbY, final int sw, final int sh,
                                  final int lmx, final int lmy, final DesktopTheme theme) {
-        final DesktopScreen.TaskStrip strip = desktop.taskButtons(sw);
+        final TaskStrip strip = desktop.taskbar().strip(sw);
         final int accent = theme.startButton();
         for (int i = 0; i < strip.entries().size(); i++) {
             final TaskbarGroups.Entry entry = strip.entries().get(i);
@@ -192,7 +192,7 @@ final class LinuxPanels {
         final int textColor = active ? c.activeInk() : minimized ? c.minimizedInk() : theme.startText();
         final int textW = bw - 22 - (several ? 12 : 0);
         g.drawString(desktop.textFont(),
-                desktop.shorten(desktop.taskLabel(entry), desktop.taskTitleRoom(textW + 20)),
+                desktop.shorten(desktop.taskbar().label(entry), TaskbarModel.titleRoom(textW + 20)),
                 bx + 22, tbY + 8, textColor, false);
         if (several) {
             final int badgeX = bx + bw - 12;
@@ -213,7 +213,7 @@ final class LinuxPanels {
      */
     private void drawPeriodTasks(final GuiGraphics g, final int tbY, final int sw, final int lmx,
                                  final int lmy, final OsSkin skin) {
-        final DesktopScreen.TaskStrip strip = desktop.taskButtons(sw);
+        final TaskStrip strip = desktop.taskbar().strip(sw);
         for (int i = 0; i < strip.entries().size(); i++) {
             final TaskbarGroups.Entry entry = strip.entries().get(i);
             final int bx = strip.x()[i];
@@ -233,10 +233,10 @@ final class LinuxPanels {
             ProgramIcons.draw(g, bx + 3, tbY + 5, 12, 12, desktop.programIdFor(entry.key()), desktop.icons());
             final int textColor = minimized ? skin.dim() : skin.text();
             g.drawString(desktop.textFont(),
-                    desktop.shorten(desktop.taskLabel(entry), desktop.taskTitleRoom(btnW - (several ? 8 : 0))),
+                    desktop.shorten(desktop.taskbar().label(entry), TaskbarModel.titleRoom(btnW - (several ? 8 : 0))),
                     bx + 19, tbY + 8 + (active ? 1 : 0), textColor, false);
             if (several) {
-                desktop.drawStackCaret(g, bx + btnW - 8, tbY + 10 + (active ? 1 : 0), textColor);
+                TaskbarModel.drawCaret(g, bx + btnW - 8, tbY + 10 + (active ? 1 : 0), textColor);
             }
         }
     }

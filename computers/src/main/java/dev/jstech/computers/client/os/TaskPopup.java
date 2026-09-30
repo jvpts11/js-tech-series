@@ -150,7 +150,7 @@ final class TaskPopup {
         if (desktop.view().panelOnTop()) {
             return; // the top bar lists no programs
         }
-        final DesktopScreen.TaskStrip strip = desktop.taskButtons(sw);
+        final TaskStrip strip = desktop.taskbar().strip(sw);
         final int idx = lmy >= tbY ? strip.indexAt(lmx) : -1;
         final String under = idx >= 0 && strip.entries().get(idx).open() ? strip.entries().get(idx).key() : null;
         final long now = System.currentTimeMillis();
@@ -223,7 +223,7 @@ final class TaskPopup {
         final boolean pinned = sticky;
         dismiss();
         if (pinned && button == 0 && my >= tbY) {
-            final DesktopScreen.TaskStrip strip = desktop.taskButtons(desktop.view().width());
+            final TaskStrip strip = desktop.taskbar().strip(desktop.view().width());
             final int idx = strip.indexAt(mx);
             if (idx >= 0 && strip.entries().get(idx).key().equals(was)) {
                 return true; // the entry that opened it closes it; nothing more
@@ -247,7 +247,7 @@ final class TaskPopup {
 
     /** Whether this panel shows the windows' live pictures rather than their titles. */
     private boolean thumbnails() {
-        return desktop.popupShowsThumbnails();
+        return desktop.taskbar().thumbnails();
     }
 
     /** Its box, desktop-local {x, y, w, h}, or null while it is not up. */
@@ -257,7 +257,7 @@ final class TaskPopup {
         if (list.isEmpty()) {
             return null;
         }
-        final DesktopScreen.TaskStrip strip = desktop.taskButtons(sw);
+        final TaskStrip strip = desktop.taskbar().strip(sw);
         final int index = TaskbarGroups.indexOf(strip.entries(), key);
         if (index < 0) {
             return null;
