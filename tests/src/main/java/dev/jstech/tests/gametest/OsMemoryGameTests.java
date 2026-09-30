@@ -87,7 +87,7 @@ public final class OsMemoryGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     mainframe.setNeedsPost(false);
                     helper.assertTrue(mainframe.ramTotalMb() == 2048,
-                            "one DDR2-2048 module is 2048 MB; got " + mainframe.ramTotalMb());
+                            "two DDR-1024 modules are 2048 MB; got " + mainframe.ramTotalMb());
                     helper.assertTrue(mainframe.ramReservedMb() == 64,
                             "Frames XP holds 64 MB for itself; got " + mainframe.ramReservedMb());
 
@@ -251,7 +251,7 @@ public final class OsMemoryGameTests {
         return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, path);
     }
 
-    /** A Legacy Mainframe with one 2 GB DDR2 module, powered on with {@code osId} installed. */
+    /** A Legacy Mainframe with 2 GB of DDR in two modules, powered on with {@code osId} installed. */
     private static MainframeBlockEntity placeLegacyMainframe(final GameTestHelper helper, final BlockPos pos,
                                                             final ResourceLocation osId) {
         helper.setBlock(pos, ComputingModule.LEGACY_MAINFRAME.get());
@@ -260,8 +260,10 @@ public final class OsMemoryGameTests {
         }
         final ItemStackHandler inv = mainframe.getInventory();
         inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT, new ItemStack(HardwareItems.MOTHERBOARD_MTX_LEGACY.get()));
-        inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START, new ItemStack(HardwareItems.CPU_VELOCION_DUAL_285.get()));
-        inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START, new ItemStack(HardwareItems.RAM_DDR2_2048.get()));
+        inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
+                new ItemStack(HardwareItems.CPU_VELOCION_OPTERA_250.get()));
+        inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START, new ItemStack(HardwareItems.RAM_DDR_1024.get()));
+        inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START + 1, new ItemStack(HardwareItems.RAM_DDR_1024.get()));
         inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(HardwareItems.PSU_500B.get()));
         inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));

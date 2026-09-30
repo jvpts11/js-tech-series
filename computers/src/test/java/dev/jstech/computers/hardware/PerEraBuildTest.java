@@ -170,6 +170,78 @@ class PerEraBuildTest {
         assertFalse(build(legacyBoard(), legacyCpu(), ddr3, psu(500)).isPowered());
     }
 
+    /*
+     * The rest of the Legacy, as the catalogue has it: the Socket 370 board at the entry with SDRAM and AGP, the
+     * Socket 939 board at the top with DDR and PCIe, and the server boards on DDR.
+     */
+
+    private static MotherboardSpec legacySocket370Board() {
+        return new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY, CpuSocketId.SOCKET_370, 1,
+                Set.of(RamGeneration.SDRAM), 4, PcieGeneration.AGP_4X, 4, 4, 4);
+    }
+
+    private static MotherboardSpec legacySocket939Board() {
+        return new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY, CpuSocketId.SOCKET_939, 1,
+                Set.of(RamGeneration.DDR), 4, PcieGeneration.PCIE_1_0, 4, 4, 4);
+    }
+
+    private static CpuSpec fx55() {
+        return new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_939, 1, 2600, 104, false);
+    }
+
+    private static RamSpec ddr() {
+        return new RamSpec(HardwareEra.LEGACY, RamGeneration.DDR, 256, 12);
+    }
+
+    @Test
+    void legacySocket370Build_withItsAgpCard_isPowered() {
+        final CpuSpec pentiumIii = new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_370, 1, 700, 28, false);
+        final RamSpec sdram = new RamSpec(HardwareEra.LEGACY, RamGeneration.SDRAM, 32, 5);
+        final GpuSpec tnt2 = new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_4X, 2, 32, 10);
+        assertTrue(new ComputerBuild(legacySocket370Board(), List.of(pentiumIii), List.of(tnt2), List.of(sdram),
+                psu(350)).isPowered());
+    }
+
+    @Test
+    void legacySocket370Build_ddrMemory_isNotPowered() {
+        // The i815 took SDRAM only; DDR came with the boards after it.
+        final CpuSpec pentiumIii = new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_370, 1, 700, 28, false);
+        assertFalse(build(legacySocket370Board(), pentiumIii, ddr(), psu(350)).isPowered());
+    }
+
+    @Test
+    void legacySocket939Build_withItsPcieCard_isPowered() {
+        final GpuSpec x800 = new GpuSpec(HardwareEra.LEGACY, PcieGeneration.PCIE_1_0, 16, 256, 70);
+        assertTrue(new ComputerBuild(legacySocket939Board(), List.of(fx55()), List.of(x800), List.of(ddr()),
+                psu(500)).isPowered());
+    }
+
+    @Test
+    void legacySocket939Build_agpCard_isNotPowered() {
+        // The Socket 939 board's bus is PCIe; the AGP cards of the boards before it have no slot on it.
+        final GpuSpec agp = new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_8X, 16, 256, 81);
+        assertFalse(new ComputerBuild(legacySocket939Board(), List.of(fx55()), List.of(agp), List.of(ddr()),
+                psu(500)).isPowered());
+    }
+
+    @Test
+    void legacyServerBuild_twoServosOnSocket604_isPowered() {
+        final MotherboardSpec board = new MotherboardSpec(FormFactor.EATX, HardwareEra.LEGACY, CpuSocketId.SOCKET_604,
+                2, Set.of(RamGeneration.DDR), 8, PcieGeneration.PCIE_1_0, 6, 6, 4);
+        final CpuSpec servo = new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_604, 1, 3200, 92, false);
+        assertTrue(new ComputerBuild(board, List.of(servo, servo), List.of(), List.of(ddr()), psu(500)).isPowered());
+    }
+
+    @Test
+    void legacyMainframeBuild_ddr2Memory_isNotPowered() {
+        // The four-way Socket 940 board of the Mainframe took DDR; DDR2 came after the Opteras it was built for.
+        final MotherboardSpec board = new MotherboardSpec(FormFactor.MTX, HardwareEra.LEGACY, CpuSocketId.SOCKET_940,
+                4, Set.of(RamGeneration.DDR), 24, PcieGeneration.PCIE_1_0, 8, 6, 8);
+        final CpuSpec optera = new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_940, 1, 2400, 89, false);
+        final RamSpec ddr2 = new RamSpec(HardwareEra.LEGACY, RamGeneration.DDR2, 512, 12);
+        assertFalse(build(board, optera, ddr2, psu(500)).isPowered());
+    }
+
     // Standard
 
     private static MotherboardSpec standardBoard() {

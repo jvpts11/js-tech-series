@@ -337,6 +337,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   Wonder VGA, the Atrion Rave Pro and, on the AGP, the Envya Prism TNT. New memory: the SIMM-16, the EDO-32 and
   EDO-64, and the SDRAM-32 and SDRAM-64 the Slot 1 board takes. And the MF PowerBasic 200 and the Vaultis Trench
   HDD 200M.
+- The Legacy era fills out the same way, a socket at a time: the Velocion Duro 1300 on Socket A; the Integra Celer
+  2.0 and the Pentix 4 2.4C, 3.2C and EE 3.4 on Socket 478; the Celer D 325J and the Pentix 4 520, 540 and 560 on
+  LGA 775; the Velocion Semper 3100+ and Sprint 64 3200+ and 3700+ on Socket 754; the Sprint 64 3500+, 4000+ and
+  FX-55 on Socket 939; and the Integra Servo 2800, 3060 and 3200 for the servers on Socket 604, with an ATX board
+  for each new socket. The Pentix 4 chips and the Servos run two threads a core. Thirteen new graphics cards run from
+  the Envya Prism TNT2 M64 and the Atrion Radiance 7000 through the Vertex 4 Ti 4200 and the Radiance 9600 XT to
+  the Vertex 6800 Ultra on AGP, and on the first PCIe boards the Vertex 6200 and 6600 GT and the Radiance X300 and
+  X800 XT, the top of the era. And the SDRAM-256, DDR-256, DDR-1024 and DDR2-512, the MF PowerBasic 350, the
+  Vaultis Link IDE-HDD 40G and the Artisan Tone Blaster Audigy, the sound card of the PCIe boards.
 
 ### Changed
 - The Vintage server boards hold the Integra Pentix Pro, as the boards of the time did: the MF MTX-V of the
@@ -345,6 +354,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   is the MF PowerBasic 300 (its id follows, `jsc:psu_300`; the Bronze seal came a decade later), and the graphics
   cards carry their makers of the time: the Artisan 3D Blaster, the Envya Prism 4 and the Tridex Voodoo GFX, while
   the VGA-256 is IBM's own and carries none. Every Vintage part has a new icon drawn from the real one.
+- Legacy parts that never existed as named give way to real ones, and their ids follow: the Velocion Sprint XP
+  3800+ is the Sprint XP 2800+ (`jsc:cpu_velocion_sprint_xp_2800`), the dual-core Velocion Dual 240, 280 and 285
+  are the single-core Velocion Optera 244, 248 and 250 of their years, and the two-way LGA 775 server board is the
+  MF EATX Legacy Motherboard (2x Socket 604). The Integra Vertex processors are the Integra Pentix, the name of
+  their line (`jsc:cpu_integra_pentix_700` and on), which leaves Vertex to the graphics cards.
+- Legacy boards take the memory and the bus their chipsets had: the Socket 370 board SDRAM on AGP 4x, the Socket A
+  board SDRAM and DDR, and the Socket 940 server and Mainframe boards DDR. The Radiance 9200 SE is an AGP 8x card
+  with four pipelines and 128 MB, and the Legacy graphics cards carry the makers of their time, Envya and Atrion.
+  Every Legacy part has a new icon drawn from the real one.
 - A medium's tooltip names its format in the player's language ("Floppy", "Blu-ray") instead of the code's name
   for it.
 - A monitor going dark is heard only from a picture tube; the flat panels of the Transition and every later era

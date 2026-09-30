@@ -54,17 +54,57 @@ public final class CatalogRulerGameTests {
 
     @GameTest(template = ARENA)
     public static void vintageGraphicsCards_climbFromTheFloorToTheTop(final GameTestHelper helper) {
-        final List<DeferredItem<GpuItem>> ladder = List.of(HardwareItems.GPU_VGA_256, HardwareItems.GPU_WONDER_VGA,
+        assertCardsClimb(helper, "Vintage", List.of(HardwareItems.GPU_VGA_256, HardwareItems.GPU_WONDER_VGA,
                 HardwareItems.GPU_3D_BLASTER, HardwareItems.GPU_RAVE_PRO, HardwareItems.GPU_PRISM_4,
-                HardwareItems.GPU_VOODOO_GFX, HardwareItems.GPU_PRISM_TNT);
-        for (int i = 1; i < ladder.size(); i++) {
-            final GpuItem below = ladder.get(i - 1).get();
-            final GpuItem card = ladder.get(i).get();
-            helper.assertTrue(card.spec().power() >= below.spec().power(), ladder.get(i).getId() + " ("
-                    + card.spec().power() + ") is weaker than " + ladder.get(i - 1).getId() + " ("
-                    + below.spec().power() + ") below it");
-        }
+                HardwareItems.GPU_PRISM_TNT, HardwareItems.GPU_VOODOO_GFX));
         helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void legacyProcessors_climbTheirLadderInEverySocket(final GameTestHelper helper) {
+        assertProcessorsClimb(helper, "Socket 370", List.of(HardwareItems.CPU_INTEGRA_PENTIX_700,
+                HardwareItems.CPU_INTEGRA_PENTIX_III_S_1000, HardwareItems.CPU_INTEGRA_PENTIX_III_S_1400));
+        assertProcessorsClimb(helper, "Socket A", List.of(HardwareItems.CPU_VELOCION_DURO_1300,
+                HardwareItems.CPU_VELOCION_SPRINT_XP_2400, HardwareItems.CPU_VELOCION_SPRINT_XP_2800,
+                HardwareItems.CPU_VELOCION_SPRINT_XP_3200));
+        assertProcessorsClimb(helper, "Socket 478", List.of(HardwareItems.CPU_INTEGRA_CELER_2_0,
+                HardwareItems.CPU_INTEGRA_PENTIX_4_2_4C, HardwareItems.CPU_INTEGRA_PENTIX_4_3_2C,
+                HardwareItems.CPU_INTEGRA_PENTIX_4_EE_3_4));
+        assertProcessorsClimb(helper, "LGA 775", List.of(HardwareItems.CPU_INTEGRA_CELER_D_325J,
+                HardwareItems.CPU_INTEGRA_PENTIX_4_520, HardwareItems.CPU_INTEGRA_PENTIX_4_540,
+                HardwareItems.CPU_INTEGRA_PENTIX_4_560));
+        assertProcessorsClimb(helper, "Socket 754", List.of(HardwareItems.CPU_VELOCION_SEMPER_3100,
+                HardwareItems.CPU_VELOCION_SPRINT_64_3200, HardwareItems.CPU_VELOCION_SPRINT_64_3700));
+        assertProcessorsClimb(helper, "Socket 939", List.of(HardwareItems.CPU_VELOCION_SPRINT_64_3500,
+                HardwareItems.CPU_VELOCION_SPRINT_64_4000, HardwareItems.CPU_VELOCION_SPRINT_64_FX_55));
+        assertProcessorsClimb(helper, "Socket 604", List.of(HardwareItems.CPU_INTEGRA_SERVO_2800,
+                HardwareItems.CPU_INTEGRA_SERVO_3060, HardwareItems.CPU_INTEGRA_SERVO_3200));
+        assertProcessorsClimb(helper, "Socket 940", List.of(HardwareItems.CPU_VELOCION_OPTERA_244,
+                HardwareItems.CPU_VELOCION_OPTERA_248, HardwareItems.CPU_VELOCION_OPTERA_250));
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void legacyGraphicsCards_climbEachMakersLadder(final GameTestHelper helper) {
+        assertCardsClimb(helper, "Envya", List.of(HardwareItems.GPU_PRISM_TNT2_M64, HardwareItems.GPU_VERTEX_2_MX_400,
+                HardwareItems.GPU_VERTEX_256, HardwareItems.GPU_VERTEX_FX_5200, HardwareItems.GPU_VERTEX_6200,
+                HardwareItems.GPU_VERTEX_4_TI_4200, HardwareItems.GPU_VERTEX_6600_GT,
+                HardwareItems.GPU_VERTEX_6800_ULTRA));
+        assertCardsClimb(helper, "Atrion", List.of(HardwareItems.GPU_RADIANCE_7000, HardwareItems.GPU_RADIANCE_9200_SE,
+                HardwareItems.GPU_RADIANCE_8500, HardwareItems.GPU_RADIANCE_X300, HardwareItems.GPU_RADIANCE_9600_XT,
+                HardwareItems.GPU_RADIANCE_9800_PRO, HardwareItems.GPU_RADIANCE_9800_XT,
+                HardwareItems.GPU_RADIANCE_X800_XT));
+        helper.succeed();
+    }
+
+    private static void assertCardsClimb(final GameTestHelper helper, final String ladderName,
+                                         final List<DeferredItem<GpuItem>> ladder) {
+        for (int i = 1; i < ladder.size(); i++) {
+            final long below = ladder.get(i - 1).get().spec().power();
+            final long card = ladder.get(i).get().spec().power();
+            helper.assertTrue(card >= below, ladderName + ": " + ladder.get(i).getId() + " (" + card
+                    + ") is weaker than " + ladder.get(i - 1).getId() + " (" + below + ") below it");
+        }
     }
 
     private static void assertProcessorsClimb(final GameTestHelper helper, final String socket,

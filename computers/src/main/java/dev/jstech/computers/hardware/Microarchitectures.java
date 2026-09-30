@@ -89,13 +89,21 @@ public final class Microarchitectures {
     /** 3dfx's design, sold under the Voodoo brand; left unnamed. */
     public static final Microarchitecture THREEDFX = new Microarchitecture("threedfx", "", 30_000);
     /**
-     * The RIVA TNT's and TNT2's: the TNT lands level with the Voodoo2 of the same year, and the TNT2 M64 that opens
-     * the next era under the Celsius card above it.
+     * The RIVA TNT's and TNT2's: the TNT lands between the RIVA 128 and the Voodoo2 of its year, and the TNT2 M64
+     * that opens the next era under the Celsius cards above it.
      */
-    public static final Microarchitecture FAHRENHEIT = new Microarchitecture("fahrenheit", "Fahrenheit", 45_000);
+    public static final Microarchitecture FAHRENHEIT = new Microarchitecture("fahrenheit", "Fahrenheit", 36_000);
     public static final Microarchitecture CELSIUS = new Microarchitecture("celsius", "Celsius", 25_000);
+    /** The first Radeon's; its one-pipeline card sits with the TNT2 M64 at the floor of its era. */
+    public static final Microarchitecture R100 = new Microarchitecture("r100", "R100", 50_000);
     public static final Microarchitecture R200 = new Microarchitecture("r200", "R200", 25_000);
+    public static final Microarchitecture KELVIN = new Microarchitecture("kelvin", "Kelvin", 30_000);
     public static final Microarchitecture R300 = new Microarchitecture("r300", "R300", 25_000);
+    /** The GeForce FX's, whose entry card was slower per pipeline than the cards before it. */
+    public static final Microarchitecture RANKINE = new Microarchitecture("rankine", "Rankine", 13_000);
+    /** The GeForce 6's: its 6800 Ultra and the R400's X800 XT top their era a little above its fastest processor. */
+    public static final Microarchitecture CURIE = new Microarchitecture("curie", "Curie", 23_500);
+    public static final Microarchitecture R400 = new Microarchitecture("r400", "R400", 19_000);
     /** Counted at the clock its shaders run at, which is twice the rest of the chip's. */
     public static final Microarchitecture TESLA = new Microarchitecture("tesla", "Tesla", 2400);
     /** Counted at the clock its shaders run at, which is twice the rest of the chip's. */
@@ -110,8 +118,8 @@ public final class Microarchitectures {
             BULLDOZER, PILEDRIVER, SKYLAKE, KABY_LAKE, COFFEE_LAKE, COMET_LAKE, WAY_1, WAY_1_PLUS, WAY_2, WAY_3, WAY_4,
             WAY_5, ALDER_LAKE, RAPTOR_LAKE, ARROW_LAKE, GRACEMONT, SKYMONT, SKYLAKE_SP, CASCADE_LAKE, ICE_LAKE_SP,
             COOPER_LAKE, SAPPHIRE_RAPIDS, EMERALD_RAPIDS,
-            VGA, RENDITION, NV3, RAGE, THREEDFX, FAHRENHEIT, CELSIUS, R200, R300, TESLA, FERMI, TERASCALE_2, GCN,
-            KEPLER);
+            VGA, RENDITION, NV3, RAGE, THREEDFX, FAHRENHEIT, CELSIUS, R100, R200, KELVIN, R300, RANKINE, CURIE, R400,
+            TESLA, FERMI, TERASCALE_2, GCN, KEPLER);
 
     private Microarchitectures() {
     }

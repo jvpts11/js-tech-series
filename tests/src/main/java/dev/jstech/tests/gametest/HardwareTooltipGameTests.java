@@ -48,7 +48,7 @@ public final class HardwareTooltipGameTests {
     @GameTest(template = ARENA)
     public static void eraLine_wearsItsErasScreenColour(final GameTestHelper helper) {
         assertEraColour(helper, new ItemStack(HardwareItems.CPU_INTEGRA_486SX.get()), HardwareEra.VINTAGE);
-        assertEraColour(helper, new ItemStack(HardwareItems.CPU_INTEGRA_VERTEX_700.get()), HardwareEra.LEGACY);
+        assertEraColour(helper, new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_700.get()), HardwareEra.LEGACY);
         assertEraColour(helper, new ItemStack(HardwareItems.CPU_APEX_5_4590.get()), HardwareEra.STANDARD);
         assertEraColour(helper, new ItemStack(HardwareItems.RAM_SIMM_4.get()), HardwareEra.VINTAGE);
         assertEraColour(helper, new ItemStack(HardwareItems.GPU_VERTEX_GTX_780_TI.get()), HardwareEra.STANDARD);
@@ -82,7 +82,7 @@ public final class HardwareTooltipGameTests {
     @GameTest(template = ARENA)
     public static void cpuTooltip_namesTheInstructionSetAndItsWordSize(final GameTestHelper helper) {
         assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_486SX.get()), "x86-16, 16-bit");
-        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_VERTEX_700.get()), "x86, 32-bit");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_700.get()), "x86, 32-bit");
         assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_APEX_5_4590.get()), "x86-64, 64-bit");
         helper.succeed();
     }

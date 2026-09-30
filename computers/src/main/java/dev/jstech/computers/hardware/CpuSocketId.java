@@ -30,6 +30,10 @@ public record CpuSocketId(String id) {
     public static final CpuSocketId SLOT_1 = own("slot_1");
     public static final CpuSocketId SOCKET_A = own("socket_a");
     public static final CpuSocketId SOCKET_370 = own("socket_370");
+    public static final CpuSocketId SOCKET_478 = own("socket_478");
+    public static final CpuSocketId SOCKET_604 = own("socket_604");
+    public static final CpuSocketId SOCKET_754 = own("socket_754");
+    public static final CpuSocketId SOCKET_939 = own("socket_939");
     public static final CpuSocketId LGA_771 = own("lga_771");
     public static final CpuSocketId LGA_775 = own("lga_775");
     public static final CpuSocketId SOCKET_940 = own("socket_940");

@@ -1192,8 +1192,8 @@ public final class OsCliGameTests {
          */
         final MainframeBlockEntity legacy = placeMainframeWithEra(helper, legacyPos, ubuntu,
                 ComputingModule.LEGACY_MAINFRAME.get(),
-                HardwareItems.MOTHERBOARD_MTX_LEGACY.get(), HardwareItems.CPU_VELOCION_DUAL_285.get(),
-                HardwareItems.RAM_DDR2_2048.get(), HardwareItems.PSU_500B.get());
+                HardwareItems.MOTHERBOARD_MTX_LEGACY.get(), HardwareItems.CPU_VELOCION_OPTERA_250.get(),
+                HardwareItems.RAM_DDR_1024.get(), HardwareItems.PSU_500B.get());
         final MainframeBlockEntity vintage = placeMainframeWithEra(helper, vintagePos, ubuntu,
                 ComputingModule.VINTAGE_MAINFRAME.get(),
                 HardwareItems.MOTHERBOARD_MTX_VINTAGE.get(), HardwareItems.CPU_INTEGRA_PENTIX_PRO_200.get(),
