@@ -351,8 +351,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   owner chose it should look (accent, brightness, clock, wallpaper, dark theme, CDE's palette) with the skin, the
   clock and the era that follow from it; what it tells the player, in a dialog or in a balloon over the notification
   area; the power dialog; the machine's memory as the desktop weighs it, with the crash of a cooperative kernel that
-  runs out of it; the two right-click menus, the panel's and the wallpaper's; and the player's inventory laid over
-  the window in front.
+  runs out of it; the two right-click menus, the panel's and the wallpaper's; the player's inventory laid over the
+  window in front; and what the desktop can start, built from the program registry and the machine's listing.
 - J's Computers' blocks keep their state as J's Core's declared fields: the computers, the server racks, the drives,
   the Pattern Encoders, monitors, speakers, Network Gateways, data cables, Crafting Switches, Server Routers, HBW
   Interfaces and tanks. The players who see one are sent one update a tick however much of it changed, and the

@@ -10,10 +10,6 @@ package dev.jstech.computers.client.os;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.audio.SoundOutput;
-import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
-import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.MachineKeyboard;
 import dev.jstech.computers.client.MonitorFrame;
 import dev.jstech.computers.gui.CdeStyle;
@@ -40,14 +36,12 @@ import dev.jstech.computers.operation.payload.SetupProgressPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.os.CdeAppGroup;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
-import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.Platform;
-import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.WorkspaceSet;
@@ -65,7 +59,6 @@ import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -116,8 +109,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     private final DesktopViewport view = new DesktopViewport(this);
     /** Which workspace is up, counted from nought; always the first on a desktop that has only one. */
     private int shownWorkspace;
-    private final List<Launcher> launchers = new ArrayList<>();
-    private final List<String> installedPrograms = new ArrayList<>();
+    /** What this desktop can start, the programs installed on the machine, and the wallpaper's icons. */
+    private final DesktopLaunchers catalogue;
     /** What the desktop tells the player: a dialog over everything, or a balloon over the notification area. */
     private final DesktopNotices notices = new DesktopNotices(this);
     /** The dialog that shuts the machine down, restarts it or logs off. */
@@ -150,8 +143,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     private final DeskFiles deskFiles = new DeskFiles(this);
     /** The trash: its icon, full or empty, and what deleting a thing on this desktop means. */
     private final DeskTrash trash = new DeskTrash(this);
-    /** What the wallpaper wears as icons ahead of the desktop folder's files: the trash, then every program. */
-    private final List<Launcher> iconLaunchers = new ArrayList<>();
 
     /** The machine's memory as the desktop weighs it, and the crash of a cooperative kernel run out of it. */
     private final DesktopMemory memory;
@@ -289,15 +280,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * something else on another, and a button that offers it should say what this machine calls it.
      */
     public static String programLabel(final String path) {
-        if (active == null) {
-            return "";
-        }
-        for (final Launcher l : active.launchers) {
-            if (l.programId().getPath().equals(path)) {
-                return l.label();
-            }
-        }
-        return "";
+        final Launcher launcher = active == null ? null : active.catalogue.byPath(path);
+        return launcher == null ? "" : launcher.label();
     }
 
     /** The programs pinned to the panel, by program id path, in the order the machine keeps them. */
@@ -369,7 +353,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** The ids of the programs the open desktop's machine has, for a window offering what can open a file. */
     public static List<String> installedProgramIds() {
-        return active == null ? List.of() : List.copyOf(active.installedPrograms);
+        return active == null ? List.of() : List.copyOf(active.catalogue.installed());
     }
 
     /** What a program is called, for a menu that offers it by id. */
@@ -603,8 +587,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return prefs;
     }
 
+    /** Everything this desktop can start, in the order its menus list it. */
     List<Launcher> launcherList() {
-        return launchers;
+        return catalogue.all();
     }
 
     /**
@@ -612,7 +597,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * desktop but CDE, and then the programs. The menus list the programs alone, as the desktops' menus did.
      */
     List<Launcher> deskIcons() {
-        return iconLaunchers;
+        return catalogue.icons();
     }
 
     /** The style this desktop is drawn in, which decides the look and the words of what opens on it. */
@@ -627,7 +612,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Whether the icon in that slot of the wallpaper is the trash's. */
     boolean isTrashIcon(final int slot) {
-        return slot >= 0 && slot < iconLaunchers.size() && trash.is(iconLaunchers.get(slot));
+        final List<Launcher> icons = catalogue.icons();
+        return slot >= 0 && slot < icons.size() && trash.is(icons.get(slot));
     }
 
     /** Opens the trash, or brings its window forward. */
@@ -668,15 +654,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     @Nullable
     public QuestionPopup question() {
         return notices.question();
-    }
-
-    /** Makes the wallpaper's icons again, after the programs or the trash's picture changed. */
-    private void rebuildDeskIcons() {
-        iconLaunchers.clear();
-        if (trash.onWallpaper()) {
-            iconLaunchers.add(trash.launcher());
-        }
-        iconLaunchers.addAll(launchers);
     }
 
     /** Where this desktop sits on the game's screen, how big it draws, and the work area its panel leaves. */
@@ -923,7 +900,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** The programs this machine has installed, by id path. */
     List<String> installedPrograms() {
-        return installedPrograms;
+        return catalogue.installed();
     }
 
     /** Whether the program with that id path is pinned to the panel. */
@@ -1228,30 +1205,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** The width of the Frames XP Start pill, which the task buttons and its own hit-test both clear. */
     static final int XP_START_W = 58;
 
-    /** A desktop/start-menu entry that opens an app when clicked. */
-    /*
-     * A launcher either opens a built-in app window (factory) or runs a custom action (e.g. open the
-     * NMS, which is a server-side menu rather than a desktop window). Exactly one is non-null.
-     */
-    /** A desktop launcher: its display label, the program id (icon + identity), and the window factory. */
-    /**
-     * One thing on the desktop that can be started.
-     *
-     * <p>{@code key} is what it is known by: the key its window goes by ({@link WindowKeys}), or {@code run:}
-     * and the listing for a player's own program. {@code label} is only what it reads as on this desktop.
-     * {@code runs} is the listing a player's own program starts at. Those have no window of their own: like
-     * any console program they get a terminal and print into it, which is the same thing that happens when
-     * one is opened in the file explorer.
-     */
-    record Launcher(String key, String label, ResourceLocation programId,
-                    Supplier<IDesktopApp> factory, String runs) {
-
-        Launcher(final String key, final String label, final ResourceLocation programId,
-                 final Supplier<IDesktopApp> factory) {
-            this(key, label, programId, factory, "");
-        }
-    }
-
     /** The desktop environment drawn: the OS's bundled one (Frames) or the Linux package installed. */
     private final ResourceLocation desktopId;
     /** The desktop environment's descriptor (chrome family, bundled apps, native names); null if unknown. */
@@ -1270,6 +1223,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         this.desktopId = menu.desktopId();
         this.memory = new DesktopMemory(this, osId, windows, menu.ramTotalMb(), menu.ramReservedMb());
         this.chrome = OsRegistry.getDesktop(desktopId);
+        this.catalogue = new DesktopLaunchers(this, host, monitorPos, desktopId, osId, chrome);
         // A desktop nobody registered is drawn as the first Frames edition, as its look is.
         this.panel = chrome != null ? chrome.panelStyle() : PanelStyle.FRAMES_95;
         final OsDef os =
@@ -1736,7 +1690,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** What this desktop calls its terminal, or an empty string when it has none installed. */
     private String terminalLabel() {
-        final Launcher terminal = launcherFor(Programs.COMMAND_PROMPT);
+        final Launcher terminal = catalogue.byProgram(Programs.COMMAND_PROMPT);
         return terminal == null ? "" : terminal.label();
     }
 
@@ -1749,11 +1703,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     }
 
     public List<String> launcherLabels() {
-        final List<String> out = new ArrayList<>();
-        for (final Launcher l : launchers) {
-            out.add(l.label());
-        }
-        return out;
+        return catalogue.labels();
     }
 
     /** Whether {@code app} runs in the front (focused) window; what a recipe viewer's drop or transfer targets. */
@@ -1795,20 +1745,17 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * which name what they click by what it says.
      */
     private String keyFor(final String asked) {
-        for (final Launcher l : launchers) {
-            if (l.key().equals(asked)) {
-                return asked;
-            }
+        if (catalogue.byKey(asked) != null) {
+            return asked;
         }
         for (final DesktopWindow w : windows) {
             if (w.appKey().equals(asked)) {
                 return asked;
             }
         }
-        for (final Launcher l : launchers) {
-            if (l.label().equals(asked)) {
-                return l.key();
-            }
+        final Launcher labelled = catalogue.byLabel(asked);
+        if (labelled != null) {
+            return labelled.key();
         }
         for (final DesktopWindow w : windows) {
             if (nameOf(w.appKey()).equals(asked)) {
@@ -1823,17 +1770,16 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * desktop gives its program, else what its window calls itself, else the key.
      */
     String nameOf(final String key) {
-        for (final Launcher l : launchers) {
-            if (l.key().equals(key)) {
-                return l.label();
-            }
+        final Launcher launcher = catalogue.byKey(key);
+        if (launcher != null) {
+            return launcher.label();
         }
         if (WindowKeys.TRASH.equals(key)) {
             return trash.title();
         }
         final ProgramSpec spec = WindowKeys.program(key);
         if (spec != null) {
-            return launcherLabel(spec);
+            return catalogue.labelOf(spec);
         }
         for (final DesktopWindow w : windows) {
             if (w.appKey().equals(key)) {
@@ -1872,8 +1818,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      */
     public int startMenuItemX(final int index) {
         if (panel == PanelStyle.FRAMES_XP
-                && index >= 0 && index < launchers.size()) {
-            final boolean place = XP_PLACES.contains(launchers.get(index).programId());
+                && index >= 0 && index < catalogue.all().size()) {
+            final boolean place = XP_PLACES.contains(catalogue.all().get(index).programId());
             final int colX = startMenuX() + (place ? XP_LEFT_W + 3 : 3);
             final int colW = place ? XP_MENU_W - XP_LEFT_W - 6 : XP_LEFT_W - 6;
             return view.screenX(colX + colW / 2);
@@ -1884,8 +1830,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     public int startMenuItemY(final int index) {
         final int tbY = view.height() - TASKBAR_H;
         if (panel == PanelStyle.FRAMES_XP
-                && index >= 0 && index < launchers.size()) {
-            final Launcher target = launchers.get(index);
+                && index >= 0 && index < catalogue.all().size()) {
+            final Launcher target = catalogue.all().get(index);
             final boolean place = XP_PLACES.contains(target.programId());
             final List<Launcher> column = place ? xpRightLaunchers() : xpLeftLaunchers();
             final int row = Math.max(0, column.indexOf(target));
@@ -1931,7 +1877,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          */
         prefs.rebuildSkin();
 
-        buildLaunchers();
+        catalogue.build();
 
         /*
          * Restore the windows that were open when this computer's Monitor was last left.
@@ -2052,86 +1998,16 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     }
 
     /** The platform the installed system stands on, Frames as the safe default for a machine with no system. */
-    private Platform platform() {
+    Platform platform() {
         final OsDef os = OsRegistry.getOs(osId);
         return os != null ? os.platform() : Platform.FRAMES;
     }
 
-    /**
-     * (Re)builds the launcher rail from the single program registry: every registered Frames app that opens a
-     * window and is present on this computer. A pre-installed app is gated here by its host scope and OS rank
-     * (e.g. the Network Manager on the Mainframe, Frames XP or newer); an installed app is gated on the server
-     * (its id already sits in {@link #installedPrograms} only when it passed). No more per-program branches.
-     */
-    private void buildLaunchers() {
-        launchers.clear();
-        final boolean isMainframe = hostIs(
-                MainframeBlockEntity.class);
-        final boolean isCraftingComputer = hostIs(
-                CraftingComputerBlockEntity.class);
-        // A rack shows the desktop of the server mounted in it, so a rack host IS a server session.
-        final boolean isServer = hostIs(
-                ServerRackBlockEntity.class);
-        final boolean isClusterManager = hostIs(
-                ClusterManagementComputerBlockEntity.class);
-        final int rank = OsRegistry.osVersionRank(osId);
-        final Platform platform = platform();
-        for (final ProgramSpec spec
-                : OsRegistry.programs()) {
-            if (spec.kind() != ProgramKind.APP
-                    || !spec.platforms().contains(platform)
-                    || !ProgramClient.hasWindow(spec.id())) {
-                continue;
-            }
-            if (spec.preinstalled()) {
-                // Built-in apps are present when the desktop environment bundles them; gate by host and OS version.
-                if (chrome != null && !chrome.bundles(spec.id())) {
-                    continue;
-                }
-                if (!hostScopeAllows(spec.hostScope(), isMainframe, isCraftingComputer, isServer, isClusterManager)) {
-                    continue;
-                }
-                if (rank != 0 && rank < spec.minOsRank()) {
-                    continue;
-                }
-            } else if (!installedPrograms.contains(spec.id().getPath())) {
-                continue; // installed apps: the server already gated them into installedPrograms
-            }
-            final ProgramClient.IDesktopAppFactory factory = ProgramClient.factory(spec.id());
-            // Apps receive the desktop id (their skin/icon key); the Frames editions' id equals their OS id.
-            launchers.add(new Launcher(WindowKeys.of(spec.id()), launcherLabel(spec), spec.id(),
-                    () -> factory.create(host, monitorPos, desktopId)));
-        }
-        /*
-         * Then whatever the player installed from the Mirror. These are not the mod's programs and have
-         * no window of their own: starting one gets it a terminal, exactly as opening it in the file
-         * explorer would. The icon id is one the artwork can grow into; until it does they wear the
-         * generic one, which is what ProgramIcons falls back to.
-         */
-        for (final CommunityLauncher one : communityPrograms) {
-            launchers.add(new Launcher(RUN_KEY + one.entry(), one.name(),
-                    ResourceLocation.fromNamespaceAndPath(
-                            JsComputers.MODID, "sigma_" + one.icon()),
-                    null, one.entry()));
-        }
-        rebuildDeskIcons();
-    }
-
-    /** A player's own program on this desktop: what to call it, what to draw, and what to run. */
-    private record CommunityLauncher(String name, String icon, String entry) {
-    }
-
-    /** What a player's own program is known by, ahead of the listing it starts at: it has no window to go by. */
-    private static final String RUN_KEY = "run:";
-
-    private final List<CommunityLauncher> communityPrograms = new ArrayList<>();
-
     /** The icon for a window key or a launcher key, for the panel and the menus; the generic one if none. */
     private ResourceLocation iconOf(final String key) {
-        for (final Launcher l : launchers) {
-            if (l.key().equals(key)) {
-                return l.programId();
-            }
+        final Launcher launcher = catalogue.byKey(key);
+        if (launcher != null) {
+            return launcher.programId();
         }
         if (WindowKeys.TRASH.equals(key)) {
             return trash.icon();
@@ -2148,33 +2024,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             }
         }
         return ResourceLocation.fromNamespaceAndPath("jsc", "generic");
-    }
-
-    /** Whether the linked host computer's block entity is (an instance of) {@code type}. */
-    private boolean hostIs(final Class<?> type) {
-        return Minecraft.getInstance().level != null
-                && type.isInstance(Minecraft.getInstance().level.getBlockEntity(host));
-    }
-
-    /** Whether a program's host scope permits it on this computer. */
-    private static boolean hostScopeAllows(final HostScope scope,
-                                           final boolean isMainframe, final boolean isCraftingComputer,
-                                           final boolean isServer, final boolean isClusterManager) {
-        return switch (scope) {
-            case ANY -> true;
-            case MAINFRAME -> isMainframe;
-            case CRAFTING_COMPUTER -> isCraftingComputer;
-            case SERVER -> isServer;
-            case CLUSTER_MANAGEMENT_COMPUTER -> isClusterManager;
-        };
-    }
-
-    /**
-     * The rail label for a program: the desktop environment's native name for it (Dolphin, Konsole, Nautilus...),
-     * its own display name otherwise; the shell reads "Megashell" on Frames 11.
-     */
-    private String launcherLabel(final ProgramSpec spec) {
-        return GameText.resolve(chrome != null ? chrome.launcherLabel(spec) : spec.name());
     }
 
     /** Requests the desktop folder's files so they can be drawn as background icons. */
@@ -2242,26 +2091,15 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         for (final DesktopFilesPayload.WireIconCell cell : payload.iconCells()) {
             active.iconGrid.pinnedCells().put(cell.key(), cell.cell());
         }
-        /*
-         * Refresh the installed-program launchers whenever the installed set changes, so ANY installable
-         * program (NMS, Minesweeper, Storage Insights, ...) gets its launcher the moment it is installed.
-         */
-        final Set<String> before = new HashSet<>(active.installedPrograms);
-        final List<CommunityLauncher> theirsBefore = List.copyOf(active.communityPrograms);
-        active.installedPrograms.clear();
-        active.installedPrograms.addAll(payload.programs());
+        // A program installed or removed while the desktop is up gets or loses its launcher at once.
+        final boolean programsChanged = active.catalogue.take(payload.programs(), payload.community());
         active.memory.takeSourceBuilt(payload.sourceBuilt());
-        active.communityPrograms.clear();
-        for (final DesktopFilesPayload.WireCommunity one : payload.community()) {
-            active.communityPrograms.add(new CommunityLauncher(one.name(), one.icon(), one.entry()));
-        }
         // The trash's picture changes with what is in it, and the icons are made again when it does.
         final boolean trashChanged = active.trash.setFull(payload.trashFull());
-        if (!before.equals(new HashSet<>(active.installedPrograms))
-                || !theirsBefore.equals(active.communityPrograms)) {
-            active.buildLaunchers();
+        if (programsChanged) {
+            active.catalogue.build();
         } else if (trashChanged) {
-            active.rebuildDeskIcons();
+            active.catalogue.rebuildIcons();
         }
         // Enter rename on a freshly created item once it appears in the listing.
         active.deskFiles.takePendingRename();
@@ -2526,10 +2364,10 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                 && deskDragX < sw && deskDragY < tbY && overWallpaper(deskDragX, deskDragY)) {
             iconGrid.drawDropCell(g, iconGrid.cellAt(deskDragX, deskDragY, perCol));
         }
-        if (deskDragSlot < iconLaunchers.size() + desktopItems.size()) {
-            final String label = deskDragSlot < iconLaunchers.size()
-                    ? iconLaunchers.get(deskDragSlot).label()
-                    : DesktopIcons.baseName(desktopItems.get(deskDragSlot - iconLaunchers.size()).path());
+        if (deskDragSlot < catalogue.icons().size() + desktopItems.size()) {
+            final String label = deskDragSlot < catalogue.icons().size()
+                    ? catalogue.icons().get(deskDragSlot).label()
+                    : DesktopIcons.baseName(desktopItems.get(deskDragSlot - catalogue.icons().size()).path());
             final int gx = (int) deskDragX + 6;
             final int gy = (int) deskDragY + 2;
             final DesktopShellPalette.Colours c = DesktopShellPalette.get();
@@ -2740,13 +2578,13 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * underlying file, so for them only the pin-to-cell path applies.
      */
     private void handleDeskDrop(final double dx, final double dy) {
-        final int total = iconLaunchers.size() + desktopItems.size();
+        final int total = catalogue.icons().size() + desktopItems.size();
         if (deskDragSlot < 0 || deskDragSlot >= total) {
             return;
         }
-        final boolean isLauncher = deskDragSlot < iconLaunchers.size();
+        final boolean isLauncher = deskDragSlot < catalogue.icons().size();
         final DiskFilesPayload.WireFile src =
-                isLauncher ? null : desktopItems.get(deskDragSlot - iconLaunchers.size());
+                isLauncher ? null : desktopItems.get(deskDragSlot - catalogue.icons().size());
 
         // (0) Dropped on the trash, its icon or CDE's control for it: the file is deleted.
         if (src != null && overTrash(dx, dy)) {
@@ -2779,8 +2617,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         // (2) Drop onto a desktop folder icon: move the file inside it.
         final int perCol = iconGrid.perColumn();
         final int target = iconGrid.slotAt(dx, dy, perCol);
-        if (target >= iconLaunchers.size() && target != deskDragSlot && src != null) {
-            final DiskFilesPayload.WireFile dst = desktopItems.get(target - iconLaunchers.size());
+        if (target >= catalogue.icons().size() && target != deskDragSlot && src != null) {
+            final DiskFilesPayload.WireFile dst = desktopItems.get(target - catalogue.icons().size());
             if (dst.directory()) {
                 if (src.readOnly()) {
                     notices.datLocked();
@@ -2904,8 +2742,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Opens an icon slot: a launcher starts its program; a desktop file/folder opens or navigates. */
     void openSlot(final int slot) {
-        if (slot < iconLaunchers.size()) {
-            final Launcher launcher = iconLaunchers.get(slot);
+        if (slot < catalogue.icons().size()) {
+            final Launcher launcher = catalogue.icons().get(slot);
             if (trash.is(launcher)) {
                 trash.open();
             } else {
@@ -2913,7 +2751,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             }
             return;
         }
-        final int di = slot - iconLaunchers.size();
+        final int di = slot - catalogue.icons().size();
         if (di < 0 || di >= desktopItems.size()) {
             return;
         }
@@ -2932,7 +2770,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      */
     private void openFile(final String path) {
         final String program =
-                FileOpeners.defaultFor(path, installedPrograms, defaultApps);
+                FileOpeners.defaultFor(path, catalogue.installed(), defaultApps);
         if (program.isEmpty() && FileOpeners.isUnknownKind(path)
                 && !runsAsProgram(path)) {
             chooseOpener(path);
@@ -2952,14 +2790,14 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * the choice this computer's program for the file's extension, written down on the machine.
      */
     void chooseOpener(final String path) {
-        final List<String> programs = FileOpeners.choices(path, installedPrograms);
+        final List<String> programs = FileOpeners.choices(path, catalogue.installed());
         if (programs.isEmpty()) {
             cannotOpen(path);
             return;
         }
         final String extension = FileOpeners.extensionOf(path);
         final String current =
-                FileOpeners.defaultFor(path, installedPrograms, defaultApps);
+                FileOpeners.defaultFor(path, catalogue.installed(), defaultApps);
         final String opener = current.isEmpty() ? "" : openerName(current);
         final String iconSet = prefs.skin().iconSet();
         notices.show(new OpenWithPopup(path, extension, programs, opener, iconSet, font, (program, always) -> {
@@ -3005,7 +2843,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
         final ProgramSpec spec = Programs.get(
                 ResourceLocation.fromNamespaceAndPath("jsc", programId));
-        final Launcher launcher = spec == null ? null : launcherFor(spec.id());
+        final Launcher launcher = spec == null ? null : catalogue.byProgram(spec.id());
         if (launcher == null) {
             cannotOpen(path);
             return;
@@ -3046,7 +2884,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      */
     @Nullable
     private ShellApp terminalApp() {
-        final Launcher launcher = launcherFor(Programs.COMMAND_PROMPT);
+        final Launcher launcher = catalogue.byProgram(Programs.COMMAND_PROMPT);
         if (launcher == null) {
             return null;
         }
@@ -3073,16 +2911,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         PENDING_OPEN.add(TYPE_AT_TERMINAL + String.join("\n", lines));
     }
 
-    /** The launcher of a program by id, or null when this desktop does not offer it. */
-    private Launcher launcherFor(final ResourceLocation id) {
-        for (final Launcher launcher : launchers) {
-            if (id.equals(launcher.programId())) {
-                return launcher;
-            }
-        }
-        return null;
-    }
-
     /** Opens the Settings window on one of its pages, the way a menu entry names a page rather than the program. */
     void openSettingsPage(final int page) {
         if (memory.allowOpen(SETTINGS_KEY)) {
@@ -3092,11 +2920,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Runs the launcher known by {@code key}, when the desktop has one. */
     void runLauncherKeyed(final String key) {
-        for (final Launcher launcher : launchers) {
-            if (launcher.key().equals(key)) {
-                runLauncher(launcher);
-                return;
-            }
+        final Launcher launcher = catalogue.byKey(key);
+        if (launcher != null) {
+            runLauncher(launcher);
         }
     }
 
@@ -3155,7 +2981,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** The names under the wallpaper's icons ahead of the files, in their order, the trash first where it stands. */
     public List<String> deskIconLabels() {
         final List<String> out = new ArrayList<>();
-        for (final Launcher l : iconLaunchers) {
+        for (final Launcher l : catalogue.icons()) {
             out.add(l.label());
         }
         return out;
@@ -3164,9 +2990,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** The desktop-local middle of the wallpaper icon so named, a program's, the trash's or a file's; or null. */
     @Nullable
     public int[] deskIconPoint(final String name) {
-        final int icons = iconLaunchers.size();
+        final int icons = catalogue.icons().size();
         for (int slot = 0; slot < icons + desktopItems.size(); slot++) {
-            final String label = slot < icons ? iconLaunchers.get(slot).label()
+            final String label = slot < icons ? catalogue.icons().get(slot).label()
                     : FsPaths.fileName(desktopItems.get(slot - icons).path());
             if (label.equals(name)) {
                 return iconGrid.centreOf(slot);
@@ -3216,12 +3042,12 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
              * A period launcher is a small program list, not a Plasma menu and not a full-screen
              * overview: it is sized by its own contents, like the classic launcher it is.
              */
-            return Math.max(4, launchers.size()) * MENU_ITEM_H + 8;
+            return Math.max(4, catalogue.all().size()) * MENU_ITEM_H + 8;
         }
         return switch (panel) {
-            case KDE -> KDE_HEADER_H + Math.max(6, launchers.size()) * KDE_ROW_H + KDE_FOOTER_H + 8;
+            case KDE -> KDE_HEADER_H + Math.max(6, catalogue.all().size()) * KDE_ROW_H + KDE_FOOTER_H + 8;
             case GNOME -> view.height() - TASKBAR_H; // the overview covers the whole desktop below the top bar
-            case CINNAMON -> CIN_HEADER_H + Math.max(5, launchers.size()) * CIN_ROW_H + 10;
+            case CINNAMON -> CIN_HEADER_H + Math.max(5, catalogue.all().size()) * CIN_ROW_H + 10;
             // Two columns: the taller of programs (left) and places (right) sets the body height.
             case FRAMES_XP -> XP_HEADER_H + XP_ORANGE_H
                     + Math.max(xpLeftColumnH(), xpRightLaunchers().size() * XP_ROW_H)
@@ -3231,10 +3057,10 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
              * Layout: 6 top pad + search + 5 + 9 (Pinned label) + rows + 5 + footer + 5 bottom pad.
              */
             case FRAMES_11 -> {
-                final int gridRows = Math.max(1, (launchers.size() + W11_COLS - 1) / W11_COLS);
+                final int gridRows = Math.max(1, (catalogue.all().size() + W11_COLS - 1) / W11_COLS);
                 yield 6 + W11_SEARCH_H + 5 + 9 + gridRows * W11_TILE_H + 5 + W11_FOOTER_H + 5;
             }
-            default -> launchers.size() * MENU_ITEM_H + 6 + MENU_ITEM_H + 8;
+            default -> catalogue.all().size() * MENU_ITEM_H + 6 + MENU_ITEM_H + 8;
         };
     }
 
@@ -3286,7 +3112,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** The launchers shown in the XP left "programs" column: everything that is not a fixed system place. */
     private List<Launcher> xpLeftLaunchers() {
         final List<Launcher> out = new ArrayList<>();
-        for (final Launcher l : launchers) {
+        for (final Launcher l : catalogue.all()) {
             if (!XP_PLACES.contains(l.programId())) {
                 out.add(l);
             }
@@ -3324,7 +3150,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** The launchers shown in the XP right "places" column: the fixed system entries, in launcher order. */
     private List<Launcher> xpRightLaunchers() {
         final List<Launcher> out = new ArrayList<>();
-        for (final Launcher l : launchers) {
+        for (final Launcher l : catalogue.all()) {
             if (XP_PLACES.contains(l.programId())) {
                 out.add(l);
             }
@@ -3336,10 +3162,10 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     private List<Launcher> w11Filtered() {
         final String q = startSearch.toString().toLowerCase(Locale.ROOT).trim();
         if (q.isEmpty()) {
-            return launchers;
+            return catalogue.all();
         }
         final List<Launcher> out = new ArrayList<>();
-        for (final Launcher l : launchers) {
+        for (final Launcher l : catalogue.all()) {
             if (l.label().toLowerCase(Locale.ROOT).contains(q)) {
                 out.add(l);
             }
@@ -3546,11 +3372,10 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return out;
         }
         for (final String id : pinnedPrograms) {
-            for (final Launcher launcher : launchers) {
-                if (launcher.factory() != null && launcher.programId().getPath().equals(id)) {
-                    out.add(launcher.key());
-                    break;
-                }
+            final Launcher launcher =
+                    catalogue.find(l -> l.factory() != null && l.programId().getPath().equals(id));
+            if (launcher != null) {
+                out.add(launcher.key());
             }
         }
         return out;
@@ -3559,12 +3384,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** The launcher a panel entry stands for, or null for a program with no launcher (the Task Manager). */
     @Nullable
     private Launcher pinnableLauncher(final String key) {
-        for (final Launcher launcher : launchers) {
-            if (launcher.factory() != null && launcher.key().equals(key)) {
-                return launcher;
-            }
-        }
-        return null;
+        return catalogue.find(l -> l.factory() != null && l.key().equals(key));
     }
 
     /**
@@ -4035,8 +3855,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * anywhere answers the right button the same way.
      */
     private void startChoose(final int index) {
-        if (index >= 0 && index < launchers.size()) {
-            startChoose(launchers.get(index));
+        if (index >= 0 && index < catalogue.all().size()) {
+            startChoose(catalogue.all().get(index));
         }
     }
 
@@ -4045,7 +3865,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (this.startWithRightButton) {
             closeStart();
             // The menu is the icon's, so it is found among the icons; the same launcher stands in both lists.
-            deskMenu.openFor(iconLaunchers.indexOf(launcher), this.startClickX, this.startClickY);
+            deskMenu.openFor(catalogue.icons().indexOf(launcher), this.startClickX, this.startClickY);
             return;
         }
         runLauncher(launcher);
@@ -4083,11 +3903,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** "All Programs": the page that lists everything installed on this machine, services included. */
     private void openAllPrograms() {
-        for (final Launcher l : launchers) {
-            if (Programs.SETTINGS.equals(l.programId())) {
-                runLauncher(l);
-                return;
-            }
+        final Launcher settings = catalogue.byProgram(Programs.SETTINGS);
+        if (settings != null) {
+            runLauncher(settings);
         }
     }
 
@@ -4933,11 +4751,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Opens that program's window on this desktop, if this machine has it at all. */
     private void startProgramById(final String path) {
-        for (final Launcher l : launchers) {
-            if (l.programId().getPath().equals(path) && l.factory() != null) {
-                openApp(l.key(), l.factory().get());
-                return;
-            }
+        final Launcher launcher = catalogue.find(l -> l.programId().getPath().equals(path) && l.factory() != null);
+        if (launcher != null) {
+            openApp(launcher.key(), launcher.factory().get());
         }
     }
 
@@ -4959,10 +4775,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (WindowKeys.TRASH.equals(key)) {
             return trash.window();
         }
-        for (final Launcher l : launchers) {
-            if (l.key().equals(key) && l.factory() != null) {
-                return l.factory().get();
-            }
+        final Launcher launcher = catalogue.find(l -> l.key().equals(key) && l.factory() != null);
+        if (launcher != null) {
+            return launcher.factory().get();
         }
         /*
          * A program the desktop shows no launcher for (the Task Manager, or one a file opens in) still opens,

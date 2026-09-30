@@ -119,7 +119,7 @@ final class DesktopIcons {
      * window goes by and not by the name it shows, or {@code file:<name>}.
      */
     String keyOf(final int i) {
-        final List<DesktopScreen.Launcher> launchers = desktop.deskIcons();
+        final List<Launcher> launchers = desktop.deskIcons();
         if (i < launchers.size()) {
             return "app:" + launchers.get(i).key();
         }
@@ -227,7 +227,7 @@ final class DesktopIcons {
      * clipped by it.
      */
     void render(final GuiGraphics g, final int lmx, final int lmy) {
-        final List<DesktopScreen.Launcher> launchers = desktop.deskIcons();
+        final List<Launcher> launchers = desktop.deskIcons();
         final List<DiskFilesPayload.WireFile> files = desktop.deskFiles();
         final int total = launchers.size() + files.size();
         final int perCol = perColumn();
@@ -270,7 +270,7 @@ final class DesktopIcons {
     }
 
     /** What an icon is called: a launcher's own name, or the file's, or what is being typed over it. */
-    private String labelOf(final int i, final List<DesktopScreen.Launcher> launchers,
+    private String labelOf(final int i, final List<Launcher> launchers,
                            final List<DiskFilesPayload.WireFile> files) {
         if (i < launchers.size()) {
             return launchers.get(i).label();

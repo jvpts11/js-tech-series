@@ -189,7 +189,7 @@ final class CdeLaunchers {
 
     /** Adds the program whose id has that path, under the name this desktop gives it, when the machine has it. */
     private void program(final List<Row> out, final String path) {
-        for (final DesktopScreen.Launcher launcher : desktop.launcherList()) {
+        for (final Launcher launcher : desktop.launcherList()) {
             if (launcher.programId() != null && launcher.programId().getPath().equals(path)) {
                 out.add(new Row(launcher.label(), launcher.programId(), () -> desktop.launch(launcher)));
                 return;
@@ -199,7 +199,7 @@ final class CdeLaunchers {
 
     @Nullable
     private ResourceLocation iconOf(final String path) {
-        for (final DesktopScreen.Launcher launcher : desktop.launcherList()) {
+        for (final Launcher launcher : desktop.launcherList()) {
             if (launcher.programId() != null && launcher.programId().getPath().equals(path)) {
                 return launcher.programId();
             }

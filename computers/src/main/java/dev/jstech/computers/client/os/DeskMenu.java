@@ -67,7 +67,7 @@ final class DeskMenu {
     /** Opens the menu at a desktop-local point for the icon in {@code slot}, or for the wallpaper when none. */
     void openFor(final int slot, final int x, final int y) {
         final List<ContextMenu.Item> entries = new ArrayList<>();
-        final List<DesktopScreen.Launcher> icons = desktop.deskIcons();
+        final List<Launcher> icons = desktop.deskIcons();
         final List<DiskFilesPayload.WireFile> files = desktop.deskFiles();
         if (desktop.isTrashIcon(slot)) {
             entries.addAll(desktop.trash().menu());
@@ -130,7 +130,7 @@ final class DeskMenu {
      * off is offered: the programs that ship with a system are part of it, so offering to remove one would be
      * offering something that then fails.
      */
-    private void addProgramItems(final List<ContextMenu.Item> entries, final DesktopScreen.Launcher launcher) {
+    private void addProgramItems(final List<ContextMenu.Item> entries, final Launcher launcher) {
         entries.add(item(DesktopTexts.OPEN, true, () -> desktop.runLauncher(launcher)));
         if (desktop.pinsOnPanel() && launcher.factory() != null) {
             final boolean pinned = desktop.isPinned(launcher.programId().getPath());

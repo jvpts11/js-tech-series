@@ -83,7 +83,7 @@ final class FramesLaunchers {
 
         final int itemX = x + DesktopScreen.BAND_W + 6;
         int my = y + 4;
-        for (final DesktopScreen.Launcher l : desktop.launcherList()) {
+        for (final Launcher l : desktop.launcherList()) {
             final boolean hov = desktop.hoverIn(itemX, my, x + w - itemX, DesktopScreen.MENU_ITEM_H);
             skin.listRow(g, itemX, my, x + w - 4 - itemX, DesktopScreen.MENU_ITEM_H, hov, false);
             ProgramIcons.draw(g, itemX + 2, my + 1, 14, 14, desktop.programIdFor(l.key()), desktop.icons());
@@ -133,7 +133,7 @@ final class FramesLaunchers {
         // Program items with icons.
         final int itemX = x + DesktopScreen.BAND_W + 4;
         int my = y + 4;
-        for (final DesktopScreen.Launcher l : desktop.launcherList()) {
+        for (final Launcher l : desktop.launcherList()) {
             final boolean hov = desktop.hoverIn(itemX, my, x + w - itemX, DesktopScreen.MENU_ITEM_H);
             if (hov) {
                 g.fill(itemX, my, x + w - 2, my + DesktopScreen.MENU_ITEM_H, theme.titleActive());
@@ -161,7 +161,7 @@ final class FramesLaunchers {
             return false;
         }
         final int itemsTop = y + 4;
-        final List<DesktopScreen.Launcher> all = desktop.launcherList();
+        final List<Launcher> all = desktop.launcherList();
         final int idx = (int) Math.floor((my - itemsTop) / (double) DesktopScreen.MENU_ITEM_H);
         if (idx >= 0 && idx < all.size()) {
             desktop.launchAt(idx);
@@ -256,7 +256,7 @@ final class FramesLaunchers {
         g.fill(x - 1, y - 1, x + w + 1, y + h + 1, skin.windowBorder());
         g.fill(x, y, x + w, y + h, panelBg);
         final int contentTop = drawW11Search(g, x, y, w, panelEdge, panelDim, panelText, skin);
-        final List<DesktopScreen.Launcher> filtered = desktop.searchedLaunchers();
+        final List<Launcher> filtered = desktop.searchedLaunchers();
         if (desktop.searchText().isEmpty()) {
             drawW11Pinned(g, x, w, contentTop, filtered, panelDim, panelText, panelHover, panelEdge);
         } else {
@@ -283,10 +283,10 @@ final class FramesLaunchers {
             return true; // clicks elsewhere in the footer are absorbed, keeping the menu open
         }
         final int contentTop = y + 6 + DesktopScreen.W11_SEARCH_H + 5;
-        final List<DesktopScreen.Launcher> filtered = desktop.searchedLaunchers();
+        final List<Launcher> filtered = desktop.searchedLaunchers();
         if (!desktop.searchText().isEmpty()) {
             int ry = contentTop + 11;
-            for (final DesktopScreen.Launcher l : filtered) {
+            for (final Launcher l : filtered) {
                 if (my >= ry && my < ry + 15) {
                     desktop.launch(l);
                     desktop.closeLauncher();
@@ -320,7 +320,7 @@ final class FramesLaunchers {
      */
     private void drawXpLeftColumn(final GuiGraphics g, final int colX, final int colY, final int colW) {
         final Luna c = LUNA.get();
-        final List<DesktopScreen.Launcher> items = desktop.xpLeft();
+        final List<Launcher> items = desktop.xpLeft();
         final int pinned = Math.min(DesktopScreen.XP_PINNED, items.size());
         drawXpColumn(g, items, colX, colY, colW, desktop.themeColours().menuText(), pinned, true);
         if (items.size() > pinned) {
@@ -348,11 +348,11 @@ final class FramesLaunchers {
      * {@code boldCount} entries are the pinned ones and are drawn in bold. The left column's rows are spaced
      * to leave the gap its separator sits in.
      */
-    private void drawXpColumn(final GuiGraphics g, final List<DesktopScreen.Launcher> items, final int colX,
+    private void drawXpColumn(final GuiGraphics g, final List<Launcher> items, final int colX,
                               final int colY, final int colW, final int textColor, final int boldCount,
                               final boolean leftColumn) {
         for (int i = 0; i < items.size(); i++) {
-            final DesktopScreen.Launcher l = items.get(i);
+            final Launcher l = items.get(i);
             final int my = colY + (leftColumn ? desktop.xpLeftRow(i) : i * DesktopScreen.XP_ROW_H);
             if (desktop.hoverIn(colX, my, colW, DesktopScreen.XP_ROW_H)) {
                 g.fill(colX, my, colX + colW, my + DesktopScreen.XP_ROW_H, LUNA.get().rowHover());
@@ -396,7 +396,7 @@ final class FramesLaunchers {
     private boolean clickXpBody(final int mx, final int dy, final int split) {
         if (mx < split) {
             // The left column's rows are spaced around a separator, so they are walked, not divided.
-            final List<DesktopScreen.Launcher> col = desktop.xpLeft();
+            final List<Launcher> col = desktop.xpLeft();
             for (int i = 0; i < col.size(); i++) {
                 final int ry = desktop.xpLeftRow(i);
                 if (dy >= ry && dy < ry + DesktopScreen.XP_ROW_H) {
@@ -411,7 +411,7 @@ final class FramesLaunchers {
             }
             return false;
         }
-        final List<DesktopScreen.Launcher> col = desktop.xpRight();
+        final List<Launcher> col = desktop.xpRight();
         final int row = dy / DesktopScreen.XP_ROW_H;
         if (row >= 0 && row < col.size()) {
             desktop.launch(col.get(row));
@@ -442,7 +442,7 @@ final class FramesLaunchers {
     }
 
     private void drawW11Pinned(final GuiGraphics g, final int x, final int w, final int contentTop,
-                               final List<DesktopScreen.Launcher> filtered, final int panelDim,
+                               final List<Launcher> filtered, final int panelDim,
                                final int panelText, final int panelHover, final int panelEdge) {
         g.drawString(desktop.textFont(), GameText.resolve(DesktopTexts.PINNED), x + 8, contentTop, panelDim, false);
         final int gridTop = contentTop + 9;
@@ -456,14 +456,14 @@ final class FramesLaunchers {
     }
 
     private void drawW11Results(final GuiGraphics g, final int x, final int w, final int contentTop,
-                                final List<DesktopScreen.Launcher> filtered, final int panelDim,
+                                final List<Launcher> filtered, final int panelDim,
                                 final int panelText, final int panelHover) {
         g.drawString(desktop.textFont(),
                 GameText.resolve(filtered.isEmpty() ? DesktopTexts.NO_RESULTS : DesktopTexts.BEST_MATCH),
                 x + 8, contentTop, panelDim, false);
         int my = contentTop + 11;
         final int rowW = w - 12;
-        for (final DesktopScreen.Launcher l : filtered) {
+        for (final Launcher l : filtered) {
             if (desktop.hoverIn(x + 6, my, rowW, 15)) {
                 g.fill(x + 6, my, x + 6 + rowW, my + 15, panelHover);
             }
@@ -490,7 +490,7 @@ final class FramesLaunchers {
     }
 
     /** Draws one Frames 11 pinned tile: an icon over a centered label, with a hover background. */
-    private void drawW11Tile(final GuiGraphics g, final DesktopScreen.Launcher l, final int tx, final int ty,
+    private void drawW11Tile(final GuiGraphics g, final Launcher l, final int tx, final int ty,
                              final int labelColor, final int hoverBg, final int hoverEdge) {
         if (desktop.hoverIn(tx, ty, DesktopScreen.W11_TILE_W, DesktopScreen.W11_TILE_H)) {
             g.fill(tx + 1, ty + 1, tx + DesktopScreen.W11_TILE_W - 1, ty + DesktopScreen.W11_TILE_H - 1, hoverBg);

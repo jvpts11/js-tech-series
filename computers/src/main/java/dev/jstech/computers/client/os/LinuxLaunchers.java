@@ -106,7 +106,7 @@ final class LinuxLaunchers {
         int my = bodyTop + 4;
         final int listX = x + KDE_SIDE_W + 4;
         final int listW = w - KDE_SIDE_W - 8;
-        for (final DesktopScreen.Launcher l : desktop.launcherList()) {
+        for (final Launcher l : desktop.launcherList()) {
             final boolean hov = desktop.hoverIn(listX, my, listW, KDE_ROW_H);
             if (hov) {
                 g.fill(listX, my, listX + listW, my + KDE_ROW_H, c.rowHover());
@@ -175,7 +175,7 @@ final class LinuxLaunchers {
             g.drawString(desktop.textFont(), desktop.shorten(q, (fieldW - 8) / 6),
                     fieldX + 6, fieldY + 3, c.ink(), false);
         }
-        final List<DesktopScreen.Launcher> filtered = desktop.searchedLaunchers();
+        final List<Launcher> filtered = desktop.searchedLaunchers();
         int contentTop = fieldY + 22;
         if (q.isEmpty()) {
             contentTop = drawWorkspaceStrip(g, sw, contentTop);
@@ -196,7 +196,7 @@ final class LinuxLaunchers {
         final int fieldW = Math.min(180, sw - 40);
         final int fieldX = (sw - fieldW) / 2;
         final int fieldY = top + 8;
-        final List<DesktopScreen.Launcher> filtered = desktop.searchedLaunchers();
+        final List<Launcher> filtered = desktop.searchedLaunchers();
         if (!desktop.searchText().isEmpty()) {
             return clickSearchResults(mx, my, fieldX, fieldW, fieldY, filtered);
         }
@@ -243,7 +243,7 @@ final class LinuxLaunchers {
         g.fill(x, y, x + w, y + h, c.fill());
         // Favourites rail: the first apps as icons.
         g.fill(x, y, x + CIN_RAIL_W, y + h, c.rail());
-        final List<DesktopScreen.Launcher> all = desktop.launcherList();
+        final List<Launcher> all = desktop.launcherList();
         final int favN = Math.min(4, all.size());
         for (int i = 0; i < favN; i++) {
             final int fy = y + 8 + i * 22;
@@ -270,7 +270,7 @@ final class LinuxLaunchers {
         desktop.drawOutline(g, listX, y + 5, listW, 12, c.searchEdge());
         g.drawString(desktop.textFont(), words(DesktopTexts.SEARCH), listX + 4, y + 7, c.searchHint(), false);
         int my = y + CIN_HEADER_H;
-        for (final DesktopScreen.Launcher l : all) {
+        for (final Launcher l : all) {
             final boolean hov = desktop.hoverIn(listX, my, listW, CIN_ROW_H);
             if (hov) {
                 g.fill(listX, my, listX + listW, my + CIN_ROW_H, c.hover());
@@ -327,7 +327,7 @@ final class LinuxLaunchers {
     }
 
     private void drawAppGrid(final GuiGraphics g, final int sw, final int sh, final int contentTop,
-                             final List<DesktopScreen.Launcher> filtered) {
+                             final List<Launcher> filtered) {
         final Overview c = GNOME.get();
         final int gridX = (sw - GN_COLS * GN_TILE_W) / 2;
         for (int i = 0; i < filtered.size(); i++) {
@@ -338,7 +338,7 @@ final class LinuxLaunchers {
             if (ty + GN_TILE_H > sh - 26) {
                 break;
             }
-            final DesktopScreen.Launcher l = filtered.get(i);
+            final Launcher l = filtered.get(i);
             if (desktop.hoverIn(tx, ty, GN_TILE_W, GN_TILE_H)) {
                 g.fill(tx + 2, ty, tx + GN_TILE_W - 2, ty + GN_TILE_H - 2, c.hover());
             }
@@ -354,7 +354,7 @@ final class LinuxLaunchers {
 
     /** The dash: the first few apps as a pill along the bottom, which GNOME keeps there whatever is open. */
     private void drawDash(final GuiGraphics g, final int sw, final int sh) {
-        final List<DesktopScreen.Launcher> all = desktop.launcherList();
+        final List<Launcher> all = desktop.launcherList();
         final int dashN = Math.min(5, all.size());
         final int dashW = dashN * 22 + 8;
         final int dashX = (sw - dashW) / 2;
@@ -367,13 +367,13 @@ final class LinuxLaunchers {
     }
 
     private void drawSearchResults(final GuiGraphics g, final int fieldX, final int fieldW, final int contentTop,
-                                   final List<DesktopScreen.Launcher> filtered) {
+                                   final List<Launcher> filtered) {
         final Overview c = GNOME.get();
         g.drawString(desktop.textFont(),
                 words(filtered.isEmpty() ? DesktopTexts.NO_RESULTS : DesktopTexts.APPLICATIONS),
                 fieldX, contentTop, c.hint(), false);
         int my = contentTop + 12;
-        for (final DesktopScreen.Launcher l : filtered) {
+        for (final Launcher l : filtered) {
             if (desktop.hoverIn(fieldX, my, fieldW, 16)) {
                 g.fill(fieldX, my, fieldX + fieldW, my + 16, c.hover());
             }
@@ -384,9 +384,9 @@ final class LinuxLaunchers {
     }
 
     private boolean clickSearchResults(final int mx, final int my, final int fieldX, final int fieldW,
-                                       final int fieldY, final List<DesktopScreen.Launcher> filtered) {
+                                       final int fieldY, final List<Launcher> filtered) {
         int ry = fieldY + 22 + 12;
-        for (final DesktopScreen.Launcher l : filtered) {
+        for (final Launcher l : filtered) {
             if (my >= ry && my < ry + 16 && mx >= fieldX && mx < fieldX + fieldW) {
                 desktop.launch(l);
                 desktop.closeLauncher();

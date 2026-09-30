@@ -121,12 +121,12 @@ final class DeskTrash {
     }
 
     /** The trash as an icon on the wallpaper. */
-    DesktopScreen.Launcher launcher() {
-        return new DesktopScreen.Launcher(WindowKeys.TRASH, title(), icon(), this::window);
+    Launcher launcher() {
+        return new Launcher(WindowKeys.TRASH, title(), icon(), this::window);
     }
 
     /** Whether a launcher is the trash's own. */
-    boolean is(final DesktopScreen.Launcher launcher) {
+    boolean is(final Launcher launcher) {
         return WindowKeys.TRASH.equals(launcher.key());
     }
 

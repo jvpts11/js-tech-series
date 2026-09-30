@@ -91,7 +91,7 @@ final class ApplicationManagerApp implements IDesktopApp {
                 out.add(each.label());
             }
         } else {
-            for (final DesktopScreen.Launcher launcher : programs()) {
+            for (final Launcher launcher : programs()) {
                 out.add(launcher.label());
             }
         }
@@ -228,7 +228,7 @@ final class ApplicationManagerApp implements IDesktopApp {
     /** The groups that hold something on this machine, in the Application Manager's own order. */
     private List<CdeAppGroup> groups() {
         final boolean[] holds = new boolean[CdeAppGroup.values().length];
-        for (final DesktopScreen.Launcher launcher : launchers()) {
+        for (final Launcher launcher : launchers()) {
             holds[CdeAppGroup.of(launcher.programId().getPath()).place()] = true;
         }
         final List<CdeAppGroup> out = new ArrayList<>();
@@ -241,9 +241,9 @@ final class ApplicationManagerApp implements IDesktopApp {
     }
 
     /** The programs of this window's group, in the order the desktop lists them. */
-    private List<DesktopScreen.Launcher> programs() {
-        final List<DesktopScreen.Launcher> out = new ArrayList<>();
-        for (final DesktopScreen.Launcher launcher : launchers()) {
+    private List<Launcher> programs() {
+        final List<Launcher> out = new ArrayList<>();
+        for (final Launcher launcher : launchers()) {
             if (CdeAppGroup.of(launcher.programId().getPath()) == this.group) {
                 out.add(launcher);
             }
@@ -252,7 +252,7 @@ final class ApplicationManagerApp implements IDesktopApp {
     }
 
     /** Every program of the desktop that is up, or none while no desktop is. */
-    private static List<DesktopScreen.Launcher> launchers() {
+    private static List<Launcher> launchers() {
         final DesktopScreen desktop = DesktopScreen.current();
         return desktop == null ? List.of() : desktop.launcherList();
     }
