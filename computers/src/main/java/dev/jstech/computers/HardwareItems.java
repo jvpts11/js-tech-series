@@ -1056,6 +1056,417 @@ public final class HardwareItems {
                     CpuSocketId.G34, 4, Set.of(RamGeneration.DDR3), 32, PcieGeneration.PCIE_2_0, 8, 6, 8))
                     .named("MF MTX-S Motherboard (4x G34)").register();
 
+    //  ADVANCED: PCIe 4.0 and 5.0, DDR4 and DDR5, the Way and hybrid Centro processors, the Epic and Servo servers
+
+    // AM4: the Awayken on the first three Way designs, and the Sprint below them.
+    public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_200GE = cpu("cpu_velocion_sprint_200ge",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM4, 2, 3200, 35, false)
+                    .on(Microarchitectures.WAY_1, "Raven Ridge").withSmt())
+            .named("Velocion Sprint 200GE").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_3_3200G = cpu("cpu_velocion_awayken_3_3200g",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM4, 4, 3600, 65, false)
+                    .on(Microarchitectures.WAY_1_PLUS, "Picasso"))
+            .named("Velocion Awayken 3 3200G").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_5_1600 = cpu("cpu_velocion_awayken_5_1600",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM4, 6, 3200, 65, false)
+                    .on(Microarchitectures.WAY_1, "Summit Ridge").withSmt())
+            .named("Velocion Awayken 5 1600").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_5_3600 = cpu("cpu_velocion_awayken_5_3600",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM4, 6, 3600, 65, false)
+                    .on(Microarchitectures.WAY_2, "Matisse").withSmt())
+            .named("Velocion Awayken 5 3600").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_7_1800X = cpu("cpu_velocion_awayken_7_1800x",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM4, 8, 3600, 95, false)
+                    .on(Microarchitectures.WAY_1, "Summit Ridge").withSmt())
+            .named("Velocion Awayken 7 1800X").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_7_5800X3D = cpu("cpu_velocion_awayken_7_5800x3d",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM4, 8, 3400, 105, false)
+                    .on(Microarchitectures.WAY_3, "Vermeer").withSmt())
+            .named("Velocion Awayken 7 5800X3D").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_9_3900X = cpu("cpu_velocion_awayken_9_3900x",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM4, 12, 3800, 105, false)
+                    .on(Microarchitectures.WAY_2, "Matisse").withSmt())
+            .named("Velocion Awayken 9 3900X").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_9_5900X = cpu("cpu_velocion_awayken_9_5900x",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM4, 12, 3700, 105, false)
+                    .on(Microarchitectures.WAY_3, "Vermeer").withSmt())
+            .named("Velocion Awayken 9 5900X").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_9_5950X = cpu("cpu_velocion_awayken_9_5950x",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM4, 16, 3400, 105, false)
+                    .on(Microarchitectures.WAY_3, "Vermeer").withSmt())
+            .named("Velocion Awayken 9 5950X").register();
+
+    // AM5: Way 4 and Way 5.
+    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_5_7600 = cpu("cpu_velocion_awayken_5_7600",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM5, 6, 3800, 65, false)
+                    .on(Microarchitectures.WAY_4, "Raphael").withSmt())
+            .named("Velocion Awayken 5 7600").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_7_7700X = cpu("cpu_velocion_awayken_7_7700x",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM5, 8, 4500, 105, false)
+                    .on(Microarchitectures.WAY_4, "Raphael").withSmt())
+            .named("Velocion Awayken 7 7700X").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_7_9800X3D = cpu("cpu_velocion_awayken_7_9800x3d",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM5, 8, 4700, 120, false)
+                    .on(Microarchitectures.WAY_5, "Granite Ridge").withSmt())
+            .named("Velocion Awayken 7 9800X3D").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_9_7950X = cpu("cpu_velocion_awayken_9_7950x",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM5, 16, 4500, 170, false)
+                    .on(Microarchitectures.WAY_4, "Raphael").withSmt())
+            .named("Velocion Awayken 9 7950X").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_AWAYKEN_9_9950X = cpu("cpu_velocion_awayken_9_9950x",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM5, 16, 4300, 170, false)
+                    .on(Microarchitectures.WAY_5, "Granite Ridge").withSmt())
+            .named("Velocion Awayken 9 9950X").register();
+
+    // LGA 1151: Kaby Lake and Coffee Lake.
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_G4560 = cpu("cpu_integra_pentix_g4560",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1151, 2, 3500, 54, false)
+                    .on(Microarchitectures.KABY_LAKE, "").withSmt())
+            .named("Integra Pentix G4560").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C3_8100 = cpu("cpu_integra_centro_c3_8100",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1151, 4, 3600, 65, false)
+                    .on(Microarchitectures.COFFEE_LAKE, ""))
+            .named("Integra Centro c3 8100").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C5_8400 = cpu("cpu_integra_centro_c5_8400",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1151, 6, 2800, 65, false)
+                    .on(Microarchitectures.COFFEE_LAKE, ""))
+            .named("Integra Centro c5 8400").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C7_8700K = cpu("cpu_integra_centro_c7_8700k",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1151, 6, 3700, 95, false)
+                    .on(Microarchitectures.COFFEE_LAKE, "").withSmt())
+            .named("Integra Centro c7 8700K").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C9_9900K = cpu("cpu_integra_centro_c9_9900k",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1151, 8, 3600, 95, false)
+                    .on(Microarchitectures.COFFEE_LAKE, "").withSmt())
+            .named("Integra Centro c9 9900K").register();
+
+    // LGA 1200: Comet Lake.
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C3_10100 = cpu("cpu_integra_centro_c3_10100",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1200, 4, 3600, 65, false)
+                    .on(Microarchitectures.COMET_LAKE, "").withSmt())
+            .named("Integra Centro c3 10100").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C5_10400 = cpu("cpu_integra_centro_c5_10400",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1200, 6, 2900, 65, false)
+                    .on(Microarchitectures.COMET_LAKE, "").withSmt())
+            .named("Integra Centro c5 10400").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C9_10900K = cpu("cpu_integra_centro_c9_10900k",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1200, 10, 3700, 125, false)
+                    .on(Microarchitectures.COMET_LAKE, "").withSmt())
+            .named("Integra Centro c9 10900K").register();
+
+    // LGA 1700: the first hybrid Centro, performance cores with the Gracemont efficiency cores beside them.
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C3_12100 = cpu("cpu_integra_centro_c3_12100",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1700, 4, 3300, 60, false)
+                    .on(Microarchitectures.ALDER_LAKE, "").withSmt())
+            .named("Integra Centro c3 12100").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C5_12400 = cpu("cpu_integra_centro_c5_12400",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1700, 6, 2500, 65, false)
+                    .on(Microarchitectures.ALDER_LAKE, "").withSmt())
+            .named("Integra Centro c5 12400").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C5_13600K = cpu("cpu_integra_centro_c5_13600k",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1700, 6, 3500, 125, false)
+                    .on(Microarchitectures.RAPTOR_LAKE, "").withSmt()
+                    .withEfficiencyCores(8, 2600, Microarchitectures.GRACEMONT))
+            .named("Integra Centro c5 13600K").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C9_12900K = cpu("cpu_integra_centro_c9_12900k",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1700, 8, 3200, 125, false)
+                    .on(Microarchitectures.ALDER_LAKE, "").withSmt()
+                    .withEfficiencyCores(8, 2400, Microarchitectures.GRACEMONT))
+            .named("Integra Centro c9 12900K").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C9_13900K = cpu("cpu_integra_centro_c9_13900k",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1700, 8, 3000, 125, false)
+                    .on(Microarchitectures.RAPTOR_LAKE, "").withSmt()
+                    .withEfficiencyCores(16, 2200, Microarchitectures.GRACEMONT))
+            .named("Integra Centro c9 13900K").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C9_13900KS = cpu("cpu_integra_centro_c9_13900ks",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1700, 8, 3200, 150, false)
+                    .on(Microarchitectures.RAPTOR_LAKE, "").withSmt()
+                    .withEfficiencyCores(16, 2400, Microarchitectures.GRACEMONT))
+            .named("Integra Centro c9 13900KS").register();
+
+    // LGA 1851: the Centro Ultra, one thread a core, with the Skymont efficiency cores.
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_ULTRA_C5_225 = cpu("cpu_integra_centro_ultra_c5_225",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1851, 6, 3300, 65, false)
+                    .on(Microarchitectures.ARROW_LAKE, "")
+                    .withEfficiencyCores(4, 2700, Microarchitectures.SKYMONT))
+            .named("Integra Centro Ultra c5 225").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_ULTRA_C5_245K =
+            cpu("cpu_integra_centro_ultra_c5_245k", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1851, 6, 4200,
+                    125, false).on(Microarchitectures.ARROW_LAKE, "")
+                    .withEfficiencyCores(8, 3600, Microarchitectures.SKYMONT))
+            .named("Integra Centro Ultra c5 245K").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_ULTRA_C7_265K =
+            cpu("cpu_integra_centro_ultra_c7_265k", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1851, 8, 3900,
+                    125, false).on(Microarchitectures.ARROW_LAKE, "")
+                    .withEfficiencyCores(12, 3300, Microarchitectures.SKYMONT))
+            .named("Integra Centro Ultra c7 265K").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_ULTRA_C9_285K =
+            cpu("cpu_integra_centro_ultra_c9_285k", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1851, 8, 3700,
+                    125, false).on(Microarchitectures.ARROW_LAKE, "")
+                    .withEfficiencyCores(16, 3200, Microarchitectures.SKYMONT))
+            .named("Integra Centro Ultra c9 285K").register();
+
+    // LGA 2066: the workstation Centro c9, on the server design of their years.
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C9_7900X = cpu("cpu_integra_centro_c9_7900x",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_2066, 10, 3300, 140, false)
+                    .on(Microarchitectures.SKYLAKE_SP, "").withSmt())
+            .named("Integra Centro c9 7900X").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C9_7980XE = cpu("cpu_integra_centro_c9_7980xe",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_2066, 18, 2600, 165, false)
+                    .on(Microarchitectures.SKYLAKE_SP, "").withSmt())
+            .named("Integra Centro c9 7980XE").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C9_10980XE = cpu("cpu_integra_centro_c9_10980xe",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_2066, 18, 3000, 165, false)
+                    .on(Microarchitectures.CASCADE_LAKE, "").withSmt())
+            .named("Integra Centro c9 10980XE").register();
+
+    // sTR4 and sTR5: the Threadkiller of the workstations, up to ninety-six cores.
+    public static final DeferredItem<CpuItem> CPU_VELOCION_THREADKILLER_1920X =
+            cpu("cpu_velocion_threadkiller_1920x", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.STR4, 12, 3500, 180,
+                    false).on(Microarchitectures.WAY_1, "Whitehaven").withSmt())
+            .named("Velocion Threadkiller 1920X").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_THREADKILLER_1950X =
+            cpu("cpu_velocion_threadkiller_1950x", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.STR4, 16, 3400, 180,
+                    false).on(Microarchitectures.WAY_1, "Whitehaven").withSmt())
+            .named("Velocion Threadkiller 1950X").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_THREADKILLER_2990WX =
+            cpu("cpu_velocion_threadkiller_2990wx", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.STR4, 32, 3000, 250,
+                    false).on(Microarchitectures.WAY_1_PLUS, "Colfax").withSmt())
+            .named("Velocion Threadkiller 2990WX").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_THREADKILLER_7960X =
+            cpu("cpu_velocion_threadkiller_7960x", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.STR5, 24, 4200, 350,
+                    false).on(Microarchitectures.WAY_4, "Storm Peak").withSmt())
+            .named("Velocion Threadkiller 7960X").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_THREADKILLER_7980X =
+            cpu("cpu_velocion_threadkiller_7980x", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.STR5, 64, 3200, 350,
+                    false).on(Microarchitectures.WAY_4, "Storm Peak").withSmt())
+            .named("Velocion Threadkiller 7980X").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_THREADKILLER_7995WX =
+            cpu("cpu_velocion_threadkiller_7995wx", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.STR5, 96, 2500, 350,
+                    false).on(Microarchitectures.WAY_4, "Storm Peak").withSmt())
+            .named("Velocion Threadkiller 7995WX").register();
+
+    // SP3 and SP5: the Epic, two to a server board and four to the Mainframe's.
+    public static final DeferredItem<CpuItem> CPU_VELOCION_EPIC_7251 = cpu("cpu_velocion_epic_7251",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.SP3, 8, 2100, 120, false)
+                    .on(Microarchitectures.WAY_1, "Naples").withSmt())
+            .named("Velocion Epic 7251").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_EPIC_7302 = cpu("cpu_velocion_epic_7302",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.SP3, 16, 3000, 155, false)
+                    .on(Microarchitectures.WAY_2, "Rome").withSmt())
+            .named("Velocion Epic 7302").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_EPIC_7452 = cpu("cpu_velocion_epic_7452",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.SP3, 32, 2350, 155, false)
+                    .on(Microarchitectures.WAY_2, "Rome").withSmt())
+            .named("Velocion Epic 7452").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_EPIC_7763 = cpu("cpu_velocion_epic_7763",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.SP3, 64, 2450, 280, false)
+                    .on(Microarchitectures.WAY_3, "Milan").withSmt())
+            .named("Velocion Epic 7763").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_EPIC_9124 = cpu("cpu_velocion_epic_9124",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.SP5, 16, 3000, 200, false)
+                    .on(Microarchitectures.WAY_4, "Genoa").withSmt())
+            .named("Velocion Epic 9124").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_EPIC_9374F = cpu("cpu_velocion_epic_9374f",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.SP5, 32, 3850, 320, false)
+                    .on(Microarchitectures.WAY_4, "Genoa").withSmt())
+            .named("Velocion Epic 9374F").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_EPIC_9654 = cpu("cpu_velocion_epic_9654",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.SP5, 96, 2400, 360, false)
+                    .on(Microarchitectures.WAY_4, "Genoa").withSmt())
+            .named("Velocion Epic 9654").register();
+
+    // LGA 3647: the Servo Bronzo, Plata, Oro and Platina of the first scalable servers, and the W-3175X.
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_BRONZO_3106 = cpu("cpu_integra_servo_bronzo_3106",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_3647, 8, 1700, 85, false)
+                    .on(Microarchitectures.SKYLAKE_SP, ""))
+            .named("Integra Servo Bronzo 3106").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_PLATA_4114 = cpu("cpu_integra_servo_plata_4114",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_3647, 10, 2200, 85, false)
+                    .on(Microarchitectures.SKYLAKE_SP, "").withSmt())
+            .named("Integra Servo Plata 4114").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_ORO_6148 = cpu("cpu_integra_servo_oro_6148",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_3647, 20, 2400, 150, false)
+                    .on(Microarchitectures.SKYLAKE_SP, "").withSmt())
+            .named("Integra Servo Oro 6148").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_PLATINA_8180 = cpu("cpu_integra_servo_platina_8180",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_3647, 28, 2500, 205, false)
+                    .on(Microarchitectures.SKYLAKE_SP, "").withSmt())
+            .named("Integra Servo Platina 8180").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_W_3175X = cpu("cpu_integra_servo_w_3175x",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_3647, 28, 3100, 255, false)
+                    .on(Microarchitectures.SKYLAKE_SP, "").withSmt())
+            .named("Integra Servo W-3175X").register();
+
+    // LGA 4189: Ice Lake-SP, and the Cooper Lake Platina 8380H of the four-way boards.
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_PLATA_4314 = cpu("cpu_integra_servo_plata_4314",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_4189, 16, 2400, 135, false)
+                    .on(Microarchitectures.ICE_LAKE_SP, "").withSmt())
+            .named("Integra Servo Plata 4314").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_PLATINA_8352Y =
+            cpu("cpu_integra_servo_platina_8352y", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_4189, 32, 2200,
+                    205, false).on(Microarchitectures.ICE_LAKE_SP, "").withSmt())
+            .named("Integra Servo Platina 8352Y").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_PLATINA_8380H =
+            cpu("cpu_integra_servo_platina_8380h", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_4189, 28, 2900,
+                    250, false).on(Microarchitectures.COOPER_LAKE, "").withSmt())
+            .named("Integra Servo Platina 8380H").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_PLATINA_8380 = cpu("cpu_integra_servo_platina_8380",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_4189, 40, 2300, 270, false)
+                    .on(Microarchitectures.ICE_LAKE_SP, "").withSmt())
+            .named("Integra Servo Platina 8380").register();
+
+    // LGA 4677: Sapphire and Emerald Rapids, and the w9-3495X of the W790 workstation.
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_PLATA_4410Y = cpu("cpu_integra_servo_plata_4410y",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_4677, 12, 2000, 150, false)
+                    .on(Microarchitectures.SAPPHIRE_RAPIDS, "").withSmt())
+            .named("Integra Servo Plata 4410Y").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_ORO_6442Y = cpu("cpu_integra_servo_oro_6442y",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_4677, 24, 2600, 225, false)
+                    .on(Microarchitectures.SAPPHIRE_RAPIDS, "").withSmt())
+            .named("Integra Servo Oro 6442Y").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_W9_3495X = cpu("cpu_integra_servo_w9_3495x",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_4677, 56, 1900, 350, false)
+                    .on(Microarchitectures.SAPPHIRE_RAPIDS, "").withSmt())
+            .named("Integra Servo w9-3495X").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_PLATINA_8490H =
+            cpu("cpu_integra_servo_platina_8490h", new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_4677, 60, 1900,
+                    350, false).on(Microarchitectures.SAPPHIRE_RAPIDS, "").withSmt())
+            .named("Integra Servo Platina 8490H").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_PLATINA_8592 = cpu("cpu_integra_servo_platina_8592",
+            new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_4677, 64, 1900, 350, false)
+                    .on(Microarchitectures.EMERALD_RAPIDS, "").withSmt())
+            .named("Integra Servo Platina 8592+").register();
+
+    /*
+     * Advanced memory: DDR4 for the AM4, LGA 1151, 1200, 2066, sTR4, SP3, 3647 and 4189 boards, DDR5 for the AM5,
+     * LGA 1851, sTR5, SP5 and 4677 ones, and either on the LGA 1700 board; the registered modules are the servers'.
+     */
+    public static final DeferredItem<RamItem> RAM_DDR4_8192 = ram("ram_ddr4_8192",
+            new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR4, 2048, 12))
+            .named("Stratix Layer DDR4-8192").register();
+    public static final DeferredItem<RamItem> RAM_DDR4_16384 = ram("ram_ddr4_16384",
+            new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR4, 4096, 13))
+            .named("Stratix Layer DDR4-16384").register();
+    public static final DeferredItem<RamItem> RAM_DDR4_32768 = ram("ram_ddr4_32768",
+            new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR4, 8192, 15))
+            .named("Stratix Layer DDR4-32768").register();
+    public static final DeferredItem<RamItem> RAM_DDR4_65536_RDIMM = ram("ram_ddr4_65536_rdimm",
+            new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR4, 16384, 18))
+            .named("Stratix Layer DDR4-65536 RDIMM").register();
+    public static final DeferredItem<RamItem> RAM_DDR5_16384 = ram("ram_ddr5_16384",
+            new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR5, 4096, 12))
+            .named("Stratix Layer DDR5-16384").register();
+    public static final DeferredItem<RamItem> RAM_DDR5_32768 = ram("ram_ddr5_32768",
+            new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR5, 8192, 14))
+            .named("Stratix Layer DDR5-32768").register();
+    public static final DeferredItem<RamItem> RAM_DDR5_65536_RDIMM = ram("ram_ddr5_65536_rdimm",
+            new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR5, 16384, 18))
+            .named("Stratix Layer DDR5-65536 RDIMM").register();
+    public static final DeferredItem<RamItem> RAM_DDR5_131072_RDIMM = ram("ram_ddr5_131072_rdimm",
+            new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR5, 32768, 22))
+            .named("Stratix Layer DDR5-131072 RDIMM").register();
+
+    // The Advanced power supplies: the desktop PowerGold and PowerPlat, and the hot-swap server modules.
+    public static final DeferredItem<PsuItem> PSU_1000G =
+            psu("psu_1000g", new PsuSpec(1000, 90)).named("MF PowerGold 1000G").register();
+    public static final DeferredItem<PsuItem> PSU_1200P =
+            psu("psu_1200p", new PsuSpec(1200, 92)).named("MF PowerPlat 1200P").register();
+    public static final DeferredItem<PsuItem> PSU_1600P =
+            psu("psu_1600p", new PsuSpec(1600, 92)).named("MF PowerPlat 1600P").register();
+    public static final DeferredItem<PsuItem> PSU_2000P =
+            psu("psu_2000p", new PsuSpec(2000, 94)).named("MF ServerPSU 2000P").register();
+    public static final DeferredItem<PsuItem> PSU_3000P =
+            psu("psu_3000p", new PsuSpec(3000, 94)).named("MF ServerPSU 3000P (Redundant)").register();
+
+    /*
+     * The Advanced ATX boards, one per socket, on the bus of their chipsets: PCIe 3.0 on LGA 1151 and 1200, 4.0 on
+     * AM4, 5.0 on AM5, LGA 1700 and 1851. The LGA 1700 board takes DDR4 or DDR5, as the boards of its socket did.
+     */
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_ADVANCED_AM4 =
+            board("motherboard_atx_advanced_am4", new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED,
+                    CpuSocketId.AM4, 1, Set.of(RamGeneration.DDR4), 4, PcieGeneration.PCIE_4_0, 4, 2, 4))
+                    .named("MF ATX Advanced Motherboard (AM4)").register();
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_ADVANCED_AM5 =
+            board("motherboard_atx_advanced_am5", new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED,
+                    CpuSocketId.AM5, 1, Set.of(RamGeneration.DDR5), 4, PcieGeneration.PCIE_5_0, 4, 2, 4))
+                    .named("MF ATX Advanced Motherboard (AM5)").register();
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_ADVANCED_1151 =
+            board("motherboard_atx_advanced_1151", new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED,
+                    CpuSocketId.LGA_1151, 1, Set.of(RamGeneration.DDR4), 4, PcieGeneration.PCIE_3_0, 4, 2, 4))
+                    .named("MF ATX Advanced Motherboard (LGA 1151)").register();
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_ADVANCED_1200 =
+            board("motherboard_atx_advanced_1200", new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED,
+                    CpuSocketId.LGA_1200, 1, Set.of(RamGeneration.DDR4), 4, PcieGeneration.PCIE_3_0, 4, 2, 4))
+                    .named("MF ATX Advanced Motherboard (LGA 1200)").register();
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_ADVANCED_1700 =
+            board("motherboard_atx_advanced_1700", new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED,
+                    CpuSocketId.LGA_1700, 1, Set.of(RamGeneration.DDR4, RamGeneration.DDR5), 4,
+                    PcieGeneration.PCIE_5_0, 4, 2, 4))
+                    .named("MF ATX Advanced Motherboard (LGA 1700)").register();
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_ADVANCED_1851 =
+            board("motherboard_atx_advanced_1851", new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED,
+                    CpuSocketId.LGA_1851, 1, Set.of(RamGeneration.DDR5), 4, PcieGeneration.PCIE_5_0, 4, 2, 4))
+                    .named("MF ATX Advanced Motherboard (LGA 1851)").register();
+    // The workstation boards.
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_ADVANCED_2066 =
+            board("motherboard_eatx_advanced_2066", new MotherboardSpec(FormFactor.EATX, HardwareEra.ADVANCED,
+                    CpuSocketId.LGA_2066, 1, Set.of(RamGeneration.DDR4), 8, PcieGeneration.PCIE_3_0, 7, 4, 4))
+                    .named("MF EATX Advanced WS Motherboard (LGA 2066)").register();
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_ADVANCED_STR4 =
+            board("motherboard_eatx_advanced_str4", new MotherboardSpec(FormFactor.EATX, HardwareEra.ADVANCED,
+                    CpuSocketId.STR4, 1, Set.of(RamGeneration.DDR4), 8, PcieGeneration.PCIE_3_0, 7, 4, 4))
+                    .named("MF EATX Advanced WS Motherboard (sTR4)").register();
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_ADVANCED_STR5 =
+            board("motherboard_eatx_advanced_str5", new MotherboardSpec(FormFactor.EATX, HardwareEra.ADVANCED,
+                    CpuSocketId.STR5, 1, Set.of(RamGeneration.DDR5), 8, PcieGeneration.PCIE_5_0, 7, 4, 4))
+                    .named("MF EATX Advanced WS Motherboard (sTR5)").register();
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_ADVANCED_4677 =
+            board("motherboard_eatx_advanced_4677", new MotherboardSpec(FormFactor.EATX, HardwareEra.ADVANCED,
+                    CpuSocketId.LGA_4677, 1, Set.of(RamGeneration.DDR5), 8, PcieGeneration.PCIE_5_0, 7, 4, 4))
+                    .named("MF EATX Advanced WS Motherboard (LGA 4677)").register();
+    // The two-way server boards.
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_A_SP3 =
+            board("motherboard_eeb_a_sp3", new MotherboardSpec(FormFactor.EEB, HardwareEra.ADVANCED,
+                    CpuSocketId.SP3, 2, Set.of(RamGeneration.DDR4), 16, PcieGeneration.PCIE_4_0, 6, 6, 6))
+                    .named("MF EEB-A Server Board (2x SP3)").register();
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_A_SP5 =
+            board("motherboard_eeb_a_sp5", new MotherboardSpec(FormFactor.EEB, HardwareEra.ADVANCED,
+                    CpuSocketId.SP5, 2, Set.of(RamGeneration.DDR5), 24, PcieGeneration.PCIE_5_0, 6, 6, 6))
+                    .named("MF EEB-A Server Board (2x SP5)").register();
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_A_3647 =
+            board("motherboard_eeb_a_3647", new MotherboardSpec(FormFactor.EEB, HardwareEra.ADVANCED,
+                    CpuSocketId.LGA_3647, 2, Set.of(RamGeneration.DDR4), 16, PcieGeneration.PCIE_3_0, 6, 6, 6))
+                    .named("MF EEB-A Server Board (2x LGA 3647)").register();
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_A_4189 =
+            board("motherboard_eeb_a_4189", new MotherboardSpec(FormFactor.EEB, HardwareEra.ADVANCED,
+                    CpuSocketId.LGA_4189, 2, Set.of(RamGeneration.DDR4), 16, PcieGeneration.PCIE_4_0, 6, 6, 6))
+                    .named("MF EEB-A Server Board (2x LGA 4189)").register();
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_A_4677 =
+            board("motherboard_eeb_a_4677", new MotherboardSpec(FormFactor.EEB, HardwareEra.ADVANCED,
+                    CpuSocketId.LGA_4677, 2, Set.of(RamGeneration.DDR5), 16, PcieGeneration.PCIE_5_0, 6, 6, 6))
+                    .named("MF EEB-A Server Board (2x LGA 4677)").register();
+    /*
+     * The Mainframe's four-way boards: real four-socket Xeon boards on LGA 3647 and 4189, and four Epics on SP3 and
+     * SP5, which no board of the time held; the Mainframe is the machine's own design.
+     */
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_A_SP3 =
+            board("motherboard_mtx_a_sp3", new MotherboardSpec(FormFactor.MTX, HardwareEra.ADVANCED,
+                    CpuSocketId.SP3, 4, Set.of(RamGeneration.DDR4), 64, PcieGeneration.PCIE_4_0, 8, 6, 8))
+                    .named("MF MTX-A Motherboard (4x SP3)").register();
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_A_SP5 =
+            board("motherboard_mtx_a_sp5", new MotherboardSpec(FormFactor.MTX, HardwareEra.ADVANCED,
+                    CpuSocketId.SP5, 4, Set.of(RamGeneration.DDR5), 64, PcieGeneration.PCIE_5_0, 8, 6, 8))
+                    .named("MF MTX-A Motherboard (4x SP5)").register();
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_A_3647 =
+            board("motherboard_mtx_a_3647", new MotherboardSpec(FormFactor.MTX, HardwareEra.ADVANCED,
+                    CpuSocketId.LGA_3647, 4, Set.of(RamGeneration.DDR4), 48, PcieGeneration.PCIE_3_0, 8, 6, 8))
+                    .named("MF MTX-A Motherboard (4x LGA 3647)").register();
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_A_4189 =
+            board("motherboard_mtx_a_4189", new MotherboardSpec(FormFactor.MTX, HardwareEra.ADVANCED,
+                    CpuSocketId.LGA_4189, 4, Set.of(RamGeneration.DDR4), 48, PcieGeneration.PCIE_3_0, 8, 6, 8))
+                    .named("MF MTX-A Motherboard (4x LGA 4189)").register();
+
     /*
      * The sound cards: one for each bus the boards of their era have. The ones of an era sound the same and differ
      * in the slot they take and how they look. The Vintage ones are really lo-fi, eight bits in one channel at 22

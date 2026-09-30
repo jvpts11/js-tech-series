@@ -108,8 +108,8 @@ class HardcodedTextTest {
                     "a category's id, which a saved filter keeps; what it reads as is translated"),
             data(COMPUTERS + "client/os/TtyChrome.java", 1, "the mode line of a period editor, as the editor drew it"),
             data(COMPUTERS + "client/theme/MonitorFrameStyle.java", 1, "a monitor's model name on its bezel"),
-            data(COMPUTERS + "HardwareItems.java", 3,
-                    "the codenames of real chips (Santa Rosa, Abu Dhabi, Cape Verde), which are names in every"
+            data(COMPUTERS + "HardwareItems.java", 11,
+                    "the codenames of real chips (Santa Rosa, Summit Ridge, Storm Peak), which are names in every"
                             + " language"),
             data(COMPUTERS + "hardware/Microarchitectures.java", 13,
                     "the names of chip designs (Sandy Bridge, Alder Lake), which are names in every language"),

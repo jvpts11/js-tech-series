@@ -10,7 +10,9 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.Microarchitectures;
+import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.GpuItem;
 import dev.jstech.computers.os.MinSpecTooltip;
@@ -55,6 +57,26 @@ public final class HardwareTooltipGameTests {
         helper.assertTrue(HardwareEra.VINTAGE.screenColor() != HardwareEra.LEGACY.screenColor()
                         && HardwareEra.LEGACY.screenColor() != HardwareEra.STANDARD.screenColor(),
                 "the three eras tell apart by colour");
+        helper.succeed();
+    }
+
+    /** A disk belongs to the years it sold in, which a kind and a size decide together. */
+    @GameTest(template = ARENA)
+    public static void disks_wearTheEraOfTheYearsTheySoldIn(final GameTestHelper helper) {
+        assertEraColour(helper, disk(StorageTier.HDD, DiskSize.TB_2), HardwareEra.TRANSITION);
+        assertEraColour(helper, disk(StorageTier.HDD, DiskSize.TB_8), HardwareEra.STANDARD);
+        assertEraColour(helper, disk(StorageTier.HDD, DiskSize.TB_12), HardwareEra.ADVANCED);
+        assertEraColour(helper, disk(StorageTier.SSD, DiskSize.TB_4), HardwareEra.STANDARD);
+        assertEraColour(helper, disk(StorageTier.SSD, DiskSize.TB_8), HardwareEra.ADVANCED);
+        assertEraColour(helper, disk(StorageTier.NVME, DiskSize.TB_2), HardwareEra.STANDARD);
+        assertEraColour(helper, disk(StorageTier.NVME, DiskSize.TB_4), HardwareEra.ADVANCED);
+        boolean flashOf12 = true;
+        try {
+            ComputingModule.disk(StorageTier.SSD, DiskSize.TB_12);
+        } catch (final IllegalArgumentException none) {
+            flashOf12 = false;
+        }
+        helper.assertFalse(flashOf12, "the sizes above 8 TB are hard disks only");
         helper.succeed();
     }
 
@@ -183,6 +205,10 @@ public final class HardwareTooltipGameTests {
         }
         helper.fail(stack.getHoverName().getString() + " says nothing of '" + text + "'; it says "
                 + tooltip.stream().map(Component::getString).toList());
+    }
+
+    private static ItemStack disk(final StorageTier tier, final DiskSize size) {
+        return new ItemStack(ComputingModule.disk(tier, size));
     }
 
     private static void assertEraColour(final GameTestHelper helper, final ItemStack stack, final HardwareEra era) {

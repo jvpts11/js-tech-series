@@ -612,6 +612,9 @@ public final class ComputingModule {
         final List<DiskEntry> disks = new ArrayList<>();
         for (final StorageTier tier : StorageTier.values()) {
             for (final DiskSize size : DiskSize.values()) {
+                if (!size.comesAs(tier)) {
+                    continue;
+                }
                 final String id = "disk_" + tier.name().toLowerCase(Locale.ROOT) + "_" + size.id();
                 disks.add(new DiskEntry(tier, size, CONTENT.item(id, properties -> new DiskItem(properties,
                                 new DiskSpec(tier, diskEra(tier, size), size.capacityItems(), tier.tdpWatts())))
@@ -621,10 +624,22 @@ public final class ComputingModule {
         return List.copyOf(disks);
     }
 
-    /** The hard disks up to 2 TB are the Transition's, the years they sold; the rest of the grid is Standard. */
+    /*
+     * Each disk belongs to the years it sold in: the hard disks up to 2 TB to the Transition and the helium ones above
+     * 8 TB to the Advanced, the SATA SSD of 8 TB and the NVMe drives from 4 TB to the Advanced as well, and the rest of
+     * the grid to the Standard.
+     */
     private static HardwareEra diskEra(final StorageTier tier, final DiskSize size) {
-        return tier == StorageTier.HDD && size.capacityItems() <= DiskSize.TB_2.capacityItems()
-                ? HardwareEra.TRANSITION : HardwareEra.STANDARD;
+        final long items = size.capacityItems();
+        final long lastStandard = switch (tier) {
+            case HDD -> DiskSize.TB_8.capacityItems();
+            case SSD -> DiskSize.TB_4.capacityItems();
+            case NVME -> DiskSize.TB_2.capacityItems();
+        };
+        if (tier == StorageTier.HDD && items <= DiskSize.TB_2.capacityItems()) {
+            return HardwareEra.TRANSITION;
+        }
+        return items <= lastStandard ? HardwareEra.STANDARD : HardwareEra.ADVANCED;
     }
 
     private static BlockBehaviour.Properties cableProperties(final BlockBehaviour.Properties properties) {

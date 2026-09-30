@@ -406,6 +406,60 @@ class PerEraBuildTest {
                 List.of(servo, servo, servo, servo), List.of(), List.of(rdimm, rdimm), psu(850)).isPowered());
     }
 
+    /*
+     * Advanced: DDR4 begins here and DDR5 follows it; the LGA 1700 board takes either, a hybrid processor counts its
+     * efficiency cores, and the Mainframe's four Epics on SP5 need the server supplies.
+     */
+
+    private static MotherboardSpec advancedBoard(final CpuSocketId socket, final Set<RamGeneration> ram,
+                                                 final int sockets) {
+        return new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED, socket, sockets, ram, 16,
+                PcieGeneration.PCIE_5_0, 4, 2, 4);
+    }
+
+    private static RamSpec ddr4() {
+        return new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR4, 4096, 13);
+    }
+
+    private static RamSpec ddr5() {
+        return new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR5, 8192, 14);
+    }
+
+    @Test
+    void advancedAm4Build_onDdr4_isPowered() {
+        final CpuSpec awayken = new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM4, 6, 3600, 65, false);
+        assertTrue(build(advancedBoard(CpuSocketId.AM4, Set.of(RamGeneration.DDR4), 1), awayken, ddr4(), psu(650))
+                .isPowered());
+    }
+
+    @Test
+    void advancedAm5Board_refusesDdr4() {
+        final CpuSpec awayken = new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.AM5, 8, 4500, 105, false);
+        final MotherboardSpec board = advancedBoard(CpuSocketId.AM5, Set.of(RamGeneration.DDR5), 1);
+        assertTrue(build(board, awayken, ddr5(), psu(850)).isPowered());
+        assertFalse(build(board, awayken, ddr4(), psu(850)).isPowered());
+    }
+
+    @Test
+    void advancedHybridBuild_onLga1700_takesDdr4OrDdr5() {
+        final CpuSpec centro = new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.LGA_1700, 8, 3000, 125, false)
+                .on(Microarchitectures.RAPTOR_LAKE, "").withSmt()
+                .withEfficiencyCores(16, 2200, Microarchitectures.GRACEMONT);
+        final MotherboardSpec board = advancedBoard(CpuSocketId.LGA_1700,
+                Set.of(RamGeneration.DDR4, RamGeneration.DDR5), 1);
+        assertTrue(build(board, centro, ddr4(), psu(850)).isPowered());
+        assertTrue(build(board, centro, ddr5(), psu(850)).isPowered());
+    }
+
+    @Test
+    void advancedMainframeBuild_fourEpicsOnSp5_isPowered() {
+        final CpuSpec epic = new CpuSpec(HardwareEra.ADVANCED, CpuSocketId.SP5, 96, 2400, 360, false);
+        final RamSpec rdimm = new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR5, 32768, 22);
+        assertTrue(new ComputerBuild(advancedBoard(CpuSocketId.SP5, Set.of(RamGeneration.DDR5), 4),
+                List.of(epic, epic, epic, epic), List.of(), List.of(rdimm, rdimm), new PsuSpec(3000, 94))
+                .isPowered());
+    }
+
     // Sound cards
 
     private static SoundCardSpec soundCard(final HardwareEra era, final PcieGeneration bus) {

@@ -179,6 +179,56 @@ public final class CatalogRulerGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = ARENA)
+    public static void advancedDesktopProcessors_climbTheirLadderInEverySocket(final GameTestHelper helper) {
+        assertProcessorsClimb(helper, "AM4", List.of(HardwareItems.CPU_VELOCION_SPRINT_200GE,
+                HardwareItems.CPU_VELOCION_AWAYKEN_3_3200G, HardwareItems.CPU_VELOCION_AWAYKEN_5_1600,
+                HardwareItems.CPU_VELOCION_AWAYKEN_5_3600, HardwareItems.CPU_VELOCION_AWAYKEN_7_1800X,
+                HardwareItems.CPU_VELOCION_AWAYKEN_7_5800X3D, HardwareItems.CPU_VELOCION_AWAYKEN_9_3900X,
+                HardwareItems.CPU_VELOCION_AWAYKEN_9_5900X, HardwareItems.CPU_VELOCION_AWAYKEN_9_5950X));
+        assertProcessorsClimb(helper, "AM5", List.of(HardwareItems.CPU_VELOCION_AWAYKEN_5_7600,
+                HardwareItems.CPU_VELOCION_AWAYKEN_7_7700X, HardwareItems.CPU_VELOCION_AWAYKEN_7_9800X3D,
+                HardwareItems.CPU_VELOCION_AWAYKEN_9_7950X, HardwareItems.CPU_VELOCION_AWAYKEN_9_9950X));
+        assertProcessorsClimb(helper, "LGA 1151", List.of(HardwareItems.CPU_INTEGRA_PENTIX_G4560,
+                HardwareItems.CPU_INTEGRA_CENTRO_C3_8100, HardwareItems.CPU_INTEGRA_CENTRO_C5_8400,
+                HardwareItems.CPU_INTEGRA_CENTRO_C7_8700K, HardwareItems.CPU_INTEGRA_CENTRO_C9_9900K));
+        assertProcessorsClimb(helper, "LGA 1200", List.of(HardwareItems.CPU_INTEGRA_CENTRO_C3_10100,
+                HardwareItems.CPU_INTEGRA_CENTRO_C5_10400, HardwareItems.CPU_INTEGRA_CENTRO_C9_10900K));
+        assertProcessorsClimb(helper, "LGA 1700", List.of(HardwareItems.CPU_INTEGRA_CENTRO_C3_12100,
+                HardwareItems.CPU_INTEGRA_CENTRO_C5_12400, HardwareItems.CPU_INTEGRA_CENTRO_C5_13600K,
+                HardwareItems.CPU_INTEGRA_CENTRO_C9_12900K, HardwareItems.CPU_INTEGRA_CENTRO_C9_13900K,
+                HardwareItems.CPU_INTEGRA_CENTRO_C9_13900KS));
+        assertProcessorsClimb(helper, "LGA 1851", List.of(HardwareItems.CPU_INTEGRA_CENTRO_ULTRA_C5_225,
+                HardwareItems.CPU_INTEGRA_CENTRO_ULTRA_C5_245K, HardwareItems.CPU_INTEGRA_CENTRO_ULTRA_C7_265K,
+                HardwareItems.CPU_INTEGRA_CENTRO_ULTRA_C9_285K));
+        assertProcessorsClimb(helper, "LGA 2066", List.of(HardwareItems.CPU_INTEGRA_CENTRO_C9_7900X,
+                HardwareItems.CPU_INTEGRA_CENTRO_C9_7980XE, HardwareItems.CPU_INTEGRA_CENTRO_C9_10980XE));
+        assertProcessorsClimb(helper, "sTR4", List.of(HardwareItems.CPU_VELOCION_THREADKILLER_1920X,
+                HardwareItems.CPU_VELOCION_THREADKILLER_1950X, HardwareItems.CPU_VELOCION_THREADKILLER_2990WX));
+        assertProcessorsClimb(helper, "sTR5", List.of(HardwareItems.CPU_VELOCION_THREADKILLER_7960X,
+                HardwareItems.CPU_VELOCION_THREADKILLER_7980X, HardwareItems.CPU_VELOCION_THREADKILLER_7995WX));
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void advancedServerProcessors_climbTheirLadderInEverySocket(final GameTestHelper helper) {
+        assertProcessorsClimb(helper, "SP3", List.of(HardwareItems.CPU_VELOCION_EPIC_7251,
+                HardwareItems.CPU_VELOCION_EPIC_7302, HardwareItems.CPU_VELOCION_EPIC_7452,
+                HardwareItems.CPU_VELOCION_EPIC_7763));
+        assertProcessorsClimb(helper, "SP5", List.of(HardwareItems.CPU_VELOCION_EPIC_9124,
+                HardwareItems.CPU_VELOCION_EPIC_9374F, HardwareItems.CPU_VELOCION_EPIC_9654));
+        assertProcessorsClimb(helper, "LGA 3647", List.of(HardwareItems.CPU_INTEGRA_SERVO_BRONZO_3106,
+                HardwareItems.CPU_INTEGRA_SERVO_PLATA_4114, HardwareItems.CPU_INTEGRA_SERVO_ORO_6148,
+                HardwareItems.CPU_INTEGRA_SERVO_PLATINA_8180, HardwareItems.CPU_INTEGRA_SERVO_W_3175X));
+        assertProcessorsClimb(helper, "LGA 4189", List.of(HardwareItems.CPU_INTEGRA_SERVO_PLATA_4314,
+                HardwareItems.CPU_INTEGRA_SERVO_PLATINA_8352Y, HardwareItems.CPU_INTEGRA_SERVO_PLATINA_8380H,
+                HardwareItems.CPU_INTEGRA_SERVO_PLATINA_8380));
+        assertProcessorsClimb(helper, "LGA 4677", List.of(HardwareItems.CPU_INTEGRA_SERVO_PLATA_4410Y,
+                HardwareItems.CPU_INTEGRA_SERVO_ORO_6442Y, HardwareItems.CPU_INTEGRA_SERVO_W9_3495X,
+                HardwareItems.CPU_INTEGRA_SERVO_PLATINA_8490H, HardwareItems.CPU_INTEGRA_SERVO_PLATINA_8592));
+        helper.succeed();
+    }
+
     private static void assertCardsClimb(final GameTestHelper helper, final String ladderName,
                                          final List<DeferredItem<GpuItem>> ladder) {
         for (int i = 1; i < ladder.size(); i++) {

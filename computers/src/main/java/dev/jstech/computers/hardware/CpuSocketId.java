@@ -46,15 +46,22 @@ public record CpuSocketId(String id) {
     public static final CpuSocketId AM3_PLUS = own("am3_plus");
     public static final CpuSocketId FM2_PLUS = own("fm2_plus");
     public static final CpuSocketId G34 = own("g34");
-    public static final CpuSocketId AM4 = own("am4");
     public static final CpuSocketId LGA_1150 = own("lga_1150");
-    public static final CpuSocketId LGA_1700 = own("lga_1700");
     public static final CpuSocketId LGA_2011 = own("lga_2011");
-    public static final CpuSocketId LGA_4189 = own("lga_4189");
-    public static final CpuSocketId LGA_4677 = own("lga_4677");
+    public static final CpuSocketId AM4 = own("am4");
+    public static final CpuSocketId AM5 = own("am5");
+    public static final CpuSocketId LGA_1151 = own("lga_1151");
+    public static final CpuSocketId LGA_1200 = own("lga_1200");
+    public static final CpuSocketId LGA_1700 = own("lga_1700");
+    public static final CpuSocketId LGA_1851 = own("lga_1851");
+    public static final CpuSocketId LGA_2066 = own("lga_2066");
+    public static final CpuSocketId STR4 = own("str4");
+    public static final CpuSocketId STR5 = own("str5");
     public static final CpuSocketId SP3 = own("sp3");
     public static final CpuSocketId SP5 = own("sp5");
-    public static final CpuSocketId STR5 = own("str5");
+    public static final CpuSocketId LGA_3647 = own("lga_3647");
+    public static final CpuSocketId LGA_4189 = own("lga_4189");
+    public static final CpuSocketId LGA_4677 = own("lga_4677");
     public static final CpuSocketId SOCKET_Q = own("socket_q");
     public static final CpuSocketId SOCKET_EM = own("socket_em");
 
