@@ -25,8 +25,6 @@ import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.RequestDiskFilesPayload;
 import dev.jstech.computers.operation.payload.MachinePowerPayload;
-import dev.jstech.computers.operation.payload.NiDepositPayload;
-import dev.jstech.computers.operation.payload.NiShiftInsertPayload;
 import dev.jstech.computers.operation.payload.RequestDesktopFilesPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
@@ -50,7 +48,6 @@ import dev.jstech.core.gui.layout.DesktopZ;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
-import java.util.Optional;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -61,7 +58,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.client.event.ContainerScreenEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -382,17 +378,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** The key of the Workstation Info window, which a test reads. */
     private static final String WORKSTATION_INFO_KEY =
             WindowKeys.of(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "workstation_info"));
-    private int selectedIcon = -1;
-    private long iconClickAt;
-    @Nullable
-    private DesktopWindow dragging;
-    @Nullable
-    private DesktopWindow resizing;
-    // The window whose title-bar button is currently held down (pushed-in until release).
-    @Nullable
-    private DesktopWindow pressedBtnWindow;
-    private int dragOffsetX;
-    private int dragOffsetY;
 
     /** The currently shown desktop is the one that receives desktop-folder listing replies. */
     @Nullable
@@ -415,6 +400,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     private final InventoryBand band = new InventoryBand(this);
     /** An icon or a file being dragged across the wallpaper, and the rubber band swept over it. */
     private final DesktopDrags drags = new DesktopDrags(this);
+    /** Where the pointer and the keyboard go, layer by layer. */
+    private final DesktopInput input = new DesktopInput(this);
 
     static final int TASKBAR_H = 24;
 
@@ -743,14 +730,51 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return catalogue.installed();
     }
 
-    /** The icon a click has picked, which shows its whole name, or -1 while none is picked. */
-    int pickedIcon() {
-        return selectedIcon;
+    /** Where the pointer and the keyboard go, and the icon a click has picked. */
+    DesktopInput input() {
+        return input;
     }
 
     /** An icon or a file being dragged across the wallpaper, and the rubber band swept over it. */
     DesktopDrags drags() {
         return drags;
+    }
+
+    /** The player's inventory, laid over the window in front when its program has an inventory zone. */
+    InventoryBand band() {
+        return band;
+    }
+
+    /** The volume control the speaker on the panel opens. */
+    VolumePopup volume() {
+        return volumePopup;
+    }
+
+    /** The panel's own menu. */
+    PanelMenu panelMenu() {
+        return panelMenu;
+    }
+
+    /** CDE's Front Panel, the subpanels that rise out of it, a window's menu and the icons of windows put away. */
+    CdePanels cdePanels() {
+        return cdePanels;
+    }
+
+    CdeLaunchers cdeLaunchers() {
+        return cdeLaunchers;
+    }
+
+    CdeWindowMenu cdeWindowMenu() {
+        return cdeWindowMenu;
+    }
+
+    CdeWindowIcons cdeWindowIcons() {
+        return cdeWindowIcons;
+    }
+
+    /** The monitor this desktop is shown on. */
+    BlockPos monitorPos() {
+        return monitorPos;
     }
 
     /** The icons on the wallpaper: where each one sits, what it looks like, and which ones are picked. */
@@ -774,11 +798,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     String deskDir() {
         return desktopDir;
-    }
-
-    /** Picks an icon, which is what a fresh file does so its name is ready to be typed over. */
-    void pickIcon(final int slot) {
-        selectedIcon = slot;
     }
 
     /**
@@ -2038,21 +2057,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         DesktopRequests.open(new OpenRequest.Properties(path));
     }
 
-    /** A click on a live balloon: it takes the click, and opens the program it offers when it offers one. */
-    private boolean balloonClick(final double mx, final double my, final int tbY, final int sw) {
-        final String opens = notices.clickBalloon(mx, my, tbY, sw);
-        if (opens == null) {
-            return false;
-        }
-        if (!opens.isEmpty()) {
-            final IDesktopApp app = opener.factoryFor(opens);
-            if (app != null) {
-                wm.open(opens, app);
-            }
-        }
-        return true;
-    }
-
     /** Whether the host computer is on a data network right now, as its block entity tells the client. */
     private boolean networkAttached() {
         final Level level = Minecraft.getInstance().level;
@@ -2066,7 +2070,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     }
 
     /** Whether a desktop-local point is on the bottom panel's Start button. */
-    private boolean startButtonHit(final double mx, final double my, final int tbY) {
+    boolean startButtonHit(final double mx, final double my, final int tbY) {
         return framesPanels.startButtonHit(mx, my, tbY);
     }
 
@@ -2121,639 +2125,53 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         PacketDistributor.sendToServer(new MachinePowerPayload(host, monitorPos, action));
     }
 
-    /**
-     * A click travels down the desktop one layer at a time: whatever is modal takes it first, then the
-     * panel, then the windows, then the wallpaper and its icons, and only what nothing claimed reaches the
-     * container underneath. Each layer below says whether it took the click, so the order they are tried in
-     * is the whole of the routing and reads in one place.
-     */
+    /** A click goes down the desktop one layer at a time; only what nothing on it claimed reaches the container. */
     @Override
     public boolean mouseClicked(final double mouseXAbs, final double mouseYAbs, final int button) {
-        if (memory.crashing()) {
-            return true; // the crash screen swallows input until the reboot completes
-        }
-        if (clickedOverlay(mouseXAbs, mouseYAbs, button)) {
-            return true;
-        }
-        final double mouseX = view.localX(mouseXAbs);
-        final double mouseY = view.localY(mouseYAbs);
-        final int tbY = view.height() - view.panelBand();
-        if (clickedPanel(mouseX, mouseY, button, tbY)) {
-            return true;
-        }
-        final Click inWindow = clickedWindow(mouseXAbs, mouseYAbs, mouseX, mouseY, button);
-        if (inWindow == Click.TAKEN) {
-            return true;
-        }
-        if (inWindow == Click.CONTAINER || clickedDesktop(mouseX, mouseY, button) == Click.CONTAINER) {
-            return super.mouseClicked(view.slotX(mouseXAbs), view.slotY(mouseYAbs), button);
-        }
-        return true;
-    }
-
-    /** What a layer did with a click: took it, left it for the next one, or handed it to the container. */
-    private enum Click {
-        TAKEN,
-        PASSED,
-        CONTAINER
-    }
-
-    /**
-     * Whatever is over everything else: the power dialog, an open program menu, the panel's popup, a modal
-     * dialog, and a window holding a dialog of its own. Each of these is modal in its own way, so a click
-     * reaching one goes no further down.
-     */
-    private boolean clickedOverlay(final double mouseXAbs, final double mouseYAbs, final int button) {
-        /*
-         * The power dialog is modal: it decides the fate of the whole machine, so nothing behind it
-         * takes the click. An open program menu takes the next click the same way, and the panel's
-         * popup answers a click on it or is put away by one anywhere else.
-         */
-        if (power.click(view.localX(mouseXAbs), view.localY(mouseYAbs))) {
-            return true;
-        }
-        // The volume control takes the next click like a menu: on it, it turns what it lands on; anywhere else it goes.
-        if (volumePopup.isOpen()) {
-            volumePopup.mouseClicked(view.localX(mouseXAbs), view.localY(mouseYAbs), button);
-            return true;
-        }
-        if (taskbar.menu().isOpen()) {
-            taskbar.menu().mouseClicked(view.localX(mouseXAbs), view.localY(mouseYAbs), button);
-            return true;
-        }
-        // A window's own menu on CDE takes the click too, unless it is on the very button the menu hangs from.
-        if (cdeWindowMenu.isOpen() && cdeWindowMenu.clicked(view.localX(mouseXAbs), view.localY(mouseYAbs))) {
-            return true;
-        }
-        if (taskPopup.key() != null && taskPopup.click(view.localX(mouseXAbs), view.localY(mouseYAbs), button)) {
-            return true;
-        }
-        // A modal dialog swallows every click; only its OK button dismisses it, and a click beside it rings the bell.
-        if (notices.clickPopup(view.localX(mouseXAbs), view.localY(mouseYAbs), button)) {
-            return true;
-        }
-        /*
-         * An app-level modal dialog isolates its window: route the click to it and to nothing behind it
-         * (inventory slots, other windows, the taskbar), just like the desktop popup above.
-         */
-        if (wm.focusModal()) {
-            final DesktopWindow f = wm.front();
-            if (f != null) {
-                f.app().mouseClicked(f, view.localX(mouseXAbs), view.localY(mouseYAbs), button);
-            }
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * The panel and everything that belongs to it: a balloon over it, its own menu, the Start button and an
-     * open launcher, and the row of program entries. The bar swallows any click that lands on it and misses
-     * all of those, so nothing underneath ever reacts to a click on the panel.
-     */
-    private boolean clickedPanel(final double mouseX, final double mouseY, final int button, final int tbY) {
-        // A balloon is dismissed by clicking it, and it swallows that click so nothing under it reacts.
-        if (balloonClick(mouseX, mouseY, tbY, view.width())) {
-            return true;
-        }
-
-        /*
-         * The panel's menu takes the next click wherever it lands: on an entry it runs it, anywhere else it
-         * just closes, which is what a menu does.
-         */
-        if (panelMenu.click(mouseX, mouseY)) {
-            return true;
-        }
-
-        // The speaker on the panel: the left button opens the volume control, the right one its menu.
-        if (!is(PanelStyle.CDE)
-                && tray.onSpeaker(mouseX, mouseY, view.width(), view.panelOnTop() ? 0 : tbY, view.panelOnTop())) {
-            if (button == 1) {
-                volumePopup.openMenu((int) mouseX, tbY, view.panelOnTop());
-            } else if (button == 0) {
-                volumePopup.toggle();
-            }
-            return true;
-        }
-
-        /*
-         * GNOME: the top bar's Activities corner toggles the overview; the rest of the bar is inert.
-         * Only while the bar IS at the top: a period GNOME panels at the bottom, and swallowing clicks
-         * along the top edge there ate the title bars of every window parked up there.
-         */
-        if (view.panelOnTop() && mouseY < TASKBAR_H) {
-            if (mouseX < 64) {
-                start.toggle();
-            } else if (button == 1) {
-                panelMenu.open((int) mouseX, 0);
-            }
-            return true;
-        }
-        /*
-         * CDE: the Front Panel answers for itself, and so does the subpanel standing on it. There is no Start
-         * button and no row of open programs to test, and the band either side of the slab is plain desktop.
-         */
-        if (is(PanelStyle.CDE)) {
-            // A click beside a subpanel leaves it up: only its own arrow puts it away again.
-            if (button == 0 && cdeLaunchers.click(mouseX, mouseY, view.width(), view.height())) {
-                return true;
-            }
-            // The right button on the slab opens the panel's own menu, where the Task Manager has always been.
-            if (button == 1 && CdeFrontPanelLayout.panel(view.width(), view.height()).holds(mouseX, mouseY)) {
-                panelMenu.open((int) mouseX, tbY);
-                return true;
-            }
-            return cdePanels.click(mouseX, mouseY, view.width(), view.height());
-        }
-        // Windows 11 keeps Start with the centered group, so it has its own hit test.
-        if (is(PanelStyle.FRAMES_11) && mouseY >= tbY) {
-            final int startX = taskbar.modernStartLeft(view.width());
-            if (mouseX >= startX && mouseX < startX + WIN11_SLOT) {
-                start.toggle();
-                return true;
-            }
-        } else if (startButtonHit(mouseX, mouseY, tbY)) {
-            start.toggle();
-            return true;
-        }
-        // An open launcher takes a click on it; one anywhere else closes it and goes on below.
-        if (start.click(mouseX, mouseY, button, tbY)) {
-            return true;
-        }
-
-        /*
-         * The panel's entries, one per program: the left button brings its window up or down, or lists
-         * its windows when it has several; the right button opens the program's own menu, so a program
-         * can be closed or pinned without first going to it. A right-click on the panel itself, clear of
-         * Start and of the entries, opens the panel's own menu, the way every one of these desktops offers
-         * it; the Task Manager is one entry on that menu. The rest of the bar is the bar and swallows the
-         * click, so nothing under it reacts.
-         */
-        if (!view.panelOnTop() && mouseY >= tbY) {
-            final TaskStrip strip = taskbar.strip(view.width());
-            int idx = strip.indexAt(mouseX);
-            int atX = idx >= 0 ? strip.x()[idx] : 0;
-            if (idx < 0 && strip.quickCount() > 0) {
-                idx = strip.quickEntryAt(mouseX);
-                atX = idx >= 0 ? strip.quickX() + strip.quickIndexOf(idx) * TaskStrip.QL_W : 0;
-            }
-            if (idx >= 0) {
-                taskbar.click(strip.entries().get(idx), atX, button, tbY);
-                return true;
-            }
-            if (button == 1) {
-                panelMenu.open((int) mouseX, tbY);
-            }
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * The open windows, front to back: a title-bar button, a resize edge, the bar itself, or the body. A
-     * window with a dialog up takes nothing itself, and a click on the front window's inventory band is a
-     * real container click rather than anything the desktop should answer.
-     */
-    private Click clickedWindow(final double mouseXAbs, final double mouseYAbs,
-                                final double mouseX, final double mouseY, final int button) {
-        for (int i = windows.size() - 1; i >= 0; i--) {
-            final DesktopWindow w = windows.get(i);
-            if (wm.away(w)) {
-                continue;
-            }
-            /*
-             * A window with a dialog up takes nothing itself: a click on it brings the dialog forward,
-             * the way every desktop answers a click on a program that is waiting for its own question.
-             */
-            final DesktopWindow held = wm.dialogOf(w);
-            if (held != null && mouseX >= w.x() && mouseX <= w.x() + w.width()
-                    && mouseY >= w.y() && mouseY <= w.y() + w.height()) {
-                wm.focus(held);
-                return Click.TAKEN;
-            }
-            final int titleBtn = w.buttonAt(mouseX, mouseY);
-            if (titleBtn != 0) {
-                /*
-                 * Press the button now; the action fires on release over the same button, so the player
-                 * sees the pushed-in feedback of a real click instead of the window reacting instantly.
-                 */
-                wm.bringToFront(i);
-                w.setPressedButton(titleBtn);
-                pressedBtnWindow = w;
-                return Click.TAKEN;
-            }
-            final int rdir = w.resizeHitTest(mouseX, mouseY);
-            if (rdir != DesktopWindow.RESIZE_NONE) {
-                wm.bringToFront(i);
-                resizing = w;
-                w.beginResize(rdir, mouseX, mouseY);
-                return Click.TAKEN;
-            }
-            if (w.titleBarHit(mouseX, mouseY)) {
-                wm.bringToFront(i);
-                dragging = w;
-                dragOffsetX = (int) mouseX - w.x();
-                dragOffsetY = (int) mouseY - w.y();
-                return Click.TAKEN;
-            }
-            if (w.bodyHit(mouseX, mouseY)) {
-                wm.bringToFront(i);
-                return clickedWindowBody(w, mouseXAbs, mouseYAbs, mouseX, mouseY, button);
-            }
-        }
-        return Click.PASSED;
-    }
-
-    /**
-     * A click inside a window's body. Most of the time the program itself answers it, but a window carrying
-     * the player's inventory has to let the container drive instead, and the Network Interactor takes the
-     * ones the container would otherwise turn into a quick-move between slots.
-     */
-    private Click clickedWindowBody(final DesktopWindow w, final double mouseXAbs, final double mouseYAbs,
-                                    final double mouseX, final double mouseY, final int button) {
-        /*
-         * A click landing on an active inventory slot (only the front inventory-band window has them) is
-         * a real container click: let the vanilla container drive the cursor, drag, and shift-click.
-         */
-        if (w.app() instanceof IInventoryBandApp && !(w.app() instanceof NetworkInteractorApp)
-                && !w.app().modalActive() && band.slotAt(mouseXAbs, mouseYAbs) != null) {
-            return Click.CONTAINER;
-        }
-        if (w.app() instanceof NetworkInteractorApp ni) {
-            final Click routed = clickedInteractor(ni, w, mouseXAbs, mouseYAbs, mouseX, mouseY, button);
-            if (routed != Click.PASSED) {
-                return routed;
-            }
-        }
-        w.app().mouseClicked(w, mouseX, mouseY, button);
-        return Click.TAKEN;
-    }
-
-    /**
-     * The Network Interactor's own handling of a click on its window, which is where the desktop hands items
-     * between the player and the network. It is here rather than in the program because the desktop, not the
-     * container, owns the cursor while a window is open.
-     */
-    private Click clickedInteractor(final NetworkInteractorApp ni, final DesktopWindow w,
-                                    final double mouseXAbs, final double mouseYAbs,
-                                    final double mouseX, final double mouseY, final int button) {
-        /*
-         * Shift-click an inventory slot inserts that whole stack into the network (Network tab) or
-         * local storage (Local tab), like MC-NET, instead of the vanilla quick-move between slots.
-         */
-        if (!ni.hasPopup() && hasShiftDown()) {
-            final Slot slot = band.slotAt(mouseXAbs, mouseYAbs);
-            final int target = ni.shiftInsertTarget();
-            if (slot != null && slot.hasItem() && target >= 0) {
-                PacketDistributor.sendToServer(
-                        new NiShiftInsertPayload(host, monitorPos, slot.getContainerSlot(), target));
-                return Click.TAKEN;
-            }
-        }
-        /*
-         * While the request/storage dialog is open it is modal over the window (even over the
-         * inventory band) so the app gets the click instead of the vanilla container.
-         */
-        if (!ni.hasPopup() && band.slotAt(mouseXAbs, mouseYAbs) != null) {
-            return Click.CONTAINER;
-        }
-        /*
-         * A held stack dropped on the item grid goes to the network (Network tab) or local storage
-         * (Storage tab): the desktop owns the cursor, so it routes the handoff here. Left = the
-         * whole stack as items; right = one, or what a held container holds; and a held empty
-         * container right-clicked on a fluid or chemical entry fills from it, so the entry under
-         * the cursor travels with a right-click.
-         */
-        if (!ni.hasPopup() && !menu.getCarried().isEmpty() && (button == 0 || button == 1)) {
-            final double lx = mouseX - (w.x() + 4);
-            final double ly = mouseY - (w.y() + 18);
-            final int target = ni.cursorDepositTarget(lx, ly);
-            if (target >= 0) {
-                PacketDistributor.sendToServer(
-                        new NiDepositPayload(host, monitorPos, target, button == 0,
-                                button == 1 ? ni.cursorDepositEntry(lx, ly) : Optional.empty()));
-                return Click.TAKEN;
-            }
-        }
-        return Click.PASSED;
-    }
-
-    /**
-     * The wallpaper and its icons, which is where a click lands when nothing above wanted it: the desktop's
-     * own menu, an icon picked or opened, a drag armed, or a rubber band begun on bare wallpaper.
-     */
-    private Click clickedDesktop(final double mouseX, final double mouseY, final int button) {
-        // An open desktop context menu takes the click first, and closes on it whatever it landed on.
-        if (deskMenu.isOpen()) {
-            deskMenu.mouseClicked(mouseX, mouseY, button);
-            return Click.TAKEN;
-        }
-        // A click on the desktop commits any in-progress icon rename.
-        if (deskFiles.isRenaming()) {
-            deskFiles.commitRename();
-        }
-        // On CDE a double click on the icon of a window that was put away brings that window back.
-        if (is(PanelStyle.CDE) && button == 0
-                && cdeWindowIcons.clicked(mouseX, mouseY, wm.putAwayHere(), view.width(), view.workAreaTop())) {
-            return Click.TAKEN;
-        }
-        // The right button on such an icon raises the window's own menu, which is how it is closed from there.
-        if (is(PanelStyle.CDE) && button == 1) {
-            final DesktopWindow putAway = cdeWindowIcons.at(mouseX, mouseY, wm.putAwayHere(), view.width(),
-                    view.workAreaTop());
-            if (putAway != null) {
-                cdeWindowMenu.openFor(putAway, (int) mouseX, (int) mouseY);
-                return Click.TAKEN;
-            }
-        }
-
-        final int perCol = iconGrid.perColumn();
-        final int slot = iconGrid.slotAt(mouseX, mouseY, perCol);
-
-        if (button == 1) {
-            // Right-click: the menu of whatever is under the cursor, or the wallpaper's own.
-            selectedIcon = slot;
-            deskMenu.openFor(slot, (int) mouseX, (int) mouseY);
-            return Click.TAKEN;
-        }
-
-        if (slot >= 0) {
-            // Windows-style: single click selects an icon, a double click opens it.
-            final long now = System.currentTimeMillis();
-            final boolean dbl = selectedIcon == slot && now - iconClickAt < 300;
-            selectedIcon = slot;
-            iconClickAt = now;
-            /*
-             * Arm a drag of any desktop icon (a program launcher as well as a file or folder) so all of
-             * them can be freely repositioned (the launcher drag only ever pins to a cell, never moves a file).
-             * The drag does not actually begin until the cursor leaves a small dead zone, so a plain click (or
-             * a double-click) never turns into an accidental reposition.
-             */
-            drags.armIcon(slot, mouseX, mouseY);
-            if (dbl) {
-                openSlot(slot);
-                selectedIcon = -1;
-            }
-            return Click.TAKEN;
-        }
-        selectedIcon = -1;
-        iconGrid.selection().clear();
-        /*
-         * A click on empty desktop while holding a stack would make the vanilla container throw the item to the
-         * world (no slot under the cursor). Swallow it so nothing is ever dropped by clicking the wallpaper.
-         */
-        if (!menu.getCarried().isEmpty()) {
-            return Click.TAKEN;
-        }
-        // Pressing on bare wallpaper starts a rubber band; the drag handler grows it from here.
-        if (button == 0) {
-            drags.startBand(mouseX, mouseY);
-        }
-        return Click.CONTAINER;
+        return input.click(mouseXAbs, mouseYAbs, button) != DesktopInput.Click.CONTAINER
+                || super.mouseClicked(view.slotX(mouseXAbs), view.slotY(mouseYAbs), button);
     }
 
     @Override
     public boolean mouseDragged(final double mouseXAbs, final double mouseYAbs, final int button,
                                 final double dx, final double dy) {
-        if (notices.popupUp()) {
-            return true;
-        }
-        if (volumePopup.mouseDragged(view.localX(mouseXAbs), view.localY(mouseYAbs))) {
-            return true;
-        }
-        if (dragging != null) {
-            dragging.moveTo((int) (view.localX(mouseXAbs)) - dragOffsetX, (int) (view.localY(mouseYAbs)) - dragOffsetY,
-                    view.workAreaTop(), view.width(), view.workAreaBottom());
-            return true;
-        }
-        if (resizing != null) {
-            resizing.applyResize(view.localX(mouseXAbs), view.localY(mouseYAbs), view.workAreaTop(), view.width(),
-                    view.workAreaBottom());
-            return true;
-        }
-        // An icon dragged across the desktop, or the rubber band swept over it.
-        if (drags.drag(view.localX(mouseXAbs), view.localY(mouseYAbs))) {
-            return true;
-        }
-        /*
-         * No window drag/resize in progress. While the front Network Interactor holds a stack on the cursor,
-         * a drag is the vanilla "spread across slots" gesture, so hand it to the container, not the app.
-         */
-        final DesktopWindow w = wm.front();
-        if (w != null && w.app() instanceof IInventoryBandApp && !menu.getCarried().isEmpty()) {
-            return super.mouseDragged(view.slotX(mouseXAbs), view.slotY(mouseYAbs), button, dx, dy);
-        }
-        if (w != null) {
-            w.app().mouseDragged(w, view.localX(mouseXAbs), view.localY(mouseYAbs), button);
-            return true;
-        }
-        return super.mouseDragged(view.slotX(mouseXAbs), view.slotY(mouseYAbs), button, dx, dy);
+        return input.drag(mouseXAbs, mouseYAbs, button) != DesktopInput.Click.CONTAINER
+                || super.mouseDragged(view.slotX(mouseXAbs), view.slotY(mouseYAbs), button, dx, dy);
     }
 
     @Override
     public boolean mouseReleased(final double mouseX, final double mouseY, final int button) {
-        volumePopup.mouseReleased();
-        if (notices.releasePopup(view.localX(mouseX), view.localY(mouseY), button)) {
-            return true;
-        }
-        // Letting go ends the sweep; whatever it covered stays selected.
-        if (drags.endBand()) {
-            return true;
-        }
-        /*
-         * A title-bar button was pressed on mousedown; fire its action only if released over the same
-         * button (dragging off it cancels). Either way, clear the pushed-in state.
-         */
-        if (pressedBtnWindow != null) {
-            final DesktopWindow pb = pressedBtnWindow;
-            final int btn = pb.pressedButton();
-            pb.setPressedButton(0);
-            pressedBtnWindow = null;
-            if (btn != DesktopWindow.BUTTON_NONE && pb.buttonAt(view.localX(mouseX), view.localY(mouseY)) == btn) {
-                if (btn == DesktopWindow.BUTTON_CLOSE && is(PanelStyle.CDE)) {
-                    // Motif's button opens the window's menu, and closes the window on a double click.
-                    cdeWindowMenu.pressed(pb);
-                } else if (btn == DesktopWindow.BUTTON_CLOSE) {
-                    wm.close(pb);
-                } else if (btn == DesktopWindow.BUTTON_MINIMIZE) {
-                    pb.setMinimized(true);
-                } else if (btn == DesktopWindow.BUTTON_MAXIMIZE) {
-                    pb.toggleMaximize();
-                }
-            }
-            return true;
-        }
-        // A dragged desktop icon: handle the drop (move into a folder / open explorer, or pin to a cell).
-        final boolean wasDeskDrag = drags.dropIcon(view.localX(mouseX), view.localY(mouseY));
-        /*
-         * A file dragged out of a Files explorer and dropped on the bare desktop moves it into the desktop
-         * folder. Handled here, before the app sees the release, so the explorer's own in-window drop logic
-         * does not also fire. Anything else (a drop staying inside the window, or onto a removable medium)
-         * falls through to the app below.
-         */
-        if (!wasDeskDrag && dragging == null && resizing == null
-                && drags.dropFromFileManager(view.localX(mouseX), view.localY(mouseY))) {
-            return super.mouseReleased(mouseX, mouseY, button);
-        }
-        /*
-         * Route the release to the front window's app (for content drag-and-drop) unless this was a
-         * desktop-icon drag, and only when no window move/resize is in progress.
-         */
-        if (!wasDeskDrag && dragging == null && resizing == null) {
-            final DesktopWindow w = wm.front();
-            if (w != null) {
-                w.app().mouseReleased(w, view.localX(mouseX), view.localY(mouseY), button);
-            }
-        }
-        /*
-         * Frames 11 edge snapping: releasing a dragged window against a screen edge tiles it (top = maximize,
-         * left/right = that half). A modern-OS gesture the earlier editions do not have.
-         */
-        if (dragging != null && (is(PanelStyle.FRAMES_11) || linuxDesktop())) {
-            final int lx = (int) (view.localX(mouseX));
-            final int ly = (int) (view.localY(mouseY));
-            final int top = view.workAreaTop();
-            final int workH = view.workAreaBottom() - top;
-            final int halfW = view.width() / 2;
-            if (ly <= top + 4) {
-                dragging.setMaximized(true);
-            } else if (lx <= 4) {
-                dragging.snapTo(0, top, halfW, workH);
-            } else if (lx >= view.width() - 4) {
-                dragging.snapTo(halfW, top, view.width() - halfW, workH);
-            }
-        }
-        dragging = null;
-        resizing = null;
-        return super.mouseReleased(mouseX, mouseY, button);
+        return input.release(mouseX, mouseY, button) != DesktopInput.Click.CONTAINER
+                || super.mouseReleased(mouseX, mouseY, button);
     }
 
     @Override
     public boolean charTyped(final char c, final int modifiers) {
-        if (notices.popupUp()) {
-            return true;
-        }
-        // A desktop-icon rename captures typing before any window, until the name is as long as it may be.
-        if (deskFiles.isRenaming() && c >= 32 && c != 127 && c != '/' && c != '\\' && deskFiles.type(c)) {
-            return true;
-        }
-        // An open launcher's search box takes the typing; it is always focused while it is shown.
-        if (start.type(c)) {
-            return true;
-        }
-        final DesktopWindow w = wm.front();
-        if (w != null && w.app().charTyped(c)) {
-            return true;
-        }
-        return super.charTyped(c, modifiers);
+        return input.typed(c) || super.charTyped(c, modifiers);
     }
 
-    /**
-     * A desktop takes a key ahead of the rest of the game only when something on it is being typed at: one of
-     * its own menus or boxes, or the program in the window in front. Over everything else a key stays whoever's
-     * it was, which is what keeps a recipe viewer's keys working on the items a window shows.
-     */
+    /** A key is the desktop's ahead of the rest of the game only while something on it is being typed at. */
     @Override
     public boolean keyFirst(final int key, final int scanCode, final int modifiers) {
-        // Motif's keys for a window's menu come before the window's own program, as a window manager's do.
-        if (is(PanelStyle.CDE) && !notices.popupUp() && !power.isOpen()
-                && cdeWindowMenu.keyPressed(key, modifiers, wm.front())) {
-            return true;
-        }
-        if (notices.popupUp() || power.isOpen() || deskMenu.isOpen() || taskbar.menu().isOpen()
-                || deskFiles.isRenaming()
-                || start.isOpen()) {
-            return keyPressed(key, scanCode, modifiers);
-        }
-        final DesktopWindow w = wm.front();
-        return w != null && (key != 256 || w.app().wantsEscape()) && w.app().keyPressed(key, scanCode, modifiers);
+        return input.keyFirst(key, scanCode, modifiers);
     }
 
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
-        // A modal dialog swallows every key; Enter or Escape dismisses it, nothing leaks behind it.
-        if (notices.keyPopup(key, scanCode, modifiers)) {
-            return true;
-        }
-        if (key == 256 && volumePopup.isOpen()) { // Escape
-            volumePopup.close();
-            return true;
-        }
-        // The power dialog decides the fate of the whole machine, so it keeps the keyboard as it keeps the mouse.
-        if (power.keyPressed(key)) {
-            return true;
-        }
-        // The desktop's menu and a program's are walked with the arrows and left with Escape, like any menu.
-        if (deskMenu.isOpen() && deskMenu.keyPressed(key, scanCode, modifiers)) {
-            return true;
-        }
-        if (taskbar.menu().isOpen() && taskbar.menu().keyPressed(key, scanCode, modifiers)) {
-            return true;
-        }
-        if (taskPopup.key() != null && key == 256) {
-            taskPopup.dismiss();
-            return true;
-        }
-        // An in-progress desktop-icon rename consumes keys first (Enter commits, Esc cancels).
-        if (deskFiles.isRenaming()) {
-            switch (key) {
-                case 257, 335 -> deskFiles.commitRename();
-                case 256 -> deskFiles.cancelRename();
-                case 259 -> deskFiles.backspace();
-                default -> {
-                    return false;
-                }
-            }
-            return true;
-        }
-        // An open launcher owns the keyboard ahead of the desktop, so Escape closes it rather than the desktop.
-        if (start.keyPressed(key)) {
-            return true;
-        }
-        // The front window's app gets first refusal on keys, except ESC which always closes the desktop.
-        final DesktopWindow w = wm.front();
-        if (w != null && (key != 256 || w.app().wantsEscape()) && w.app().keyPressed(key, scanCode, modifiers)) {
-            return true;
-        }
-        /*
-         * A container screen closes on the inventory key by default; the desktop must NOT, or pressing 'E'
-         * would dismiss the whole shell. Swallow that key here.
-         */
-        if (key == Minecraft.getInstance().options.keyInventory.getKey().getValue()) {
-            return true;
-        }
-        return super.keyPressed(key, scanCode, modifiers);
+        final DesktopInput.Click taken = input.key(key, scanCode, modifiers);
+        return taken == DesktopInput.Click.CONTAINER ? super.keyPressed(key, scanCode, modifiers)
+                : taken == DesktopInput.Click.TAKEN;
     }
 
     /** A key let go goes to the window in front, for a program that tells a press from a release. */
     @Override
     public boolean keyReleased(final int key, final int scanCode, final int modifiers) {
-        final DesktopWindow w = wm.front();
-        if (!notices.popupUp() && w != null && w.app().keyReleased(key, scanCode, modifiers)) {
-            return true;
-        }
-        return super.keyReleased(key, scanCode, modifiers);
+        return input.keyReleased(key, scanCode, modifiers) || super.keyReleased(key, scanCode, modifiers);
     }
 
     @Override
     public boolean mouseScrolled(final double mouseX, final double mouseY, final double dx, final double dy) {
-        if (notices.popupUp()) {
-            return true;
-        }
-        // The wheel over the speaker, or over its open control, turns the volume a step a notch.
-        final double lmx = view.localX(mouseX);
-        final double lmy = view.localY(mouseY);
-        if (dy != 0 && !is(PanelStyle.CDE) && (volumePopup.over(lmx, lmy)
-                || tray.onSpeaker(lmx, lmy, view.width(), view.panelOnTop() ? 0 : view.height() - view.panelBand(),
-                        view.panelOnTop()))) {
-            volumePopup.nudge(dy > 0 ? 1 : -1);
-            return true;
-        }
-        final DesktopWindow w = wm.front();
-        if (w != null && w.app().mouseScrolled(dy)) {
-            return true;
-        }
-        return super.mouseScrolled(mouseX, mouseY, dx, dy);
+        return input.scrolled(mouseX, mouseY, dy) || super.mouseScrolled(mouseX, mouseY, dx, dy);
     }
 
     /** The Occupy Workspace dialog that is up, front-most first, or null. */

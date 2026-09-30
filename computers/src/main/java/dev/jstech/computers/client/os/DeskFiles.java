@@ -83,7 +83,7 @@ final class DeskFiles implements CodeFileReplies.IReader {
             return;
         }
         renaming = idx;
-        desktop.pickIcon(desktop.deskIcons().size() + idx);
+        desktop.input().pick(desktop.deskIcons().size() + idx);
         typed.setLength(0);
         typed.append(DesktopIcons.baseName(f.path()));
     }

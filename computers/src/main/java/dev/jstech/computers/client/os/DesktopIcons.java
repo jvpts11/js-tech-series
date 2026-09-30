@@ -245,7 +245,7 @@ final class DesktopIcons {
             final int iy = yOf(cells[i]);
             drawCell(g, i, ix, iy, lmx, lmy, dragging, dropTarget, launchers.size(), files);
             final String label = labelOf(i, launchers, files);
-            if (i == desktop.pickedIcon()) {
+            if (i == desktop.input().picked()) {
                 // Defer the full name to a pass after every icon so nothing overdraws it.
                 pickedLabel = label;
                 pickedX = ix;
@@ -287,7 +287,7 @@ final class DesktopIcons {
         final int cellX = ix + CELL_DX;
         final int cellY = iy + CELL_DY;
         final Colours c = PALETTE.get();
-        if (i == desktop.pickedIcon() || selected.contains(i)) {
+        if (i == desktop.input().picked() || selected.contains(i)) {
             g.fill(cellX, cellY, cellX + CELL_W, cellY + CELL_H, c.picked());
         } else if (lmx >= cellX && lmx < cellX + CELL_W && lmy >= cellY && lmy < cellY + CELL_H && !dragging) {
             // Hover feedback so the player sees which icon the cursor is over.
