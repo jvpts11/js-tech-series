@@ -18,6 +18,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 import java.util.Set;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The single descriptor for a program known to the mod: its identity and CLI metadata, the OS platforms
@@ -57,6 +58,7 @@ import java.util.Set;
  *                     weighs a share of the system that ships it, anything else weighs by its generation
  *                     ({@link RamLedger#eraWeightMb})
  */
+@ApiStatus.Experimental
 public record ProgramSpec(
         ResourceLocation id,
         String commandName,

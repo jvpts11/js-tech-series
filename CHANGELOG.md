@@ -6,6 +6,32 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 
 ## [Unreleased]
 
+### API
+- J's Core's API is at version 2 and J's Computers' at version 2. Everything this release adds to either, or
+  changes, carries `@ApiStatus.Experimental`: it keeps the mark through this release and loses it when the next
+  cycle begins. Each mod's API is now kept line by line, every type and member a mod can reach with the version
+  that brought it, and the tests fail when the code and that list disagree; `docs/API.md` says how.
+- Added: a build can ask a language for an instruction set and a version of the language at once, with
+  `IProgrammingLanguage.compile(sources, CompileOptions)`; a language without versions builds as it did for the
+  instruction set alone, which is what the method does unless overridden.
+- Added: `IsaSpec`, `ComputersRegisterEvent.isa` and `JsComputersApi.registerIsa`, which take over from
+  `ArchitectureSpec`, `architecture` and `registerArchitecture`.
+- Changed: `IProgrammingLanguage.Complaint` carries its message as a `Text`, read in the language of whoever is
+  shown it, with the `arguments` the message was written around; `text()` is the line a person reads, and
+  `format()` is still the same line in English.
+- Changed: `OsDef` says its shell with a `ShellKind` (`shell`, where it had the id `shellId`), and so do
+  `linuxDistro` and `terminalSystem`. `ProgramSpec` has a `description`, `of` no longer takes the display name
+  (`named` and `described` give the English words), and `name()` is the name to translate. A
+  `DesktopEnvironmentDef`'s native names are `TextKey`s, and so are what `nameOf` and `launcherLabel` give.
+- Changed: `ComputerTerminalMenu` stands on the Core's `CoreMenu`, which now holds what it had from the menu it
+  stood on before. Its layout constants (`INV_X`, `INV_Y`, `HOTBAR_Y` and the `STORAGE_` ones) and
+  `storageSlotCount()` are gone: `invY()` and `hotbarY()`, with the new `invX()`, give where the inventory is
+  drawn. `openingTab` says which tab a terminal opens on.
+- Deprecated: `ComputersRegisterEvent.architecture`, `JsComputersApi.registerArchitecture` and
+  `ArchitectureSpec`. They still work, handing what they are given to the instruction set registration, and go
+  in the next cycle; `ArchitectureSpec.toIsa()` gives the same values under the new name.
+- Removed: `ArchitectureSpec.runs` (ask the `IsaSpec` from `toIsa()`), and `DesktopEnvironmentDef.programFor`.
+
 ### Added
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
@@ -496,11 +522,6 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - What a processor understands (x86-16, x86, x86-64) is its instruction set: the firmware lists it as the
   Instruction Set, a build of mixed processors is refused for mixing instruction sets, and `sgsc --arch` asks for
   an instruction set by the same ids and names as before. The word architecture is left for the design of a chip.
-- For addon authors: `ComputersRegisterEvent.isa`, `JsComputersApi.registerIsa` and `IsaSpec` take over from
-  `architecture`, `registerArchitecture` and `ArchitectureSpec`, and `JsComputersApi.VERSION` is 2.
-- For addon authors: a build can ask a language for an instruction set and a version of the language at once, with
-  `IProgrammingLanguage.compile(sources, CompileOptions)`; a language without versions builds as it did for the
-  instruction set alone, which is what the method does unless overridden. `JsCoreApi.VERSION` is 2.
 - How much a processor orchestrates counts the design of its cores as well as how many there are and how fast
   they run: a newer design does more in each tick of its clock, and two threads a core add a fifth. An old chip at
   a high clock no longer outruns a better one that came after it. Vintage machines orchestrate less than before
@@ -692,10 +713,6 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A desktop's windows are known by the program they belong to rather than by the name they show, so a machine's
   layout comes back the same whatever desktop or language it is looked at under, and the Task Manager and the
   System Monitor list each window by the name the desktop gives its program.
-
-### Deprecated
-- `ComputersRegisterEvent.architecture`, `JsComputersApi.registerArchitecture` and `ArchitectureSpec`: they still
-  work, handing what they are given to the instruction set registration, and go in the next cycle.
 
 ### Removed
 - The unused hook for the Modonomicon guidebook: the series' manuals will be drawn by J's Core itself.

@@ -45,11 +45,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Menu for the Monitor terminal, the tabbed interface a Monitor opens onto the computer it is linked to.
  */
+@ApiStatus.Experimental
 public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
 
     private final Level level;

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -64,6 +65,7 @@ public interface IProgrammingLanguage {
      * @param arguments the names and values the message was written around, in the order it names them, so a
      *                  tool that acts on a complaint reads them here rather than taking the sentence apart
      */
+    @ApiStatus.Experimental
     record Complaint(String file, int line, int column, String code, Text message, List<String> arguments) {
 
         public Complaint {
@@ -119,6 +121,7 @@ public interface IProgrammingLanguage {
      * @param languageVersion the version of the language the sources are held to, or {@link #NEWEST} for the newest
      *                        the compiler knows; a language without versions reads it as nothing
      */
+    @ApiStatus.Experimental
     record CompileOptions(String isa, int languageVersion) {
 
         /** A version of none, which leaves a build to the newest version its compiler knows. */
@@ -169,6 +172,7 @@ public interface IProgrammingLanguage {
      * <p>A language with versions overrides this and refuses what came after the version asked for. One without
      * them builds as it does for the instruction set alone, which is what this does unless overridden.
      */
+    @ApiStatus.Experimental
     default CompileResult compile(final List<SourceText> sources, final CompileOptions options) {
         return options.isa().isEmpty() ? compile(sources) : compile(sources, options.isa());
     }

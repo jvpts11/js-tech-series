@@ -17,6 +17,11 @@ package dev.jstech.core.api;
  * <p>The version below is not the Core's version: it is the number of the shape of this promise. It goes
  * up by one whenever something here is added, and an addon that wants to be sure asks for it. What the
  * number does NOT promise yet is that the shape will hold: see the note on stability.
+ *
+ * <p>What is new carries {@code @ApiStatus.Experimental} from the cycle it came in until the cycle after its
+ * first release, since until then no mod has used it in a released game and it is the part most likely to
+ * move. The promise is also written down line by line, with the version each part came in, and a test holds
+ * the code to it; {@code docs/API.md} says how.
  */
 public final class JsCoreApi {
 

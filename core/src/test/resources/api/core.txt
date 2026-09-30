@@ -1,0 +1,69 @@
+# The public API of the mod in the folder 'core': every type and member a mod
+# built on it can reach. The number before a line is the version of the API that brought
+# it in the shape written there. Whatever came after the stable version carries
+# @ApiStatus.Experimental until the cycle after its first release. Kept by ApiSurfaceTest,
+# which writes to build/api-photo what this file would have to say when the API changes.
+stable 1
+1 dev.jstech.core.api.CoreRegisterEvent  type final class extends Event implements IModBusEvent
+1 dev.jstech.core.api.CoreRegisterEvent  LanguageRegistry languages()
+1 dev.jstech.core.api.CoreRegisterEvent  OperationTypeRegistry operations()
+1 dev.jstech.core.api.CoreRegisterEvent  new(LanguageRegistry, OperationTypeRegistry)
+1 dev.jstech.core.api.JsCoreApi  type final class
+1 dev.jstech.core.api.JsCoreApi  static final boolean SETTLED
+1 dev.jstech.core.api.JsCoreApi  static final int CYCLES_BEFORE_REMOVAL
+1 dev.jstech.core.api.JsCoreApi  static final int VERSION
+1 dev.jstech.core.language.IProgrammingLanguage  type interface
+1 dev.jstech.core.language.IProgrammingLanguage  abstract CompileResult compile(List<SourceText>)
+1 dev.jstech.core.language.IProgrammingLanguage  abstract List<Token> tokenize(String)
+1 dev.jstech.core.language.IProgrammingLanguage  abstract ResourceLocation id()
+1 dev.jstech.core.language.IProgrammingLanguage  abstract Set<String> binaryExtensions()
+1 dev.jstech.core.language.IProgrammingLanguage  abstract Set<String> sourceExtensions()
+1 dev.jstech.core.language.IProgrammingLanguage  abstract String displayName()
+2 dev.jstech.core.language.IProgrammingLanguage  default CompileResult compile(List<SourceText>, CompileOptions)
+1 dev.jstech.core.language.IProgrammingLanguage  default CompileResult compile(List<SourceText>, String)
+1 dev.jstech.core.language.IProgrammingLanguage  default ILanguageProcess restore(String, CompoundTag, int, IMachineView)
+1 dev.jstech.core.language.IProgrammingLanguage  default ILanguageProcess start(String, IMachineView, List<String>)
+1 dev.jstech.core.language.IProgrammingLanguage  default int stateVersion()
+2 dev.jstech.core.language.IProgrammingLanguage.CompileOptions  type record(String isa, int languageVersion)
+2 dev.jstech.core.language.IProgrammingLanguage.CompileOptions  static CompileOptions forIsa(String)
+2 dev.jstech.core.language.IProgrammingLanguage.CompileOptions  static final int NEWEST
+1 dev.jstech.core.language.IProgrammingLanguage.CompileResult  type record(String binary, List<Complaint> complaints)
+1 dev.jstech.core.language.IProgrammingLanguage.CompileResult  boolean ok()
+1 dev.jstech.core.language.IProgrammingLanguage.CompileResult  static CompileResult failed(List<Complaint>)
+1 dev.jstech.core.language.IProgrammingLanguage.CompileResult  static CompileResult of(String)
+2 dev.jstech.core.language.IProgrammingLanguage.Complaint  type record(String file, int line, int column, String code, Text message, List<String> arguments)
+1 dev.jstech.core.language.IProgrammingLanguage.Complaint  String format()
+2 dev.jstech.core.language.IProgrammingLanguage.Complaint  Text text()
+2 dev.jstech.core.language.IProgrammingLanguage.Complaint  new(String, int, int, String, Text)
+1 dev.jstech.core.language.IProgrammingLanguage.Kind  type enum
+1 dev.jstech.core.language.IProgrammingLanguage.Kind  COMMENT
+1 dev.jstech.core.language.IProgrammingLanguage.Kind  KEYWORD
+1 dev.jstech.core.language.IProgrammingLanguage.Kind  NAME
+1 dev.jstech.core.language.IProgrammingLanguage.Kind  NUMBER
+1 dev.jstech.core.language.IProgrammingLanguage.Kind  SYMBOL
+1 dev.jstech.core.language.IProgrammingLanguage.Kind  TEXT
+1 dev.jstech.core.language.IProgrammingLanguage.SourceText  type record(String name, String text)
+1 dev.jstech.core.language.IProgrammingLanguage.Token  type record(int line, int column, int length, Kind kind)
+1 dev.jstech.core.language.LanguageRegistry  type final class
+1 dev.jstech.core.language.LanguageRegistry  IProgrammingLanguage byExtension(String)
+1 dev.jstech.core.language.LanguageRegistry  IProgrammingLanguage get(ResourceLocation)
+1 dev.jstech.core.language.LanguageRegistry  IProgrammingLanguage runnerOf(String)
+1 dev.jstech.core.language.LanguageRegistry  IProgrammingLanguage sourceOf(String)
+1 dev.jstech.core.language.LanguageRegistry  List<IProgrammingLanguage> all()
+1 dev.jstech.core.language.LanguageRegistry  boolean isFrozen()
+1 dev.jstech.core.language.LanguageRegistry  boolean isReserved(String)
+1 dev.jstech.core.language.LanguageRegistry  boolean register(IProgrammingLanguage)
+1 dev.jstech.core.language.LanguageRegistry  boolean reserve(String)
+1 dev.jstech.core.language.LanguageRegistry  boolean unregister(ResourceLocation)
+1 dev.jstech.core.language.LanguageRegistry  void freeze()
+1 dev.jstech.core.operation.IOperationArgs  type interface
+1 dev.jstech.core.operation.OperationType  type record<T extends IOperationArgs>(String id, Class<T> argsClass, OperationCategory category, IndustrialTier minTier, EnumSet<NetworkCategory> requiredCategories, IOperationHandler<T> handler)
+1 dev.jstech.core.operation.OperationType  EnumSet<NetworkCategory> requiredCategories()
+1 dev.jstech.core.operation.OperationTypeRegistry  type final class
+1 dev.jstech.core.operation.OperationTypeRegistry  <T extends IOperationArgs> OperationType<T> register(OperationType<T>)
+1 dev.jstech.core.operation.OperationTypeRegistry  Collection<OperationType<?>> all()
+1 dev.jstech.core.operation.OperationTypeRegistry  Optional<OperationType<?>> get(String)
+1 dev.jstech.core.operation.OperationTypeRegistry  boolean contains(String)
+1 dev.jstech.core.operation.OperationTypeRegistry  boolean isFrozen()
+1 dev.jstech.core.operation.OperationTypeRegistry  int size()
+1 dev.jstech.core.operation.OperationTypeRegistry  void freeze()

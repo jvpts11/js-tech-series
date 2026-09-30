@@ -14,6 +14,19 @@ Everything reachable from those two packages is the API. Everything else in eith
 business and may change in any release with no warning and no note. A mod that reaches into it is a mod
 that will break, and no release will be held back to avoid breaking it.
 
+A few types live where they belong rather than in those packages, and are part of the API all the same,
+because a mod cannot add anything without holding them:
+
+- The registries a mod adds to: `LanguageRegistry` and `OperationTypeRegistry`.
+- What it adds to them: `IProgrammingLanguage`, `OperationType` and `IOperationArgs`.
+- What a machine is and what can be installed on one: `IsaSpec`, `KernelDef`, `OsDef`, `ProgramSpec`,
+  `DesktopEnvironmentDef` and `OperatingSpaceDef`, with `ArchitectureSpec`, the former name of `IsaSpec`,
+  for one more cycle.
+- What a screen of a mod's own is handed: `ComputerTerminalMenu`, the machine's menu, which an operating
+  space is given because the items in it are the server's.
+
+Everything public in one of these is part of the promise, as it is in the two packages.
+
 ## How to add something
 
 Each mod opens its registries once, while the game loads, by firing one event on the mod bus:
@@ -49,8 +62,9 @@ processors of its own brings the socket they sit in by writing its id, with noth
 
 ## The version, and how stable this is
 
-`JsCoreApi.VERSION` is the number of the shape of the API. It goes up by one whenever something is added.
-A mod that needs something added later can refuse to load below the number that added it.
+`JsCoreApi.VERSION` and `JsComputersApi.VERSION` are the numbers of the shape of each mod's API. Each goes
+up by one whenever something is added to that mod's API or changes shape in it. A mod that needs something
+added later can refuse to load below the number that added it.
 
 `JsCoreApi.SETTLED` says whether the shape has settled. **It has not.** The computing side of the series
 is still being built, and until J's Computers and J's Industrial are both finished in what they do and in
@@ -60,6 +74,39 @@ also when the rest of the series starts building its own on top of them.
 
 That is not an excuse to break things for no reason. It is a warning that a release may, and a promise
 that it will say so in the changelog when it does.
+
+## What is new is marked
+
+Anything added or changed in the cycle being built, or in the last release, carries
+`@ApiStatus.Experimental`, from the JetBrains annotations every Minecraft mod already has on its classpath.
+It is the part of the API most likely to move, because no release has yet gone out with mods using it. The
+mark comes off when the next cycle begins; what has not moved by then is as settled as the rest.
+
+## How the API is kept
+
+Each mod's API is written down line by line in a file of its own, `core/src/test/resources/api/core.txt`
+and `computers.txt`: one line for every type and every member a mod can reach, each with the version of
+the API that brought it in the shape written there. A line reads like this:
+
+```
+2 dev.jstech.core.language.IProgrammingLanguage  default CompileResult compile(List<SourceText>, CompileOptions)
+```
+
+The file also says the newest version that is no longer marked as new (`stable 1`). A test compares the
+code with the file on every build, and fails when:
+
+- the API has a type or member the file does not, or the file has one the API lost;
+- the mod's `VERSION` is not the newest number in the file, so something came in without raising it;
+- something newer than the stable version has no `@ApiStatus.Experimental`, or something as old as it
+  still has one.
+
+When it fails, it writes what the file would have to say to `core/build/api-photo`, with anything new at
+the next number. Nothing reaches the API, or leaves it, without somebody reading that and deciding it.
+
+## What changed, release by release
+
+Each release's section of `CHANGELOG.md` opens with an API part, for the people who build on the series:
+the version each mod's API reached, and what was added, changed, deprecated or removed.
 
 ## Taking something away
 

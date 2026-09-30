@@ -60,6 +60,10 @@ release says which phase begins.
 - A version starts when the branch for its slice opens: `mod_version` is bumped on that branch right
   away, so every jar built from it is a snapshot of the coming version, and the cycle takes its codename
   (see below).
+- In the same commit, what the last release brought to each mod's API stops being new: the `stable` line
+  of each file in `core/src/test/resources/api/` moves up to the API version that release shipped, and the
+  `@ApiStatus.Experimental` marks on those parts come off. The API test names every mark to take off
+  (`docs/API.md` says why the marks are there).
 - A version ends when the branch merges into `main` (a recorded merge) and the merge is tagged
   `v<version>`. That tag is the release.
 - Fixes made on `main` between slices are `PATCH` releases, tagged the same way.
@@ -90,8 +94,8 @@ Every development cycle has a codename, and every release that brings more than 
 2. Confirm `mod_version` in `gradle.properties` is the version being released.
 3. Move the `Unreleased` entries of `CHANGELOG.md` under the new version and date, followed by the
    release's name when it has one (`## [0.3.0a] - 2026-09-13 - The Programming Update`). The section
-   opens with the cycle's codename, and notes a phase change if the release crosses a gate. Add the
-   name to the table above.
+   opens with the cycle's codename, and notes a phase change if the release crosses a gate. Its API part
+   comes first and says the version each mod's API reached. Add the name to the table above.
 4. Tag the commit `v<version>` (for example `v0.1.0a`) and push the tag.
 5. The tag starts the Release workflow. It checks that the tag and `mod_version` agree, builds the jars
    with `./gradlew build -Prelease`, takes the version's section of `CHANGELOG.md` as the notes and drafts

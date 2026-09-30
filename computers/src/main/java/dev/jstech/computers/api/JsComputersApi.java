@@ -17,6 +17,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.fs.FileOpeners;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * What J's Computers promises to anything built on it.
@@ -47,6 +48,7 @@ public final class JsComputersApi {
      * <p>A program built for an older machine of the same line runs on it; nothing runs what was built for
      * a machine that came after it.
      */
+    @ApiStatus.Experimental
     public static void registerIsa(final IsaSpec isa) {
         Isas.add(isa);
     }

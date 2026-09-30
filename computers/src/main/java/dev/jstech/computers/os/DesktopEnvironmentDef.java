@@ -14,6 +14,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 import java.util.Map;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * A desktop environment: the graphical shell a computer runs on top of its OS. The Frames editions bundle
@@ -32,6 +33,7 @@ import java.util.Map;
  * @param nativeNames      per-program names under this desktop, as sentences to translate (missing = the program's own)
  * @param house            who makes this desktop, and so who is credited for the programs it bundles
  */
+@ApiStatus.Experimental
 public record DesktopEnvironmentDef(
         ResourceLocation id,
         String displayName,

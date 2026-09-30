@@ -8,6 +8,7 @@
 package dev.jstech.computers.hardware;
 
 import java.util.Set;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The former name of an {@link IsaSpec}, kept for one cycle so that an addon built against it still loads.
@@ -22,6 +23,7 @@ import java.util.Set;
 public record ArchitectureSpec(String id, String name, int bits, Set<String> runs) {
 
     /** The same instruction set under its present name. */
+    @ApiStatus.Experimental
     public IsaSpec toIsa() {
         return new IsaSpec(id, name, bits, runs);
     }

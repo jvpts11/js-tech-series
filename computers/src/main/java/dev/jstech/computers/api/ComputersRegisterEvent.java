@@ -16,6 +16,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.ProgramSpec;
 import net.neoforged.bus.api.Event;
 import net.neoforged.fml.event.IModBusEvent;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The one moment anything may be added to what the computers know.
@@ -33,6 +34,7 @@ import net.neoforged.fml.event.IModBusEvent;
 public final class ComputersRegisterEvent extends Event implements IModBusEvent {
 
     /** Adds an instruction set architecture, a kind of machine that programs can then be built for. */
+    @ApiStatus.Experimental
     public void isa(final IsaSpec isa) {
         JsComputersApi.registerIsa(isa);
     }

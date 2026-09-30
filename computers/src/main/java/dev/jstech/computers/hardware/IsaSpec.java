@@ -9,6 +9,7 @@ package dev.jstech.computers.hardware;
 
 import java.util.Objects;
 import java.util.Set;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * An instruction set architecture (ISA): the instructions a machine's processor understands, and whose programs it
@@ -22,6 +23,7 @@ import java.util.Set;
  * <p>Like a socket, the id is text in the {@code namespace:path} shape and nothing here touches Minecraft: which
  * programs a machine will run is worked out where the hardware is, and that is tested without the game.
  */
+@ApiStatus.Experimental
 public record IsaSpec(String id, String name, int bits, Set<String> runs) {
 
     public IsaSpec {
