@@ -15,6 +15,12 @@ class OldNamesCorpus {
         string said = sprintf("%s: %d, %f", itoa(n), lucky + length + at, root + asked);
         printf("%s\n", said);
         printf("%-12s|%5d|%05.2f|%#x|%e|%u\n", said, n, root, lucky, asked, length);
+        int order = strcmp(line, said) + string.Compare(said, line) + atoi(line) + Convert.ToInt(line, -1);
+        char first = toupper('a');
+        char last = tolower(char.ToUpper('z'));
+        bool kinds = isdigit(first) || isalpha(last) || isspace(' ') || char.ToLower(first) == 'a'
+                || char.IsDigit('1') || char.IsLetter('b') || char.IsWhiteSpace('\t');
+        puts(itoa(order, 16) + Convert.ToString(lucky, 2) + first + last + kinds);
         exit(0);
     }
 }

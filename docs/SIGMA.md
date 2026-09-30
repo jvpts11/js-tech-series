@@ -58,9 +58,11 @@ value, a value with no hole, and a value of the wrong kind are all errors when t
 line break written into the format ends the line; the console keeps whole lines, so a `printf` that does not
 end in one still ends its line. Σ# has `printf` as well, since it reads whatever Σ does.
 
-Version 2 brings the other names those languages used, each written with no type in front of it. None of them
-is anything new: each stands for a call the library already has, the compiler writes that call down, and the
-listing is the very one writing it the long way gives.
+Version 2 brings the other names those languages used, each written with no type in front of it. Each stands
+for a call of the library, the compiler writes that call down, and the listing is the very one writing it the
+long way gives. The few calls the library gained for them in the same version, `string.Compare`, the `char`
+type's `ToUpper`, `ToLower`, `IsDigit`, `IsLetter` and `IsWhiteSpace`, `Convert.ToString(n, base)` and
+`Convert.ToInt(text, fallback)`, are there to be written the long way as well.
 
 | The old name | The long way |
 |---|---|
@@ -68,13 +70,17 @@ listing is the very one writing it the long way gives.
 | `gets()` | `Console.ReadLine()` |
 | `exit(status)` | `Program.Exit(status)` |
 | `abs(n)`, `sqrt(x)`, `pow(x, y)`, `floor(x)`, `min(a, b)`, `max(a, b)` | `Math.Abs`, `Math.Sqrt`, `Math.Pow`, `Math.Floor`, `Math.Min`, `Math.Max` |
+| `atoi(text)` | `Convert.ToInt(text, 0)`: the number the text is, or 0 when it is not one |
 | `atof(text)` | `Convert.ToDouble(text)` |
-| `itoa(n)` | `Convert.ToString(n)` |
+| `itoa(n)`, `itoa(n, base)` | `Convert.ToString(n)`, `Convert.ToString(n, base)`: a base from 2 to 36 |
 | `srand(seed)` | `Random.Seed(seed)` |
 | `rand()` | `Random.Next(32768)`: a whole number from 0 to 32767 |
 | `strlen(text)` | `text.Length` |
 | `strstr(haystack, needle)` | `haystack.IndexOf(needle)`: where the needle starts, or -1 when it is not there |
 | `sprintf(format, ...)` | the text `printf` would print, given back instead of printed |
+| `strcmp(a, b)` | `string.Compare(a, b)`: -1 when `a` comes first, 0 when they are the same, 1 after |
+| `toupper(c)`, `tolower(c)` | `char.ToUpper(c)`, `char.ToLower(c)` |
+| `isdigit(c)`, `isalpha(c)`, `isspace(c)` | `char.IsDigit(c)`, `char.IsLetter(c)`, `char.IsWhiteSpace(c)` |
 
 A method or a variable of the program's own under one of these names is still the one called, so a program
 that already had its own `abs` goes on calling it. Σ# has all of them too.
@@ -89,9 +95,10 @@ project cannot reference a Σ# one.
 ## Versions
 
 Σ and Σ# have versions, one number for both, since Σ N is the subset of Σ# N. Version 1 is the language as it
-first shipped under these names; version 2 brings `Sound` and `Speaker`, the old names above, the rest of
-`printf`'s holes, and `Random` in Σ's `Standard`. A version only ever adds: whatever version 1 takes, version 2 takes too and compiles to the
-same listing, so a newer compiler never breaks an older program.
+first shipped under these names; version 2 brings `Sound` and `Speaker`, the old names above with the calls
+they gained, the rest of `printf`'s holes, and `Random` in Σ's `Standard`. A version only ever adds: whatever
+version 1 takes, version 2 takes too and compiles to the same listing, so a newer compiler never breaks an
+older program.
 
 The version a machine builds is its compiler's. The package `sgsc` 2.0 is Σ# 2 and `scc` 2.0 is Σ 2, and a
 machine whose compiler is older builds the older version until an upgrade brings it up: `pckmgr upgrade`, the

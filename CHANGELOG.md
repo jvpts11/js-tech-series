@@ -403,6 +403,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   rounds the number the machine holds half to even). A number with a fraction and no precision is still written
   as the language writes it. A plain hole compiles to the same listing as before; one of these is written down as
   a single call that formats the value, and the first version refuses it for the version it needs.
+- Σ 2's small helpers: `strcmp`, `toupper`, `tolower`, `isdigit`, `isalpha`, `isspace`, `itoa(n, base)` for a base
+  from 2 to 36, and `atoi`, which reads text that is not a number as 0. They stand for calls the library gained in
+  the same version and that Σ# can write the long way: `string.Compare`, the `char` type's `ToUpper`, `ToLower`,
+  `IsDigit`, `IsLetter` and `IsWhiteSpace`, `Convert.ToString(n, base)` and `Convert.ToInt(text, fallback)`. A
+  member added to a type the first version had is refused there the way a later type is ("'string.Compare' needs
+  Σ# 2"), and the editors do not offer it to a project held to that version.
 
 ### Changed
 - The Vintage server boards hold the Integra Pentix Pro, as the boards of the time did: the MF MTX-V of the

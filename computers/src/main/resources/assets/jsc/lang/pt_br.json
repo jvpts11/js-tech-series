@@ -5521,6 +5521,7 @@
   "jsc.vm.listing.a4014": "'%s' pode ser lido mas não escrito",
   "jsc.vm.listing.a4015": "compilado para %s; esta máquina é %s",
   "jsc.vm.listing.problem": "(%s,%s): erro %s: %s",
+  "jsc.vm.number_functions.no_such_base": "não existe a base %s; um número se escreve numa base de 2 a 36",
   "jsc.vm.number_functions.not_a_number": "'%s' não é um número",
   "jsc.vm.number_functions.not_a_truth": "'%s' não é verdadeiro ou falso",
   "jsc.vm.numbers.divided_by_zero": "dividido por zero",

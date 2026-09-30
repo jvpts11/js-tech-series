@@ -26,7 +26,13 @@ public final class SigmaVersions {
     public static final int NEWEST = 2;
 
     /** The types of the library that came after the first version, with the version each came in. */
-    private static final Map<String, Integer> LIBRARY_TYPES = Map.of("Sound", 2, "Speaker", 2);
+    private static final Map<String, Integer> LIBRARY_TYPES = Map.of("Sound", 2, "Speaker", 2, "char", 2);
+    /**
+     * The members that came after the first version on a type that was already there, each written as its owner,
+     * its name and the types it takes, with the version it came in.
+     */
+    private static final Map<String, Integer> LIBRARY_MEMBERS = Map.of("string.Compare(string, string)", 2,
+            "Convert.ToString(int, int)", 2, "Convert.ToInt(string, int)", 2);
     /**
      * The types the smaller language's library took in later than the full one had them, with the version each
      * came in there: the full language always had Random, and the smaller one gained it with the old rand.
@@ -43,6 +49,18 @@ public final class SigmaVersions {
     public static int sinceType(final LanguageLevel level, final String name) {
         final Integer later = level.full() ? null : SUBSET_LATER.get(name);
         return later != null ? later : LIBRARY_TYPES.getOrDefault(name, FIRST);
+    }
+
+    /**
+     * The version a member of the library came in, in {@code level}: the version of its type, or a later one when
+     * the member was added to a type that was already there.
+     *
+     * @param takes the types it takes, as a signature writes them between its brackets: {@code int, int}
+     */
+    public static int sinceMember(final LanguageLevel level, final String owner, final String name,
+                                  final String takes) {
+        return Math.max(sinceType(level, owner),
+                LIBRARY_MEMBERS.getOrDefault(owner + "." + name + "(" + takes + ")", FIRST));
     }
 
     /**

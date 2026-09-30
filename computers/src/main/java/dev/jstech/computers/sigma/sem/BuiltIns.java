@@ -62,6 +62,7 @@ public final class BuiltIns {
         this.scriptBase = this.declare("Script", NamedType.Kind.CLASS);
 
         this.fillString();
+        this.fillCharacter(this.declare("char", NamedType.Kind.CLASS));
         this.fillList();
         this.fillMap();
         this.fillDelegates();
@@ -288,6 +289,23 @@ public final class BuiltIns {
                 PUBLIC, ITypeSymbol.Primitive.CHAR);
         this.method(this.stringType, "Format", text, PUBLIC_STATIC, text, this.objectType);
         this.method(this.stringType, "Format", text, PUBLIC_STATIC, text, this.objectType, this.objectType);
+        // Which of two texts comes first, character by character: below zero, zero when they are the same, above.
+        this.method(this.stringType, "Compare", integer, PUBLIC_STATIC, text, text);
+    }
+
+    /**
+     * What the language says about a single character, asked of the type by its keyword as C# asks it:
+     * {@code char.IsDigit(c)}. A character itself has no members, since it runs as its number; the type is only
+     * reached for these.
+     */
+    private void fillCharacter(final NamedType character) {
+        final ITypeSymbol letter = ITypeSymbol.Primitive.CHAR;
+        final ITypeSymbol flag = ITypeSymbol.Primitive.BOOL;
+        this.method(character, "ToUpper", letter, PUBLIC_STATIC, letter);
+        this.method(character, "ToLower", letter, PUBLIC_STATIC, letter);
+        this.method(character, "IsDigit", flag, PUBLIC_STATIC, letter);
+        this.method(character, "IsLetter", flag, PUBLIC_STATIC, letter);
+        this.method(character, "IsWhiteSpace", flag, PUBLIC_STATIC, letter);
     }
 
     private void fillList() {

@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 class PureFunctionsTest {
 
     /** The types of the language whose methods need nothing but their arguments. */
-    private static final Set<String> PURE_TYPES = Set.of("string", "List", "Map", "Math", "Convert", "Time");
+    private static final Set<String> PURE_TYPES = Set.of("string", "char", "List", "Map", "Math", "Convert", "Time");
 
     /**
      * The calls the compiler writes itself, for an operator or for a printf hole that asks for more than its value,

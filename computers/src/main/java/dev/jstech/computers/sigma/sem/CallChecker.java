@@ -177,6 +177,7 @@ final class CallChecker {
         final IMemberSymbol.MethodSymbol chosen = this.callWith(candidates, call.arguments(), name, call);
         if (chosen != null) {
             this.scope.model().setBinding(callee, new IBinding.Member(chosen, chosen.returnType()));
+            this.scope.declarations().reportIfNewer(chosen, call.line(), call.column());
         }
         return chosen == null ? ITypeSymbol.Special.ERROR : chosen.returnType();
     }

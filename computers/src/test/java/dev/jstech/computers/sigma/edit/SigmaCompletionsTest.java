@@ -394,6 +394,22 @@ class SigmaCompletionsTest {
         assertEquals(List.of("Random"), labels(SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 1, types)));
     }
 
+    /** A member added to a type the first version had is not offered there, nor a type that came later. */
+    @Test
+    void within_theFirstVersion_offersNoMemberThatCameLaterOnAnOlderType() {
+        final List<SigmaCompletions.Item> compare =
+                SigmaCompletions.members(this.builtIns, null, "string", "Comp", true);
+        assertEquals(List.of("Compare"), labels(compare));
+        assertTrue(SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 1, compare).isEmpty());
+        assertEquals(compare, SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 2, compare));
+        final List<String> toString = SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 1,
+                SigmaCompletions.members(this.builtIns, null, "Convert", "ToString", true)).stream()
+                .map(SigmaCompletions.Item::signature).toList();
+        assertEquals(List.of("ToString(object) : string"), toString);
+        assertFalse(labels(SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 1,
+                SigmaCompletions.types(this.builtIns, null, "ch"))).contains("char"));
+    }
+
     /** The calls written with no type in front of them are offered from their table, each way each is written. */
     @Test
     void names_offersTheCallsWrittenWithNoTypeInFrontOfThem() {

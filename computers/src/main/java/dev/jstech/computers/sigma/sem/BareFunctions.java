@@ -42,7 +42,10 @@ public final class BareFunctions {
         ON_THE_FIRST,
         /** A value read off the first: {@code strlen(s)} is {@code s.Length}. */
         READ_OFF_THE_FIRST,
-        /** The library's own call, handed one fixed value: {@code rand()} is {@code Random.Next(32768)}. */
+        /**
+         * The library's own call, handed the same values and then one fixed value: {@code rand()} is
+         * {@code Random.Next(32768)}, and {@code atoi(s)} is {@code Convert.ToInt(s, 0)}.
+         */
         FIXED_VALUE,
         /** A format read while the program is compiled, its text handed to the console: {@code printf}. */
         PRINTED,
@@ -116,6 +119,8 @@ public final class BareFunctions {
     public static final String MORE = "...";
     /** Where the long way of a formatting call lives, which is text joined up and nothing called. */
     private static final String JOINED_TEXT = "string";
+    /** The type the character tests and changes are asked of. */
+    private static final String CHARACTER = "char";
     /** What an old program's rand gives back is under this, as it was on the machines it comes from. */
     private static final int RAND_LIMIT = 32768;
     private static final Set<LanguageLevel> BOTH = Set.of(LanguageLevel.SIGMA, LanguageLevel.SIGMA_SHARP);
@@ -138,8 +143,11 @@ public final class BareFunctions {
         same("floor", "Math", "Floor", form("double", "double x"));
         same("min", "Math", "Min", form("int", "int a", "int b"), form("double", "double a", "double b"));
         same("max", "Math", "Max", form("int", "int a", "int b"), form("double", "double a", "double b"));
+        // Text that is not a number is 0, as it was: the value handed to fall back on.
+        add(new Function("atoi", List.of(form("int", "string text")), Shape.FIXED_VALUE, "Convert", "ToInt", 0,
+                OLD_NAMES, BOTH));
         same("atof", "Convert", "ToDouble", form("double", "string text"));
-        same("itoa", "Convert", "ToString", form("string", "int value"));
+        same("itoa", "Convert", "ToString", form("string", "int value"), form("string", "int value", "int base"));
         same("srand", "Random", "Seed", form("void", "long seed"));
         add(new Function("rand", List.of(form("int")), Shape.FIXED_VALUE, "Random", "Next", RAND_LIMIT,
                 OLD_NAMES, BOTH));
@@ -147,6 +155,12 @@ public final class BareFunctions {
                 "Length", 0, OLD_NAMES, BOTH));
         add(new Function("strstr", List.of(form("int", "string haystack", "string needle")), Shape.ON_THE_FIRST,
                 "string", "IndexOf", 0, OLD_NAMES, BOTH));
+        same("strcmp", "string", "Compare", form("int", "string a", "string b"));
+        same("toupper", CHARACTER, "ToUpper", form("char", "char c"));
+        same("tolower", CHARACTER, "ToLower", form("char", "char c"));
+        same("isdigit", CHARACTER, "IsDigit", form("bool", "char c"));
+        same("isalpha", CHARACTER, "IsLetter", form("bool", "char c"));
+        same("isspace", CHARACTER, "IsWhiteSpace", form("bool", "char c"));
     }
 
     private BareFunctions() {

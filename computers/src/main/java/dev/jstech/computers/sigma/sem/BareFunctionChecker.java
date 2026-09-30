@@ -82,7 +82,7 @@ final class BareFunctionChecker {
         final List<IExpr> values = call.arguments();
         switch (function.shape()) {
             case SAME_VALUES -> this.scope.model().setCall(call, this.longCall(owner, function.member(), takes, values));
-            case FIXED_VALUE -> this.fixed(call, function, owner);
+            case FIXED_VALUE -> this.fixed(call, function, owner, takes);
             case ON_THE_FIRST -> this.onTheFirst(call, function, owner, takes);
             case READ_OFF_THE_FIRST -> this.readOffTheFirst(call, function, owner);
             case PRINTED, FORMATTED -> throw new IllegalStateException("a format is not called");
@@ -90,13 +90,20 @@ final class BareFunctionChecker {
         return chosen.returnType();
     }
 
-    /** {@code rand()} as {@code Random.Next(32768)}: the library's call, handed the one value it is fixed to. */
-    private void fixed(final IExpr.Call call, final BareFunctions.Function function, final NamedType owner) {
-        final IExpr limit = new IExpr.Literal(TokenKind.INT_LITERAL, function.fixed(), call.line(), call.column());
-        this.scope.model().setType(limit, ITypeSymbol.Primitive.INT);
-        final IExpr.Call made = new IExpr.Call(call.callee(), List.of(limit), call.line(), call.column());
-        final IMemberSymbol.MethodSymbol target = this.longCall(owner, function.member(),
-                List.of(ITypeSymbol.Primitive.INT), made.arguments());
+    /**
+     * {@code rand()} as {@code Random.Next(32768)} and {@code atoi(s)} as {@code Convert.ToInt(s, 0)}: the library's
+     * call, handed the values and then the one value it is fixed to.
+     */
+    private void fixed(final IExpr.Call call, final BareFunctions.Function function, final NamedType owner,
+                       final List<ITypeSymbol> takes) {
+        final IExpr fixed = new IExpr.Literal(TokenKind.INT_LITERAL, function.fixed(), call.line(), call.column());
+        this.scope.model().setType(fixed, ITypeSymbol.Primitive.INT);
+        final List<IExpr> values = new ArrayList<>(call.arguments());
+        values.add(fixed);
+        final List<ITypeSymbol> types = new ArrayList<>(takes);
+        types.add(ITypeSymbol.Primitive.INT);
+        final IExpr.Call made = new IExpr.Call(call.callee(), List.copyOf(values), call.line(), call.column());
+        final IMemberSymbol.MethodSymbol target = this.longCall(owner, function.member(), types, made.arguments());
         this.scope.model().setCall(made, target);
         this.scope.model().setType(made, target.returnType());
         this.scope.model().setLongWay(call, made);

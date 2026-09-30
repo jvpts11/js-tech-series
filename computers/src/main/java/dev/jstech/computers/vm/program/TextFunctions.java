@@ -15,11 +15,13 @@ import dev.jstech.core.text.TextKey;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-/** What the language does with text: joining it, cutting it, searching it and changing it. */
+/** What the language does with text, joining it, cutting it, searching it and changing it, and with one character. */
 @TextHolder
 final class TextFunctions {
 
     private static final String TEXT = IntrinsicTypes.TEXT;
+    /** A single character, whose type is only reached for what the language says about one. */
+    private static final String CHAR = "char";
     private static final TextKey NO_START = TextKey.of("jsc.vm.text_functions.no_start",
             "there is no place %s to start from in a string of %s");
     private static final TextKey NO_RUN = TextKey.of("jsc.vm.text_functions.no_run",
@@ -39,6 +41,19 @@ final class TextFunctions {
                 context.text(String.valueOf((char) Numbers.toInt(arguments[0])), line), "char");
         // Written by the compiler for a printf hole with a width, a precision, flags or a base.
         registry.onType(TEXT, "Printf", TEXT, TextFunctions::printf, TEXT, "object");
+        // Character by character, and only which way it goes: -1, 0 or 1, whatever the difference was.
+        registry.onType(TEXT, "Compare", "int", (context, target, arguments, line) ->
+                Integer.signum(String.valueOf(arguments[0]).compareTo(String.valueOf(arguments[1]))), TEXT, TEXT);
+        registry.onType(CHAR, "ToUpper", CHAR, (context, target, arguments, line) ->
+                Character.toUpperCase(letter(arguments[0])), CHAR);
+        registry.onType(CHAR, "ToLower", CHAR, (context, target, arguments, line) ->
+                Character.toLowerCase(letter(arguments[0])), CHAR);
+        registry.onType(CHAR, "IsDigit", "bool", (context, target, arguments, line) ->
+                Character.isDigit(letter(arguments[0])), CHAR);
+        registry.onType(CHAR, "IsLetter", "bool", (context, target, arguments, line) ->
+                Character.isLetter(letter(arguments[0])), CHAR);
+        registry.onType(CHAR, "IsWhiteSpace", "bool", (context, target, arguments, line) ->
+                Character.isWhitespace(letter(arguments[0])), CHAR);
         registry.onType(TEXT, "Format", TEXT, TextFunctions::format, TEXT, "object");
         registry.onType(TEXT, "Format", TEXT, TextFunctions::format, TEXT, "object", "object");
         registry.onObject(TEXT, "Substring", TEXT, TextFunctions::substring, "int");
@@ -70,6 +85,11 @@ final class TextFunctions {
             result = result.replace("{" + (i - 1) + "}", String.valueOf(arguments[i]));
         }
         return context.text(result, line);
+    }
+
+    /** A character as it runs, which is its number, as the character it is. */
+    private static char letter(final Object value) {
+        return (char) Numbers.toInt(value);
     }
 
     /**

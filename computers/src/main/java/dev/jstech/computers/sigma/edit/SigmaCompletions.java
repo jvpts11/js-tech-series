@@ -160,7 +160,10 @@ public final class SigmaCompletions {
         if (bare != null) {
             return bare.in(level) ? bare.since() : Integer.MAX_VALUE;
         }
-        return SigmaVersions.sinceType(level, item.sort() == Sort.TYPE ? item.label() : item.owner());
+        if (item.sort() == Sort.TYPE) {
+            return SigmaVersions.sinceType(level, item.label());
+        }
+        return SigmaVersions.sinceMember(level, item.owner(), item.label(), takenBy(item.signature()));
     }
 
     /** The call written with no type in front of it that a candidate is, or null when it is not one. */

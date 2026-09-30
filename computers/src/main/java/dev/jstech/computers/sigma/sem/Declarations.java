@@ -92,6 +92,26 @@ public final class Declarations {
     }
 
     /**
+     * Reports a method of the library, called at {@code line}, {@code column}, when it was added to its type in a
+     * later version than the one the build is held to. One whose whole type came later is not reported again here:
+     * the type was, where it was named.
+     */
+    void reportIfNewer(final IMemberSymbol.MethodSymbol method, final int line, final int column) {
+        final NamedType owner = method.owner();
+        if (owner == null || this.builtIns.type(owner.name(), owner.typeParameters().size()) != owner) {
+            return;
+        }
+        final List<String> takes = new ArrayList<>(method.parameters().size());
+        for (final IMemberSymbol.ParameterSymbol parameter : method.parameters()) {
+            takes.add(parameter.type().describe());
+        }
+        final int since = SigmaVersions.sinceMember(this.level, owner.name(), method.name(), String.join(", ", takes));
+        if (since > SigmaVersions.sinceType(this.level, owner.name())) {
+            this.reportIfLater(owner.name() + "." + method.name(), since, line, column);
+        }
+    }
+
+    /**
      * Reports {@code name}, written at {@code line}, {@code column}, when what it names came in {@code since}, a
      * later version than the one the build is held to.
      */

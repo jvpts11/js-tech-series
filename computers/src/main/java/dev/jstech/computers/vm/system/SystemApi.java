@@ -119,6 +119,9 @@ public final class SystemApi {
         convert.pure(DOUBLE, "ToDouble", STRING);
         convert.pure(BOOL, "ToBool", STRING);
         convert.pure(STRING, "ToString", OBJECT);
+        // The second version's: a whole number in any base from 2 to 36, and text read with a value to fall back on.
+        convert.pure(STRING, "ToString", INT, INT);
+        convert.pure(INT, "ToInt", STRING, INT);
         /*
          * The Try forms answer whether the text was a value and hand the value out sideways, for a program that would
          * rather ask again than stop on a line somebody mistyped.

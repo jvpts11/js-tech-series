@@ -55,7 +55,14 @@ class BareFunctionsTest {
             List.of("int r = rand();", "int r = Random.Next(32768);"),
             List.of("string s = \"abc\"; int n = strlen(s);", "string s = \"abc\"; int n = s.Length;"),
             List.of("string s = \"abc\"; int i = strstr(s, \"b\");", "string s = \"abc\"; int i = s.IndexOf(\"b\");"),
-            List.of("int n = 3; string t = sprintf(\"%d items\", n);", "int n = 3; string t = \"\" + n + \" items\";"));
+            List.of("int n = 3; string t = sprintf(\"%d items\", n);", "int n = 3; string t = \"\" + n + \" items\";"),
+            List.of("int c = strcmp(\"a\", \"b\");", "int c = string.Compare(\"a\", \"b\");"),
+            List.of("char u = toupper('a'); char l = tolower('B');",
+                    "char u = char.ToUpper('a'); char l = char.ToLower('B');"),
+            List.of("bool d = isdigit('7'); bool a = isalpha('x'); bool w = isspace(' ');",
+                    "bool d = char.IsDigit('7'); bool a = char.IsLetter('x'); bool w = char.IsWhiteSpace(' ');"),
+            List.of("string h = itoa(255, 16);", "string h = Convert.ToString(255, 16);"),
+            List.of("int n = atoi(\"12\");", "int n = Convert.ToInt(\"12\", 0);"));
 
     private static SigmaCompiler.Result built(final String members, final String body, final LanguageLevel level,
                                               final int version) {
@@ -129,6 +136,45 @@ class BareFunctionsTest {
                 + "puts(sprintf(\"%s=%d\", \"n\", abs(-4))); srand(7); int r = rand(); "
                 + "if (r >= 0 && r < 32768) { puts(\"in range\"); }", LanguageLevel.SIGMA, SigmaVersions.NEWEST);
         assertEquals(List.of("6", "n=4", "in range"), out);
+    }
+
+    /** The small helpers: text compared, characters tested and changed, numbers in a base, text read as 0. */
+    @Test
+    void theHelpers_doWhatTheirNamesSay() {
+        final List<String> out = printed("", "printf(\"%d %d %d\\n\", strcmp(\"apple\", \"banana\"), "
+                + "strcmp(\"b\", \"b\"), strcmp(\"b\", \"a\")); printf(\"%c%c\\n\", toupper('a'), tolower('B')); "
+                + "if (isdigit('7') && isalpha('x') && isspace(' ') && !isdigit('x')) { puts(\"tested\"); } "
+                + "puts(itoa(255, 16) + \" \" + itoa(-1, 16) + \" \" + itoa(5, 2) + \" \" + itoa(35, 36)); "
+                + "printf(\"%d %d %d\\n\", atoi(\"12\"), atoi(\" 7 \"), atoi(\"twelve\"));",
+                LanguageLevel.SIGMA, SigmaVersions.NEWEST);
+        assertEquals(List.of("-1 0 1", "Ab", "tested", "ff ffffffff 101 z", "12 7 0"), out);
+    }
+
+    @Test
+    void itoa_inABaseThereIsNotStopsTheProgramSayingSo() {
+        final SigmaCompiler.Result built = built("", "puts(itoa(5, 40));", LanguageLevel.SIGMA,
+                SigmaVersions.NEWEST);
+        assertTrue(built.ok(), () -> String.join("\n", built.lines()));
+        final ProgramImage program = ProgramImage.of(new AsmReader(built.assembly()).read());
+        final Process process = new Process(program, ROOM, IHost.still());
+        process.begin(process.create(program.entryPoint()), "OnTick");
+        process.step(PLENTY);
+        assertEquals(Process.State.HALTED, process.state());
+        assertTrue(process.message().english().contains("there is no base 40"), process.message().english());
+    }
+
+    /** What came to a type the first version already had is refused there, named with its type. */
+    @Test
+    void aMemberAddedInTheSecondVersion_isRefusedAtTheFirst() {
+        assertTrue(refusal("int c = string.Compare(\"a\", \"b\");", LanguageLevel.SIGMA_SHARP, SigmaVersions.FIRST)
+                .contains("'string.Compare' needs Σ# 2; this project is Σ# 1"));
+        assertTrue(refusal("string h = Convert.ToString(255, 16);", LanguageLevel.SIGMA_SHARP, SigmaVersions.FIRST)
+                .contains("'Convert.ToString' needs Σ# 2"));
+        final String character = refusal("bool d = char.IsDigit('1');", LanguageLevel.SIGMA_SHARP,
+                SigmaVersions.FIRST);
+        assertTrue(character.contains("'char' needs Σ# 2") && !character.contains("'char.IsDigit'"), character);
+        assertTrue(built("", "string s = Convert.ToString(255); int n = Convert.ToInt(\"4\");",
+                LanguageLevel.SIGMA_SHARP, SigmaVersions.FIRST).ok(), "what was there before is still there");
     }
 
     /** A program that had a method or a variable under one of the names before they came keeps calling its own. */
