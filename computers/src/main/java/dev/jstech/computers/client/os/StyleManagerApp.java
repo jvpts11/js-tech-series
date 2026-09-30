@@ -131,7 +131,7 @@ final class StyleManagerApp implements IDesktopApp {
         if (this.skin == null || desktop == null) {
             return;
         }
-        final CdePalette p = desktop.cdePalette();
+        final CdePalette p = desktop.prefs().cdePalette();
         this.skin.panel(g, x, y, CdeStyleLayout.STRIP_W, CdeStyleLayout.STRIP_H);
         for (int i = 0; i < PAGE_KEYS.size(); i++) {
             final Rect page = CdeStyleLayout.page(i);
@@ -150,7 +150,7 @@ final class StyleManagerApp implements IDesktopApp {
                 g.pose().pushPose();
                 g.pose().translate(ix + 1, iy + 1, 0);
                 MotifChrome.backdrop(g, CdeStyleLayout.PAGE_ICON - 2, CdeStyleLayout.PAGE_ICON - 2, p,
-                        desktop.cdeStyle().backdrop(desktop.workspace()));
+                        desktop.prefs().cdeStyle().backdrop(desktop.workspace()));
                 g.pose().popPose();
             } else {
                 MotifChrome.sunken(g, ix, iy, CdeStyleLayout.PAGE_ICON, CdeStyleLayout.PAGE_ICON, p.inset(), p);
@@ -187,12 +187,12 @@ final class StyleManagerApp implements IDesktopApp {
         final IDesktopApp opening;
         if (page == COLOR) {
             if (this.color == null) {
-                this.color = new CdeColorPage(desktop.cdeStyle().palette(), () -> this.color = null);
+                this.color = new CdeColorPage(desktop.prefs().cdeStyle().palette(), () -> this.color = null);
             }
             opening = this.color;
         } else if (page == BACKDROP) {
             if (this.backdrop == null) {
-                this.backdrop = new CdeBackdropPage(desktop.cdeStyle().backdrop(desktop.workspace()),
+                this.backdrop = new CdeBackdropPage(desktop.prefs().cdeStyle().backdrop(desktop.workspace()),
                         () -> this.backdrop = null);
             }
             opening = this.backdrop;

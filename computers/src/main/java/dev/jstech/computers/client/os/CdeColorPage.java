@@ -174,7 +174,7 @@ final class CdeColorPage implements IDesktopApp {
         this.answered = true;
         final DesktopScreen desktop = DesktopScreen.current();
         if (desktop != null) {
-            desktop.keepCdeStyle(desktop.cdeStyle().withPalette(this.picked));
+            desktop.prefs().keepCdeStyle(desktop.prefs().cdeStyle().withPalette(this.picked));
         }
         DesktopScreen.closeDialog(this);
     }
@@ -189,7 +189,7 @@ final class CdeColorPage implements IDesktopApp {
     private static void wear(final String palette) {
         final DesktopScreen desktop = DesktopScreen.current();
         if (desktop != null) {
-            desktop.wearCdeStyle(desktop.cdeStyle().withPalette(palette));
+            desktop.prefs().wearCdeStyle(desktop.prefs().cdeStyle().withPalette(palette));
         }
     }
 

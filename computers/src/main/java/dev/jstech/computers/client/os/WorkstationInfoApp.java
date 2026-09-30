@@ -150,7 +150,7 @@ public final class WorkstationInfoApp implements IDesktopApp {
         if (this.skin == null || desktop == null) {
             return;
         }
-        final CdePalette p = desktop.cdePalette();
+        final CdePalette p = desktop.prefs().cdePalette();
         if (this.facts != null) {
             final List<WorkstationFacts.Group> groups = this.facts.groups();
             for (int gi = 0; gi < groups.size() && gi < WorkstationInfoLayout.GROUPS.size(); gi++) {

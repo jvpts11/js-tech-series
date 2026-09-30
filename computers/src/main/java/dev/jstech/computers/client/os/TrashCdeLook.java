@@ -176,7 +176,7 @@ final class TrashCdeLook implements ITrashLook {
 
     private CdePalette palette() {
         final DesktopScreen desktop = DesktopScreen.current();
-        return desktop == null ? CdeScheme.DEFAULT.colours() : desktop.cdePalette();
+        return desktop == null ? CdeScheme.DEFAULT.colours() : desktop.prefs().cdePalette();
     }
 
     private static Font font() {

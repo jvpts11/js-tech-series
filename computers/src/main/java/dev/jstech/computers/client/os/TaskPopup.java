@@ -191,7 +191,7 @@ final class TaskPopup {
         if (r == null) {
             return;
         }
-        final OsSkin skin = desktop.panelSkin();
+        final OsSkin skin = desktop.prefs().skin();
         skin.windowShadow(g, r[0], r[1], r[2], r[3]);
         skin.panel(g, r[0], r[1], r[2], r[3]);
         final List<DesktopWindow> list = windows();

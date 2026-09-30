@@ -72,7 +72,7 @@ final class PanelTray {
 
     /** How wide the whole notification area runs: the status group, the clock, and the padding around them. */
     int width() {
-        return PAD + statusWidth() + GAP + desktop.textFont().width(desktop.clock()) + PAD;
+        return PAD + statusWidth() + GAP + desktop.textFont().width(desktop.prefs().clockText()) + PAD;
     }
 
     /** The left edge of the notification area on a panel {@code sw} wide. */
@@ -94,7 +94,7 @@ final class PanelTray {
     void draw(final GuiGraphics g, final int panelY, final int sw, final int textColor) {
         final int x = left(sw) + PAD;
         drawStatus(g, x, panelY, textColor);
-        g.drawString(desktop.textFont(), desktop.clock(),
+        g.drawString(desktop.textFont(), desktop.prefs().clockText(),
                 x + statusWidth() + GAP, panelY + 8, textColor, false);
     }
 

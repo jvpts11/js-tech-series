@@ -224,7 +224,7 @@ final class VolumePopup {
     /** The control this desktop opens, or null on one with no speaker on its panel. */
     @Nullable
     Look look() {
-        final OsSkin.Form form = desktop.panelSkin().form();
+        final OsSkin.Form form = desktop.prefs().skin().form();
         if (form == OsSkin.Form.KDE2 || form == OsSkin.Form.GNOME1) {
             return Look.PERIOD;
         }
@@ -261,7 +261,7 @@ final class VolumePopup {
         final int my = ctx.mouseY() - originY;
         g.pose().pushPose();
         g.pose().translate(originX, originY, 0);
-        final OsSkin skin = desktop.panelSkin();
+        final OsSkin skin = desktop.prefs().skin();
         switch (look) {
             case CLASSIC, PERIOD -> drawUpright(g, font, skin, geo, mx, my);
             case SYSTEM_MENU -> drawSystemMenu(g, font, geo, mx, my);
@@ -482,7 +482,7 @@ final class VolumePopup {
     private void drawSystemMenu(final GuiGraphics g, final Font font, final Geometry geo, final int mx,
                                 final int my) {
         final Colours c = PALETTE.get();
-        final int accent = desktop.panelSkin().accent();
+        final int accent = desktop.prefs().skin().accent();
         g.fill(0, 0, geo.width(), geo.height(), c.menuFill());
         Draw.outline(g, 0, 0, geo.width(), geo.height(), c.menuEdge());
         final Rect icon = geo.icon();

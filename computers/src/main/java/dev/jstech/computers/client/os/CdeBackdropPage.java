@@ -99,7 +99,7 @@ final class CdeBackdropPage implements IDesktopApp {
         if (this.skin == null || desktop == null) {
             return;
         }
-        final CdePalette p = desktop.cdePalette();
+        final CdePalette p = desktop.prefs().cdePalette();
         CdeStylePages.list(g, font, this.skin, p, x, y, false, LABELS, this.picked.place());
         final Rect preview = CdeStyleLayout.preview();
         this.skin.panel(g, x + preview.x(), y + preview.y(), preview.w(), preview.h());
@@ -160,7 +160,7 @@ final class CdeBackdropPage implements IDesktopApp {
     private void apply() {
         final DesktopScreen desktop = DesktopScreen.current();
         if (desktop != null) {
-            desktop.keepCdeStyle(desktop.cdeStyle().withBackdrop(desktop.workspace(), this.picked));
+            desktop.prefs().keepCdeStyle(desktop.prefs().cdeStyle().withBackdrop(desktop.workspace(), this.picked));
         }
     }
 

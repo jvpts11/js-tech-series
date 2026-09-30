@@ -247,7 +247,7 @@ final class CdePanels {
 
     /** The hands that tell the world's own time, which is the one thing on the panel that moves. */
     private void clockHands(final GuiGraphics g, final int cx, final int cy) {
-        final int minute = desktop.minuteOfDay();
+        final int minute = desktop.prefs().minuteOfDay();
         hand(g, cx, cy, (minute % 720) / 720.0, 6);
         hand(g, cx, cy, (minute % 60) / 60.0, 9);
     }
@@ -264,7 +264,7 @@ final class CdePanels {
 
     /** The day of the world on the calendar page, under its red band. */
     private void day(final GuiGraphics g, final int cx, final int y) {
-        final String day = Integer.toString(desktop.dayOfWorld());
+        final String day = Integer.toString(desktop.prefs().dayOfWorld());
         g.drawString(desktop.textFont(), day, cx - desktop.textFont().width(day) / 2, y, PALETTE.get().ink(), false);
     }
 

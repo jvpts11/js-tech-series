@@ -17,7 +17,6 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.MachineKeyboard;
 import dev.jstech.computers.client.MonitorFrame;
-import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.TaskbarGroups;
@@ -122,15 +121,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     private final BlockPos monitorPos;
     private final ResourceLocation osId;
     private final DesktopTheme theme;
-    private OsSkin skin;
-    /** Per-computer accent override (0 = skin default), brightness, and clock format, from the settings. */
-    private int desktopAccent;
-    private int desktopBrightness = 100;
-    private boolean desktopClock12h;
-    /** Frames 11 taskbar layout: centered app strip (default) or left-aligned next to Start. */
-    private boolean desktopTaskbarCentered = true;
-    /** Frames 11 dark theme: darkens the window chrome (via the skin) and the Start menu. */
-    private boolean desktopDarkMode;
+    /** How the owner chose this desktop should look, and the skin that dresses it. */
+    private final DesktopPrefs prefs;
     private final List<DesktopWindow> windows = new ArrayList<>();
     /** Where the desktop sits on the game's screen and how big it draws. */
     private final DesktopViewport view = new DesktopViewport(this);
@@ -296,7 +288,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (active == null) {
             return "";
         }
-        return WallpaperPainter.styleFor(active.desktopId, active.platform(), active.desktopWallpaper).id();
+        return WallpaperPainter.styleFor(active.desktopId, active.platform(), active.prefs.wallpaper()).id();
     }
 
     /** Whether a window of that key is up on the desktop in front of the player. */
@@ -440,29 +432,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                                       final String wallpaper, final boolean taskbarCentered,
                                       final boolean darkMode, final int scale) {
         if (active != null) {
-            active.desktopAccent = accent;
-            active.desktopBrightness = brightness;
-            active.desktopClock12h = clock12h;
-            active.desktopWallpaper = wallpaper == null ? "" : wallpaper;
-            active.desktopTaskbarCentered = taskbarCentered;
-            active.desktopDarkMode = darkMode;
             active.view.setScalePercent(scale);
-            active.rebuildSkin();
+            active.prefs.apply(accent, brightness, clock12h, wallpaper, taskbarCentered, darkMode);
         }
-    }
-
-    /** Rebuilds the skin from the current accent + dark-mode prefs (dark applies only to the flat Frames 11). */
-    private void rebuildSkin() {
-        /*
-         * The host's era picks the desktop's period look: a Linux desktop on Legacy hardware wears
-         * its own era, instead of a modern flat theme on a machine from another decade.
-         */
-        // CDE is drawn out of the palette the machine keeps, which is a choice and not a fact of its era.
-        OsSkin base = is(PanelStyle.CDE) ? OsSkin.motif(cdeStyle.scheme()) : OsSkin.forDesktop(desktopId, era());
-        if (desktopDarkMode) {
-            base = base.darkVariant();
-        }
-        this.skin = base.withAccent(desktopAccent);
     }
 
     /**
@@ -487,7 +459,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return;
         }
         final String choice = PixWallpaper.choiceFor(path);
-        active.desktopWallpaper = choice;
+        active.prefs.setWallpaper(choice);
         PacketDistributor.sendToServer(new SetSettingPayload(active.host, "wallpaper", choice));
     }
 
@@ -614,11 +586,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** Files and folders living in the desktop folder ({@link SystemLayout#DESKTOP_DIR}), drawn as icons. */
     private final List<DiskFilesPayload.WireFile> desktopItems = new ArrayList<>();
 
-    /** The player's chosen wallpaper style ({@code ""} = OS default) and computer name, synced from the server. */
-    private String desktopWallpaper = "";
+    /** The computer's name, synced from the server. */
     private String computerName = "";
-    /** CDE's palette and the backdrop of each workspace, synced from the server and worn while one is chosen. */
-    private CdeStyle cdeStyle = CdeStyle.DEFAULT;
     /** The media in the machine's drives, as its last listing said. */
     private final List<DiskFilesPayload.WireVolume> media = new ArrayList<>();
 
@@ -672,7 +641,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * decided, so the panel and the windows can never disagree about which decade they are in.
      */
     boolean periodPanel() {
-        return skin.form() == OsSkin.Form.KDE2 || skin.form() == OsSkin.Form.GNOME1;
+        return prefs.skin().form() == OsSkin.Form.KDE2 || prefs.skin().form() == OsSkin.Form.GNOME1;
     }
 
     /**
@@ -705,8 +674,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return theme;
     }
 
-    OsSkin panelSkin() {
-        return skin;
+    /** How the owner chose this desktop should look, the skin that dresses it, its clock and its era. */
+    DesktopPrefs prefs() {
+        return prefs;
     }
 
     List<Launcher> launcherList() {
@@ -749,7 +719,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return;
         }
         final IDesktopApp app = make.get();
-        app.applySkin(skin);
+        app.applySkin(prefs.skin());
         openApp(key, app);
     }
 
@@ -828,48 +798,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** How bright an opaque colour reads, 0 to 255, for deciding what tone sits well on it. */
     private static int luminance(final int color) {
         return (((color >> 16) & 0xFF) * 30 + ((color >> 8) & 0xFF) * 59 + (color & 0xFF) * 11) / 100;
-    }
-
-    /** The time this machine shows, in the format its settings ask for. */
-    String clock() {
-        return clockText();
-    }
-
-    /** The minute of the world's day counted from midnight, for a clock that has hands instead of figures. */
-    int minuteOfDay() {
-        final Minecraft mc = Minecraft.getInstance();
-        return mc.level == null ? 0 : (int) (((mc.level.getDayTime() % 24000L + 6000L) % 24000L) * 3L / 50L);
-    }
-
-    /** Which day of the world it is, counted from one, for a calendar page. */
-    int dayOfWorld() {
-        final Minecraft mc = Minecraft.getInstance();
-        return mc.level == null ? 1 : (int) (mc.level.getDayTime() / 24000L % 9999L) + 1;
-    }
-
-    /** The palette a CDE desktop is drawn from. */
-    CdePalette cdePalette() {
-        return cdeStyle.colours();
-    }
-
-    /** CDE's look as this desktop is wearing it, which is what the Style Manager starts from. */
-    CdeStyle cdeStyle() {
-        return cdeStyle;
-    }
-
-    /**
-     * Puts a look on the desktop at once, frames and panel and backdrop, without telling the machine: the Style
-     * Manager shows a palette this way while it is being chosen, and puts the kept one back on Cancel.
-     */
-    void wearCdeStyle(final CdeStyle style) {
-        cdeStyle = style == null ? CdeStyle.DEFAULT : style;
-        rebuildSkin();
-    }
-
-    /** Puts a look on the desktop and has the machine keep it, so it is there for whoever looks next. */
-    void keepCdeStyle(final CdeStyle style) {
-        wearCdeStyle(style);
-        PacketDistributor.sendToServer(new SetSettingPayload(host, "cdestyle", cdeStyle.encoded()));
     }
 
     /** Which of the desktop's workspaces is up, counted from nought. */
@@ -1241,7 +1169,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return;
         }
         final ApplicationManagerApp app = new ApplicationManagerApp(group);
-        app.applySkin(skin);
+        app.applySkin(prefs.skin());
         openApp(key, app);
     }
 
@@ -1442,8 +1370,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         this.desktopDir = SystemLayout.desktopDirFor(os, os == null ? null
                 : OsRegistry.getKernel(os.kernelId()));
         this.theme = DesktopTheme.forDesktop(desktopId);
-        // A provisional skin: rebuildSkin() refines it with the host's era once the level is reachable.
-        this.skin = OsSkin.forDesktop(desktopId);
+        this.prefs = new DesktopPrefs(this, desktopId);
     }
 
     private boolean is(final PanelStyle style) {
@@ -1779,7 +1706,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** CDE's look as the desktop is wearing it, as the machine would keep it. */
     public String wornCdeStyle() {
-        return cdeStyle.encoded();
+        return prefs.cdeStyle().encoded();
     }
 
     /** Screen position of a page on the Style Manager's strip, or null while the Style Manager is not up. */
@@ -2151,47 +2078,14 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     }
 
     /**
-     * The host computer's hardware era, read from its block entity so the monitor frame matches the chassis.
-     * Never null: a host that cannot name an era yet (a rack whose unit the client has not received) gets the
-     * Standard frame, since the frame geometry is asked for every frame by the recipe viewer as well.
-     */
-    private HardwareEra era() {
-        final Minecraft mc = Minecraft.getInstance();
-        if (mc.level != null && mc.level.getBlockEntity(host)
-                instanceof IOsHost be) {
-            final HardwareEra era = be.displayEra();
-            if (era != null) {
-                return era;
-            }
-        }
-        return HardwareEra.STANDARD;
-    }
-
-    /** The in-game time of day as HH:MM for the taskbar clock (Minecraft dayTime 0 = 06:00). */
-    private String clockText() {
-        final Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) {
-            return "";
-        }
-        final long t = mc.level.getDayTime() % 24000L;
-        final int totalMin = (int) (((t + 6000L) % 24000L) * 3L / 50L);
-        final int hour24 = totalMin / 60;
-        final int minute = totalMin % 60;
-        if (desktopClock12h) {
-            final int h12 = hour24 % 12 == 0 ? 12 : hour24 % 12;
-            return String.format(Locale.ROOT, "%d:%02d %s", h12, minute, hour24 < 12 ? "AM" : "PM");
-        }
-        return String.format(Locale.ROOT, "%02d:%02d", hour24, minute);
-    }
-
-    /**
      * Outer bounds of the framed monitor window (the bezel plus its chin), in screen coordinates. Integrations
      * that place a side panel next to this screen (e.g. the JEI ingredient list) read this so the panel sits
      * beside the monitor rather than over it.
      */
     public MonitorFrameStyle.Geometry frameBounds() {
         // The frame wraps the glass as it is on the screen, whatever the desktop inside it is scaled to.
-        return MonitorFrameStyle.forEra(era()).geometry(view.left(), view.top(), view.glassWidth(), view.glassHeight());
+        return MonitorFrameStyle.forEra(prefs.era())
+                .geometry(view.left(), view.top(), view.glassWidth(), view.glassHeight());
     }
 
     @Override
@@ -2216,7 +2110,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * period desktop panels at the bottom), so waiting for the desktop payload to arrive would draw
          * one frame with the panel on the wrong edge and then jump.
          */
-        rebuildSkin();
+        prefs.rebuildSkin();
 
         buildLaunchers();
 
@@ -2259,7 +2153,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             if (app == null) {
                 continue; // a program that is no longer installed simply does not come back
             }
-            app.applySkin(screen.skin);
+            app.applySkin(screen.prefs.skin());
             if (restored) {
                 app.onRestored(); // a kept instance re-asks the server for what may have changed meanwhile
             }
@@ -2515,20 +2409,16 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
         active.desktopItems.clear();
         active.desktopItems.addAll(payload.files());
-        active.desktopWallpaper = payload.wallpaper();
-        active.cdeStyle = CdeStyle.parse(payload.cdeStyle());
         active.computerName = payload.computerName();
-        active.desktopAccent = payload.prefs().accent();
-        active.desktopBrightness = payload.prefs().brightness();
-        active.desktopClock12h = payload.prefs().clock12h();
-        active.desktopTaskbarCentered = payload.prefs().taskbarCentered();
-        active.desktopDarkMode = payload.prefs().darkMode();
         active.view.setScalePercent(payload.prefs().scale());
+        // The look the machine keeps goes in first, so the skin the choices rebuild is drawn from it.
+        active.prefs.takeCdeStyle(CdeStyle.parse(payload.cdeStyle()));
+        active.prefs.apply(payload.prefs().accent(), payload.prefs().brightness(), payload.prefs().clock12h(),
+                payload.wallpaper(), payload.prefs().taskbarCentered(), payload.prefs().darkMode());
         active.pinnedPrograms.clear();
         active.pinnedPrograms.addAll(payload.pinned());
         active.defaultApps.clear();
         active.defaultApps.putAll(payload.defaultApps());
-        active.rebuildSkin();
         active.iconGrid.pinnedCells().clear();
         for (final DesktopFilesPayload.WireIconCell cell : payload.iconCells()) {
             active.iconGrid.pinnedCells().put(cell.key(), cell.cell());
@@ -2589,7 +2479,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         this.hoverX = lmx;
         this.hoverY = lmy;
         taskPopup.update(lmx, lmy, sw, sh - view.panelBand());
-        final HardwareEra eraNow = era();
+        final HardwareEra eraNow = prefs.era();
 
         /*
          * The host computer's hardware-era monitor frame wraps the desktop glass, then translate so the desktop
@@ -2604,16 +2494,16 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
         if (is(PanelStyle.CDE)) {
             // CDE hangs no picture: each workspace wears a pattern of its own in the palette's backdrop colours.
-            MotifChrome.backdrop(g, sw, sh, cdePalette(), cdeStyle.backdrop(shownWorkspace));
+            MotifChrome.backdrop(g, sw, sh, prefs.cdePalette(), prefs.cdeStyle().backdrop(shownWorkspace));
         } else {
             /*
              * A picture a player drew hangs in front of the built-in wallpapers, and falls back to them the
              * moment it cannot be found, so a deleted drawing never leaves the desktop with a blank wall.
              */
-            PixWallpaper.want(host, desktopWallpaper);
+            PixWallpaper.want(host, prefs.wallpaper());
             if (!PixWallpaper.paint(g, sw, sh)) {
-                WallpaperPainter.paint(g, sw, sh, desktopId, platform(), desktopWallpaper,
-                        desktopDarkMode && is(PanelStyle.FRAMES_11));
+                WallpaperPainter.paint(g, sw, sh, desktopId, platform(), prefs.wallpaper(),
+                        prefs.darkMode() && is(PanelStyle.FRAMES_11));
             }
         }
 
@@ -2649,7 +2539,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         iconGrid.render(g, lmx, lmy);
         // CDE stands a window that was put away on its workspace as an icon, having no panel to list it on.
         if (is(PanelStyle.CDE)) {
-            cdeWindowIcons.render(g, putAwayHere(), sw, view.workAreaTop(), cdePalette());
+            cdeWindowIcons.render(g, putAwayHere(), sw, view.workAreaTop(), prefs.cdePalette());
         }
         g.pose().popPose();
 
@@ -2704,7 +2594,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.windowZ(i, windows.size()));
             w.setFocused(w == front);
-            w.render(g, font, skin, lmx, lmy, partialTick, sw, sh, view.panelReserve(), view.workAreaTop());
+            w.render(g, font, prefs.skin(), lmx, lmy, partialTick, sw, sh, view.panelReserve(), view.workAreaTop());
             g.pose().popPose();
         }
         /*
@@ -2727,7 +2617,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         g.pose().translate(0, 0, DesktopZ.TASKBAR);
         if (is(PanelStyle.CDE)) {
             // CDE has no bar at all: a slab of controls at the bottom centre, in its palette's relief.
-            cdePanels.render(g, sw, sh, cdePalette());
+            cdePanels.render(g, sw, sh, prefs.cdePalette());
         } else if (is(PanelStyle.FRAMES_11)) {
             // Frames 11 taskbar: dark bar, centered Start + app icons with an active indicator, clock right.
             framesPanels.renderModern(g, tbY, sw, lmx, lmy);
@@ -2775,13 +2665,13 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (is(PanelStyle.CDE) && !menuOrDialogOpen()) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.MENU);
-            cdePanels.renderTip(g, view.width(), view.height(), cdePalette());
+            cdePanels.renderTip(g, view.width(), view.height(), prefs.cdePalette());
             g.pose().popPose();
         }
         if (volumePopup.isOpen()) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.MENU);
-            volumePopup.render(g, new UiContext(skin, font, lmx, lmy, partialTick), view.width(), tbY,
+            volumePopup.render(g, new UiContext(prefs.skin(), font, lmx, lmy, partialTick), view.width(), tbY,
                     view.panelOnTop());
             g.pose().popPose();
         }
@@ -2794,12 +2684,12 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             renderStartMenu(g, tbY);
         }
         // A subpanel of CDE's Front Panel is no launcher that comes and goes: it stays up until its arrow says so.
-        cdeLaunchers.render(g, view.width(), view.height(), cdePalette());
+        cdeLaunchers.render(g, view.width(), view.height(), prefs.cdePalette());
         if (panelCtxOpen) {
             renderPanelContext(g, lmx, lmy);
         }
         if (deskMenu.isOpen()) {
-            deskMenu.render(g, new UiContext(skin, font, lmx, lmy, partialTick));
+            deskMenu.render(g, new UiContext(prefs.skin(), font, lmx, lmy, partialTick));
         }
         g.pose().popPose();
     }
@@ -2880,8 +2770,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         g.pose().popPose();
 
         // Brightness: a per-computer dim over the whole surface (100 = none, 0 = deeply dimmed).
-        if (desktopBrightness < 100) {
-            final int alpha = Math.min(210, (100 - desktopBrightness) * 21 / 10);
+        if (prefs.brightness() < 100) {
+            final int alpha = Math.min(210, (100 - prefs.brightness()) * 21 / 10);
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.POPUP - 1);
             g.fill(0, 0, sw, sh, alpha << 24);
@@ -2909,7 +2799,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (popup != null) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.POPUP);
-            popup.renderIn(g, new UiContext(skin, font, lmx, lmy, 0f), 0, 0, sw, sh);
+            popup.renderIn(g, new UiContext(prefs.skin(), font, lmx, lmy, 0f), 0, 0, sw, sh);
             g.pose().popPose();
         }
         // The power dialog rides at the same height: it is the one choice that ends the session.
@@ -2923,14 +2813,14 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (taskMenu.isOpen()) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.POPUP);
-            taskMenu.render(g, new UiContext(skin, font, lmx, lmy, partialTick));
+            taskMenu.render(g, new UiContext(prefs.skin(), font, lmx, lmy, partialTick));
             g.pose().popPose();
         }
         // So does a window's own menu on CDE, which hangs from the button at the left of its title bar.
         if (cdeWindowMenu.isOpen()) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.POPUP);
-            cdeWindowMenu.render(g, lmx, lmy, cdePalette());
+            cdeWindowMenu.render(g, lmx, lmy, prefs.cdePalette());
             g.pose().popPose();
         }
     }
@@ -3264,7 +3154,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         final String current =
                 FileOpeners.defaultFor(path, installedPrograms, defaultApps);
         final String opener = current.isEmpty() ? "" : openerName(current);
-        popup = new OpenWithPopup(path, extension, programs, opener, skin.iconSet(), font, (program, always) -> {
+        final String iconSet = prefs.skin().iconSet();
+        popup = new OpenWithPopup(path, extension, programs, opener, iconSet, font, (program, always) -> {
             if (always) {
                 defaultApps.put(extension, program);
                 PacketDistributor.sendToServer(
@@ -3452,7 +3343,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         final int mx = panelCtxX;
         final int my = panelCtxY;
         final int mh = PANEL_CTX.size() * DESK_CTX_ITEM_H + 2;
-        final boolean light = luminance(skin.text()) > 140;
+        final boolean light = luminance(prefs.skin().text()) > 140;
         final DesktopShellPalette.Colours c = DesktopShellPalette.get();
         final int bg = light ? c.darkMenuFill() : c.lightMenuFill();
         final int fg = light ? c.darkMenuInk() : c.lightMenuInk();
@@ -3467,7 +3358,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                         iy + DESK_CTX_ITEM_H / 2 + 1, light ? c.darkMenuRule() : c.lightMenuRule());
             } else {
                 if (k == hover) {
-                    g.fill(mx + 1, iy, mx + PANEL_CTX_W - 1, iy + DESK_CTX_ITEM_H, skin.accent());
+                    g.fill(mx + 1, iy, mx + PANEL_CTX_W - 1, iy + DESK_CTX_ITEM_H, prefs.skin().accent());
                 }
                 g.drawString(font, PANEL_CTX.get(k).words(), mx + 4, iy + 2, k == hover ? c.menuHoverInk() : fg,
                         false);
@@ -3763,7 +3654,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * why the taskbar-alignment setting actually moves the Start button.
      */
     private int win11StartX(final int sw) {
-        if (!desktopTaskbarCentered) {
+        if (!prefs.taskbarCentered()) {
             return 4;
         }
         final int group = (taskEntries().size() + 1) * WIN11_SLOT;
@@ -4554,7 +4445,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          */
         final int x = Math.max(0, Math.min(ownerWin.x() + (ownerWin.width() - w) / 2, view.width() - w));
         final int y = Math.max(top, Math.min(ownerWin.y() + DesktopWindow.TITLE_H + 6, view.workAreaBottom() - h));
-        dialog.applySkin(skin);
+        dialog.applySkin(prefs.skin());
         final DesktopWindow made = new DesktopWindow(dialog, ownerWin.appKey(), x, y, w, h);
         made.setOwner(ownerWin);
         made.setWorkspaces(ownerWin.workspaces());
@@ -4618,25 +4509,25 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         powerSurfaceH = surfaceH;
         // CDE asks its own way: how many programs are open, then Shut Down, Restart or Cancel.
         if (is(PanelStyle.CDE)) {
-            CdeExitDialog.render(g, font, surfaceW, surfaceH, openPrograms(), cdePalette());
+            CdeExitDialog.render(g, font, surfaceW, surfaceH, openPrograms(), prefs.cdePalette());
             return true;
         }
         final int x = powerX();
         final int y = powerY();
         g.fill(0, 0, surfaceW, surfaceH, DesktopShellPalette.get().powerShade());
-        skin.windowShadow(g, x, y, POWER_W, powerHeight());
-        skin.windowFrame(g, x, y, POWER_W, powerHeight());
-        skin.titleBar(g, x, y, POWER_W, 14);
-        g.drawString(font, words(DesktopTexts.POWER), x + 6, y + 3, skin.titleText(), false);
+        prefs.skin().windowShadow(g, x, y, POWER_W, powerHeight());
+        prefs.skin().windowFrame(g, x, y, POWER_W, powerHeight());
+        prefs.skin().titleBar(g, x, y, POWER_W, 14);
+        g.drawString(font, words(DesktopTexts.POWER), x + 6, y + 3, prefs.skin().titleText(), false);
         for (int i = 0; i < POWER_CHOICES.length; i++) {
             final int rowY = y + 18 + i * POWER_ROW_H;
             final boolean hovered = mouseX >= x + 4 && mouseX < x + POWER_W - 4
                     && mouseY >= rowY && mouseY < rowY + POWER_ROW_H - 2;
             if (hovered) {
-                g.fill(x + 4, rowY, x + POWER_W - 4, rowY + POWER_ROW_H - 2, skin.listHover());
+                g.fill(x + 4, rowY, x + POWER_W - 4, rowY + POWER_ROW_H - 2, prefs.skin().listHover());
             }
-            g.drawString(font, words(POWER_CHOICES[i][0]), x + 12, rowY + 2, skin.text(), false);
-            g.drawString(font, words(POWER_CHOICES[i][1]), x + 12, rowY + 11, skin.dim(), false);
+            g.drawString(font, words(POWER_CHOICES[i][0]), x + 12, rowY + 2, prefs.skin().text(), false);
+            g.drawString(font, words(POWER_CHOICES[i][1]), x + 12, rowY + 11, prefs.skin().dim(), false);
         }
         return true;
     }
@@ -5841,7 +5732,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
         final IDesktopApp app = factoryFor(key);
         if (app != null && allowOpen(key)) {
-            app.applySkin(skin);
+            app.applySkin(prefs.skin());
             openApp(key, app);
         }
     }
@@ -5855,7 +5746,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
         final IDesktopApp app = factoryFor(key);
         if (app != null && allowOpen(key)) {
-            app.applySkin(skin);
+            app.applySkin(prefs.skin());
             openApp(key, app);
         }
     }

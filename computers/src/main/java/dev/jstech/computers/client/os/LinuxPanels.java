@@ -75,7 +75,7 @@ final class LinuxPanels {
      */
     void renderPeriod(final GuiGraphics g, final int tbY, final int sw, final int sh,
                       final int lmx, final int lmy) {
-        final OsSkin skin = desktop.panelSkin();
+        final OsSkin skin = desktop.prefs().skin();
         final boolean kde = skin.form() == OsSkin.Form.KDE2;
         skin.statusBar(g, 0, tbY, sw, DesktopScreen.TASKBAR_H);
 
@@ -109,7 +109,7 @@ final class LinuxPanels {
             g.fill(4, 3, 62, DesktopScreen.TASKBAR_H - 3, PALETTE.get().hover());
         }
         g.drawString(desktop.textFont(), GameText.resolve(PanelTexts.ACTIVITIES), 8, 8, theme.startText(), false);
-        final String clock = desktop.clock();
+        final String clock = desktop.prefs().clockText();
         g.drawString(desktop.textFont(), clock,
                 (sw - desktop.textFont().width(clock)) / 2, 8, theme.startText(), false);
         // GNOME keeps its clock in the middle, so only the status group sits at the right end.

@@ -113,7 +113,7 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
         if (desktop == null) {
             return false;
         }
-        final OsSkin.Form form = desktop.panelSkin().form();
+        final OsSkin.Form form = desktop.prefs().skin().form();
         if (form == OsSkin.Form.KDE2 || form == OsSkin.Form.GNOME1) {
             return false;
         }

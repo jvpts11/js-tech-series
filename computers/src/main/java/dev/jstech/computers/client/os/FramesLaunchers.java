@@ -69,7 +69,7 @@ final class FramesLaunchers {
         final int h = desktop.startMenuTall();
         final int w = desktop.startMenuWide();
         final int y = tbY - h;
-        final OsSkin skin = desktop.panelSkin();
+        final OsSkin skin = desktop.prefs().skin();
         skin.panel(g, x, y, w, h);
 
         // Side band with the desktop's name, rotated, the way the launchers of that period carried it.
@@ -244,7 +244,7 @@ final class FramesLaunchers {
         final int w = DesktopScreen.W11_MENU_W;
         final int h = desktop.startMenuTall();
         final int y = desktop.startMenuTop(tbY);
-        final OsSkin skin = desktop.panelSkin();
+        final OsSkin skin = desktop.prefs().skin();
         // The Start panel follows the window skin, so dark mode darkens it along with every program.
         final int panelBg = skin.windowBg();
         final int panelText = skin.text();

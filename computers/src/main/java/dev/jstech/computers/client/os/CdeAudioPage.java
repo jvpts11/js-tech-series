@@ -125,7 +125,7 @@ final class CdeAudioPage implements IDesktopApp {
         if (this.skin == null || desktop == null) {
             return;
         }
-        final CdePalette p = desktop.cdePalette();
+        final CdePalette p = desktop.prefs().cdePalette();
         final int ground = p.window();
         final Rect volumeLabel = CdeStyleLayout.audioVolumeLabel();
         Draw.text(g, font, words(StyleManagerTexts.VOLUME), x + volumeLabel.x(), y + volumeLabel.y(), this.skin.text(),
