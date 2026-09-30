@@ -38,7 +38,7 @@ final class InventoryBand {
      */
     void sync() {
         final DesktopMenu menu = desktop.getMenu();
-        final DesktopWindow w = desktop.frontWindow();
+        final DesktopWindow w = desktop.wm().front();
         if (w == null || !(w.app() instanceof IInventoryBandApp app)) {
             menu.setSlotsActive(false);
             return;
@@ -86,7 +86,7 @@ final class InventoryBand {
          * A modal dialog in the front window's program disables the inventory: the items still draw, under the
          * dialog's dimming, but nothing lights up and nothing takes a click.
          */
-        final boolean modal = desktop.focusModal();
+        final boolean modal = desktop.wm().focusModal();
         Slot hovered = null;
         /*
          * The items are drawn straight at the slots' positions, which are desktop-local like the pointer here: the

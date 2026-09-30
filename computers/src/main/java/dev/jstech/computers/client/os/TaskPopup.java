@@ -144,7 +144,7 @@ final class TaskPopup {
             }
             return;
         }
-        if (key != null && desktop.windowsOf(key).isEmpty()) {
+        if (key != null && desktop.wm().group(key).isEmpty()) {
             dismiss();
         }
         if (desktop.view().panelOnTop()) {
@@ -237,7 +237,7 @@ final class TaskPopup {
         if (key == null) {
             return List.of();
         }
-        final List<DesktopWindow> mine = desktop.windowsOf(key);
+        final List<DesktopWindow> mine = desktop.wm().group(key);
         if (thumbnails()) {
             final int most = Math.max(1, (desktop.view().width() - 4 - POPUP_PAD) / (CARD_W + POPUP_PAD));
             return mine.size() > most ? mine.subList(0, most) : mine;
@@ -397,20 +397,20 @@ final class TaskPopup {
         }
         for (int i = 0; i < list.size(); i++) {
             if (thumbnails() && inRect(mx, my, closeRect(i))) {
-                desktop.closeOne(list.get(i));
-                if (key != null && desktop.windowsOf(key).isEmpty()) {
+                desktop.wm().close(list.get(i));
+                if (key != null && desktop.wm().group(key).isEmpty()) {
                     dismiss();
                 }
                 return true;
             }
             if (inRect(mx, my, itemRect(i))) {
-                desktop.focusOne(list.get(i));
+                desktop.wm().focus(list.get(i));
                 dismiss();
                 return true;
             }
         }
         if (inRect(mx, my, closeAllRect()) && key != null) {
-            desktop.closeAllOf(key);
+            desktop.wm().closeGroup(key);
             dismiss();
         }
         return true;

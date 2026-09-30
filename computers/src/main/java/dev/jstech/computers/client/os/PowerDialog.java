@@ -62,7 +62,8 @@ final class PowerDialog {
         this.surfaceH = surfaceH;
         final Font font = desktop.textFont();
         if (desktop.panelStyle() == PanelStyle.CDE) {
-            CdeExitDialog.render(g, font, surfaceW, surfaceH, desktop.openPrograms(), desktop.prefs().cdePalette());
+            CdeExitDialog.render(g, font, surfaceW, surfaceH, desktop.wm().openPrograms(),
+                    desktop.prefs().cdePalette());
             return;
         }
         final OsSkin skin = desktop.prefs().skin();

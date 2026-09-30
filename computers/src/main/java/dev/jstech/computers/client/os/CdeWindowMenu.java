@@ -85,7 +85,7 @@ final class CdeWindowMenu {
         if (twice) {
             this.lastPressed = null;
             this.menu.close();
-            this.desktop.closeOne(w);
+            this.desktop.wm().close(w);
             return;
         }
         this.lastPressed = w;
@@ -154,14 +154,14 @@ final class CdeWindowMenu {
             out.add(new MotifMenu.Entry(words(CdeTexts.MINIMIZE), "Alt+F9", !w.minimized(),
                     () -> w.setMinimized(true)));
             out.add(new MotifMenu.Entry(words(CdeTexts.MAXIMIZE), "Alt+F10", !w.maximized(), () -> maximize(w)));
-            out.add(new MotifMenu.Entry(words(CdeTexts.LOWER), "", !w.minimized(), () -> this.desktop.lowerOne(w)));
+            out.add(new MotifMenu.Entry(words(CdeTexts.LOWER), "", !w.minimized(), () -> this.desktop.wm().lower(w)));
             out.add(MotifMenu.Entry.line());
             out.add(new MotifMenu.Entry(words(CdeTexts.OCCUPY_WORKSPACE), "", true, () -> askWorkspaces(w)));
             out.add(new MotifMenu.Entry(words(CdeTexts.OCCUPY_ALL), "", w.workspaces() != WorkspaceSet.EVERY,
-                    () -> this.desktop.occupy(w, WorkspaceSet.EVERY)));
+                    () -> this.desktop.wm().occupy(w, WorkspaceSet.EVERY)));
             out.add(MotifMenu.Entry.line());
         }
-        out.add(new MotifMenu.Entry(words(CdeTexts.CLOSE), "", true, () -> this.desktop.closeOne(w)));
+        out.add(new MotifMenu.Entry(words(CdeTexts.CLOSE), "", true, () -> this.desktop.wm().close(w)));
         return out;
     }
 
@@ -173,20 +173,20 @@ final class CdeWindowMenu {
         if (!w.minimized() && w.maximized()) {
             w.toggleMaximize();
         }
-        this.desktop.focusOne(w);
+        this.desktop.wm().focus(w);
     }
 
     private void maximize(final DesktopWindow w) {
-        this.desktop.focusOne(w);
+        this.desktop.wm().focus(w);
         if (!w.maximized()) {
             w.toggleMaximize();
         }
     }
 
     private void askWorkspaces(final DesktopWindow w) {
-        this.desktop.focusOne(w);
+        this.desktop.wm().focus(w);
         DesktopScreen.openDialogFor(w.app(), new OccupyWorkspaceDialog(w.appKey(), w.workspaces(),
-                chosen -> this.desktop.occupy(w, chosen)));
+                chosen -> this.desktop.wm().occupy(w, chosen)));
     }
 
     private static String words(final TextKey key) {

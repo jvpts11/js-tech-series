@@ -319,7 +319,7 @@ final class LinuxLaunchers {
         final int wsX = (sw - (wsW * 2 + 10)) / 2;
         g.fill(wsX, contentTop, wsX + wsW, contentTop + 34, c.workspace());
         desktop.drawOutline(g, wsX, contentTop, wsW, 34, c.workspaceEdge());
-        if (desktop.anyWindowOpen()) {
+        if (!desktop.wm().all().isEmpty()) {
             g.fill(wsX + 8, contentTop + 8, wsX + wsW - 8, contentTop + 26, c.windowHint());
         }
         g.fill(wsX + wsW + 10, contentTop, wsX + wsW * 2 + 10, contentTop + 34, c.emptyWorkspace());

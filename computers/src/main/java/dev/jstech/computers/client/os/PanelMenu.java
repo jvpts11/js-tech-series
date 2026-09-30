@@ -128,8 +128,8 @@ final class PanelMenu {
 
     private void run(final Row row) {
         switch (row) {
-            case CASCADE -> desktop.cascadeWindows();
-            case SHOW_DESKTOP -> desktop.showDesktop();
+            case CASCADE -> desktop.wm().cascade();
+            case SHOW_DESKTOP -> desktop.wm().showDesktop();
             case TASK_MANAGER -> desktop.openTaskManager();
             case SEPARATOR -> {
             }

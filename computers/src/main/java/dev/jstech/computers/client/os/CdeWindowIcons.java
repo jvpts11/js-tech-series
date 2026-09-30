@@ -75,7 +75,7 @@ final class CdeWindowIcons {
         final long now = System.currentTimeMillis();
         if (w == lastClicked && now - lastClickAt < DOUBLE_CLICK_MS) {
             lastClicked = null;
-            desktop.focusOne(w);
+            desktop.wm().focus(w);
         } else {
             lastClicked = w;
             lastClickAt = now;

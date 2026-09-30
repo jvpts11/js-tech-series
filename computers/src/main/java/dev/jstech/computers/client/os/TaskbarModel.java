@@ -131,13 +131,13 @@ final class TaskbarModel {
     /** The programs on the panel, in its order, grouped from the windows and the pins. */
     List<TaskbarGroups.Entry> entries() {
         final List<TaskbarGroups.Window> list = new ArrayList<>();
-        for (final DesktopWindow w : desktop.windows()) {
+        for (final DesktopWindow w : desktop.wm().all()) {
             // A panel lists what is on the workspace that is up; the rest are met by going to theirs.
             if (w.on(desktop.workspace())) {
                 list.add(new TaskbarGroups.Window(w.groupKey(), w.minimized(), w.serial()));
             }
         }
-        final DesktopWindow front = desktop.frontWindow();
+        final DesktopWindow front = desktop.wm().front();
         return TaskbarGroups.group(list, pinnedKeys(), front == null ? null : front.groupKey());
     }
 
@@ -146,7 +146,7 @@ final class TaskbarModel {
         if (entry.windows() > 1) {
             return entry.windows() + " " + desktop.nameOf(entry.key());
         }
-        final List<DesktopWindow> mine = desktop.windowsOf(entry.key());
+        final List<DesktopWindow> mine = desktop.wm().group(entry.key());
         return mine.isEmpty() ? desktop.nameOf(entry.key()) : desktop.titleOf(mine.get(mine.size() - 1));
     }
 
@@ -244,13 +244,13 @@ final class TaskbarModel {
             return;
         }
         if (entry.windows() == 1) {
-            final List<DesktopWindow> mine = desktop.windowsOf(entry.key());
+            final List<DesktopWindow> mine = desktop.wm().group(entry.key());
             if (entry.state() == TaskbarGroups.State.ACTIVE) {
-                desktop.minimizeGroup(entry.key());
+                desktop.wm().minimizeGroup(entry.key());
             } else if (mine.get(0).minimized()) {
-                desktop.restoreGroup(entry.key());
+                desktop.wm().restoreGroup(entry.key());
             } else {
-                desktop.bringGroupToFront(entry.key());
+                desktop.wm().bringGroupToFront(entry.key());
             }
             return;
         }
@@ -268,19 +268,19 @@ final class TaskbarModel {
             final boolean minimized = entry.state() == TaskbarGroups.State.MINIMIZED;
             items.add(DeskMenu.item(several ? DesktopTexts.RESTORE_ALL
                     : minimized ? DesktopTexts.RESTORE : DesktopTexts.BRING_TO_FRONT, true,
-                    () -> desktop.restoreGroup(key)));
+                    () -> desktop.wm().restoreGroup(key)));
             items.add(DeskMenu.item(several ? DesktopTexts.MINIMIZE_ALL : DesktopTexts.MINIMIZE, true,
-                    () -> desktop.minimizeGroup(key)));
+                    () -> desktop.wm().minimizeGroup(key)));
             if (!several) {
                 items.add(DeskMenu.item(DesktopTexts.MAXIMIZE, true, () -> {
-                    desktop.restoreGroup(key);
-                    final List<DesktopWindow> mine = desktop.windowsOf(key);
+                    desktop.wm().restoreGroup(key);
+                    final List<DesktopWindow> mine = desktop.wm().group(key);
                     if (!mine.isEmpty()) {
                         mine.get(0).setMaximized(!mine.get(0).maximized());
                     }
                 }));
             }
-            items.add(DeskMenu.item(DesktopTexts.MINIMIZE_OTHERS, true, () -> desktop.minimizeOthers(key)));
+            items.add(DeskMenu.item(DesktopTexts.MINIMIZE_OTHERS, true, () -> desktop.wm().minimizeOthers(key)));
             if (canPin) {
                 items.add(ContextMenu.Item.separator());
                 items.add(DeskMenu.item(entry.pinned() ? DesktopTexts.UNPIN : DesktopTexts.PIN, true,
@@ -288,7 +288,7 @@ final class TaskbarModel {
             }
             items.add(ContextMenu.Item.separator());
             items.add(DeskMenu.item(several ? DesktopTexts.CLOSE_ALL_WINDOWS : DesktopTexts.CLOSE, true,
-                    () -> desktop.closeAllOf(key)));
+                    () -> desktop.wm().closeGroup(key)));
         } else {
             items.add(DeskMenu.item(DesktopTexts.OPEN, true, () -> desktop.runLauncherKeyed(key)));
             if (canPin) {

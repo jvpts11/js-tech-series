@@ -37,7 +37,6 @@ import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.os.CdeAppGroup;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.IOsHost;
-import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PanelStyle;
@@ -57,12 +56,9 @@ import dev.jstech.core.gui.layout.DesktopZ;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -103,11 +99,14 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     private final DesktopTheme theme;
     /** How the owner chose this desktop should look, and the skin that dresses it. */
     private final DesktopPrefs prefs;
-    private final List<DesktopWindow> windows = new ArrayList<>();
+    /** The window manager: the windows, back to front, and the workspace that is up. */
+    private final DesktopWindows wm = new DesktopWindows(this);
+    /** The window manager's windows, back to front, which most of what the screen does walks through. */
+    private final List<DesktopWindow> windows = wm.all();
+    /** The windows the machine has open, as it remembers them, and the programs' insides kept in this client. */
+    private final WindowLayouts layouts;
     /** Where the desktop sits on the game's screen and how big it draws. */
     private final DesktopViewport view = new DesktopViewport(this);
-    /** Which workspace is up, counted from nought; always the first on a desktop that has only one. */
-    private int shownWorkspace;
     /** What this desktop can start, the programs installed on the machine, and the wallpaper's icons. */
     private final DesktopLaunchers catalogue;
     /** What the desktop tells the player: a dialog over everything, or a balloon over the notification area. */
@@ -145,26 +144,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** The machine's memory as the desktop weighs it, and the crash of a cooperative kernel run out of it. */
     private final DesktopMemory memory;
-
-    /**
-     * Open windows kept per-computer across leaving and re-entering the Monitor in the same session.
-     * Bounded (access-ordered, eldest evicted past the cap) so a long session that visits many computers
-     * does not grow this map without limit.
-     */
-    private static final int MAX_SAVED_DESKTOPS = 16;
-
-    /*
-     * The live app instances kept per computer while its Monitor is left, so re-entering restores each
-     * program's in-progress session (terminal scrollback, an unsaved query) instead of a fresh window.
-     */
-    private static final Map<BlockPos, Map<String, IDesktopApp>> SAVED_APPS =
-            new LinkedHashMap<>(16, 0.75f, true) {
-                @Override
-                protected boolean removeEldestEntry(
-                        final Map.Entry<BlockPos, Map<String, IDesktopApp>> eldest) {
-                    return size() > MAX_SAVED_DESKTOPS;
-                }
-            };
 
     /** Apps a running window asked to launch (e.g. Files opening the Editor); drained by the active desktop. */
     private static final List<String> PENDING_OPEN = new ArrayList<>();
@@ -205,21 +184,21 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      */
     public static void openDialogFor(final IDesktopApp owner, final IDesktopApp dialog) {
         if (active != null) {
-            active.openDialog(owner, dialog);
+            active.wm.openDialog(owner, dialog);
         }
     }
 
     /** Closes the window running {@code app}, when it is up, the way its own Close button does. */
     public static void closeWindowFor(final IDesktopApp app) {
         if (active != null) {
-            active.closeWindowOf(app);
+            active.wm.closeOf(app);
         }
     }
 
     /** Puts away the window running {@code dialog}, when it is up. */
     public static void closeDialog(final IDesktopApp dialog) {
         if (active != null) {
-            active.closeWindowOf(dialog);
+            active.wm.closeOf(dialog);
         }
     }
 
@@ -368,7 +347,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * one world lingers into the next.
      */
     public static void forgetClientState() {
-        SAVED_APPS.clear();
+        WindowLayouts.forgetAll();
         PENDING_OPEN.clear();
         PENDING_CLOSE.clear();
         PENDING_UI.clear();
@@ -614,12 +593,12 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     void openOnce(final String key, final Supplier<IDesktopApp> make) {
         final DesktopWindow open = windowFor(key);
         if (open != null) {
-            focusWindow(open);
+            wm.focus(open);
             return;
         }
         final IDesktopApp app = make.get();
         app.applySkin(prefs.skin());
-        openApp(key, app);
+        wm.open(key, app);
     }
 
     /**
@@ -691,9 +670,14 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return (((color >> 16) & 0xFF) * 30 + ((color >> 8) & 0xFF) * 59 + (color & 0xFF) * 11) / 100;
     }
 
+    /** The window manager: the windows, back to front, and the workspace that is up. */
+    DesktopWindows wm() {
+        return wm;
+    }
+
     /** Which of the desktop's workspaces is up, counted from nought. */
     int workspace() {
-        return shownWorkspace;
+        return wm.workspace();
     }
 
     /**
@@ -705,7 +689,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (!hasWorkspaces()) {
             return;
         }
-        shownWorkspace = WorkspaceSet.clampIndex(workspace);
+        wm.setWorkspace(WorkspaceSet.clampIndex(workspace));
         cdeWindowMenu.close();
         start.close();
     }
@@ -713,27 +697,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** Whether this desktop has workspaces at all; one that does not keeps everything on the first. */
     boolean hasWorkspaces() {
         return is(PanelStyle.CDE);
-    }
-
-    /** The windows put away on the workspace that is up, in the order they were opened, dialogs aside. */
-    private List<DesktopWindow> putAwayHere() {
-        final List<DesktopWindow> out = new ArrayList<>();
-        for (final DesktopWindow w : windows) {
-            if (w.minimized() && !w.dialog() && w.owner() == null && w.on(shownWorkspace)) {
-                out.add(w);
-            }
-        }
-        /*
-         * By when each was opened and not by how they are stacked, since bringing one back restacks the
-         * list and the icons beside it must not jump about when that happens.
-         */
-        out.sort(Comparator.comparingInt(DesktopWindow::serial));
-        return out;
-    }
-
-    /** Whether a window is out of sight: put away, or on a workspace that is not up. */
-    private boolean away(final DesktopWindow w) {
-        return w.minimized() || !w.on(shownWorkspace);
     }
 
     /** The arrow at the head of a Front Panel control was pressed: its subpanel comes up, or goes back down. */
@@ -780,7 +743,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Opens a file manager at that folder, as a window of the file manager this desktop has. */
     void openFolder(final String dir) {
-        openApp(FILES_KEY, new FilesApp(host, desktopId.getPath(), dir, monitorPos));
+        wm.open(FILES_KEY, new FilesApp(host, desktopId.getPath(), dir, monitorPos));
     }
 
     /** Whether the host computer is on a data network right now, as its block entity tells the client. */
@@ -860,19 +823,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return catalogue;
     }
 
-    /** The windows on the desktop, back to front. */
-    List<DesktopWindow> windows() {
-        return windows;
-    }
-
     /** The flyout that lists one program's windows over its button on the panel. */
     TaskPopup taskPopup() {
         return taskPopup;
-    }
-
-    /** The windows a program has open, back to front. */
-    List<DesktopWindow> windowsOf(final String key) {
-        return groupWindows(key);
     }
 
     /** The files and folders of the desktop folder, which are drawn as icons after the launchers. */
@@ -948,45 +901,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return is(PanelStyle.CDE);
     }
 
-    /** Ending or bringing forward a window on the panel's behalf. */
-    void closeOne(final DesktopWindow w) {
-        closeWindow(w);
-    }
-
-    void focusOne(final DesktopWindow w) {
-        focusWindow(w);
-    }
-
-    /** Sends a window behind every other, its dialogs with it and still in front of it. */
-    void lowerOne(final DesktopWindow w) {
-        final List<DesktopWindow> sent = new ArrayList<>();
-        for (final DesktopWindow other : windows) {
-            if (other == w || other.owner() == w) {
-                sent.add(other);
-            }
-        }
-        windows.removeAll(sent);
-        sent.remove(w);
-        windows.addAll(0, sent);
-        windows.add(0, w);
-    }
-
-    /**
-     * Says which workspaces a window is on, its dialogs with it. One taken off the workspace that is up simply
-     * leaves it, as it did on CDE, and is found again on any workspace it is still on.
-     */
-    void occupy(final DesktopWindow w, final int workspaces) {
-        for (final DesktopWindow other : windows) {
-            if (other == w || other.owner() == w) {
-                other.setWorkspaces(workspaces);
-            }
-        }
-    }
-
-    void closeAllOf(final String key) {
-        closeGroup(key);
-    }
-
     /**
      * Whether a launcher, a menu or a dialog is up. The popup gives way to all of them: it is the one
      * thing on the panel that opens by itself, so it must never sit over something the player asked for.
@@ -1000,11 +914,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     @Nullable
     String openTaskPopup() {
         return taskPopup.key();
-    }
-
-    /** Whether anything is open at all, which is what a workspace preview shows. */
-    boolean anyWindowOpen() {
-        return !windows.isEmpty();
     }
 
     /** The name this machine shows for whoever is at it. */
@@ -1028,12 +937,12 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         final String key = ApplicationManagerApp.keyOf(group);
         final DesktopWindow open = windowFor(key);
         if (open != null) {
-            focusWindow(open);
+            wm.focus(open);
             return;
         }
         final ApplicationManagerApp app = new ApplicationManagerApp(group);
         app.applySkin(prefs.skin());
-        openApp(key, app);
+        wm.open(key, app);
     }
 
     /** The desktop that is up, for a window that outlived the screen it was opened on; null while none is. */
@@ -1080,6 +989,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         this.osId = menu.osId();
         this.desktopId = menu.desktopId();
         this.memory = new DesktopMemory(this, osId, windows, menu.ramTotalMb(), menu.ramReservedMb());
+        this.layouts = new WindowLayouts(this, host);
         this.chrome = OsRegistry.getDesktop(desktopId);
         this.catalogue = new DesktopLaunchers(this, host, monitorPos, desktopId, osId, chrome);
         // A desktop nobody registered is drawn as the first Frames edition, as its look is.
@@ -1113,7 +1023,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         memory.recover();
         notices.dismissBalloon();
         windows.clear();
-        SAVED_APPS.remove(host);
+        layouts.forgetSession();
         start.close();
         notices.dismissPopup();
     }
@@ -1460,14 +1370,14 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Which workspace is up, counted from nought. */
     public int shownWorkspace() {
-        return shownWorkspace;
+        return wm.workspace();
     }
 
     /** The labels of the program windows that are on show: open, not put away, on the workspace that is up. */
     public List<String> shownWindowLabels() {
         final List<String> out = new ArrayList<>();
         for (final DesktopWindow w : windows) {
-            if (!w.dialog() && !away(w)) {
+            if (!w.dialog() && !wm.away(w)) {
                 out.add(nameOf(w.appKey()));
             }
         }
@@ -1478,7 +1388,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     public List<String> shownWindowTitles() {
         final List<String> out = new ArrayList<>();
         for (final DesktopWindow w : windows) {
-            if (!away(w)) {
+            if (!wm.away(w)) {
                 out.add(titleOf(w));
             }
         }
@@ -1567,7 +1477,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Whether {@code app} runs in the front (focused) window; what a recipe viewer's drop or transfer targets. */
     public boolean isFront(final IDesktopApp app) {
-        final DesktopWindow front = frontWindow();
+        final DesktopWindow front = wm.front();
         return front != null && front.app() == app;
     }
 
@@ -1721,11 +1631,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         catalogue.build();
 
         /*
-         * Restore the windows that were open when this computer's Monitor was last left.
-         * The open windows are the machine's, not this client's: they arrive from the server with the
-         * desktop listing requested below, and are restored in applyWindows. The app instances kept per
-         * computer (SAVED_APPS) are only the programs' insides (scrollback, an unsaved query) and are
-         * reattached to the restored windows when they are still around.
+         * The windows that were open when this machine's monitor was last left are the machine's: they arrive
+         * from the server with the desktop listing requested below, and the layouts restore them.
          */
 
         // Become the active desktop and fetch the desktop-folder listing for the background icons.
@@ -1737,105 +1644,10 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * Restores the windows the machine has open, once, when the server hands them over. Later refreshes
      * of the desktop listing send the same payload again and must not open everything a second time.
      */
-    public static void applyWindows(
-            final DesktopWindowsPayload payload) {
-        final DesktopScreen screen = active;
-        if (screen == null || !screen.host.equals(payload.host()) || screen.windowsRestored) {
-            return;
+    public static void applyWindows(final DesktopWindowsPayload payload) {
+        if (active != null && active.host.equals(payload.host())) {
+            active.layouts.apply(payload);
         }
-        screen.windowsRestored = true;
-        if (!screen.windows.isEmpty()) {
-            return; // the player already opened something before the layout arrived; keep theirs
-        }
-        // Only a desktop that has workspaces comes back on another than the first.
-        screen.shownWorkspace = screen.hasWorkspaces() ? payload.workspace() : 0;
-        final Map<String, IDesktopApp> savedApps = SAVED_APPS.get(screen.host);
-        for (final OpenWindow ow : payload.toOpenWindows()) {
-            IDesktopApp app = savedApps != null ? savedApps.get(ow.key()) : null;
-            final boolean restored = app != null;
-            if (app == null) {
-                app = screen.factoryFor(ow.key());
-            }
-            if (app == null) {
-                continue; // a program that is no longer installed simply does not come back
-            }
-            app.applySkin(screen.prefs.skin());
-            if (restored) {
-                app.onRestored(); // a kept instance re-asks the server for what may have changed meanwhile
-            }
-            final DesktopWindow w = new DesktopWindow(app, ow.key(), ow.x(), ow.y(), ow.w(), ow.h());
-            /*
-             * Clamp into the current work area: the monitor may be a different size from the one the
-             * layout was left on, and a title bar off-screen is a window nobody can reach.
-             */
-            w.moveTo(ow.x(), ow.y(), screen.view.workAreaTop(), screen.view.width(), screen.view.workAreaBottom());
-            w.setMinimized(ow.minimized());
-            w.setMaximized(ow.maximized());
-            w.setWorkspaces(screen.hasWorkspaces() ? ow.workspaces() : WorkspaceSet.only(0));
-            screen.windows.add(w);
-            /*
-             * A kept instance still has everything it had; a fresh one, made because the game itself
-             * was closed in between, is handed what the machine remembered it having open.
-             */
-            if (!restored && !ow.state().isEmpty()) {
-                app.restoreState(ow.state());
-            }
-        }
-    }
-
-    /** Whether the machine's window layout has been applied to this desktop instance. */
-    private boolean windowsRestored;
-
-    /** The layout the machine was last told about, so only a real change is pushed to it. */
-    private String pushedLayout = "";
-
-    /**
-     * Tells the machine which programs it has open, whenever that changes. Without this the machine only
-     * learned its layout when the desktop closed, so anything reading its memory ledger (the Task Manager
-     * above all) saw a computer running nothing while the player had five windows in front of them.
-     */
-    private void pushWindowsIfChanged() {
-        if (!windowsRestored || powerCycling) {
-            return;
-        }
-        final StringBuilder signature = new StringBuilder().append(shownWorkspace).append('|');
-        for (final DesktopWindow w : windows) {
-            if (!w.dialog()) {
-                signature.append(w.appKey()).append(w.minimized() ? '-' : '+').append(w.workspaces()).append(';');
-            }
-        }
-        final String now = signature.toString();
-        if (now.equals(pushedLayout)) {
-            return;
-        }
-        pushedLayout = now;
-        PacketDistributor.sendToServer(
-                DesktopWindowsPayload.of(host, snapshotWindows(), shownWorkspace));
-    }
-
-    /**
-     * Set when this desktop is closing because the player shut the machine down or restarted it, so the
-     * layout is NOT handed back to the machine on the way out: the server has just cleared it, and a
-     * late arrival would resurrect windows on a machine that is off or rebooting.
-     */
-    private boolean powerCycling;
-
-    /**
-     * The current windows as the machine should remember them: floating bounds plus their state. A
-     * dialog is a question in flight, not something a machine has open, so it is not remembered.
-     */
-    private List<OpenWindow> snapshotWindows() {
-        final List<OpenWindow> out =
-                new ArrayList<>(windows.size());
-        for (final DesktopWindow w : windows) {
-            // A Σ# program's window is the program's, not the desktop's: the machine says what it has.
-            if (!w.dialog() && !(w.app() instanceof SigmaWindowApp)) {
-                out.add(new OpenWindow(
-                        w.appKey(), w.floatX(), w.floatY(), w.floatW(), w.floatH(), w.minimized(), w.maximized(),
-                        w.app().saveState(), w.workspaces()));
-            }
-        }
-        return out;
     }
 
     /** The platform the installed system stands on, Frames as the safe default for a machine with no system. */
@@ -1900,7 +1712,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             app = existing;
         } else {
             app = new SetupApp(active.host, active.desktopId.getPath());
-            active.openApp(SetupApp.KEY, app);
+            active.wm.open(SetupApp.KEY, app);
         }
         app.accept(payload);
         if (payload.state() == SetupProgressPayload.STATE_DONE) {
@@ -1959,7 +1771,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          */
         NeoForge.EVENT_BUS.post(new ContainerScreenEvent.Render.Background(this, g, mouseX, mouseY));
         takePendingRequests();
-        pushWindowsIfChanged();
+        layouts.pushIfChanged();
         /*
          * Keep the inventory slots glued to the focused Network Interactor window this frame (per-frame, so a
          * dragged window does not leave its slots a tick behind).
@@ -1990,7 +1802,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
         if (is(PanelStyle.CDE)) {
             // CDE hangs no picture: each workspace wears a pattern of its own in the palette's backdrop colours.
-            MotifChrome.backdrop(g, sw, sh, prefs.cdePalette(), prefs.cdeStyle().backdrop(shownWorkspace));
+            MotifChrome.backdrop(g, sw, sh, prefs.cdePalette(), prefs.cdeStyle().backdrop(wm.workspace()));
         } else {
             /*
              * A picture a player drew hangs in front of the built-in wallpapers, and falls back to them the
@@ -2035,7 +1847,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         iconGrid.render(g, lmx, lmy);
         // CDE stands a window that was put away on its workspace as an icon, having no panel to list it on.
         if (is(PanelStyle.CDE)) {
-            cdeWindowIcons.render(g, putAwayHere(), sw, view.workAreaTop(), prefs.cdePalette());
+            cdeWindowIcons.render(g, wm.putAwayHere(), sw, view.workAreaTop(), prefs.cdePalette());
         }
         g.pose().popPose();
 
@@ -2080,11 +1892,11 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      */
     private void renderWindows(final GuiGraphics g, final int lmx, final int lmy, final float partialTick,
                                final int sw, final int sh) {
-        final DesktopWindow front = frontWindow();
+        final DesktopWindow front = wm.front();
         for (int i = 0; i < windows.size(); i++) {
             final DesktopWindow w = windows.get(i);
             // A window on a workspace that is not up is not drawn at all, which is what makes them cost nothing.
-            if (away(w)) {
+            if (wm.away(w)) {
                 continue;
             }
             g.pose().pushPose();
@@ -2247,7 +2059,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * landing them at DesktopZ.TOOLTIP, above every window and the panel. The front window's app draws
          * its own hover hints; the inventory zone defers to the real slot's item tooltip.
          */
-        final DesktopWindow tooltipWin = frontWindow();
+        final DesktopWindow tooltipWin = wm.front();
         if (tooltipWin != null) {
             tooltipWin.renderTooltip(g, font, lmx, lmy);
         }
@@ -2274,7 +2086,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * A focused app's modal dialog draws above every item icon and window, so the dialog and its own dim
          * cover and darken the icons instead of them piercing through at their blit depth.
          */
-        final DesktopWindow modalWin = frontWindow();
+        final DesktopWindow modalWin = wm.front();
         if (modalWin != null && modalWin.app().modalActive()) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.POPUP);
@@ -2341,7 +2153,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                 for (int i = windows.size() - 1; i >= 0; i--) {
                     final DesktopWindow w = windows.get(i);
                     if (!w.dialog() && w.appKey().equals(key)) {
-                        closeWindow(w);
+                        wm.close(w);
                         break;
                     }
                 }
@@ -2359,7 +2171,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (key.startsWith(OPEN_FILES_AT)) {
             // This PC asked for a drive or a folder to be opened in the explorer.
             if (memory.allowOpen(FILES_KEY)) {
-                openApp(FILES_KEY, new FilesApp(host, desktopId.getPath(),
+                wm.open(FILES_KEY, new FilesApp(host, desktopId.getPath(),
                         key.substring(OPEN_FILES_AT.length()), monitorPos));
             }
             return;
@@ -2374,7 +2186,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             if (memory.allowOpen(FILES_KEY)) {
                 final FilesApp files = new FilesApp(host, desktopId.getPath(), desktopDir, monitorPos);
                 files.showPropertiesFor(FsPaths.fileName(path));
-                openApp(FILES_KEY, files);
+                wm.open(FILES_KEY, files);
             }
             return;
         }
@@ -2403,7 +2215,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         final String program = keyFor(key);
         final IDesktopApp app = factoryFor(program);
         if (app != null && memory.allowOpen(program)) {
-            openApp(program, app);
+            wm.open(program, app);
         }
     }
 
@@ -2514,7 +2326,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * lands back inside the origin window (let the app handle it).
      */
     private boolean handleExplorerDropToDesktop(final double dx, final double dy) {
-        final DesktopWindow front = frontWindow();
+        final DesktopWindow front = wm.front();
         if (front == null || !(front.app() instanceof FilesApp origin) || !origin.isDragging()) {
             return false;
         }
@@ -2595,7 +2407,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
         final DiskFilesPayload.WireFile f = desktopItems.get(di);
         if (f.directory()) {
-            openApp(FILES_KEY, new FilesApp(host, desktopId.getPath(), f.path(), monitorPos));
+            wm.open(FILES_KEY, new FilesApp(host, desktopId.getPath(), f.path(), monitorPos));
             return;
         }
         openFile(f.path());
@@ -2670,7 +2482,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
         if (programId.equals(FileOpeners.EDITOR)) {
             final EditorApp editor = new EditorApp(host);
-            openApp(EDITOR_KEY, editor);
+            wm.open(EDITOR_KEY, editor);
             editor.openFile(path);
             return;
         }
@@ -2730,12 +2542,12 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         final DesktopWindow open = windowFor(terminal);
         if (open != null && open.app() instanceof ShellApp shell) {
             open.setMinimized(false);
-            bringToFront(windows.indexOf(open));
+            wm.bringToFront(windows.indexOf(open));
             return shell;
         }
         final IDesktopApp made = factoryFor(terminal);
         if (made instanceof ShellApp shell && memory.allowOpen(terminal)) {
-            openApp(terminal, shell);
+            wm.open(terminal, shell);
             return shell;
         }
         return null;
@@ -2752,7 +2564,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** Opens the Settings window on one of its pages, the way a menu entry names a page rather than the program. */
     void openSettingsPage(final int page) {
         if (memory.allowOpen(SETTINGS_KEY)) {
-            openApp(SETTINGS_KEY, new SettingsApp(host, monitorPos).showPage(page));
+            wm.open(SETTINGS_KEY, new SettingsApp(host, monitorPos).showPage(page));
         }
     }
 
@@ -2761,27 +2573,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         final Launcher launcher = catalogue.byKey(key);
         if (launcher != null) {
             runLauncher(launcher);
-        }
-    }
-
-    /** Puts every window away, which is what Show desktop on the panel's menu does. */
-    void showDesktop() {
-        for (final DesktopWindow w : windows) {
-            w.setMinimized(true);
-        }
-    }
-
-    /** Steps the open windows down and to the right from the work area's corner, the way a cascade does. */
-    void cascadeWindows() {
-        int step = 0;
-        for (final DesktopWindow w : windows) {
-            if (away(w)) {
-                continue;
-            }
-            w.setMaximized(false);
-            w.moveTo(16 + step * 12, view.workAreaTop() + 10 + step * 12, view.workAreaTop(), view.width(),
-                    view.workAreaBottom());
-            step++;
         }
     }
 
@@ -2868,7 +2659,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (!opens.isEmpty()) {
             final IDesktopApp app = factoryFor(opens);
             if (app != null) {
-                openApp(opens, app);
+                wm.open(opens, app);
             }
         }
         return true;
@@ -2933,176 +2724,13 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         g.fill(x + w - 1, y, x + w, y + h, color);
     }
 
-    /* The windows of one program */
-
-    /** Every window listed under {@code key}, back to front, a program's own and its dialogs alike. */
-    private List<DesktopWindow> groupWindows(final String key) {
-        final List<DesktopWindow> out = new ArrayList<>();
-        for (final DesktopWindow w : windows) {
-            if (w.groupKey().equals(key)) {
-                out.add(w);
-            }
-        }
-        return out;
-    }
-
-    /** The dialog up over {@code w}, or null: while there is one, {@code w} takes nothing itself. */
-    @Nullable
-    private DesktopWindow dialogOf(final DesktopWindow w) {
-        for (final DesktopWindow other : windows) {
-            if (other.owner() == w) {
-                return other;
-            }
-        }
-        return null;
-    }
-
-    /** Puts {@code w} in front, and its dialogs in front of it, in the order they were opened. */
-    private void bringWindowToFront(final DesktopWindow w) {
-        if (!windows.remove(w)) {
-            return;
-        }
-        windows.add(w);
-        final List<DesktopWindow> dialogs = new ArrayList<>();
-        for (final DesktopWindow other : windows) {
-            if (other.owner() == w) {
-                dialogs.add(other);
-            }
-        }
-        for (final DesktopWindow dialog : dialogs) {
-            bringWindowToFront(dialog);
-        }
-    }
-
-    /** Brings {@code w} up and forward: a dialog comes with the window it belongs to. */
-    private void focusWindow(final DesktopWindow w) {
-        final DesktopWindow root = w.owner() != null ? w.owner() : w;
-        // A window asked for by name from another workspace takes the desktop there, as CDE did.
-        if (!root.on(shownWorkspace)) {
-            shownWorkspace = WorkspaceSet.first(root.workspaces());
-        }
-        for (final DesktopWindow other : groupWindows(root.groupKey())) {
-            if (other == root || other.owner() == root) {
-                other.setMinimized(false);
-            }
-        }
-        bringWindowToFront(root);
-        if (w != root) {
-            bringWindowToFront(w);
-        }
-    }
-
-    void bringGroupToFront(final String key) {
-        for (final DesktopWindow w : groupWindows(key)) {
-            if (!w.dialog()) {
-                bringWindowToFront(w);
-            }
-        }
-    }
-
-    void restoreGroup(final String key) {
-        for (final DesktopWindow w : groupWindows(key)) {
-            w.setMinimized(false);
-        }
-        bringGroupToFront(key);
-    }
-
-    void minimizeGroup(final String key) {
-        for (final DesktopWindow w : groupWindows(key)) {
-            w.setMinimized(true);
-        }
-    }
-
-    void minimizeOthers(final String key) {
-        for (final DesktopWindow w : windows) {
-            w.setMinimized(!w.groupKey().equals(key));
-        }
-        bringGroupToFront(key);
-    }
-
-    private void closeGroup(final String key) {
-        final List<DesktopWindow> mine = groupWindows(key);
-        for (int i = mine.size() - 1; i >= 0; i--) {
-            if (windows.contains(mine.get(i))) {
-                closeWindow(mine.get(i));
-            }
-        }
-    }
-
-    /** Ends {@code w}: its dialogs go first, since a window put away takes its questions with it. */
-    private void closeWindow(final DesktopWindow w) {
-        for (final DesktopWindow other : new ArrayList<>(windows)) {
-            if (other.owner() == w) {
-                closeWindow(other);
-            }
-        }
-        if (windows.remove(w)) {
-            w.app().onClosed();
-        }
-    }
-
-    /** Ends the window running {@code app}, when there is one. */
-    private void closeWindowOf(final IDesktopApp app) {
-        for (final DesktopWindow w : new ArrayList<>(windows)) {
-            if (w.app() == app) {
-                closeWindow(w);
-            }
-        }
-    }
-
-    /**
-     * Opens {@code dialog} as a window over the one running {@code ownerApp}, centred on it and in front
-     * of it. The owner comes forward first, so the pair reads as one program that just asked something.
-     */
-    private void openDialog(final IDesktopApp ownerApp, final IDesktopApp dialog) {
-        DesktopWindow ownerWin = null;
-        for (final DesktopWindow w : windows) {
-            if (w.app() == ownerApp) {
-                ownerWin = w;
-            } else if (w.app() == dialog) {
-                focusWindow(w);
-                return;
-            }
-        }
-        if (ownerWin == null) {
-            return;
-        }
-        final int top = view.workAreaTop();
-        final int w = Math.max(dialog.minWidth(), Math.min(dialog.defaultWidth(), view.width() - 8));
-        final int h = Math.max(dialog.minHeight(), Math.min(dialog.defaultHeight(), view.workAreaBottom() - top - 8));
-        /*
-         * Centred across the owner and hung just under its title bar, so the owner's name and edges stay
-         * in view around the question it is asking, and the two read as two windows rather than one.
-         */
-        final int x = Math.max(0, Math.min(ownerWin.x() + (ownerWin.width() - w) / 2, view.width() - w));
-        final int y = Math.max(top, Math.min(ownerWin.y() + DesktopWindow.TITLE_H + 6, view.workAreaBottom() - h));
-        dialog.applySkin(prefs.skin());
-        final DesktopWindow made = new DesktopWindow(dialog, ownerWin.appKey(), x, y, w, h);
-        made.setOwner(ownerWin);
-        made.setWorkspaces(ownerWin.workspaces());
-        ownerWin.setMinimized(false);
-        bringWindowToFront(ownerWin);
-        windows.add(made);
-    }
-
     /**
      * Tells the machine what the power dialog chose. It is going down, restarting or being left: the desktop closing
      * after this must not hand its windows back to a machine whose session has just ended.
      */
     void cyclePower(final int action) {
-        powerCycling = true;
+        layouts.powerCycling();
         PacketDistributor.sendToServer(new MachinePowerPayload(host, monitorPos, action));
-    }
-
-    /** How many programs are open, on every workspace; a dialog is a question a program asks, not a program. */
-    int openPrograms() {
-        int open = 0;
-        for (final DesktopWindow w : windows) {
-            if (!w.dialog()) {
-                open++;
-            }
-        }
-        return open;
     }
 
     /**
@@ -3180,8 +2808,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * An app-level modal dialog isolates its window: route the click to it and to nothing behind it
          * (inventory slots, other windows, the taskbar), just like the desktop popup above.
          */
-        if (focusModal()) {
-            final DesktopWindow f = frontWindow();
+        if (wm.focusModal()) {
+            final DesktopWindow f = wm.front();
             if (f != null) {
                 f.app().mouseClicked(f, view.localX(mouseXAbs), view.localY(mouseYAbs), button);
             }
@@ -3302,17 +2930,17 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                                 final double mouseX, final double mouseY, final int button) {
         for (int i = windows.size() - 1; i >= 0; i--) {
             final DesktopWindow w = windows.get(i);
-            if (away(w)) {
+            if (wm.away(w)) {
                 continue;
             }
             /*
              * A window with a dialog up takes nothing itself: a click on it brings the dialog forward,
              * the way every desktop answers a click on a program that is waiting for its own question.
              */
-            final DesktopWindow held = dialogOf(w);
+            final DesktopWindow held = wm.dialogOf(w);
             if (held != null && mouseX >= w.x() && mouseX <= w.x() + w.width()
                     && mouseY >= w.y() && mouseY <= w.y() + w.height()) {
-                focusWindow(held);
+                wm.focus(held);
                 return Click.TAKEN;
             }
             final int titleBtn = w.buttonAt(mouseX, mouseY);
@@ -3321,27 +2949,27 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                  * Press the button now; the action fires on release over the same button, so the player
                  * sees the pushed-in feedback of a real click instead of the window reacting instantly.
                  */
-                bringToFront(i);
+                wm.bringToFront(i);
                 w.setPressedButton(titleBtn);
                 pressedBtnWindow = w;
                 return Click.TAKEN;
             }
             final int rdir = w.resizeHitTest(mouseX, mouseY);
             if (rdir != DesktopWindow.RESIZE_NONE) {
-                bringToFront(i);
+                wm.bringToFront(i);
                 resizing = w;
                 w.beginResize(rdir, mouseX, mouseY);
                 return Click.TAKEN;
             }
             if (w.titleBarHit(mouseX, mouseY)) {
-                bringToFront(i);
+                wm.bringToFront(i);
                 dragging = w;
                 dragOffsetX = (int) mouseX - w.x();
                 dragOffsetY = (int) mouseY - w.y();
                 return Click.TAKEN;
             }
             if (w.bodyHit(mouseX, mouseY)) {
-                bringToFront(i);
+                wm.bringToFront(i);
                 return clickedWindowBody(w, mouseXAbs, mouseYAbs, mouseX, mouseY, button);
             }
         }
@@ -3438,12 +3066,12 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
         // On CDE a double click on the icon of a window that was put away brings that window back.
         if (is(PanelStyle.CDE) && button == 0
-                && cdeWindowIcons.clicked(mouseX, mouseY, putAwayHere(), view.width(), view.workAreaTop())) {
+                && cdeWindowIcons.clicked(mouseX, mouseY, wm.putAwayHere(), view.width(), view.workAreaTop())) {
             return Click.TAKEN;
         }
         // The right button on such an icon raises the window's own menu, which is how it is closed from there.
         if (is(PanelStyle.CDE) && button == 1) {
-            final DesktopWindow putAway = cdeWindowIcons.at(mouseX, mouseY, putAwayHere(), view.width(),
+            final DesktopWindow putAway = cdeWindowIcons.at(mouseX, mouseY, wm.putAwayHere(), view.width(),
                     view.workAreaTop());
             if (putAway != null) {
                 cdeWindowMenu.openFor(putAway, (int) mouseX, (int) mouseY);
@@ -3545,7 +3173,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * No window drag/resize in progress. While the front Network Interactor holds a stack on the cursor,
          * a drag is the vanilla "spread across slots" gesture, so hand it to the container, not the app.
          */
-        final DesktopWindow w = frontWindow();
+        final DesktopWindow w = wm.front();
         if (w != null && w.app() instanceof IInventoryBandApp && !menu.getCarried().isEmpty()) {
             return super.mouseDragged(view.slotX(mouseXAbs), view.slotY(mouseYAbs), button, dx, dy);
         }
@@ -3581,7 +3209,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                     // Motif's button opens the window's menu, and closes the window on a double click.
                     cdeWindowMenu.pressed(pb);
                 } else if (btn == DesktopWindow.BUTTON_CLOSE) {
-                    closeWindow(pb);
+                    wm.close(pb);
                 } else if (btn == DesktopWindow.BUTTON_MINIMIZE) {
                     pb.setMinimized(true);
                 } else if (btn == DesktopWindow.BUTTON_MAXIMIZE) {
@@ -3612,7 +3240,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * desktop-icon drag, and only when no window move/resize is in progress.
          */
         if (!wasDeskDrag && dragging == null && resizing == null) {
-            final DesktopWindow w = frontWindow();
+            final DesktopWindow w = wm.front();
             if (w != null) {
                 w.app().mouseReleased(w, view.localX(mouseX), view.localY(mouseY), button);
             }
@@ -3653,7 +3281,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (start.type(c)) {
             return true;
         }
-        final DesktopWindow w = frontWindow();
+        final DesktopWindow w = wm.front();
         if (w != null && w.app().charTyped(c)) {
             return true;
         }
@@ -3669,7 +3297,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     public boolean keyFirst(final int key, final int scanCode, final int modifiers) {
         // Motif's keys for a window's menu come before the window's own program, as a window manager's do.
         if (is(PanelStyle.CDE) && !notices.popupUp() && !power.isOpen()
-                && cdeWindowMenu.keyPressed(key, modifiers, frontWindow())) {
+                && cdeWindowMenu.keyPressed(key, modifiers, wm.front())) {
             return true;
         }
         if (notices.popupUp() || power.isOpen() || deskMenu.isOpen() || taskbar.menu().isOpen()
@@ -3677,7 +3305,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                 || start.isOpen()) {
             return keyPressed(key, scanCode, modifiers);
         }
-        final DesktopWindow w = frontWindow();
+        final DesktopWindow w = wm.front();
         return w != null && (key != 256 || w.app().wantsEscape()) && w.app().keyPressed(key, scanCode, modifiers);
     }
 
@@ -3723,7 +3351,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return true;
         }
         // The front window's app gets first refusal on keys, except ESC which always closes the desktop.
-        final DesktopWindow w = frontWindow();
+        final DesktopWindow w = wm.front();
         if (w != null && (key != 256 || w.app().wantsEscape()) && w.app().keyPressed(key, scanCode, modifiers)) {
             return true;
         }
@@ -3740,7 +3368,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** A key let go goes to the window in front, for a program that tells a press from a release. */
     @Override
     public boolean keyReleased(final int key, final int scanCode, final int modifiers) {
-        final DesktopWindow w = frontWindow();
+        final DesktopWindow w = wm.front();
         if (!notices.popupUp() && w != null && w.app().keyReleased(key, scanCode, modifiers)) {
             return true;
         }
@@ -3761,7 +3389,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             volumePopup.nudge(dy > 0 ? 1 : -1);
             return true;
         }
-        final DesktopWindow w = frontWindow();
+        final DesktopWindow w = wm.front();
         if (w != null && w.app().mouseScrolled(dy)) {
             return true;
         }
@@ -3784,23 +3412,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return new int[] {view.screenX(local[0]), view.screenY(local[1])};
     }
 
-    /** The topmost window that is on show, which receives keyboard and scroll input. */
-    @Nullable
-    DesktopWindow frontWindow() {
-        for (int i = windows.size() - 1; i >= 0; i--) {
-            if (!away(windows.get(i))) {
-                return windows.get(i);
-            }
-        }
-        return null;
-    }
-
-    /** Whether the front window's program has a modal dialog open, which disables everything behind it. */
-    boolean focusModal() {
-        final DesktopWindow f = frontWindow();
-        return f != null && f.app().modalActive();
-    }
-
     /**
      * Whether a desktop-local point lands on the bare wallpaper, not over any open (non-minimized) window
      * body or title bar. Used so a free icon drop only snaps to a cell on the empty desktop, and so a
@@ -3808,7 +3419,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      */
     private boolean overWallpaper(final double mx, final double my) {
         for (final DesktopWindow w : windows) {
-            if (!away(w) && mx >= w.x() && mx <= w.x() + w.width()
+            if (!wm.away(w) && mx >= w.x() && mx <= w.x() + w.width()
                     && my >= w.y() && my <= w.y() + w.height()) {
                 return false;
             }
@@ -3824,7 +3435,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     private DesktopWindow explorerWindowAt(final double mx, final double my) {
         for (int i = windows.size() - 1; i >= 0; i--) {
             final DesktopWindow w = windows.get(i);
-            if (away(w) || !(w.app() instanceof FilesApp)) {
+            if (wm.away(w) || !(w.app() instanceof FilesApp)) {
                 continue;
             }
             if (mx >= w.x() && mx <= w.x() + w.width() && my >= w.y() && my <= w.y() + w.height()) {
@@ -3870,48 +3481,21 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             }
         }
         if (payload.open()) {
-            openApp(key, new SigmaWindowApp(host, payload));
+            wm.open(key, new SigmaWindowApp(host, payload));
         }
-    }
-
-    private void openApp(final String key, final IDesktopApp app) {
-        /*
-         * Open at the default size, clamped to the screen, but never below the app's minimum while the
-         * screen still has room for it, so the content opens laid out (not collapsed) on a small monitor.
-         */
-        final int top = view.workAreaTop();
-        final int workH = view.workAreaBottom() - top;
-        final int availW = view.width() - 16;
-        final int availH = workH - 16;
-        final int w = availW >= app.minWidth() ? Math.min(app.defaultWidth(), availW) : availW;
-        final int h = availH >= app.minHeight() ? Math.min(app.defaultHeight(), availH) : availH;
-        /*
-         * Each window opens a little further down and across than the last, but never past the edge of the work area
-         * where it fits: a window that draws its own frame keeps its own size, which may be more than was clamped.
-         */
-        final int shownW = app.drawsOwnFrame() ? app.defaultWidth() : w;
-        final int shownH = app.drawsOwnFrame() ? app.defaultHeight() : h;
-        final int x = Math.max(0,
-                Math.min(Math.max(48, (view.width() - w) / 2 + windows.size() * 12), view.width() - shownW));
-        final int y = Math.max(top, Math.min(Math.max(top + 6, top + (workH - h) / 2 + windows.size() * 12),
-                view.workAreaBottom() - shownH));
-        final DesktopWindow opened = new DesktopWindow(app, key, x, y, w, h);
-        // A program opens on the workspace that is up, which is where whoever started it is looking.
-        opened.setWorkspaces(WorkspaceSet.only(shownWorkspace));
-        windows.add(opened);
     }
 
     /** Opens that program's window on this desktop, if this machine has it at all. */
     private void startProgramById(final String path) {
         final Launcher launcher = catalogue.find(l -> l.programId().getPath().equals(path) && l.factory() != null);
         if (launcher != null) {
-            openApp(launcher.key(), launcher.factory().get());
+            wm.open(launcher.key(), launcher.factory().get());
         }
     }
 
     /** Recreates a program from its window key ({@link WindowKeys}), for restoring persisted windows. */
     @Nullable
-    private IDesktopApp factoryFor(final String key) {
+    IDesktopApp factoryFor(final String key) {
         /*
          * The welcome has no launcher of its own: it is the system putting itself in front of somebody, not a
          * program anybody goes looking for, and it is the machine that asks for it by name.
@@ -3951,27 +3535,27 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         final String key = WindowKeys.of(Programs.TASK_MANAGER);
         final DesktopWindow open = windowFor(key);
         if (open != null) {
-            focusWindow(open);
+            wm.focus(open);
             return;
         }
         final IDesktopApp app = factoryFor(key);
         if (app != null && memory.allowOpen(key)) {
             app.applySkin(prefs.skin());
-            openApp(key, app);
+            wm.open(key, app);
         }
     }
 
     private void openOrFocusWindow(final String key) {
         for (final DesktopWindow w : windows) {
             if (!w.dialog() && w.appKey().equals(key)) {
-                focusWindow(w);
+                wm.focus(w);
                 return;
             }
         }
         final IDesktopApp app = factoryFor(key);
         if (app != null && memory.allowOpen(key)) {
             app.applySkin(prefs.skin());
-            openApp(key, app);
+            wm.open(key, app);
         }
     }
 
@@ -3982,13 +3566,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return;
         }
         if (memory.allowOpen(l.key())) {
-            openApp(l.key(), l.factory().get());
-        }
-    }
-
-    private void bringToFront(final int index) {
-        if (index >= 0 && index < windows.size()) {
-            bringWindowToFront(windows.get(index));
+            wm.open(l.key(), l.factory().get());
         }
     }
 
@@ -4011,38 +3589,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * wallpaper chosen there under the same file name would otherwise be shown this one's drawing.
          */
         PixWallpaper.clear();
-        /*
-         * The layout goes to the machine: the windows the player leaves behind are what the machine
-         * has open, for whoever looks next and after the game is closed. Not when the desktop is closing
-         * because the machine is going down; that layout belongs to a session that just ended, and the
-         * server has already cleared it.
-         */
-        if (!powerCycling) {
-            PacketDistributor.sendToServer(
-                    DesktopWindowsPayload.of(
-                            host, snapshotWindows(), shownWorkspace));
-        }
-        /*
-         * The programs' insides stay in this client as a convenience, keyed by the same launcher keys the
-         * machine's layout uses, so a restored window picks its session back up when it is still here.
-         */
-        final Map<String, IDesktopApp> apps = new LinkedHashMap<>();
-        for (final DesktopWindow w : windows) {
-            if (w.dialog()) {
-                w.app().onClosed(); // a question left unanswered is not kept; the program is
-            } else if (!(w.app() instanceof SigmaWindowApp)) {
-                /*
-                 * A Σ# program's window is not kept here either: the machine sends it again, as it
-                 * stands, the moment anyone looks at that desktop.
-                 */
-                apps.put(w.appKey(), w.app());
-            }
-        }
-        if (apps.isEmpty()) {
-            SAVED_APPS.remove(host);
-        } else {
-            SAVED_APPS.put(host, apps);
-        }
+        // The layout goes back to the machine, and the programs' insides stay in this client.
+        layouts.keep();
         if (active == this) {
             active = null;
         }
