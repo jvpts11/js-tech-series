@@ -17,9 +17,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * One representative build per shipped hardware era (Vintage, Legacy, Standard), asserting that the
+ * Representative builds of each shipped hardware era (Vintage, Legacy, Standard), asserting that the
  * validation rules hold across the progression: a coherent era build powers on, a socket mismatch is
- * rejected, and a wrong RAM generation is rejected. The specs mirror the registered item catalog; the
+ * rejected, and a wrong RAM generation is rejected. An era the catalogue has filled out has a build at its
+ * entry, its middle and its top, and its server board. The specs mirror the registered item catalog; the
  * pure-logic layer cannot touch the Minecraft item wrappers, so it works on the records.
  */
 class PerEraBuildTest {
@@ -63,6 +64,78 @@ class PerEraBuildTest {
     void vintageBuild_wrongRamGeneration_isNotPowered() {
         final RamSpec ddr = new RamSpec(HardwareEra.LEGACY, RamGeneration.DDR, 128, 10);
         assertFalse(build(vintageBoard(), vintageCpu(), ddr, psu(300)).isPowered());
+    }
+
+    /*
+     * The rest of the Vintage, as the catalogue has it: the Socket 7 board in the middle, the Slot 1 board at the top
+     * with its SDRAM and its AGP card, and the two-way Socket 8 server board.
+     */
+
+    private static MotherboardSpec vintageSocket7Board() {
+        return new MotherboardSpec(FormFactor.AT, HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1,
+                Set.of(RamGeneration.SIMM, RamGeneration.EDO), 8, PcieGeneration.PCI, 7, 4, 2);
+    }
+
+    private static MotherboardSpec vintageSlot1Board() {
+        return new MotherboardSpec(FormFactor.AT, HardwareEra.VINTAGE, CpuSocketId.SLOT_1, 1,
+                Set.of(RamGeneration.SDRAM), 8, PcieGeneration.AGP_2X, 7, 4, 2);
+    }
+
+    private static MotherboardSpec vintageServerBoard() {
+        return new MotherboardSpec(FormFactor.EEB, HardwareEra.VINTAGE, CpuSocketId.SOCKET_8, 2,
+                Set.of(RamGeneration.SIMM, RamGeneration.EDO), 16, PcieGeneration.PCI, 10, 8, 8);
+    }
+
+    private static CpuSpec pentiumIii() {
+        return new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SLOT_1, 1, 600, 35, false);
+    }
+
+    private static CpuSpec pentiumPro() {
+        return new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_8, 1, 200, 35, false);
+    }
+
+    private static RamSpec edo() {
+        return new RamSpec(HardwareEra.VINTAGE, RamGeneration.EDO, 8, 3);
+    }
+
+    @Test
+    void vintageSocket7Build_isPowered() {
+        final CpuSpec pentium = new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 133, 11, false);
+        assertTrue(build(vintageSocket7Board(), pentium, edo(), psu(300)).isPowered());
+    }
+
+    @Test
+    void vintageSlot1Build_withItsAgpCard_isPowered() {
+        final RamSpec sdram = new RamSpec(HardwareEra.VINTAGE, RamGeneration.SDRAM, 16, 4);
+        final GpuSpec tnt = new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.AGP_2X, 2, 16, 15);
+        assertTrue(new ComputerBuild(vintageSlot1Board(), List.of(pentiumIii()), List.of(tnt), List.of(sdram),
+                psu(300)).isPowered());
+    }
+
+    @Test
+    void vintageSlot1Build_edoMemory_isNotPowered() {
+        // The Slot 1 board takes SDRAM DIMMs only; the SIMMs of the boards before it do not fit.
+        assertFalse(build(vintageSlot1Board(), pentiumIii(), edo(), psu(300)).isPowered());
+    }
+
+    @Test
+    void vintageSlot1Build_pciCard_isNotPowered() {
+        // A board has one bus, and the Slot 1 board's is its AGP, so a PCI card finds no slot on it.
+        final RamSpec sdram = new RamSpec(HardwareEra.VINTAGE, RamGeneration.SDRAM, 16, 4);
+        assertFalse(new ComputerBuild(vintageSlot1Board(), List.of(pentiumIii()),
+                List.of(soundCard(HardwareEra.VINTAGE, PcieGeneration.PCI)), List.of(sdram), psu(300)).isPowered());
+    }
+
+    @Test
+    void vintageServerBuild_twoPentiumPros_isPowered() {
+        assertTrue(new ComputerBuild(vintageServerBoard(), List.of(pentiumPro(), pentiumPro()), List.of(),
+                List.of(edo()), psu(300)).isPowered());
+    }
+
+    @Test
+    void vintageServerBuild_socket7Cpu_isNotPowered() {
+        final CpuSpec k6 = new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 400, 20, false);
+        assertFalse(build(vintageServerBoard(), k6, edo(), psu(300)).isPowered());
     }
 
     // Legacy

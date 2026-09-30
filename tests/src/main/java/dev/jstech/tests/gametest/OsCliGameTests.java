@@ -1196,8 +1196,8 @@ public final class OsCliGameTests {
                 HardwareItems.RAM_DDR2_2048.get(), HardwareItems.PSU_500B.get());
         final MainframeBlockEntity vintage = placeMainframeWithEra(helper, vintagePos, ubuntu,
                 ComputingModule.VINTAGE_MAINFRAME.get(),
-                HardwareItems.MOTHERBOARD_MTX_VINTAGE.get(), HardwareItems.CPU_VELOCION_K6_III.get(),
-                HardwareItems.RAM_EDO_16.get(), HardwareItems.PSU_300B.get());
+                HardwareItems.MOTHERBOARD_MTX_VINTAGE.get(), HardwareItems.CPU_INTEGRA_PENTIX_PRO_200.get(),
+                HardwareItems.RAM_EDO_16.get(), HardwareItems.PSU_300.get());
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     legacy.installMirror();

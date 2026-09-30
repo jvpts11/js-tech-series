@@ -81,8 +81,18 @@ public final class Microarchitectures {
     /** Rendition's design, sold under a brand and never named otherwise; its card names the chip. */
     public static final Microarchitecture RENDITION = new Microarchitecture("rendition", "", 60_000);
     public static final Microarchitecture NV3 = new Microarchitecture("nv3", "NV3", 20_000);
+    /**
+     * ATI's design of the Rage line, sold under the brand and never named otherwise; left unnamed. A little behind
+     * the NV3 of the same year, as the Rage Pro was behind the RIVA 128.
+     */
+    public static final Microarchitecture RAGE = new Microarchitecture("rage", "", 40_000);
     /** 3dfx's design, sold under the Voodoo brand; left unnamed. */
     public static final Microarchitecture THREEDFX = new Microarchitecture("threedfx", "", 30_000);
+    /**
+     * The RIVA TNT's and TNT2's: the TNT lands level with the Voodoo2 of the same year, and the TNT2 M64 that opens
+     * the next era under the Celsius card above it.
+     */
+    public static final Microarchitecture FAHRENHEIT = new Microarchitecture("fahrenheit", "Fahrenheit", 45_000);
     public static final Microarchitecture CELSIUS = new Microarchitecture("celsius", "Celsius", 25_000);
     public static final Microarchitecture R200 = new Microarchitecture("r200", "R200", 25_000);
     public static final Microarchitecture R300 = new Microarchitecture("r300", "R300", 25_000);
@@ -100,7 +110,8 @@ public final class Microarchitectures {
             BULLDOZER, PILEDRIVER, SKYLAKE, KABY_LAKE, COFFEE_LAKE, COMET_LAKE, WAY_1, WAY_1_PLUS, WAY_2, WAY_3, WAY_4,
             WAY_5, ALDER_LAKE, RAPTOR_LAKE, ARROW_LAKE, GRACEMONT, SKYMONT, SKYLAKE_SP, CASCADE_LAKE, ICE_LAKE_SP,
             COOPER_LAKE, SAPPHIRE_RAPIDS, EMERALD_RAPIDS,
-            VGA, RENDITION, NV3, THREEDFX, CELSIUS, R200, R300, TESLA, FERMI, TERASCALE_2, GCN, KEPLER);
+            VGA, RENDITION, NV3, RAGE, THREEDFX, FAHRENHEIT, CELSIUS, R200, R300, TESLA, FERMI, TERASCALE_2, GCN,
+            KEPLER);
 
     private Microarchitectures() {
     }

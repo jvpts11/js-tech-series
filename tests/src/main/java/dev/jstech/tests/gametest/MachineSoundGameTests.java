@@ -69,7 +69,7 @@ public final class MachineSoundGameTests {
         final Heard heard = Heard.at(helper, WHERE);
         final PersonalComputerBlockEntity pc = computer(helper, ComputingModule.VINTAGE_PERSONAL_COMPUTER.get(),
                 HardwareItems.MOTHERBOARD_BABYAT_VINTAGE.get(), HardwareItems.CPU_INTEGRA_486SX.get(),
-                HardwareItems.RAM_SIMM_4.get(), HardwareItems.PSU_300B.get(), StorageTier.HDD);
+                HardwareItems.RAM_SIMM_4.get(), HardwareItems.PSU_300.get(), StorageTier.HDD);
         pc.togglePower();
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {

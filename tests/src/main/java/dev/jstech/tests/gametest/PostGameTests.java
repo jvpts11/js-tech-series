@@ -291,7 +291,7 @@ public final class PostGameTests {
         hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(HardwareItems.RAM_SIMM_4.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
-                new ItemStack(HardwareItems.PSU_300B.get()));
+                new ItemStack(HardwareItems.PSU_300.get()));
         computer.togglePower();
         return computer;
     }

@@ -224,7 +224,7 @@ public final class IsaGameTests {
     private static PersonalComputerBlockEntity vintage(final GameTestHelper helper, final BlockPos at) {
         return assemble(helper, at, ComputingModule.VINTAGE_PERSONAL_COMPUTER.get(),
                 HardwareItems.MOTHERBOARD_BABYAT_VINTAGE.get(), HardwareItems.CPU_INTEGRA_486SX.get(),
-                HardwareItems.RAM_SIMM_4.get(), HardwareItems.PSU_300B.get());
+                HardwareItems.RAM_SIMM_4.get(), HardwareItems.PSU_300.get());
     }
 
     private static PersonalComputerBlockEntity legacy(final GameTestHelper helper) {

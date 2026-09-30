@@ -64,8 +64,9 @@ public final class HardwareItems {
             .thenComparing(HardwareItems::era)
             .thenComparingInt(HardwareItems::kind);
 
-    //  VINTAGE: ISA/PCI buses, SIMM/EDO RAM, single-core CPUs
+    //  VINTAGE: ISA/PCI/AGP 2x buses, SIMM/EDO/SDRAM RAM, single-core CPUs
 
+    // Socket 3: the 486, and the chip that took the socket to 133 MHz.
     public static final DeferredItem<CpuItem> CPU_INTEGRA_486SX = cpu("cpu_integra_486sx",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 25, 3, false)
                     .on(Microarchitectures.I486, "")).named("Integra 486SX").register();
@@ -75,6 +76,23 @@ public final class HardwareItems {
     public static final DeferredItem<CpuItem> CPU_INTEGRA_486DX4 = cpu("cpu_integra_486dx4",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 100, 5, false)
                     .on(Microarchitectures.I486, "")).named("Integra 486DX4").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_5X86_133 = cpu("cpu_velocion_5x86_133",
+            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 133, 4, false)
+                    .on(Microarchitectures.I486, "X5")).named("Velocion 5x86-133").register();
+
+    // Socket 7: the Pentium and the chips that raced it, up to the K6-III+.
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_75 = cpu("cpu_integra_pentix_75",
+            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 75, 8, false)
+                    .on(Microarchitectures.P5, "P54C")).named("Integra Pentix 75").register();
+    public static final DeferredItem<CpuItem> CPU_VELOCION_K5_PR133 = cpu("cpu_velocion_k5_pr133",
+            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 100, 11, false)
+                    .on(Microarchitectures.K5, "5k86")).named("Velocion K5 PR133").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_133 = cpu("cpu_integra_pentix_133",
+            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 133, 11, false)
+                    .on(Microarchitectures.P5, "P54CS")).named("Integra Pentix 133").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_MMX_233 = cpu("cpu_integra_pentix_mmx_233",
+            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 233, 17, false)
+                    .on(Microarchitectures.P5, "P55C")).named("Integra Pentix MMX 233").register();
     public static final DeferredItem<CpuItem> CPU_VELOCION_K6_II = cpu("cpu_velocion_k6_ii",
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 350, 15, false)
                     .on(Microarchitectures.K6, "Chomper")).named("Velocion K6-II").register();
@@ -85,31 +103,83 @@ public final class HardwareItems {
             new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 450, 22, false)
                     .on(Microarchitectures.K6, "Sharptooth")).named("Velocion K6-III+").register();
 
-    public static final DeferredItem<RamItem> RAM_SIMM_4 = ram("ram_simm_4",
-            new RamSpec(HardwareEra.VINTAGE, RamGeneration.SIMM, 1, 1)).named("Stratix Layer SIMM-4").register();
-    public static final DeferredItem<RamItem> RAM_EDO_16 = ram("ram_edo_16",
-            new RamSpec(HardwareEra.VINTAGE, RamGeneration.EDO, 4, 2)).named("Stratix Layer EDO-16").register();
+    // Socket 8: the Pentium Pro, the processor of the Vintage server and Mainframe boards.
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_PRO_150 = cpu("cpu_integra_pentix_pro_150",
+            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_8, 1, 150, 29, false)
+                    .on(Microarchitectures.P6, "")).named("Integra Pentix Pro 150").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_PRO_180 = cpu("cpu_integra_pentix_pro_180",
+            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_8, 1, 180, 32, false)
+                    .on(Microarchitectures.P6, "")).named("Integra Pentix Pro 180").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_PRO_200 = cpu("cpu_integra_pentix_pro_200",
+            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_8, 1, 200, 35, false)
+                    .on(Microarchitectures.P6, "")).named("Integra Pentix Pro 200").register();
+
+    // Slot 1: the cartridges of the last Vintage board, the top of the era.
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_CELER_300A = cpu("cpu_integra_celer_300a",
+            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SLOT_1, 1, 300, 19, false)
+                    .on(Microarchitectures.P6, "Mendocino")).named("Integra Celer 300A").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_II_300 = cpu("cpu_integra_pentix_ii_300",
+            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SLOT_1, 1, 300, 43, false)
+                    .on(Microarchitectures.P6, "Klamath")).named("Integra Pentix II 300").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_II_450 = cpu("cpu_integra_pentix_ii_450",
+            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SLOT_1, 1, 450, 27, false)
+                    .on(Microarchitectures.P6, "Deschutes")).named("Integra Pentix II 450").register();
+    public static final DeferredItem<CpuItem> CPU_INTEGRA_PENTIX_III_600 = cpu("cpu_integra_pentix_iii_600",
+            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SLOT_1, 1, 600, 35, false)
+                    .on(Microarchitectures.P6, "Katmai")).named("Integra Pentix III 600").register();
 
     /*
-     * Vintage GPU ladder (ISA entry to PCI high-end). VGA-256 and the 3D Blaster are the floor; the two
-     * PCI cards below extend the era upward with more cores, VRAM and draw. Single-digit cores and a few MB
-     * of VRAM is era-appropriate for fixed-function 2D/early-3D accelerators.
+     * Vintage memory: the 30- and 72-pin SIMMs, EDO, and the first SDRAM DIMMs, which only the Slot 1 board takes.
+     * A module holds an item for every 4 MB; the watts climb gently with the size.
+     */
+    public static final DeferredItem<RamItem> RAM_SIMM_4 = ram("ram_simm_4",
+            new RamSpec(HardwareEra.VINTAGE, RamGeneration.SIMM, 1, 1)).named("Stratix Layer SIMM-4").register();
+    public static final DeferredItem<RamItem> RAM_SIMM_16 = ram("ram_simm_16",
+            new RamSpec(HardwareEra.VINTAGE, RamGeneration.SIMM, 4, 2)).named("Stratix Layer SIMM-16").register();
+    public static final DeferredItem<RamItem> RAM_EDO_16 = ram("ram_edo_16",
+            new RamSpec(HardwareEra.VINTAGE, RamGeneration.EDO, 4, 2)).named("Stratix Layer EDO-16").register();
+    public static final DeferredItem<RamItem> RAM_EDO_32 = ram("ram_edo_32",
+            new RamSpec(HardwareEra.VINTAGE, RamGeneration.EDO, 8, 3)).named("Stratix Layer EDO-32").register();
+    public static final DeferredItem<RamItem> RAM_EDO_64 = ram("ram_edo_64",
+            new RamSpec(HardwareEra.VINTAGE, RamGeneration.EDO, 16, 4)).named("Stratix Layer EDO-64").register();
+    public static final DeferredItem<RamItem> RAM_SDRAM_32 = ram("ram_sdram_32",
+            new RamSpec(HardwareEra.VINTAGE, RamGeneration.SDRAM, 8, 3)).named("Stratix Layer SDRAM-32").register();
+    public static final DeferredItem<RamItem> RAM_SDRAM_64 = ram("ram_sdram_64",
+            new RamSpec(HardwareEra.VINTAGE, RamGeneration.SDRAM, 16, 4)).named("Stratix Layer SDRAM-64").register();
+
+    /*
+     * Vintage GPU ladder, ISA to AGP. The two VGA cards are the floor; the PCI 3D accelerators climb from the 3D
+     * Blaster to the Voodoo GFX, and the Prism TNT, on the Slot 1 board's AGP, tops the era. Single-digit cores and
+     * a few MB of VRAM is era-appropriate for fixed-function 2D and early 3D chips. The VGA-256 is IBM's own
+     * adapter, from before the card makers the mod parodies existed, so it carries no maker's name.
      */
     public static final DeferredItem<GpuItem> GPU_VGA_256 = gpu("gpu_vga_256",
             new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.ISA, 1, 1, 5).on(Microarchitectures.VGA, "", 25))
-            .named("Visara VGA-256").register();
+            .named("VGA-256").register();
+    public static final DeferredItem<GpuItem> GPU_WONDER_VGA = gpu("gpu_wonder_vga",
+            new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.ISA, 1, 1, 5).on(Microarchitectures.VGA, "18800", 28))
+            .named("Atrion Wonder VGA").register();
     public static final DeferredItem<GpuItem> GPU_3D_BLASTER = gpu("gpu_3d_blaster",
             new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.PCI, 1, 2, 5).on(Microarchitectures.RENDITION, "V1000", 25))
-            .named("Pyrix 3D Blaster").register();
+            .named("Artisan 3D Blaster").register();
+    public static final DeferredItem<GpuItem> GPU_RAVE_PRO = gpu("gpu_rave_pro",
+            new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.PCI, 1, 4, 8).on(Microarchitectures.RAGE, "", 75))
+            .named("Atrion Rave Pro").register();
     public static final DeferredItem<GpuItem> GPU_PRISM_4 = gpu("gpu_prism_4",
             new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.PCI, 2, 4, 12).on(Microarchitectures.NV3, "", 100))
-            .named("Visara Prism 4").register();
+            .named("Envya Prism 4").register();
     public static final DeferredItem<GpuItem> GPU_VOODOO_GFX = gpu("gpu_voodoo_gfx",
             new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.PCI, 3, 8, 18).on(Microarchitectures.THREEDFX, "", 90))
-            .named("Pyrix Voodoo GFX").register();
+            .named("Tridex Voodoo GFX").register();
+    public static final DeferredItem<GpuItem> GPU_PRISM_TNT = gpu("gpu_prism_tnt",
+            new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.AGP_2X, 2, 16, 15)
+                    .on(Microarchitectures.FAHRENHEIT, "NV4", 90))
+            .named("Envya Prism TNT").register();
 
-    public static final DeferredItem<PsuItem> PSU_300B =
-            psu("psu_300b", new PsuSpec(300, 80)).named("MF PowerBasic 300B").register();
+    public static final DeferredItem<PsuItem> PSU_200 =
+            psu("psu_200", new PsuSpec(200, 80)).named("MF PowerBasic 200").register();
+    public static final DeferredItem<PsuItem> PSU_300 =
+            psu("psu_300", new PsuSpec(300, 80)).named("MF PowerBasic 300").register();
 
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_BABYAT_VINTAGE = board("motherboard_babyat_vintage",
             new MotherboardSpec(FormFactor.BABY_AT, HardwareEra.VINTAGE,
@@ -119,30 +189,41 @@ public final class HardwareItems {
             new MotherboardSpec(FormFactor.AT, HardwareEra.VINTAGE,
                     CpuSocketId.SOCKET_7, 1, Set.of(RamGeneration.SIMM, RamGeneration.EDO), 8,
                     PcieGeneration.PCI, 7, 4, 2))
-            .named("MF AT Standard Motherboard").register();
+            .named("MF AT Classic Motherboard").register();
+    /*
+     * The top of the Vintage: a 440BX board for the Slot 1 cartridges, with SDRAM and the first AGP. A board has one
+     * bus, and this one's is the AGP its graphics card needs.
+     */
+    public static final DeferredItem<MotherboardItem> MOTHERBOARD_AT_VINTAGE_SLOT1 =
+            board("motherboard_at_vintage_slot1", new MotherboardSpec(FormFactor.AT, HardwareEra.VINTAGE,
+                    CpuSocketId.SLOT_1, 1, Set.of(RamGeneration.SDRAM), 8, PcieGeneration.AGP_2X, 7, 4, 2))
+                    .named("MF AT Slot 1 Motherboard").register();
+    // The Mainframe's board: four Pentium Pros, as the 450GX boards of the time held.
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_VINTAGE = board("motherboard_mtx_vintage",
             new MotherboardSpec(FormFactor.MTX, HardwareEra.VINTAGE,
-                    CpuSocketId.SOCKET_7, 2, Set.of(RamGeneration.SIMM, RamGeneration.EDO), 16,
+                    CpuSocketId.SOCKET_8, 4, Set.of(RamGeneration.SIMM, RamGeneration.EDO), 16,
                     PcieGeneration.PCI, 8, 4, 8))
             .named("MF MTX-V Motherboard").register();
     /*
-     * Dual-socket server board for vintage-era rack hardware; more RAM slots and PCIe slots
-     * than the desktop MTX variant to match server-class density expectations of the era.
+     * Dual-socket server board for vintage-era rack hardware, two Pentium Pros as on a 440FX board; more RAM slots
+     * and card slots than the desktop boards to match server-class density expectations of the era.
      */
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_VINTAGE = board("motherboard_eeb_vintage",
             new MotherboardSpec(FormFactor.EEB, HardwareEra.VINTAGE,
-                    CpuSocketId.SOCKET_7, 2, Set.of(RamGeneration.SIMM, RamGeneration.EDO), 16,
+                    CpuSocketId.SOCKET_8, 2, Set.of(RamGeneration.SIMM, RamGeneration.EDO), 16,
                     PcieGeneration.PCI, 10, 8, 8))
             .named("MF EEB-V Server Board").register();
 
     /*
-     * Vintage spinning disks: MFM/IDE rotating platters of 20 MB and 100 MB. Tiny by design (the floor of
-     * the storage ladder) and honest: at 16 bits an item costs 1 MB, so they hold 20 and 100 items.
+     * Vintage spinning disks: MFM and IDE platters of 20, 100 and 200 MB. Tiny by design (the floor of the storage
+     * ladder) and honest: at 16 bits an item costs 1 MB, so they hold 20, 100 and 200 items.
      */
     public static final DeferredItem<DiskItem> DISK_TRENCH_20M = disk("disk_vaultis_trench_20m",
             new DiskSpec(StorageTier.HDD, HardwareEra.VINTAGE, 20L, 5)).named("Vaultis Trench HDD 20M").register();
     public static final DeferredItem<DiskItem> DISK_TRENCH_100M = disk("disk_vaultis_trench_100m",
             new DiskSpec(StorageTier.HDD, HardwareEra.VINTAGE, 100L, 6)).named("Vaultis Trench HDD 100M").register();
+    public static final DeferredItem<DiskItem> DISK_TRENCH_200M = disk("disk_vaultis_trench_200m",
+            new DiskSpec(StorageTier.HDD, HardwareEra.VINTAGE, 200L, 7)).named("Vaultis Trench HDD 200M").register();
 
     //  LEGACY: AGP/PCIe 1.0 buses, SDRAM/DDR/DDR2 RAM, first multi-core CPUs
 

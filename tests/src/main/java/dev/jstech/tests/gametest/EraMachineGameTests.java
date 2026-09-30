@@ -135,7 +135,7 @@ public final class EraMachineGameTests {
         hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(HardwareItems.RAM_SIMM_4.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
-                new ItemStack(HardwareItems.PSU_300B.get()));
+                new ItemStack(HardwareItems.PSU_300.get()));
         be.togglePower();
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> helper.assertTrue(be.isRunning(),
@@ -180,15 +180,15 @@ public final class EraMachineGameTests {
         hw.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(HardwareItems.MOTHERBOARD_MTX_VINTAGE.get()));
         hw.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
-                new ItemStack(HardwareItems.CPU_VELOCION_K6_III.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_PRO_200.get()));
         hw.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
                 new ItemStack(HardwareItems.RAM_SIMM_4.get()));
         hw.setStackInSlot(MainframeBlockEntity.PSU_SLOT,
-                new ItemStack(HardwareItems.PSU_300B.get()));
+                new ItemStack(HardwareItems.PSU_300.get()));
         be.togglePower();
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> helper.assertTrue(be.isRunning(),
-                        "vintage Mainframe on a Vintage MTX board with a Socket-7 CPU must power on"))
+                        "vintage Mainframe on a Vintage MTX board with a Socket 8 CPU must power on"))
                 .thenSucceed();
     }
 

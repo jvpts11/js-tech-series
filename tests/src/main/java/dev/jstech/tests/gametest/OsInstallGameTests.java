@@ -299,7 +299,7 @@ public final class OsInstallGameTests {
                 new ItemStack(HardwareItems.MOTHERBOARD_BABYAT_VINTAGE.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT, new ItemStack(HardwareItems.CPU_INTEGRA_486SX.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START, new ItemStack(HardwareItems.RAM_SIMM_4.get()));
-        hw.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(HardwareItems.PSU_300B.get()));
+        hw.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(HardwareItems.PSU_300.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(HardwareItems.DISK_TRENCH_20M.get()));
         pc.togglePower();

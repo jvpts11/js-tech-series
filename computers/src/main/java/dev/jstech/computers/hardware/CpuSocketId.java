@@ -26,6 +26,8 @@ public record CpuSocketId(String id) {
 
     public static final CpuSocketId SOCKET_3 = own("socket_3");
     public static final CpuSocketId SOCKET_7 = own("socket_7");
+    public static final CpuSocketId SOCKET_8 = own("socket_8");
+    public static final CpuSocketId SLOT_1 = own("slot_1");
     public static final CpuSocketId SOCKET_A = own("socket_a");
     public static final CpuSocketId SOCKET_370 = own("socket_370");
     public static final CpuSocketId LGA_771 = own("lga_771");

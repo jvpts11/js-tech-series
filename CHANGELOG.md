@@ -330,8 +330,21 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   stick. Advanced programs ship on Blu-ray, and its systems and services on the stick.
 - Processors and graphics cards name the architecture they are built on in their tooltip, with the chip's
   codename: "Architecture: Centro Conroe", "Architecture: Kepler GK110".
+- The Vintage era fills out, so a weak machine and a top one can be built in it: the Velocion 5x86-133 on Socket 3;
+  the Integra Pentix 75, 133 and MMX 233 and the Velocion K5 PR133 on Socket 7; the Integra Pentix Pro 150, 180
+  and 200 on Socket 8; and, on Slot 1, the Integra Celer 300A, Pentix II 300 and 450 and Pentix III 600, with the
+  MF AT Slot 1 Motherboard, the top of the era, that takes them with SDRAM and the first AGP. New cards: the Atrion
+  Wonder VGA, the Atrion Rave Pro and, on the AGP, the Envya Prism TNT. New memory: the SIMM-16, the EDO-32 and
+  EDO-64, and the SDRAM-32 and SDRAM-64 the Slot 1 board takes. And the MF PowerBasic 200 and the Vaultis Trench
+  HDD 200M.
 
 ### Changed
+- The Vintage server boards hold the Integra Pentix Pro, as the boards of the time did: the MF MTX-V of the
+  Mainframe takes four on Socket 8 and the MF EEB-V two. The Socket 7 chips stay on the desktop boards.
+- Vintage names, fixed to their years: the MF AT Standard Motherboard is the MF AT Classic, the MF PowerBasic 300B
+  is the MF PowerBasic 300 (its id follows, `jsc:psu_300`; the Bronze seal came a decade later), and the graphics
+  cards carry their makers of the time: the Artisan 3D Blaster, the Envya Prism 4 and the Tridex Voodoo GFX, while
+  the VGA-256 is IBM's own and carries none. Every Vintage part has a new icon drawn from the real one.
 - A medium's tooltip names its format in the player's language ("Floppy", "Blu-ray") instead of the code's name
   for it.
 - A monitor going dark is heard only from a picture tube; the flat panels of the Transition and every later era

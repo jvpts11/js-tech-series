@@ -13,14 +13,16 @@ package dev.jstech.computers.hardware;
 public enum PcieGeneration {
     ISA(0),
     PCI(1),
-    AGP_4X(2),
-    AGP_8X(3),
-    PCIE_1_0(4),
-    PCIE_2_0(5),
-    PCIE_3_0(6),
-    PCIE_4_0(7),
-    PCIE_5_0(8),
-    PCIE_6_0(9);
+    /** The first AGP, of the Slot 1 boards and the cards of 1998. */
+    AGP_2X(2),
+    AGP_4X(3),
+    AGP_8X(4),
+    PCIE_1_0(5),
+    PCIE_2_0(6),
+    PCIE_3_0(7),
+    PCIE_4_0(8),
+    PCIE_5_0(9),
+    PCIE_6_0(10);
 
     /** The generation's place in the line, oldest first: one step is roughly a doubling of bandwidth. */
     private final int generation;
@@ -34,7 +36,7 @@ public enum PcieGeneration {
         return switch (this) {
             case ISA -> ExpansionBus.ISA;
             case PCI -> ExpansionBus.PCI;
-            case AGP_4X, AGP_8X -> ExpansionBus.AGP;
+            case AGP_2X, AGP_4X, AGP_8X -> ExpansionBus.AGP;
             case PCIE_1_0, PCIE_2_0, PCIE_3_0, PCIE_4_0, PCIE_5_0, PCIE_6_0 -> ExpansionBus.PCIE;
         };
     }

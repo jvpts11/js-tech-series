@@ -52,7 +52,7 @@ public final class EraComputerGameTests {
         hw.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(HardwareItems.RAM_SIMM_4.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
-                new ItemStack(HardwareItems.PSU_300B.get()));
+                new ItemStack(HardwareItems.PSU_300.get()));
         be.togglePower();
 
         helper.startSequence()
@@ -79,7 +79,7 @@ public final class EraComputerGameTests {
         hw.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(HardwareItems.RAM_SIMM_4.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
-                new ItemStack(HardwareItems.PSU_300B.get()));
+                new ItemStack(HardwareItems.PSU_300.get()));
         be.togglePower();
 
         helper.startSequence()

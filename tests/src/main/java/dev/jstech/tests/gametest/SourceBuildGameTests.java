@@ -223,7 +223,7 @@ public final class SourceBuildGameTests {
                 new ItemStack(HardwareItems.CPU_INTEGRA_486SX.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(HardwareItems.RAM_SIMM_4.get()));
-        hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(HardwareItems.PSU_300B.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(HardwareItems.PSU_300.get()));
         computer.togglePower();
 
         final PackageService packages = computer.services().packages();

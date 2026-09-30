@@ -26,6 +26,11 @@ class PcieGenerationTest {
     }
 
     @Test
+    void busFamily_agp2x_returnsAgp() {
+        assertEquals(ExpansionBus.AGP, PcieGeneration.AGP_2X.busFamily());
+    }
+
+    @Test
     void busFamily_agp4x_returnsAgp() {
         assertEquals(ExpansionBus.AGP, PcieGeneration.AGP_4X.busFamily());
     }
@@ -65,6 +70,12 @@ class PcieGenerationTest {
     @Test
     void compatibleWith_agp8xInAgp4xSlot_compatible() {
         assertTrue(PcieGeneration.AGP_8X.compatibleWith(PcieGeneration.AGP_4X));
+    }
+
+    @Test
+    void compatibleWith_agp4xInAgp2xSlot_compatibleAtHalfSpeed() {
+        assertTrue(PcieGeneration.AGP_4X.compatibleWith(PcieGeneration.AGP_2X));
+        assertEquals(0.5, PcieGeneration.AGP_4X.bandwidthFactorIn(PcieGeneration.AGP_2X));
     }
 
     @Test

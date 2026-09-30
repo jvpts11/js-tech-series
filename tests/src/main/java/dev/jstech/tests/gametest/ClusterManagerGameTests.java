@@ -681,7 +681,7 @@ public final class ClusterManagerGameTests {
         hardware.setStackInSlot(ClusterManagementComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(HardwareItems.RAM_SIMM_4.get()));
         hardware.setStackInSlot(ClusterManagementComputerBlockEntity.PSU_SLOT,
-                new ItemStack(HardwareItems.PSU_300B.get()));
+                new ItemStack(HardwareItems.PSU_300.get()));
         hardware.setStackInSlot(ClusterManagementComputerBlockEntity.PCIE_SLOTS_START,
                 new ItemStack(ComputingModule.SERIAL_CONSOLE_CARD.get()));
         manager.togglePower();
