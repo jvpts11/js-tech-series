@@ -95,11 +95,21 @@ public final class CodeCompletions {
      */
     public void offer(final CodeArea area, final String path,
                       final List<IProgrammingLanguage.SourceText> others, final int[] bounds) {
+        offer(area, path, others, bounds, 0);
+    }
+
+    /**
+     * The same, for a file whose project holds it to {@code projectVersion} of its language, 0 for none: only what
+     * that version has is offered, and never more than the machine's compiler knows.
+     */
+    public void offer(final CodeArea area, final String path, final List<IProgrammingLanguage.SourceText> others,
+                      final int[] bounds, final int projectVersion) {
         close();
         final LanguageLevel level = LanguageLevel.ofSource(path);
         if (level == null) {
             return;
         }
+        final int version = InstalledCompilers.held(level, projectVersion);
         final TextDocument doc = area.document();
         final CompletionContext.Where where =
                 CompletionContext.at(doc.line(doc.cursorLine()), doc.cursorCol());
@@ -108,7 +118,8 @@ public final class CodeCompletions {
             return;
         }
         // Read the same way for both languages, then cut down to what the one this file is written in has.
-        final List<SigmaCompletions.Item> found = SigmaCompletions.within(level, find(path, doc, others, where));
+        final List<SigmaCompletions.Item> found =
+                SigmaCompletions.within(level, version, find(path, doc, others, where));
         if (found.isEmpty()) {
             return;
         }

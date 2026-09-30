@@ -381,7 +381,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   Linux and BSD manager, or on MC-DOS installing the compiler again from newer media). A build can be held to an
   older version with `--lang N` on sgsc and scc, or with a `langversion: N` line in a project, and what came later
   is refused where it was written: "'Sound' needs Σ# 2; this project is Σ# 1". Both compilers say which they are
-  before anything else ("Σ# Compiler 2.0").
+  before anything else ("Σ# Compiler 2.0"). The editors follow the machine's compiler, and Virtual Studio the
+  project as well: the list of suggestions offers only what that version has, and the margins and the builds hold
+  a file to it.
 - Seventeen Advanced graphics cards run from the Velocion Radiance RX 550 and the Envya Vertex GTX 1650 to the
   Radiance RX 7900 XTX and the Vertex RTX 5090, on the Turing, Ampere, Ada Lovelace and Blackwell designs and on
   RDNA 1 to 4, with the Envya Tessera V100, A100 and H100 compute cards of the servers. The Forge Logic Crafting Card

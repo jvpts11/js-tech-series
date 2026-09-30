@@ -273,6 +273,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     public VirtualStudioApp(final BlockPos host) {
         this.host = host;
         this.workspace = new CodeWorkspace(host);
+        this.workspace.setProjectVersion(this::projectVersionOf);
         this.dialog = new FileDialog(host, this);
         this.explorer = this.root.add(new ListView<>(this::nodes, TREE_ROW_H, this::drawNode)).setOnClick(this::onNode);
         this.tabs = this.root.add(new TabStrip(this.workspace::tabLabels).fitToLabels(10).setUnderline(false));
@@ -912,7 +913,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             return;
         }
         final IProgrammingLanguage.CompileResult result = language.compile(
-                List.of(new IProgrammingLanguage.SourceText(doc.name(), doc.area().text())));
+                List.of(new IProgrammingLanguage.SourceText(doc.name(), doc.area().text())),
+                InstalledCompilers.options(language, "", projectVersionOf(doc.path())));
         finishBuild(doc.name(), doc.path().replaceAll("\\.[^.]+$", "") + ".asm", result, Map.of(doc.path(), doc.name()));
     }
 
@@ -1006,7 +1008,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             return;
         }
         final IProgrammingLanguage.CompileResult result = language.compile(sources,
-                new IProgrammingLanguage.CompileOptions(project.platform(), project.languageVersion()));
+                InstalledCompilers.options(language, project.platform(), project.languageVersion()));
         finishBuild(project.name(), join(projectDir(project.name()), project.entry()), result, names);
         buildNext();
     }
@@ -2759,7 +2761,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private void offerCompletions(final CodeWorkspace.Doc doc) {
         final CodeArea area = doc.area();
         this.completions.offer(area, doc.path(), sourcesAround(doc),
-                new int[] {area.x(), area.y(), area.width(), area.height()});
+                new int[] {area.x(), area.y(), area.width(), area.height()}, projectVersionOf(doc.path()));
     }
 
     /**
@@ -2798,6 +2800,12 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             }
         }
         return null;
+    }
+
+    /** The version of its language the project holding {@code path} names, or 0 when it names none or is none. */
+    private int projectVersionOf(final String path) {
+        final String own = projectOf(path);
+        return own == null ? 0 : this.projects.get(own).languageVersion();
     }
 
     @Override

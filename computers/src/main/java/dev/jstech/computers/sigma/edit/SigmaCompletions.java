@@ -8,6 +8,7 @@
 package dev.jstech.computers.sigma.edit;
 
 import dev.jstech.computers.sigma.LanguageLevel;
+import dev.jstech.computers.sigma.SigmaVersions;
 import dev.jstech.computers.sigma.ast.CompilationUnit;
 import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.sem.BuiltIns;
@@ -134,6 +135,26 @@ public final class SigmaCompletions {
      * of the library is listed under the one namespace this language knows it by.
      */
     public static List<Item> within(final LanguageLevel level, final List<Item> candidates) {
+        return within(level, SigmaVersions.NEWEST, candidates);
+    }
+
+    /**
+     * The same, held to {@code version} of the language as well: a type of the library that came in a later version
+     * is not offered, nor what it has, since the compiler would refuse both. What the program declares stays.
+     */
+    public static List<Item> within(final LanguageLevel level, final int version, final List<Item> candidates) {
+        final List<Item> held = new ArrayList<>(candidates.size());
+        for (final Item item : candidates) {
+            final boolean ownOrVariable = item.sort() == Sort.VARIABLE || OWN.equals(item.owner());
+            final String libraryType = item.sort() == Sort.TYPE ? item.label() : item.owner();
+            if (ownOrVariable || SigmaVersions.sinceType(libraryType) <= version) {
+                held.add(item);
+            }
+        }
+        return atLevel(level, held);
+    }
+
+    private static List<Item> atLevel(final LanguageLevel level, final List<Item> candidates) {
         if (level.full()) {
             return candidates;
         }

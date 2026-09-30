@@ -153,6 +153,15 @@ public final class ActiveDesktop {
         return desktop == null ? List.of() : List.copyOf(desktop.catalogue().installed());
     }
 
+    /**
+     * The version the open desktop's machine has that package installed at, or empty when there is no desktop or
+     * the machine keeps no record of one.
+     */
+    public static String installedVersion(final String programId) {
+        final DesktopState desktop = DesktopScreen.current();
+        return desktop == null ? "" : desktop.packageVersion(programId);
+    }
+
     /** What a program is called, for a menu that offers it by id. */
     public static String openerName(final String programId) {
         return ProgramOpener.openerName(programId);

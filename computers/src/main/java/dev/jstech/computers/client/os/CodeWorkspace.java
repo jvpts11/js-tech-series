@@ -38,6 +38,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -100,6 +101,11 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
     private int current = -1;
     private String status = "";
     private Supplier<InkPalette> palette = InkPalette.LIGHT;
+    /**
+     * The version of its language the project a file sits in names, by the file's path, 0 for none; an editor
+     * without projects leaves it at none, and a file is then checked at what the machine's compiler knows.
+     */
+    private ToIntFunction<String> projectVersion = path -> 0;
 
     /*
      * The folder the workspace is on. It starts on the machine's own, and an editor that works in
@@ -118,6 +124,11 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
 
     public CodeWorkspace(final BlockPos host) {
         this.host = host;
+    }
+
+    /** Checks each file at the version of its language its project names, as {@code versionOf} reads it. */
+    public void setProjectVersion(final ToIntFunction<String> versionOf) {
+        this.projectVersion = versionOf;
     }
 
     /* What is on the disk */
@@ -557,7 +568,8 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         final List<IProgrammingLanguage.SourceText> sources = new ArrayList<>();
         sources.add(new IProgrammingLanguage.SourceText(doc.name(), doc.area.text()));
         sources.addAll(siblingsOf(doc, language));
-        final List<IProgrammingLanguage.Complaint> all = language.compile(sources).complaints();
+        final List<IProgrammingLanguage.Complaint> all = language.compile(sources,
+                InstalledCompilers.options(language, "", this.projectVersion.applyAsInt(doc.path()))).complaints();
         final List<IProgrammingLanguage.Complaint> mine = new ArrayList<>();
         for (final IProgrammingLanguage.Complaint complaint : all) {
             if (complaint.file().isEmpty() || complaint.file().equals(doc.name())) {
@@ -888,8 +900,9 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
              * reported as the machine would find it, and the open copy has its own margin for that.
              */
             this.folderComplaints.put(file.path(), language.compile(
-                    List.of(new IProgrammingLanguage.SourceText(
-                            ProblemReport.nameOf(file.path()), file.text()))).complaints());
+                    List.of(new IProgrammingLanguage.SourceText(ProblemReport.nameOf(file.path()), file.text())),
+                    InstalledCompilers.options(language, "", this.projectVersion.applyAsInt(file.path())))
+                    .complaints());
         }
         if (this.announceSurvey) {
             this.announceSurvey = false;

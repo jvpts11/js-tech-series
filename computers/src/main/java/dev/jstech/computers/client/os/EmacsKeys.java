@@ -284,7 +284,8 @@ public final class EmacsKeys implements TtyEditor.IKeys {
             return;
         }
         final IProgrammingLanguage.CompileResult result = language.compile(
-                List.of(new IProgrammingLanguage.SourceText(editor.name(), editor.text())));
+                List.of(new IProgrammingLanguage.SourceText(editor.name(), editor.text())),
+                InstalledCompilers.options(language, "", 0));
         final List<String> out = new ArrayList<>();
         out.add(language.displayName() + " " + editor.name());
         if (result.ok()) {

@@ -371,6 +371,29 @@ class SigmaCompletionsTest {
                 "which the full language still has");
     }
 
+    /** A version of the language offers none of the library's types that came after it, in either language. */
+    @Test
+    void within_theFirstVersion_offersNoTypeThatCameLater() {
+        final List<String> first = labels(SigmaCompletions.within(LanguageLevel.SIGMA, 1,
+                SigmaCompletions.types(this.builtIns, null, "")));
+        assertFalse(first.contains("Sound") || first.contains("Speaker"), () -> "Σ 1 offered " + first);
+        assertTrue(first.contains("Console"));
+        final List<String> sharp = labels(SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 1,
+                SigmaCompletions.types(this.builtIns, null, "")));
+        assertFalse(sharp.contains("Sound"), () -> "Σ# 1 offered " + sharp);
+        assertTrue(labels(SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 2,
+                SigmaCompletions.types(this.builtIns, null, ""))).contains("Sound"), "Σ# 2 has it");
+    }
+
+    /** Nor what such a type has, reached through its name. */
+    @Test
+    void within_theFirstVersion_offersNothingOfATypeThatCameLater() {
+        final List<SigmaCompletions.Item> sound = SigmaCompletions.members(this.builtIns, null, "Sound", "", true);
+        assertFalse(sound.isEmpty());
+        assertTrue(SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 1, sound).isEmpty());
+        assertEquals(sound, SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 2, sound));
+    }
+
     /** A type of the library offers what the smaller version of it has, and nothing the compiler would refuse. */
     @Test
     void within_theSmallerLanguage_aTypeOffersOnlyTheMembersItKept() {

@@ -33,6 +33,7 @@ import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -132,6 +133,8 @@ final class DesktopState {
     private final List<DiskFilesPayload.WireVolume> media = new ArrayList<>();
     /** The computer's name, synced from the server. */
     private String computerName = "";
+    /** The version each installed package is at, by id path, as the machine last said. */
+    private Map<String, String> packageVersions = Map.of();
     /** The pointer, desktop-local, as the frame being drawn has it, so a menu drawn late in it lights its row. */
     private int hoverX;
     private int hoverY;
@@ -601,6 +604,15 @@ final class DesktopState {
         return taskPopup.key();
     }
 
+    /**
+     * The version this machine has a package installed at, by its id or its id's path, or empty when it keeps no
+     * record of one.
+     */
+    String packageVersion(final String programId) {
+        final int colon = programId.indexOf(':');
+        return packageVersions.getOrDefault(colon < 0 ? programId : programId.substring(colon + 1), "");
+    }
+
     /** The name this machine shows for whoever is at it: the computer's name, or a generic label. */
     String accountLabel() {
         return computerName == null || computerName.isBlank() ? GameText.resolve(DesktopTexts.LOCAL_ACCOUNT)
@@ -866,6 +878,7 @@ final class DesktopState {
         desktopItems.clear();
         desktopItems.addAll(payload.files());
         computerName = payload.computerName();
+        packageVersions = payload.versions();
         view.setScalePercent(payload.prefs().scale());
         // The look the machine keeps goes in first, so the skin the choices rebuild is drawn from it.
         prefs.takeCdeStyle(CdeStyle.parse(payload.cdeStyle()));

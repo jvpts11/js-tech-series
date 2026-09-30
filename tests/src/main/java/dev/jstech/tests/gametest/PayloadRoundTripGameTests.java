@@ -105,7 +105,7 @@ public final class PayloadRoundTripGameTests {
         roundTrip(helper, DesktopFilesPayload.STREAM_CODEC, new DesktopFilesPayload(List.of(), "", "", "Desk",
                 programs, List.of("screenfetch", "vim"), List.of(),
                 new DesktopFilesPayload.Prefs(0, 100, false, true, false, 100), List.of(), List.of(), Map.of(),
-                false));
+                false, Map.of("sgsc", "2.0", "scc", "1.0")));
         helper.succeed();
     }
 

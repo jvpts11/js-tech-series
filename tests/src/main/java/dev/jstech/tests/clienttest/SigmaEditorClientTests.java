@@ -430,6 +430,8 @@ public final class SigmaEditorClientTests {
                     for (final String id : new String[] {"virtual_studio", "sgsc", "scc", "sigma"}) {
                         computer.console().install(program(id).toString());
                     }
+                    // An scc of 1.0 knows Σ 1, which had no Sound and no Speaker: the editor follows the compiler.
+                    computer.console().setInstalledVersion(program("scc").toString(), "1.0");
                     world.placeMonitor(MONITOR, Direction.EAST);
                 })
                 .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
@@ -472,6 +474,16 @@ public final class SigmaEditorClientTests {
                         ctx.key(GLFW.GLFW_KEY_BACKSPACE);
                     }
                 })
+                // The types this version of the language has, and none of those that came in the next one.
+                .then(SETTLE, () -> ctx.type("S"))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_SPACE, GLFW.GLFW_MOD_CONTROL))
+                .thenWaitUntil(() -> studio(ctx).completionLabels().contains("Script"),
+                        SCREEN_WAIT, "the list to offer the types of Σ that start with S")
+                .thenAssert(0, () -> !studio(ctx).completionLabels().contains("Sound")
+                                && !studio(ctx).completionLabels().contains("Speaker"),
+                        "and not Sound or Speaker, which the installed scc 1.0 does not know")
+                .thenScreenshot(2, "sigma-first-version-suggestions")
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_BACKSPACE))
                 .then(SETTLE, () -> studio(ctx).buildSolution())
                 .thenWaitUntil(() -> studio(ctx).outputLines().stream().anyMatch(l -> l.startsWith("Build succeeded")),
                         SCREEN_WAIT, "the build to succeed")

@@ -34,12 +34,14 @@ import java.util.Map;
  * {@code trashFull} says whether anything is in the desktop's trash, which is the picture its icon wears.
  * {@code sourceBuilt} names, by program id path, the installed programs the machine built from source, whose
  * windows hold a little less memory, so the desktop weighs a window the way the machine does.
+ * {@code versions} gives, by program id path, the version each installed package is at, which is what an editor
+ * reads the version of the language from: the machine's compiler knows the language up to its own number.
  */
 public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String wallpaper, String cdeStyle,
                                   String computerName, List<String> programs, List<String> sourceBuilt,
                                   List<WireIconCell> iconCells, Prefs prefs,
                                   List<WireCommunity> community, List<String> pinned,
-                                  Map<String, String> defaultApps, boolean trashFull)
+                                  Map<String, String> defaultApps, boolean trashFull, Map<String, String> versions)
         implements CustomPacketPayload {
 
     public static final int MAX_FILES = 256;
@@ -96,7 +98,7 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "desktop_files"));
 
     /*
-     * Written out by hand: composite takes six pairs and this carries twelve things. The alternative was
+     * Written out by hand: composite takes six pairs and this carries thirteen things. The alternative was
      * to bundle two of them into a record nobody else wants, which would have cost a reader more than
      * these two short methods do.
      */
@@ -138,6 +140,15 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             buf.writeUtf(clip(one.getValue(), 64), 64);
         }
         buf.writeBoolean(payload.trashFull);
+        buf.writeVarInt(Math.min(payload.versions.size(), MAX_PROGRAMS));
+        int versioned = 0;
+        for (final Map.Entry<String, String> one : payload.versions.entrySet()) {
+            if (versioned++ == MAX_PROGRAMS) {
+                break;
+            }
+            buf.writeUtf(clip(one.getKey(), 32), 32);
+            buf.writeUtf(clip(one.getValue(), 16), 16);
+        }
     }
 
     private static String clip(final String text, final int max) {
@@ -170,8 +181,13 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             defaultApps.put(buf.readUtf(32), buf.readUtf(64));
         }
         final boolean trashFull = buf.readBoolean();
+        final int versionCount = Math.min(buf.readVarInt(), MAX_PROGRAMS);
+        final Map<String, String> versions = new LinkedHashMap<>();
+        for (int i = 0; i < versionCount; i++) {
+            versions.put(buf.readUtf(32), buf.readUtf(16));
+        }
         return new DesktopFilesPayload(files, wallpaper, cdeStyle, computerName, programs, sourceBuilt, cells, prefs,
-                community, pinned, defaultApps, trashFull);
+                community, pinned, defaultApps, trashFull, versions);
     }
 
     /* Copied on the way in, so what the desktop is handed cannot change under it after it arrives. */
@@ -183,6 +199,7 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
         community = List.copyOf(community);
         pinned = List.copyOf(pinned);
         defaultApps = Map.copyOf(defaultApps);
+        versions = Map.copyOf(versions);
     }
 
     @Override

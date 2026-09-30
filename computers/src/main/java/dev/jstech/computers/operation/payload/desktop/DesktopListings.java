@@ -30,6 +30,7 @@ import dev.jstech.computers.program.DesktopLayout;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,7 +63,7 @@ final class DesktopListings {
         if (computer == null) {
             return new DesktopFilesPayload(List.of(), "", "", "", List.of(), List.of(), List.of(),
                     new DesktopFilesPayload.Prefs(0, 100, false, true, false, 0), community, List.of(), Map.of(),
-                    false);
+                    false, Map.of());
         }
         final ComputerConsoleState console = computer.console();
         final ComputerSettings settings = console.settings();
@@ -74,7 +75,20 @@ final class DesktopListings {
                 console.computerName(), installedApps(computer), sourceBuilt(console), iconCells(computer, files),
                 new DesktopFilesPayload.Prefs(settings.accent(), settings.brightness(), settings.clock12h(),
                         settings.taskbarCentered(), settings.darkMode(), settings.guiScale()),
-                community, settings.pinned(), settings.defaultApps(), trashFull);
+                community, settings.pinned(), settings.defaultApps(), trashFull, versions(console));
+    }
+
+    /** The version each installed package is at, by id path; a package with no version on record is left out. */
+    private static Map<String, String> versions(final ComputerConsoleState console) {
+        final Map<String, String> versions = new LinkedHashMap<>();
+        for (final String id : console.installed()) {
+            final String version = console.installedVersion(id);
+            final ResourceLocation program = ResourceLocation.tryParse(id);
+            if (!version.isBlank() && program != null && versions.size() < DesktopFilesPayload.MAX_PROGRAMS) {
+                versions.put(program.getPath(), version);
+            }
+        }
+        return versions;
     }
 
     /**
