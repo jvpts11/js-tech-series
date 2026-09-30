@@ -24,6 +24,8 @@ final class TextFunctions {
             "there is no place %s to start from in a string of %s");
     private static final TextKey NO_RUN = TextKey.of("jsc.vm.text_functions.no_run",
             "there are no %s characters from place %s in a string of %s");
+    private static final TextKey NOT_A_HOLE = TextKey.of("jsc.vm.text_functions.not_a_hole",
+            "'%s' is no printf hole this machine writes");
 
     private TextFunctions() {
     }
@@ -35,6 +37,8 @@ final class TextFunctions {
         // Written by the compiler where a character is joined to text, since a character runs as its number.
         registry.onType(TEXT, "FromChar", TEXT, (context, target, arguments, line) ->
                 context.text(String.valueOf((char) Numbers.toInt(arguments[0])), line), "char");
+        // Written by the compiler for a printf hole with a width, a precision, flags or a base.
+        registry.onType(TEXT, "Printf", TEXT, TextFunctions::printf, TEXT, "object");
         registry.onType(TEXT, "Format", TEXT, TextFunctions::format, TEXT, "object");
         registry.onType(TEXT, "Format", TEXT, TextFunctions::format, TEXT, "object", "object");
         registry.onObject(TEXT, "Substring", TEXT, TextFunctions::substring, "int");
@@ -66,6 +70,19 @@ final class TextFunctions {
             result = result.replace("{" + (i - 1) + "}", String.valueOf(arguments[i]));
         }
         return context.text(result, line);
+    }
+
+    /**
+     * A value put in a printf hole the way C puts one. The hole was read when the program was compiled, so one that
+     * does not read here was written by hand into a listing, and stops the program saying so.
+     */
+    private static Object printf(final IPureContext context, final Object target, final Object[] arguments,
+                                 final int line) {
+        final HoleFormat hole = HoleFormat.read(String.valueOf(arguments[0]));
+        if (hole == null) {
+            throw new Halt(Halt.Reason.REFUSED, line, NOT_A_HOLE.with(String.valueOf(arguments[0])));
+        }
+        return context.text(hole.apply(arguments[1]), line);
     }
 
     /**

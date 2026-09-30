@@ -43,8 +43,17 @@ It prints the way the languages of those machines printed, with `printf`, a call
 front of it: `printf("%s has %d items\n", name, count);`. The format has to be written out in quotes,
 because it is read while the program is compiled and never while it runs; what is left is the pieces joined
 and handed to the console, the very line adding them up by hand would have given. The holes are `%d` and `%i`
-for a whole number, `%f` for a number, `%s` for text, `%c` for a character and `%%` for the sign itself, an
-`l` before the letter is taken and means nothing, and there are no widths or precisions. A hole with no
+for a whole number, `%f` for a number, `%s` for text, `%c` for a character and `%%` for the sign itself, and
+the letters C writes for how long a number is (`l`, `ll`, `h`, `hh`) are taken and mean nothing.
+
+From version 2 a hole reads the rest of what C wrote in one: the flags (`-` to the left, `+` or a space for the
+sign, `0` to fill with zeros, `#` for `0x` or a leading `0`), a width, a precision after a dot, `%u` for a
+whole number read as never below zero, `%x`, `%X` and `%o` for one in hexadecimal and octal, and `%e` and
+`%E` for a number with an exponent. `printf("%-12s %5d %05.2f %03x\n", name, count, rate, id);` writes what
+C would. A number with a fraction is written as the language writes it (`2.5`) unless the hole gives a
+precision; C's six decimals are `%.6f`. A width or a precision goes up to 999, and one taken from a value
+(`%*d`) is not read. A hole like these is written down as one call that puts the value in it; a plain hole is
+still the value itself, joined to the rest. A hole with no
 value, a value with no hole, and a value of the wrong kind are all errors when the program is compiled. A
 line break written into the format ends the line; the console keeps whole lines, so a `printf` that does not
 end in one still ends its line. Σ# has `printf` as well, since it reads whatever Σ does.
@@ -80,8 +89,8 @@ project cannot reference a Σ# one.
 ## Versions
 
 Σ and Σ# have versions, one number for both, since Σ N is the subset of Σ# N. Version 1 is the language as it
-first shipped under these names; version 2 brings `Sound` and `Speaker`, the old names above, and `Random` in
-Σ's `Standard`. A version only ever adds: whatever version 1 takes, version 2 takes too and compiles to the
+first shipped under these names; version 2 brings `Sound` and `Speaker`, the old names above, the rest of
+`printf`'s holes, and `Random` in Σ's `Standard`. A version only ever adds: whatever version 1 takes, version 2 takes too and compiles to the
 same listing, so a newer compiler never breaks an older program.
 
 The version a machine builds is its compiler's. The package `sgsc` 2.0 is Σ# 2 and `scc` 2.0 is Σ 2, and a

@@ -109,8 +109,40 @@ class PrintfTest {
 
     @Test
     void printf_aFormatItCannotReadIsRefusedWithWhy() {
-        assertTrue(refusal("printf(\"%5d\\n\", 1);").contains("no widths or precisions"));
+        assertTrue(refusal("printf(\"%*d\\n\", 1);").contains("cannot come from a value"));
         assertTrue(refusal("printf(\"%q\\n\", 1);").contains("S3054"));
+    }
+
+    /** The second version puts a value in a hole with a width, a precision, flags or a base the way C does. */
+    @Test
+    void printf_widthsPrecisionsFlagsAndBasesAreWrittenAsInC() {
+        assertEquals(List.of("Iron Ingot      16", "Lucky number: 0a7", "pi 3.14 1.50e+00 -0042 ff 377"),
+                printed("printf(\"%-12s %5d\\n\", \"Iron Ingot\", 16); printf(\"Lucky number: %03x\\n\", 167); "
+                        + "printf(\"pi %.2f %.2e %05d %x %o\\n\", 3.14159, 1.5, -42, 255, 255);"));
+    }
+
+    /** Such a hole is the one call that puts a value in it; a plain one stays the value, joined to the rest. */
+    @Test
+    void printf_aHoleThatAsksForMoreIsWrittenDownAsTheCallThatPutsTheValueInIt() {
+        final String listing = built("int n = 3; printf(\"%5d and %d\\n\", n, n);", LanguageLevel.SIGMA).assembly();
+        assertTrue(listing.contains("ldstr   \"%5d\"") && listing.contains("string.Printf(string, object)"),
+                listing);
+        final String plain = built("int n = 3; printf(\"%d\\n\", n);", LanguageLevel.SIGMA).assembly();
+        assertFalse(plain.contains("Printf"), plain);
+    }
+
+    /** What the first version did not read is refused there, for the version it needs. */
+    @Test
+    void printf_aWidthAtTheFirstVersionNeedsTheSecond() {
+        final SigmaCompiler.Result first = SigmaCompiler.compile(List.of(new SourceFile("Says.sg", PRELUDE
+                        + "class Says : Script { public override void OnTick() { printf(\"%5d %x\\n\", 1, 2); } }")),
+                "jsc:x86_16", LanguageLevel.SIGMA, SigmaVersions.FIRST);
+        final String said = String.join("\n", first.lines());
+        assertTrue(said.contains("'%5d' needs Σ 2; this project is Σ 1") && said.contains("'%x' needs Σ 2"), said);
+        final SigmaCompiler.Result plain = SigmaCompiler.compile(List.of(new SourceFile("Says.sg", PRELUDE
+                        + "class Says : Script { public override void OnTick() { printf(\"%ld %d\\n\", 1, 2); } }")),
+                "jsc:x86_16", LanguageLevel.SIGMA, SigmaVersions.FIRST);
+        assertTrue(plain.ok(), () -> String.join("\n", plain.lines()));
     }
 
     @Test

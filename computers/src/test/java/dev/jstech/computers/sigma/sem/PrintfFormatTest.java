@@ -20,7 +20,13 @@ import org.junit.jupiter.api.Test;
 class PrintfFormatTest {
 
     private static PrintfFormat.Hole hole(final char letter, final PrintfFormat.Wants wants) {
-        return new PrintfFormat.Hole(letter, wants);
+        return new PrintfFormat.Hole(letter, wants, "%" + letter, "%" + letter, 1);
+    }
+
+    private static PrintfFormat.Hole only(final String format) {
+        final PrintfFormat.Read read = PrintfFormat.read(format);
+        assertNull(read.problem(), format);
+        return (PrintfFormat.Hole) read.pieces().getFirst();
     }
 
     @Test
@@ -48,8 +54,37 @@ class PrintfFormatTest {
         assertEquals(PrintfFormat.Wants.CHARACTER, ((PrintfFormat.Hole) PrintfFormat.read("%c").pieces()
                 .getFirst()).wants());
         // The l of a long means nothing here and is taken all the same, since the hand writes it.
-        assertEquals(hole('d', PrintfFormat.Wants.WHOLE_NUMBER), PrintfFormat.read("%ld").pieces().getFirst());
-        assertEquals(hole('f', PrintfFormat.Wants.FRACTION), PrintfFormat.read("%lf").pieces().getFirst());
+        assertEquals(new PrintfFormat.Hole('d', PrintfFormat.Wants.WHOLE_NUMBER, "%ld", "%d", 1), only("%ld"));
+        assertEquals(new PrintfFormat.Hole('f', PrintfFormat.Wants.FRACTION, "%lf", "%f", 1), only("%lf"));
+        assertTrue(only("%ld").plain());
+    }
+
+    /** The second version reads the rest of what C wrote in a hole, and says so by the version of each hole. */
+    @Test
+    void read_takesWidthsPrecisionsFlagsAndTheOtherLettersFromTheSecondVersion() {
+        final PrintfFormat.Read read = PrintfFormat.read("%-12s %5d %05.1f %#x %X %o %u %e %E %+i %hd %lld");
+        assertNull(read.problem());
+        final List<String> specs = read.pieces().stream().filter(PrintfFormat.Hole.class::isInstance)
+                .map(piece -> ((PrintfFormat.Hole) piece).spec()).toList();
+        assertEquals(List.of("%-12s", "%5d", "%05.1f", "%#x", "%X", "%o", "%u", "%e", "%E", "%+i", "%d", "%d"),
+                specs);
+        for (final Object piece : read.pieces()) {
+            if (piece instanceof PrintfFormat.Hole hole) {
+                assertEquals(2, hole.since(), hole.written());
+            }
+        }
+        assertEquals(PrintfFormat.Wants.WHOLE_NUMBER, only("%x").wants());
+        assertEquals(PrintfFormat.Wants.FRACTION, only("%e").wants());
+        assertTrue(only("%hd").plain(), "a length letter asks for nothing, though the first version did not read it");
+        assertEquals("%hd", only("%hd").written());
+    }
+
+    @Test
+    void read_aWidthFromAValueOrOneTooWideIsAProblem() {
+        assertTrue(PrintfFormat.read("%*d").problem().english().contains("cannot come from a value"));
+        assertTrue(PrintfFormat.read("%1000d").problem().english().contains("up to 999"));
+        assertTrue(PrintfFormat.read("%.1000f").problem().english().contains("up to 999"));
+        assertNull(PrintfFormat.read("%999d").problem());
     }
 
     @Test
@@ -64,17 +99,9 @@ class PrintfFormatTest {
         final Text read = PrintfFormat.read("%q").problem();
         assertNotNull(read);
         final String problem = read.english();
-        assertTrue(problem.contains("'%q'") && problem.contains("%d, %f, %s, %c"), problem);
-    }
-
-    @Test
-    void read_aWidthOrAPrecisionIsSaidNotToBeHere() {
-        for (final String format : List.of("%5d", "%.2f", "%-8s")) {
-            final Text read = PrintfFormat.read(format).problem();
-            assertNotNull(read, format);
-            final String problem = read.english();
-            assertTrue(problem.contains("no widths or precisions"), problem);
-        }
+        assertTrue(problem.contains("'%q'") && problem.contains("%d, %i, %u, %x"), problem);
+        assertNotNull(PrintfFormat.read("%5q").problem(), "a width does not make a letter one");
+        assertNotNull(PrintfFormat.read("%lhd").problem(), "nor two lengths that are no length");
     }
 
     @Test

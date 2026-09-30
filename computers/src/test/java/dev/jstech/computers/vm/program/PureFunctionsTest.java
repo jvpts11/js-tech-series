@@ -28,9 +28,12 @@ class PureFunctionsTest {
     /** The types of the language whose methods need nothing but their arguments. */
     private static final Set<String> PURE_TYPES = Set.of("string", "List", "Map", "Math", "Convert", "Time");
 
-    /** The calls the compiler writes itself for an operator, which no type of the language declares. */
-    private static final Set<String> WRITTEN_BY_THE_COMPILER =
-            Set.of("string.Concat(T, U)", "string.FromChar(char)", "Delegate.Combine(T, T)", "Delegate.Remove(T, T)");
+    /**
+     * The calls the compiler writes itself, for an operator or for a printf hole that asks for more than its value,
+     * which no type of the language declares.
+     */
+    private static final Set<String> WRITTEN_BY_THE_COMPILER = Set.of("string.Concat(T, U)", "string.FromChar(char)",
+            "string.Printf(string, object)", "Delegate.Combine(T, T)", "Delegate.Remove(T, T)");
 
     @Test
     void registry_answersEveryMethodThePureTypesDeclare() {

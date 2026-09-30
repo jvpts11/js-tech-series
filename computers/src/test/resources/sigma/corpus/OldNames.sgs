@@ -14,6 +14,7 @@ class OldNamesCorpus {
         int at = strstr(line, "ingot");
         string said = sprintf("%s: %d, %f", itoa(n), lucky + length + at, root + asked);
         printf("%s\n", said);
+        printf("%-12s|%5d|%05.2f|%#x|%e|%u\n", said, n, root, lucky, asked, length);
         exit(0);
     }
 }

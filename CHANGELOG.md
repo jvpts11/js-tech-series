@@ -398,6 +398,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   those names is still the one called, so no program changes. Σ's `Standard` library gains `Random` in the same
   version, with `Next` and `Seed`. The editors offer the old names, each way it is written, priced as the call it
   stands for, and only to a project whose version has them; `docs/SIGMA.md` lists them with the long way of each.
+- `printf` and `sprintf` in Σ 2 read the rest of what C wrote in a hole: flags, widths, precisions, `%u`, `%x`,
+  `%X`, `%o`, `%e` and `%E`, and put the value in the hole the way C does (`%05d` of -42 is `-0042`, `%.2f`
+  rounds the number the machine holds half to even). A number with a fraction and no precision is still written
+  as the language writes it. A plain hole compiles to the same listing as before; one of these is written down as
+  a single call that formats the value, and the first version refuses it for the version it needs.
 
 ### Changed
 - The Vintage server boards hold the Integra Pentix Pro, as the boards of the time did: the MF MTX-V of the

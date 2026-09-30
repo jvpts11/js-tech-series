@@ -86,6 +86,44 @@
     ldstr   "\n"
     call    string.Concat(string, string) -> string
     call    Console.Print(string) -> void
+    ldstr   ""
+    ldstr   "%-12s"
+    ldloc   7
+    call    string.Printf(string, object) -> string
+    call    string.Concat(string, string) -> string
+    ldstr   "|"
+    call    string.Concat(string, string) -> string
+    ldstr   "%5d"
+    ldloc   2
+    call    string.Printf(string, object) -> string
+    call    string.Concat(string, string) -> string
+    ldstr   "|"
+    call    string.Concat(string, string) -> string
+    ldstr   "%05.2f"
+    ldloc   3
+    call    string.Printf(string, object) -> string
+    call    string.Concat(string, string) -> string
+    ldstr   "|"
+    call    string.Concat(string, string) -> string
+    ldstr   "%#x"
+    ldloc   4
+    call    string.Printf(string, object) -> string
+    call    string.Concat(string, string) -> string
+    ldstr   "|"
+    call    string.Concat(string, string) -> string
+    ldstr   "%e"
+    ldloc   1
+    call    string.Printf(string, object) -> string
+    call    string.Concat(string, string) -> string
+    ldstr   "|"
+    call    string.Concat(string, string) -> string
+    ldstr   "%u"
+    ldloc   5
+    call    string.Printf(string, object) -> string
+    call    string.Concat(string, string) -> string
+    ldstr   "\n"
+    call    string.Concat(string, string) -> string
+    call    Console.Print(string) -> void
     ldc.i4  0
     call    Program.Exit(int) -> void
     ret

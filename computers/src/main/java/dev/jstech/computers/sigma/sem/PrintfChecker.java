@@ -8,6 +8,7 @@
 package dev.jstech.computers.sigma.sem;
 
 import dev.jstech.computers.sigma.SigmaError;
+import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.lex.TokenKind;
 import dev.jstech.core.text.Text;
@@ -15,6 +16,7 @@ import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Rules on a call of {@code printf} or {@code sprintf}: the format written out, a value for every hole, each of
@@ -22,15 +24,21 @@ import java.util.List;
  *
  * <p>Both are among the calls written with no type in front of them, the way the languages of those machines
  * wrote theirs, and both languages have them, since whatever the smaller one takes the full one takes too.
- * Nothing new runs for either: a format is read here, while the program is compiled, and what is left is the
- * pieces joined together, handed to the console by printf and given back by sprintf, exactly what adding them up
- * by hand would have come to.
+ * A format is read here, while the program is compiled, and what is left is the pieces joined together, handed to
+ * the console by printf and given back by sprintf. A plain hole is its value, exactly what adding the pieces up by
+ * hand would have come to; one with a width, a precision, flags or a base is its value handed to the one call that
+ * puts a value in a hole the way C does.
  */
 @TextHolder
 final class PrintfChecker {
 
     private final BodyScope scope;
     private final ExpressionChecker expressions;
+    /** The call a hole with more than a letter is written down as: its spec and its value, in, and text out. */
+    private IMemberSymbol.MethodSymbol putInHole;
+
+    /** The name of that call, on the language's own text, which only the compiler writes. */
+    private static final String PUT_IN_HOLE = "Printf";
 
     /* How many holes a format has and how many values a call gives, as the message counts them. */
     private static final TextKey ONE_HOLE = TextKey.of("jsc.sigma.printf_checker.one_hole", "1 hole");
@@ -84,11 +92,12 @@ final class PrintfChecker {
             }
             final IExpr value = values.get(next);
             final ITypeSymbol kind = kinds.get(next++);
+            this.scope.declarations().reportIfLater(hole.written(), hole.since(), written.line(), written.column());
             if (!this.scope.rules().isError(kind) && !this.takes(hole.wants(), kind)) {
                 this.scope.report(value.line(), value.column(), SigmaError.PRINTF_WRONG_VALUE, name,
-                        hole.letter(), hole.wants().words(), kind.describe());
+                        hole.written().substring(1), hole.wants().words(), kind.describe());
             }
-            pieces.add(value);
+            pieces.add(hole.plain() ? value : this.putInHole(hole, value));
         }
         this.scope.model().setFormatted(call, pieces);
         if (prints) {
@@ -105,6 +114,35 @@ final class PrintfChecker {
             case TEXT -> kind == this.scope.builtIns().stringType();
             case CHARACTER -> kind == ITypeSymbol.Primitive.CHAR;
         };
+    }
+
+    /**
+     * A value in a hole that asks for more than the value: the call that puts it there, handed the hole as the
+     * runtime reads it and the value, and typed as the text it gives back.
+     */
+    private IExpr putInHole(final PrintfFormat.Hole hole, final IExpr value) {
+        final IExpr spec = new IExpr.Literal(TokenKind.STRING_LITERAL, hole.spec(), value.line(), value.column());
+        this.scope.model().setType(spec, this.scope.builtIns().stringType());
+        final IExpr.Call made = new IExpr.Call(new IExpr.Name(PUT_IN_HOLE, value.line(), value.column()),
+                List.of(spec, value), value.line(), value.column());
+        this.scope.model().setCall(made, this.putInHole());
+        this.scope.model().setType(made, this.scope.builtIns().stringType());
+        return made;
+    }
+
+    /**
+     * The call itself, which belongs to the language's own text and is not declared where a program could name it:
+     * only the compiler writes it, for a hole it has already read.
+     */
+    private IMemberSymbol.MethodSymbol putInHole() {
+        if (this.putInHole == null) {
+            final NamedType text = this.scope.builtIns().stringType();
+            this.putInHole = new IMemberSymbol.MethodSymbol(text, PUT_IN_HOLE, text,
+                    List.of(new IMemberSymbol.ParameterSymbol("spec", text, false),
+                            new IMemberSymbol.ParameterSymbol("value", this.scope.builtIns().objectType(), false)),
+                    Set.of(IDecl.Modifier.PUBLIC, IDecl.Modifier.STATIC));
+        }
+        return this.putInHole;
     }
 
     /** The console's own call that prints text, which is what every printf comes down to. */
