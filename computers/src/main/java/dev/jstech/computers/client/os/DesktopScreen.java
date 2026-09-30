@@ -25,7 +25,6 @@ import dev.jstech.computers.gui.layout.CdeWindowIconLayout;
 import dev.jstech.computers.gui.layout.VolumePopupLayout;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
-import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.RequestDiskFilesPayload;
@@ -52,9 +51,7 @@ import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.WorkspaceSet;
-import dev.jstech.computers.os.fs.Archive;
 import dev.jstech.computers.os.fs.FileOpeners;
-import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.computers.program.Programs;
@@ -126,9 +123,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     private final DesktopNotices notices = new DesktopNotices(this);
     /** The dialog that shuts the machine down, restarts it or logs off. */
     private final PowerDialog power = new PowerDialog(this);
-
-    /** The archiver, by the id the desktop knows it under; nothing of its is offered without it installed. */
-    private static final String ARCHIVER = "ark";
 
     /** The Linux desktops' own ways of opening a program: Kickoff, the Mint menu, the Activities overview. */
     private final LinuxLaunchers linuxLaunchers = new LinuxLaunchers(this);
@@ -488,8 +482,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** The windows the desktop opens by itself, whatever this desktop calls the programs they belong to. */
     private static final String FILES_KEY = WindowKeys.of(Programs.FILES);
     private static final String SETTINGS_KEY = WindowKeys.of(Programs.SETTINGS);
-    private static final String THIS_PC_KEY =
-            WindowKeys.of(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "this_pc"));
     private static final String EDITOR_KEY =
             WindowKeys.of(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, FileOpeners.EDITOR));
     private static final String WORKSTATION_INFO_KEY =
@@ -525,13 +517,10 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** The media in the machine's drives, as its last listing said. */
     private final List<DiskFilesPayload.WireVolume> media = new ArrayList<>();
 
-    /** The desktop's right-click menu, the same component every program's menus are. */
-    private final ContextMenu deskMenu =
-            new ContextMenu(DESK_CTX_W, DESK_CTX_ITEM_H);
-    /** Whether the panel's own menu is up, and where it was raised. */
-    private boolean panelCtxOpen;
-    private int panelCtxX;
-    private int panelCtxY;
+    /** The wallpaper's right-click menu, for whatever the cursor is on. */
+    private final DeskMenu deskMenu = new DeskMenu(this);
+    /** The panel's own menu, which a right click on the bar clear of its entries opens. */
+    private final PanelMenu panelMenu = new PanelMenu(this);
 
     /*
      * Drag-and-drop of a desktop icon (a file/folder, or a program launcher), onto a folder, an open
@@ -921,6 +910,26 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return desktopItems;
     }
 
+    /** Making, renaming and deleting the things that live on the desktop. */
+    DeskFiles fileActions() {
+        return deskFiles;
+    }
+
+    /** The trash as the desktop has it, whose icon has a menu of its own. */
+    DeskTrash trash() {
+        return trash;
+    }
+
+    /** The programs this machine has installed, by id path. */
+    List<String> installedPrograms() {
+        return installedPrograms;
+    }
+
+    /** Whether the program with that id path is pinned to the panel. */
+    boolean isPinned(final String programPath) {
+        return pinnedPrograms.contains(programPath);
+    }
+
     /** The icon a click has picked, which shows its whole name, or -1 while none is picked. */
     int pickedIcon() {
         return selectedIcon;
@@ -1023,7 +1032,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * thing on the panel that opens by itself, so it must never sit over something the player asked for.
      */
     boolean menuOrDialogOpen() {
-        return startOpen || panelCtxOpen || taskMenu.isOpen() || cdeWindowMenu.isOpen() || notices.popup() != null
+        return startOpen || panelMenu.isOpen() || taskMenu.isOpen() || cdeWindowMenu.isOpen() || notices.popup() != null
                 || power.isOpen() || memory.crashing();
     }
 
@@ -1217,35 +1226,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     private static final int CIN_ROW_H = LinuxLaunchers.CIN_ROW_H;
     /** The width of the Frames XP Start pill, which the task buttons and its own hit-test both clear. */
     static final int XP_START_W = 58;
-    private static final int DESK_CTX_W = 88;
-    private static final int DESK_CTX_ITEM_H = 11;
-    /**
-     * The panel's own menu, top to bottom. Right-clicking a taskbar opens this on every desktop these imitate, and
-     * the Task Manager is one entry on it rather than the click's whole meaning. A separator sits before that entry.
-     */
-    private enum PanelRow {
-        CASCADE(DesktopTexts.CASCADE),
-        SHOW_DESKTOP(DesktopTexts.SHOW_DESKTOP),
-        SEPARATOR(null),
-        TASK_MANAGER(DesktopTexts.TASK_MANAGER);
-
-        @Nullable
-        private final TextKey label;
-
-        PanelRow(@Nullable final TextKey label) {
-            this.label = label;
-        }
-
-        /** What the row reads as in the player's language; a separator reads as nothing. */
-        String words() {
-            return this.label == null ? "" : GameText.resolve(this.label);
-        }
-    }
-
-    /** The rows in the order the menu shows them, which is a place on the screen and nothing more. */
-    private static final List<PanelRow> PANEL_CTX =
-            List.of(PanelRow.CASCADE, PanelRow.SHOW_DESKTOP, PanelRow.SEPARATOR, PanelRow.TASK_MANAGER);
-    private static final int PANEL_CTX_W = 104;
 
     /** A desktop/start-menu entry that opens an app when clicked. */
     /*
@@ -1355,7 +1335,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Whether the panel's own menu is open. */
     public boolean isPanelMenuOpen() {
-        return panelCtxOpen;
+        return panelMenu.isOpen();
     }
 
     /** Whether a program's menu, the one its panel entry opens, is open. */
@@ -1472,16 +1452,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** Screen position of the centre of the panel menu's {@code label} entry, or null when it is not there. */
     @Nullable
     public int[] panelMenuPoint(final String label) {
-        if (!panelCtxOpen) {
-            return null;
-        }
-        for (int i = 0; i < PANEL_CTX.size(); i++) {
-            if (PANEL_CTX.get(i) != PanelRow.SEPARATOR && PANEL_CTX.get(i).words().equals(label)) {
-                return new int[] {view.screenX(panelCtxX + PANEL_CTX_W / 2),
-                        view.screenY(panelCtxY + 1 + i * DESK_CTX_ITEM_H + DESK_CTX_ITEM_H / 2)};
-            }
-        }
-        return null;
+        final int[] local = panelMenu.pointOf(label);
+        return local == null ? null : new int[] {view.screenX(local[0]), view.screenY(local[1])};
     }
 
     /** Screen position of the middle of one of the Front Panel's controls, under the arrow at its head. */
@@ -2205,7 +2177,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     }
 
     /** Requests the desktop folder's files so they can be drawn as background icons. */
-    private void requestDesktop() {
+    void requestDesktop() {
         PacketDistributor.sendToServer(new RequestDesktopFilesPayload(host));
     }
 
@@ -2520,7 +2492,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                     view.panelOnTop());
             g.pose().popPose();
         }
-        if (!startOpen && !deskMenu.isOpen() && !panelCtxOpen && !cdeLaunchers.isOpen()) {
+        if (!startOpen && !deskMenu.isOpen() && !panelMenu.isOpen() && !cdeLaunchers.isOpen()) {
             return;
         }
         g.pose().pushPose();
@@ -2530,9 +2502,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
         // A subpanel of CDE's Front Panel is no launcher that comes and goes: it stays up until its arrow says so.
         cdeLaunchers.render(g, view.width(), view.height(), prefs.cdePalette());
-        if (panelCtxOpen) {
-            renderPanelContext(g, lmx, lmy);
-        }
+        panelMenu.render(g, lmx, lmy);
         if (deskMenu.isOpen()) {
             deskMenu.render(g, new UiContext(prefs.skin(), font, lmx, lmy, partialTick));
         }
@@ -2932,7 +2902,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     }
 
     /** Opens an icon slot: a launcher starts its program; a desktop file/folder opens or navigates. */
-    private void openSlot(final int slot) {
+    void openSlot(final int slot) {
         if (slot < iconLaunchers.size()) {
             final Launcher launcher = iconLaunchers.get(slot);
             if (trash.is(launcher)) {
@@ -2980,7 +2950,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * Asks the player which program opens a file, with the Open with chooser over the whole desktop. Always makes
      * the choice this computer's program for the file's extension, written down on the machine.
      */
-    private void chooseOpener(final String path) {
+    void chooseOpener(final String path) {
         final List<String> programs = FileOpeners.choices(path, installedPrograms);
         if (programs.isEmpty()) {
             cannotOpen(path);
@@ -3008,7 +2978,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * <p>Which program a kind of file belongs to is one answer, kept in one place, so a double-click, a
      * pick from "Open with" and a run from the explorer all reach the same one.
      */
-    private void openIn(final String programId, final String path) {
+    void openIn(final String programId, final String path) {
         if (programId.isEmpty()) {
             /*
              * Nothing here claims the kind, but a language an addon brought may: its compiled programs
@@ -3112,57 +3082,15 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return null;
     }
 
-    /**
-     * Offers the programs on this machine that can open the file, so the player picks one.
-     *
-     * <p>A menu rather than a dialog: it is the same question as the one that was just asked with the
-     * right button, and the answer is one of a handful of names.
-     */
-    private List<ContextMenu.Item> openWithItems(final String path) {
-        final List<ContextMenu.Item> entries = new ArrayList<>();
-        for (final String programId
-                : FileOpeners.available(path, installedPrograms)) {
-            final ProgramSpec spec = Programs.get(
-                    ResourceLocation.fromNamespaceAndPath("jsc", programId));
-            final String label = spec == null ? programId : spec.displayName();
-            entries.add(new ContextMenu.Item(label, true, () -> openIn(programId, path)));
-        }
-        if (!FileOpeners.choices(path, installedPrograms).isEmpty()) {
-            if (!entries.isEmpty()) {
-                entries.add(ContextMenu.Item.separator());
-            }
-            entries.add(new ContextMenu.Item(words(DesktopTexts.CHOOSE_ANOTHER), true,
-                    () -> chooseOpener(path)));
-        }
-        if (entries.isEmpty()) {
-            entries.add(new ContextMenu.Item(words(DesktopTexts.NO_PROGRAM_OPENS_THIS), false, () -> { }));
-        }
-        return entries;
-    }
-
-    /** What New offers on the desktop: a folder first, then a file of every kind the machine can create. */
-    private List<ContextMenu.Item> newDeskItems() {
-        final List<ContextMenu.Item> entries = new ArrayList<>();
-        entries.add(new ContextMenu.Item(words(DesktopTexts.FOLDER), true, deskFiles::newFolder));
-        entries.add(ContextMenu.Item.separator());
-        for (final FileType type
-                : FileOpeners.creatable()) {
-            entries.add(new ContextMenu.Item(
-                    FilesApp.typeLabel(type) + " (." + type.extension() + ")", true,
-                    () -> deskFiles.newFile(type)));
-        }
-        return entries;
-    }
-
     /** Opens the Settings window on one of its pages, the way a menu entry names a page rather than the program. */
-    private void openSettingsPage(final int page) {
+    void openSettingsPage(final int page) {
         if (memory.allowOpen(SETTINGS_KEY)) {
             openApp(SETTINGS_KEY, new SettingsApp(host, monitorPos).showPage(page));
         }
     }
 
     /** Runs the launcher known by {@code key}, when the desktop has one. */
-    private void runLauncherKeyed(final String key) {
+    void runLauncherKeyed(final String key) {
         for (final Launcher launcher : launchers) {
             if (launcher.key().equals(key)) {
                 runLauncher(launcher);
@@ -3171,76 +3099,15 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
     }
 
-    /**
-     * The panel's menu, drawn in the desktop's own chrome: the bevelled plate on the older Frames, a light
-     * rounded panel on the newer one and on the Linux desktops. A separator row is drawn as a rule.
-     */
-    private void renderPanelContext(final GuiGraphics g, final int hoverMx, final int hoverMy) {
-        final int mx = panelCtxX;
-        final int my = panelCtxY;
-        final int mh = PANEL_CTX.size() * DESK_CTX_ITEM_H + 2;
-        final boolean light = luminance(prefs.skin().text()) > 140;
-        final DesktopShellPalette.Colours c = DesktopShellPalette.get();
-        final int bg = light ? c.darkMenuFill() : c.lightMenuFill();
-        final int fg = light ? c.darkMenuInk() : c.lightMenuInk();
-        g.fill(mx - 1, my - 1, mx + PANEL_CTX_W + 1, my + mh + 1, light ? c.darkMenuBorder() : c.lightMenuBorder());
-        g.fill(mx, my, mx + PANEL_CTX_W, my + mh, bg);
-        g.fill(mx, my, mx + PANEL_CTX_W, my + 1, light ? c.darkMenuRule() : c.lightMenuTop());
-        final int hover = panelCtxItemAt(hoverMx, hoverMy);
-        int iy = my + 1;
-        for (int k = 0; k < PANEL_CTX.size(); k++) {
-            if (PANEL_CTX.get(k) == PanelRow.SEPARATOR) {
-                g.fill(mx + 4, iy + DESK_CTX_ITEM_H / 2, mx + PANEL_CTX_W - 4,
-                        iy + DESK_CTX_ITEM_H / 2 + 1, light ? c.darkMenuRule() : c.lightMenuRule());
-            } else {
-                if (k == hover) {
-                    g.fill(mx + 1, iy, mx + PANEL_CTX_W - 1, iy + DESK_CTX_ITEM_H, prefs.skin().accent());
-                }
-                g.drawString(font, PANEL_CTX.get(k).words(), mx + 4, iy + 2, k == hover ? c.menuHoverInk() : fg,
-                        false);
-            }
-            iy += DESK_CTX_ITEM_H;
-        }
-    }
-
-    /** The panel-menu entry under a desktop-local point, or {@code -1}; a separator never answers. */
-    private int panelCtxItemAt(final double mx, final double my) {
-        if (!panelCtxOpen || mx < panelCtxX || mx > panelCtxX + PANEL_CTX_W) {
-            return -1;
-        }
-        final int rel = (int) Math.floor((my - (panelCtxY + 1)) / (double) DESK_CTX_ITEM_H);
-        if (rel < 0 || rel >= PANEL_CTX.size() || PANEL_CTX.get(rel) == PanelRow.SEPARATOR) {
-            return -1;
-        }
-        return rel;
-    }
-
-    /** Raises the panel's menu at a point, clamped so it stays on the desktop. */
-    private void openPanelMenu(final int atX, final int panelY) {
-        final int mh = PANEL_CTX.size() * DESK_CTX_ITEM_H + 2;
-        panelCtxOpen = true;
-        panelCtxX = Math.max(2, Math.min(view.width() - PANEL_CTX_W - 2, atX));
-        // Above a bottom panel, below a top one: the menu never covers the bar it came from.
-        panelCtxY = view.panelOnTop() ? panelY + TASKBAR_H + 2 : panelY - mh - 2;
-    }
-
-    /** Runs a panel-menu entry. Every one of them does something: none is there for decoration. */
-    private void runPanelMenu(final int index) {
-        switch (PANEL_CTX.get(index)) {
-            case CASCADE -> cascadeWindows();
-            case SHOW_DESKTOP -> {
-                for (final DesktopWindow w : windows) {
-                    w.setMinimized(true);
-                }
-            }
-            case TASK_MANAGER -> openTaskManager();
-            case SEPARATOR -> {
-            }
+    /** Puts every window away, which is what Show desktop on the panel's menu does. */
+    void showDesktop() {
+        for (final DesktopWindow w : windows) {
+            w.setMinimized(true);
         }
     }
 
     /** Steps the open windows down and to the right from the work area's corner, the way a cascade does. */
-    private void cascadeWindows() {
+    void cascadeWindows() {
         int step = 0;
         for (final DesktopWindow w : windows) {
             if (away(w)) {
@@ -3251,101 +3118,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                     view.workAreaBottom());
             step++;
         }
-    }
-
-    /**
-     * Opens the menu for whatever the cursor is on: a program, a file or folder, or the wallpaper.
-     *
-     * <p>Each gets the entries that mean something for it, which is why a program no longer offers to
-     * be renamed and the wallpaper no longer offers to be opened. The entries are the ones a desktop
-     * has: a file opens, opens with a chosen program, is renamed, deleted or looked at; the wallpaper
-     * makes new things, refreshes, and leads to the settings that dress it.
-     */
-    private void openDeskContext(final int slot, final int x, final int y) {
-        final List<ContextMenu.Item> entries = new ArrayList<>();
-        if (slot >= 0 && slot < iconLaunchers.size() && trash.is(iconLaunchers.get(slot))) {
-            entries.addAll(trash.menu());
-        } else if (slot >= 0 && slot < iconLaunchers.size()) {
-            final Launcher launcher = iconLaunchers.get(slot);
-            entries.add(deskItem(DesktopTexts.OPEN, true, () -> runLauncher(launcher)));
-            /*
-             * Only what the machine could actually take off: the programs that ship with a system are
-             * part of it, so offering to remove one would be offering something that then fails.
-             */
-            final ProgramSpec spec =
-                    Programs.get(launcher.programId());
-            if (pinsOnPanel() && launcher.factory() != null) {
-                final boolean pinned = pinnedPrograms.contains(launcher.programId().getPath());
-                entries.add(deskItem(pinned ? DesktopTexts.UNPIN : DesktopTexts.PIN, true,
-                        () -> togglePin(launcher.key())));
-            }
-            if (spec != null && spec.installable()) {
-                entries.add(ContextMenu.Item.separator());
-                entries.add(deskItem(DesktopTexts.UNINSTALL, true, () -> uninstallLauncher(spec)));
-            }
-        } else if (slot >= iconLaunchers.size() && slot - iconLaunchers.size() < desktopItems.size()) {
-            final int di = slot - iconLaunchers.size();
-            final DiskFilesPayload.WireFile file = desktopItems.get(di);
-            entries.add(deskItem(DesktopTexts.OPEN, true, () -> openSlot(iconLaunchers.size() + di)));
-            if (!file.directory()) {
-                entries.add(ContextMenu.Item.submenu(words(DesktopTexts.OPEN_WITH), openWithItems(file.path())));
-            }
-            addArchiveItems(entries, file, di);
-            entries.add(ContextMenu.Item.separator());
-            /*
-             * A projection of what a drive holds is not a file anybody wrote, so it cannot be renamed or
-             * deleted by hand; the filesystem refuses both, and a menu that offered them would be lying.
-             */
-            entries.add(deskItem(DesktopTexts.RENAME, !file.readOnly(), () -> deskFiles.startRename(di)));
-            entries.add(deskItem(DesktopTexts.DELETE, !file.readOnly(), () -> deskFiles.delete(di)));
-            entries.add(ContextMenu.Item.separator());
-            entries.add(deskItem(DesktopTexts.PROPERTIES, true, () -> requestFileProperties(file.path())));
-        } else {
-            entries.add(ContextMenu.Item.submenu(words(DesktopTexts.NEW), newDeskItems()));
-            entries.add(ContextMenu.Item.separator());
-            entries.add(deskItem(DesktopTexts.REFRESH, true, this::requestDesktop));
-            entries.add(ContextMenu.Item.separator());
-            entries.add(deskItem(DesktopTexts.DISPLAY_SETTINGS, true,
-                    () -> openSettingsPage(SettingsApp.PAGE_DISPLAY)));
-            entries.add(deskItem(DesktopTexts.PERSONALIZE, true,
-                    () -> openSettingsPage(SettingsApp.PAGE_PERSONALIZE)));
-            entries.add(ContextMenu.Item.separator());
-            entries.add(deskItem(DesktopTexts.PROPERTIES, true, () -> runLauncherKeyed(THIS_PC_KEY)));
-        }
-        deskMenu.open(entries, x, y, 0, 0, view.width(), view.height());
-    }
-
-    private static ContextMenu.Item deskItem(
-            final TextKey label, final boolean enabled, final Runnable action) {
-        return new ContextMenu.Item(words(label), enabled, action);
-    }
-
-    /**
-     * What the archiver offers on a desktop icon, when the machine has it installed.
-     *
-     * <p>The same two entries the explorer offers, because the desktop is a folder like any other and a
-     * menu that changed depending on which window a file was looked at through would be the odd one.
-     */
-    private void addArchiveItems(final List<ContextMenu.Item> entries,
-                                 final DiskFilesPayload.WireFile file, final int index) {
-        if (!installedPrograms.contains(ARCHIVER) || file.projectsItem()) {
-            return;
-        }
-        entries.add(ContextMenu.Item.separator());
-        if (Archive.EXTENSION.equalsIgnoreCase(file.ext())) {
-            entries.add(deskItem(DesktopTexts.EXTRACT_HERE, true, () -> deskFiles.extractHere(index)));
-            return;
-        }
-        entries.add(new ContextMenu.Item(
-                GameText.resolve(DesktopTexts.COMPRESS_TO.with(Archive.leaf(archiveNameOf(file.path())))), true,
-                () -> deskFiles.compress(index)));
-    }
-
-    /** The name the archive of a thing would take, for the menu entry that offers to make it. */
-    private static String archiveNameOf(final String path) {
-        final String leaf = Archive.leaf(path);
-        final int dot = leaf.lastIndexOf('.');
-        return (dot > 0 ? leaf.substring(0, dot) : leaf) + "." + Archive.EXTENSION;
     }
 
     /* What a test reads of the desktop's menu and its scale. */
@@ -3362,17 +3134,12 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** The labels of the desk menu's items, in order, so a test finds one by name. */
     public List<String> deskMenuLabels() {
-        final List<String> out = new ArrayList<>();
-        for (final ContextMenu.Item item : deskMenu.items()) {
-            out.add(item.label());
-        }
-        return out;
+        return deskMenu.labels();
     }
 
     /** The desktop-local centre of item {@code index} of the menu open beside the desk menu, or null when none is. */
     public int[] deskSubmenuItemCenter(final int index) {
-        final ContextMenu sub = deskMenu.openSubmenu();
-        return sub == null ? null : sub.itemCenter(index);
+        return deskMenu.submenuItemCenter(index);
     }
 
     /** The names of the files and folders on the desktop, as their icons read. */
@@ -3425,12 +3192,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** Asks for the Properties window of a file on the desktop, which the explorer knows how to show. */
     public static void requestFileProperties(final String path) {
         PENDING_OPEN.add(OPEN_PROPS + path);
-    }
-
-    /** Takes a program off this computer, the way {@code uninstall} at the prompt does. */
-    private void uninstallLauncher(final ProgramSpec spec) {
-        PacketDistributor.sendToServer(
-                new DesktopShellRunPayload(host, "uninstall " + spec.commandName()));
     }
 
     /** The overall width of the Start menu panel, which differs per Frames version. */
@@ -3763,7 +3524,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * Whether this panel keeps pinned programs in view. The Frames 95 taskbar and the period panels
      * never had a place for them, and the GNOME top bar lists no programs at all.
      */
-    private boolean pinsOnPanel() {
+    boolean pinsOnPanel() {
         if (periodPanel()) {
             return false;
         }
@@ -3809,7 +3570,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * Pins a program to the panel or takes it off, and tells the machine, which keeps the list. The
      * panel changes at once rather than waiting for the machine's reply.
      */
-    private void togglePin(final String key) {
+    void togglePin(final String key) {
         final Launcher launcher = pinnableLauncher(key);
         if (launcher == null) {
             return;
@@ -3994,7 +3755,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** A program's own menu, from its panel entry: the same component every menu on this desktop is. */
     private final ContextMenu taskMenu =
-            new ContextMenu(TASK_MENU_W, DESK_CTX_ITEM_H);
+            new ContextMenu(TASK_MENU_W, DeskMenu.ITEM_H);
 
     /** Opens a program's menu over its panel entry: what can be done with its windows and its pin. */
     private void openTaskMenu(final TaskbarGroups.Entry entry, final int atX, final int tbY) {
@@ -4004,13 +3765,13 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (entry.open()) {
             final boolean several = entry.windows() > 1;
             final boolean minimized = entry.state() == TaskbarGroups.State.MINIMIZED;
-            items.add(deskItem(several ? DesktopTexts.RESTORE_ALL
+            items.add(DeskMenu.item(several ? DesktopTexts.RESTORE_ALL
                             : minimized ? DesktopTexts.RESTORE : DesktopTexts.BRING_TO_FRONT, true,
                     () -> restoreGroup(key)));
-            items.add(deskItem(several ? DesktopTexts.MINIMIZE_ALL : DesktopTexts.MINIMIZE, true,
+            items.add(DeskMenu.item(several ? DesktopTexts.MINIMIZE_ALL : DesktopTexts.MINIMIZE, true,
                     () -> minimizeGroup(key)));
             if (!several) {
-                items.add(deskItem(DesktopTexts.MAXIMIZE, true, () -> {
+                items.add(DeskMenu.item(DesktopTexts.MAXIMIZE, true, () -> {
                     restoreGroup(key);
                     final List<DesktopWindow> mine = groupWindows(key);
                     if (!mine.isEmpty()) {
@@ -4018,24 +3779,24 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                     }
                 }));
             }
-            items.add(deskItem(DesktopTexts.MINIMIZE_OTHERS, true, () -> minimizeOthers(key)));
+            items.add(DeskMenu.item(DesktopTexts.MINIMIZE_OTHERS, true, () -> minimizeOthers(key)));
             if (pinnable) {
                 items.add(ContextMenu.Item.separator());
-                items.add(deskItem(entry.pinned() ? DesktopTexts.UNPIN : DesktopTexts.PIN, true,
+                items.add(DeskMenu.item(entry.pinned() ? DesktopTexts.UNPIN : DesktopTexts.PIN, true,
                         () -> togglePin(key)));
             }
             items.add(ContextMenu.Item.separator());
-            items.add(deskItem(several ? DesktopTexts.CLOSE_ALL_WINDOWS : DesktopTexts.CLOSE, true,
+            items.add(DeskMenu.item(several ? DesktopTexts.CLOSE_ALL_WINDOWS : DesktopTexts.CLOSE, true,
                     () -> closeGroup(key)));
         } else {
-            items.add(deskItem(DesktopTexts.OPEN, true, () -> runLauncherKeyed(key)));
+            items.add(DeskMenu.item(DesktopTexts.OPEN, true, () -> runLauncherKeyed(key)));
             if (pinnable) {
                 items.add(ContextMenu.Item.separator());
-                items.add(deskItem(DesktopTexts.UNPIN, true, () -> togglePin(key)));
+                items.add(DeskMenu.item(DesktopTexts.UNPIN, true, () -> togglePin(key)));
             }
         }
         taskPopup.dismiss();
-        final int h = items.size() * DESK_CTX_ITEM_H + 2;
+        final int h = items.size() * DeskMenu.ITEM_H + 2;
         // Above a bottom panel, below a top one: the menu never covers the entry it came from.
         final int y = view.panelOnTop() ? TASKBAR_H + 2 : tbY - h - 2;
         taskMenu.open(items, atX, y, 0, 0, view.width(), view.height());
@@ -4283,7 +4044,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (this.startWithRightButton) {
             closeStart();
             // The menu is the icon's, so it is found among the icons; the same launcher stands in both lists.
-            openDeskContext(iconLaunchers.indexOf(launcher), this.startClickX, this.startClickY);
+            deskMenu.openFor(iconLaunchers.indexOf(launcher), this.startClickX, this.startClickY);
             return;
         }
         runLauncher(launcher);
@@ -4433,12 +4194,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * The panel's menu takes the next click wherever it lands: on an entry it runs it, anywhere else it
          * just closes, which is what a menu does.
          */
-        if (panelCtxOpen) {
-            final int entry = panelCtxItemAt(mouseX, mouseY);
-            panelCtxOpen = false;
-            if (entry >= 0) {
-                runPanelMenu(entry);
-            }
+        if (panelMenu.click(mouseX, mouseY)) {
             return true;
         }
 
@@ -4462,7 +4218,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             if (mouseX < 64) {
                 toggleStart();
             } else if (button == 1) {
-                openPanelMenu((int) mouseX, 0);
+                panelMenu.open((int) mouseX,0);
             }
             return true;
         }
@@ -4477,7 +4233,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             }
             // The right button on the slab opens the panel's own menu, where the Task Manager has always been.
             if (button == 1 && CdeFrontPanelLayout.panel(view.width(), view.height()).holds(mouseX, mouseY)) {
-                openPanelMenu((int) mouseX, tbY);
+                panelMenu.open((int) mouseX,tbY);
                 return true;
             }
             return cdePanels.click(mouseX, mouseY, view.width(), view.height());
@@ -4531,7 +4287,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                 return true;
             }
             if (button == 1) {
-                openPanelMenu((int) mouseX, tbY);
+                panelMenu.open((int) mouseX,tbY);
             }
             return true;
         }
@@ -4702,7 +4458,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (button == 1) {
             // Right-click: the menu of whatever is under the cursor, or the wallpaper's own.
             selectedIcon = slot;
-            openDeskContext(slot, (int) mouseX, (int) mouseY);
+            deskMenu.openFor(slot, (int) mouseX, (int) mouseY);
             return Click.TAKEN;
         }
 
@@ -5353,7 +5109,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * Opens the Task Manager, or brings it forward when it is already up. It is the panel's own right-click
      * destination and has no launcher of its own, exactly as on the desktops this imitates.
      */
-    private void openTaskManager() {
+    void openTaskManager() {
         if (OsRegistry.getProgram(Programs.TASK_MANAGER) == null) {
             return;
         }
@@ -5385,7 +5141,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     }
 
     /** Starts a launcher: a built-in app opens a window; an action-based one (e.g. the NMS) runs its action. */
-    private void runLauncher(final Launcher l) {
+    void runLauncher(final Launcher l) {
         if (!l.runs().isEmpty()) {
             requestRunAtTerminal(l.runs());
             return;
