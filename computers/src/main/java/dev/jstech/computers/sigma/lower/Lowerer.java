@@ -493,7 +493,12 @@ public final class Lowerer {
      */
     private IExpr lowered(final IExpr expression) {
         if (expression instanceof IExpr.Call call && this.model.longWayOf(call) != null) {
-            return this.model.longWayOf(call);
+            final IExpr longWay = this.model.longWayOf(call);
+            if (longWay instanceof IExpr.Assign assign) {
+                // The long way writes a place, which is said here as it is for an assignment written by hand.
+                this.written(assign);
+            }
+            return longWay;
         }
         if (expression instanceof IExpr.Call call && this.model.formattedOf(call) != null) {
             // A formatting call that hands its text to nothing is sprintf, and the text is its value.

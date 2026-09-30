@@ -108,7 +108,8 @@ final class DefiniteAssignment {
             case IExpr.Assign assign -> (assign.operator() == Operator.ASSIGN
                     && assign.target() instanceof IExpr.Name target && target.identifier().equals(name))
                     || writesTo(assign.target(), name) || writesTo(assign.value(), name);
-            case IExpr.OutArgument outward -> outward.name().equals(name);
+            // A place handed with ref is read before it is written, so it has to have been given a value already.
+            case IExpr.OutArgument outward -> !outward.ref() && outward.name().equals(name);
             case IExpr.Binary binary -> writesTo(binary.left(), name) || writesTo(binary.right(), name);
             case IExpr.Unary unary -> writesTo(unary.operand(), name);
             case IExpr.Conditional conditional -> writesTo(conditional.condition(), name);

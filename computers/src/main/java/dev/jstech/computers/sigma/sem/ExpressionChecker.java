@@ -403,6 +403,22 @@ final class ExpressionChecker {
      * known once the version of the method has been chosen.
      */
     private ITypeSymbol outArgumentType(final IExpr.OutArgument argument, final ITypeSymbol expected) {
+        if (argument.ref()) {
+            this.scope.report(argument.line(), argument.column(), SigmaError.REF_ONLY_FOR_STRCAT, argument.name());
+            return ITypeSymbol.Special.ERROR;
+        }
+        return this.placeType(argument, expected);
+    }
+
+    /**
+     * The place a {@code ref} argument names, which strcat reads and then writes: a variable or a field that already
+     * exists, since there is nothing in a place declared right there to read.
+     */
+    ITypeSymbol refArgumentType(final IExpr.OutArgument argument) {
+        return this.placeType(argument, null);
+    }
+
+    private ITypeSymbol placeType(final IExpr.OutArgument argument, final ITypeSymbol expected) {
         if (argument.type() != null) {
             final ITypeSymbol type = StatementChecker.isInferred(argument.type())
                     ? expected : this.scope.declarations().resolve(argument.type(), this.scope.currentType());

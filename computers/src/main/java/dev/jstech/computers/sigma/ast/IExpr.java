@@ -96,8 +96,16 @@ public sealed interface IExpr extends INode {
      * <p>{@code type} is null when the argument names something that already exists, and set when
      * the variable is declared right there in the call; written as {@code var}, the variable takes
      * whatever the method fills in.
+     *
+     * <p>Written with {@code ref} instead of {@code out}, it is a place that is read before it is written, which is
+     * what {@code strcat} joins onto; nothing else takes one.
      */
-    record OutArgument(TypeRef type, String name, int line, int column) implements IExpr {
+    record OutArgument(TypeRef type, String name, boolean ref, int line, int column) implements IExpr {
+
+        /** A place to fill in, written with {@code out}. */
+        public OutArgument(final TypeRef type, final String name, final int line, final int column) {
+            this(type, name, false, line, column);
+        }
     }
 
     /**

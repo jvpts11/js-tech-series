@@ -147,7 +147,9 @@ final class StatementWriter {
      * behind is thrown away. An assignment is told beforehand, so it never puts it there at all.
      */
     private void discard(final IExpr expression) {
-        if (expression instanceof IExpr.Assign assign) {
+        // What a shorter shape was reduced to is what is written, and an assignment is one wherever it came from.
+        final IExpr simpler = this.emitter.model.loweredOf(expression);
+        if ((simpler == null ? expression : simpler) instanceof IExpr.Assign assign) {
             this.values.assign(assign, false);
             return;
         }

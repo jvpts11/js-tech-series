@@ -426,6 +426,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   was not one; what is left of the line waits for the next read. They stand for `Console.Read()` and
   `Console.Scan(out value)`, which Σ# can write the long way. Text that is not the value asked for lets its line go
   rather than stopping every read after it.
+- `strcpy(out dest, src)` and `strcat(ref dest, src)` in Σ 2, in C's order, compile to the assignment and the
+  joining written by hand (`dest = src`, `dest = dest + src`), to the same listing. `ref` is written for `strcat`
+  alone; a variable called `ref` is still a variable.
 
 ### Changed
 - The Vintage server boards hold the Integra Pentix Pro, as the boards of the time did: the MF MTX-V of the

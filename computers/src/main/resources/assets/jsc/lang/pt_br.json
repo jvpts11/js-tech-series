@@ -4559,6 +4559,7 @@
   "jsc.sigma.error.s3055": "%s: o formato tem %s e a chamada dá %s",
   "jsc.sigma.error.s3056": "%s: '%%%s' espera %s, e isto é %s",
   "jsc.sigma.error.s3057": "'%s' precisa do %s %s; este projeto é %s %s",
+  "jsc.sigma.error.s3058": "'ref' só se escreve no strcat, que junta ao texto que '%s' guarda; um método preenche com out",
   "jsc.sigma.error.s4011": "%s ainda não foi compilado",
   "jsc.sigma.error.s4012": "%s só executa Σ; escreva-o em Σ, em um projeto Σ",
   "jsc.sigma.expression_parser.end_of_hole": "o fim do buraco",

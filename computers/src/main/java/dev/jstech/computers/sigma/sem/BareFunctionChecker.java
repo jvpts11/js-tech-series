@@ -7,8 +7,10 @@
  */
 package dev.jstech.computers.sigma.sem;
 
+import dev.jstech.computers.sigma.SigmaError;
 import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.IExpr;
+import dev.jstech.computers.sigma.ast.Operator;
 import dev.jstech.computers.sigma.lex.TokenKind;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +28,7 @@ import java.util.Set;
 final class BareFunctionChecker {
 
     private final BodyScope scope;
+    private final ExpressionChecker expressions;
     private final CallChecker calls;
     /** Choosing the library's own version of the long way, which is the choice a call written that way makes. */
     private final Overloads overloads;
@@ -36,6 +39,7 @@ final class BareFunctionChecker {
 
     BareFunctionChecker(final BodyScope scope, final ExpressionChecker expressions, final CallChecker calls) {
         this.scope = scope;
+        this.expressions = expressions;
         this.calls = calls;
         this.overloads = new Overloads(scope.rules());
         this.printf = new PrintfChecker(scope, expressions);
@@ -65,6 +69,7 @@ final class BareFunctionChecker {
             case PRINTED -> this.printf.check(call, function.name(), true);
             case SCANNED -> this.printf.scan(call, function.name(),
                     this.scope.builtIns().type(function.owner(), 0), function.member());
+            case COPIED_INTO, JOINED_ONTO -> this.assigned(call, function);
             case FORMATTED -> this.printf.check(call, function.name(), false);
             case SAME_VALUES, ON_THE_FIRST, READ_OFF_THE_FIRST, FIXED_VALUE -> this.called(call, function);
         };
@@ -87,9 +92,59 @@ final class BareFunctionChecker {
             case FIXED_VALUE -> this.fixed(call, function, owner, takes);
             case ON_THE_FIRST -> this.onTheFirst(call, function, owner, takes);
             case READ_OFF_THE_FIRST -> this.readOffTheFirst(call, function, owner);
-            case PRINTED, FORMATTED, SCANNED -> throw new IllegalStateException("a format is not called");
+            case PRINTED, FORMATTED, SCANNED, COPIED_INTO, JOINED_ONTO ->
+                    throw new IllegalStateException("not a call of the library");
         }
         return chosen.returnType();
+    }
+
+    /**
+     * {@code strcpy(out d, s)} as {@code d = s} and {@code strcat(ref d, s)} as {@code d = d + s}: in C's order, the
+     * place first, handed with out when it is only written and with ref when it is read first, and the text second.
+     * The long way names the same place again, so the assignment is the one a player would have written.
+     */
+    private ITypeSymbol assigned(final IExpr.Call call, final BareFunctions.Function function) {
+        final NamedType text = this.scope.builtIns().stringType();
+        final boolean joins = function.shape() == BareFunctions.Shape.JOINED_ONTO;
+        final List<IExpr> arguments = call.arguments();
+        if (arguments.size() != 2 || !(arguments.getFirst() instanceof IExpr.OutArgument place)
+                || place.ref() != joins) {
+            this.scope.report(call.line(), call.column(), SigmaError.NO_MATCHING_OVERLOAD, function.name());
+            return text;
+        }
+        final ITypeSymbol held = joins ? this.expressions.refArgumentType(place) : this.expressions.check(place, text);
+        final IExpr source = arguments.get(1);
+        final ITypeSymbol given = this.expressions.check(source, text);
+        if (this.scope.rules().isError(held) || this.scope.rules().isError(given)) {
+            return text;
+        }
+        this.scope.expect(text, held, place);
+        this.scope.expect(given, text, source);
+        final IBinding binding = this.scope.model().bindingOf(place);
+        if (binding == null) {
+            return held;
+        }
+        final IExpr value;
+        if (joins) {
+            value = new IExpr.Binary(Operator.ADD, this.named(place, binding, held), source, call.line(),
+                    call.column());
+            this.scope.model().setType(value, text);
+        } else {
+            value = source;
+        }
+        final IExpr.Assign made = new IExpr.Assign(this.named(place, binding, held), Operator.ASSIGN, value,
+                call.line(), call.column());
+        this.scope.model().setType(made, held);
+        this.scope.model().setLongWay(call, made);
+        return held;
+    }
+
+    /** A name for the place an argument handed over, bound and typed as the argument was. */
+    private IExpr.Name named(final IExpr.OutArgument place, final IBinding binding, final ITypeSymbol type) {
+        final IExpr.Name made = new IExpr.Name(place.name(), place.line(), place.column());
+        this.scope.model().setBinding(made, binding);
+        this.scope.model().setType(made, type);
+        return made;
     }
 
     /**

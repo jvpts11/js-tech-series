@@ -4559,6 +4559,7 @@
   "jsc.sigma.error.s3055": "%s: the format has %s and the call gives %s",
   "jsc.sigma.error.s3056": "%s: '%%%s' takes %s, and this is %s",
   "jsc.sigma.error.s3057": "'%s' needs %s %s; this project is %s %s",
+  "jsc.sigma.error.s3058": "'ref' is written only for strcat, which joins onto the text '%s' holds; a method fills in with out",
   "jsc.sigma.error.s4011": "%s is not built yet",
   "jsc.sigma.error.s4012": "%s runs Σ only; write it in Σ, in a Σ project",
   "jsc.sigma.expression_parser.end_of_hole": "the end of the hole",

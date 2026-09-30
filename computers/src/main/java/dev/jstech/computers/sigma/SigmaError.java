@@ -136,6 +136,8 @@ public enum SigmaError {
     PRINTF_WRONG_COUNT(TextKey.of("jsc.sigma.error.s3055", "%s: the format has %s and the call gives %s")),
     PRINTF_WRONG_VALUE(TextKey.of("jsc.sigma.error.s3056", "%s: '%%%s' takes %s, and this is %s")),
     NEEDS_A_LATER_VERSION(TextKey.of("jsc.sigma.error.s3057", "'%s' needs %s %s; this project is %s %s")),
+    REF_ONLY_FOR_STRCAT(TextKey.of("jsc.sigma.error.s3058",
+            "'ref' is written only for strcat, which joins onto the text '%s' holds; a method fills in with out")),
 
     // A4001 to A4010 are the listing's own problems, reported by reading one back (ListingError).
     NOT_YET_BUILT(TextKey.of("jsc.sigma.error.s4011", "%s is not built yet")),

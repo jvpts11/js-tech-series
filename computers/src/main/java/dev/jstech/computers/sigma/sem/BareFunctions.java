@@ -55,7 +55,14 @@ public final class BareFunctions {
          * A format of one hole read while the program is compiled, and the library's read of one value into the
          * variable handed with it: {@code scanf("%d", out n)} is {@code Console.Scan(out n)}.
          */
-        SCANNED
+        SCANNED,
+        /** The text handed second, given to the variable handed first: {@code strcpy(out d, s)} is {@code d = s}. */
+        COPIED_INTO,
+        /**
+         * The text handed second, joined onto what the variable handed first holds: {@code strcat(ref d, s)} is
+         * {@code d = d + s}.
+         */
+        JOINED_ONTO
     }
 
     /**
@@ -165,6 +172,11 @@ public final class BareFunctions {
         add(new Function("strstr", List.of(form("int", "string haystack", "string needle")), Shape.ON_THE_FIRST,
                 "string", "IndexOf", 0, OLD_NAMES, BOTH));
         same("strcmp", "string", "Compare", form("int", "string a", "string b"));
+        // In C's order, the place first: out for one that is only written, ref for one that is read first.
+        add(new Function("strcpy", List.of(form("string", "out string dest", "string src")), Shape.COPIED_INTO,
+                JOINED_TEXT, "", 0, OLD_NAMES, BOTH));
+        add(new Function("strcat", List.of(form("string", "ref string dest", "string src")), Shape.JOINED_ONTO,
+                JOINED_TEXT, "", 0, OLD_NAMES, BOTH));
         same("toupper", CHARACTER, "ToUpper", form("char", "char c"));
         same("tolower", CHARACTER, "ToLower", form("char", "char c"));
         same("isdigit", CHARACTER, "IsDigit", form("bool", "char c"));

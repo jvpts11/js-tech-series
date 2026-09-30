@@ -47,6 +47,9 @@ final class ExpressionParser {
     private static final TextKey END_OF_HOLE = TextKey.of("jsc.sigma.expression_parser.end_of_hole",
             "the end of the hole");
 
+    /** The word a place that is read before it is written starts with, in an argument. */
+    private static final String REF = "ref";
+
     private static final Set<TokenKind> LITERALS = EnumSet.of(
             TokenKind.INT_LITERAL, TokenKind.LONG_LITERAL, TokenKind.FLOAT_LITERAL, TokenKind.DOUBLE_LITERAL,
             TokenKind.STRING_LITERAL, TokenKind.CHAR_LITERAL, TokenKind.TRUE, TokenKind.FALSE, TokenKind.NULL);
@@ -112,8 +115,8 @@ final class ExpressionParser {
         }
         while (!this.cursor.check(TokenKind.RIGHT_PAREN) && !this.cursor.atEnd()) {
             final int before = this.cursor.at();
-            final IExpr argument = this.cursor.check(TokenKind.OUT)
-                    ? this.parseOutArgument() : this.parseExpression();
+            final IExpr argument = this.cursor.check(TokenKind.OUT) ? this.parseOutArgument()
+                    : this.refAhead() ? this.parseRefArgument() : this.parseExpression();
             if (argument != null) {
                 arguments.add(argument);
             }
@@ -379,6 +382,22 @@ final class ExpressionParser {
         }
         final String name = this.cursor.expectIdentifier();
         return new IExpr.OutArgument(type, name, start.line(), start.column());
+    }
+
+    /*
+     * "ref value" hands over a place that is read before it is written, which only strcat takes. The word is not
+     * kept from anybody: it means this only where an argument starts with it and a name follows, which is nowhere
+     * a program could already have written it, so a variable called ref is still a variable.
+     */
+    private boolean refAhead() {
+        return this.cursor.check(TokenKind.IDENTIFIER) && REF.equals(this.cursor.peek().text())
+                && this.cursor.kindAhead(1) == TokenKind.IDENTIFIER;
+    }
+
+    private IExpr parseRefArgument() {
+        final Token start = this.cursor.advance();
+        final String name = this.cursor.expectIdentifier();
+        return new IExpr.OutArgument(null, name, true, start.line(), start.column());
     }
 
     /**

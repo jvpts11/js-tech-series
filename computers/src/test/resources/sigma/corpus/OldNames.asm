@@ -4,7 +4,7 @@
 
 .class Corpus.OldNamesCorpus
 
-.method static int Main(string[]) slots 16
+.method static int Main(string[]) slots 17
     ldstr   "How many ingots?"
     call    Console.PrintLine(string) -> void
     ldc.i4  62
@@ -24,8 +24,14 @@
     add
     stloc   4
     ldloc   1
-    call    Convert.ToDouble(string) -> double
     stloc   5
+    ldloc   5
+    ldstr   "!"
+    call    string.Concat(string, string) -> string
+    stloc   5
+    ldloc   1
+    call    Convert.ToDouble(string) -> double
+    stloc   6
     ldc.i4  3
     neg
     call    Math.Abs(int) -> int
@@ -37,7 +43,7 @@
     ldc.i4  2
     call    Math.Max(int, int) -> int
     add
-    stloc   6
+    stloc   7
     ldc.i4  3
     conv.r8
     ldc.i4  2
@@ -61,87 +67,87 @@
     conv.r8
     call    Math.Max(double, double) -> double
     add
-    stloc   7
+    stloc   8
     ldc.i4  1987
     conv.i8
     call    Random.Seed(long) -> void
     ldc.i4  32768
     call    Random.Next(int) -> int
-    stloc   8
+    stloc   9
     ldloc   1
     ldfld   string.Length
-    stloc   9
+    stloc   10
     ldloc   1
     ldstr   "ingot"
     call    string.IndexOf(string) -> int
-    stloc   10
+    stloc   11
     ldstr   ""
-    ldloc   6
+    ldloc   7
     call    Convert.ToString(object) -> string
     call    string.Concat(string, string) -> string
     ldstr   ": "
     call    string.Concat(string, string) -> string
-    ldloc   8
     ldloc   9
-    add
     ldloc   10
+    add
+    ldloc   11
     add
     call    string.Concat(string, int) -> string
     ldstr   ", "
     call    string.Concat(string, string) -> string
-    ldloc   7
-    ldloc   5
+    ldloc   8
+    ldloc   6
     add
     call    string.Concat(string, double) -> string
-    stloc   11
+    stloc   12
     ldstr   ""
-    ldloc   11
+    ldloc   12
     call    string.Concat(string, string) -> string
     ldstr   "\n"
     call    string.Concat(string, string) -> string
     call    Console.Print(string) -> void
     ldstr   ""
     ldstr   "%-12s"
-    ldloc   11
+    ldloc   12
     call    string.Printf(string, object) -> string
     call    string.Concat(string, string) -> string
     ldstr   "|"
     call    string.Concat(string, string) -> string
     ldstr   "%5d"
-    ldloc   6
-    call    string.Printf(string, object) -> string
-    call    string.Concat(string, string) -> string
-    ldstr   "|"
-    call    string.Concat(string, string) -> string
-    ldstr   "%05.2f"
     ldloc   7
     call    string.Printf(string, object) -> string
     call    string.Concat(string, string) -> string
     ldstr   "|"
     call    string.Concat(string, string) -> string
-    ldstr   "%#x"
+    ldstr   "%05.2f"
     ldloc   8
     call    string.Printf(string, object) -> string
     call    string.Concat(string, string) -> string
     ldstr   "|"
     call    string.Concat(string, string) -> string
+    ldstr   "%#x"
+    ldloc   9
+    call    string.Printf(string, object) -> string
+    call    string.Concat(string, string) -> string
+    ldstr   "|"
+    call    string.Concat(string, string) -> string
     ldstr   "%e"
-    ldloc   5
+    ldloc   6
     call    string.Printf(string, object) -> string
     call    string.Concat(string, string) -> string
     ldstr   "|"
     call    string.Concat(string, string) -> string
     ldstr   "%u"
-    ldloc   9
+    ldloc   10
     call    string.Printf(string, object) -> string
     call    string.Concat(string, string) -> string
     ldstr   "\n"
     call    string.Concat(string, string) -> string
     call    Console.Print(string) -> void
     ldloc   1
-    ldloc   11
+    ldloc   12
     call    string.Compare(string, string) -> int
-    ldloc   11
+    ldloc   12
     ldloc   1
     call    string.Compare(string, string) -> int
     add
@@ -154,18 +160,18 @@
     neg
     call    Convert.ToInt(string, int) -> int
     add
-    stloc   12
+    stloc   13
     ldc.i4  97
     call    char.ToUpper(char) -> char
-    stloc   13
+    stloc   14
     ldc.i4  122
     call    char.ToUpper(char) -> char
     call    char.ToLower(char) -> char
-    stloc   14
-    ldloc   13
+    stloc   15
+    ldloc   14
     call    char.IsDigit(char) -> bool
     brtrue  L11
-    ldloc   14
+    ldloc   15
     call    char.IsLetter(char) -> bool
     br      L12
 L11: ldc.i4  1
@@ -175,7 +181,7 @@ L12: brtrue  L9
     br      L10
 L9: ldc.i4  1
 L10: brtrue  L7
-    ldloc   13
+    ldloc   14
     call    char.ToLower(char) -> char
     conv.i4
     ldc.i4  97
@@ -198,21 +204,21 @@ L4: brtrue  L1
     call    char.IsWhiteSpace(char) -> bool
     br      L2
 L1: ldc.i4  1
-L2: stloc   15
-    ldloc   12
+L2: stloc   16
+    ldloc   13
     ldc.i4  16
     call    Convert.ToString(int, int) -> string
-    ldloc   8
+    ldloc   9
     ldc.i4  2
     call    Convert.ToString(int, int) -> string
-    call    string.Concat(string, string) -> string
-    ldloc   13
-    call    string.FromChar(char) -> string
     call    string.Concat(string, string) -> string
     ldloc   14
     call    string.FromChar(char) -> string
     call    string.Concat(string, string) -> string
     ldloc   15
+    call    string.FromChar(char) -> string
+    call    string.Concat(string, string) -> string
+    ldloc   16
     call    string.Concat(string, bool) -> string
     call    Console.PrintLine(string) -> void
     ldloc   0

@@ -110,6 +110,12 @@ type's `ToUpper`, `ToLower`, `IsDigit`, `IsLetter` and `IsWhiteSpace`, `Convert.
 | `strcmp(a, b)` | `string.Compare(a, b)`: -1 when `a` comes first, 0 when they are the same, 1 after |
 | `toupper(c)`, `tolower(c)` | `char.ToUpper(c)`, `char.ToLower(c)` |
 | `isdigit(c)`, `isalpha(c)`, `isspace(c)` | `char.IsDigit(c)`, `char.IsLetter(c)`, `char.IsWhiteSpace(c)` |
+| `strcpy(out dest, src)` | `dest = src` |
+| `strcat(ref dest, src)` | `dest = dest + src` |
+
+`strcpy` and `strcat` keep C's order, the place first: handed with `out` to `strcpy`, which only writes it, and
+with `ref` to `strcat`, which reads it before joining onto it. `ref` is written for `strcat` alone, and only where
+an argument starts with it, so a variable called `ref` is still a variable.
 
 A method or a variable of the program's own under one of these names is still the one called, so a program
 that already had its own `abs` goes on calling it. Σ# has all of them too.

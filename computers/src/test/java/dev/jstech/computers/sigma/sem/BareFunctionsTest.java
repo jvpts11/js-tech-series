@@ -66,7 +66,10 @@ class BareFunctionsTest {
             List.of("bool d = isdigit('7'); bool a = isalpha('x'); bool w = isspace(' ');",
                     "bool d = char.IsDigit('7'); bool a = char.IsLetter('x'); bool w = char.IsWhiteSpace(' ');"),
             List.of("string h = itoa(255, 16);", "string h = Convert.ToString(255, 16);"),
-            List.of("int n = atoi(\"12\");", "int n = Convert.ToInt(\"12\", 0);"));
+            List.of("int n = atoi(\"12\");", "int n = Convert.ToInt(\"12\", 0);"),
+            List.of("string d; strcpy(out d, \"abc\");", "string d; d = \"abc\";"),
+            List.of("string d = \"a\"; strcat(ref d, \"b\");", "string d = \"a\"; d = d + \"b\";"),
+            List.of("strcpy(out string e, \"x\"); puts(e);", "string e; e = \"x\"; puts(e);"));
 
     private static SigmaCompiler.Result built(final String members, final String body, final LanguageLevel level,
                                               final int version) {
@@ -208,6 +211,20 @@ class BareFunctionsTest {
                 .contains("no version of 'rand' takes those arguments"));
         assertTrue(refusal("string t = sprintf(\"%d\", 1, 2);", LanguageLevel.SIGMA, SigmaVersions.NEWEST)
                 .contains("sprintf: the format has 1 hole and the call gives 2 values"));
+    }
+
+    /** strcpy and strcat in C's order: the place first, with out to be written and with ref to be joined onto. */
+    @Test
+    void strcpyAndStrcat_copyIntoAndJoinOntoThePlaceHandedFirst() {
+        assertEquals(List.of("Iron Ingot", "Iron Ingot"), printed("", "string d = \"Iron\"; "
+                + "strcat(ref d, \" Ingot\"); string c; strcpy(out c, d); puts(c); puts(strcpy(out c, d));",
+                LanguageLevel.SIGMA, SigmaVersions.NEWEST));
+        assertTrue(refusal("int x = -2; int y = abs(ref x);", LanguageLevel.SIGMA, SigmaVersions.NEWEST)
+                .contains("'ref' is written only for strcat"));
+        assertTrue(refusal("string d = \"a\"; strcat(out d, \"b\");", LanguageLevel.SIGMA, SigmaVersions.NEWEST)
+                .contains("no version of 'strcat' takes those arguments"));
+        assertEquals(List.of("3"), printed("", "int ref = 3; puts(itoa(ref));", LanguageLevel.SIGMA,
+                SigmaVersions.NEWEST), "a variable called ref is still a variable");
     }
 
     /** scanf reads one value a call, of a kind its hole names, into a variable handed with out. */
