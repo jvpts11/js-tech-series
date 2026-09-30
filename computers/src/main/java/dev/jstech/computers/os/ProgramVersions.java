@@ -51,8 +51,9 @@ public final class ProgramVersions {
             Map.entry("remote_control", "1.1"),
             Map.entry("mirror", "2.5"),
             Map.entry("screenfetch", "3.9.1"),
-            Map.entry("sgsc", "1.0"),
-            Map.entry("scc", "1.0"),
+            // A compiler's major number is the version of the language it knows: sgsc 2.0 is Σ# 2.
+            Map.entry("sgsc", "2.0"),
+            Map.entry("scc", "2.0"),
             Map.entry("sigma", "1.0"),
             Map.entry("virtual_studio", "17.0"),
             Map.entry("virtual_studio_code", "1.85"),

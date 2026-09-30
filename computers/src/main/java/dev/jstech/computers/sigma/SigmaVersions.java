@@ -48,4 +48,21 @@ public final class SigmaVersions {
     public static boolean known(final int asked) {
         return asked >= FIRST && asked <= NEWEST;
     }
+
+    /**
+     * The version a compiler installed at {@code packageVersion} knows, which is its major number: sgsc 2.0 is Σ# 2.
+     * A package with no version on record predates the record and is taken at the newest, as is one whose number
+     * cannot be read.
+     */
+    public static int ofPackage(final String packageVersion) {
+        if (packageVersion == null || packageVersion.isBlank()) {
+            return NEWEST;
+        }
+        final int dot = packageVersion.indexOf('.');
+        try {
+            return held(Integer.parseInt(dot < 0 ? packageVersion.trim() : packageVersion.substring(0, dot).trim()));
+        } catch (final NumberFormatException unreadable) {
+            return NEWEST;
+        }
+    }
 }

@@ -1005,7 +1005,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             buildNext();
             return;
         }
-        final IProgrammingLanguage.CompileResult result = language.compile(sources, project.platform());
+        final IProgrammingLanguage.CompileResult result = language.compile(sources,
+                new IProgrammingLanguage.CompileOptions(project.platform(), project.languageVersion()));
         finishBuild(project.name(), join(projectDir(project.name()), project.entry()), result, names);
         buildNext();
     }

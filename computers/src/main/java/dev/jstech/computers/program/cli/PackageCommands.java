@@ -57,11 +57,11 @@ final class PackageCommands {
         private static final TextKey USAGE_PACMAN = TextKey.of("jsc.cli.package.pacman.usage",
                 "-S <package> | -R <package> | -Ss [term] | -Q | -Syu");
         private static final TextKey USAGE_EMERGE = TextKey.of("jsc.cli.package.emerge.usage",
-                "[--ask] <package> | --unmerge <package> | --search [term] | --sync");
+                "[--ask] <package> | --unmerge <package> | --search [term] | --sync | --update @world");
         private static final TextKey USAGE_PKG = TextKey.of("jsc.cli.package.pkg.usage",
-                "install <package> | delete <package> | search [term] | info | update");
+                "install <package> | delete <package> | search [term] | info | update | upgrade");
         private static final TextKey USAGE = TextKey.of("jsc.cli.package.usage",
-                "install <package> | remove <package> | search [term] | list | update");
+                "install <package> | remove <package> | search [term] | list | update | upgrade");
         /* How the apt family opens a line about a repository it could not read, and one about a refusal. */
         private static final TextKey ERR = TextKey.of("jsc.cli.package.err", "Err: %s");
         private static final TextKey REFUSED = TextKey.of("jsc.cli.package.refused", "E: %s");
@@ -130,7 +130,8 @@ final class PackageCommands {
                         case "-S" -> install(ctx, arg, false);
                         case "-Ss" -> search(ctx, arg);
                         case "-Q" -> installed(ctx);
-                        case "-Syu", "-Sy" -> sync(ctx);
+                        case "-Sy" -> sync(ctx);
+                        case "-Syu", "-Su" -> upgrade(ctx);
                         case "-R", "-Rs", "-Rns" -> remove(ctx, arg);
                         default -> ctx.out().error(usageLine());
                     }
@@ -139,6 +140,8 @@ final class PackageCommands {
                     switch (verb) {
                         case "--search", "-s" -> search(ctx, arg);
                         case "--sync" -> sync(ctx);
+                        // @world after it is every package, which is all an upgrade here ever brings up.
+                        case "--update", "-u", "-uDN", "-avuDN" -> upgrade(ctx);
                         case "" -> ctx.out().error(usageLine());
                         case "--ask", "-a", "-av" -> install(ctx, arg, true);
                         case "--unmerge", "-C", "--depclean", "-c" -> remove(ctx, arg);
@@ -151,7 +154,8 @@ final class PackageCommands {
                         case "install", "add" -> install(ctx, arg, false);
                         case "search" -> search(ctx, arg);
                         case "info", "query" -> installed(ctx);
-                        case "update", "upgrade" -> sync(ctx);
+                        case "update" -> sync(ctx);
+                        case "upgrade" -> upgrade(ctx);
                         case "delete", "remove" -> remove(ctx, arg);
                         default -> ctx.out().error(usageLine());
                     }
@@ -161,7 +165,15 @@ final class PackageCommands {
                         case "install" -> install(ctx, arg, false);
                         case "search" -> search(ctx, arg);
                         case "list" -> installed(ctx);
-                        case "update", "upgrade" -> sync(ctx);
+                        // apt's update reads the lists and its upgrade installs; dnf's two words both install.
+                        case "update" -> {
+                            if (kind == PackageManagerKind.DNF) {
+                                upgrade(ctx);
+                            } else {
+                                sync(ctx);
+                            }
+                        }
+                        case "upgrade", "full-upgrade", "dist-upgrade" -> upgrade(ctx);
                         case "remove", "purge", "erase" -> remove(ctx, arg);
                         default -> ctx.out().error(usageLine());
                     }
@@ -186,6 +198,29 @@ final class PackageCommands {
                 return;
             }
             ctx.out().dim(kind == PackageManagerKind.PACMAN ? SYNCHRONIZING : READING_LISTS);
+        }
+
+        /**
+         * Reads the repository and brings every installed package up to the version it serves, the one verb of each
+         * manager that installs what moved on: a compiler updated this way knows the language's newer version.
+         */
+        private void upgrade(final CliContext ctx) {
+            if (!ctx.computer().mirrorReachable()) {
+                ctx.out().error(problem(NO_MIRROR));
+                ctx.out().dim(NOT_ON_A_MIRROR);
+                return;
+            }
+            if (kind == PackageManagerKind.PKG) {
+                catalogue(ctx);
+            } else {
+                ctx.out().dim(kind == PackageManagerKind.PACMAN ? SYNCHRONIZING : READING_LISTS);
+            }
+            final ICliComputer.OpResult updated = ctx.computer().packageUpdate();
+            if (!updated.ok()) {
+                ctx.out().error(updated.message());
+                return;
+            }
+            done(ctx, updated.message());
         }
 
         /** What pkg says before anything that reads the repository, which is that it looked at it first. */

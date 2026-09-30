@@ -103,6 +103,16 @@ public interface ICliPackages {
     }
 
     /**
+     * The version this computer has a package installed at, such as {@code 2.0}, or empty when it keeps no record
+     * of one: a machine with nowhere to keep installed programs, or a package that predates the record.
+     *
+     * @param programId the package's id, such as {@code jsc:sgsc}
+     */
+    default String installedVersion(final String programId) {
+        return "";
+    }
+
+    /**
      * Puts a built package on the network's Mirror, for anyone on the network to install.
      *
      * @param path the package file on this computer's disk

@@ -48,6 +48,32 @@ class ProjectFileTest {
     }
 
     @Test
+    void write_withNoLanguageVersion_saysNothingOfOne() {
+        assertFalse(stockWatch().write().contains("langversion"));
+        assertEquals(0, stockWatch().languageVersion());
+    }
+
+    @Test
+    void withLanguageVersion_writesItsLineAndReadsBack() {
+        final ProjectFile held = stockWatch().withLanguageVersion(1);
+        assertTrue(held.write().contains("langversion: 1\n"));
+        assertEquals(1, ProjectFile.read(held.write()).languageVersion());
+        assertEquals(held, ProjectFile.read(held.write()));
+    }
+
+    @Test
+    void read_aLanguageVersionThatIsNotANumber_isNone() {
+        assertEquals(0, ProjectFile.read("name: X\nlangversion: two\n").languageVersion());
+    }
+
+    @Test
+    void withLanguageVersion_keepsItThroughTheOtherChanges() {
+        final ProjectFile held = stockWatch().withLanguageVersion(1);
+        assertEquals(1, held.withSource("More.sgs").withPlatform("jsc:x86_64").withReference("Other")
+                .languageVersion());
+    }
+
+    @Test
     void withPlatform_buildsForThatOneInstead() {
         assertEquals("jsc:x86_64", stockWatch().withPlatform("jsc:x86_64").platform());
         assertEquals("jsc:x86_64",

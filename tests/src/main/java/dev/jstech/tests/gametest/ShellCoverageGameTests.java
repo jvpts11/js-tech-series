@@ -15,7 +15,9 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.cli.SigmaCommands;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -47,6 +49,9 @@ public final class ShellCoverageGameTests {
 
     private static final String ARENA = "empty";
     private static final int SETTLE = 8;
+    /** A program that names Sound, which came in the second version of Σ#. */
+    private static final String BEEPER = "using System.IO.*; using System.Sound.*; namespace T; "
+            + "class Beeper { static void Main() { Sound.Beep(880, 200); } }";
 
     /** The Mainframe with a rack holding 640 oak logs, and two personal computers off one router. */
     private record Fleet(MainframeBlockEntity mainframe, PersonalComputerBlockEntity lab,
@@ -185,6 +190,57 @@ public final class ShellCoverageGameTests {
                     helper.assertTrue(!says(updated, "could not resolve")
                                     && (says(updated, "up to date") || says(updated, "Updated")),
                             "pckmgr update reaches the Mirror and reports; got " + updated);
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * The version of the language lives in the compiler's package: a machine whose sgsc is still 1.0 knows Σ# 1 and
+     * is refused what came in 2, and an upgrade through the Mirror brings the compiler, and with it the language, up.
+     */
+    @GameTest(template = ARENA)
+    public static void packages_upgradeBringsTheCompilerUpToTheNewerLanguage(final GameTestHelper helper) {
+        final Fleet fleet = wire(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    fleet.lab().console().install(SigmaCommands.COMPILER);
+                    fleet.lab().console().setInstalledVersion(SigmaCommands.COMPILER, "1.0");
+                    new ServerCliComputer(fleet.lab(), helper.getLevel()).writeFile("Beeper.sgs", BEEPER);
+                    final List<String> old = shell(helper, fleet.lab(), "sgsc Beeper.sgs");
+                    helper.assertTrue(says(old, "Σ# Compiler 1.0") && says(old, "'Sound' needs Σ# 2"),
+                            "an sgsc of 1.0 knows Σ# 1; got " + old);
+                    fleet.mainframe().installMirror();
+                    final List<String> upgraded = shell(helper, fleet.lab(), "pckmgr upgrade");
+                    helper.assertTrue(says(upgraded, "Setting up sgsc (2.0)"),
+                            "the upgrade brings the compiler to 2.0; got " + upgraded);
+                    final List<String> built = shell(helper, fleet.lab(), "sgsc Beeper.sgs");
+                    helper.assertTrue(says(built, "Σ# Compiler 2.0") && says(built, "wrote Beeper.asm"),
+                            "and the program builds with Σ# 2; got " + built);
+                })
+                .thenSucceed();
+    }
+
+    /** The upgrade verb of a distribution's own manager does the same, where its update verb only reads the lists. */
+    @GameTest(template = ARENA)
+    public static void packages_aptUpgradeBringsPackagesUpAndAptUpdateOnlyReads(final GameTestHelper helper) {
+        final Fleet fleet = wire(helper);
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        world.setBlock(new BlockPos(4, 2, 4), ComputingModule.ETHERNET_CABLE.get());
+        final PersonalComputerBlockEntity linux = world.placeRunningPersonalComputer(new BlockPos(5, 2, 4),
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "ubuntu"));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    fleet.mainframe().installMirror();
+                    linux.console().install(SigmaCommands.COMPILER);
+                    linux.console().setInstalledVersion(SigmaCommands.COMPILER, "1.0");
+                    final ServerCliComputer cli = new ServerCliComputer(linux, helper.getLevel());
+                    final CliShell posix = CliCommands.shellFor(cli, 80);
+                    posix.run("apt update", cli);
+                    helper.assertTrue("1.0".equals(linux.console().installedVersion(SigmaCommands.COMPILER)),
+                            "apt update reads the lists and installs nothing");
+                    final List<CliLine> upgraded = posix.run("apt upgrade", cli).lines();
+                    helper.assertTrue("2.0".equals(linux.console().installedVersion(SigmaCommands.COMPILER)),
+                            "apt upgrade brings sgsc up; got " + upgraded.stream().map(CliLine::text).toList());
                 })
                 .thenSucceed();
     }

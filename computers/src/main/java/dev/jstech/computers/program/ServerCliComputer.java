@@ -168,6 +168,11 @@ public final class ServerCliComputer extends ServerCliNetwork {
     }
 
     @Override
+    public String installedVersion(final String programId) {
+        return host.console() == null ? "" : host.console().installedVersion(programId);
+    }
+
+    @Override
     public OpResult packageRemove(final String name) {
         return packages().remove(name);
     }

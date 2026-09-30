@@ -11,8 +11,10 @@ import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.hardware.IsaSpec;
 import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.sigma.SigmaCompiler;
+import dev.jstech.computers.sigma.SigmaVersions;
 import dev.jstech.computers.sigma.Diagnostic;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.sigma.pack.Manifest;
@@ -111,7 +113,15 @@ public final class SigmaCommands {
                 "compile a %s program into the assembly a machine runs");
         /* The source's extension, then the assembly's. */
         private static final TextKey USAGE = TextKey.of("jsc.cli.sigma.compile.usage",
-                "<file%1$s> [more%1$s ...] [-o <out%2$s>] [--arch <isa>]");
+                "<file%1$s> [more%1$s ...] [-o <out%2$s>] [--arch <isa>] [--lang <version>]");
+        /* The compiler's own line, first of all it says: the language's name, then the package's version. */
+        private static final TextKey BANNER = TextKey.of("jsc.cli.sigma.compile.banner", "%s Compiler %s");
+        /* What was asked, the language's name, and the first and newest version there are. */
+        private static final TextKey NO_VERSION = TextKey.of("jsc.cli.sigma.compile.no_version",
+                "'%s' is not a version of %s; there are %s to %s");
+        /* The language's name and the version the installed compiler knows, then what was asked. */
+        private static final TextKey ABOVE_INSTALLED = TextKey.of("jsc.cli.sigma.compile.above_installed",
+                "this compiler knows %1$s %2$s at most; %1$s %3$s needs a newer one");
         private static final TextKey NO_ISA = TextKey.of("jsc.cli.sigma.compile.no_isa",
                 "no instruction set is called '%s'; there is %s");
         private static final TextKey SIGMA_ONLY = TextKey.of("jsc.cli.sigma.compile.sigma_only",
@@ -168,6 +178,7 @@ public final class SigmaCommands {
             final List<String> paths = new ArrayList<>();
             String out = null;
             String arch = null;
+            String lang = null;
             for (int i = 0; i < ctx.args().size(); i++) {
                 final String arg = ctx.args().get(i);
                 if ("-o".equals(arg)) {
@@ -176,6 +187,9 @@ public final class SigmaCommands {
                 } else if ("--arch".equals(arg)) {
                     i++;
                     arch = i < ctx.args().size() ? ctx.args().get(i) : null;
+                } else if ("--lang".equals(arg)) {
+                    i++;
+                    lang = i < ctx.args().size() ? ctx.args().get(i) : "";
                 } else {
                     paths.add(arg);
                 }
@@ -183,6 +197,30 @@ public final class SigmaCommands {
             if (paths.isEmpty()) {
                 ctx.out().error(CliTexts.USAGE.with(this.verb, this.usage()));
                 return;
+            }
+            /*
+             * The version lives in the package: the compiler installed here knows the language up to its major
+             * number, and says which it is before anything else, as a compiler of the real world does. A build
+             * may ask for an older version, never a newer one; that takes updating the compiler.
+             */
+            final String installed = ctx.computer().installedVersion(this.packageId);
+            ctx.out().line(BANNER.with(this.level.mark(),
+                    installed.isBlank() ? ProgramVersions.of(this.packageId) : installed));
+            final int ceiling = SigmaVersions.ofPackage(installed);
+            int version = ceiling;
+            if (lang != null) {
+                final int asked = parseVersion(lang);
+                if (!SigmaVersions.known(asked)) {
+                    ctx.out().error(CliTexts.SAID_BY.with(this.verb, NO_VERSION.with(lang, this.level.mark(),
+                            SigmaVersions.FIRST, SigmaVersions.NEWEST)));
+                    return;
+                }
+                if (asked > ceiling) {
+                    ctx.out().error(CliTexts.SAID_BY.with(this.verb,
+                            ABOVE_INSTALLED.with(this.level.mark(), ceiling, asked)));
+                    return;
+                }
+                version = asked;
             }
             /*
              * Asked for by id or by the name it is written under, and refused before anything is compiled: a
@@ -218,7 +256,7 @@ public final class SigmaCommands {
                 sources.add(new SourceFile(leaf(path), read.message().english()));
             }
 
-            final SigmaCompiler.Result built = SigmaCompiler.compile(sources, isa, this.level);
+            final SigmaCompiler.Result built = SigmaCompiler.compile(sources, isa, this.level, version);
             final List<Diagnostic> diagnostics = built.diagnostics();
             final String assembly = built.ok() ? built.assembly() : null;
             for (final Diagnostic diagnostic : diagnostics) {
@@ -246,6 +284,15 @@ public final class SigmaCommands {
             }
             // Compiling is not running, and the prompt is the place to say how the second is done.
             ctx.out().dim(runIt(ctx.computer(), target));
+        }
+
+        /** A version as typed after {@code --lang}, or zero when it is not a number at all. */
+        private static int parseVersion(final String typed) {
+            try {
+                return Integer.parseInt(typed.trim());
+            } catch (final NumberFormatException notANumber) {
+                return 0;
+            }
         }
 
         /**

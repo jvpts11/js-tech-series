@@ -99,6 +99,53 @@ class SigmaCommandsTest {
                 withoutTheTarget(this.computer.files.get("small.asm")));
     }
 
+    private static final String BEEPER = """
+            using System.IO.*;
+            using System.Sound.*;
+            namespace Tests;
+            class Beeper { static void Main() { Sound.Beep(880, 200); } }
+            """;
+
+    /** The compiler says which it is before anything else, by the version of the package installed. */
+    @Test
+    void sgsc_firstSaysWhichCompilerItIs() {
+        this.computer.add(SigmaCommands.COMPILER);
+        this.computer.files.put("Beeper.sgs", BEEPER);
+        assertTrue(this.run("sgsc Beeper.sgs").startsWith("Σ# Compiler 2.0\n"));
+        this.computer.versions.put(SigmaCommands.COMPILER, "1.0");
+        assertTrue(this.run("sgsc Beeper.sgs").startsWith("Σ# Compiler 1.0\n"));
+    }
+
+    /** --lang holds a build to an older version, which is refused what came later. */
+    @Test
+    void sgsc_langHoldsTheBuildToThatVersion() {
+        this.computer.add(SigmaCommands.COMPILER);
+        this.computer.files.put("Beeper.sgs", BEEPER);
+        final String said = this.run("sgsc --lang 1 Beeper.sgs");
+        assertTrue(said.contains("error S3057: 'Sound' needs Σ# 2; this project is Σ# 1"), said);
+        assertFalse(this.computer.files.containsKey("Beeper.asm"));
+        assertTrue(this.run("sgsc --lang 2 Beeper.sgs").contains("wrote Beeper.asm"));
+    }
+
+    /** An installed compiler is the ceiling: an older one builds at its own version and cannot be asked above it. */
+    @Test
+    void sgsc_atAnOlderPackage_buildsAtItsVersionAndRefusesANewerOne() {
+        this.computer.add(SigmaCommands.COMPILER);
+        this.computer.versions.put(SigmaCommands.COMPILER, "1.0");
+        this.computer.files.put("Beeper.sgs", BEEPER);
+        assertTrue(this.run("sgsc Beeper.sgs").contains("'Sound' needs Σ# 2; this project is Σ# 1"));
+        assertTrue(this.run("sgsc --lang 2 Beeper.sgs")
+                .contains("sgsc: this compiler knows Σ# 1 at most; Σ# 2 needs a newer one"));
+    }
+
+    @Test
+    void sgsc_langOfNoVersionThereIs_isRefused() {
+        this.computer.add(SigmaCommands.COMPILER);
+        this.computer.files.put("Beeper.sgs", BEEPER);
+        assertTrue(errored("sgsc --lang 9 Beeper.sgs"));
+        assertTrue(this.run("sgsc --lang two Beeper.sgs").contains("'two' is not a version of Σ#; there are 1 to 2"));
+    }
+
     /** The listing with the line naming the machine it was built for taken out. */
     private static String withoutTheTarget(final String listing) {
         return listing == null ? null : listing.lines()
@@ -424,6 +471,7 @@ class SigmaCommandsTest {
     private static final class Fake implements ICliComputer {
 
         private final Map<String, String> files = new LinkedHashMap<>();
+        private final Map<String, String> versions = new LinkedHashMap<>();
         private final List<ProgramInfo> installed = new ArrayList<>();
         private final List<SigmaProcess> running = new ArrayList<>();
         private String started;
@@ -450,6 +498,10 @@ class SigmaCommandsTest {
 
         @Override public List<ProgramInfo> programs() {
             return List.copyOf(this.installed);
+        }
+
+        @Override public String installedVersion(final String programId) {
+            return this.versions.getOrDefault(programId, "");
         }
 
         @Override public FsResult readFile(final String path) {

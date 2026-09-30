@@ -28,9 +28,11 @@ import java.util.Locale;
  * @param references the names of the library projects it compiles with
  * @param entry      the listing it builds, relative to the project folder, or empty for a library
  * @param platform   the instruction set it is built for, by id (a platform target, as the studio it imitates says)
+ * @param languageVersion the version of the language it is held to ({@code langversion}), or 0 for none, which
+ *                        leaves it to the compiler installed on the machine
  */
 public record ProjectFile(String name, Kind kind, String language, List<String> sources,
-                          List<String> references, String entry, String platform) {
+                          List<String> references, String entry, String platform, int languageVersion) {
 
     /** The shapes a project can have. */
     public enum Kind {
@@ -70,6 +72,16 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         references = List.copyOf(references);
         entry = entry == null ? "" : entry;
         platform = platform == null || platform.isEmpty() ? AsmProgram.DEFAULT_ISA : platform;
+        languageVersion = Math.max(0, languageVersion);
+    }
+
+    /**
+     * A project held to no version of its own, which builds at whatever the installed compiler knows. Every project
+     * written before a project could name one is one of these.
+     */
+    public ProjectFile(final String name, final Kind kind, final String language, final List<String> sources,
+                       final List<String> references, final String entry, final String platform) {
+        this(name, kind, language, sources, references, entry, platform, 0);
     }
 
     /**
@@ -129,7 +141,7 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         final List<String> more = new ArrayList<>(this.sources);
         more.add(source);
         return new ProjectFile(this.name, this.kind, this.language, more, this.references, this.entry,
-                this.platform);
+                this.platform, this.languageVersion);
     }
 
     /** The project without that source, or the same one when it was not there. */
@@ -140,7 +152,7 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         final List<String> fewer = new ArrayList<>(this.sources);
         fewer.remove(source);
         return new ProjectFile(this.name, this.kind, this.language, fewer, this.references, this.entry,
-                this.platform);
+                this.platform, this.languageVersion);
     }
 
     /** The project with one more reference, or the same one when it is already there. */
@@ -151,7 +163,7 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         final List<String> more = new ArrayList<>(this.references);
         more.add(reference);
         return new ProjectFile(this.name, this.kind, this.language, this.sources, more, this.entry,
-                this.platform);
+                this.platform, this.languageVersion);
     }
 
     /** The project built for that instruction set instead, or the same one when it is already the one. */
@@ -159,7 +171,17 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         if (this.platform.equals(isa)) {
             return this;
         }
-        return new ProjectFile(this.name, this.kind, this.language, this.sources, this.references, this.entry, isa);
+        return new ProjectFile(this.name, this.kind, this.language, this.sources, this.references, this.entry, isa,
+                this.languageVersion);
+    }
+
+    /** The project held to that version of its language instead, 0 for none; the same one when it already is. */
+    public ProjectFile withLanguageVersion(final int version) {
+        if (this.languageVersion == Math.max(0, version)) {
+            return this;
+        }
+        return new ProjectFile(this.name, this.kind, this.language, this.sources, this.references, this.entry,
+                this.platform, version);
     }
 
     /** The file's text. */
@@ -172,6 +194,10 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         out.append("references: ").append(String.join(", ", this.references)).append('\n');
         out.append("entry: ").append(this.entry).append('\n');
         out.append("platform: ").append(this.platform).append('\n');
+        // Only a project that asked for one says so; without the line it builds at the compiler's own version.
+        if (this.languageVersion > 0) {
+            out.append("langversion: ").append(this.languageVersion).append('\n');
+        }
         return out.toString();
     }
 
@@ -187,6 +213,7 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         List<String> references = List.of();
         String entry = "";
         String platform = AsmProgram.DEFAULT_ISA;
+        int languageVersion = 0;
         for (final String raw : (text == null ? "" : text).split("\n")) {
             final String line = raw.trim();
             final int colon = line.indexOf(':');
@@ -203,10 +230,20 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
                 case "references" -> references = list(value);
                 case "entry" -> entry = value;
                 case "platform" -> platform = value;
+                case "langversion" -> languageVersion = number(value);
                 default -> { }
             }
         }
-        return new ProjectFile(name, kind, language, sources, references, entry, platform);
+        return new ProjectFile(name, kind, language, sources, references, entry, platform, languageVersion);
+    }
+
+    /** A version as a file writes it, or 0 when a hand left something that is not a number. */
+    private static int number(final String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (final NumberFormatException notANumber) {
+            return 0;
+        }
     }
 
     private static List<String> list(final String value) {

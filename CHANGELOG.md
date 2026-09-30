@@ -375,6 +375,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   RDIMM, and the LGA 1700 board takes either. The MF PowerGold 1000G, the PowerPlat 1200P and 1600P, and the
   ServerPSU 2000P and 3000P (Redundant) of the servers. And the Vaultis Keep HDD 12T, 16T, 20T and 24T, the helium
   drives, which are made only as hard disks.
+- Σ and Σ# have versions, one number for both: 1 is the language as 0.4.0a shipped it, and this release brings 2,
+  with the Sound and Speaker types. The version lives in the compiler's package, sgsc 2.0 being Σ# 2, so a machine
+  whose compiler is still 1.0 builds Σ# 1 until an upgrade brings it up (`pckmgr upgrade`, the upgrade verb of each
+  Linux and BSD manager, or on MC-DOS installing the compiler again from newer media). A build can be held to an
+  older version with `--lang N` on sgsc and scc, or with a `langversion: N` line in a project, and what came later
+  is refused where it was written: "'Sound' needs Σ# 2; this project is Σ# 1". Both compilers say which they are
+  before anything else ("Σ# Compiler 2.0").
 - Seventeen Advanced graphics cards run from the Velocion Radiance RX 550 and the Envya Vertex GTX 1650 to the
   Radiance RX 7900 XTX and the Vertex RTX 5090, on the Turing, Ampere, Ada Lovelace and Blackwell designs and on
   RDNA 1 to 4, with the Envya Tessera V100, A100 and H100 compute cards of the servers. The Forge Logic Crafting Card
@@ -422,6 +429,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   four-way one, where a machine still counts only as many as its case holds; a rack server reports the slots its
   case has rather than the board's.
 - The Vaultis Swift SSD 8T and the Bolt NVMe 4T and 8T move to the Advanced, the years they sold in, with new icons.
+- `apt upgrade`, `dnf update` and `upgrade`, `pacman -Syu`, `emerge --update @world` and `pkg upgrade` bring the
+  installed packages up to the versions the Mirror serves, as `pckmgr upgrade` does; `apt update`, `pacman -Sy`,
+  `emerge --sync` and `pkg update` still only read the lists.
 - A compute card is counted at the clock it is rated at, the one a card with no fan of its own holds in a server:
   the Tessera K40 does as much as the Vertex GTX 780 Ti on the same chip. The Integra Phi 9000 has a new icon.
 - A medium's tooltip names its format in the player's language ("Floppy", "Blu-ray") instead of the code's name
