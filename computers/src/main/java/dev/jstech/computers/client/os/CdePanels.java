@@ -174,7 +174,7 @@ final class CdePanels {
     private void open(final String programPath) {
         for (final Launcher launcher : desktop.launcherList()) {
             if (launcher.programId() != null && launcher.programId().getPath().equals(programPath)) {
-                desktop.launch(launcher);
+                desktop.start().choose(launcher);
                 return;
             }
         }

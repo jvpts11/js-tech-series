@@ -60,7 +60,6 @@ import dev.jstech.core.tier.HardwareEra;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -116,10 +115,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** The dialog that shuts the machine down, restarts it or logs off. */
     private final PowerDialog power = new PowerDialog(this);
 
-    /** The Linux desktops' own ways of opening a program: Kickoff, the Mint menu, the Activities overview. */
-    private final LinuxLaunchers linuxLaunchers = new LinuxLaunchers(this);
-    /** The Frames systems' own: the classic Start menu, XP's two columns, Frames 11's floating panel. */
-    private final FramesLaunchers framesLaunchers = new FramesLaunchers(this);
+    /** The launcher the panel opens: a Start menu, Kickoff, the Mint menu or the Activities overview. */
+    private final StartMenus start = new StartMenus(this);
     /** The corner every panel reports the machine in: the network, the sound, the memory and the clock. */
     private final PanelTray tray = new PanelTray(this);
     /** The volume control the speaker in that corner opens, in the form this desktop gives it. */
@@ -452,16 +449,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
     }
 
-    private boolean startOpen;
-    /** The Frames 11 Start search box: when non-empty, the pinned grid is replaced by a filtered result list. */
-    private final StringBuilder startSearch = new StringBuilder();
     /** Local cursor cached each frame, so menus drawn later in the frame can highlight the hovered entry. */
     private int hoverX;
     private int hoverY;
-    /** Programs pinned to the right "places" column of the Frames XP Start menu (drawn there, not on the left). */
-    private static final Set<ResourceLocation> XP_PLACES = Set.of(
-            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "this_pc"), Programs.FILES, Programs.SETTINGS,
-            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "network"));
     /** The windows the desktop opens by itself, whatever this desktop calls the programs they belong to. */
     private static final String FILES_KEY = WindowKeys.of(Programs.FILES);
     private static final String SETTINGS_KEY = WindowKeys.of(Programs.SETTINGS);
@@ -661,13 +651,14 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return view;
     }
 
-    /** Where an open launcher starts and how tall it is, which its own desktop decides. */
-    int startMenuLeft() {
-        return startMenuX();
+    /** The launcher the panel opens, and whether it is open. */
+    StartMenus start() {
+        return start;
     }
 
-    int startMenuTall() {
-        return startMenuHeight();
+    /** The wallpaper's right-click menu, which a program listed in a launcher also answers the right button with. */
+    DeskMenu deskMenu() {
+        return deskMenu;
     }
 
     /** Whether the pointer is inside that rectangle, which is what decides a highlight. */
@@ -717,7 +708,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
         shownWorkspace = WorkspaceSet.clampIndex(workspace);
         cdeWindowMenu.close();
-        closeStart();
+        start.close();
     }
 
     /** Whether this desktop has workspaces at all; one that does not keeps everything on the first. */
@@ -858,11 +849,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** Whether this desktop is drawn in that style, which decides what its panel and launcher look like. */
     boolean isPanel(final PanelStyle style) {
         return is(style);
-    }
-
-    /** Whether the launcher is open, which lights its button on the panel. */
-    boolean launcherOpen() {
-        return startOpen;
     }
 
     /** Where each task button sits and how wide it is: the same measurement the clicks are tested against. */
@@ -1010,8 +996,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * thing on the panel that opens by itself, so it must never sit over something the player asked for.
      */
     boolean menuOrDialogOpen() {
-        return startOpen || panelMenu.isOpen() || taskMenu.isOpen() || cdeWindowMenu.isOpen() || notices.popup() != null
-                || power.isOpen() || memory.crashing();
+        return start.isOpen() || panelMenu.isOpen() || taskMenu.isOpen() || cdeWindowMenu.isOpen()
+                || notices.popupUp() || power.isOpen() || memory.crashing();
     }
 
     /** The program whose windows the panel's popup is showing, or null while none is up. */
@@ -1035,16 +1021,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         drawCaret(g, x, y, color);
     }
 
-    /** What has been typed into an open launcher's search field, empty when nothing has. */
-    String searchText() {
-        return startSearch.toString();
-    }
-
-    /** The programs that match what was typed, or all of them when nothing was. */
-    List<Launcher> searchedLaunchers() {
-        return w11Filtered();
-    }
-
     /** Whether anything is open at all, which is what a workspace preview shows. */
     boolean anyWindowOpen() {
         return !windows.isEmpty();
@@ -1061,18 +1037,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     void drawOutline(final GuiGraphics g, final int x, final int y, final int w, final int h, final int color) {
         outline(g, x, y, w, h, color);
-    }
-
-    void launchAt(final int index) {
-        startChoose(index);
-    }
-
-    void launch(final Launcher launcher) {
-        startChoose(launcher);
-    }
-
-    void closeLauncher() {
-        closeStart();
     }
 
     /**
@@ -1097,24 +1061,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return active;
     }
 
-    /** How wide an open launcher is, which its own desktop decides. */
-    int startMenuWide() {
-        return startMenuW();
-    }
-
-    /** Where an open launcher's top edge is, for the one desktop that floats it rather than sitting it on the bar. */
-    int startMenuTop(final int tbY) {
-        return startMenuY(tbY);
-    }
-
-    /** The desktop's own name, which a period launcher carries up its side band. */
+    /** The desktop's own name, which a launcher carries up its side band. */
     String deskName() {
         return desktopName();
-    }
-
-    /** The system's name, which the classic Start menu carries up its side band. */
-    String osBand() {
-        return osBandLabel();
     }
 
     /** The icon a window key or a launcher key is drawn with, for a panel entry or a row. */
@@ -1122,40 +1071,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return iconOf(key);
     }
 
-    /** The XP menu's two columns: the programs on the left, the system's own places on the right. */
-    List<Launcher> xpLeft() {
-        return xpLeftLaunchers();
-    }
-
-    List<Launcher> xpRight() {
-        return xpRightLaunchers();
-    }
-
-    /** Where the XP left column's row {@code i} sits, which leaves the gap its separator needs. */
-    int xpLeftRow(final int i) {
-        return xpLeftRowY(i);
-    }
-
-    int xpAllRow() {
-        return xpAllRowY();
-    }
-
-    int xpFooterOff(final int x, final int w) {
-        return xpFooterOffX(x, w);
-    }
-
-    int xpFooterLog(final int x, final int w) {
-        return xpFooterLogX(x, w);
-    }
-
     /** Leaves the desktop without touching the machine, which is what logging off is. */
     void leaveDesktop() {
         onClose();
-    }
-
-    /** Opens the page listing everything installed on this machine, services included. */
-    void openEverythingInstalled() {
-        openAllPrograms();
     }
 
     // Frames 11 taskbar: each centered item (Start + one per program) occupies this slot.
@@ -1165,43 +1083,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     private static final int LAUNCHER_W = 22;
     /** The pitch of the Frames XP quick launch icons beside Start. */
     static final int QL_W = 16;
-    static final int MENU_W = 130;
-    static final int BAND_W = 22;
-    static final int MENU_ITEM_H = 18;
-    // Frames XP Start: a two-column panel (programs left, system "places" right) with a header and a footer band.
-    static final int XP_MENU_W = 202;
-    static final int XP_HEADER_H = 26;
-    /** The orange band the Luna Start menu ran under its user header. */
-    static final int XP_ORANGE_H = 2;
-    static final int XP_FOOTER_H = 18;
-    static final int XP_ROW_H = 16;
-    static final int XP_LEFT_W = 120;
-    /** The gap a separator sits in, between the pinned block and the rest of the left column. */
-    static final int XP_SEP_H = 5;
-    /** How many of the left column's entries are drawn as pinned (bold) at its top. */
-    static final int XP_PINNED = 2;
-    static final int XP_ALL_ROW_H = 15;
-    /*
-     * Frames 11 Start: a compact floating panel with a search box, a pinned-app grid, and a footer power button.
-     * Kept small (5 columns, tight tiles) so even a Mainframe's full app set fits above the taskbar.
-     */
-    static final int W11_MENU_W = 172;
-    static final int W11_COLS = 5;
-    static final int W11_TILE_W = 32;
-    static final int W11_TILE_H = 30;
-    static final int W11_SEARCH_H = 14;
-    static final int W11_FOOTER_H = 18;
-    /*
-     * The Linux launchers' own measurements live with the launchers, since that is what draws and hit-tests
-     * them; the desktop only needs the few the shared geometry below is worked out from.
-     */
-    private static final int KDE_MENU_W = LinuxLaunchers.KDE_MENU_W;
-    private static final int KDE_HEADER_H = LinuxLaunchers.KDE_HEADER_H;
-    private static final int KDE_ROW_H = LinuxLaunchers.KDE_ROW_H;
-    private static final int KDE_FOOTER_H = LinuxLaunchers.KDE_FOOTER_H;
-    private static final int CIN_MENU_W = LinuxLaunchers.CIN_MENU_W;
-    private static final int CIN_HEADER_H = LinuxLaunchers.CIN_HEADER_H;
-    private static final int CIN_ROW_H = LinuxLaunchers.CIN_ROW_H;
     /** The width of the Frames XP Start pill, which the task buttons and its own hit-test both clear. */
     static final int XP_START_W = 58;
 
@@ -1256,14 +1137,14 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         notices.dismissBalloon();
         windows.clear();
         SAVED_APPS.remove(host);
-        startOpen = false;
+        start.close();
         notices.dismissPopup();
     }
 
     // inspection (client tests drive the desktop through the same hit areas the player clicks)
 
     public boolean isStartOpen() {
-        return startOpen;
+        return start.isOpen();
     }
 
     /** Screen position of the desktop's top-left corner: window and app geometry is relative to it. */
@@ -1809,7 +1690,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Screen coordinates of the centre of the {@code index}-th Start menu entry (valid while it is open). */
     public int startMenuItemX() {
-        return view.screenX(startMenuX() + BAND_W + 30);
+        return view.screenX(start.itemX(-1));
     }
 
     /**
@@ -1817,29 +1698,11 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * columns (programs left, places right), so the column depends on the entry.
      */
     public int startMenuItemX(final int index) {
-        if (panel == PanelStyle.FRAMES_XP
-                && index >= 0 && index < catalogue.all().size()) {
-            final boolean place = XP_PLACES.contains(catalogue.all().get(index).programId());
-            final int colX = startMenuX() + (place ? XP_LEFT_W + 3 : 3);
-            final int colW = place ? XP_MENU_W - XP_LEFT_W - 6 : XP_LEFT_W - 6;
-            return view.screenX(colX + colW / 2);
-        }
-        return startMenuItemX();
+        return view.screenX(start.itemX(index));
     }
 
     public int startMenuItemY(final int index) {
-        final int tbY = view.height() - TASKBAR_H;
-        if (panel == PanelStyle.FRAMES_XP
-                && index >= 0 && index < catalogue.all().size()) {
-            final Launcher target = catalogue.all().get(index);
-            final boolean place = XP_PLACES.contains(target.programId());
-            final List<Launcher> column = place ? xpRightLaunchers() : xpLeftLaunchers();
-            final int row = Math.max(0, column.indexOf(target));
-            // The left column has a separator under its pinned block, so its rows are not a plain multiple.
-            final int rowY = place ? row * XP_ROW_H : xpLeftRowY(row);
-            return view.screenY(tbY - startMenuHeight() + XP_HEADER_H + XP_ORANGE_H + 3 + rowY + XP_ROW_H / 2);
-        }
-        return view.screenY(tbY - startMenuHeight() + 4 + index * MENU_ITEM_H + MENU_ITEM_H / 2);
+        return view.screenY(start.itemY(index));
     }
 
     /**
@@ -2331,14 +2194,12 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                     view.panelOnTop());
             g.pose().popPose();
         }
-        if (!startOpen && !deskMenu.isOpen() && !panelMenu.isOpen() && !cdeLaunchers.isOpen()) {
+        if (!start.isOpen() && !deskMenu.isOpen() && !panelMenu.isOpen() && !cdeLaunchers.isOpen()) {
             return;
         }
         g.pose().pushPose();
         g.pose().translate(0, 0, DesktopZ.MENU);
-        if (startOpen) {
-            renderStartMenu(g, tbY);
-        }
+        start.render(g, tbY);
         // A subpanel of CDE's Front Panel is no launcher that comes and goes: it stays up until its arrow says so.
         cdeLaunchers.render(g, view.width(), view.height(), prefs.cdePalette());
         panelMenu.render(g, lmx, lmy);
@@ -3021,49 +2882,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         PENDING_OPEN.add(OPEN_PROPS + path);
     }
 
-    /** The overall width of the Start menu panel, which differs per Frames version. */
-    private int startMenuW() {
-        if (periodPanel()) {
-            return MENU_W; // the period launcher is a narrow list, whatever its desktop does today
-        }
-        return switch (panel) {
-            case FRAMES_XP -> XP_MENU_W;
-            case FRAMES_11 -> W11_MENU_W;
-            case KDE -> KDE_MENU_W;
-            case GNOME -> view.width();
-            case CINNAMON -> CIN_MENU_W;
-            default -> MENU_W;
-        };
-    }
-
-    private int startMenuHeight() {
-        if (periodPanel()) {
-            /*
-             * A period launcher is a small program list, not a Plasma menu and not a full-screen
-             * overview: it is sized by its own contents, like the classic launcher it is.
-             */
-            return Math.max(4, catalogue.all().size()) * MENU_ITEM_H + 8;
-        }
-        return switch (panel) {
-            case KDE -> KDE_HEADER_H + Math.max(6, catalogue.all().size()) * KDE_ROW_H + KDE_FOOTER_H + 8;
-            case GNOME -> view.height() - TASKBAR_H; // the overview covers the whole desktop below the top bar
-            case CINNAMON -> CIN_HEADER_H + Math.max(5, catalogue.all().size()) * CIN_ROW_H + 10;
-            // Two columns: the taller of programs (left) and places (right) sets the body height.
-            case FRAMES_XP -> XP_HEADER_H + XP_ORANGE_H
-                    + Math.max(xpLeftColumnH(), xpRightLaunchers().size() * XP_ROW_H)
-                    + XP_FOOTER_H + 6;
-            /*
-             * A pinned grid sized to the full app set (so the panel does not resize as the search filters it).
-             * Layout: 6 top pad + search + 5 + 9 (Pinned label) + rows + 5 + footer + 5 bottom pad.
-             */
-            case FRAMES_11 -> {
-                final int gridRows = Math.max(1, (catalogue.all().size() + W11_COLS - 1) / W11_COLS);
-                yield 6 + W11_SEARCH_H + 5 + 9 + gridRows * W11_TILE_H + 5 + W11_FOOTER_H + 5;
-            }
-            default -> catalogue.all().size() * MENU_ITEM_H + 6 + MENU_ITEM_H + 8;
-        };
-    }
-
     /**
      * The left edge of the app-icon strip on the Windows 11 taskbar: right after the Start button, so the whole
      * [Start + apps] group moves together with the taskbar alignment. Single source for render and hit-test.
@@ -3083,94 +2901,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
         final int group = (taskEntries().size() + 1) * WIN11_SLOT;
         return Math.max(4, (sw - group) / 2);
-    }
-
-    /** The Start menu's left edge: left-pinned on 95/XP; on Frames 11 it opens over the Start button (clamped). */
-    private int startMenuX() {
-        if (is(PanelStyle.FRAMES_11)) {
-            final int w = startMenuW();
-            final int startCenter = win11StartX(view.width()) + WIN11_SLOT / 2;
-            return Math.max(4, Math.min(view.width() - w - 4, startCenter - w / 2));
-        }
-        if (view.panelOnTop()) {
-            return 0; // the Activities overview spans the desktop
-        }
-        return 4;
-    }
-
-    /** The Start menu's top edge for the given taskbar top: flush on 95/XP, floating with a gap on Frames 11. */
-    private int startMenuY(final int tbY) {
-        if (is(PanelStyle.FRAMES_11)) {
-            return Math.max(2, tbY - startMenuHeight() - 6); // float above the taskbar, but never off the top
-        }
-        if (view.panelOnTop()) {
-            return TASKBAR_H; // the overview hangs below the top bar
-        }
-        return tbY - startMenuHeight();
-    }
-
-    /** The launchers shown in the XP left "programs" column: everything that is not a fixed system place. */
-    private List<Launcher> xpLeftLaunchers() {
-        final List<Launcher> out = new ArrayList<>();
-        for (final Launcher l : catalogue.all()) {
-            if (!XP_PLACES.contains(l.programId())) {
-                out.add(l);
-            }
-        }
-        return out;
-    }
-
-    /** The y of the {@code i}-th left-column row, measured from the top of the Start menu's body. */
-    private int xpLeftRowY(final int i) {
-        final int n = xpLeftLaunchers().size();
-        final int pinned = Math.min(XP_PINNED, n);
-        return i * XP_ROW_H + (i >= pinned && n > pinned ? XP_SEP_H : 0);
-    }
-
-    /** The y of the "All Programs" row, measured from the top of the Start menu's body. */
-    private int xpAllRowY() {
-        return xpLeftRowY(xpLeftLaunchers().size()) + XP_SEP_H;
-    }
-
-    /** How tall the left column runs: its rows, its separators, and the "All Programs" row under them. */
-    private int xpLeftColumnH() {
-        return xpAllRowY() + XP_ALL_ROW_H;
-    }
-
-    /** The left edge of the footer's "Turn Off Computer" entry, shared by the drawing and the hit-test. */
-    private int xpFooterOffX(final int x, final int w) {
-        return x + w - 6 - (font.width(words(DesktopTexts.TURN_OFF_COMPUTER)) + 14);
-    }
-
-    /** The left edge of the footer's "Log Off" entry, immediately before the Turn Off one. */
-    private int xpFooterLogX(final int x, final int w) {
-        return xpFooterOffX(x, w) - 8 - (font.width(words(DesktopTexts.XP_LOG_OFF)) + 14);
-    }
-
-    /** The launchers shown in the XP right "places" column: the fixed system entries, in launcher order. */
-    private List<Launcher> xpRightLaunchers() {
-        final List<Launcher> out = new ArrayList<>();
-        for (final Launcher l : catalogue.all()) {
-            if (XP_PLACES.contains(l.programId())) {
-                out.add(l);
-            }
-        }
-        return out;
-    }
-
-    /** The launchers matching the Frames 11 Start search box (all of them when the box is empty). */
-    private List<Launcher> w11Filtered() {
-        final String q = startSearch.toString().toLowerCase(Locale.ROOT).trim();
-        if (q.isEmpty()) {
-            return catalogue.all();
-        }
-        final List<Launcher> out = new ArrayList<>();
-        for (final Launcher l : catalogue.all()) {
-            if (l.label().toLowerCase(Locale.ROOT).contains(q)) {
-                out.add(l);
-            }
-        }
-        return out;
     }
 
     /** A small downward caret: a program with several windows says so at the end of its button. */
@@ -3434,58 +3164,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return framesPanels.startButtonHit(mx, my, tbY);
     }
 
-    private String osBandLabel() {
-        return desktopName();
-    }
-
-    /**
-     * Draws the Start menu. Each Frames version has its OWN layout, not just its own palette: 95 is the
-     * classic side-band vertical list, XP is a two-column programs/places panel, and 11 is a centered
-     * floating panel with a search box and a pinned-app grid.
-     */
-    private void renderStartMenu(final GuiGraphics g, final int tbY) {
-        if (periodPanel()) {
-            /*
-             * A period desktop had a plain vertical launcher, not a modern Plasma menu and certainly not
-             * the GNOME overview, which belongs to a shell released a decade later.
-             */
-            renderStartMenuPeriod(g, tbY);
-            return;
-        }
-        switch (panel) {
-            case FRAMES_XP -> renderStartMenuXp(g, tbY);
-            case FRAMES_11 -> renderStartMenu11(g, tbY);
-            case KDE -> renderStartMenuKde(g, tbY);
-            case GNOME -> renderOverviewGnome(g);
-            case CINNAMON -> renderStartMenuCinnamon(g, tbY);
-            default -> renderStartMenu95(g, tbY);
-        }
-    }
-
-    /**
-     * The launcher of a Legacy-era Unix desktop: a raised panel with a coloured side band carrying the
-     * desktop's name and one vertical list of programs. Drawn from the skin's own primitives, so it
-     * carries the same relief as that skin's windows and panel instead of the modern flat chrome.
-     */
-    private void renderStartMenuPeriod(final GuiGraphics g, final int tbY) {
-        framesLaunchers.renderPeriod(g, tbY);
-    }
-
-    /** Frames 95: the classic Start menu with a rotated OS-name side band and a single vertical program list. */
-    private void renderStartMenu95(final GuiGraphics g, final int tbY) {
-        framesLaunchers.render95(g, tbY);
-    }
-
-    /** Whether the open launcher has a live search box (Frames 11's Start, GNOME's Activities overview). */
-    private boolean searchableStart() {
-        /*
-         * The period launcher is a plain program list with no search field, so it is not searchable
-         * even though the modern GNOME shell it replaces is.
-         */
-        return is(PanelStyle.FRAMES_11)
-                || (is(PanelStyle.GNOME) && !periodPanel());
-    }
-
     // Linux desktop environments: panels
 
     /**
@@ -3513,42 +3191,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         linuxPanels.renderGnomeTopBar(g, sw, lmx, lmy);
     }
 
-    // Linux desktop environments: launchers, which LinuxLaunchers draws and hit-tests beside this screen
-
-    private void renderStartMenuKde(final GuiGraphics g, final int tbY) {
-        linuxLaunchers.renderKde(g, tbY);
-    }
-
-    private boolean handleStartClickKde(final int mx, final int my, final int tbY) {
-        return linuxLaunchers.clickKde(mx, my, tbY);
-    }
-
-    private void renderOverviewGnome(final GuiGraphics g) {
-        linuxLaunchers.renderGnomeOverview(g);
-    }
-
-    private boolean handleOverviewClickGnome(final int mx, final int my) {
-        return linuxLaunchers.clickGnomeOverview(mx, my);
-    }
-
-    private void renderStartMenuCinnamon(final GuiGraphics g, final int tbY) {
-        linuxLaunchers.renderCinnamon(g, tbY);
-    }
-
-    private boolean handleStartClickCinnamon(final int mx, final int my, final int tbY) {
-        return linuxLaunchers.clickCinnamon(mx, my, tbY);
-    }
-
-    /** Frames XP: a two-column panel (programs on the left, system places on the right) with header/footer bands. */
-    private void renderStartMenuXp(final GuiGraphics g, final int tbY) {
-        framesLaunchers.renderXp(g, tbY);
-    }
-
-    /** Frames 11: a centered floating panel with a search box, a pinned-app grid, and a footer power button. */
-    private void renderStartMenu11(final GuiGraphics g, final int tbY) {
-        framesLaunchers.render11(g, tbY);
-    }
-
     /** A short account line for the Frames 11 Start footer: the computer's name, or a generic label. */
     private String hostAccountLabel() {
         return (computerName == null || computerName.isBlank()) ? words(DesktopTexts.LOCAL_ACCOUNT)
@@ -3562,12 +3204,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         g.fill(x, y + h - 1, x + w, y + h, color);
         g.fill(x, y, x + 1, y + h, color);
         g.fill(x + w - 1, y, x + w, y + h, color);
-    }
-
-    /** Closes the Start menu and clears any Frames 11 search text so it reopens fresh. */
-    private void closeStart() {
-        startOpen = false;
-        startSearch.setLength(0);
     }
 
     // The panel's entries: a program's menu, its windows, and the popup that lists them
@@ -3824,95 +3460,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return open;
     }
 
-    /** Toggles the Start menu open/closed, always opening with an empty search box. */
-    private void toggleStart() {
-        if (startOpen) {
-            closeStart();
-        } else {
-            startOpen = true;
-            startSearch.setLength(0);
-        }
-    }
-
-    /**
-     * Resolves a click inside the (version-specific) Start menu. Returns true when the click landed on the
-     * panel (and was acted on or absorbed); false when it fell outside, so the caller closes the menu.
-     */
-    /*
-     * Which button opened the Start menu entry, and where the cursor was. Every panel style lays its
-     * entries out differently and each handler already does that arithmetic, so rather than a second
-     * hit test that would have to match all of them, the handlers say which entry was hit and this
-     * decides what to do with it.
-     */
-    private boolean startWithRightButton;
-    private int startClickX;
-    private int startClickY;
-
-    /**
-     * Starts a program from the Start menu, or opens its own menu when the right button asked.
-     *
-     * <p>Every panel style calls this instead of running the launcher itself, so a program listed
-     * anywhere answers the right button the same way.
-     */
-    private void startChoose(final int index) {
-        if (index >= 0 && index < catalogue.all().size()) {
-            startChoose(catalogue.all().get(index));
-        }
-    }
-
-    /** The same, for the panels that lay their entries out from a list of their own. */
-    private void startChoose(final Launcher launcher) {
-        if (this.startWithRightButton) {
-            closeStart();
-            // The menu is the icon's, so it is found among the icons; the same launcher stands in both lists.
-            deskMenu.openFor(catalogue.icons().indexOf(launcher), this.startClickX, this.startClickY);
-            return;
-        }
-        runLauncher(launcher);
-    }
-
-    private boolean handleStartMenuClick(final int mx, final int my, final int tbY) {
-        if (periodPanel()) {
-            return handleStartClickPeriod(mx, my, tbY);
-        }
-        return switch (panel) {
-            case FRAMES_XP -> handleStartClickXp(mx, my, tbY);
-            case FRAMES_11 -> handleStartClick11(mx, my, tbY);
-            case KDE -> handleStartClickKde(mx, my, tbY);
-            case GNOME -> handleOverviewClickGnome(mx, my);
-            case CINNAMON -> handleStartClickCinnamon(mx, my, tbY);
-            default -> handleStartClick95(mx, my, tbY);
-        };
-    }
-
-    /**
-     * Clicks in the period launcher. The rows are laid out from the same origin and pitch the renderer
-     * uses, so what the player sees and what they hit are one list.
-     */
-    private boolean handleStartClickPeriod(final int mx, final int my, final int tbY) {
-        return framesLaunchers.clickPeriod(mx, my, tbY);
-    }
-
-    private boolean handleStartClick95(final int mx, final int my, final int tbY) {
-        return framesLaunchers.click95(mx, my, tbY);
-    }
-
-    private boolean handleStartClickXp(final int mx, final int my, final int tbY) {
-        return framesLaunchers.clickXp(mx, my, tbY);
-    }
-
-    /** "All Programs": the page that lists everything installed on this machine, services included. */
-    private void openAllPrograms() {
-        final Launcher settings = catalogue.byProgram(Programs.SETTINGS);
-        if (settings != null) {
-            runLauncher(settings);
-        }
-    }
-
-    private boolean handleStartClick11(final int mx, final int my, final int tbY) {
-        return framesLaunchers.click11(mx, my, tbY);
-    }
-
     /**
      * A click travels down the desktop one layer at a time: whatever is modal takes it first, then the
      * panel, then the windows, then the wallpaper and its icons, and only what nothing claimed reaches the
@@ -4035,7 +3582,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          */
         if (view.panelOnTop() && mouseY < TASKBAR_H) {
             if (mouseX < 64) {
-                toggleStart();
+                start.toggle();
             } else if (button == 1) {
                 panelMenu.open((int) mouseX,0);
             }
@@ -4061,28 +3608,16 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (is(PanelStyle.FRAMES_11) && mouseY >= tbY) {
             final int startX = win11StartX(view.width());
             if (mouseX >= startX && mouseX < startX + WIN11_SLOT) {
-                toggleStart();
+                start.toggle();
                 return true;
             }
         } else if (startButtonHit(mouseX, mouseY, tbY)) {
-            toggleStart();
+            start.toggle();
             return true;
         }
-        if (startOpen) {
-            /*
-             * The right button asks about a program rather than starting it, the way it does on the
-             * desktop itself. Before this, both buttons ran it, so there was no way to reach a
-             * program's own menu from the one place every program is listed.
-             */
-            startWithRightButton = button == 1;
-            startClickX = (int) mouseX;
-            startClickY = (int) mouseY;
-            final boolean handled = handleStartMenuClick((int) mouseX, (int) mouseY, tbY);
-            startWithRightButton = false;
-            if (handled) {
-                return true;
-            }
-            startOpen = false;
+        // An open launcher takes a click on it; one anywhere else closes it and goes on below.
+        if (start.click(mouseX, mouseY, button, tbY)) {
+            return true;
         }
 
         /*
@@ -4469,9 +4004,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (deskFiles.isRenaming() && c >= 32 && c != 127 && c != '/' && c != '\\' && deskFiles.type(c)) {
             return true;
         }
-        // The Frames 11 Start search box captures typing while it is open (it is always focused when shown).
-        if (startOpen && searchableStart() && c >= 32 && c != 127 && startSearch.length() < 24) {
-            startSearch.append(c);
+        // An open launcher's search box takes the typing; it is always focused while it is shown.
+        if (start.type(c)) {
             return true;
         }
         final DesktopWindow w = frontWindow();
@@ -4494,7 +4028,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return true;
         }
         if (notices.popupUp() || power.isOpen() || deskMenu.isOpen() || taskMenu.isOpen() || deskFiles.isRenaming()
-                || startOpen) {
+                || start.isOpen()) {
             return keyPressed(key, scanCode, modifiers);
         }
         final DesktopWindow w = frontWindow();
@@ -4538,37 +4072,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             }
             return true;
         }
-        /*
-         * While the Start menu is open it owns the keyboard: Escape closes it, and on Frames 11 the search box
-         * takes Backspace (edit) and Enter (launch the top result). This runs before ESC reaches the desktop.
-         */
-        if (startOpen) {
-            if (key == 256) { // Escape
-                closeStart();
-                return true;
-            }
-            if (searchableStart()) {
-                if (key == 259) { // Backspace
-                    if (startSearch.length() > 0) {
-                        startSearch.deleteCharAt(startSearch.length() - 1);
-                    }
-                    return true;
-                }
-                if ((key == 257 || key == 335) && startSearch.length() > 0) { // Enter launches the first result
-                    final List<Launcher> hits = w11Filtered();
-                    if (!hits.isEmpty()) {
-                        runLauncher(hits.get(0));
-                        closeStart();
-                    }
-                    return true;
-                }
-                /*
-                 * Swallow every other key so the open search box owns the keyboard: this stops a background
-                 * window from eating letters and stops the inventory key from closing the desktop. charTyped
-                 * is a separate GLFW event, so typed characters still reach the search box below.
-                 */
-                return true;
-            }
+        // An open launcher owns the keyboard ahead of the desktop, so Escape closes it rather than the desktop.
+        if (start.keyPressed(key)) {
+            return true;
         }
         // The front window's app gets first refusal on keys, except ESC which always closes the desktop.
         final DesktopWindow w = frontWindow();

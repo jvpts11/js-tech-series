@@ -191,7 +191,7 @@ final class CdeLaunchers {
     private void program(final List<Row> out, final String path) {
         for (final Launcher launcher : desktop.launcherList()) {
             if (launcher.programId() != null && launcher.programId().getPath().equals(path)) {
-                out.add(new Row(launcher.label(), launcher.programId(), () -> desktop.launch(launcher)));
+                out.add(new Row(launcher.label(), launcher.programId(), () -> desktop.start().choose(launcher)));
                 return;
             }
         }

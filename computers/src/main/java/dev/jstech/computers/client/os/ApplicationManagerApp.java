@@ -198,7 +198,7 @@ final class ApplicationManagerApp implements IDesktopApp {
         if (this.group == null) {
             desktop.openApplicationManager(groups().get(index));
         } else {
-            desktop.launch(programs().get(index));
+            desktop.start().choose(programs().get(index));
         }
     }
 

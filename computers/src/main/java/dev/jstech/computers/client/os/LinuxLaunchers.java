@@ -79,9 +79,9 @@ final class LinuxLaunchers {
     /** KDE Plasma's Kickoff: a dark two-pane launcher with a places column, an app list and a session footer. */
     void renderKde(final GuiGraphics g, final int tbY) {
         final Kickoff c = KDE.get();
-        final int x = desktop.startMenuLeft();
+        final int x = desktop.start().left();
         final int w = KDE_MENU_W;
-        final int h = desktop.startMenuTall();
+        final int h = desktop.start().height();
         final int y = tbY - h;
         g.fill(x + 2, y + 3, x + w + 2, y + h + 3, c.shadow());
         g.fill(x - 1, y - 1, x + w + 1, y + h + 1, c.border());
@@ -125,9 +125,9 @@ final class LinuxLaunchers {
     }
 
     boolean clickKde(final int mx, final int my, final int tbY) {
-        final int x = desktop.startMenuLeft();
+        final int x = desktop.start().left();
         final int w = KDE_MENU_W;
-        final int h = desktop.startMenuTall();
+        final int h = desktop.start().height();
         final int y = tbY - h;
         if (mx < x || mx > x + w || my < y || my > y + h) {
             return false;
@@ -137,15 +137,15 @@ final class LinuxLaunchers {
         if (my >= bodyBot) {
             if (mx >= x + w - desktop.textFont().width(words(DesktopTexts.START_SHUT_DOWN)) - 12) {
                 desktop.power().open();
-                desktop.closeLauncher();
+                desktop.start().close();
             }
             return true;
         }
         if (my >= bodyTop && mx >= x + KDE_SIDE_W + 4) {
             final int row = (my - (bodyTop + 4)) / KDE_ROW_H;
             if (row >= 0 && row < desktop.launcherList().size()) {
-                desktop.launchAt(row);
-                desktop.closeLauncher();
+                desktop.start().choose(row);
+                desktop.start().close();
             }
         }
         return true;
@@ -166,7 +166,7 @@ final class LinuxLaunchers {
         final int fieldX = (sw - fieldW) / 2;
         final int fieldY = top + 8;
         g.fill(fieldX, fieldY, fieldX + fieldW, fieldY + 14, c.field());
-        final String q = desktop.searchText();
+        final String q = desktop.start().searchText();
         if (q.isEmpty()) {
             final String hint = words(DesktopTexts.TYPE_TO_SEARCH);
             g.drawString(desktop.textFont(), hint,
@@ -175,7 +175,7 @@ final class LinuxLaunchers {
             g.drawString(desktop.textFont(), desktop.shorten(q, (fieldW - 8) / 6),
                     fieldX + 6, fieldY + 3, c.ink(), false);
         }
-        final List<Launcher> filtered = desktop.searchedLaunchers();
+        final List<Launcher> filtered = desktop.start().filtered();
         int contentTop = fieldY + 22;
         if (q.isEmpty()) {
             contentTop = drawWorkspaceStrip(g, sw, contentTop);
@@ -196,8 +196,8 @@ final class LinuxLaunchers {
         final int fieldW = Math.min(180, sw - 40);
         final int fieldX = (sw - fieldW) / 2;
         final int fieldY = top + 8;
-        final List<Launcher> filtered = desktop.searchedLaunchers();
-        if (!desktop.searchText().isEmpty()) {
+        final List<Launcher> filtered = desktop.start().filtered();
+        if (!desktop.start().searchText().isEmpty()) {
             return clickSearchResults(mx, my, fieldX, fieldW, fieldY, filtered);
         }
         final int gridTop = fieldY + 22 + 42;
@@ -207,8 +207,8 @@ final class LinuxLaunchers {
             final int row = (my - gridTop) / GN_TILE_H;
             final int idx = row * GN_COLS + col;
             if (idx >= 0 && idx < filtered.size() && gridTop + (row + 1) * GN_TILE_H <= sh - 26) {
-                desktop.launch(filtered.get(idx));
-                desktop.closeLauncher();
+                desktop.start().choose(filtered.get(idx));
+                desktop.start().close();
                 return true;
             }
         }
@@ -219,24 +219,24 @@ final class LinuxLaunchers {
         if (my >= dashY && my < dashY + 20 && mx >= dashX && mx < dashX + dashW) {
             final int idx = (mx - dashX - 4) / 22;
             if (idx >= 0 && idx < dashN) {
-                desktop.launchAt(idx);
-                desktop.closeLauncher();
+                desktop.start().choose(idx);
+                desktop.start().close();
             }
             return true;
         }
         if (my >= fieldY && my < fieldY + 14) {
             return true; // the search box keeps the overview open
         }
-        desktop.closeLauncher(); // clicking the overview backdrop leaves it, as GNOME does
+        desktop.start().close(); // clicking the overview backdrop leaves it, as GNOME does
         return true;
     }
 
     /** Cinnamon's Mint menu: a favourites rail, a categories column and the app list with a search hint. */
     void renderCinnamon(final GuiGraphics g, final int tbY) {
         final MintMenu c = CINNAMON.get();
-        final int x = desktop.startMenuLeft();
+        final int x = desktop.start().left();
         final int w = CIN_MENU_W;
-        final int h = desktop.startMenuTall();
+        final int h = desktop.start().height();
         final int y = tbY - h;
         g.fill(x + 2, y + 3, x + w + 2, y + h + 3, c.shadow());
         g.fill(x - 1, y - 1, x + w + 1, y + h + 1, c.border());
@@ -282,9 +282,9 @@ final class LinuxLaunchers {
     }
 
     boolean clickCinnamon(final int mx, final int my, final int tbY) {
-        final int x = desktop.startMenuLeft();
+        final int x = desktop.start().left();
         final int w = CIN_MENU_W;
-        final int h = desktop.startMenuTall();
+        final int h = desktop.start().height();
         final int y = tbY - h;
         if (mx < x || mx > x + w || my < y || my > y + h) {
             return false;
@@ -294,8 +294,8 @@ final class LinuxLaunchers {
             for (int i = 0; i < favN; i++) {
                 final int fy = y + 8 + i * 22;
                 if (my >= fy - 3 && my < fy + 19) {
-                    desktop.launchAt(i);
-                    desktop.closeLauncher();
+                    desktop.start().choose(i);
+                    desktop.start().close();
                     return true;
                 }
             }
@@ -305,8 +305,8 @@ final class LinuxLaunchers {
         if (mx >= listX && my >= y + CIN_HEADER_H) {
             final int row = (my - (y + CIN_HEADER_H)) / CIN_ROW_H;
             if (row >= 0 && row < desktop.launcherList().size()) {
-                desktop.launchAt(row);
-                desktop.closeLauncher();
+                desktop.start().choose(row);
+                desktop.start().close();
             }
         }
         return true;
@@ -388,8 +388,8 @@ final class LinuxLaunchers {
         int ry = fieldY + 22 + 12;
         for (final Launcher l : filtered) {
             if (my >= ry && my < ry + 16 && mx >= fieldX && mx < fieldX + fieldW) {
-                desktop.launch(l);
-                desktop.closeLauncher();
+                desktop.start().choose(l);
+                desktop.start().close();
                 return true;
             }
             ry += 16;
@@ -397,7 +397,7 @@ final class LinuxLaunchers {
         if (my >= fieldY && my < fieldY + 14) {
             return true;
         }
-        desktop.closeLauncher();
+        desktop.start().close();
         return true;
     }
 

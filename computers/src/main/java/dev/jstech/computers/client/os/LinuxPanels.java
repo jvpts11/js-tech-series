@@ -80,10 +80,10 @@ final class LinuxPanels {
         skin.statusBar(g, 0, tbY, sw, DesktopScreen.TASKBAR_H);
 
         // Launcher: KDE's K, GNOME's footprint. Both are a raised square stud, not a wide Start slab.
-        final boolean startHot = desktop.launcherOpen() || (lmx >= 4 && lmx <= 58 && lmy >= tbY);
+        final boolean startHot = desktop.start().isOpen() || (lmx >= 4 && lmx <= 58 && lmy >= tbY);
         skin.button(g, desktop.textFont(), 4, tbY + 3, 54, DesktopScreen.TASKBAR_H - 6,
                 kde ? "K  " + GameText.resolve(PanelTexts.APPS) : "▲  " + GameText.resolve(PanelTexts.MENU),
-                startHot, desktop.launcherOpen(), false);
+                startHot, desktop.start().isOpen(), false);
 
         drawPeriodTasks(g, tbY, sw, lmx, lmy, skin);
 
@@ -104,7 +104,7 @@ final class LinuxPanels {
         final DesktopTheme theme = desktop.themeColours();
         g.fill(0, 0, sw, DesktopScreen.TASKBAR_H, theme.taskbar());
         g.fill(0, DesktopScreen.TASKBAR_H - 1, sw, DesktopScreen.TASKBAR_H, theme.taskbarEdge());
-        final boolean hot = desktop.launcherOpen() || (lmx < 64 && lmy < DesktopScreen.TASKBAR_H);
+        final boolean hot = desktop.start().isOpen() || (lmx < 64 && lmy < DesktopScreen.TASKBAR_H);
         if (hot) {
             g.fill(4, 3, 62, DesktopScreen.TASKBAR_H - 3, PALETTE.get().hover());
         }
@@ -119,7 +119,7 @@ final class LinuxPanels {
     private void drawModernLauncher(final GuiGraphics g, final int tbY, final int sh, final int lmx,
                                     final int lmy, final boolean kde, final DesktopTheme theme) {
         final Colours c = PALETTE.get();
-        final boolean startHot = desktop.launcherOpen() || (lmx >= 4 && lmx <= 58 && lmy >= tbY);
+        final boolean startHot = desktop.start().isOpen() || (lmx >= 4 && lmx <= 58 && lmy >= tbY);
         if (startHot) {
             g.fill(4, tbY + 2, 58, sh - 2, c.hover());
         }

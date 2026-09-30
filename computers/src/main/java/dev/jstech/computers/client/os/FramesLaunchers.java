@@ -55,6 +55,34 @@ final class FramesLaunchers {
     private static final Palette<Modern> MODERN = Palettes.declare(JsComputers.MODID, "launcher/frames_11",
             new Modern(0x40000000));
 
+    // The classic Start menu, and the period launcher that shares its list: a side band and one row per program.
+    static final int MENU_W = 130;
+    static final int BAND_W = 22;
+    static final int MENU_ITEM_H = 18;
+    // Frames XP Start: a two-column panel (programs left, system "places" right) with a header and a footer band.
+    static final int XP_MENU_W = 202;
+    static final int XP_HEADER_H = 26;
+    /** The orange band the Luna Start menu ran under its user header. */
+    static final int XP_ORANGE_H = 2;
+    static final int XP_FOOTER_H = 18;
+    static final int XP_ROW_H = 16;
+    static final int XP_LEFT_W = 120;
+    /** The gap a separator sits in, between the pinned block and the rest of the left column. */
+    static final int XP_SEP_H = 5;
+    /** How many of the left column's entries are drawn as pinned (bold) at its top. */
+    static final int XP_PINNED = 2;
+    static final int XP_ALL_ROW_H = 15;
+    /*
+     * Frames 11 Start: a compact floating panel with a search box, a pinned-app grid, and a footer power button.
+     * Kept small (5 columns, tight tiles) so even a Mainframe's full app set fits above the taskbar.
+     */
+    static final int W11_MENU_W = 172;
+    static final int W11_COLS = 5;
+    static final int W11_TILE_W = 32;
+    static final int W11_TILE_H = 30;
+    static final int W11_SEARCH_H = 14;
+    static final int W11_FOOTER_H = 18;
+
     FramesLaunchers(final DesktopScreen desktop) {
         this.desktop = desktop;
     }
@@ -65,56 +93,56 @@ final class FramesLaunchers {
      * the same relief as that skin's windows and panel instead of the modern flat chrome.
      */
     void renderPeriod(final GuiGraphics g, final int tbY) {
-        final int x = desktop.startMenuLeft();
-        final int h = desktop.startMenuTall();
-        final int w = desktop.startMenuWide();
+        final int x = desktop.start().left();
+        final int h = desktop.start().height();
+        final int w = desktop.start().width();
         final int y = tbY - h;
         final OsSkin skin = desktop.prefs().skin();
         skin.panel(g, x, y, w, h);
 
         // Side band with the desktop's name, rotated, the way the launchers of that period carried it.
-        g.fill(x + 2, y + 2, x + 2 + DesktopScreen.BAND_W, y + h - 2, skin.accent());
+        g.fill(x + 2, y + 2, x + 2 + BAND_W, y + h - 2, skin.accent());
         final PoseStack pose = g.pose();
         pose.pushPose();
-        pose.translate(x + DesktopScreen.BAND_W - 3, y + h - 8, 0);
+        pose.translate(x + BAND_W - 3, y + h - 8, 0);
         pose.mulPose(Axis.ZP.rotationDegrees(-90));
         g.drawString(desktop.textFont(), desktop.deskName(), 0, 0, PERIOD.get().bandInk(), false);
         pose.popPose();
 
-        final int itemX = x + DesktopScreen.BAND_W + 6;
+        final int itemX = x + BAND_W + 6;
         int my = y + 4;
         for (final Launcher l : desktop.launcherList()) {
-            final boolean hov = desktop.hoverIn(itemX, my, x + w - itemX, DesktopScreen.MENU_ITEM_H);
-            skin.listRow(g, itemX, my, x + w - 4 - itemX, DesktopScreen.MENU_ITEM_H, hov, false);
+            final boolean hov = desktop.hoverIn(itemX, my, x + w - itemX, MENU_ITEM_H);
+            skin.listRow(g, itemX, my, x + w - 4 - itemX, MENU_ITEM_H, hov, false);
             ProgramIcons.draw(g, itemX + 2, my + 1, 14, 14, desktop.programIdFor(l.key()), desktop.icons());
             g.drawString(desktop.textFont(), l.label(), itemX + 20, my + 4,
                     hov ? skin.listRowText(true) : skin.text(), false);
-            my += DesktopScreen.MENU_ITEM_H;
+            my += MENU_ITEM_H;
         }
     }
 
     boolean clickPeriod(final int mx, final int my, final int tbY) {
-        final int x = desktop.startMenuLeft();
-        final int w = desktop.startMenuWide();
-        final int h = desktop.startMenuTall();
+        final int x = desktop.start().left();
+        final int w = desktop.start().width();
+        final int h = desktop.start().height();
         final int y = tbY - h;
         if (mx < x || mx > x + w || my < y || my > y + h) {
             return false;
         }
-        final int idx = (int) Math.floor((my - (y + 4)) / (double) DesktopScreen.MENU_ITEM_H);
+        final int idx = (int) Math.floor((my - (y + 4)) / (double) MENU_ITEM_H);
         if (idx >= 0 && idx < desktop.launcherList().size()) {
-            desktop.launchAt(idx);
+            desktop.start().choose(idx);
         }
-        desktop.closeLauncher();
+        desktop.start().close();
         return true;
     }
 
     /** Frames 95: the classic Start menu with a rotated OS-name side band and a single vertical program list. */
     void render95(final GuiGraphics g, final int tbY) {
-        final int x = desktop.startMenuLeft();
-        final int h = desktop.startMenuTall();
+        final int x = desktop.start().left();
+        final int h = desktop.start().height();
         final int y = tbY - h;
-        final int w = DesktopScreen.MENU_W;
+        final int w = MENU_W;
         final DesktopTheme theme = desktop.themeColours();
         final Classic c = CLASSIC.get();
         // Raised panel.
@@ -123,25 +151,25 @@ final class FramesLaunchers {
         g.fill(x, y, x + w, y + 1, c.light());
         g.fill(x, y, x + 1, y + h, c.light());
         // Side band with the OS name, drawn rotated like the classic Start menu.
-        g.fill(x + 1, y + 1, x + 1 + DesktopScreen.BAND_W, y + h - 1, theme.titleActive());
+        g.fill(x + 1, y + 1, x + 1 + BAND_W, y + h - 1, theme.titleActive());
         final PoseStack pose = g.pose();
         pose.pushPose();
-        pose.translate(x + DesktopScreen.BAND_W - 5, y + h - 7, 0);
+        pose.translate(x + BAND_W - 5, y + h - 7, 0);
         pose.mulPose(Axis.ZP.rotationDegrees(-90));
-        g.drawString(desktop.textFont(), desktop.osBand(), 0, 0, c.bandInk(), false);
+        g.drawString(desktop.textFont(), desktop.deskName(), 0, 0, c.bandInk(), false);
         pose.popPose();
         // Program items with icons.
-        final int itemX = x + DesktopScreen.BAND_W + 4;
+        final int itemX = x + BAND_W + 4;
         int my = y + 4;
         for (final Launcher l : desktop.launcherList()) {
-            final boolean hov = desktop.hoverIn(itemX, my, x + w - itemX, DesktopScreen.MENU_ITEM_H);
+            final boolean hov = desktop.hoverIn(itemX, my, x + w - itemX, MENU_ITEM_H);
             if (hov) {
-                g.fill(itemX, my, x + w - 2, my + DesktopScreen.MENU_ITEM_H, theme.titleActive());
+                g.fill(itemX, my, x + w - 2, my + MENU_ITEM_H, theme.titleActive());
             }
             ProgramIcons.draw(g, itemX, my, 16, 14, l.programId(), desktop.icons());
             g.drawString(desktop.textFont(), l.label(), itemX + 20, my + 3,
                     hov ? c.hoverInk() : theme.menuText(), false);
-            my += DesktopScreen.MENU_ITEM_H;
+            my += MENU_ITEM_H;
         }
         // Separator, then Shut Down.
         g.fill(itemX, my + 1, x + w - 4, my + 2, c.ruleDark());
@@ -154,32 +182,32 @@ final class FramesLaunchers {
     }
 
     boolean click95(final int mx, final int my, final int tbY) {
-        final int h = desktop.startMenuTall();
+        final int h = desktop.start().height();
         final int y = tbY - h;
-        final int x = desktop.startMenuLeft();
-        if (mx < x || mx > x + DesktopScreen.MENU_W || my < y || my > y + h) {
+        final int x = desktop.start().left();
+        if (mx < x || mx > x + MENU_W || my < y || my > y + h) {
             return false;
         }
         final int itemsTop = y + 4;
         final List<Launcher> all = desktop.launcherList();
-        final int idx = (int) Math.floor((my - itemsTop) / (double) DesktopScreen.MENU_ITEM_H);
+        final int idx = (int) Math.floor((my - itemsTop) / (double) MENU_ITEM_H);
         if (idx >= 0 && idx < all.size()) {
-            desktop.launchAt(idx);
+            desktop.start().choose(idx);
         } else {
-            final int shutY = itemsTop + all.size() * DesktopScreen.MENU_ITEM_H + 6;
-            if (my >= shutY && my <= shutY + DesktopScreen.MENU_ITEM_H) {
+            final int shutY = itemsTop + all.size() * MENU_ITEM_H + 6;
+            if (my >= shutY && my <= shutY + MENU_ITEM_H) {
                 desktop.power().open();
             }
         }
-        desktop.closeLauncher();
+        desktop.start().close();
         return true;
     }
 
     /** Frames XP: a two-column panel (programs left, system places right) with header and footer bands. */
     void renderXp(final GuiGraphics g, final int tbY) {
-        final int x = desktop.startMenuLeft();
-        final int w = DesktopScreen.XP_MENU_W;
-        final int h = desktop.startMenuTall();
+        final int x = desktop.start().left();
+        final int w = XP_MENU_W;
+        final int h = desktop.start().height();
         final int y = tbY - h;
         final DesktopTheme theme = desktop.themeColours();
         final Luna c = LUNA.get();
@@ -187,63 +215,63 @@ final class FramesLaunchers {
         g.fill(x - 1, y - 1, x + w + 1, y + h + 1, c.border());
         g.fill(x, y, x + w, y + h, theme.menuBg());
         // Header band: the player's own face and name over the Luna blue, the way this menu always opened.
-        g.fillGradient(x, y, x + w, y + DesktopScreen.XP_HEADER_H, c.bandFrom(), c.bandTo());
-        drawPlayerFace(g, x + 4, y + 3, DesktopScreen.XP_HEADER_H - 6);
+        g.fillGradient(x, y, x + w, y + XP_HEADER_H, c.bandFrom(), c.bandTo());
+        drawPlayerFace(g, x + 4, y + 3, XP_HEADER_H - 6);
         g.drawString(desktop.textFont(), playerName(),
-                x + 4 + DesktopScreen.XP_HEADER_H - 6 + 5, y + (DesktopScreen.XP_HEADER_H - 8) / 2,
+                x + 4 + XP_HEADER_H - 6 + 5, y + (XP_HEADER_H - 8) / 2,
                 c.bandInk(), true);
         // The orange rule under the header, lit along its top edge.
-        g.fill(x, y + DesktopScreen.XP_HEADER_H, x + w, y + DesktopScreen.XP_HEADER_H + 1, c.orangeTop());
-        g.fill(x, y + DesktopScreen.XP_HEADER_H + 1,
-                x + w, y + DesktopScreen.XP_HEADER_H + DesktopScreen.XP_ORANGE_H, c.orange());
+        g.fill(x, y + XP_HEADER_H, x + w, y + XP_HEADER_H + 1, c.orangeTop());
+        g.fill(x, y + XP_HEADER_H + 1,
+                x + w, y + XP_HEADER_H + XP_ORANGE_H, c.orange());
         // Body: left programs column over white, right places column over a tinted panel.
-        final int bodyTop = y + DesktopScreen.XP_HEADER_H + DesktopScreen.XP_ORANGE_H;
-        final int bodyBot = y + h - DesktopScreen.XP_FOOTER_H;
-        final int split = x + DesktopScreen.XP_LEFT_W;
+        final int bodyTop = y + XP_HEADER_H + XP_ORANGE_H;
+        final int bodyBot = y + h - XP_FOOTER_H;
+        final int split = x + XP_LEFT_W;
         g.fill(x, bodyTop, split, bodyBot, c.leftBody());
         g.fill(split, bodyTop, x + w, bodyBot, c.rightBody());
         g.fill(split, bodyTop, split + 1, bodyBot, c.split());
-        drawXpLeftColumn(g, x + 3, bodyTop + 3, DesktopScreen.XP_LEFT_W - 6);
-        drawXpColumn(g, desktop.xpRight(), split + 3, bodyTop + 3,
-                w - DesktopScreen.XP_LEFT_W - 6, c.rightInk(), 0, false);
+        drawXpLeftColumn(g, x + 3, bodyTop + 3, XP_LEFT_W - 6);
+        drawXpColumn(g, desktop.start().xpRight(), split + 3, bodyTop + 3,
+                w - XP_LEFT_W - 6, c.rightInk(), 0, false);
         drawXpFooter(g, x, y, w, h, bodyBot);
     }
 
     boolean clickXp(final int mx, final int my, final int tbY) {
-        final int x = desktop.startMenuLeft();
-        final int w = DesktopScreen.XP_MENU_W;
-        final int h = desktop.startMenuTall();
+        final int x = desktop.start().left();
+        final int w = XP_MENU_W;
+        final int h = desktop.start().height();
         final int y = tbY - h;
         if (mx < x || mx > x + w || my < y || my > y + h) {
             return false;
         }
-        final int bodyTop = y + DesktopScreen.XP_HEADER_H + DesktopScreen.XP_ORANGE_H;
-        final int bodyBot = y + h - DesktopScreen.XP_FOOTER_H;
-        final int split = x + DesktopScreen.XP_LEFT_W;
+        final int bodyTop = y + XP_HEADER_H + XP_ORANGE_H;
+        final int bodyBot = y + h - XP_FOOTER_H;
+        final int split = x + XP_LEFT_W;
         if (my >= bodyTop && my < bodyBot) {
             if (clickXpBody(mx, my - (bodyTop + 3), split)) {
                 return true;
             }
         } else if (my >= bodyBot) {
             // The footer: log off leaves the machine, turn off asks the power dialog.
-            if (mx >= desktop.xpFooterOff(x, w)) {
+            if (mx >= desktop.start().xpFooterOff(x, w)) {
                 desktop.power().open();
-            } else if (mx >= desktop.xpFooterLog(x, w)) {
-                desktop.closeLauncher();
+            } else if (mx >= desktop.start().xpFooterLog(x, w)) {
+                desktop.start().close();
                 desktop.leaveDesktop();
                 return true;
             }
         }
-        desktop.closeLauncher();
+        desktop.start().close();
         return true;
     }
 
     /** Frames 11: a centered floating panel with a search box, a pinned-app grid, and a footer power button. */
     void render11(final GuiGraphics g, final int tbY) {
-        final int x = desktop.startMenuLeft();
-        final int w = DesktopScreen.W11_MENU_W;
-        final int h = desktop.startMenuTall();
-        final int y = desktop.startMenuTop(tbY);
+        final int x = desktop.start().left();
+        final int w = W11_MENU_W;
+        final int h = desktop.start().height();
+        final int y = desktop.start().top(tbY);
         final OsSkin skin = desktop.prefs().skin();
         // The Start panel follows the window skin, so dark mode darkens it along with every program.
         final int panelBg = skin.windowBg();
@@ -256,8 +284,8 @@ final class FramesLaunchers {
         g.fill(x - 1, y - 1, x + w + 1, y + h + 1, skin.windowBorder());
         g.fill(x, y, x + w, y + h, panelBg);
         final int contentTop = drawW11Search(g, x, y, w, panelEdge, panelDim, panelText, skin);
-        final List<Launcher> filtered = desktop.searchedLaunchers();
-        if (desktop.searchText().isEmpty()) {
+        final List<Launcher> filtered = desktop.start().filtered();
+        if (desktop.start().searchText().isEmpty()) {
             drawW11Pinned(g, x, w, contentTop, filtered, panelDim, panelText, panelHover, panelEdge);
         } else {
             drawW11Results(g, x, w, contentTop, filtered, panelDim, panelText, panelHover);
@@ -266,30 +294,30 @@ final class FramesLaunchers {
     }
 
     boolean click11(final int mx, final int my, final int tbY) {
-        final int x = desktop.startMenuLeft();
-        final int w = DesktopScreen.W11_MENU_W;
-        final int h = desktop.startMenuTall();
-        final int y = desktop.startMenuTop(tbY);
+        final int x = desktop.start().left();
+        final int w = W11_MENU_W;
+        final int h = desktop.start().height();
+        final int y = desktop.start().top(tbY);
         if (mx < x || mx > x + w || my < y || my > y + h) {
             return false;
         }
         // Footer power button (right side): shut the computer down.
-        final int footY = y + h - DesktopScreen.W11_FOOTER_H;
+        final int footY = y + h - W11_FOOTER_H;
         if (my >= footY) {
             if (mx >= x + w - 24) {
                 desktop.power().open();
-                desktop.closeLauncher();
+                desktop.start().close();
             }
             return true; // clicks elsewhere in the footer are absorbed, keeping the menu open
         }
-        final int contentTop = y + 6 + DesktopScreen.W11_SEARCH_H + 5;
-        final List<Launcher> filtered = desktop.searchedLaunchers();
-        if (!desktop.searchText().isEmpty()) {
+        final int contentTop = y + 6 + W11_SEARCH_H + 5;
+        final List<Launcher> filtered = desktop.start().filtered();
+        if (!desktop.start().searchText().isEmpty()) {
             int ry = contentTop + 11;
             for (final Launcher l : filtered) {
                 if (my >= ry && my < ry + 15) {
-                    desktop.launch(l);
-                    desktop.closeLauncher();
+                    desktop.start().choose(l);
+                    desktop.start().close();
                     return true;
                 }
                 ry += 15;
@@ -298,15 +326,15 @@ final class FramesLaunchers {
         }
         // Pinned grid tiles.
         final int gridTop = contentTop + 9;
-        final int gridX = x + (w - DesktopScreen.W11_COLS * DesktopScreen.W11_TILE_W) / 2;
+        final int gridX = x + (w - W11_COLS * W11_TILE_W) / 2;
         if (my >= gridTop && mx >= gridX) {
-            final int col = (mx - gridX) / DesktopScreen.W11_TILE_W;
-            final int row = (my - gridTop) / DesktopScreen.W11_TILE_H;
-            if (col >= 0 && col < DesktopScreen.W11_COLS) {
-                final int idx = row * DesktopScreen.W11_COLS + col;
+            final int col = (mx - gridX) / W11_TILE_W;
+            final int row = (my - gridTop) / W11_TILE_H;
+            if (col >= 0 && col < W11_COLS) {
+                final int idx = row * W11_COLS + col;
                 if (idx >= 0 && idx < filtered.size()) {
-                    desktop.launch(filtered.get(idx));
-                    desktop.closeLauncher();
+                    desktop.start().choose(filtered.get(idx));
+                    desktop.start().close();
                     return true;
                 }
             }
@@ -320,19 +348,19 @@ final class FramesLaunchers {
      */
     private void drawXpLeftColumn(final GuiGraphics g, final int colX, final int colY, final int colW) {
         final Luna c = LUNA.get();
-        final List<Launcher> items = desktop.xpLeft();
-        final int pinned = Math.min(DesktopScreen.XP_PINNED, items.size());
+        final List<Launcher> items = desktop.start().xpLeft();
+        final int pinned = Math.min(XP_PINNED, items.size());
         drawXpColumn(g, items, colX, colY, colW, desktop.themeColours().menuText(), pinned, true);
         if (items.size() > pinned) {
-            final int sepY = colY + pinned * DesktopScreen.XP_ROW_H + DesktopScreen.XP_SEP_H / 2;
+            final int sepY = colY + pinned * XP_ROW_H + XP_SEP_H / 2;
             g.fill(colX + 3, sepY, colX + colW - 3, sepY + 1, c.rule());
         }
-        final int afterRows = colY + desktop.xpLeftRow(items.size());
-        g.fill(colX + 3, afterRows + DesktopScreen.XP_SEP_H / 2,
-                colX + colW - 3, afterRows + DesktopScreen.XP_SEP_H / 2 + 1, c.rule());
-        final int allY = colY + desktop.xpAllRow();
-        if (desktop.hoverIn(colX, allY, colW, DesktopScreen.XP_ALL_ROW_H)) {
-            g.fill(colX, allY, colX + colW, allY + DesktopScreen.XP_ALL_ROW_H, c.rowHover());
+        final int afterRows = colY + desktop.start().xpLeftRow(items.size());
+        g.fill(colX + 3, afterRows + XP_SEP_H / 2,
+                colX + colW - 3, afterRows + XP_SEP_H / 2 + 1, c.rule());
+        final int allY = colY + desktop.start().xpAllRow();
+        if (desktop.hoverIn(colX, allY, colW, XP_ALL_ROW_H)) {
+            g.fill(colX, allY, colX + colW, allY + XP_ALL_ROW_H, c.rowHover());
         }
         g.drawString(desktop.textFont(), GameText.component(DesktopTexts.ALL_PROGRAMS).withStyle(ChatFormatting.BOLD),
                 colX + 4, allY + 4, desktop.themeColours().menuText(), false);
@@ -353,9 +381,9 @@ final class FramesLaunchers {
                               final boolean leftColumn) {
         for (int i = 0; i < items.size(); i++) {
             final Launcher l = items.get(i);
-            final int my = colY + (leftColumn ? desktop.xpLeftRow(i) : i * DesktopScreen.XP_ROW_H);
-            if (desktop.hoverIn(colX, my, colW, DesktopScreen.XP_ROW_H)) {
-                g.fill(colX, my, colX + colW, my + DesktopScreen.XP_ROW_H, LUNA.get().rowHover());
+            final int my = colY + (leftColumn ? desktop.start().xpLeftRow(i) : i * XP_ROW_H);
+            if (desktop.hoverIn(colX, my, colW, XP_ROW_H)) {
+                g.fill(colX, my, colX + colW, my + XP_ROW_H, LUNA.get().rowHover());
             }
             ProgramIcons.draw(g, colX + 1, my, 14, 12, l.programId(), desktop.icons());
             final String label = desktop.shorten(l.label(), (colW - 20) / 6);
@@ -373,9 +401,9 @@ final class FramesLaunchers {
                               final int footY) {
         final Luna c = LUNA.get();
         g.fillGradient(x, footY, x + w, y + h, c.bandFrom(), c.bandTo());
-        final int offX = desktop.xpFooterOff(x, w);
-        final int logX = desktop.xpFooterLog(x, w);
-        final int textY = footY + (DesktopScreen.XP_FOOTER_H - 8) / 2;
+        final int offX = desktop.start().xpFooterOff(x, w);
+        final int logX = desktop.start().xpFooterLog(x, w);
+        final int textY = footY + (XP_FOOTER_H - 8) / 2;
         if (desktop.hoverBelowRight(footY, logX, offX - 4)) {
             g.fill(logX - 2, footY + 2, offX - 6, y + h - 2, c.footerHover());
         }
@@ -396,25 +424,25 @@ final class FramesLaunchers {
     private boolean clickXpBody(final int mx, final int dy, final int split) {
         if (mx < split) {
             // The left column's rows are spaced around a separator, so they are walked, not divided.
-            final List<Launcher> col = desktop.xpLeft();
+            final List<Launcher> col = desktop.start().xpLeft();
             for (int i = 0; i < col.size(); i++) {
-                final int ry = desktop.xpLeftRow(i);
-                if (dy >= ry && dy < ry + DesktopScreen.XP_ROW_H) {
-                    desktop.launch(col.get(i));
-                    desktop.closeLauncher();
+                final int ry = desktop.start().xpLeftRow(i);
+                if (dy >= ry && dy < ry + XP_ROW_H) {
+                    desktop.start().choose(col.get(i));
+                    desktop.start().close();
                     return true;
                 }
             }
-            final int allY = desktop.xpAllRow();
-            if (dy >= allY && dy < allY + DesktopScreen.XP_ALL_ROW_H) {
-                desktop.openEverythingInstalled();
+            final int allY = desktop.start().xpAllRow();
+            if (dy >= allY && dy < allY + XP_ALL_ROW_H) {
+                desktop.start().openAllPrograms();
             }
             return false;
         }
-        final List<Launcher> col = desktop.xpRight();
-        final int row = dy / DesktopScreen.XP_ROW_H;
+        final List<Launcher> col = desktop.start().xpRight();
+        final int row = dy / XP_ROW_H;
         if (row >= 0 && row < col.size()) {
-            desktop.launch(col.get(row));
+            desktop.start().choose(col.get(row));
         }
         return false;
     }
@@ -425,12 +453,12 @@ final class FramesLaunchers {
         final int fieldX = x + 6;
         final int fieldW = w - 12;
         final int fieldY = y + 6;
-        g.fill(fieldX, fieldY, fieldX + fieldW, fieldY + DesktopScreen.W11_SEARCH_H, skin.fieldBg());
-        desktop.drawOutline(g, fieldX, fieldY, fieldW, DesktopScreen.W11_SEARCH_H, panelEdge);
+        g.fill(fieldX, fieldY, fieldX + fieldW, fieldY + W11_SEARCH_H, skin.fieldBg());
+        desktop.drawOutline(g, fieldX, fieldY, fieldW, W11_SEARCH_H, panelEdge);
         // Magnifier glyph.
         desktop.drawOutline(g, fieldX + 4, fieldY + 3, 5, 5, panelDim);
         g.fill(fieldX + 8, fieldY + 7, fieldX + 10, fieldY + 9, panelDim);
-        final String q = desktop.searchText();
+        final String q = desktop.start().searchText();
         if (q.isEmpty()) {
             g.drawString(desktop.textFont(), GameText.resolve(DesktopTexts.SEARCH_HINT), fieldX + 13, fieldY + 3,
                     panelDim, false);
@@ -438,7 +466,7 @@ final class FramesLaunchers {
             g.drawString(desktop.textFont(), desktop.shorten(q, (fieldW - 16) / 6),
                     fieldX + 13, fieldY + 3, panelText, false);
         }
-        return fieldY + DesktopScreen.W11_SEARCH_H + 5;
+        return fieldY + W11_SEARCH_H + 5;
     }
 
     private void drawW11Pinned(final GuiGraphics g, final int x, final int w, final int contentTop,
@@ -446,12 +474,12 @@ final class FramesLaunchers {
                                final int panelText, final int panelHover, final int panelEdge) {
         g.drawString(desktop.textFont(), GameText.resolve(DesktopTexts.PINNED), x + 8, contentTop, panelDim, false);
         final int gridTop = contentTop + 9;
-        final int gridX = x + (w - DesktopScreen.W11_COLS * DesktopScreen.W11_TILE_W) / 2;
+        final int gridX = x + (w - W11_COLS * W11_TILE_W) / 2;
         for (int i = 0; i < filtered.size(); i++) {
-            final int col = i % DesktopScreen.W11_COLS;
-            final int row = i / DesktopScreen.W11_COLS;
-            drawW11Tile(g, filtered.get(i), gridX + col * DesktopScreen.W11_TILE_W,
-                    gridTop + row * DesktopScreen.W11_TILE_H, panelText, panelHover, panelEdge);
+            final int col = i % W11_COLS;
+            final int row = i / W11_COLS;
+            drawW11Tile(g, filtered.get(i), gridX + col * W11_TILE_W,
+                    gridTop + row * W11_TILE_H, panelText, panelHover, panelEdge);
         }
     }
 
@@ -476,14 +504,14 @@ final class FramesLaunchers {
     /** The Frames 11 footer: a separator, the account on the left, the power button on the right. */
     private void drawW11Footer(final GuiGraphics g, final int x, final int y, final int w, final int h,
                                final int panelEdge, final int panelText, final int panelHover) {
-        final int footY = y + h - DesktopScreen.W11_FOOTER_H;
+        final int footY = y + h - W11_FOOTER_H;
         g.fill(x + 8, footY, x + w - 8, footY + 1, panelEdge);
         g.drawString(desktop.textFont(), desktop.accountLabel(),
-                x + 12, footY + (DesktopScreen.W11_FOOTER_H - 8) / 2, panelText, false);
+                x + 12, footY + (W11_FOOTER_H - 8) / 2, panelText, false);
         final int pwX = x + w - 22;
-        final int pwY = footY + (DesktopScreen.W11_FOOTER_H - 12) / 2;
+        final int pwY = footY + (W11_FOOTER_H - 12) / 2;
         if (desktop.hoverBelowRight(footY, pwX - 2, pwX + 14)) {
-            g.fill(pwX - 3, footY + 2, pwX + 15, footY + DesktopScreen.W11_FOOTER_H - 2, panelHover);
+            g.fill(pwX - 3, footY + 2, pwX + 15, footY + W11_FOOTER_H - 2, panelHover);
         }
         desktop.drawOutline(g, pwX, pwY, 12, 12, panelText);
         g.fill(pwX + 5, pwY - 1, pwX + 7, pwY + 6, panelText); // power stem
@@ -492,20 +520,20 @@ final class FramesLaunchers {
     /** Draws one Frames 11 pinned tile: an icon over a centered label, with a hover background. */
     private void drawW11Tile(final GuiGraphics g, final Launcher l, final int tx, final int ty,
                              final int labelColor, final int hoverBg, final int hoverEdge) {
-        if (desktop.hoverIn(tx, ty, DesktopScreen.W11_TILE_W, DesktopScreen.W11_TILE_H)) {
-            g.fill(tx + 1, ty + 1, tx + DesktopScreen.W11_TILE_W - 1, ty + DesktopScreen.W11_TILE_H - 1, hoverBg);
+        if (desktop.hoverIn(tx, ty, W11_TILE_W, W11_TILE_H)) {
+            g.fill(tx + 1, ty + 1, tx + W11_TILE_W - 1, ty + W11_TILE_H - 1, hoverBg);
             desktop.drawOutline(g, tx + 1, ty + 1,
-                    DesktopScreen.W11_TILE_W - 2, DesktopScreen.W11_TILE_H - 2, hoverEdge);
+                    W11_TILE_W - 2, W11_TILE_H - 2, hoverEdge);
         }
-        ProgramIcons.draw(g, tx + (DesktopScreen.W11_TILE_W - 16) / 2, ty + 3, 16, 14,
+        ProgramIcons.draw(g, tx + (W11_TILE_W - 16) / 2, ty + 3, 16, 14,
                 l.programId(), desktop.icons());
         // Truncate the label to the tile width by dropping characters (no ellipsis, which would be wider).
         String label = l.label();
-        while (label.length() > 3 && desktop.textFont().width(label) > DesktopScreen.W11_TILE_W - 2) {
+        while (label.length() > 3 && desktop.textFont().width(label) > W11_TILE_W - 2) {
             label = label.substring(0, label.length() - 1);
         }
         g.drawString(desktop.textFont(), label,
-                tx + (DesktopScreen.W11_TILE_W - desktop.textFont().width(label)) / 2, ty + 20, labelColor, false);
+                tx + (W11_TILE_W - desktop.textFont().width(label)) / 2, ty + 20, labelColor, false);
     }
 
     /** The name shown on the XP menu's header: the player's own. */
