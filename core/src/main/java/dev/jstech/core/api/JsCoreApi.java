@@ -26,7 +26,7 @@ public final class JsCoreApi {
      * <p>An addon that uses something added later can say so by refusing to load below the number that
      * added it, which is the whole reason this is a number and not a date.
      */
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
 
     /**
      * How long something here lives once it is marked as going.

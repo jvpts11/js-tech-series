@@ -111,6 +111,30 @@ public interface IProgrammingLanguage {
         }
     }
 
+    /**
+     * What a build is asked for besides its sources.
+     *
+     * @param isa             the instruction set to build for, such as {@code jsc:x86_64}, or empty to leave it to the
+     *                        language
+     * @param languageVersion the version of the language the sources are held to, or {@link #NEWEST} for the newest
+     *                        the compiler knows; a language without versions reads it as nothing
+     */
+    record CompileOptions(String isa, int languageVersion) {
+
+        /** A version of none, which leaves a build to the newest version its compiler knows. */
+        public static final int NEWEST = 0;
+
+        public CompileOptions {
+            isa = isa == null ? "" : isa;
+            languageVersion = Math.max(NEWEST, languageVersion);
+        }
+
+        /** A build for that instruction set, at the newest version of the language. */
+        public static CompileOptions forIsa(final String isa) {
+            return new CompileOptions(isa, NEWEST);
+        }
+    }
+
     /** What a piece of source is made of, for an editor to colour it by. */
     enum Kind {
         KEYWORD, NAME, TEXT, NUMBER, COMMENT, SYMBOL
@@ -137,6 +161,16 @@ public interface IProgrammingLanguage {
      */
     default CompileResult compile(final List<SourceText> sources, final String isa) {
         return compile(sources);
+    }
+
+    /**
+     * The same, built as {@code options} asks: for an instruction set, and held to a version of the language.
+     *
+     * <p>A language with versions overrides this and refuses what came after the version asked for. One without
+     * them builds as it does for the instruction set alone, which is what this does unless overridden.
+     */
+    default CompileResult compile(final List<SourceText> sources, final CompileOptions options) {
+        return options.isa().isEmpty() ? compile(sources) : compile(sources, options.isa());
     }
 
     /**

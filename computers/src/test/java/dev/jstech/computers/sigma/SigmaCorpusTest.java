@@ -69,6 +69,29 @@ class SigmaCorpusTest {
         assertTrue(changed.isEmpty(), () -> String.join("\n", changed));
     }
 
+    /*
+     * A version only adds, so every program the first version takes compiles under it to the very listing the
+     * newest writes: a machine that loaded it before loads the same thing now. The one program built on what came
+     * later is refused by the first version instead, and refused for that.
+     */
+    @Test
+    void compile_atTheFirstVersion_writesWhatTheNewestWrites() throws IOException {
+        for (final String name : PROGRAMS) {
+            final List<SourceFile> files = List.of(new SourceFile(name + ".sgs", source(name + ".sgs")));
+            final SigmaCompiler.Result first =
+                    SigmaCompiler.compile(files, AsmProgram.DEFAULT_ISA, LanguageLevel.SIGMA_SHARP, 1);
+            if (name.equals("Sound")) {
+                assertTrue(!first.ok() && first.diagnostics().stream().allMatch(d -> "S3057".equals(d.code())),
+                        () -> "the first version should refuse Sound only for its version: " + first.diagnostics());
+                continue;
+            }
+            final SigmaCompiler.Result newest = SigmaCompiler.compile(files);
+            assertTrue(first.ok(), () -> name + " does not compile at the first version: " + first.diagnostics());
+            assertTrue(first.assembly().equals(newest.assembly()),
+                    () -> name + " compiles to a different listing at the first version");
+        }
+    }
+
     @Test
     void corpus_usesEveryMemberOfTheLibraryAndMachineTypes() {
         final StringBuilder all = new StringBuilder();

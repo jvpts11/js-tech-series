@@ -46,6 +46,7 @@ final class MemberChecker {
             final NamedType named = this.scope.declarations().lookup(spelled + "." + member.name(),
                     this.scope.currentType());
             if (named != null) {
+                this.scope.declarations().reportIfNewer(named, member.line(), member.column());
                 this.scope.model().setBinding(member, new IBinding.TypeName(named));
                 return named;
             }

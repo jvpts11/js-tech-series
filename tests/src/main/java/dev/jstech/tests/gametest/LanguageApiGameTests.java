@@ -284,6 +284,31 @@ public final class LanguageApiGameTests {
     }
 
     /**
+     * A build asked for a version of the language is held to it: Σ# 1 has no Sound, the newest has. A language with
+     * no versions of its own builds as it always did, whatever version it is asked for.
+     */
+    @GameTest(template = ARENA)
+    public static void compileOptions_holdAVersionedLanguageToItsVersionAndLeaveAnotherAlone(
+            final GameTestHelper helper) {
+        final List<IProgrammingLanguage.SourceText> beeper = List.of(new IProgrammingLanguage.SourceText("b.sgs",
+                "using System.Sound.*; namespace T; class T { static void Main() { Sound.Beep(880, 200); } }"));
+        final IProgrammingLanguage.CompileResult first = SigmaLanguage.SIGMA_SHARP.compile(beeper,
+                new IProgrammingLanguage.CompileOptions("", 1));
+        helper.assertTrue(!first.ok() && first.complaints().stream().anyMatch(c -> "S3057".equals(c.code())),
+                "Σ# 1 has no Sound: " + first.complaints());
+        final IProgrammingLanguage.CompileResult newest = SigmaLanguage.SIGMA_SHARP.compile(beeper,
+                IProgrammingLanguage.CompileOptions.forIsa(""));
+        helper.assertTrue(newest.ok() && newest.binary().contains(".arch jsc:x86"),
+                "the newest version has it, built for the language's own baseline: " + newest.complaints());
+        final ToyLanguage toy = new ToyLanguage();
+        final List<IProgrammingLanguage.SourceText> clock =
+                List.of(new IProgrammingLanguage.SourceText("clock.toy", ToyLanguage.CLOCK));
+        helper.assertTrue(toy.compile(clock, new IProgrammingLanguage.CompileOptions("", 3))
+                        .equals(toy.compile(clock)), "a language without versions builds as it always did");
+        helper.succeed();
+    }
+
+    /**
      * The smaller language is a language of the registry in its own right, found by what its files end in, so an
      * editor colours it, complains about it and builds it as it does the full one. It is held to its own cut, it
      * builds for the oldest machines unless told otherwise, and the machine runs its source like any other.

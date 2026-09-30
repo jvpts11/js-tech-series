@@ -131,8 +131,9 @@ final class ExpressionChecker {
                         BodyScope.Access.IMPLICIT);
             }
         }
-        final ITypeSymbol type = this.scope.declarations().lookup(name.identifier(), this.scope.currentType());
+        final NamedType type = this.scope.declarations().lookup(name.identifier(), this.scope.currentType());
         if (type != null) {
+            this.scope.declarations().reportIfNewer(type, name.line(), name.column());
             this.scope.model().setBinding(name, new IBinding.TypeName(type));
             return type;
         }

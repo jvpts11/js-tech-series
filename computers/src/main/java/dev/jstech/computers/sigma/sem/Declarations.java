@@ -9,6 +9,8 @@ package dev.jstech.computers.sigma.sem;
 
 import dev.jstech.computers.sigma.SigmaError;
 import dev.jstech.computers.sigma.DiagnosticBag;
+import dev.jstech.computers.sigma.LanguageLevel;
+import dev.jstech.computers.sigma.SigmaVersions;
 import dev.jstech.computers.sigma.ast.CompilationUnit;
 import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.INode;
@@ -52,6 +54,9 @@ public final class Declarations {
     private final Map<IMemberSymbol.MethodSymbol, INode> methodNodes = new LinkedHashMap<>();
     /** The type being filled, whose scope decides what a bare name means. */
     private NamedType current;
+    /** The language and the version of it the build is held to, which decide what of the library it may name. */
+    private LanguageLevel level = LanguageLevel.SIGMA_SHARP;
+    private int version = SigmaVersions.NEWEST;
 
     /** The namespace a file's types live in, and what the file brought in with using. */
     private record Scope(String namespace, List<CompilationUnit.Using> usings) {
@@ -64,6 +69,30 @@ public final class Declarations {
         this.rules = rules;
         this.diagnostics = diagnostics;
         this.model = model;
+    }
+
+    /**
+     * Holds the build to {@code version} of {@code level}: a type of the library that came in a later version is
+     * reported where it was named, and a program's own type of the same name is its own and is left alone.
+     */
+    public void holdTo(final LanguageLevel level, final int version) {
+        this.level = level;
+        this.version = SigmaVersions.held(version);
+    }
+
+    /**
+     * Reports {@code type}, named at {@code line}, {@code column}, when it is a type of the library that came in a
+     * later version than the one the build is held to.
+     */
+    public void reportIfNewer(final NamedType type, final int line, final int column) {
+        if (type == null || this.builtIns.type(type.name(), type.typeParameters().size()) != type) {
+            return;
+        }
+        final int since = SigmaVersions.sinceType(type.name());
+        if (since > this.version) {
+            this.diagnostics.error(line, column, SigmaError.NEEDS_A_LATER_VERSION, type.name(), this.level.mark(),
+                    since, this.level.mark(), this.version);
+        }
     }
 
     /** First pass: every type in the program gets its name and nothing else. */
@@ -446,6 +475,7 @@ public final class Declarations {
             this.reportUnknown(reference.line(), reference.column(), name);
             return ITypeSymbol.Special.ERROR;
         }
+        this.reportIfNewer(type, reference.line(), reference.column());
         if (type.typeParameters().size() != reference.arguments().size()) {
             this.diagnostics.error(reference.line(), reference.column(),
                     SigmaError.WRONG_TYPE_ARGUMENT_COUNT, name, type.typeParameters().size());

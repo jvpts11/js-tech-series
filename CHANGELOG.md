@@ -433,6 +433,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   an instruction set by the same ids and names as before. The word architecture is left for the design of a chip.
 - For addon authors: `ComputersRegisterEvent.isa`, `JsComputersApi.registerIsa` and `IsaSpec` take over from
   `architecture`, `registerArchitecture` and `ArchitectureSpec`, and `JsComputersApi.VERSION` is 2.
+- For addon authors: a build can ask a language for an instruction set and a version of the language at once, with
+  `IProgrammingLanguage.compile(sources, CompileOptions)`; a language without versions builds as it did for the
+  instruction set alone, which is what the method does unless overridden. `JsCoreApi.VERSION` is 2.
 - How much a processor orchestrates counts the design of its cores as well as how many there are and how fast
   they run: a newer design does more in each tick of its clock, and two threads a core add a fifth. An old chip at
   a high clock no longer outruns a better one that came after it. Vintage machines orchestrate less than before

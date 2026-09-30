@@ -135,6 +135,7 @@ public enum SigmaError {
     PRINTF_BAD_FORMAT(TextKey.of("jsc.sigma.error.s3054", "printf: %s")),
     PRINTF_WRONG_COUNT(TextKey.of("jsc.sigma.error.s3055", "printf: the format has %s and the call gives %s")),
     PRINTF_WRONG_VALUE(TextKey.of("jsc.sigma.error.s3056", "printf: '%%%s' takes %s, and this is %s")),
+    NEEDS_A_LATER_VERSION(TextKey.of("jsc.sigma.error.s3057", "'%s' needs %s %s; this project is %s %s")),
 
     // A4001 to A4010 are the listing's own problems, reported by reading one back (ListingError).
     NOT_YET_BUILT(TextKey.of("jsc.sigma.error.s4011", "%s is not built yet")),

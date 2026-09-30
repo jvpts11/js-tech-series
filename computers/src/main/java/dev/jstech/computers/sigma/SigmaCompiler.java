@@ -86,8 +86,17 @@ public final class SigmaCompiler {
      * what a source may be, never what it compiles to.
      */
     public static Result compile(final List<SourceFile> sources, final String isa, final LanguageLevel level) {
+        return compile(sources, isa, level, SigmaVersions.NEWEST);
+    }
+
+    /**
+     * The same, held to {@code version} of the language: what came in a later version is refused where it was
+     * written, and what the version has compiles exactly as the newest compiles it, since a version only adds.
+     */
+    public static Result compile(final List<SourceFile> sources, final String isa, final LanguageLevel level,
+                                 final int version) {
         final DiagnosticBag bag = new DiagnosticBag(sources.isEmpty() ? "" : sources.getFirst().name());
-        final SigmaSemantics.Analysis analysis = SigmaSemantics.analyse(sources, bag, true, false, level);
+        final SigmaSemantics.Analysis analysis = SigmaSemantics.analyse(sources, bag, true, false, level, version);
         if (bag.hasErrors()) {
             return new Result(null, bag.sorted(), bag.wasCapped());
         }

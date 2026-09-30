@@ -83,8 +83,13 @@ public final class SigmaSemantics {
 
     /** The same, for sources that may only be as much of the language as {@code level} allows. */
     public static Result checkProgram(final List<SourceFile> sources, final LanguageLevel level) {
+        return checkProgram(sources, level, SigmaVersions.NEWEST);
+    }
+
+    /** The same, held to {@code version} of the language as well; see {@link SigmaVersions}. */
+    public static Result checkProgram(final List<SourceFile> sources, final LanguageLevel level, final int version) {
         final DiagnosticBag bag = new DiagnosticBag(sources.isEmpty() ? "" : sources.getFirst().name());
-        return result(sources, bag, analyse(sources, bag, true, false, level));
+        return result(sources, bag, analyse(sources, bag, true, false, level, version));
     }
 
     /**
@@ -138,6 +143,12 @@ public final class SigmaSemantics {
     static Analysis analyse(final List<SourceFile> sources, final DiagnosticBag bag,
                             final boolean wholeProgram, final boolean tolerant,
                             final LanguageLevel level) {
+        return analyse(sources, bag, wholeProgram, tolerant, level, SigmaVersions.NEWEST);
+    }
+
+    static Analysis analyse(final List<SourceFile> sources, final DiagnosticBag bag,
+                            final boolean wholeProgram, final boolean tolerant,
+                            final LanguageLevel level, final int version) {
         final List<CompilationUnit> units = new ArrayList<>();
         for (final SourceFile source : sources) {
             bag.setFile(source.name());
@@ -154,6 +165,7 @@ public final class SigmaSemantics {
         final BuiltIns builtIns = new BuiltIns();
         final TypeRules rules = new TypeRules(builtIns);
         final Declarations declarations = new Declarations(builtIns, rules, bag, model);
+        declarations.holdTo(level, version);
         /*
          * A tree the parser had to guess its way through says nothing reliable about types, so the
          * player gets the mistakes that are certainly there rather than the ones that follow from them.
