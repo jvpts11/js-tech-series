@@ -232,9 +232,10 @@ final class DesktopIcons {
         final int total = launchers.size() + files.size();
         final int perCol = perColumn();
         final int[] cells = cells(perCol);
-        final boolean dragging = desktop.draggingIcon();
+        final DesktopDrags drags = desktop.drags();
+        final boolean dragging = drags.iconDragging();
         final int dropTarget = dragging
-                ? slotAt(desktop.iconDragX(), desktop.iconDragY(), perCol)
+                ? slotAt(drags.iconX(), drags.iconY(), perCol)
                 : -1;
         String pickedLabel = null;
         int pickedX = 0;
@@ -296,8 +297,8 @@ final class DesktopIcons {
          * A green outline on the folder, or the trash, under the cursor while a real file or folder is being
          * dragged. A launcher has no file to move into a folder, so dragging one lights nothing.
          */
-        if (dragging && desktop.draggedIconSlot() >= launcherCount
-                && i == dropTarget && i != desktop.draggedIconSlot()
+        if (dragging && desktop.drags().iconSlot() >= launcherCount
+                && i == dropTarget && i != desktop.drags().iconSlot()
                 && (i >= launcherCount ? files.get(i - launcherCount).directory() : desktop.isTrashIcon(i))) {
             g.fill(cellX, cellY, cellX + CELL_W, cellY + 1, c.dropTarget());
             g.fill(cellX, cellY + CELL_H - 1, cellX + CELL_W, cellY + CELL_H, c.dropTarget());

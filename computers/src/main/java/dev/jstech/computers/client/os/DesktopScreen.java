@@ -25,11 +25,9 @@ import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.RequestDiskFilesPayload;
 import dev.jstech.computers.operation.payload.MachinePowerPayload;
-import dev.jstech.computers.operation.payload.MoveFilePayload;
 import dev.jstech.computers.operation.payload.NiDepositPayload;
 import dev.jstech.computers.operation.payload.NiShiftInsertPayload;
 import dev.jstech.computers.operation.payload.RequestDesktopFilesPayload;
-import dev.jstech.computers.operation.payload.SetIconPositionPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
@@ -415,35 +413,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     private final PanelMenu panelMenu = new PanelMenu(this);
     /** The player's inventory, laid over the window in front when its program has an inventory zone. */
     private final InventoryBand band = new InventoryBand(this);
-
-    /*
-     * Drag-and-drop of a desktop icon (a file/folder, or a program launcher), onto a folder, an open
-     * explorer, or a free grid cell.
-     * Rubber-band selection: dragging on empty wallpaper sweeps a rectangle and selects every icon
-     * it touches. Every desktop does this, and without it there was no way to act on more than one
-     * icon at a time.
-     */
-    private boolean bandActive;
-    private double bandStartX;
-    private double bandStartY;
-    private double bandX;
-    private double bandY;
-
-    /** The band's rectangle in desktop coordinates: {x, y, w, h}. */
-    private int[] bandRect() {
-        final int bx = (int) Math.min(bandStartX, bandX);
-        final int by = (int) Math.min(bandStartY, bandY);
-        return new int[]{bx, by, (int) Math.abs(bandX - bandStartX), (int) Math.abs(bandY - bandStartY)};
-    }
-
-    private int deskDragSlot = -1; // global icon slot being dragged, or -1
-    private boolean deskDragging;
-    private double deskDragX;
-    private double deskDragY;
-    private double deskDragStartX;
-    private double deskDragStartY;
-    /** How far the cursor must travel from the press point before an icon click becomes a drag. */
-    private static final double DRAG_THRESHOLD = 3.0;
+    /** An icon or a file being dragged across the wallpaper, and the rubber band swept over it. */
+    private final DesktopDrags drags = new DesktopDrags(this);
 
     static final int TASKBAR_H = 24;
 
@@ -777,21 +748,14 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return selectedIcon;
     }
 
-    /** The icon being dragged and where the cursor has taken it, for the drop outline and the ghost. */
-    boolean draggingIcon() {
-        return deskDragging;
+    /** An icon or a file being dragged across the wallpaper, and the rubber band swept over it. */
+    DesktopDrags drags() {
+        return drags;
     }
 
-    int draggedIconSlot() {
-        return deskDragSlot;
-    }
-
-    double iconDragX() {
-        return deskDragX;
-    }
-
-    double iconDragY() {
-        return deskDragY;
+    /** The icons on the wallpaper: where each one sits, what it looks like, and which ones are picked. */
+    DesktopIcons iconGrid() {
+        return iconGrid;
     }
 
     /** The desktop file being renamed in place and what has been typed so far, or -1 and empty. */
@@ -1758,8 +1722,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         final int tbY = sh - view.panelBand();
         renderPanelLayer(g, tbY, sw, sh, lmx, lmy);
         renderMenus(g, tbY, lmx, lmy, partialTick);
-        renderDragFeedback(g, sw, tbY, perCol);
-        renderBand(g);
+        drags.render(g, sw, tbY, perCol);
 
         g.disableScissor();
         renderOverlays(g, sw, sh, lmx, lmy, partialTick);
@@ -1900,55 +1863,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         g.pose().popPose();
     }
 
-    /** What an icon being dragged shows: the cell it would land on, and its name trailing the cursor. */
-    private void renderDragFeedback(final GuiGraphics g, final int sw, final int tbY, final int perCol) {
-        if (!deskDragging || deskDragSlot < 0) {
-            return;
-        }
-        g.pose().pushPose();
-        g.pose().translate(0, 0, DesktopZ.DRAG);
-        /*
-         * While dragging an icon to a free spot (not onto a folder), outline the grid cell it would snap to.
-         * Suppressed over a folder (the green folder outline wins) or off the wallpaper, where the drop is a
-         * no-op.
-         */
-        if (iconGrid.slotAt(deskDragX, deskDragY, perCol) < 0
-                && deskDragX < sw && deskDragY < tbY && overWallpaper(deskDragX, deskDragY)) {
-            iconGrid.drawDropCell(g, iconGrid.cellAt(deskDragX, deskDragY, perCol));
-        }
-        if (deskDragSlot < catalogue.icons().size() + desktopItems.size()) {
-            final String label = deskDragSlot < catalogue.icons().size()
-                    ? catalogue.icons().get(deskDragSlot).label()
-                    : DesktopIcons.baseName(desktopItems.get(deskDragSlot - catalogue.icons().size()).path());
-            final int gx = (int) deskDragX + 6;
-            final int gy = (int) deskDragY + 2;
-            final DesktopShellPalette.Colours c = DesktopShellPalette.get();
-            g.fill(gx, gy, gx + font.width(label) + 6, gy + 12, c.ghostFill());
-            g.drawString(font, label, gx + 3, gy + 2, c.ghostInk(), false);
-        }
-        g.pose().popPose();
-    }
-
-    /**
-     * The rubber band, over the wallpaper and its icons: a translucent fill with a solid outline, the way
-     * every desktop draws one.
-     */
-    private void renderBand(final GuiGraphics g) {
-        if (!bandActive) {
-            return;
-        }
-        final int[] r = bandRect();
-        g.pose().pushPose();
-        g.pose().translate(0, 0, DesktopZ.ICONS + 1);
-        final DesktopShellPalette.Colours c = DesktopShellPalette.get();
-        g.fill(r[0], r[1], r[0] + r[2], r[1] + r[3], c.bandFill());
-        g.fill(r[0], r[1], r[0] + r[2], r[1] + 1, c.bandEdge());
-        g.fill(r[0], r[1] + r[3] - 1, r[0] + r[2], r[1] + r[3], c.bandEdge());
-        g.fill(r[0], r[1], r[0] + 1, r[1] + r[3], c.bandEdge());
-        g.fill(r[0] + r[2] - 1, r[1], r[0] + r[2], r[1] + r[3], c.bandEdge());
-        g.pose().popPose();
-    }
-
     /**
      * Everything that sits over the finished desktop, in the order it stacks: hover tooltips, the stack on
      * the cursor, the brightness dim, a program's own modal dialog, a dialog over the whole desktop, the
@@ -2020,177 +1934,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             cdeWindowMenu.render(g, lmx, lmy, prefs.cdePalette());
             g.pose().popPose();
         }
-    }
-
-    /**
-     * Resolves a dropped desktop icon at desktop-local point ({@code dx},{@code dy}). In priority order:
-     * dropping onto an open Files explorer moves the file/folder into the folder that window shows; dropping
-     * onto a desktop folder moves it inside; and dropping on the bare wallpaper pins the icon to that grid
-     * cell (free positioning) and persists the spot. {@code .dat} projections cannot be moved by hand, and any
-     * move attempt raises the locked-file dialog instead, leaving the item where it is. Launchers have no
-     * underlying file, so for them only the pin-to-cell path applies.
-     */
-    private void handleDeskDrop(final double dx, final double dy) {
-        final int total = catalogue.icons().size() + desktopItems.size();
-        if (deskDragSlot < 0 || deskDragSlot >= total) {
-            return;
-        }
-        final boolean isLauncher = deskDragSlot < catalogue.icons().size();
-        final DiskFilesPayload.WireFile src =
-                isLauncher ? null : desktopItems.get(deskDragSlot - catalogue.icons().size());
-
-        // (0) Dropped on the trash, its icon or CDE's control for it: the file is deleted.
-        if (src != null && overTrash(dx, dy)) {
-            if (src.readOnly()) {
-                notices.datLocked();
-            } else {
-                clearMovedIconCell(src);
-                DeskTrash.delete(host, List.of(src.path()));
-            }
-            return;
-        }
-
-        // (1) Drop onto an open Files explorer window: move the file into the folder it is showing.
-        final DesktopWindow explorer = explorerWindowAt(dx, dy);
-        if (explorer != null && explorer.app() instanceof FilesApp files && src != null) {
-            final String destDir = files.crossWindowDropDir(explorer, dx, dy);
-            if (destDir != null && !samePathParent(src.path(), destDir)) {
-                if (src.readOnly()) {
-                    notices.datLocked();
-                } else {
-                    PacketDistributor.sendToServer(new MoveFilePayload(host, src.path(), destDir));
-                    clearMovedIconCell(src);
-                    files.refresh();
-                    requestDesktop();
-                }
-            }
-            return;
-        }
-
-        // (2) Drop onto a desktop folder icon: move the file inside it.
-        final int perCol = iconGrid.perColumn();
-        final int target = iconGrid.slotAt(dx, dy, perCol);
-        if (target >= catalogue.icons().size() && target != deskDragSlot && src != null) {
-            final DiskFilesPayload.WireFile dst = desktopItems.get(target - catalogue.icons().size());
-            if (dst.directory()) {
-                if (src.readOnly()) {
-                    notices.datLocked();
-                } else {
-                    PacketDistributor.sendToServer(new MoveFilePayload(host, src.path(), dst.path()));
-                    clearMovedIconCell(src);
-                    requestDesktop();
-                }
-                return;
-            }
-        }
-
-        /*
-         * (3) Drop on the bare wallpaper: pin the icon to the grid cell under the cursor and persist it,
-         * unless that cell already holds another icon (so two icons never stack on the same spot).
-         */
-        if (dy >= view.workAreaTop() && dy < view.workAreaBottom() && overWallpaper(dx, dy)) {
-            final int cell = iconGrid.cellAt(dx, dy, perCol);
-            if (iconGrid.cellTaken(cell, deskDragSlot, perCol)) {
-                return; // the target cell is occupied; leave the icon where it was
-            }
-            final String key = iconGrid.keyOf(deskDragSlot);
-            iconGrid.pin(key, cell);
-            PacketDistributor.sendToServer(new SetIconPositionPayload(host, key, cell));
-        }
-    }
-
-    /** Whether a desktop point is on the trash: its icon on the wallpaper, or CDE's control for it on the panel. */
-    private boolean overTrash(final double dx, final double dy) {
-        if (is(PanelStyle.CDE)) {
-            return CdeFrontPanelLayout.controlAt(dx, dy, view.width(), view.height())
-                    == CdeFrontPanelLayout.Control.TRASH;
-        }
-        return isTrashIcon(iconGrid.slotAt(dx, dy, iconGrid.perColumn())) && overWallpaper(dx, dy);
-    }
-
-    /** Whether {@code destDir} is already the parent folder of {@code srcPath} (a no-op move). */
-    private static boolean samePathParent(final String srcPath, final String destDir) {
-        final int slash = srcPath.lastIndexOf('/');
-        final String parent = slash < 0 ? "" : srcPath.substring(0, slash);
-        return parent.equals(destDir);
-    }
-
-    /** Forgets a desktop icon's pinned cell once its file has left the desktop folder (moved away). */
-    private void clearMovedIconCell(final DiskFilesPayload.WireFile src) {
-        iconGrid.forget(src.path());
-    }
-
-    /**
-     * Handles a file dragged out of the front Files explorer and released over the bare desktop or over a
-     * different explorer window: it moves the file into the destination folder (the desktop folder, or the
-     * other explorer's open folder). Returns {@code true} when it consumed the drop, so the origin explorer's
-     * own in-window drop logic is skipped. A {@code .dat} cannot be moved this way; it raises the locked
-     * dialog instead. Returns {@code false} when the front window is not a dragging explorer or the drop
-     * lands back inside the origin window (let the app handle it).
-     */
-    private boolean handleExplorerDropToDesktop(final double dx, final double dy) {
-        final DesktopWindow front = wm.front();
-        if (front == null || !(front.app() instanceof FilesApp origin) || !origin.isDragging()) {
-            return false;
-        }
-        final DiskFilesPayload.WireFile dragged = origin.draggedFile();
-        if (dragged == null) {
-            return false;
-        }
-        // A drop landing inside the origin explorer is its own business (move into a subfolder, onto media).
-        final boolean insideOrigin = dx >= front.x() && dx <= front.x() + front.width()
-                && dy >= front.y() && dy <= front.y() + front.height();
-        if (insideOrigin) {
-            return false;
-        }
-        // Dropped on the trash: deleted, as a delete from the explorer's own menu would.
-        if (overTrash(dx, dy)) {
-            if (dragged.readOnly()) {
-                notices.datLocked();
-            } else {
-                DeskTrash.delete(host, List.of(dragged.path()));
-            }
-            origin.cancelDrag();
-            return true;
-        }
-        // Dropped onto a different explorer window: move into the folder that window shows.
-        final DesktopWindow otherExplorer = explorerWindowAt(dx, dy);
-        if (otherExplorer != null && otherExplorer != front
-                && otherExplorer.app() instanceof FilesApp dest) {
-            final String destDir = dest.crossWindowDropDir(otherExplorer, dx, dy);
-            moveExplorerFile(origin, dest, dragged, destDir);
-            origin.cancelDrag();
-            return true;
-        }
-        // Dropped on the bare wallpaper: move it into the desktop folder.
-        if (dy >= view.workAreaTop() && dy < view.workAreaBottom() && overWallpaper(dx, dy)) {
-            moveExplorerFile(origin, null, dragged, desktopDir);
-            origin.cancelDrag();
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Emits the move of {@code dragged} (from {@code origin}) into {@code destDir}, refreshing the source
-     * explorer, an optional destination explorer, and the desktop icons. A {@code .dat} or a no-op move
-     * (already in that folder) does nothing but show the locked dialog where appropriate.
-     */
-    private void moveExplorerFile(final FilesApp origin, @Nullable final FilesApp dest,
-                                  final DiskFilesPayload.WireFile dragged, final String destDir) {
-        if (destDir == null || samePathParent(dragged.path(), destDir)) {
-            return;
-        }
-        if (dragged.readOnly()) {
-            notices.datLocked();
-            return;
-        }
-        PacketDistributor.sendToServer(new MoveFilePayload(host, dragged.path(), destDir));
-        origin.refresh();
-        if (dest != null) {
-            dest.refresh();
-        }
-        requestDesktop();
     }
 
     /** Opens an icon slot: a launcher starts its program; a desktop file/folder opens or navigates. */
@@ -2746,10 +2489,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
              * The drag does not actually begin until the cursor leaves a small dead zone, so a plain click (or
              * a double-click) never turns into an accidental reposition.
              */
-            deskDragSlot = slot;
-            deskDragging = false;
-            deskDragStartX = mouseX;
-            deskDragStartY = mouseY;
+            drags.armIcon(slot, mouseX, mouseY);
             if (dbl) {
                 openSlot(slot);
                 selectedIcon = -1;
@@ -2766,13 +2506,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return Click.TAKEN;
         }
         // Pressing on bare wallpaper starts a rubber band; the drag handler grows it from here.
-        if (button == 0 && mouseY >= view.workAreaTop() && mouseY < view.workAreaBottom()
-                && overWallpaper(mouseX, mouseY)) {
-            bandActive = true;
-            bandStartX = mouseX;
-            bandStartY = mouseY;
-            bandX = mouseX;
-            bandY = mouseY;
+        if (button == 0) {
+            drags.startBand(mouseX, mouseY);
         }
         return Click.CONTAINER;
     }
@@ -2796,22 +2531,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                     view.workAreaBottom());
             return true;
         }
-        // Dragging a desktop icon across the desktop, once the cursor has left the click dead zone.
-        if (deskDragSlot >= 0) {
-            deskDragX = view.localX(mouseXAbs);
-            deskDragY = view.localY(mouseYAbs);
-            if (!deskDragging
-                    && (Math.abs(deskDragX - deskDragStartX) > DRAG_THRESHOLD
-                        || Math.abs(deskDragY - deskDragStartY) > DRAG_THRESHOLD)) {
-                deskDragging = true;
-            }
-            return true;
-        }
-        // Sweeping the wallpaper: extend the band and reselect what it now covers.
-        if (bandActive) {
-            bandX = view.localX(mouseXAbs);
-            bandY = view.localY(mouseYAbs);
-            iconGrid.selectWithin(bandRect());
+        // An icon dragged across the desktop, or the rubber band swept over it.
+        if (drags.drag(view.localX(mouseXAbs), view.localY(mouseYAbs))) {
             return true;
         }
         /*
@@ -2836,8 +2557,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return true;
         }
         // Letting go ends the sweep; whatever it covered stays selected.
-        if (bandActive) {
-            bandActive = false;
+        if (drags.endBand()) {
             return true;
         }
         /*
@@ -2864,12 +2584,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return true;
         }
         // A dragged desktop icon: handle the drop (move into a folder / open explorer, or pin to a cell).
-        if (deskDragging && deskDragSlot >= 0) {
-            handleDeskDrop(view.localX(mouseX), view.localY(mouseY));
-        }
-        final boolean wasDeskDrag = deskDragging;
-        deskDragging = false;
-        deskDragSlot = -1;
+        final boolean wasDeskDrag = drags.dropIcon(view.localX(mouseX), view.localY(mouseY));
         /*
          * A file dragged out of a Files explorer and dropped on the bare desktop moves it into the desktop
          * folder. Handled here, before the app sees the release, so the explorer's own in-window drop logic
@@ -2877,7 +2592,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * falls through to the app below.
          */
         if (!wasDeskDrag && dragging == null && resizing == null
-                && handleExplorerDropToDesktop(view.localX(mouseX), view.localY(mouseY))) {
+                && drags.dropFromFileManager(view.localX(mouseX), view.localY(mouseY))) {
             return super.mouseReleased(mouseX, mouseY, button);
         }
         /*
@@ -3055,39 +2770,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** A desktop-local point as the screen position a click is given in. */
     private int[] screenPoint(final int[] local) {
         return new int[] {view.screenX(local[0]), view.screenY(local[1])};
-    }
-
-    /**
-     * Whether a desktop-local point lands on the bare wallpaper, not over any open (non-minimized) window
-     * body or title bar. Used so a free icon drop only snaps to a cell on the empty desktop, and so a
-     * cross-window drag knows the cursor is on the desktop (not a window).
-     */
-    private boolean overWallpaper(final double mx, final double my) {
-        for (final DesktopWindow w : windows) {
-            if (!wm.away(w) && mx >= w.x() && mx <= w.x() + w.width()
-                    && my >= w.y() && my <= w.y() + w.height()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * The topmost open Files-explorer window whose body is under a desktop-local point, or {@code null}.
-     * Cross-window drag uses this to decide which open folder a dragged file should move into.
-     */
-    @Nullable
-    private DesktopWindow explorerWindowAt(final double mx, final double my) {
-        for (int i = windows.size() - 1; i >= 0; i--) {
-            final DesktopWindow w = windows.get(i);
-            if (wm.away(w) || !(w.app() instanceof FilesApp)) {
-                continue;
-            }
-            if (mx >= w.x() && mx <= w.x() + w.width() && my >= w.y() && my <= w.y() + w.height()) {
-                return w;
-            }
-        }
-        return null;
     }
 
     /** Lays the inventory's slots over the window in front once a tick, ahead of the next frame. */

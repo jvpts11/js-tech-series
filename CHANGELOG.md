@@ -356,8 +356,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   launcher the panel opens, a Start menu, Kickoff, the Mint menu or the Activities overview, with its search; and the
   programs on the panel, their pins, where their buttons sit and a program's own menu; the window manager, with the
   windows back to front and the workspace that is up; the layout the machine remembers, with the programs' insides
-  this client keeps; and how the desktop opens a program or a file, with the requests other screens make of it now
-  typed rather than packed into strings.
+  this client keeps; how the desktop opens a program or a file, with the requests other screens make of it now
+  typed rather than packed into strings; and what the pointer drags across the wallpaper, icons, files out of a file
+  manager and the rubber band.
 - J's Computers' blocks keep their state as J's Core's declared fields: the computers, the server racks, the drives,
   the Pattern Encoders, monitors, speakers, Network Gateways, data cables, Crafting Switches, Server Routers, HBW
   Interfaces and tanks. The players who see one are sent one update a tick however much of it changed, and the
