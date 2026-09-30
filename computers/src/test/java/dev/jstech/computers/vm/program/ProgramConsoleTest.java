@@ -36,6 +36,42 @@ class ProgramConsoleTest {
     }
 
     @Test
+    void print_endsALineAtEveryBreakAndLeavesTheRestOpen() {
+        final ProgramConsole console = new ProgramConsole();
+        console.print("one\ntw");
+        console.print("o\n\nthree");
+        assertEquals(List.of("one", "two", ""), console.lines());
+        assertEquals("three", console.open());
+        assertEquals(3, console.written(), "an open line is not written yet");
+        console.close();
+        assertEquals(List.of("one", "two", "", "three"), console.lines());
+        assertEquals("", console.open());
+        console.close();
+        assertEquals(4, console.written(), "closing with nothing open writes nothing");
+    }
+
+    @Test
+    void print_cutsAnOpenLineThatRunsPastALineWhenItIsKept() {
+        final ProgramConsole console = new ProgramConsole();
+        console.print("x".repeat(ProgramConsole.MOST_LINE_CHARACTERS + 100));
+        console.print("\n");
+        assertEquals(ProgramConsole.MOST_LINE_CHARACTERS, console.lines().getFirst().length());
+        assertTrue(console.lines().getFirst().endsWith(ProgramConsole.CUT));
+    }
+
+    @Test
+    void restore_bringsBackTheLineLeftOpenAndClearTakesItAway() {
+        final ProgramConsole console = new ProgramConsole();
+        console.restore(List.of(Text.literal("before")), 1, "Name? ");
+        assertEquals("Name? ", console.open());
+        console.print("Ann\n");
+        assertEquals(List.of("before", "Name? Ann"), console.lines());
+        console.print("again? ");
+        console.clear();
+        assertEquals("", console.open());
+    }
+
+    @Test
     void write_cutsALineLongerThanALineMayBe() {
         final ProgramConsole console = new ProgramConsole();
         console.write("x".repeat(ProgramConsole.MOST_LINE_CHARACTERS * 3));

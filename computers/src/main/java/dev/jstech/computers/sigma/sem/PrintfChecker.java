@@ -149,7 +149,8 @@ final class PrintfChecker {
     private IMemberSymbol print() {
         final NamedType console = this.scope.builtIns().type("Console", 0);
         for (final IMemberSymbol member : BodyScope.lookup(console, "Print")) {
-            if (member instanceof IMemberSymbol.MethodSymbol method && method.parameters().size() == 1) {
+            if (member instanceof IMemberSymbol.MethodSymbol method && method.parameters().size() == 1
+                    && method.parameters().getFirst().type() == this.scope.builtIns().stringType()) {
                 return method;
             }
         }

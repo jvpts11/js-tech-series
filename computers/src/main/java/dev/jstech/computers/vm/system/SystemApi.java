@@ -136,6 +136,7 @@ public final class SystemApi {
     private static TypeSpec console() {
         final Members console = new Members("Console");
         console.onType(VOID, "Print", MemberKind.PROCESS, CallCost.FREE, STRING);
+        console.onType(VOID, "Print", MemberKind.PROCESS, CallCost.FREE, "char");
         console.onType(VOID, "PrintLine", MemberKind.PROCESS, CallCost.FREE, STRING);
         console.onType(VOID, "Clear", MemberKind.PROCESS, CallCost.FREE);
         /*

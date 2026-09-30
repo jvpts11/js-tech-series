@@ -56,20 +56,37 @@ whole number read as never below zero, `%x`, `%X` and `%o` for one in hexadecima
 C would. A number with a fraction is written as the language writes it (`2.5`) unless the hole gives a
 precision; C's six decimals are `%.6f`. A width or a precision goes up to 999, and one taken from a value
 (`%*d`) is not read. A hole like these is written down as one call that puts the value in it; a plain hole is
-still the value itself, joined to the rest. A hole with no
-value, a value with no hole, and a value of the wrong kind are all errors when the program is compiled. A
-line break written into the format ends the line; the console keeps whole lines, so a `printf` that does not
-end in one still ends its line. Σ# has `printf` as well, since it reads whatever Σ does.
+still the value itself, joined to the rest. A hole with no value, a value with no hole, and a value of the wrong
+kind are all errors when the program is compiled. Σ# has `printf` as well, since it reads whatever Σ does.
+
+The console keeps an open line, as the consoles of those machines did. A `printf` without a line break, or a
+`Console.Print`, leaves the line open for what is printed next; a break, or a `Console.PrintLine`, ends it, and
+it ends when the program does. A program that waits for a line asks with what it left open: the question stands
+where the prompt was, and the answer is typed after it, on the same line.
+
+```
+printf("How many ingots? ");
+int n = atoi(gets());
+```
+
+```
+How many ingots? 16
+```
+
+What is typed while a program is in front is written into its console as it is typed, so every terminal looking
+at the machine shows it once, and a save keeps the exchange, the line left open included.
 
 Version 2 brings the other names those languages used, each written with no type in front of it. Each stands
 for a call of the library, the compiler writes that call down, and the listing is the very one writing it the
-long way gives. The few calls the library gained for them in the same version, `string.Compare`, the `char`
+long way gives. The few calls the library gained for them in the same version, `Console.Print(char)`,
+`string.Compare`, the `char`
 type's `ToUpper`, `ToLower`, `IsDigit`, `IsLetter` and `IsWhiteSpace`, `Convert.ToString(n, base)` and
 `Convert.ToInt(text, fallback)`, are there to be written the long way as well.
 
 | The old name | The long way |
 |---|---|
 | `puts(text)` | `Console.PrintLine(text)` |
+| `putchar(c)` | `Console.Print(c)`: one character, on the open line |
 | `gets()` | `Console.ReadLine()` |
 | `exit(status)` | `Program.Exit(status)` |
 | `abs(n)`, `sqrt(x)`, `pow(x, y)`, `floor(x)`, `min(a, b)`, `max(a, b)` | `Math.Abs`, `Math.Sqrt`, `Math.Pow`, `Math.Floor`, `Math.Min`, `Math.Max` |

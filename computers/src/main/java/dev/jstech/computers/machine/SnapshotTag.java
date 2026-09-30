@@ -65,6 +65,7 @@ public final class SnapshotTag {
     private static final String STATICS = "statics";
     private static final String SCRIPT = "script";
     private static final String CONSOLE = "console";
+    private static final String CONSOLE_OPEN = "console_open";
     private static final String WRITTEN = "written";
     private static final String RANDOM = "random";
     private static final String INPUT = "input";
@@ -180,6 +181,7 @@ public final class SnapshotTag {
         tag.put(WATCHES, watches);
         // Lines kept as sentences, so what the runtime said of a halt reads in its player's words after a reload too.
         tag.put(CONSOLE, TextTags.writeAll(shot.console().lines()));
+        tag.putString(CONSOLE_OPEN, shot.console().open());
         tag.putLong(WRITTEN, shot.console().written());
         tag.putLong(RANDOM, shot.console().random());
         tag.put(INPUT, names(shot.input()));
@@ -243,7 +245,8 @@ public final class SnapshotTag {
                         tag.getLong(SPENT),
                         tag.getString(PROGRAM_NAME), readNames(tag.getList(ARGS, Tag.TAG_STRING)),
                         tag.getInt(MACHINE_ID), tag.getBoolean(EXITED), tag.getInt(EXIT_CODE)),
-                new Snapshot.ConsoleShot(console, tag.getLong(WRITTEN), tag.getLong(RANDOM)),
+                new Snapshot.ConsoleShot(console, tag.getLong(WRITTEN), tag.getLong(RANDOM),
+                        tag.getString(CONSOLE_OPEN)),
                 readNames(tag.getList(INPUT, Tag.TAG_STRING)),
                 new Snapshot.CallbacksShot(readFrames(tag.getList(WAITING, Tag.TAG_COMPOUND)),
                         tag.getLong(DROPPED)),

@@ -229,8 +229,9 @@ public final class HostileSaveGameTests {
                     helper.assertTrue(pc.programs().held() == started.id(), "the terminal still holds it");
                     helper.assertTrue(pc.programs().offerInput("Ada"), "the line typed after the save reaches it");
                     pc.programs().tick(PLENTY);
-                    helper.assertTrue(after.console().equals(List.of("name?", "got Ada")),
-                            "it reads the line and goes on; got " + after.console() + " (" + after.message() + ")");
+                    helper.assertTrue(after.console().equals(List.of("name?", "Ada", "got Ada")),
+                            "it reads the line, echoed as it was typed, and goes on; got " + after.console() + " ("
+                                    + after.message() + ")");
                 })
                 .thenSucceed();
     }

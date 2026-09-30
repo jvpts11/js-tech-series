@@ -569,6 +569,11 @@ public final class ShellView extends Panel {
         return true;
     }
 
+    /** What stands in front of what is typed right now, as the line being typed shows it. */
+    public String promptShown() {
+        return this.promptNow();
+    }
+
     /** What stands in front of what is typed: the prompt, a tool's question, or nothing while something runs. */
     private String promptNow() {
         if (this.keyboard.asking()) {
@@ -581,8 +586,8 @@ public final class ShellView extends Panel {
         this.scrollOffset = 0;
         if (this.keyboard.busy()) {
             /*
-             * A tool is in front. It is typed at only when it has asked, and what is typed is not echoed
-             * here: the machine prints the question with its answer for every window looking at it, and
+             * A tool, or a program, is in front. It is typed at only when it has asked, and what is typed is not
+             * echoed here: the machine prints the question with its answer for every window looking at it, and
              * prints the question alone when the answer was not for showing.
              */
             if (this.keyboard.asking()) {
@@ -593,12 +598,12 @@ public final class ShellView extends Panel {
         }
         if (this.busy) {
             /*
-             * A line for the program in front: it shows as typed, with no prompt, and goes to the machine
-             * for the program to read. None of the terminal's own words mean anything here.
+             * A line typed ahead for the program in front, before it has asked: it goes to the machine for the
+             * program to read, which echoes it into the program's console for every window looking at it. None
+             * of the terminal's own words mean anything here.
              */
-            push(line, CliStyle.PROMPT);
-            PacketDistributor.sendToServer(
-                    new DesktopShellRunPayload(this.host, line, this.session, this.columns));
+            PacketDistributor.sendToServer(new DesktopShellRunPayload(this.host,
+                    line.isEmpty() ? TerminalTools.ENTER : line, this.session, this.columns));
             return;
         }
         push(this.prompt + " " + line, CliStyle.PROMPT);

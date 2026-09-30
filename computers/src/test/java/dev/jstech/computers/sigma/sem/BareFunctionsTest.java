@@ -41,6 +41,7 @@ class BareFunctionsTest {
     /** Each old name beside the call a player would have written the long way, in a method body. */
     private static final List<List<String>> SAME_LISTINGS = List.of(
             List.of("puts(\"hi\");", "Console.PrintLine(\"hi\");"),
+            List.of("putchar('x');", "Console.Print('x');"),
             List.of("string s = gets();", "string s = Console.ReadLine();"),
             List.of("exit(1);", "Program.Exit(1);"),
             List.of("int a = abs(-3); double b = abs(-2.5);", "int a = Math.Abs(-3); double b = Math.Abs(-2.5);"),
@@ -115,7 +116,7 @@ class BareFunctionsTest {
     void named_findsOneByItsNameAndNothingForAnyOtherName() {
         assertEquals(BareFunctions.Shape.READ_OFF_THE_FIRST, BareFunctions.named("strlen").shape());
         assertNull(BareFunctions.named("Strlen"));
-        assertEquals(List.of("printf", "puts", "pow"),
+        assertEquals(List.of("printf", "puts", "putchar", "pow"),
                 BareFunctions.startingWith("p").stream().map(BareFunctions.Function::name).toList());
     }
 

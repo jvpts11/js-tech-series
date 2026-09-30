@@ -135,6 +135,7 @@ public final class BareFunctions {
         add(new Function("sprintf", List.of(form("string", "string format", MORE)), Shape.FORMATTED, JOINED_TEXT,
                 "", 0, OLD_NAMES, BOTH));
         same("puts", "Console", "PrintLine", form("void", "string text"));
+        same("putchar", "Console", "Print", form("void", "char c"));
         same("gets", "Console", "ReadLine", form("string"));
         same("exit", "Program", "Exit", form("void", "int status"));
         same("abs", "Math", "Abs", form("int", "int n"), form("double", "double x"));

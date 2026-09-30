@@ -81,6 +81,11 @@ final class SigmaProgram implements IMachineRuntime {
     }
 
     @Override
+    public String openLine() {
+        return this.process.openLine();
+    }
+
+    @Override
     public long spent() {
         return this.process.spent();
     }

@@ -120,7 +120,7 @@ final class ProcessSnapshotReader {
             }
         }
         final Snapshot.ConsoleShot console = shot.console();
-        process.console0().restore(console.lines(), console.written());
+        process.console0().restore(console.lines(), console.written(), console.open());
         process.random().startFrom(console.random());
         process.input().restore(shot.input());
         callbacks.startFrom(shot.callbacks().dropped());

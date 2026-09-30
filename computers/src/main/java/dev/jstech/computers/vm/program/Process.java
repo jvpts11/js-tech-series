@@ -323,6 +323,11 @@ public final class Process {
         return this.console.written();
     }
 
+    /** What it has printed since its last line ended, which stands before what is typed when it asks. */
+    public String openLine() {
+        return this.console.open();
+    }
+
     /** What it is holding, to the byte. */
     public Heap heap() {
         return this.heap;
@@ -651,6 +656,8 @@ public final class Process {
             this.halt(this.fault(fault, 0));
         }
         if (!this.told && this.endedForGood()) {
+            // A program that ends leaves no line half written: what it had open is a line of its own.
+            this.console.close();
             this.told = true;
             this.host.programEnded(this.machineId());
         }
@@ -773,8 +780,15 @@ public final class Process {
     /** The lines typed at the terminal this process is in front of, waiting for the program to read them. */
     private final ProgramInput input = new ProgramInput();
 
-    /** Hands the process a typed line; a thread stopped on a read carries on with it. */
+    /**
+     * Hands the process a typed line; a thread stopped on a read carries on with it.
+     *
+     * <p>The line is written into the console as it is typed, the way a terminal echoes it: onto the open line, so
+     * the question the program left open and the answer to it are one line, and a line typed ahead of any question
+     * stands on its own.
+     */
     public void offerInput(final String line) {
+        this.console.print((line == null ? "" : line) + "\n");
         this.input.offer(line);
         if (this.waitingForInput()) {
             this.resume();
@@ -1089,6 +1103,7 @@ public final class Process {
 
     void halt(final Halt halt) {
         this.identity.halt(halt.text());
+        this.console.close();
         this.console.write(halt.text());
         if (halt.reason() == Halt.Reason.STACK_DEPTH) {
             this.host.reached(ProgramMilestone.STACK_OVERFLOW);

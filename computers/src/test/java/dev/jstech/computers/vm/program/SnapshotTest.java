@@ -130,7 +130,25 @@ class SnapshotTest {
         final Process process = Process.restore(program, typedAt.save(), IHost.still());
         process.step(PLENTY);
         assertEquals(Process.State.FINISHED, process.state(), () -> String.valueOf(process.message()));
-        assertEquals(List.of("first second"), process.console());
+        assertEquals(List.of("first", "second", "first second"), process.console());
+    }
+
+    /** A question the program left open while it waits is still open when it comes back, and takes its answer. */
+    @Test
+    void save_keepsTheLineAProgramLeftOpen() {
+        final ProgramImage program = load("", """
+                        Console.Print("Name? ");
+                        Console.PrintLine("hello " + Console.ReadLine());
+                """);
+        final Process asking = new Process(program, ROOM, IHost.still());
+        asking.begin(asking.create(program.entryPoint()), "OnTick");
+        asking.step(PLENTY);
+        assertEquals("Name? ", asking.openLine());
+        final Process process = Process.restore(program, asking.save(), IHost.still());
+        assertEquals("Name? ", process.openLine(), "the open line comes back with the rest of the console");
+        process.offerInput("Ann");
+        process.step(PLENTY);
+        assertEquals(List.of("Name? Ann", "hello Ann"), process.console());
     }
 
     @Test
@@ -149,7 +167,7 @@ class SnapshotTest {
         }
         final Process ended = process;
         assertEquals(Process.State.FINISHED, ended.state(), () -> String.valueOf(ended.message()));
-        assertEquals(List.of("got Ada"), ended.console());
+        assertEquals(List.of("Ada", "got Ada"), ended.console());
     }
 
     @Test

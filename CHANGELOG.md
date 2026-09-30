@@ -413,6 +413,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   parent reads from `Process.ExitCode`, unless the program ended itself with `Program.Exit`), and may take
   `string[] args`, handed the words the program was started with. The first version refuses both shapes for the
   version they need.
+- A program's console keeps an open line, the way the consoles of the old machines did: `Console.Print` and a
+  `printf` with no line break leave the line open for what follows, `PrintLine` and a break end it, and it ends
+  when the program does. A program that waits for a line asks with what it left open, which stands where the prompt
+  was at a desktop's terminal and at a machine's own prompt, and the answer typed goes on the same line
+  (`How many ingots? 16`). What is typed is written into the program's console as it is typed, so every terminal
+  looking at it shows it once and a save keeps the whole exchange, the open line included. Σ 2's `putchar` prints
+  one character on the open line, the `Console.Print(char)` it stands for.
 
 ### Changed
 - The Vintage server boards hold the Integra Pentix Pro, as the boards of the time did: the MF MTX-V of the
@@ -672,6 +679,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The unused hook for the Modonomicon guidebook: the series' manuals will be drawn by J's Core itself.
 
 ### Fixed
+- A program in front of a machine's own prompt, on a machine with no desktop, reads what is typed there: the line
+  went to the shell as a command instead, so such a program could never be answered.
 - An array in Σ and Σ# answers to `Length`, the number of places it has, which Σ's own advice for `foreach` told
   a program to use and nothing let it read. It is only read: an array is as long as it was made.
 - The amber of cautions on the Legacy computing screens was hard to read on their light panels; it is a darker

@@ -130,6 +130,8 @@ final class HostedRuntime implements IMachineRuntime {
 
     @Override
     public void offerInput(final String line) {
+        // Echoed as it is typed, as the machine's own programs echo it: a terminal no longer draws it itself.
+        this.view.print(line == null ? "" : line);
         this.process.offerInput(line);
     }
 

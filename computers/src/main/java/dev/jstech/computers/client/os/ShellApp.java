@@ -137,6 +137,11 @@ public final class ShellApp implements IDesktopApp {
         return this.view.scrollbackText();
     }
 
+    /** What stands in front of what is typed right now: the prompt, or the question of the program in front. */
+    public String promptShown() {
+        return this.view.promptShown();
+    }
+
     private void typeNext() {
         final String next = this.lines.poll();
         if (next != null) {

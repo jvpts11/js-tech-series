@@ -393,6 +393,11 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         }
     }
 
+    /** What stands in front of what is typed right now: the prompt, or the question of what is in front. */
+    public String promptShown() {
+        return before().text(GameText.LOADED);
+    }
+
     /** The console's scrollback, oldest first, what the player can read on the prompt right now. */
     public List<String> scrollbackText() {
         final List<String> lines = new ArrayList<>(scrollback.rows().size());

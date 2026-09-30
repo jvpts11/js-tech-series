@@ -42,6 +42,14 @@ public interface IMachineRuntime extends ILanguageProcess, IProgramRuntime {
     /** How many lines it has written since it started, the ones no longer kept included. */
     long written();
 
+    /**
+     * What it has printed since its last line ended, which a terminal shows before what is typed while it waits for a
+     * line; nothing for a runtime that only writes whole lines.
+     */
+    default String openLine() {
+        return "";
+    }
+
     /** How many bytes it may hold at once. */
     long heapBytes();
 

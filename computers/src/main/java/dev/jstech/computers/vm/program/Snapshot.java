@@ -65,11 +65,20 @@ public record Snapshot(int format, String listing, HeapShot heap, IdentityShot i
         }
     }
 
-    /** What the program printed, how much it has ever written, and where its random numbers stand. */
-    public record ConsoleShot(List<Text> lines, long written, long random) {
+    /**
+     * What the program printed, how much it has ever written, where its random numbers stand, and the line it had
+     * left open.
+     */
+    public record ConsoleShot(List<Text> lines, long written, long random, String open) {
 
         public ConsoleShot {
             lines = List.copyOf(lines);
+            open = open == null ? "" : open;
+        }
+
+        /** A console with no line left open. */
+        public ConsoleShot(final List<Text> lines, final long written, final long random) {
+            this(lines, written, random, "");
         }
     }
 

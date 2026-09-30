@@ -84,9 +84,10 @@ public final class DesktopShellPayloads {
             final var running = computer.foreground();
             if (running != null) {
                 busy = drainForeground(running, payload.line(), wire);
+                final var held = ProgramKeyboard.heldBy(running);
                 PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(false, busy,
-                        SshTerminal.prompt(computer, computer),
-                        wire, payload.session()));
+                        SshTerminal.prompt(computer, computer), wire, "", "", payload.session(), false, false,
+                        busy && held != null ? ProgramKeyboard.onDesktop(held) : TerminalKeyboard.PROMPT));
                 return;
             }
             /*
@@ -208,12 +209,17 @@ public final class DesktopShellPayloads {
      * <p>What a program prints reaches the terminal from the machine's own tick, so nothing is
      * collected here: this is only the keyboard. While a program is in front, a line typed is the
      * program's to read, and the interrupt is the one thing that means something to the terminal itself.
+     * Nothing at all is a window asking where things stand, which is answered and hands the program nothing;
+     * a line typed empty comes as the Enter key alone.
      */
-    private static boolean drainForeground(
+    static boolean drainForeground(
             final MachinePrograms processes, final String typed,
             final List<WireLine> wire) {
+        if (typed.isEmpty()) {
+            return true;
+        }
         if (!INTERRUPT.equals(typed)) {
-            processes.offerInput(typed);
+            processes.offerInput(TerminalTools.ENTER.equals(typed) ? "" : typed);
             return true;
         }
         final int id = processes.held();

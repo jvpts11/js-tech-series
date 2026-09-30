@@ -7,6 +7,10 @@
 .method static int Main(string[]) slots 13
     ldstr   "How many ingots?"
     call    Console.PrintLine(string) -> void
+    ldc.i4  62
+    call    Console.Print(char) -> void
+    ldc.i4  32
+    call    Console.Print(char) -> void
     call    Console.ReadLine() -> string
     stloc   1
     ldloc   1

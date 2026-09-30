@@ -229,10 +229,46 @@ class ProcessTest {
         assertEquals(List.of(), process.console(), "nothing is printed before the line comes");
         process.offerInput("Ada");
         assertEquals(Process.State.RUNNING, process.state(), "a typed line lets the read go on");
+        assertEquals(List.of("Ada"), process.console(), "the line typed is echoed as it is typed");
         process.step(PLENTY);
         assertFinished(process);
-        assertEquals(List.of("got Ada"), process.console());
+        assertEquals(List.of("Ada", "got Ada"), process.console());
         assertFalse(process.waitingForInput());
+    }
+
+    /** A question printed without ending the line is what the program asks with, and the answer goes after it. */
+    @Test
+    void readLine_theAnswerGoesOnTheLineTheQuestionLeftOpen() {
+        final Process process = run("        Console.Print(\"How many? \"); "
+                + "Console.PrintLine(\"got \" + Console.ReadLine());");
+        assertTrue(process.waitingForInput());
+        assertEquals("How many? ", process.openLine(), "the question stands open while the program waits");
+        assertEquals(List.of(), process.console(), "an open line is not a line yet");
+        process.offerInput("16");
+        assertEquals(List.of("How many? 16"), process.console());
+        assertEquals("", process.openLine());
+        process.step(PLENTY);
+        assertEquals(List.of("How many? 16", "got 16"), process.console());
+    }
+
+    /** A line left open when a program ends is a line of its own, and so is one open when it is halted. */
+    @Test
+    void end_ofAProgramEndsTheLineItLeftOpen() {
+        final ProgramImage finished = loadSource("class Tool { static void Main() { "
+                + "Console.Print(\"a\"); Console.Print('b'); } }");
+        final Process process = new Process(finished, ROOM, IHost.still());
+        process.beginMain(finished.entryPoint());
+        process.step(PLENTY);
+        assertFinished(process);
+        assertEquals(List.of("ab"), process.console());
+        final ProgramImage halted = loadSource("class Tool { static void Main() { "
+                + "Console.Print(\"half\"); int zero = 0; int n = 1 / zero; } }");
+        final Process stopped = new Process(halted, ROOM, IHost.still());
+        stopped.beginMain(halted.entryPoint());
+        stopped.step(PLENTY);
+        assertEquals(Process.State.HALTED, stopped.state());
+        assertEquals("half", stopped.console().getFirst(), "what was open, then what stopped it");
+        assertEquals(2, stopped.console().size());
     }
 
     @Test
@@ -243,7 +279,7 @@ class ProcessTest {
         process.begin(process.create(program.entryPoint()), "OnTick");
         process.step(PLENTY);
         assertFinished(process);
-        assertEquals(List.of("got early"), process.console());
+        assertEquals(List.of("early", "got early"), process.console(), "echoed when typed, read later");
     }
 
     @Test
@@ -258,7 +294,7 @@ class ProcessTest {
         process.begin(process.create(program.entryPoint()), "OnTick");
         process.step(PLENTY);
         assertFinished(process);
-        assertEquals(List.of("yes", "one", "no"), process.console());
+        assertEquals(List.of("one", "yes", "one", "no"), process.console());
     }
 
     @Test
@@ -288,7 +324,7 @@ class ProcessTest {
         process.offerInput(" 21 ");
         process.step(PLENTY);
         assertFinished(process);
-        assertEquals(List.of("twice 42"), process.console());
+        assertEquals(List.of(" 21 ", "twice 42"), process.console());
     }
 
     @Test
@@ -316,7 +352,7 @@ class ProcessTest {
         process.begin(process.create(program.entryPoint()), "OnTick");
         process.step(PLENTY);
         assertFinished(process);
-        assertEquals(List.of("yes", "no", "41.5"), process.console());
+        assertEquals(List.of("Yes", "off", "1.5", "40", "yes", "no", "41.5"), process.console());
     }
 
     @Test

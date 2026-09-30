@@ -87,12 +87,17 @@ final class ProcessCalls {
      * text it could not read, as Convert would.
      */
     private static void console(final Map<MemberId, Binding> bindings) {
+        // Print leaves the line open for what follows it; PrintLine ends it.
         bind(bindings, "Console", "Print", null, (process, target, arguments, line) -> {
-            process.console0().writeLines(String.valueOf(arguments[0]));
+            process.console0().print(String.valueOf(arguments[0]));
             return null;
         }, STRING);
+        bind(bindings, "Console", "Print", null, (process, target, arguments, line) -> {
+            process.console0().print(String.valueOf((char) Numbers.toInt(arguments[0])));
+            return null;
+        }, "char");
         bind(bindings, "Console", "PrintLine", null, (process, target, arguments, line) -> {
-            process.console0().writeLines(String.valueOf(arguments[0]));
+            process.console0().print(arguments[0] + "\n");
             return null;
         }, STRING);
         bind(bindings, "Console", "Clear", null, (process, target, arguments, line) -> {

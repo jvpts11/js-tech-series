@@ -92,12 +92,25 @@ public final class ConsolePayloads {
             return;
         }
         /*
+         * A program has the terminal: what is typed is its to read, and Ctrl+C stops it. What it prints, and the
+         * line typed echoed back, come from the machine's own tick, as they do at a desktop's terminal.
+         */
+        final var here = new ServerCliComputer(host, level);
+        final var running = here.foreground();
+        if (running != null) {
+            final List<WireLine> wire = new ArrayList<>();
+            final boolean still = DesktopShellPayloads.drainForeground(running, payload.line(), wire);
+            final var held = ProgramKeyboard.heldBy(running);
+            PacketDistributor.sendToPlayer(player, new CommandOutputPayload(still ? "" : SshTerminal.prompt(here,
+                    here), wire, still && held != null ? ProgramKeyboard.atTerminal(held) : TerminalKeyboard.PROMPT));
+            return;
+        }
+        /*
          * A tool is in front of the terminal: what is typed is the tool's, not the shell's. Its question is
          * answered, Ctrl+C stops it, and anything else goes nowhere, as it would at a real terminal.
          */
         final TerminalTools.Turn turn = TerminalTools.typed(host, level, payload.line());
         if (turn != null) {
-            final var here = new ServerCliComputer(host, level);
             PacketDistributor.sendToPlayer(player, new CommandOutputPayload(
                     turn.ended() ? SshTerminal.prompt(here, here) : "", turn.lines(),
                     TerminalTools.settled(turn.keyboard(), here, here)));
@@ -326,7 +339,13 @@ public final class ConsolePayloads {
          * the terminal never has to guess at a prompt it has not been shown yet.
          */
         final TerminalKeyboard keyboard = TerminalTools.keyboardOf(host.console());
-        if (keyboard.busy()) {
+        // A program in front has the keyboard the way a tool does, asking with what it left open.
+        final var held = player.level() instanceof ServerLevel onLevel
+                ? ProgramKeyboard.heldBy(new ServerCliComputer(host, onLevel).foreground()) : null;
+        if (held != null) {
+            PacketDistributor.sendToPlayer(player, new CommandOutputPayload("", List.of(),
+                    ProgramKeyboard.atTerminal(held)));
+        } else if (keyboard.busy()) {
             PacketDistributor.sendToPlayer(player, new CommandOutputPayload("", List.of(), keyboard));
         } else if (cli != null) {
             PacketDistributor.sendToPlayer(player, new CommandOutputPayload(SshTerminal.prompt(cli, cli), List.of(),

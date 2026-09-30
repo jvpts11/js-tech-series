@@ -26,10 +26,17 @@ import java.util.List;
  *
  * <p>What a program printed is data and stays as it was printed; what the runtime says of it, the reason it was
  * halted, is a sentence, which the terminal shows in its player's language.
+ *
+ * <p>A line is only kept once it has ended. What a program prints without ending it is the open line, held the way a
+ * console of the time held it: it ends with the next line break, it is what the program asks with when it waits for
+ * something to be typed, and it ends when the program does. What is typed is written into the console as it is typed,
+ * the way a terminal echoes it, so a question and its answer are one line.
  */
 public final class ProgramConsole {
 
     private final Deque<Text> lines = new ArrayDeque<>();
+    /** What has been printed since the last line ended. */
+    private final StringBuilder open = new StringBuilder();
     private int characters;
     private long written;
 
@@ -57,36 +64,55 @@ public final class ProgramConsole {
     }
 
     /**
-     * Writes text a program printed, which is as many lines as it has line breaks in it.
-     *
-     * <p>A break at the very end only ends the last line, the way it does at any terminal, so
-     * {@code "done\n"} is the one line {@code done} and {@code "\n"} is an empty line. Without this a break
-     * inside a line was kept as a character no terminal knows how to show.
+     * Writes text a program printed onto the open line: every line break ends the line so far and starts another,
+     * and what comes after the last one stays open, so {@code "done\n"} is the line {@code done} and {@code "\n"} an
+     * empty one. A break is never kept as a character, which no terminal knows how to show. An open line longer than
+     * a line may be is cut where it is kept.
      */
-    public void writeLines(final String text) {
-        if (text.indexOf('\n') < 0) {
-            this.write(text);
-            return;
+    public void print(final String text) {
+        int from = 0;
+        for (int at = text.indexOf('\n'); at >= 0; at = text.indexOf('\n', from)) {
+            this.append(text, from, at);
+            this.write(this.open.toString());
+            this.open.setLength(0);
+            from = at + 1;
         }
-        final String whole = text.endsWith("\n") ? text.substring(0, text.length() - 1) : text;
-        for (final String line : whole.split("\n", -1)) {
-            this.write(line);
+        this.append(text, from, text.length());
+    }
+
+    /** What has been printed since the last line ended, which the terminal shows before what is typed. */
+    public String open() {
+        return this.open.toString();
+    }
+
+    /** Ends the open line where it stands, as a program's end does; nothing when there is none. */
+    public void close() {
+        if (!this.open.isEmpty()) {
+            this.write(this.open.toString());
+            this.open.setLength(0);
         }
     }
 
     /** Empties what is kept; the count of what was ever written stays, since those lines were written. */
     public void clear() {
         this.lines.clear();
+        this.open.setLength(0);
         this.characters = 0;
     }
 
     /** Puts back what a process had kept before it was put away, held to the same limits. */
     public void restore(final List<Text> saved, final long written) {
+        this.restore(saved, written, "");
+    }
+
+    /** Puts back what a process had kept, the line it had left open included, held to the same limits. */
+    public void restore(final List<Text> saved, final long written, final String openLine) {
         this.clear();
         for (final Text line : saved) {
             this.keep(line);
         }
         this.written = Math.max(written, this.lines.size());
+        this.append(openLine == null ? "" : openLine, 0, openLine == null ? 0 : openLine.length());
     }
 
     /** What is kept, oldest first, in English: the words a program reads back, or a file is written with. */
@@ -122,6 +148,15 @@ public final class ProgramConsole {
         while (this.lines.size() > MOST_LINES || this.characters > MOST_CHARACTERS) {
             this.characters -= lengthOf(this.lines.removeFirst());
         }
+    }
+
+    /**
+     * Adds a piece of text to the open line, as much of it as a line has room for and one character more, so a line
+     * that ran over is cut with the mark that says so when it is kept.
+     */
+    private void append(final String text, final int from, final int to) {
+        final int room = MOST_LINE_CHARACTERS + 1 - this.open.length();
+        this.open.append(text, from, Math.min(to, from + Math.max(0, room)));
     }
 
     /* A sentence is counted at its English, which is near enough its length in any language for a limit. */
