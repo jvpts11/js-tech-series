@@ -51,6 +51,7 @@ public final class ClientTestSuite {
             MekanismClientTests.class,
             NetworkInteractorClientTests.class,
             NetworkSharesClientTests.class,
+            OffscreenDesktopClientTests.class,
             OpenWithClientTests.class,
             PanelStylesClientTests.class,
             PatternEncoderClientTests.class,

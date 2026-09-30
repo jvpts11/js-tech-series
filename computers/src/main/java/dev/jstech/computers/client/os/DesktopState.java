@@ -156,19 +156,23 @@ final class DesktopState {
     }
 
     /**
-     * Readies the desktop for its first frame and asks the machine for what it shows. The era's skin is resolved
-     * first: the panel's placement follows the skin (a period desktop panels at the bottom), so waiting for the
-     * machine's reply would draw one frame with the panel on the wrong edge and then jump.
+     * Readies the desktop for its first frame from what the machine is: its system, its desktop and its era. The
+     * era's skin is resolved here rather than when the machine answers: the panel's placement follows the skin (a
+     * period desktop panels at the bottom), so waiting would draw one frame with the panel on the wrong edge and then
+     * jump.
      */
     void prepare() {
-        // The speaker on the panel says whether the system is muted from the first frame it is drawn in.
-        volumePopup.requestState();
         prefs.rebuildSkin();
         catalogue.build();
-        /*
-         * The windows that were open when this machine's monitor was last left are the machine's: they arrive from
-         * the server with the desktop listing asked for here, and the layouts restore them.
-         */
+    }
+
+    /**
+     * Asks the machine for what the desktop shows: the sound, so the speaker on the panel says whether the system is
+     * muted from the first frames, and the desktop folder's listing. The windows that were open when this machine's
+     * monitor was last left are the machine's: they arrive with that listing, and the layouts restore them.
+     */
+    void askMachine() {
+        volumePopup.requestState();
         requestDesktop();
     }
 

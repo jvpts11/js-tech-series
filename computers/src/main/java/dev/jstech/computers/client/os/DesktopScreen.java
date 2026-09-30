@@ -573,9 +573,10 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         this.topPos = view.top();
         this.titleLabelX = -10000;
         this.inventoryLabelY = -10000;
-        // Become the desktop that is up, then ready it and fetch what the machine says it shows.
+        // Become the desktop that is up, since the machine's answers go to that one, then ready it and ask.
         active = state;
         state.prepare();
+        state.askMachine();
     }
 
     /*
