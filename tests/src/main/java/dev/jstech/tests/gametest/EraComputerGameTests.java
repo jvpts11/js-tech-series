@@ -210,7 +210,7 @@ public final class EraComputerGameTests {
                 new ItemStack(HardwareItems.MOTHERBOARD_EATX_LEGACY_604.get())),
                 "a Legacy case has no room for an EATX board");
         helper.assertTrue(standard.isValidForSlot(board,
-                new ItemStack(HardwareItems.MOTHERBOARD_EATX_STANDARD_WS.get())),
+                new ItemStack(HardwareItems.MOTHERBOARD_EATX_STANDARD_2011.get())),
                 "a Standard case takes the workstation's EATX board");
         helper.assertTrue(standard.isValidForSlot(board,
                 new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get())),

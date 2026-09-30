@@ -60,7 +60,7 @@ public final class ComputerCallsGameTests {
         hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_APEX_7_4790K.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,

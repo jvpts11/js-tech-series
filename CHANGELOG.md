@@ -355,6 +355,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   new graphics cards run from the Envya Vertex 7300 GS and the Atrion Radiance X1300 to the Vertex GTX 480 and the
   Radiance HD 5870. And DDR2 and DDR3 in three sizes each, a registered DDR2 for the servers, and the MF PowerBasic
   450B.
+- The Standard fills out: on LGA 1155 the Integra Celer G530 and the Centro c3 2120, c5 2500K and c7 2600K and
+  3770K; on LGA 1150 the Pentix G3258, the Centro c3 4160 and the Servo 1231 v3 beside the Centro c5 and c7; on LGA
+  2011 the workstation Centro c7 3820, 3930K, 4930K and 4960X and the Servo 2609, 4650 and 4657L v2; the Velocion
+  FX-4300, FX-6300, FX-8350 and FX-9590 on AM3+, the Fuse A4, A8 and A10 on FM2+, and the Optera 6212, 6272 and
+  6380 on G34. A board for each new socket: the ATX boards for LGA 1155, AM3+ (on the PCIe 2.0 its chipset had)
+  and FM2+, and the two-way and four-way G34 server boards. Thirteen new graphics cards run from the Envya Vertex GT
+  730 and the Velocion Radiance HD 7750 to the Vertex GTX 1080 and the Radiance R9 Fury X, on the new Maxwell and
+  Pascal designs, with the Envya Tessera K40 compute card for the servers. And the Stratix Layer DDR3L-4096 and the
+  DDR3-16384 RDIMM of the servers.
 
 ### Changed
 - The Vintage server boards hold the Integra Pentix Pro, as the boards of the time did: the MF MTX-V of the
@@ -384,6 +393,18 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   Standard ones do, and their tooltips say so. The self-test's beep lasts through the Transition, whose firmware is
   still a BIOS; from the Standard on, with a UEFI, a machine comes up quiet. And a Personal Computer from the
   Transition on takes the workstation's EATX board as well as an ATX one.
+- Standard names follow the catalogue, and their ids follow them: the Integra Apex processors are the Integra
+  Centro c5 and c7 (`jsc:cpu_integra_centro_c7_4790k` and on); the Servos are `jsc:cpu_integra_servo_2620` and
+  `jsc:cpu_integra_servo_2690`, and the Servo 2699, a chip of the next socket and of DDR4, gives way to the Servo
+  2697 v2 (`jsc:cpu_integra_servo_2697_v2`); the Radiance HD 7970 is a Velocion card
+  (`jsc:gpu_radiance_hd_7970`) and the Vertex GTX 550 Ti and 780 Ti are Envya's; the memory is the Stratix Layer
+  DDR3-8192; the MTX-P Motherboard and EEB-P Server Board are the MF MTX-S Motherboard (4x LGA 2011)
+  (`jsc:motherboard_mtx_s_2011`) and the MF EEB-S Server Board (2x LGA 2011) (`jsc:motherboard_eeb_s_2011`); and the
+  MF EATX Standard Workstation Board is the MF EATX Standard Motherboard (LGA 2011)
+  (`jsc:motherboard_eatx_standard_2011`). Every Standard part has a new icon drawn from the real one.
+- The Standard server boards have the memory slots of their kind: 16 on the two-way board and 48 on the Mainframe's
+  four-way one, where a machine still counts only as many as its case holds; a rack server reports the slots its
+  case has rather than the board's.
 - A medium's tooltip names its format in the player's language ("Floppy", "Blu-ray") instead of the code's name
   for it.
 - A monitor going dark is heard only from a picture tube; the flat panels of the Transition and every later era

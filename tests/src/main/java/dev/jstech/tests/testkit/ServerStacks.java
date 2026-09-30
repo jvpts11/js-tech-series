@@ -47,7 +47,7 @@ public final class ServerStacks {
     private static ItemStack built(final Item machine, final boolean withCpu, final boolean withPhi) {
         final ItemStack stack = new ItemStack(machine);
         final NonNullList<ItemStack> hardware = NonNullList.withSize(ServerHardwareHandler.SLOTS, ItemStack.EMPTY);
-        hardware.set(ServerHardwareHandler.MOBO, new ItemStack(ComputingModule.MOTHERBOARD_EEB_P.get()));
+        hardware.set(ServerHardwareHandler.MOBO, new ItemStack(ComputingModule.MOTHERBOARD_EEB_S_2011.get()));
         if (withCpu) {
             hardware.set(ServerHardwareHandler.CPU_START, new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
         }

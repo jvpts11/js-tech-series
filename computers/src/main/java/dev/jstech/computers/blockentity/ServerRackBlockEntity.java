@@ -2100,7 +2100,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     @Override
     public int ramSlots() {
         final ComputerBuild build = soleBuild();
-        return build == null ? 0 : build.motherboard().ramSlots();
+        // A server board can have more memory slots than a server's case holds modules; the case is what counts.
+        return build == null ? 0 : Math.min(build.motherboard().ramSlots(), ServerHardwareHandler.RAM);
     }
 
     @Override

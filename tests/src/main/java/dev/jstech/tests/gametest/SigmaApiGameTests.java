@@ -79,7 +79,7 @@ public final class SigmaApiGameTests {
         hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_APEX_7_4790K.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
@@ -294,7 +294,7 @@ public final class SigmaApiGameTests {
                     computer.programs().tick(100000);
                     final List<String> said = computer.programs().byId(started.id()).process().console();
                     /*
-                     * The socket holds a four-core Apex 7 4790K at 4000 on a Standard board, with 8 GB
+                     * The socket holds a four-core Centro c7 4790K at 4000 on a Standard board, with 8 GB
                      * in the slot and Frames XP on the disk: what the machine reports has to be that.
                      */
                     helper.assertTrue(said.size() == 3, "it says its three lines; got " + said);

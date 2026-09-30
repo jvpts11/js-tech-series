@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest;
 
+import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.GpuItem;
@@ -135,6 +136,46 @@ public final class CatalogRulerGameTests {
                 HardwareItems.GPU_RADIANCE_X1950_XTX, HardwareItems.GPU_RADIANCE_HD_3850,
                 HardwareItems.GPU_RADIANCE_HD_4670, HardwareItems.GPU_RADIANCE_HD_5770,
                 HardwareItems.GPU_RADIANCE_HD_4870, HardwareItems.GPU_RADIANCE_HD_5870));
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void standardProcessors_climbTheirLadderInEverySocket(final GameTestHelper helper) {
+        assertProcessorsClimb(helper, "LGA 1155", List.of(HardwareItems.CPU_INTEGRA_CELER_G530,
+                HardwareItems.CPU_INTEGRA_CENTRO_C3_2120, HardwareItems.CPU_INTEGRA_CENTRO_C5_2500K,
+                HardwareItems.CPU_INTEGRA_CENTRO_C7_2600K, HardwareItems.CPU_INTEGRA_CENTRO_C7_3770K));
+        assertProcessorsClimb(helper, "LGA 1150", List.of(HardwareItems.CPU_INTEGRA_PENTIX_G3258,
+                HardwareItems.CPU_INTEGRA_CENTRO_C3_4160, HardwareItems.CPU_INTEGRA_CENTRO_C5_4590,
+                HardwareItems.CPU_INTEGRA_CENTRO_C5_4690K, HardwareItems.CPU_INTEGRA_SERVO_1231_V3,
+                HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K));
+        assertProcessorsClimb(helper, "LGA 2011 workstation", List.of(HardwareItems.CPU_INTEGRA_CENTRO_C7_3820,
+                HardwareItems.CPU_INTEGRA_CENTRO_C7_3930K, HardwareItems.CPU_INTEGRA_CENTRO_C7_4930K,
+                HardwareItems.CPU_INTEGRA_CENTRO_C7_4960X));
+        assertProcessorsClimb(helper, "LGA 2011 two-way", List.of(HardwareItems.CPU_INTEGRA_SERVO_2609,
+                ComputingModule.CPU_SERVO_2620, ComputingModule.CPU_SERVO_2690, ComputingModule.CPU_SERVO_2697_V2));
+        assertProcessorsClimb(helper, "LGA 2011 four-way", List.of(HardwareItems.CPU_INTEGRA_SERVO_4650,
+                HardwareItems.CPU_INTEGRA_SERVO_4657L_V2));
+        assertProcessorsClimb(helper, "AM3+", List.of(HardwareItems.CPU_VELOCION_FX_4300,
+                HardwareItems.CPU_VELOCION_FX_6300, HardwareItems.CPU_VELOCION_FX_8350,
+                HardwareItems.CPU_VELOCION_FX_9590));
+        assertProcessorsClimb(helper, "FM2+", List.of(HardwareItems.CPU_VELOCION_FUSE_A4_6300,
+                HardwareItems.CPU_VELOCION_FUSE_A8_6600K, HardwareItems.CPU_VELOCION_FUSE_A10_6800K));
+        assertProcessorsClimb(helper, "G34", List.of(HardwareItems.CPU_VELOCION_OPTERA_6212,
+                HardwareItems.CPU_VELOCION_OPTERA_6272, HardwareItems.CPU_VELOCION_OPTERA_6380));
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void standardGraphicsCards_climbEachMakersLadder(final GameTestHelper helper) {
+        assertCardsClimb(helper, "Envya", List.of(HardwareItems.GPU_VERTEX_GT_730,
+                HardwareItems.GPU_VERTEX_GTX_550_TI, HardwareItems.GPU_VERTEX_GTX_750_TI,
+                HardwareItems.GPU_VERTEX_GTX_660, HardwareItems.GPU_VERTEX_GTX_970, HardwareItems.GPU_VERTEX_GTX_780_TI,
+                HardwareItems.GPU_VERTEX_GTX_1060, HardwareItems.GPU_VERTEX_GTX_980_TI,
+                HardwareItems.GPU_VERTEX_GTX_1080));
+        assertCardsClimb(helper, "Velocion", List.of(HardwareItems.GPU_RADIANCE_HD_7750,
+                HardwareItems.GPU_RADIANCE_HD_7850, HardwareItems.GPU_RADIANCE_HD_7970,
+                HardwareItems.GPU_RADIANCE_RX_480, HardwareItems.GPU_RADIANCE_R9_290X,
+                HardwareItems.GPU_RADIANCE_R9_FURY_X));
         helper.succeed();
     }
 

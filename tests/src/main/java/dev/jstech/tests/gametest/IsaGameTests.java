@@ -243,7 +243,7 @@ public final class IsaGameTests {
 
     private static PersonalComputerBlockEntity standard(final GameTestHelper helper, final BlockPos at) {
         return assemble(helper, at, ComputingModule.PERSONAL_COMPUTER.get(),
-                HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get(), HardwareItems.CPU_APEX_7_4790K.get(),
+                HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get(), HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get(),
                 ComputingModule.RAM_DDR3_8192.get(), ComputingModule.PSU_650G.get());
     }
 

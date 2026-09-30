@@ -42,6 +42,10 @@ public record CpuSocketId(String id) {
     public static final CpuSocketId LGA_1156 = own("lga_1156");
     public static final CpuSocketId LGA_1366 = own("lga_1366");
     public static final CpuSocketId SOCKET_F = own("socket_f");
+    public static final CpuSocketId LGA_1155 = own("lga_1155");
+    public static final CpuSocketId AM3_PLUS = own("am3_plus");
+    public static final CpuSocketId FM2_PLUS = own("fm2_plus");
+    public static final CpuSocketId G34 = own("g34");
     public static final CpuSocketId AM4 = own("am4");
     public static final CpuSocketId LGA_1150 = own("lga_1150");
     public static final CpuSocketId LGA_1700 = own("lga_1700");
@@ -71,8 +75,11 @@ public record CpuSocketId(String id) {
         return new CpuSocketId(JsComputers.MODID + ":" + path);
     }
 
-    /** The socket as a tooltip says it: LGA_1700, the way it is written on a board. */
+    /**
+     * The socket as a tooltip says it: LGA_1700, the way it is written on a board. An id cannot hold a plus sign, so
+     * a socket named for the one before it plus a little spells it out ({@code am3_plus}) and reads AM3+ here.
+     */
     public String display() {
-        return this.id.substring(this.id.indexOf(':') + 1).toUpperCase(Locale.ROOT);
+        return this.id.substring(this.id.indexOf(':') + 1).toUpperCase(Locale.ROOT).replace("_PLUS", "+");
     }
 }

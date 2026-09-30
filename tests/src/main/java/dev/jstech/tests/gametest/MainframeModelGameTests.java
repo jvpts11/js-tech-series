@@ -50,7 +50,7 @@ public final class MainframeModelGameTests {
     private static void fitMinimalBuild(final MainframeBlockEntity mainframe) {
         final ItemStackHandler hardware = mainframe.getHardware();
         hardware.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_MTX_P.get()));
+                new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
         hardware.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
                 new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
         hardware.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,

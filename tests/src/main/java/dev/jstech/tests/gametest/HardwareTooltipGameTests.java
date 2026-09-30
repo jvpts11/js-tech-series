@@ -49,7 +49,7 @@ public final class HardwareTooltipGameTests {
     public static void eraLine_wearsItsErasScreenColour(final GameTestHelper helper) {
         assertEraColour(helper, new ItemStack(HardwareItems.CPU_INTEGRA_486SX.get()), HardwareEra.VINTAGE);
         assertEraColour(helper, new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_700.get()), HardwareEra.LEGACY);
-        assertEraColour(helper, new ItemStack(HardwareItems.CPU_APEX_5_4590.get()), HardwareEra.STANDARD);
+        assertEraColour(helper, new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C5_4590.get()), HardwareEra.STANDARD);
         assertEraColour(helper, new ItemStack(HardwareItems.RAM_SIMM_4.get()), HardwareEra.VINTAGE);
         assertEraColour(helper, new ItemStack(HardwareItems.GPU_VERTEX_GTX_780_TI.get()), HardwareEra.STANDARD);
         helper.assertTrue(HardwareEra.VINTAGE.screenColor() != HardwareEra.LEGACY.screenColor()
@@ -83,7 +83,7 @@ public final class HardwareTooltipGameTests {
     public static void cpuTooltip_namesTheInstructionSetAndItsWordSize(final GameTestHelper helper) {
         assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_486SX.get()), "x86-16, 16-bit");
         assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_700.get()), "x86, 32-bit");
-        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_APEX_5_4590.get()), "x86-64, 64-bit");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C5_4590.get()), "x86-64, 64-bit");
         helper.succeed();
     }
 
@@ -95,7 +95,8 @@ public final class HardwareTooltipGameTests {
     public static void partTooltips_nameTheirArchitectureAndCodename(final GameTestHelper helper) {
         assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_2_DUO_E6600.get()),
                 "Architecture: Centro Conroe");
-        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_APEX_5_4590.get()), "Architecture: Haswell");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C5_4590.get()),
+                "Architecture: Haswell");
         assertTooltipHas(helper, new ItemStack(HardwareItems.GPU_VERTEX_GTX_780_TI.get()),
                 "Architecture: Kepler GK110");
         assertTooltipHas(helper, new ItemStack(HardwareItems.GPU_3D_BLASTER.get()), "Architecture: V1000");
@@ -125,7 +126,7 @@ public final class HardwareTooltipGameTests {
                 "a K6-II orchestrates 11");
         helper.assertTrue(HardwareItems.CPU_INTEGRA_CENTRO_2_DUO_E6600.get().spec().orchestrationCapacity() == 307,
                 "an E6600 orchestrates 307");
-        helper.assertTrue(HardwareItems.CPU_APEX_7_4790K.get().spec().orchestrationCapacity() == 2074,
+        helper.assertTrue(HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get().spec().orchestrationCapacity() == 2074,
                 "a 4790K with two threads a core orchestrates 2,074");
         helper.assertTrue(HardwareItems.GPU_VERTEX_GTX_780_TI.get().spec().power() == 2520
                         && HardwareItems.GPU_RADIANCE_HD_6850.get().spec().power() == 744,

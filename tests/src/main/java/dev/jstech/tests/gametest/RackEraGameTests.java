@@ -109,7 +109,7 @@ public final class RackEraGameTests {
         final InteractionHand hand = InteractionHand.MAIN_HAND;
         final ItemStack vintageBoard = stack(HardwareItems.MOTHERBOARD_EEB_VINTAGE.get());
         final ItemStack legacyBoard = stack(HardwareItems.MOTHERBOARD_EATX_LEGACY_S940.get());
-        final ItemStack standardBoard = stack(ComputingModule.MOTHERBOARD_EEB_P.get());
+        final ItemStack standardBoard = stack(ComputingModule.MOTHERBOARD_EEB_S_2011.get());
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     player.setItemInHand(hand, stack(ComputingModule.VINTAGE_SERVER.get()));

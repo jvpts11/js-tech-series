@@ -500,35 +500,40 @@ public final class ComputingModule {
     public static final ItemEntry<RackUnitItem> COOLING_UNIT =
             rackUnit("cooling_unit", RackUnitItem.Kind.COOLING_UNIT).named("Cooling Unit").register();
 
-    // The parts of the first machines, Standard era; the rest of every era is in HardwareItems.
+    /*
+     * The parts of the first machines, Standard era; the rest of every era is in HardwareItems. The Mainframe's
+     * four-way board and the two-way server board take the Servo on LGA 2011, and their memory slots follow the
+     * boards of their kind before them; a machine counts only as many as its own case holds.
+     */
 
-    public static final ItemEntry<MotherboardItem> MOTHERBOARD_MTX_P = part("motherboard_mtx_p",
+    public static final ItemEntry<MotherboardItem> MOTHERBOARD_MTX_S_2011 = part("motherboard_mtx_s_2011",
             properties -> new MotherboardItem(properties, new MotherboardSpec(FormFactor.MTX, HardwareEra.STANDARD,
-                    CpuSocketId.LGA_2011, 4, Set.of(RamGeneration.DDR3), 8, PcieGeneration.PCIE_3_0, 6, 4, 8)))
-            .named("MTX-P Motherboard").register();
-    public static final ItemEntry<MotherboardItem> MOTHERBOARD_EEB_P = part("motherboard_eeb_p",
+                    CpuSocketId.LGA_2011, 4, Set.of(RamGeneration.DDR3), 48, PcieGeneration.PCIE_3_0, 8, 6, 8)))
+            .named("MF MTX-S Motherboard (4x LGA 2011)").register();
+    public static final ItemEntry<MotherboardItem> MOTHERBOARD_EEB_S_2011 = part("motherboard_eeb_s_2011",
             properties -> new MotherboardItem(properties, new MotherboardSpec(FormFactor.EEB, HardwareEra.STANDARD,
-                    CpuSocketId.LGA_2011, 2, Set.of(RamGeneration.DDR3), 8, PcieGeneration.PCIE_3_0, 6, 6, 6)))
-            .named("EEB-P Server Board").register();
-    public static final ItemEntry<CpuItem> CPU_SERVO_2620 = part("cpu_servo_2620", properties -> new CpuItem(
+                    CpuSocketId.LGA_2011, 2, Set.of(RamGeneration.DDR3), 16, PcieGeneration.PCIE_3_0, 6, 6, 6)))
+            .named("MF EEB-S Server Board (2x LGA 2011)").register();
+    public static final ItemEntry<CpuItem> CPU_SERVO_2620 = part("cpu_integra_servo_2620", properties -> new CpuItem(
             properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 6, 2000, 95, false)
                     .on(Microarchitectures.SANDY_BRIDGE, "").withSmt()))
             .named("Integra Servo 2620").register();
-    public static final ItemEntry<CpuItem> CPU_SERVO_2690 = part("cpu_servo_2690", properties -> new CpuItem(
+    public static final ItemEntry<CpuItem> CPU_SERVO_2690 = part("cpu_integra_servo_2690", properties -> new CpuItem(
             properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 8, 2900, 135, false)
                     .on(Microarchitectures.SANDY_BRIDGE, "").withSmt()))
             .named("Integra Servo 2690").register();
-    public static final ItemEntry<CpuItem> CPU_SERVO_2699 = part("cpu_servo_2699", properties -> new CpuItem(
-            properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 18, 2300, 145, false)
-                    .on(Microarchitectures.HASWELL, "").withSmt()))
-            .named("Integra Servo 2699").register();
+    /* The top of the LGA 2011 Servos on DDR3; the eighteen-core chips came with the next socket and DDR4. */
+    public static final ItemEntry<CpuItem> CPU_SERVO_2697_V2 = part("cpu_integra_servo_2697_v2",
+            properties -> new CpuItem(properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 12, 2700,
+                    130, false).on(Microarchitectures.IVY_BRIDGE, "").withSmt()))
+            .named("Integra Servo 2697 v2").register();
     public static final ItemEntry<RamItem> RAM_DDR3_8192 = part("ram_ddr3_8192", properties -> new RamItem(
             properties, new RamSpec(HardwareEra.STANDARD, RamGeneration.DDR3, 2048, 15)))
-            .named("Stratix DDR3-8192").register();
-    public static final ItemEntry<GpuItem> GPU_HD_7970 = part("gpu_hd_7970", properties -> new GpuItem(
+            .named("Stratix Layer DDR3-8192").register();
+    public static final ItemEntry<GpuItem> GPU_HD_7970 = part("gpu_radiance_hd_7970", properties -> new GpuItem(
             properties, new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 2048, 3072, 250)
                     .on(Microarchitectures.GCN, "Tahiti", 925)))
-            .named("Pyrix Radiance HD 7970").register();
+            .named("Velocion Radiance HD 7970").register();
     public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_T2 = part("crafting_card_t2",
             properties -> new CraftingCardItem(properties,
                     new CraftingCardSpec(IndustrialTier.T2, PcieGeneration.PCIE_1_0, 0.05, 2, 75)))

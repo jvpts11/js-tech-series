@@ -346,6 +346,66 @@ class PerEraBuildTest {
         assertFalse(build(standardBoard(), standardCpu(), ddr2, psu(650)).isPowered());
     }
 
+    /*
+     * The rest of the Standard: the LGA 1155 entry, the Velocion FX on AM3+, whose board has the PCIe 2.0 its chipset
+     * had, the Fuse on FM2+, the Opteras two to a G34 server board, and the Mainframe's four LGA 2011 Servos on their
+     * registered memory.
+     */
+
+    private static MotherboardSpec standardBoard(final CpuSocketId socket, final PcieGeneration bus,
+                                                 final int sockets) {
+        return new MotherboardSpec(FormFactor.ATX, HardwareEra.STANDARD, socket, sockets, Set.of(RamGeneration.DDR3),
+                16, bus, 4, 2, 4);
+    }
+
+    @Test
+    void standardEntryBuild_onLga1155_isPowered() {
+        final CpuSpec celer = new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1155, 2, 2400, 65, false);
+        final RamSpec ddr3l = new RamSpec(HardwareEra.STANDARD, RamGeneration.DDR3, 1024, 10);
+        assertTrue(build(standardBoard(CpuSocketId.LGA_1155, PcieGeneration.PCIE_3_0, 1), celer, ddr3l, psu(450))
+                .isPowered());
+    }
+
+    @Test
+    void standardFxBuild_onAm3Plus_isPoweredWithItsCardHeldToThePcie2Slot() {
+        final MotherboardSpec board = standardBoard(CpuSocketId.AM3_PLUS, PcieGeneration.PCIE_2_0, 1);
+        final CpuSpec fx = new CpuSpec(HardwareEra.STANDARD, CpuSocketId.AM3_PLUS, 8, 4000, 125, false);
+        final GpuSpec card = new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 1664, 4096, 145);
+        final ComputerBuild build = new ComputerBuild(board, List.of(fx), List.of(card), List.of(standardRam()),
+                psu(650));
+        assertTrue(build.isPowered());
+        assertTrue(build.hasBandwidthLimitedCard());
+    }
+
+    @Test
+    void standardAm3PlusBoard_refusesATransitionAm3Processor() {
+        final MotherboardSpec board = standardBoard(CpuSocketId.AM3_PLUS, PcieGeneration.PCIE_2_0, 1);
+        final CpuSpec x6 = new CpuSpec(HardwareEra.STANDARD, CpuSocketId.AM3, 6, 3300, 125, false);
+        assertFalse(build(board, x6, standardRam(), psu(650)).isPowered());
+    }
+
+    @Test
+    void standardFuseBuild_onFm2Plus_isPowered() {
+        final CpuSpec fuse = new CpuSpec(HardwareEra.STANDARD, CpuSocketId.FM2_PLUS, 4, 4100, 100, false);
+        assertTrue(build(standardBoard(CpuSocketId.FM2_PLUS, PcieGeneration.PCIE_3_0, 1), fuse, standardRam(),
+                psu(450)).isPowered());
+    }
+
+    @Test
+    void standardServerBuild_twoOpterasOnG34_isPowered() {
+        final CpuSpec optera = new CpuSpec(HardwareEra.STANDARD, CpuSocketId.G34, 16, 2500, 115, false);
+        assertTrue(new ComputerBuild(standardBoard(CpuSocketId.G34, PcieGeneration.PCIE_2_0, 2),
+                List.of(optera, optera), List.of(), List.of(standardRam()), psu(650)).isPowered());
+    }
+
+    @Test
+    void standardMainframeBuild_fourServosOnRegisteredMemory_isPowered() {
+        final CpuSpec servo = new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 8, 2700, 130, false);
+        final RamSpec rdimm = new RamSpec(HardwareEra.STANDARD, RamGeneration.DDR3, 4096, 18);
+        assertTrue(new ComputerBuild(standardBoard(CpuSocketId.LGA_2011, PcieGeneration.PCIE_3_0, 4),
+                List.of(servo, servo, servo, servo), List.of(), List.of(rdimm, rdimm), psu(850)).isPowered());
+    }
+
     // Sound cards
 
     private static SoundCardSpec soundCard(final HardwareEra era, final PcieGeneration bus) {

@@ -117,8 +117,16 @@ public final class Microarchitectures {
     public static final Microarchitecture FERMI = new Microarchitecture("fermi", "Fermi", 1800);
     /** Its shaders worked in groups of five, so a card is counted a group at a time. */
     public static final Microarchitecture TERASCALE_2 = new Microarchitecture("terascale_2", "TeraScale 2", 5000, 5);
+    /*
+     * The Radeons from the HD 7000 to the RX 400: their shaders did about as much a clock through the generations of
+     * the design, so one entry covers them, and each card names its chip.
+     */
     public static final Microarchitecture GCN = new Microarchitecture("gcn", "GCN", 1000);
     public static final Microarchitecture KEPLER = new Microarchitecture("kepler", "Kepler", 1000);
+    /** Each of its shaders did about a third more a clock than a Kepler one. */
+    public static final Microarchitecture MAXWELL = new Microarchitecture("maxwell", "Maxwell", 1350);
+    /** Maxwell's shaders on a finer process, doing as much a clock at a much higher clock. */
+    public static final Microarchitecture PASCAL = new Microarchitecture("pascal", "Pascal", 1350);
 
     private static final List<Microarchitecture> ALL = List.of(UNSPECIFIED,
             I486, P5, K5, K6, P6, K7, NETBURST, K8, CENTRO, K10, NEHALEM, WESTMERE, SANDY_BRIDGE, IVY_BRIDGE, HASWELL,
@@ -126,7 +134,7 @@ public final class Microarchitectures {
             WAY_5, ALDER_LAKE, RAPTOR_LAKE, ARROW_LAKE, GRACEMONT, SKYMONT, SKYLAKE_SP, CASCADE_LAKE, ICE_LAKE_SP,
             COOPER_LAKE, SAPPHIRE_RAPIDS, EMERALD_RAPIDS,
             VGA, RENDITION, NV3, RAGE, THREEDFX, FAHRENHEIT, CELSIUS, R100, R200, KELVIN, R300, RANKINE, CURIE, R400,
-            R500, TESLA, TERASCALE, FERMI, TERASCALE_2, GCN, KEPLER);
+            R500, TESLA, TERASCALE, FERMI, TERASCALE_2, GCN, KEPLER, MAXWELL, PASCAL);
 
     private Microarchitectures() {
     }

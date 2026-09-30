@@ -74,12 +74,12 @@ public final class PayloadRoundTripGameTests {
     public static void desktop_thisPcRoundTrips(final GameTestHelper helper) {
         final ThisPcPayload.AboutFacts about = new ThisPcPayload.AboutFacts(Text.literal("FreeBSD 14.1-RELEASE"),
                 Text.literal("vel64"), Text.literal("14.1-RELEASE GENERIC"), Text.literal("KDE Plasma"),
-                Text.literal("desk"), ThisPcPayload.WITH_CLOCK.with("Integra Apex 7 4790K", "4.0 GHz"), 8192L, 2000L,
-                120L, true, true);
+                Text.literal("desk"), ThisPcPayload.WITH_CLOCK.with("Integra Centro c7 4790K", "4.0 GHz"), 8192L,
+                2000L, 120L, true, true);
         final ThisPcPayload.WireMachine machine = new ThisPcPayload.WireMachine("desk",
                 ThisPcPayload.PERSONAL_COMPUTER.text(), Text.literal("Standard"), "Frames 11", 2021, "on CORE",
-                Text.literal("MF ATX Standard"), ThisPcPayload.WITH_CLOCK.with("Integra Apex 7 4790K", "4.0 GHz"), 1,
-                Text.literal("x86-64, 64-bit"), 16384, 3072, 1, Text.literal("PSU 650G"), true,
+                Text.literal("MF ATX Standard"), ThisPcPayload.WITH_CLOCK.with("Integra Centro c7 4790K", "4.0 GHz"),
+                1, Text.literal("x86-64, 64-bit"), 16384, 3072, 1, Text.literal("PSU 650G"), true,
                 ThisPcPayload.COUNTED.with(2, ThisPcPayload.MONITOR), about);
         final ThisPcPayload.WireDisk disk = new ThisPcPayload.WireDisk(0, Text.literal("Vaultis Swift SSD 500 GB"),
                 2000L, 120L, true, "C:\\", 80L, 20L, 20L);
@@ -181,9 +181,9 @@ public final class PayloadRoundTripGameTests {
     @GameTest(template = ARENA)
     public static void firmware_stateRoundTrips(final GameTestHelper helper) {
         roundTrip(helper, FirmwareStatePayload.STREAM_CODEC, new FirmwareStatePayload(HOST, 2,
-                new FirmwareStatePayload.Machine(Text.literal("RENDER-01"), Text.literal("Integra Apex 7 4790K"), 4,
-                        4000, "x86-64", 64, Text.literal("MF ATX Standard Motherboard"), 16384, 2, 4,
-                        Text.literal("Stratix DDR3-8192"), Text.literal("Visara Vertex GTX 780 Ti"), 1, 2,
+                new FirmwareStatePayload.Machine(Text.literal("RENDER-01"), Text.literal("Integra Centro c7 4790K"),
+                        4, 4000, "x86-64", 64, Text.literal("MF ATX Standard Motherboard"), 16384, 2, 4,
+                        Text.literal("Stratix Layer DDR3-8192"), Text.literal("Envya Vertex GTX 780 Ti"), 1, 2,
                         Text.literal("Standard")),
                 0, -1,
                 List.of(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_DISK, 0L, "jsc:frames_11",
