@@ -131,10 +131,10 @@ public enum SigmaError {
     MODIFIER_NOT_ALLOWED(TextKey.of("jsc.sigma.error.s3051", "'%s' cannot be written with %s")),
     NOT_IN_THE_SUBSET(TextKey.of("jsc.sigma.error.s3052", "Sigma has no %s; %s")),
     PRINTF_FORMAT_NOT_WRITTEN_OUT(TextKey.of("jsc.sigma.error.s3053",
-            "printf's format has to be written out where it is used, in quotes, so its holes can be read")),
-    PRINTF_BAD_FORMAT(TextKey.of("jsc.sigma.error.s3054", "printf: %s")),
-    PRINTF_WRONG_COUNT(TextKey.of("jsc.sigma.error.s3055", "printf: the format has %s and the call gives %s")),
-    PRINTF_WRONG_VALUE(TextKey.of("jsc.sigma.error.s3056", "printf: '%%%s' takes %s, and this is %s")),
+            "%s's format has to be written out where it is used, in quotes, so its holes can be read")),
+    PRINTF_BAD_FORMAT(TextKey.of("jsc.sigma.error.s3054", "%s: %s")),
+    PRINTF_WRONG_COUNT(TextKey.of("jsc.sigma.error.s3055", "%s: the format has %s and the call gives %s")),
+    PRINTF_WRONG_VALUE(TextKey.of("jsc.sigma.error.s3056", "%s: '%%%s' takes %s, and this is %s")),
     NEEDS_A_LATER_VERSION(TextKey.of("jsc.sigma.error.s3057", "'%s' needs %s %s; this project is %s %s")),
 
     // A4001 to A4010 are the listing's own problems, reported by reading one back (ListingError).

@@ -11,6 +11,7 @@ import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.sigma.SigmaVersions;
 import dev.jstech.computers.sigma.ast.CompilationUnit;
 import dev.jstech.computers.sigma.ast.IDecl;
+import dev.jstech.computers.sigma.sem.BareFunctions;
 import dev.jstech.computers.sigma.sem.BuiltIns;
 import dev.jstech.computers.sigma.sem.IBinding;
 import dev.jstech.computers.sigma.sem.IMemberSymbol;
@@ -107,9 +108,8 @@ public final class SigmaCompletions {
     /** What the line under a namespace says it is. */
     private static final String NAMESPACE = "namespace";
 
-    /** The call both languages have with no type in front of it, listed under the language itself. */
-    private static final Item PRINTF =
-            new Item("printf", "printf(string format, ...) : void", Sort.METHOD, "the language");
+    /** What the calls written with no type in front of them are listed under, which is the language itself. */
+    private static final String LANGUAGE = "the language";
 
     /** What a using writes to bring in everything a namespace holds. */
     private static final String ALL = "*";
@@ -140,18 +140,32 @@ public final class SigmaCompletions {
 
     /**
      * The same, held to {@code version} of the language as well: a type of the library that came in a later version
-     * is not offered, nor what it has, since the compiler would refuse both. What the program declares stays.
+     * is not offered, nor what it has, nor a call written with no type in front of it that came later, since the
+     * compiler would refuse all of them. What the program declares stays.
      */
     public static List<Item> within(final LanguageLevel level, final int version, final List<Item> candidates) {
         final List<Item> held = new ArrayList<>(candidates.size());
         for (final Item item : candidates) {
             final boolean ownOrVariable = item.sort() == Sort.VARIABLE || OWN.equals(item.owner());
-            final String libraryType = item.sort() == Sort.TYPE ? item.label() : item.owner();
-            if (ownOrVariable || SigmaVersions.sinceType(libraryType) <= version) {
+            if (ownOrVariable || since(level, item) <= version) {
                 held.add(item);
             }
         }
         return atLevel(level, held);
+    }
+
+    /** The version of {@code level} a candidate of the language came in, or never when that language lacks it. */
+    private static int since(final LanguageLevel level, final Item item) {
+        final BareFunctions.Function bare = bareFunction(item);
+        if (bare != null) {
+            return bare.in(level) ? bare.since() : Integer.MAX_VALUE;
+        }
+        return SigmaVersions.sinceType(level, item.sort() == Sort.TYPE ? item.label() : item.owner());
+    }
+
+    /** The call written with no type in front of it that a candidate is, or null when it is not one. */
+    private static BareFunctions.Function bareFunction(final Item item) {
+        return LANGUAGE.equals(item.owner()) ? BareFunctions.named(item.label()) : null;
     }
 
     private static List<Item> atLevel(final LanguageLevel level, final List<Item> candidates) {
@@ -372,10 +386,16 @@ public final class SigmaCompletions {
             own.sort(Comparator.comparing(Item::label).thenComparing(Item::signature));
             items.addAll(own);
         }
-        // The one call written with no type in front of it, unless the program has a printf of its own above.
-        if (!wanted.isEmpty() && PRINTF.label().startsWith(wanted)
-                && items.stream().noneMatch(item -> item.label().equals(PRINTF.label()))) {
-            items.add(PRINTF);
+        // The calls written with no type in front of them, each unless the program has its own by that name above.
+        if (!wanted.isEmpty()) {
+            for (final BareFunctions.Function function : BareFunctions.startingWith(wanted)) {
+                if (items.stream().anyMatch(item -> item.label().equals(function.name()))) {
+                    continue;
+                }
+                for (final BareFunctions.Form form : function.forms()) {
+                    items.add(new Item(function.name(), form.written(function.name()), Sort.METHOD, LANGUAGE));
+                }
+            }
         }
         items.addAll(types(builtIns, model, prefix));
         return items;
@@ -512,12 +532,15 @@ public final class SigmaCompletions {
      * item is not a call of the library or the machine.
      *
      * <p>A call written several ways may cost something different each way, as a call across a Gateway does for
-     * every thing it hands over, so the price is the one for the way this item writes it.
+     * every thing it hands over, so the price is the one for the way this item writes it. A call written with no
+     * type in front of it costs what the library's call it stands for costs.
      */
     public static Text costOf(final Item item) {
-        final List<IMemberSpec> ways = SystemApi.members(item.owner(), item.label());
+        final BareFunctions.Function bare = bareFunction(item);
+        final List<IMemberSpec> ways = bare == null ? SystemApi.members(item.owner(), item.label())
+                : SystemApi.members(bare.owner(), bare.member());
         IMemberSpec chosen = ways.size() == 1 ? ways.getFirst() : null;
-        final String taken = takenBy(item.signature());
+        final String taken = bare == null ? takenBy(item.signature()) : typesOnly(takenBy(item.signature()));
         for (int i = 0; chosen == null && i < ways.size(); i++) {
             if (String.join(", ", ways.get(i).id().parameters()).equals(taken)) {
                 chosen = ways.get(i);
@@ -536,5 +559,21 @@ public final class SigmaCompletions {
         final int open = signature.indexOf('(');
         final int close = signature.lastIndexOf(')');
         return open < 0 || close < open ? "" : signature.substring(open + 1, close);
+    }
+
+    /**
+     * What a call written with no type in front of it takes, with the names of the values left out, since it names
+     * them the way the manuals of its day did: {@code int a, int b} is {@code int, int}.
+     */
+    private static String typesOnly(final String taken) {
+        if (taken.isEmpty()) {
+            return taken;
+        }
+        final List<String> types = new ArrayList<>();
+        for (final String value : taken.split(", ")) {
+            final int space = value.indexOf(' ');
+            types.add(space < 0 ? value : value.substring(0, space));
+        }
+        return String.join(", ", types);
     }
 }

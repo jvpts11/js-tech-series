@@ -1,0 +1,19 @@
+using System.*;
+using System.IO.*;
+namespace Corpus;
+class OldNamesCorpus {
+    static void Main() {
+        puts("How many ingots?");
+        string line = gets();
+        double asked = atof(line);
+        int n = abs(-3) + min(4, 5) + max(1, 2);
+        double root = sqrt(pow(3, 2)) + floor(2.5) + abs(-0.5) + min(1.5, 2) + max(0.5, 1);
+        srand(1987);
+        int lucky = rand();
+        int length = strlen(line);
+        int at = strstr(line, "ingot");
+        string said = sprintf("%s: %d, %f", itoa(n), lucky + length + at, root + asked);
+        printf("%s\n", said);
+        exit(0);
+    }
+}

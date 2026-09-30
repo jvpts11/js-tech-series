@@ -48,17 +48,19 @@ public final class SubsetRules {
      * language. The rest of a type is not hidden so much as absent: these machines had no floating point worth
      * rounding, no second process to message and no list to hand anybody.
      */
-    private static final Map<String, Set<String>> LIBRARY = Map.of(
-            "Console", Set.of("Print", "PrintLine", "Clear", "ReadLine", "ReadInt", "ReadBool"),
-            "File", Set.of("Exists", "Read", "Write", "Append", "Delete"),
-            "Program", Set.of("Name", "Args", "Exit"),
-            "Math", Set.of("Abs", "Min", "Max", "Floor", "Sqrt", "Pow"),
-            "Convert", Set.of("ToInt", "ToDouble", "ToBool", "ToString"),
-            "Time", Set.of("Tick", "Day"),
-            "Computer", Set.of("Name", "RamMb", "Online"),
-            "Script", Set.of("OnInit", "OnTick", "OnDestroy"),
-            "Sound", Set.of("Beep", "Tones", "Play", "Stop"),
-            "Speaker", Set.of("Named", "Name", "Play"));
+    private static final Map<String, Set<String>> LIBRARY = Map.ofEntries(
+            Map.entry("Console", Set.of("Print", "PrintLine", "Clear", "ReadLine", "ReadInt", "ReadBool")),
+            Map.entry("File", Set.of("Exists", "Read", "Write", "Append", "Delete")),
+            Map.entry("Program", Set.of("Name", "Args", "Exit")),
+            Map.entry("Math", Set.of("Abs", "Min", "Max", "Floor", "Sqrt", "Pow")),
+            Map.entry("Convert", Set.of("ToInt", "ToDouble", "ToBool", "ToString")),
+            Map.entry("Time", Set.of("Tick", "Day")),
+            Map.entry("Computer", Set.of("Name", "RamMb", "Online")),
+            Map.entry("Script", Set.of("OnInit", "OnTick", "OnDestroy")),
+            Map.entry("Sound", Set.of("Beep", "Tones", "Play", "Stop")),
+            Map.entry("Speaker", Set.of("Named", "Name", "Play")),
+            // What rand and srand come down to, and nothing past them: a whole number drawn, and a start chosen.
+            Map.entry("Random", Set.of("Next", "Seed")));
 
     /*
      * What the subset does not have, and what to write instead, in pairs: the first fills "Sigma has no %s", the

@@ -27,13 +27,22 @@ public final class SigmaVersions {
 
     /** The types of the library that came after the first version, with the version each came in. */
     private static final Map<String, Integer> LIBRARY_TYPES = Map.of("Sound", 2, "Speaker", 2);
+    /**
+     * The types the smaller language's library took in later than the full one had them, with the version each
+     * came in there: the full language always had Random, and the smaller one gained it with the old rand.
+     */
+    private static final Map<String, Integer> SUBSET_LATER = Map.of("Random", 2);
 
     private SigmaVersions() {
     }
 
-    /** The version a type of the library came in; a type that has always been there came in the first. */
-    public static int sinceType(final String name) {
-        return LIBRARY_TYPES.getOrDefault(name, FIRST);
+    /**
+     * The version a type of the library came in, in {@code level}; a type that has always been there came in the
+     * first.
+     */
+    public static int sinceType(final LanguageLevel level, final String name) {
+        final Integer later = level.full() ? null : SUBSET_LATER.get(name);
+        return later != null ? later : LIBRARY_TYPES.getOrDefault(name, FIRST);
     }
 
     /**

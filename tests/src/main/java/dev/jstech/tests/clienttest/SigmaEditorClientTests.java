@@ -482,6 +482,9 @@ public final class SigmaEditorClientTests {
                 .thenAssert(0, () -> !studio(ctx).completionLabels().contains("Sound")
                                 && !studio(ctx).completionLabels().contains("Speaker"),
                         "and not Sound or Speaker, which the installed scc 1.0 does not know")
+                .thenAssert(0, () -> !studio(ctx).completionLabels().contains("strlen")
+                                && !studio(ctx).completionLabels().contains("sqrt"),
+                        "nor the old names like strlen and sqrt, which came in Σ 2")
                 .thenScreenshot(2, "sigma-first-version-suggestions")
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_BACKSPACE))
                 .then(SETTLE, () -> studio(ctx).buildSolution())

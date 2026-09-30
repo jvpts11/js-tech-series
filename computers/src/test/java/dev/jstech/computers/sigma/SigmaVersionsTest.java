@@ -60,9 +60,17 @@ class SigmaVersionsTest {
 
     @Test
     void sinceType_givesSoundAndSpeakerTheSecondVersion() {
-        assertEquals(2, SigmaVersions.sinceType("Sound"));
-        assertEquals(2, SigmaVersions.sinceType("Speaker"));
-        assertEquals(SigmaVersions.FIRST, SigmaVersions.sinceType("Console"));
+        for (final LanguageLevel level : LanguageLevel.values()) {
+            assertEquals(2, SigmaVersions.sinceType(level, "Sound"));
+            assertEquals(2, SigmaVersions.sinceType(level, "Speaker"));
+            assertEquals(SigmaVersions.FIRST, SigmaVersions.sinceType(level, "Console"));
+        }
+    }
+
+    @Test
+    void sinceType_givesRandomTheSecondVersionOnlyInTheSmallerLanguage() {
+        assertEquals(2, SigmaVersions.sinceType(LanguageLevel.SIGMA, "Random"));
+        assertEquals(SigmaVersions.FIRST, SigmaVersions.sinceType(LanguageLevel.SIGMA_SHARP, "Random"));
     }
 
     @Test

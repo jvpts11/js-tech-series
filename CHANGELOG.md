@@ -389,6 +389,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   RDNA 1 to 4, with the Envya Tessera V100, A100 and H100 compute cards of the servers. The Forge Logic Crafting Card
   T4 is the crafting card of the Advanced boards, and the Fabric DPU the cluster card that reaches eight nodes at
   once.
+- Σ 2 brings the old names the languages of those machines used, written with no type in front of them, for what
+  the library already does: `puts`, `gets`, `exit`, `abs`, `sqrt`, `pow`, `floor`, `min`, `max`, `strlen`,
+  `strstr`, `atof`, `itoa`, `sprintf`, `rand` and `srand`. Each is the library's own call written the short way
+  (`puts(s)` is `Console.PrintLine(s)`, `strlen(s)` is `s.Length`, `rand()` is `Random.Next(32768)`), so a program
+  compiles to the very listing the long way gives, and Σ# has them too. `sprintf` reads its format as `printf`
+  does and gives the text back instead of printing it. A method or a variable of the program's own under one of
+  those names is still the one called, so no program changes. Σ's `Standard` library gains `Random` in the same
+  version, with `Next` and `Seed`. The editors offer the old names, each way it is written, priced as the call it
+  stands for, and only to a project whose version has them; `docs/SIGMA.md` lists them with the long way of each.
 
 ### Changed
 - The Vintage server boards hold the Integra Pentix Pro, as the boards of the time did: the MF MTX-V of the

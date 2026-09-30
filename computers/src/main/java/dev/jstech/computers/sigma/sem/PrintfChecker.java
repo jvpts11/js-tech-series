@@ -17,23 +17,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Rules on a call of {@code printf}: the format written out, a value for every hole, each of the kind its hole
- * takes.
+ * Rules on a call of {@code printf} or {@code sprintf}: the format written out, a value for every hole, each of
+ * the kind its hole takes.
  *
- * <p>It is the one call of the language written with no type in front of it, the way the languages of those
- * machines wrote theirs, and both languages have it, since whatever the smaller one takes the full one takes
- * too. Nothing new runs for it: a format is read here, while the program is compiled, and what is left is the
- * pieces joined together and handed to the console, exactly what adding them up by hand would have come to. A
- * method of the program's own called {@code printf} is the program's, and is called instead.
+ * <p>Both are among the calls written with no type in front of them, the way the languages of those machines
+ * wrote theirs, and both languages have them, since whatever the smaller one takes the full one takes too.
+ * Nothing new runs for either: a format is read here, while the program is compiled, and what is left is the
+ * pieces joined together, handed to the console by printf and given back by sprintf, exactly what adding them up
+ * by hand would have come to.
  */
 @TextHolder
 final class PrintfChecker {
 
     private final BodyScope scope;
     private final ExpressionChecker expressions;
-
-    /** The name the call is written under. */
-    static final String NAME = "printf";
 
     /* How many holes a format has and how many values a call gives, as the message counts them. */
     private static final TextKey ONE_HOLE = TextKey.of("jsc.sigma.printf_checker.one_hole", "1 hole");
@@ -46,8 +43,12 @@ final class PrintfChecker {
         this.expressions = expressions;
     }
 
-    /** Checks the call and records what it prints. It gives nothing back, so it is a statement and not a value. */
-    ITypeSymbol check(final IExpr.Call call) {
+    /**
+     * Checks the call of {@code name} and records what it comes to. One that prints gives nothing back, so it is a
+     * statement and not a value; one that does not is the text, and nothing is called for it.
+     */
+    ITypeSymbol check(final IExpr.Call call, final String name, final boolean prints) {
+        final ITypeSymbol gives = prints ? ITypeSymbol.Primitive.VOID : this.scope.builtIns().stringType();
         final List<IExpr> values = call.arguments().subList(Math.min(1, call.arguments().size()),
                 call.arguments().size());
         final List<ITypeSymbol> kinds = new ArrayList<>(values.size());
@@ -59,19 +60,20 @@ final class PrintfChecker {
             if (first != null) {
                 this.expressions.check(first, null);
             }
-            this.scope.report(call.line(), call.column(), SigmaError.PRINTF_FORMAT_NOT_WRITTEN_OUT);
-            return ITypeSymbol.Primitive.VOID;
+            this.scope.report(call.line(), call.column(), SigmaError.PRINTF_FORMAT_NOT_WRITTEN_OUT, name);
+            return gives;
         }
         this.scope.model().setType(written, this.scope.builtIns().stringType());
         final PrintfFormat.Read format = PrintfFormat.read(String.valueOf(written.value()));
         if (format.problem() != null) {
-            this.scope.report(written.line(), written.column(), SigmaError.PRINTF_BAD_FORMAT, format.problem());
-            return ITypeSymbol.Primitive.VOID;
+            this.scope.report(written.line(), written.column(), SigmaError.PRINTF_BAD_FORMAT, name,
+                    format.problem());
+            return gives;
         }
         if (format.holes() != values.size()) {
-            this.scope.report(call.line(), call.column(), SigmaError.PRINTF_WRONG_COUNT,
+            this.scope.report(call.line(), call.column(), SigmaError.PRINTF_WRONG_COUNT, name,
                     counted(format.holes(), ONE_HOLE, HOLES), counted(values.size(), ONE_VALUE, VALUES));
-            return ITypeSymbol.Primitive.VOID;
+            return gives;
         }
         final List<Object> pieces = new ArrayList<>(format.pieces().size());
         int next = 0;
@@ -83,14 +85,16 @@ final class PrintfChecker {
             final IExpr value = values.get(next);
             final ITypeSymbol kind = kinds.get(next++);
             if (!this.scope.rules().isError(kind) && !this.takes(hole.wants(), kind)) {
-                this.scope.report(value.line(), value.column(), SigmaError.PRINTF_WRONG_VALUE,
+                this.scope.report(value.line(), value.column(), SigmaError.PRINTF_WRONG_VALUE, name,
                         hole.letter(), hole.wants().words(), kind.describe());
             }
             pieces.add(value);
         }
         this.scope.model().setFormatted(call, pieces);
-        this.scope.model().setCall(call, this.print());
-        return ITypeSymbol.Primitive.VOID;
+        if (prints) {
+            this.scope.model().setCall(call, this.print());
+        }
+        return gives;
     }
 
     /** Whether a hole of that kind takes a value of that type. A whole number does for a fraction, as it did. */

@@ -10,6 +10,7 @@ package dev.jstech.computers.sigma;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.computers.sigma.sem.BareFunctions;
 import dev.jstech.computers.sigma.sem.BuiltIns;
 import dev.jstech.computers.sigma.sem.IMemberSymbol;
 import dev.jstech.computers.sigma.sem.NamedType;
@@ -25,6 +26,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -38,8 +40,10 @@ import org.junit.jupiter.api.Test;
 class SigmaCorpusTest {
 
     /** The programs of the corpus, kept under {@code sigma/corpus} as source and as the listing each compiles to. */
-    private static final List<String> PROGRAMS =
-            List.of("Library", "Programs", "Machine", "Network", "Gateway", "Ui", "Steps", "Values", "Sound");
+    private static final List<String> PROGRAMS = List.of("Library", "Programs", "Machine", "Network", "Gateway",
+            "Ui", "Steps", "Values", "Sound", "OldNames");
+    /** The programs built on what came after the first version, which that version refuses for it. */
+    private static final Set<String> LATER = Set.of("Sound", "OldNames");
 
     /**
      * The types the compiler declares as the language's own core, which the corpus is not about.
@@ -71,8 +75,8 @@ class SigmaCorpusTest {
 
     /*
      * A version only adds, so every program the first version takes compiles under it to the very listing the
-     * newest writes: a machine that loaded it before loads the same thing now. The one program built on what came
-     * later is refused by the first version instead, and refused for that.
+     * newest writes: a machine that loaded it before loads the same thing now. A program built on what came later
+     * is refused by the first version instead, and refused for that.
      */
     @Test
     void compile_atTheFirstVersion_writesWhatTheNewestWrites() throws IOException {
@@ -80,9 +84,10 @@ class SigmaCorpusTest {
             final List<SourceFile> files = List.of(new SourceFile(name + ".sgs", source(name + ".sgs")));
             final SigmaCompiler.Result first =
                     SigmaCompiler.compile(files, AsmProgram.DEFAULT_ISA, LanguageLevel.SIGMA_SHARP, 1);
-            if (name.equals("Sound")) {
+            if (LATER.contains(name)) {
                 assertTrue(!first.ok() && first.diagnostics().stream().allMatch(d -> "S3057".equals(d.code())),
-                        () -> "the first version should refuse Sound only for its version: " + first.diagnostics());
+                        () -> "the first version should refuse " + name + " only for its version: "
+                                + first.diagnostics());
                 continue;
             }
             final SigmaCompiler.Result newest = SigmaCompiler.compile(files);
@@ -113,6 +118,22 @@ class SigmaCorpusTest {
             }
         }
         assertTrue(missing.isEmpty(), () -> "the corpus never uses " + missing);
+    }
+
+    /** Nor does it leave out any of the calls written with no type in front of them. */
+    @Test
+    void corpus_usesEveryCallWrittenWithNoTypeInFrontOfIt() {
+        final StringBuilder all = new StringBuilder();
+        for (final String name : PROGRAMS) {
+            all.append(source(name + ".sgs")).append('\n');
+        }
+        final List<String> missing = new ArrayList<>();
+        for (final BareFunctions.Function function : BareFunctions.all()) {
+            if (!Pattern.compile("\\b" + function.name() + "\\(").matcher(all).find()) {
+                missing.add(function.name());
+            }
+        }
+        assertTrue(missing.isEmpty(), () -> "the corpus never calls " + missing);
     }
 
     /*

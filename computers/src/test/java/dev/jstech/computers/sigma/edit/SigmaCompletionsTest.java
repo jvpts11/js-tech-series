@@ -364,8 +364,8 @@ class SigmaCompletionsTest {
     void within_theSmallerLanguage_onlyTheTypesOfItsLibraryAreOffered() {
         final List<SigmaCompletions.Item> types = SigmaCompletions.within(LanguageLevel.SIGMA,
                 SigmaCompletions.types(this.builtIns, null, ""));
-        assertEquals(List.of("Computer", "Console", "Convert", "File", "Math", "Program", "Script", "Sound",
-                "Speaker", "Time"), labels(types));
+        assertEquals(List.of("Computer", "Console", "Convert", "File", "Math", "Program", "Random", "Script",
+                "Sound", "Speaker", "Time"), labels(types));
         assertEquals("Standard", named(types, "Console").owner());
         assertTrue(labels(SigmaCompletions.types(this.builtIns, null, "")).contains("Network"),
                 "which the full language still has");
@@ -383,6 +383,73 @@ class SigmaCompletionsTest {
         assertFalse(sharp.contains("Sound"), () -> "Σ# 1 offered " + sharp);
         assertTrue(labels(SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 2,
                 SigmaCompletions.types(this.builtIns, null, ""))).contains("Sound"), "Σ# 2 has it");
+    }
+
+    /** Random came to the smaller language's library in the second version; the full one always had it. */
+    @Test
+    void within_theFirstVersion_offersRandomOnlyToTheFullLanguage() {
+        final List<SigmaCompletions.Item> types = SigmaCompletions.types(this.builtIns, null, "Ran");
+        assertEquals(List.of(), labels(SigmaCompletions.within(LanguageLevel.SIGMA, 1, types)));
+        assertEquals(List.of("Random"), labels(SigmaCompletions.within(LanguageLevel.SIGMA, 2, types)));
+        assertEquals(List.of("Random"), labels(SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 1, types)));
+    }
+
+    /** The calls written with no type in front of them are offered from their table, each way each is written. */
+    @Test
+    void names_offersTheCallsWrittenWithNoTypeInFrontOfThem() {
+        final List<String> signatures = SigmaCompletions.names(this.builtIns, null, SigmaCompletions.Scope.NONE,
+                "p").stream().map(SigmaCompletions.Item::signature).toList();
+        assertTrue(signatures.containsAll(List.of("printf(string format, ...) : void", "puts(string text) : void",
+                "pow(double x, double y) : double")), () -> "got " + signatures);
+        final List<SigmaCompletions.Item> abs =
+                SigmaCompletions.names(this.builtIns, null, SigmaCompletions.Scope.NONE, "abs");
+        assertEquals(List.of("abs(int n) : int", "abs(double x) : double"),
+                abs.stream().map(SigmaCompletions.Item::signature).toList());
+    }
+
+    /** The old names came in the second version; printf has been there since the first. */
+    @Test
+    void within_theFirstVersion_offersPrintfAndNoneOfTheOldNames() {
+        final List<SigmaCompletions.Item> offered =
+                SigmaCompletions.names(this.builtIns, null, SigmaCompletions.Scope.NONE, "p");
+        final List<String> first = labels(SigmaCompletions.within(LanguageLevel.SIGMA, 1, offered));
+        assertTrue(first.contains("printf"), () -> "Σ 1 offered " + first);
+        assertFalse(first.contains("puts") || first.contains("pow"), () -> "Σ 1 offered " + first);
+        assertTrue(labels(SigmaCompletions.within(LanguageLevel.SIGMA, 2, offered)).contains("puts"));
+    }
+
+    /** A method of the program's own under one of those names is the one offered, as it is the one called. */
+    @Test
+    void names_aMethodOfTheProgramsOwnHidesTheOldNameItShares() {
+        final String text = PRELUDE + """
+                class Farm : IScript {
+                    public void puts(int n) { }
+                    public void OnInit() {
+                        pu
+                    }
+                    public void OnTick() { }
+                    public void OnDestroy() { }
+                }
+                """;
+        final Read read = readAt(text, 4);
+        final List<String> puts = SigmaCompletions.names(this.builtIns, read.model(), read.scope(), "pu").stream()
+                .filter(item -> item.label().equals("puts")).map(SigmaCompletions.Item::signature).toList();
+        assertEquals(List.of("puts(int) : void"), puts);
+    }
+
+    /** One costs what the library's call it stands for costs; one that stands for a value of text costs nothing. */
+    @Test
+    void costOf_pricesAnOldNameAsTheCallItStandsFor() {
+        for (final SigmaCompletions.Item abs
+                : SigmaCompletions.names(this.builtIns, null, SigmaCompletions.Scope.NONE, "abs")) {
+            assertEquals("costs free", SigmaCompletions.costOf(abs).english(), abs.signature());
+        }
+        final SigmaCompletions.Item puts =
+                named(SigmaCompletions.names(this.builtIns, null, SigmaCompletions.Scope.NONE, "puts"), "puts");
+        assertEquals("costs free", SigmaCompletions.costOf(puts).english());
+        final SigmaCompletions.Item strlen =
+                named(SigmaCompletions.names(this.builtIns, null, SigmaCompletions.Scope.NONE, "strlen"), "strlen");
+        assertNull(SigmaCompletions.costOf(strlen));
     }
 
     /** Nor what such a type has, reached through its name. */

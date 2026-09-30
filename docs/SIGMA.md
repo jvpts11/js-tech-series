@@ -36,11 +36,11 @@ It keeps classes with inheritance, `virtual` and `override`, structs, enums, arr
 and `as`. It has no interfaces, records, delegates, events, properties, lambdas, `foreach`, `List`, `Map`,
 generics, `var`, `lock`, threads, windows, `abstract`, or strings with holes in them, and every refusal says
 what to write instead. Its whole library is one namespace, `Standard` (`using Standard.*;`), with
-`Console`, `File`, `Program`, `Math`, `Convert`, `Time`, `Computer`, `Script`, `Sound` and `Speaker`, each a
-handful of members.
+`Console`, `File`, `Program`, `Math`, `Convert`, `Time`, `Computer` and `Script`, each a handful of members, and
+from version 2 (see Versions below) `Sound`, `Speaker` and `Random`, whose `Next` and `Seed` are the whole of it.
 
-It prints the way the languages of those machines printed, with `printf`, the one call written with no type
-in front of it: `printf("%s has %d items\n", name, count);`. The format has to be written out in quotes,
+It prints the way the languages of those machines printed, with `printf`, a call written with no type in
+front of it: `printf("%s has %d items\n", name, count);`. The format has to be written out in quotes,
 because it is read while the program is compiled and never while it runs; what is left is the pieces joined
 and handed to the console, the very line adding them up by hand would have given. The holes are `%d` and `%i`
 for a whole number, `%f` for a number, `%s` for text, `%c` for a character and `%%` for the sign itself, an
@@ -49,12 +49,55 @@ value, a value with no hole, and a value of the wrong kind are all errors when t
 line break written into the format ends the line; the console keeps whole lines, so a `printf` that does not
 end in one still ends its line. Σ# has `printf` as well, since it reads whatever Σ does.
 
+Version 2 brings the other names those languages used, each written with no type in front of it. None of them
+is anything new: each stands for a call the library already has, the compiler writes that call down, and the
+listing is the very one writing it the long way gives.
+
+| The old name | The long way |
+|---|---|
+| `puts(text)` | `Console.PrintLine(text)` |
+| `gets()` | `Console.ReadLine()` |
+| `exit(status)` | `Program.Exit(status)` |
+| `abs(n)`, `sqrt(x)`, `pow(x, y)`, `floor(x)`, `min(a, b)`, `max(a, b)` | `Math.Abs`, `Math.Sqrt`, `Math.Pow`, `Math.Floor`, `Math.Min`, `Math.Max` |
+| `atof(text)` | `Convert.ToDouble(text)` |
+| `itoa(n)` | `Convert.ToString(n)` |
+| `srand(seed)` | `Random.Seed(seed)` |
+| `rand()` | `Random.Next(32768)`: a whole number from 0 to 32767 |
+| `strlen(text)` | `text.Length` |
+| `strstr(haystack, needle)` | `haystack.IndexOf(needle)`: where the needle starts, or -1 when it is not there |
+| `sprintf(format, ...)` | the text `printf` would print, given back instead of printed |
+
+A method or a variable of the program's own under one of these names is still the one called, so a program
+that already had its own `abs` goes on calling it. Σ# has all of them too.
+
 An old language is no reason to write it the hard way. On a machine that runs them, the editors treat a
 `.sg` file as they treat a `.sgs` one: coloured, checked as it is typed, and completed from what Σ really
 has, so nothing is offered that the compiler would then refuse. Virtual Studio's New Project lists every
 shape of project in both languages; a Σ project keeps itself in a `.sgproj` file, holds `.sg` sources, and
 starts out built for the oldest machines. A Σ# project may reference a Σ library, since Σ# reads it; a Σ
 project cannot reference a Σ# one.
+
+## Versions
+
+Σ and Σ# have versions, one number for both, since Σ N is the subset of Σ# N. Version 1 is the language as it
+first shipped under these names; version 2 brings `Sound` and `Speaker`, the old names above, and `Random` in
+Σ's `Standard`. A version only ever adds: whatever version 1 takes, version 2 takes too and compiles to the
+same listing, so a newer compiler never breaks an older program.
+
+The version a machine builds is its compiler's. The package `sgsc` 2.0 is Σ# 2 and `scc` 2.0 is Σ 2, and a
+machine whose compiler is older builds the older version until an upgrade brings it up: `pckmgr upgrade`, the
+upgrade verb of each Linux and BSD package manager, or on MC-DOS installing the compiler again from newer
+media. Both compilers say which they are before anything else (`Σ# Compiler 2.0`).
+
+A build can be held to an older version, never a newer one: `sgsc --lang 1 file.sgs` (and the same on `scc`),
+or a `langversion: 1` line in the project file. Whatever came later is refused where it was written:
+
+```
+Mine.sgs(4,5): error S3057: 'puts' needs Σ# 2; this project is Σ# 1
+```
+
+The editors follow the machine's compiler, and Virtual Studio the project as well: the suggestions offer only
+what that version has, and the checks as you type hold a file to it.
 
 ## Classes standing on other classes
 

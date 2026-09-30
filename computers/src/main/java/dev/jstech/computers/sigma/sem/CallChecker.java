@@ -18,7 +18,8 @@ import java.util.List;
  *
  * <p>Three ways to be called and they end in the same place: a bare name that turns out to be a method
  * of the type around it, a method reached through a dot, and something holding a delegate, which is
- * called through the shape that delegate was declared with.
+ * called through the shape that delegate was declared with. The calls written with no type in front of them,
+ * printf and the old names, are checked apart, and only once the program has said the name is not its own.
  *
  * <p>Choosing between versions of a method comes last and reads only the types, which is why a lambda
  * and a method handed over without brackets are left out of the choosing: neither has a type until it
@@ -31,14 +32,15 @@ final class CallChecker {
     private final MemberChecker members;
     /** Choosing between the versions of a method that share a name, which is a question about types alone. */
     private final Overloads overloads;
-    private final PrintfChecker printf;
+    /** The calls written with no type in front of them: printf, and the old names for what the library does. */
+    private final BareFunctionChecker bare;
 
     CallChecker(final BodyScope scope, final ExpressionChecker expressions, final MemberChecker members) {
         this.scope = scope;
         this.expressions = expressions;
         this.members = members;
         this.overloads = new Overloads(scope.rules());
-        this.printf = new PrintfChecker(scope, expressions);
+        this.bare = new BareFunctionChecker(scope, expressions, this);
     }
 
     ITypeSymbol callType(final IExpr.Call call) {
@@ -50,10 +52,10 @@ final class CallChecker {
                         name.identifier(), BodyScope.Access.IMPLICIT);
             }
         }
-        // Only once the program has been asked: a printf of its own is its own, and is what was called above.
-        if (call.callee() instanceof IExpr.Name name && PrintfChecker.NAME.equals(name.identifier())
-                && this.scope.scope().lookup(name.identifier()) == null) {
-            return this.printf.check(call);
+        // Only once the program has been asked: a function of its own under one of these names is its own.
+        final BareFunctions.Function bareFunction = this.bare.named(call);
+        if (bareFunction != null) {
+            return this.bare.check(call, bareFunction);
         }
         if (call.callee() instanceof IExpr.Member member) {
             return this.callThroughMember(call, member);
@@ -184,8 +186,8 @@ final class CallChecker {
      * knows what it is being handed to, so it is left out of the choosing and checked afterwards,
      * against the version that won.
      */
-    private IMemberSymbol.MethodSymbol callWith(final List<IMemberSymbol.MethodSymbol> candidates,
-                                                final List<IExpr> arguments, final String name, final INode at) {
+    IMemberSymbol.MethodSymbol callWith(final List<IMemberSymbol.MethodSymbol> candidates,
+                                        final List<IExpr> arguments, final String name, final INode at) {
         final List<ITypeSymbol> given = new ArrayList<>();
         for (final IExpr argument : arguments) {
             final boolean waits = argument instanceof IExpr.Lambda

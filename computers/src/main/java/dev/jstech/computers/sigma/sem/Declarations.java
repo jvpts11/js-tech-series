@@ -88,11 +88,23 @@ public final class Declarations {
         if (type == null || this.builtIns.type(type.name(), type.typeParameters().size()) != type) {
             return;
         }
-        final int since = SigmaVersions.sinceType(type.name());
+        this.reportIfLater(type.name(), SigmaVersions.sinceType(this.level, type.name()), line, column);
+    }
+
+    /**
+     * Reports {@code name}, written at {@code line}, {@code column}, when what it names came in {@code since}, a
+     * later version than the one the build is held to.
+     */
+    void reportIfLater(final String name, final int since, final int line, final int column) {
         if (since > this.version) {
-            this.diagnostics.error(line, column, SigmaError.NEEDS_A_LATER_VERSION, type.name(), this.level.mark(),
+            this.diagnostics.error(line, column, SigmaError.NEEDS_A_LATER_VERSION, name, this.level.mark(),
                     since, this.level.mark(), this.version);
         }
+    }
+
+    /** The language the build is in. */
+    LanguageLevel level() {
+        return this.level;
     }
 
     /** First pass: every type in the program gets its name and nothing else. */

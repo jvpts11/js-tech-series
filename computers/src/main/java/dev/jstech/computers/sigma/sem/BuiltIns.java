@@ -140,8 +140,8 @@ public final class BuiltIns {
      * <p>Its types are a handful on purpose: these are the machines that had a screen, a disk, a clock and not
      * much else, and a library they could not have held would be a lie about them. Every name in it is a type the
      * full language also has, under the namespace it has always had, so a call written in the subset compiles to
-     * the very same line of assembly; what the subset does not get is the other thirty-eight types, and most of
-     * the members of these.
+     * the very same line of assembly; what the subset does not get is every other type, and most of the members of
+     * these.
      */
     public static final String SUBSET_LIBRARY = "Standard";
 
@@ -168,7 +168,8 @@ public final class BuiltIns {
      * thing with nothing gained, and a program moved between the languages would have to be rewritten to say it.
      */
     private static final Set<String> SUBSET_TYPES =
-            Set.of("Console", "File", "Program", "Math", "Convert", "Time", "Computer", "Script", "Sound", "Speaker");
+            Set.of("Console", "File", "Program", "Math", "Convert", "Time", "Computer", "Script", "Sound", "Speaker",
+                    "Random");
 
     /**
      * The type known by exactly {@code fullName}, its namespace in front ({@code System.IO.Console}),

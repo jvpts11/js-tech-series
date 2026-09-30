@@ -486,10 +486,19 @@ public final class Lowerer {
      * <p>A string with holes becomes the pieces added together, left to right, each piece already reduced. An
      * empty one is the empty string; one that starts with a hole starts from the empty string, so that the
      * first addition is text joining text rather than whatever the hole turned out to hold.
+     *
+     * <p>A call of one of the old bare functions becomes the long way the checker worked out for it. That shape
+     * was made over the very values the player handed the call, so reducing those, which the walk has already
+     * done, reduces it too.
      */
     private IExpr lowered(final IExpr expression) {
+        if (expression instanceof IExpr.Call call && this.model.longWayOf(call) != null) {
+            return this.model.longWayOf(call);
+        }
         if (expression instanceof IExpr.Call call && this.model.formattedOf(call) != null) {
-            return this.printed(call);
+            // A formatting call that hands its text to nothing is sprintf, and the text is its value.
+            return this.model.callOf(call) == null ? this.joined(this.model.formattedOf(call), call)
+                    : this.printed(call);
         }
         if (!(expression instanceof IExpr.Interpolation written)) {
             return null;
