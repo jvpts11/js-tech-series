@@ -420,6 +420,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   (`How many ingots? 16`). What is typed is written into the program's console as it is typed, so every terminal
   looking at it shows it once and a save keeps the whole exchange, the open line included. Σ 2's `putchar` prints
   one character on the open line, the `Console.Print(char)` it stands for.
+- Reads of less than a line in Σ 2: `getchar` takes the next character typed, the line break at its end included,
+  and `scanf("%d", out n)` reads one value into the variable handed with out (`%d`, `%i` and `%u` a whole number,
+  `%f` and `%e` a number, `%s` a word, `%c` a character), giving 1 when there was one and 0 when what was typed
+  was not one; what is left of the line waits for the next read. They stand for `Console.Read()` and
+  `Console.Scan(out value)`, which Σ# can write the long way. Text that is not the value asked for lets its line go
+  rather than stopping every read after it.
 
 ### Changed
 - The Vintage server boards hold the Integra Pentix Pro, as the boards of the time did: the MF MTX-V of the

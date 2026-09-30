@@ -31,8 +31,12 @@ public final class SigmaVersions {
      * The members that came after the first version on a type that was already there, each written as its owner,
      * its name and the types it takes, with the version it came in.
      */
-    private static final Map<String, Integer> LIBRARY_MEMBERS = Map.of("string.Compare(string, string)", 2,
-            "Convert.ToString(int, int)", 2, "Convert.ToInt(string, int)", 2, "Console.Print(char)", 2);
+    private static final Map<String, Integer> LIBRARY_MEMBERS = Map.ofEntries(
+            Map.entry("string.Compare(string, string)", 2), Map.entry("Convert.ToString(int, int)", 2),
+            Map.entry("Convert.ToInt(string, int)", 2), Map.entry("Console.Print(char)", 2),
+            Map.entry("Console.Read()", 2), Map.entry("Console.Scan(out int)", 2),
+            Map.entry("Console.Scan(out long)", 2), Map.entry("Console.Scan(out double)", 2),
+            Map.entry("Console.Scan(out string)", 2), Map.entry("Console.Scan(out char)", 2));
     /**
      * The types the smaller language's library took in later than the full one had them, with the version each
      * came in there: the full language always had Random, and the smaller one gained it with the old rand.

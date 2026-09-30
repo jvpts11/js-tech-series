@@ -830,6 +830,21 @@ public final class Process {
         return this.input.has();
     }
 
+    /** The next character typed, the end of its line included; the rest of the line waits for the next read. */
+    char takeChar() {
+        return this.input.takeChar();
+    }
+
+    /**
+     * The next value typed, of {@code kind} (int, long, double, string or char), read off what is left of the line;
+     * what follows it waits for the next read. Null when what was typed was not one.
+     */
+    Object scan(final String kind, final int line) {
+        final ScanReading.Read read = ScanReading.of(kind, this.input.takeRest());
+        this.input.putBack(read.rest());
+        return read.value() instanceof String text ? this.text(text, line) : read.value();
+    }
+
     /**
      * Puts a handler in the queue, to run on the main thread when it next has nothing else to do; false when the event
      * found no room and was dropped.
@@ -1137,7 +1152,7 @@ public final class Process {
 
     // odds and ends
 
-    private String text(final String value, final int line) {
+    String text(final String value, final int line) {
         return this.heap.text(value, line);
     }
 }

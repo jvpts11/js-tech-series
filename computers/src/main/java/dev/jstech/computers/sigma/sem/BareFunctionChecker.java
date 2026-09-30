@@ -63,6 +63,8 @@ final class BareFunctionChecker {
         this.scope.declarations().reportIfLater(function.name(), function.since(), call.line(), call.column());
         return switch (function.shape()) {
             case PRINTED -> this.printf.check(call, function.name(), true);
+            case SCANNED -> this.printf.scan(call, function.name(),
+                    this.scope.builtIns().type(function.owner(), 0), function.member());
             case FORMATTED -> this.printf.check(call, function.name(), false);
             case SAME_VALUES, ON_THE_FIRST, READ_OFF_THE_FIRST, FIXED_VALUE -> this.called(call, function);
         };
@@ -85,7 +87,7 @@ final class BareFunctionChecker {
             case FIXED_VALUE -> this.fixed(call, function, owner, takes);
             case ON_THE_FIRST -> this.onTheFirst(call, function, owner, takes);
             case READ_OFF_THE_FIRST -> this.readOffTheFirst(call, function, owner);
-            case PRINTED, FORMATTED -> throw new IllegalStateException("a format is not called");
+            case PRINTED, FORMATTED, SCANNED -> throw new IllegalStateException("a format is not called");
         }
         return chosen.returnType();
     }

@@ -251,6 +251,31 @@ class ProcessTest {
         assertEquals(List.of("How many? 16", "got 16"), process.console());
     }
 
+    /** Less than a line: a character at a time, then a value, then what is left of the line. */
+    @Test
+    void read_andScanTakeLessThanALineAndLeaveTheRestForTheNextRead() {
+        final Process process = run("""
+                        int first = Console.Read();
+                        int n;
+                        int got = Console.Scan(out n);
+                        string word;
+                        Console.Scan(out word);
+                        Console.PrintLine((char) first + "|" + got + "|" + n + "|" + word + "|" + Console.ReadLine());
+                        int bad;
+                        Console.PrintLine("" + Console.Scan(out bad) + bad + Console.ReadLine());
+                """);
+        assertTrue(process.waitingForInput());
+        process.offerInput("x 42 ingots of iron");
+        process.step(PLENTY);
+        assertTrue(process.waitingForInput(), "the second scan waits for a line of its own");
+        process.offerInput("lots");
+        process.offerInput("after");
+        process.step(PLENTY);
+        assertFinished(process);
+        assertEquals(List.of("x 42 ingots of iron", "x|1|42|ingots| of iron", "lots", "after", "00after"),
+                process.console());
+    }
+
     /** A line left open when a program ends is a line of its own, and so is one open when it is halted. */
     @Test
     void end_ofAProgramEndsTheLineItLeftOpen() {

@@ -43,6 +43,9 @@ class BareFunctionsTest {
             List.of("puts(\"hi\");", "Console.PrintLine(\"hi\");"),
             List.of("putchar('x');", "Console.Print('x');"),
             List.of("string s = gets();", "string s = Console.ReadLine();"),
+            List.of("int c = getchar();", "int c = Console.Read();"),
+            List.of("int n; int got = scanf(\"%d\", out n); double x; scanf(\" %lf \", out x);",
+                    "int n; int got = Console.Scan(out n); double x; Console.Scan(out x);"),
             List.of("exit(1);", "Program.Exit(1);"),
             List.of("int a = abs(-3); double b = abs(-2.5);", "int a = Math.Abs(-3); double b = Math.Abs(-2.5);"),
             List.of("double r = sqrt(16);", "double r = Math.Sqrt(16);"),
@@ -205,6 +208,21 @@ class BareFunctionsTest {
                 .contains("no version of 'rand' takes those arguments"));
         assertTrue(refusal("string t = sprintf(\"%d\", 1, 2);", LanguageLevel.SIGMA, SigmaVersions.NEWEST)
                 .contains("sprintf: the format has 1 hole and the call gives 2 values"));
+    }
+
+    /** scanf reads one value a call, of a kind its hole names, into a variable handed with out. */
+    @Test
+    void scanf_readsOneValueACallIntoAVariableHandedWithOut() {
+        assertTrue(refusal("int a; int b; scanf(\"%d %d\", out a, out b);", LanguageLevel.SIGMA,
+                SigmaVersions.NEWEST).contains("scanf: one value a call"));
+        assertTrue(refusal("int a = 0; scanf(\"%d\", a);", LanguageLevel.SIGMA, SigmaVersions.NEWEST)
+                .contains("scanf: one value a call"));
+        assertTrue(refusal("int a; scanf(\"%x\", out a);", LanguageLevel.SIGMA, SigmaVersions.NEWEST)
+                .contains("'%x' is no hole scanf reads"));
+        assertTrue(refusal("string s; scanf(\"%d\", out s);", LanguageLevel.SIGMA, SigmaVersions.NEWEST)
+                .contains("scanf: '%d' takes a whole number, and this is string"));
+        assertTrue(refusal("int a; scanf(\"%d\", out a);", LanguageLevel.SIGMA_SHARP, SigmaVersions.FIRST)
+                .contains("'scanf' needs Σ# 2"));
     }
 
     /** The smaller language gained Random with rand, and only the two calls rand and srand come down to. */

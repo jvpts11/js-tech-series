@@ -76,10 +76,17 @@ How many ingots? 16
 What is typed while a program is in front is written into its console as it is typed, so every terminal looking
 at the machine shows it once, and a save keeps the exchange, the line left open included.
 
+A program can read less than a line. `getchar()` takes the next character typed, and `scanf` reads one value a
+call, with a format of one hole and the variable handed with `out`: `%d`, `%i` and `%u` read a whole number into
+an `int` or a `long`, `%f` and `%e` a number into a `double`, `%s` a word into a `string`, and `%c` a character.
+Spaces before a value are skipped, what follows it waits for the next read, and `scanf` gives back 1 when it read
+a value and 0 when what was typed was not one, in which case that line is let go and the next read takes the next
+line typed.
+
 Version 2 brings the other names those languages used, each written with no type in front of it. Each stands
 for a call of the library, the compiler writes that call down, and the listing is the very one writing it the
 long way gives. The few calls the library gained for them in the same version, `Console.Print(char)`,
-`string.Compare`, the `char`
+`Console.Read()`, `Console.Scan(out value)`, `string.Compare`, the `char`
 type's `ToUpper`, `ToLower`, `IsDigit`, `IsLetter` and `IsWhiteSpace`, `Convert.ToString(n, base)` and
 `Convert.ToInt(text, fallback)`, are there to be written the long way as well.
 
@@ -88,6 +95,8 @@ type's `ToUpper`, `ToLower`, `IsDigit`, `IsLetter` and `IsWhiteSpace`, `Convert.
 | `puts(text)` | `Console.PrintLine(text)` |
 | `putchar(c)` | `Console.Print(c)`: one character, on the open line |
 | `gets()` | `Console.ReadLine()` |
+| `getchar()` | `Console.Read()`: the next character typed, the line break at the end of a line included |
+| `scanf("%d", out n)` | `Console.Scan(out n)`: one value into `n`, of the kind its hole names; 1 when there was one, 0 when not |
 | `exit(status)` | `Program.Exit(status)` |
 | `abs(n)`, `sqrt(x)`, `pow(x, y)`, `floor(x)`, `min(a, b)`, `max(a, b)` | `Math.Abs`, `Math.Sqrt`, `Math.Pow`, `Math.Floor`, `Math.Min`, `Math.Max` |
 | `atoi(text)` | `Convert.ToInt(text, 0)`: the number the text is, or 0 when it is not one |

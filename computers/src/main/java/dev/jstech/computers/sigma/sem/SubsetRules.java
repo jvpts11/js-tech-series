@@ -49,7 +49,8 @@ public final class SubsetRules {
      * rounding, no second process to message and no list to hand anybody.
      */
     private static final Map<String, Set<String>> LIBRARY = Map.ofEntries(
-            Map.entry("Console", Set.of("Print", "PrintLine", "Clear", "ReadLine", "ReadInt", "ReadBool")),
+            Map.entry("Console", Set.of("Print", "PrintLine", "Clear", "ReadLine", "ReadInt", "ReadBool", "Read",
+                    "Scan")),
             Map.entry("File", Set.of("Exists", "Read", "Write", "Append", "Delete")),
             Map.entry("Program", Set.of("Name", "Args", "Exit")),
             Map.entry("Math", Set.of("Abs", "Min", "Max", "Floor", "Sqrt", "Pow")),

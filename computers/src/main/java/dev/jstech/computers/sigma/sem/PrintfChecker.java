@@ -45,6 +45,14 @@ final class PrintfChecker {
     private static final TextKey HOLES = TextKey.of("jsc.sigma.printf_checker.holes", "%s holes");
     private static final TextKey ONE_VALUE = TextKey.of("jsc.sigma.printf_checker.one_value", "1 value");
     private static final TextKey VALUES = TextKey.of("jsc.sigma.printf_checker.values", "%s values");
+    /* What scanf reads, and how it is written. */
+    private static final TextKey ONE_VALUE_A_CALL = TextKey.of("jsc.sigma.printf_checker.one_value_a_call",
+            "one value a call: a format of one hole with nothing written around it, and the variable handed with "
+                    + "out, as %s(\"%%d\", out n)");
+    private static final TextKey NO_SUCH_SCAN = TextKey.of("jsc.sigma.printf_checker.no_such_scan",
+            "'%%%s' is no hole %s reads; it reads %%d, %%i, %%u, %%f, %%e, %%s and %%c, with no widths");
+    /** The letters of the holes scanf reads. */
+    private static final String SCANNED_LETTERS = "diufeEsc";
 
     PrintfChecker(final BodyScope scope, final ExpressionChecker expressions) {
         this.scope = scope;
@@ -104,6 +112,100 @@ final class PrintfChecker {
             this.scope.model().setCall(call, this.print());
         }
         return gives;
+    }
+
+    /**
+     * Checks a call of {@code scanf} and records the read it stands for. It reads one value a call: a format of one
+     * hole with nothing written around it, and the variable the value goes into, handed with out and of the kind the
+     * hole reads. What is left is the library's read of one value into that variable, which gives back 1 when there
+     * was one and 0 when what was typed was not one.
+     */
+    ITypeSymbol scan(final IExpr.Call call, final String name, final NamedType owner, final String member) {
+        final List<IExpr> arguments = call.arguments();
+        final IExpr into = arguments.size() > 1 ? arguments.get(1) : null;
+        final ITypeSymbol kind = into == null ? null : this.expressions.check(into, null);
+        for (int i = 2; i < arguments.size(); i++) {
+            this.expressions.check(arguments.get(i), null);
+        }
+        final IExpr first = arguments.isEmpty() ? null : arguments.getFirst();
+        if (!(first instanceof IExpr.Literal written) || written.kind() != TokenKind.STRING_LITERAL) {
+            if (first != null) {
+                this.expressions.check(first, null);
+            }
+            this.scope.report(call.line(), call.column(), SigmaError.PRINTF_FORMAT_NOT_WRITTEN_OUT, name);
+            return ITypeSymbol.Primitive.INT;
+        }
+        this.scope.model().setType(written, this.scope.builtIns().stringType());
+        final PrintfFormat.Read format = PrintfFormat.read(String.valueOf(written.value()));
+        if (format.problem() != null) {
+            this.scope.report(written.line(), written.column(), SigmaError.PRINTF_BAD_FORMAT, name,
+                    format.problem());
+            return ITypeSymbol.Primitive.INT;
+        }
+        final PrintfFormat.Hole hole = onlyHole(format);
+        if (hole == null || arguments.size() != 2 || !(into instanceof IExpr.OutArgument)) {
+            this.scope.report(call.line(), call.column(), SigmaError.PRINTF_BAD_FORMAT, name,
+                    ONE_VALUE_A_CALL.with(name));
+            return ITypeSymbol.Primitive.INT;
+        }
+        if (hole.spec().length() != 2 || SCANNED_LETTERS.indexOf(hole.letter()) < 0) {
+            this.scope.report(written.line(), written.column(), SigmaError.PRINTF_BAD_FORMAT, name,
+                    NO_SUCH_SCAN.with(hole.written().substring(1), name));
+            return ITypeSymbol.Primitive.INT;
+        }
+        if (this.scope.rules().isError(kind)) {
+            return ITypeSymbol.Primitive.INT;
+        }
+        final IMemberSymbol.MethodSymbol read = this.scans(hole.letter(), kind) ? readInto(owner, member, kind) : null;
+        if (read == null) {
+            this.scope.report(into.line(), into.column(), SigmaError.PRINTF_WRONG_VALUE, name,
+                    hole.written().substring(1), hole.wants().words(), kind.describe());
+            return ITypeSymbol.Primitive.INT;
+        }
+        final IExpr.Call made = new IExpr.Call(call.callee(), List.of(into), call.line(), call.column());
+        this.scope.model().setCall(made, read);
+        this.scope.model().setType(made, read.returnType());
+        this.scope.model().setLongWay(call, made);
+        return read.returnType();
+    }
+
+    /** Whether a hole of scanf reads into a variable of that type: a whole number of either size, as C's did. */
+    private boolean scans(final char letter, final ITypeSymbol kind) {
+        return switch (letter) {
+            case 'd', 'i', 'u' -> kind == ITypeSymbol.Primitive.INT || kind == ITypeSymbol.Primitive.LONG;
+            case 'f', 'e', 'E' -> kind == ITypeSymbol.Primitive.DOUBLE;
+            case 's' -> kind == this.scope.builtIns().stringType();
+            case 'c' -> kind == ITypeSymbol.Primitive.CHAR;
+            default -> false;
+        };
+    }
+
+    /** The only hole of a format with nothing but spaces around it, or null when it is not such a format. */
+    private static PrintfFormat.Hole onlyHole(final PrintfFormat.Read format) {
+        PrintfFormat.Hole hole = null;
+        for (final Object piece : format.pieces()) {
+            if (piece instanceof PrintfFormat.Hole one) {
+                if (hole != null) {
+                    return null;
+                }
+                hole = one;
+            } else if (!String.valueOf(piece).isBlank()) {
+                return null;
+            }
+        }
+        return hole;
+    }
+
+    /** The library's read of one value into a variable of that type. */
+    private static IMemberSymbol.MethodSymbol readInto(final NamedType owner, final String member,
+                                                      final ITypeSymbol kind) {
+        for (final IMemberSymbol found : BodyScope.lookup(owner, member)) {
+            if (found instanceof IMemberSymbol.MethodSymbol method && method.parameters().size() == 1
+                    && method.parameters().getFirst().outward() && method.parameters().getFirst().type() == kind) {
+                return method;
+            }
+        }
+        return null;
     }
 
     /** Whether a hole of that kind takes a value of that type. A whole number does for a fraction, as it did. */

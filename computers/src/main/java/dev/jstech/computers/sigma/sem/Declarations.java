@@ -103,7 +103,7 @@ public final class Declarations {
         }
         final List<String> takes = new ArrayList<>(method.parameters().size());
         for (final IMemberSymbol.ParameterSymbol parameter : method.parameters()) {
-            takes.add(parameter.type().describe());
+            takes.add((parameter.outward() ? "out " : "") + parameter.type().describe());
         }
         final int since = SigmaVersions.sinceMember(this.level, owner.name(), method.name(), String.join(", ", takes));
         if (since > SigmaVersions.sinceType(this.level, owner.name())) {

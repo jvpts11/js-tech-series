@@ -50,7 +50,12 @@ public final class BareFunctions {
         /** A format read while the program is compiled, its text handed to the console: {@code printf}. */
         PRINTED,
         /** The same format, with the text as the value instead of printed: {@code sprintf}. */
-        FORMATTED
+        FORMATTED,
+        /**
+         * A format of one hole read while the program is compiled, and the library's read of one value into the
+         * variable handed with it: {@code scanf("%d", out n)} is {@code Console.Scan(out n)}.
+         */
+        SCANNED
     }
 
     /**
@@ -137,6 +142,9 @@ public final class BareFunctions {
         same("puts", "Console", "PrintLine", form("void", "string text"));
         same("putchar", "Console", "Print", form("void", "char c"));
         same("gets", "Console", "ReadLine", form("string"));
+        same("getchar", "Console", "Read", form("int"));
+        add(new Function("scanf", List.of(form("int", "string format", MORE)), Shape.SCANNED, "Console", "Scan", 0,
+                OLD_NAMES, BOTH));
         same("exit", "Program", "Exit", form("void", "int status"));
         same("abs", "Math", "Abs", form("int", "int n"), form("double", "double x"));
         same("sqrt", "Math", "Sqrt", form("double", "double x"));

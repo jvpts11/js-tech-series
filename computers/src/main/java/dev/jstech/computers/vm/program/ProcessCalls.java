@@ -41,6 +41,8 @@ final class ProcessCalls {
     }
 
     private static final String STRING = "string";
+    /** The kinds of variable a read of one value fills in, each a version of Console.Scan of its own. */
+    private static final List<String> SCANNED = List.of("int", "long", "double", STRING, "char");
     /** What a watch on the network calls when it goes off. */
     private static final String STOCK_HANDLER = "Action<StockEvent>";
     private static final TextKey NO_WIDGET = TextKey.of("jsc.vm.process_calls.no_widget", "there is no %s here to %s");
@@ -107,6 +109,18 @@ final class ProcessCalls {
         bind(bindings, "Console", "ReadLine", LINE,
                 (process, target, arguments, line) -> process.heap().adopt(process.takeInput(), line));
         bind(bindings, "Console", "HasLine", null, (process, target, arguments, line) -> process.hasInput());
+        /*
+         * Less than a line: one character, the line break at its end included, and one value, of the kind of the
+         * variable it goes into. What is left of the line waits for the next read.
+         */
+        bind(bindings, "Console", "Read", LINE, (process, target, arguments, line) -> (int) process.takeChar());
+        for (final String kind : SCANNED) {
+            bind(bindings, "Console", "Scan", LINE, (process, target, arguments, line) -> {
+                final Object value = process.scan(kind, line);
+                arguments[0] = value == null && STRING.equals(kind) ? process.text("", line) : value;
+                return value == null ? 0 : 1;
+            }, "out " + kind);
+        }
         bind(bindings, "Console", "ReadInt", LINE,
                 (process, target, arguments, line) -> NumberFunctions.number("ToInt", process.takeInput(), line));
         bind(bindings, "Console", "ReadLong", LINE,

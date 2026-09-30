@@ -135,6 +135,12 @@ final class CallDispatch {
         if (site.gives()) {
             frame.push(answer);
         }
+        // What the call filled in comes back after its answer, as it does from a function of the language.
+        for (int i = 0; i < outs.length; i++) {
+            if (outs[i]) {
+                frame.push(arguments[i] == null ? site.defaults()[i] : arguments[i]);
+            }
+        }
     }
 
     /**

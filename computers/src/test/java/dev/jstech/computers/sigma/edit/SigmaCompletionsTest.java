@@ -501,7 +501,7 @@ class SigmaCompletionsTest {
     void within_theSmallerLanguage_aTypeOffersOnlyTheMembersItKept() {
         final List<SigmaCompletions.Item> all = SigmaCompletions.members(this.builtIns, null, "Console", "", true);
         final List<String> kept = labels(SigmaCompletions.within(LanguageLevel.SIGMA, all));
-        assertEquals(List.of("Clear", "Print", "PrintLine", "ReadBool", "ReadInt", "ReadLine"),
+        assertEquals(List.of("Clear", "Print", "PrintLine", "Read", "ReadBool", "ReadInt", "ReadLine", "Scan"),
                 kept.stream().distinct().toList());
         assertTrue(all.size() > kept.size(), "the full language's Console has more than that");
         assertEquals(all, SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, all), "and the full one loses none");

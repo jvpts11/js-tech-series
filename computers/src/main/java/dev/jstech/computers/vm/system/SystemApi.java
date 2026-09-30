@@ -146,6 +146,15 @@ public final class SystemApi {
         console.onType(STRING, "ReadLine", MemberKind.PROCESS, CallCost.FREE);
         console.onType(BOOL, "HasLine", MemberKind.PROCESS, CallCost.FREE);
         /*
+         * Less than a line, as the second version reads it: the next character typed, the line break at its end
+         * included, as C's getchar; and the next value typed, of the kind of the variable it goes into, as C's scanf,
+         * answering 1 when there was one and 0 when what was typed was not one. What is left of the line waits.
+         */
+        console.onType(INT, "Read", MemberKind.PROCESS, CallCost.FREE);
+        for (final String kind : List.of(INT, LONG, DOUBLE, STRING, "char")) {
+            console.onType(INT, "Scan", MemberKind.PROCESS, CallCost.FREE, "out " + kind);
+        }
+        /*
          * The same wait, with the line read as a value: a program asking for a number gets one, and a line that is
          * not one stops the program with the text it could not read, as Convert would.
          */

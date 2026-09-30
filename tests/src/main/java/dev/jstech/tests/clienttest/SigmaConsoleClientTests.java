@@ -58,8 +58,9 @@ public final class SigmaConsoleClientTests {
             namespace Ask;
             class Ask {
                 static void Main() {
+                    int n;
                     printf("How many ingots? ");
-                    int n = atoi(gets());
+                    scanf("%d", out n);
                     printf("Iron Ingot %5d\\n", n);
                 }
             }
