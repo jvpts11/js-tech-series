@@ -196,6 +196,28 @@ public final class EraComputerGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = ARENA)
+    public static void motherboardSlot_takesTheWorkstationBoardFromTheTransitionOn(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity legacy = withBoard(helper, new BlockPos(1, 2, 1),
+                ComputingModule.LEGACY_PERSONAL_COMPUTER.get(), HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get());
+        final PersonalComputerBlockEntity standard = withBoard(helper, new BlockPos(3, 2, 1),
+                ComputingModule.PERSONAL_COMPUTER.get(), HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get());
+        final int board = PersonalComputerBlockEntity.MOTHERBOARD_SLOT;
+
+        helper.assertTrue(legacy.isValidForSlot(board, new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_478.get())),
+                "a Legacy case takes a Legacy ATX board");
+        helper.assertFalse(legacy.isValidForSlot(board,
+                new ItemStack(HardwareItems.MOTHERBOARD_EATX_LEGACY_604.get())),
+                "a Legacy case has no room for an EATX board");
+        helper.assertTrue(standard.isValidForSlot(board,
+                new ItemStack(HardwareItems.MOTHERBOARD_EATX_STANDARD_WS.get())),
+                "a Standard case takes the workstation's EATX board");
+        helper.assertTrue(standard.isValidForSlot(board,
+                new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get())),
+                "and still the ATX one");
+        helper.succeed();
+    }
+
     private static PersonalComputerBlockEntity withBoard(final GameTestHelper helper, final BlockPos pos,
                                                          final Block block, final Item board) {
         helper.setBlock(pos, block);

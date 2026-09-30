@@ -18,12 +18,12 @@ import java.util.List;
 
 /**
  * What the tooltips say about where a computer's sound comes from: the speaker in its case, the sound built into a
- * Standard board, and the monitor it comes out of. One place, so the board, the case and the monitor say it alike.
+ * board, and the monitor it comes out of. One place, so the board, the case and the monitor say it alike.
  */
 @TextHolder
 public final class SoundHardwareTexts {
 
-    /** A Standard board's line: its sound is built in, so it needs no card. */
+    /** The line of a board from the Transition on: its sound is built in, so it needs no card. */
     public static final TextKey ON_BOARD_AUDIO = TextKey.of("jsc.audio.on_board", "On-board audio");
 
     private static final TextKey MONITOR_PLAYS =
@@ -36,9 +36,9 @@ public final class SoundHardwareTexts {
     private SoundHardwareTexts() {
     }
 
-    /** A computer case's line: a Vintage or Legacy case only beeps, a Standard one has its sound on the board. */
+    /** A computer case's line: a Vintage or Legacy case only beeps, a later one has its sound on the board. */
     public static void appendComputer(final List<Component> tooltip, final HardwareEra era) {
-        final TextKey line = era == HardwareEra.STANDARD ? SOUND_ON_BOARD : PC_SPEAKER_ONLY;
+        final TextKey line = era.isAtLeast(HardwareEra.TRANSITION) ? SOUND_ON_BOARD : PC_SPEAKER_ONLY;
         tooltip.add(GameText.component(line).withStyle(ChatFormatting.GRAY));
     }
 

@@ -426,9 +426,10 @@ public final class BootRunner {
 
     /**
      * Whether the speaker inside the case beeps the self-test's outcome: one short beep when it passes, a pattern
-     * when it fails, on the machines of the two ages that had one; a Standard machine comes up without it.
+     * when it fails, on the machines of the ages whose firmware was a BIOS, up to the Transition; a machine of the
+     * Standard on, whose firmware is a UEFI, comes up without it.
      */
     public static boolean beepsAfterSelfTest(@Nullable final HardwareEra era) {
-        return era == HardwareEra.VINTAGE || era == HardwareEra.LEGACY;
+        return era != null && era.isAtMost(HardwareEra.TRANSITION);
     }
 }

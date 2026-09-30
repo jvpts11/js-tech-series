@@ -13,12 +13,14 @@ import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.os.boot.BootRunner;
 import dev.jstech.computers.os.install.SetupJob;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -43,8 +45,8 @@ import java.util.function.Consumer;
 /**
  * The sounds the machines make as machines, heard where the server plays them: a computer's power button, an old
  * machine's start-up, a hard drive spinning up, turning and winding down while a solid-state disk stays quiet, the
- * self-test's beep on the two ages that had one, a floppy disk going into a drive and coming out, and the drive
- * heard reading while a program on its disk installs.
+ * self-test's beep on the ages whose firmware was a BIOS, a floppy disk going into a drive and coming out, and the
+ * drive heard reading while a program on its disk installs.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -131,6 +133,17 @@ public final class MachineSoundGameTests {
                         "waiting for the self-test's beep"))
                 .thenExecute(heard::stop)
                 .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void selfTestBeep_isTheBiosOfTheAgesUpToTheTransition(final GameTestHelper helper) {
+        helper.assertTrue(BootRunner.beepsAfterSelfTest(HardwareEra.VINTAGE), "a Vintage BIOS beeps");
+        helper.assertTrue(BootRunner.beepsAfterSelfTest(HardwareEra.LEGACY), "a Legacy BIOS beeps");
+        helper.assertTrue(BootRunner.beepsAfterSelfTest(HardwareEra.TRANSITION), "a Transition BIOS beeps");
+        helper.assertFalse(BootRunner.beepsAfterSelfTest(HardwareEra.STANDARD), "a Standard UEFI comes up quiet");
+        helper.assertFalse(BootRunner.beepsAfterSelfTest(HardwareEra.ADVANCED), "and so does every later one");
+        helper.assertFalse(BootRunner.beepsAfterSelfTest(null), "a machine with no system installed has no age");
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)

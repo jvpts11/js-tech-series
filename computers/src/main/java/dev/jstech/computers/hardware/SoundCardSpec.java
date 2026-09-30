@@ -13,8 +13,9 @@ import java.util.Objects;
 
 /**
  * A sound card: what a Vintage or Legacy computer plays its system's sounds, its music and its programs through,
- * beyond the beeps of the speaker inside its case. It sits only on a board of its own era, in a slot of the bus
- * that board has; a Standard board has its sound built in and takes none.
+ * beyond the beeps of the speaker inside its case, and what a Transition one can play through instead of the sound
+ * built into its board. It sits only on a board of its own era, in a slot of the bus that board has; there is no
+ * Standard card, the Standard boards having their sound built in.
  *
  * @param era        the age of machine it goes into
  * @param bus        the slot it takes

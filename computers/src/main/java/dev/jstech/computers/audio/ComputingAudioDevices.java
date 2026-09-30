@@ -20,7 +20,8 @@ import java.util.Set;
 
 /**
  * What a computer's sound can come out of: the speaker inside its case, which beeps one square note at a time and
- * plays no recording; an FM sound card; a wavetable sound card; and the sound built into a Standard board.
+ * plays no recording; an FM sound card; a wavetable sound card; and the sound built into a board from the Transition
+ * on.
  */
 @TextHolder
 public final class ComputingAudioDevices {

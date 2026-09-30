@@ -102,10 +102,14 @@ public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     protected Set<FormFactor> acceptedFormFactors() {
-        // Each era takes its own consumer form factor: Vintage on Baby-AT/AT, Legacy and Standard on ATX.
+        /*
+         * Each era takes its own consumer form factor: Vintage on Baby-AT/AT, Legacy on ATX, and from the Transition
+         * on ATX or the workstation's EATX, as the tower cases of the time did.
+         */
         return switch (blockEra()) {
             case VINTAGE -> Set.of(FormFactor.BABY_AT, FormFactor.AT);
-            default -> Set.of(FormFactor.ATX);
+            case LEGACY -> Set.of(FormFactor.ATX);
+            default -> Set.of(FormFactor.ATX, FormFactor.EATX);
         };
     }
 

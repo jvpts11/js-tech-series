@@ -269,7 +269,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             return true;
         }
         if (card.cardSpec() instanceof SoundCardSpec sound && sound.era() != motherboard.spec().era()) {
-            // A sound card sits only on a board of its own age; a Standard board has its sound built in.
+            // A sound card sits only on a board of its own age; no Standard card exists, the boards have it built in.
             return false;
         }
         return card.cardSpec().bus().compatibleWith(motherboard.spec().pcieGeneration());

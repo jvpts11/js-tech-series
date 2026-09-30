@@ -8,6 +8,7 @@
 package dev.jstech.computers.hardware;
 
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.tier.IndustrialTier;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -297,6 +298,19 @@ class PerEraBuildTest {
         final MotherboardSpec board = transitionBoard(CpuSocketId.SOCKET_F, Set.of(RamGeneration.DDR2), 4);
         final CpuSpec optera = new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.SOCKET_F, 6, 2600, 75, false);
         assertFalse(build(board, optera, ddr3(), psu(650)).isPowered());
+    }
+
+    @Test
+    void transitionBuild_takesTheCraftingCardsAndTheLegacyManagementNicByTheirBus() {
+        // None of the three is bound to an age: a PCIe 1.0 or 2.0 card sits in the PCIe 2.0 slots of the board.
+        final MotherboardSpec board = transitionBoard(CpuSocketId.LGA_1366, Set.of(RamGeneration.DDR3), 1);
+        final CpuSpec c7 = new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_1366, 4, 2660, 130, false);
+        final IExpansionCardSpec t2 = new CraftingCardSpec(IndustrialTier.T2, PcieGeneration.PCIE_1_0, 0.05, 2, 75);
+        final IExpansionCardSpec t3 = new CraftingCardSpec(IndustrialTier.T3, PcieGeneration.PCIE_2_0, 0.1, 4, 100);
+        final IExpansionCardSpec nic = new ClusterInterfaceCardSpec(HardwareEra.LEGACY, IndustrialTier.T3,
+                PcieGeneration.PCIE_1_0, ClusterInterfaceCardSpec.Reach.SUPERCOMPUTERS, 2, 20);
+        assertTrue(new ComputerBuild(board, List.of(c7), List.of(t2, t3, nic), List.of(ddr3()), psu(650))
+                .isPowered());
     }
 
     // Standard

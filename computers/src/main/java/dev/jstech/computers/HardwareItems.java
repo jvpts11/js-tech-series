@@ -861,10 +861,11 @@ public final class HardwareItems {
                     .named("MF EATX Standard Workstation Board").register();
 
     /*
-     * The sound cards: one for each bus the boards of their era have. The two of an era sound the same and differ
+     * The sound cards: one for each bus the boards of their era have. The ones of an era sound the same and differ
      * in the slot they take and how they look. The Vintage ones are really lo-fi, eight bits in one channel at 22
-     * kHz, making their notes by FM; the Legacy ones play recordings at CD quality from a bank of instruments.
-     * Standard boards have their sound built in, so there is no Standard card.
+     * kHz, making their notes by FM; the Legacy ones play recordings at CD quality from a bank of instruments. The
+     * boards have their sound built in from the Transition on, where the Hi-Fi is the one card, and there is no
+     * Standard card.
      */
     public static final DeferredItem<SoundCardItem> SOUND_CARD_TONE_BLASTER = soundCard("sound_card_tone_blaster",
             new SoundCardSpec(HardwareEra.VINTAGE, PcieGeneration.ISA, 5, SoundCardSpec.Synthesis.FM, 9, 8, false,

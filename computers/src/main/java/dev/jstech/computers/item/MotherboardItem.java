@@ -14,7 +14,6 @@ import dev.jstech.computers.hardware.RamGeneration;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -60,7 +59,7 @@ public class MotherboardItem extends SpecItem<MotherboardSpec> {
          */
         tooltip.add(GameText.component(SLOTS.with(spec.cpuSlots(), spec.socket().display(), spec.ramSlots(), ramTypes,
                 spec.pcieSlots(), spec.pcieGeneration())).withStyle(ChatFormatting.GRAY));
-        if (spec.era() == HardwareEra.STANDARD) {
+        if (spec.hasOnBoardAudio()) {
             tooltip.add(GameText.component(SoundHardwareTexts.ON_BOARD_AUDIO).withStyle(ChatFormatting.GRAY));
         }
         HardwareTooltip.appendEra(tooltip, spec.era());

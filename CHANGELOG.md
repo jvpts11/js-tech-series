@@ -380,6 +380,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   AM3 board, now the MF ATX Transition Motherboard (AM3) on PCIe 2.0, the Radiance HD 6850, a Velocion card of 1 GB,
   the hard disks up to 2T, and the DVD. The disks read as their catalogue writes them, 500G to 8T, and their ids
   follow (`jsc:disk_hdd_500g` and on).
+- The sound built into a board arrives with the Transition: its boards play everything without a sound card, as the
+  Standard ones do, and their tooltips say so. The self-test's beep lasts through the Transition, whose firmware is
+  still a BIOS; from the Standard on, with a UEFI, a machine comes up quiet. And a Personal Computer from the
+  Transition on takes the workstation's EATX board as well as an ATX one.
 - A medium's tooltip names its format in the player's language ("Floppy", "Blu-ray") instead of the code's name
   for it.
 - A monitor going dark is heard only from a picture tube; the flat panels of the Transition and every later era

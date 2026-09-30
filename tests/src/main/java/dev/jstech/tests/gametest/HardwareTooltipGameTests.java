@@ -150,6 +150,10 @@ public final class HardwareTooltipGameTests {
         assertTooltipHas(helper, pcie, "Fits a PCIe slot");
         assertTooltipHas(helper, new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()),
                 "On-board audio");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.MOTHERBOARD_ATX_TRANSITION_775.get()),
+                "On-board audio");
+        assertTooltipLacks(helper, new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get()),
+                "On-board audio");
         assertTooltipLacks(helper, new ItemStack(HardwareItems.MOTHERBOARD_BABYAT_VINTAGE.get()), "On-board audio");
         assertTooltipHas(helper, new ItemStack(ComputingModule.VINTAGE_PERSONAL_COMPUTER.item()),
                 "PC speaker: beeps only");

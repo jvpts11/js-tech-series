@@ -46,11 +46,11 @@ import java.util.List;
 
 /**
  * A computer as the source of its system's sound: the device that plays it and where it comes out. A sound card, or
- * the sound built into a Standard board, plays out of the monitors linked to the machine and out of its speakers,
- * which add to the monitors. Two or more speakers play a stereo recording a side each, by where they stand against
- * the monitor; a Legacy speaker plays it coarser than a Standard one. The system chooses among them and sets how loud
- * they play. With no monitor and no speaker there is only the speaker inside the case, which beeps and plays no
- * recording.
+ * the sound built into a board from the Transition on, plays out of the monitors linked to the machine and out of its
+ * speakers, which add to the monitors. Two or more speakers play a stereo recording a side each, by where they stand
+ * against the monitor; a Legacy speaker plays it coarser than a Standard one. The system chooses among them and sets
+ * how loud they play. With no monitor and no speaker there is only the speaker inside the case, which beeps and plays
+ * no recording.
  */
 final class ComputerAudioHost implements IAudioHost {
 
@@ -74,7 +74,7 @@ final class ComputerAudioHost implements IAudioHost {
                 return ComputingAudioDevices.of(sound);
             }
         }
-        return build.motherboard().era() == HardwareEra.STANDARD
+        return build.motherboard().hasOnBoardAudio()
                 ? ComputingAudioDevices.ON_BOARD : ComputingAudioDevices.PC_SPEAKER;
     }
 
@@ -192,7 +192,7 @@ final class ComputerAudioHost implements IAudioHost {
             }
         }
         final ComputerBuild build = machine.currentBuild();
-        return build != null && build.motherboard().era() == HardwareEra.STANDARD
+        return build != null && build.motherboard().hasOnBoardAudio()
                 ? SoundHardwareTexts.ON_BOARD_AUDIO.text() : SoundHardwareTexts.PC_SPEAKER_ONLY.text();
     }
 

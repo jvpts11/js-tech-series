@@ -51,4 +51,12 @@ public record MotherboardSpec(FormFactor formFactor,
             throw new IllegalArgumentException("peripheralPorts must be >= 0; got " + peripheralPorts);
         }
     }
+
+    /**
+     * Whether the board has its sound built in, so a machine plays without a sound card. Boards had it from the
+     * Transition on, as the HD Audio of the late 2000s; the boards before it give only the speaker in the case.
+     */
+    public boolean hasOnBoardAudio() {
+        return era.isAtLeast(HardwareEra.TRANSITION);
+    }
 }
