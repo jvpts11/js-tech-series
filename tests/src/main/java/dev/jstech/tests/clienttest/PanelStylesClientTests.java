@@ -9,6 +9,7 @@ package dev.jstech.tests.clienttest;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.client.os.ThisPcApp;
@@ -184,8 +185,8 @@ public final class PanelStylesClientTests {
     @ClientTest(timeoutTicks = 2400)
     public static void kdePlasma_onFreeBsdListsInfoCenterWithFreeBsdsWallpaper(final ClientTestContext ctx) {
         booted(ctx, "freebsd", "jsc:kde_plasma", INFO_CENTER, false)
-                .thenAssert(0, () -> WallpaperStyle.FREEBSD_PLASMA.id().equals(DesktopScreen.currentWallpaperId()),
-                        "FreeBSD's own wallpaper hangs here; got " + DesktopScreen.currentWallpaperId())
+                .thenAssert(0, () -> WallpaperStyle.FREEBSD_PLASMA.id().equals(ActiveDesktop.currentWallpaperId()),
+                        "FreeBSD's own wallpaper hangs here; got " + ActiveDesktop.currentWallpaperId())
                 .thenScreenshot(2, "freebsd-kde-desktop")
                 .then(0, () -> DesktopScreen.requestOpen(INFO_CENTER))
                 .thenWaitUntil(() -> desktop(ctx).windowFor(INFO_CENTER) != null, SCREEN_WAIT,
@@ -199,8 +200,8 @@ public final class PanelStylesClientTests {
     @ClientTest(timeoutTicks = 2400)
     public static void gnome_onFreeBsdListsAboutWithFreeBsdsWallpaper(final ClientTestContext ctx) {
         booted(ctx, "freebsd", "jsc:gnome", ABOUT, false)
-                .thenAssert(0, () -> WallpaperStyle.FREEBSD_GNOME.id().equals(DesktopScreen.currentWallpaperId()),
-                        "FreeBSD's own wallpaper hangs here; got " + DesktopScreen.currentWallpaperId())
+                .thenAssert(0, () -> WallpaperStyle.FREEBSD_GNOME.id().equals(ActiveDesktop.currentWallpaperId()),
+                        "FreeBSD's own wallpaper hangs here; got " + ActiveDesktop.currentWallpaperId())
                 .thenScreenshot(2, "freebsd-gnome-desktop")
                 .then(0, () -> DesktopScreen.requestOpen(ABOUT))
                 .thenWaitUntil(() -> desktop(ctx).windowFor(ABOUT) != null, SCREEN_WAIT, "the About window")
@@ -213,8 +214,8 @@ public final class PanelStylesClientTests {
     @ClientTest(timeoutTicks = 2400)
     public static void cinnamon_onFreeBsdListsSystemInfoWithFreeBsdsWallpaper(final ClientTestContext ctx) {
         booted(ctx, "freebsd", "jsc:cinnamon", SYSTEM_INFO, false)
-                .thenAssert(0, () -> WallpaperStyle.FREEBSD_CINNAMON.id().equals(DesktopScreen.currentWallpaperId()),
-                        "FreeBSD's own wallpaper hangs here; got " + DesktopScreen.currentWallpaperId())
+                .thenAssert(0, () -> WallpaperStyle.FREEBSD_CINNAMON.id().equals(ActiveDesktop.currentWallpaperId()),
+                        "FreeBSD's own wallpaper hangs here; got " + ActiveDesktop.currentWallpaperId())
                 .thenScreenshot(2, "freebsd-cinnamon-desktop")
                 .then(0, () -> DesktopScreen.requestOpen(SYSTEM_INFO))
                 .thenWaitUntil(() -> desktop(ctx).windowFor(SYSTEM_INFO) != null, SCREEN_WAIT,

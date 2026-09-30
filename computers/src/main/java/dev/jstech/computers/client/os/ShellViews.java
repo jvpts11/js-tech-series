@@ -74,6 +74,6 @@ public final class ShellViews {
         if (!payload.busy()) {
             FilesApps.refreshAll();
         }
-        DesktopScreen.refreshActive();
+        ActiveDesktop.refreshActive();
     }
 }

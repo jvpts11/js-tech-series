@@ -8,14 +8,13 @@
 package dev.jstech.computers.operation.payload.desktop;
 
 import dev.jstech.computers.os.OsDisks;
-import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
-import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.ThisPcApp;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.DiskItem;
@@ -387,7 +386,7 @@ public final class ThisPcPayloads {
 
     /** A machine telling a desktop how its setup is going: the desktop's Setup window is a view of it. */
     private static void handleSetupProgress(final SetupProgressPayload payload, final Player player) {
-        DesktopScreen.acceptSetup(payload);
+        ActiveDesktop.acceptSetup(payload);
     }
 
     /** A player at the Setup window's Cancel: the machine stops and nothing is installed. */

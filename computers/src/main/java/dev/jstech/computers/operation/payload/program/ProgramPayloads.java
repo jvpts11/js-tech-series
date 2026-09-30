@@ -10,7 +10,7 @@ package dev.jstech.computers.operation.payload.program;
 import dev.jstech.computers.block.IFirmwareScreenOpener;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.machine.ProgramLauncher;
 import dev.jstech.computers.machine.ProgramService;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
@@ -154,7 +154,7 @@ public final class ProgramPayloads {
     }
 
     private static void handleUiWindow(final UiWindowPayload payload, final Player player) {
-        DesktopScreen.acceptWindow(payload);
+        ActiveDesktop.acceptWindow(payload);
     }
 
     /**

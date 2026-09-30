@@ -1724,7 +1724,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         items.add(item(StudioTexts.SAVE_ALL, this.workspace.anyDirty(), this.workspace::saveAll));
         items.add(ContextMenu.Item.separator());
         items.add(item(VirtualStudioTexts.CLOSE_SOLUTION, this.page == Page.SOLUTION, this::closeSolution));
-        items.add(item(StudioTexts.EXIT, true, () -> DesktopScreen.requestClose(KEY)));
+        items.add(item(StudioTexts.EXIT, true, () -> ActiveDesktop.requestClose(KEY)));
         return items;
     }
 

@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload.desktop;
 
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.SettingsApp;
 import dev.jstech.computers.client.os.SystemMonitorApp;
@@ -74,7 +75,7 @@ public final class DesktopPayloads {
         // A notice the machine raises from the corner of its own desktop, which takes nothing over.
         registrar.playToClient(DesktopBalloonPayload.TYPE, DesktopBalloonPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
-                        DesktopScreen.raise(payload.hostPos(), GameText.resolve(payload.title()),
+                        ActiveDesktop.raise(payload.hostPos(), GameText.resolve(payload.title()),
                                 GameText.resolve(payload.body()), payload.opens())));
     }
 
@@ -134,7 +135,7 @@ public final class DesktopPayloads {
     }
 
     private static void handleSettingsSnapshot(final SettingsSnapshotPayload payload, final Player player) {
-        DesktopScreen.acceptSettings(payload);
+        ActiveDesktop.acceptSettings(payload);
         SettingsApp.accept(payload);
         SystemMonitorApp.accept(payload);
         TaskManagerApp.accept(payload);
@@ -172,6 +173,6 @@ public final class DesktopPayloads {
 
     /** The desktop is opening: hand it the windows the machine has. */
     private static void handleDesktopWindowsOnClient(final DesktopWindowsPayload payload, final Player player) {
-        DesktopScreen.applyWindows(payload);
+        ActiveDesktop.applyWindows(payload);
     }
 }

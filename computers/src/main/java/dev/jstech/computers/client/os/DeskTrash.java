@@ -75,7 +75,7 @@ final class DeskTrash {
                 ? (disc ? TrashTexts.ONE_ON_DISC : TrashTexts.ONE_ON_SHARE).with(nameOf(forGood.getFirst()),
                         titleTextHere())
                 : (disc ? TrashTexts.MANY_ON_DISC : TrashTexts.MANY_ON_SHARE).with(forGood.size(), titleTextHere());
-        DesktopScreen.ask(GameText.resolve(TrashTexts.CONFIRM), GameText.resolve(question), () -> {
+        ActiveDesktop.ask(GameText.resolve(TrashTexts.CONFIRM), GameText.resolve(question), () -> {
             for (final String path : forGood) {
                 PacketDistributor.sendToServer(new DeleteFilePayload(host, path));
             }
@@ -152,7 +152,7 @@ final class DeskTrash {
     private void empty() {
         final BlockPos host = this.desktop.hostPos();
         final Text trash = TrashApp.kindOf(this.desktop.panelStyle()).titleText();
-        DesktopScreen.ask(GameText.resolve(TrashTexts.CONFIRM),
+        ActiveDesktop.ask(GameText.resolve(TrashTexts.CONFIRM),
                 GameText.resolve(TrashTexts.EMPTY_EVERYTHING.with(trash)), () -> {
             PacketDistributor.sendToServer(new TrashActionPayload(host, TrashActionPayload.Action.EMPTY, List.of()));
             FilesApps.diskChanged();

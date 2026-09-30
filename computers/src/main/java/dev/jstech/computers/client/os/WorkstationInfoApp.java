@@ -167,14 +167,14 @@ public final class WorkstationInfoApp implements IDesktopApp {
     public void mouseClicked(final DesktopWindow window, final double mouseX, final double mouseY,
                              final int button) {
         if (button == 0 && WorkstationInfoLayout.close().holds(mouseX - this.left, mouseY - this.top)) {
-            DesktopScreen.closeWindowFor(this);
+            ActiveDesktop.closeWindowFor(this);
         }
     }
 
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
         if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) {
-            DesktopScreen.closeWindowFor(this);
+            ActiveDesktop.closeWindowFor(this);
             return true;
         }
         return false;

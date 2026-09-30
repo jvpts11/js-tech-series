@@ -186,7 +186,7 @@ final class CdeAudioPage implements IDesktopApp {
         if (pressed == 0) {
             ok();
         } else if (pressed == 1) {
-            DesktopScreen.closeDialog(this);
+            ActiveDesktop.closeDialog(this);
         }
     }
 
@@ -209,7 +209,7 @@ final class CdeAudioPage implements IDesktopApp {
             case GLFW.GLFW_KEY_LEFT -> this.volume = Math.max(0, this.volume - 5);
             case GLFW.GLFW_KEY_RIGHT -> this.volume = Math.min(100, this.volume + 5);
             case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> ok();
-            case GLFW.GLFW_KEY_ESCAPE -> DesktopScreen.closeDialog(this);
+            case GLFW.GLFW_KEY_ESCAPE -> ActiveDesktop.closeDialog(this);
             default -> {
                 return false;
             }
@@ -233,7 +233,7 @@ final class CdeAudioPage implements IDesktopApp {
         if (desktop != null) {
             desktop.applySound(this.volume, this.muted, output());
         }
-        DesktopScreen.closeDialog(this);
+        ActiveDesktop.closeDialog(this);
     }
 
     /* A toggle: its square, filled while it is on, and its words beside it. */

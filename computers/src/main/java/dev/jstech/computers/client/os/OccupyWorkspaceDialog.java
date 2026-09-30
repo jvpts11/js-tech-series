@@ -141,7 +141,7 @@ final class OccupyWorkspaceDialog implements IDesktopApp {
             return;
         }
         if (over(mouseX, mouseY, cancelX(), buttonsY())) {
-            DesktopScreen.closeDialog(this);
+            ActiveDesktop.closeDialog(this);
             return;
         }
         // The whole row answers, the name as well as the box, as a tick box on any desktop does.
@@ -161,7 +161,7 @@ final class OccupyWorkspaceDialog implements IDesktopApp {
             return true;
         }
         if (key == GLFW.GLFW_KEY_ESCAPE) {
-            DesktopScreen.closeDialog(this);
+            ActiveDesktop.closeDialog(this);
             return true;
         }
         return false;
@@ -174,7 +174,7 @@ final class OccupyWorkspaceDialog implements IDesktopApp {
     }
 
     private void accept() {
-        DesktopScreen.closeDialog(this);
+        ActiveDesktop.closeDialog(this);
         this.onChosen.accept(this.chosen);
     }
 

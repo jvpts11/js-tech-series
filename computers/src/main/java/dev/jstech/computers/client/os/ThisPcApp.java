@@ -1013,7 +1013,7 @@ public final class ThisPcApp implements IDesktopApp {
          * The install lands server-side before this refresh is processed, so the desktop's
          * launchers pick the new program up immediately.
          */
-        DesktopScreen.refreshActive();
+        ActiveDesktop.refreshActive();
     }
 
     private void eject(final long readerPos) {

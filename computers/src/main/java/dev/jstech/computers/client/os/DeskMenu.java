@@ -162,7 +162,7 @@ final class DeskMenu {
         entries.add(item(DesktopTexts.RENAME, !file.readOnly(), () -> actions.startRename(index)));
         entries.add(item(DesktopTexts.DELETE, !file.readOnly(), () -> actions.delete(index)));
         entries.add(ContextMenu.Item.separator());
-        entries.add(item(DesktopTexts.PROPERTIES, true, () -> DesktopScreen.requestFileProperties(file.path())));
+        entries.add(item(DesktopTexts.PROPERTIES, true, () -> ActiveDesktop.requestFileProperties(file.path())));
     }
 
     /**

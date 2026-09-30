@@ -161,7 +161,7 @@ public final class OpenWithPopup extends Popup {
         }
         ProgramIcons.draw(g, x + OpenWithLayout.ICON_X, y + (h - ProgramIcons.SIZE) / 2, ProgramIcons.SIZE,
                 ProgramIcons.SIZE, ResourceLocation.fromNamespaceAndPath("jsc", programId), iconSet);
-        g.drawString(ctx.font(), DesktopScreen.openerName(programId), x + OpenWithLayout.ROW_TEXT_X,
+        g.drawString(ctx.font(), ActiveDesktop.openerName(programId), x + OpenWithLayout.ROW_TEXT_X,
                 y + (h - OpenWithLayout.LINE_H) / 2, color, false);
     }
 

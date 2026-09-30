@@ -23,6 +23,7 @@ import dev.jstech.computers.client.audio.SoundfoundryCoverArt;
 import dev.jstech.computers.client.audio.SoundfoundryPages;
 import dev.jstech.computers.client.audio.SoundfoundryShares;
 import dev.jstech.computers.client.audio.SoundfoundryStates;
+import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
@@ -56,7 +57,7 @@ public final class ComputingClientSetup {
     @SubscribeEvent
     public static void onLoggingOut(final ClientPlayerNetworkEvent.LoggingOut event) {
         // The desktop's per-machine caches belong to the world being left.
-        DesktopScreen.forgetClientState();
+        ActiveDesktop.forgetClientState();
         SoundfoundryStates.clear();
         SoundfoundryShares.clear();
         SoundfoundryPages.clear();

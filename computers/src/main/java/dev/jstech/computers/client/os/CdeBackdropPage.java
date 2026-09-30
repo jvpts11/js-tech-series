@@ -128,7 +128,7 @@ final class CdeBackdropPage implements IDesktopApp {
         if (pressed == 0) {
             apply();
         } else if (pressed == 1) {
-            DesktopScreen.closeDialog(this);
+            ActiveDesktop.closeDialog(this);
         }
     }
 
@@ -138,7 +138,7 @@ final class CdeBackdropPage implements IDesktopApp {
             case GLFW.GLFW_KEY_UP -> this.picked = byPlace(Math.max(0, this.picked.place() - 1));
             case GLFW.GLFW_KEY_DOWN -> this.picked = byPlace(Math.min(LABELS.size() - 1, this.picked.place() + 1));
             case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> apply();
-            case GLFW.GLFW_KEY_ESCAPE -> DesktopScreen.closeDialog(this);
+            case GLFW.GLFW_KEY_ESCAPE -> ActiveDesktop.closeDialog(this);
             default -> {
                 return false;
             }

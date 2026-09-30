@@ -193,7 +193,7 @@ public final class SettingsApp implements IDesktopApp {
             active.data = payload;
             active.snapshots++;
             // Reflect accent, brightness, clock, wallpaper, taskbar layout and dark mode on the live desktop now.
-            DesktopScreen.applyLivePrefs(payload.accent(), payload.brightness(), payload.clock12h(),
+            ActiveDesktop.applyLivePrefs(payload.accent(), payload.brightness(), payload.clock12h(),
                     payload.wallpaper(), payload.taskbarCentered(), payload.darkMode(), payload.guiScale());
         }
     }
@@ -715,7 +715,7 @@ public final class SettingsApp implements IDesktopApp {
                 PacketDistributor.sendToServer(new UninstallProgramPayload(host, id));
                 // The uninstall lands before these refreshes are processed (same connection, in order).
                 PacketDistributor.sendToServer(new RequestSettingsPayload(host));
-                DesktopScreen.refreshActive();
+                ActiveDesktop.refreshActive();
             }).setLabelScale(0.85f)).setBounds(x + w - bw, y - 1, bw, 11);
             y += 12;
         }

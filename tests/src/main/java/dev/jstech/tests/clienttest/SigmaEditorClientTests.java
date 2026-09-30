@@ -9,6 +9,7 @@ package dev.jstech.tests.clienttest;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.IDesktopApp;
 import dev.jstech.computers.client.os.ShellApp;
@@ -233,7 +234,7 @@ public final class SigmaEditorClientTests {
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT)
                 // What the game being closed does to the client: nothing of the programs' insides survives.
-                .then(SETTLE, DesktopScreen::forgetClientState)
+                .then(SETTLE, ActiveDesktop::forgetClientState)
                 .thenRightClick(SETTLE, MONITOR)
                 .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
                 .thenWaitUntil(() -> studio(ctx) != null && !studio(ctx).onStartWindow()

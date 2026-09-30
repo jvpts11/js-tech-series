@@ -83,7 +83,7 @@ public final class SetupApp implements IDesktopApp {
         this.percent = this.root.add(new Label(this::percentText, Label.Tone.DIM));
         this.cancel = this.root.add(new Button(GameText.resolve(SetupTexts.CANCEL), () ->
                 PacketDistributor.sendToServer(new CancelSetupPayload(this.host))));
-        this.close = this.root.add(new Button(GameText.resolve(SetupTexts.CLOSE), () -> DesktopScreen.requestClose(KEY))
+        this.close = this.root.add(new Button(GameText.resolve(SetupTexts.CLOSE), () -> ActiveDesktop.requestClose(KEY))
                 .setPrimary(true));
         this.close.setVisible(false);
     }
@@ -207,7 +207,7 @@ public final class SetupApp implements IDesktopApp {
                               final float partialTick) {
         if (this.state != null && this.state.state() == SetupProgressPayload.STATE_DONE
                 && System.currentTimeMillis() - this.overSince > LINGER_MS) {
-            DesktopScreen.requestClose(KEY);
+            ActiveDesktop.requestClose(KEY);
         }
         this.skin.panel(g, x, y, width, height);
         final int textX;

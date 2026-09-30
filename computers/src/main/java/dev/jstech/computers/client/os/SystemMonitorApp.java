@@ -228,7 +228,7 @@ public final class SystemMonitorApp implements IDesktopApp {
         final int amountW = font.width(amount);
         // A window is listed by the name the desktop gives its program, not by the key the machine keeps it under.
         final String label = RamLedger.Kind.find(use.kind()) == RamLedger.Kind.WINDOW
-                ? DesktopScreen.windowName(use.label()) : use.label();
+                ? ActiveDesktop.windowName(use.label()) : use.label();
         final String name = font.plainSubstrByWidth(label, w - amountW - 6);
         g.drawString(font, name, x, y + 1, ctx.skin().text(), false);
         g.drawString(font, amount, x + w - amountW, y + 1, ctx.skin().dim(), false);

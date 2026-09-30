@@ -1265,7 +1265,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /** Brings the desktop's terminal up with its prompt in this folder. */
     private void openInTerminal() {
-        DesktopScreen.requestTypeAtTerminal(List.of("cd \"" + promptFolder() + "\""));
+        ActiveDesktop.requestTypeAtTerminal(List.of("cd \"" + promptFolder() + "\""));
     }
 
     /** The folder's path the way a prompt takes it: as the address bar writes it, without the trailing separator. */
@@ -1490,18 +1490,18 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
                  * program should open files like it for good.
                  */
                 final String path = target.file().path();
-                final List<String> installed = DesktopScreen.installedProgramIds();
+                final List<String> installed = ActiveDesktop.installedProgramIds();
                 final List<ContextMenu.Item> openWith = new ArrayList<>();
                 for (final String programId : FileOpeners.available(path, installed)) {
-                    openWith.add(new ContextMenu.Item(DesktopScreen.openerName(programId), true,
-                            () -> DesktopScreen.requestOpenFileWith(programId, path)));
+                    openWith.add(new ContextMenu.Item(ActiveDesktop.openerName(programId), true,
+                            () -> ActiveDesktop.requestOpenFileWith(programId, path)));
                 }
                 if (!FileOpeners.choices(path, installed).isEmpty()) {
                     if (!openWith.isEmpty()) {
                         openWith.add(ContextMenu.Item.separator());
                     }
                     openWith.add(item(FilesTexts.CHOOSE_ANOTHER, true,
-                            () -> DesktopScreen.requestChooseOpener(path)));
+                            () -> ActiveDesktop.requestChooseOpener(path)));
                 }
                 if (!openWith.isEmpty()) {
                     items.add(ContextMenu.Item.submenu(GameText.resolve(FilesTexts.OPEN_WITH), openWith));
@@ -1551,7 +1551,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
      * without the archiver, because the menu should not name a program that is not there.
      */
     private void addArchiveItems(final List<ContextMenu.Item> items, final Row target, final boolean ro) {
-        if (!DesktopScreen.installedProgramIds().contains(ARCHIVER) || target.file() == null
+        if (!ActiveDesktop.installedProgramIds().contains(ARCHIVER) || target.file() == null
                 || target.file().projectsItem()) {
             return;
         }
@@ -1592,7 +1592,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     public void onSaved(final boolean ok, final Text message) {
         // The folder has changed under the window either way, so it is read again before anything else.
         request(dir);
-        DesktopScreen.raise(host, ok ? "67ark" : GameText.resolve(FilesTexts.COULD_NOT), GameText.resolve(message),
+        ActiveDesktop.raise(host, ok ? "67ark" : GameText.resolve(FilesTexts.COULD_NOT), GameText.resolve(message),
                 "");
     }
 
@@ -1718,11 +1718,11 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
                     }
                 } else if (destDir != null) {
                     // Reorganising a .dat into a normal folder by hand is forbidden; surface the error dialog.
-                    DesktopScreen.showDatLockedError();
+                    ActiveDesktop.showDatLockedError();
                 }
             } else if (src.file() != null && src.file().readOnly()) {
                 // An installer's projected file cannot leave its medium.
-                DesktopScreen.showInstallerLockedError();
+                ActiveDesktop.showInstallerLockedError();
             } else if (destDir != null && src.file() != null) {
                 // A real, non-projection entry moves into a real folder as before.
                 PacketDistributor.sendToServer(new MoveFilePayload(host, src.file().path(), destDir));
@@ -1892,7 +1892,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         final long reader = mediaReaderPos(path);
         if (reader >= 0) {
             PacketDistributor.sendToServer(new InstallFromMediaPayload(host, reader));
-            DesktopScreen.refreshActive();
+            ActiveDesktop.refreshActive();
         }
     }
 
@@ -2022,7 +2022,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
                 doomed.add(r.file().path());
             }
             if (locked) {
-                DesktopScreen.showDatLockedError();
+                ActiveDesktop.showDatLockedError();
             }
             bandRows.clear();
             DeskTrash.delete(host, doomed);
@@ -2046,9 +2046,9 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     /** The right refusal for a projected entry: a stored item points at the Network Interactor, an installer's file at setup. */
     private static void lockedError(final Row r) {
         if (r.file() != null && r.file().projectsItem()) {
-            DesktopScreen.showDatLockedError();
+            ActiveDesktop.showDatLockedError();
         } else {
-            DesktopScreen.showInstallerLockedError();
+            ActiveDesktop.showInstallerLockedError();
         }
     }
 

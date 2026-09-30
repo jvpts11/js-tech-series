@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.SystemBootScreen;
+import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.client.os.ShellApp;
@@ -389,7 +390,7 @@ public final class CdeClientTests {
                         "the Color page to open again")
                 .then(SETTLE, () -> clickAt(ctx, desktop(ctx).stylePageRowPoint("Neptune")))
                 .then(SETTLE, () -> clickAt(ctx, desktop(ctx).stylePageButtonPoint(true, 0)))
-                .then(SETTLE * 2, DesktopScreen::refreshActive)
+                .then(SETTLE * 2, ActiveDesktop::refreshActive)
                 .thenAssert(SETTLE * 5, () -> desktop(ctx).wornCdeStyle().startsWith("Neptune;"),
                         "OK has the machine keep it, so the desktop wears it after asking the machine again");
     }

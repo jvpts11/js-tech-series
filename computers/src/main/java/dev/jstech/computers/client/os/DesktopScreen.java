@@ -12,25 +12,15 @@ import dev.jstech.computers.client.MachineKeyboard;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
-import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
-import dev.jstech.computers.operation.payload.DiskFilesPayload;
-import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
-import dev.jstech.computers.operation.payload.SetupProgressPayload;
-import dev.jstech.computers.operation.payload.UiWindowPayload;
-import dev.jstech.computers.os.IOsHost;
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
-import dev.jstech.core.text.GameText;
 import java.util.List;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.client.event.ContainerScreenEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>The desktop itself, its windows, panel, menus and what the machine said about it, is a {@link DesktopState},
  * which draws onto this screen and would draw the same onto any other surface. What is left here is what only an
  * open screen has: the pointer and the keyboard handed on to the desktop, the container that carries the player's
- * inventory, and the calls programs make to the desktop that is up.
+ * inventory, and which desktop is up, the one the rest of the client reaches through {@link ActiveDesktop}.
  */
 public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         implements MachineKeyboard.ITakesKeysFirst, DesktopInspection, DesktopSurface {
@@ -66,7 +56,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** The width of the Frames XP Start pill, which the task buttons and its own hit-test both clear. */
     static final int XP_START_W = 58;
 
-    /** The desktop that is up, which the calls programs make to "the desktop" reach; null while none is. */
+    /** The desktop that is up, the one the machine's answers and the programs' calls reach; null while none is. */
     @Nullable
     private static DesktopState active;
 
@@ -80,107 +70,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** Lets a running app request another program be opened on the desktop, by its key or its name. */
     public static void requestOpen(final String key) {
         DesktopRequests.open(new OpenRequest.Program(key));
-    }
-
-    /** Takes a window a Σ# program has open on the machine being looked at. */
-    public static void acceptWindow(final UiWindowPayload payload) {
-        DesktopRequests.window(payload);
-    }
-
-    /** Lets a running app end another program's window, the way a task manager does. */
-    public static void requestClose(final String key) {
-        DesktopRequests.close(key);
-    }
-
-    /**
-     * Opens {@code dialog} as a window of its own over the window running {@code owner}: it is listed with the owner
-     * on the panel, sits in front of it, and holds it until it is put away. The way an Open or Save window belongs to
-     * the program that asked. Nothing happens when no desktop is up or the owner has no window on it.
-     */
-    public static void openDialogFor(final IDesktopApp owner, final IDesktopApp dialog) {
-        if (active != null) {
-            active.wm().openDialog(owner, dialog);
-        }
-    }
-
-    /** Closes the window running {@code app}, when it is up, the way its own Close button does. */
-    public static void closeWindowFor(final IDesktopApp app) {
-        if (active != null) {
-            active.wm().closeOf(app);
-        }
-    }
-
-    /** Puts away the window running {@code dialog}, when it is up. */
-    public static void closeDialog(final IDesktopApp dialog) {
-        if (active != null) {
-            active.wm().closeOf(dialog);
-        }
-    }
-
-    /**
-     * Starts one of this machine's programs by its id, the way a shortcut to it does.
-     *
-     * <p>For a program that offers another as a way out of itself: a welcome pointing at This PC, and whatever comes
-     * to want the same. Nothing happens when this machine has no such program, which is the honest answer on a
-     * computer where it was never installed.
-     */
-    public static void openProgramById(final String path) {
-        if (active != null) {
-            active.opener().startProgram(path);
-        }
-    }
-
-    /**
-     * Brings the window of that key forward, or opens it the way a session coming back would, for a program that has
-     * a second window of its own: Soundfoundry's sharing window, say. The key is the id its window factory is
-     * registered under ({@link ProgramClient#register}), so the window comes back with the session like any other.
-     */
-    public static void openOrFocus(final String key) {
-        if (active != null) {
-            active.opener().openOrFocus(key);
-        }
-    }
-
-    /**
-     * The id of the wallpaper actually hanging on the desktop right now: the player's own choice when they made one,
-     * else whatever the desktop ships with on the platform it runs on.
-     */
-    public static String currentWallpaperId() {
-        return active == null ? "" : active.wallpaperId();
-    }
-
-    /** Whether a window of that key is up on the desktop in front of the player. */
-    public static boolean windowOpen(final String key) {
-        return active != null && active.windowOpen(key);
-    }
-
-    /**
-     * The name this desktop gives that program, or empty when this machine has no such program.
-     *
-     * <p>The name is the desktop's, not the program's: the same prompt is called one thing on one edition and
-     * something else on another, and a button that offers it should say what this machine calls it.
-     */
-    public static String programLabel(final String path) {
-        final Launcher launcher = active == null ? null : active.catalogue().byPath(path);
-        return launcher == null ? "" : launcher.label();
-    }
-
-    /** Whether the computer at {@code pos} is on a data network, as its block entity tells the client. */
-    public static boolean hostNetworked(final BlockPos pos) {
-        final Level level = Minecraft.getInstance().level;
-        return level != null
-                && level.getBlockEntity(pos) instanceof IOsHost computer
-                && computer.networkAttached();
-    }
-
-    /**
-     * Opens this desktop's terminal and has it run that program, which is what double-clicking one does.
-     *
-     * <p>A program of the console kind needs a terminal to print into, so it is given one; the window is whatever
-     * this desktop calls its terminal, because that is the one the machine has.
-     */
-    public static void requestRunAtTerminal(final String path) {
-        DesktopRequests.open(new OpenRequest.RunAtTerminal(path));
     }
 
     /** Lets a running app open the explorer already navigated to {@code dir} (a drive, a folder). */
@@ -198,109 +87,10 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         DesktopRequests.open(new OpenRequest.OpenFile("", path));
     }
 
-    /** Lets a running app open a file in a program the player picked. */
-    public static void requestOpenFileWith(final String programId, final String path) {
-        DesktopRequests.open(new OpenRequest.OpenFile(programId, path));
-    }
-
-    /** Lets a running app ask the player which program opens a file, as Choose another program does. */
-    public static void requestChooseOpener(final String path) {
-        DesktopRequests.open(new OpenRequest.ChooseOpener(path));
-    }
-
-    /**
-     * Lets a running app hand the shell a job: lines typed at the terminal, one after the other. A line with a
-     * newline in it is typed as the lines it holds.
-     */
-    public static void requestTypeAtTerminal(final List<String> lines) {
-        DesktopRequests.open(new OpenRequest.TypeAtTerminal(List.of(String.join("\n", lines).split("\n"))));
-    }
-
-    /** Asks for the Properties window of a file on the desktop, which the explorer knows how to show. */
-    public static void requestFileProperties(final String path) {
-        DesktopRequests.open(new OpenRequest.Properties(path));
-    }
-
     /** The Open with chooser the open desktop is showing, or null when none is up. */
     @Nullable
     public static OpenWithPopup openWithChooser() {
         return active != null ? active.notices().chooser() : null;
-    }
-
-    /** The ids of the programs the open desktop's machine has, for a window offering what can open a file. */
-    public static List<String> installedProgramIds() {
-        return active == null ? List.of() : List.copyOf(active.catalogue().installed());
-    }
-
-    /** What a program is called, for a menu that offers it by id. */
-    public static String openerName(final String programId) {
-        return ProgramOpener.openerName(programId);
-    }
-
-    /**
-     * Forgets every per-machine client cache: the programs' insides kept for the machines of the world the player is
-     * leaving, and any open request that never found a desktop. Called on logout, so nothing of one world lingers
-     * into the next.
-     */
-    public static void forgetClientState() {
-        WindowLayouts.forgetAll();
-        DesktopRequests.forgetAll();
-    }
-
-    /** The launcher labels the active desktop can open (built-in apps plus installed programs). */
-    public static List<String> openableLabels() {
-        return active != null ? active.launcherLabels() : List.of();
-    }
-
-    /**
-     * Applies an accent/brightness change to the live desktop immediately, so a change in the Settings app shows on
-     * the chrome without waiting for the next desktop refresh.
-     *
-     * @param accent     the accent override ({@code 0} = skin default)
-     * @param brightness the screen brightness 0..100
-     */
-    public static void applyLivePrefs(final int accent, final int brightness, final boolean clock12h,
-                                      final String wallpaper, final boolean taskbarCentered,
-                                      final boolean darkMode, final int scale) {
-        if (active != null) {
-            active.applyLivePrefs(accent, brightness, clock12h, wallpaper, taskbarCentered, darkMode, scale);
-        }
-    }
-
-    /**
-     * Raises the modal {@code .dat}-locked error dialog on the active desktop. Called from desktop apps (e.g. the
-     * Files explorer) that detect a refused {@code .dat} action and need to surface it; a no-op when no desktop is
-     * showing.
-     */
-    public static void showDatLockedError() {
-        if (active != null) {
-            active.notices().datLocked();
-        }
-    }
-
-    /**
-     * Raises the error for a refused action on an installer's own files: they are generated from the medium's stamp,
-     * so there is nothing to rename, copy off, delete or overwrite.
-     */
-    public static void showInstallerLockedError() {
-        if (active != null) {
-            active.notices().showError(GameText.resolve(DesktopTexts.ERROR),
-                    GameText.resolve(DesktopTexts.INSTALLER_LOCKED));
-        }
-    }
-
-    /** Hangs a picture on this desktop's wall, which is what the paint program's last button does. */
-    public static void setWallpaperToPicture(final String path) {
-        if (active != null && path != null && !path.isEmpty()) {
-            active.hangPicture(path);
-        }
-    }
-
-    /** Raises that balloon on whichever desktop is looking at that machine, if one is. */
-    public static void raise(final BlockPos host, final String title, final String body, final String opens) {
-        if (active != null && active.host().equals(host)) {
-            active.notices().showBalloon(title, body, opens);
-        }
     }
 
     /**
@@ -311,51 +101,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return active == null ? "" : active.opener().terminalLabel();
     }
 
-    /**
-     * What a window key reads as on the desktop that is up, for a program listing the windows a machine has open (a
-     * task manager) by the names the player knows them by; the key itself while no desktop is up.
-     */
-    public static String windowName(final String key) {
-        return active == null ? key : active.nameOf(key);
-    }
-
-    /**
-     * Refreshes the open desktop's server-derived state (installed programs included), so a program installed or
-     * removed while the desktop is up gets its launcher without closing the monitor. Called after any action that can
-     * change the installed set (a shell command, an install disc, Settings).
-     */
-    public static void refreshActive() {
-        if (active != null) {
-            active.requestDesktop();
-        }
-    }
-
-    /** Takes the removable media a listing names, which are the machine's whichever folder was listed. */
-    public static void acceptVolumes(final DiskFilesPayload payload) {
-        if (active != null) {
-            active.takeVolumes(payload);
-        }
-    }
-
-    /** Routes the machine's settings to the open desktop, whose panel shows its sound. */
-    public static void acceptSettings(final SettingsSnapshotPayload payload) {
-        if (active != null && active.host().equals(payload.hostPos())) {
-            active.volume().accept(payload.sound());
-        }
-    }
-
-    /** Restores the windows the machine has open, when the server hands them over. */
-    public static void applyWindows(final DesktopWindowsPayload payload) {
-        if (active != null && active.host().equals(payload.host())) {
-            active.takeWindows(payload);
-        }
-    }
-
-    /** A machine saying how the program it is setting up is going, which its Setup window shows. */
-    public static void acceptSetup(final SetupProgressPayload payload) {
-        if (active != null && active.host().equals(payload.hostPos())) {
-            active.takeSetup(payload);
-        }
+    /** The launcher labels the active desktop can open (built-in apps plus installed programs). */
+    public static List<String> openableLabels() {
+        return active != null ? active.launcherLabels() : List.of();
     }
 
     /** Routes a desktop-folder listing reply to the active desktop. */
@@ -539,23 +287,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     @Nullable
     static DesktopState current() {
         return active;
-    }
-
-    /**
-     * Asks the player a question over the whole desktop, running {@code yes} only when the answer is Yes: what
-     * deletes a thing for good asks this first.
-     */
-    static void ask(final String title, final String message, final Runnable yes) {
-        if (active != null) {
-            active.notices().ask(title, message, yes);
-        }
-    }
-
-    /** Tells the player something over the whole desktop, in a note they close with OK. */
-    static void tell(final String title, final String message) {
-        if (active != null) {
-            active.notices().ask(title, message, null);
-        }
     }
 
     @Override

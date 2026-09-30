@@ -239,7 +239,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         this.newFolder.setVisible(what != Mode.OPEN_FILE);
         if (!this.open) {
             this.open = true;
-            DesktopScreen.openDialogFor(this.owner, this);
+            ActiveDesktop.openDialogFor(this.owner, this);
         }
         request(start == null ? "" : start);
         this.root.focus(what == Mode.SAVE ? this.name : this.rows);
@@ -255,7 +255,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
             return;
         }
         this.open = false;
-        DesktopScreen.closeDialog(this);
+        ActiveDesktop.closeDialog(this);
     }
 
     /** The folder the window is on, as the machine names it. */

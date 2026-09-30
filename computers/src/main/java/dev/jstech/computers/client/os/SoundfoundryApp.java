@@ -396,7 +396,7 @@ public final class SoundfoundryApp implements IDesktopApp {
         } else if (SoundfoundryLayout.PL.contains(lx, ly)) {
             playlistShown = !playlistShown;
         } else if (SoundfoundryLayout.NET.contains(lx, ly)) {
-            DesktopScreen.openOrFocus(SoundfoundryShareApp.KEY);
+            ActiveDesktop.openOrFocus(SoundfoundryShareApp.KEY);
         } else if (SoundfoundryLayout.PREVIOUS.contains(lx, ly)) {
             send(SoundfoundryActionPayload.PREVIOUS, 0);
         } else if (SoundfoundryLayout.PLAY.contains(lx, ly)) {
@@ -734,7 +734,7 @@ public final class SoundfoundryApp implements IDesktopApp {
         SoundfoundrySkin.slider(g, x + bal.x(), y + bal.y(), bal.w(), balance, !device);
         labelled(g, font, x, y, SoundfoundryLayout.PL, SoundfoundryAppTexts.PL, device && playlistShown, !device);
         labelled(g, font, x, y, SoundfoundryLayout.NET, SoundfoundryAppTexts.NET,
-                device && DesktopScreen.windowOpen(SoundfoundryShareApp.KEY), !device);
+                device && ActiveDesktop.windowOpen(SoundfoundryShareApp.KEY), !device);
         final Rect pos = SoundfoundryLayout.POSITION;
         final double at = dragging == DRAG_POSITION ? dragValue
                 : known == null || playing.millis() <= 0 ? 0.0 : known.position() / (double) playing.millis();

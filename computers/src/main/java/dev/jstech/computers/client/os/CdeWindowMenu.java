@@ -185,7 +185,7 @@ final class CdeWindowMenu {
 
     private void askWorkspaces(final DesktopWindow w) {
         this.desktop.wm().focus(w);
-        DesktopScreen.openDialogFor(w.app(), new OccupyWorkspaceDialog(w.appKey(), w.workspaces(),
+        ActiveDesktop.openDialogFor(w.app(), new OccupyWorkspaceDialog(w.appKey(), w.workspaces(),
                 chosen -> this.desktop.wm().occupy(w, chosen)));
     }
 

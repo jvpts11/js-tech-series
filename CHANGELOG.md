@@ -361,7 +361,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   manager and the rubber band; where a click, a key or the wheel goes, layer by layer; how the desktop is painted,
   back to front; and what the client tests read of a desktop and where they click on it. The desktop itself, all of
   those parts and what the machine last said about it, is now apart from the screen that shows it, and draws onto
-  any surface that gives it a size, so it can be drawn with no screen open.
+  any surface that gives it a size, so it can be drawn with no screen open. What programs and the machine's replies
+  ask of the desktop that is up goes through a class of its own, and the screen is left with what only a screen
+  does.
 - J's Computers' blocks keep their state as J's Core's declared fields: the computers, the server racks, the drives,
   the Pattern Encoders, monitors, speakers, Network Gateways, data cables, Crafting Switches, Server Routers, HBW
   Interfaces and tanks. The players who see one are sent one update a tick however much of it changed, and the

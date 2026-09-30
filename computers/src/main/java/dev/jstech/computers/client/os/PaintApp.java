@@ -265,7 +265,7 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
             this.status = PaintTexts.SAVE_FIRST.text();
             return;
         }
-        DesktopScreen.setWallpaperToPicture(path);
+        ActiveDesktop.setWallpaperToPicture(path);
         this.status = PaintTexts.NOW_WALLPAPER.with(name());
     }
 

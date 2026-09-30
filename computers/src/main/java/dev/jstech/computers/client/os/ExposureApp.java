@@ -182,7 +182,7 @@ public final class ExposureApp implements IDesktopApp {
                 }),
                 ContextMenu.Item.separator(),
                 item(ExposureTexts.CLOSE_FILE, hasDoc(), () -> closeTab(this.workspace.currentIndex())),
-                item(StudioTexts.EXIT, true, () -> DesktopScreen.requestClose(KEY)));
+                item(StudioTexts.EXIT, true, () -> ActiveDesktop.requestClose(KEY)));
     }
 
     private List<ContextMenu.Item> sourceMenu() {
@@ -350,7 +350,7 @@ public final class ExposureApp implements IDesktopApp {
         final int dot = source.lastIndexOf('.');
         final String built = (dot > source.lastIndexOf('/') ? source.substring(0, dot) : source) + ".asm";
         // Each language is built by its own compiler, so a Σ source is held to what Σ has.
-        DesktopScreen.requestTypeAtTerminal(
+        ActiveDesktop.requestTypeAtTerminal(
                 List.of(level.compiler() + " " + quote(source), "sigma run " + quote(built)));
     }
 

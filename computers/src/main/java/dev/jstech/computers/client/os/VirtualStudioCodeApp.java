@@ -463,7 +463,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         items.add(item(VsCodeTexts.CLOSE_EDITOR, hasDoc(), () -> closeTab(this.workspace.currentIndex())));
         items.add(item(VsCodeTexts.CLOSE_FOLDER, this.folderOpen, this::closeFolder));
         // The window goes by the program's id, whatever its title bar says.
-        items.add(item(StudioTexts.EXIT, true, () -> DesktopScreen.requestClose("jsc:virtual_studio_code")));
+        items.add(item(StudioTexts.EXIT, true, () -> ActiveDesktop.requestClose("jsc:virtual_studio_code")));
         return items;
     }
 

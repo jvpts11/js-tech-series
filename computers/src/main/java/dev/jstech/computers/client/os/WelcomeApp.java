@@ -165,12 +165,12 @@ public final class WelcomeApp implements IDesktopApp {
         }
         for (final Door door : this.doors) {
             if (hit(door.box(), mouseX, mouseY)) {
-                DesktopScreen.openProgramById(door.program());
+                ActiveDesktop.openProgramById(door.program());
                 return;
             }
         }
         if (hit(this.closeButton, mouseX, mouseY)) {
-            DesktopScreen.requestClose(KEY);
+            ActiveDesktop.requestClose(KEY);
         }
     }
 
@@ -341,7 +341,7 @@ public final class WelcomeApp implements IDesktopApp {
 
     /** The name this desktop gives that program, falling back to the id when it has none. */
     private static String label(final String program) {
-        final String named = DesktopScreen.programLabel(program);
+        final String named = ActiveDesktop.programLabel(program);
         return named.isEmpty() ? program : named;
     }
 

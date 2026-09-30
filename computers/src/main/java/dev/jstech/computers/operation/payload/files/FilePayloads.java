@@ -7,8 +7,8 @@
  */
 package dev.jstech.computers.operation.payload.files;
 
+import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.CodeFileReplies;
-import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.FilesApps;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
@@ -244,7 +244,7 @@ public final class FilePayloads {
 
     private static void handleDiskFiles(final DiskFilesPayload payload, final Player player) {
         // The drives a listing names are the machine's, whoever asked, so the desktop takes them from any of them.
-        DesktopScreen.acceptVolumes(payload);
+        ActiveDesktop.acceptVolumes(payload);
         if (!CodeFileReplies.listing(payload)) {
             FilesApps.accept(payload);
         }

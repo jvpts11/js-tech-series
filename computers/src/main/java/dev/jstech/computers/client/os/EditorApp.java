@@ -272,7 +272,7 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
         // A .dat is a read-only projection of stored items; it can never be created or written by hand.
         if (FileType.of(FileOpeners.extensionOf(target)) == FileType.DAT) {
             this.status = GameText.resolve(EditorTexts.CANNOT_SAVE_DAT);
-            DesktopScreen.showDatLockedError();
+            ActiveDesktop.showDatLockedError();
             return;
         }
         final String text = body.text();

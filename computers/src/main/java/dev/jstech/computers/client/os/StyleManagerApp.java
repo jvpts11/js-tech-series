@@ -204,7 +204,7 @@ final class StyleManagerApp implements IDesktopApp {
             opening = this.audio;
         }
         opening.applySkin(this.skin);
-        DesktopScreen.openDialogFor(this, opening);
+        ActiveDesktop.openDialogFor(this, opening);
     }
 
     private boolean open(final int page) {

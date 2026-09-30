@@ -176,13 +176,13 @@ final class CdeColorPage implements IDesktopApp {
         if (desktop != null) {
             desktop.prefs().keepCdeStyle(desktop.prefs().cdeStyle().withPalette(this.picked));
         }
-        DesktopScreen.closeDialog(this);
+        ActiveDesktop.closeDialog(this);
     }
 
     private void putBack() {
         this.answered = true;
         wear(this.kept);
-        DesktopScreen.closeDialog(this);
+        ActiveDesktop.closeDialog(this);
     }
 
     /* Only the palette changes: the backdrops may have been set on the other page in the meantime. */

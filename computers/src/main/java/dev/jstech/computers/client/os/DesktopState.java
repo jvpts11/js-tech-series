@@ -21,6 +21,7 @@ import dev.jstech.computers.operation.payload.RequestDiskFilesPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PanelStyle;
@@ -40,6 +41,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
@@ -409,7 +411,7 @@ final class DesktopState {
 
     /** Whether the host computer is on a data network right now, as its block entity tells the client. */
     boolean onNetwork() {
-        return DesktopScreen.hostNetworked(host);
+        return hostNetworked(host);
     }
 
     /** The machine's memory as the desktop weighs it, for the meter and its tooltip. */
@@ -924,6 +926,12 @@ final class DesktopState {
     void cyclePower(final int action) {
         layouts.powerCycling();
         PacketDistributor.sendToServer(new MachinePowerPayload(host, monitorPos, action));
+    }
+
+    /** Whether the computer at {@code pos} is on a data network, as its block entity tells the client. */
+    static boolean hostNetworked(final BlockPos pos) {
+        final Level level = Minecraft.getInstance().level;
+        return level != null && level.getBlockEntity(pos) instanceof IOsHost computer && computer.networkAttached();
     }
 
     private boolean is(final PanelStyle style) {

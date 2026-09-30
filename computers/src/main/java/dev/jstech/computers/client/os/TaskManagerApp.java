@@ -179,7 +179,7 @@ public final class TaskManagerApp implements IDesktopApp {
         }
         final RamLedger.Kind kind = kindOf(use);
         if (kind == RamLedger.Kind.WINDOW) {
-            DesktopScreen.requestClose(use.label());
+            ActiveDesktop.requestClose(use.label());
         } else if (kind == RamLedger.Kind.PROCESS) {
             /*
              * A script is ended by its number: two of them can have come from the same file, and the
@@ -467,7 +467,7 @@ public final class TaskManagerApp implements IDesktopApp {
     /** The XP networking page: the link, and what the network is doing through it. */
     private void renderNetworking(final GuiGraphics g, final Font font, final int x, final int y,
                                   final int w, final int h) {
-        final boolean up = DesktopScreen.hostNetworked(host);
+        final boolean up = DesktopState.hostNetworked(host);
         Texts.small(g, font, GameText.resolve(TaskManagerTexts.NETWORK), x + 2, y + 2, skin.dim());
         g.drawString(font, GameText.resolve(up ? TaskManagerTexts.CONNECTED : TaskManagerTexts.NOT_CONNECTED), x + 2,
                 y + 11, up ? PALETTE.get().connected() : skin.dim(), false);
@@ -761,7 +761,7 @@ public final class TaskManagerApp implements IDesktopApp {
 
     /** What a row reads as: a window by the name the desktop gives its program, anything else as the ledger has it. */
     private static String shownName(final RamUse use) {
-        return kindOf(use) == RamLedger.Kind.WINDOW ? DesktopScreen.windowName(use.label()) : use.label();
+        return kindOf(use) == RamLedger.Kind.WINDOW ? ActiveDesktop.windowName(use.label()) : use.label();
     }
 
     private static String kindLabel(final String kind) {

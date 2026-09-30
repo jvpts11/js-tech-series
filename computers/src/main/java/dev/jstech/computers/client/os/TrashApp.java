@@ -290,7 +290,7 @@ public final class TrashApp implements IDesktopApp {
         }
         final Text question = chosen.size() == 1 ? TrashTexts.DELETE_ONE.with(chosen.getFirst().name())
                 : TrashTexts.DELETE_MANY.with(chosen.size());
-        DesktopScreen.ask(GameText.resolve(TrashTexts.CONFIRM), GameText.resolve(question),
+        ActiveDesktop.ask(GameText.resolve(TrashTexts.CONFIRM), GameText.resolve(question),
                 () -> act(TrashActionPayload.Action.SHRED, storedOf(chosen)));
     }
 
@@ -302,13 +302,13 @@ public final class TrashApp implements IDesktopApp {
         final Text trash = kindOf(this.style).titleText();
         final Text question = this.items.size() == 1 ? TrashTexts.EMPTY_ONE.with(trash)
                 : TrashTexts.EMPTY_ALL.with(this.items.size(), trash);
-        DesktopScreen.ask(GameText.resolve(TrashTexts.CONFIRM), GameText.resolve(question),
+        ActiveDesktop.ask(GameText.resolve(TrashTexts.CONFIRM), GameText.resolve(question),
                 () -> act(TrashActionPayload.Action.EMPTY, List.of()));
     }
 
     /** Says what an item is: its name, where it came from and the room it takes. */
     void showProperties(final TrashItem item) {
-        DesktopScreen.tell(GameText.resolve(TrashTexts.PROPERTIES_OF.with(item.name())),
+        ActiveDesktop.tell(GameText.resolve(TrashTexts.PROPERTIES_OF.with(item.name())),
                 GameText.resolve(TrashTexts.PROPERTIES_BODY.with(item.name(), item.place(), item.size())));
     }
 
@@ -317,19 +317,19 @@ public final class TrashApp implements IDesktopApp {
         final DesktopState desktop = DesktopScreen.current();
         if (desktop != null) {
             desktop.opener().openFolder(desktopFolder ? desktop.desktopDirectory() : desktop.homeDir());
-            DesktopScreen.closeWindowFor(this);
+            ActiveDesktop.closeWindowFor(this);
         }
     }
 
     /** Closes the window, as its File menu's Close does. */
     void close() {
-        DesktopScreen.closeWindowFor(this);
+        ActiveDesktop.closeWindowFor(this);
     }
 
     /** The picture of the program that opens an item, which is how the desktops showed a file. */
     ResourceLocation iconOf(final TrashItem item) {
         final String program = item.directory() ? "files"
-                : FileOpeners.defaultFor(item.name(), DesktopScreen.installedProgramIds());
+                : FileOpeners.defaultFor(item.name(), ActiveDesktop.installedProgramIds());
         return ResourceLocation.fromNamespaceAndPath("jsc", program.isEmpty() ? "generic" : program);
     }
 
