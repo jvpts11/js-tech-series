@@ -83,7 +83,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.client.event.ContainerScreenEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -521,6 +520,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     private final DeskMenu deskMenu = new DeskMenu(this);
     /** The panel's own menu, which a right click on the bar clear of its entries opens. */
     private final PanelMenu panelMenu = new PanelMenu(this);
+    /** The player's inventory, laid over the window in front when its program has an inventory zone. */
+    private final InventoryBand band = new InventoryBand(this);
 
     /*
      * Drag-and-drop of a desktop icon (a file/folder, or a program launcher), onto a folder, an open
@@ -2285,7 +2286,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * Keep the inventory slots glued to the focused Network Interactor window this frame (per-frame, so a
          * dragged window does not leave its slots a tick behind).
          */
-        syncInventorySlots();
+        band.sync();
         final int sw = view.width();
         final int sh = view.height();
         final int ox = view.left();
@@ -2420,7 +2421,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          */
         g.pose().pushPose();
         g.pose().translate(0, 0, DesktopZ.INVENTORY);
-        renderInventoryItems(g, lmx, lmy, partialTick);
+        hoveredSlot = band.render(g, lmx, lmy);
         g.pose().popPose();
     }
 
@@ -2581,7 +2582,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         // The carried (cursor) stack rides above the tooltip, at the mouse.
         g.pose().pushPose();
         g.pose().translate(0, 0, DesktopZ.CURSOR);
-        renderCarried(g, lmx, lmy);
+        band.renderCarried(g, lmx, lmy);
         g.pose().popPose();
 
         // Brightness: a per-computer dim over the whole surface (100 = none, 0 = deeply dimmed).
@@ -4361,7 +4362,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * a real container click: let the vanilla container drive the cursor, drag, and shift-click.
          */
         if (w.app() instanceof IInventoryBandApp && !(w.app() instanceof NetworkInteractorApp)
-                && !w.app().modalActive() && slotUnderMouse(mouseXAbs, mouseYAbs) != null) {
+                && !w.app().modalActive() && band.slotAt(mouseXAbs, mouseYAbs) != null) {
             return Click.CONTAINER;
         }
         if (w.app() instanceof NetworkInteractorApp ni) {
@@ -4387,7 +4388,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * local storage (Local tab), like MC-NET, instead of the vanilla quick-move between slots.
          */
         if (!ni.hasPopup() && hasShiftDown()) {
-            final Slot slot = slotUnderMouse(mouseXAbs, mouseYAbs);
+            final Slot slot = band.slotAt(mouseXAbs, mouseYAbs);
             final int target = ni.shiftInsertTarget();
             if (slot != null && slot.hasItem() && target >= 0) {
                 PacketDistributor.sendToServer(
@@ -4399,7 +4400,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * While the request/storage dialog is open it is modal over the window (even over the
          * inventory band) so the app gets the click instead of the vanilla container.
          */
-        if (!ni.hasPopup() && slotUnderMouse(mouseXAbs, mouseYAbs) != null) {
+        if (!ni.hasPopup() && band.slotAt(mouseXAbs, mouseYAbs) != null) {
             return Click.CONTAINER;
         }
         /*
@@ -4815,7 +4816,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** The topmost window that is on show, which receives keyboard and scroll input. */
     @Nullable
-    private DesktopWindow frontWindow() {
+    DesktopWindow frontWindow() {
         for (int i = windows.size() - 1; i >= 0; i--) {
             if (!away(windows.get(i))) {
                 return windows.get(i);
@@ -4825,7 +4826,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     }
 
     /** Whether the front window's program has a modal dialog open, which disables everything behind it. */
-    private boolean focusModal() {
+    boolean focusModal() {
         final DesktopWindow f = frontWindow();
         return f != null && f.app().modalActive();
     }
@@ -4863,144 +4864,11 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return null;
     }
 
-    /**
-     * The front window only if it hosts a Network Interactor, the one window that shows the player's real
-     * inventory slots. Returns {@code null} when the front window is another app or the desktop is bare, which
-     * is exactly when the inventory slots must go inert.
-     */
-    @Nullable
-    private DesktopWindow frontNetworkInteractorWindow() {
-        final DesktopWindow w = frontWindow();
-        return w != null && w.app() instanceof IInventoryBandApp ? w : null;
-    }
-
-    /**
-     * Repositions the menu's 36 inventory slots over the focused Network Interactor window's inventory zone and
-     * toggles them active, once per tick before the next render. When no Network Interactor is in front the
-     * slots are switched off (not rendered, not hit-tested), so the inventory only appears inside that window.
-     * The slot grid origin is kept relative to {@code leftPos}/{@code topPos}, the offset the container renders
-     * and hit-tests slots at (since {@code leftPos == view.left()} and {@code topPos == view.top()}, that origin is
-     * just the window-local position of the first inventory cell).
-     */
+    /** Lays the inventory's slots over the window in front once a tick, ahead of the next frame. */
     @Override
     protected void containerTick() {
         super.containerTick();
-        syncInventorySlots();
-    }
-
-    /**
-     * Positions the menu's 36 inventory slots over the focused Network Interactor window's inventory zone and
-     * toggles them active. Run from {@link #containerTick()} and again at the top of {@link #render} so the
-     * slots track a dragged/resized window per frame, not just per tick. When no Network Interactor is in front
-     * the slots go inert (not rendered, not hit-tested), so the inventory only shows inside that window. The
-     * grid origin is window-local, and since {@code leftPos == view.left()} and {@code topPos == view.top()}, that is
-     * exactly the offset the container measures {@code slot.x}/{@code slot.y} from. The menu only rebuilds slots when
-     * the origin actually changed, so this is cheap to call every frame.
-     */
-    private void syncInventorySlots() {
-        final DesktopWindow w = frontNetworkInteractorWindow();
-        if (w == null || !(w.app() instanceof IInventoryBandApp app)) {
-            menu.setSlotsActive(false);
-            return;
-        }
-        /*
-         * Resolve the window's rectangle for this frame first, so slot positions never lag a frame behind a
-         * drag, resize, or maximize (curX/curY are otherwise only refreshed when the window itself renders).
-         */
-        w.resolveGeometry(view.width(), view.height(), view.panelReserve(), view.workAreaTop());
-        /*
-         * The focused Network Interactor is the one that should receive network snapshots and console output,
-         * so point the static routing at it whenever it is in front (matters when two windows are open).
-         */
-        app.markActive();
-        menu.setSlotsActive(true);
-        /*
-         * The window-local top-left of the first inventory cell: past the window border + title bar to the app
-         * content, then the app's own inventory-zone offset. The inventory is a fixed, framed band pinned just
-         * above the footer; its Y uses the window's live content height (not the app's cached field) so the
-         * cells line up with their backgrounds from the very first frame. The band is always fully visible (it
-         * never scrolls and is never clipped) so every one of the 36 slots is always live.
-         */
-        final int contentHeight = w.height() - DesktopWindow.TITLE_H - 8;
-        final int contentTop = w.y() + DesktopWindow.TITLE_H + 4;
-        final int originX = w.x() + 4 + app.invCellContentX(0);
-        final int originY = contentTop + app.invCellContentY(0, contentHeight);
-        /*
-         * The band's screen-space bounds span the rows the app shows: the band never scrolls and is never
-         * clipped, but it can fold its top rows away, and a slot above the band's top goes inert.
-         */
-        final int bandTop = contentTop + app.invBandTop(contentHeight);
-        final int bandBottom = contentTop + app.invBandBottom(contentHeight);
-        menu.layoutInventory(originX, originY, bandTop, bandBottom);
-    }
-
-    /**
-     * Draws the items held in the active inventory slots, plus the hover highlight, inside the desktop's
-     * translated/scissored pass right after the windows, so the items sit over the front window's inventory
-     * zone. Records {@link #hoveredSlot} so the carried-item and tooltip passes can use it. Coordinates are
-     * desktop-local (the caller has already translated by view.left()/view.top()), which equals slot.x/slot.y here.
-     */
-    private void renderInventoryItems(final GuiGraphics g, final int lmx, final int lmy, final float partialTick) {
-        hoveredSlot = null;
-        if (!menu.slotsActive()) {
-            return;
-        }
-        /*
-         * A modal dialog in the focused app disables the inventory: still draw the items (the dialog's dim
-         * darkens them) but give no hover highlight and no click target.
-         */
-        final boolean modal = focusModal();
-        /*
-         * lmx/lmy and the slot coordinates are both desktop-local (already inside the ox/oy translate).
-         * Draw the items directly at the local slot coordinates: delegating to the inherited renderSlot would
-         * add leftPos/topPos a second time (leftPos==view.left()), double-offsetting the icons from their backgrounds.
-         */
-        for (final var slot : menu.slots) {
-            if (!slot.isActive()) {
-                continue;
-            }
-            final ItemStack stack = slot.getItem();
-            if (!stack.isEmpty()) {
-                DesktopItems.item(g, stack, slot.x, slot.y);
-                DesktopItems.count(g, font, stack, slot.x, slot.y);
-            }
-            if (!modal && lmx >= slot.x && lmx < slot.x + 16 && lmy >= slot.y && lmy < slot.y + 16) {
-                hoveredSlot = slot;
-                g.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, DesktopShellPalette.get().slotHover());
-            }
-        }
-    }
-
-    /**
-     * The active inventory slot under an absolute screen point, or {@code null}. Mirrors the container's own
-     * hit-test ({@code slot.x + leftPos}, a 16x16 cell, active only), so a click there can be handed to the
-     * vanilla container which expects the same geometry.
-     */
-    @Nullable
-    private Slot slotUnderMouse(final double absX, final double absY) {
-        if (!menu.slotsActive()) {
-            return null;
-        }
-        for (final var slot : menu.slots) {
-            if (!slot.isActive()) {
-                continue;
-            }
-            final double mx = view.localX(absX);
-            final double my = view.localY(absY);
-            if (mx >= slot.x && mx < slot.x + 16 && my >= slot.y && my < slot.y + 16) {
-                return slot;
-            }
-        }
-        return null;
-    }
-
-    /** Draws the carried (cursor) stack at the mouse, above everything. Desktop-local coordinates. */
-    private void renderCarried(final GuiGraphics g, final int lmx, final int lmy) {
-        final ItemStack carried = menu.getCarried();
-        if (!carried.isEmpty()) {
-            g.renderItem(carried, lmx - 8, lmy - 8);
-            g.renderItemDecorations(font, carried, lmx - 8, lmy - 8);
-        }
+        band.sync();
     }
 
     /** The first window one of the machine's Σ# programs has open on this desktop, or null. */
