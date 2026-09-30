@@ -13,6 +13,7 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
@@ -40,7 +41,22 @@ public final class HardwareTooltip {
     /** An instruction set and the width of its word: "x86-64, 64-bit". */
     private static final TextKey ISA = TextKey.of("jsc.item.hardware_tooltip.isa", "%s, %s-bit");
 
+    /** The design a chip is built on, with its codename: "Architecture: Centro Conroe". */
+    private static final TextKey DESIGN = TextKey.of("jsc.item.hardware_tooltip.design", "Architecture: %s");
+
     private HardwareTooltip() {
+    }
+
+    /**
+     * Appends the design a chip is built on, which is what tells two chips of one clock apart: a newer design does
+     * more in each tick of it. Nothing is appended for a part whose design and codename are both unnamed.
+     *
+     * @param label the design and the codename as one name, "Centro Conroe", "Kepler GK110"; names, not words
+     */
+    public static void appendDesign(final List<Component> tooltip, final String label) {
+        if (!label.isEmpty()) {
+            tooltip.add(GameText.component(DESIGN.with(label)).withStyle(ChatFormatting.GRAY));
+        }
     }
 
     /**

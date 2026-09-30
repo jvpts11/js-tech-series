@@ -43,6 +43,7 @@ public class GpuItem extends SpecItem<GpuSpec> implements IExpansionCardItem {
                                 final List<Component> tooltip, final TooltipFlag flag) {
         final GpuSpec spec = spec();
         tooltip.add(GameText.component(CORES.with(spec.cores(), spec.vramMb())).withStyle(ChatFormatting.GRAY));
+        HardwareTooltip.appendDesign(tooltip, spec.designLabel());
         tooltip.add(GameText.component(QUEUE.with(spec.tdpWatts())).withStyle(ChatFormatting.DARK_GRAY));
         /*
          * Say what the card wants and what happens when it does not get it: the card still fits an

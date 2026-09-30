@@ -79,6 +79,7 @@ import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.GpuSpec;
+import dev.jstech.computers.hardware.Microarchitectures;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.PcieGeneration;
 import dev.jstech.computers.hardware.PhiCoprocessorSpec;
@@ -514,22 +515,27 @@ public final class ComputingModule {
                     CpuSocketId.LGA_2011, 2, Set.of(RamGeneration.DDR3), 8, PcieGeneration.PCIE_3_0, 6, 6, 6)))
             .named("EEB-P Server Board").register();
     public static final ItemEntry<CpuItem> CPU_SERVO_2620 = part("cpu_servo_2620", properties -> new CpuItem(
-            properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 6, 2000, 95, false)))
+            properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 6, 2000, 95, false)
+                    .on(Microarchitectures.SANDY_BRIDGE, "").withSmt()))
             .named("Integra Servo 2620").register();
     public static final ItemEntry<CpuItem> CPU_SERVO_2690 = part("cpu_servo_2690", properties -> new CpuItem(
-            properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 8, 2900, 135, false)))
+            properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 8, 2900, 135, false)
+                    .on(Microarchitectures.SANDY_BRIDGE, "").withSmt()))
             .named("Integra Servo 2690").register();
     public static final ItemEntry<CpuItem> CPU_SERVO_2699 = part("cpu_servo_2699", properties -> new CpuItem(
-            properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 18, 2300, 145, false)))
+            properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 18, 2300, 145, false)
+                    .on(Microarchitectures.HASWELL, "").withSmt()))
             .named("Integra Servo 2699").register();
     public static final ItemEntry<CpuItem> CPU_ASCENT_965 = part("cpu_ascent_965", properties -> new CpuItem(
-            properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.AM3, 4, 3400, 125, false)))
+            properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.AM3, 4, 3400, 125, false)
+                    .on(Microarchitectures.K10, "Deneb")))
             .named("Velocion Ascent X4 965").register();
     public static final ItemEntry<RamItem> RAM_DDR3_8192 = part("ram_ddr3_8192", properties -> new RamItem(
             properties, new RamSpec(HardwareEra.STANDARD, RamGeneration.DDR3, 2048, 15)))
             .named("Stratix DDR3-8192").register();
     public static final ItemEntry<GpuItem> GPU_HD_7970 = part("gpu_hd_7970", properties -> new GpuItem(
-            properties, new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 2048, 3072, 250)))
+            properties, new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 2048, 3072, 250)
+                    .on(Microarchitectures.GCN, "Tahiti", 925)))
             .named("Pyrix Radiance HD 7970").register();
     public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_T2 = part("crafting_card_t2",
             properties -> new CraftingCardItem(properties,

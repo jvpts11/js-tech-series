@@ -328,6 +328,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   recoloured by a resource pack like the others.
 - Blu-ray discs, the Advanced era's medium: the BD-ROM and the rewritable BD-RE, each holding four times a USB
   stick. Advanced programs ship on Blu-ray, and its systems and services on the stick.
+- Processors and graphics cards name the architecture they are built on in their tooltip, with the chip's
+  codename: "Architecture: Centro Conroe", "Architecture: Kepler GK110".
 
 ### Changed
 - A medium's tooltip names its format in the player's language ("Floppy", "Blu-ray") instead of the code's name
@@ -339,6 +341,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   an instruction set by the same ids and names as before. The word architecture is left for the design of a chip.
 - For addon authors: `ComputersRegisterEvent.isa`, `JsComputersApi.registerIsa` and `IsaSpec` take over from
   `architecture`, `registerArchitecture` and `ArchitectureSpec`, and `JsComputersApi.VERSION` is 2.
+- How much a processor orchestrates counts the design of its cores as well as how many there are and how fast
+  they run: a newer design does more in each tick of its clock, and two threads a core add a fifth. An old chip at
+  a high clock no longer outruns a better one that came after it. Vintage machines orchestrate less than before
+  (a 486DX2 one item a tick, a K6-II 11) and Standard ones up to three times more (a 4790K 2,074), and no
+  processor does less than one item a tick.
 - J's Computers' blocks keep their state as J's Core's declared fields: the computers, the server racks, the drives,
   the Pattern Encoders, monitors, speakers, Network Gateways, data cables, Crafting Switches, Server Routers, HBW
   Interfaces and tanks. The players who see one are sent one update a tick however much of it changed, and the

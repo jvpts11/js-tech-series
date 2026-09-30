@@ -10,9 +10,13 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.hardware.Microarchitectures;
+import dev.jstech.computers.item.CpuItem;
+import dev.jstech.computers.item.GpuItem;
 import dev.jstech.computers.os.MinSpecTooltip;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
@@ -80,6 +84,52 @@ public final class HardwareTooltipGameTests {
         assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_486SX.get()), "x86-16, 16-bit");
         assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_VERTEX_700.get()), "x86, 32-bit");
         assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_APEX_5_4590.get()), "x86-64, 64-bit");
+        helper.succeed();
+    }
+
+    /**
+     * A part names the design it is built on, which is what tells two chips of one clock apart; a card whose design
+     * was only ever sold under a brand names its chip, or nothing, rather than the brand.
+     */
+    @GameTest(template = ARENA)
+    public static void partTooltips_nameTheirArchitectureAndCodename(final GameTestHelper helper) {
+        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_DUO_E6600.get()),
+                "Architecture: Centro Conroe");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_APEX_5_4590.get()), "Architecture: Haswell");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.GPU_VERTEX_GTX_780_TI.get()),
+                "Architecture: Kepler GK110");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.GPU_3D_BLASTER.get()), "Architecture: V1000");
+        assertTooltipLacks(helper, new ItemStack(HardwareItems.GPU_VOODOO_GFX.get()), "Architecture");
+        helper.succeed();
+    }
+
+    /** Every processor and card the mod brings is built on a design of the table, and counted by it. */
+    @GameTest(template = ARENA)
+    public static void everyPart_isBuiltOnADesignAndCountedByIt(final GameTestHelper helper) {
+        for (final Item item : BuiltInRegistries.ITEM) {
+            final ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
+            if (!JsComputers.MODID.equals(id.getNamespace())) {
+                continue;
+            }
+            if (item instanceof CpuItem cpu) {
+                helper.assertTrue(cpu.spec().design().arch() != Microarchitectures.UNSPECIFIED,
+                        id + " says nothing of its design");
+            } else if (item instanceof GpuItem gpu) {
+                helper.assertTrue(gpu.spec().arch() != Microarchitectures.UNSPECIFIED,
+                        id + " says nothing of its design");
+            }
+        }
+        helper.assertTrue(HardwareItems.CPU_INTEGRA_486DX2.get().spec().orchestrationCapacity() == 1,
+                "the 486 design makes a 66 MHz chip one item a tick");
+        helper.assertTrue(HardwareItems.CPU_VELOCION_K6_II.get().spec().orchestrationCapacity() == 11,
+                "a K6-II orchestrates 11");
+        helper.assertTrue(HardwareItems.CPU_INTEGRA_DUO_E6600.get().spec().orchestrationCapacity() == 307,
+                "an E6600 orchestrates 307");
+        helper.assertTrue(HardwareItems.CPU_APEX_7_4790K.get().spec().orchestrationCapacity() == 2074,
+                "a 4790K with two threads a core orchestrates 2,074");
+        helper.assertTrue(HardwareItems.GPU_VERTEX_GTX_780_TI.get().spec().power() == 2520
+                        && HardwareItems.GPU_RADIANCE_HD_6850.get().spec().power() == 744,
+                "the cards' power follows their design");
         helper.succeed();
     }
 

@@ -3153,6 +3153,7 @@
   "jsc.item.gpu.cores": "%s núcleos  -  %s MB de VRAM",
   "jsc.item.gpu.older_slot": "%s  -  mais lenta em um slot mais antigo",
   "jsc.item.gpu.queue": "+1 fila paralela  -  %s W",
+  "jsc.item.hardware_tooltip.design": "Arquitetura: %s",
   "jsc.item.hardware_tooltip.isa": "%s, %s bits",
   "jsc.item.hardware_tooltip.mb_per_item": "%s MB por item",
   "jsc.item.hardware_tooltip.tier_power_bus": "%s  -  %s W  -  %s",

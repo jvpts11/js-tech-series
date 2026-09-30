@@ -40,6 +40,7 @@ public class CpuItem extends SpecItem<CpuSpec> {
         final CpuSpec spec = spec();
         tooltip.add(GameText.component(CORES.with(spec.cores(), String.format("%.2f", spec.freqMhz() / 1000.0)))
                 .withStyle(ChatFormatting.GRAY));
+        HardwareTooltip.appendDesign(tooltip, spec.design().label());
         tooltip.add(GameText.component(THROUGHPUT.with(spec.orchestrationCapacity(), spec.tdpWatts()))
                 .withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(GameText.component(SOCKET.with(spec.socket().display())).withStyle(ChatFormatting.DARK_GRAY));

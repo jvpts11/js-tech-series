@@ -12,6 +12,7 @@ import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.GpuSpec;
+import dev.jstech.computers.hardware.Microarchitectures;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.PcieGeneration;
 import dev.jstech.computers.hardware.PsuSpec;
@@ -66,21 +67,23 @@ public final class HardwareItems {
     //  VINTAGE: ISA/PCI buses, SIMM/EDO RAM, single-core CPUs
 
     public static final DeferredItem<CpuItem> CPU_INTEGRA_486SX = cpu("cpu_integra_486sx",
-            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 25, 3, false)).named("Integra 486SX").register();
+            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 25, 3, false)
+                    .on(Microarchitectures.I486, "")).named("Integra 486SX").register();
     public static final DeferredItem<CpuItem> CPU_INTEGRA_486DX2 = cpu("cpu_integra_486dx2",
-            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 66, 5, false)).named("Integra 486DX2").register();
+            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 66, 5, false)
+                    .on(Microarchitectures.I486, "")).named("Integra 486DX2").register();
     public static final DeferredItem<CpuItem> CPU_INTEGRA_486DX4 = cpu("cpu_integra_486dx4",
-            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 100, 5, false)).named("Integra 486DX4")
-            .register();
+            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 100, 5, false)
+                    .on(Microarchitectures.I486, "")).named("Integra 486DX4").register();
     public static final DeferredItem<CpuItem> CPU_VELOCION_K6_II = cpu("cpu_velocion_k6_ii",
-            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 350, 15, false)).named("Velocion K6-II")
-            .register();
+            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 350, 15, false)
+                    .on(Microarchitectures.K6, "Chomper")).named("Velocion K6-II").register();
     public static final DeferredItem<CpuItem> CPU_VELOCION_K6_III = cpu("cpu_velocion_k6_iii",
-            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 400, 20, false)).named("Velocion K6-III")
-            .register();
+            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 400, 20, false)
+                    .on(Microarchitectures.K6, "Sharptooth")).named("Velocion K6-III").register();
     public static final DeferredItem<CpuItem> CPU_VELOCION_K6_III_PLUS = cpu("cpu_velocion_k6_iii_plus",
-            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 450, 22, false)).named("Velocion K6-III+")
-            .register();
+            new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 450, 22, false)
+                    .on(Microarchitectures.K6, "Sharptooth")).named("Velocion K6-III+").register();
 
     public static final DeferredItem<RamItem> RAM_SIMM_4 = ram("ram_simm_4",
             new RamSpec(HardwareEra.VINTAGE, RamGeneration.SIMM, 1, 1)).named("Stratix Layer SIMM-4").register();
@@ -93,13 +96,17 @@ public final class HardwareItems {
      * of VRAM is era-appropriate for fixed-function 2D/early-3D accelerators.
      */
     public static final DeferredItem<GpuItem> GPU_VGA_256 = gpu("gpu_vga_256",
-            new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.ISA, 1, 1, 5)).named("Visara VGA-256").register();
+            new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.ISA, 1, 1, 5).on(Microarchitectures.VGA, "", 25))
+            .named("Visara VGA-256").register();
     public static final DeferredItem<GpuItem> GPU_3D_BLASTER = gpu("gpu_3d_blaster",
-            new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.PCI, 1, 2, 5)).named("Pyrix 3D Blaster").register();
+            new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.PCI, 1, 2, 5).on(Microarchitectures.RENDITION, "V1000", 25))
+            .named("Pyrix 3D Blaster").register();
     public static final DeferredItem<GpuItem> GPU_PRISM_4 = gpu("gpu_prism_4",
-            new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.PCI, 2, 4, 12)).named("Visara Prism 4").register();
+            new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.PCI, 2, 4, 12).on(Microarchitectures.NV3, "", 100))
+            .named("Visara Prism 4").register();
     public static final DeferredItem<GpuItem> GPU_VOODOO_GFX = gpu("gpu_voodoo_gfx",
-            new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.PCI, 3, 8, 18)).named("Pyrix Voodoo GFX").register();
+            new GpuSpec(HardwareEra.VINTAGE, PcieGeneration.PCI, 3, 8, 18).on(Microarchitectures.THREEDFX, "", 90))
+            .named("Pyrix Voodoo GFX").register();
 
     public static final DeferredItem<PsuItem> PSU_300B =
             psu("psu_300b", new PsuSpec(300, 80)).named("MF PowerBasic 300B").register();
@@ -140,49 +147,64 @@ public final class HardwareItems {
     //  LEGACY: AGP/PCIe 1.0 buses, SDRAM/DDR/DDR2 RAM, first multi-core CPUs
 
     public static final DeferredItem<CpuItem> CPU_INTEGRA_VERTEX_700 = cpu("cpu_integra_vertex_700",
-            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_370, 1, 700, 28, false))
+            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_370, 1, 700, 28, false)
+                    .on(Microarchitectures.P6, "Coppermine"))
             .named("Integra Vertex 700").register();
     public static final DeferredItem<CpuItem> CPU_INTEGRA_VERTEX_III_S_1000 = cpu("cpu_integra_vertex_iii_s_1000",
-            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_370, 1, 1000, 30, false))
+            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_370, 1, 1000, 30, false)
+                    .on(Microarchitectures.P6, "Tualatin"))
             .named("Integra Vertex III-S 1000").register();
     public static final DeferredItem<CpuItem> CPU_INTEGRA_VERTEX_III_S_1400 = cpu("cpu_integra_vertex_iii_s_1400",
-            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_370, 1, 1400, 32, false))
+            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_370, 1, 1400, 32, false)
+                    .on(Microarchitectures.P6, "Tualatin"))
             .named("Integra Vertex III-S 1400").register();
     public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_XP_2400 = cpu("cpu_velocion_sprint_xp_2400",
-            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_A, 1, 2000, 65, false))
+            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_A, 1, 2000, 65, false)
+                    .on(Microarchitectures.K7, "Thoroughbred"))
             .named("Velocion Sprint XP 2400+").register();
     public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_XP_3200 = cpu("cpu_velocion_sprint_xp_3200",
-            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_A, 1, 2200, 76, false))
+            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_A, 1, 2200, 76, false)
+                    .on(Microarchitectures.K7, "Barton"))
             .named("Velocion Sprint XP 3200+").register();
     public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_XP_3800 = cpu("cpu_velocion_sprint_xp_3800",
-            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_A, 1, 2400, 89, false))
+            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_A, 1, 2400, 89, false)
+                    .on(Microarchitectures.K7, "Barton"))
             .named("Velocion Sprint XP 3800+").register();
     public static final DeferredItem<CpuItem> CPU_INTEGRA_DUO_E4300 = cpu("cpu_integra_duo_e4300",
-            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_775, 2, 1800, 65, false))
+            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_775, 2, 1800, 65, false)
+                    .on(Microarchitectures.CENTRO, "Allendale"))
             .named("Integra Duo E4300").register();
     public static final DeferredItem<CpuItem> CPU_INTEGRA_DUO_E6600 = cpu("cpu_integra_duo_e6600",
-            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_775, 2, 2400, 65, false))
+            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_775, 2, 2400, 65, false)
+                    .on(Microarchitectures.CENTRO, "Conroe"))
             .named("Integra Duo E6600").register();
     public static final DeferredItem<CpuItem> CPU_INTEGRA_DUO_E8500 = cpu("cpu_integra_duo_e8500",
-            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_775, 2, 3160, 65, false))
+            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_775, 2, 3160, 65, false)
+                    .on(Microarchitectures.CENTRO, "Wolfdale"))
             .named("Integra Duo E8500").register();
     public static final DeferredItem<CpuItem> CPU_VELOCION_DUAL_240 = cpu("cpu_velocion_dual_240",
-            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_940, 2, 2200, 85, false))
+            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_940, 2, 2200, 85, false)
+                    .on(Microarchitectures.K8, "Italy"))
             .named("Velocion Dual 240").register();
     public static final DeferredItem<CpuItem> CPU_VELOCION_DUAL_280 = cpu("cpu_velocion_dual_280",
-            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_940, 2, 2400, 95, false))
+            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_940, 2, 2400, 95, false)
+                    .on(Microarchitectures.K8, "Italy"))
             .named("Velocion Dual 280").register();
     public static final DeferredItem<CpuItem> CPU_VELOCION_DUAL_285 = cpu("cpu_velocion_dual_285",
-            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_940, 2, 2600, 95, false))
+            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_940, 2, 2600, 95, false)
+                    .on(Microarchitectures.K8, "Italy"))
             .named("Velocion Dual 285").register();
     public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_5100 = cpu("cpu_integra_servo_5100",
-            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_771, 2, 2000, 65, false))
+            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_771, 2, 2000, 65, false)
+                    .on(Microarchitectures.CENTRO, "Woodcrest"))
             .named("Integra Servo 5100").register();
     public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_5160 = cpu("cpu_integra_servo_5160",
-            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_771, 2, 3000, 80, false))
+            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_771, 2, 3000, 80, false)
+                    .on(Microarchitectures.CENTRO, "Woodcrest"))
             .named("Integra Servo 5160").register();
     public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_5365 = cpu("cpu_integra_servo_5365",
-            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_771, 4, 2000, 120, false))
+            new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_771, 4, 2000, 120, false)
+                    .on(Microarchitectures.CENTRO, "Clovertown"))
             .named("Integra Servo 5365").register();
 
     public static final DeferredItem<RamItem> RAM_SDRAM_128 = ram("ram_sdram_128",
@@ -198,19 +220,25 @@ public final class HardwareItems {
      * MB of VRAM track the AGP/early-PCIe generation.
      */
     public static final DeferredItem<GpuItem> GPU_RADIANCE_9200_SE = gpu("gpu_radiance_9200_se",
-            new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_4X, 2, 16, 30)).named("Pyrix Radiance 9200 SE")
-            .register();
+            new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_4X, 2, 16, 30)
+                    .on(Microarchitectures.R200, "RV280", 200))
+            .named("Pyrix Radiance 9200 SE").register();
     public static final DeferredItem<GpuItem> GPU_VERTEX_256 = gpu("gpu_vertex_256",
-            new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_4X, 4, 32, 50)).named("Visara Vertex 256").register();
+            new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_4X, 4, 32, 50)
+                    .on(Microarchitectures.CELSIUS, "NV10", 120))
+            .named("Visara Vertex 256").register();
     public static final DeferredItem<GpuItem> GPU_RADIANCE_9800_PRO = gpu("gpu_radiance_9800_pro",
-            new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_8X, 8, 128, 70)).named("Pyrix Radiance 9800 Pro")
-            .register();
+            new GpuSpec(HardwareEra.LEGACY, PcieGeneration.AGP_8X, 8, 128, 70)
+                    .on(Microarchitectures.R300, "R350", 380))
+            .named("Pyrix Radiance 9800 Pro").register();
     public static final DeferredItem<GpuItem> GPU_VERTEX_8800_GT = gpu("gpu_vertex_8800_gt",
-            new GpuSpec(HardwareEra.LEGACY, PcieGeneration.PCIE_1_0, 112, 512, 110)).named("Visara Vertex 8800 GT")
-            .register();
+            new GpuSpec(HardwareEra.LEGACY, PcieGeneration.PCIE_1_0, 112, 512, 110)
+                    .on(Microarchitectures.TESLA, "G92", 1500))
+            .named("Visara Vertex 8800 GT").register();
     public static final DeferredItem<GpuItem> GPU_VERTEX_GTX_280 = gpu("gpu_vertex_gtx_280",
-            new GpuSpec(HardwareEra.LEGACY, PcieGeneration.PCIE_1_0, 240, 1024, 145)).named("Visara Vertex GTX 280")
-            .register();
+            new GpuSpec(HardwareEra.LEGACY, PcieGeneration.PCIE_1_0, 240, 1024, 145)
+                    .on(Microarchitectures.TESLA, "GT200", 1296))
+            .named("Visara Vertex GTX 280").register();
 
     public static final DeferredItem<PsuItem> PSU_500B =
             psu("psu_500b", new PsuSpec(500, 80)).named("MF PowerBasic 500B").register();
@@ -271,19 +299,24 @@ public final class HardwareItems {
      */
 
     public static final DeferredItem<CpuItem> CPU_ASCENT_X4_955 = cpu("cpu_ascent_x4_955",
-            new CpuSpec(HardwareEra.STANDARD, CpuSocketId.AM3, 4, 3200, 125, false))
+            new CpuSpec(HardwareEra.STANDARD, CpuSocketId.AM3, 4, 3200, 125, false)
+                    .on(Microarchitectures.K10, "Deneb"))
             .named("Velocion Ascent X4 955").register();
     public static final DeferredItem<CpuItem> CPU_ASCENT_X6_1090T = cpu("cpu_ascent_x6_1090t",
-            new CpuSpec(HardwareEra.STANDARD, CpuSocketId.AM3, 6, 3200, 125, false))
+            new CpuSpec(HardwareEra.STANDARD, CpuSocketId.AM3, 6, 3200, 125, false)
+                    .on(Microarchitectures.K10, "Thuban"))
             .named("Velocion Ascent X6 1090T").register();
     public static final DeferredItem<CpuItem> CPU_APEX_5_4590 = cpu("cpu_apex_5_4590",
-            new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 4, 3300, 84, false))
+            new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 4, 3300, 84, false)
+                    .on(Microarchitectures.HASWELL, ""))
             .named("Integra Apex 5 4590").register();
     public static final DeferredItem<CpuItem> CPU_APEX_5_4690K = cpu("cpu_apex_5_4690k",
-            new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 4, 3500, 88, false))
+            new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 4, 3500, 88, false)
+                    .on(Microarchitectures.HASWELL, "Devil's Canyon"))
             .named("Integra Apex 5 4690K").register();
     public static final DeferredItem<CpuItem> CPU_APEX_7_4790K = cpu("cpu_apex_7_4790k",
-            new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 4, 4000, 88, false))
+            new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 4, 4000, 88, false)
+                    .on(Microarchitectures.HASWELL, "Devil's Canyon").withSmt())
             .named("Integra Apex 7 4790K").register();
 
     /*
@@ -293,13 +326,16 @@ public final class HardwareItems {
      */
     public static final DeferredItem<GpuItem> GPU_RADIANCE_HD_7970 = ComputingModule.GPU_HD_7970;
     public static final DeferredItem<GpuItem> GPU_VERTEX_GTX_550_TI = gpu("gpu_vertex_gtx_550_ti",
-            new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_2_0, 192, 1024, 116))
+            new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_2_0, 192, 1024, 116)
+                    .on(Microarchitectures.FERMI, "GF116", 1800))
             .named("Visara Vertex GTX 550 Ti").register();
     public static final DeferredItem<GpuItem> GPU_RADIANCE_HD_6850 = gpu("gpu_radiance_hd_6850",
-            new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_2_0, 960, 2048, 127))
+            new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_2_0, 960, 2048, 127)
+                    .on(Microarchitectures.TERASCALE_2, "Barts", 775))
             .named("Pyrix Radiance HD 6850").register();
     public static final DeferredItem<GpuItem> GPU_VERTEX_GTX_780_TI = gpu("gpu_vertex_gtx_780_ti",
-            new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 2880, 3072, 250))
+            new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 2880, 3072, 250)
+                    .on(Microarchitectures.KEPLER, "GK110", 875))
             .named("Visara Vertex GTX 780 Ti").register();
 
     public static final DeferredItem<PsuItem> PSU_850G =

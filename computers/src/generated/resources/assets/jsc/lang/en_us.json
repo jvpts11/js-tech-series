@@ -3153,6 +3153,7 @@
   "jsc.item.gpu.cores": "%s cores  -  %s MB VRAM",
   "jsc.item.gpu.older_slot": "%s  -  slower on an older slot",
   "jsc.item.gpu.queue": "+1 parallel queue  -  %s W",
+  "jsc.item.hardware_tooltip.design": "Architecture: %s",
   "jsc.item.hardware_tooltip.isa": "%s, %s-bit",
   "jsc.item.hardware_tooltip.mb_per_item": "%s MB per item",
   "jsc.item.hardware_tooltip.tier_power_bus": "%s  -  %s W  -  %s",
