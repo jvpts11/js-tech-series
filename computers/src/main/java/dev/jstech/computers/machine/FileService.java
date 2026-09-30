@@ -749,6 +749,28 @@ public final class FileService {
         return this.deleteFile(path).ok();
     }
 
+    /**
+     * Moves the file at {@code from} to the path {@code to}, as C's rename does: renamed where it is when the folder is
+     * the same, moved into the other folder and renamed there otherwise; false when it could not be.
+     */
+    public boolean move(final String from, final String to) {
+        final String source = from.replace('\\', '/');
+        final String target = to.replace('\\', '/');
+        final String name = FsPaths.fileName(target);
+        if (name.isBlank()) {
+            return false;
+        }
+        final String folder = FsPaths.parentDir(target);
+        if (folder.equalsIgnoreCase(FsPaths.parentDir(source))) {
+            return this.renamePath(from, name).ok();
+        }
+        if (!this.movePath(from, folder).ok()) {
+            return false;
+        }
+        final String moved = FsPaths.join(folder, FsPaths.fileName(source));
+        return name.equals(FsPaths.fileName(source)) || this.renamePath(moved, name).ok();
+    }
+
     /** Makes a folder at that path; false when it could not be made. */
     public boolean makeFolder(final String path) {
         return this.makeDir(path).ok();

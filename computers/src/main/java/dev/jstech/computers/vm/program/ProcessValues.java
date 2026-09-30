@@ -78,6 +78,11 @@ final class ProcessValues {
                 target instanceof Values.ListValue list ? list.size() : nothing("Count", line));
         core(bindings, "Map", "Count", (process, target, line) ->
                 target instanceof Values.MapValue map ? map.entries().size() : nothing("Count", line));
+        // Where a file the program opened is up to, and whether that is its end.
+        onObject(bindings, OpenFile.TYPE, "Position", (process, target, line) ->
+                OpenFile.position((Values.Obj) target, line));
+        onObject(bindings, OpenFile.TYPE, "AtEnd", (process, target, line) ->
+                OpenFile.atEnd((Values.Obj) target, line));
         // What a window and its widgets hold, which is read for nothing and written at the price of a draw.
         for (final TypeSpec type : SystemApi.types()) {
             if (UI.equals(type.namespace())) {
@@ -133,6 +138,20 @@ final class ProcessValues {
                     owner + "." + name + " is not a value the system declares as the process's");
         }
         add(bindings, new Binding(new MemberId(owner, name, List.of()), read, null, true));
+    }
+
+    /** Binds a value the system declares as the process's, read from an object of the type. */
+    private static void onObject(final Map<MemberId, Binding> bindings, final String owner, final String name,
+                                 final IProcessValue read) {
+        boolean declared = false;
+        for (final IMemberSpec member : SystemApi.members(owner, name)) {
+            declared |= member instanceof PropertySpec && member.kind() == MemberKind.PROCESS && !member.isStatic();
+        }
+        if (!declared) {
+            throw new IllegalStateException(
+                    owner + "." + name + " is not a value the system declares as the process's");
+        }
+        add(bindings, new Binding(new MemberId(owner, name, List.of()), read, null, false));
     }
 
     /** Binds one of the values the language's core keeps on its own objects. */

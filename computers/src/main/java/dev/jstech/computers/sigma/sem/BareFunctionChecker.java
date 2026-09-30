@@ -70,8 +70,11 @@ final class BareFunctionChecker {
             case SCANNED -> this.printf.scan(call, function.name(),
                     this.scope.builtIns().type(function.owner(), 0), function.member());
             case COPIED_INTO, JOINED_ONTO -> this.assigned(call, function);
+            case FILE_PRINTED -> this.filePrinted(call, function);
+            case FILE_SCANNED -> this.fileScanned(call, function);
             case FORMATTED -> this.printf.check(call, function.name(), false);
-            case SAME_VALUES, ON_THE_FIRST, READ_OFF_THE_FIRST, FIXED_VALUE -> this.called(call, function);
+            case SAME_VALUES, ON_THE_FIRST, ON_THE_FIRST_FIXED, ON_THE_LAST, READ_OFF_THE_FIRST, FIXED_VALUE ->
+                    this.called(call, function);
         };
     }
 
@@ -91,8 +94,10 @@ final class BareFunctionChecker {
             case SAME_VALUES -> this.scope.model().setCall(call, this.longCall(owner, function.member(), takes, values));
             case FIXED_VALUE -> this.fixed(call, function, owner, takes);
             case ON_THE_FIRST -> this.onTheFirst(call, function, owner, takes);
+            case ON_THE_FIRST_FIXED -> this.onTheFirstFixed(call, function, owner);
+            case ON_THE_LAST -> this.onTheLast(call, function, owner, takes);
             case READ_OFF_THE_FIRST -> this.readOffTheFirst(call, function, owner);
-            case PRINTED, FORMATTED, SCANNED, COPIED_INTO, JOINED_ONTO ->
+            case PRINTED, FORMATTED, SCANNED, COPIED_INTO, JOINED_ONTO, FILE_PRINTED, FILE_SCANNED ->
                     throw new IllegalStateException("not a call of the library");
         }
         return chosen.returnType();
@@ -139,6 +144,49 @@ final class BareFunctionChecker {
         return held;
     }
 
+    /**
+     * {@code fprintf(f, format, ...)}: the file first, then printf's format and values, read while the program is
+     * compiled; what they come to is written to the file, as {@code f.Write} of the joined text.
+     */
+    private ITypeSymbol filePrinted(final IExpr.Call call, final BareFunctions.Function function) {
+        final NamedType file = this.scope.builtIns().type(function.owner(), 0);
+        final IExpr target = this.fileHandedFirst(call, function, file);
+        if (target == null) {
+            return ITypeSymbol.Primitive.VOID;
+        }
+        final IExpr.Call text = new IExpr.Call(call.callee(),
+                List.copyOf(call.arguments().subList(1, call.arguments().size())), call.line(), call.column());
+        this.scope.model().setType(text, this.printf.check(text, function.name(), false));
+        if (this.scope.model().formattedOf(text) != null) {
+            this.onObject(call, target, function.member(), file, List.of(text),
+                    List.of(this.scope.builtIns().stringType()));
+        }
+        return ITypeSymbol.Primitive.VOID;
+    }
+
+    /** {@code fscanf(f, format, out v)}: scanf's one value, read from the file handed first. */
+    private ITypeSymbol fileScanned(final IExpr.Call call, final BareFunctions.Function function) {
+        final NamedType file = this.scope.builtIns().type(function.owner(), 0);
+        final IExpr source = this.fileHandedFirst(call, function, file);
+        if (source == null) {
+            return ITypeSymbol.Primitive.INT;
+        }
+        return this.printf.scan(call, call.arguments().subList(1, call.arguments().size()), source,
+                function.name(), file, function.member());
+    }
+
+    /** The file a call on files is handed first, checked, or null when there is none to check. */
+    private IExpr fileHandedFirst(final IExpr.Call call, final BareFunctions.Function function,
+                                  final NamedType file) {
+        if (call.arguments().isEmpty()) {
+            this.scope.report(call.line(), call.column(), SigmaError.NO_MATCHING_OVERLOAD, function.name());
+            return null;
+        }
+        final IExpr target = call.arguments().getFirst();
+        this.scope.expect(this.expressions.check(target, file), file, target);
+        return target;
+    }
+
     /** A name for the place an argument handed over, bound and typed as the argument was. */
     private IExpr.Name named(final IExpr.OutArgument place, final IBinding binding, final ITypeSymbol type) {
         final IExpr.Name made = new IExpr.Name(place.name(), place.line(), place.column());
@@ -175,6 +223,35 @@ final class BareFunctionChecker {
         final IExpr.Call made = new IExpr.Call(member, List.copyOf(rest), call.line(), call.column());
         final IMemberSymbol.MethodSymbol target = this.longCall(owner, function.member(),
                 takes.subList(1, takes.size()), rest);
+        this.scope.model().setBinding(member, new IBinding.Member(target, target.returnType()));
+        this.scope.model().setCall(made, target);
+        this.scope.model().setType(made, target.returnType());
+        this.scope.model().setLongWay(call, made);
+    }
+
+    /** {@code rewind(f)} as {@code f.Seek(0)}: a call on the first value, handed the one value it is fixed to. */
+    private void onTheFirstFixed(final IExpr.Call call, final BareFunctions.Function function,
+                                 final NamedType owner) {
+        final IExpr fixed = new IExpr.Literal(TokenKind.INT_LITERAL, function.fixed(), call.line(), call.column());
+        this.scope.model().setType(fixed, ITypeSymbol.Primitive.INT);
+        this.onObject(call, call.arguments().getFirst(), function.member(), owner, List.of(fixed),
+                List.of(ITypeSymbol.Primitive.INT));
+    }
+
+    /** {@code fputs(s, f)} as {@code f.Write(s)}: the last value is what the call is made on, as C puts the file. */
+    private void onTheLast(final IExpr.Call call, final BareFunctions.Function function, final NamedType owner,
+                           final List<ITypeSymbol> takes) {
+        final int last = call.arguments().size() - 1;
+        this.onObject(call, call.arguments().get(last), function.member(), owner,
+                List.copyOf(call.arguments().subList(0, last)), takes.subList(0, last));
+    }
+
+    /** The long way of a call made on {@code receiver}, handed {@code values} of those types. */
+    private void onObject(final IExpr.Call call, final IExpr receiver, final String name, final NamedType owner,
+                          final List<IExpr> values, final List<ITypeSymbol> takes) {
+        final IExpr.Member member = new IExpr.Member(receiver, name, call.line(), call.column());
+        final IExpr.Call made = new IExpr.Call(member, values, call.line(), call.column());
+        final IMemberSymbol.MethodSymbol target = this.longCall(owner, name, takes, values);
         this.scope.model().setBinding(member, new IBinding.Member(target, target.returnType()));
         this.scope.model().setCall(made, target);
         this.scope.model().setType(made, target.returnType());
@@ -222,7 +299,7 @@ final class BareFunctionChecker {
             final List<IMemberSymbol.ParameterSymbol> parameters = new ArrayList<>(types.size());
             for (int i = 0; i < types.size(); i++) {
                 parameters.add(new IMemberSymbol.ParameterSymbol(form.nameOf(i), this.typeNamed(types.get(i)),
-                        false));
+                        form.outward(i)));
             }
             forms.add(new IMemberSymbol.MethodSymbol(owner, function.name(), this.typeNamed(form.gives()),
                     parameters, OF_NO_OBJECT));

@@ -121,7 +121,15 @@ final class PrintfChecker {
      * was one and 0 when what was typed was not one.
      */
     ITypeSymbol scan(final IExpr.Call call, final String name, final NamedType owner, final String member) {
-        final List<IExpr> arguments = call.arguments();
+        return this.scan(call, call.arguments(), null, name, owner, member);
+    }
+
+    /**
+     * The same, reading from {@code source} (a file the program opened, for fscanf) rather than from what is typed,
+     * with the format and the variable in {@code arguments}.
+     */
+    ITypeSymbol scan(final IExpr.Call call, final List<IExpr> arguments, final IExpr source, final String name,
+                     final NamedType owner, final String member) {
         final IExpr into = arguments.size() > 1 ? arguments.get(1) : null;
         final ITypeSymbol kind = into == null ? null : this.expressions.check(into, null);
         for (int i = 2; i < arguments.size(); i++) {
@@ -162,7 +170,14 @@ final class PrintfChecker {
                     hole.written().substring(1), hole.wants().words(), kind.describe());
             return ITypeSymbol.Primitive.INT;
         }
-        final IExpr.Call made = new IExpr.Call(call.callee(), List.of(into), call.line(), call.column());
+        final IExpr callee;
+        if (source == null) {
+            callee = call.callee();
+        } else {
+            callee = new IExpr.Member(source, member, call.line(), call.column());
+            this.scope.model().setBinding(callee, new IBinding.Member(read, read.returnType()));
+        }
+        final IExpr.Call made = new IExpr.Call(callee, List.of(into), call.line(), call.column());
         this.scope.model().setCall(made, read);
         this.scope.model().setType(made, read.returnType());
         this.scope.model().setLongWay(call, made);

@@ -43,9 +43,11 @@ public final class SystemApi {
     private static final String STRINGS = "List<string>";
     private static final String ROWS = "List<Map<string, object>>";
     private static final String WIDGET = "Widget";
+    /** A file a program opened, named as C names it. */
+    private static final String OPEN_FILE = "FILE";
 
     private static final List<TypeSpec> TYPES = List.of(math(), convert(), console(), program(), process(),
-            processMessage(), thread(), time(), random(), file(), cpuInfo(), diskInfo(), osInfo(), processInfo(),
+            processMessage(), thread(), time(), random(), openFile(), file(), cpuInfo(), diskInfo(), osInfo(), processInfo(),
             computer(), holdingInfo(), serverInfo(), network(), stockEvent(), subscription(), remoteComputer(),
             iqlResult(), iql(), workStat(), mainframe(), askResult(), operationInfo(), operations(), ccComputer(),
             ccPeripheral(), gatewayMessage(), gateway(), widget(), window(), box("Row"), box("Column"), label(),
@@ -285,7 +287,35 @@ public final class SystemApi {
         file.onType(BOOL, "Delete", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING);
         file.onType(BOOL, "MkDir", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING);
         file.onType(STRINGS, "List", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
+        /*
+         * The second version's: a file opened to be worked on a piece at a time, as C's fopen opens one, which costs
+         * the read of what it holds; and a file moved or renamed, as C's rename does.
+         */
+        file.onType(OPEN_FILE, "Open", MemberKind.WORLD, read, STRING, STRING);
+        file.onType(BOOL, "Move", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING, STRING);
         return new TypeSpec(IO, "File", file.members);
+    }
+
+    /**
+     * A file a program opened, as C's FILE is: what it holds, kept with the program while it works on it a line, a
+     * value or a character at a time, and where it is up to in it, counted in characters. Working on it is the
+     * program's own and costs nothing; what was written reaches the disk when the file is closed, which costs the
+     * write, or when the program ends with it still open.
+     */
+    private static TypeSpec openFile() {
+        final Members open = new Members(OPEN_FILE);
+        open.onObject(VOID, "Close", MemberKind.WORLD, CallCost.perBlock(SigmaCosts.WRITE, SigmaCosts.WRITE_PER_BLOCK));
+        open.onObject(BOOL, "ReadLine", MemberKind.PROCESS, CallCost.FREE, "out " + STRING);
+        open.onObject(INT, "Read", MemberKind.PROCESS, CallCost.FREE);
+        for (final String kind : List.of(INT, LONG, DOUBLE, STRING, "char")) {
+            open.onObject(INT, "Scan", MemberKind.PROCESS, CallCost.FREE, "out " + kind);
+        }
+        open.onObject(VOID, "Write", MemberKind.PROCESS, CallCost.FREE, STRING);
+        open.onObject(VOID, "Write", MemberKind.PROCESS, CallCost.FREE, "char");
+        open.onObject(VOID, "Seek", MemberKind.PROCESS, CallCost.FREE, INT);
+        open.valueOnObject(INT, "Position", MemberKind.PROCESS, CallCost.FREE);
+        open.valueOnObject(BOOL, "AtEnd", MemberKind.PROCESS, CallCost.FREE);
+        return new TypeSpec(IO, OPEN_FILE, open.members);
     }
 
     /*

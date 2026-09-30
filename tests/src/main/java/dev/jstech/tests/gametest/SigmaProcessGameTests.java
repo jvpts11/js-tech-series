@@ -19,6 +19,7 @@ import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.machine.IMachineRuntime;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.ServerTickDeadline;
+import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramConsole;
@@ -631,6 +632,66 @@ public final class SigmaProcessGameTests {
                     programs.tick(2048);
                     helper.assertTrue(programs.isEmpty(),
                             "and both are gone once the parent is; " + programs.view().size() + " left");
+                })
+                .thenSucceed();
+    }
+
+    /** A program that works on files as C's stdio does, and leaves one open when it ends. */
+    private static final String FILES = """
+            using System.*;
+            using System.IO.*;
+            namespace Programs;
+            class Files {
+                static void Main() {
+                    FILE w = fopen("notes.txt", "w");
+                    fprintf(w, "%s %d\\n", "iron", 16);
+                    fclose(w);
+                    FILE r = fopen("notes.txt", "r");
+                    string line;
+                    fgets(out line, r);
+                    Console.PrintLine("read " + line);
+                    fclose(r);
+                    Console.PrintLine("renamed " + rename("notes.txt", "stock.txt"));
+                    FILE left = fopen("left.txt", "w");
+                    fputs("still here", left);
+                }
+            }
+            """;
+
+    /**
+     * The files a program opens are the machine's own: what it wrote is on the disk once it closes them, what it
+     * renamed is under the new name, and what it left open is written when it ends.
+     */
+    @GameTest(template = ARENA)
+    public static void programs_workOnTheMachinesFilesAsCDoes(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2));
+        if (computer == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final MachinePrograms programs = computer.programs();
+                    final MachinePrograms.Started started =
+                            programs.start("files.asm", listing(FILES), 1, computer);
+                    helper.assertTrue(started.ok(), "it starts: " + started.message());
+                    final IMachineRuntime files = programs.byId(started.id()).process();
+                    int ticks = 0;
+                    while (MachinePrograms.running(files) && ticks++ < 12) {
+                        programs.tick(4096);
+                    }
+                    helper.assertTrue(files.console().equals(List.of("read iron 16", "renamed true")),
+                            "it read what it wrote and renamed it; got " + files.console() + " (" + files.message()
+                                    + ")");
+                    helper.assertTrue(DiskFilesystem.read(computer.systemDisk(), "stock.txt")
+                                    .filter("iron 16\n"::equals).isPresent(),
+                            "the file is on the disk under its new name; got "
+                                    + DiskFilesystem.read(computer.systemDisk(), "stock.txt"));
+                    helper.assertTrue(DiskFilesystem.read(computer.systemDisk(), "notes.txt").isEmpty(),
+                            "and not under the old one");
+                    helper.assertTrue(DiskFilesystem.read(computer.systemDisk(), "left.txt")
+                                    .filter("still here"::equals).isPresent(),
+                            "what it left open is written when it ends; got "
+                                    + DiskFilesystem.read(computer.systemDisk(), "left.txt"));
                 })
                 .thenSucceed();
     }

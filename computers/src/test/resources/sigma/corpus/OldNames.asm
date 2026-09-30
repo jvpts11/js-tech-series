@@ -4,7 +4,7 @@
 
 .class Corpus.OldNamesCorpus
 
-.method static int Main(string[]) slots 17
+.method static int Main(string[]) slots 24
     ldstr   "How many ingots?"
     call    Console.PrintLine(string) -> void
     ldc.i4  62
@@ -29,9 +29,108 @@
     ldstr   "!"
     call    string.Concat(string, string) -> string
     stloc   5
+    ldstr   "notes.txt"
+    ldstr   "a+"
+    call    File.Open(string, string) -> FILE
+    stloc   6
+    ldloc   6
+    call    FILE.ReadLine(out string) -> bool
+    stloc   7
+    brfalse L5
+    ldloc   6
+    ldfld   FILE.AtEnd
+    ldc.i4  0
+    ceq
+    br      L6
+L5: ldc.i4  0
+L6: brfalse L3
+    ldloc   6
+    call    FILE.ReadLine(out string) -> bool
+    stloc   7
+    br      L4
+L3: ldc.i4  0
+L4: brfalse L1
+    ldloc   6
+    ldfld   FILE.AtEnd
+    br      L2
+L1: ldc.i4  0
+L2: stloc   8
+    ldloc   6
+    ldloc   5
+    call    FILE.Write(string) -> void
+    ldloc   6
+    ldc.i4  46
+    call    FILE.Write(char) -> void
+    ldloc   6
+    ldstr   "x"
+    call    FILE.Write(string) -> void
+    ldloc   6
+    ldc.i4  121
+    call    FILE.Write(char) -> void
+    ldloc   6
+    call    FILE.Read() -> int
+    ldloc   6
+    call    FILE.Read() -> int
+    add
+    ldloc   6
+    ldfld   FILE.Position
+    add
+    ldloc   6
+    ldfld   FILE.Position
+    add
+    ldloc   6
+    call    FILE.Scan(out int) -> int
+    stloc   3
+    add
+    stloc   9
+    ldloc   6
+    ldc.i4  0
+    call    FILE.Seek(int) -> void
+    ldloc   6
+    ldc.i4  2
+    call    FILE.Seek(int) -> void
+    ldloc   6
+    ldc.i4  1
+    call    FILE.Seek(int) -> void
+    ldloc   6
+    ldstr   ""
+    ldstr   "%05d"
+    ldloc   9
+    call    string.Printf(string, object) -> string
+    call    string.Concat(string, string) -> string
+    ldstr   "\n"
+    call    string.Concat(string, string) -> string
+    call    FILE.Write(string) -> void
+    ldloc   6
+    call    FILE.Scan(out int) -> int
+    stloc   3
+    stloc   10
+    ldloc   6
+    call    FILE.Close() -> void
+    ldstr   "notes.txt"
+    ldstr   "r"
+    call    File.Open(string, string) -> FILE
+    stloc   11
+    ldloc   11
+    call    FILE.Close() -> void
+    ldstr   "old.txt"
+    call    File.Delete(string) -> bool
+    brtrue  L9
+    ldstr   "a.txt"
+    ldstr   "b.txt"
+    call    File.Move(string, string) -> bool
+    br      L10
+L9: ldc.i4  1
+L10: brtrue  L7
+    ldstr   "b.txt"
+    ldstr   "c.txt"
+    call    File.Move(string, string) -> bool
+    br      L8
+L7: ldc.i4  1
+L8: stloc   12
     ldloc   1
     call    Convert.ToDouble(string) -> double
-    stloc   6
+    stloc   13
     ldc.i4  3
     neg
     call    Math.Abs(int) -> int
@@ -43,7 +142,7 @@
     ldc.i4  2
     call    Math.Max(int, int) -> int
     add
-    stloc   7
+    stloc   14
     ldc.i4  3
     conv.r8
     ldc.i4  2
@@ -67,87 +166,87 @@
     conv.r8
     call    Math.Max(double, double) -> double
     add
-    stloc   8
+    stloc   15
     ldc.i4  1987
     conv.i8
     call    Random.Seed(long) -> void
     ldc.i4  32768
     call    Random.Next(int) -> int
-    stloc   9
+    stloc   16
     ldloc   1
     ldfld   string.Length
-    stloc   10
+    stloc   17
     ldloc   1
     ldstr   "ingot"
     call    string.IndexOf(string) -> int
-    stloc   11
+    stloc   18
     ldstr   ""
-    ldloc   7
+    ldloc   14
     call    Convert.ToString(object) -> string
     call    string.Concat(string, string) -> string
     ldstr   ": "
     call    string.Concat(string, string) -> string
-    ldloc   9
-    ldloc   10
+    ldloc   16
+    ldloc   17
     add
-    ldloc   11
+    ldloc   18
     add
     call    string.Concat(string, int) -> string
     ldstr   ", "
     call    string.Concat(string, string) -> string
-    ldloc   8
-    ldloc   6
+    ldloc   15
+    ldloc   13
     add
     call    string.Concat(string, double) -> string
-    stloc   12
+    stloc   19
     ldstr   ""
-    ldloc   12
+    ldloc   19
     call    string.Concat(string, string) -> string
     ldstr   "\n"
     call    string.Concat(string, string) -> string
     call    Console.Print(string) -> void
     ldstr   ""
     ldstr   "%-12s"
-    ldloc   12
+    ldloc   19
     call    string.Printf(string, object) -> string
     call    string.Concat(string, string) -> string
     ldstr   "|"
     call    string.Concat(string, string) -> string
     ldstr   "%5d"
-    ldloc   7
+    ldloc   14
     call    string.Printf(string, object) -> string
     call    string.Concat(string, string) -> string
     ldstr   "|"
     call    string.Concat(string, string) -> string
     ldstr   "%05.2f"
-    ldloc   8
+    ldloc   15
     call    string.Printf(string, object) -> string
     call    string.Concat(string, string) -> string
     ldstr   "|"
     call    string.Concat(string, string) -> string
     ldstr   "%#x"
-    ldloc   9
+    ldloc   16
     call    string.Printf(string, object) -> string
     call    string.Concat(string, string) -> string
     ldstr   "|"
     call    string.Concat(string, string) -> string
     ldstr   "%e"
-    ldloc   6
+    ldloc   13
     call    string.Printf(string, object) -> string
     call    string.Concat(string, string) -> string
     ldstr   "|"
     call    string.Concat(string, string) -> string
     ldstr   "%u"
-    ldloc   10
+    ldloc   17
     call    string.Printf(string, object) -> string
     call    string.Concat(string, string) -> string
     ldstr   "\n"
     call    string.Concat(string, string) -> string
     call    Console.Print(string) -> void
     ldloc   1
-    ldloc   12
+    ldloc   19
     call    string.Compare(string, string) -> int
-    ldloc   12
+    ldloc   19
     ldloc   1
     call    string.Compare(string, string) -> int
     add
@@ -160,74 +259,74 @@
     neg
     call    Convert.ToInt(string, int) -> int
     add
-    stloc   13
+    stloc   20
     ldc.i4  97
     call    char.ToUpper(char) -> char
-    stloc   14
+    stloc   21
     ldc.i4  122
     call    char.ToUpper(char) -> char
     call    char.ToLower(char) -> char
-    stloc   15
-    ldloc   14
+    stloc   22
+    ldloc   21
     call    char.IsDigit(char) -> bool
-    brtrue  L11
-    ldloc   15
+    brtrue  L21
+    ldloc   22
     call    char.IsLetter(char) -> bool
-    br      L12
-L11: ldc.i4  1
-L12: brtrue  L9
+    br      L22
+L21: ldc.i4  1
+L22: brtrue  L19
     ldc.i4  32
     call    char.IsWhiteSpace(char) -> bool
-    br      L10
-L9: ldc.i4  1
-L10: brtrue  L7
-    ldloc   14
+    br      L20
+L19: ldc.i4  1
+L20: brtrue  L17
+    ldloc   21
     call    char.ToLower(char) -> char
     conv.i4
     ldc.i4  97
     conv.i4
     ceq
-    br      L8
-L7: ldc.i4  1
-L8: brtrue  L5
+    br      L18
+L17: ldc.i4  1
+L18: brtrue  L15
     ldc.i4  49
     call    char.IsDigit(char) -> bool
-    br      L6
-L5: ldc.i4  1
-L6: brtrue  L3
+    br      L16
+L15: ldc.i4  1
+L16: brtrue  L13
     ldc.i4  98
     call    char.IsLetter(char) -> bool
-    br      L4
-L3: ldc.i4  1
-L4: brtrue  L1
+    br      L14
+L13: ldc.i4  1
+L14: brtrue  L11
     ldc.i4  9
     call    char.IsWhiteSpace(char) -> bool
-    br      L2
-L1: ldc.i4  1
-L2: stloc   16
-    ldloc   13
+    br      L12
+L11: ldc.i4  1
+L12: stloc   23
+    ldloc   20
     ldc.i4  16
     call    Convert.ToString(int, int) -> string
-    ldloc   9
+    ldloc   16
     ldc.i4  2
     call    Convert.ToString(int, int) -> string
     call    string.Concat(string, string) -> string
-    ldloc   14
+    ldloc   21
     call    string.FromChar(char) -> string
     call    string.Concat(string, string) -> string
-    ldloc   15
+    ldloc   22
     call    string.FromChar(char) -> string
     call    string.Concat(string, string) -> string
-    ldloc   16
+    ldloc   23
     call    string.Concat(string, bool) -> string
     call    Console.PrintLine(string) -> void
     ldloc   0
     ldlen
     ldc.i4  1
     cgt
-    brfalse L13
+    brfalse L23
     ldc.i4  0
     call    Program.Exit(int) -> void
-L13: ldloc   0
+L23: ldloc   0
     ldlen
     ret

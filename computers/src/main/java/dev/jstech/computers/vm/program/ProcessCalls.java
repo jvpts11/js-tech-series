@@ -74,6 +74,7 @@ final class ProcessCalls {
     private static Map<MemberId, Binding> build() {
         final Map<MemberId, Binding> bindings = new HashMap<>();
         console(bindings);
+        openFile(bindings);
         random(bindings);
         thread(bindings);
         program(bindings);
@@ -129,6 +130,37 @@ final class ProcessCalls {
                 (process, target, arguments, line) -> NumberFunctions.number("ToDouble", process.takeInput(), line));
         bind(bindings, "Console", "ReadBool", LINE,
                 (process, target, arguments, line) -> NumberFunctions.truth(process.takeInput(), line));
+    }
+
+    /*
+     * A file the program opened, which it works on as one of its own objects: reading, writing and moving about in it
+     * is the program's own, and only closing it reaches the machine.
+     */
+    private static void openFile(final Map<MemberId, Binding> bindings) {
+        final String file = OpenFile.TYPE;
+        bind(bindings, file, "ReadLine", null, (process, target, arguments, line) ->
+                OpenFile.readLine(process, (Values.Obj) target, arguments, line), "out " + STRING);
+        bind(bindings, file, "Read", null, (process, target, arguments, line) ->
+                OpenFile.read((Values.Obj) target, line));
+        for (final String kind : SCANNED) {
+            bind(bindings, file, "Scan", null, (process, target, arguments, line) -> {
+                final Object value = OpenFile.scan(process, (Values.Obj) target, kind, line);
+                arguments[0] = value == null && STRING.equals(kind) ? process.text("", line) : value;
+                return value == null ? 0 : 1;
+            }, "out " + kind);
+        }
+        bind(bindings, file, "Write", null, (process, target, arguments, line) -> {
+            OpenFile.write(process, (Values.Obj) target, String.valueOf(arguments[0]), line);
+            return null;
+        }, STRING);
+        bind(bindings, file, "Write", null, (process, target, arguments, line) -> {
+            OpenFile.write(process, (Values.Obj) target, String.valueOf((char) Numbers.toInt(arguments[0])), line);
+            return null;
+        }, "char");
+        bind(bindings, file, "Seek", null, (process, target, arguments, line) -> {
+            OpenFile.seek((Values.Obj) target, Numbers.toInt(arguments[0]), line);
+            return null;
+        }, "int");
     }
 
     /** The program's own random numbers, which a program may start again from a number of its choosing. */

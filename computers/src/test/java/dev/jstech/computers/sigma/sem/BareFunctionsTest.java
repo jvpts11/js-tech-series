@@ -69,7 +69,18 @@ class BareFunctionsTest {
             List.of("int n = atoi(\"12\");", "int n = Convert.ToInt(\"12\", 0);"),
             List.of("string d; strcpy(out d, \"abc\");", "string d; d = \"abc\";"),
             List.of("string d = \"a\"; strcat(ref d, \"b\");", "string d = \"a\"; d = d + \"b\";"),
-            List.of("strcpy(out string e, \"x\"); puts(e);", "string e; e = \"x\"; puts(e);"));
+            List.of("strcpy(out string e, \"x\"); puts(e);", "string e; e = \"x\"; puts(e);"),
+            List.of("FILE f = fopen(\"a.txt\", \"r\"); fclose(f);", "FILE f = File.Open(\"a.txt\", \"r\"); f.Close();"),
+            List.of("FILE f = fopen(\"a.txt\", \"r+\"); string l; bool got = fgets(out l, f); fputs(\"x\", f); "
+                            + "int c = fgetc(f); fputc('y', f); bool e = feof(f); rewind(f); fseek(f, 3); "
+                            + "int p = ftell(f);",
+                    "FILE f = File.Open(\"a.txt\", \"r+\"); string l; bool got = f.ReadLine(out l); f.Write(\"x\"); "
+                            + "int c = f.Read(); f.Write('y'); bool e = f.AtEnd; f.Seek(0); f.Seek(3); "
+                            + "int p = f.Position;"),
+            List.of("FILE f = fopen(\"a.txt\", \"w\"); int n = 4; fprintf(f, \"%d\", n); fscanf(f, \"%d\", out n);",
+                    "FILE f = File.Open(\"a.txt\", \"w\"); int n = 4; f.Write(\"\" + n); f.Scan(out n);"),
+            List.of("bool r = remove(\"a.txt\"); bool m = rename(\"a.txt\", \"b.txt\");",
+                    "bool r = File.Delete(\"a.txt\"); bool m = File.Move(\"a.txt\", \"b.txt\");"));
 
     private static SigmaCompiler.Result built(final String members, final String body, final LanguageLevel level,
                                               final int version) {

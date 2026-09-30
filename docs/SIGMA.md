@@ -113,6 +113,30 @@ type's `ToUpper`, `ToLower`, `IsDigit`, `IsLetter` and `IsWhiteSpace`, `Convert.
 | `strcpy(out dest, src)` | `dest = src` |
 | `strcat(ref dest, src)` | `dest = dest + src` |
 
+Version 2 also works on files the way C's stdio does. `FILE f = fopen(path, mode)` opens one of the machine's
+files, on the same terms as `File.*`, and gives `null` when it cannot: `"r"` reads a file that has to be there,
+`"w"` writes one from nothing, `"a"` adds at its end, and each with a `+` both reads and writes (a `b` or a `t`
+is taken and means nothing, since every file is text). Opening reads what the file holds into the program, which
+works on it from then on as one of its own objects, a line, a value or a character at a time; what it writes
+reaches the disk when the file is closed, or when the program ends with it still open.
+
+| The old name | The long way |
+|---|---|
+| `fopen(path, mode)` | `File.Open(path, mode)`, a `FILE` |
+| `fclose(f)` | `f.Close()`: what was written goes to the disk |
+| `fgets(out line, f)` | `f.ReadLine(out line)`: the next line, false at the end |
+| `fputs(text, f)`, `fputc(c, f)` | `f.Write(text)`, `f.Write(c)`: where the file is up to, or at its end for `"a"` |
+| `fprintf(f, format, ...)` | `f.Write` of what `printf` would print |
+| `fscanf(f, format, out v)` | `f.Scan(out v)`: one value, as `scanf` reads one |
+| `fgetc(f)` | `f.Read()`: the next character, or -1 at the end |
+| `feof(f)` | `f.AtEnd`: whether there is nothing more to read |
+| `fseek(f, n)`, `rewind(f)`, `ftell(f)` | `f.Seek(n)`, `f.Seek(0)`, `f.Position`, counted in characters |
+| `remove(path)`, `rename(from, to)` | `File.Delete(path)`, `File.Move(from, to)` |
+
+A file opened to read refuses to be written and one opened only to write refuses to be read, each saying so, and
+a closed file refuses everything. `feof` says whether the file is at its end already, rather than whether a read
+has gone past it as C's does, so `while (!feof(f))` reads exactly what is there.
+
 `strcpy` and `strcat` keep C's order, the place first: handed with `out` to `strcpy`, which only writes it, and
 with `ref` to `strcat`, which reads it before joining onto it. `ref` is written for `strcat` alone, and only where
 an argument starts with it, so a variable called `ref` is still a variable.

@@ -8,6 +8,7 @@
 package dev.jstech.computers.vm.program;
 
 import dev.jstech.computers.vm.listing.Shape;
+import dev.jstech.computers.vm.system.MemberId;
 import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
@@ -68,6 +69,8 @@ public final class Process {
     private static final int START_COST = SigmaCosts.THREAD_START;
     /** Where a program that runs at a terminal starts. */
     private static final String MAIN = "Main";
+    /** The machine's close of a file a program opened, which a program that ends with one open is given. */
+    private static final MemberId CLOSE_FILE = new MemberId(OpenFile.TYPE, "Close", List.of());
     /** Text, as a listing names its type. */
     private static final String TEXT = "string";
 
@@ -658,6 +661,7 @@ public final class Process {
         if (!this.told && this.endedForGood()) {
             // A program that ends leaves no line half written: what it had open is a line of its own.
             this.console.close();
+            this.closeOpenFiles();
             this.told = true;
             this.host.programEnded(this.machineId());
         }
@@ -1148,6 +1152,27 @@ public final class Process {
     /** Reads a process back out of what {@link #save()} wrote, ready to carry on where it stopped. */
     public static Process restore(final ProgramImage program, final Snapshot shot, final IHost host) {
         return ProcessSnapshotReader.read(program, shot, host);
+    }
+
+    /**
+     * Closes the files the program left open when it ends, as C closes them at a program's exit: what was written to
+     * them reaches the disk. Nothing is charged, since the program is over; a file that cannot be written says why on
+     * the console, where the program's last words are.
+     */
+    private void closeOpenFiles() {
+        final IWorldFunction close = this.host.bind(CLOSE_FILE);
+        if (close == null) {
+            return;
+        }
+        for (final Object held : this.heap.live()) {
+            if (OpenFile.isOpen(held)) {
+                try {
+                    close.call(bytes -> { }, held, new Object[0], 0);
+                } catch (final Halt notWritten) {
+                    this.console.write(notWritten.text());
+                }
+            }
+        }
     }
 
     // odds and ends

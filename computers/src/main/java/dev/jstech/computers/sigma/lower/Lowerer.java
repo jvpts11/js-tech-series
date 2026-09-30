@@ -494,10 +494,11 @@ public final class Lowerer {
     private IExpr lowered(final IExpr expression) {
         if (expression instanceof IExpr.Call call && this.model.longWayOf(call) != null) {
             final IExpr longWay = this.model.longWayOf(call);
-            if (longWay instanceof IExpr.Assign assign) {
-                // The long way writes a place, which is said here as it is for an assignment written by hand.
-                this.written(assign);
-            }
+            /*
+             * The long way is walked as a shape written by hand would be: what it writes is worked out, and a format
+             * inside it is joined. What of it the player wrote was walked already, and walking it again changes nothing.
+             */
+            this.replaceIn(longWay);
             return longWay;
         }
         if (expression instanceof IExpr.Call call && this.model.formattedOf(call) != null) {

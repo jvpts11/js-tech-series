@@ -9,6 +9,8 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.vm.program.Halt;
+import dev.jstech.computers.vm.program.IWorldCall;
+import dev.jstech.computers.vm.program.OpenFile;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.vm.system.MemberId;
 import java.util.Map;
@@ -64,6 +66,57 @@ final class FileCalls {
             names.items().addAll(files.list(path(arguments)));
             return names;
         }, STRING);
+        file(bindings, "Move", (files, call, target, arguments, line) -> files.move(path(arguments), text(arguments)),
+                STRING, STRING);
+        file(bindings, "Open", FileCalls::open, STRING, STRING);
+        MachineCalls.bind(bindings, MachineServices::files, OpenFile.TYPE, "Close", FileCalls::close);
+    }
+
+    /**
+     * A file opened as C's fopen opens one: what it holds read into the program, or nothing when it is not there to
+     * be read or the mode is none C has. One opened to be written from nothing reads nothing, and is only written, as
+     * a whole, when it is closed.
+     */
+    private static Object open(final FileService files, final IWorldCall call, final Object target,
+                               final Object[] arguments, final int line) {
+        final String path = path(arguments);
+        final String mode = OpenFile.mode(text(arguments));
+        if (mode == null || path.isBlank()) {
+            return null;
+        }
+        String held = "";
+        if (!OpenFile.startsEmpty(mode)) {
+            final ICliComputer.FsResult read = files.read(path);
+            if (read.ok()) {
+                held = read.message().english();
+            } else if (OpenFile.needsFile(mode)) {
+                return null;
+            }
+        }
+        call.moved(FileService.bytesOf(held));
+        return OpenFile.opened(path, mode, held);
+    }
+
+    /**
+     * Closes a file the program opened, writing back what it holds when anything was written to it. A file that could
+     * not be written stops the program saying why, rather than losing what it wrote without a word.
+     */
+    private static Object close(final FileService files, final IWorldCall call, final Object target,
+                                final Object[] arguments, final int line) {
+        if (!OpenFile.isOpen(target)) {
+            return null;
+        }
+        final Values.Obj file = (Values.Obj) target;
+        OpenFile.close(file);
+        if (OpenFile.changed(file)) {
+            final String text = OpenFile.text(file);
+            call.moved(FileService.bytesOf(text));
+            final ICliComputer.FsResult written = files.writeFile(OpenFile.path(file), text);
+            if (!written.ok()) {
+                throw new Halt(Halt.Reason.REFUSED, line, written.message());
+            }
+        }
+        return null;
     }
 
     private static void file(final Map<MemberId, MachineCalls.Binding<?>> bindings, final String name,

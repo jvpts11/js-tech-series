@@ -426,6 +426,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   was not one; what is left of the line waits for the next read. They stand for `Console.Read()` and
   `Console.Scan(out value)`, which Σ# can write the long way. Text that is not the value asked for lets its line go
   rather than stopping every read after it.
+- Files as C's stdio works them, in Σ 2 and Σ# 2: `FILE f = fopen(path, mode)` with C's six modes, `fclose`,
+  `fgets(out line, f)`, `fputs`, `fprintf`, `fscanf` of one value, `fgetc`, `fputc`, `feof`, `rewind`, `fseek` and
+  `ftell` counted in characters, `remove` and `rename`, on the machine's own files and the same terms as `File.*`.
+  A file opened is one of the program's own objects, kept with it in a save; what it writes reaches the disk when
+  the file is closed or when the program ends with it open. They stand for `File.Open`, `File.Move` and the new
+  `FILE` type's `Close`, `ReadLine`, `Read`, `Scan`, `Write`, `Seek`, `Position` and `AtEnd`.
 - `strcpy(out dest, src)` and `strcat(ref dest, src)` in Σ 2, in C's order, compile to the assignment and the
   joining written by hand (`dest = src`, `dest = dest + src`), to the same listing. `ref` is written for `strcat`
   alone; a variable called `ref` is still a variable.

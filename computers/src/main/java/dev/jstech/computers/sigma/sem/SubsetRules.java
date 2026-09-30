@@ -51,7 +51,9 @@ public final class SubsetRules {
     private static final Map<String, Set<String>> LIBRARY = Map.ofEntries(
             Map.entry("Console", Set.of("Print", "PrintLine", "Clear", "ReadLine", "ReadInt", "ReadBool", "Read",
                     "Scan")),
-            Map.entry("File", Set.of("Exists", "Read", "Write", "Append", "Delete")),
+            Map.entry("File", Set.of("Exists", "Read", "Write", "Append", "Delete", "Open", "Move")),
+            // A file opened as C's fopen opens one, which the smaller language's own stdio works on.
+            Map.entry("FILE", Set.of("Close", "ReadLine", "Read", "Scan", "Write", "Seek", "Position", "AtEnd")),
             Map.entry("Program", Set.of("Name", "Args", "Exit")),
             Map.entry("Math", Set.of("Abs", "Min", "Max", "Floor", "Sqrt", "Pow")),
             Map.entry("Convert", Set.of("ToInt", "ToDouble", "ToBool", "ToString")),
