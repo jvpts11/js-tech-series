@@ -111,7 +111,7 @@ final class DesktopIcons {
 
     /** How many icons a column holds: the work area, which is the screen minus the panel wherever it sits. */
     int perColumn() {
-        return Math.max(1, (desktop.workAreaBottom() - desktop.workAreaTop() - 12) / PITCH_Y);
+        return Math.max(1, (desktop.view().workAreaBottom() - desktop.view().workAreaTop() - 12) / PITCH_Y);
     }
 
     /**
@@ -146,11 +146,11 @@ final class DesktopIcons {
      */
     int xOf(final int packedCell) {
         final int across = ORIGIN_X + DesktopIconLayout.col(packedCell) * PITCH_X;
-        return desktop.objectsStandRight() ? desktop.workAreaWidth() - across - ICON_W : across;
+        return desktop.objectsStandRight() ? desktop.view().width() - across - ICON_W : across;
     }
 
     int yOf(final int packedCell) {
-        return desktop.workAreaTop() + 10 + DesktopIconLayout.row(packedCell) * PITCH_Y;
+        return desktop.view().workAreaTop() + 10 + DesktopIconLayout.row(packedCell) * PITCH_Y;
     }
 
     /** The desktop-local middle of the picture in slot {@code slot}, where a click on it lands. */
@@ -176,10 +176,10 @@ final class DesktopIcons {
     /** The packed grid cell under a desktop-local point, clamped to the grid. */
     int cellAt(final double mx, final double my, final int perCol) {
         // Counted from whichever edge the columns start at, so a mirrored grid is the same sum.
-        final double across = desktop.objectsStandRight() ? desktop.workAreaWidth() - mx : mx;
+        final double across = desktop.objectsStandRight() ? desktop.view().width() - mx : mx;
         final int col = Math.max(0, (int) Math.floor((across - (ORIGIN_X - PITCH_X / 2.0)) / PITCH_X));
         final int row = Math.max(0, Math.min(perCol - 1,
-                (int) Math.floor((my - desktop.workAreaTop() - (10 - PITCH_Y / 2.0)) / PITCH_Y)));
+                (int) Math.floor((my - desktop.view().workAreaTop() - (10 - PITCH_Y / 2.0)) / PITCH_Y)));
         return DesktopIconLayout.pack(col, row);
     }
 

@@ -157,8 +157,8 @@ final class LinuxLaunchers {
      */
     void renderGnomeOverview(final GuiGraphics g) {
         final Overview c = GNOME.get();
-        final int sw = desktop.screenW();
-        final int sh = desktop.screenH();
+        final int sw = desktop.view().width();
+        final int sh = desktop.view().height();
         final int top = DesktopScreen.TASKBAR_H;
         g.fill(0, top, sw, sh, c.shade());
         // Search box.
@@ -187,8 +187,8 @@ final class LinuxLaunchers {
     }
 
     boolean clickGnomeOverview(final int mx, final int my) {
-        final int sw = desktop.screenW();
-        final int sh = desktop.screenH();
+        final int sw = desktop.view().width();
+        final int sh = desktop.view().height();
         final int top = DesktopScreen.TASKBAR_H;
         if (my < top) {
             return false; // the top bar handles its own clicks

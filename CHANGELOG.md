@@ -346,6 +346,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   a high clock no longer outruns a better one that came after it. Vintage machines orchestrate less than before
   (a 486DX2 one item a tick, a K6-II 11) and Standard ones up to three times more (a 4790K 2,074), and no
   processor does less than one item a tick.
+- The desktop's code is being split into parts by what each one does, apart from the screen that shows them: first
+  where the desktop sits on the game's screen, how big it draws and the work area its panel leaves to windows.
 - J's Computers' blocks keep their state as J's Core's declared fields: the computers, the server racks, the drives,
   the Pattern Encoders, monitors, speakers, Network Gateways, data cables, Crafting Switches, Server Routers, HBW
   Interfaces and tanks. The players who see one are sent one update a tick however much of it changed, and the

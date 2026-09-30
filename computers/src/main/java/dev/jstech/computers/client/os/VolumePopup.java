@@ -168,7 +168,7 @@ final class VolumePopup {
         open = false;
         final int y = topBar ? DesktopScreen.TASKBAR_H + 2 : panelY - MENU_ITEM_H - 4;
         menu.open(List.of(new ContextMenu.Item(GameText.resolve(VolumeTexts.SOUND_SETTINGS), true,
-                desktop::openSoundSettings)), x, y, 0, 0, desktop.screenW(), desktop.screenH());
+                desktop::openSoundSettings)), x, y, 0, 0, desktop.view().width(), desktop.view().height());
     }
 
     /** Whether a desktop-local point is on the open control. */

@@ -19,7 +19,6 @@ import dev.jstech.computers.client.MachineKeyboard;
 import dev.jstech.computers.client.MonitorFrame;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.CdeStyle;
-import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.TaskbarGroups;
 import dev.jstech.computers.gui.layout.CdeExitLayout;
@@ -133,6 +132,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** Frames 11 dark theme: darkens the window chrome (via the skin) and the Start menu. */
     private boolean desktopDarkMode;
     private final List<DesktopWindow> windows = new ArrayList<>();
+    /** Where the desktop sits on the game's screen and how big it draws. */
+    private final DesktopViewport view = new DesktopViewport(this);
     /** Which workspace is up, counted from nought; always the first on a desktop that has only one. */
     private int shownWorkspace;
     private final List<Launcher> launchers = new ArrayList<>();
@@ -445,53 +446,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             active.desktopWallpaper = wallpaper == null ? "" : wallpaper;
             active.desktopTaskbarCentered = taskbarCentered;
             active.desktopDarkMode = darkMode;
-            active.desktopScale = scale;
+            active.view.setScalePercent(scale);
             active.rebuildSkin();
         }
-    }
-
-    /**
-     * How big the desktop draws everything, as a percentage of its designed size; 0 stands for 100.
-     * Smaller fits more on the same glass, the way a display setting does on any desktop.
-     */
-    private int desktopScale;
-
-    /** The percentage the desktop is drawn at when the machine has not been told another: the size that reads best. */
-    public static final int DEFAULT_SCALE = 75;
-
-    /** The scale as a factor: three quarters unless the setting says otherwise. */
-    private double scale() {
-        return (desktopScale <= 0 ? DEFAULT_SCALE : desktopScale) / 100.0;
-    }
-
-    /** The screen x of a desktop-local x, for a hook that hands a test a point to click. */
-    private int sx(final int local) {
-        return ox() + (int) Math.round(local * scale());
-    }
-
-    private int sy(final int local) {
-        return oy() + (int) Math.round(local * scale());
-    }
-
-    /** The desktop-local x of an absolute screen x, allowing for where the glass is and how it is scaled. */
-    private double lx(final double absX) {
-        return (absX - ox()) / scale();
-    }
-
-    private double ly(final double absY) {
-        return (absY - oy()) / scale();
-    }
-
-    /**
-     * An absolute screen x moved so the container's own slot test, which adds {@code leftPos} to a
-     * slot's desktop-local x, lands on the right slot under a scaled desktop.
-     */
-    private double vx(final double absX) {
-        return ox() + lx(absX);
-    }
-
-    private double vy(final double absY) {
-        return oy() + ly(absY);
     }
 
     /** Rebuilds the skin from the current accent + dark-mode prefs (dark applies only to the flat Frames 11). */
@@ -714,7 +671,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * Whether this desktop wears its period chrome. Derived from the skin's form, which the era already
      * decided, so the panel and the windows can never disagree about which decade they are in.
      */
-    private boolean periodPanel() {
+    boolean periodPanel() {
         return skin.form() == OsSkin.Form.KDE2 || skin.form() == OsSkin.Form.GNOME1;
     }
 
@@ -828,12 +785,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         iconLaunchers.addAll(launchers);
     }
 
-    int screenW() {
-        return sw();
-    }
-
-    int screenH() {
-        return sh();
+    /** Where this desktop sits on the game's screen, how big it draws, and the work area its panel leaves. */
+    DesktopViewport view() {
+        return view;
     }
 
     /** Where an open launcher starts and how tall it is, which its own desktop decides. */
@@ -1158,28 +1112,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return thumbnailPopups();
     }
 
-    /** Whether this desktop's panel is the top bar rather than a bottom one. */
-    boolean panelOnTop() {
-        return topPanel();
-    }
-
-    /** The pixels a bottom panel takes, and the first row of the desktop under a top one. */
-    int panelReserve() {
-        return bottomReserve();
-    }
-
-    int workAreaTop() {
-        return workTop();
-    }
-
-    int workAreaBottom() {
-        return workBottom();
-    }
-
-    int workAreaWidth() {
-        return sw();
-    }
-
     /**
      * Whether what is kept on the desktop is laid out from the right edge. CDE did that, and here it also
      * leaves the top left to the icons of the windows that were put away.
@@ -1382,38 +1314,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** Opens the page listing everything installed on this machine, services included. */
     void openEverythingInstalled() {
         openAllPrograms();
-    }
-
-    /**
-     * Whether the panel sits at the top. Only the modern GNOME shell does that: the GNOME of the Legacy
-     * era put its panel at the bottom, and its top bar ("Activities") did not exist for another decade.
-     */
-    private boolean topPanel() {
-        return is(PanelStyle.GNOME) && !periodPanel();
-    }
-
-    /** The first desktop-local row of the work area. */
-    private int workTop() {
-        return topPanel() ? TASKBAR_H : 0;
-    }
-
-    /** One past the last desktop-local row of the work area (the bottom panel's top, or the screen bottom). */
-    private int workBottom() {
-        return topPanel() ? sh() : sh() - panelBand();
-    }
-
-    /** The pixels reserved for a bottom panel (none under GNOME's top bar). */
-    private int bottomReserve() {
-        return topPanel() ? 0 : panelBand();
-    }
-
-    /**
-     * How tall the band a panel stands in is. A taskbar is a taskbar's height on every desktop that has one;
-     * CDE's Front Panel is a slab of pictures and stands taller, and windows keep out of its band the whole
-     * width of the desktop although the slab itself is only as wide as what it holds.
-     */
-    private int panelBand() {
-        return is(PanelStyle.CDE) ? CdeFrontPanelLayout.BAND_H : TASKBAR_H;
     }
 
     // Frames 11 taskbar: each centered item (Start + one per program) occupies this slot.
@@ -1652,39 +1552,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
     }
 
-    /*
-     * The on-screen monitor "screen" rectangle: a centred window, not the whole game viewport. The extra slack
-     * (vs the raw viewport) leaves room for the monitor frame drawn around the glass and its chin below it.
-     */
-    /** The glass's width on the screen, in screen pixels: what the frame wraps and the scissor clips. */
-    private int pw() {
-        return MonitorGlass.width(width);
-    }
-
-    private int ph() {
-        return MonitorGlass.height(height);
-    }
-
-    /**
-     * The desktop's width as the desktop sees it: the glass's, and more of it when the desktop is
-     * drawn smaller. Everything laid out on the desktop uses this pair and is drawn under the scale.
-     */
-    private int sw() {
-        return (int) Math.round(pw() / scale());
-    }
-
-    private int sh() {
-        return (int) Math.round(ph() / scale());
-    }
-
-    private int ox() {
-        return (width - pw()) / 2;
-    }
-
-    private int oy() {
-        return (height - ph()) / 2;
-    }
-
     // inspection (client tests drive the desktop through the same hit areas the player clicks)
 
     public boolean isStartOpen() {
@@ -1693,11 +1560,11 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Screen position of the desktop's top-left corner: window and app geometry is relative to it. */
     public int desktopX() {
-        return ox();
+        return view.left();
     }
 
     public int desktopY() {
-        return oy();
+        return view.top();
     }
 
     /**
@@ -1709,8 +1576,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * the scale, which lands the shape low, right and too big.
      */
     public Rect2i onScreen(final int x, final int y, final int w, final int h) {
-        return new Rect2i(sx(x), sy(y),
-                (int) Math.round(w * scale()), (int) Math.round(h * scale()));
+        return new Rect2i(view.screenX(x), view.screenY(y),
+                (int) Math.round(w * view.scale()), (int) Math.round(h * view.scale()));
     }
 
     /** Whether the panel's own menu is open. */
@@ -1728,7 +1595,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * entries: centred on Frames 11, from the left on every other panel.
      */
     public int[] taskButtonPoint(final int index) {
-        final TaskStrip strip = taskStrip(sw());
+        final TaskStrip strip = taskStrip(view.width());
         return index >= 0 && index < strip.entries().size() ? taskEntryPoint(strip.entries().get(index).key()) : null;
     }
 
@@ -1737,17 +1604,17 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * panel has none for it. On Frames XP a pinned program with no window is its quick launch icon.
      */
     public int[] taskEntryPoint(final String key) {
-        final TaskStrip strip = taskStrip(sw());
+        final TaskStrip strip = taskStrip(view.width());
         final int index = TaskbarGroups.indexOf(strip.entries(), keyFor(key));
         if (index < 0) {
             return null;
         }
-        final int y = sy(topPanel() ? TASKBAR_H / 2 : sh() - TASKBAR_H / 2);
+        final int y = view.screenY(view.panelOnTop() ? TASKBAR_H / 2 : view.height() - TASKBAR_H / 2);
         if (strip.w()[index] > 0) {
-            return new int[] {sx(strip.x()[index] + strip.w()[index] / 2), y};
+            return new int[] {view.screenX(strip.x()[index] + strip.w()[index] / 2), y};
         }
         final int quick = strip.quickIndexOf(index);
-        return quick < 0 ? null : new int[] {sx(strip.quickX() + quick * QL_W + QL_W / 2), y};
+        return quick < 0 ? null : new int[] {view.screenX(strip.quickX() + quick * QL_W + QL_W / 2), y};
     }
 
     /** The programs the panel lists, in order, by what they read as: the pinned ones first, then every open one. */
@@ -1837,8 +1704,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
         for (int i = 0; i < PANEL_CTX.size(); i++) {
             if (PANEL_CTX.get(i) != PanelRow.SEPARATOR && PANEL_CTX.get(i).words().equals(label)) {
-                return new int[] {sx(panelCtxX + PANEL_CTX_W / 2),
-                        sy(panelCtxY + 1 + i * DESK_CTX_ITEM_H + DESK_CTX_ITEM_H / 2)};
+                return new int[] {view.screenX(panelCtxX + PANEL_CTX_W / 2),
+                        view.screenY(panelCtxY + 1 + i * DESK_CTX_ITEM_H + DESK_CTX_ITEM_H / 2)};
             }
         }
         return null;
@@ -1846,15 +1713,15 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Screen position of the middle of one of the Front Panel's controls, under the arrow at its head. */
     public int[] frontPanelPoint(final CdeFrontPanelLayout.Control control) {
-        final CdeFrontPanelLayout.Rect r = CdeFrontPanelLayout.control(control, sw(), sh());
-        return new int[] {sx(r.x() + r.w() / 2), sy(r.y() + CdeFrontPanelLayout.ARROW_H + (r.h()
+        final CdeFrontPanelLayout.Rect r = CdeFrontPanelLayout.control(control, view.width(), view.height());
+        return new int[] {view.screenX(r.x() + r.w() / 2), view.screenY(r.y() + CdeFrontPanelLayout.ARROW_H + (r.h()
                 - CdeFrontPanelLayout.ARROW_H) / 2)};
     }
 
     /** Screen position of the middle of the Front Panel's button for workspace {@code index}, from nought. */
     public int[] workspacePoint(final int index) {
-        final CdeFrontPanelLayout.Rect r = CdeFrontPanelLayout.workspace(index, sw(), sh());
-        return new int[] {sx(r.x() + r.w() / 2), sy(r.y() + r.h() / 2)};
+        final CdeFrontPanelLayout.Rect r = CdeFrontPanelLayout.workspace(index, view.width(), view.height());
+        return new int[] {view.screenX(r.x() + r.w() / 2), view.screenY(r.y() + r.h() / 2)};
     }
 
     /** Screen position of a title-bar button (1 minimise, 2 maximise, 3 the way out) of the window so labelled. */
@@ -1863,7 +1730,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         for (final DesktopWindow w : windows) {
             if (w.appKey().equals(key)) {
                 final int[] at = w.buttonCentre(button);
-                return new int[] {sx(at[0]), sy(at[1])};
+                return new int[] {view.screenX(at[0]), view.screenY(at[1])};
             }
         }
         return new int[] {0, 0};
@@ -1871,8 +1738,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Screen position of the arrow at the head of a Front Panel control, which raises what is behind it. */
     public int[] frontPanelArrowPoint(final CdeFrontPanelLayout.Control control) {
-        final CdeFrontPanelLayout.Rect r = CdeFrontPanelLayout.control(control, sw(), sh());
-        return new int[] {sx(r.x() + r.w() / 2), sy(r.y() + CdeFrontPanelLayout.ARROW_H / 2 + 1)};
+        final CdeFrontPanelLayout.Rect r = CdeFrontPanelLayout.control(control, view.width(), view.height());
+        return new int[] {view.screenX(r.x() + r.w() / 2), view.screenY(r.y() + CdeFrontPanelLayout.ARROW_H / 2 + 1)};
     }
 
     /** The name the Front Panel is showing over the control the pointer rests on, or empty while it shows none. */
@@ -1887,7 +1754,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Screen position of the line so labelled on the subpanel that is up, or null. */
     public int[] subpanelPoint(final String label) {
-        final int[] at = cdeLaunchers.rowCentre(label, sw(), sh());
+        final int[] at = cdeLaunchers.rowCentre(label, view.width(), view.height());
         return at == null ? null : screenPoint(at);
     }
 
@@ -1971,8 +1838,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Screen position of the middle of EXIT on the Front Panel. */
     public int[] exitPoint() {
-        final CdeFrontPanelLayout.Rect r = CdeFrontPanelLayout.exit(sw(), sh());
-        return new int[] {sx(r.x() + r.w() / 2), sy(r.y() + r.h() / 2)};
+        final CdeFrontPanelLayout.Rect r = CdeFrontPanelLayout.exit(view.width(), view.height());
+        return new int[] {view.screenX(r.x() + r.w() / 2), view.screenY(r.y() + r.h() / 2)};
     }
 
     /** Whether the dialog that shuts the machine down or restarts it is up. */
@@ -1982,8 +1849,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Screen position of a button of CDE's Exit dialog, by the numbers {@link CdeExitLayout} gives them. */
     public int[] exitDialogPoint(final int button) {
-        final CdeFrontPanelLayout.Rect r = CdeExitLayout.button(button, sw(), sh());
-        return new int[] {sx(r.x() + r.w() / 2), sy(r.y() + r.h() / 2)};
+        final CdeFrontPanelLayout.Rect r = CdeExitLayout.button(button, view.width(), view.height());
+        return new int[] {view.screenX(r.x() + r.w() / 2), view.screenY(r.y() + r.h() / 2)};
     }
 
     /** What the window menu CDE has up lists, top to bottom, or nothing when none is up. */
@@ -1994,7 +1861,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** Screen position of the entry so labelled on the window menu that is up, or null. */
     public int[] windowMenuPoint(final String label) {
         final int[] at = cdeWindowMenu.entryCentre(label);
-        return at == null ? null : new int[] {sx(at[0]), sy(at[1])};
+        return at == null ? null : new int[] {view.screenX(at[0]), view.screenY(at[1])};
     }
 
     /** Screen position of the box of workspace {@code index} on the Occupy Workspace dialog that is up, or null. */
@@ -2028,8 +1895,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Screen position of the icon CDE stands the {@code index}-th put-away window of this workspace as. */
     public int[] putAwayIconPoint(final int index) {
-        final CdeFrontPanelLayout.Rect tile = CdeWindowIconLayout.tile(index, sw(), workTop());
-        return new int[] {sx(tile.x() + tile.w() / 2), sy(tile.y() + tile.h() / 2)};
+        final CdeFrontPanelLayout.Rect tile = CdeWindowIconLayout.tile(index, view.width(), view.workAreaTop());
+        return new int[] {view.screenX(tile.x() + tile.w() / 2), view.screenY(tile.y() + tile.h() / 2)};
     }
 
     /** Which workspace is up, counted from nought. */
@@ -2066,14 +1933,15 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Screen position of a point on the panel clear of Start and of the task buttons: its empty stretch. */
     public int[] emptyPanelPoint() {
-        return new int[] {sx(Math.max(TASK_X, taskStripRight(sw()) - 8)), sy(sh() - TASKBAR_H / 2)};
+        return new int[] {view.screenX(Math.max(TASK_X, taskStripRight(view.width()) - 8)),
+                view.screenY(view.height() - TASKBAR_H / 2)};
     }
 
     /** Where the speaker on the panel is, on the screen. */
     public int[] speakerPoint() {
-        final boolean top = topPanel();
-        final int panelY = top ? 0 : sh() - panelBand();
-        return new int[] {sx(tray.speakerX(sw(), top) + 4), sy(panelY + TASKBAR_H / 2)};
+        final boolean top = view.panelOnTop();
+        final int panelY = top ? 0 : view.height() - view.panelBand();
+        return new int[] {view.screenX(tray.speakerX(view.width(), top) + 4), view.screenY(panelY + TASKBAR_H / 2)};
     }
 
     /**
@@ -2083,7 +1951,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     @Nullable
     public int[] volumePoint(final String part, final int index) {
         final int[] p = volumePopup.pointOf(part, index);
-        return p == null ? null : new int[] {sx(p[0]), sy(p[1])};
+        return p == null ? null : new int[] {view.screenX(p[0]), view.screenY(p[1])};
     }
 
     public boolean volumeControlOpen() {
@@ -2239,17 +2107,17 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Screen coordinates of the Start button's centre. */
     public int startButtonX() {
-        return sx(is(PanelStyle.FRAMES_11) ? 4 + WIN11_SLOT / 2 : 30);
+        return view.screenX(is(PanelStyle.FRAMES_11) ? 4 + WIN11_SLOT / 2 : 30);
     }
 
     public int startButtonY() {
         // GNOME's "Activities" launcher lives in the top bar; every other panel sits at the bottom.
-        return sy(topPanel() ? TASKBAR_H / 2 : sh() - TASKBAR_H / 2);
+        return view.screenY(view.panelOnTop() ? TASKBAR_H / 2 : view.height() - TASKBAR_H / 2);
     }
 
     /** Screen coordinates of the centre of the {@code index}-th Start menu entry (valid while it is open). */
     public int startMenuItemX() {
-        return sx(startMenuX() + BAND_W + 30);
+        return view.screenX(startMenuX() + BAND_W + 30);
     }
 
     /**
@@ -2262,13 +2130,13 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             final boolean place = XP_PLACES.contains(launchers.get(index).programId());
             final int colX = startMenuX() + (place ? XP_LEFT_W + 3 : 3);
             final int colW = place ? XP_MENU_W - XP_LEFT_W - 6 : XP_LEFT_W - 6;
-            return sx(colX + colW / 2);
+            return view.screenX(colX + colW / 2);
         }
         return startMenuItemX();
     }
 
     public int startMenuItemY(final int index) {
-        final int tbY = sh() - TASKBAR_H;
+        final int tbY = view.height() - TASKBAR_H;
         if (panel == PanelStyle.FRAMES_XP
                 && index >= 0 && index < launchers.size()) {
             final Launcher target = launchers.get(index);
@@ -2277,9 +2145,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             final int row = Math.max(0, column.indexOf(target));
             // The left column has a separator under its pinned block, so its rows are not a plain multiple.
             final int rowY = place ? row * XP_ROW_H : xpLeftRowY(row);
-            return sy(tbY - startMenuHeight() + XP_HEADER_H + XP_ORANGE_H + 3 + rowY + XP_ROW_H / 2);
+            return view.screenY(tbY - startMenuHeight() + XP_HEADER_H + XP_ORANGE_H + 3 + rowY + XP_ROW_H / 2);
         }
-        return sy(tbY - startMenuHeight() + 4 + index * MENU_ITEM_H + MENU_ITEM_H / 2);
+        return view.screenY(tbY - startMenuHeight() + 4 + index * MENU_ITEM_H + MENU_ITEM_H / 2);
     }
 
     /**
@@ -2323,21 +2191,21 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      */
     public MonitorFrameStyle.Geometry frameBounds() {
         // The frame wraps the glass as it is on the screen, whatever the desktop inside it is scaled to.
-        return MonitorFrameStyle.forEra(era()).geometry(ox(), oy(), pw(), ph());
+        return MonitorFrameStyle.forEra(era()).geometry(view.left(), view.top(), view.glassWidth(), view.glassHeight());
     }
 
     @Override
     protected void init() {
         /*
          * Size the container's image rect to the on-screen monitor glass, so leftPos/topPos centre exactly
-         * where ox()/oy() place the desktop. The inventory/title labels the base would draw are pushed
+         * where view.left()/view.top() place the desktop. The inventory/title labels the base would draw are pushed
          * off-screen, since the desktop draws its own chrome.
          */
-        this.imageWidth = pw();
-        this.imageHeight = ph();
+        this.imageWidth = view.glassWidth();
+        this.imageHeight = view.glassHeight();
         super.init();
-        this.leftPos = ox();
-        this.topPos = oy();
+        this.leftPos = view.left();
+        this.topPos = view.top();
         this.titleLabelX = -10000;
         this.inventoryLabelY = -10000;
         // The speaker on the panel says whether the system is muted from the first frame it is drawn in.
@@ -2400,7 +2268,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
              * Clamp into the current work area: the monitor may be a different size from the one the
              * layout was left on, and a title bar off-screen is a window nobody can reach.
              */
-            w.moveTo(ow.x(), ow.y(), screen.workTop(), screen.sw(), screen.workBottom());
+            w.moveTo(ow.x(), ow.y(), screen.view.workAreaTop(), screen.view.width(), screen.view.workAreaBottom());
             w.setMinimized(ow.minimized());
             w.setMaximized(ow.maximized());
             w.setWorkspaces(screen.hasWorkspaces() ? ow.workspaces() : WorkspaceSet.only(0));
@@ -2655,7 +2523,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         active.desktopClock12h = payload.prefs().clock12h();
         active.desktopTaskbarCentered = payload.prefs().taskbarCentered();
         active.desktopDarkMode = payload.prefs().darkMode();
-        active.desktopScale = payload.prefs().scale();
+        active.view.setScalePercent(payload.prefs().scale());
         active.pinnedPrograms.clear();
         active.pinnedPrograms.addAll(payload.pinned());
         active.defaultApps.clear();
@@ -2711,28 +2579,28 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * dragged window does not leave its slots a tick behind).
          */
         syncInventorySlots();
-        final int sw = sw();
-        final int sh = sh();
-        final int ox = ox();
-        final int oy = oy();
-        final int lmx = (int) Math.floor(lx(mouseX));
-        final int lmy = (int) Math.floor(ly(mouseY));
+        final int sw = view.width();
+        final int sh = view.height();
+        final int ox = view.left();
+        final int oy = view.top();
+        final int lmx = (int) Math.floor(view.localX(mouseX));
+        final int lmy = (int) Math.floor(view.localY(mouseY));
         // Cache the local cursor so the Start-menu draw (called deeper in this frame) can highlight the hovered row.
         this.hoverX = lmx;
         this.hoverY = lmy;
-        taskPopup.update(lmx, lmy, sw, sh - panelBand());
+        taskPopup.update(lmx, lmy, sw, sh - view.panelBand());
         final HardwareEra eraNow = era();
 
         /*
          * The host computer's hardware-era monitor frame wraps the desktop glass, then translate so the desktop
          * draws in local (0,0)-(sw,sh) coordinates.
          */
-        MonitorFrame.renderBody(g, ox, oy, pw(), ph(), eraNow, font);
+        MonitorFrame.renderBody(g, ox, oy, view.glassWidth(), view.glassHeight(), eraNow, font);
         g.pose().pushPose();
         g.pose().translate(ox, oy, 0);
         // Everything on the desktop is drawn under its scale, so a smaller setting fits more on the glass.
-        g.pose().scale((float) scale(), (float) scale(), 1);
-        g.enableScissor(ox, oy, ox + pw(), oy + ph());
+        g.pose().scale((float) view.scale(), (float) view.scale(), 1);
+        g.enableScissor(ox, oy, ox + view.glassWidth(), oy + view.glassHeight());
 
         if (is(PanelStyle.CDE)) {
             // CDE hangs no picture: each workspace wears a pattern of its own in the palette's backdrop colours.
@@ -2781,13 +2649,13 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         iconGrid.render(g, lmx, lmy);
         // CDE stands a window that was put away on its workspace as an icon, having no panel to list it on.
         if (is(PanelStyle.CDE)) {
-            cdeWindowIcons.render(g, putAwayHere(), sw, workTop(), cdePalette());
+            cdeWindowIcons.render(g, putAwayHere(), sw, view.workAreaTop(), cdePalette());
         }
         g.pose().popPose();
 
         renderWindows(g, lmx, lmy, partialTick, sw, sh);
 
-        final int tbY = sh - panelBand();
+        final int tbY = sh - view.panelBand();
         renderPanelLayer(g, tbY, sw, sh, lmx, lmy);
         renderMenus(g, tbY, lmx, lmy, partialTick);
         renderDragFeedback(g, sw, tbY, perCol);
@@ -2836,7 +2704,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.windowZ(i, windows.size()));
             w.setFocused(w == front);
-            w.render(g, font, skin, lmx, lmy, partialTick, sw, sh, bottomReserve(), workTop());
+            w.render(g, font, skin, lmx, lmy, partialTick, sw, sh, view.panelReserve(), view.workAreaTop());
             g.pose().popPose();
         }
         /*
@@ -2882,7 +2750,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             g.pose().popPose();
         }
         // The figures behind the notification area, while the cursor rests on it. CDE has no such area.
-        if (!topPanel() && !is(PanelStyle.CDE)) {
+        if (!view.panelOnTop() && !is(PanelStyle.CDE)) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.TASKBAR + 8);
             drawTrayTip(g, tbY, sw);
@@ -2907,13 +2775,14 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (is(PanelStyle.CDE) && !menuOrDialogOpen()) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.MENU);
-            cdePanels.renderTip(g, sw(), sh(), cdePalette());
+            cdePanels.renderTip(g, view.width(), view.height(), cdePalette());
             g.pose().popPose();
         }
         if (volumePopup.isOpen()) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.MENU);
-            volumePopup.render(g, new UiContext(skin, font, lmx, lmy, partialTick), sw(), tbY, topPanel());
+            volumePopup.render(g, new UiContext(skin, font, lmx, lmy, partialTick), view.width(), tbY,
+                    view.panelOnTop());
             g.pose().popPose();
         }
         if (!startOpen && !deskMenu.isOpen() && !panelCtxOpen && !cdeLaunchers.isOpen()) {
@@ -2925,7 +2794,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             renderStartMenu(g, tbY);
         }
         // A subpanel of CDE's Front Panel is no launcher that comes and goes: it stays up until its arrow says so.
-        cdeLaunchers.render(g, sw(), sh(), cdePalette());
+        cdeLaunchers.render(g, view.width(), view.height(), cdePalette());
         if (panelCtxOpen) {
             renderPanelContext(g, lmx, lmy);
         }
@@ -3231,7 +3100,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * (3) Drop on the bare wallpaper: pin the icon to the grid cell under the cursor and persist it,
          * unless that cell already holds another icon (so two icons never stack on the same spot).
          */
-        if (dy >= workTop() && dy < workBottom() && overWallpaper(dx, dy)) {
+        if (dy >= view.workAreaTop() && dy < view.workAreaBottom() && overWallpaper(dx, dy)) {
             final int cell = iconGrid.cellAt(dx, dy, perCol);
             if (iconGrid.cellTaken(cell, deskDragSlot, perCol)) {
                 return; // the target cell is occupied; leave the icon where it was
@@ -3245,7 +3114,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** Whether a desktop point is on the trash: its icon on the wallpaper, or CDE's control for it on the panel. */
     private boolean overTrash(final double dx, final double dy) {
         if (is(PanelStyle.CDE)) {
-            return CdeFrontPanelLayout.controlAt(dx, dy, sw(), sh()) == CdeFrontPanelLayout.Control.TRASH;
+            return CdeFrontPanelLayout.controlAt(dx, dy, view.width(), view.height())
+                    == CdeFrontPanelLayout.Control.TRASH;
         }
         return isTrashIcon(iconGrid.slotAt(dx, dy, iconGrid.perColumn())) && overWallpaper(dx, dy);
     }
@@ -3305,7 +3175,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return true;
         }
         // Dropped on the bare wallpaper: move it into the desktop folder.
-        if (dy >= workTop() && dy < workBottom() && overWallpaper(dx, dy)) {
+        if (dy >= view.workAreaTop() && dy < view.workAreaBottom() && overWallpaper(dx, dy)) {
             moveExplorerFile(origin, null, dragged, desktopDir);
             origin.cancelDrag();
             return true;
@@ -3622,9 +3492,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     private void openPanelMenu(final int atX, final int panelY) {
         final int mh = PANEL_CTX.size() * DESK_CTX_ITEM_H + 2;
         panelCtxOpen = true;
-        panelCtxX = Math.max(2, Math.min(sw() - PANEL_CTX_W - 2, atX));
+        panelCtxX = Math.max(2, Math.min(view.width() - PANEL_CTX_W - 2, atX));
         // Above a bottom panel, below a top one: the menu never covers the bar it came from.
-        panelCtxY = topPanel() ? panelY + TASKBAR_H + 2 : panelY - mh - 2;
+        panelCtxY = view.panelOnTop() ? panelY + TASKBAR_H + 2 : panelY - mh - 2;
     }
 
     /** Runs a panel-menu entry. Every one of them does something: none is there for decoration. */
@@ -3650,7 +3520,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                 continue;
             }
             w.setMaximized(false);
-            w.moveTo(16 + step * 12, workTop() + 10 + step * 12, workTop(), sw(), workBottom());
+            w.moveTo(16 + step * 12, view.workAreaTop() + 10 + step * 12, view.workAreaTop(), view.width(),
+                    view.workAreaBottom());
             step++;
         }
     }
@@ -3714,7 +3585,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             entries.add(ContextMenu.Item.separator());
             entries.add(deskItem(DesktopTexts.PROPERTIES, true, () -> runLauncherKeyed(THIS_PC_KEY)));
         }
-        deskMenu.open(entries, x, y, 0, 0, sw(), sh());
+        deskMenu.open(entries, x, y, 0, 0, view.width(), view.height());
     }
 
     private static ContextMenu.Item deskItem(
@@ -3818,7 +3689,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** The scale the desktop is drawn at, as a factor, which a test needs to land a click on a scaled desktop. */
     public double desktopScale() {
-        return scale();
+        return view.scale();
     }
 
     /** A queued request to show a file's Properties window: the explorer opens on its folder and shows it. */
@@ -3844,7 +3715,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             case FRAMES_XP -> XP_MENU_W;
             case FRAMES_11 -> W11_MENU_W;
             case KDE -> KDE_MENU_W;
-            case GNOME -> sw();
+            case GNOME -> view.width();
             case CINNAMON -> CIN_MENU_W;
             default -> MENU_W;
         };
@@ -3860,7 +3731,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
         return switch (panel) {
             case KDE -> KDE_HEADER_H + Math.max(6, launchers.size()) * KDE_ROW_H + KDE_FOOTER_H + 8;
-            case GNOME -> sh() - TASKBAR_H; // the overview covers the whole desktop below the top bar
+            case GNOME -> view.height() - TASKBAR_H; // the overview covers the whole desktop below the top bar
             case CINNAMON -> CIN_HEADER_H + Math.max(5, launchers.size()) * CIN_ROW_H + 10;
             // Two columns: the taller of programs (left) and places (right) sets the body height.
             case FRAMES_XP -> XP_HEADER_H + XP_ORANGE_H
@@ -3903,10 +3774,10 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     private int startMenuX() {
         if (is(PanelStyle.FRAMES_11)) {
             final int w = startMenuW();
-            final int startCenter = win11StartX(sw()) + WIN11_SLOT / 2;
-            return Math.max(4, Math.min(sw() - w - 4, startCenter - w / 2));
+            final int startCenter = win11StartX(view.width()) + WIN11_SLOT / 2;
+            return Math.max(4, Math.min(view.width() - w - 4, startCenter - w / 2));
         }
-        if (topPanel()) {
+        if (view.panelOnTop()) {
             return 0; // the Activities overview spans the desktop
         }
         return 4;
@@ -3917,7 +3788,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (is(PanelStyle.FRAMES_11)) {
             return Math.max(2, tbY - startMenuHeight() - 6); // float above the taskbar, but never off the top
         }
-        if (topPanel()) {
+        if (view.panelOnTop()) {
             return TASKBAR_H; // the overview hangs below the top bar
         }
         return tbY - startMenuHeight();
@@ -4536,8 +4407,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         taskPopup.dismiss();
         final int h = items.size() * DESK_CTX_ITEM_H + 2;
         // Above a bottom panel, below a top one: the menu never covers the entry it came from.
-        final int y = topPanel() ? TASKBAR_H + 2 : tbY - h - 2;
-        taskMenu.open(items, atX, y, 0, 0, sw(), sh());
+        final int y = view.panelOnTop() ? TASKBAR_H + 2 : tbY - h - 2;
+        taskMenu.open(items, atX, y, 0, 0, view.width(), view.height());
     }
 
     /* The windows of one program */
@@ -4674,15 +4545,15 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (ownerWin == null) {
             return;
         }
-        final int top = workTop();
-        final int w = Math.max(dialog.minWidth(), Math.min(dialog.defaultWidth(), sw() - 8));
-        final int h = Math.max(dialog.minHeight(), Math.min(dialog.defaultHeight(), workBottom() - top - 8));
+        final int top = view.workAreaTop();
+        final int w = Math.max(dialog.minWidth(), Math.min(dialog.defaultWidth(), view.width() - 8));
+        final int h = Math.max(dialog.minHeight(), Math.min(dialog.defaultHeight(), view.workAreaBottom() - top - 8));
         /*
          * Centred across the owner and hung just under its title bar, so the owner's name and edges stay
          * in view around the question it is asking, and the two read as two windows rather than one.
          */
-        final int x = Math.max(0, Math.min(ownerWin.x() + (ownerWin.width() - w) / 2, sw() - w));
-        final int y = Math.max(top, Math.min(ownerWin.y() + DesktopWindow.TITLE_H + 6, workBottom() - h));
+        final int x = Math.max(0, Math.min(ownerWin.x() + (ownerWin.width() - w) / 2, view.width() - w));
+        final int y = Math.max(top, Math.min(ownerWin.y() + DesktopWindow.TITLE_H + 6, view.workAreaBottom() - h));
         dialog.applySkin(skin);
         final DesktopWindow made = new DesktopWindow(dialog, ownerWin.appKey(), x, y, w, h);
         made.setOwner(ownerWin);
@@ -4778,8 +4649,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (!powerOpen) {
             return false;
         }
-        final double mouseX = lx(mouseXAbs);
-        final double mouseY = ly(mouseYAbs);
+        final double mouseX = view.localX(mouseXAbs);
+        final double mouseY = view.localY(mouseYAbs);
         if (is(PanelStyle.CDE)) {
             // A question with a Cancel of its own stays up until one of its buttons answers it.
             final int pressed = CdeExitLayout.buttonAt(mouseX, mouseY, powerSurfaceW, powerSurfaceH);
@@ -4932,9 +4803,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (clickedOverlay(mouseXAbs, mouseYAbs, button)) {
             return true;
         }
-        final double mouseX = lx(mouseXAbs);
-        final double mouseY = ly(mouseYAbs);
-        final int tbY = sh() - panelBand();
+        final double mouseX = view.localX(mouseXAbs);
+        final double mouseY = view.localY(mouseYAbs);
+        final int tbY = view.height() - view.panelBand();
         if (clickedPanel(mouseX, mouseY, button, tbY)) {
             return true;
         }
@@ -4943,7 +4814,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return true;
         }
         if (inWindow == Click.CONTAINER || clickedDesktop(mouseX, mouseY, button) == Click.CONTAINER) {
-            return super.mouseClicked(vx(mouseXAbs), vy(mouseYAbs), button);
+            return super.mouseClicked(view.slotX(mouseXAbs), view.slotY(mouseYAbs), button);
         }
         return true;
     }
@@ -4971,26 +4842,26 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
         // The volume control takes the next click like a menu: on it, it turns what it lands on; anywhere else it goes.
         if (volumePopup.isOpen()) {
-            volumePopup.mouseClicked(lx(mouseXAbs), ly(mouseYAbs), button);
+            volumePopup.mouseClicked(view.localX(mouseXAbs), view.localY(mouseYAbs), button);
             return true;
         }
         if (taskMenu.isOpen()) {
-            taskMenu.mouseClicked(lx(mouseXAbs), ly(mouseYAbs), button);
+            taskMenu.mouseClicked(view.localX(mouseXAbs), view.localY(mouseYAbs), button);
             return true;
         }
         // A window's own menu on CDE takes the click too, unless it is on the very button the menu hangs from.
-        if (cdeWindowMenu.isOpen() && cdeWindowMenu.clicked(lx(mouseXAbs), ly(mouseYAbs))) {
+        if (cdeWindowMenu.isOpen() && cdeWindowMenu.clicked(view.localX(mouseXAbs), view.localY(mouseYAbs))) {
             return true;
         }
-        if (taskPopup.key() != null && taskPopup.click(lx(mouseXAbs), ly(mouseYAbs), button)) {
+        if (taskPopup.key() != null && taskPopup.click(view.localX(mouseXAbs), view.localY(mouseYAbs), button)) {
             return true;
         }
         // A modal dialog swallows every click; only its OK button dismisses it, and a click beside it rings the bell.
         if (popup != null) {
-            if (!popup.contains(lx(mouseXAbs), ly(mouseYAbs))) {
+            if (!popup.contains(view.localX(mouseXAbs), view.localY(mouseYAbs))) {
                 PacketDistributor.sendToServer(new MachineSoundPayload(host, SystemSound.BEEP));
             }
-            popup.mouseClicked(lx(mouseXAbs), ly(mouseYAbs), button);
+            popup.mouseClicked(view.localX(mouseXAbs), view.localY(mouseYAbs), button);
             if (!popup.isOpen()) {
                 popup = null;
             }
@@ -5003,7 +4874,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (focusModal()) {
             final DesktopWindow f = frontWindow();
             if (f != null) {
-                f.app().mouseClicked(f, lx(mouseXAbs), ly(mouseYAbs), button);
+                f.app().mouseClicked(f, view.localX(mouseXAbs), view.localY(mouseYAbs), button);
             }
             return true;
         }
@@ -5017,7 +4888,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      */
     private boolean clickedPanel(final double mouseX, final double mouseY, final int button, final int tbY) {
         // A balloon is dismissed by clicking it, and it swallows that click so nothing under it reacts.
-        if (balloonClick(mouseX, mouseY, tbY, sw())) {
+        if (balloonClick(mouseX, mouseY, tbY, view.width())) {
             return true;
         }
 
@@ -5035,9 +4906,10 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
 
         // The speaker on the panel: the left button opens the volume control, the right one its menu.
-        if (!is(PanelStyle.CDE) && tray.onSpeaker(mouseX, mouseY, sw(), topPanel() ? 0 : tbY, topPanel())) {
+        if (!is(PanelStyle.CDE)
+                && tray.onSpeaker(mouseX, mouseY, view.width(), view.panelOnTop() ? 0 : tbY, view.panelOnTop())) {
             if (button == 1) {
-                volumePopup.openMenu((int) mouseX, tbY, topPanel());
+                volumePopup.openMenu((int) mouseX, tbY, view.panelOnTop());
             } else if (button == 0) {
                 volumePopup.toggle();
             }
@@ -5049,7 +4921,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * Only while the bar IS at the top: a period GNOME panels at the bottom, and swallowing clicks
          * along the top edge there ate the title bars of every window parked up there.
          */
-        if (topPanel() && mouseY < TASKBAR_H) {
+        if (view.panelOnTop() && mouseY < TASKBAR_H) {
             if (mouseX < 64) {
                 toggleStart();
             } else if (button == 1) {
@@ -5063,19 +4935,19 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          */
         if (is(PanelStyle.CDE)) {
             // A click beside a subpanel leaves it up: only its own arrow puts it away again.
-            if (button == 0 && cdeLaunchers.click(mouseX, mouseY, sw(), sh())) {
+            if (button == 0 && cdeLaunchers.click(mouseX, mouseY, view.width(), view.height())) {
                 return true;
             }
             // The right button on the slab opens the panel's own menu, where the Task Manager has always been.
-            if (button == 1 && CdeFrontPanelLayout.panel(sw(), sh()).holds(mouseX, mouseY)) {
+            if (button == 1 && CdeFrontPanelLayout.panel(view.width(), view.height()).holds(mouseX, mouseY)) {
                 openPanelMenu((int) mouseX, tbY);
                 return true;
             }
-            return cdePanels.click(mouseX, mouseY, sw(), sh());
+            return cdePanels.click(mouseX, mouseY, view.width(), view.height());
         }
         // Windows 11 keeps Start with the centered group, so it has its own hit test.
         if (is(PanelStyle.FRAMES_11) && mouseY >= tbY) {
-            final int startX = win11StartX(sw());
+            final int startX = win11StartX(view.width());
             if (mouseX >= startX && mouseX < startX + WIN11_SLOT) {
                 toggleStart();
                 return true;
@@ -5109,8 +4981,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * it; the Task Manager is one entry on that menu. The rest of the bar is the bar and swallows the
          * click, so nothing under it reacts.
          */
-        if (!topPanel() && mouseY >= tbY) {
-            final TaskStrip strip = taskStrip(sw());
+        if (!view.panelOnTop() && mouseY >= tbY) {
+            final TaskStrip strip = taskStrip(view.width());
             int idx = strip.indexAt(mouseX);
             int atX = idx >= 0 ? strip.x()[idx] : 0;
             if (idx < 0 && strip.quickCount() > 0) {
@@ -5274,12 +5146,13 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
         // On CDE a double click on the icon of a window that was put away brings that window back.
         if (is(PanelStyle.CDE) && button == 0
-                && cdeWindowIcons.clicked(mouseX, mouseY, putAwayHere(), sw(), workTop())) {
+                && cdeWindowIcons.clicked(mouseX, mouseY, putAwayHere(), view.width(), view.workAreaTop())) {
             return Click.TAKEN;
         }
         // The right button on such an icon raises the window's own menu, which is how it is closed from there.
         if (is(PanelStyle.CDE) && button == 1) {
-            final DesktopWindow putAway = cdeWindowIcons.at(mouseX, mouseY, putAwayHere(), sw(), workTop());
+            final DesktopWindow putAway = cdeWindowIcons.at(mouseX, mouseY, putAwayHere(), view.width(),
+                    view.workAreaTop());
             if (putAway != null) {
                 cdeWindowMenu.openFor(putAway, (int) mouseX, (int) mouseY);
                 return Click.TAKEN;
@@ -5328,7 +5201,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return Click.TAKEN;
         }
         // Pressing on bare wallpaper starts a rubber band; the drag handler grows it from here.
-        if (button == 0 && mouseY >= workTop() && mouseY < workBottom() && overWallpaper(mouseX, mouseY)) {
+        if (button == 0 && mouseY >= view.workAreaTop() && mouseY < view.workAreaBottom()
+                && overWallpaper(mouseX, mouseY)) {
             bandActive = true;
             bandStartX = mouseX;
             bandStartY = mouseY;
@@ -5344,22 +5218,23 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (popup != null) {
             return true;
         }
-        if (volumePopup.mouseDragged(lx(mouseXAbs), ly(mouseYAbs))) {
+        if (volumePopup.mouseDragged(view.localX(mouseXAbs), view.localY(mouseYAbs))) {
             return true;
         }
         if (dragging != null) {
-            dragging.moveTo((int) (lx(mouseXAbs)) - dragOffsetX, (int) (ly(mouseYAbs)) - dragOffsetY,
-                    workTop(), sw(), workBottom());
+            dragging.moveTo((int) (view.localX(mouseXAbs)) - dragOffsetX, (int) (view.localY(mouseYAbs)) - dragOffsetY,
+                    view.workAreaTop(), view.width(), view.workAreaBottom());
             return true;
         }
         if (resizing != null) {
-            resizing.applyResize(lx(mouseXAbs), ly(mouseYAbs), workTop(), sw(), workBottom());
+            resizing.applyResize(view.localX(mouseXAbs), view.localY(mouseYAbs), view.workAreaTop(), view.width(),
+                    view.workAreaBottom());
             return true;
         }
         // Dragging a desktop icon across the desktop, once the cursor has left the click dead zone.
         if (deskDragSlot >= 0) {
-            deskDragX = lx(mouseXAbs);
-            deskDragY = ly(mouseYAbs);
+            deskDragX = view.localX(mouseXAbs);
+            deskDragY = view.localY(mouseYAbs);
             if (!deskDragging
                     && (Math.abs(deskDragX - deskDragStartX) > DRAG_THRESHOLD
                         || Math.abs(deskDragY - deskDragStartY) > DRAG_THRESHOLD)) {
@@ -5369,8 +5244,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
         // Sweeping the wallpaper: extend the band and reselect what it now covers.
         if (bandActive) {
-            bandX = lx(mouseXAbs);
-            bandY = ly(mouseYAbs);
+            bandX = view.localX(mouseXAbs);
+            bandY = view.localY(mouseYAbs);
             iconGrid.selectWithin(bandRect());
             return true;
         }
@@ -5380,20 +5255,20 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          */
         final DesktopWindow w = frontWindow();
         if (w != null && w.app() instanceof IInventoryBandApp && !menu.getCarried().isEmpty()) {
-            return super.mouseDragged(vx(mouseXAbs), vy(mouseYAbs), button, dx, dy);
+            return super.mouseDragged(view.slotX(mouseXAbs), view.slotY(mouseYAbs), button, dx, dy);
         }
         if (w != null) {
-            w.app().mouseDragged(w, lx(mouseXAbs), ly(mouseYAbs), button);
+            w.app().mouseDragged(w, view.localX(mouseXAbs), view.localY(mouseYAbs), button);
             return true;
         }
-        return super.mouseDragged(vx(mouseXAbs), vy(mouseYAbs), button, dx, dy);
+        return super.mouseDragged(view.slotX(mouseXAbs), view.slotY(mouseYAbs), button, dx, dy);
     }
 
     @Override
     public boolean mouseReleased(final double mouseX, final double mouseY, final int button) {
         volumePopup.mouseReleased();
         if (popup != null) {
-            popup.mouseReleased(lx(mouseX), ly(mouseY), button);
+            popup.mouseReleased(view.localX(mouseX), view.localY(mouseY), button);
             return true;
         }
         // Letting go ends the sweep; whatever it covered stays selected.
@@ -5410,7 +5285,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             final int btn = pb.pressedButton();
             pb.setPressedButton(0);
             pressedBtnWindow = null;
-            if (btn != DesktopWindow.BUTTON_NONE && pb.buttonAt(lx(mouseX), ly(mouseY)) == btn) {
+            if (btn != DesktopWindow.BUTTON_NONE && pb.buttonAt(view.localX(mouseX), view.localY(mouseY)) == btn) {
                 if (btn == DesktopWindow.BUTTON_CLOSE && is(PanelStyle.CDE)) {
                     // Motif's button opens the window's menu, and closes the window on a double click.
                     cdeWindowMenu.pressed(pb);
@@ -5426,7 +5301,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
         // A dragged desktop icon: handle the drop (move into a folder / open explorer, or pin to a cell).
         if (deskDragging && deskDragSlot >= 0) {
-            handleDeskDrop(lx(mouseX), ly(mouseY));
+            handleDeskDrop(view.localX(mouseX), view.localY(mouseY));
         }
         final boolean wasDeskDrag = deskDragging;
         deskDragging = false;
@@ -5438,7 +5313,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * falls through to the app below.
          */
         if (!wasDeskDrag && dragging == null && resizing == null
-                && handleExplorerDropToDesktop(lx(mouseX), ly(mouseY))) {
+                && handleExplorerDropToDesktop(view.localX(mouseX), view.localY(mouseY))) {
             return super.mouseReleased(mouseX, mouseY, button);
         }
         /*
@@ -5448,7 +5323,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (!wasDeskDrag && dragging == null && resizing == null) {
             final DesktopWindow w = frontWindow();
             if (w != null) {
-                w.app().mouseReleased(w, lx(mouseX), ly(mouseY), button);
+                w.app().mouseReleased(w, view.localX(mouseX), view.localY(mouseY), button);
             }
         }
         /*
@@ -5456,17 +5331,17 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * left/right = that half). A modern-OS gesture the earlier editions do not have.
          */
         if (dragging != null && (is(PanelStyle.FRAMES_11) || linuxDesktop())) {
-            final int lx = (int) (lx(mouseX));
-            final int ly = (int) (ly(mouseY));
-            final int top = workTop();
-            final int workH = workBottom() - top;
-            final int halfW = sw() / 2;
+            final int lx = (int) (view.localX(mouseX));
+            final int ly = (int) (view.localY(mouseY));
+            final int top = view.workAreaTop();
+            final int workH = view.workAreaBottom() - top;
+            final int halfW = view.width() / 2;
             if (ly <= top + 4) {
                 dragging.setMaximized(true);
             } else if (lx <= 4) {
                 dragging.snapTo(0, top, halfW, workH);
-            } else if (lx >= sw() - 4) {
-                dragging.snapTo(halfW, top, sw() - halfW, workH);
+            } else if (lx >= view.width() - 4) {
+                dragging.snapTo(halfW, top, view.width() - halfW, workH);
             }
         }
         dragging = null;
@@ -5627,10 +5502,11 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return true;
         }
         // The wheel over the speaker, or over its open control, turns the volume a step a notch.
-        final double lmx = lx(mouseX);
-        final double lmy = ly(mouseY);
+        final double lmx = view.localX(mouseX);
+        final double lmy = view.localY(mouseY);
         if (dy != 0 && !is(PanelStyle.CDE) && (volumePopup.over(lmx, lmy)
-                || tray.onSpeaker(lmx, lmy, sw(), topPanel() ? 0 : sh() - panelBand(), topPanel()))) {
+                || tray.onSpeaker(lmx, lmy, view.width(), view.panelOnTop() ? 0 : view.height() - view.panelBand(),
+                        view.panelOnTop()))) {
             volumePopup.nudge(dy > 0 ? 1 : -1);
             return true;
         }
@@ -5654,7 +5530,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** A desktop-local point as the screen position a click is given in. */
     private int[] screenPoint(final int[] local) {
-        return new int[] {sx(local[0]), sy(local[1])};
+        return new int[] {view.screenX(local[0]), view.screenY(local[1])};
     }
 
     /** The topmost window that is on show, which receives keyboard and scroll input. */
@@ -5723,8 +5599,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * toggles them active, once per tick before the next render. When no Network Interactor is in front the
      * slots are switched off (not rendered, not hit-tested), so the inventory only appears inside that window.
      * The slot grid origin is kept relative to {@code leftPos}/{@code topPos}, the offset the container renders
-     * and hit-tests slots at (since {@code leftPos == ox()} and {@code topPos == oy()}, that origin is just the
-     * window-local position of the first inventory cell).
+     * and hit-tests slots at (since {@code leftPos == view.left()} and {@code topPos == view.top()}, that origin is
+     * just the window-local position of the first inventory cell).
      */
     @Override
     protected void containerTick() {
@@ -5737,8 +5613,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * toggles them active. Run from {@link #containerTick()} and again at the top of {@link #render} so the
      * slots track a dragged/resized window per frame, not just per tick. When no Network Interactor is in front
      * the slots go inert (not rendered, not hit-tested), so the inventory only shows inside that window. The
-     * grid origin is window-local, and since {@code leftPos == ox()} and {@code topPos == oy()}, that is exactly
-     * the offset the container measures {@code slot.x}/{@code slot.y} from. The menu only rebuilds slots when
+     * grid origin is window-local, and since {@code leftPos == view.left()} and {@code topPos == view.top()}, that is
+     * exactly the offset the container measures {@code slot.x}/{@code slot.y} from. The menu only rebuilds slots when
      * the origin actually changed, so this is cheap to call every frame.
      */
     private void syncInventorySlots() {
@@ -5751,7 +5627,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * Resolve the window's rectangle for this frame first, so slot positions never lag a frame behind a
          * drag, resize, or maximize (curX/curY are otherwise only refreshed when the window itself renders).
          */
-        w.resolveGeometry(sw(), sh(), bottomReserve(), workTop());
+        w.resolveGeometry(view.width(), view.height(), view.panelReserve(), view.workAreaTop());
         /*
          * The focused Network Interactor is the one that should receive network snapshots and console output,
          * so point the static routing at it whenever it is in front (matters when two windows are open).
@@ -5782,7 +5658,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * Draws the items held in the active inventory slots, plus the hover highlight, inside the desktop's
      * translated/scissored pass right after the windows, so the items sit over the front window's inventory
      * zone. Records {@link #hoveredSlot} so the carried-item and tooltip passes can use it. Coordinates are
-     * desktop-local (the caller has already translated by ox()/oy()), which equals slot.x/slot.y here.
+     * desktop-local (the caller has already translated by view.left()/view.top()), which equals slot.x/slot.y here.
      */
     private void renderInventoryItems(final GuiGraphics g, final int lmx, final int lmy, final float partialTick) {
         hoveredSlot = null;
@@ -5797,7 +5673,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         /*
          * lmx/lmy and the slot coordinates are both desktop-local (already inside the ox/oy translate).
          * Draw the items directly at the local slot coordinates: delegating to the inherited renderSlot would
-         * add leftPos/topPos a second time (leftPos==ox()), double-offsetting the icons from their backgrounds.
+         * add leftPos/topPos a second time (leftPos==view.left()), double-offsetting the icons from their backgrounds.
          */
         for (final var slot : menu.slots) {
             if (!slot.isActive()) {
@@ -5829,8 +5705,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             if (!slot.isActive()) {
                 continue;
             }
-            final double mx = lx(absX);
-            final double my = ly(absY);
+            final double mx = view.localX(absX);
+            final double my = view.localY(absY);
             if (mx >= slot.x && mx < slot.x + 16 && my >= slot.y && my < slot.y + 16) {
                 return slot;
             }
@@ -5885,9 +5761,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * Open at the default size, clamped to the screen, but never below the app's minimum while the
          * screen still has room for it, so the content opens laid out (not collapsed) on a small monitor.
          */
-        final int top = workTop();
-        final int workH = workBottom() - top;
-        final int availW = sw() - 16;
+        final int top = view.workAreaTop();
+        final int workH = view.workAreaBottom() - top;
+        final int availW = view.width() - 16;
         final int availH = workH - 16;
         final int w = availW >= app.minWidth() ? Math.min(app.defaultWidth(), availW) : availW;
         final int h = availH >= app.minHeight() ? Math.min(app.defaultHeight(), availH) : availH;
@@ -5897,9 +5773,10 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          */
         final int shownW = app.drawsOwnFrame() ? app.defaultWidth() : w;
         final int shownH = app.drawsOwnFrame() ? app.defaultHeight() : h;
-        final int x = Math.max(0, Math.min(Math.max(48, (sw() - w) / 2 + windows.size() * 12), sw() - shownW));
+        final int x = Math.max(0,
+                Math.min(Math.max(48, (view.width() - w) / 2 + windows.size() * 12), view.width() - shownW));
         final int y = Math.max(top, Math.min(Math.max(top + 6, top + (workH - h) / 2 + windows.size() * 12),
-                workBottom() - shownH));
+                view.workAreaBottom() - shownH));
         final DesktopWindow opened = new DesktopWindow(app, key, x, y, w, h);
         // A program opens on the workspace that is up, which is where whoever started it is looking.
         opened.setWorkspaces(WorkspaceSet.only(shownWorkspace));

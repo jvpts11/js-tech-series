@@ -669,7 +669,7 @@ public final class SettingsApp implements IDesktopApp {
          */
         caption(SettingsTexts.SCALE, x, y, w);
         y += 10;
-        final int scale = d.guiScale() <= 0 ? DesktopScreen.DEFAULT_SCALE : d.guiScale();
+        final int scale = d.guiScale() <= 0 ? DesktopViewport.DEFAULT_SCALE : d.guiScale();
         final int at = Math.max(0, SCALES.indexOf(scale));
         stepper(x, y, font, GameText.resolve(SettingsTexts.PERCENT.with(scale)),
                 () -> set("guiscale", Integer.toString(SCALES.get(Math.min(SCALES.size() - 1, at + 1)))),

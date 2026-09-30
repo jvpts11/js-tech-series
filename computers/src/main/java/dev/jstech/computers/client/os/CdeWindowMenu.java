@@ -98,8 +98,8 @@ final class CdeWindowMenu {
     /** Raises the menu of {@code w} with its top left at that point, as the icon of a window put away asks. */
     void openFor(final DesktopWindow w, final int atX, final int atY) {
         this.target = w;
-        this.menu.open(entriesFor(w), atX, atY, this.desktop.textFont(), this.desktop.workAreaWidth(),
-                this.desktop.workAreaBottom());
+        this.menu.open(entriesFor(w), atX, atY, this.desktop.textFont(), this.desktop.view().width(),
+                this.desktop.view().workAreaBottom());
     }
 
     /**

@@ -147,7 +147,7 @@ final class TaskPopup {
         if (key != null && desktop.windowsOf(key).isEmpty()) {
             dismiss();
         }
-        if (desktop.panelOnTop()) {
+        if (desktop.view().panelOnTop()) {
             return; // the top bar lists no programs
         }
         final DesktopScreen.TaskStrip strip = desktop.taskButtons(sw);
@@ -209,8 +209,8 @@ final class TaskPopup {
      * opened it is that and nothing more.
      */
     boolean click(final double mx, final double my, final int button) {
-        final int tbY = desktop.screenH() - DesktopScreen.TASKBAR_H;
-        final int[] r = rect(desktop.screenW(), tbY);
+        final int tbY = desktop.view().height() - DesktopScreen.TASKBAR_H;
+        final int[] r = rect(desktop.view().width(), tbY);
         final List<DesktopWindow> list = windows();
         if (r == null) {
             dismiss();
@@ -223,7 +223,7 @@ final class TaskPopup {
         final boolean pinned = sticky;
         dismiss();
         if (pinned && button == 0 && my >= tbY) {
-            final DesktopScreen.TaskStrip strip = desktop.taskButtons(desktop.screenW());
+            final DesktopScreen.TaskStrip strip = desktop.taskButtons(desktop.view().width());
             final int idx = strip.indexAt(mx);
             if (idx >= 0 && strip.entries().get(idx).key().equals(was)) {
                 return true; // the entry that opened it closes it; nothing more
@@ -239,7 +239,7 @@ final class TaskPopup {
         }
         final List<DesktopWindow> mine = desktop.windowsOf(key);
         if (thumbnails()) {
-            final int most = Math.max(1, (desktop.screenW() - 4 - POPUP_PAD) / (CARD_W + POPUP_PAD));
+            final int most = Math.max(1, (desktop.view().width() - 4 - POPUP_PAD) / (CARD_W + POPUP_PAD));
             return mine.size() > most ? mine.subList(0, most) : mine;
         }
         return mine;
@@ -274,14 +274,14 @@ final class TaskPopup {
             h = 2 + n * LIST_ROW_H + 5 + LIST_ROW_H + 2;
         }
         final int x = Math.max(2, Math.min(center - w / 2, sw - w - 2));
-        final int y = desktop.panelOnTop() ? DesktopScreen.TASKBAR_H + 3 : tbY - 3 - h;
+        final int y = desktop.view().panelOnTop() ? DesktopScreen.TASKBAR_H + 3 : tbY - 3 - h;
         return new int[] {x, y, w, h};
     }
 
     /** Its {@code index}-th card or row, desktop-local {x, y, w, h}, or null. */
     @Nullable
     private int[] itemRect(final int index) {
-        final int[] r = rect(desktop.screenW(), desktop.screenH() - DesktopScreen.TASKBAR_H);
+        final int[] r = rect(desktop.view().width(), desktop.view().height() - DesktopScreen.TASKBAR_H);
         if (r == null || index < 0 || index >= windows().size()) {
             return null;
         }
@@ -307,7 +307,7 @@ final class TaskPopup {
     /** The "Close all" row of a list popup, or null on a modern panel. */
     @Nullable
     private int[] closeAllRect() {
-        final int[] r = rect(desktop.screenW(), desktop.screenH() - DesktopScreen.TASKBAR_H);
+        final int[] r = rect(desktop.view().width(), desktop.view().height() - DesktopScreen.TASKBAR_H);
         if (r == null || thumbnails()) {
             return null;
         }
@@ -341,7 +341,7 @@ final class TaskPopup {
             ChromeShapes.outline(g, tx - 1, ty - 1, tw + 2, THUMB_H + 2, skin.edge());
             g.fill(tx, ty, tx + tw, ty + THUMB_H, skin.fieldBg());
             w.renderThumbnail(g, desktop.textFont(), skin, tx, ty, tw, THUMB_H, sw, sh,
-                    desktop.panelReserve(), desktop.workAreaTop());
+                    desktop.view().panelReserve(), desktop.view().workAreaTop());
         }
     }
 
