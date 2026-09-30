@@ -229,6 +229,23 @@ public final class CatalogRulerGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = ARENA)
+    public static void advancedGraphicsCards_climbEachMakersLadder(final GameTestHelper helper) {
+        assertCardsClimb(helper, "Envya", List.of(HardwareItems.GPU_VERTEX_GTX_1650, HardwareItems.GPU_VERTEX_RTX_2060,
+                HardwareItems.GPU_VERTEX_RTX_3060, HardwareItems.GPU_VERTEX_GTX_1080_TI,
+                HardwareItems.GPU_VERTEX_RTX_4060, HardwareItems.GPU_VERTEX_RTX_5060, HardwareItems.GPU_VERTEX_RTX_3080,
+                HardwareItems.GPU_VERTEX_RTX_4090, HardwareItems.GPU_VERTEX_RTX_5090));
+        assertCardsClimb(helper, "Velocion", List.of(HardwareItems.GPU_RADIANCE_RX_550,
+                HardwareItems.GPU_RADIANCE_RX_580, HardwareItems.GPU_RADIANCE_RX_VEGA_64,
+                HardwareItems.GPU_RADIANCE_RX_6600, HardwareItems.GPU_RADIANCE_RX_5700_XT,
+                HardwareItems.GPU_RADIANCE_RX_6900_XT, HardwareItems.GPU_RADIANCE_RX_9070_XT,
+                HardwareItems.GPU_RADIANCE_RX_7900_XTX));
+        // The compute cards climb across the two eras they span.
+        assertCardsClimb(helper, "Tessera", List.of(HardwareItems.GPU_TESSERA_K40, HardwareItems.GPU_TESSERA_V100,
+                HardwareItems.GPU_TESSERA_A100, HardwareItems.GPU_TESSERA_H100));
+        helper.succeed();
+    }
+
     private static void assertCardsClimb(final GameTestHelper helper, final String ladderName,
                                          final List<DeferredItem<GpuItem>> ladder) {
         for (int i = 1; i < ladder.size(); i++) {

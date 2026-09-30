@@ -542,6 +542,11 @@ public final class ComputingModule {
             properties -> new CraftingCardItem(properties,
                     new CraftingCardSpec(IndustrialTier.T3, PcieGeneration.PCIE_2_0, 0.1, 4, 100)))
             .named("Forge Logic Crafting Card T3").register();
+    // The card of the Advanced boards, twice the tier before it again.
+    public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_T4 = part("crafting_card_t4",
+            properties -> new CraftingCardItem(properties,
+                    new CraftingCardSpec(IndustrialTier.T4, PcieGeneration.PCIE_4_0, 0.2, 8, 125)))
+            .named("Forge Logic Crafting Card T4").register();
     /*
      * The Cluster Interface Cards: exclusive to the Cluster Management Computer, one per era. Each era
      * reaches further and writes more nodes at once. Numbers are estimates.
@@ -558,6 +563,10 @@ public final class ComputingModule {
             properties -> new ClusterInterfaceCardItem(properties, new ClusterInterfaceCardSpec(HardwareEra.STANDARD,
                     IndustrialTier.T4, PcieGeneration.PCIE_3_0, ClusterInterfaceCardSpec.Reach.ALL, 4, 35)))
             .named("Fabric Host Adapter").register();
+    public static final ItemEntry<ClusterInterfaceCardItem> FABRIC_DPU = part("fabric_dpu",
+            properties -> new ClusterInterfaceCardItem(properties, new ClusterInterfaceCardSpec(HardwareEra.ADVANCED,
+                    IndustrialTier.T5, PcieGeneration.PCIE_4_0, ClusterInterfaceCardSpec.Reach.ALL, 8, 75)))
+            .named("Fabric DPU").register();
     public static final ItemEntry<PhiCoprocessorItem> PHI_5100 =
             phi("phi_5100", new PhiCoprocessorSpec(IndustrialTier.T3, 2, 60, 1050, 225))
                     .named("Integra Phi 5100 Co-processor").register();

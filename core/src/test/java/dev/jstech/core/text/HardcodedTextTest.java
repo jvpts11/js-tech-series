@@ -111,8 +111,8 @@ class HardcodedTextTest {
             data(COMPUTERS + "HardwareItems.java", 11,
                     "the codenames of real chips (Santa Rosa, Summit Ridge, Storm Peak), which are names in every"
                             + " language"),
-            data(COMPUTERS + "hardware/Microarchitectures.java", 13,
-                    "the names of chip designs (Sandy Bridge, Alder Lake), which are names in every language"),
+            data(COMPUTERS + "hardware/Microarchitectures.java", 14,
+                    "the names of chip designs (Sandy Bridge, Ada Lovelace), which are names in every language"),
             data(COMPUTERS + "datagen/JscRecipeMachinesProvider.java", 1, BUILD_LOG),
             data(COMPUTERS + "datagen/advancement/ConditionalAdvancementProvider.java", 1, BUILD_LOG),
             data(COMPUTERS + "hardware/StorageTier.java", 3, PRODUCTS),

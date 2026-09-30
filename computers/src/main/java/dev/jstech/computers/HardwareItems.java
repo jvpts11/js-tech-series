@@ -955,7 +955,7 @@ public final class HardwareItems {
      * Standard GPU ladder, PCIe 2.0 at the floor and PCIe 3.0 above it. The Vertex GT 730 and the Radiance HD 7750
      * are the floor; the Maxwell and Pascal Vertex cards do a third more a shader than the Kepler ones, and the Vertex
      * GTX 1080 and the Radiance R9 Fury X top the era. The Tessera K40 is the compute card of the servers, with no
-     * fan of its own and twelve gigabytes.
+     * fan of its own and twelve gigabytes, counted like every compute card at the clock it is rated at.
      */
     public static final DeferredItem<GpuItem> GPU_VERTEX_GT_730 = gpu("gpu_vertex_gt_730",
             new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_2_0, 384, 2048, 38)
@@ -1016,7 +1016,7 @@ public final class HardwareItems {
             .named("Envya Vertex GTX 1080").register();
     public static final DeferredItem<GpuItem> GPU_TESSERA_K40 = gpu("gpu_tessera_k40",
             new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 2880, 12288, 235)
-                    .on(Microarchitectures.KEPLER, "GK110B", 745))
+                    .on(Microarchitectures.KEPLER, "GK110B", 875))
             .named("Envya Tessera K40").register();
 
     public static final DeferredItem<PsuItem> PSU_850G =
@@ -1366,6 +1366,96 @@ public final class HardwareItems {
     public static final DeferredItem<RamItem> RAM_DDR5_131072_RDIMM = ram("ram_ddr5_131072_rdimm",
             new RamSpec(HardwareEra.ADVANCED, RamGeneration.DDR5, 32768, 22))
             .named("Stratix Layer DDR5-131072 RDIMM").register();
+
+    /*
+     * Advanced GPU ladder, PCIe 3.0 at the floor to PCIe 5.0 at the top. The Velocion Radiance RX 550 and the Envya
+     * Vertex GTX 1650 are the floor; the Vertex RTX 5090 and the Radiance RX 7900 XTX top the era. The Tessera V100,
+     * A100 and H100 are the compute cards of the servers.
+     */
+    public static final DeferredItem<GpuItem> GPU_RADIANCE_RX_550 = gpu("gpu_radiance_rx_550",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_3_0, 512, 4096, 50)
+                    .on(Microarchitectures.GCN, "Polaris 12", 1100))
+            .named("Velocion Radiance RX 550").register();
+    public static final DeferredItem<GpuItem> GPU_VERTEX_GTX_1650 = gpu("gpu_vertex_gtx_1650",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_3_0, 896, 4096, 75)
+                    .on(Microarchitectures.TURING, "TU117", 1485))
+            .named("Envya Vertex GTX 1650").register();
+    public static final DeferredItem<GpuItem> GPU_RADIANCE_RX_580 = gpu("gpu_radiance_rx_580",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_3_0, 2304, 8192, 185)
+                    .on(Microarchitectures.GCN, "Polaris 20", 1257))
+            .named("Velocion Radiance RX 580").register();
+    public static final DeferredItem<GpuItem> GPU_VERTEX_RTX_2060 = gpu("gpu_vertex_rtx_2060",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_3_0, 1920, 6144, 160)
+                    .on(Microarchitectures.TURING, "TU106", 1365))
+            .named("Envya Vertex RTX 2060").register();
+    public static final DeferredItem<GpuItem> GPU_VERTEX_GTX_1080_TI = gpu("gpu_vertex_gtx_1080_ti",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_3_0, 3584, 11264, 250)
+                    .on(Microarchitectures.PASCAL, "GP102", 1480))
+            .named("Envya Vertex GTX 1080 Ti").register();
+    public static final DeferredItem<GpuItem> GPU_RADIANCE_RX_VEGA_64 = gpu("gpu_radiance_rx_vega_64",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_3_0, 4096, 8192, 295)
+                    .on(Microarchitectures.GCN, "Vega 10", 1247))
+            .named("Velocion Radiance RX Vega 64").register();
+    public static final DeferredItem<GpuItem> GPU_RADIANCE_RX_5700_XT = gpu("gpu_radiance_rx_5700_xt",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 2560, 8192, 225)
+                    .on(Microarchitectures.RDNA, "Navi 10", 1605))
+            .named("Velocion Radiance RX 5700 XT").register();
+    public static final DeferredItem<GpuItem> GPU_VERTEX_RTX_3060 = gpu("gpu_vertex_rtx_3060",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 3584, 12288, 170)
+                    .on(Microarchitectures.AMPERE, "GA106", 1320))
+            .named("Envya Vertex RTX 3060").register();
+    public static final DeferredItem<GpuItem> GPU_RADIANCE_RX_6600 = gpu("gpu_radiance_rx_6600",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 1792, 8192, 132)
+                    .on(Microarchitectures.RDNA_2, "Navi 23", 1626))
+            .named("Velocion Radiance RX 6600").register();
+    public static final DeferredItem<GpuItem> GPU_VERTEX_RTX_3080 = gpu("gpu_vertex_rtx_3080",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 8704, 10240, 320)
+                    .on(Microarchitectures.AMPERE, "GA102", 1440))
+            .named("Envya Vertex RTX 3080").register();
+    public static final DeferredItem<GpuItem> GPU_RADIANCE_RX_6900_XT = gpu("gpu_radiance_rx_6900_xt",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 5120, 16384, 300)
+                    .on(Microarchitectures.RDNA_2, "Navi 21", 1825))
+            .named("Velocion Radiance RX 6900 XT").register();
+    public static final DeferredItem<GpuItem> GPU_VERTEX_RTX_4060 = gpu("gpu_vertex_rtx_4060",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 3072, 8192, 115)
+                    .on(Microarchitectures.ADA, "AD107", 1830))
+            .named("Envya Vertex RTX 4060").register();
+    public static final DeferredItem<GpuItem> GPU_RADIANCE_RX_7900_XTX = gpu("gpu_radiance_rx_7900_xtx",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 6144, 24576, 355)
+                    .on(Microarchitectures.RDNA_3, "Navi 31", 1855))
+            .named("Velocion Radiance RX 7900 XTX").register();
+    public static final DeferredItem<GpuItem> GPU_VERTEX_RTX_4090 = gpu("gpu_vertex_rtx_4090",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 16384, 24576, 450)
+                    .on(Microarchitectures.ADA, "AD102", 2235))
+            .named("Envya Vertex RTX 4090").register();
+    public static final DeferredItem<GpuItem> GPU_VERTEX_RTX_5060 = gpu("gpu_vertex_rtx_5060",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_5_0, 3840, 8192, 145)
+                    .on(Microarchitectures.BLACKWELL, "GB206", 2280))
+            .named("Envya Vertex RTX 5060").register();
+    public static final DeferredItem<GpuItem> GPU_RADIANCE_RX_9070_XT = gpu("gpu_radiance_rx_9070_xt",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_5_0, 4096, 16384, 304)
+                    .on(Microarchitectures.RDNA_4, "Navi 48", 2400))
+            .named("Velocion Radiance RX 9070 XT").register();
+    public static final DeferredItem<GpuItem> GPU_VERTEX_RTX_5090 = gpu("gpu_vertex_rtx_5090",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_5_0, 21760, 32768, 575)
+                    .on(Microarchitectures.BLACKWELL, "GB202", 2010))
+            .named("Envya Vertex RTX 5090").register();
+    /*
+     * The compute cards, counted at the clock they are rated at: a card with no fan of its own holds it in a server
+     * built around it, and the clock they are sold by is that one.
+     */
+    public static final DeferredItem<GpuItem> GPU_TESSERA_V100 = gpu("gpu_tessera_v100",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_3_0, 5120, 16384, 250)
+                    .on(Microarchitectures.VOLTA, "GV100", 1380))
+            .named("Envya Tessera V100").register();
+    public static final DeferredItem<GpuItem> GPU_TESSERA_A100 = gpu("gpu_tessera_a100",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 6912, 40960, 250)
+                    .on(Microarchitectures.AMPERE, "GA100", 1410))
+            .named("Envya Tessera A100").register();
+    public static final DeferredItem<GpuItem> GPU_TESSERA_H100 = gpu("gpu_tessera_h100",
+            new GpuSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_5_0, 14592, 81920, 350)
+                    .on(Microarchitectures.HOPPER, "GH100", 1755))
+            .named("Envya Tessera H100").register();
 
     // The Advanced power supplies: the desktop PowerGold and PowerPlat, and the hot-swap server modules.
     public static final DeferredItem<PsuItem> PSU_1000G =

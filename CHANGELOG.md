@@ -375,6 +375,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   RDIMM, and the LGA 1700 board takes either. The MF PowerGold 1000G, the PowerPlat 1200P and 1600P, and the
   ServerPSU 2000P and 3000P (Redundant) of the servers. And the Vaultis Keep HDD 12T, 16T, 20T and 24T, the helium
   drives, which are made only as hard disks.
+- Seventeen Advanced graphics cards run from the Velocion Radiance RX 550 and the Envya Vertex GTX 1650 to the
+  Radiance RX 7900 XTX and the Vertex RTX 5090, on the Turing, Ampere, Ada Lovelace and Blackwell designs and on
+  RDNA 1 to 4, with the Envya Tessera V100, A100 and H100 compute cards of the servers. The Forge Logic Crafting Card
+  T4 is the crafting card of the Advanced boards, and the Fabric DPU the cluster card that reaches eight nodes at
+  once.
 
 ### Changed
 - The Vintage server boards hold the Integra Pentix Pro, as the boards of the time did: the MF MTX-V of the
@@ -417,6 +422,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   four-way one, where a machine still counts only as many as its case holds; a rack server reports the slots its
   case has rather than the board's.
 - The Vaultis Swift SSD 8T and the Bolt NVMe 4T and 8T move to the Advanced, the years they sold in, with new icons.
+- A compute card is counted at the clock it is rated at, the one a card with no fan of its own holds in a server:
+  the Tessera K40 does as much as the Vertex GTX 780 Ti on the same chip. The Integra Phi 9000 has a new icon.
 - A medium's tooltip names its format in the player's language ("Floppy", "Blu-ray") instead of the code's name
   for it.
 - A monitor going dark is heard only from a picture tube; the flat panels of the Transition and every later era

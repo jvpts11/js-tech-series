@@ -118,7 +118,7 @@ public final class Microarchitectures {
     /** Its shaders worked in groups of five, so a card is counted a group at a time. */
     public static final Microarchitecture TERASCALE_2 = new Microarchitecture("terascale_2", "TeraScale 2", 5000, 5);
     /*
-     * The Radeons from the HD 7000 to the RX 400: their shaders did about as much a clock through the generations of
+     * The Radeons from the HD 7000 to the RX Vega: their shaders did about as much a clock through the generations of
      * the design, so one entry covers them, and each card names its chip.
      */
     public static final Microarchitecture GCN = new Microarchitecture("gcn", "GCN", 1000);
@@ -127,6 +127,24 @@ public final class Microarchitectures {
     public static final Microarchitecture MAXWELL = new Microarchitecture("maxwell", "Maxwell", 1350);
     /** Maxwell's shaders on a finer process, doing as much a clock at a much higher clock. */
     public static final Microarchitecture PASCAL = new Microarchitecture("pascal", "Pascal", 1350);
+    /** The compute design of the Tessera V100, whose shaders ran beside the first tensor cores. */
+    public static final Microarchitecture VOLTA = new Microarchitecture("volta", "Volta", 1600);
+    /** Its shaders ran whole and fractional work side by side, doing about two fifths more a clock than Pascal's. */
+    public static final Microarchitecture TURING = new Microarchitecture("turing", "Turing", 1850);
+    /** The Radeon design after GCN, doing about three quarters more a shader and a clock. */
+    public static final Microarchitecture RDNA = new Microarchitecture("rdna", "RDNA", 1750);
+    /*
+     * Twice the shaders of the design before it in the same space, each doing less on its own; the Tessera A100 is
+     * built on it too.
+     */
+    public static final Microarchitecture AMPERE = new Microarchitecture("ampere", "Ampere", 1350);
+    public static final Microarchitecture RDNA_2 = new Microarchitecture("rdna_2", "RDNA 2", 2000);
+    public static final Microarchitecture ADA = new Microarchitecture("ada", "Ada Lovelace", 1350);
+    /** The compute design of the Tessera H100. */
+    public static final Microarchitecture HOPPER = new Microarchitecture("hopper", "Hopper", 1350);
+    public static final Microarchitecture RDNA_3 = new Microarchitecture("rdna_3", "RDNA 3", 2000);
+    public static final Microarchitecture BLACKWELL = new Microarchitecture("blackwell", "Blackwell", 1350);
+    public static final Microarchitecture RDNA_4 = new Microarchitecture("rdna_4", "RDNA 4", 2100);
 
     private static final List<Microarchitecture> ALL = List.of(UNSPECIFIED,
             I486, P5, K5, K6, P6, K7, NETBURST, K8, CENTRO, K10, NEHALEM, WESTMERE, SANDY_BRIDGE, IVY_BRIDGE, HASWELL,
@@ -134,7 +152,8 @@ public final class Microarchitectures {
             WAY_5, ALDER_LAKE, RAPTOR_LAKE, ARROW_LAKE, GRACEMONT, SKYMONT, SKYLAKE_SP, CASCADE_LAKE, ICE_LAKE_SP,
             COOPER_LAKE, SAPPHIRE_RAPIDS, EMERALD_RAPIDS,
             VGA, RENDITION, NV3, RAGE, THREEDFX, FAHRENHEIT, CELSIUS, R100, R200, KELVIN, R300, RANKINE, CURIE, R400,
-            R500, TESLA, TERASCALE, FERMI, TERASCALE_2, GCN, KEPLER, MAXWELL, PASCAL);
+            R500, TESLA, TERASCALE, FERMI, TERASCALE_2, GCN, KEPLER, MAXWELL, PASCAL, VOLTA, TURING, RDNA, AMPERE,
+            RDNA_2, ADA, HOPPER, RDNA_3, BLACKWELL, RDNA_4);
 
     private Microarchitectures() {
     }
