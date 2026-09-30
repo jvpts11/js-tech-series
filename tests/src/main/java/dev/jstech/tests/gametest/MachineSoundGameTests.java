@@ -107,7 +107,7 @@ public final class MachineSoundGameTests {
     public static void standardPc_withSolidStateDisk_makesNoDriveSound(final GameTestHelper helper) {
         final Heard heard = Heard.at(helper, WHERE);
         final PersonalComputerBlockEntity pc = computer(helper, ComputingModule.PERSONAL_COMPUTER.get(),
-                ComputingModule.MOTHERBOARD_ATX_P.get(), ComputingModule.CPU_ASCENT_965.get(),
+                HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get(), HardwareItems.CPU_APEX_7_4790K.get(),
                 ComputingModule.RAM_DDR3_8192.get(), ComputingModule.PSU_650G.get(), StorageTier.SSD);
         pc.togglePower();
         helper.startSequence()
@@ -193,8 +193,8 @@ public final class MachineSoundGameTests {
 
     private static PersonalComputerBlockEntity legacy(final GameTestHelper helper, final StorageTier disk) {
         return computer(helper, ComputingModule.LEGACY_PERSONAL_COMPUTER.get(),
-                HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get(), HardwareItems.CPU_INTEGRA_DUO_E4300.get(),
-                HardwareItems.RAM_DDR2_2048.get(), HardwareItems.PSU_500B.get(), disk);
+                HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get(), HardwareItems.CPU_INTEGRA_PENTIX_4_560.get(),
+                HardwareItems.RAM_DDR_1024.get(), HardwareItems.PSU_500B.get(), disk);
     }
 
     private static PersonalComputerBlockEntity computer(final GameTestHelper helper, final Block block,

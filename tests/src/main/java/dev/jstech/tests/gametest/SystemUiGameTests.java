@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest;
 
 import com.mojang.authlib.GameProfile;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
@@ -148,8 +149,8 @@ public final class SystemUiGameTests {
         }
         final ItemStackHandler hw = computer.getHardware();
         hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_ATX_P.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT, new ItemStack(ComputingModule.CPU_ASCENT_965.get()));
+                new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT, new ItemStack(HardwareItems.CPU_APEX_7_4790K.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));

@@ -75,7 +75,7 @@ public final class EraComputerGameTests {
         hw.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(HardwareItems.MOTHERBOARD_BABYAT_VINTAGE.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_DUO_E4300.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_4_560.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(HardwareItems.RAM_SIMM_4.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
@@ -101,9 +101,9 @@ public final class EraComputerGameTests {
         hw.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_DUO_E4300.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_4_560.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(HardwareItems.RAM_DDR2_2048.get()));
+                new ItemStack(HardwareItems.RAM_DDR_1024.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
                 new ItemStack(HardwareItems.PSU_500B.get()));
         be.togglePower();
@@ -130,7 +130,7 @@ public final class EraComputerGameTests {
         hw.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
                 new ItemStack(HardwareItems.CPU_INTEGRA_486SX.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(HardwareItems.RAM_DDR2_2048.get()));
+                new ItemStack(HardwareItems.RAM_DDR_1024.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
                 new ItemStack(HardwareItems.PSU_500B.get()));
         be.togglePower();
@@ -179,11 +179,11 @@ public final class EraComputerGameTests {
         final PersonalComputerBlockEntity legacy = withBoard(helper, new BlockPos(3, 2, 1),
                 ComputingModule.LEGACY_PERSONAL_COMPUTER.get(), HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get());
         final PersonalComputerBlockEntity standard = withBoard(helper, new BlockPos(5, 2, 1),
-                ComputingModule.PERSONAL_COMPUTER.get(), ComputingModule.MOTHERBOARD_ATX_P.get());
+                ComputingModule.PERSONAL_COMPUTER.get(), HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get());
         final ItemStack isa = new ItemStack(HardwareItems.SOUND_CARD_TONE_BLASTER.get());
         final ItemStack pci = new ItemStack(HardwareItems.SOUND_CARD_TONE_BLASTER_128.get());
         final ItemStack agp = new ItemStack(HardwareItems.SOUND_CARD_TONE_BLASTER_LIVE.get());
-        final ItemStack pcie = new ItemStack(HardwareItems.SOUND_CARD_TONE_BLASTER_HI_FI.get());
+        final ItemStack pcie = new ItemStack(HardwareItems.SOUND_CARD_TONE_BLASTER_AUDIGY.get());
         final int card = PersonalComputerBlockEntity.GPU_SLOTS_START;
 
         helper.assertTrue(vintage.isValidForSlot(card, isa), "the ISA card fits the Vintage ISA board");

@@ -80,7 +80,7 @@ public final class SystemAdvancements extends AdvancementTab {
         this.challengeOfAll("professional_larper", "distro_hopper", Items.PAINTING, "Professional Larper",
                 "Run screenfetch on every system it installs on", everyScreenfetch);
 
-        this.task("press_del", "root", ComputingModule.MOTHERBOARD_ATX_P.get(), "Press DEL to Enter Setup",
+        this.task("press_del", "root", HardwareItems.MOTHERBOARD_ATX_TRANSITION_AM3.get(), "Press DEL to Enter Setup",
                 "Open a computer's firmware setup", on(JscEvents.FIRMWARE_SETUP));
         this.goal("best_of_both_worlds", "press_del", HardwareItems.DISK_TRENCH_20M.get(),
                 "The Best of Both Worlds", "Boot one of two systems sharing a disk from the boot menu",

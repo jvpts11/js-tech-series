@@ -141,7 +141,8 @@ public final class SoundPassGameTests {
         final Heard heard = Heard.at(helper, WHERE);
         final PersonalComputerBlockEntity pc = withoutMemory(helper, ComputingModule.LEGACY_PERSONAL_COMPUTER.get(),
                 new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get()),
-                new ItemStack(HardwareItems.CPU_INTEGRA_DUO_E4300.get()), new ItemStack(HardwareItems.PSU_500B.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_4_560.get()),
+                new ItemStack(HardwareItems.PSU_500B.get()));
         pc.togglePower();
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
@@ -157,8 +158,8 @@ public final class SoundPassGameTests {
     public static void standardPc_switchedOnWithoutMemory_failsWithoutABeep(final GameTestHelper helper) {
         final Heard heard = Heard.at(helper, WHERE);
         final PersonalComputerBlockEntity pc = withoutMemory(helper, ComputingModule.PERSONAL_COMPUTER.get(),
-                new ItemStack(ComputingModule.MOTHERBOARD_ATX_P.get()),
-                new ItemStack(ComputingModule.CPU_ASCENT_965.get()), new ItemStack(ComputingModule.PSU_650G.get()));
+                new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()),
+                new ItemStack(HardwareItems.CPU_APEX_7_4790K.get()), new ItemStack(ComputingModule.PSU_650G.get()));
         pc.togglePower();
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
@@ -372,9 +373,9 @@ public final class SoundPassGameTests {
         hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_DUO_E4300.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_4_560.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(HardwareItems.RAM_DDR2_2048.get()));
+                new ItemStack(HardwareItems.RAM_DDR_1024.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(HardwareItems.PSU_500B.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));

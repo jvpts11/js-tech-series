@@ -123,9 +123,9 @@ public final class ClusterManagerGameTests {
         final ClusterManagementComputerBlockEntity manager = managerAt(helper);
         final ItemStackHandler hardware = manager.getHardware();
         hardware.setStackInSlot(ClusterManagementComputerBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_ATX_P.get()));
+                new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
         hardware.setStackInSlot(ClusterManagementComputerBlockEntity.CPU_SLOT,
-                new ItemStack(ComputingModule.CPU_ASCENT_965.get()));
+                new ItemStack(HardwareItems.CPU_APEX_7_4790K.get()));
         hardware.setStackInSlot(ClusterManagementComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         hardware.setStackInSlot(ClusterManagementComputerBlockEntity.PSU_SLOT,

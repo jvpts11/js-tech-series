@@ -104,6 +104,13 @@ public final class Microarchitectures {
     /** The GeForce 6's: its 6800 Ultra and the R400's X800 XT top their era a little above its fastest processor. */
     public static final Microarchitecture CURIE = new Microarchitecture("curie", "Curie", 23_500);
     public static final Microarchitecture R400 = new Microarchitecture("r400", "R400", 19_000);
+    /** The Radeon X1000's; its X1950 XTX sits a little under the Vertex 7800 GTX it chased. */
+    public static final Microarchitecture R500 = new Microarchitecture("r500", "R500", 22_000);
+    /**
+     * The first unified Radeons', from the HD 2000 to the HD 4000: their shaders worked in groups of five, as the
+     * TeraScale 2 ones did, so a card is counted a group at a time.
+     */
+    public static final Microarchitecture TERASCALE = new Microarchitecture("terascale", "TeraScale", 6500, 5);
     /** Counted at the clock its shaders run at, which is twice the rest of the chip's. */
     public static final Microarchitecture TESLA = new Microarchitecture("tesla", "Tesla", 2400);
     /** Counted at the clock its shaders run at, which is twice the rest of the chip's. */
@@ -119,7 +126,7 @@ public final class Microarchitectures {
             WAY_5, ALDER_LAKE, RAPTOR_LAKE, ARROW_LAKE, GRACEMONT, SKYMONT, SKYLAKE_SP, CASCADE_LAKE, ICE_LAKE_SP,
             COOPER_LAKE, SAPPHIRE_RAPIDS, EMERALD_RAPIDS,
             VGA, RENDITION, NV3, RAGE, THREEDFX, FAHRENHEIT, CELSIUS, R100, R200, KELVIN, R300, RANKINE, CURIE, R400,
-            TESLA, FERMI, TERASCALE_2, GCN, KEPLER);
+            R500, TESLA, TERASCALE, FERMI, TERASCALE_2, GCN, KEPLER);
 
     private Microarchitectures() {
     }

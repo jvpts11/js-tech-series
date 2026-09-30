@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Representative builds of each shipped hardware era (Vintage, Legacy, Standard), asserting that the
+ * Representative builds of each shipped hardware era (Vintage, Legacy, Transition, Standard), asserting that the
  * validation rules hold across the progression: a coherent era build powers on, a socket mismatch is
  * rejected, and a wrong RAM generation is rejected. An era the catalogue has filled out has a build at its
  * entry, its middle and its top, and its server board. The specs mirror the registered item catalog; the
@@ -146,11 +146,11 @@ class PerEraBuildTest {
     }
 
     private static CpuSpec legacyCpu() {
-        return new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_775, 2, 2400, 65, false);
+        return new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_775, 1, 3600, 115, false);
     }
 
     private static RamSpec legacyRam() {
-        return new RamSpec(HardwareEra.LEGACY, RamGeneration.DDR2, 512, 12);
+        return new RamSpec(HardwareEra.LEGACY, RamGeneration.DDR2, 128, 9);
     }
 
     @Test
@@ -238,8 +238,65 @@ class PerEraBuildTest {
         final MotherboardSpec board = new MotherboardSpec(FormFactor.MTX, HardwareEra.LEGACY, CpuSocketId.SOCKET_940,
                 4, Set.of(RamGeneration.DDR), 24, PcieGeneration.PCIE_1_0, 8, 6, 8);
         final CpuSpec optera = new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_940, 1, 2400, 89, false);
-        final RamSpec ddr2 = new RamSpec(HardwareEra.LEGACY, RamGeneration.DDR2, 512, 12);
+        final RamSpec ddr2 = new RamSpec(HardwareEra.LEGACY, RamGeneration.DDR2, 128, 9);
         assertFalse(build(board, optera, ddr2, psu(500)).isPowered());
+    }
+
+    /*
+     * Transition: the LGA 775 board at the entry, which takes DDR2 and DDR3, the AM3 board in the middle, the LGA 1366
+     * workstation board at the top with its PCIe 2.0 card, the two-way LGA 1366 server board, and the Mainframe's
+     * four-way Socket F board, still on DDR2.
+     */
+
+    private static MotherboardSpec transitionBoard(final CpuSocketId socket, final Set<RamGeneration> ram,
+                                                   final int sockets) {
+        return new MotherboardSpec(FormFactor.ATX, HardwareEra.TRANSITION, socket, sockets, ram, 8,
+                PcieGeneration.PCIE_2_0, 4, 4, 4);
+    }
+
+    private static RamSpec ddr3() {
+        return new RamSpec(HardwareEra.TRANSITION, RamGeneration.DDR3, 512, 10);
+    }
+
+    @Test
+    void transitionEntryBuild_takesDdr2AndDdr3() {
+        final MotherboardSpec board = transitionBoard(CpuSocketId.LGA_775,
+                Set.of(RamGeneration.DDR2, RamGeneration.DDR3), 1);
+        final CpuSpec celer = new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_775, 2, 1600, 65, false);
+        final RamSpec ddr2 = new RamSpec(HardwareEra.TRANSITION, RamGeneration.DDR2, 256, 10);
+        assertTrue(build(board, celer, ddr2, psu(450)).isPowered());
+        assertTrue(build(board, celer, ddr3(), psu(450)).isPowered());
+    }
+
+    @Test
+    void transitionMiddleBuild_onAm3_isPowered() {
+        final MotherboardSpec board = transitionBoard(CpuSocketId.AM3, Set.of(RamGeneration.DDR3), 1);
+        final CpuSpec x4 = new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.AM3, 4, 3400, 125, false);
+        assertTrue(build(board, x4, ddr3(), psu(450)).isPowered());
+    }
+
+    @Test
+    void transitionTopBuild_withItsPcie2Card_isPowered() {
+        final MotherboardSpec board = transitionBoard(CpuSocketId.LGA_1366, Set.of(RamGeneration.DDR3), 1);
+        final CpuSpec c7 = new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_1366, 6, 3330, 130, false);
+        final GpuSpec gtx480 = new GpuSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 480, 1536, 250);
+        assertTrue(new ComputerBuild(board, List.of(c7), List.of(gtx480), List.of(ddr3()), psu(650)).isPowered());
+    }
+
+    @Test
+    void transitionServerBuild_twoServosOnLga1366_isPowered() {
+        final MotherboardSpec board = transitionBoard(CpuSocketId.LGA_1366, Set.of(RamGeneration.DDR3), 2);
+        final CpuSpec servo = new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.LGA_1366, 6, 3330, 130, false);
+        assertTrue(new ComputerBuild(board, List.of(servo, servo), List.of(), List.of(ddr3()), psu(650))
+                .isPowered());
+    }
+
+    @Test
+    void transitionMainframeBuild_ddr3Memory_isNotPowered() {
+        // The four-way Socket F board of the Mainframe took DDR2; DDR3 came with the boards after it.
+        final MotherboardSpec board = transitionBoard(CpuSocketId.SOCKET_F, Set.of(RamGeneration.DDR2), 4);
+        final CpuSpec optera = new CpuSpec(HardwareEra.TRANSITION, CpuSocketId.SOCKET_F, 6, 2600, 75, false);
+        assertFalse(build(board, optera, ddr3(), psu(650)).isPowered());
     }
 
     // Standard

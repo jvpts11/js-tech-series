@@ -31,7 +31,7 @@ public enum MediaFormat {
     /** CD, the Legacy-era optical medium. 700 MB class. */
     CD(8_192, TextKey.of("jsc.media.format.cd", "CD")),
 
-    /** DVD, the Standard-era optical medium. 4.7 GB class. */
+    /** DVD, the Transition-era optical medium. 4.7 GB class. */
     DVD(65_536, TextKey.of("jsc.media.format.dvd", "DVD")),
 
     /** USB flash drive, a removable medium four times a DVD. */
@@ -67,7 +67,8 @@ public enum MediaFormat {
         return switch (this) {
             case FLOPPY -> HardwareEra.VINTAGE;
             case CD -> HardwareEra.LEGACY;
-            case DVD, USB -> HardwareEra.STANDARD;
+            case DVD -> HardwareEra.TRANSITION;
+            case USB -> HardwareEra.STANDARD;
             case BLU_RAY -> HardwareEra.ADVANCED;
         };
     }

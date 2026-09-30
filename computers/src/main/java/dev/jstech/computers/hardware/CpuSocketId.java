@@ -37,7 +37,11 @@ public record CpuSocketId(String id) {
     public static final CpuSocketId LGA_771 = own("lga_771");
     public static final CpuSocketId LGA_775 = own("lga_775");
     public static final CpuSocketId SOCKET_940 = own("socket_940");
+    public static final CpuSocketId AM2 = own("am2");
     public static final CpuSocketId AM3 = own("am3");
+    public static final CpuSocketId LGA_1156 = own("lga_1156");
+    public static final CpuSocketId LGA_1366 = own("lga_1366");
+    public static final CpuSocketId SOCKET_F = own("socket_f");
     public static final CpuSocketId AM4 = own("am4");
     public static final CpuSocketId LGA_1150 = own("lga_1150");
     public static final CpuSocketId LGA_1700 = own("lga_1700");

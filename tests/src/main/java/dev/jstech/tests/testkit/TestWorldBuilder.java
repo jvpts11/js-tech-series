@@ -220,9 +220,9 @@ public final class TestWorldBuilder {
         final PersonalComputerBlockEntity be = blockEntity(relative, PersonalComputerBlockEntity.class);
         final ItemStackHandler hw = be.getHardware();
         hw.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_ATX_P.get()));
+                new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
-                new ItemStack(ComputingModule.CPU_ASCENT_965.get()));
+                new ItemStack(HardwareItems.CPU_APEX_7_4790K.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
@@ -253,9 +253,9 @@ public final class TestWorldBuilder {
         final CraftingComputerBlockEntity be = blockEntity(relative, CraftingComputerBlockEntity.class);
         final ItemStackHandler hw = be.getHardware();
         hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_ATX_P.get()));
+                new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
-                new ItemStack(ComputingModule.CPU_ASCENT_965.get()));
+                new ItemStack(HardwareItems.CPU_APEX_7_4790K.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START,
@@ -290,9 +290,9 @@ public final class TestWorldBuilder {
         hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_DUO_E4300.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_4_560.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(HardwareItems.RAM_DDR2_2048.get()));
+                new ItemStack(HardwareItems.RAM_DDR_1024.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START,
                 new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,

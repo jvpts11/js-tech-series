@@ -156,9 +156,9 @@ public final class EraMachineGameTests {
         hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_DUO_E4300.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_4_560.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(HardwareItems.RAM_DDR2_2048.get()));
+                new ItemStack(HardwareItems.RAM_DDR_1024.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
                 new ItemStack(HardwareItems.PSU_500B.get()));
         be.togglePower();

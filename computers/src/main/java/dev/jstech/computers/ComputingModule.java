@@ -506,10 +506,6 @@ public final class ComputingModule {
             properties -> new MotherboardItem(properties, new MotherboardSpec(FormFactor.MTX, HardwareEra.STANDARD,
                     CpuSocketId.LGA_2011, 4, Set.of(RamGeneration.DDR3), 8, PcieGeneration.PCIE_3_0, 6, 4, 8)))
             .named("MTX-P Motherboard").register();
-    public static final ItemEntry<MotherboardItem> MOTHERBOARD_ATX_P = part("motherboard_atx_p",
-            properties -> new MotherboardItem(properties, new MotherboardSpec(FormFactor.ATX, HardwareEra.STANDARD,
-                    CpuSocketId.AM3, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_3_0, 4, 2, 4)))
-            .named("ATX-P Motherboard").register();
     public static final ItemEntry<MotherboardItem> MOTHERBOARD_EEB_P = part("motherboard_eeb_p",
             properties -> new MotherboardItem(properties, new MotherboardSpec(FormFactor.EEB, HardwareEra.STANDARD,
                     CpuSocketId.LGA_2011, 2, Set.of(RamGeneration.DDR3), 8, PcieGeneration.PCIE_3_0, 6, 6, 6)))
@@ -526,10 +522,6 @@ public final class ComputingModule {
             properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 18, 2300, 145, false)
                     .on(Microarchitectures.HASWELL, "").withSmt()))
             .named("Integra Servo 2699").register();
-    public static final ItemEntry<CpuItem> CPU_ASCENT_965 = part("cpu_ascent_965", properties -> new CpuItem(
-            properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.AM3, 4, 3400, 125, false)
-                    .on(Microarchitectures.K10, "Deneb")))
-            .named("Velocion Ascent X4 965").register();
     public static final ItemEntry<RamItem> RAM_DDR3_8192 = part("ram_ddr3_8192", properties -> new RamItem(
             properties, new RamSpec(HardwareEra.STANDARD, RamGeneration.DDR3, 2048, 15)))
             .named("Stratix DDR3-8192").register();
@@ -617,11 +609,17 @@ public final class ComputingModule {
             for (final DiskSize size : DiskSize.values()) {
                 final String id = "disk_" + tier.name().toLowerCase(Locale.ROOT) + "_" + size.id();
                 disks.add(new DiskEntry(tier, size, CONTENT.item(id, properties -> new DiskItem(properties,
-                                new DiskSpec(tier, HardwareEra.STANDARD, size.capacityItems(), tier.tdpWatts())))
+                                new DiskSpec(tier, diskEra(tier, size), size.capacityItems(), tier.tdpWatts())))
                         .named(tier.productName() + " " + size.displayName()).tab(DISKS).register()));
             }
         }
         return List.copyOf(disks);
+    }
+
+    /** The hard disks up to 2 TB are the Transition's, the years they sold; the rest of the grid is Standard. */
+    private static HardwareEra diskEra(final StorageTier tier, final DiskSize size) {
+        return tier == StorageTier.HDD && size.capacityItems() <= DiskSize.TB_2.capacityItems()
+                ? HardwareEra.TRANSITION : HardwareEra.STANDARD;
     }
 
     private static BlockBehaviour.Properties cableProperties(final BlockBehaviour.Properties properties) {

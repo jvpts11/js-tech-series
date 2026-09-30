@@ -59,7 +59,7 @@ public final class NmsFileGameTests {
         hw.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(ComputingModule.MOTHERBOARD_MTX_P.get()));
         hw.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
-                new ItemStack(ComputingModule.CPU_ASCENT_965.get()));
+                new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
         hw.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
                 new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         hw.setStackInSlot(MainframeBlockEntity.PSU_SLOT,

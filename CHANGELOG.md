@@ -346,6 +346,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the Vertex 6800 Ultra on AGP, and on the first PCIe boards the Vertex 6200 and 6600 GT and the Radiance X300 and
   X800 XT, the top of the era. And the SDRAM-256, DDR-256, DDR-1024 and DDR2-512, the MF PowerBasic 350, the
   Vaultis Link IDE-HDD 40G and the Artisan Tone Blaster Audigy, the sound card of the PCIe boards.
+- The Transition gets its hardware catalogue: on LGA 775 the Integra Pentix D 805, the Celer E1200 and the Centro 2
+  Duo, Quad Q6600 and Extreme QX9650; on AM2 the Velocion Sprint 64 X2 and the Ascent X4 9850; on AM3 the Sprint II
+  and the Ascent X4 and X6, up to the X6 1100T; on LGA 1156 the Pentix G6950 and the first Centro c3, c5 and c7; on
+  LGA 1366 the Centro c7 920, 960 and 980X and the Integra Servo 5520, 5570 and 5680; the Servo 5450 on LGA 771;
+  and the Velocion Optera 2218, 8356, 8384 and 8435 on Socket F. A board for each: the ATX boards for LGA 775, AM2,
+  AM3 and LGA 1156, the LGA 1366 workstation board, the two-way server boards and the Mainframe's MF MTX-T. Fourteen
+  new graphics cards run from the Envya Vertex 7300 GS and the Atrion Radiance X1300 to the Vertex GTX 480 and the
+  Radiance HD 5870. And DDR2 and DDR3 in three sizes each, a registered DDR2 for the servers, and the MF PowerBasic
+  450B.
 
 ### Changed
 - The Vintage server boards hold the Integra Pentix Pro, as the boards of the time did: the MF MTX-V of the
@@ -363,6 +372,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   board SDRAM and DDR, and the Socket 940 server and Mainframe boards DDR. The Radiance 9200 SE is an AGP 8x card
   with four pipelines and 128 MB, and the Legacy graphics cards carry the makers of their time, Envya and Atrion.
   Every Legacy part has a new icon drawn from the real one.
+- Parts move to the era of their years. From the Legacy to the Transition: the Integra Duo processors, now the
+  Integra Centro 2 Duo (`jsc:cpu_integra_centro_2_duo_e4300` and on), the Servo 5100 and 5160, the Servo 5365, now
+  the Servo 5335 it really was, the DDR2-2048, the Vertex 8800 GT and GTX 280 on PCIe 2.0 (the GTX 280 draws 236 W),
+  the Tone Blaster Hi-Fi and the SATA-SSD 64G, which holds 256 items at the Transition's weight. From the Standard to
+  the Transition: the Velocion Ascent X4 955, X4 965 and X6 1090T (`jsc:cpu_velocion_ascent_x4_965` and on), the
+  AM3 board, now the MF ATX Transition Motherboard (AM3) on PCIe 2.0, the Radiance HD 6850, a Velocion card of 1 GB,
+  the hard disks up to 2T, and the DVD. The disks read as their catalogue writes them, 500G to 8T, and their ids
+  follow (`jsc:disk_hdd_500g` and on).
 - A medium's tooltip names its format in the player's language ("Floppy", "Blu-ray") instead of the code's name
   for it.
 - A monitor going dark is heard only from a picture tube; the flat panels of the Transition and every later era

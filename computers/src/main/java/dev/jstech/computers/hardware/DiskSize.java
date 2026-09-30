@@ -12,11 +12,11 @@ package dev.jstech.computers.hardware;
  */
 public enum DiskSize {
 
-    GB_500("500gb", "500 GB", 2_000L),
-    TB_1("1tb", "1 TB", 4_096L),
-    TB_2("2tb", "2 TB", 8_192L),
-    TB_4("4tb", "4 TB", 16_384L),
-    TB_8("8tb", "8 TB", 32_768L);
+    GB_500("500g", "500G", 2_000L),
+    TB_1("1t", "1T", 4_096L),
+    TB_2("2t", "2T", 8_192L),
+    TB_4("4t", "4T", 16_384L),
+    TB_8("8t", "8T", 32_768L);
 
     private final String id;
     private final String displayName;

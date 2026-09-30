@@ -93,7 +93,7 @@ public final class HardwareTooltipGameTests {
      */
     @GameTest(template = ARENA)
     public static void partTooltips_nameTheirArchitectureAndCodename(final GameTestHelper helper) {
-        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_DUO_E6600.get()),
+        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_2_DUO_E6600.get()),
                 "Architecture: Centro Conroe");
         assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_APEX_5_4590.get()), "Architecture: Haswell");
         assertTooltipHas(helper, new ItemStack(HardwareItems.GPU_VERTEX_GTX_780_TI.get()),
@@ -123,7 +123,7 @@ public final class HardwareTooltipGameTests {
                 "the 486 design makes a 66 MHz chip one item a tick");
         helper.assertTrue(HardwareItems.CPU_VELOCION_K6_II.get().spec().orchestrationCapacity() == 11,
                 "a K6-II orchestrates 11");
-        helper.assertTrue(HardwareItems.CPU_INTEGRA_DUO_E6600.get().spec().orchestrationCapacity() == 307,
+        helper.assertTrue(HardwareItems.CPU_INTEGRA_CENTRO_2_DUO_E6600.get().spec().orchestrationCapacity() == 307,
                 "an E6600 orchestrates 307");
         helper.assertTrue(HardwareItems.CPU_APEX_7_4790K.get().spec().orchestrationCapacity() == 2074,
                 "a 4790K with two threads a core orchestrates 2,074");
@@ -148,7 +148,8 @@ public final class HardwareTooltipGameTests {
         assertTooltipHas(helper, pcie, "Wavetable, 32 voices");
         assertTooltipHas(helper, pcie, "Recordings: 16-bit stereo, 44.1 kHz");
         assertTooltipHas(helper, pcie, "Fits a PCIe slot");
-        assertTooltipHas(helper, new ItemStack(ComputingModule.MOTHERBOARD_ATX_P.get()), "On-board audio");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()),
+                "On-board audio");
         assertTooltipLacks(helper, new ItemStack(HardwareItems.MOTHERBOARD_BABYAT_VINTAGE.get()), "On-board audio");
         assertTooltipHas(helper, new ItemStack(ComputingModule.VINTAGE_PERSONAL_COMPUTER.item()),
                 "PC speaker: beeps only");

@@ -355,9 +355,9 @@ public final class AdvancementGameTests {
         hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_DUO_E4300.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_4_560.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(HardwareItems.RAM_DDR2_2048.get()));
+                new ItemStack(HardwareItems.RAM_DDR_1024.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
                 new ItemStack(HardwareItems.PSU_500B.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,

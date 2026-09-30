@@ -8,6 +8,7 @@
 package dev.jstech.tests.clienttest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.HardwareItems;
 import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -300,7 +301,8 @@ public final class FullJourneyClientTests {
                 });
 
         // 5. Assemble the Crafting Computer (card + GPU) and power it on.
-        ctx.thenGive(0, new ItemStack(ComputingModule.MOTHERBOARD_ATX_P.get()), new ItemStack(ComputingModule.CPU_ASCENT_965.get()),
+        ctx.thenGive(0, new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()),
+                        new ItemStack(HardwareItems.CPU_APEX_7_4790K.get()),
                         new ItemStack(ComputingModule.RAM_DDR3_8192.get()), new ItemStack(ComputingModule.PSU_650G.get()),
                         new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)), new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()),
                         new ItemStack(ComputingModule.GPU_HD_7970.get()))

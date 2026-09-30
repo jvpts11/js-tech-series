@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
@@ -76,9 +77,9 @@ public final class SigmaApiGameTests {
         }
         final ItemStackHandler hw = computer.getHardware();
         hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_ATX_P.get()));
+                new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
-                new ItemStack(ComputingModule.CPU_ASCENT_965.get()));
+                new ItemStack(HardwareItems.CPU_APEX_7_4790K.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
@@ -293,11 +294,11 @@ public final class SigmaApiGameTests {
                     computer.programs().tick(100000);
                     final List<String> said = computer.programs().byId(started.id()).process().console();
                     /*
-                     * The socket holds a four-core Ascent X4 965 at 3400 on a Standard board, with 8 GB
+                     * The socket holds a four-core Apex 7 4790K at 4000 on a Standard board, with 8 GB
                      * in the slot and Frames XP on the disk: what the machine reports has to be that.
                      */
                     helper.assertTrue(said.size() == 3, "it says its three lines; got " + said);
-                    helper.assertTrue(said.get(0).equals("4 at 3400 standard"),
+                    helper.assertTrue(said.get(0).equals("4 at 4000 standard"),
                             "the processor is the one in the socket; got " + said.get(0));
                     helper.assertTrue(said.get(1).equals("os Frames XP"),
                             "the system is the one on the disk; got " + said.get(1));
