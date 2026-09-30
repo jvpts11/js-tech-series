@@ -137,7 +137,7 @@ final class DeskTrash {
 
     /** Opens the trash, or brings its window forward when it is already up: one trash window a desktop. */
     void open() {
-        this.desktop.openOnce(WindowKeys.TRASH, this::window);
+        this.desktop.opener().openOnce(WindowKeys.TRASH, this::window);
     }
 
     /** The menu of the trash's own icon: open it, or empty it without opening it. */

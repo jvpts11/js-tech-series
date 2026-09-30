@@ -130,7 +130,7 @@ final class PanelMenu {
         switch (row) {
             case CASCADE -> desktop.wm().cascade();
             case SHOW_DESKTOP -> desktop.wm().showDesktop();
-            case TASK_MANAGER -> desktop.openTaskManager();
+            case TASK_MANAGER -> desktop.opener().openTaskManager();
             case SEPARATOR -> {
             }
         }

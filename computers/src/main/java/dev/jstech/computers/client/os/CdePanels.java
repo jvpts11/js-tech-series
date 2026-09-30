@@ -164,7 +164,7 @@ final class CdePanels {
             case FILES -> open(FILES);
             case EDITOR -> open(EDITOR);
             case STYLE -> open(STYLE);
-            case APPLICATIONS -> desktop.openApplicationManager(null);
+            case APPLICATIONS -> desktop.opener().openApplicationManager(null);
             case TRASH -> desktop.openTrash();
             case HELP -> open("help_viewer");
             default -> { }

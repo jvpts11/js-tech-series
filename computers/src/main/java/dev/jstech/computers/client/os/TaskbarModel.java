@@ -240,7 +240,7 @@ final class TaskbarModel {
             return;
         }
         if (!entry.open()) {
-            desktop.runLauncherKeyed(entry.key());
+            desktop.opener().runKeyed(entry.key());
             return;
         }
         if (entry.windows() == 1) {
@@ -290,7 +290,7 @@ final class TaskbarModel {
             items.add(DeskMenu.item(several ? DesktopTexts.CLOSE_ALL_WINDOWS : DesktopTexts.CLOSE, true,
                     () -> desktop.wm().closeGroup(key)));
         } else {
-            items.add(DeskMenu.item(DesktopTexts.OPEN, true, () -> desktop.runLauncherKeyed(key)));
+            items.add(DeskMenu.item(DesktopTexts.OPEN, true, () -> desktop.opener().runKeyed(key)));
             if (canPin) {
                 items.add(ContextMenu.Item.separator());
                 items.add(DeskMenu.item(DesktopTexts.UNPIN, true, () -> togglePin(key)));

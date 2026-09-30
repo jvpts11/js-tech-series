@@ -294,6 +294,17 @@ final class DesktopWindows {
         }
     }
 
+    /** Ends the newest window of the program {@code key}, dialogs aside, when it has one. */
+    void closeNewest(final String key) {
+        for (int i = windows.size() - 1; i >= 0; i--) {
+            final DesktopWindow w = windows.get(i);
+            if (!w.dialog() && w.appKey().equals(key)) {
+                close(w);
+                return;
+            }
+        }
+    }
+
     /** Ends the window running {@code app}, when there is one. */
     void closeOf(final IDesktopApp app) {
         for (final DesktopWindow w : new ArrayList<>(windows)) {

@@ -231,14 +231,14 @@ final class StartMenus {
             desktop.deskMenu().openFor(desktop.deskIcons().indexOf(launcher), clickX, clickY);
             return;
         }
-        desktop.runLauncher(launcher);
+        desktop.opener().run(launcher);
     }
 
     /** "All Programs": the page that lists everything installed on this machine, services included. */
     void openAllPrograms() {
         for (final Launcher l : desktop.launcherList()) {
             if (Programs.SETTINGS.equals(l.programId())) {
-                desktop.runLauncher(l);
+                desktop.opener().run(l);
                 return;
             }
         }
@@ -318,7 +318,7 @@ final class StartMenus {
         } else if ((key == 257 || key == 335) && !search.isEmpty()) {
             final List<Launcher> hits = filtered();
             if (!hits.isEmpty()) {
-                desktop.runLauncher(hits.get(0));
+                desktop.opener().run(hits.get(0));
                 close();
             }
         }

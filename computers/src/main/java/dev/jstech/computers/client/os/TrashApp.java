@@ -316,7 +316,7 @@ public final class TrashApp implements IDesktopApp {
     void openPlace(final boolean desktopFolder) {
         final DesktopScreen desktop = DesktopScreen.current();
         if (desktop != null) {
-            desktop.openFolder(desktopFolder ? desktop.desktopDirectory() : desktop.homeDir());
+            desktop.opener().openFolder(desktopFolder ? desktop.desktopDirectory() : desktop.homeDir());
             DesktopScreen.closeWindowFor(this);
         }
     }

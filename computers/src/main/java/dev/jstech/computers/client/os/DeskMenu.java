@@ -81,11 +81,11 @@ final class DeskMenu {
             entries.add(item(DesktopTexts.REFRESH, true, desktop::requestDesktop));
             entries.add(ContextMenu.Item.separator());
             entries.add(item(DesktopTexts.DISPLAY_SETTINGS, true,
-                    () -> desktop.openSettingsPage(SettingsApp.PAGE_DISPLAY)));
+                    () -> desktop.opener().openSettingsPage(SettingsApp.PAGE_DISPLAY)));
             entries.add(item(DesktopTexts.PERSONALIZE, true,
-                    () -> desktop.openSettingsPage(SettingsApp.PAGE_PERSONALIZE)));
+                    () -> desktop.opener().openSettingsPage(SettingsApp.PAGE_PERSONALIZE)));
             entries.add(ContextMenu.Item.separator());
-            entries.add(item(DesktopTexts.PROPERTIES, true, () -> desktop.runLauncherKeyed(THIS_PC_KEY)));
+            entries.add(item(DesktopTexts.PROPERTIES, true, () -> desktop.opener().runKeyed(THIS_PC_KEY)));
         }
         menu.open(entries, x, y, 0, 0, desktop.view().width(), desktop.view().height());
     }
@@ -131,7 +131,7 @@ final class DeskMenu {
      * offering something that then fails.
      */
     private void addProgramItems(final List<ContextMenu.Item> entries, final Launcher launcher) {
-        entries.add(item(DesktopTexts.OPEN, true, () -> desktop.runLauncher(launcher)));
+        entries.add(item(DesktopTexts.OPEN, true, () -> desktop.opener().run(launcher)));
         final TaskbarModel taskbar = desktop.taskbar();
         if (taskbar.pinsOnPanel() && launcher.factory() != null) {
             final boolean pinned = taskbar.isPinned(launcher.programId().getPath());
@@ -199,13 +199,13 @@ final class DeskMenu {
         for (final String programId : FileOpeners.available(path, installed)) {
             final ProgramSpec spec = Programs.get(ResourceLocation.fromNamespaceAndPath("jsc", programId));
             final String label = spec == null ? programId : spec.displayName();
-            entries.add(new ContextMenu.Item(label, true, () -> desktop.openIn(programId, path)));
+            entries.add(new ContextMenu.Item(label, true, () -> desktop.opener().openIn(programId, path)));
         }
         if (!FileOpeners.choices(path, installed).isEmpty()) {
             if (!entries.isEmpty()) {
                 entries.add(ContextMenu.Item.separator());
             }
-            entries.add(item(DesktopTexts.CHOOSE_ANOTHER, true, () -> desktop.chooseOpener(path)));
+            entries.add(item(DesktopTexts.CHOOSE_ANOTHER, true, () -> desktop.opener().chooseOpener(path)));
         }
         if (entries.isEmpty()) {
             entries.add(item(DesktopTexts.NO_PROGRAM_OPENS_THIS, false, () -> { }));

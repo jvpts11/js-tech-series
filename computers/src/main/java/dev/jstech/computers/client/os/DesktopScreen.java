@@ -34,7 +34,6 @@ import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
-import dev.jstech.computers.os.CdeAppGroup;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
@@ -44,11 +43,8 @@ import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.WorkspaceSet;
-import dev.jstech.computers.os.fs.FileOpeners;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.fs.SystemLayout;
-import dev.jstech.computers.program.Programs;
-import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.ContextMenu;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
@@ -56,10 +52,7 @@ import dev.jstech.core.gui.layout.DesktopZ;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -105,6 +98,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     private final List<DesktopWindow> windows = wm.all();
     /** The windows the machine has open, as it remembers them, and the programs' insides kept in this client. */
     private final WindowLayouts layouts;
+    /** How the desktop opens things: programs, files, and the windows the machine's own programs have. */
+    private final ProgramOpener opener;
     /** Where the desktop sits on the game's screen and how big it draws. */
     private final DesktopViewport view = new DesktopViewport(this);
     /** What this desktop can start, the programs installed on the machine, and the wallpaper's icons. */
@@ -145,35 +140,19 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** The machine's memory as the desktop weighs it, and the crash of a cooperative kernel run out of it. */
     private final DesktopMemory memory;
 
-    /** Apps a running window asked to launch (e.g. Files opening the Editor); drained by the active desktop. */
-    private static final List<String> PENDING_OPEN = new ArrayList<>();
-
-    /** Lets a running app request another program be opened on the desktop. */
+    /** Lets a running app request another program be opened on the desktop, by its key or its name. */
     public static void requestOpen(final String key) {
-        PENDING_OPEN.add(key);
+        DesktopRequests.open(new OpenRequest.Program(key));
     }
-
-    /**
-     * The windows the machine says its Σ# programs have open, waiting for the desktop to draw them.
-     *
-     * <p>A program's window is the machine's, not this screen's: it is opened when the machine first
-     * mentions it, redrawn whenever the machine sends it again, and taken away when the machine says it is
-     * gone or the player shuts it.
-     */
-    private static final List<UiWindowPayload> PENDING_UI =
-            new ArrayList<>();
 
     /** Takes a window a Σ# program has open on the machine being looked at. */
     public static void acceptWindow(final UiWindowPayload payload) {
-        PENDING_UI.add(payload);
+        DesktopRequests.window(payload);
     }
-
-    /** Windows a running app asked to end (the Task Manager); drained by the active desktop. */
-    private static final List<String> PENDING_CLOSE = new ArrayList<>();
 
     /** Lets a running app end another program's window, the way a task manager does. */
     public static void requestClose(final String key) {
-        PENDING_CLOSE.add(key);
+        DesktopRequests.close(key);
     }
 
     /**
@@ -211,7 +190,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      */
     public static void openProgramById(final String path) {
         if (active != null) {
-            active.startProgramById(path);
+            active.opener.startProgram(path);
         }
     }
 
@@ -222,7 +201,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      */
     public static void openOrFocus(final String key) {
         if (active != null) {
-            active.openOrFocusWindow(key);
+            active.opener.openOrFocus(key);
         }
     }
 
@@ -271,31 +250,19 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     }
 
     /**
-     * A pending open of the explorer at a given folder, kept apart from a plain program key by a separator no
-     * program id can contain.
-     */
-    private static final String OPEN_FILES_AT = "Files\0";
-
-    /** A pending run of a compiled program, kept apart the same way. */
-    private static final String RUN_AT_TERMINAL = "Terminal\0";
-
-    /**
      * Opens this desktop's terminal and has it run that program, which is what double-clicking one does.
      *
      * <p>A program of the console kind needs a terminal to print into, so it is given one; the window is
      * whatever this desktop calls its terminal, because that is the one the machine has.
      */
     public static void requestRunAtTerminal(final String path) {
-        PENDING_OPEN.add(RUN_AT_TERMINAL + path);
+        DesktopRequests.open(new OpenRequest.RunAtTerminal(path));
     }
 
     /** Lets a running app open the explorer already navigated to {@code dir} (a drive, a folder). */
     public static void requestOpenFiles(final String dir) {
-        PENDING_OPEN.add(OPEN_FILES_AT + dir);
+        DesktopRequests.open(new OpenRequest.FilesAt(dir));
     }
-
-    /** A queued request to open a file: the program to use (empty for the default), then the path. */
-    private static final String OPEN_FILE = "File\0";
 
     /**
      * Lets a running app open a file in whatever program opens that kind by default.
@@ -304,20 +271,17 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * than deciding for itself and disagreeing with a double-click on the desktop.
      */
     public static void requestOpenFile(final String path) {
-        PENDING_OPEN.add(OPEN_FILE + "\0" + path);
+        DesktopRequests.open(new OpenRequest.OpenFile("", path));
     }
 
     /** Lets a running app open a file in a program the player picked. */
     public static void requestOpenFileWith(final String programId, final String path) {
-        PENDING_OPEN.add(OPEN_FILE + programId + "\0" + path);
+        DesktopRequests.open(new OpenRequest.OpenFile(programId, path));
     }
-
-    /** A queued request to ask the player which program opens a file, kept apart like the others. */
-    private static final String CHOOSE_OPENER = "Choose\0";
 
     /** Lets a running app ask the player which program opens a file, as Choose another program does. */
     public static void requestChooseOpener(final String path) {
-        PENDING_OPEN.add(CHOOSE_OPENER + path);
+        DesktopRequests.open(new OpenRequest.ChooseOpener(path));
     }
 
     /** The Open with chooser the open desktop is showing, or null when none is up. */
@@ -333,12 +297,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** What a program is called, for a menu that offers it by id. */
     public static String openerName(final String programId) {
-        if (programId.equals(FileOpeners.EDITOR)) {
-            return words(DesktopTexts.EDITOR);
-        }
-        final ProgramSpec spec = Programs.get(
-                ResourceLocation.fromNamespaceAndPath("jsc", programId));
-        return spec == null ? programId : GameText.resolve(spec.name());
+        return ProgramOpener.openerName(programId);
     }
 
     /**
@@ -348,9 +307,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      */
     public static void forgetClientState() {
         WindowLayouts.forgetAll();
-        PENDING_OPEN.clear();
-        PENDING_CLOSE.clear();
-        PENDING_UI.clear();
+        DesktopRequests.forgetAll();
     }
 
     /** The launcher labels the active desktop can open (built-in apps plus installed programs). */
@@ -410,12 +367,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
     }
 
-    /* The notice for a file that no program on this machine opens. */
-    private void cannotOpen(final String path) {
-        notices.showBalloon(words(DesktopTexts.CANNOT_OPEN),
-                GameText.resolve(DesktopTexts.NO_PROGRAM_OPENS.with(FsPaths.fileName(path))));
-    }
-
     private static String words(final TextKey key) {
         return GameText.resolve(key);
     }
@@ -430,11 +381,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** Local cursor cached each frame, so menus drawn later in the frame can highlight the hovered entry. */
     private int hoverX;
     private int hoverY;
-    /** The windows the desktop opens by itself, whatever this desktop calls the programs they belong to. */
-    private static final String FILES_KEY = WindowKeys.of(Programs.FILES);
-    private static final String SETTINGS_KEY = WindowKeys.of(Programs.SETTINGS);
-    private static final String EDITOR_KEY =
-            WindowKeys.of(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, FileOpeners.EDITOR));
+    /** The key of the Workstation Info window, which a test reads. */
     private static final String WORKSTATION_INFO_KEY =
             WindowKeys.of(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "workstation_info"));
     private int selectedIcon = -1;
@@ -453,12 +400,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     @Nullable
     private static DesktopScreen active;
 
-
-    /**
-     * The program chosen with Always for each extension on this machine, as the desktop listing brings it. A choice
-     * made here goes in at once, before the server has sent the listing again.
-     */
-    private final Map<String, String> defaultApps = new HashMap<>();
 
     /** Files and folders living in the desktop folder ({@link SystemLayout#DESKTOP_DIR}), drawn as icons. */
     private final List<DiskFilesPayload.WireFile> desktopItems = new ArrayList<>();
@@ -587,18 +528,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** Opens the trash, or brings its window forward. */
     void openTrash() {
         trash.open();
-    }
-
-    /** Opens that window, or brings it forward when one of that key is already up. */
-    void openOnce(final String key, final Supplier<IDesktopApp> make) {
-        final DesktopWindow open = windowFor(key);
-        if (open != null) {
-            wm.focus(open);
-            return;
-        }
-        final IDesktopApp app = make.get();
-        app.applySkin(prefs.skin());
-        wm.open(key, app);
     }
 
     /**
@@ -741,9 +670,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return media;
     }
 
-    /** Opens a file manager at that folder, as a window of the file manager this desktop has. */
-    void openFolder(final String dir) {
-        wm.open(FILES_KEY, new FilesApp(host, desktopId.getPath(), dir, monitorPos));
+    /** How the desktop opens things: programs, files, and the windows the machine's own programs have. */
+    ProgramOpener opener() {
+        return opener;
     }
 
     /** Whether the host computer is on a data network right now, as its block entity tells the client. */
@@ -794,11 +723,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** Sets the system's sound all at once, the way a dialog with an OK button does. */
     void applySound(final int volume, final boolean muted, final SoundOutput output) {
         volumePopup.apply(volume, muted, output);
-    }
-
-    /** Opens the Settings window on its Sound page, where every link to the sound settings leads. */
-    void openSoundSettings() {
-        openSettingsPage(SettingsApp.PAGE_SOUND);
     }
 
     /** Routes the machine's settings to the open desktop, whose panel shows its sound. */
@@ -929,22 +853,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         outline(g, x, y, w, h, color);
     }
 
-    /**
-     * Opens CDE's Application Manager on a group, or on the groups themselves for null, and brings the window
-     * forward instead when it is already up: one window for each, however often it is asked for.
-     */
-    void openApplicationManager(@Nullable final CdeAppGroup group) {
-        final String key = ApplicationManagerApp.keyOf(group);
-        final DesktopWindow open = windowFor(key);
-        if (open != null) {
-            wm.focus(open);
-            return;
-        }
-        final ApplicationManagerApp app = new ApplicationManagerApp(group);
-        app.applySkin(prefs.skin());
-        wm.open(key, app);
-    }
-
     /** The desktop that is up, for a window that outlived the screen it was opened on; null while none is. */
     @Nullable
     static DesktopScreen current() {
@@ -990,6 +898,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         this.desktopId = menu.desktopId();
         this.memory = new DesktopMemory(this, osId, windows, menu.ramTotalMb(), menu.ramReservedMb());
         this.layouts = new WindowLayouts(this, host);
+        this.opener = new ProgramOpener(this, host, monitorPos, desktopId);
         this.chrome = OsRegistry.getDesktop(desktopId);
         this.catalogue = new DesktopLaunchers(this, host, monitorPos, desktopId, osId, chrome);
         // A desktop nobody registered is drawn as the first Frames edition, as its look is.
@@ -1457,18 +1366,12 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return out;
     }
 
-    /** What this desktop calls its terminal, or an empty string when it has none installed. */
-    private String terminalLabel() {
-        final Launcher terminal = catalogue.byProgram(Programs.COMMAND_PROMPT);
-        return terminal == null ? "" : terminal.label();
-    }
-
     /**
      * What this desktop calls its terminal (Command Prompt, Megashell, Konsole...), for a program
      * offering to open one; empty when no desktop is up or it has none.
      */
     public static String terminalName() {
-        return active == null ? "" : active.terminalLabel();
+        return active == null ? "" : active.opener.terminalLabel();
     }
 
     public List<String> launcherLabels() {
@@ -1513,7 +1416,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * reads as on this desktop. A player who types a program's name at a shell asks this way; so do the tests,
      * which name what they click by what it says.
      */
-    private String keyFor(final String asked) {
+    String keyFor(final String asked) {
         if (catalogue.byKey(asked) != null) {
             return asked;
         }
@@ -1737,8 +1640,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         active.prefs.apply(payload.prefs().accent(), payload.prefs().brightness(), payload.prefs().clock12h(),
                 payload.wallpaper(), payload.prefs().taskbarCentered(), payload.prefs().darkMode());
         active.taskbar.takePinned(payload.pinned());
-        active.defaultApps.clear();
-        active.defaultApps.putAll(payload.defaultApps());
+        active.opener.takeDefaults(payload.defaultApps());
         active.iconGrid.pinnedCells().clear();
         for (final DesktopFilesPayload.WireIconCell cell : payload.iconCells()) {
             active.iconGrid.pinnedCells().put(cell.key(), cell.cell());
@@ -1770,7 +1672,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * monitor from them (its plain screen-render hook skips container screens on purpose).
          */
         NeoForge.EVENT_BUS.post(new ContainerScreenEvent.Render.Background(this, g, mouseX, mouseY));
-        takePendingRequests();
+        DesktopRequests.drain(this);
         layouts.pushIfChanged();
         /*
          * Keep the inventory slots glued to the focused Network Interactor window this frame (per-frame, so a
@@ -2121,105 +2023,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     }
 
     /**
-     * Carries out what other screens and programs have asked of this desktop since the last frame: windows a
-     * machine's own programs have opened or closed, files to open, things to type at the prompt, and windows
-     * the Task Manager has ended.
-     *
-     * <p>They arrive as requests rather than as calls because whoever asks is usually not on the render
-     * thread and often is not a screen at all. Draining them here, once at the top of a frame, is what keeps
-     * a window from being opened halfway through the frame that draws it.
-     */
-    private void takePendingRequests() {
-        // Draw whatever the machine says its programs have open, opening and closing as it says.
-        if (!PENDING_UI.isEmpty()) {
-            for (final var payload : PENDING_UI) {
-                acceptProgramWindow(payload);
-            }
-            PENDING_UI.clear();
-        }
-        if (!PENDING_OPEN.isEmpty()) {
-            for (final String key : PENDING_OPEN) {
-                runOpenRequest(key);
-            }
-            PENDING_OPEN.clear();
-        }
-        /*
-         * A request to end a window (the Task Manager) closes the newest of that program, so ending a
-         * repeated program closes the one on top rather than the oldest copy of it.
-         */
-        if (!PENDING_CLOSE.isEmpty()) {
-            for (final String asked : PENDING_CLOSE) {
-                final String key = keyFor(asked);
-                for (int i = windows.size() - 1; i >= 0; i--) {
-                    final DesktopWindow w = windows.get(i);
-                    if (!w.dialog() && w.appKey().equals(key)) {
-                        wm.close(w);
-                        break;
-                    }
-                }
-            }
-            PENDING_CLOSE.clear();
-        }
-    }
-
-    /**
-     * One request to open something. Most are a program's name, but a few carry what to open it on: a folder
-     * for the explorer, a file with or without the program to open it in, a line to run or to type at the
-     * prompt, or a file whose Properties to show.
-     */
-    private void runOpenRequest(final String key) {
-        if (key.startsWith(OPEN_FILES_AT)) {
-            // This PC asked for a drive or a folder to be opened in the explorer.
-            if (memory.allowOpen(FILES_KEY)) {
-                wm.open(FILES_KEY, new FilesApp(host, desktopId.getPath(),
-                        key.substring(OPEN_FILES_AT.length()), monitorPos));
-            }
-            return;
-        }
-        if (key.startsWith(RUN_AT_TERMINAL)) {
-            runAtTerminal(key.substring(RUN_AT_TERMINAL.length()));
-            return;
-        }
-        if (key.startsWith(OPEN_PROPS)) {
-            // A desktop icon's Properties: the explorer on the desktop's folder shows the window.
-            final String path = key.substring(OPEN_PROPS.length());
-            if (memory.allowOpen(FILES_KEY)) {
-                final FilesApp files = new FilesApp(host, desktopId.getPath(), desktopDir, monitorPos);
-                files.showPropertiesFor(FsPaths.fileName(path));
-                wm.open(FILES_KEY, files);
-            }
-            return;
-        }
-        if (key.startsWith(TYPE_AT_TERMINAL)) {
-            typeAtTerminal(List.of(key.substring(TYPE_AT_TERMINAL.length()).split("\n")));
-            return;
-        }
-        if (key.startsWith(OPEN_FILE)) {
-            // A window asked for a file to be opened, in a program it named or in the default one.
-            final String rest = key.substring(OPEN_FILE.length());
-            final int split = rest.indexOf('\0');
-            final String programId = rest.substring(0, split);
-            final String path = rest.substring(split + 1);
-            if (programId.isEmpty()) {
-                openFile(path);
-            } else {
-                openIn(programId, path);
-            }
-            return;
-        }
-        if (key.startsWith(CHOOSE_OPENER)) {
-            chooseOpener(key.substring(CHOOSE_OPENER.length()));
-            return;
-        }
-        // A plain program: by its window key, or by the name a player typed for it at a shell.
-        final String program = keyFor(key);
-        final IDesktopApp app = factoryFor(program);
-        if (app != null && memory.allowOpen(program)) {
-            wm.open(program, app);
-        }
-    }
-
-    /**
      * Resolves a dropped desktop icon at desktop-local point ({@code dx},{@code dy}). In priority order:
      * dropping onto an open Files explorer moves the file/folder into the folder that window shows; dropping
      * onto a desktop folder moves it inside; and dropping on the bare wallpaper pins the icon to that grid
@@ -2397,7 +2200,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             if (trash.is(launcher)) {
                 trash.open();
             } else {
-                runLauncher(launcher);
+                opener.run(launcher);
             }
             return;
         }
@@ -2407,173 +2210,18 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
         final DiskFilesPayload.WireFile f = desktopItems.get(di);
         if (f.directory()) {
-            wm.open(FILES_KEY, new FilesApp(host, desktopId.getPath(), f.path(), monitorPos));
+            opener.openFolder(f.path());
             return;
         }
-        openFile(f.path());
+        opener.openFile(f.path());
     }
 
     /**
-     * Opens a file the way a double-click does: in the program chosen with Always for its extension on this
-     * computer, else in the one that opens its kind. A file of a kind nothing here knows, and that no language
-     * runs, asks the player which program to use.
+     * Lets a running app hand the shell a job: lines typed at the terminal, one after the other. A line with a
+     * newline in it is typed as the lines it holds.
      */
-    private void openFile(final String path) {
-        final String program =
-                FileOpeners.defaultFor(path, catalogue.installed(), defaultApps);
-        if (program.isEmpty() && FileOpeners.isUnknownKind(path)
-                && !runsAsProgram(path)) {
-            chooseOpener(path);
-            return;
-        }
-        openIn(program, path);
-    }
-
-    /** Whether a language on this computer runs files like this one, so opening it means running it. */
-    private static boolean runsAsProgram(final String path) {
-        final String extension = FileOpeners.extensionOf(path);
-        return !extension.isEmpty() && JsCore.languages().runnerOf(extension) != null;
-    }
-
-    /**
-     * Asks the player which program opens a file, with the Open with chooser over the whole desktop. Always makes
-     * the choice this computer's program for the file's extension, written down on the machine.
-     */
-    void chooseOpener(final String path) {
-        final List<String> programs = FileOpeners.choices(path, catalogue.installed());
-        if (programs.isEmpty()) {
-            cannotOpen(path);
-            return;
-        }
-        final String extension = FileOpeners.extensionOf(path);
-        final String current =
-                FileOpeners.defaultFor(path, catalogue.installed(), defaultApps);
-        final String opener = current.isEmpty() ? "" : openerName(current);
-        final String iconSet = prefs.skin().iconSet();
-        notices.show(new OpenWithPopup(path, extension, programs, opener, iconSet, font, (program, always) -> {
-            if (always) {
-                defaultApps.put(extension, program);
-                PacketDistributor.sendToServer(
-                        new SetSettingPayload(host, "defaultapp:" + extension,
-                                program));
-            }
-            openIn(program, path);
-        }));
-    }
-
-    /**
-     * Opens a file in a named program, or says why it cannot be opened at all.
-     *
-     * <p>Which program a kind of file belongs to is one answer, kept in one place, so a double-click, a
-     * pick from "Open with" and a run from the explorer all reach the same one.
-     */
-    void openIn(final String programId, final String path) {
-        if (programId.isEmpty()) {
-            /*
-             * Nothing here claims the kind, but a language an addon brought may: its compiled programs
-             * have an extension of their own, and opening one of those means running it.
-             */
-            if (runsAsProgram(path)) {
-                runAtTerminal(path);
-                return;
-            }
-            cannotOpen(path);
-            return;
-        }
-        if (programId.equals(FileOpeners.EDITOR)) {
-            final EditorApp editor = new EditorApp(host);
-            wm.open(EDITOR_KEY, editor);
-            editor.openFile(path);
-            return;
-        }
-        if (programId.equals(FileOpeners.RUNTIME)) {
-            // A compiled program is run, not read: it gets this desktop's terminal and prints into it.
-            runAtTerminal(path);
-            return;
-        }
-        final ProgramSpec spec = Programs.get(
-                ResourceLocation.fromNamespaceAndPath("jsc", programId));
-        final Launcher launcher = spec == null ? null : catalogue.byProgram(spec.id());
-        if (launcher == null) {
-            cannotOpen(path);
-            return;
-        }
-        runLauncher(launcher);
-        /*
-         * The window exists once the launcher has run, so the file goes to it straight away. An app that
-         * opens no files ignores this, which is what lets any program be picked without a special case.
-         */
-        final DesktopWindow opened = windowFor(launcher.key());
-        if (opened != null) {
-            opened.app().openFile(path);
-        }
-    }
-
-    /**
-     * Runs a program at this desktop's terminal, whatever this desktop calls it, as if the command had
-     * been typed there.
-     */
-    private void runAtTerminal(final String path) {
-        final ShellApp shell = terminalApp();
-        if (shell != null) {
-            shell.runProgram(path);
-        }
-    }
-
-    /** Types lines at this desktop's terminal, one after the other. */
-    private void typeAtTerminal(final List<String> lines) {
-        final ShellApp shell = terminalApp();
-        if (shell != null) {
-            shell.typeLines(lines);
-        }
-    }
-
-    /**
-     * This desktop's terminal window, brought forward, or opened when there is none: a program that
-     * needs the prompt gets the one that is up rather than a second one beside it.
-     */
-    @Nullable
-    private ShellApp terminalApp() {
-        final Launcher launcher = catalogue.byProgram(Programs.COMMAND_PROMPT);
-        if (launcher == null) {
-            return null;
-        }
-        final String terminal = launcher.key();
-        final DesktopWindow open = windowFor(terminal);
-        if (open != null && open.app() instanceof ShellApp shell) {
-            open.setMinimized(false);
-            wm.bringToFront(windows.indexOf(open));
-            return shell;
-        }
-        final IDesktopApp made = factoryFor(terminal);
-        if (made instanceof ShellApp shell && memory.allowOpen(terminal)) {
-            wm.open(terminal, shell);
-            return shell;
-        }
-        return null;
-    }
-
-    /** A queued request to type lines at the terminal, the lines joined by newlines. */
-    private static final String TYPE_AT_TERMINAL = "Type\0";
-
-    /** Lets a running app hand the shell a job: lines typed at the terminal, one after the other. */
     public static void requestTypeAtTerminal(final List<String> lines) {
-        PENDING_OPEN.add(TYPE_AT_TERMINAL + String.join("\n", lines));
-    }
-
-    /** Opens the Settings window on one of its pages, the way a menu entry names a page rather than the program. */
-    void openSettingsPage(final int page) {
-        if (memory.allowOpen(SETTINGS_KEY)) {
-            wm.open(SETTINGS_KEY, new SettingsApp(host, monitorPos).showPage(page));
-        }
-    }
-
-    /** Runs the launcher known by {@code key}, when the desktop has one. */
-    void runLauncherKeyed(final String key) {
-        final Launcher launcher = catalogue.byKey(key);
-        if (launcher != null) {
-            runLauncher(launcher);
-        }
+        DesktopRequests.open(new OpenRequest.TypeAtTerminal(List.of(String.join("\n", lines).split("\n"))));
     }
 
     /* What a test reads of the desktop's menu and its scale. */
@@ -2642,12 +2290,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return view.scale();
     }
 
-    /** A queued request to show a file's Properties window: the explorer opens on its folder and shows it. */
-    private static final String OPEN_PROPS = "Props\0";
-
     /** Asks for the Properties window of a file on the desktop, which the explorer knows how to show. */
     public static void requestFileProperties(final String path) {
-        PENDING_OPEN.add(OPEN_PROPS + path);
+        DesktopRequests.open(new OpenRequest.Properties(path));
     }
 
     /** A click on a live balloon: it takes the click, and opens the program it offers when it offers one. */
@@ -2657,7 +2302,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return false;
         }
         if (!opens.isEmpty()) {
-            final IDesktopApp app = factoryFor(opens);
+            final IDesktopApp app = opener.factoryFor(opens);
             if (app != null) {
                 wm.open(opens, app);
             }
@@ -3461,113 +3106,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             }
         }
         return null;
-    }
-
-    /** Opens, redraws or takes away a window one of the machine's Σ# programs has. */
-    private void acceptProgramWindow(final UiWindowPayload payload) {
-        if (!payload.hostPos().equals(host)) {
-            return;
-        }
-        final String key = SigmaWindowApp.keyFor(payload.program(), payload.window());
-        for (final DesktopWindow open : windows) {
-            if (open.appKey().equals(key) && open.app() instanceof SigmaWindowApp app) {
-                if (payload.open()) {
-                    app.accept(payload);
-                } else {
-                    // The program closed it: the window goes without telling the program again.
-                    windows.remove(open);
-                }
-                return;
-            }
-        }
-        if (payload.open()) {
-            wm.open(key, new SigmaWindowApp(host, payload));
-        }
-    }
-
-    /** Opens that program's window on this desktop, if this machine has it at all. */
-    private void startProgramById(final String path) {
-        final Launcher launcher = catalogue.find(l -> l.programId().getPath().equals(path) && l.factory() != null);
-        if (launcher != null) {
-            wm.open(launcher.key(), launcher.factory().get());
-        }
-    }
-
-    /** Recreates a program from its window key ({@link WindowKeys}), for restoring persisted windows. */
-    @Nullable
-    IDesktopApp factoryFor(final String key) {
-        /*
-         * The welcome has no launcher of its own: it is the system putting itself in front of somebody, not a
-         * program anybody goes looking for, and it is the machine that asks for it by name.
-         */
-        if (WelcomeApp.KEY.equals(key)) {
-            return new WelcomeApp(host);
-        }
-        // Nor has CDE's Application Manager, which is reached from the Front Panel, one window to a group.
-        if (is(PanelStyle.CDE) && ApplicationManagerApp.owns(key)) {
-            return new ApplicationManagerApp(ApplicationManagerApp.groupOf(key));
-        }
-        // Nor has the trash, which is a place of the desktop and no program.
-        if (WindowKeys.TRASH.equals(key)) {
-            return trash.window();
-        }
-        final Launcher launcher = catalogue.find(l -> l.key().equals(key) && l.factory() != null);
-        if (launcher != null) {
-            return launcher.factory().get();
-        }
-        /*
-         * A program the desktop shows no launcher for (the Task Manager, or one a file opens in) still opens,
-         * and still comes back with the session, by the id its window goes by.
-         */
-        final ResourceLocation id = ResourceLocation.tryParse(key);
-        final ProgramClient.IDesktopAppFactory factory = id == null ? null : ProgramClient.factory(id);
-        return factory == null ? null : factory.create(host, monitorPos, desktopId);
-    }
-
-    /**
-     * Opens the Task Manager, or brings it forward when it is already up. It is the panel's own right-click
-     * destination and has no launcher of its own, exactly as on the desktops this imitates.
-     */
-    void openTaskManager() {
-        if (OsRegistry.getProgram(Programs.TASK_MANAGER) == null) {
-            return;
-        }
-        final String key = WindowKeys.of(Programs.TASK_MANAGER);
-        final DesktopWindow open = windowFor(key);
-        if (open != null) {
-            wm.focus(open);
-            return;
-        }
-        final IDesktopApp app = factoryFor(key);
-        if (app != null && memory.allowOpen(key)) {
-            app.applySkin(prefs.skin());
-            wm.open(key, app);
-        }
-    }
-
-    private void openOrFocusWindow(final String key) {
-        for (final DesktopWindow w : windows) {
-            if (!w.dialog() && w.appKey().equals(key)) {
-                wm.focus(w);
-                return;
-            }
-        }
-        final IDesktopApp app = factoryFor(key);
-        if (app != null && memory.allowOpen(key)) {
-            app.applySkin(prefs.skin());
-            wm.open(key, app);
-        }
-    }
-
-    /** Starts a launcher: a built-in app opens a window; an action-based one (e.g. the NMS) runs its action. */
-    void runLauncher(final Launcher l) {
-        if (!l.runs().isEmpty()) {
-            requestRunAtTerminal(l.runs());
-            return;
-        }
-        if (memory.allowOpen(l.key())) {
-            wm.open(l.key(), l.factory().get());
-        }
     }
 
     private static String trim(final String s, final int max) {

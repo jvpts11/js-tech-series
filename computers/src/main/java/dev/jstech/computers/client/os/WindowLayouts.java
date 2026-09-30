@@ -86,7 +86,7 @@ final class WindowLayouts {
             IDesktopApp app = savedApps != null ? savedApps.get(ow.key()) : null;
             final boolean kept = app != null;
             if (app == null) {
-                app = desktop.factoryFor(ow.key());
+                app = desktop.opener().factoryFor(ow.key());
             }
             if (app == null) {
                 continue; // a program that is no longer installed simply does not come back
