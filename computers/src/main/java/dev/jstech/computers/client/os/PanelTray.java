@@ -155,7 +155,7 @@ final class PanelTray {
         }
         final String link =
                 GameText.resolve(desktop.onNetwork() ? PanelTexts.NETWORK_CONNECTED : PanelTexts.NO_NETWORK);
-        final String mem = GameText.resolve(PanelTexts.RAM.with(desktop.ramMeter()));
+        final String mem = GameText.resolve(PanelTexts.RAM.with(desktop.memory().meterText()));
         final int w = Math.max(desktop.textFont().width(link), desktop.textFont().width(mem)) + 8;
         final int h = 22;
         final int x = Math.max(2, sw - w - 2);
@@ -204,8 +204,8 @@ final class PanelTray {
         g.fill(x, y, x + RAM_BAR_W, y + RAM_BAR_H, c.barEdge());
         g.fill(x + 1, y + 1, x + RAM_BAR_W - 1, y + RAM_BAR_H - 1, c.barTrough());
         final int innerW = RAM_BAR_W - 2;
-        final int used = desktop.ramUsed();
-        final int total = desktop.ramTotal();
+        final int used = desktop.memory().usedMb();
+        final int total = desktop.memory().totalMb();
         if (total <= 0 || used <= 0) {
             return;
         }

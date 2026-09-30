@@ -10,7 +10,6 @@ package dev.jstech.computers.client.os;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.audio.SoundOutput;
-import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -39,14 +38,11 @@ import dev.jstech.computers.operation.payload.SetIconPositionPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
-import dev.jstech.computers.operation.payload.MachineSoundPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.os.CdeAppGroup;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.IOsHost;
-import dev.jstech.computers.os.KernelDef;
-import dev.jstech.computers.os.MachineMemory;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
@@ -54,7 +50,6 @@ import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
-import dev.jstech.computers.os.SchedulerKind;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.computers.os.fs.Archive;
@@ -65,7 +60,6 @@ import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.ContextMenu;
-import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
 import dev.jstech.core.gui.layout.DesktopZ;
@@ -81,7 +75,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -91,7 +84,6 @@ import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -130,8 +122,10 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     private int shownWorkspace;
     private final List<Launcher> launchers = new ArrayList<>();
     private final List<String> installedPrograms = new ArrayList<>();
-    /** The installed programs the machine built from source, by id path, whose windows hold a little less. */
-    private final Set<String> sourceBuilt = new HashSet<>();
+    /** What the desktop tells the player: a dialog over everything, or a balloon over the notification area. */
+    private final DesktopNotices notices = new DesktopNotices(this);
+    /** The dialog that shuts the machine down, restarts it or logs off. */
+    private final PowerDialog power = new PowerDialog(this);
 
     /** The archiver, by the id the desktop knows it under; nothing of its is offered without it installed. */
     private static final String ARCHIVER = "ark";
@@ -166,17 +160,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** What the wallpaper wears as icons ahead of the desktop folder's files: the trash, then every program. */
     private final List<Launcher> iconLaunchers = new ArrayList<>();
 
-    /*
-     * Per-OS memory model: the system, its desktop and its services hold their share of the machine's RAM
-     * (reserved, from the server) and every open program holds its own, weighed under the running system by the
-     * same rule the server applies. A cooperative kernel (Frames 95) is fragile and crashes when overloaded; a
-     * preemptive one (XP/11) just refuses.
-     */
-    private int ramTotalMb;
-    private int ramReservedMb;
-    /** True while the cooperative OS is showing its crash screen; the desktop reboots to an empty session after. */
-    private boolean crashing;
-    private long crashUntil;
+    /** The machine's memory as the desktop weighs it, and the crash of a cooperative kernel run out of it. */
+    private final DesktopMemory memory;
 
     /**
      * Open windows kept per-computer across leaving and re-entering the Monitor in the same session.
@@ -386,7 +371,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** The Open with chooser the open desktop is showing, or null when none is up. */
     @Nullable
     public static OpenWithPopup openWithChooser() {
-        return active != null && active.popup instanceof OpenWithPopup chooser && chooser.isOpen() ? chooser : null;
+        return active != null ? active.notices.chooser() : null;
     }
 
     /** The ids of the programs the open desktop's machine has, for a window offering what can open a file. */
@@ -444,7 +429,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      */
     public static void showDatLockedError() {
         if (active != null) {
-            active.datLocked();
+            active.notices.datLocked();
         }
     }
 
@@ -469,27 +454,13 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      */
     public static void showInstallerLockedError() {
         if (active != null) {
-            active.showError(words(DesktopTexts.ERROR), words(DesktopTexts.INSTALLER_LOCKED));
+            active.notices.showError(words(DesktopTexts.ERROR), words(DesktopTexts.INSTALLER_LOCKED));
         }
-    }
-
-    /** Opens a modal error dialog with the given title and message over this desktop, and the machine sounds it. */
-    void showError(final String title, final String message) {
-        this.popup = new DesktopPopup(title, message, this.font);
-        PacketDistributor.sendToServer(new MachineSoundPayload(host, SystemSound.ERROR));
-    }
-
-    /*
-     * The error for a {@code .dat} touched by hand. A {@code .dat} is a read-only projection of the computer's
-     * stored items, so the only sanctioned way to move those items is the Network Interactor.
-     */
-    private void datLocked() {
-        showError(words(DesktopTexts.ERROR), words(DesktopTexts.DAT_LOCKED));
     }
 
     /* The notice for a file that no program on this machine opens. */
     private void cannotOpen(final String path) {
-        showBalloon(words(DesktopTexts.CANNOT_OPEN),
+        notices.showBalloon(words(DesktopTexts.CANNOT_OPEN),
                 GameText.resolve(DesktopTexts.NO_PROGRAM_OPENS.with(FsPaths.fileName(path))));
     }
 
@@ -497,44 +468,10 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return GameText.resolve(key);
     }
 
-    /**
-     * A notice from the system itself: it rises over the notification area and goes away on its own.
-     *
-     * @param opens the program a click on it opens, or empty when clicking it only puts it away
-     */
-    private record Balloon(String title, String body, long until, String opens) {
-    }
-
-    /** How long a balloon stays up before it fades away, in milliseconds. */
-    private static final long BALLOON_MS = 9_000L;
-    private static final int BALLOON_W = 152;
-    @Nullable
-    private Balloon balloon;
-
-    /**
-     * Raises a tray balloon. Unlike {@link #showError}, it takes nothing over: the machine is telling the
-     * player something, not asking them to answer, so the desktop stays usable underneath it.
-     */
-    void showBalloon(final String title, final String body) {
-        this.showBalloon(title, body, "");
-    }
-
-    /**
-     * The same, for a notice that is also an invitation: clicking it opens the program it is about.
-     *
-     * <p>Which is how a machine of one edition said hello on its first start. It did not put a window in
-     * front of anybody; it said one sentence from the corner and left the offer open for as long as the
-     * sentence was up.
-     */
-    void showBalloon(final String title, final String body, final String opens) {
-        this.balloon = new Balloon(title, body, System.currentTimeMillis() + BALLOON_MS, opens);
-        PacketDistributor.sendToServer(new MachineSoundPayload(host, SystemSound.NOTIFY));
-    }
-
     /** Raises that balloon on whichever desktop is looking at that machine, if one is. */
     public static void raise(final BlockPos host, final String title, final String body, final String opens) {
         if (active != null && active.host.equals(host)) {
-            active.showBalloon(title, body, opens);
+            active.notices.showBalloon(title, body, opens);
         }
     }
 
@@ -573,9 +510,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     @Nullable
     private static DesktopScreen active;
 
-    /** The modal dialog currently shown over the desktop (an error, or Open with), or {@code null} when none. */
-    @Nullable
-    private Popup popup;
 
     /**
      * The program chosen with Always for each extension on this machine, as the desktop listing brings it. A choice
@@ -729,21 +663,21 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      */
     static void ask(final String title, final String message, final Runnable yes) {
         if (active != null) {
-            active.popup = new QuestionPopup(title, message, active.font, yes);
+            active.notices.ask(title, message, yes);
         }
     }
 
     /** Tells the player something over the whole desktop, in a note they close with OK. */
     static void tell(final String title, final String message) {
         if (active != null) {
-            active.popup = new QuestionPopup(title, message, active.font, null);
+            active.notices.ask(title, message, null);
         }
     }
 
     /** The question or note up over the desktop, for a test to answer; null while none is. */
     @Nullable
     public QuestionPopup question() {
-        return popup instanceof QuestionPopup q && q.isOpen() ? q : null;
+        return notices.question();
     }
 
     /** Makes the wallpaper's icons again, after the programs or the trash's picture changed. */
@@ -897,17 +831,19 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return networkAttached();
     }
 
-    /** How much memory the machine is using and how much it has, for the meter and its tooltip. */
-    int ramUsed() {
-        return ramUsedMb();
+    /** The machine's memory as the desktop weighs it, for the meter and its tooltip. */
+    DesktopMemory memory() {
+        return memory;
     }
 
-    int ramTotal() {
-        return ramTotalMb;
+    /** What the desktop tells the player: its dialogs and its balloons. */
+    DesktopNotices notices() {
+        return notices;
     }
 
-    String ramMeter() {
-        return ramMeterText();
+    /** The dialog that shuts the machine down, restarts it or logs off. */
+    PowerDialog power() {
+        return power;
     }
 
     /** The notification corner, which every panel draws at its right end. */
@@ -1030,11 +966,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         selectedIcon = slot;
     }
 
-    /** Says a file cannot be changed by hand, which is what a projection of stored items is. */
-    void showLocked() {
-        datLocked();
-    }
-
     /** Whether this panel's popup shows the windows' live pictures rather than a list of their titles. */
     boolean popupShowsThumbnails() {
         return thumbnailPopups();
@@ -1092,8 +1023,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      * thing on the panel that opens by itself, so it must never sit over something the player asked for.
      */
     boolean menuOrDialogOpen() {
-        return startOpen || panelCtxOpen || taskMenu.isOpen() || cdeWindowMenu.isOpen() || popup != null
-                || powerOpen || crashing;
+        return startOpen || panelCtxOpen || taskMenu.isOpen() || cdeWindowMenu.isOpen() || notices.popup() != null
+                || power.isOpen() || memory.crashing();
     }
 
     /** The program whose windows the panel's popup is showing, or null while none is up. */
@@ -1177,10 +1108,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     @Nullable
     static DesktopScreen current() {
         return active;
-    }
-
-    void askToPowerOff() {
-        openPowerDialog();
     }
 
     /** How wide an open launcher is, which its own desktop decides. */
@@ -1360,8 +1287,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         this.monitorPos = menu.monitorPos();
         this.osId = menu.osId();
         this.desktopId = menu.desktopId();
-        this.ramTotalMb = menu.ramTotalMb();
-        this.ramReservedMb = menu.ramReservedMb();
+        this.memory = new DesktopMemory(this, osId, windows, menu.ramTotalMb(), menu.ramReservedMb());
         this.chrome = OsRegistry.getDesktop(desktopId);
         // A desktop nobody registered is drawn as the first Frames edition, as its look is.
         this.panel = chrome != null ? chrome.panelStyle() : PanelStyle.FRAMES_95;
@@ -1389,94 +1315,14 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return chrome != null ? chrome.displayName() : desktopId.getPath();
     }
 
-    /** The megabytes a window opened under {@code key} holds: its program's weight under the running system. */
-    private int windowRamMb(final String key) {
-        final OsDef os = OsRegistry.getOs(osId);
-        return os == null ? 0
-                : MachineMemory.windowRamMb(key, os, spec -> sourceBuilt.contains(spec.id().getPath()));
-    }
-
-    /** What the open windows hold together; a dialog is part of its program, not another copy of it. */
-    private int windowsRamMb() {
-        int sum = 0;
-        for (final DesktopWindow w : windows) {
-            if (!w.dialog()) {
-                sum += windowRamMb(w.appKey());
-            }
-        }
-        return sum;
-    }
-
-    /** Everything held right now: the system's share, its desktop and services, and the open windows. */
-    private int ramUsedMb() {
-        return ramReservedMb + windowsRamMb();
-    }
-
-    /** A cooperative kernel (Frames 95's) has no memory protection: overloading it crashes the whole desktop. */
-    private boolean isCooperative() {
-        final OsDef os = OsRegistry.getOs(osId);
-        final KernelDef kernel = os == null ? null : OsRegistry.getKernel(os.kernelId());
-        return kernel != null && kernel.scheduler() == SchedulerKind.COOPERATIVE;
-    }
-
-    /**
-     * Whether a window of {@code key} may open now, that is whether its program's weight still fits in the
-     * free RAM; otherwise a preemptive OS refuses with the figures and a cooperative one crashes.
-     */
-    private boolean allowOpen(final String key) {
-        if (crashing) {
-            return false;
-        }
-        final int need = windowRamMb(key);
-        final int free = ramTotalMb - ramUsedMb();
-        if (need <= free) {
-            return true;
-        }
-        if (isCooperative()) {
-            crashing = true;
-            crashUntil = System.currentTimeMillis() + 4200;
-        } else {
-            /*
-             * A refusal the machine can simply report: the desktop is still there, so a balloon says it the
-             * way the notification area always did, instead of taking the screen over with a dialog.
-             */
-            showBalloon(words(DesktopTexts.LOW_MEMORY),
-                    GameText.resolve(DesktopTexts.LOW_MEMORY_BODY.with(nameOf(key), need, Math.max(0, free))));
-        }
-        return false;
-    }
-
     /** Reboots after a crash: the session is lost (windows and their saved state), back to an empty desktop. */
     private void reboot() {
-        crashing = false;
-        balloon = null;
+        memory.recover();
+        notices.dismissBalloon();
         windows.clear();
         SAVED_APPS.remove(host);
         startOpen = false;
-        popup = null;
-    }
-
-    /** The cooperative-kernel crash screen: a classic blue fatal-error page, drawn in desktop-local coords. */
-    private void renderCrash(final GuiGraphics g, final int sw, final int sh) {
-        final DesktopShellPalette.Colours c = DesktopShellPalette.get();
-        g.fill(0, 0, sw, sh, c.crashGround());
-        final int cy = sh / 3;
-        final String head = " Frames ";
-        final int hw = font.width(head) + 6;
-        g.fill((sw - hw) / 2, cy - 2, (sw + hw) / 2, cy + 10, c.crashBand());
-        g.drawString(font, head, (sw - font.width(head)) / 2, cy, c.crashGround(), false);
-        final List<String> lines = new ArrayList<>();
-        lines.add(words(DesktopTexts.CRASH_FATAL));
-        // The cause is written over two lines of the screen, where the language breaks it.
-        lines.addAll(List.of(words(DesktopTexts.CRASH_CAUSE).split("\n")));
-        lines.add("");
-        lines.add(words(DesktopTexts.CRASH_NO_RECOVERY));
-        lines.add(words(DesktopTexts.REBOOTING));
-        int ly = cy + 20;
-        for (final String s : lines) {
-            g.drawString(font, s, (sw - font.width(s)) / 2, ly, c.crashInk(), false);
-            ly += 11;
-        }
+        notices.dismissPopup();
     }
 
     // inspection (client tests drive the desktop through the same hit areas the player clicks)
@@ -1771,7 +1617,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Whether the dialog that shuts the machine down or restarts it is up. */
     public boolean powerDialogOpen() {
-        return powerOpen;
+        return power.isOpen();
     }
 
     /** Screen position of a button of CDE's Exit dialog, by the numbers {@link CdeExitLayout} gives them. */
@@ -2431,8 +2277,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         final List<CommunityLauncher> theirsBefore = List.copyOf(active.communityPrograms);
         active.installedPrograms.clear();
         active.installedPrograms.addAll(payload.programs());
-        active.sourceBuilt.clear();
-        active.sourceBuilt.addAll(payload.sourceBuilt());
+        active.memory.takeSourceBuilt(payload.sourceBuilt());
         active.communityPrograms.clear();
         for (final DesktopFilesPayload.WireCommunity one : payload.community()) {
             active.communityPrograms.add(new CommunityLauncher(one.name(), one.icon(), one.entry()));
@@ -2508,11 +2353,11 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         }
 
         // A cooperative OS that ran out of memory shows its crash screen, then reboots to an empty session.
-        if (crashing) {
-            if (System.currentTimeMillis() >= crashUntil) {
+        if (memory.crashing()) {
+            if (memory.crashOver()) {
                 reboot();
             } else {
-                renderCrash(g, sw, sh);
+                memory.renderCrash(g, sw, sh);
                 g.disableScissor();
                 g.pose().popPose();
                 return;
@@ -2633,10 +2478,10 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         g.pose().popPose();
 
         // A tray balloon sits above the panel and under the menus, so opening the launcher covers it.
-        if (balloon != null) {
+        if (notices.balloonUp()) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.TASKBAR + 10);
-            renderBalloon(g, tbY, sw);
+            notices.renderBalloon(g, tbY, sw);
             g.pose().popPose();
         }
         // The figures behind the notification area, while the cursor rests on it. CDE has no such area.
@@ -2792,21 +2637,12 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             g.pose().popPose();
         }
 
-        if (popup != null && !popup.isOpen()) {
-            // Closed by its own choice rather than by a click the desktop saw, as Open with can be.
-            popup = null;
-        }
-        if (popup != null) {
-            g.pose().pushPose();
-            g.pose().translate(0, 0, DesktopZ.POPUP);
-            popup.renderIn(g, new UiContext(prefs.skin(), font, lmx, lmy, 0f), 0, 0, sw, sh);
-            g.pose().popPose();
-        }
+        notices.renderPopup(g, prefs.skin(), lmx, lmy, sw, sh);
         // The power dialog rides at the same height: it is the one choice that ends the session.
-        if (powerOpen) {
+        if (power.isOpen()) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.POPUP);
-            renderPowerDialog(g, sw, sh, lmx, lmy);
+            power.render(g, sw, sh, lmx, lmy);
             g.pose().popPose();
         }
         // A program's own menu, from its panel entry, sits above the windows it acts on.
@@ -2875,7 +2711,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     private void runOpenRequest(final String key) {
         if (key.startsWith(OPEN_FILES_AT)) {
             // This PC asked for a drive or a folder to be opened in the explorer.
-            if (allowOpen(FILES_KEY)) {
+            if (memory.allowOpen(FILES_KEY)) {
                 openApp(FILES_KEY, new FilesApp(host, desktopId.getPath(),
                         key.substring(OPEN_FILES_AT.length()), monitorPos));
             }
@@ -2888,7 +2724,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (key.startsWith(OPEN_PROPS)) {
             // A desktop icon's Properties: the explorer on the desktop's folder shows the window.
             final String path = key.substring(OPEN_PROPS.length());
-            if (allowOpen(FILES_KEY)) {
+            if (memory.allowOpen(FILES_KEY)) {
                 final FilesApp files = new FilesApp(host, desktopId.getPath(), desktopDir, monitorPos);
                 files.showPropertiesFor(FsPaths.fileName(path));
                 openApp(FILES_KEY, files);
@@ -2919,7 +2755,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         // A plain program: by its window key, or by the name a player typed for it at a shell.
         final String program = keyFor(key);
         final IDesktopApp app = factoryFor(program);
-        if (app != null && allowOpen(program)) {
+        if (app != null && memory.allowOpen(program)) {
             openApp(program, app);
         }
     }
@@ -2944,7 +2780,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         // (0) Dropped on the trash, its icon or CDE's control for it: the file is deleted.
         if (src != null && overTrash(dx, dy)) {
             if (src.readOnly()) {
-                datLocked();
+                notices.datLocked();
             } else {
                 clearMovedIconCell(src);
                 DeskTrash.delete(host, List.of(src.path()));
@@ -2958,7 +2794,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             final String destDir = files.crossWindowDropDir(explorer, dx, dy);
             if (destDir != null && !samePathParent(src.path(), destDir)) {
                 if (src.readOnly()) {
-                    datLocked();
+                    notices.datLocked();
                 } else {
                     PacketDistributor.sendToServer(new MoveFilePayload(host, src.path(), destDir));
                     clearMovedIconCell(src);
@@ -2976,7 +2812,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             final DiskFilesPayload.WireFile dst = desktopItems.get(target - iconLaunchers.size());
             if (dst.directory()) {
                 if (src.readOnly()) {
-                    datLocked();
+                    notices.datLocked();
                 } else {
                     PacketDistributor.sendToServer(new MoveFilePayload(host, src.path(), dst.path()));
                     clearMovedIconCell(src);
@@ -3048,7 +2884,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         // Dropped on the trash: deleted, as a delete from the explorer's own menu would.
         if (overTrash(dx, dy)) {
             if (dragged.readOnly()) {
-                datLocked();
+                notices.datLocked();
             } else {
                 DeskTrash.delete(host, List.of(dragged.path()));
             }
@@ -3084,7 +2920,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return;
         }
         if (dragged.readOnly()) {
-            datLocked();
+            notices.datLocked();
             return;
         }
         PacketDistributor.sendToServer(new MoveFilePayload(host, dragged.path(), destDir));
@@ -3155,7 +2991,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                 FileOpeners.defaultFor(path, installedPrograms, defaultApps);
         final String opener = current.isEmpty() ? "" : openerName(current);
         final String iconSet = prefs.skin().iconSet();
-        popup = new OpenWithPopup(path, extension, programs, opener, iconSet, font, (program, always) -> {
+        notices.show(new OpenWithPopup(path, extension, programs, opener, iconSet, font, (program, always) -> {
             if (always) {
                 defaultApps.put(extension, program);
                 PacketDistributor.sendToServer(
@@ -3163,7 +2999,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                                 program));
             }
             openIn(program, path);
-        });
+        }));
     }
 
     /**
@@ -3251,7 +3087,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return shell;
         }
         final IDesktopApp made = factoryFor(terminal);
-        if (made instanceof ShellApp shell && allowOpen(terminal)) {
+        if (made instanceof ShellApp shell && memory.allowOpen(terminal)) {
             openApp(terminal, shell);
             return shell;
         }
@@ -3320,7 +3156,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     /** Opens the Settings window on one of its pages, the way a menu entry names a page rather than the program. */
     private void openSettingsPage(final int page) {
-        if (allowOpen(SETTINGS_KEY)) {
+        if (memory.allowOpen(SETTINGS_KEY)) {
             openApp(SETTINGS_KEY, new SettingsApp(host, monitorPos).showPage(page));
         }
     }
@@ -3765,94 +3601,19 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return mine.isEmpty() ? nameOf(entry.key()) : titleOf(mine.get(mine.size() - 1));
     }
 
-    /** The balloon's box in desktop-local coordinates, or null when none is up. Draw and hit-test share it. */
-    @Nullable
-    private int[] balloonRect(final int tbY, final int sw) {
-        if (balloon == null) {
-            return null;
-        }
-        final int lines = font.split(Component.literal(balloon.body()), BALLOON_W - 12).size();
-        final int h = 15 + lines * 9 + 5;
-        final int x = Math.max(4, sw - BALLOON_W - 6);
-        return new int[] {x, tbY - h - 7, BALLOON_W, h};
-    }
-
-    /** The classic notification balloon: pale yellow, a blue "i", a title, a line or two, and a close box. */
-    private void renderBalloon(final GuiGraphics g, final int tbY, final int sw) {
-        if (balloon != null && System.currentTimeMillis() > balloon.until()) {
-            balloon = null;
-        }
-        final int[] r = balloonRect(tbY, sw);
-        if (r == null || balloon == null) {
-            return;
-        }
-        final int x = r[0];
-        final int y = r[1];
-        final int w = r[2];
-        final int h = r[3];
-        final DesktopShellPalette.Colours c = DesktopShellPalette.get();
-        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, c.balloonBorder());
-        g.fill(x, y, x + w, y + h, c.balloonFill());
-        /*
-         * The tail, pointing down at the notification area it came from: a bordered wedge, drawn as an
-         * outline first and the pale fill inset into it, so it carries the same 1px edge as the box.
-         */
-        final int tail = x + w - 42;
-        for (int i = 0; i < 7; i++) {
-            g.fill(tail + i - 1, y + h + i, tail + 14 - i, y + h + i + 1, c.balloonBorder());
-        }
-        for (int i = 0; i < 6; i++) {
-            g.fill(tail + i, y + h + i, tail + 12 - i, y + h + i + 1, c.balloonFill());
-        }
-        g.fill(tail, y + h - 1, tail + 12, y + h, c.balloonFill()); // the tail opens into the balloon
-        // The round blue "i" and the title beside it.
-        g.fill(x + 6, y + 5, x + 14, y + 13, c.balloonIcon());
-        g.fill(x + 7, y + 4, x + 13, y + 14, c.balloonIcon());
-        g.fill(x + 9, y + 6, x + 11, y + 7, c.balloonIconMark());
-        g.fill(x + 9, y + 8, x + 11, y + 12, c.balloonIconMark());
-        g.drawString(font, Component.literal(balloon.title()).withStyle(ChatFormatting.BOLD),
-                x + 18, y + 5, c.balloonTitle(), false);
-        int ly = y + 16;
-        for (final FormattedCharSequence line
-                : font.split(Component.literal(balloon.body()), w - 12)) {
-            g.drawString(font, line, x + 6, ly, c.balloonBody(), false);
-            ly += 9;
-        }
-        // The close box, the one part of a balloon anyone ever clicked.
-        final int bx = x + w - 12;
-        g.fill(bx, y + 4, bx + 8, y + 12, c.balloonCloseFill());
-        outline(g, bx, y + 4, 8, 8, c.balloonCloseEdge());
-        g.drawString(font, "x", bx + 2, y + 5, c.balloonBody(), false);
-    }
-
-    /** A click on a live balloon: its close box dismisses it, and the rest of it absorbs the click. */
+    /** A click on a live balloon: it takes the click, and opens the program it offers when it offers one. */
     private boolean balloonClick(final double mx, final double my, final int tbY, final int sw) {
-        final int[] r = balloonRect(tbY, sw);
-        if (r == null) {
+        final String opens = notices.clickBalloon(mx, my, tbY, sw);
+        if (opens == null) {
             return false;
         }
-        if (mx < r[0] || mx > r[0] + r[2] || my < r[1] || my > r[1] + r[3]) {
-            return false;
-        }
-        /*
-         * The close box only puts it away; anywhere else on a balloon that carries an offer takes it up, which
-         * is what made those balloons worth clicking rather than worth dismissing.
-         */
-        final String opens = balloon == null ? "" : balloon.opens();
-        final boolean onClose = mx >= r[0] + r[2] - 14;
-        balloon = null;
-        if (!opens.isEmpty() && !onClose) {
+        if (!opens.isEmpty()) {
             final IDesktopApp app = factoryFor(opens);
             if (app != null) {
                 openApp(opens, app);
             }
         }
         return true;
-    }
-
-    /** The memory meter's text, "used/total MB", shared by the panels so they can keep room for it. */
-    private String ramMeterText() {
-        return ramUsedMb() + "/" + ramTotalMb + " MB";
     }
 
     /*
@@ -4227,28 +3988,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         startSearch.setLength(0);
     }
 
-    /*
-     * Power
-     *
-     * Shutting down used to close the window and leave the machine running, so the computer stayed on
-     * the network with everything still open. The three real choices now live in one dialog, and each
-     * one reaches the machine.
-     */
-
-    private static final int POWER_W = 190;
-    private static final int POWER_ROW_H = 20;
-    /** Each power choice with the line under it that says what it does, in the order the dialog lists them. */
-    private static final TextKey[][] POWER_CHOICES = {
-            {DesktopTexts.SHUT_DOWN, DesktopTexts.SHUT_DOWN_HINT},
-            {DesktopTexts.RESTART, DesktopTexts.RESTART_HINT},
-            {DesktopTexts.LOG_OFF, DesktopTexts.LOG_OFF_HINT},
-    };
-
-    private boolean powerOpen;
-    // The desktop surface the dialog was centred on, so the click test lands where it was drawn.
-    private int powerSurfaceW;
-    private int powerSurfaceH;
-
     // The panel's entries: a program's menu, its windows, and the popup that lists them
 
     private static final int TASK_MENU_W = 118;
@@ -4483,103 +4222,17 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         taskPopup.openFor(entry.key());
     }
 
-    private void openPowerDialog() {
-        powerOpen = true;
-    }
-
-    private int powerHeight() {
-        return 22 + POWER_CHOICES.length * POWER_ROW_H;
-    }
-
-    private int powerX() {
-        return (powerSurfaceW - POWER_W) / 2;
-    }
-
-    private int powerY() {
-        return (powerSurfaceH - powerHeight()) / 2;
-    }
-
-    /** Draws the power dialog over the desktop; returns false when it is not open. */
-    private boolean renderPowerDialog(final GuiGraphics g, final int surfaceW, final int surfaceH,
-                                      final int mouseX, final int mouseY) {
-        if (!powerOpen) {
-            return false;
-        }
-        powerSurfaceW = surfaceW;
-        powerSurfaceH = surfaceH;
-        // CDE asks its own way: how many programs are open, then Shut Down, Restart or Cancel.
-        if (is(PanelStyle.CDE)) {
-            CdeExitDialog.render(g, font, surfaceW, surfaceH, openPrograms(), prefs.cdePalette());
-            return true;
-        }
-        final int x = powerX();
-        final int y = powerY();
-        g.fill(0, 0, surfaceW, surfaceH, DesktopShellPalette.get().powerShade());
-        prefs.skin().windowShadow(g, x, y, POWER_W, powerHeight());
-        prefs.skin().windowFrame(g, x, y, POWER_W, powerHeight());
-        prefs.skin().titleBar(g, x, y, POWER_W, 14);
-        g.drawString(font, words(DesktopTexts.POWER), x + 6, y + 3, prefs.skin().titleText(), false);
-        for (int i = 0; i < POWER_CHOICES.length; i++) {
-            final int rowY = y + 18 + i * POWER_ROW_H;
-            final boolean hovered = mouseX >= x + 4 && mouseX < x + POWER_W - 4
-                    && mouseY >= rowY && mouseY < rowY + POWER_ROW_H - 2;
-            if (hovered) {
-                g.fill(x + 4, rowY, x + POWER_W - 4, rowY + POWER_ROW_H - 2, prefs.skin().listHover());
-            }
-            g.drawString(font, words(POWER_CHOICES[i][0]), x + 12, rowY + 2, prefs.skin().text(), false);
-            g.drawString(font, words(POWER_CHOICES[i][1]), x + 12, rowY + 11, prefs.skin().dim(), false);
-        }
-        return true;
-    }
-
     /**
-     * Handles a click while the power dialog is up; returns whether it consumed the click. The
-     * coordinates come in absolute and are moved into the desktop's own space, where it was drawn.
+     * Tells the machine what the power dialog chose. It is going down, restarting or being left: the desktop closing
+     * after this must not hand its windows back to a machine whose session has just ended.
      */
-    private boolean clickPowerDialog(final double mouseXAbs, final double mouseYAbs) {
-        if (!powerOpen) {
-            return false;
-        }
-        final double mouseX = view.localX(mouseXAbs);
-        final double mouseY = view.localY(mouseYAbs);
-        if (is(PanelStyle.CDE)) {
-            // A question with a Cancel of its own stays up until one of its buttons answers it.
-            final int pressed = CdeExitLayout.buttonAt(mouseX, mouseY, powerSurfaceW, powerSurfaceH);
-            if (pressed == CdeExitLayout.SHUT_DOWN || pressed == CdeExitLayout.RESTART) {
-                sendPower(pressed == CdeExitLayout.SHUT_DOWN ? MachinePowerPayload.ACTION_SHUTDOWN
-                        : MachinePowerPayload.ACTION_RESTART);
-            } else if (pressed == CdeExitLayout.CANCEL) {
-                powerOpen = false;
-            }
-            return true;
-        }
-        final int x = powerX();
-        final int y = powerY();
-        for (int i = 0; i < POWER_CHOICES.length; i++) {
-            final int rowY = y + 18 + i * POWER_ROW_H;
-            if (mouseX >= x + 4 && mouseX < x + POWER_W - 4
-                    && mouseY >= rowY && mouseY < rowY + POWER_ROW_H - 2) {
-                sendPower(i);
-                return true;
-            }
-        }
-        // A click anywhere else dismisses it: no accidental shutdowns.
-        powerOpen = false;
-        return true;
-    }
-
-    /**
-     * Tells the machine what was chosen. It is going down, restarting or being left: the desktop closing after
-     * this must not hand its windows back to a machine whose session has just ended.
-     */
-    private void sendPower(final int action) {
+    void cyclePower(final int action) {
         powerCycling = true;
         PacketDistributor.sendToServer(new MachinePowerPayload(host, monitorPos, action));
-        powerOpen = false;
     }
 
     /** How many programs are open, on every workspace; a dialog is a question a program asks, not a program. */
-    private int openPrograms() {
+    int openPrograms() {
         int open = 0;
         for (final DesktopWindow w : windows) {
             if (!w.dialog()) {
@@ -4688,7 +4341,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      */
     @Override
     public boolean mouseClicked(final double mouseXAbs, final double mouseYAbs, final int button) {
-        if (crashing) {
+        if (memory.crashing()) {
             return true; // the crash screen swallows input until the reboot completes
         }
         if (clickedOverlay(mouseXAbs, mouseYAbs, button)) {
@@ -4728,7 +4381,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
          * takes the click. An open program menu takes the next click the same way, and the panel's
          * popup answers a click on it or is put away by one anywhere else.
          */
-        if (clickPowerDialog(mouseXAbs, mouseYAbs)) {
+        if (power.click(view.localX(mouseXAbs), view.localY(mouseYAbs))) {
             return true;
         }
         // The volume control takes the next click like a menu: on it, it turns what it lands on; anywhere else it goes.
@@ -4748,14 +4401,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return true;
         }
         // A modal dialog swallows every click; only its OK button dismisses it, and a click beside it rings the bell.
-        if (popup != null) {
-            if (!popup.contains(view.localX(mouseXAbs), view.localY(mouseYAbs))) {
-                PacketDistributor.sendToServer(new MachineSoundPayload(host, SystemSound.BEEP));
-            }
-            popup.mouseClicked(view.localX(mouseXAbs), view.localY(mouseYAbs), button);
-            if (!popup.isOpen()) {
-                popup = null;
-            }
+        if (notices.clickPopup(view.localX(mouseXAbs), view.localY(mouseYAbs), button)) {
             return true;
         }
         /*
@@ -5106,7 +4752,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     @Override
     public boolean mouseDragged(final double mouseXAbs, final double mouseYAbs, final int button,
                                 final double dx, final double dy) {
-        if (popup != null) {
+        if (notices.popupUp()) {
             return true;
         }
         if (volumePopup.mouseDragged(view.localX(mouseXAbs), view.localY(mouseYAbs))) {
@@ -5158,8 +4804,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     @Override
     public boolean mouseReleased(final double mouseX, final double mouseY, final int button) {
         volumePopup.mouseReleased();
-        if (popup != null) {
-            popup.mouseReleased(view.localX(mouseX), view.localY(mouseY), button);
+        if (notices.releasePopup(view.localX(mouseX), view.localY(mouseY), button)) {
             return true;
         }
         // Letting go ends the sweep; whatever it covered stays selected.
@@ -5242,7 +4887,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     @Override
     public boolean charTyped(final char c, final int modifiers) {
-        if (popup != null) {
+        if (notices.popupUp()) {
             return true;
         }
         // A desktop-icon rename captures typing before any window, until the name is as long as it may be.
@@ -5269,11 +4914,11 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     @Override
     public boolean keyFirst(final int key, final int scanCode, final int modifiers) {
         // Motif's keys for a window's menu come before the window's own program, as a window manager's do.
-        if (is(PanelStyle.CDE) && popup == null && !powerOpen
+        if (is(PanelStyle.CDE) && !notices.popupUp() && !power.isOpen()
                 && cdeWindowMenu.keyPressed(key, modifiers, frontWindow())) {
             return true;
         }
-        if (popup != null || powerOpen || deskMenu.isOpen() || taskMenu.isOpen() || deskFiles.isRenaming()
+        if (notices.popupUp() || power.isOpen() || deskMenu.isOpen() || taskMenu.isOpen() || deskFiles.isRenaming()
                 || startOpen) {
             return keyPressed(key, scanCode, modifiers);
         }
@@ -5284,27 +4929,15 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
         // A modal dialog swallows every key; Enter or Escape dismisses it, nothing leaks behind it.
-        if (popup != null) {
-            popup.keyPressed(key, scanCode, modifiers);
-            if (!popup.isOpen()) {
-                popup = null;
-            }
+        if (notices.keyPopup(key, scanCode, modifiers)) {
             return true;
         }
         if (key == 256 && volumePopup.isOpen()) { // Escape
             volumePopup.close();
             return true;
         }
-        /*
-         * The power dialog decides the fate of the whole machine, so it keeps the keyboard as it keeps the
-         * mouse: Escape thinks again, and on CDE Enter takes the button that wears the ring, Shut Down.
-         */
-        if (powerOpen) {
-            if (key == 256) {
-                powerOpen = false;
-            } else if (is(PanelStyle.CDE) && (key == 257 || key == 335)) {
-                sendPower(MachinePowerPayload.ACTION_SHUTDOWN);
-            }
+        // The power dialog decides the fate of the whole machine, so it keeps the keyboard as it keeps the mouse.
+        if (power.keyPressed(key)) {
             return true;
         }
         // The desktop's menu and a program's are walked with the arrows and left with Escape, like any menu.
@@ -5381,7 +5014,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     @Override
     public boolean keyReleased(final int key, final int scanCode, final int modifiers) {
         final DesktopWindow w = frontWindow();
-        if (popup == null && w != null && w.app().keyReleased(key, scanCode, modifiers)) {
+        if (!notices.popupUp() && w != null && w.app().keyReleased(key, scanCode, modifiers)) {
             return true;
         }
         return super.keyReleased(key, scanCode, modifiers);
@@ -5389,7 +5022,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     @Override
     public boolean mouseScrolled(final double mouseX, final double mouseY, final double dx, final double dy) {
-        if (popup != null) {
+        if (notices.popupUp()) {
             return true;
         }
         // The wheel over the speaker, or over its open control, turns the volume a step a notch.
@@ -5435,7 +5068,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return null;
     }
 
-    /** Whether the front (focused) window's app has a modal dialog open, in which case the desktop disables everything behind it. */
+    /** Whether the front window's program has a modal dialog open, which disables everything behind it. */
     private boolean focusModal() {
         final DesktopWindow f = frontWindow();
         return f != null && f.app().modalActive();
@@ -5731,7 +5364,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return;
         }
         final IDesktopApp app = factoryFor(key);
-        if (app != null && allowOpen(key)) {
+        if (app != null && memory.allowOpen(key)) {
             app.applySkin(prefs.skin());
             openApp(key, app);
         }
@@ -5745,7 +5378,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             }
         }
         final IDesktopApp app = factoryFor(key);
-        if (app != null && allowOpen(key)) {
+        if (app != null && memory.allowOpen(key)) {
             app.applySkin(prefs.skin());
             openApp(key, app);
         }
@@ -5757,7 +5390,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             requestRunAtTerminal(l.runs());
             return;
         }
-        if (allowOpen(l.key())) {
+        if (memory.allowOpen(l.key())) {
             openApp(l.key(), l.factory().get());
         }
     }

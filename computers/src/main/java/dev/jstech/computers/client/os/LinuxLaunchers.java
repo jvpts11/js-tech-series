@@ -136,7 +136,7 @@ final class LinuxLaunchers {
         final int bodyBot = y + h - KDE_FOOTER_H;
         if (my >= bodyBot) {
             if (mx >= x + w - desktop.textFont().width(words(DesktopTexts.START_SHUT_DOWN)) - 12) {
-                desktop.askToPowerOff();
+                desktop.power().open();
                 desktop.closeLauncher();
             }
             return true;

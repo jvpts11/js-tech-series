@@ -135,7 +135,7 @@ final class CdePanels {
             return false;
         }
         if (CdeFrontPanelLayout.exit(sw, sh).holds(mx, my)) {
-            desktop.askToPowerOff();
+            desktop.power().open();
             return true;
         }
         for (int i = 0; i < CdeFrontPanelLayout.WORKSPACES; i++) {

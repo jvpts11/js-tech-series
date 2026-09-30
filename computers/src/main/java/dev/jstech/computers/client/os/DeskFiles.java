@@ -79,7 +79,7 @@ final class DeskFiles implements CodeFileReplies.IReader {
         }
         final DiskFilesPayload.WireFile f = files.get(idx);
         if (f.readOnly()) {
-            desktop.showLocked();
+            desktop.notices().datLocked();
             return;
         }
         renaming = idx;
@@ -139,7 +139,7 @@ final class DeskFiles implements CodeFileReplies.IReader {
         }
         final DiskFilesPayload.WireFile f = files.get(idx);
         if (f.readOnly()) {
-            desktop.showLocked();
+            desktop.notices().datLocked();
             return;
         }
         DeskTrash.delete(desktop.hostPos(), List.of(f.path()));
@@ -174,7 +174,8 @@ final class DeskFiles implements CodeFileReplies.IReader {
 
     @Override
     public void onSaved(final boolean ok, final Text message) {
-        desktop.showBalloon(ok ? "67ark" : GameText.resolve(FilesTexts.COULD_NOT), GameText.resolve(message));
+        desktop.notices().showBalloon(ok ? "67ark" : GameText.resolve(FilesTexts.COULD_NOT),
+                GameText.resolve(message));
         FilesApps.diskChanged();
     }
 

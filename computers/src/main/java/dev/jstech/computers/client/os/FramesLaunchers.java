@@ -168,7 +168,7 @@ final class FramesLaunchers {
         } else {
             final int shutY = itemsTop + all.size() * DesktopScreen.MENU_ITEM_H + 6;
             if (my >= shutY && my <= shutY + DesktopScreen.MENU_ITEM_H) {
-                desktop.askToPowerOff();
+                desktop.power().open();
             }
         }
         desktop.closeLauncher();
@@ -227,7 +227,7 @@ final class FramesLaunchers {
         } else if (my >= bodyBot) {
             // The footer: log off leaves the machine, turn off asks the power dialog.
             if (mx >= desktop.xpFooterOff(x, w)) {
-                desktop.askToPowerOff();
+                desktop.power().open();
             } else if (mx >= desktop.xpFooterLog(x, w)) {
                 desktop.closeLauncher();
                 desktop.leaveDesktop();
@@ -277,7 +277,7 @@ final class FramesLaunchers {
         final int footY = y + h - DesktopScreen.W11_FOOTER_H;
         if (my >= footY) {
             if (mx >= x + w - 24) {
-                desktop.askToPowerOff();
+                desktop.power().open();
                 desktop.closeLauncher();
             }
             return true; // clicks elsewhere in the footer are absorbed, keeping the menu open
