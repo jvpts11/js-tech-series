@@ -8,16 +8,11 @@
 package dev.jstech.computers.client.os;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.audio.SoundOutput;
 import dev.jstech.computers.client.MachineKeyboard;
 import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
-import dev.jstech.computers.gui.TaskbarGroups;
-import dev.jstech.computers.gui.layout.CdeExitLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
-import dev.jstech.computers.gui.layout.CdeWindowIconLayout;
-import dev.jstech.computers.gui.layout.VolumePopupLayout;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
@@ -38,9 +33,7 @@ import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.WorkspaceSet;
-import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.fs.SystemLayout;
-import dev.jstech.core.client.gui.component.ContextMenu;
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
@@ -74,7 +67,7 @@ import org.jetbrains.annotations.Nullable;
  * delegated to {@link IDesktopApp} instances. Visual polish is tuned in-game.
  */
 public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
-        implements MachineKeyboard.ITakesKeysFirst {
+        implements MachineKeyboard.ITakesKeysFirst, DesktopInspection {
 
     private final BlockPos host;
     private final BlockPos monitorPos;
@@ -371,9 +364,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** Local cursor cached each frame, so menus drawn later in the frame can highlight the hovered entry. */
     private int hoverX;
     private int hoverY;
-    /** The key of the Workstation Info window, which a test reads. */
-    private static final String WORKSTATION_INFO_KEY =
-            WindowKeys.of(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "workstation_info"));
 
     /** The currently shown desktop is the one that receives desktop-folder listing replies. */
     @Nullable
@@ -501,12 +491,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         if (active != null) {
             active.notices.ask(title, message, null);
         }
-    }
-
-    /** The question or note up over the desktop, for a test to answer; null while none is. */
-    @Nullable
-    public QuestionPopup question() {
-        return notices.question();
     }
 
     /** Where this desktop sits on the game's screen, how big it draws, and the work area its panel leaves. */
@@ -932,21 +916,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         notices.dismissPopup();
     }
 
-    // inspection (client tests drive the desktop through the same hit areas the player clicks)
-
-    public boolean isStartOpen() {
-        return start.isOpen();
-    }
-
-    /** Screen position of the desktop's top-left corner: window and app geometry is relative to it. */
-    public int desktopX() {
-        return view.left();
-    }
-
-    public int desktopY() {
-        return view.top();
-    }
-
     /**
      * A rectangle an app drew, as it lands on the screen.
      *
@@ -960,405 +929,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                 (int) Math.round(w * view.scale()), (int) Math.round(h * view.scale()));
     }
 
-    /** Whether the panel's own menu is open. */
-    public boolean isPanelMenuOpen() {
-        return panelMenu.isOpen();
-    }
-
-    /** Whether a program's menu, the one its panel entry opens, is open. */
-    public boolean isTaskMenuOpen() {
-        return taskbar.menu().isOpen();
-    }
-
-    /**
-     * Screen position of the centre of the {@code index}-th panel entry, wherever this panel keeps its
-     * entries: centred on Frames 11, from the left on every other panel.
-     */
-    public int[] taskButtonPoint(final int index) {
-        final TaskStrip strip = taskbar.strip(view.width());
-        return index >= 0 && index < strip.entries().size() ? taskEntryPoint(strip.entries().get(index).key()) : null;
-    }
-
-    /**
-     * Screen position of the centre of the panel entry of the program {@code key}, or null when the
-     * panel has none for it. On Frames XP a pinned program with no window is its quick launch icon.
-     */
-    public int[] taskEntryPoint(final String key) {
-        final TaskStrip strip = taskbar.strip(view.width());
-        final int index = TaskbarGroups.indexOf(strip.entries(), keyFor(key));
-        if (index < 0) {
-            return null;
-        }
-        final int y = view.screenY(view.panelOnTop() ? TASKBAR_H / 2 : view.height() - TASKBAR_H / 2);
-        if (strip.w()[index] > 0) {
-            return new int[] {view.screenX(strip.x()[index] + strip.w()[index] / 2), y};
-        }
-        final int quick = strip.quickIndexOf(index);
-        return quick < 0 ? null
-                : new int[] {view.screenX(strip.quickX() + quick * TaskStrip.QL_W + TaskStrip.QL_W / 2), y};
-    }
-
-    /** The programs the panel lists, in order, by what they read as: the pinned ones first, then every open one. */
-    public List<String> taskEntryLabels() {
-        final List<String> out = new ArrayList<>();
-        for (final TaskbarGroups.Entry entry : taskbar.entries()) {
-            out.add(nameOf(entry.key()));
-        }
-        return out;
-    }
-
-    /** The programs pinned to the panel, by the label the panel shows them under. */
-    public List<String> pinnedLabels() {
-        final List<String> out = new ArrayList<>();
-        for (final String key : taskbar.pinnedKeys()) {
-            out.add(nameOf(key));
-        }
-        return out;
-    }
-
-    /** Whether the panel's popup (the windows of one program) is up. */
-    public boolean isTaskPopupOpen() {
-        return taskPopup.isOpen();
-    }
-
-    /** The titles the panel's popup lists, in order, empty when it is not up. */
-    public List<String> taskPopupTitles() {
-        return taskPopup.titles();
-    }
-
-    /** The desktop-local centre of the popup's {@code index}-th card or row, where a test clicks it. */
-    public int[] taskPopupItemPoint(final int index) {
-        return taskPopup.itemPoint(index);
-    }
-
-    /** The desktop-local centre of the popup's close box for its {@code index}-th window. */
-    public int[] taskPopupClosePoint(final int index) {
-        return taskPopup.closePoint(index);
-    }
-
-    /** The labels of the open program menu, in order, empty when none is up. */
-    public List<String> taskMenuLabels() {
-        final List<String> out = new ArrayList<>();
-        if (taskbar.menu().isOpen()) {
-            for (final ContextMenu.Item item : taskbar.menu().items()) {
-                out.add(item.label());
-            }
-        }
-        return out;
-    }
-
-    /** The desktop-local centre of the program menu's entry {@code label}, or null when it is not there. */
-    public int[] taskMenuPoint(final String label) {
-        final List<String> labels = taskMenuLabels();
-        final int index = labels.indexOf(label);
-        return index < 0 ? null : taskbar.menu().itemCenter(index);
-    }
-
-    /** The titles of the dialog windows up on the desktop, front-most last. */
-    public List<String> dialogTitles() {
-        final List<String> out = new ArrayList<>();
-        for (final DesktopWindow w : windows) {
-            if (w.dialog()) {
-                out.add(w.app().title());
-            }
-        }
-        return out;
-    }
-
-    /** The dialog window up over a window of the program {@code label}, or null. */
-    public DesktopWindow dialogWindowFor(final String label) {
-        final String key = keyFor(label);
-        for (int i = windows.size() - 1; i >= 0; i--) {
-            final DesktopWindow w = windows.get(i);
-            if (w.dialog() && w.groupKey().equals(key)) {
-                return w;
-            }
-        }
-        return null;
-    }
-
-    /** Screen position of the centre of the panel menu's {@code label} entry, or null when it is not there. */
-    @Nullable
-    public int[] panelMenuPoint(final String label) {
-        final int[] local = panelMenu.pointOf(label);
-        return local == null ? null : new int[] {view.screenX(local[0]), view.screenY(local[1])};
-    }
-
-    /** Screen position of the middle of one of the Front Panel's controls, under the arrow at its head. */
-    public int[] frontPanelPoint(final CdeFrontPanelLayout.Control control) {
-        final CdeFrontPanelLayout.Rect r = CdeFrontPanelLayout.control(control, view.width(), view.height());
-        return new int[] {view.screenX(r.x() + r.w() / 2), view.screenY(r.y() + CdeFrontPanelLayout.ARROW_H + (r.h()
-                - CdeFrontPanelLayout.ARROW_H) / 2)};
-    }
-
-    /** Screen position of the middle of the Front Panel's button for workspace {@code index}, from nought. */
-    public int[] workspacePoint(final int index) {
-        final CdeFrontPanelLayout.Rect r = CdeFrontPanelLayout.workspace(index, view.width(), view.height());
-        return new int[] {view.screenX(r.x() + r.w() / 2), view.screenY(r.y() + r.h() / 2)};
-    }
-
-    /** Screen position of a title-bar button (1 minimise, 2 maximise, 3 the way out) of the window so labelled. */
-    public int[] windowButtonPoint(final String label, final int button) {
-        final String key = keyFor(label);
-        for (final DesktopWindow w : windows) {
-            if (w.appKey().equals(key)) {
-                final int[] at = w.buttonCentre(button);
-                return new int[] {view.screenX(at[0]), view.screenY(at[1])};
-            }
-        }
-        return new int[] {0, 0};
-    }
-
-    /** Screen position of the arrow at the head of a Front Panel control, which raises what is behind it. */
-    public int[] frontPanelArrowPoint(final CdeFrontPanelLayout.Control control) {
-        final CdeFrontPanelLayout.Rect r = CdeFrontPanelLayout.control(control, view.width(), view.height());
-        return new int[] {view.screenX(r.x() + r.w() / 2), view.screenY(r.y() + CdeFrontPanelLayout.ARROW_H / 2 + 1)};
-    }
-
-    /** The name the Front Panel is showing over the control the pointer rests on, or empty while it shows none. */
-    public String frontPanelTip() {
-        return cdePanels.shownTip();
-    }
-
-    /** What the subpanel standing on the Front Panel lists, top to bottom, or nothing when none is up. */
-    public List<String> subpanelLabels() {
-        return cdeLaunchers.labels();
-    }
-
-    /** Screen position of the line so labelled on the subpanel that is up, or null. */
-    public int[] subpanelPoint(final String label) {
-        final int[] at = cdeLaunchers.rowCentre(label, view.width(), view.height());
-        return at == null ? null : screenPoint(at);
-    }
-
-    /** The names under the icons of the Application Manager window so titled, or nothing when it is not up. */
-    public List<String> applicationManagerNames(final String windowTitle) {
-        final DesktopWindow w = windowFor(windowTitle);
-        return w != null && w.app() instanceof ApplicationManagerApp app ? app.names() : List.of();
-    }
-
-    /** Screen position of the icon so named in the Application Manager window so titled, or null. */
-    public int[] applicationManagerPoint(final String windowTitle, final String name) {
-        final DesktopWindow w = windowFor(windowTitle);
-        final int[] at = w != null && w.app() instanceof ApplicationManagerApp app ? app.iconCentre(name) : null;
-        return at == null ? null : screenPoint(at);
-    }
-
-    /** What the Workstation Info window shows, as {@code label=value}, or nothing while it is not up. */
-    public List<String> workstationInfoFacts() {
-        final DesktopWindow w = windowFor(WORKSTATION_INFO_KEY);
-        return w != null && w.app() instanceof WorkstationInfoApp app ? app.shownFacts() : List.of();
-    }
-
-    /** CDE's look as the desktop is wearing it, as the machine would keep it. */
-    public String wornCdeStyle() {
-        return prefs.cdeStyle().encoded();
-    }
-
-    /** Screen position of a page on the Style Manager's strip, or null while the Style Manager is not up. */
-    public int[] styleManagerPagePoint(final String page) {
-        final StyleManagerApp manager = styleManager();
-        final int[] at = manager == null ? null : manager.pageCentre(page);
-        return at == null ? null : screenPoint(at);
-    }
-
-    /** Screen position of a palette on the Color page, or of a pattern on the Backdrop page, whichever is up. */
-    public int[] stylePageRowPoint(final String name) {
-        final StyleManagerApp manager = styleManager();
-        if (manager == null) {
-            return null;
-        }
-        int[] at = manager.colorPage() == null ? null : manager.colorPage().rowCentre(name);
-        if (at == null && manager.backdropPage() != null) {
-            at = manager.backdropPage().rowCentre(name);
-        }
-        return at == null ? null : screenPoint(at);
-    }
-
-    /** Screen position of a button of a Style Manager page: OK or Cancel on Color, Apply or Close on Backdrop. */
-    public int[] stylePageButtonPoint(final boolean color, final int button) {
-        final StyleManagerApp manager = styleManager();
-        if (manager == null) {
-            return null;
-        }
-        final int[] at = color
-                ? manager.colorPage() == null ? null : manager.colorPage().buttonCentre(button)
-                : manager.backdropPage() == null ? null : manager.backdropPage().buttonCentre(button);
-        return at == null ? null : screenPoint(at);
-    }
-
-    /**
-     * Screen position of a part of the Style Manager's Audio page: {@code mute}, {@code monitor}, {@code speakers},
-     * {@code ok}, {@code cancel}, or {@code scale} at the volume {@code value}; null while the page is not up.
-     */
-    @Nullable
-    public int[] styleAudioPoint(final String part, final int value) {
-        final StyleManagerApp manager = styleManager();
-        final CdeAudioPage page = manager == null ? null : manager.audioPage();
-        final int[] at = page == null ? null : page.partCentre(part, value);
-        return at == null ? null : screenPoint(at);
-    }
-
-    @Nullable
-    private StyleManagerApp styleManager() {
-        for (final DesktopWindow w : windows) {
-            if (w.app() instanceof StyleManagerApp manager) {
-                return manager;
-            }
-        }
-        return null;
-    }
-
-    /** Screen position of the middle of EXIT on the Front Panel. */
-    public int[] exitPoint() {
-        final CdeFrontPanelLayout.Rect r = CdeFrontPanelLayout.exit(view.width(), view.height());
-        return new int[] {view.screenX(r.x() + r.w() / 2), view.screenY(r.y() + r.h() / 2)};
-    }
-
-    /** Whether the dialog that shuts the machine down or restarts it is up. */
-    public boolean powerDialogOpen() {
-        return power.isOpen();
-    }
-
-    /** Screen position of a button of CDE's Exit dialog, by the numbers {@link CdeExitLayout} gives them. */
-    public int[] exitDialogPoint(final int button) {
-        final CdeFrontPanelLayout.Rect r = CdeExitLayout.button(button, view.width(), view.height());
-        return new int[] {view.screenX(r.x() + r.w() / 2), view.screenY(r.y() + r.h() / 2)};
-    }
-
-    /** What the window menu CDE has up lists, top to bottom, or nothing when none is up. */
-    public List<String> windowMenuLabels() {
-        return cdeWindowMenu.labels();
-    }
-
-    /** Screen position of the entry so labelled on the window menu that is up, or null. */
-    public int[] windowMenuPoint(final String label) {
-        final int[] at = cdeWindowMenu.entryCentre(label);
-        return at == null ? null : new int[] {view.screenX(at[0]), view.screenY(at[1])};
-    }
-
-    /** Screen position of the box of workspace {@code index} on the Occupy Workspace dialog that is up, or null. */
-    public int[] occupyBoxPoint(final int index) {
-        final OccupyWorkspaceDialog dialog = occupyDialog();
-        return dialog == null ? null : screenPoint(dialog.boxCentre(index));
-    }
-
-    /** Screen position of OK on the Occupy Workspace dialog that is up, or null. */
-    public int[] occupyOkPoint() {
-        final OccupyWorkspaceDialog dialog = occupyDialog();
-        return dialog == null ? null : screenPoint(dialog.okCentre());
-    }
-
-    /** The workspaces the window so labelled is on, counted from nought. */
-    public List<Integer> workspacesOf(final String label) {
-        final List<Integer> out = new ArrayList<>();
-        final String key = keyFor(label);
-        for (final DesktopWindow w : windows) {
-            if (!w.dialog() && w.appKey().equals(key)) {
-                for (int i = 0; i < WorkspaceSet.COUNT; i++) {
-                    if (w.on(i)) {
-                        out.add(i);
-                    }
-                }
-                break;
-            }
-        }
-        return out;
-    }
-
-    /** Screen position of the icon CDE stands the {@code index}-th put-away window of this workspace as. */
-    public int[] putAwayIconPoint(final int index) {
-        final CdeFrontPanelLayout.Rect tile = CdeWindowIconLayout.tile(index, view.width(), view.workAreaTop());
-        return new int[] {view.screenX(tile.x() + tile.w() / 2), view.screenY(tile.y() + tile.h() / 2)};
-    }
-
-    /** Which workspace is up, counted from nought. */
-    public int shownWorkspace() {
-        return wm.workspace();
-    }
-
-    /** The labels of the program windows that are on show: open, not put away, on the workspace that is up. */
-    public List<String> shownWindowLabels() {
-        final List<String> out = new ArrayList<>();
-        for (final DesktopWindow w : windows) {
-            if (!w.dialog() && !wm.away(w)) {
-                out.add(nameOf(w.appKey()));
-            }
-        }
-        return out;
-    }
-
-    /** What the title bars of the windows on show say. */
-    public List<String> shownWindowTitles() {
-        final List<String> out = new ArrayList<>();
-        for (final DesktopWindow w : windows) {
-            if (!wm.away(w)) {
-                out.add(titleOf(w));
-            }
-        }
-        return out;
-    }
-
     /** What a window is called on this desktop, on its title bar and wherever the panel lists it. */
     String titleOf(final DesktopWindow w) {
         return w.titleOn(chrome);
-    }
-
-    /** Screen position of a point on the panel clear of Start and of the task buttons: its empty stretch. */
-    public int[] emptyPanelPoint() {
-        return new int[] {view.screenX(taskbar.emptyX(view.width())),
-                view.screenY(view.height() - TASKBAR_H / 2)};
-    }
-
-    /** Where the speaker on the panel is, on the screen. */
-    public int[] speakerPoint() {
-        final boolean top = view.panelOnTop();
-        final int panelY = top ? 0 : view.height() - view.panelBand();
-        return new int[] {view.screenX(tray.speakerX(view.width(), top) + 4), view.screenY(panelY + TASKBAR_H / 2)};
-    }
-
-    /**
-     * Where a part of the open volume control is, on the screen: {@code track} at the volume {@code index},
-     * {@code mute}, {@code chevron}, {@code output} number {@code index}, or {@code footer}; null when it has none.
-     */
-    @Nullable
-    public int[] volumePoint(final String part, final int index) {
-        final int[] p = volumePopup.pointOf(part, index);
-        return p == null ? null : new int[] {view.screenX(p[0]), view.screenY(p[1])};
-    }
-
-    public boolean volumeControlOpen() {
-        return volumePopup.controlOpen();
-    }
-
-    public boolean volumeMenuOpen() {
-        return volumePopup.menuOpen();
-    }
-
-    /** The volume the panel shows, and whether it shows it muted. */
-    public int volumeShown() {
-        return volumePopup.volume();
-    }
-
-    public boolean mutedShown() {
-        return volumePopup.muted();
-    }
-
-    /** The volume control this desktop opens, by the name of its look, or empty on a desktop with none. */
-    public String volumeLook() {
-        final VolumePopupLayout.Look look = volumePopup.look();
-        return look == null ? "" : look.name();
-    }
-
-    /** The labels of the program windows this desktop has open (dialogs aside), back to front. */
-    public List<String> openWindowLabels() {
-        final List<String> out = new ArrayList<>();
-        for (final DesktopWindow w : windows) {
-            if (!w.dialog()) {
-                out.add(nameOf(w.appKey()));
-            }
-        }
-        return out;
     }
 
     /**
@@ -1462,33 +1035,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      */
     public static String windowName(final String key) {
         return active == null ? key : active.nameOf(key);
-    }
-
-    /** Screen coordinates of the Start button's centre. */
-    public int startButtonX() {
-        return view.screenX(is(PanelStyle.FRAMES_11) ? 4 + WIN11_SLOT / 2 : 30);
-    }
-
-    public int startButtonY() {
-        // GNOME's "Activities" launcher lives in the top bar; every other panel sits at the bottom.
-        return view.screenY(view.panelOnTop() ? TASKBAR_H / 2 : view.height() - TASKBAR_H / 2);
-    }
-
-    /** Screen coordinates of the centre of the {@code index}-th Start menu entry (valid while it is open). */
-    public int startMenuItemX() {
-        return view.screenX(start.itemX(-1));
-    }
-
-    /**
-     * Screen x of the centre of the {@code index}-th Start menu entry. Frames XP lays its entries in two
-     * columns (programs left, places right), so the column depends on the entry.
-     */
-    public int startMenuItemX(final int index) {
-        return view.screenX(start.itemX(index));
-    }
-
-    public int startMenuItemY(final int index) {
-        return view.screenY(start.itemY(index));
     }
 
     /**
@@ -1735,72 +1281,6 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         DesktopRequests.open(new OpenRequest.TypeAtTerminal(List.of(String.join("\n", lines).split("\n"))));
     }
 
-    /* What a test reads of the desktop's menu and its scale. */
-
-    /** Whether the desktop's right-click menu is up. */
-    public boolean deskMenuOpen() {
-        return deskMenu.isOpen();
-    }
-
-    /** The desktop-local centre of the desk menu's item {@code index}, where a test clicks it. */
-    public int[] deskMenuItemCenter(final int index) {
-        return deskMenu.itemCenter(index);
-    }
-
-    /** The labels of the desk menu's items, in order, so a test finds one by name. */
-    public List<String> deskMenuLabels() {
-        return deskMenu.labels();
-    }
-
-    /** The desktop-local centre of item {@code index} of the menu open beside the desk menu, or null when none is. */
-    public int[] deskSubmenuItemCenter(final int index) {
-        return deskMenu.submenuItemCenter(index);
-    }
-
-    /** The names of the files and folders on the desktop, as their icons read. */
-    public List<String> desktopItemNames() {
-        final List<String> out = new ArrayList<>();
-        for (final DiskFilesPayload.WireFile file : desktopItems) {
-            out.add(FsPaths.fileName(file.path()));
-        }
-        return out;
-    }
-
-    /** The names under the wallpaper's icons ahead of the files, in their order, the trash first where it stands. */
-    public List<String> deskIconLabels() {
-        final List<String> out = new ArrayList<>();
-        for (final Launcher l : catalogue.icons()) {
-            out.add(l.label());
-        }
-        return out;
-    }
-
-    /** The desktop-local middle of the wallpaper icon so named, a program's, the trash's or a file's; or null. */
-    @Nullable
-    public int[] deskIconPoint(final String name) {
-        final int icons = catalogue.icons().size();
-        for (int slot = 0; slot < icons + desktopItems.size(); slot++) {
-            final String label = slot < icons ? catalogue.icons().get(slot).label()
-                    : FsPaths.fileName(desktopItems.get(slot - icons).path());
-            if (label.equals(name)) {
-                return iconGrid.centreOf(slot);
-            }
-        }
-        return null;
-    }
-
-    /** The trash window that is up, or null while none is. */
-    @Nullable
-    public TrashApp trashWindow() {
-        final DesktopWindow open = windowFor(WindowKeys.TRASH);
-        return open != null && open.app() instanceof TrashApp app ? app : null;
-    }
-
-    /** The scale the desktop is drawn at, as a factor, which a test needs to land a click on a scaled desktop. */
-    public double desktopScale() {
-        return view.scale();
-    }
-
     /** Asks for the Properties window of a file on the desktop, which the explorer knows how to show. */
     public static void requestFileProperties(final String path) {
         DesktopRequests.open(new OpenRequest.Properties(path));
@@ -1892,38 +1372,11 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return input.scrolled(mouseX, mouseY, dy) || super.mouseScrolled(mouseX, mouseY, dx, dy);
     }
 
-    /** The Occupy Workspace dialog that is up, front-most first, or null. */
-    @Nullable
-    private OccupyWorkspaceDialog occupyDialog() {
-        for (int i = windows.size() - 1; i >= 0; i--) {
-            if (windows.get(i).app() instanceof OccupyWorkspaceDialog dialog) {
-                return dialog;
-            }
-        }
-        return null;
-    }
-
-    /** A desktop-local point as the screen position a click is given in. */
-    private int[] screenPoint(final int[] local) {
-        return new int[] {view.screenX(local[0]), view.screenY(local[1])};
-    }
-
     /** Lays the inventory's slots over the window in front once a tick, ahead of the next frame. */
     @Override
     protected void containerTick() {
         super.containerTick();
         band.sync();
-    }
-
-    /** The first window one of the machine's Σ# programs has open on this desktop, or null. */
-    @Nullable
-    public SigmaWindowApp programWindow() {
-        for (final DesktopWindow open : windows) {
-            if (open.app() instanceof SigmaWindowApp app) {
-                return app;
-            }
-        }
-        return null;
     }
 
     private static String trim(final String s, final int max) {
