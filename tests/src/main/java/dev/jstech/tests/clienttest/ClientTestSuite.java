@@ -51,6 +51,7 @@ public final class ClientTestSuite {
             MultipartModelClientTests.class,
             CableBlockClientTests.class,
             ItemStateClientTests.class,
+            DataRegistryClientTests.class,
             TaskbarClientTests.class,
             TerminalEditorClientTests.class,
             MekanismClientTests.class,

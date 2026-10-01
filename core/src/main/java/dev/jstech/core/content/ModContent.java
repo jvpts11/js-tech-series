@@ -21,12 +21,16 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -38,6 +42,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
+import net.neoforged.neoforge.registries.DataPackRegistryEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -45,7 +50,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * What one mod puts in the game, declared in one place: its blocks, its items and the components they carry, the
- * block entities its blocks make and its creative tabs.
+ * block entities its blocks make, its creative tabs and the registries datapacks fill.
  *
  * <p>A block or an item is declared once, with everything about it, and nothing else lists it again: the
  * generator writes its block state, models, name, loot and tags from the declaration, the tab shows it from the
@@ -68,6 +73,7 @@ public final class ModContent {
     private final List<DeferredHolder<BlockEntityType<?>, ? extends BlockEntityType<?>>> declaredBlockEntities =
             new ArrayList<>();
     private final List<CableEntry> declaredCables = new ArrayList<>();
+    private final List<Consumer<DataPackRegistryEvent.NewRegistry>> datapackRegistries = new ArrayList<>();
     private @Nullable DeferredRegister<CableType> cables;
     private DeferredRegister.@Nullable DataComponents components;
 
@@ -206,6 +212,18 @@ public final class ModContent {
                 .networkSynchronized(streamCodec));
     }
 
+    /**
+     * Declares a registry whose entries come from datapacks, each a file under
+     * {@code data/<namespace>/<modid>/<name>/}, read with {@code codec} when a world loads and sent to every player
+     * as they join; read its entries from the level's registries with the key this gives.
+     */
+    public <T> ResourceKey<Registry<T>> datapackRegistry(final String name, final Codec<T> codec) {
+        final ResourceKey<Registry<T>> key =
+                ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath(modid, name));
+        datapackRegistries.add(event -> event.dataPackRegistry(key, codec, codec));
+        return key;
+    }
+
     /** Hands the registrations to the mod's event bus; call it once, after every declaration class has loaded. */
     public void register(final IEventBus modEventBus) {
         Arrays.asList(blocks, items, blockEntities, tabs, sounds).forEach(register -> register.register(modEventBus));
@@ -214,6 +232,10 @@ public final class ModContent {
         }
         if (components != null) {
             components.register(modEventBus);
+        }
+        if (!datapackRegistries.isEmpty()) {
+            modEventBus.addListener(DataPackRegistryEvent.NewRegistry.class,
+                    event -> datapackRegistries.forEach(registry -> registry.accept(event)));
         }
         modEventBus.addListener(RegisterCapabilitiesEvent.class, this::giveItemsTheirCapabilities);
         modEventBus.addListener(ModifyDefaultComponentsEvent.class, this::giveItemsTheirComponents);

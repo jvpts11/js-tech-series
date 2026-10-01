@@ -33,7 +33,8 @@ public final class IndustrialRecipeMachinesGameTests {
     @GameTest(template = ARENA)
     public static void recipeMachines_industrialDataMapsItsMachines(final GameTestHelper helper) {
         // Read the data afresh: another test may have replaced the map in memory.
-        RecipeMachines.reload(helper.getLevel().getServer().getResourceManager());
+        RecipeMachines.reload(helper.getLevel().getServer().getResourceManager(),
+                helper.getLevel().registryAccess());
 
         helper.assertTrue(RecipeMachines.machinesFor("jsindustrial:macerating").equals(List.of("jsindustrial:macerator")),
                 "macerating runs on the Macerator; got " + RecipeMachines.machinesFor("jsindustrial:macerating"));

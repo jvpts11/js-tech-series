@@ -106,6 +106,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   holds stacks takes no other item that does. The new Change Item Mode key moves the item in the main hand on to its
   next mode, or back one with shift held, and says the new mode on the action bar; it has no key until the player
   gives it one.
+- Content from datapacks, in J's Core. A mod declares a registry of JSON files, every file under
+  `data/<namespace>/<folder>/` one value read with its codec, read again whenever the server reloads its data; a file
+  that does not read is left out with a line in the log saying why. A synced one is sent to every player as they
+  join and after every reload, and their game keeps it apart from the server's. A mod can also declare a registry
+  datapacks fill, sent to every player with the world's registries.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,
@@ -543,6 +548,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   error a lower version gives for what came after it, and the line the choice wrote.
 
 ### Changed
+- The `recipe_machines` files that tell the Pattern Studio which machines run which recipe types are read by the
+  Core's registry of datapack files: a file with a value that is neither a machine id nor a list of them is now left
+  out whole, with a line in the log saying why.
 - J's Computers' four data cables (Ethernet, HBW, High Compute and Crafting) are laid in the Core's shared cable
   block, each in the lane of its line: access top left, backbone top middle, compute in the middle and crafting
   middle right. They are items now rather than blocks of their own, drawn four pixels thick in their new jackets with
