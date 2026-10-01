@@ -9,9 +9,10 @@ package dev.jstech.tests.clienttest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.part.ComputingParts;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.cable.Cables;
+import dev.jstech.core.client.model.CableBakedModel;
 import dev.jstech.core.client.model.ConnectedBakedModel;
-import dev.jstech.core.client.model.MultipartBakedModel;
 import dev.jstech.core.connect.ConnectedQuadrants;
 import dev.jstech.tests.JsTestsClient;
 import dev.jstech.tests.TestBlocks;
@@ -47,23 +48,22 @@ public final class MultipartModelClientTests {
     @ClientTest(timeoutTicks = 400)
     public static void cable_drawsItsBusInTheWorldMesh(final ClientTestContext ctx) {
         ctx.thenTeleport(0, STAND, Direction.SOUTH)
-                .thenServer(0, level -> level.setBlockAndUpdate(ctx.abs(CABLE),
-                        ComputingModule.ETHERNET_CABLE.get().defaultBlockState()))
-                .thenServer(2, level -> ((DataCableBlockEntity) level.getBlockEntity(ctx.abs(CABLE)))
+                .thenServer(0, level -> Cables.lay(level, ctx.abs(CABLE), ComputingModule.ETHERNET_CABLE.get()))
+                .thenServer(2, level -> ((CableBlockEntity) level.getBlockEntity(ctx.abs(CABLE)))
                         .addPart(Direction.NORTH, ComputingParts.IMPORT.get().create()))
                 .thenWaitUntil(() -> {
-                    final DataCableBlockEntity cable = clientCable(ctx);
+                    final CableBlockEntity cable = clientCable(ctx);
                     return cable != null && cable.partType(Direction.NORTH) == ComputingParts.IMPORT.get();
                 }, 60, "the player's game to know the bus on the cable")
                 .thenAssert(2, () -> {
-                    final DataCableBlockEntity cable = clientCable(ctx);
+                    final CableBlockEntity cable = clientCable(ctx);
                     final BlockState state = cable.getBlockState();
                     final BakedModel model = ctx.mc().getBlockRenderer().getBlockModel(state);
                     final int bare = model.getQuads(state, null, RandomSource.create(0L), ModelData.EMPTY,
                             RenderType.cutout()).size();
                     final int drawn = model.getQuads(state, null, RandomSource.create(0L), cable.getModelData(),
                             RenderType.cutout()).size();
-                    return model instanceof MultipartBakedModel && drawn > bare;
+                    return model instanceof CableBakedModel && drawn > bare;
                 }, "the bus's quads drawn with the cable's own")
                 .thenScreenshot(5, "cable-with-bus")
                 .thenServer(0, level -> level.removeBlock(ctx.abs(CABLE), false));
@@ -101,8 +101,8 @@ public final class MultipartModelClientTests {
                 });
     }
 
-    private static @Nullable DataCableBlockEntity clientCable(final ClientTestContext ctx) {
-        return ctx.mc().level != null && ctx.mc().level.getBlockEntity(ctx.abs(CABLE)) instanceof DataCableBlockEntity
+    private static @Nullable CableBlockEntity clientCable(final ClientTestContext ctx) {
+        return ctx.mc().level != null && ctx.mc().level.getBlockEntity(ctx.abs(CABLE)) instanceof CableBlockEntity
                 cable ? cable : null;
     }
 

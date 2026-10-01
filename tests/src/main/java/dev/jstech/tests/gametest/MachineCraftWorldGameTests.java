@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -42,11 +43,11 @@ public final class MachineCraftWorldGameTests {
     @GameTest(template = ARENA, timeoutTicks = 100)
     public static void craftingCable_dropsItsItemWhenBroken(final GameTestHelper helper) {
         final BlockPos pos = new BlockPos(2, 2, 2);
-        helper.setBlock(pos, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, pos, ComputingModule.CRAFTING_CABLE);
         helper.startSequence()
                 .thenExecute(() -> helper.getLevel().destroyBlock(helper.absolutePos(pos), true))
                 .thenExecuteAfter(2, () -> helper.assertItemEntityPresent(
-                        ComputingModule.CRAFTING_CABLE.item(), pos, 2.0))
+                        ComputingModule.CRAFTING_CABLE.asItem(), pos, 2.0))
                 .thenSucceed();
     }
 }

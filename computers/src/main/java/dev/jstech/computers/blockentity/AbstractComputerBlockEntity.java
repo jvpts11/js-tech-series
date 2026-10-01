@@ -70,8 +70,6 @@ import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.connect.IFaceConnector;
-import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.peripheral.IPeripheralOwnerSupport;
@@ -1292,11 +1290,6 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         } else if (level != null && level.isClientSide()) {
             MachineSoundSources.untrack(sounds);
         }
-    }
-
-    protected boolean acceptsTier(final DataTier tier) {
-        return getBlockState().getBlock() instanceof IFaceConnector device
-                && device.lines().contains(DataLines.of(tier).line());
     }
 
     /** The Σ# programs this machine is running. */

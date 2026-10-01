@@ -79,6 +79,16 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Models put together as the game runs, in J's Core: a multipart block draws its parts and the pieces of its wires on
   top of its own model, and a block can have faces that run on into the blocks it joins, drawn from five tiles a
   quarter of a face at a time. Both are drawn into the world's mesh, built again only when a block changes.
+- The shared cable block, in J's Core: every mod's cables are laid in one block, each line in a lane of its own on a
+  grid of three by three, and the wires of one block never join one another. A wire crosses a face alone in the
+  middle and beside others in its lane; where a wire changes place, or two would cross inside the block, the block
+  becomes a junction box the wires enter and leave each in its place. A cable dyed one of the sixteen colours wears a
+  ring of it on every block and joins only its own colour and the uncoloured, which joins every colour. A cable that
+  never shares a block, as a long-distance line does, holds its block alone. Using a cable on a cable block lays it
+  there when its lane is free, and against the face clicked otherwise or while sneaking; breaking takes out only the
+  wire or the part looked at, the block going with its last piece; a dye colours the wire looked at. A mod declares
+  its cables with its content, each with its line, its lane, its thickness, how much it carries, how far it reaches,
+  its jacket and the plug it ends in where it meets a device that takes it.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,
@@ -516,6 +526,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   error a lower version gives for what came after it, and the line the choice wrote.
 
 ### Changed
+- J's Computers' four data cables (Ethernet, HBW, High Compute and Crafting) are laid in the Core's shared cable
+  block, each in the lane of its line: access top left, backbone top middle, compute in the middle and crafting
+  middle right. They are items now rather than blocks of their own, drawn four pixels thick in their new jackets with
+  the plug of their kind where they meet a device, and they can share a block. The buses mount on any cable block that
+  holds a data or a crafting cable, on a face no wire crosses. A world's old cable blocks are gone from it.
 - The buses on a cable are drawn with the cable in the world's mesh, rather than on their own every frame, and their
   faces are shaded as they are turned.
 - A data cable beside a rack cabinet shows a connection only on the cabinet's back, where the cabinet links its

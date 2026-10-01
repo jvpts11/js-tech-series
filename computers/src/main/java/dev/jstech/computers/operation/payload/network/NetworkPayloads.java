@@ -9,7 +9,6 @@ package dev.jstech.computers.operation.payload.network;
 
 import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
@@ -36,6 +35,7 @@ import dev.jstech.computers.operation.payload.SetBusNamePayload;
 import dev.jstech.computers.operation.payload.StorageInsightsPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.format.Unit;
 import dev.jstech.core.format.UnitFormatter;
 import dev.jstech.core.network.NetworkSystem;
@@ -109,7 +109,7 @@ public final class NetworkPayloads {
     private static void handleSetBusName(final SetBusNamePayload payload, final AbstractBusMenu menu,
                                          final ServerPlayer player, final ServerLevel level) {
         if (menu.face().get3DDataValue() == payload.face()
-                && level.getBlockEntity(menu.cablePos()) instanceof DataCableBlockEntity cable
+                && level.getBlockEntity(menu.cablePos()) instanceof CableBlockEntity cable
                 && cable.getPart(menu.face()) instanceof AbstractBusPart bus) {
             bus.setName(payload.name());
             menu.setBusNameLocal(bus.name());

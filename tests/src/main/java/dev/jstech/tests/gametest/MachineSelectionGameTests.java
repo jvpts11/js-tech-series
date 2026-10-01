@@ -10,12 +10,12 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.part.InputBusPart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.ProcessingPattern;
-import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -61,14 +61,14 @@ public final class MachineSelectionGameTests {
                                     final net.minecraft.world.item.Item filter) {
         final BlockPos above = furnace.above();
         final BlockPos below = furnace.below();
-        helper.setBlock(above, ComputingModule.CRAFTING_CABLE.get());
-        helper.setBlock(below, ComputingModule.CRAFTING_CABLE.get());
-        if (helper.getBlockEntity(above) instanceof DataCableBlockEntity cable) {
+        TestCables.lay(helper, above, ComputingModule.CRAFTING_CABLE);
+        TestCables.lay(helper, below, ComputingModule.CRAFTING_CABLE);
+        if (helper.getBlockEntity(above) instanceof CableBlockEntity cable) {
             final InputBusPart in = new InputBusPart();
             cable.addPart(Direction.DOWN, in);
             in.setFilter(new ItemStack(filter));
         }
-        if (helper.getBlockEntity(below) instanceof DataCableBlockEntity cable) {
+        if (helper.getBlockEntity(below) instanceof CableBlockEntity cable) {
             cable.addPart(Direction.UP, new ReceivingBusPart());
         }
     }
@@ -81,7 +81,7 @@ public final class MachineSelectionGameTests {
         final BlockPos sw = new BlockPos(5, 2, 4);
         final BlockPos furnaceA = new BlockPos(5, 2, 5); // south face of the switch
         final BlockPos furnaceB = new BlockPos(6, 2, 4); // east face of the switch
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(furnaceA, Blocks.FURNACE);
         helper.setBlock(furnaceB, Blocks.FURNACE);

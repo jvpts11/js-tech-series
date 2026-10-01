@@ -14,6 +14,7 @@ import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
 import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -52,15 +53,15 @@ public final class GridGameTests {
     @GameTest(template = ARENA)
     public static void dataCables_standInTheDataGridAsTheirTier(final GameTestHelper helper) {
         final BlockPos first = new BlockPos(1, 2, 1);
-        helper.setBlock(first, ComputingModule.ETHERNET_CABLE.get());
-        helper.setBlock(first.east(), ComputingModule.ETHERNET_CABLE.get());
-        helper.setBlock(first.east(2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, first, ComputingModule.ETHERNET_CABLE);
+        TestCables.lay(helper, first.east(), ComputingModule.ETHERNET_CABLE);
+        TestCables.lay(helper, first.east(2), ComputingModule.HBW_CABLE);
 
         helper.succeedWhen(() -> {
             final Grid data = CoreGrids.of(helper.getLevel(), GridKind.DATA);
-            final long a = helper.absolutePos(first).asLong();
-            final long b = helper.absolutePos(first.east()).asLong();
-            final long c = helper.absolutePos(first.east(2)).asLong();
+            final long a = TestCables.dataNumber(helper, first).orElse(-1L);
+            final long b = TestCables.dataNumber(helper, first.east()).orElse(-1L);
+            final long c = TestCables.dataNumber(helper, first.east(2)).orElse(-1L);
             helper.assertTrue(data.contains(a) && data.contains(b) && data.contains(c), "every cable in the grid");
             helper.assertTrue(data.connected(a, b), "two Ethernet cables join");
             helper.assertTrue(!data.connected(b, c), "Ethernet and HBW stay apart");

@@ -12,7 +12,6 @@ import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.block.part.InputBusPart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
@@ -28,6 +27,7 @@ import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.tests.JsTests;
@@ -115,19 +115,19 @@ public final class OperationCancelGameTests {
     private static TestWorldBuilder.CraftingNetwork furnaceRig(final GameTestHelper helper,
                                                                final TestWorldBuilder world) {
         final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
-        world.setBlock(new BlockPos(5, 2, 3), ComputingModule.CRAFTING_CABLE.get());
+        world.setBlock(new BlockPos(5, 2, 3), ComputingModule.CRAFTING_CABLE);
         world.setBlock(new BlockPos(5, 2, 4), ComputingModule.CRAFTING_SWITCH.get());
         world.setBlock(FURNACE, Blocks.FURNACE);
-        world.setBlock(new BlockPos(5, 3, 5), ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(new BlockPos(5, 1, 5), ComputingModule.CRAFTING_CABLE.get());
+        world.setBlock(new BlockPos(5, 3, 5), ComputingModule.CRAFTING_CABLE);
+        world.setBlock(new BlockPos(5, 1, 5), ComputingModule.CRAFTING_CABLE);
         return net;
     }
 
     private static void wireFurnaceBuses(final TestWorldBuilder world) {
-        if (world.getBlockEntity(new BlockPos(5, 3, 5)) instanceof DataCableBlockEntity c) {
+        if (world.getBlockEntity(new BlockPos(5, 3, 5)) instanceof CableBlockEntity c) {
             c.addPart(Direction.DOWN, new InputBusPart());
         }
-        if (world.getBlockEntity(new BlockPos(5, 1, 5)) instanceof DataCableBlockEntity c) {
+        if (world.getBlockEntity(new BlockPos(5, 1, 5)) instanceof CableBlockEntity c) {
             c.addPart(Direction.UP, new ReceivingBusPart());
         }
     }
@@ -184,9 +184,9 @@ public final class OperationCancelGameTests {
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final MainframeBlockEntity mainframe = world.placeRunningMainframe(MAINFRAME);
-        world.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        world.setBlock(hbw, ComputingModule.HBW_CABLE);
         world.setBlock(router, ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(eth, ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(eth, ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity computer = world.placeRunningPersonalComputer(pc);
         world.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));

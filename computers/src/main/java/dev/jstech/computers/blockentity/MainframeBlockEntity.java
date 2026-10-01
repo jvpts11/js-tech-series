@@ -42,7 +42,6 @@ import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.IFieldPart;
-import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.FailoverRole;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.operation.OperationBalance;
@@ -514,11 +513,6 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     @Override
     public Set<Long> networkCables(final ServerLevel level) {
         return networking.adjacentCables(level);
-    }
-
-    /** Whether a cable of that tier is one this Mainframe will talk over. */
-    boolean acceptsDataTier(final DataTier tier) {
-        return acceptsTier(tier);
     }
 
     // Operation dispatch (the virtual-thread runtime)

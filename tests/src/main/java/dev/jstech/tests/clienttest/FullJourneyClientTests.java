@@ -178,8 +178,8 @@ public final class FullJourneyClientTests {
                 .thenPlace(1, MAINFRAME)
                 .thenWaitUntilServer(level -> level.getBlockEntity(abs(ctx, MAINFRAME)) instanceof MainframeBlockEntity,
                         SCREEN_WAIT, "the Mainframe to be placed", level -> "block=" + level.getBlockState(abs(ctx, MAINFRAME)))
-                .thenGive(0, new ItemStack(ComputingModule.HBW_CABLE.get(), 4), new ItemStack(ComputingModule.PERSONAL_ROUTER.get()),
-                        new ItemStack(ComputingModule.ETHERNET_CABLE.get(), 4))
+                .thenGive(0, ComputingModule.HBW_CABLE.stack(4), new ItemStack(ComputingModule.PERSONAL_ROUTER.get()),
+                        ComputingModule.ETHERNET_CABLE.stack(4))
                 .thenTeleport(SETTLE, new BlockPos(4, 2, 0), Direction.SOUTH)
                 .then(SETTLE, () -> ctx.selectHotbar(0))
                 .thenPlace(1, HBW_1)
@@ -453,7 +453,7 @@ public final class FullJourneyClientTests {
                 .thenAwaitNoScreen(SCREEN_WAIT);
 
         // 8. The machine: switch, crafting cables, a furnace hung off the run with both buses, and coal.
-        ctx.thenGive(0, new ItemStack(ComputingModule.CRAFTING_CABLE.get(), 8), new ItemStack(ComputingModule.CRAFTING_SWITCH.get()),
+        ctx.thenGive(0, ComputingModule.CRAFTING_CABLE.stack(8), new ItemStack(ComputingModule.CRAFTING_SWITCH.get()),
                         new ItemStack(Items.FURNACE), new ItemStack(ComputingModule.INPUT_BUS_ITEM.get()),
                         new ItemStack(ComputingModule.RECEIVING_BUS_ITEM.get()), new ItemStack(Items.COAL, 8))
                 .thenTeleport(SETTLE, new BlockPos(9, 2, 4), Direction.WEST)

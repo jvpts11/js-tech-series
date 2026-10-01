@@ -20,6 +20,7 @@ import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.blockentity.AbstractMachineBlockEntity;
@@ -262,7 +263,7 @@ public final class BigBaseScenario {
     private static Built buildWide(final TestWorldBuilder world, final Params params) {
         final MainframeBlockEntity mainframe = placeMainframe(world, params, new BlockPos(W_MAINFRAME_X, Y, W_BACKBONE_Z));
         for (int x = W_BACKBONE_X0; x <= W_BACKBONE_X1; x++) {
-            world.setBlock(new BlockPos(x, Y, W_BACKBONE_Z), ComputingModule.HBW_CABLE.get());
+            world.setBlock(new BlockPos(x, Y, W_BACKBONE_Z), ComputingModule.HBW_CABLE);
         }
         final List<ServerRackBlockEntity> serverRacks = new ArrayList<>();
         for (int r = 0; r < params.routers(); r++) {
@@ -275,7 +276,7 @@ public final class BigBaseScenario {
             final int hx = W_HUB_X0 + s * PITCH;
             world.setBlock(new BlockPos(hx, Y, W_NORTH_ROW_Z), ComputingModule.HBW_INTERFACE.get());
             hubs.add(world.blockEntity(new BlockPos(hx, Y, W_NORTH_ROW_Z), HbwInterfaceBlockEntity.class));
-            nodeRacks.addAll(placeCabinetRow(world, ComputingModule.HPC_CABLE.get(), ComputingModule.SUPERCOMPUTER_RACK.get(),
+            nodeRacks.addAll(placeCabinetRow(world, ComputingModule.HPC_CABLE, ComputingModule.SUPERCOMPUTER_RACK.get(),
                     hx, W_NORTH_ROW_Z - 1, Direction.NORTH, params.nodeRacksPerSupercomputer(), BigBaseScenario::seatNodes));
         }
         final List<PersonalComputerBlockEntity> pcs = new ArrayList<>();
@@ -296,14 +297,14 @@ public final class BigBaseScenario {
         final MainframeBlockEntity mainframe =
                 placeMainframe(world, params, new BlockPos(D_CONNECTOR_X - 1, Y, D_BACKBONE_A_Z));
         for (int x = D_CONNECTOR_X; x <= D_BACKBONE_X1; x++) {
-            world.setBlock(new BlockPos(x, Y, D_BACKBONE_A_Z), ComputingModule.HBW_CABLE.get());
-            world.setBlock(new BlockPos(x, Y, D_BACKBONE_B_Z), ComputingModule.HBW_CABLE.get());
+            world.setBlock(new BlockPos(x, Y, D_BACKBONE_A_Z), ComputingModule.HBW_CABLE);
+            world.setBlock(new BlockPos(x, Y, D_BACKBONE_B_Z), ComputingModule.HBW_CABLE);
         }
         for (int z = D_BACKBONE_A_Z + 1; z < D_BACKBONE_B_Z; z++) {
-            world.setBlock(new BlockPos(D_CONNECTOR_X, Y, z), ComputingModule.HBW_CABLE.get());
+            world.setBlock(new BlockPos(D_CONNECTOR_X, Y, z), ComputingModule.HBW_CABLE);
         }
         for (int x = D_CONNECTOR_X + 1; x <= D_BACKBONE_X1; x++) {
-            world.setBlock(new BlockPos(x, Y, D_SPINE_Z), ComputingModule.HBW_CABLE.get());
+            world.setBlock(new BlockPos(x, Y, D_SPINE_Z), ComputingModule.HBW_CABLE);
         }
         /*
          * Four rows of sections: both sides of each backbone. The row facing the spine is kept short so
@@ -329,8 +330,8 @@ public final class BigBaseScenario {
             world.setBlock(new BlockPos(hx, Y, D_SPINE_Z + 1), ComputingModule.HBW_INTERFACE.get());
             hubs.add(world.blockEntity(new BlockPos(hx, Y, D_SPINE_Z + 1), HbwInterfaceBlockEntity.class));
             for (int j = 1; j <= params.nodeRacksPerSupercomputer(); j++) {
-                world.setBlock(new BlockPos(hx + 2 * j - 1, Y, D_SPINE_Z + 1), ComputingModule.HPC_CABLE.get());
-                world.setBlock(new BlockPos(hx + 2 * j, Y, D_SPINE_Z + 1), ComputingModule.HPC_CABLE.get());
+                world.setBlock(new BlockPos(hx + 2 * j - 1, Y, D_SPINE_Z + 1), ComputingModule.HPC_CABLE);
+                world.setBlock(new BlockPos(hx + 2 * j, Y, D_SPINE_Z + 1), ComputingModule.HPC_CABLE);
                 final ServerRackBlockEntity rack = placeCabinet(world, ComputingModule.SUPERCOMPUTER_RACK.get(),
                         new BlockPos(hx + 2 * j, Y, D_SPINE_Z + 3), Direction.SOUTH);
                 seatNodes(rack);
@@ -372,7 +373,7 @@ public final class BigBaseScenario {
         // The router's back is its uplink: it faces away from the backbone, so its back meets the cable.
         world.setBlock(new BlockPos(rx, Y, routerZ), ComputingModule.SERVER_ROUTER.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, away));
-        return placeCabinetRow(world, ComputingModule.HBW_CABLE.get(), ComputingModule.SERVER_RACK.get(), rx,
+        return placeCabinetRow(world, ComputingModule.HBW_CABLE, ComputingModule.SERVER_RACK.get(), rx,
                 routerZ + away.getStepZ(), away, racks, rack -> {
                     for (int slot = 0; slot < params.serversPerRack(); slot++) {
                         final int row = params.chassis() == Chassis.STORAGE ? slot * 2 : slot;
@@ -396,7 +397,7 @@ public final class BigBaseScenario {
      * whose rear meets a cable at {@code x} has its controller two blocks off the cable, and the two sides
      * are staggered by one so their footprints tile the cable without touching.
      */
-    private static List<ServerRackBlockEntity> placeCabinetRow(final TestWorldBuilder world, final Block cable,
+    private static List<ServerRackBlockEntity> placeCabinetRow(final TestWorldBuilder world, final CableEntry cable,
                                                                final Block rackBlock, final int x, final int start,
                                                                final Direction away, final int count,
                                                                final IRackFiller filler) {
@@ -453,7 +454,7 @@ public final class BigBaseScenario {
      */
     private static BlockPos placeDesk(final TestWorldBuilder world, final int x, final int z, final Direction toward) {
         world.setBlock(new BlockPos(x, Y, z), ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(new BlockPos(x, Y, z).relative(toward), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(x, Y, z).relative(toward), ComputingModule.ETHERNET_CABLE);
         return new BlockPos(x, Y, z).relative(toward, 2);
     }
 
@@ -467,7 +468,7 @@ public final class BigBaseScenario {
     /** A crafting cable, a Crafting Switch and a Compressor in a line from the computer, in the given direction. */
     private static AbstractMachineBlockEntity placeMachineLine(final TestWorldBuilder world, final BlockPos computer,
                                                                final Direction away) {
-        world.setBlock(computer.relative(away, 1), ComputingModule.CRAFTING_CABLE.get());
+        world.setBlock(computer.relative(away, 1), ComputingModule.CRAFTING_CABLE);
         world.setBlock(computer.relative(away, 2), ComputingModule.CRAFTING_SWITCH.get());
         world.setBlock(computer.relative(away, 3), IndustrialModule.COMPRESSOR.get());
         return world.blockEntity(computer.relative(away, 3), AbstractMachineBlockEntity.class);

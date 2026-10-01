@@ -8,21 +8,15 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.block.DataCableBlock;
-import dev.jstech.core.network.ConnectivityIndex;
-import dev.jstech.core.network.INetworkBridge;
+import dev.jstech.computers.block.DataWires;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
-import dev.jstech.core.network.NetworkSystem;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.HashSet;
-import java.util.Set;
-
 /**
- * BlockEntity backing the Personal Router.
+ * BlockEntity backing the Personal Router: a whole block of the data grid that joins every data wire crossing into
+ * it, so the access and the backbone it touches are one network.
  */
 public class PersonalRouterBlockEntity extends SyncedBlockEntity {
 
@@ -34,23 +28,7 @@ public class PersonalRouterBlockEntity extends SyncedBlockEntity {
     public void onLoad() {
         super.onLoad();
         if (level instanceof ServerLevel serverLevel) {
-            final ConnectivityIndex index = NetworkSystem.get(serverLevel).connectivity();
-            final long encodedPos = worldPosition.asLong();
-            if (!index.contains(encodedPos)) {
-                index.onCablePlaced(encodedPos, bridgeNeighbors(serverLevel));
-            }
+            DataWires.placeRouter(serverLevel, worldPosition);
         }
-    }
-
-    private Set<Long> bridgeNeighbors(final ServerLevel serverLevel) {
-        final Set<Long> neighbors = new HashSet<>();
-        for (final Direction direction : Direction.values()) {
-            final BlockPos neighborPos = worldPosition.relative(direction);
-            final var block = serverLevel.getBlockState(neighborPos).getBlock();
-            if (block instanceof DataCableBlock || block instanceof INetworkBridge) {
-                neighbors.add(neighborPos.asLong());
-            }
-        }
-        return neighbors;
     }
 }

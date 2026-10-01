@@ -61,13 +61,13 @@ public final class ShellCoverageGameTests {
     private static Fleet wire(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final MainframeBlockEntity mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         final ServerRackBlockEntity rack = world.placeSeededRack(new BlockPos(2, 2, 1));
         rack.getServerStorage(0).insert(Items.OAK_LOG, 640);
         world.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity lab = world.placeRunningPersonalComputer(new BlockPos(5, 2, 2));
-        world.setBlock(new BlockPos(4, 2, 3), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(4, 2, 3), ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity desk = world.placeRunningPersonalComputer(new BlockPos(5, 2, 3));
         lab.console().setComputerName("lab");
         desk.console().setComputerName("desk");
@@ -225,7 +225,7 @@ public final class ShellCoverageGameTests {
     public static void packages_aptUpgradeBringsPackagesUpAndAptUpdateOnlyReads(final GameTestHelper helper) {
         final Fleet fleet = wire(helper);
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
-        world.setBlock(new BlockPos(4, 2, 4), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(4, 2, 4), ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity linux = world.placeRunningPersonalComputer(new BlockPos(5, 2, 4),
                 ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "ubuntu"));
         helper.startSequence()

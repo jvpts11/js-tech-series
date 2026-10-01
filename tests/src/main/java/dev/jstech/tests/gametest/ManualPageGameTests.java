@@ -56,9 +56,9 @@ public final class ManualPageGameTests {
                                                        final ResourceLocation system) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         world.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity computer = world.placeRunningPersonalComputer(new BlockPos(5, 2, 2));
         computer.installOs(system);
         return computer;

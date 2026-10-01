@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -41,7 +42,7 @@ public final class CraftingSwitchGameTests {
         final BlockPos machine = new BlockPos(4, 2, 3);
 
         helper.setBlock(computer, ComputingModule.CRAFTING_COMPUTER.get());
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(machine, IndustrialModule.MACERATOR.get());
 
@@ -79,7 +80,7 @@ public final class CraftingSwitchGameTests {
         final BlockPos machine = new BlockPos(4, 2, 3);
 
         helper.setBlock(computer, ComputingModule.CRAFTING_COMPUTER.get());
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(machine, IndustrialModule.MACERATOR.get());
 

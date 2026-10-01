@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers;
 
-import dev.jstech.core.client.model.CoreModels;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -26,10 +25,5 @@ public class JsComputersClient {
          * Accessed via the Mods menu > J's Computers > Config.
          */
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
-        // The data cables draw the buses on their faces in the world's mesh, with their own model.
-        CoreModels.multipart(ComputingModule.ETHERNET_CABLE);
-        CoreModels.multipart(ComputingModule.HBW_CABLE);
-        CoreModels.multipart(ComputingModule.HPC_CABLE);
-        CoreModels.multipart(ComputingModule.CRAFTING_CABLE);
     }
 }

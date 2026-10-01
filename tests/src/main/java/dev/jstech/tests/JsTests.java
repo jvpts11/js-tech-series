@@ -36,6 +36,8 @@ public final class JsTests {
         // The sounds the tests play through the series' sound system, on files the game already has.
         TestBlocks.declare();
         TestSounds.CONTENT.register(modEventBus);
+        // A cable that never shares a block, to show the shared block refusing it company.
+        TestCableTypes.register(modEventBus);
         // A state of every scope, on both sides, since the client tests watch them arrive.
         TestStates.register();
         if (GameTestHooks.isGametestServer()) {

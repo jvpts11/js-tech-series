@@ -9,7 +9,6 @@ package dev.jstech.computers.block.part;
 
 import com.mojang.logging.LogUtils;
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.menu.ImportBusMenu;
 import dev.jstech.computers.operation.MoveLabels;
@@ -17,6 +16,7 @@ import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.persistence.SavedValue;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -54,7 +54,7 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
 
     @Override
     public AbstractContainerMenu createMenu(final int containerId, final Inventory inventory,
-                                            final DataCableBlockEntity cable, final Direction mountedFace) {
+                                            final CableBlockEntity cable, final Direction mountedFace) {
         return ImportBusMenu.create(containerId, inventory, cable, mountedFace);
     }
 
@@ -76,13 +76,13 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
             flushedAmount = 0L;
             ticksSinceFlush = 0;
         }
-        final ServerLevel level = host.serverLevel();
+        final ServerLevel level = serverLevel();
         if (level == null) {
             return;
         }
-        final NetworkUuid network = host.network();
+        final NetworkUuid network = network();
         linked = network != null;
-        final MainframeBlockEntity mainframe = network == null ? null : host.mainframe();
+        final MainframeBlockEntity mainframe = network == null ? null : mainframe();
         ticksSinceFlush++;
         // Redstone mode holds off pulling new data; an already-buffered payload still flushes below.
         final boolean pulling = !redstoneBlocked();

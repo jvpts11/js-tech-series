@@ -12,11 +12,13 @@ import java.util.Map;
 
 /**
  * The grids of one dimension, one of each kind but data, whose grid is the data network's own and carries the
- * identity of each network. Nothing here is saved: the cables put themselves back as they load.
+ * identity of each network, and the numbers every grid of the dimension knows its places by. Nothing here is saved:
+ * the cables put themselves back as they load.
  */
 public final class LevelGrids {
 
     private final Map<GridKind, Grid> grids = new EnumMap<>(GridKind.class);
+    private final GridPlaces places = new GridPlaces();
 
     /** The grid of {@code kind}, which is never data. */
     public Grid of(final GridKind kind) {
@@ -24,5 +26,10 @@ public final class LevelGrids {
             throw new IllegalArgumentException("the data grid is the network's own, kept with the network");
         }
         return this.grids.computeIfAbsent(kind, key -> new Grid());
+    }
+
+    /** The numbers the dimension's grids know their places by, the data grid's included. */
+    public GridPlaces places() {
+        return this.places;
     }
 }

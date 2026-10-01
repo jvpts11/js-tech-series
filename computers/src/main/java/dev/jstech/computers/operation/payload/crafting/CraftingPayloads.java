@@ -10,7 +10,6 @@ package dev.jstech.computers.operation.payload.crafting;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.os.CraftPlannerApp;
 import dev.jstech.computers.client.os.NetworkInteractorApp;
@@ -36,6 +35,7 @@ import dev.jstech.computers.operation.payload.crafting.CraftPlanMath.PlanPreview
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.operation.IOperationResult;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.operation.OperationStatus;
@@ -434,7 +434,7 @@ public final class CraftingPayloads {
         if (!discovered) {
             return;
         }
-        if (level.getBlockEntity(payload.cablePos()) instanceof DataCableBlockEntity cable
+        if (level.getBlockEntity(payload.cablePos()) instanceof CableBlockEntity cable
                 && cable.getPart(Direction.from3DDataValue(payload.busFace())) instanceof AbstractBusPart bus) {
             bus.setName(payload.name());
         }

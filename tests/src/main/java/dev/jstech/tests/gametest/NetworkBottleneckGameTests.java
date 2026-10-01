@@ -14,6 +14,7 @@ import dev.jstech.core.network.ConnectivityIndex;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.Optional;
 import java.util.Set;
@@ -88,19 +89,20 @@ public final class NetworkBottleneckGameTests {
     private static Base wire(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final MainframeBlockEntity mainframe = world.placeRunningMainframe(MAINFRAME);
-        world.setBlock(EAST_HBW, ComputingModule.HBW_CABLE.get());
+        world.setBlock(EAST_HBW, ComputingModule.HBW_CABLE);
         world.setBlock(EAST_ROUTER, ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(new BlockPos(5, 2, 4), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(5, 2, 4), ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity east = world.placeRunningPersonalComputer(new BlockPos(5, 2, 5));
-        world.setBlock(WEST_HBW, ComputingModule.HBW_CABLE.get());
+        world.setBlock(WEST_HBW, ComputingModule.HBW_CABLE);
         world.setBlock(new BlockPos(1, 2, 3), ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(new BlockPos(1, 2, 4), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(1, 2, 4), ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity west = world.placeRunningPersonalComputer(new BlockPos(1, 2, 5));
         return new Base(mainframe, east, west);
     }
 
+    /* The number the data grid knows the block at {@code relative} by: its wire, or the whole block of a router. */
     private static long encoded(final GameTestHelper helper, final BlockPos relative) {
-        return helper.absolutePos(relative).asLong();
+        return TestCables.dataNumber(helper, relative).orElse(Long.MIN_VALUE);
     }
 
     /** The Mainframe in the middle and the computer on each side of it. */

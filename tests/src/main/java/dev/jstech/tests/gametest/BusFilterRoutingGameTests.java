@@ -9,12 +9,12 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.part.ImportBusPart;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.storage.CompositeDataPort;
 import dev.jstech.computers.storage.IDataPort;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.FilteredDataPort;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -108,13 +108,13 @@ public final class BusFilterRoutingGameTests {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final BlockPos cablePos = new BlockPos(5, 2, 3);
         final BlockPos tankPos = new BlockPos(5, 2, 4); // south of the cable; its front (north) faces the cable
-        world.setBlock(cablePos, ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(cablePos, ComputingModule.ETHERNET_CABLE);
         final Block tank = BuiltInRegistries.BLOCK.get(CHEMICAL_TANK);
         world.placeFromItem(tankPos, tank);
 
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    if (!(helper.getBlockEntity(cablePos) instanceof DataCableBlockEntity cable)) {
+                    if (!(helper.getBlockEntity(cablePos) instanceof CableBlockEntity cable)) {
                         helper.fail("no data cable at " + cablePos);
                         return;
                     }
@@ -122,7 +122,8 @@ public final class BusFilterRoutingGameTests {
                      * The tank offers a chemical face toward the cable but no inventory there, so the old
                      * item-only auto-placement would have missed it. It is the cable's only data neighbor.
                      */
-                    helper.assertTrue(!cable.neighborPort(Direction.SOUTH).isEmpty(),
+                    helper.assertTrue(!ExternalDataPort.at(helper.getLevel(), helper.absolutePos(tankPos),
+                                    Direction.NORTH).isEmpty(),
                             "the cable must see the tank's chemical face as a data neighbor");
 
                     /*

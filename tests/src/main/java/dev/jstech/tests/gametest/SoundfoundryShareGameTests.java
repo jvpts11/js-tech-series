@@ -237,13 +237,13 @@ public final class SoundfoundryShareGameTests {
     private static Base wire(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final MainframeBlockEntity mainframe = world.placeRunningMainframe(new BlockPos(3, 2, 3));
-        world.setBlock(new BlockPos(4, 2, 3), ComputingModule.HBW_CABLE.get());
+        world.setBlock(new BlockPos(4, 2, 3), ComputingModule.HBW_CABLE);
         world.setBlock(new BlockPos(5, 2, 3), ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(new BlockPos(5, 2, 4), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(5, 2, 4), ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity sharer = world.placeRunningPersonalComputer(new BlockPos(5, 2, 5));
-        world.setBlock(new BlockPos(2, 2, 3), ComputingModule.HBW_CABLE.get());
+        world.setBlock(new BlockPos(2, 2, 3), ComputingModule.HBW_CABLE);
         world.setBlock(new BlockPos(1, 2, 3), ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(new BlockPos(1, 2, 4), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(1, 2, 4), ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity asker = world.placeRunningPersonalComputer(new BlockPos(1, 2, 5));
         sharer.console().install(Programs.SOUNDFOUNDRY.toString());
         asker.console().install(Programs.SOUNDFOUNDRY.toString());

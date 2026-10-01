@@ -8,7 +8,6 @@
 package dev.jstech.computers.operation.payload.interactor;
 
 import dev.jstech.computers.block.part.AbstractBusPart;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.os.NetworkInteractorApp;
@@ -23,6 +22,8 @@ import dev.jstech.computers.operation.payload.NetworkItemEntry;
 import dev.jstech.computers.operation.payload.RequestItemDetailPayload;
 import dev.jstech.computers.operation.payload.RequestItemRecipesPayload;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.cable.Cables;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
 import dev.jstech.core.text.Text;
@@ -136,12 +137,11 @@ public final class ItemInfoPayloads {
 
         // Which buses filter it: walk the network's cable positions and read each bus's filter.
         final List<ItemDetailPayload.BusRef> buses = new ArrayList<>();
-        for (final long posLong : system.connectivity().positionsOf(network)) {
+        for (final BlockPos cablePos : Cables.blocksOf(level, system.connectivity().positionsOf(network))) {
             if (buses.size() >= ItemDetailPayload.MAX_BUSES) {
                 break;
             }
-            if (!(level.getBlockEntity(BlockPos.of(posLong))
-                    instanceof DataCableBlockEntity cable)) {
+            if (!(level.getBlockEntity(cablePos) instanceof CableBlockEntity cable)) {
                 continue;
             }
             for (final Direction dir : Direction.values()) {

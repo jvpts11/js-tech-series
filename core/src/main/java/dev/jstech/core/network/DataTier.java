@@ -8,6 +8,7 @@
 package dev.jstech.core.network;
 
 import dev.jstech.core.id.IStableName;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Canonical tiers for data network cables.
@@ -60,5 +61,15 @@ public enum DataTier implements IStableName {
     /** The id of this tier's line, as the Core's grids and ports name it: {@code jscore:data/<tier>}. */
     public String line() {
         return "jscore:data/" + serializedName;
+    }
+
+    /** The tier whose line is {@code line}, or null when no tier's is. */
+    public static @Nullable DataTier ofLine(final @Nullable String line) {
+        for (final DataTier tier : values()) {
+            if (tier.line().equals(line)) {
+                return tier;
+            }
+        }
+        return null;
     }
 }

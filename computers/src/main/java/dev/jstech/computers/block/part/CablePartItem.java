@@ -8,11 +8,12 @@
 package dev.jstech.computers.block.part;
 
 import dev.jstech.computers.advancement.JscEvents;
-import dev.jstech.computers.block.DataCableBlock;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.computers.block.DataWires;
+import dev.jstech.computers.storage.ExternalDataPort;
+import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.cable.Cables;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.PartType;
-import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
@@ -86,12 +87,11 @@ public class CablePartItem extends Item {
         final BlockPos clicked = context.getClickedPos();
 
         /*
-         * Clicked a data cable directly: mount on it (clicked face, snapping to an adjacent
+         * Clicked a cable directly: mount on it (clicked face, snapping to an adjacent
          * inventory when there is exactly one).
          */
-        if (level.getBlockState(clicked).getBlock() instanceof DataCableBlock
-                && level.getBlockEntity(clicked) instanceof DataCableBlockEntity cable) {
-            return place(context, cable, chooseFace(cable, context.getClickedFace()));
+        if (level.getBlockEntity(clicked) instanceof CableBlockEntity cable) {
+            return place(context, cable, chooseFace(level, cable, context.getClickedFace()));
         }
 
         /*
@@ -118,16 +118,14 @@ public class CablePartItem extends Item {
                                                final Direction toCable) {
         final Level level = context.getLevel();
         final BlockPos cablePos = clicked.relative(toCable);
-        if (level.getBlockState(cablePos).getBlock() instanceof DataCableBlock
-                && level.getBlockEntity(cablePos) instanceof DataCableBlockEntity cable
-                && !cable.hasPart(toCable.getOpposite())) {
+        if (level.getBlockEntity(cablePos) instanceof CableBlockEntity cable && free(cable, toCable.getOpposite())) {
             // The cable's face pointing back at the clicked block is toCable's opposite.
             return place(context, cable, toCable.getOpposite());
         }
         return InteractionResult.PASS;
     }
 
-    private InteractionResult place(final UseOnContext context, final DataCableBlockEntity cable,
+    private InteractionResult place(final UseOnContext context, final CableBlockEntity cable,
                                     @Nullable final Direction face) {
         if (face == null) {
             return InteractionResult.PASS; // every candidate face is taken
@@ -136,12 +134,13 @@ public class CablePartItem extends Item {
         /*
          * Crafting buses belong on crafting cables and storage buses on data cables. A storage bus on a
          * crafting cable would autonomously move items the crafting engine is accounting for (and vice versa
-         * the crafting buses are inert), so a mismatched mount is refused with a hint instead.
+         * the crafting buses are inert), so a mismatched mount is refused with a hint instead. A block that
+         * holds both takes both.
          */
         final boolean craftingPart = ComputingParts.isCrafting(type.get());
-        final boolean craftingCable =
-                cable.tier() == DataTier.CRAFTING;
-        if (craftingPart != craftingCable) {
+        final boolean fits = craftingPart ? DataWires.holds(cable, DataWires::isCrafting)
+                : DataWires.holds(cable, DataWires::isNetwork);
+        if (!fits) {
             if (!level.isClientSide() && context.getPlayer() != null) {
                 context.getPlayer().displayClientMessage(
                         GameText.component(craftingPart ? ON_CRAFTING_CABLES : ON_DATA_CABLES), true);
@@ -163,15 +162,15 @@ public class CablePartItem extends Item {
     }
 
     @Nullable
-    private static Direction chooseFace(final DataCableBlockEntity cable, final Direction clicked) {
-        if (!cable.hasPart(clicked) && !cable.neighborPort(clicked).isEmpty()) {
+    private static Direction chooseFace(final Level level, final CableBlockEntity cable, final Direction clicked) {
+        if (free(cable, clicked) && !port(level, cable, clicked).isEmpty()) {
             return clicked;
         }
         Direction firstFree = null;
         Direction dataFace = null;
         int dataCount = 0;
         for (final Direction direction : Direction.values()) {
-            if (cable.hasPart(direction)) {
+            if (!free(cable, direction)) {
                 continue;
             }
             if (firstFree == null) {
@@ -182,7 +181,7 @@ public class CablePartItem extends Item {
              * fluid- or chemical-only machine face (e.g. a chemical tank side) snaps the bus the same way an
              * inventory does, now that buses carry every kind of data.
              */
-            if (!cable.neighborPort(direction).isEmpty()) {
+            if (!port(level, cable, direction).isEmpty()) {
                 dataFace = direction;
                 dataCount++;
             }
@@ -190,23 +189,36 @@ public class CablePartItem extends Item {
         if (dataCount == 1) {
             return dataFace;
         }
-        if (!cable.hasPart(clicked)) {
+        if (free(cable, clicked)) {
             return clicked;
         }
         return firstFree;
     }
 
+    /* A face a bus can go on: no part there, and no wire crossing it, which a bus would cut. */
+    private static boolean free(final CableBlockEntity cable, final Direction face) {
+        return !cable.hasPart(face) && cable.wiresThrough(face).isEmpty();
+    }
+
+    /* What the block beyond {@code face} holds, as a bus there would reach it; nothing on a player's game. */
+    private static ExternalDataPort port(final Level level, final CableBlockEntity cable, final Direction face) {
+        if (!(level instanceof ServerLevel server)) {
+            return new ExternalDataPort(null, null);
+        }
+        return ExternalDataPort.at(server, cable.getBlockPos().relative(face), face.getOpposite());
+    }
+
     /* An Import Bus and an Export Bus on one network: items now come in and go out on their own. */
-    private void reportPair(final ServerLevel level, final DataCableBlockEntity placedOn, final Player player) {
+    private void reportPair(final ServerLevel level, final CableBlockEntity placedOn, final Player player) {
         final PartType<?> other = type.get() == ComputingParts.IMPORT.get()
                 ? ComputingParts.EXPORT.get() : ComputingParts.IMPORT.get();
         final NetworkSystem system = NetworkSystem.get(level);
-        final NetworkUuid network = system.connectivity().networkOf(placedOn.getBlockPos().asLong()).orElse(null);
+        final NetworkUuid network = DataWires.networkOf(placedOn);
         if (network == null) {
             return;
         }
-        for (final long encoded : system.connectivity().positionsOf(network)) {
-            if (level.getBlockEntity(BlockPos.of(encoded)) instanceof DataCableBlockEntity cable) {
+        for (final BlockPos pos : Cables.blocksOf(level, system.connectivity().positionsOf(network))) {
+            if (level.getBlockEntity(pos) instanceof CableBlockEntity cable) {
                 for (final Direction face : Direction.values()) {
                     final IFacePart part = cable.getPart(face);
                     if (part != null && part.type() == other) {

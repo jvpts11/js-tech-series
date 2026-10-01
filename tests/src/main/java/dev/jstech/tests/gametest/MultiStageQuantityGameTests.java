@@ -10,13 +10,13 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.part.InputBusPart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.MultiStagePattern;
 import dev.jstech.computers.crafting.NetworkMultiStageOperation;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -78,19 +78,19 @@ public final class MultiStageQuantityGameTests {
     public static void multiStage_smeltsOnlyWhatTheBenchStageConsumes(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
-        world.setBlock(new BlockPos(5, 2, 3), ComputingModule.CRAFTING_CABLE.get());
+        world.setBlock(new BlockPos(5, 2, 3), ComputingModule.CRAFTING_CABLE);
         world.setBlock(new BlockPos(5, 2, 4), ComputingModule.CRAFTING_SWITCH.get());
         world.setBlock(FURNACE, Blocks.FURNACE);
-        world.setBlock(new BlockPos(5, 3, 5), ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(new BlockPos(5, 1, 5), ComputingModule.CRAFTING_CABLE.get());
+        world.setBlock(new BlockPos(5, 3, 5), ComputingModule.CRAFTING_CABLE);
+        world.setBlock(new BlockPos(5, 1, 5), ComputingModule.CRAFTING_CABLE);
         final NetworkMultiStageOperation[] op = new NetworkMultiStageOperation[1];
 
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    if (world.getBlockEntity(new BlockPos(5, 3, 5)) instanceof DataCableBlockEntity c) {
+                    if (world.getBlockEntity(new BlockPos(5, 3, 5)) instanceof CableBlockEntity c) {
                         c.addPart(Direction.DOWN, new InputBusPart());
                     }
-                    if (world.getBlockEntity(new BlockPos(5, 1, 5)) instanceof DataCableBlockEntity c) {
+                    if (world.getBlockEntity(new BlockPos(5, 1, 5)) instanceof CableBlockEntity c) {
                         c.addPart(Direction.UP, new ReceivingBusPart());
                     }
                     // Only ONE raw iron in the network: a stage sized with the final "9" could never finish.

@@ -11,14 +11,15 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -529,7 +530,7 @@ public final class CraftingGameTests {
         helper.setBlock(hub, ComputingModule.HBW_INTERFACE.get());
         for (int i = 1; i <= nodes; i++) {
             final BlockPos cable = hub.east(i);
-            helper.setBlock(cable, ComputingModule.HPC_CABLE.get());
+            TestCables.lay(helper, cable, ComputingModule.HPC_CABLE);
             /*
              * Above the cable, not beside it: the fixtures' computers and cables occupy the row in
              * front, and a rack dropped there would overwrite them.
@@ -712,7 +713,7 @@ public final class CraftingGameTests {
         final BlockPos cable = new BlockPos(5, 2, 3);
         final BlockPos sw = new BlockPos(5, 2, 4);
         final BlockPos machine = new BlockPos(5, 2, 5);
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(machine, dev.jstech.industrial.IndustrialModule.COMPRESSOR.get());
         final String machineType = BuiltInRegistries.BLOCK.getKey(
@@ -757,7 +758,7 @@ public final class CraftingGameTests {
         final BlockPos cable = new BlockPos(5, 2, 3);
         final BlockPos sw = new BlockPos(5, 2, 4);
         final BlockPos machine = new BlockPos(5, 2, 5);
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(machine, dev.jstech.industrial.IndustrialModule.COMPRESSOR.get());
         final String machineType = BuiltInRegistries.BLOCK.getKey(
@@ -798,7 +799,7 @@ public final class CraftingGameTests {
         final BlockPos cable = new BlockPos(5, 2, 3);
         final BlockPos sw = new BlockPos(5, 2, 4);
         final BlockPos machine = new BlockPos(5, 2, 5);
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(machine, dev.jstech.industrial.IndustrialModule.COMPRESSOR.get());
         final String machineType = BuiltInRegistries.BLOCK.getKey(
@@ -841,7 +842,7 @@ public final class CraftingGameTests {
         final BlockPos cable = new BlockPos(5, 2, 3);
         final BlockPos sw = new BlockPos(5, 2, 4);
         final BlockPos machine = new BlockPos(5, 2, 5);
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(machine, dev.jstech.industrial.IndustrialModule.COMPRESSOR.get());
         final String machineType = BuiltInRegistries.BLOCK.getKey(
@@ -924,7 +925,7 @@ public final class CraftingGameTests {
         final BlockPos cable = new BlockPos(5, 2, 3);
         final BlockPos sw = new BlockPos(5, 2, 4);
         final BlockPos machine = new BlockPos(5, 2, 5);
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(machine, dev.jstech.industrial.IndustrialModule.COMPRESSOR.get());
         final String machineType = BuiltInRegistries.BLOCK.getKey(
@@ -973,7 +974,7 @@ public final class CraftingGameTests {
         final BlockPos cable = new BlockPos(5, 2, 3);
         final BlockPos sw = new BlockPos(5, 2, 4);
         final BlockPos machine = new BlockPos(5, 2, 5);
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(machine, dev.jstech.industrial.IndustrialModule.COMPRESSOR.get());
         final String machineType = BuiltInRegistries.BLOCK.getKey(
@@ -1052,7 +1053,7 @@ public final class CraftingGameTests {
         final BlockPos cable = new BlockPos(5, 2, 3);
         final BlockPos sw = new BlockPos(5, 2, 4);
         final BlockPos machine = new BlockPos(5, 2, 5);
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(machine, dev.jstech.industrial.IndustrialModule.COMPRESSOR.get());
         final String machineType = BuiltInRegistries.BLOCK.getKey(
@@ -1146,7 +1147,7 @@ public final class CraftingGameTests {
         final BlockPos cable = new BlockPos(5, 2, 3);
         final BlockPos sw = new BlockPos(5, 2, 4);
         final BlockPos machine = new BlockPos(5, 2, 5);
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(machine, dev.jstech.industrial.IndustrialModule.COMPRESSOR.get());
         final String machineType = BuiltInRegistries.BLOCK.getKey(
@@ -1212,7 +1213,7 @@ public final class CraftingGameTests {
         final BlockPos cable = new BlockPos(5, 2, 3);
         final BlockPos sw = new BlockPos(5, 2, 4);
         final BlockPos machine = new BlockPos(5, 2, 5);
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(machine, dev.jstech.industrial.IndustrialModule.COMPRESSOR.get());
         final String machineType = BuiltInRegistries.BLOCK.getKey(
@@ -1250,7 +1251,7 @@ public final class CraftingGameTests {
         final BlockPos cable = new BlockPos(5, 2, 3);
         final BlockPos sw = new BlockPos(5, 2, 4);
         final BlockPos machine = new BlockPos(5, 2, 5);
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(machine, dev.jstech.industrial.IndustrialModule.COMPRESSOR.get());
         final String machineType = BuiltInRegistries.BLOCK.getKey(
@@ -1293,7 +1294,7 @@ public final class CraftingGameTests {
         final BlockPos cable = new BlockPos(5, 2, 3);
         final BlockPos sw = new BlockPos(5, 2, 4);
         final BlockPos machine = new BlockPos(5, 2, 5);
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(machine, dev.jstech.industrial.IndustrialModule.COMPRESSOR.get());
         final String machineType = BuiltInRegistries.BLOCK.getKey(
@@ -1329,7 +1330,7 @@ public final class CraftingGameTests {
         final BlockPos cable = new BlockPos(5, 2, 3);
         final BlockPos sw = new BlockPos(5, 2, 4);
         final BlockPos machine = new BlockPos(5, 2, 5);
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(machine, dev.jstech.industrial.IndustrialModule.COMPRESSOR.get());
         final String machineType = BuiltInRegistries.BLOCK.getKey(
@@ -1364,7 +1365,7 @@ public final class CraftingGameTests {
         final BlockPos cable = new BlockPos(5, 2, 3);
         final BlockPos sw = new BlockPos(5, 2, 4);
         final BlockPos machine = new BlockPos(5, 2, 5);
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(machine, dev.jstech.industrial.IndustrialModule.COMPRESSOR.get());
         final String machineType = BuiltInRegistries.BLOCK.getKey(
@@ -1417,7 +1418,7 @@ public final class CraftingGameTests {
         final BlockPos cable = new BlockPos(5, 2, 3);
         final BlockPos sw = new BlockPos(5, 2, 4);
         final BlockPos machine = new BlockPos(5, 2, 5);
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(machine, dev.jstech.industrial.IndustrialModule.COMPRESSOR.get());
         final String machineType = BuiltInRegistries.BLOCK.getKey(
@@ -1520,7 +1521,7 @@ public final class CraftingGameTests {
         final BlockPos cable = new BlockPos(5, 2, 3);
         final BlockPos sw = new BlockPos(5, 2, 4);
         final BlockPos machine = new BlockPos(5, 2, 5);
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(machine, dev.jstech.industrial.IndustrialModule.COMPRESSOR.get());
         final String machineType = BuiltInRegistries.BLOCK.getKey(
@@ -1561,23 +1562,23 @@ public final class CraftingGameTests {
         final BlockPos furnace = new BlockPos(6, 2, 6);  // beside the far cable, never touching the switch
         final BlockPos cableAbove = new BlockPos(6, 3, 6);
         final BlockPos cableBelow = new BlockPos(6, 1, 6);
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
-        helper.setBlock(cable2, ComputingModule.CRAFTING_CABLE.get());
-        helper.setBlock(cable3, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable2, ComputingModule.CRAFTING_CABLE);
+        TestCables.lay(helper, cable3, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(furnace, Blocks.FURNACE);
-        helper.setBlock(cableAbove, ComputingModule.CRAFTING_CABLE.get());
-        helper.setBlock(cableBelow, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cableAbove, ComputingModule.CRAFTING_CABLE);
+        TestCables.lay(helper, cableBelow, ComputingModule.CRAFTING_CABLE);
         // Bridge cables so the bus cables are part of the switch's cable run (a continuous circuit).
-        helper.setBlock(new BlockPos(5, 3, 6), ComputingModule.CRAFTING_CABLE.get());
-        helper.setBlock(new BlockPos(5, 1, 6), ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, new BlockPos(5, 3, 6), ComputingModule.CRAFTING_CABLE);
+        TestCables.lay(helper, new BlockPos(5, 1, 6), ComputingModule.CRAFTING_CABLE);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    if (helper.getBlockEntity(cableAbove) instanceof DataCableBlockEntity c) {
+                    if (helper.getBlockEntity(cableAbove) instanceof CableBlockEntity c) {
                         c.addPart(Direction.DOWN,
                                 new dev.jstech.computers.block.part.InputBusPart());
                     }
-                    if (helper.getBlockEntity(cableBelow) instanceof DataCableBlockEntity c) {
+                    if (helper.getBlockEntity(cableBelow) instanceof CableBlockEntity c) {
                         c.addPart(Direction.UP,
                                 new dev.jstech.computers.block.part.ReceivingBusPart());
                     }
@@ -1632,18 +1633,18 @@ public final class CraftingGameTests {
         final BlockPos furnace = new BlockPos(5, 2, 5); // the switch touches a SIDE face, which accepts nothing
         final BlockPos cableAbove = new BlockPos(5, 3, 5); // Input Bus faces the furnace TOP (its input face)
         final BlockPos cableBelow = new BlockPos(5, 1, 5); // Receiving Bus faces its BOTTOM (its output face)
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(furnace, Blocks.FURNACE);
-        helper.setBlock(cableAbove, ComputingModule.CRAFTING_CABLE.get());
-        helper.setBlock(cableBelow, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cableAbove, ComputingModule.CRAFTING_CABLE);
+        TestCables.lay(helper, cableBelow, ComputingModule.CRAFTING_CABLE);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    if (helper.getBlockEntity(cableAbove) instanceof DataCableBlockEntity c) {
+                    if (helper.getBlockEntity(cableAbove) instanceof CableBlockEntity c) {
                         c.addPart(Direction.DOWN,
                                 new dev.jstech.computers.block.part.InputBusPart());
                     }
-                    if (helper.getBlockEntity(cableBelow) instanceof DataCableBlockEntity c) {
+                    if (helper.getBlockEntity(cableBelow) instanceof CableBlockEntity c) {
                         c.addPart(Direction.UP,
                                 new dev.jstech.computers.block.part.ReceivingBusPart());
                     }
@@ -1756,7 +1757,7 @@ public final class CraftingGameTests {
         final BlockPos cable = new BlockPos(5, 2, 3);
         final BlockPos sw = new BlockPos(5, 2, 4);
         final BlockPos machine = new BlockPos(5, 2, 5);
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(machine, dev.jstech.industrial.IndustrialModule.COMPRESSOR.get());
         final String machineType = BuiltInRegistries.BLOCK.getKey(
@@ -1863,7 +1864,7 @@ public final class CraftingGameTests {
         final BlockPos cable = new BlockPos(5, 2, 3);
         final BlockPos sw = new BlockPos(5, 2, 4);
         final BlockPos machine = new BlockPos(5, 2, 5);
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
         helper.setBlock(machine, dev.jstech.industrial.IndustrialModule.COMPRESSOR.get());
         final String machineType = BuiltInRegistries.BLOCK.getKey(
@@ -1922,22 +1923,22 @@ public final class CraftingGameTests {
         final BlockPos furnace = new BlockPos(6, 2, 6);
         final BlockPos cableAbove = new BlockPos(6, 3, 6);
         final BlockPos cableBelow = new BlockPos(6, 1, 6);
-        helper.setBlock(cable, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(sw, ComputingModule.CRAFTING_SWITCH.get());
-        helper.setBlock(cable2, ComputingModule.CRAFTING_CABLE.get());
-        helper.setBlock(cable3, ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cable2, ComputingModule.CRAFTING_CABLE);
+        TestCables.lay(helper, cable3, ComputingModule.CRAFTING_CABLE);
         helper.setBlock(furnace, Blocks.FURNACE);
-        helper.setBlock(cableAbove, ComputingModule.CRAFTING_CABLE.get());
-        helper.setBlock(cableBelow, ComputingModule.CRAFTING_CABLE.get());
-        helper.setBlock(new BlockPos(5, 3, 6), ComputingModule.CRAFTING_CABLE.get());
-        helper.setBlock(new BlockPos(5, 1, 6), ComputingModule.CRAFTING_CABLE.get());
+        TestCables.lay(helper, cableAbove, ComputingModule.CRAFTING_CABLE);
+        TestCables.lay(helper, cableBelow, ComputingModule.CRAFTING_CABLE);
+        TestCables.lay(helper, new BlockPos(5, 3, 6), ComputingModule.CRAFTING_CABLE);
+        TestCables.lay(helper, new BlockPos(5, 1, 6), ComputingModule.CRAFTING_CABLE);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    if (helper.getBlockEntity(cableAbove) instanceof DataCableBlockEntity c) {
+                    if (helper.getBlockEntity(cableAbove) instanceof CableBlockEntity c) {
                         c.addPart(Direction.DOWN,
                                 new dev.jstech.computers.block.part.InputBusPart());
                     }
-                    if (helper.getBlockEntity(cableBelow) instanceof DataCableBlockEntity c) {
+                    if (helper.getBlockEntity(cableBelow) instanceof CableBlockEntity c) {
                         c.addPart(Direction.UP,
                                 new dev.jstech.computers.block.part.ReceivingBusPart());
                     }

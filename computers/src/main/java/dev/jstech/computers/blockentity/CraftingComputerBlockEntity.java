@@ -10,7 +10,6 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.CraftingComputerBlock;
-import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.hardware.ComputerBuild;
@@ -24,7 +23,7 @@ import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.IFieldPart;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.cable.Cables;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.persistence.SavedValue;
 import dev.jstech.core.tier.HardwareEra;
@@ -307,9 +306,7 @@ public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
                 out.addAll(sw.declaredMachines());
                 continue; // a switch terminates the search; do not cross it
             }
-            if (level.getBlockState(current).getBlock()
-                    instanceof DataCableBlock cable
-                    && cable.tier() == DataTier.CRAFTING) {
+            if (Cables.holds(level, current, ComputingModule.CRAFTING_CABLE.get())) {
                 for (final Direction d : Direction.values()) {
                     final BlockPos nb = current.relative(d);
                     if (visited.add(nb)) {

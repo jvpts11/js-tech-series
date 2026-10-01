@@ -73,7 +73,7 @@ public final class NetworkInteractorClientTests {
                     net.seed(Items.RAW_IRON, 32);
                     net.seed(Items.IRON_INGOT, 8);
                     net.seed(Items.OAK_LOG, 16);
-                    net.seed(ComputingModule.ETHERNET_CABLE.get().asItem(), 4);
+                    net.seed(ComputingModule.ETHERNET_CABLE.asItem(), 4);
                 })
                 .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
                 .thenRightClick(SETTLE, MONITOR)

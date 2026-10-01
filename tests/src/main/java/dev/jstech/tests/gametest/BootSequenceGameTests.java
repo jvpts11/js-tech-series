@@ -126,9 +126,9 @@ public final class BootSequenceGameTests {
          * backbone and a Personal Router is what bridges an Ethernet machine onto it.
          */
         world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         world.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity onACable = legacy(helper, new BlockPos(5, 2, 2));
         if (onACable == null) {
             return;

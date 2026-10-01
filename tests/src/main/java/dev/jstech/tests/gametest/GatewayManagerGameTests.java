@@ -21,7 +21,6 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.core.text.Text;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
-import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.ArrayList;
@@ -58,13 +57,13 @@ public final class GatewayManagerGameTests {
     private static Fleet wire(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final MainframeBlockEntity mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         world.placeSeededRack(new BlockPos(2, 2, 1));
         world.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity host = world.placeRunningPersonalComputer(new BlockPos(5, 2, 2));
         host.console().setComputerName("desk");
-        world.setBlock(new BlockPos(4, 2, 3), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(4, 2, 3), ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity lab = world.placeRunningPersonalComputer(new BlockPos(5, 2, 3));
         lab.console().setComputerName("lab");
         // The Gateway stands east of the host, its back socket against it.

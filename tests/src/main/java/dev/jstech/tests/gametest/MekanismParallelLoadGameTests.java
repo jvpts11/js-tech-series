@@ -12,7 +12,6 @@ import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.block.part.InputBusPart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.crafting.CraftingPattern;
@@ -22,6 +21,7 @@ import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -98,7 +98,7 @@ public final class MekanismParallelLoadGameTests {
     /** Builds the hub, a cable, and one Supercomputer Rack seating a node with a Phi; leaves its bay OFF. */
     private static void placeClusterOffline(final TestWorldBuilder world) {
         world.setBlock(HUB, ComputingModule.HBW_INTERFACE.get());
-        world.setBlock(CABLE, ComputingModule.HPC_CABLE.get());
+        world.setBlock(CABLE, ComputingModule.HPC_CABLE);
         world.setBlock(NODE_RACK, ComputingModule.SUPERCOMPUTER_RACK.get());
         final var rack = world.blockEntity(NODE_RACK,
                 dev.jstech.computers.blockentity.ServerRackBlockEntity.class);
@@ -210,10 +210,10 @@ public final class MekanismParallelLoadGameTests {
         final StorageKey infused = MekanismRig.itemKey(MekanismRig.mek("alloy_infused"));
         final INetworkOperation[] ops = new INetworkOperation[3];
         // The second machine and its buses, further down the run.
-        world.setBlock(new BlockPos(5, 2, 8), ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(CABLE_2_WEST, ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(new BlockPos(5, 3, 9), ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(CABLE_2_ABOVE, ComputingModule.CRAFTING_CABLE.get());
+        world.setBlock(new BlockPos(5, 2, 8), ComputingModule.CRAFTING_CABLE);
+        world.setBlock(CABLE_2_WEST, ComputingModule.CRAFTING_CABLE);
+        world.setBlock(new BlockPos(5, 3, 9), ComputingModule.CRAFTING_CABLE);
+        world.setBlock(CABLE_2_ABOVE, ComputingModule.CRAFTING_CABLE);
         world.placeFromItem(MACHINE_2, net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(CRUSHER));
         // A second Crafting Computer on the data network, and the Supercomputer cluster.
         final CraftingComputerBlockEntity cc2 = world.placeRunningCraftingComputer(SECOND_COMPUTER);
@@ -225,10 +225,10 @@ public final class MekanismParallelLoadGameTests {
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     MekanismRig.mountBuses(helper);
                     MekanismRig.mountBottomInputBus(helper);
-                    if (world.getBlockEntity(CABLE_2_ABOVE) instanceof DataCableBlockEntity cable) {
+                    if (world.getBlockEntity(CABLE_2_ABOVE) instanceof CableBlockEntity cable) {
                         cable.addPart(Direction.DOWN, new InputBusPart());
                     }
-                    if (world.getBlockEntity(CABLE_2_WEST) instanceof DataCableBlockEntity cable) {
+                    if (world.getBlockEntity(CABLE_2_WEST) instanceof CableBlockEntity cable) {
                         cable.addPart(Direction.EAST, new ReceivingBusPart());
                     }
                     // Stock: two frame kits, sixteen iron ingots, six hundred logs.

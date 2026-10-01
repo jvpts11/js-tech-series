@@ -13,7 +13,6 @@ import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.operation.IPersistentOperation;
 import dev.jstech.computers.operation.payload.OperationRecord;
@@ -22,6 +21,7 @@ import dev.jstech.computers.storage.IDataPort;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.FilteredDataPort;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.persistence.SavedValue;
@@ -418,7 +418,7 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         for (final Direction d : Direction.values()) {
             final BlockPos cablePos = m.machinePos().relative(d);
             if (level.getBlockEntity(cablePos)
-                    instanceof DataCableBlockEntity cable
+                    instanceof CableBlockEntity cable
                     && cable.getPart(d.getOpposite())
                     instanceof AbstractBusPart bus
                     && bus.type() == ComputingParts.INPUT.get()) {
@@ -487,7 +487,7 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         for (final Direction d : Direction.values()) {
             final BlockPos cablePos = machine.machinePos().relative(d);
             if (level.getBlockEntity(cablePos)
-                    instanceof DataCableBlockEntity cable
+                    instanceof CableBlockEntity cable
                     && cable.getPart(d.getOpposite())
                     instanceof AbstractBusPart bus
                     && bus.type() == kind) {

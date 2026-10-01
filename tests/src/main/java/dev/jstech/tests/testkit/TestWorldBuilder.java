@@ -8,7 +8,6 @@
 package dev.jstech.tests.testkit;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
@@ -17,6 +16,8 @@ import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.core.cable.CableBlock;
+import dev.jstech.core.cable.CableEntry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -98,6 +99,15 @@ public final class TestWorldBuilder {
         // Flag 3 (update neighbours + send to clients) matches what GameTestHelper.setBlock does.
         final BlockPos pos = absolute(relative);
         level.setBlock(pos, state, 3);
+        note(pos);
+    }
+
+    /** Lays a wire of {@code cable} at {@code relative}: into the cable block there, or into a new one. */
+    public void setBlock(final BlockPos relative, final CableEntry cable) {
+        final BlockPos pos = absolute(relative);
+        if (!TestCables.lay(level, pos, cable.get())) {
+            throw new IllegalStateException("could not lay " + cable.id() + " at " + relative);
+        }
         note(pos);
     }
 
@@ -346,7 +356,7 @@ public final class TestWorldBuilder {
             return;
         }
         for (final Direction d : Direction.Plane.HORIZONTAL) {
-            if (getBlockState(relative.relative(d)).getBlock() instanceof DataCableBlock) {
+            if (getBlockState(relative.relative(d)).getBlock() instanceof CableBlock) {
                 setBlock(relative, state.setValue(HorizontalDirectionalBlock.FACING, d.getOpposite()));
                 return;
             }
@@ -404,10 +414,10 @@ public final class TestWorldBuilder {
      */
     public CraftingNetwork buildCraftingNetwork() {
         final MainframeBlockEntity mainframe = placeRunningMainframe(new BlockPos(1, 2, 2));
-        setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         final ServerRackBlockEntity rack = placeSeededRack(new BlockPos(2, 2, 1));
         setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
-        setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE.get());
+        setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE);
         final CraftingComputerBlockEntity cc = placeRunningCraftingComputer(new BlockPos(5, 2, 2));
         return new CraftingNetwork(mainframe, rack, cc);
     }

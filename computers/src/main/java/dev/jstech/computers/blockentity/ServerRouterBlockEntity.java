@@ -11,7 +11,7 @@ import com.mojang.serialization.Codec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.advancement.JscEvents;
-import dev.jstech.computers.block.DataCableBlock;
+import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.block.ServerRouterBlock;
 import dev.jstech.computers.datacenter.DatacenterSection;
 import dev.jstech.computers.datacenter.LoadBalanceMode;
@@ -21,8 +21,8 @@ import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.PartField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.core.cable.Cables;
 import dev.jstech.core.network.ConnectivityIndex;
-import dev.jstech.core.network.INetworkBridge;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
 import dev.jstech.core.network.ServerRouterElement;
@@ -46,6 +46,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.Set;
 
 /**
@@ -120,11 +121,7 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
     public void onLoad() {
         super.onLoad();
         if (level instanceof ServerLevel serverLevel) {
-            final ConnectivityIndex index = NetworkSystem.get(serverLevel).connectivity();
-            final long encodedPos = worldPosition.asLong();
-            if (!index.contains(encodedPos)) {
-                index.onCablePlaced(encodedPos, bridgeNeighbors(serverLevel));
-            }
+            DataWires.placeRouter(serverLevel, worldPosition);
         }
     }
 
@@ -284,28 +281,15 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
         faces.changed();
     }
 
-    private Set<Long> bridgeNeighbors(final ServerLevel serverLevel) {
-        final Set<Long> neighbors = new HashSet<>();
-        for (final Direction direction : Direction.values()) {
-            final BlockPos neighborPos = worldPosition.relative(direction);
-            final var block = serverLevel.getBlockState(neighborPos).getBlock();
-            if (block instanceof DataCableBlock || block instanceof INetworkBridge) {
-                neighbors.add(neighborPos.asLong());
-            }
-        }
-        return neighbors;
-    }
-
     private void tick(final ServerLevel level) {
         final NetworkSystem system = NetworkSystem.get(level);
         final ConnectivityIndex index = system.connectivity();
         final long encodedPos = worldPosition.asLong();
         // Re-register after a chunk reload, mirroring the cable's self-healing index discipline.
-        if (!index.contains(encodedPos)) {
-            index.onCablePlaced(encodedPos, bridgeNeighbors(level));
-        }
+        DataWires.placeRouter(level, worldPosition);
 
-        final NetworkUuid network = index.networkOf(encodedPos).orElse(null);
+        final OptionalLong here = DataWires.routerNumber(level, worldPosition);
+        final NetworkUuid network = here.isEmpty() ? null : index.networkOf(here.getAsLong()).orElse(null);
         if (network == null) {
             // Off-network (no UUID yet, or the network collapsed): drop registration and any topology.
             if (registeredNetwork != null) {
@@ -338,7 +322,8 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
 
     private void recomputeSections(final ServerLevel level, final NetworkSystem system, final NetworkUuid network) {
         final ConnectivityIndex index = system.connectivity();
-        final Set<Long> blocked = Set.of(worldPosition.asLong());
+        final OptionalLong here = DataWires.routerNumber(level, worldPosition);
+        final Set<Long> blocked = here.isEmpty() ? Set.of() : Set.of(here.getAsLong());
         final List<DatacenterSection> found = new ArrayList<>();
         final Set<Set<Long>> seenRackSets = new HashSet<>();
         /*
@@ -355,11 +340,15 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
             if (face == uplink) {
                 continue; // the uplink side is never a datacenter section
             }
-            final long neighbor = worldPosition.relative(face).asLong();
-            if (!index.contains(neighbor)) {
+            final List<Long> wires = DataWires.numbersReaching(level, worldPosition, face,
+                    wire -> DataWires.tierOf(wire) != null);
+            if (wires.isEmpty()) {
                 continue; // no cable on this face
             }
-            final Set<Long> branchCables = index.reachableFrom(neighbor, blocked);
+            final Set<Long> branchCables = new LinkedHashSet<>();
+            for (final long wire : wires) {
+                branchCables.addAll(index.reachableFrom(wire, blocked));
+            }
             if (branchCables.isEmpty()) {
                 continue;
             }
@@ -414,8 +403,7 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
     private BranchScan scanBranch(final ServerLevel level, final Set<Long> branchCables) {
         final Set<Long> racks = new LinkedHashSet<>();
         boolean hasMainframe = false;
-        for (final long cablePos : branchCables) {
-            final BlockPos cable = BlockPos.of(cablePos);
+        for (final BlockPos cable : Cables.blocksOf(level, branchCables)) {
             for (final Direction direction : Direction.values()) {
                 final BlockEntity neighbor = level.getBlockEntity(cable.relative(direction));
                 /*

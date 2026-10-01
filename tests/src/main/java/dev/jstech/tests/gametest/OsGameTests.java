@@ -20,6 +20,7 @@ import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -234,7 +235,7 @@ public final class OsGameTests {
         // Place a running Mainframe WITH an OS (the standard test setup).
         final MainframeBlockEntity mainframe =
                 NetworkGameTests.placeRunningMainframe(helper, mainframePos);
-        helper.setBlock(cablePos, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, cablePos, ComputingModule.HBW_CABLE);
 
         // Place a Server Router (Category B, no OS concept).
         helper.setBlock(routerPos, ComputingModule.SERVER_ROUTER.get().defaultBlockState()

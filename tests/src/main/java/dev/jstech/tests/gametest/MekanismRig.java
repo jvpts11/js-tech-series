@@ -11,8 +11,8 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.part.InputBusPart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
 import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -88,20 +88,20 @@ public final class MekanismRig {
     /** Builds the crafting network and the machine rig in {@code world}; fails loudly if the machine is missing. */
     public static TestWorldBuilder.CraftingNetwork place(final TestWorldBuilder world, final ResourceLocation machineId) {
         final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
-        world.setBlock(new BlockPos(5, 2, 3), ComputingModule.CRAFTING_CABLE.get());
+        world.setBlock(new BlockPos(5, 2, 3), ComputingModule.CRAFTING_CABLE);
         world.setBlock(SWITCH, ComputingModule.CRAFTING_SWITCH.get());
         for (int z = 5; z <= 7; z++) {
-            world.setBlock(new BlockPos(5, 2, z), ComputingModule.CRAFTING_CABLE.get());
+            world.setBlock(new BlockPos(5, 2, z), ComputingModule.CRAFTING_CABLE);
         }
         // Spurs over and under the machine, each continuing to its far (east) face.
-        world.setBlock(new BlockPos(5, 3, 7), ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(CABLE_ABOVE, ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(new BlockPos(7, 3, 7), ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(CABLE_EAST, ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(new BlockPos(5, 1, 7), ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(CABLE_BELOW, ComputingModule.CRAFTING_CABLE.get());
+        world.setBlock(new BlockPos(5, 3, 7), ComputingModule.CRAFTING_CABLE);
+        world.setBlock(CABLE_ABOVE, ComputingModule.CRAFTING_CABLE);
+        world.setBlock(new BlockPos(7, 3, 7), ComputingModule.CRAFTING_CABLE);
+        world.setBlock(CABLE_EAST, ComputingModule.CRAFTING_CABLE);
+        world.setBlock(new BlockPos(5, 1, 7), ComputingModule.CRAFTING_CABLE);
+        world.setBlock(CABLE_BELOW, ComputingModule.CRAFTING_CABLE);
         // And one against the front (north) face, off the run's (5,2,6), for machines that output forward.
-        world.setBlock(CABLE_NORTH, ComputingModule.CRAFTING_CABLE.get());
+        world.setBlock(CABLE_NORTH, ComputingModule.CRAFTING_CABLE);
         final Block machine = BuiltInRegistries.BLOCK.get(machineId);
         if (machine == null || machine == Blocks.AIR) {
             throw new IllegalStateException(machineId + " must exist on the dev runtime");
@@ -122,10 +122,10 @@ public final class MekanismRig {
 
     /** Input Bus against the top, Receiving Bus against the right (west) face. */
     public static void mountBuses(final TestWorldBuilder world) {
-        if (world.getBlockEntity(CABLE_ABOVE) instanceof DataCableBlockEntity cable) {
+        if (world.getBlockEntity(CABLE_ABOVE) instanceof CableBlockEntity cable) {
             cable.addPart(Direction.DOWN, new InputBusPart());
         }
-        if (world.getBlockEntity(CABLE_WEST) instanceof DataCableBlockEntity cable) {
+        if (world.getBlockEntity(CABLE_WEST) instanceof CableBlockEntity cable) {
             cable.addPart(Direction.EAST, new ReceivingBusPart());
         }
     }
@@ -136,7 +136,7 @@ public final class MekanismRig {
 
     /** A second Input Bus against the bottom: the "extra" slot of infusers and compressors lives there. */
     public static void mountBottomInputBus(final TestWorldBuilder world) {
-        if (world.getBlockEntity(CABLE_BELOW) instanceof DataCableBlockEntity cable) {
+        if (world.getBlockEntity(CABLE_BELOW) instanceof CableBlockEntity cable) {
             cable.addPart(Direction.UP, new InputBusPart());
         }
     }
@@ -147,13 +147,13 @@ public final class MekanismRig {
 
     /** Places a second machine of {@code machineId} south of the first, its cables linked to the run. */
     public static void placeSecondMachine(final TestWorldBuilder world, final ResourceLocation machineId) {
-        world.setBlock(new BlockPos(5, 2, 8), ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(new BlockPos(5, 2, 9), ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(B_RUN, ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(new BlockPos(5, 3, 10), ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(B_ABOVE, ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(new BlockPos(5, 1, 10), ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(B_BELOW, ComputingModule.CRAFTING_CABLE.get());
+        world.setBlock(new BlockPos(5, 2, 8), ComputingModule.CRAFTING_CABLE);
+        world.setBlock(new BlockPos(5, 2, 9), ComputingModule.CRAFTING_CABLE);
+        world.setBlock(B_RUN, ComputingModule.CRAFTING_CABLE);
+        world.setBlock(new BlockPos(5, 3, 10), ComputingModule.CRAFTING_CABLE);
+        world.setBlock(B_ABOVE, ComputingModule.CRAFTING_CABLE);
+        world.setBlock(new BlockPos(5, 1, 10), ComputingModule.CRAFTING_CABLE);
+        world.setBlock(B_BELOW, ComputingModule.CRAFTING_CABLE);
         world.placeFromItem(MACHINE_B, BuiltInRegistries.BLOCK.get(machineId));
     }
 
@@ -165,28 +165,28 @@ public final class MekanismRig {
     public static void mountSecondMachineBuses(final TestWorldBuilder world,
                                                final net.minecraft.world.item.ItemStack topFilter,
                                                final net.minecraft.world.item.ItemStack bottomFilter) {
-        if (world.getBlockEntity(B_ABOVE) instanceof DataCableBlockEntity cable) {
+        if (world.getBlockEntity(B_ABOVE) instanceof CableBlockEntity cable) {
             final InputBusPart top = new InputBusPart();
             cable.addPart(Direction.DOWN, top);
             if (topFilter != null) {
                 top.setFilter(topFilter);
             }
         }
-        if (world.getBlockEntity(B_BELOW) instanceof DataCableBlockEntity cable) {
+        if (world.getBlockEntity(B_BELOW) instanceof CableBlockEntity cable) {
             final InputBusPart bottom = new InputBusPart();
             cable.addPart(Direction.UP, bottom);
             if (bottomFilter != null) {
                 bottom.setFilter(bottomFilter);
             }
         }
-        if (world.getBlockEntity(B_RUN) instanceof DataCableBlockEntity cable) {
+        if (world.getBlockEntity(B_RUN) instanceof CableBlockEntity cable) {
             cable.addPart(Direction.EAST, new ReceivingBusPart());
         }
     }
 
     /** A second Receiving Bus against the left (east) face, for machines that output on both sides. */
     public static void mountLeftReceivingBus(final TestWorldBuilder world) {
-        if (world.getBlockEntity(CABLE_EAST) instanceof DataCableBlockEntity cable) {
+        if (world.getBlockEntity(CABLE_EAST) instanceof CableBlockEntity cable) {
             cable.addPart(Direction.WEST, new ReceivingBusPart());
         }
     }
@@ -197,14 +197,14 @@ public final class MekanismRig {
 
     /** An Input Bus against the left (east) face: the first input of two-input machines. */
     public static void mountLeftInputBus(final TestWorldBuilder world) {
-        if (world.getBlockEntity(CABLE_EAST) instanceof DataCableBlockEntity cable) {
+        if (world.getBlockEntity(CABLE_EAST) instanceof CableBlockEntity cable) {
             cable.addPart(Direction.WEST, new InputBusPart());
         }
     }
 
     /** A Receiving Bus against the front (north) face: where two-input machines give their output. */
     public static void mountFrontReceivingBus(final TestWorldBuilder world) {
-        if (world.getBlockEntity(CABLE_NORTH) instanceof DataCableBlockEntity cable) {
+        if (world.getBlockEntity(CABLE_NORTH) instanceof CableBlockEntity cable) {
             cable.addPart(Direction.SOUTH, new ReceivingBusPart());
         }
     }

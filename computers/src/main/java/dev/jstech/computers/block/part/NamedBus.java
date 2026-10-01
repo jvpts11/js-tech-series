@@ -7,10 +7,12 @@
  */
 package dev.jstech.computers.block.part;
 
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.storage.ExternalDataPort;
+import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.cable.Cables;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -28,10 +30,14 @@ public final class NamedBus {
     }
 
     /** A located bus: the cable hosting it and the face it is mounted on, enough to reach its external port. */
-    public record Located(DataCableBlockEntity cable, Direction face) {
+    public record Located(CableBlockEntity cable, Direction face) {
 
         public ExternalDataPort port() {
-            return cable.neighborPort(face);
+            final ServerLevel level = cable.partServerLevel();
+            if (level == null) {
+                return new ExternalDataPort(null, null);
+            }
+            return ExternalDataPort.at(level, cable.getBlockPos().relative(face), face.getOpposite());
         }
     }
 
@@ -44,8 +50,9 @@ public final class NamedBus {
         if (network == null || name == null || name.isBlank()) {
             return null;
         }
-        for (final long encoded : NetworkSystem.get(level).connectivity().positionsOf(network)) {
-            if (!(level.getBlockEntity(BlockPos.of(encoded)) instanceof DataCableBlockEntity cable)) {
+        final Set<Long> wires = NetworkSystem.get(level).connectivity().positionsOf(network);
+        for (final BlockPos pos : Cables.blocksOf(level, wires)) {
+            if (!(level.getBlockEntity(pos) instanceof CableBlockEntity cable)) {
                 continue;
             }
             for (final Direction face : Direction.values()) {

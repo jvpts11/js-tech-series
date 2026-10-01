@@ -8,7 +8,6 @@
 package dev.jstech.computers.block.part;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.menu.ExportBusMenu;
 import dev.jstech.computers.operation.MoveLabels;
@@ -16,6 +15,7 @@ import dev.jstech.computers.operation.NetworkSelectOperation;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.Direction;
@@ -41,17 +41,17 @@ public non-sealed class ExportBusPart extends AbstractBusPart {
 
     @Override
     public AbstractContainerMenu createMenu(final int containerId, final Inventory inventory,
-                                            final DataCableBlockEntity cable, final Direction mountedFace) {
+                                            final CableBlockEntity cable, final Direction mountedFace) {
         return ExportBusMenu.create(containerId, inventory, cable, mountedFace);
     }
 
     @Override
     public void serverTick() {
-        final ServerLevel level = host.serverLevel();
+        final ServerLevel level = serverLevel();
         if (level == null) {
             return;
         }
-        final NetworkUuid network = host.network();
+        final NetworkUuid network = network();
         linked = network != null;
         // Wait for the in-flight DELETE to finish before starting another.
         if (activeOp != null) {
@@ -76,7 +76,7 @@ public non-sealed class ExportBusPart extends AbstractBusPart {
         if (dest.isEmpty()) {
             return;
         }
-        final MainframeBlockEntity mainframe = host.mainframe();
+        final MainframeBlockEntity mainframe = mainframe();
         if (mainframe == null) {
             return;
         }

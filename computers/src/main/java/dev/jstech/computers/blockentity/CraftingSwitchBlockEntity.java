@@ -8,16 +8,17 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.PartField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
+import dev.jstech.core.cable.CableBlock;
+import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.cable.Cables;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.network.DataLines;
-import dev.jstech.core.network.DataTier;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextTags;
@@ -205,8 +206,7 @@ public class CraftingSwitchBlockEntity extends SyncedBlockEntity {
         Direction cable = null;
         for (final Direction direction : SIDES) {
             final BlockPos neighbor = worldPosition.relative(direction);
-            if (level.getBlockState(neighbor).getBlock() instanceof DataCableBlock dataCable
-                    && dataCable.tier() == DataTier.CRAFTING) {
+            if (craftingAt(level, neighbor)) {
                 cable = direction;
                 machinePresent[direction.get3DDataValue()] = false; // the cable face never hosts a machine
             } else {
@@ -265,11 +265,10 @@ public class CraftingSwitchBlockEntity extends SyncedBlockEntity {
         int steps = 0;
         while (!queue.isEmpty() && steps++ < BFS_STEPS) {
             final BlockPos current = queue.poll();
-            final BlockState state = level.getBlockState(current);
             if (level.getBlockEntity(current) instanceof CraftingComputerBlockEntity) {
                 return current;
             }
-            if (state.getBlock() instanceof DataCableBlock cable && cable.tier() == DataTier.CRAFTING) {
+            if (craftingAt(level, current)) {
                 for (final Direction direction : SIDES) {
                     final BlockPos neighbor = current.relative(direction);
                     if (visited.add(neighbor)) {
@@ -297,15 +296,14 @@ public class CraftingSwitchBlockEntity extends SyncedBlockEntity {
                 continue; // the face's toggle disables its whole cable run
             }
             final BlockPos neighbor = worldPosition.relative(direction);
-            if (level.getBlockState(neighbor).getBlock() instanceof DataCableBlock dataCable
-                    && dataCable.tier() == DataTier.CRAFTING && origin.putIfAbsent(neighbor, direction) == null) {
+            if (craftingAt(level, neighbor) && origin.putIfAbsent(neighbor, direction) == null) {
                 queue.add(neighbor);
             }
         }
         int steps = 0;
         while (!queue.isEmpty() && steps++ < BFS_STEPS) {
             final BlockPos current = queue.poll();
-            if (!(level.getBlockEntity(current) instanceof DataCableBlockEntity cable)) {
+            if (!(level.getBlockEntity(current) instanceof CableBlockEntity cable)) {
                 continue;
             }
             final Direction from = origin.get(current);
@@ -314,7 +312,7 @@ public class CraftingSwitchBlockEntity extends SyncedBlockEntity {
                     final BlockPos machinePos = current.relative(face);
                     final var machineBlock = level.getBlockState(machinePos).getBlock();
                     // Network hardware is never a machine, even when a bus happens to point at it.
-                    if (machineBlock instanceof DataCableBlock
+                    if (machineBlock instanceof CableBlock
                             || machineBlock instanceof IFaceConnector device
                             && device.lines().stream().anyMatch(DataLines::isData)
                             || !declared.add(machinePos) || level.getBlockEntity(machinePos) == null) {
@@ -325,13 +323,17 @@ public class CraftingSwitchBlockEntity extends SyncedBlockEntity {
                             face.get3DDataValue(), from.get3DDataValue()));
                 }
                 final BlockPos neighbor = current.relative(face);
-                if (level.getBlockState(neighbor).getBlock() instanceof DataCableBlock next
-                        && next.tier() == DataTier.CRAFTING && origin.putIfAbsent(neighbor, from) == null) {
+                if (craftingAt(level, neighbor) && origin.putIfAbsent(neighbor, from) == null) {
                     queue.add(neighbor);
                 }
             }
         }
         return lines;
+    }
+
+    /* Whether a crafting cable runs through the block at {@code pos}. */
+    private static boolean craftingAt(final Level level, final BlockPos pos) {
+        return Cables.holds(level, pos, ComputingModule.CRAFTING_CABLE.get());
     }
 
     /**

@@ -78,7 +78,7 @@ public final class GatewayManagerClientTests {
                     world.placeMonitor(MONITOR, Direction.EAST);
                     world.setBlock(GATEWAY, ComputingModule.NETWORK_GATEWAY.get().defaultBlockState()
                             .setValue(NetworkGatewayBlock.FACING, Direction.SOUTH));
-                    world.setBlock(SHARER_CABLE, ComputingModule.ETHERNET_CABLE.get());
+                    world.setBlock(SHARER_CABLE, ComputingModule.ETHERNET_CABLE);
                     final PersonalComputerBlockEntity sharer = world.placeRunningPersonalComputer(SHARER);
                     sharer.console().setComputerName("lab");
                     final ServerCliComputer lab = new ServerCliComputer(sharer, world.level());

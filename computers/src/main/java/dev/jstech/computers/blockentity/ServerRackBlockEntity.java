@@ -10,7 +10,7 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.registry.ComputingComponents;
-import dev.jstech.computers.block.DataCableBlock;
+import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRackPartBlock;
 import dev.jstech.computers.block.ServerRackStructure;
@@ -1169,10 +1169,10 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             if (inside.contains(neighbor.asLong())) {
                 continue; // a face internal to the cabinet (the front layer's rear)
             }
-            if (level.getBlockState(neighbor).getBlock() instanceof DataCableBlock cable
-                    && cable.tier() != DataTier.HPC) {
-                cables.add(neighbor.asLong());
-            }
+            cables.addAll(DataWires.numbersReaching(level, p, back, wire -> {
+                final DataTier tier = DataWires.tierOf(wire);
+                return tier != null && tier != DataTier.HPC;
+            }));
         }
         /*
          * Bridge the cable runs this rack touches into one segment, so a Mainframe on one side and a

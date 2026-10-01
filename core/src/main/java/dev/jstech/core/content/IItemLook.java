@@ -29,6 +29,9 @@ public sealed interface IItemLook
     /** A model written by hand in the mod's resources, used as it is: nothing is generated. */
     IItemLook HANDMADE = Standard.HANDMADE;
 
+    /** A cable's item: a length of the cable, as thick as it is, in its own jacket. */
+    IItemLook CABLE = Standard.CABLE;
+
     /** The model given, as it is: {@code "block/ethernet_cable_core"}. */
     static IItemLook parent(final String model) {
         return new Parent(model);
@@ -39,7 +42,8 @@ public sealed interface IItemLook
         OF_BLOCK,
         FLAT,
         DRAWN_BY_ENTITY,
-        HANDMADE
+        HANDMADE,
+        CABLE
     }
 
     /** An item whose model is another model, unchanged. */

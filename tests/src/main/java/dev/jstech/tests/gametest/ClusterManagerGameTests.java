@@ -40,6 +40,7 @@ import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -50,7 +51,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.PipeBlock;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -116,8 +116,8 @@ public final class ClusterManagerGameTests {
                                                                        final ResourceLocation os) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         world.placeRunningMainframe(MAINFRAME);
-        helper.setBlock(CABLE_A, ComputingModule.HBW_CABLE.get());
-        helper.setBlock(CABLE_B, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, CABLE_A, ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, CABLE_B, ComputingModule.HBW_CABLE);
         helper.setBlock(MANAGER, ComputingModule.CLUSTER_MANAGEMENT_COMPUTER.get());
         world.faceRearTowardCable(MANAGER);
         final ClusterManagementComputerBlockEntity manager = managerAt(helper);
@@ -151,7 +151,7 @@ public final class ClusterManagerGameTests {
     /** A supercomputer on the backbone with two nodes seated (rows 0 and 2), each with a drive to install to. */
     private static ServerRackBlockEntity placeSupercomputer(final GameTestHelper helper) {
         helper.setBlock(HUB, ComputingModule.HBW_INTERFACE.get());
-        helper.setBlock(FABRIC, ComputingModule.HPC_CABLE.get());
+        TestCables.lay(helper, FABRIC, ComputingModule.HPC_CABLE);
         helper.setBlock(NODE_RACK, ComputingModule.SUPERCOMPUTER_RACK.get());
         final ServerRackBlockEntity rack = rackAt(helper, NODE_RACK);
         for (final int row : new int[] {0, 2}) {
@@ -167,7 +167,7 @@ public final class ClusterManagerGameTests {
     private static ServerRackBlockEntity placeDatacenter(final GameTestHelper helper, final int servers) {
         helper.setBlock(ROUTER, ComputingModule.SERVER_ROUTER.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.EAST)); // back (the uplink) meets the backbone
-        helper.setBlock(SECTION_CABLE, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, SECTION_CABLE, ComputingModule.HBW_CABLE);
         helper.setBlock(SERVER_RACK, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.EAST)); // rear meets the section cable
         final ServerRackBlockEntity rack = rackAt(helper, SERVER_RACK);
@@ -384,8 +384,8 @@ public final class ClusterManagerGameTests {
     public static void supercomputerRack_takesTheFabricNotTheDataCable(final GameTestHelper helper) {
         placeBackbone(helper, fabricHostAdapter());
         // A data cable run east of the backbone, ending at the rear of a supercomputer cabinet.
-        helper.setBlock(ROUTER, ComputingModule.HBW_CABLE.get());
-        helper.setBlock(SECTION_CABLE, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, ROUTER, ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, SECTION_CABLE, ComputingModule.HBW_CABLE);
         helper.setBlock(SERVER_RACK, ComputingModule.SUPERCOMPUTER_RACK.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.EAST));
         final ServerRackBlockEntity onData = rackAt(helper, SERVER_RACK);
@@ -397,7 +397,8 @@ public final class ClusterManagerGameTests {
                     if (!(helper.getBlockEntity(MAINFRAME) instanceof MainframeBlockEntity mainframe)) {
                         throw new IllegalStateException("no Mainframe at " + MAINFRAME);
                     }
-                    helper.assertTrue(!helper.getBlockState(SECTION_CABLE).getValue(PipeBlock.EAST),
+                    helper.assertTrue(!TestCables.cable(helper, SECTION_CABLE)
+                                    .crosses(ComputingModule.HBW_CABLE.get(), Direction.EAST),
                             "the data cable draws no connection into a compute cabinet");
                     helper.assertTrue(NetworkSystem.get(helper.getLevel()).serversOf(mainframe.networkUuid()).isEmpty(),
                             "a node in a cabinet on a data cable is not a server on the network");
@@ -668,8 +669,8 @@ public final class ClusterManagerGameTests {
     private static ClusterManagementComputerBlockEntity placeVintageManagerOnBackbone(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         world.placeRunningMainframe(MAINFRAME);
-        helper.setBlock(CABLE_A, ComputingModule.HBW_CABLE.get());
-        helper.setBlock(CABLE_B, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, CABLE_A, ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, CABLE_B, ComputingModule.HBW_CABLE);
         helper.setBlock(MANAGER, ComputingModule.VINTAGE_CLUSTER_MANAGEMENT_COMPUTER.get());
         world.faceRearTowardCable(MANAGER);
         final ClusterManagementComputerBlockEntity manager = managerAt(helper);

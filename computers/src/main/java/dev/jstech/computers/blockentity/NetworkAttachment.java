@@ -9,11 +9,10 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.audio.SystemSound;
-import dev.jstech.computers.block.DataCableBlock;
+import dev.jstech.computers.block.DataWires;
+import dev.jstech.core.cable.Cables;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.connect.Neighbours;
-import dev.jstech.core.network.DataLines;
-import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -22,7 +21,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -184,48 +182,43 @@ final class NetworkAttachment {
     }
 
     /**
-     * The cable this computer reads its network off, or {@link #NO_CABLE} when it touches none.
+     * The data wire this computer reads its network off, as the number its grid knows it by, or {@link #NO_CABLE}
+     * when it touches none.
      *
      * <p>The one it found last time is asked after first, which is a single block to look at rather than six;
      * only when that one has gone, or when there was none, is every face looked at again.
      */
     long cable(final ServerLevel level) {
-        if (this.cable != NO_CABLE) {
-            final BlockPos at = BlockPos.of(this.cable);
-            final Direction face = Neighbours.faceTowards(this.machine.getBlockPos(), at);
-            if (face != null && cableAt(level, at, this.machine.getBlockState(), face)) {
-                return this.cable;
-            }
+        if (this.cable != NO_CABLE && stillReaches(level, this.cable)) {
+            return this.cable;
         }
         this.cable = adjacentCable(level);
         return this.cable;
     }
 
     /**
-     * Looks round every face for a data cable this computer takes there, which the block's
-     * {@link IFaceConnector#accepts} decides, so the device's attachment and the cable's rendered connection
-     * always agree. A standalone computer takes its network cable on its rear only; the Mainframe (a separate
-     * block entity) and the cluster nodes on every face. The crafting cable is never the machine's network link.
+     * Looks round every face for a data wire that crosses into this computer, which the cable decides from what the
+     * block's {@link IFaceConnector#accepts} takes on that face, so the device's attachment and the cable's drawn
+     * connection always agree. A standalone computer takes its network cable on its rear only; the Mainframe (a
+     * separate block entity) and the cluster nodes on every face. The crafting cable is never the machine's network
+     * link.
      */
     private long adjacentCable(final ServerLevel level) {
         final BlockPos pos = this.machine.getBlockPos();
-        final BlockState state = this.machine.getBlockState();
         for (final Direction direction : FACES) {
-            final BlockPos neighbor = pos.relative(direction);
-            if (cableAt(level, neighbor, state, direction)) {
-                return neighbor.asLong();
+            final List<Long> numbers = DataWires.numbersReaching(level, pos, direction, DataWires::isNetwork);
+            if (!numbers.isEmpty()) {
+                return numbers.getFirst();
             }
         }
         return NO_CABLE;
     }
 
-    /** Whether the block at {@code pos} is a data cable this computer takes on {@code face}. */
-    private boolean cableAt(final ServerLevel level, final BlockPos pos, final BlockState state,
-                            final Direction face) {
-        return level.getBlockState(pos).getBlock() instanceof DataCableBlock cable
-                && cable.tier() != DataTier.CRAFTING
-                && this.machine.acceptsTier(cable.tier())
-                && (!(state.getBlock() instanceof IFaceConnector device)
-                || device.accepts(state, face, DataLines.of(cable.tier())));
+    /* Whether the wire {@code number} stands for still lies beside this computer and still crosses into it. */
+    private boolean stillReaches(final ServerLevel level, final long number) {
+        final BlockPos at = Cables.blockOf(level, number);
+        final BlockPos pos = this.machine.getBlockPos();
+        final Direction face = at == null ? null : Neighbours.faceTowards(pos, at);
+        return face != null && DataWires.numbersReaching(level, pos, face, DataWires::isNetwork).contains(number);
     }
 }

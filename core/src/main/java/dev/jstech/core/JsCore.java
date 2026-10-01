@@ -11,6 +11,7 @@ import com.mojang.logging.LogUtils;
 import dev.jstech.core.api.CoreRegisterEvent;
 import dev.jstech.core.audio.AudioSettings;
 import dev.jstech.core.audio.media.MediaLedgers;
+import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.config.ConfigFiles;
 import dev.jstech.core.config.CoreConfigKeys;
 import dev.jstech.core.event.CoreEventDispatcher;
@@ -72,6 +73,8 @@ public final class JsCore {
         LOGGER.info("J's Core {} loaded.", modContainer.getModInfo().getVersion());
         // The data network lives on the level and the chunks as attachments the core owns.
         CoreAttachments.register(modEventBus);
+        // The cable block every mod's cables are laid in is the Core's own content.
+        CoreCables.declare();
         CoreItems.register(modEventBus);
         // The balance of the Operations engine is series-wide, so the Core owns the world's balance file.
         ConfigFiles.register(CoreConfigKeys.FILE, modEventBus, modContainer);
@@ -88,6 +91,8 @@ public final class JsCore {
          */
         modEventBus.addListener(FMLCommonSetupEvent.class, event -> event.enqueueWork(
                 () -> ModLoader.postEvent(new CoreRegisterEvent(LANGUAGES, OPERATIONS))));
+        // Every cable is registered by now: two lines given one lane stop the game here, not in a world.
+        modEventBus.addListener(FMLCommonSetupEvent.class, event -> CoreCables.checkLanes());
         modEventBus.addListener(FMLLoadCompleteEvent.class, event -> event.enqueueWork(() -> {
             LANGUAGES.freeze();
             OPERATIONS.freeze();

@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
 import java.util.Objects;
@@ -61,10 +62,10 @@ public final class ComputerBlockEntityGameTests {
     public static void network_followsACableCutNextToTheComputerAndFarFromIt(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final MainframeBlockEntity mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        world.setBlock(BACKBONE, ComputingModule.HBW_CABLE.get());
+        world.setBlock(BACKBONE, ComputingModule.HBW_CABLE);
         world.placeSeededRack(new BlockPos(2, 2, 1));
         world.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(DESK_CABLE, ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(DESK_CABLE, ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity pc = world.placeRunningPersonalComputer(new BlockPos(5, 2, 2));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + PROPAGATE, () -> {
@@ -75,13 +76,13 @@ public final class ComputerBlockEntityGameTests {
                 .thenExecute(() -> helper.setBlock(DESK_CABLE, Blocks.AIR))
                 .thenExecuteAfter(PROPAGATE, () -> helper.assertTrue(pc.networkUuid() == null && !pc.networkAttached(),
                         "the cable next to the computer cut: it is off the network; got " + pc.networkUuid()))
-                .thenExecute(() -> helper.setBlock(DESK_CABLE, ComputingModule.ETHERNET_CABLE.get()))
+                .thenExecute(() -> TestCables.lay(helper, DESK_CABLE, ComputingModule.ETHERNET_CABLE))
                 .thenExecuteAfter(PROPAGATE, () -> helper.assertTrue(Objects.equals(pc.networkUuid(), mainframe.networkUuid()),
                         "laid again: it is back on the same network; got " + pc.networkUuid()))
                 .thenExecute(() -> helper.setBlock(BACKBONE, Blocks.AIR))
                 .thenExecuteAfter(PROPAGATE, () -> helper.assertTrue(pc.networkUuid() == null,
                         "the backbone cut far from the computer: its side has no Mainframe; got " + pc.networkUuid()))
-                .thenExecute(() -> helper.setBlock(BACKBONE, ComputingModule.HBW_CABLE.get()))
+                .thenExecute(() -> TestCables.lay(helper, BACKBONE, ComputingModule.HBW_CABLE))
                 .thenExecuteAfter(PROPAGATE, () -> helper.assertTrue(Objects.equals(pc.networkUuid(), mainframe.networkUuid()),
                         "the backbone laid again: back on the Mainframe's network; got " + pc.networkUuid()))
                 .thenSucceed();

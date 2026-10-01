@@ -9,6 +9,9 @@ package dev.jstech.core.content;
 
 import dev.jstech.core.audio.SoundCue;
 import dev.jstech.core.audio.SoundKey;
+import dev.jstech.core.cable.CableEntry;
+import dev.jstech.core.cable.CableType;
+import dev.jstech.core.cable.CoreCables;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,6 +34,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * What one mod puts in the game, declared in one place: its blocks, its items, the block entities its blocks make
@@ -56,6 +60,8 @@ public final class ModContent {
     private final List<SoundCue> declaredCues = new ArrayList<>();
     private final List<DeferredHolder<BlockEntityType<?>, ? extends BlockEntityType<?>>> declaredBlockEntities =
             new ArrayList<>();
+    private final List<CableEntry> declaredCables = new ArrayList<>();
+    private @Nullable DeferredRegister<CableType> cables;
 
     /* Every mod's content, by mod id, in the order the mods made theirs. */
     private static final Map<String, ModContent> BY_MOD = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -105,6 +111,11 @@ public final class ModContent {
     /** Starts declaring an item that is not a block's, made from its properties. */
     public <I extends Item> ItemBuilder<I> item(final String id, final Function<Item.Properties, ? extends I> factory) {
         return new ItemBuilder<>(this, id, factory);
+    }
+
+    /** Starts declaring a cable laid in the Core's cable block, and the item that lays it, under one id. */
+    public CableBuilder cable(final String id, final CableType.Builder type) {
+        return new CableBuilder(this, id, type);
     }
 
     /**
@@ -169,9 +180,28 @@ public final class ModContent {
         return Collections.unmodifiableList(declaredCues);
     }
 
+    /** The cables declared so far, in declaration order. */
+    public List<CableEntry> declaredCables() {
+        return Collections.unmodifiableList(declaredCables);
+    }
+
     /** Hands the registrations to the mod's event bus; call it once, after every declaration class has loaded. */
     public void register(final IEventBus modEventBus) {
         Arrays.asList(blocks, items, blockEntities, tabs, sounds).forEach(register -> register.register(modEventBus));
+        if (cables != null) {
+            cables.register(modEventBus);
+        }
+    }
+
+    DeferredRegister<CableType> cableRegister() {
+        if (cables == null) {
+            cables = DeferredRegister.create(CoreCables.KEY, modid);
+        }
+        return cables;
+    }
+
+    void declare(final CableEntry entry) {
+        declaredCables.add(entry);
     }
 
     DeferredRegister.Blocks blockRegister() {

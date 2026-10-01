@@ -7,11 +7,10 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.block.part.ComputingParts;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.gui.layout.BusLayout;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuValidity;
@@ -208,8 +207,7 @@ public abstract class AbstractBusMenu extends CoreMenu {
     private static Predicate<Player> validity(final Level level, final BlockPos cablePos, final Direction face,
                                               final AbstractBusPart part) {
         return MenuValidity.near(level, cablePos, REACH_BLOCKS)
-                .and(player -> level.getBlockState(cablePos).getBlock() instanceof DataCableBlock)
-                .and(player -> level.getBlockEntity(cablePos) instanceof DataCableBlockEntity cable
+                .and(player -> level.getBlockEntity(cablePos) instanceof CableBlockEntity cable
                         && cable.getPart(face) == part);
     }
 }

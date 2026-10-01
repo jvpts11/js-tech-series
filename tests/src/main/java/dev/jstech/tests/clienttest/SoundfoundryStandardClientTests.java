@@ -142,10 +142,10 @@ public final class SoundfoundryStandardClientTests {
     private static ClientTestContext atTheDesktop(final ClientTestContext ctx, final boolean serving) {
         return ctx.thenBuild(0, builder -> {
                     builder.placeRunningMainframe(new BlockPos(1, 2, 2));
-                    builder.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+                    builder.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
                     final ServerRackBlockEntity rack = builder.placeSeededRack(RACK);
                     builder.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
-                    builder.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE.get());
+                    builder.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE);
                     final PersonalComputerBlockEntity pc = builder.placeRunningPersonalComputer(COMPUTER);
                     pc.console().install(Programs.SOUNDFOUNDRY.toString());
                     builder.placeMonitor(MONITOR, Direction.EAST);

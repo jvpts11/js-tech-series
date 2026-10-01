@@ -8,8 +8,9 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.advancement.JscEvents;
-import dev.jstech.computers.block.DataCableBlock;
+import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.block.MainframeStructure;
+import dev.jstech.core.cable.Cables;
 import dev.jstech.core.network.ConnectivityIndex;
 import dev.jstech.core.network.FailoverRole;
 import dev.jstech.core.network.MainframeNode;
@@ -337,11 +338,11 @@ final class MainframeNetworking {
         final Map<Long, MainframeBlockEntity> found = new LinkedHashMap<>();
         final Set<Long> scanned = new HashSet<>();
         for (final long anchor : cables) {
-            for (final long cablePos : index.componentPositions(anchor)) {
-                if (!scanned.add(cablePos)) {
+            for (final long wire : index.componentPositions(anchor)) {
+                final BlockPos base = Cables.blockOf(level, wire);
+                if (base == null || !scanned.add(base.asLong())) {
                     continue;
                 }
-                final BlockPos base = BlockPos.of(cablePos);
                 for (final Direction direction : SIDES) {
                     final MainframeBlockEntity peer = mainframeBehind(level, base.relative(direction));
                     if (peer != null && peer != mainframe && peer.isRunning()) {
@@ -381,10 +382,10 @@ final class MainframeNetworking {
     }
 
     /**
-     * Every cable touching the outside of the multiblock.
+     * Every data wire crossing into the outside of the multiblock, by the number its grid knows it by.
      *
      * <p>The Mainframe is 3x2x2, so it looks across its whole footprint rather than at one side, and it takes
-     * every cable it finds rather than the first, because it bridges all of them into its single network.
+     * every wire it finds rather than the first, because it bridges all of them into its single network.
      */
     Set<Long> adjacentCables(final ServerLevel level) {
         final Direction facing = mainframe.getBlockState().getValue(HorizontalDirectionalBlock.FACING);
@@ -406,10 +407,7 @@ final class MainframeNetworking {
                 if (inside.contains(neighbor.asLong())) {
                     continue; // a face internal to the multiblock
                 }
-                if (level.getBlockState(neighbor).getBlock() instanceof DataCableBlock cable
-                        && mainframe.acceptsDataTier(cable.tier())) {
-                    cables.add(neighbor.asLong());
-                }
+                cables.addAll(DataWires.numbersReaching(level, p, direction, DataWires::isNetwork));
             }
         }
         return cables;

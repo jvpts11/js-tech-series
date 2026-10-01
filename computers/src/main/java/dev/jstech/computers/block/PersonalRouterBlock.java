@@ -14,7 +14,6 @@ import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.INetworkBridge;
-import dev.jstech.core.network.NetworkSystem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -70,7 +69,7 @@ public class PersonalRouterBlock extends HorizontalDirectionalBlock
     protected void onRemove(final BlockState state, final Level level, final BlockPos pos,
                             final BlockState newState, final boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel) {
-            NetworkSystem.get(serverLevel).connectivity().onCableRemovedIfRegistered(pos.asLong());
+            DataWires.removeRouter(serverLevel, pos);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }

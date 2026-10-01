@@ -19,6 +19,7 @@ import dev.jstech.computers.program.KnotRepository;
 import dev.jstech.computers.program.MessengerLog;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -61,7 +62,7 @@ public final class SocialServiceGameTests {
     private static Base base(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final MainframeBlockEntity mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         final ServerRackBlockEntity rack = world.placeSeededRack(new BlockPos(3, 2, 2), Direction.EAST);
         // A machine with nothing on its drive takes no software at all, so the server gets a system first.
         rack.unitHost(0).installOs(ResourceLocation.fromNamespaceAndPath("jsc", "debian"));

@@ -7,6 +7,9 @@
  */
 package dev.jstech.core.datagen;
 
+import dev.jstech.core.JsCore;
+import dev.jstech.core.cable.CableItem;
+import dev.jstech.core.cable.CableType;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemEntry;
@@ -57,9 +60,21 @@ public final class ContentItemModelProvider extends ItemModelProvider {
             case IItemLook.Standard.HANDMADE -> {
                 // Written by hand beside the textures; nothing to generate.
             }
+            case IItemLook.Standard.CABLE -> cable(id, item);
             case IItemLook.Parent parent -> getBuilder(id)
                     .parent(new ModelFile.UncheckedModelFile(ContentFiles.named(modid, parent.model())));
         }
+    }
+
+    /* A length of the cable in its own jacket, from the Core's model of a cable as thick as it is. */
+    private void cable(final String id, final Item item) {
+        if (!(item instanceof CableItem laid)) {
+            throw new IllegalStateException(id + " is declared to look like a cable and lays none");
+        }
+        final CableType type = laid.type();
+        getBuilder(id)
+                .parent(new ModelFile.UncheckedModelFile(JsCore.MODID + ":block/cable/item_" + type.thickness()))
+                .texture("jacket", type.jacket());
     }
 
     /**

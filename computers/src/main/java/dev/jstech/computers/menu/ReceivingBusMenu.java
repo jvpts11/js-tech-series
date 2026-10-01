@@ -9,7 +9,7 @@ package dev.jstech.computers.menu;
 
 import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.block.part.ReceivingBusPart;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.core.cable.CableBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -29,7 +29,7 @@ public class ReceivingBusMenu extends AbstractBusMenu {
     }
 
     public static ReceivingBusMenu create(final int containerId, final Inventory playerInventory,
-                                          final DataCableBlockEntity cable, final Direction face) {
+                                          final CableBlockEntity cable, final Direction face) {
         final ReceivingBusPart part =
                 cable.getPart(face) instanceof ReceivingBusPart real ? real : new ReceivingBusPart();
         return new ReceivingBusMenu(containerId, playerInventory, part, cable.getLevel(), cable.getBlockPos(),
@@ -42,7 +42,7 @@ public class ReceivingBusMenu extends AbstractBusMenu {
         final Direction face = Direction.from3DDataValue(buf.readByte());
         final String busName = buf.readUtf();
         final Level level = playerInventory.player.level();
-        final ReceivingBusPart part = level.getBlockEntity(pos) instanceof DataCableBlockEntity cable
+        final ReceivingBusPart part = level.getBlockEntity(pos) instanceof CableBlockEntity cable
                 && cable.getPart(face) instanceof ReceivingBusPart real ? real : new ReceivingBusPart();
         return new ReceivingBusMenu(containerId, playerInventory, part, level, pos, face, busName);
     }

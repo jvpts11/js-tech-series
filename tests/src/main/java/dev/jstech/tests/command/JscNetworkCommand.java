@@ -9,10 +9,11 @@ package dev.jstech.tests.command;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.core.cable.CableBlock;
+import dev.jstech.core.cable.Cables;
+import dev.jstech.core.cable.Wire;
 import dev.jstech.core.network.ConnectivityIndex;
-import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.tests.JsTests;
@@ -32,6 +33,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 /**
  * Developer commands under {@code /jsc}: <ul> <li>{@code /jsc net}, to inspect (and {@code net assign}, for testing, seed) the data network at the cable the player is looking at.</li> <li>{@code /jsc op submit <count>} / {@code /jsc op status}, to submit self-test Operations to, and read the dispatch counters of, the Mainframe the player is looking at, to exercise the virtual-thread runtime.</li> <li>{@code /jsc benchmark build [types|expert]}, to raise the scale benchmark's base (a 48-block square starting one block east of the player and extending east and south) in the real world, at the default size, with a given catalog size, or at expert-pack scale; {@code /jsc benchmark load <opsPerTick> <ticks>} and {@code stop} put the same traffic on it, for watching a profiler while it works.</li> </ul>
@@ -182,32 +184,31 @@ public final class JscNetworkCommand {
     private static int info(final CommandSourceStack source) throws CommandSyntaxException {
         final ServerPlayer player = source.getPlayerOrException();
         final ServerLevel level = player.serverLevel();
-        final BlockPos pos = targetCable(player, level);
-        if (pos == null) {
+        final AimedWire aimed = targetWire(player, level);
+        if (aimed == null) {
             source.sendFailure(Component.literal("Look at a data cable."));
             return 0;
         }
         final ConnectivityIndex index = NetworkSystem.get(level).connectivity();
-        final DataTier tier = ((DataCableBlock) level.getBlockState(pos).getBlock()).tier();
-        final Optional<NetworkUuid> uuid = index.networkOf(pos.asLong());
+        final Optional<NetworkUuid> uuid = index.networkOf(aimed.number());
         source.sendSuccess(() -> Component.literal(String.format(
                 "%s @ %s | network: %s | cables in this network: %d | networks total: %d",
-                tier.name(), pos.toShortString(),
+                aimed.wire().type().id(), aimed.pos().toShortString(),
                 uuid.map(value -> value.value().toString()).orElse("unassigned"),
-                index.componentSize(pos.asLong()), index.componentCount())), false);
+                index.componentSize(aimed.number()), index.componentCount())), false);
         return 1;
     }
 
     private static int assign(final CommandSourceStack source) throws CommandSyntaxException {
         final ServerPlayer player = source.getPlayerOrException();
         final ServerLevel level = player.serverLevel();
-        final BlockPos pos = targetCable(player, level);
-        if (pos == null) {
+        final AimedWire aimed = targetWire(player, level);
+        if (aimed == null) {
             source.sendFailure(Component.literal("Look at a data cable."));
             return 0;
         }
         final NetworkUuid uuid = NetworkUuid.random();
-        NetworkSystem.get(level).connectivity().assignUuid(pos.asLong(), uuid);
+        NetworkSystem.get(level).connectivity().assignUuid(aimed.number(), uuid);
         source.sendSuccess(() -> Component.literal(
                 "Assigned " + uuid.value() + " to this segment."), false);
         return 1;
@@ -257,14 +258,22 @@ public final class JscNetworkCommand {
         return null;
     }
 
-    private static BlockPos targetCable(final ServerPlayer player, final ServerLevel level) {
+    /* The data wire the player looks at, with the number the data grid knows it by; null for none. */
+    private static AimedWire targetWire(final ServerPlayer player, final ServerLevel level) {
         final HitResult hit = player.pick(REACH, 1.0F, false);
-        if (hit instanceof BlockHitResult blockHit) {
-            final BlockPos pos = blockHit.getBlockPos();
-            if (level.getBlockState(pos).getBlock() instanceof DataCableBlock) {
-                return pos;
-            }
+        if (!(hit instanceof BlockHitResult blockHit)) {
+            return null;
         }
-        return null;
+        final BlockPos pos = blockHit.getBlockPos();
+        final Wire wire = CableBlock.aimOf(level, pos, player).wire();
+        if (wire == null || !wire.type().grid().carriesNetwork()) {
+            return null;
+        }
+        final OptionalLong number = Cables.number(level, pos, wire.type());
+        return number.isEmpty() ? null : new AimedWire(pos, wire, number.getAsLong());
+    }
+
+    /** A wire looked at: where it is, which, and the number the data grid knows it by. */
+    private record AimedWire(BlockPos pos, Wire wire, long number) {
     }
 }

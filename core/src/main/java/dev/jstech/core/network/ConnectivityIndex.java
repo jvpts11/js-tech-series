@@ -9,6 +9,7 @@ package dev.jstech.core.network;
 
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridMember;
+import dev.jstech.core.grid.GridPlaces;
 import dev.jstech.core.uuid.NetworkUuid;
 
 import java.util.Collection;
@@ -28,6 +29,11 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>A part of the grid takes the identity its owner gives it, keeps it when cables join it, and settles a conflict
  * when two networks' cables meet. A part cut away from its owner loses it.
+ *
+ * <p>What this calls a position is the number the dimension's {@link GridPlaces} gives a place
+ * of the grid: one wire in a lane of a cable block, or a whole block for a device such as a router. A device that is
+ * no position of the grid (a computer touching cables) is named by its block's own packed position where it bridges
+ * or anchors.
  */
 public final class ConnectivityIndex {
 
@@ -134,14 +140,22 @@ public final class ConnectivityIndex {
      */
     public IPlacementResult onCablePlaced(final long encodedPos, final Set<Long> neighbors,
                                          @Nullable final DataTier tier) {
-        if (grid.contains(encodedPos)) {
-            throw new IllegalStateException("Position already registered: " + encodedPos);
+        return place(encodedPos, neighbors, tier == null ? GridMember.DEVICE : MEMBERS.get(tier));
+    }
+
+    /**
+     * Puts in what {@code member} says stands at {@code node}, joined to those of {@code neighbors} already in that it
+     * joins: a wire of a line, or a device that carries the network without being a cable.
+     */
+    public IPlacementResult place(final long node, final Collection<Long> neighbors, final GridMember member) {
+        if (grid.contains(node)) {
+            throw new IllegalStateException("Position already registered: " + node);
         }
+        final DataTier tier = member.isDevice() ? null : DataTier.ofLine(member.line());
         if (tier != null) {
-            tiers.put(encodedPos, tier);
+            tiers.put(node, tier);
         }
-        final Set<Integer> joinedRoots = grid.place(encodedPos, tier == null ? GridMember.DEVICE : MEMBERS.get(tier),
-                neighbors);
+        final Set<Integer> joinedRoots = grid.place(node, member, neighbors);
         NetworkUuid firstSeen = null;
         NetworkUuid conflicting = null;
         for (final int root : joinedRoots) {
@@ -155,7 +169,7 @@ public final class ConnectivityIndex {
                 conflicting = uuid;
             }
         }
-        final int newRoot = grid.rootOf(encodedPos);
+        final int newRoot = grid.rootOf(node);
         forgetMerged(joinedRoots, newRoot);
         if (conflicting != null) {
             // Several networks met: the first keeps the merged part, and the caller is told of the conflict.

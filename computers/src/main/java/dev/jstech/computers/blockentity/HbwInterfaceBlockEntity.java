@@ -10,7 +10,7 @@ package dev.jstech.computers.blockentity;
 import com.mojang.serialization.Codec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.advancement.JscEvents;
-import dev.jstech.computers.block.DataCableBlock;
+import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.hardware.PhiCoprocessorSpec;
 import dev.jstech.computers.item.PhiCoprocessorItem;
 import dev.jstech.computers.item.ServerHardwareHandler;
@@ -18,6 +18,7 @@ import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.core.cable.Cables;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -144,10 +145,8 @@ public class HbwInterfaceBlockEntity extends SyncedBlockEntity {
                 if (!visited.add(neighbor)) {
                     continue;
                 }
-                final BlockState state = serverLevel.getBlockState(neighbor);
                 // The fabric is the high-compute cable only. A cabinet is a leaf on it, not a conduit.
-                if (state.getBlock() instanceof DataCableBlock cable
-                        && cable.tier() == DataTier.HPC) {
+                if (Cables.holds(serverLevel, neighbor, ComputingModule.HPC_CABLE.get())) {
                     queue.add(neighbor);
                     continue;
                 }
@@ -242,12 +241,13 @@ public class HbwInterfaceBlockEntity extends SyncedBlockEntity {
         };
     }
 
+    /* The HBW wire the interface reads its network off, by the number its grid knows it by. */
     private long adjacentHbwCable(final ServerLevel serverLevel) {
         for (final Direction direction : Direction.values()) {
-            final BlockPos neighbor = worldPosition.relative(direction);
-            if (serverLevel.getBlockState(neighbor).getBlock() instanceof DataCableBlock cable
-                    && cable.tier() == DataTier.T2_HBW) {
-                return neighbor.asLong();
+            final List<Long> wires = DataWires.numbersReaching(serverLevel, worldPosition, direction,
+                    DataWires.of(DataTier.T2_HBW));
+            if (!wires.isEmpty()) {
+                return wires.getFirst();
             }
         }
         return Long.MIN_VALUE;

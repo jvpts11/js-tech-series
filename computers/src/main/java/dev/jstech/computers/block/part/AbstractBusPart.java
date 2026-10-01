@@ -7,16 +7,22 @@
  */
 package dev.jstech.computers.block.part;
 
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.computers.block.DataWires;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.storage.ChemicalBridges;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.IPartHost;
 import dev.jstech.core.util.Utf8Text;
+import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
@@ -40,7 +46,7 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
     /** The longest name a bus may carry; keeps the name field and any query reference bounded. */
     public static final int MAX_NAME_LENGTH = 32;
 
-    protected DataCableBlockEntity host;
+    protected CableBlockEntity host;
     protected Direction face = Direction.NORTH;
 
     protected final ItemStackHandler filter = new ItemStackHandler(1) {
@@ -64,21 +70,37 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
 
     @Override
     public void attach(final IPartHost host, final Direction face) {
-        if (!(host instanceof DataCableBlockEntity cable)) {
-            throw new IllegalArgumentException("a bus mounts on a data cable, not on " + host);
+        if (!(host instanceof CableBlockEntity cable)) {
+            throw new IllegalArgumentException("a bus mounts on a cable block, not on " + host);
         }
         this.host = cable;
         this.face = face;
     }
 
+    /*
+     * Using the bus opens its configuration menu; picking it off the cable is a left-click, handled where the cable
+     * block breaks, so it never breaks the cable. The open packet carries the bus's name so the field shows it.
+     */
     @Override
-    public boolean hasMenu() {
+    public boolean use(final ServerPlayer player) {
+        if (this.host == null) {
+            return false;
+        }
+        final CableBlockEntity cable = this.host;
+        final Direction mounted = this.face;
+        player.openMenu(new SimpleMenuProvider((id, inventory, opener) -> createMenu(id, inventory, cable, mounted),
+                        partItem().getHoverName()),
+                buffer -> {
+                    buffer.writeBlockPos(cable.getBlockPos());
+                    buffer.writeByte(mounted.get3DDataValue());
+                    buffer.writeUtf(this.name);
+                });
         return true;
     }
 
     /** Builds this bus's configuration menu, each bus its own, so the cable stays generic. */
     public abstract AbstractContainerMenu createMenu(int containerId, Inventory inventory,
-                                                     DataCableBlockEntity cable, Direction mountedFace);
+                                                     CableBlockEntity cable, Direction mountedFace);
 
     public ItemStackHandler getFilterHandler() {
         return filter;
@@ -158,12 +180,33 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
 
     /** Whether a redstone-mode bus is currently held off because its block has no neighbor signal. */
     protected boolean redstoneBlocked() {
-        return mode == MODE_REDSTONE && host != null && host.serverLevel() != null
-                && !host.serverLevel().hasNeighborSignal(host.getBlockPos());
+        final ServerLevel level = serverLevel();
+        return mode == MODE_REDSTONE && level != null && !level.hasNeighborSignal(host.getBlockPos());
     }
 
+    /** The server level the bus's cable is in, or null on a player's game or before it is placed. */
+    protected @Nullable ServerLevel serverLevel() {
+        return host == null ? null : host.partServerLevel();
+    }
+
+    /** The network the bus's cable carries, or null when it is on none. */
+    protected @Nullable NetworkUuid network() {
+        return host == null || serverLevel() == null ? null : DataWires.networkOf(host);
+    }
+
+    /** The Mainframe of the network the bus's cable carries, or null when there is none. */
+    protected @Nullable MainframeBlockEntity mainframe() {
+        final ServerLevel level = serverLevel();
+        return level == null ? null : DataWires.mainframeOf(level, network());
+    }
+
+    /** Every kind of data the block the bus faces holds: a bus moves whatever is there. */
     protected ExternalDataPort neighborPort() {
-        return host.neighborPort(face);
+        final ServerLevel level = serverLevel();
+        if (level == null) {
+            return new ExternalDataPort(null, null);
+        }
+        return ExternalDataPort.at(level, host.getBlockPos().relative(face), face.getOpposite());
     }
 
     protected void markHostChanged() {

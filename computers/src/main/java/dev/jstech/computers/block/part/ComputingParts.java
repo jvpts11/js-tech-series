@@ -12,15 +12,14 @@ import dev.jstech.core.multipart.CoreParts;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import java.util.Map;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
- * The parts J's Computers mounts on its cables' faces: the storage buses on data cables and the crafting buses on
- * crafting cables, registered with the Core's parts.
+ * The parts J's Computers mounts on the faces of the Core's cable blocks: the storage buses where a data cable runs
+ * and the crafting buses where a crafting cable runs, registered with the Core's parts.
  */
 @TextHolder
 public final class ComputingParts {
@@ -44,13 +43,6 @@ public final class ComputingParts {
             () -> new PartType<>(InputBusPart::new, INPUT_NAME, EXPORT_MODEL));
     public static final DeferredHolder<PartType<?>, PartType<ReceivingBusPart>> RECEIVING = PARTS.register(
             "receiving_bus", () -> new PartType<>(ReceivingBusPart::new, RECEIVING_NAME, IMPORT_MODEL));
-
-    /** The numbers the buses were saved under before parts were the Core's, by the id each is registered under. */
-    public static final Map<Integer, String> FORMER_NUMBERS = Map.of(
-            0, JsComputers.MODID + ":import_bus",
-            1, JsComputers.MODID + ":export_bus",
-            2, JsComputers.MODID + ":input_bus",
-            3, JsComputers.MODID + ":receiving_bus");
 
     private ComputingParts() {
     }

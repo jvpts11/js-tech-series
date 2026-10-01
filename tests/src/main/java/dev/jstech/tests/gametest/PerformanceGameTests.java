@@ -15,6 +15,7 @@ import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -95,7 +96,7 @@ public final class PerformanceGameTests {
     private static ServerRackBlockEntity buildMainframeWithRack(final GameTestHelper helper,
                                                                 final BlockPos mainframe, final BlockPos cable,
                                                                 final BlockPos rack, final MainframeBlockEntity mf) {
-        helper.setBlock(cable, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
         if (!(helper.getBlockEntity(rack) instanceof ServerRackBlockEntity rackBe)) {
@@ -239,9 +240,9 @@ public final class PerformanceGameTests {
     public static void bench_craftPlannerDeepChain(final GameTestHelper helper) {
         final BlockPos m = new BlockPos(1, 2, 2);
         final MainframeBlockEntity mf = NetworkGameTests.placeRunningMainframe(helper, m);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
-        helper.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE.get());
+        TestCables.lay(helper, new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE);
         final CraftingComputerBlockEntity cc =
                 NetworkGameTests.placeRunningCraftingComputer(helper, new BlockPos(5, 2, 2));
         final BlockPos rack = new BlockPos(2, 2, 3);
@@ -328,7 +329,7 @@ public final class PerformanceGameTests {
         int cables = 0;
         for (int dx = 0; dx < side; dx++) {
             for (int dz = 0; dz < side; dz++) {
-                helper.setBlock(new BlockPos(x0 + dx, 2, z0 + dz), ComputingModule.HBW_CABLE.get());
+                TestCables.lay(helper, new BlockPos(x0 + dx, 2, z0 + dz), ComputingModule.HBW_CABLE);
                 cables++;
             }
         }

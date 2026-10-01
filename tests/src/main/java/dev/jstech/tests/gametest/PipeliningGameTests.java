@@ -11,12 +11,12 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.part.InputBusPart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
@@ -87,37 +87,37 @@ public final class PipeliningGameTests {
      * bottom bus, mounted separately), and a Receiving Bus on its right (west) face for the infused alloy.
      */
     private static void wireFirstInfuser(final TestWorldBuilder world) {
-        if (world.getBlockEntity(MekanismRig.CABLE_ABOVE) instanceof DataCableBlockEntity cable) {
+        if (world.getBlockEntity(MekanismRig.CABLE_ABOVE) instanceof CableBlockEntity cable) {
             final InputBusPart top = new InputBusPart();
             cable.addPart(Direction.DOWN, top);
             top.setFilter(new ItemStack(Items.COPPER_INGOT));
         }
-        if (world.getBlockEntity(MekanismRig.CABLE_WEST) instanceof DataCableBlockEntity cable) {
+        if (world.getBlockEntity(MekanismRig.CABLE_WEST) instanceof CableBlockEntity cable) {
             cable.addPart(Direction.EAST, new ReceivingBusPart());
         }
     }
 
     /** The second infuser: top bus carries the infused alloy, bottom bus the diamond, right face gives it back. */
     private static void placeSecondInfuser(final TestWorldBuilder world) {
-        world.setBlock(CABLE_2_LINK, ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(new BlockPos(5, 2, 9), ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(CABLE_2_RUN, ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(CABLE_2_ABOVE_LINK, ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(CABLE_2_ABOVE, ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(CABLE_2_BELOW_LINK, ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(CABLE_2_BELOW, ComputingModule.CRAFTING_CABLE.get());
+        world.setBlock(CABLE_2_LINK, ComputingModule.CRAFTING_CABLE);
+        world.setBlock(new BlockPos(5, 2, 9), ComputingModule.CRAFTING_CABLE);
+        world.setBlock(CABLE_2_RUN, ComputingModule.CRAFTING_CABLE);
+        world.setBlock(CABLE_2_ABOVE_LINK, ComputingModule.CRAFTING_CABLE);
+        world.setBlock(CABLE_2_ABOVE, ComputingModule.CRAFTING_CABLE);
+        world.setBlock(CABLE_2_BELOW_LINK, ComputingModule.CRAFTING_CABLE);
+        world.setBlock(CABLE_2_BELOW, ComputingModule.CRAFTING_CABLE);
         world.placeFromItem(INFUSER_2, BuiltInRegistries.BLOCK.get(INFUSER));
-        if (world.getBlockEntity(CABLE_2_ABOVE) instanceof DataCableBlockEntity cable) {
+        if (world.getBlockEntity(CABLE_2_ABOVE) instanceof CableBlockEntity cable) {
             final InputBusPart top = new InputBusPart();
             cable.addPart(Direction.DOWN, top);
             top.setFilter(new ItemStack(MekanismRig.item(ALLOY_INFUSED)));
         }
-        if (world.getBlockEntity(CABLE_2_BELOW) instanceof DataCableBlockEntity cable) {
+        if (world.getBlockEntity(CABLE_2_BELOW) instanceof CableBlockEntity cable) {
             final InputBusPart bottom = new InputBusPart();
             cable.addPart(Direction.UP, bottom);
             bottom.setFilter(new ItemStack(MekanismRig.item(DUST_DIAMOND)));
         }
-        if (world.getBlockEntity(CABLE_2_RUN) instanceof DataCableBlockEntity cable) {
+        if (world.getBlockEntity(CABLE_2_RUN) instanceof CableBlockEntity cable) {
             cable.addPart(Direction.EAST, new ReceivingBusPart());
         }
     }

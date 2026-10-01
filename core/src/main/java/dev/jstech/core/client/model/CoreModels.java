@@ -8,6 +8,8 @@
 package dev.jstech.core.client.model;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.cable.CableType;
+import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.connect.ConnectedQuadrants;
 import dev.jstech.core.connect.IJoinRule;
 import dev.jstech.core.multipart.CoreParts;
@@ -84,6 +86,9 @@ public final class CoreModels {
         for (final PartType<?> type : CoreParts.REGISTRY) {
             event.register(ModelResourceLocation.standalone(type.model()));
         }
+        for (final CableType type : CoreCables.REGISTRY) {
+            event.register(ModelResourceLocation.standalone(type.plug()));
+        }
         for (final ResourceLocation model : STANDALONE) {
             event.register(ModelResourceLocation.standalone(model));
         }
@@ -92,7 +97,13 @@ public final class CoreModels {
     @SubscribeEvent
     public static void onModifyBakingResult(final ModelEvent.ModifyBakingResult event) {
         MultipartBakedModel.forget();
+        CableBakedModel.forget();
         final Map<ModelResourceLocation, BakedModel> models = event.getModels();
+        // The Core's own cable block draws its wires on top of what its parts and plugs place.
+        for (final BlockState state : CoreCables.BLOCK.get().getStateDefinition().getPossibleStates()) {
+            models.computeIfPresent(BlockModelShaper.stateToModelLocation(state),
+                    (location, model) -> new CableBakedModel(new MultipartBakedModel(model)));
+        }
         for (final Supplier<? extends Block> block : MULTIPART) {
             for (final BlockState state : block.get().getStateDefinition().getPossibleStates()) {
                 models.computeIfPresent(BlockModelShaper.stateToModelLocation(state),

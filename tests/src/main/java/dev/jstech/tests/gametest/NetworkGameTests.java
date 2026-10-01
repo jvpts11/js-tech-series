@@ -19,7 +19,6 @@ import dev.jstech.computers.block.ServerRackPartBlock;
 import dev.jstech.computers.block.part.ExportBusPart;
 import dev.jstech.computers.block.part.ImportBusPart;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
@@ -35,6 +34,7 @@ import dev.jstech.computers.operation.payload.NmsSchemaPayload;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.connect.Connection;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.network.DataLines;
@@ -45,12 +45,12 @@ import dev.jstech.core.persistence.NetworkRegistry;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NetworkUuidState;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
@@ -94,7 +94,7 @@ public final class NetworkGameTests {
         final BlockPos cable = new BlockPos(3, 2, 2);
         final BlockPos b = new BlockPos(4, 2, 2);
         final MainframeBlockEntity beA = placeRunningMainframe(helper, a);
-        helper.setBlock(cable, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.HBW_CABLE);
         final MainframeBlockEntity beB = placeRunningMainframe(helper, b);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
@@ -111,7 +111,7 @@ public final class NetworkGameTests {
         final BlockPos cable = new BlockPos(3, 2, 2);
         final BlockPos b = new BlockPos(4, 2, 2);
         final MainframeBlockEntity beA = placeRunningMainframe(helper, a);
-        helper.setBlock(cable, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.HBW_CABLE);
         placeRunningMainframe(helper, b);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () ->
@@ -130,7 +130,7 @@ public final class NetworkGameTests {
         final BlockPos cable = new BlockPos(3, 2, 2);
         final BlockPos b = new BlockPos(4, 2, 2);
         final MainframeBlockEntity beA = placeRunningMainframe(helper, a);
-        helper.setBlock(cable, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.HBW_CABLE);
         final MainframeBlockEntity beB = placeRunningMainframe(helper, b);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () ->
@@ -150,9 +150,9 @@ public final class NetworkGameTests {
         final BlockPos c2 = new BlockPos(3, 2, 2);
         final BlockPos c3 = new BlockPos(4, 2, 2);
         placeRunningMainframe(helper, a);
-        helper.setBlock(c1, ComputingModule.HBW_CABLE.get());
-        helper.setBlock(c2, ComputingModule.HBW_CABLE.get());
-        helper.setBlock(c3, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, c1, ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, c2, ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, c3, ComputingModule.HBW_CABLE);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     helper.assertTrue(sameNetwork(helper, c1, c3), "c1 and c3 should start on one network");
@@ -174,8 +174,8 @@ public final class NetworkGameTests {
         final BlockPos c2 = new BlockPos(3, 2, 2);
         final BlockPos c3 = new BlockPos(4, 2, 2);
         placeRunningMainframe(helper, m);
-        helper.setBlock(c1, ComputingModule.HBW_CABLE.get());
-        helper.setBlock(c2, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, c1, ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, c2, ComputingModule.HBW_CABLE);
         final NetworkUuid[] uuid = new NetworkUuid[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
@@ -183,7 +183,7 @@ public final class NetworkGameTests {
                     uuid[0] = networkOf(helper, c2).orElseThrow();
                     helper.assertTrue(networkOf(helper, c3).isEmpty(), "c3 is not placed yet");
                 })
-                .thenExecute(() -> helper.setBlock(c3, ComputingModule.HBW_CABLE.get())) // extend at runtime
+                .thenExecute(() -> TestCables.lay(helper, c3, ComputingModule.HBW_CABLE)) // extend at runtime
                 .thenExecuteAfter(SETTLE, () ->
                         helper.assertTrue(networkOf(helper, c3).equals(Optional.of(uuid[0])),
                                 "a cable placed onto a live network joins it and inherits the UUID"))
@@ -197,16 +197,16 @@ public final class NetworkGameTests {
         final BlockPos c2 = new BlockPos(3, 2, 2);
         final BlockPos c3 = new BlockPos(4, 2, 2);
         placeRunningMainframe(helper, m);
-        helper.setBlock(c1, ComputingModule.HBW_CABLE.get());
-        helper.setBlock(c2, ComputingModule.HBW_CABLE.get());
-        helper.setBlock(c3, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, c1, ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, c2, ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, c3, ComputingModule.HBW_CABLE);
         final NetworkUuid[] uuid = new NetworkUuid[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> uuid[0] = networkOf(helper, c3).orElseThrow())
                 .thenExecute(() -> helper.setBlock(c2, Blocks.AIR)) // sever -> c3 fragment goes network-less
                 .thenExecuteAfter(SETTLE, () ->
                         helper.assertTrue(networkOf(helper, c3).isEmpty(), "severed far cable loses the network"))
-                .thenExecute(() -> helper.setBlock(c2, ComputingModule.HBW_CABLE.get())) // re-place the bridge
+                .thenExecute(() -> TestCables.lay(helper, c2, ComputingModule.HBW_CABLE)) // re-place the bridge
                 .thenExecuteAfter(SETTLE, () ->
                         helper.assertTrue(networkOf(helper, c3).equals(Optional.of(uuid[0])),
                                 "re-placing the cable rejoins the fragment and restores its UUID"))
@@ -219,8 +219,8 @@ public final class NetworkGameTests {
         final BlockPos c1 = new BlockPos(2, 2, 2);
         final BlockPos c2 = new BlockPos(3, 2, 2);
         placeRunningMainframe(helper, m);
-        helper.setBlock(c1, ComputingModule.HBW_CABLE.get());
-        helper.setBlock(c2, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, c1, ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, c2, ComputingModule.HBW_CABLE);
         final NetworkUuid[] uuid = new NetworkUuid[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
@@ -257,9 +257,9 @@ public final class NetworkGameTests {
         final MainframeBlockEntity primary = placeRunningMainframe(helper, primaryPos); // Failover OFF
         final MainframeBlockEntity standby = placeRunningMainframe(helper, standbyPos);
         standby.toggleFailover(); // ON -> a standby that joins the primary's network
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE);
         final NetworkUuid[] uuid = new NetworkUuid[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
@@ -290,7 +290,7 @@ public final class NetworkGameTests {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos c = new BlockPos(2, 2, 2);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m); // Failover OFF, a primary
-        helper.setBlock(c, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, c, ComputingModule.HBW_CABLE);
         final NetworkUuid[] uuid = new NetworkUuid[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
@@ -317,9 +317,9 @@ public final class NetworkGameTests {
         final MainframeBlockEntity primary = placeRunningMainframe(helper, primaryPos);
         final MainframeBlockEntity standby = placeRunningMainframe(helper, standbyPos);
         standby.toggleFailover();
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE);
         final NetworkUuid[] uuid = new NetworkUuid[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
@@ -344,9 +344,9 @@ public final class NetworkGameTests {
         final BlockPos eth = new BlockPos(2, 2, 2);
         final BlockPos router = new BlockPos(3, 2, 2);
         final BlockPos hbw = new BlockPos(4, 2, 2);
-        helper.setBlock(eth, ComputingModule.ETHERNET_CABLE.get());
+        TestCables.lay(helper, eth, ComputingModule.ETHERNET_CABLE);
         helper.setBlock(router, ComputingModule.PERSONAL_ROUTER.get());
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> helper.assertTrue(sameNetwork(helper, eth, hbw),
                         "Ethernet and HBW should share one network through the router"))
@@ -360,8 +360,8 @@ public final class NetworkGameTests {
     public static void ethernetAndHbw_doNotJoinDirectly(final GameTestHelper helper) {
         final BlockPos eth = new BlockPos(2, 2, 2);
         final BlockPos hbw = new BlockPos(3, 2, 2);
-        helper.setBlock(eth, ComputingModule.ETHERNET_CABLE.get());
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, eth, ComputingModule.ETHERNET_CABLE);
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> helper.assertFalse(sameNetwork(helper, eth, hbw),
                         "different cable tiers must not join without a router"))
@@ -391,9 +391,9 @@ public final class NetworkGameTests {
         final BlockPos eth = new BlockPos(4, 2, 2);
         final BlockPos pc = new BlockPos(5, 2, 2);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(router, ComputingModule.PERSONAL_ROUTER.get());
-        helper.setBlock(eth, ComputingModule.ETHERNET_CABLE.get());
+        TestCables.lay(helper, eth, ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity computer = placeRunningPC(helper, pc);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
@@ -413,9 +413,9 @@ public final class NetworkGameTests {
         final BlockPos eth = new BlockPos(4, 2, 2);
         final BlockPos pcPos = new BlockPos(5, 2, 2);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(router, ComputingModule.PERSONAL_ROUTER.get());
-        helper.setBlock(eth, ComputingModule.ETHERNET_CABLE.get());
+        TestCables.lay(helper, eth, ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity pc = placeRunningPC(helper, pcPos);
         /*
          * Install the smallest disk (2000-item capacity) and seed it with 100 cobblestone, all private
@@ -497,7 +497,7 @@ public final class NetworkGameTests {
         final BlockPos hbw = new BlockPos(2, 2, 2);
         final BlockPos pc = new BlockPos(3, 2, 2); // PC directly against an HBW cable
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         final PersonalComputerBlockEntity computer = placeRunningPC(helper, pc);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
@@ -637,9 +637,9 @@ public final class NetworkGameTests {
         final BlockPos eth = new BlockPos(4, 2, 2);
         final BlockPos cc = new BlockPos(5, 2, 2);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(router, ComputingModule.PERSONAL_ROUTER.get());
-        helper.setBlock(eth, ComputingModule.ETHERNET_CABLE.get());
+        TestCables.lay(helper, eth, ComputingModule.ETHERNET_CABLE);
         final CraftingComputerBlockEntity computer = placeRunningCraftingComputer(helper, cc);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
@@ -664,7 +664,7 @@ public final class NetworkGameTests {
         final BlockPos m = new BlockPos(2, 2, 2);
         final BlockPos eth = new BlockPos(3, 2, 2); // Mainframe directly against an Ethernet cable
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(eth, ComputingModule.ETHERNET_CABLE.get());
+        TestCables.lay(helper, eth, ComputingModule.ETHERNET_CABLE);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     helper.assertTrue(mainframe.networkUuid() != null, "mainframe owns its native network");
@@ -727,7 +727,7 @@ public final class NetworkGameTests {
          */
         final BlockPos farPart = controller.relative(facing.getClockWise());
         final BlockPos cable = farPart.relative(facing.getClockWise());
-        helper.setBlock(cable, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.HBW_CABLE);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     helper.assertTrue(be.networkUuid() != null, "controller must own a network");
@@ -802,7 +802,7 @@ public final class NetworkGameTests {
         final BlockPos hbw = new BlockPos(2, 2, 2);
         final BlockPos rack = new BlockPos(3, 2, 2);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.EAST)); // cables attach through the rear (west side here)
@@ -842,7 +842,7 @@ public final class NetworkGameTests {
         };
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
         for (final BlockPos c : cables) {
-            helper.setBlock(c, ComputingModule.HBW_CABLE.get());
+            TestCables.lay(helper, c, ComputingModule.HBW_CABLE);
         }
         // Place the controller and drive its self-assembly so all 11 parts exist.
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
@@ -926,7 +926,7 @@ public final class NetworkGameTests {
         final BlockPos cable = hub.east();
         final BlockPos rackPos = cable.above(); // a leaf on the fabric, kept inside the arena
         helper.setBlock(hub, ComputingModule.HBW_INTERFACE.get());
-        helper.setBlock(cable, ComputingModule.HPC_CABLE.get());
+        TestCables.lay(helper, cable, ComputingModule.HPC_CABLE);
         helper.setBlock(rackPos, ComputingModule.SUPERCOMPUTER_RACK.get());
         if (helper.getBlockEntity(rackPos) instanceof ServerRackBlockEntity rack) {
             rack.getServers().setStackInSlot(0, ServerStacks.defaultSupercomputerNode());
@@ -969,7 +969,7 @@ public final class NetworkGameTests {
         final BlockPos hbw = new BlockPos(2, 2, 2);
         final BlockPos rack = new BlockPos(3, 2, 2);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.EAST)); // cables attach through the rear (west side here)
@@ -1014,7 +1014,7 @@ public final class NetworkGameTests {
         final BlockPos hbw = new BlockPos(2, 2, 2);
         final BlockPos rack = new BlockPos(3, 2, 2);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.EAST)); // cables attach through the rear (west side here)
@@ -1063,7 +1063,7 @@ public final class NetworkGameTests {
         final BlockPos hbw = new BlockPos(2, 2, 2);
         final BlockPos rack = new BlockPos(3, 2, 2);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.EAST)); // cables attach through the rear (west side here)
@@ -1116,7 +1116,7 @@ public final class NetworkGameTests {
         final BlockPos hbw = new BlockPos(2, 2, 2);
         final BlockPos rack = new BlockPos(3, 2, 2);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.EAST));
@@ -1144,7 +1144,7 @@ public final class NetworkGameTests {
         final BlockPos hbw = new BlockPos(2, 2, 2);
         final BlockPos rack = new BlockPos(3, 2, 2);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.EAST)); // cables attach through the rear (west side here)
@@ -1179,7 +1179,7 @@ public final class NetworkGameTests {
         final BlockPos hbw = new BlockPos(2, 2, 2);
         final BlockPos rack = new BlockPos(3, 2, 2);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, Direction.EAST));
         if (!(helper.getBlockEntity(rack) instanceof ServerRackBlockEntity rackBe)) {
@@ -1215,7 +1215,7 @@ public final class NetworkGameTests {
         final BlockPos hbw = new BlockPos(2, 2, 2);
         final BlockPos rack = new BlockPos(3, 2, 2);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.EAST)); // cables attach through the rear (west side here)
@@ -1250,9 +1250,9 @@ public final class NetworkGameTests {
         final BlockPos pc = new BlockPos(5, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(router, ComputingModule.PERSONAL_ROUTER.get());
-        helper.setBlock(eth, ComputingModule.ETHERNET_CABLE.get());
+        TestCables.lay(helper, eth, ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity computer = placeRunningPC(helper, pc);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
@@ -1293,9 +1293,9 @@ public final class NetworkGameTests {
         final BlockPos pc = new BlockPos(5, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(router, ComputingModule.PERSONAL_ROUTER.get());
-        helper.setBlock(eth, ComputingModule.ETHERNET_CABLE.get());
+        TestCables.lay(helper, eth, ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity computer = placeRunningPC(helper, pc);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, Direction.SOUTH));
@@ -1338,9 +1338,9 @@ public final class NetworkGameTests {
         final BlockPos pc = new BlockPos(5, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3);
         placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(router, ComputingModule.PERSONAL_ROUTER.get());
-        helper.setBlock(eth, ComputingModule.ETHERNET_CABLE.get());
+        TestCables.lay(helper, eth, ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity computer = placeRunningPC(helper, pc);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, Direction.SOUTH));
@@ -1398,9 +1398,9 @@ public final class NetworkGameTests {
         final BlockPos pc = new BlockPos(5, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(router, ComputingModule.PERSONAL_ROUTER.get());
-        helper.setBlock(eth, ComputingModule.ETHERNET_CABLE.get());
+        TestCables.lay(helper, eth, ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity computer = placeRunningPC(helper, pc);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, Direction.SOUTH));
@@ -1475,7 +1475,7 @@ public final class NetworkGameTests {
         final BlockPos hbw = new BlockPos(2, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, Direction.SOUTH));
         if (!(helper.getBlockEntity(rack) instanceof ServerRackBlockEntity rackBe)) {
@@ -1517,9 +1517,9 @@ public final class NetworkGameTests {
         final BlockPos pc = new BlockPos(5, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(router, ComputingModule.PERSONAL_ROUTER.get());
-        helper.setBlock(eth, ComputingModule.ETHERNET_CABLE.get());
+        TestCables.lay(helper, eth, ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity computer = placeRunningPC(helper, pc);
         // A disk gives the PC local storage, so a SELECT lands there.
         computer.getHardware().setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
@@ -1574,9 +1574,9 @@ public final class NetworkGameTests {
         final BlockPos pc = new BlockPos(5, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(router, ComputingModule.PERSONAL_ROUTER.get());
-        helper.setBlock(eth, ComputingModule.ETHERNET_CABLE.get());
+        TestCables.lay(helper, eth, ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity computer = placeRunningPC(helper, pc);
         // A 500 GB disk holds 2,000 items, and the SELECT below asks for more than that.
         computer.getHardware().setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
@@ -1625,7 +1625,7 @@ public final class NetworkGameTests {
         final BlockPos hbw = new BlockPos(2, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.SOUTH)); // rear faces the cable to the north
@@ -1743,9 +1743,9 @@ public final class NetworkGameTests {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.SOUTH)); // rear faces the cable to the north
@@ -1757,7 +1757,7 @@ public final class NetworkGameTests {
 
         // Import Bus part on the east face of the cable end, facing a barrel of cobblestone.
         final BlockPos cableEnd = new BlockPos(4, 2, 2);
-        if (helper.getBlockEntity(cableEnd) instanceof DataCableBlockEntity cable) {
+        if (helper.getBlockEntity(cableEnd) instanceof CableBlockEntity cable) {
             cable.addPart(Direction.EAST, new ImportBusPart());
         }
         final BlockPos barrel = new BlockPos(5, 2, 2);
@@ -1792,9 +1792,9 @@ public final class NetworkGameTests {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.SOUTH));
@@ -1805,7 +1805,7 @@ public final class NetworkGameTests {
         TestWorldBuilder.mountDefaultServer(rackBe, 0);
 
         final BlockPos cableEnd = new BlockPos(4, 2, 2);
-        if (helper.getBlockEntity(cableEnd) instanceof DataCableBlockEntity cable) {
+        if (helper.getBlockEntity(cableEnd) instanceof CableBlockEntity cable) {
             cable.addPart(Direction.EAST, new ImportBusPart());
         }
         final BlockPos barrel = new BlockPos(5, 2, 2);
@@ -1845,9 +1845,9 @@ public final class NetworkGameTests {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.SOUTH)); // rear faces the cable to the north
@@ -1859,7 +1859,7 @@ public final class NetworkGameTests {
 
         // Export Bus part on the east face of the cable end, facing a barrel.
         final BlockPos cableEnd = new BlockPos(4, 2, 2);
-        if (helper.getBlockEntity(cableEnd) instanceof DataCableBlockEntity cable) {
+        if (helper.getBlockEntity(cableEnd) instanceof CableBlockEntity cable) {
             cable.addPart(Direction.EAST, new ExportBusPart());
         }
         final BlockPos barrel = new BlockPos(5, 2, 2);
@@ -1868,7 +1868,7 @@ public final class NetworkGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 6, () -> {
                     rackBe.getServerStorage(0).insert(Items.COBBLESTONE, 200);
-                    if (helper.getBlockEntity(cableEnd) instanceof DataCableBlockEntity cable
+                    if (helper.getBlockEntity(cableEnd) instanceof CableBlockEntity cable
                             && cable.getPart(Direction.EAST) instanceof ExportBusPart bus) {
                         bus.setFilter(new ItemStack(Items.COBBLESTONE));
                     }
@@ -1898,9 +1898,9 @@ public final class NetworkGameTests {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, Direction.SOUTH));
         if (!(helper.getBlockEntity(rack) instanceof ServerRackBlockEntity rackBe)) {
@@ -1909,7 +1909,7 @@ public final class NetworkGameTests {
         }
         TestWorldBuilder.mountDefaultServer(rackBe, 0);
         final BlockPos cableEnd = new BlockPos(4, 2, 2);
-        if (helper.getBlockEntity(cableEnd) instanceof DataCableBlockEntity cable) {
+        if (helper.getBlockEntity(cableEnd) instanceof CableBlockEntity cable) {
             final ImportBusPart bus = new ImportBusPart();
             cable.addPart(Direction.EAST, bus);
             bus.setFilter(new ItemStack(Items.COBBLESTONE)); // import only cobblestone, leave the dirt
@@ -1939,9 +1939,9 @@ public final class NetworkGameTests {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, Direction.SOUTH));
         if (!(helper.getBlockEntity(rack) instanceof ServerRackBlockEntity rackBe)) {
@@ -1950,7 +1950,7 @@ public final class NetworkGameTests {
         }
         TestWorldBuilder.mountDefaultServer(rackBe, 0);
         final BlockPos cableEnd = new BlockPos(4, 2, 2);
-        if (helper.getBlockEntity(cableEnd) instanceof DataCableBlockEntity cable) {
+        if (helper.getBlockEntity(cableEnd) instanceof CableBlockEntity cable) {
             final ExportBusPart bus = new ExportBusPart();
             cable.addPart(Direction.EAST, bus);
             bus.setName("out"); // no filter, so it never auto-exports; the query drives it by name
@@ -1987,9 +1987,9 @@ public final class NetworkGameTests {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, Direction.SOUTH));
         if (!(helper.getBlockEntity(rack) instanceof ServerRackBlockEntity rackBe)) {
@@ -1998,7 +1998,7 @@ public final class NetworkGameTests {
         }
         TestWorldBuilder.mountDefaultServer(rackBe, 0);
         final BlockPos cableEnd = new BlockPos(4, 2, 2);
-        if (helper.getBlockEntity(cableEnd) instanceof DataCableBlockEntity cable) {
+        if (helper.getBlockEntity(cableEnd) instanceof CableBlockEntity cable) {
             final ImportBusPart bus = new ImportBusPart();
             cable.addPart(Direction.EAST, bus);
             bus.setName("in");
@@ -2030,7 +2030,7 @@ public final class NetworkGameTests {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, Direction.SOUTH));
         if (!(helper.getBlockEntity(rack) instanceof ServerRackBlockEntity rackBe)) {
@@ -2083,9 +2083,9 @@ public final class NetworkGameTests {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.SOUTH)); // rear faces the cable to the north
@@ -2138,9 +2138,9 @@ public final class NetworkGameTests {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.SOUTH)); // rear faces the cable to the north
@@ -2196,9 +2196,9 @@ public final class NetworkGameTests {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.SOUTH)); // rear faces the cable to the north
@@ -2259,9 +2259,9 @@ public final class NetworkGameTests {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE.get());
-        helper.setBlock(new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(3, 2, 2), ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, new BlockPos(4, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.SOUTH)); // rear faces the cable to the north
@@ -2304,8 +2304,8 @@ public final class NetworkGameTests {
     @GameTest(template = ARENA)
     public static void cablePart_survivesReload(final GameTestHelper helper) {
         final BlockPos cablePos = new BlockPos(2, 2, 2);
-        helper.setBlock(cablePos, ComputingModule.HBW_CABLE.get());
-        if (!(helper.getBlockEntity(cablePos) instanceof DataCableBlockEntity cable)) {
+        TestCables.lay(helper, cablePos, ComputingModule.HBW_CABLE);
+        if (!(helper.getBlockEntity(cablePos) instanceof CableBlockEntity cable)) {
             helper.fail("no cable block entity");
             return;
         }
@@ -2319,9 +2319,9 @@ public final class NetworkGameTests {
         final net.minecraft.nbt.CompoundTag saved = cable.saveWithFullMetadata(registries);
         final var reloaded = net.minecraft.world.level.block.entity.BlockEntity.loadStatic(
                 helper.absolutePos(cablePos), cable.getBlockState(), saved, registries);
-        helper.assertTrue(reloaded instanceof DataCableBlockEntity, "reloaded BE should be a cable");
+        helper.assertTrue(reloaded instanceof CableBlockEntity, "reloaded BE should be a cable");
 
-        final DataCableBlockEntity back = (DataCableBlockEntity) reloaded;
+        final CableBlockEntity back = (CableBlockEntity) reloaded;
         helper.assertTrue(back.hasPart(Direction.EAST), "the part must survive on the same face");
         helper.assertTrue(!back.hasPart(Direction.WEST), "no part should appear on an empty face");
         helper.assertTrue(back.getPart(Direction.EAST) instanceof ExportBusPart, "the part type must persist");
@@ -2337,7 +2337,7 @@ public final class NetworkGameTests {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.SOUTH)); // rear faces the cable to the north
@@ -2377,7 +2377,7 @@ public final class NetworkGameTests {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.SOUTH)); // rear faces the cable to the north
@@ -2434,7 +2434,7 @@ public final class NetworkGameTests {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.SOUTH)); // rear faces the cable to the north
@@ -2469,7 +2469,7 @@ public final class NetworkGameTests {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.SOUTH)); // rear faces the cable to the north
@@ -2502,7 +2502,7 @@ public final class NetworkGameTests {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.SOUTH)); // rear faces the cable to the north
@@ -2529,7 +2529,7 @@ public final class NetworkGameTests {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.SOUTH)); // rear faces the cable to the north
@@ -2724,11 +2724,11 @@ public final class NetworkGameTests {
         final BlockPos hbwB = new BlockPos(4, 2, 2);
         final BlockPos rack = new BlockPos(5, 2, 2);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(hbwA, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbwA, ComputingModule.HBW_CABLE);
         helper.setBlock(router, ComputingModule.SERVER_ROUTER.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.EAST)); // back (the uplink) faces the Mainframe cable to the west
-        helper.setBlock(hbwB, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbwB, ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.EAST)); // cables attach through the rear (west side here)
@@ -2759,15 +2759,15 @@ public final class NetworkGameTests {
         final BlockPos hbwSouth = new BlockPos(3, 2, 3);
         final BlockPos rackSouth = new BlockPos(3, 2, 4);
         placeRunningMainframe(helper, m);
-        helper.setBlock(hbwIn, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbwIn, ComputingModule.HBW_CABLE);
         helper.setBlock(router, ComputingModule.SERVER_ROUTER.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.EAST)); // back (the uplink) faces the Mainframe cable to the west
-        helper.setBlock(hbwEast, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbwEast, ComputingModule.HBW_CABLE);
         helper.setBlock(rackEast, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.EAST)); // rear faces the section cable to the west
-        helper.setBlock(hbwSouth, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbwSouth, ComputingModule.HBW_CABLE);
         helper.setBlock(rackSouth, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.SOUTH)); // rear faces the section cable to the north
@@ -2818,13 +2818,13 @@ public final class NetworkGameTests {
         final BlockPos hubB = new BlockPos(6, 2, 3);
         placeRunningMainframe(helper, m);
         for (int x = 2; x <= 6; x++) {
-            helper.setBlock(new BlockPos(x, 2, 2), ComputingModule.HBW_CABLE.get());
+            TestCables.lay(helper, new BlockPos(x, 2, 2), ComputingModule.HBW_CABLE);
         }
         for (final BlockPos hub : new BlockPos[]{hubA, hubB}) {
             final BlockPos cable = hub.south();
             final BlockPos rackPos = cable.above();
             helper.setBlock(hub, ComputingModule.HBW_INTERFACE.get());
-            helper.setBlock(cable, ComputingModule.HPC_CABLE.get());
+            TestCables.lay(helper, cable, ComputingModule.HPC_CABLE);
             helper.setBlock(rackPos, ComputingModule.SUPERCOMPUTER_RACK.get());
             if (helper.getBlockEntity(rackPos) instanceof ServerRackBlockEntity rack) {
                 rack.getServers().setStackInSlot(0, ServerStacks.defaultSupercomputerNode());
@@ -2873,18 +2873,18 @@ public final class NetworkGameTests {
         final BlockPos hbwSouth = new BlockPos(3, 2, 3);
         final BlockPos rackSouth = new BlockPos(3, 2, 4);
         placeRunningMainframe(helper, m);
-        helper.setBlock(hbwIn, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbwIn, ComputingModule.HBW_CABLE);
         helper.setBlock(router, ComputingModule.SERVER_ROUTER.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.EAST)); // back (the uplink) faces the Mainframe cable to the west
-        helper.setBlock(hpcEast, ComputingModule.HPC_CABLE.get());
+        TestCables.lay(helper, hpcEast, ComputingModule.HPC_CABLE);
         helper.setBlock(scRack, ComputingModule.SUPERCOMPUTER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.EAST)); // rear faces the fabric cable to the west
         if (helper.getBlockEntity(scRack) instanceof ServerRackBlockEntity sc) {
             sc.getServers().setStackInSlot(0, ServerStacks.defaultSupercomputerNode());
         }
-        helper.setBlock(hbwSouth, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbwSouth, ComputingModule.HBW_CABLE);
         helper.setBlock(rackSouth, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.SOUTH)); // rear faces the section cable to the north
@@ -2913,11 +2913,11 @@ public final class NetworkGameTests {
         final BlockPos router = new BlockPos(3, 2, 2);
         final BlockPos hbwB = new BlockPos(4, 2, 2);
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
-        helper.setBlock(hbwA, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbwA, ComputingModule.HBW_CABLE);
         helper.setBlock(router, ComputingModule.SERVER_ROUTER.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.EAST)); // back (the uplink) faces the Mainframe cable to the west
-        helper.setBlock(hbwB, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, hbwB, ComputingModule.HBW_CABLE);
         final NetworkUuid[] net = new NetworkUuid[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 4, () -> {
@@ -3220,7 +3220,7 @@ public final class NetworkGameTests {
 
     private static MainframeBlockEntity storageNetwork(final GameTestHelper helper) {
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, new BlockPos(1, 2, 2));
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(new BlockPos(3, 2, 2), ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.EAST)); // cables attach through the rear (west side here)
@@ -3312,14 +3312,11 @@ public final class NetworkGameTests {
     }
 
     private static Optional<NetworkUuid> networkOf(final GameTestHelper helper, final BlockPos relative) {
-        final ServerLevel level = helper.getLevel();
-        return NetworkSystem.get(level).connectivity().networkOf(helper.absolutePos(relative).asLong());
+        return TestCables.network(helper, relative);
     }
 
     private static boolean sameNetwork(final GameTestHelper helper, final BlockPos a, final BlockPos b) {
-        final ServerLevel level = helper.getLevel();
-        return NetworkSystem.get(level).connectivity().inSameNetwork(
-                helper.absolutePos(a).asLong(), helper.absolutePos(b).asLong());
+        return TestCables.joined(helper, a, b);
     }
 
     private static NetworkUuidState registryState(final GameTestHelper helper, final NetworkUuid uuid) {

@@ -23,6 +23,7 @@ import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -325,7 +326,7 @@ public final class RackUnitGameTests {
         final dev.jstech.tests.testkit.TestWorldBuilder world =
                 dev.jstech.tests.testkit.TestWorldBuilder.forGameTest(helper);
         final var mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         final ServerRackBlockEntity rack = world.placeSeededRack(new BlockPos(3, 2, 2),
                 net.minecraft.core.Direction.EAST); // cables attach through the rear (west here)
         helper.startSequence()
@@ -563,7 +564,7 @@ public final class RackUnitGameTests {
         final dev.jstech.tests.testkit.TestWorldBuilder world =
                 dev.jstech.tests.testkit.TestWorldBuilder.forGameTest(helper);
         final var mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         final ServerRackBlockEntity rack = world.placeSeededRack(new BlockPos(3, 2, 2),
                 net.minecraft.core.Direction.EAST);
         helper.startSequence()
@@ -593,7 +594,7 @@ public final class RackUnitGameTests {
         final dev.jstech.tests.testkit.TestWorldBuilder world =
                 dev.jstech.tests.testkit.TestWorldBuilder.forGameTest(helper);
         final var mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         final ServerRackBlockEntity rack = world.placeSeededRack(new BlockPos(3, 2, 2),
                 net.minecraft.core.Direction.EAST);
         helper.startSequence()
@@ -827,7 +828,7 @@ public final class RackUnitGameTests {
         final dev.jstech.tests.testkit.TestWorldBuilder world =
                 dev.jstech.tests.testkit.TestWorldBuilder.forGameTest(helper);
         final var mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         final ServerRackBlockEntity rack = world.placeSeededRack(new BlockPos(3, 2, 2),
                 net.minecraft.core.Direction.EAST);
         helper.startSequence()

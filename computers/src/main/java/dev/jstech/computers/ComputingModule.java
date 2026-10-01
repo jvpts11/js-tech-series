@@ -24,7 +24,6 @@ import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.ClusterManagementComputerBlock;
 import dev.jstech.computers.block.CraftingComputerBlock;
 import dev.jstech.computers.block.CraftingSwitchBlock;
-import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.block.HbwInterfaceBlock;
 import dev.jstech.computers.block.LegacyClusterManagementComputerBlock;
 import dev.jstech.computers.block.LegacyCraftingComputerBlock;
@@ -57,7 +56,6 @@ import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.MainframePartBlockEntity;
@@ -112,7 +110,11 @@ import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.registry.ComputingContent;
 import dev.jstech.computers.registry.ComputingMenus;
+import dev.jstech.core.cable.CableEntry;
+import dev.jstech.core.cable.CableType;
+import dev.jstech.core.cable.Lane;
 import dev.jstech.core.content.BlockBuilder;
+import dev.jstech.core.content.CableBuilder;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ContentTab;
 import dev.jstech.core.content.Drops;
@@ -123,6 +125,7 @@ import dev.jstech.core.content.ItemBuilder;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.multipart.PartType;
+import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.tier.IndustrialTier;
@@ -132,6 +135,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -180,26 +184,22 @@ public final class ComputingModule {
     /** A device's lamps, dark on its item, whatever the devices in the world show. */
     private static final List<String> DEVICE_LAMPS = List.of(MediaBay.POWER_LAMP, MediaBay.BUSY_LAMP);
 
-    // Cables. The data cables are one block entity; the Crafting cable links a Crafting Switch to its computer.
+    /*
+     * Cables. The data cables are laid in the Core's cable block, each in the lane of its line: access top left,
+     * backbone top middle, compute in the middle, crafting middle right. The Crafting cable links a Crafting Switch to
+     * its computer.
+     */
 
-    public static final BlockEntry<DataCableBlock> ETHERNET_CABLE =
-            cable("ethernet_cable", properties -> new DataCableBlock(properties, DataTier.T1_ETHERNET), NETWORK)
-                    .named("Ethernet Cable").register();
-    public static final BlockEntry<DataCableBlock> HBW_CABLE =
-            cable("hbw_cable", properties -> new DataCableBlock(properties, DataTier.T2_HBW), NETWORK)
-                    .named("HBW Cable").register();
-    public static final BlockEntry<DataCableBlock> HPC_CABLE =
-            cable("hpc_cable", properties -> new DataCableBlock(properties, DataTier.HPC), CLUSTER)
-                    .named("High Compute Cable").register();
-    public static final BlockEntry<DataCableBlock> CRAFTING_CABLE =
-            cable("crafting_cable", properties -> new DataCableBlock(properties, DataTier.CRAFTING), CLUSTER)
-                    .named("Crafting Cable").register();
+    public static final CableEntry ETHERNET_CABLE = dataCable("ethernet_cable", DataTier.T1_ETHERNET, Lane.TOP_LEFT,
+            "ethernet", "rj45").named("Ethernet Cable").tab(NETWORK).register();
+    public static final CableEntry HBW_CABLE = dataCable("hbw_cable", DataTier.T2_HBW, Lane.TOP, "hbw", "hbw")
+            .named("HBW Cable").tab(NETWORK).register();
+    public static final CableEntry HPC_CABLE = dataCable("hpc_cable", DataTier.HPC, Lane.MIDDLE, "hpc", "qsfp")
+            .named("High Compute Cable").tab(CLUSTER).register();
+    public static final CableEntry CRAFTING_CABLE = dataCable("crafting_cable", DataTier.CRAFTING, Lane.RIGHT,
+            "crafting", "crafting").named("Crafting Cable").tab(CLUSTER).register();
     public static final BlockEntry<PeripheralCableBlock> PERIPHERAL_CABLE =
             cable("peripheral_cable", PeripheralCableBlock::new, NETWORK).named("Peripheral Cable").register();
-
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<DataCableBlockEntity>> DATA_CABLE_BE =
-            CONTENT.blockEntity("data_cable", DataCableBlockEntity::new,
-                    ETHERNET_CABLE, HBW_CABLE, HPC_CABLE, CRAFTING_CABLE);
 
     // Routers: the facing carries the port panel; the Server Router's back is its Mainframe uplink.
 
@@ -669,6 +669,18 @@ public final class ComputingModule {
 
     private static BlockBehaviour.Properties rackProperties(final BlockBehaviour.Properties properties) {
         return properties.mapColor(MapColor.METAL).strength(1.5F).sound(SoundType.METAL).noOcclusion();
+    }
+
+    /*
+     * A data cable of {@code tier}, laid in {@code lane}, carrying what its tier carries, in the jacket and with the
+     * plug of the same names.
+     */
+    private static CableBuilder dataCable(final String id, final DataTier tier, final Lane lane, final String jacket,
+                                          final String plug) {
+        return CONTENT.cable(id, CableType.builder(DataLines.of(tier)).lane(lane)
+                .carries(tier.maxThroughput(), tier.maxLength())
+                .jacket(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/" + jacket))
+                .plug(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/plug/" + plug)));
     }
 
     /** A cable: a core, an arm toward each side it connects to, and the core as its item. */

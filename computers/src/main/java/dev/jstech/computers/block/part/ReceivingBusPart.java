@@ -8,8 +8,8 @@
 package dev.jstech.computers.block.part;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.menu.ReceivingBusMenu;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.multipart.PartType;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Inventory;
@@ -39,7 +39,7 @@ public final class ReceivingBusPart extends ImportBusPart {
 
     @Override
     public AbstractContainerMenu createMenu(final int containerId, final Inventory inventory,
-                                            final DataCableBlockEntity cable, final Direction mountedFace) {
+                                            final CableBlockEntity cable, final Direction mountedFace) {
         return ReceivingBusMenu.create(containerId, inventory, cable, mountedFace);
     }
 

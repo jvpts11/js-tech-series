@@ -105,13 +105,13 @@ public final class SoundfoundryShareClientTests {
      */
     private static ClientTestContext atTheDesktop(final ClientTestContext ctx) {
         return ctx.thenBuild(0, builder -> {
-                    builder.setBlock(new BlockPos(5, 2, 3), ComputingModule.ETHERNET_CABLE.get());
+                    builder.setBlock(new BlockPos(5, 2, 3), ComputingModule.ETHERNET_CABLE);
                     builder.setBlock(new BlockPos(5, 2, 4), ComputingModule.PERSONAL_ROUTER.get());
-                    builder.setBlock(new BlockPos(5, 2, 5), ComputingModule.HBW_CABLE.get());
+                    builder.setBlock(new BlockPos(5, 2, 5), ComputingModule.HBW_CABLE);
                     builder.placeRunningMainframe(new BlockPos(5, 2, 6));
-                    builder.setBlock(new BlockPos(5, 2, 7), ComputingModule.HBW_CABLE.get());
+                    builder.setBlock(new BlockPos(5, 2, 7), ComputingModule.HBW_CABLE);
                     builder.setBlock(new BlockPos(5, 2, 8), ComputingModule.PERSONAL_ROUTER.get());
-                    builder.setBlock(new BlockPos(5, 2, 9), ComputingModule.ETHERNET_CABLE.get());
+                    builder.setBlock(new BlockPos(5, 2, 9), ComputingModule.ETHERNET_CABLE);
                     final PersonalComputerBlockEntity sharer = builder.placeRunningPersonalComputer(SHARER);
                     sharer.console().install(Programs.SOUNDFOUNDRY.toString());
                     sharer.console().setComputerName(SHARER_NAME);

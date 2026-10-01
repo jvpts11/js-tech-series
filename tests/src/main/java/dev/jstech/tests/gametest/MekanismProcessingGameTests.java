@@ -14,6 +14,7 @@ import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.ChemicalBridges;
 import dev.jstech.computers.storage.IChemicalPort;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -270,7 +271,7 @@ public final class MekanismProcessingGameTests {
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     final dev.jstech.tests.testkit.TestWorldBuilder world = rig.world();
                     // Right (west) face: the run cable already touches it; left (east) and front (north) spurs.
-                    if (world.getBlockEntity(MekanismRig.CABLE_WEST) instanceof dev.jstech.computers.blockentity.DataCableBlockEntity cable) {
+                    if (world.getBlockEntity(MekanismRig.CABLE_WEST) instanceof CableBlockEntity cable) {
                         cable.addPart(Direction.EAST, new dev.jstech.computers.block.part.InputBusPart());
                     }
                     MekanismRig.mountLeftInputBus(world);

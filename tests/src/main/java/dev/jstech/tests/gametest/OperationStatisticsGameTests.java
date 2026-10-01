@@ -121,9 +121,9 @@ public final class OperationStatisticsGameTests {
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        world.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        world.setBlock(hbw, ComputingModule.HBW_CABLE);
         world.setBlock(router, ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(eth, ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(eth, ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity computer = world.placeRunningPersonalComputer(pc);
         world.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));

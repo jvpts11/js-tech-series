@@ -11,6 +11,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -44,8 +45,12 @@ public interface IFacePart {
     default void dropContents(final ServerLevel level) {
     }
 
-    /** Whether using the part opens a screen of its own. */
-    default boolean hasMenu() {
+    /**
+     * A player used the part, on the server: it opens its screen or does what it does when used.
+     *
+     * @return whether it did anything
+     */
+    default boolean use(final ServerPlayer player) {
         return false;
     }
 }

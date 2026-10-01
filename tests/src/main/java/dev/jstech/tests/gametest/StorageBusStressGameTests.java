@@ -10,9 +10,9 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.part.ExportBusPart;
 import dev.jstech.computers.block.part.ImportBusPart;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -67,7 +67,7 @@ public final class StorageBusStressGameTests {
         final MainframeBlockEntity mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
         // A cable spine east of the Mainframe, a rack for storage beside its first segment.
         for (int i = 0; i < ITEMS.length; i++) {
-            world.setBlock(new BlockPos(2 + i, 2, 2), ComputingModule.HBW_CABLE.get());
+            world.setBlock(new BlockPos(2 + i, 2, 2), ComputingModule.HBW_CABLE);
         }
         world.placeSeededRack(new BlockPos(2, 2, 1));
 
@@ -80,7 +80,7 @@ public final class StorageBusStressGameTests {
                         final BlockPos sink = new BlockPos(2 + i, 1, 2);   // below: the Export Bus pushes to here
                         world.setBlock(source, Blocks.BARREL);
                         world.setBlock(sink, Blocks.BARREL);
-                        if (helper.getBlockEntity(cablePos) instanceof DataCableBlockEntity cable) {
+                        if (helper.getBlockEntity(cablePos) instanceof CableBlockEntity cable) {
                             final ImportBusPart in = new ImportBusPart();
                             cable.addPart(Direction.UP, in);
                             in.setFilter(new ItemStack(item));

@@ -12,7 +12,6 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.part.InputBusPart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.client.os.CraftingManagerApp;
@@ -28,6 +27,7 @@ import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.tests.testkit.CraftFiles;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.client.Minecraft;
@@ -330,11 +330,11 @@ public final class CraftingChainClientTests {
                      * The machine: a vanilla furnace (sided: in through the top, out through the bottom) on a
                      * crafting cable run behind the switch, with the two crafting buses aimed at it.
                      */
-                    world.setBlock(CRAFTING_CABLE, ComputingModule.CRAFTING_CABLE.get());
+                    world.setBlock(CRAFTING_CABLE, ComputingModule.CRAFTING_CABLE);
                     world.setBlock(SWITCH, ComputingModule.CRAFTING_SWITCH.get());
                     world.setBlock(FURNACE, Blocks.FURNACE);
-                    world.setBlock(CABLE_ABOVE_FURNACE, ComputingModule.CRAFTING_CABLE.get());
-                    world.setBlock(CABLE_BELOW_FURNACE, ComputingModule.CRAFTING_CABLE.get());
+                    world.setBlock(CABLE_ABOVE_FURNACE, ComputingModule.CRAFTING_CABLE);
+                    world.setBlock(CABLE_BELOW_FURNACE, ComputingModule.CRAFTING_CABLE);
                     net.seed(Items.RAW_IRON, 32);
                     /*
                      * Finished ingots already in the furnace's output slot: collecting them proves the receiving
@@ -346,10 +346,10 @@ public final class CraftingChainClientTests {
                 })
                 .thenServer(SETTLE + 2, level -> {
                     final TestWorldBuilder world = TestWorldBuilder.at(level, ctx.origin());
-                    if (world.getBlockEntity(CABLE_ABOVE_FURNACE) instanceof DataCableBlockEntity c) {
+                    if (world.getBlockEntity(CABLE_ABOVE_FURNACE) instanceof CableBlockEntity c) {
                         c.addPart(Direction.DOWN, new InputBusPart());
                     }
-                    if (world.getBlockEntity(CABLE_BELOW_FURNACE) instanceof DataCableBlockEntity c) {
+                    if (world.getBlockEntity(CABLE_BELOW_FURNACE) instanceof CableBlockEntity c) {
                         c.addPart(Direction.UP, new ReceivingBusPart());
                     }
                     // The furnace recipe sits in the Recipe ROM (loading it through the GUI has its own test).
@@ -462,11 +462,11 @@ public final class CraftingChainClientTests {
                     net.cc().togglePower();
                     net.cc().togglePower();
                     world.placeMonitor(MONITOR, Direction.EAST);
-                    world.setBlock(CRAFTING_CABLE, ComputingModule.CRAFTING_CABLE.get());
+                    world.setBlock(CRAFTING_CABLE, ComputingModule.CRAFTING_CABLE);
                     world.setBlock(SWITCH, ComputingModule.CRAFTING_SWITCH.get());
                     world.setBlock(FURNACE, Blocks.FURNACE);
-                    world.setBlock(CABLE_ABOVE_FURNACE, ComputingModule.CRAFTING_CABLE.get());
-                    world.setBlock(CABLE_BELOW_FURNACE, ComputingModule.CRAFTING_CABLE.get());
+                    world.setBlock(CABLE_ABOVE_FURNACE, ComputingModule.CRAFTING_CABLE);
+                    world.setBlock(CABLE_BELOW_FURNACE, ComputingModule.CRAFTING_CABLE);
                     net.seed(Items.RAW_IRON, 32);
                     /*
                      * Finished ingots already in the furnace output: collecting them proves the receiving path
@@ -478,10 +478,10 @@ public final class CraftingChainClientTests {
                 })
                 .thenServer(SETTLE + 2, level -> {
                     final TestWorldBuilder world = TestWorldBuilder.at(level, ctx.origin());
-                    if (world.getBlockEntity(CABLE_ABOVE_FURNACE) instanceof DataCableBlockEntity c) {
+                    if (world.getBlockEntity(CABLE_ABOVE_FURNACE) instanceof CableBlockEntity c) {
                         c.addPart(Direction.DOWN, new InputBusPart());
                     }
-                    if (world.getBlockEntity(CABLE_BELOW_FURNACE) instanceof DataCableBlockEntity c) {
+                    if (world.getBlockEntity(CABLE_BELOW_FURNACE) instanceof CableBlockEntity c) {
                         c.addPart(Direction.UP, new ReceivingBusPart());
                     }
                     // A MULTI-STAGE recipe for iron ingots whose single stage is the furnace smelt.
@@ -607,7 +607,7 @@ public final class CraftingChainClientTests {
     public static void craftingSwitch_showsTheComputerLinkAndTheMachineOnItsFace(final ClientTestContext ctx) {
         ctx.thenBuild(0, world -> {
                     world.buildCraftingNetwork();
-                    world.setBlock(CRAFTING_CABLE, ComputingModule.CRAFTING_CABLE.get());
+                    world.setBlock(CRAFTING_CABLE, ComputingModule.CRAFTING_CABLE);
                     world.setBlock(SWITCH, ComputingModule.CRAFTING_SWITCH.get());
                     world.setBlock(FURNACE, Blocks.FURNACE);
                 })

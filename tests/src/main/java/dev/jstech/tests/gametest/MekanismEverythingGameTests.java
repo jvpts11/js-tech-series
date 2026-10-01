@@ -20,6 +20,7 @@ import dev.jstech.computers.program.iql.IqlParseResult;
 import dev.jstech.computers.program.iql.IqlParser;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -87,7 +88,7 @@ public final class MekanismEverythingGameTests {
              * seating a ready node; racks are leaves on the fabric, so they sit beside the run.
              */
             final BlockPos cable = hub.east(i);
-            helper.setBlock(cable, ComputingModule.HPC_CABLE.get());
+            TestCables.lay(helper, cable, ComputingModule.HPC_CABLE);
             final BlockPos rackPos = cable.above(); // the row in front belongs to the rig's machines
             helper.setBlock(rackPos, ComputingModule.SUPERCOMPUTER_RACK.get());
             if (helper.getBlockEntity(rackPos)
