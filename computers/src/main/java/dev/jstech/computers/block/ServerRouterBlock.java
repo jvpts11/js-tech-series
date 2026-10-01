@@ -12,8 +12,10 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
 import dev.jstech.computers.menu.ServerRouterMenu;
 import dev.jstech.core.content.Device;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.DeviceBlock;
-import dev.jstech.core.network.IDataNetworkConnectable;
+import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.INetworkBridge;
 import dev.jstech.core.network.NetworkSystem;
 import net.minecraft.core.BlockPos;
@@ -32,9 +34,11 @@ import net.minecraft.world.phys.BlockHitResult;
  * sections, one per output face. Its facing is purely cosmetic (the port banks); sections still bind per face
  * regardless.
  */
-public class ServerRouterBlock extends DeviceBlock implements IDataNetworkConnectable, INetworkBridge {
+public class ServerRouterBlock extends DeviceBlock implements IFaceConnector, INetworkBridge {
 
     public static final MapCodec<ServerRouterBlock> CODEC = simpleCodec(ServerRouterBlock::new);
+    /* The router takes any cable family, on any face. */
+    private static final FacePorts PORTS = FacePorts.everyFace(DataLines.every());
 
     /** The router's block entity, ticking to keep its place in the network and its sections. */
     private static final Device<ServerRouterBlockEntity> DEVICE =
@@ -49,7 +53,10 @@ public class ServerRouterBlock extends DeviceBlock implements IDataNetworkConnec
         return CODEC;
     }
 
-    // acceptedCableTiers() defaults to every tier: the router input takes any cable family.
+    @Override
+    public FacePorts ports() {
+        return PORTS;
+    }
 
     /* Its screen opens with a fresh topology summary and with its name, which the plain device menu does not carry. */
     @Override

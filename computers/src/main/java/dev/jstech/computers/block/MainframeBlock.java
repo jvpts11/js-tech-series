@@ -14,14 +14,15 @@ import dev.jstech.computers.menu.MainframeMenu;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
 import dev.jstech.core.multiblock.IMultiblockGeometry;
 import dev.jstech.core.multiblock.MultiblockPatternGeometry;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
-import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
-import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -48,10 +49,15 @@ import java.util.List;
  * The Mainframe, the network's orchestrator.
  */
 public class MainframeBlock extends AbstractMultiblockControllerBlock
-        implements IDataNetworkConnectable,
+        implements IFaceConnector,
         IPeripheralConnectable, IEraChassisBlock {
 
     public static final MapCodec<MainframeBlock> CODEC = simpleCodec(MainframeBlock::new);
+    /*
+     * The Mainframe sits on the HBW backbone, on any face; it never takes an Ethernet access link directly (a
+     * Personal Router bridges that).
+     */
+    private static final FacePorts PORTS = FacePorts.everyFace(DataLines.of(DataTier.T2_HBW));
 
     @Override
     public PeripheralCableType peripheralType() {
@@ -91,12 +97,8 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
     }
 
     @Override
-    public Set<DataTier> acceptedCableTiers() {
-        /*
-         * The Mainframe sits on the HBW backbone; it never takes an Ethernet
-         * access link directly (a Personal Router bridges that).
-         */
-        return Set.of(DataTier.T2_HBW);
+    public FacePorts ports() {
+        return PORTS;
     }
 
     @Override

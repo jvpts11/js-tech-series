@@ -12,11 +12,13 @@ import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
 import dev.jstech.computers.menu.ServerRackMenu;
+import dev.jstech.core.connect.Connection;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.FaceRule;
+import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
+import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
-import dev.jstech.core.network.IRearFacingDataPort;
-import java.util.EnumSet;
-import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -46,7 +48,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A structural part of the Server Rack, one of the 11 non-controller blocks of the 2x3x2 cabinet.
  */
-public class ServerRackPartBlock extends Block implements EntityBlock, IRearFacingDataPort {
+public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConnector {
 
     public static final MapCodec<ServerRackPartBlock> CODEC = simpleCodec(ServerRackPartBlock::new);
 
@@ -62,6 +64,10 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IRearFaci
 
     public static final DirectionProperty FACING =
             BlockStateProperties.HORIZONTAL_FACING;
+
+    private static final FacePorts PORTS = FacePorts.builder()
+            .port(FaceRule.BACK, DataLines.every())
+            .build();
 
     public ServerRackPartBlock(final Properties properties) {
         super(properties);
@@ -85,19 +91,20 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IRearFaci
     }
 
     @Override
-    public Set<DataTier> acceptedCableTiers() {
-        return EnumSet.allOf(DataTier.class);
+    public FacePorts ports() {
+        return PORTS;
     }
 
+    /*
+     * A compute cabinet is on the high-compute fabric only; a server cabinet takes every data tier but that one, and
+     * both only through the cabinet's back, where the cabinet links its cables. The cable's rendered nub and the
+     * cabinet's own link follow this same rule, so a data cable on a supercomputer cabinet neither shows a
+     * connection nor makes one.
+     */
     @Override
-    public boolean connectsOnFace(final BlockState state, final Direction face,
-                                  final DataTier tier) {
-        /*
-         * A compute cabinet is on the high-compute fabric only; a server cabinet takes every data tier but
-         * that one. The cable's rendered nub and the cabinet's own link follow this same rule, so a data
-         * cable on a supercomputer cabinet neither shows a connection nor makes one.
-         */
-        return state.getValue(COMPUTE) == (tier == DataTier.HPC);
+    public boolean accepts(final BlockState state, final Direction face, final Connection offered) {
+        return IFaceConnector.super.accepts(state, face, offered)
+                && state.getValue(COMPUTE) == offered.equals(DataLines.of(DataTier.HPC));
     }
 
     @Override

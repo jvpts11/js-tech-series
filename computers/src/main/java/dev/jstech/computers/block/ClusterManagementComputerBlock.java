@@ -11,8 +11,11 @@ import com.mojang.serialization.MapCodec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.menu.ClusterManagementComputerMenu;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.FaceRule;
+import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
-import dev.jstech.core.network.IRearFacingDataPort;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
 import dev.jstech.core.tier.HardwareEra;
@@ -39,8 +42,6 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
-
 /**
  * The Cluster Management Computer: a full computer whose job is the racks. It sits on the data network
  * like any other machine and, with a Cluster Interface Card installed, drives every supercomputer
@@ -49,9 +50,16 @@ import java.util.Set;
  * works without one; the computer makes it one machine to run.
  */
 public class ClusterManagementComputerBlock extends HorizontalDirectionalBlock
-        implements EntityBlock, IRearFacingDataPort, IPeripheralConnectable, IEraChassisBlock {
+        implements EntityBlock, IFaceConnector, IPeripheralConnectable, IEraChassisBlock {
 
     public static final MapCodec<ClusterManagementComputerBlock> CODEC = simpleCodec(ClusterManagementComputerBlock::new);
+    /*
+     * A management machine lives on the backbone, on its back: Ethernet through a router, or the bandwidth and fibre
+     * cables directly. Never the compute fabric; the racks are reached over the network.
+     */
+    private static final FacePorts PORTS = FacePorts.builder()
+            .port(FaceRule.BACK, DataLines.of(DataTier.T1_ETHERNET, DataTier.T2_HBW, DataTier.T3_FIBER))
+            .build();
 
     public ClusterManagementComputerBlock(final Properties properties) {
         super(properties);
@@ -78,12 +86,8 @@ public class ClusterManagementComputerBlock extends HorizontalDirectionalBlock
     }
 
     @Override
-    public Set<DataTier> acceptedCableTiers() {
-        /*
-         * A management machine lives on the backbone: Ethernet through a router, or the bandwidth
-         * and fibre cables directly. Never the compute fabric; the racks are reached over the network.
-         */
-        return Set.of(DataTier.T1_ETHERNET, DataTier.T2_HBW, DataTier.T3_FIBER);
+    public FacePorts ports() {
+        return PORTS;
     }
 
     @Override

@@ -9,6 +9,7 @@ package dev.jstech.core.content;
 
 import com.mojang.serialization.MapCodec;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
+import dev.jstech.core.connect.Neighbours;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
@@ -84,6 +85,18 @@ public class DeviceBlock extends HorizontalDirectionalBlock implements EntityBlo
             device.openMenu(server, level.getBlockEntity(pos), getName(), pos);
         }
         return InteractionResult.sidedSuccess(level.isClientSide());
+    }
+
+    /* The block entity hears which of its faces saw its neighbour change, as it declared it wants to. */
+    @Override
+    protected void neighborChanged(final BlockState state, final Level level, final BlockPos pos,
+                                   final Block neighbourBlock, final BlockPos neighbourPos,
+                                   final boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighbourBlock, neighbourPos, movedByPiston);
+        final Direction face = Neighbours.faceTowards(pos, neighbourPos);
+        if (face != null && level.getBlockEntity(pos) instanceof SyncedBlockEntity synced) {
+            synced.fields().neighbourChanged(level, face);
+        }
     }
 
     @Override

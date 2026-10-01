@@ -19,8 +19,11 @@ import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
 import dev.jstech.core.multiblock.IMultiblockGeometry;
 import dev.jstech.core.multiblock.MultiblockPatternGeometry;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.FaceRule;
+import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
-import dev.jstech.core.network.IRearFacingDataPort;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -28,7 +31,6 @@ import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
 import java.util.EnumSet;
-import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -64,12 +66,17 @@ import java.util.List;
  */
 @TextHolder
 public class ServerRackBlock extends AbstractMultiblockControllerBlock
-        implements IRearFacingDataPort {
+        implements IFaceConnector {
 
     public static final MapCodec<ServerRackBlock> CODEC = simpleCodec(ServerRackBlock::new);
 
     public static final IntegerProperty BAYS =
             IntegerProperty.create("bays", 0, 3);
+
+    private static final FacePorts PORTS = FacePorts.builder()
+            .port(FaceRule.BACK, DataLines.of(EnumSet.complementOf(EnumSet.of(DataTier.HPC))
+                    .toArray(DataTier[]::new)))
+            .build();
 
     private static final TextKey WRONG_CHASSIS =
             TextKey.of("block.jsc.rack.wrong_chassis", "This chassis belongs in a different rack");
@@ -120,13 +127,10 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
         return ComputingModule.SERVER_RACK.item();
     }
 
+    /* A Server Rack takes any data cable on its back but the high-compute fabric, the supercomputer cabinet's alone. */
     @Override
-    public Set<DataTier> acceptedCableTiers() {
-        /*
-         * A Server Rack takes any data cable tier but the high-compute fabric, which belongs to the
-         * supercomputer cabinet alone.
-         */
-        return EnumSet.complementOf(EnumSet.of(DataTier.HPC));
+    public FacePorts ports() {
+        return PORTS;
     }
 
     @Override

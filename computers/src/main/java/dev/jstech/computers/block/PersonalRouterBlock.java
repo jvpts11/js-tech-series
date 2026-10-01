@@ -9,11 +9,12 @@ package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
 import dev.jstech.computers.blockentity.PersonalRouterBlockEntity;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
-import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.INetworkBridge;
 import dev.jstech.core.network.NetworkSystem;
-import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -31,9 +32,12 @@ import org.jetbrains.annotations.Nullable;
  * The Personal Router: a simple, tier-less block that converts between Ethernet and HBW so a Personal Computer (Ethernet) can reach the HBW backbone.
  */
 public class PersonalRouterBlock extends HorizontalDirectionalBlock
-        implements EntityBlock, IDataNetworkConnectable, INetworkBridge {
+        implements EntityBlock, IFaceConnector, INetworkBridge {
 
     public static final MapCodec<PersonalRouterBlock> CODEC = simpleCodec(PersonalRouterBlock::new);
+    /* The Personal Router bridges exactly the two access and backbone tiers it converts between, on any face. */
+    private static final FacePorts PORTS = FacePorts.everyFace(
+            DataLines.of(DataTier.T1_ETHERNET, DataTier.T2_HBW));
 
     public PersonalRouterBlock(final Properties properties) {
         super(properties);
@@ -58,10 +62,8 @@ public class PersonalRouterBlock extends HorizontalDirectionalBlock
     }
 
     @Override
-    public Set<DataTier> acceptedCableTiers() {
-        // The Personal Router bridges exactly the two access/backbone tiers it converts between.
-        return Set.of(DataTier.T1_ETHERNET,
-                DataTier.T2_HBW);
+    public FacePorts ports() {
+        return PORTS;
     }
 
     @Override

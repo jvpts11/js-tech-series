@@ -10,7 +10,10 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.DataCableBlock;
-import dev.jstech.core.network.IDataNetworkConnectable;
+import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.connect.Neighbours;
+import dev.jstech.core.network.DataLines;
+import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -187,39 +190,42 @@ final class NetworkAttachment {
      * only when that one has gone, or when there was none, is every face looked at again.
      */
     long cable(final ServerLevel level) {
-        if (this.cable != NO_CABLE && cableAt(level, BlockPos.of(this.cable))) {
-            return this.cable;
+        if (this.cable != NO_CABLE) {
+            final BlockPos at = BlockPos.of(this.cable);
+            final Direction face = Neighbours.faceTowards(this.machine.getBlockPos(), at);
+            if (face != null && cableAt(level, at, this.machine.getBlockState(), face)) {
+                return this.cable;
+            }
         }
         this.cable = adjacentCable(level);
         return this.cable;
     }
 
     /**
-     * Looks round every face this computer would take a data cable on, which the block's
-     * {@link IDataNetworkConnectable#connectsOnFace} decides, so the device's attachment and the cable's
-     * rendered connection always agree. A standalone computer offers only its rear; the Mainframe (a separate
-     * block entity) and the cluster nodes offer every face.
+     * Looks round every face for a data cable this computer takes there, which the block's
+     * {@link IFaceConnector#accepts} decides, so the device's attachment and the cable's rendered connection
+     * always agree. A standalone computer takes its network cable on its rear only; the Mainframe (a separate
+     * block entity) and the cluster nodes on every face. The crafting cable is never the machine's network link.
      */
     private long adjacentCable(final ServerLevel level) {
         final BlockPos pos = this.machine.getBlockPos();
         final BlockState state = this.machine.getBlockState();
-        final IDataNetworkConnectable device =
-                state.getBlock() instanceof IDataNetworkConnectable connectable ? connectable : null;
         for (final Direction direction : FACES) {
-            if (device != null && !device.connectsOnFace(state, direction)) {
-                continue;
-            }
             final BlockPos neighbor = pos.relative(direction);
-            if (cableAt(level, neighbor)) {
+            if (cableAt(level, neighbor, state, direction)) {
                 return neighbor.asLong();
             }
         }
         return NO_CABLE;
     }
 
-    /** Whether that block is a data cable of a kind this computer takes. */
-    private boolean cableAt(final ServerLevel level, final BlockPos pos) {
+    /** Whether the block at {@code pos} is a data cable this computer takes on {@code face}. */
+    private boolean cableAt(final ServerLevel level, final BlockPos pos, final BlockState state,
+                            final Direction face) {
         return level.getBlockState(pos).getBlock() instanceof DataCableBlock cable
-                && this.machine.acceptsTier(cable.tier());
+                && cable.tier() != DataTier.CRAFTING
+                && this.machine.acceptsTier(cable.tier())
+                && (!(state.getBlock() instanceof IFaceConnector device)
+                || device.accepts(state, face, DataLines.of(cable.tier())));
     }
 }

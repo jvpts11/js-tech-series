@@ -10,10 +10,11 @@ package dev.jstech.computers.block;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
 import dev.jstech.computers.menu.CraftingSwitchMenu;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
-import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.util.BlockEntityTickers;
-import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -36,16 +37,18 @@ import org.jetbrains.annotations.Nullable;
  * discovers the computer over the crafting cable.
  */
 public class CraftingSwitchBlock extends Block
-        implements EntityBlock, IDataNetworkConnectable {
+        implements EntityBlock, IFaceConnector {
+
+    /* Only the crafting cable attaches, on any face; the switch is not a data-network device. */
+    private static final FacePorts PORTS = FacePorts.everyFace(DataLines.of(DataTier.CRAFTING));
 
     public CraftingSwitchBlock(final Properties properties) {
         super(properties);
     }
 
     @Override
-    public Set<DataTier> acceptedCableTiers() {
-        // Only the crafting cable attaches (on any face); the switch is not a data-network device.
-        return Set.of(DataTier.CRAFTING);
+    public FacePorts ports() {
+        return PORTS;
     }
 
     @Override

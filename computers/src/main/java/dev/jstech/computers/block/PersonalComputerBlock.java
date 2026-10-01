@@ -13,15 +13,17 @@ import dev.jstech.computers.audio.SoundHardwareTexts;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.item.HardwareTooltip;
 import dev.jstech.computers.menu.PersonalComputerMenu;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.FaceRule;
+import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
-import dev.jstech.core.network.IRearFacingDataPort;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
 import java.util.List;
-import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -50,7 +52,7 @@ import org.jetbrains.annotations.Nullable;
  * The Personal Computer: the player's hands-on access point to the network, assembled on a consumer ATX board.
  */
 public class PersonalComputerBlock extends HorizontalDirectionalBlock
-        implements EntityBlock, IRearFacingDataPort, IEraChassisBlock,
+        implements EntityBlock, IFaceConnector, IEraChassisBlock,
         IPeripheralConnectable {
 
     @Override
@@ -64,6 +66,9 @@ public class PersonalComputerBlock extends HorizontalDirectionalBlock
     }
 
     public static final MapCodec<PersonalComputerBlock> CODEC = simpleCodec(PersonalComputerBlock::new);
+    private static final FacePorts PORTS = FacePorts.builder()
+            .port(FaceRule.BACK, DataLines.of(DataTier.T1_ETHERNET))
+            .build();
 
     public PersonalComputerBlock(final Properties properties) {
         super(properties);
@@ -92,9 +97,10 @@ public class PersonalComputerBlock extends HorizontalDirectionalBlock
         HardwareTooltip.appendEra(tooltip, era());
     }
 
+    /* PCs are Ethernet-only, on their back; they reach HBW through a Personal Router. */
     @Override
-    public Set<DataTier> acceptedCableTiers() {
-        return Set.of(DataTier.T1_ETHERNET); // PCs are Ethernet-only; reach HBW via a Personal Router
+    public FacePorts ports() {
+        return PORTS;
     }
 
     @Override

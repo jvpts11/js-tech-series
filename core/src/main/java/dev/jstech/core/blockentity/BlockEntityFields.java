@@ -11,6 +11,7 @@ import com.mojang.serialization.Codec;
 import dev.jstech.core.persistence.SaveLayout;
 import dev.jstech.core.util.BlockDrops;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -55,6 +56,7 @@ public final class BlockEntityFields {
     private final List<IField> polled = new ArrayList<>();
     private final List<StateMirror<?>> mirrors = new ArrayList<>();
     private final List<BiConsumer<ServerLevel, BlockPos>> brokenListeners = new ArrayList<>();
+    private final List<BiConsumer<ServerLevel, Direction>> neighbourListeners = new ArrayList<>();
     private boolean closed;
     private @Nullable SaveLayout layout;
     private @Nullable MenuData menuData;
@@ -190,6 +192,23 @@ public final class BlockEntityFields {
      */
     public void whenBroken(final BiConsumer<ServerLevel, BlockPos> listener) {
         brokenListeners.add(listener);
+    }
+
+    /**
+     * Runs {@code listener} on the server when the block beside one of the block's faces changes, with that face: a
+     * cable finding its network again, a machine seeing what now sits at its back.
+     */
+    public void whenNeighbourChanges(final BiConsumer<ServerLevel, Direction> listener) {
+        neighbourListeners.add(Objects.requireNonNull(listener, "listener"));
+    }
+
+    /** The block beside {@code face} changed: what was declared to happen then happens. */
+    public void neighbourChanged(final Level level, final Direction face) {
+        if (level instanceof ServerLevel server) {
+            for (final BiConsumer<ServerLevel, Direction> listener : neighbourListeners) {
+                listener.accept(server, face);
+            }
+        }
     }
 
     /**

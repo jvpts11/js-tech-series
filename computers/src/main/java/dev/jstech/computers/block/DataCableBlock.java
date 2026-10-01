@@ -14,8 +14,9 @@ import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.block.part.ICablePart;
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
-import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.util.BlockEntityTickers;
 import net.minecraft.core.BlockPos;
@@ -120,9 +121,8 @@ public class DataCableBlock extends PipeBlock implements EntityBlock {
          * The cable only shows a connection where the device actually accepts a cable on that face
          * (a computer accepts one on its rear only), so the rendered nub never lies about connectivity.
          */
-        return neighbor instanceof IDataNetworkConnectable device
-                && device.acceptedCableTiers().contains(this.tier)
-                && device.connectsOnFace(neighborState, direction.getOpposite(), this.tier);
+        return neighbor instanceof IFaceConnector device
+                && device.accepts(neighborState, direction.getOpposite(), DataLines.of(this.tier));
     }
 
     // Shape: the cable pipe plus a box for each mounted part

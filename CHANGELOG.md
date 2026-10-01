@@ -59,6 +59,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   is in it, a player's to that player alone, a team's to the players on it. Teams are the game's scoreboard teams
   unless a mod hands the Core a source of teams of its own. A state's file saved by a newer version of its mod is read
   as far as it can be, and the file as that version left it is kept beside it once, as `<name>.newer-v<N>.dat`.
+- Blocks that know their neighbours, in J's Core: a block declares once, as ports, which lines it takes on which of
+  its faces (its back, its front, every face), named from its own point of view so they turn with it, and in which
+  generations, a port taking its own and every earlier one. A cable that shows a connection and the device that
+  joins through it ask the same ports, so they never disagree. A block entity hears which of its faces saw its
+  neighbour change, and a block's faces can tell which of the eight blocks around them in their plane they join, for
+  textures that run across many blocks.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,
@@ -496,6 +502,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   error a lower version gives for what came after it, and the line the choice wrote.
 
 ### Changed
+- A data cable beside a rack cabinet shows a connection only on the cabinet's back, where the cabinet links its
+  cables; it used to show one on any face of the cabinet without linking there.
 - What the series kept with a world in files of its own is kept as states, each file carrying the version of its
   layout: the data networks of each dimension and the awards players earned while away stay in the files they were
   in, and the ledger of a world's recordings moves from the text file beside them into the world's saved data, as

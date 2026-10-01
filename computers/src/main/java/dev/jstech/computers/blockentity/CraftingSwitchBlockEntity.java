@@ -15,8 +15,9 @@ import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.PartField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
+import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
-import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextTags;
@@ -316,7 +317,8 @@ public class CraftingSwitchBlockEntity extends SyncedBlockEntity {
                     final var machineBlock = level.getBlockState(machinePos).getBlock();
                     // Network hardware is never a machine, even when a bus happens to point at it.
                     if (machineBlock instanceof DataCableBlock
-                            || machineBlock instanceof IDataNetworkConnectable
+                            || machineBlock instanceof IFaceConnector device
+                            && device.lines().stream().anyMatch(DataLines::isData)
                             || !declared.add(machinePos) || level.getBlockEntity(machinePos) == null) {
                         continue;
                     }

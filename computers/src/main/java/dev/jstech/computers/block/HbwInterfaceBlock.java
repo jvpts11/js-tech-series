@@ -10,14 +10,15 @@ package dev.jstech.computers.block;
 import com.mojang.serialization.MapCodec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
-import dev.jstech.core.network.IDataNetworkConnectable;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.BlockEntityTickers;
 import java.util.List;
-import java.util.Set;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -38,9 +39,11 @@ import org.jetbrains.annotations.Nullable;
  * The HBW Interface: the single point where a Supercomputer cluster meets the network.
  */
 @TextHolder
-public class HbwInterfaceBlock extends Block implements EntityBlock, IDataNetworkConnectable {
+public class HbwInterfaceBlock extends Block implements EntityBlock, IFaceConnector {
 
     public static final MapCodec<HbwInterfaceBlock> CODEC = simpleCodec(HbwInterfaceBlock::new);
+    /* The backbone on one side, the cluster fabric on the other. */
+    private static final FacePorts PORTS = FacePorts.everyFace(DataLines.of(DataTier.T2_HBW, DataTier.HPC));
 
     private static final TextKey TOOLTIP =
             TextKey.of("item.jsc.hbw_interface.tooltip", "Uplinks a node cluster to the HBW backbone");
@@ -61,9 +64,8 @@ public class HbwInterfaceBlock extends Block implements EntityBlock, IDataNetwor
     }
 
     @Override
-    public Set<DataTier> acceptedCableTiers() {
-        // The backbone on one side, the cluster fabric on the other.
-        return Set.of(DataTier.T2_HBW, DataTier.HPC);
+    public FacePorts ports() {
+        return PORTS;
     }
 
     @Override

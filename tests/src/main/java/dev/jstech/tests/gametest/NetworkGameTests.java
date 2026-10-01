@@ -35,6 +35,10 @@ import dev.jstech.computers.operation.payload.NmsSchemaPayload;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.connect.Connection;
+import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.network.DataLines;
+import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.FailoverRole;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.persistence.NetworkRegistry;
@@ -3253,27 +3257,27 @@ public final class NetworkGameTests {
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         net.minecraft.core.Direction.NORTH));
         final net.minecraft.world.level.block.state.BlockState state = helper.getBlockState(pc);
-        final dev.jstech.core.network.IDataNetworkConnectable block =
-                (dev.jstech.core.network.IDataNetworkConnectable) state.getBlock();
+        final IFaceConnector block = (IFaceConnector) state.getBlock();
+        final Connection ethernet = DataLines.of(DataTier.T1_ETHERNET);
         // A north-facing computer's rear is south: only that face takes a cable.
-        helper.assertTrue(block.connectsOnFace(state, net.minecraft.core.Direction.SOUTH),
+        helper.assertTrue(block.accepts(state, net.minecraft.core.Direction.SOUTH, ethernet),
                 "the rear (south) face must accept a cable");
-        helper.assertFalse(block.connectsOnFace(state, net.minecraft.core.Direction.NORTH),
+        helper.assertFalse(block.accepts(state, net.minecraft.core.Direction.NORTH, ethernet),
                 "the front must reject a cable");
-        helper.assertFalse(block.connectsOnFace(state, net.minecraft.core.Direction.EAST),
+        helper.assertFalse(block.accepts(state, net.minecraft.core.Direction.EAST, ethernet),
                 "a side must reject a cable");
-        helper.assertFalse(block.connectsOnFace(state, net.minecraft.core.Direction.UP),
+        helper.assertFalse(block.accepts(state, net.minecraft.core.Direction.UP, ethernet),
                 "the top must reject a cable");
-        // The Mainframe is the exception: it still takes a cable on any face.
+        // The Mainframe is the exception: it takes its backbone cable on any face.
         final BlockPos mf = new BlockPos(4, 2, 2);
         helper.setBlock(mf, ComputingModule.MAINFRAME.get());
         final net.minecraft.world.level.block.state.BlockState mfState = helper.getBlockState(mf);
-        if (mfState.getBlock() instanceof dev.jstech.core.network.IDataNetworkConnectable mainframe) {
-            helper.assertTrue(mainframe.connectsOnFace(mfState, net.minecraft.core.Direction.EAST),
-                    "the Mainframe accepts a cable on any face");
-            helper.assertTrue(mainframe.connectsOnFace(mfState, net.minecraft.core.Direction.UP),
-                    "the Mainframe accepts a cable on any face");
-        }
+        final IFaceConnector mainframe = (IFaceConnector) mfState.getBlock();
+        final Connection hbw = DataLines.of(DataTier.T2_HBW);
+        helper.assertTrue(mainframe.accepts(mfState, net.minecraft.core.Direction.EAST, hbw),
+                "the Mainframe accepts a cable on any face");
+        helper.assertTrue(mainframe.accepts(mfState, net.minecraft.core.Direction.UP, hbw),
+                "the Mainframe accepts a cable on any face");
         helper.succeed();
     }
 

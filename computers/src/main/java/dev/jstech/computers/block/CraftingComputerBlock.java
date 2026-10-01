@@ -11,14 +11,16 @@ import com.mojang.serialization.MapCodec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.menu.CraftingComputerMenu;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.FaceRule;
+import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
-import dev.jstech.core.network.IRearFacingDataPort;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
-import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -44,9 +46,17 @@ import org.jetbrains.annotations.Nullable;
  * The Crafting Computer block: an ATX-class computer that executes recipes for the network.
  */
 public class CraftingComputerBlock extends HorizontalDirectionalBlock
-        implements EntityBlock, IRearFacingDataPort, IPeripheralConnectable, IEraChassisBlock {
+        implements EntityBlock, IFaceConnector, IPeripheralConnectable, IEraChassisBlock {
 
     public static final MapCodec<CraftingComputerBlock> CODEC = simpleCodec(CraftingComputerBlock::new);
+    /*
+     * Data over Ethernet on the back (through a Personal Router to the backbone), and the crafting cable to the
+     * Crafting Switches on any face, since the machine-delivery search walks out of all six.
+     */
+    private static final FacePorts PORTS = FacePorts.builder()
+            .port(FaceRule.BACK, DataLines.of(DataTier.T1_ETHERNET))
+            .port(FaceRule.EVERY, DataLines.of(DataTier.CRAFTING))
+            .build();
 
     public CraftingComputerBlock(final Properties properties) {
         super(properties);
@@ -78,22 +88,8 @@ public class CraftingComputerBlock extends HorizontalDirectionalBlock
     }
 
     @Override
-    public Set<DataTier> acceptedCableTiers() {
-        /*
-         * Data via Ethernet (rear port, through a Personal Router to the backbone) plus the crafting cable
-         * that runs to the Crafting Switches.
-         */
-        return Set.of(DataTier.T1_ETHERNET, DataTier.CRAFTING);
-    }
-
-    @Override
-    public boolean connectsOnFace(final BlockState state,
-                                  final Direction face, final DataTier tier) {
-        /*
-         * The crafting cable attaches on any face (the machine-delivery search walks out of all six);
-         * the data cable keeps the rear-only port.
-         */
-        return tier == DataTier.CRAFTING || connectsOnFace(state, face);
+    public FacePorts ports() {
+        return PORTS;
     }
 
     @Override

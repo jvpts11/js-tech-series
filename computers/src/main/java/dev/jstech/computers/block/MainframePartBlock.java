@@ -12,13 +12,14 @@ import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.MainframePartBlockEntity;
 import dev.jstech.computers.menu.MainframeMenu;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
-import dev.jstech.core.network.IDataNetworkConnectable;
+import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
 import dev.jstech.core.tier.HardwareEra;
-import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -45,9 +46,10 @@ import org.jetbrains.annotations.Nullable;
  * A structural part of the Mainframe multiblock, one of the 11 non-controller blocks.
  */
 public class MainframePartBlock extends HorizontalDirectionalBlock
-        implements EntityBlock, IDataNetworkConnectable, IPeripheralConnectable {
+        implements EntityBlock, IFaceConnector, IPeripheralConnectable {
 
     public static final MapCodec<MainframePartBlock> CODEC = simpleCodec(MainframePartBlock::new);
+    private static final FacePorts PORTS = FacePorts.everyFace(DataLines.of(DataTier.T2_HBW));
 
     @Override
     public PeripheralCableType peripheralType() {
@@ -83,10 +85,10 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
         return CODEC;
     }
 
+    /* The whole Mainframe footprint takes HBW, so a cable may attach to any face. */
     @Override
-    public Set<DataTier> acceptedCableTiers() {
-        // The whole Mainframe footprint takes HBW, so a cable may attach to any face.
-        return Set.of(DataTier.T2_HBW);
+    public FacePorts ports() {
+        return PORTS;
     }
 
     @Override
