@@ -146,6 +146,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   never holds the others up) and puts it back together on the other side. A side keeps only so many sendings from one
   sender open at once and refuses pieces out of order, sendings larger than allowed and values that unpack into more
   than allowed. The sound system's recordings are cut and checked by the same pieces.
+- The world's calendar, in J's Core: the day, the hour and the minute, the day of the week and the week, the season,
+  the day of the season and the year, all read from the world's own clock. A year is four seasons (spring, summer,
+  autumn, winter) of the same number of days, 28 unless the series' balance file says otherwise. J's Computers' cron
+  and `at` jobs and its desktop clock read the time through it.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,

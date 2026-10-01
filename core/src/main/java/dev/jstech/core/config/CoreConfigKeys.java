@@ -11,11 +11,13 @@ import dev.jstech.core.audio.media.MediaBalance;
 import dev.jstech.core.config.format.ConfigFormats;
 import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.operation.OperationBalance;
+import dev.jstech.core.time.WorldCalendar;
 
 /**
  * The series' balance, {@code jstech-balance.toml} beside the world: how the Operations engine waits and shares its
- * work, how long the programs of the machines may run each tick, and how much of the connection the recordings
- * players hear and bring may take. A value outside its range is pulled to the nearer end rather than refused, so a
+ * work, how long the programs of the machines may run each tick, how much of the connection the recordings players
+ * hear and bring may take, and how long the world's seasons last. A value outside its range is pulled to the nearer
+ * end rather than refused, so a
  * slip in the file costs one setting its value instead of breaking the world; each value read is passed straight into
  * the balance it sets.
  */
@@ -24,6 +26,8 @@ public final class CoreConfigKeys {
     public static final String BALANCE = "balance";
     /** The recordings players hear and bring: how much of the connection they take, and how big one may be. */
     public static final String MEDIA = "media";
+    /** The world's calendar: how long its seasons last. */
+    public static final String CALENDAR = "calendar";
 
     private static final int MAX_LATENCY_TICKS = 200;
     private static final int MAX_TIMEOUT_TICKS = 72_000;
@@ -131,6 +135,13 @@ public final class CoreConfigKeys {
                     + "0 sets no limit.")
             .named("Recordings per player");
 
+    /** How many days a season of the world's year lasts. */
+    public static final ConfigKey<Integer> CALENDAR_DAYS_PER_SEASON = ConfigKey.whole(
+            CALENDAR + ".days_per_season", WorldCalendar.DEFAULT_DAYS_PER_SEASON)
+            .range(1, WorldCalendar.MOST_DAYS_PER_SEASON)
+            .comment("How many days a season of the world's year lasts; a year is four seasons.")
+            .named("Days per season");
+
     /** The file, each setting passed into the balance it sets. */
     public static final ConfigFile FILE = ConfigFile.builder("jstech-balance", ConfigSide.SERVER, ConfigFormats.TOML)
             .comment("Balance of the Operations engine and of the programs machines run.",
@@ -139,8 +150,10 @@ public final class CoreConfigKeys {
                     "How the Operations engine waits and shares its work, and how long programs run.")
             .sectionComment(MEDIA, "The recordings players hear and bring: how much of the connection they take, "
                     + "and how big one may be.")
+            .sectionComment(CALENDAR, "The world's calendar: how long its seasons last.")
             .sectionNamed(BALANCE, "Operations and programs")
             .sectionNamed(MEDIA, "Recordings")
+            .sectionNamed(CALENDAR, "Calendar")
             .key(HDD_LATENCY_TICKS, OperationBalance::setHddLatencyTicks)
             .key(SSD_LATENCY_TICKS, OperationBalance::setSsdLatencyTicks)
             .key(NVME_LATENCY_TICKS, OperationBalance::setNvmeLatencyTicks)
@@ -154,6 +167,7 @@ public final class CoreConfigKeys {
             .key(MEDIA_UPLOAD_KILOBYTES_PER_SECOND, MediaBalance::setUploadKilobytesPerSecond)
             .key(MEDIA_MAX_FILE_MEGABYTES, MediaBalance::setMaxFileMegabytes)
             .key(MEDIA_PLAYER_QUOTA_MEGABYTES, MediaBalance::setPlayerQuotaMegabytes)
+            .key(CALENDAR_DAYS_PER_SEASON, WorldCalendar::setDaysPerSeason)
             .build();
 
     private CoreConfigKeys() {

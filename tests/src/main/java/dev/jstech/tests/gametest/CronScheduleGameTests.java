@@ -11,7 +11,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.job.JobWhen;
+import dev.jstech.core.time.GameCalendar;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -35,6 +35,8 @@ public final class CronScheduleGameTests {
 
     private static final String ARENA = "empty";
     private static final int SETTLE = 8;
+    /* More than the ticks from the wait to the check, so the hour cannot turn in between. */
+    private static final int HOUR_MARGIN = 40;
     private static final int WIDTH = 80;
 
     private static final ResourceLocation DEBIAN =
@@ -43,18 +45,25 @@ public final class CronScheduleGameTests {
     private CronScheduleGameTests() {
     }
 
-    @GameTest(template = ARENA)
+    @GameTest(template = ARENA, timeoutTicks = 200)
     public static void cronOff_leavesAScheduledJobWaitingAndCronOnRunsItAgain(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer =
                 TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(new BlockPos(2, 2, 2), DEBIAN);
         helper.startSequence()
+                /*
+                 * The job is set for the hour the clock shows and checked sixteen ticks later: begun in the last
+                 * ticks of an hour, the clock would turn to the next before the check and the job never be due.
+                 */
+                .thenWaitUntil(() -> helper.assertTrue(Math.floorMod(helper.getLevel().getDayTime(),
+                        GameCalendar.HOUR_TICKS) < GameCalendar.HOUR_TICKS - HOUR_MARGIN,
+                        "the clock to leave the end of an hour"))
                 .thenExecuteAfter(SETTLE, () -> {
                     /*
                      * Scheduled at the hour the shared GameTest level's clock is already showing, rather than
                      * setting that clock itself: other tests running in the same batch keep their own jobs (a
                      * crontab set for another hour) off this one's world time.
                      */
-                    final int hour = JobWhen.hourOf(helper.getLevel().getDayTime());
+                    final int hour = GameCalendar.hourOf(helper.getLevel().getDayTime());
                     computer.console().settings().setCronEnabled(false);
                     final ServerCliComputer cli = new ServerCliComputer(computer, helper.getLevel());
                     CliCommands.shellFor(cli, WIDTH).run(

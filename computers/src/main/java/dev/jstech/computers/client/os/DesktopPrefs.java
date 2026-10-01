@@ -13,6 +13,7 @@ import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.time.GameCalendar;
 import java.util.Locale;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
@@ -44,6 +45,10 @@ final class DesktopPrefs {
     /** CDE's palette and the backdrop of each workspace, worn while one is chosen. */
     private CdeStyle cdeStyle = CdeStyle.DEFAULT;
     private OsSkin skin;
+
+    private static final int MINUTES_PER_HOUR = 60;
+    /* A calendar page shows days up to this, then starts again at one. */
+    private static final int LAST_PAGE = 9999;
 
     DesktopPrefs(final DesktopState desktop, final ResourceLocation desktopId) {
         this.desktop = desktop;
@@ -171,12 +176,16 @@ final class DesktopPrefs {
     /** The minute of the world's day counted from midnight, for a clock that has hands instead of figures. */
     int minuteOfDay() {
         final Minecraft mc = Minecraft.getInstance();
-        return mc.level == null ? 0 : (int) (((mc.level.getDayTime() % 24000L + 6000L) % 24000L) * 3L / 50L);
+        if (mc.level == null) {
+            return 0;
+        }
+        final long dayTime = mc.level.getDayTime();
+        return GameCalendar.hourOf(dayTime) * MINUTES_PER_HOUR + GameCalendar.minuteOf(dayTime);
     }
 
     /** Which day of the world it is, counted from one, for a calendar page. */
     int dayOfWorld() {
         final Minecraft mc = Minecraft.getInstance();
-        return mc.level == null ? 1 : (int) (mc.level.getDayTime() / 24000L % 9999L) + 1;
+        return mc.level == null ? 1 : (int) (GameCalendar.day(mc.level.getDayTime()) % LAST_PAGE) + 1;
     }
 }
