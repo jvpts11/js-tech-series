@@ -53,7 +53,7 @@ class HardcodedTextTest {
             "sendConsoleLine", "setTooltip", "withTooltip", "setPlaceholder", "submenu");
 
     /** What a declaration chains on to say its English: a thing's name, what it does, a sound's subtitle. */
-    private static final Set<String> DECLARATIONS = Set.of("named", "described", "subtitle");
+    private static final Set<String> DECLARATIONS = Set.of("named", "described", "subtitle", "sectionNamed");
 
     /** The toolkit's controls whose first words are the label a player reads on them. */
     private static final Set<String> LABELLED = Set.of("Button", "Label", "Checkbox", "Popup");
@@ -152,7 +152,6 @@ class HardcodedTextTest {
             data(COMPUTERS + "vm/system/SystemApi.java", 1, SIGNATURES),
             data("core/src/main/java/dev/jstech/core/config/ConfigValidator.java", 11,
                     "why a configuration value was set aside, written to the log"),
-            data("core/src/main/java/dev/jstech/core/config/ConfigFile.java", 1, SETTINGS_FILE),
             data("core/src/main/java/dev/jstech/core/config/ConfigKey.java", 1, SETTINGS_FILE),
             data(INDUSTRIAL + "client/CoalGeneratorScreen.java", 1, "the energy unit's symbol"),
             data(INDUSTRIAL + "client/ProcessingMachineScreen.java", 1, "the energy unit's symbol"));

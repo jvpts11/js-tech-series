@@ -57,6 +57,7 @@ public final class ClientTestSuite {
             PanelStylesClientTests.class,
             PatternEncoderClientTests.class,
             SettingsPersonalizeClientTests.class,
+            SettingsScreenClientTests.class,
             SettingsSharingClientTests.class,
             SourceBuildClientTests.class,
             SystemUiClientTests.class,

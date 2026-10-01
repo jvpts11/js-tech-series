@@ -55,6 +55,7 @@ public final class ConfigFile {
     private final int version;
     private final List<String> comment;
     private final Map<String, List<String>> sections;
+    private final Map<String, String> sectionTitles;
     private final Map<String, ConfigKey<?>> keys;
     private final Map<String, Consumer<Object>> uses;
     private final Map<Integer, IConfigUpgrade> upgrades;
@@ -67,8 +68,7 @@ public final class ConfigFile {
 
     /** The name every file keeps the version of its layout under, first in the file. */
     public static final String VERSION_KEY = "config_version";
-    private static final List<String> VERSION_COMMENT = List.of(
-            "The version of this file's layout. The game upgrades an older file to it; leave it as it is.");
+    private static final List<String> VERSION_COMMENT = List.of(ConfigTexts.VERSION_TOOLTIP.english());
 
     private ConfigFile(final Builder builder) {
         this.name = builder.name;
@@ -77,6 +77,7 @@ public final class ConfigFile {
         this.version = builder.version;
         this.comment = List.copyOf(builder.comment);
         this.sections = Collections.unmodifiableMap(new LinkedHashMap<>(builder.sections));
+        this.sectionTitles = Collections.unmodifiableMap(new LinkedHashMap<>(builder.sectionTitles));
         this.keys = Collections.unmodifiableMap(new LinkedHashMap<>(builder.keys));
         this.uses = Map.copyOf(builder.uses);
         this.upgrades = Map.copyOf(builder.upgrades);
@@ -118,6 +119,11 @@ public final class ConfigFile {
     /** The sections that have a comment of their own, by dotted path, in the order they were declared. */
     public Map<String, List<String>> sections() {
         return this.sections;
+    }
+
+    /** What each named section is called in English, by dotted path. */
+    public Map<String, String> sectionTitles() {
+        return this.sectionTitles;
     }
 
     /** The settings, in the order they were declared and are written. */
@@ -320,6 +326,7 @@ public final class ConfigFile {
         private final ConfigSide side;
         private final IConfigFormat format;
         private final Map<String, List<String>> sections = new LinkedHashMap<>();
+        private final Map<String, String> sectionTitles = new LinkedHashMap<>();
         private final Map<String, ConfigKey<?>> keys = new LinkedHashMap<>();
         private final Map<String, Consumer<Object>> uses = new LinkedHashMap<>();
         private final Map<Integer, IConfigUpgrade> upgrades = new TreeMap<>();
@@ -352,9 +359,15 @@ public final class ConfigFile {
             return this;
         }
 
-        /** A comment above a section, at its dotted path. */
+        /** A comment above a section, at its dotted path; on a settings screen, the section's tooltip. */
         public Builder sectionComment(final String path, final String... lines) {
             this.sections.put(path, Arrays.asList(lines));
+            return this;
+        }
+
+        /** What a section is called in English where it is shown, a settings screen listing it by this name. */
+        public Builder sectionNamed(final String path, final String english) {
+            this.sectionTitles.put(path, english);
             return this;
         }
 

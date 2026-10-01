@@ -35,9 +35,11 @@ import java.util.Optional;
  * @param range        the range a number is pulled into, when it has one
  * @param allowed      the only words a text may be, when it is held to a list
  * @param comment      what a person reads above it in the file, a line each
+ * @param title        what it is called in English where it is shown (a settings screen), or empty when it is shown
+ *                     nowhere but its file
  */
 public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Optional<ConfigKeyRange<?>> range,
-                           Optional<List<String>> allowed, List<String> comment) {
+                           Optional<List<String>> allowed, List<String> comment, String title) {
 
     public ConfigKey {
         Objects.requireNonNull(path, "path");
@@ -46,6 +48,7 @@ public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Op
         Objects.requireNonNull(range, "range");
         Objects.requireNonNull(allowed, "allowed");
         Objects.requireNonNull(comment, "comment");
+        Objects.requireNonNull(title, "title");
         if (path.isEmpty()) {
             throw new IllegalArgumentException("a setting needs a name");
         }
@@ -96,25 +99,34 @@ public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Op
     /** A setting of any kind that has a codec, at a dotted path ({@code "section.name"}). */
     public static <T> ConfigKey<T> of(final String path, final Codec<T> codec, final T defaultValue) {
         return new ConfigKey<>(ConfigTree.path(path), codec, defaultValue, Optional.empty(), Optional.empty(),
-                List.of());
+                List.of(), "");
     }
 
     /** The same setting, a number held to {@code min} and {@code max}, both included. */
     public <N extends Number & Comparable<N>> ConfigKey<T> range(final N min, final N max) {
         return new ConfigKey<>(this.path, this.codec, this.defaultValue, Optional.of(new ConfigKeyRange<>(min, max)),
-                Optional.empty(), this.comment);
+                Optional.empty(), this.comment, this.title);
     }
 
     /** The same setting, a text held to these words; any other falls back to the default. */
     public ConfigKey<T> allowing(final String... words) {
         return new ConfigKey<>(this.path, this.codec, this.defaultValue, Optional.empty(),
-                Optional.of(List.of(words)), this.comment);
+                Optional.of(List.of(words)), this.comment, this.title);
     }
 
-    /** The same setting, with these lines above it in the file. */
+    /** The same setting, with these lines above it in the file; on a settings screen, they are its tooltip. */
     public ConfigKey<T> comment(final String... lines) {
         return new ConfigKey<>(this.path, this.codec, this.defaultValue, this.range, this.allowed,
-                Arrays.asList(lines));
+                Arrays.asList(lines), this.title);
+    }
+
+    /**
+     * The same setting, called this in English where it is shown: a settings screen lists it by this name, translated
+     * as every other name of the mod is.
+     */
+    public ConfigKey<T> named(final String english) {
+        return new ConfigKey<>(this.path, this.codec, this.defaultValue, this.range, this.allowed, this.comment,
+                english);
     }
 
     /** Where it sits, written with dots: {@code "boot.show_boot_menu"}. */

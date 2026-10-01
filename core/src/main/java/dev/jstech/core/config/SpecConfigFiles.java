@@ -42,7 +42,7 @@ final class SpecConfigFiles {
 
     static void register(final ConfigFile file, final IEventBus modEventBus, final ModContainer modContainer) {
         upgradeOnDisk(file, FMLPaths.CONFIGDIR.get().resolve(file.fileName()));
-        final Spec spec = build(file);
+        final Spec spec = build(file, modContainer.getModId());
         modContainer.registerConfig(typeOf(file.side()), spec.spec(), file.fileName());
         modEventBus.addListener(ModConfigEvent.Loading.class, event -> {
             if (event.getConfig().getSpec() == spec.spec()) {
@@ -90,8 +90,11 @@ final class SpecConfigFiles {
         }
     }
 
-    /** The file's settings as NeoForge's: the version first, then each section and setting with its comment. */
-    private static Spec build(final ConfigFile file) {
+    /**
+     * The file's settings as NeoForge's: the version first, then each section and setting with its comment, and each
+     * under the key its name is translated by on NeoForge's settings screen ({@link ConfigTexts}).
+     */
+    private static Spec build(final ConfigFile file, final String modId) {
         final ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
         final List<String> top = new ArrayList<>(file.comment());
         if (!top.isEmpty()) {
@@ -99,6 +102,7 @@ final class SpecConfigFiles {
         }
         top.addAll(file.commentAt(List.of(ConfigFile.VERSION_KEY)));
         builder.comment(top.toArray(String[]::new));
+        builder.translation(ConfigTexts.VERSION.key());
         final ModConfigSpec.ConfigValue<Integer> version =
                 builder.defineInRange(ConfigFile.VERSION_KEY, file.version(), 0, Integer.MAX_VALUE);
         final Map<String, ModConfigSpec.ConfigValue<?>> values = new LinkedHashMap<>();
@@ -113,17 +117,19 @@ final class SpecConfigFiles {
                 builder.pop();
             }
             for (int i = shared; i < section.size(); i++) {
-                final List<String> lines = file.sections().getOrDefault(String.join(".", section.subList(0, i + 1)),
-                        List.of());
+                final String dotted = String.join(".", section.subList(0, i + 1));
+                final List<String> lines = file.sections().getOrDefault(dotted, List.of());
                 if (!lines.isEmpty()) {
                     builder.comment(lines.toArray(String[]::new));
                 }
+                builder.translation(ConfigTexts.key(modId, dotted));
                 builder.push(section.get(i));
             }
             open = section;
             if (!key.comment().isEmpty()) {
                 builder.comment(key.comment().toArray(String[]::new));
             }
+            builder.translation(ConfigTexts.key(modId, key.dottedPath()));
             values.put(key.dottedPath(), define(builder, key));
         }
         for (int i = 0; i < open.size(); i++) {

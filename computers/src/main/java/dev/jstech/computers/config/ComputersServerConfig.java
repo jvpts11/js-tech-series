@@ -33,7 +33,8 @@ public final class ComputersServerConfig {
     public static final ConfigKey<Boolean> SHOW_BOOT_MENU = ConfigKey.flag("boot.show_boot_menu", true)
             .comment("Whether a machine whose system brings a boot manager stops at it every time it starts: GRUB "
                             + "on a Linux, the loader on FreeBSD, the Midsoft Boot Manager with two systems.",
-                    "Turning this off boots the chosen system at once, the way a machine with the menu hidden does.");
+                    "Turning this off boots the chosen system at once, the way a machine with the menu hidden does.")
+            .named("Show the boot menu");
 
     public static final ConfigKey<Boolean> GENTOO_EVERY_STEP = ConfigKey.flag("install_by_hand.gentoo_every_step",
             false)
@@ -43,12 +44,14 @@ public final class ComputersServerConfig {
                     "On, the rest are asked for as well: the bind mounts, a profile, the @world update, the kernel "
                             + "link and a name for the machine.",
                     "Every step answers the way the real tool does either way; this only decides which of them a "
-                            + "restart refuses to go on without.");
+                            + "restart refuses to go on without.")
+            .named("Every step of Gentoo");
 
     public static final ConfigKey<Boolean> ARCH_EVERY_STEP = ConfigKey.flag("install_by_hand.arch_every_step", false)
             .comment("Whether installing Arch by hand asks for every step of the installation guide.",
                     "Off, only the steps a system cannot boot without are asked for. On, the hardware clock and a "
-                            + "name for the machine are asked for as well.");
+                            + "name for the machine are asked for as well.")
+            .named("Every step of Arch");
 
     public static final ConfigKey<Boolean> LIST_COMMANDS = ConfigKey.flag("prompt.list_commands", false)
             .comment("Whether every computer has the 'listcmd' command, which lists absolutely everything that "
@@ -58,34 +61,43 @@ public final class ComputersServerConfig {
                             + "completes to, and typing it is an unknown command. Each system then teaches what it "
                             + "has in its own way, which is the experience those systems really gave.",
                     "On, it is on every computer and shows up everywhere like any other command, for whoever would "
-                            + "rather read one list than learn each system's own habits.");
+                            + "rather read one list than learn each system's own habits.")
+            .named("The listcmd command");
 
     public static final ConfigKey<Boolean> SOUNDFOUNDRY_CATALOG = ConfigKey.flag("soundfoundry.catalog", true)
             .comment("Whether the server offers its music catalogue: the albums put in "
                             + "config/jstech/soundfoundry/catalog/, a folder each, and those the data packs carry in "
                             + "soundfoundry/catalog/.",
                     "Off, neither is read and the catalogue is empty. A change is taken up by '/soundfoundry "
-                            + "catalog reload' or the next start.");
+                            + "catalog reload' or the next start.")
+            .named("Music catalogue");
 
     public static final ConfigKey<Integer> ETHERNET_KILOBYTES_PER_SECOND = ConfigKey.whole(
             "soundfoundry.ethernet_kilobytes_per_second", ETHERNET_SPEED).range(1, MOST_SPEED)
             .comment("How fast a song comes over the network into a computer, in kilobytes a second, by the "
                             + "slowest cable on its way. A song from the catalogue comes at the speed of the cable the "
                             + "computer itself is plugged into; the songs coming in at once share it.",
-                    "A cable with no speed of its own below carries songs at Ethernet's.");
+                    "A cable with no speed of its own below carries songs at Ethernet's.")
+            .named("Songs over Ethernet");
 
     public static final ConfigKey<Integer> HBW_KILOBYTES_PER_SECOND = ConfigKey.whole(
             "soundfoundry.hbw_kilobytes_per_second", HBW_SPEED).range(1, MOST_SPEED)
-            .comment("The same over a high-bandwidth cable.");
+            .comment("The same over a high-bandwidth cable.")
+            .named("Songs over HBW");
 
     public static final ConfigKey<Integer> HPC_KILOBYTES_PER_SECOND = ConfigKey.whole(
             "soundfoundry.hpc_kilobytes_per_second", HPC_SPEED).range(1, MOST_SPEED)
-            .comment("The same over the high-performance fabric of a supercomputer.");
+            .comment("The same over the high-performance fabric of a supercomputer.")
+            .named("Songs over HPC");
 
     public static final ConfigFile FILE = ConfigFile.builder("jscomputers-server", ConfigSide.SERVER,
                     ConfigFormats.TOML)
             .comment("How the computers of J's Computers behave. Balance of the Operations engine lives in the "
                     + "series' own file beside this one.")
+            .sectionNamed("boot", "Starting up")
+            .sectionNamed("install_by_hand", "Installing by hand")
+            .sectionNamed("prompt", "The prompt")
+            .sectionNamed("soundfoundry", "Soundfoundry")
             .key(SHOW_BOOT_MENU)
             .key(GENTOO_EVERY_STEP)
             .key(ARCH_EVERY_STEP)

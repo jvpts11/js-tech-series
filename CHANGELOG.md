@@ -43,6 +43,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   from a newer mod is read and never written over, and one that cannot be read is kept aside as `.unreadable` while
   the defaults are used. YAML is read through SnakeYAML 2.7, which J's Core now carries inside its jar, with its
   safe reader only, so a file can never name a class for the game to build.
+- J's Core and J's Computers open NeoForge's settings screen from the mods list. Their world settings are listed
+  there in sections, each setting and section under a name of its own, short enough to be read whole, with its
+  comment as the tooltip, in English and in Portuguese. A mod built on the Core names each setting and section of a
+  TOML file where it declares it, and the names go into the mod's English language file with everything else.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,

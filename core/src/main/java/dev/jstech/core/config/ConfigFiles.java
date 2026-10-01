@@ -8,6 +8,10 @@
 package dev.jstech.core.config;
 
 import dev.jstech.core.config.format.ConfigFormats;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 
@@ -23,16 +27,25 @@ import net.neoforged.fml.ModContainer;
  */
 public final class ConfigFiles {
 
+    /** Each mod's files, by its id, for the words its language file writes for them. */
+    private static final Map<String, List<ConfigFile>> BY_MOD = new ConcurrentHashMap<>();
+
     private ConfigFiles() {
     }
 
     /** Puts a mod's settings file in its place, to be read when its side reads it. */
     public static void register(final ConfigFile file, final IEventBus modEventBus, final ModContainer modContainer) {
+        BY_MOD.computeIfAbsent(modContainer.getModId(), mod -> new CopyOnWriteArrayList<>()).add(file);
         file.reset();
         if (file.format() == ConfigFormats.TOML) {
             SpecConfigFiles.register(file, modEventBus, modContainer);
         } else {
             KeptConfigFiles.register(file);
         }
+    }
+
+    /** The files a mod registered, in the order it registered them. */
+    public static List<ConfigFile> of(final String modId) {
+        return List.copyOf(BY_MOD.getOrDefault(modId, List.of()));
     }
 }

@@ -8,6 +8,7 @@
 package dev.jstech.core.datagen;
 
 import dev.jstech.core.audio.SoundKey;
+import dev.jstech.core.config.ConfigTexts;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ContentTab;
 import dev.jstech.core.content.ItemEntry;
@@ -57,6 +58,8 @@ public final class ContentLanguageProvider extends LanguageProvider {
         for (final SoundKey sound : content.declaredSounds()) {
             add(sound.subtitle().key(), sound.subtitle().english());
         }
+        // The names and tooltips NeoForge's settings screen shows for the mod's settings files.
+        ConfigTexts.english(content.modid()).forEach(this::add);
         more.forEach(names -> names.accept(this::add));
     }
 }
