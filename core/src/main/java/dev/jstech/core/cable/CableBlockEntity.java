@@ -13,6 +13,7 @@ import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.connect.Neighbours;
 import dev.jstech.core.energy.CoreEnergy;
+import dev.jstech.core.fluid.FluidGrids;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridPlace;
@@ -55,8 +56,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The block entity of the Core's cable block: the wires running through it, each in its lane, the parts on its faces,
  * and which faces each wire crosses. A wire crosses a face where the block beyond holds a wire it joins, or is a device
- * that takes its line on that face; a wire of energy also plugs into any block that offers the game's energy there. A
- * part on a face closes it to wires.
+ * that takes its line on that face; a wire of energy also plugs into any block that offers the game's energy there,
+ * and a pipe into any block that holds fluids there. A part on a face closes it to wires.
  *
  * <p>Each wire is a place of the grid of its kind: it puts itself in as the block loads or as it is laid, joined to the
  * wires and devices it crosses to, and takes itself out as it is taken or the block goes. A wire of data keeps the
@@ -464,6 +465,7 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         }
         boolean changed = false;
         boolean energyPlugs = false;
+        boolean fluidPlugs = false;
         for (final Wire wire : this.bundle.wires()) {
             final int lane = wire.slot().id();
             final int before = this.links[lane];
@@ -472,15 +474,19 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
                 this.links[lane] = now;
                 changed = true;
                 energyPlugs |= wire.type().grid() == GridKind.POWER;
+                fluidPlugs |= wire.type().grid() == GridKind.FLUID;
                 if (ownParts && this.inGrids && (now & FACE_BITS) != (before & FACE_BITS)) {
                     leave(server, wire);
                     enter(server, wire);
                 }
             }
         }
+        // The blocks an energy wire or a pipe plugs into are not in its grid: the grid hears of them here.
         if (energyPlugs) {
-            // The machines an energy wire plugs into are not in its grid: the energy grid hears of them here.
             CoreEnergy.of(server).tapsChanged();
+        }
+        if (fluidPlugs) {
+            FluidGrids.of(server).tapsChanged();
         }
         if (changed) {
             this.shape = null;
@@ -516,6 +522,10 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
             } else if (wire.type().grid() == GridKind.POWER
                     && server.getCapability(Capabilities.EnergyStorage.BLOCK, next, face.getOpposite()) != null) {
                 // An energy wire plugs into any block that offers the game's energy on that face.
+                linked |= bit | bit << PLUG_SHIFT;
+            } else if (wire.type().grid() == GridKind.FLUID
+                    && server.getCapability(Capabilities.FluidHandler.BLOCK, next, face.getOpposite()) != null) {
+                // And a pipe into any block that holds fluids on that face.
                 linked |= bit | bit << PLUG_SHIFT;
             }
         }

@@ -9,15 +9,20 @@ package dev.jstech.core.cable;
 
 import dev.jstech.core.connect.Connection;
 import dev.jstech.core.energy.EnergyLoss;
+import dev.jstech.core.fluid.PipeLimits;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridMember;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -25,6 +30,9 @@ import org.jetbrains.annotations.Nullable;
  * lane it takes when it shares a block, how thick it is, how much it carries, how far a run of it reaches and what it
  * loses of what crosses it, and how it looks. Registered in {@link CoreCables#REGISTRY}, each with the item that lays
  * it, by a mod's own content.
+ *
+ * <p>A pipe, a cable of the fluid grid, also says what it is made for: the temperatures it stands and the marks it
+ * takes. How much a pipe carries in a tick is the pressure it holds; a gas needs a pipe that takes gases.
  *
  * <p>A cable that never shares a block takes no lane: a block that holds it holds nothing else.
  */
@@ -37,6 +45,7 @@ public final class CableType {
     private final long throughput;
     private final int range;
     private final int loss;
+    private final PipeLimits pipe;
     private final ResourceLocation jacket;
     private final ResourceLocation plug;
     private final Supplier<? extends Item> item;
@@ -52,6 +61,7 @@ public final class CableType {
         this.throughput = builder.throughput;
         this.range = builder.range;
         this.loss = builder.loss;
+        this.pipe = new PipeLimits(builder.coldest, builder.hottest, builder.takes);
         this.jacket = Objects.requireNonNull(builder.jacket, "a cable has a jacket");
         this.plug = Objects.requireNonNull(builder.plug, "a cable has a plug");
         this.item = Objects.requireNonNull(item, "item");
@@ -102,6 +112,11 @@ public final class CableType {
         return this.loss;
     }
 
+    /** What it is made for as a pipe: the temperatures it stands and the marks it takes. */
+    public PipeLimits pipe() {
+        return this.pipe;
+    }
+
     /**
      * Its jacket's texture, 32 pixels square: the side with the length along u in the top left (16 by its thickness),
      * the same side with the length along v beside it, and the cut end below.
@@ -148,6 +163,9 @@ public final class CableType {
         private long throughput;
         private int range;
         private int loss;
+        private int coldest = PipeLimits.PLAIN.coldest();
+        private int hottest = PipeLimits.PLAIN.hottest();
+        private final Set<TagKey<Fluid>> takes = new HashSet<>();
         private @Nullable ResourceLocation jacket;
         private @Nullable ResourceLocation plug;
 
@@ -206,6 +224,22 @@ public final class CableType {
                         + " thousandths, not " + thousandths);
             }
             this.loss = thousandths;
+            return this;
+        }
+
+        /** As a pipe, the coldest and the hottest fluid it stands, in kelvin; any temperature unless said. */
+        public Builder withstands(final int coldest, final int hottest) {
+            if (coldest < 0 || hottest < coldest) {
+                throw new IllegalArgumentException("a pipe stands from " + coldest + " K to " + hottest + " K");
+            }
+            this.coldest = coldest;
+            this.hottest = hottest;
+            return this;
+        }
+
+        /** As a pipe, it is made for fluids marked {@code mark}: a gas, a corrosive fluid. */
+        public Builder takes(final TagKey<Fluid> mark) {
+            this.takes.add(Objects.requireNonNull(mark, "mark"));
             return this;
         }
 

@@ -136,6 +136,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the block it pours as and its bucket, drawn with the fluid inside; the generator writes their names, the bucket's
   model and the fluid's tags. A gas is lighter than air, never poured into the world nor held in a bucket, only kept
   in tanks; it is tagged a gas for the Core and for other mods. A fluid can be marked corrosive.
+- Pipes, in J's Core: a cable of the fluid grid plugs into every block beside it that holds fluids. Pipes are
+  passive: a connected run moves, each tick, at most what its slowest pipe carries, which is the pressure it holds,
+  and only the fluids every pipe of it is made for (the temperatures it stands, and whether it takes gases and
+  corrosive fluids), leaving the rest where they are. An output feeds the inputs, what it has left fills the tanks,
+  and the tanks feed what the inputs still want, each share in proportion to what is wanted, nothing lost on the way.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,

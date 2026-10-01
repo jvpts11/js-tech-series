@@ -10,6 +10,7 @@ package dev.jstech.core.registry;
 import com.mojang.serialization.Codec;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.energy.LevelEnergy;
+import dev.jstech.core.fluid.LevelFluids;
 import dev.jstech.core.grid.LevelGrids;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.persistence.CoreChunkData;
@@ -55,6 +56,10 @@ public final class CoreAttachments {
     /** How a dimension's energy grid moves energy; never saved, since it is worked out from the wires. */
     public static final Supplier<AttachmentType<LevelEnergy>> ENERGY =
             ATTACHMENT_TYPES.register("energy", () -> AttachmentType.builder(LevelEnergy::new).build());
+
+    /** How a dimension's fluid grid moves fluids; never saved, since it is worked out from the pipes. */
+    public static final Supplier<AttachmentType<LevelFluids>> FLUIDS =
+            ATTACHMENT_TYPES.register("fluids", () -> AttachmentType.builder(LevelFluids::new).build());
 
     /** The layout a chunk's networks are saved in; a chunk saved before it had one holds the bare list. */
     public static final SaveLayout CHUNK_NETWORKS_LAYOUT = SaveLayout.of(JsCore.MODID + ":chunk_networks");

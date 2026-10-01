@@ -8,24 +8,17 @@
 package dev.jstech.core.energy;
 
 import dev.jstech.core.JsCore;
-import dev.jstech.core.cable.CableBlockEntity;
-import dev.jstech.core.cable.Lane;
-import dev.jstech.core.cable.Wire;
+import dev.jstech.core.cable.CableParts;
 import dev.jstech.core.diagnostic.Diagnostics;
 import dev.jstech.core.energy.internal.EnergyNetwork;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
-import dev.jstech.core.grid.GridPlace;
-import dev.jstech.core.grid.GridPlaces;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -96,71 +89,38 @@ public final class LevelEnergy {
     }
 
     /*
-     * Each wire of the grid is a cable of its part; each machine a wire plugs into is a node of that part, numbered
-     * below zero so it never meets a wire's number. A wire whose block is not loaded is left out until it loads.
+     * Each wire of a part is a cable of its network; each machine a wire plugs into is a node of it, numbered below
+     * zero so it never meets a wire's number.
      */
     private void build(final ServerLevel level, final Grid grid) {
         this.parts.clear();
         this.partOfWire.clear();
-        final GridPlaces places = CoreGrids.places(level);
-        final Map<Integer, EnergyNetwork> byRoot = new TreeMap<>();
-        final Map<Integer, Map<Long, Long>> machinesByRoot = new HashMap<>();
-        final List<long[]> wires = new ArrayList<>();
-        final List<long[]> plugged = new ArrayList<>();
-        for (final long number : new TreeSet<>(grid.positions())) {
-            final GridPlace place = places.place(number);
-            if (place == null || place.lane() == GridPlace.WHOLE) {
-                continue;
+        for (final CableParts.Part part : CableParts.of(level, grid)) {
+            final EnergyNetwork network = new EnergyNetwork();
+            for (final CableParts.WireAt wire : part.wires()) {
+                final long carries = wire.runTooLong() ? 0L : wire.type().throughput();
+                network.addCable(wire.number(), new WireCable(carries, wire.type().loss()));
+                this.partOfWire.put(wire.number(), this.parts.size());
             }
-            final BlockPos pos = BlockPos.of(place.pos());
-            if (!level.isLoaded(pos) || !(level.getBlockEntity(pos) instanceof CableBlockEntity cable)) {
-                continue;
-            }
-            final Lane lane = Lane.byId(place.lane());
-            final Wire wire = cable.wireIn(lane);
-            if (wire == null) {
-                continue;
-            }
-            final int root = grid.rootOf(number);
-            final EnergyNetwork part = byRoot.computeIfAbsent(root, key -> new EnergyNetwork());
-            final long carries = grid.runTooLong(number) ? 0L : wire.type().throughput();
-            part.addCable(number, new WireCable(carries, wire.type().loss()));
-            wires.add(new long[] {root, number});
-            final Map<Long, Long> machines = machinesByRoot.computeIfAbsent(root, key -> new HashMap<>());
-            final int plugs = cable.plugs(lane);
-            for (final Direction face : Direction.values()) {
-                final BlockPos at = pos.relative(face);
-                if ((plugs & 1 << face.get3DDataValue()) == 0 || level.getBlockEntity(at) instanceof CableBlockEntity) {
-                    continue;
+            for (final CableParts.WireAt wire : part.wires()) {
+                for (final long next : grid.neighbours(wire.number())) {
+                    if (next > wire.number() && network.contains(next)) {
+                        network.connect(wire.number(), next);
+                    }
                 }
-                Long node = machines.get(at.asLong());
+            }
+            final Map<Long, Long> machines = new HashMap<>();
+            for (final CableParts.Plug plug : part.plugs()) {
+                Long node = machines.get(plug.at().asLong());
                 if (node == null) {
                     node = -(machines.size() + 1L);
-                    machines.put(at.asLong(), node);
-                    part.addNode(node, new MachineNode(BlockCapabilityCache.create(
-                            Capabilities.EnergyStorage.BLOCK, level, at, face.getOpposite())));
+                    machines.put(plug.at().asLong(), node);
+                    network.addNode(node, new MachineNode(BlockCapabilityCache.create(
+                            Capabilities.EnergyStorage.BLOCK, level, plug.at(), plug.face())));
                 }
-                plugged.add(new long[] {root, number, node});
+                network.connect(plug.wire(), node);
             }
-        }
-        this.parts.addAll(byRoot.values());
-        final Map<Integer, Integer> indexOfRoot = new HashMap<>();
-        for (final Integer root : byRoot.keySet()) {
-            indexOfRoot.put(root, indexOfRoot.size());
-        }
-        for (final long[] wire : wires) {
-            this.partOfWire.put(wire[1], indexOfRoot.get((int) wire[0]));
-        }
-        for (final long[] wire : wires) {
-            final EnergyNetwork part = byRoot.get((int) wire[0]);
-            for (final long next : grid.neighbours(wire[1])) {
-                if (next > wire[1] && part.contains(next)) {
-                    part.connect(wire[1], next);
-                }
-            }
-        }
-        for (final long[] plug : plugged) {
-            byRoot.get((int) plug[0]).connect(plug[1], plug[2]);
+            this.parts.add(network);
         }
     }
 

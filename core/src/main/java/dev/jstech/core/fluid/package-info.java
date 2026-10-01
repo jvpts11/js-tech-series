@@ -6,6 +6,8 @@
  * This file is part of J's Core.
  */
 /**
- * Fluid registries, fluid stack helpers, and pipe network abstractions shared between Industrial, Geological and Oceanic modules.
+ * Fluids and pipes: the marks a pipe has to be made for (a gas, a corrosive fluid), what a pipe stands and takes, and
+ * the fluid grid that moves fluids through pipes between the blocks they plug into. Fluids themselves are declared
+ * with a mod's content.
  */
 package dev.jstech.core.fluid;
