@@ -8,6 +8,7 @@
 package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.audio.SoundHardwareTexts;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
@@ -16,6 +17,7 @@ import dev.jstech.computers.menu.PersonalComputerMenu;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
 import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
@@ -40,6 +42,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -52,8 +55,26 @@ import org.jetbrains.annotations.Nullable;
  * The Personal Computer: the player's hands-on access point to the network, assembled on a consumer ATX board.
  */
 public class PersonalComputerBlock extends HorizontalDirectionalBlock
-        implements EntityBlock, IFaceConnector, IEraChassisBlock,
-        IPeripheralConnectable {
+        implements EntityBlock, IFaceConnector, IComputerCase, IPeripheralConnectable {
+
+    private final HardwareEra era;
+    private final CaseStyle caseStyle;
+
+    public static final MapCodec<PersonalComputerBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+            propertiesCodec(),
+            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(PersonalComputerBlock::era),
+            StableCodecs.byName(CaseStyle.class).fieldOf("case").forGetter(PersonalComputerBlock::caseStyle)
+    ).apply(i, PersonalComputerBlock::new));
+    private static final FacePorts PORTS = FacePorts.builder()
+            .port(FaceRule.BACK, DataLines.of(DataTier.T1_ETHERNET))
+            .build();
+
+    public PersonalComputerBlock(final Properties properties, final HardwareEra era, final CaseStyle caseStyle) {
+        super(properties);
+        this.era = era;
+        this.caseStyle = caseStyle;
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+    }
 
     @Override
     public PeripheralCableType peripheralType() {
@@ -65,23 +86,28 @@ public class PersonalComputerBlock extends HorizontalDirectionalBlock
         return era();
     }
 
-    public static final MapCodec<PersonalComputerBlock> CODEC = simpleCodec(PersonalComputerBlock::new);
-    private static final FacePorts PORTS = FacePorts.builder()
-            .port(FaceRule.BACK, DataLines.of(DataTier.T1_ETHERNET))
-            .build();
-
-    public PersonalComputerBlock(final Properties properties) {
-        super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
-    }
-
     /**
      * The hardware era this Personal Computer belongs to. It selects the block's skin and gates which
      * consumer board the machine accepts: only a board of this era (and of the era's form factor) installs.
-     * The base block is the Standard era; the Vintage and Legacy variants override this.
      */
     public HardwareEra era() {
-        return HardwareEra.STANDARD;
+        return era;
+    }
+
+    @Override
+    public CaseStyle caseStyle() {
+        return caseStyle;
+    }
+
+    @Override
+    public String machineName() {
+        return "personal_computer";
+    }
+
+    /** The case is one model drawn by the block entity; the block itself paints nothing over it. */
+    @Override
+    protected RenderShape getRenderShape(final BlockState state) {
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override

@@ -21,15 +21,14 @@ import static dev.jstech.computers.registry.ComputingContent.SERVERS;
 import dev.jstech.computers.advancement.JscTriggers;
 import dev.jstech.computers.audio.ComputingAudioDevices;
 import dev.jstech.computers.audio.ComputingSounds;
+import dev.jstech.computers.block.CaseStyle;
 import dev.jstech.computers.block.ClusterManagementComputerBlock;
 import dev.jstech.computers.block.CraftingComputerBlock;
 import dev.jstech.computers.block.CraftingSwitchBlock;
 import dev.jstech.computers.block.HbwInterfaceBlock;
-import dev.jstech.computers.block.LegacyClusterManagementComputerBlock;
-import dev.jstech.computers.block.LegacyCraftingComputerBlock;
+import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.block.LegacyMainframeBlock;
 import dev.jstech.computers.block.LegacyMonitorBlock;
-import dev.jstech.computers.block.LegacyPersonalComputerBlock;
 import dev.jstech.computers.block.LegacyServerRackBlock;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.MainframePartBlock;
@@ -45,11 +44,8 @@ import dev.jstech.computers.block.ServerRouterBlock;
 import dev.jstech.computers.block.SpeakerBlock;
 import dev.jstech.computers.block.SupercomputerRackBlock;
 import dev.jstech.computers.block.TankBlock;
-import dev.jstech.computers.block.VintageClusterManagementComputerBlock;
-import dev.jstech.computers.block.VintageCraftingComputerBlock;
 import dev.jstech.computers.block.VintageMainframeBlock;
 import dev.jstech.computers.block.VintageMonitorBlock;
-import dev.jstech.computers.block.VintagePersonalComputerBlock;
 import dev.jstech.computers.block.VintageServerRackBlock;
 import dev.jstech.computers.block.part.CablePartItem;
 import dev.jstech.computers.block.part.ComputingParts;
@@ -183,6 +179,9 @@ public final class ComputingModule {
     private static final CabinetBlockItem.Fit DEVICE_FIT = new CabinetBlockItem.Fit(16.0F, 0.0F, -0.5F, 0.0F);
     /** A device's lamps, dark on its item, whatever the devices in the world show. */
     private static final List<String> DEVICE_LAMPS = List.of(MediaBay.POWER_LAMP, MediaBay.BUSY_LAMP);
+    /** A small computer's lamps, dark on its item. */
+    private static final List<String> COMPUTER_LAMPS =
+            List.of(ComputingLooks.COMPUTER_POWER_LAMP, ComputingLooks.COMPUTER_DISK_LAMP);
 
     /*
      * Cables. The data cables are laid in the Core's cable block, each in the lane of its line: access top left,
@@ -267,50 +266,123 @@ public final class ComputingModule {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TankBlockEntity>> TANK_BE =
             CONTENT.blockEntity("tank", TankBlockEntity::new, TANK);
 
-    // The computers, each in three eras: the same machine and block entity, differing by era, board and skin.
+    /*
+     * The small computers. Each machine comes in the tower of each age up to the Transition, and from the Standard
+     * age on in three cases, a block each: Neutral (plain id, as the case of the age with nothing added), High
+     * Performance and Aesthetic. The case is its look alone; the machine, its block entity and what it takes are
+     * the same in all of them.
+     */
 
     public static final BlockEntry<PersonalComputerBlock> PERSONAL_COMPUTER =
-            computer("personal_computer", PersonalComputerBlock::new).named("Personal Computer").register();
-    public static final BlockEntry<VintagePersonalComputerBlock> VINTAGE_PERSONAL_COMPUTER =
-            computer("vintage_personal_computer", VintagePersonalComputerBlock::new)
+            personalComputer("personal_computer", HardwareEra.STANDARD, CaseStyle.NEUTRAL)
+                    .named("Personal Computer").register();
+    public static final BlockEntry<PersonalComputerBlock> HIGH_PERFORMANCE_PERSONAL_COMPUTER =
+            personalComputer("high_performance_personal_computer", HardwareEra.STANDARD, CaseStyle.HIGH_PERFORMANCE)
+                    .named("High Performance Personal Computer").register();
+    public static final BlockEntry<PersonalComputerBlock> AESTHETIC_PERSONAL_COMPUTER =
+            personalComputer("aesthetic_personal_computer", HardwareEra.STANDARD, CaseStyle.AESTHETIC)
+                    .named("Aesthetic Personal Computer").register();
+    public static final BlockEntry<PersonalComputerBlock> VINTAGE_PERSONAL_COMPUTER =
+            personalComputer("vintage_personal_computer", HardwareEra.VINTAGE, CaseStyle.SOLE)
                     .named("Vintage Personal Computer").register();
-    public static final BlockEntry<LegacyPersonalComputerBlock> LEGACY_PERSONAL_COMPUTER =
-            computer("legacy_personal_computer", LegacyPersonalComputerBlock::new)
+    public static final BlockEntry<PersonalComputerBlock> LEGACY_PERSONAL_COMPUTER =
+            personalComputer("legacy_personal_computer", HardwareEra.LEGACY, CaseStyle.SOLE)
                     .named("Legacy Personal Computer").register();
+    public static final BlockEntry<PersonalComputerBlock> TRANSITION_PERSONAL_COMPUTER =
+            personalComputer("transition_personal_computer", HardwareEra.TRANSITION, CaseStyle.SOLE)
+                    .named("Transition Personal Computer").register();
+    public static final BlockEntry<PersonalComputerBlock> ADVANCED_PERSONAL_COMPUTER =
+            personalComputer("advanced_personal_computer", HardwareEra.ADVANCED, CaseStyle.NEUTRAL)
+                    .named("Advanced Personal Computer").register();
+    public static final BlockEntry<PersonalComputerBlock> ADVANCED_HIGH_PERFORMANCE_PERSONAL_COMPUTER =
+            personalComputer("advanced_high_performance_personal_computer", HardwareEra.ADVANCED,
+                    CaseStyle.HIGH_PERFORMANCE).named("Advanced High Performance Personal Computer").register();
+    public static final BlockEntry<PersonalComputerBlock> ADVANCED_AESTHETIC_PERSONAL_COMPUTER =
+            personalComputer("advanced_aesthetic_personal_computer", HardwareEra.ADVANCED, CaseStyle.AESTHETIC)
+                    .named("Advanced Aesthetic Personal Computer").register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PersonalComputerBlockEntity>>
             PERSONAL_COMPUTER_BE = CONTENT.blockEntity("personal_computer", PersonalComputerBlockEntity::new,
-                    PERSONAL_COMPUTER, VINTAGE_PERSONAL_COMPUTER, LEGACY_PERSONAL_COMPUTER);
+                    PERSONAL_COMPUTER, HIGH_PERFORMANCE_PERSONAL_COMPUTER, AESTHETIC_PERSONAL_COMPUTER,
+                    VINTAGE_PERSONAL_COMPUTER, LEGACY_PERSONAL_COMPUTER, TRANSITION_PERSONAL_COMPUTER,
+                    ADVANCED_PERSONAL_COMPUTER, ADVANCED_HIGH_PERFORMANCE_PERSONAL_COMPUTER,
+                    ADVANCED_AESTHETIC_PERSONAL_COMPUTER);
 
     // Crafting Computer: an ATX computer that executes recipes once a Crafting Card is installed.
     public static final BlockEntry<CraftingComputerBlock> CRAFTING_COMPUTER =
-            computer("crafting_computer", CraftingComputerBlock::new).named("Crafting Computer").register();
-    public static final BlockEntry<VintageCraftingComputerBlock> VINTAGE_CRAFTING_COMPUTER =
-            computer("vintage_crafting_computer", VintageCraftingComputerBlock::new)
+            craftingComputer("crafting_computer", HardwareEra.STANDARD, CaseStyle.NEUTRAL)
+                    .named("Crafting Computer").register();
+    public static final BlockEntry<CraftingComputerBlock> HIGH_PERFORMANCE_CRAFTING_COMPUTER =
+            craftingComputer("high_performance_crafting_computer", HardwareEra.STANDARD, CaseStyle.HIGH_PERFORMANCE)
+                    .named("High Performance Crafting Computer").register();
+    public static final BlockEntry<CraftingComputerBlock> AESTHETIC_CRAFTING_COMPUTER =
+            craftingComputer("aesthetic_crafting_computer", HardwareEra.STANDARD, CaseStyle.AESTHETIC)
+                    .named("Aesthetic Crafting Computer").register();
+    public static final BlockEntry<CraftingComputerBlock> VINTAGE_CRAFTING_COMPUTER =
+            craftingComputer("vintage_crafting_computer", HardwareEra.VINTAGE, CaseStyle.SOLE)
                     .named("Vintage Crafting Computer").register();
-    public static final BlockEntry<LegacyCraftingComputerBlock> LEGACY_CRAFTING_COMPUTER =
-            computer("legacy_crafting_computer", LegacyCraftingComputerBlock::new)
+    public static final BlockEntry<CraftingComputerBlock> LEGACY_CRAFTING_COMPUTER =
+            craftingComputer("legacy_crafting_computer", HardwareEra.LEGACY, CaseStyle.SOLE)
                     .named("Legacy Crafting Computer").register();
+    public static final BlockEntry<CraftingComputerBlock> TRANSITION_CRAFTING_COMPUTER =
+            craftingComputer("transition_crafting_computer", HardwareEra.TRANSITION, CaseStyle.SOLE)
+                    .named("Transition Crafting Computer").register();
+    public static final BlockEntry<CraftingComputerBlock> ADVANCED_CRAFTING_COMPUTER =
+            craftingComputer("advanced_crafting_computer", HardwareEra.ADVANCED, CaseStyle.NEUTRAL)
+                    .named("Advanced Crafting Computer").register();
+    public static final BlockEntry<CraftingComputerBlock> ADVANCED_HIGH_PERFORMANCE_CRAFTING_COMPUTER =
+            craftingComputer("advanced_high_performance_crafting_computer", HardwareEra.ADVANCED,
+                    CaseStyle.HIGH_PERFORMANCE).named("Advanced High Performance Crafting Computer").register();
+    public static final BlockEntry<CraftingComputerBlock> ADVANCED_AESTHETIC_CRAFTING_COMPUTER =
+            craftingComputer("advanced_aesthetic_crafting_computer", HardwareEra.ADVANCED, CaseStyle.AESTHETIC)
+                    .named("Advanced Aesthetic Crafting Computer").register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CraftingComputerBlockEntity>>
             CRAFTING_COMPUTER_BE = CONTENT.blockEntity("crafting_computer", CraftingComputerBlockEntity::new,
-                    CRAFTING_COMPUTER, VINTAGE_CRAFTING_COMPUTER, LEGACY_CRAFTING_COMPUTER);
+                    CRAFTING_COMPUTER, HIGH_PERFORMANCE_CRAFTING_COMPUTER, AESTHETIC_CRAFTING_COMPUTER,
+                    VINTAGE_CRAFTING_COMPUTER, LEGACY_CRAFTING_COMPUTER, TRANSITION_CRAFTING_COMPUTER,
+                    ADVANCED_CRAFTING_COMPUTER, ADVANCED_HIGH_PERFORMANCE_CRAFTING_COMPUTER,
+                    ADVANCED_AESTHETIC_CRAFTING_COMPUTER);
 
     /*
      * Cluster Management Computer: a full computer that, with a Cluster Interface Card, drives every
      * supercomputer fabric and datacenter section on its network as one machine.
      */
     public static final BlockEntry<ClusterManagementComputerBlock> CLUSTER_MANAGEMENT_COMPUTER =
-            computer("cluster_management_computer", ClusterManagementComputerBlock::new)
+            clusterManagementComputer("cluster_management_computer", HardwareEra.STANDARD, CaseStyle.NEUTRAL)
                     .named("Cluster Management Computer").register();
-    public static final BlockEntry<VintageClusterManagementComputerBlock> VINTAGE_CLUSTER_MANAGEMENT_COMPUTER =
-            computer("vintage_cluster_management_computer", VintageClusterManagementComputerBlock::new)
+    public static final BlockEntry<ClusterManagementComputerBlock> HIGH_PERFORMANCE_CLUSTER_MANAGEMENT_COMPUTER =
+            clusterManagementComputer("high_performance_cluster_management_computer", HardwareEra.STANDARD,
+                    CaseStyle.HIGH_PERFORMANCE).named("High Performance Cluster Management Computer").register();
+    public static final BlockEntry<ClusterManagementComputerBlock> AESTHETIC_CLUSTER_MANAGEMENT_COMPUTER =
+            clusterManagementComputer("aesthetic_cluster_management_computer", HardwareEra.STANDARD,
+                    CaseStyle.AESTHETIC).named("Aesthetic Cluster Management Computer").register();
+    public static final BlockEntry<ClusterManagementComputerBlock> VINTAGE_CLUSTER_MANAGEMENT_COMPUTER =
+            clusterManagementComputer("vintage_cluster_management_computer", HardwareEra.VINTAGE, CaseStyle.SOLE)
                     .named("Vintage Cluster Management Computer").register();
-    public static final BlockEntry<LegacyClusterManagementComputerBlock> LEGACY_CLUSTER_MANAGEMENT_COMPUTER =
-            computer("legacy_cluster_management_computer", LegacyClusterManagementComputerBlock::new)
+    public static final BlockEntry<ClusterManagementComputerBlock> LEGACY_CLUSTER_MANAGEMENT_COMPUTER =
+            clusterManagementComputer("legacy_cluster_management_computer", HardwareEra.LEGACY, CaseStyle.SOLE)
                     .named("Legacy Cluster Management Computer").register();
+    public static final BlockEntry<ClusterManagementComputerBlock> TRANSITION_CLUSTER_MANAGEMENT_COMPUTER =
+            clusterManagementComputer("transition_cluster_management_computer", HardwareEra.TRANSITION,
+                    CaseStyle.SOLE).named("Transition Cluster Management Computer").register();
+    public static final BlockEntry<ClusterManagementComputerBlock> ADVANCED_CLUSTER_MANAGEMENT_COMPUTER =
+            clusterManagementComputer("advanced_cluster_management_computer", HardwareEra.ADVANCED,
+                    CaseStyle.NEUTRAL).named("Advanced Cluster Management Computer").register();
+    public static final BlockEntry<ClusterManagementComputerBlock>
+            ADVANCED_HIGH_PERFORMANCE_CLUSTER_MANAGEMENT_COMPUTER = clusterManagementComputer(
+                    "advanced_high_performance_cluster_management_computer", HardwareEra.ADVANCED,
+                    CaseStyle.HIGH_PERFORMANCE).named("Advanced High Performance Cluster Management Computer")
+                    .register();
+    public static final BlockEntry<ClusterManagementComputerBlock> ADVANCED_AESTHETIC_CLUSTER_MANAGEMENT_COMPUTER =
+            clusterManagementComputer("advanced_aesthetic_cluster_management_computer", HardwareEra.ADVANCED,
+                    CaseStyle.AESTHETIC).named("Advanced Aesthetic Cluster Management Computer").register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ClusterManagementComputerBlockEntity>>
             CLUSTER_MANAGEMENT_COMPUTER_BE = CONTENT.blockEntity("cluster_management_computer",
                     ClusterManagementComputerBlockEntity::new, CLUSTER_MANAGEMENT_COMPUTER,
-                    VINTAGE_CLUSTER_MANAGEMENT_COMPUTER, LEGACY_CLUSTER_MANAGEMENT_COMPUTER);
+                    HIGH_PERFORMANCE_CLUSTER_MANAGEMENT_COMPUTER, AESTHETIC_CLUSTER_MANAGEMENT_COMPUTER,
+                    VINTAGE_CLUSTER_MANAGEMENT_COMPUTER, LEGACY_CLUSTER_MANAGEMENT_COMPUTER,
+                    TRANSITION_CLUSTER_MANAGEMENT_COMPUTER, ADVANCED_CLUSTER_MANAGEMENT_COMPUTER,
+                    ADVANCED_HIGH_PERFORMANCE_CLUSTER_MANAGEMENT_COMPUTER,
+                    ADVANCED_AESTHETIC_CLUSTER_MANAGEMENT_COMPUTER);
 
     // Crafting Switch: declares up to 5 adjacent machines, wired to a Crafting Computer over the crafting cable.
     public static final BlockEntry<CraftingSwitchBlock> CRAFTING_SWITCH =
@@ -715,11 +787,37 @@ public final class ComputingModule {
                 .item().tab(MACHINES);
     }
 
-    private static <B extends Block> BlockBuilder<B> computer(final String id,
-                                                             final Function<BlockBehaviour.Properties, B> factory) {
+    private static BlockBuilder<PersonalComputerBlock> personalComputer(final String id, final HardwareEra era,
+                                                                        final CaseStyle style) {
+        return computer(id, era, style, properties -> new PersonalComputerBlock(properties, era, style));
+    }
+
+    private static BlockBuilder<CraftingComputerBlock> craftingComputer(final String id, final HardwareEra era,
+                                                                        final CaseStyle style) {
+        return computer(id, era, style, properties -> new CraftingComputerBlock(properties, era, style));
+    }
+
+    private static BlockBuilder<ClusterManagementComputerBlock> clusterManagementComputer(
+            final String id, final HardwareEra era, final CaseStyle style) {
+        return computer(id, era, style, properties -> new ClusterManagementComputerBlock(properties, era, style));
+    }
+
+    /**
+     * A small computer, whose case its block entity draws: the block shows nothing but the particles a break scatters,
+     * and without noOcclusion the full cube would block its own light and cull the faces of its neighbours. Its item
+     * shows the same case, switched off.
+     */
+    private static <B extends Block & IComputerCase> BlockBuilder<B> computer(
+            final String id, final HardwareEra era, final CaseStyle style,
+            final Function<BlockBehaviour.Properties, B> factory) {
         return CONTENT.block(id, factory)
-                .properties(properties -> properties.mapColor(MapColor.COLOR_GRAY).strength(2.0F))
-                .look(IBlockLook::orientable).item().tab(MACHINES);
+                .properties(properties -> properties.mapColor(MapColor.COLOR_GRAY).strength(2.0F).noOcclusion())
+                .look(IBlockLook.fixed(new IBlockModel.ParticleOnly(id + "_body",
+                        "block/computer/" + style.caseName(era) + "_particle")))
+                .geo(ComputingLooks.COMPUTER)
+                .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.COMPUTER,
+                        block.caseModel(), DEVICE_FIT, COMPUTER_LAMPS))
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(MACHINES);
     }
 
     private static BlockBuilder<PatternEncoderBlock> encoder(final String id, final MapColor color,

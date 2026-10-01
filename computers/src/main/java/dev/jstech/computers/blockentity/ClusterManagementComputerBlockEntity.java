@@ -65,7 +65,8 @@ import java.util.Set;
  * goes through the same per-node hosts a player reaches rack by rack, with the same gates: a shortcut,
  * never a loophole. A cluster works without one.
  */
-public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockEntity implements IComputerTerminalHost {
+public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerBlockEntity
+        implements IComputerTerminalHost {
 
     // The same consumer/workstation slot layout as a Personal Computer.
     public static final int MOTHERBOARD_SLOT = 0;

@@ -53,7 +53,7 @@ import java.util.Set;
 /**
  * The Crafting Computer: a Category-C computer that executes crafting recipes for the network.
  */
-public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
+public class CraftingComputerBlockEntity extends AbstractSmallComputerBlockEntity
         implements IComputerTerminalHost {
 
     /*

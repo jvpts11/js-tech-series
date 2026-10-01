@@ -173,5 +173,9 @@ public final class ComputingClientSetup {
         event.registerBlockEntityRenderer(ComputingModule.PATTERN_ENCODER_BE.get(), PatternEncoderRenderer::new);
         // The floppy, CD and DVD drives the same way; the Dock Station keeps its block model.
         event.registerBlockEntityRenderer(ComputingModule.MEDIA_READER_BE.get(), MediaDriveRenderer::new);
+        // The small computers: each machine's case, by its age and the case it comes in.
+        event.registerBlockEntityRenderer(ComputingModule.PERSONAL_COMPUTER_BE.get(), ComputerRenderer::new);
+        event.registerBlockEntityRenderer(ComputingModule.CRAFTING_COMPUTER_BE.get(), ComputerRenderer::new);
+        event.registerBlockEntityRenderer(ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_BE.get(), ComputerRenderer::new);
     }
 }

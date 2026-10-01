@@ -135,6 +135,19 @@ public final class MachineSoundGameTests {
                 .thenSucceed();
     }
 
+    @GameTest(template = ARENA, timeoutTicks = 300)
+    public static void transitionPc_passingItsSelfTest_beeps(final GameTestHelper helper) {
+        final Heard heard = Heard.at(helper, WHERE);
+        computer(helper, ComputingModule.TRANSITION_PERSONAL_COMPUTER.get(),
+                HardwareItems.MOTHERBOARD_ATX_TRANSITION_775.get(), HardwareItems.CPU_INTEGRA_CENTRO_2_DUO_E6600.get(),
+                HardwareItems.RAM_DDR2_2048.get(), HardwareItems.PSU_450B.get(), StorageTier.HDD).togglePower();
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(heard.played(ComputingSounds.POST_BEEP),
+                        "waiting for the Transition self-test's beep"))
+                .thenExecute(heard::stop)
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA)
     public static void selfTestBeep_isTheBiosOfTheAgesUpToTheTransition(final GameTestHelper helper) {
         helper.assertTrue(BootRunner.beepsAfterSelfTest(HardwareEra.VINTAGE), "a Vintage BIOS beeps");

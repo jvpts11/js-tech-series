@@ -155,6 +155,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   blocks, and one model of the Core draws every family, where each used to need a model class of its own. The Core
   runs without GeckoLib; a mod that draws with it brings it. J's Computers' Mainframes, racks, Pattern Encoders and
   drives, and the items that show them in a slot, are drawn this way.
+- The small computers drawn as the cases of their age: the Personal Computer, the Crafting Computer and the Cluster
+  Management Computer fill their block as a real tower of each age, the left side a panel of its own: a beige AT
+  minitower with its MHz display for the Vintage, a beige ATX tower for the Legacy, a silver and gloss black mid tower
+  for the Transition. From the Standard age on each comes in three cases, a block each, that differ in look alone:
+  Neutral, closed and quiet; High Performance, mesh and more fans; Aesthetic, glass and light, with red LEDs in the
+  Standard and addressable light in the Advanced. A plate at the foot of the front tells the machines apart. The
+  Transition and Advanced machines are new blocks, and so are the High Performance and Aesthetic cases of the Standard.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

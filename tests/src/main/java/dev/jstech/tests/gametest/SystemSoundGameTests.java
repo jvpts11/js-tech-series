@@ -22,6 +22,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -30,9 +32,9 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import java.util.List;
 
 /**
- * Where a computer's system sound comes from: the sound built into a Standard board or a Legacy machine's sound
- * card, out of the monitor linked to it; and, with no monitor or no sound hardware, only the speaker in the case,
- * which plays no recording.
+ * Where a computer's system sound comes from: the sound built into a board from the Transition on or a Legacy
+ * machine's sound card, out of the monitor linked to it; and, with no monitor or no sound hardware, only the speaker
+ * in the case, which plays no recording.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -100,17 +102,38 @@ public final class SystemSoundGameTests {
                 .thenSucceed();
     }
 
+    /** From the Transition on the board has sound of its own, so a machine with no card plays through it. */
+    @GameTest(template = ARENA)
+    public static void transitionPc_withoutASoundCard_playsThroughItsBoard(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final PersonalComputerBlockEntity pc = machine(world, ComputingModule.TRANSITION_PERSONAL_COMPUTER.get(),
+                HardwareItems.MOTHERBOARD_ATX_TRANSITION_775.get(), HardwareItems.CPU_INTEGRA_CENTRO_2_DUO_E6600.get(),
+                HardwareItems.RAM_DDR2_2048.get(), HardwareItems.PSU_450B.get());
+        world.placeMonitor(MONITOR, Direction.EAST);
+        helper.startSequence()
+                .thenExecuteAfter(LINKED, () -> helper.assertTrue(
+                        pc.audioHost().audioDevice() == ComputingAudioDevices.ON_BOARD,
+                        "a Transition machine with no sound card plays through its board; got "
+                                + pc.audioHost().audioDevice().id()))
+                .thenSucceed();
+    }
+
     private static PersonalComputerBlockEntity legacy(final TestWorldBuilder world) {
-        world.setBlock(COMPUTER, ComputingModule.LEGACY_PERSONAL_COMPUTER.get());
+        return machine(world, ComputingModule.LEGACY_PERSONAL_COMPUTER.get(),
+                HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get(), HardwareItems.CPU_INTEGRA_PENTIX_4_560.get(),
+                HardwareItems.RAM_DDR_1024.get(), HardwareItems.PSU_500B.get());
+    }
+
+    private static PersonalComputerBlockEntity machine(final TestWorldBuilder world, final Block block,
+                                                       final ItemLike board, final ItemLike cpu, final ItemLike ram,
+                                                       final ItemLike psu) {
+        world.setBlock(COMPUTER, block);
         final PersonalComputerBlockEntity pc = world.blockEntity(COMPUTER, PersonalComputerBlockEntity.class);
         final ItemStackHandler hardware = pc.getHardware();
-        hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get()));
-        hardware.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_4_560.get()));
-        hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(HardwareItems.RAM_DDR_1024.get()));
-        hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(HardwareItems.PSU_500B.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT, new ItemStack(board));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT, new ItemStack(cpu));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START, new ItemStack(ram));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(psu));
         hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         return pc;

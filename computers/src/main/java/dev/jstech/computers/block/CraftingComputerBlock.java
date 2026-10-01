@@ -8,12 +8,14 @@
 package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.menu.CraftingComputerMenu;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
 import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.peripheral.PeripheralCableType;
@@ -34,6 +36,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -46,9 +49,16 @@ import org.jetbrains.annotations.Nullable;
  * The Crafting Computer block: an ATX-class computer that executes recipes for the network.
  */
 public class CraftingComputerBlock extends HorizontalDirectionalBlock
-        implements EntityBlock, IFaceConnector, IPeripheralConnectable, IEraChassisBlock {
+        implements EntityBlock, IFaceConnector, IPeripheralConnectable, IComputerCase {
 
-    public static final MapCodec<CraftingComputerBlock> CODEC = simpleCodec(CraftingComputerBlock::new);
+    private final HardwareEra era;
+    private final CaseStyle caseStyle;
+
+    public static final MapCodec<CraftingComputerBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+            propertiesCodec(),
+            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(CraftingComputerBlock::era),
+            StableCodecs.byName(CaseStyle.class).fieldOf("case").forGetter(CraftingComputerBlock::caseStyle)
+    ).apply(i, CraftingComputerBlock::new));
     /*
      * Data over Ethernet on the back (through a Personal Router to the backbone), and the crafting cable to the
      * Crafting Switches on any face, since the machine-delivery search walks out of all six.
@@ -58,23 +68,40 @@ public class CraftingComputerBlock extends HorizontalDirectionalBlock
             .port(FaceRule.EVERY, DataLines.of(DataTier.CRAFTING))
             .build();
 
-    public CraftingComputerBlock(final Properties properties) {
+    public CraftingComputerBlock(final Properties properties, final HardwareEra era, final CaseStyle caseStyle) {
         super(properties);
+        this.era = era;
+        this.caseStyle = caseStyle;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
     /**
      * The hardware era this Crafting Computer belongs to. It selects the block's skin and gates which
-     * board the machine accepts: only a board of this era (and of the era's form factor) installs. The
-     * base block is the Standard era; the Vintage and Legacy variants override this.
+     * board the machine accepts: only a board of this era (and of the era's form factor) installs.
      */
     public HardwareEra era() {
-        return HardwareEra.STANDARD;
+        return era;
     }
 
     @Override
     public HardwareEra chassisEra() {
         return era();
+    }
+
+    @Override
+    public CaseStyle caseStyle() {
+        return caseStyle;
+    }
+
+    @Override
+    public String machineName() {
+        return "crafting_computer";
+    }
+
+    /** The case is one model drawn by the block entity; the block itself paints nothing over it. */
+    @Override
+    protected RenderShape getRenderShape(final BlockState state) {
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override

@@ -8,12 +8,14 @@
 package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.menu.ClusterManagementComputerMenu;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
 import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.peripheral.PeripheralCableType;
@@ -34,6 +36,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -50,9 +53,16 @@ import org.jetbrains.annotations.Nullable;
  * works without one; the computer makes it one machine to run.
  */
 public class ClusterManagementComputerBlock extends HorizontalDirectionalBlock
-        implements EntityBlock, IFaceConnector, IPeripheralConnectable, IEraChassisBlock {
+        implements EntityBlock, IFaceConnector, IPeripheralConnectable, IComputerCase {
 
-    public static final MapCodec<ClusterManagementComputerBlock> CODEC = simpleCodec(ClusterManagementComputerBlock::new);
+    private final HardwareEra era;
+    private final CaseStyle caseStyle;
+
+    public static final MapCodec<ClusterManagementComputerBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+            propertiesCodec(),
+            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(ClusterManagementComputerBlock::era),
+            StableCodecs.byName(CaseStyle.class).fieldOf("case").forGetter(ClusterManagementComputerBlock::caseStyle)
+    ).apply(i, ClusterManagementComputerBlock::new));
     /*
      * A management machine lives on the backbone, on its back: Ethernet through a router, or the bandwidth and fibre
      * cables directly. Never the compute fabric; the racks are reached over the network.
@@ -61,18 +71,37 @@ public class ClusterManagementComputerBlock extends HorizontalDirectionalBlock
             .port(FaceRule.BACK, DataLines.of(DataTier.T1_ETHERNET, DataTier.T2_HBW, DataTier.T3_FIBER))
             .build();
 
-    public ClusterManagementComputerBlock(final Properties properties) {
+    public ClusterManagementComputerBlock(final Properties properties, final HardwareEra era,
+                                          final CaseStyle caseStyle) {
         super(properties);
+        this.era = era;
+        this.caseStyle = caseStyle;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
     public HardwareEra era() {
-        return HardwareEra.STANDARD;
+        return era;
     }
 
     @Override
     public HardwareEra chassisEra() {
         return era();
+    }
+
+    @Override
+    public CaseStyle caseStyle() {
+        return caseStyle;
+    }
+
+    @Override
+    public String machineName() {
+        return "cluster_management_computer";
+    }
+
+    /** The case is one model drawn by the block entity; the block itself paints nothing over it. */
+    @Override
+    protected RenderShape getRenderShape(final BlockState state) {
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override

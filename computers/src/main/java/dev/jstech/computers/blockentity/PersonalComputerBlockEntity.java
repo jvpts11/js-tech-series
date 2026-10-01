@@ -35,7 +35,7 @@ import java.util.Set;
 /**
  * The Personal Computer: the player's hands-on access point to the network, assembled on a consumer ATX board (one CPU, four RAM, four PCIe, one PSU, two disks).
  */
-public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
+public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntity
         implements IComputerTerminalHost {
 
     // Slot layout, kept public so the assembly Menu and Screen address slots by name.
