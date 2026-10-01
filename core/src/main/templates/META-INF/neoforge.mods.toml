@@ -35,6 +35,14 @@ versionRange = "${minecraft_version_range}"
 ordering = "NONE"
 side = "BOTH"
 
+# GeckoLib is optional for the Core: only a mod that draws with it, and requires it, loads the Core's model for it.
+[[dependencies.${mod_id}]]
+modId = "geckolib"
+type = "optional"
+versionRange = "[4.7,)"
+ordering = "AFTER"
+side = "BOTH"
+
 # Mekanism is optional: when it is present, its chemicals move and store like fluids through the Core.
 [[dependencies.${mod_id}]]
 modId = "mekanism"

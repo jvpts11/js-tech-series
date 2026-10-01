@@ -10,7 +10,9 @@ package dev.jstech.computers.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import dev.jstech.computers.ComputingLooks;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.core.client.geo.LookGeoModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
@@ -31,7 +33,7 @@ import software.bernie.geckolib.renderer.GeoBlockRenderer;
 public final class MainframeRenderer extends GeoBlockRenderer<MainframeBlockEntity> {
 
     public MainframeRenderer(final BlockEntityRendererProvider.Context context) {
-        super(new MainframeGeoModel());
+        super(new LookGeoModel<>(ComputingLooks.MAINFRAME));
     }
 
     @Override

@@ -7,8 +7,8 @@
  */
 package dev.jstech.computers.item;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.client.CabinetItemRenderer;
+import dev.jstech.core.content.GeoLook;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
@@ -45,12 +45,10 @@ public class CabinetBlockItem extends BlockItem implements GeoItem {
     }
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    /** The texture folder this family's atlases live in, e.g. {@code rack}. */
-    private final String folder;
+    /** The family the cabinet is drawn as in the world: its models, their atlases and the animation they share. */
+    private final GeoLook<?> look;
     /** The model this cabinet is drawn with, e.g. {@code vintage_server_rack}. */
     private final String model;
-    /** The animation file the family shares, e.g. {@code rack}. */
-    private final String animation;
     private final Fit fit;
     /**
      * How the names of the parts the world shows only when they are fitted or lit begin (a CPU, a server in a row, a
@@ -60,29 +58,25 @@ public class CabinetBlockItem extends BlockItem implements GeoItem {
      */
     private final List<String> fittedParts;
 
-    public CabinetBlockItem(final Block block, final Properties properties, final String folder,
-                            final String model, final String animation, final Fit fit,
-                            final List<String> fittedParts) {
+    public CabinetBlockItem(final Block block, final Properties properties, final GeoLook<?> look,
+                            final String model, final Fit fit, final List<String> fittedParts) {
         super(block, properties);
-        this.folder = folder;
+        this.look = look;
         this.model = model;
-        this.animation = animation;
         this.fit = fit;
         this.fittedParts = List.copyOf(fittedParts);
     }
 
     public ResourceLocation modelResource() {
-        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "geo/" + model + ".geo.json");
+        return look.modelFile(model);
     }
 
     public ResourceLocation textureResource() {
-        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
-                "textures/block/" + folder + "/" + model + ".png");
+        return look.textureFile(model);
     }
 
     public ResourceLocation animationResource() {
-        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
-                "animations/" + animation + ".animation.json");
+        return look.animationFile();
     }
 
     public Fit fit() {

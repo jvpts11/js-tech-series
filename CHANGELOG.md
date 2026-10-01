@@ -150,6 +150,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the day of the season and the year, all read from the world's own clock. A year is four seasons (spring, summer,
   autumn, winter) of the same number of days, 28 unless the series' balance file says otherwise. J's Computers' cron
   and `at` jobs and its desktop clock read the time through it.
+- Machines drawn with GeckoLib, in J's Core: a mod says once how a family of them looks (which model each is drawn
+  with, by era or by kind, the folder of their textures and the animation they share) and declares it with the
+  blocks, and one model of the Core draws every family, where each used to need a model class of its own. The Core
+  runs without GeckoLib; a mod that draws with it brings it. J's Computers' Mainframes, racks, Pattern Encoders and
+  drives, and the items that show them in a slot, are drawn this way.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,

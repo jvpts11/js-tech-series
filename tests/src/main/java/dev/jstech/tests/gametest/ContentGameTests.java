@@ -7,10 +7,12 @@
  */
 package dev.jstech.tests.gametest;
 
+import dev.jstech.computers.item.CabinetBlockItem;
 import dev.jstech.computers.os.OsBootstrap;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.Drops;
+import dev.jstech.core.content.GeoLook;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.tests.JsTests;
@@ -233,6 +235,49 @@ public final class ContentGameTests {
         report(helper, wrong, "not accepted by the block entity they make");
     }
 
+    /**
+     * A block drawn with GeckoLib has the model, the atlas and the animation its look names for the entity it makes,
+     * and its item, which shows the machine in a slot, is drawn with that very model.
+     */
+    @GameTest(template = ARENA)
+    public static void declaredGeoBlocks_haveTheFilesTheirLookNames(final GameTestHelper helper) {
+        final List<String> wrong = new ArrayList<>();
+        int drawn = 0;
+        for (final ModContent content : ModContent.all()) {
+            for (final BlockEntry<?> block : content.declaredBlocks()) {
+                if (block.geoLook().isEmpty()) {
+                    continue;
+                }
+                drawn++;
+                final BlockState state = block.get().defaultBlockState();
+                final BlockEntity made = block.get() instanceof EntityBlock maker
+                        ? maker.newBlockEntity(BlockPos.ZERO, state) : null;
+                if (made == null) {
+                    wrong.add(block.getId() + " is drawn by a block entity it does not make");
+                    continue;
+                }
+                final List<ResourceLocation> files;
+                try {
+                    files = filesOf(block.geoLook().get(), made);
+                } catch (final ClassCastException e) {
+                    wrong.add(block.getId() + " is drawn as a family its block entity is not of");
+                    continue;
+                }
+                files.stream().filter(file -> !exists(file))
+                        .forEach(file -> wrong.add(block.getId() + " has no " + file));
+                if (block.hasItem() && block.item() instanceof CabinetBlockItem cabinet
+                        && !cabinet.modelResource().equals(files.getFirst())) {
+                    wrong.add(block.getId() + " shows " + cabinet.modelResource() + " in a slot, not "
+                            + files.getFirst());
+                }
+            }
+        }
+        if (drawn == 0) {
+            wrong.add("no block declares how GeckoLib draws it");
+        }
+        report(helper, wrong, "GeckoLib looks without their files");
+    }
+
     /** Every program says what it does, in the language file, where its install disc and the lists show it. */
     @GameTest(template = ARENA)
     public static void programs_sayWhatTheyDo(final GameTestHelper helper) {
@@ -259,6 +304,18 @@ public final class ContentGameTests {
         full[1] = mod;
         System.arraycopy(path, 0, full, 2, path.length);
         return ModList.get().getModFileById(mod).getFile().findResource(full);
+    }
+
+    /* The model, the atlas and the animation a look names for what a block makes; a look of another family throws. */
+    @SuppressWarnings("unchecked")
+    private static List<ResourceLocation> filesOf(final GeoLook<?> look, final BlockEntity made) {
+        final GeoLook<Object> family = (GeoLook<Object>) look;
+        return List.of(family.modelOf(made), family.textureOf(made), family.animationFile());
+    }
+
+    /** Whether a file of a mod's assets is there. */
+    private static boolean exists(final ResourceLocation file) {
+        return Files.exists(resource(file.getNamespace(), file.getPath().split("/")));
     }
 
     /** The names of the JSON files in a folder of the mod's resources, without the extension. */

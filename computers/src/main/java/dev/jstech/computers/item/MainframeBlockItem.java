@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.item;
 
+import dev.jstech.computers.ComputingLooks;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -41,7 +42,7 @@ public class MainframeBlockItem extends CabinetBlockItem {
             TextKey.of("item.jsc.mainframe.tooltip", "Forms a 3x2x2 structure when placed");
 
     public MainframeBlockItem(final Block block, final Item.Properties properties, final String model) {
-        super(block, properties, "mainframe", model, "mainframe", MAINFRAME_FIT, FITTED);
+        super(block, properties, ComputingLooks.MAINFRAME, model, MAINFRAME_FIT, FITTED);
     }
 
     @Override

@@ -43,6 +43,7 @@ public final class BlockBuilder<B extends Block> {
     private @Nullable IItemLook itemLook;
     private @Nullable Drops drops;
     private ContentTab.@Nullable Section section;
+    private @Nullable GeoLook<?> geoLook;
 
     BlockBuilder(final ModContent content, final String id, final Function<BlockBehaviour.Properties, ? extends B> factory) {
         this.content = content;
@@ -113,6 +114,12 @@ public final class BlockBuilder<B extends Block> {
         return this;
     }
 
+    /** It is drawn with GeckoLib, by its block entity, as {@code family} says. */
+    public BlockBuilder<B> geo(final GeoLook<?> family) {
+        this.geoLook = family;
+        return this;
+    }
+
     /**
      * Registers the block, and its item if it has one, and keeps what was declared.
      *
@@ -133,7 +140,8 @@ public final class BlockBuilder<B extends Block> {
         final DeferredItem<Item> item = itemMade == null ? null
                 : content.itemRegister().register(id, () -> itemMade.apply(block.get(), new Item.Properties()));
         final BlockEntry<B> entry = new BlockEntry<>(block.getId(), english, look, item,
-                item == null ? null : itemLook != null ? itemLook : IItemLook.OF_BLOCK, dropped, tags, recipeTypes);
+                item == null ? null : itemLook != null ? itemLook : IItemLook.OF_BLOCK, dropped, tags, recipeTypes,
+                geoLook);
         if (section != null) {
             section.add(entry);
         }

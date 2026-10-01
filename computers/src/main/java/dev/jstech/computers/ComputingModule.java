@@ -695,6 +695,7 @@ public final class ComputingModule {
     private static <B extends Block> BlockBuilder<B> mainframe(final String id,
                                                               final Function<BlockBehaviour.Properties, B> factory) {
         return CONTENT.block(id, factory).properties(ComputingModule::mainframeProperties).look(MAINFRAME_BODY)
+                .geo(ComputingLooks.MAINFRAME)
                 .item((block, properties) -> new MainframeBlockItem(block, properties, id))
                 .itemLook(IItemLook.DRAWN_BY_ENTITY).drops(Drops.NONE).tag(BlockTags.MINEABLE_WITH_PICKAXE)
                 .tab(MACHINES);
@@ -730,9 +731,9 @@ public final class ComputingModule {
         return CONTENT.block(id, properties -> new PatternEncoderBlock(properties, era))
                 .properties(properties -> properties.mapColor(color).strength(1.5F).sound(SoundType.METAL)
                         .noOcclusion())
-                .look(ENCODER_BODY)
-                .item((block, properties) -> new CabinetBlockItem(block, properties, "pattern_encoder", id,
-                        "pattern_encoder", DEVICE_FIT, DEVICE_LAMPS))
+                .look(ENCODER_BODY).geo(ComputingLooks.PATTERN_ENCODER)
+                .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.PATTERN_ENCODER,
+                        id, DEVICE_FIT, DEVICE_LAMPS))
                 .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(DEVICES);
     }
 
@@ -746,8 +747,9 @@ public final class ComputingModule {
                 .properties(properties -> properties.mapColor(color).strength(1.5F).sound(SoundType.METAL)
                         .noOcclusion())
                 .look(IBlockLook.fixed(new IBlockModel.ParticleOnly(id + "_body", "block/" + id + "_particle")))
-                .item((block, properties) -> new CabinetBlockItem(block, properties, "media_drive", id,
-                        "media_drive", DEVICE_FIT, DEVICE_LAMPS))
+                .geo(ComputingLooks.MEDIA_DRIVE)
+                .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.MEDIA_DRIVE, id,
+                        DEVICE_FIT, DEVICE_LAMPS))
                 .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(DEVICES);
     }
 
@@ -772,7 +774,8 @@ public final class ComputingModule {
     private static <B extends Block> BlockBuilder<B> rack(final String id,
                                                          final Function<BlockBehaviour.Properties, B> factory) {
         return CONTENT.block(id, factory).properties(ComputingModule::rackProperties).look(RACK_BODY)
-                .item((block, properties) -> new CabinetBlockItem(block, properties, "rack", id, "rack", RACK_FIT,
+                .geo(ComputingLooks.RACK)
+                .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.RACK, id, RACK_FIT,
                         RACK_FITTED))
                 .itemLook(IItemLook.DRAWN_BY_ENTITY).drops(Drops.NONE).tab(RACKS);
     }

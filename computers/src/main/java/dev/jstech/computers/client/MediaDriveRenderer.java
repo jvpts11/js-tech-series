@@ -9,8 +9,10 @@ package dev.jstech.computers.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import dev.jstech.computers.ComputingLooks;
 import dev.jstech.computers.os.media.MediaBay;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.core.client.geo.LookGeoModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
@@ -25,7 +27,7 @@ import software.bernie.geckolib.renderer.GeoBlockRenderer;
 public final class MediaDriveRenderer extends GeoBlockRenderer<MediaReaderBlockEntity> {
 
     public MediaDriveRenderer(final BlockEntityRendererProvider.Context context) {
-        super(new MediaDriveGeoModel());
+        super(new LookGeoModel<>(ComputingLooks.MEDIA_DRIVE));
         addRenderLayer(new BayMediumLayer<>(this, MediaReaderBlockEntity::drawnMedium));
     }
 

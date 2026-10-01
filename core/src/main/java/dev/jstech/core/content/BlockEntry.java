@@ -8,6 +8,7 @@
 package dev.jstech.core.content;
 
 import java.util.List;
+import java.util.Optional;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -33,10 +34,12 @@ public final class BlockEntry<B extends Block> extends DeferredBlock<B> {
     private final Drops drops;
     private final List<TagKey<Block>> tags;
     private final List<ResourceLocation> recipeTypes;
+    private final @Nullable GeoLook<?> geoLook;
 
     BlockEntry(final ResourceLocation id, final String english, final IBlockLook look,
                final @Nullable DeferredItem<Item> item, final @Nullable IItemLook itemLook, final Drops drops,
-               final List<TagKey<Block>> tags, final List<ResourceLocation> recipeTypes) {
+               final List<TagKey<Block>> tags, final List<ResourceLocation> recipeTypes,
+               final @Nullable GeoLook<?> geoLook) {
         super(ResourceKey.create(Registries.BLOCK, id));
         this.english = english;
         this.look = look;
@@ -45,6 +48,7 @@ public final class BlockEntry<B extends Block> extends DeferredBlock<B> {
         this.drops = drops;
         this.tags = List.copyOf(tags);
         this.recipeTypes = List.copyOf(recipeTypes);
+        this.geoLook = geoLook;
     }
 
     /** The block's item. */
@@ -85,5 +89,10 @@ public final class BlockEntry<B extends Block> extends DeferredBlock<B> {
     /** The recipe types this block is the machine for. */
     public List<ResourceLocation> recipeTypes() {
         return recipeTypes;
+    }
+
+    /** How it is drawn with GeckoLib, when it is. */
+    public Optional<GeoLook<?>> geoLook() {
+        return Optional.ofNullable(geoLook);
     }
 }

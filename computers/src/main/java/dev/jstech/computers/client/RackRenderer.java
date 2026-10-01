@@ -10,7 +10,9 @@ package dev.jstech.computers.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import dev.jstech.computers.ComputingLooks;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.core.client.geo.LookGeoModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
@@ -32,7 +34,7 @@ public final class RackRenderer extends GeoBlockRenderer<ServerRackBlockEntity> 
     private static final int ROWS = ServerRackBlockEntity.CAPACITY_U;
 
     public RackRenderer(final BlockEntityRendererProvider.Context context) {
-        super(new RackGeoModel());
+        super(new LookGeoModel<>(ComputingLooks.RACK));
     }
 
     @Override
