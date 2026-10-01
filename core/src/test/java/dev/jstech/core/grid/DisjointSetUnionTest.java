@@ -5,7 +5,7 @@
  *
  * This file is part of J's Core.
  */
-package dev.jstech.core.network;
+package dev.jstech.core.grid;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

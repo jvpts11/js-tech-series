@@ -56,4 +56,9 @@ public enum DataTier implements IStableName {
     public String translationKey() {
         return translationKey;
     }
+
+    /** The id of this tier's line, as the Core's grids and ports name it: {@code jscore:data/<tier>}. */
+    public String line() {
+        return "jscore:data/" + serializedName;
+    }
 }

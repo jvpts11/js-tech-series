@@ -5,7 +5,7 @@
  *
  * This file is part of J's Core.
  */
-package dev.jstech.core.network;
+package dev.jstech.core.grid;
 
 import java.util.Arrays;
 

@@ -70,6 +70,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   generation and one colour or none. A block keeps its parts and wires as fields of its block entity; they are
   saved whole, and the players who see the block are sent only what draws it. Which part a player points at is
   worked out the same way for every block. J's Computers' buses are now parts of the Core's.
+- Grids, in J's Core: one grid of each kind (power, fluid, heat, gas, motion, data) in each dimension, shared by
+  every line of that kind. Cables of one line join when they are of the same generation and their colours agree (the
+  same colour, or either in none); devices such as routers join every line. The slowest cable on the best way
+  between two places, and the length of each run of one cable against how far it reaches, are worked out when the
+  grid changes and kept until it changes again, never on every tick. Only the data grid carries the identity of a
+  network; the data network's index is now the data grid.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,

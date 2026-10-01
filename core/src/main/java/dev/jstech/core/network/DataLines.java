@@ -7,7 +7,6 @@
  */
 package dev.jstech.core.network;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.connect.Connection;
 import java.util.EnumMap;
 import java.util.Map;
@@ -27,8 +26,7 @@ public final class DataLines {
 
     static {
         for (final DataTier tier : DataTier.values()) {
-            BY_TIER.put(tier, Connection.of(ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
-                    "data/" + tier.serializedName())));
+            BY_TIER.put(tier, Connection.of(ResourceLocation.parse(tier.line())));
         }
         ALL = BY_TIER.values().stream().map(Connection::line).collect(Collectors.toUnmodifiableSet());
     }

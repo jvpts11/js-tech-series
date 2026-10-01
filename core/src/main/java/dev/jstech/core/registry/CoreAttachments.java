@@ -9,6 +9,7 @@ package dev.jstech.core.registry;
 
 import com.mojang.serialization.Codec;
 import dev.jstech.core.JsCore;
+import dev.jstech.core.grid.LevelGrids;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.persistence.CoreChunkData;
 import dev.jstech.core.persistence.SaveLayout;
@@ -45,6 +46,10 @@ public final class CoreAttachments {
     public static final Supplier<AttachmentType<NetworkSystem>> NETWORK_SYSTEM =
             ATTACHMENT_TYPES.register("network_system",
                     () -> AttachmentType.builder(NetworkSystem::new).build());
+
+    /** A dimension's grids of every kind but data; never saved, since the cables put themselves back as they load. */
+    public static final Supplier<AttachmentType<LevelGrids>> GRIDS =
+            ATTACHMENT_TYPES.register("grids", () -> AttachmentType.builder(LevelGrids::new).build());
 
     /** The layout a chunk's networks are saved in; a chunk saved before it had one holds the bare list. */
     public static final SaveLayout CHUNK_NETWORKS_LAYOUT = SaveLayout.of(JsCore.MODID + ":chunk_networks");
