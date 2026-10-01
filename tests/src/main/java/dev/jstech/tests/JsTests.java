@@ -39,6 +39,8 @@ public final class JsTests {
         TestItems.declare();
         // A corrosive liquid and a hot gas, to prove the Core's fluids and pipes.
         TestFluids.declare();
+        // Large values sent either way, in pieces.
+        TestBigPayloads.declare();
         // A registry datapacks fill and notes read from datapack files, both sent to the players.
         TestData.declare();
         TestSounds.CONTENT.register(modEventBus);

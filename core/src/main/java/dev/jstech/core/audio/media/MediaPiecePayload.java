@@ -8,6 +8,7 @@
 package dev.jstech.core.audio.media;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.network.transfer.Pieces;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -45,7 +46,7 @@ public record MediaPiecePayload(String hash, int index, int count, byte[] data) 
 
     /** How many pieces a recording of that many bytes comes in; one at least, even for an empty one. */
     public static int piecesFor(final long bytes) {
-        return (int) Math.max(1L, (bytes + PIECE_BYTES - 1) / PIECE_BYTES);
+        return Pieces.count(bytes, PIECE_BYTES);
     }
 
     @Override

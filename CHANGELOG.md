@@ -141,6 +141,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   and only the fluids every pipe of it is made for (the temperatures it stands, and whether it takes gases and
   corrosive fluids), leaving the rest where they are. An output feeds the inputs, what it has left fills the tanks,
   and the tanks feed what the inputs still want, each share in proportion to what is wanted, nothing lost on the way.
+- Large values sent in pieces, in J's Core: a mod declares a kind of value with its codec, and the Core writes it,
+  packs it, sends it in pieces either way (the server a share of each player's pieces every tick, so a large sending
+  never holds the others up) and puts it back together on the other side. A side keeps only so many sendings from one
+  sender open at once and refuses pieces out of order, sendings larger than allowed and values that unpack into more
+  than allowed. The sound system's recordings are cut and checked by the same pieces.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,

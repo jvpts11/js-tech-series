@@ -55,6 +55,7 @@ public final class ClientTestSuite {
             KeyActionClientTests.class,
             DiagnosticsClientTests.class,
             FluidClientTests.class,
+            BigPayloadClientTests.class,
             TaskbarClientTests.class,
             TerminalEditorClientTests.class,
             MekanismClientTests.class,

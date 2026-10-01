@@ -12,6 +12,7 @@ import dev.jstech.core.audio.media.MediaOfferPayload;
 import dev.jstech.core.audio.media.MediaOfferReplyPayload;
 import dev.jstech.core.audio.media.MediaUploadDonePayload;
 import dev.jstech.core.audio.media.MediaUploadPiecePayload;
+import dev.jstech.core.network.transfer.Pieces;
 import dev.jstech.core.text.Text;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -118,9 +119,10 @@ public final class MediaUploader {
             }
             int budget = outgoing.bytesPerTick;
             while (budget > 0 && outgoing.index < outgoing.pieces) {
-                final int start = outgoing.index * MediaUploadPiecePayload.PIECE_BYTES;
-                final int length = Math.min(MediaUploadPiecePayload.PIECE_BYTES, outgoing.bytes.length - start);
-                final byte[] piece = new byte[Math.max(0, length)];
+                final int start = (int) Pieces.start(outgoing.index, MediaUploadPiecePayload.PIECE_BYTES);
+                final int length = Pieces.length(outgoing.index, outgoing.bytes.length,
+                        MediaUploadPiecePayload.PIECE_BYTES);
+                final byte[] piece = new byte[length];
                 System.arraycopy(outgoing.bytes, start, piece, 0, piece.length);
                 PacketDistributor.sendToServer(new MediaUploadPiecePayload(entry.getKey(), outgoing.index, piece));
                 outgoing.index++;

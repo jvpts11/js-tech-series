@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.audio.media;
 
+import dev.jstech.core.network.transfer.OrderedPieces;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.MessageDigest;
@@ -21,11 +22,9 @@ import java.util.HexFormat;
 public final class MediaReceiver {
 
     private final MediaId expected;
-    private final int pieces;
+    private final OrderedPieces order;
     private final OutputStream out;
     private final MessageDigest digest = MediaId.sha256();
-    private int next;
-    private long received;
 
     /**
      * @param expected the recording the pieces make, by its name, kind and size
@@ -33,11 +32,8 @@ public final class MediaReceiver {
      * @param out      where its bytes are written, which this closes when the last piece has come
      */
     public MediaReceiver(final MediaId expected, final int pieces, final OutputStream out) {
-        if (pieces <= 0) {
-            throw new IllegalArgumentException("a recording comes in one piece at least: " + pieces);
-        }
         this.expected = expected;
-        this.pieces = pieces;
+        this.order = new OrderedPieces(pieces, expected.bytes());
         this.out = out;
     }
 
@@ -53,34 +49,27 @@ public final class MediaReceiver {
      *                     than the recording has
      */
     public void accept(final int index, final byte[] data) throws IOException {
-        if (index != next || next >= pieces) {
-            throw new IOException("piece " + index + " came where piece " + next + " of " + pieces + " was due");
-        }
-        if (received + data.length > expected.bytes()) {
-            throw new IOException("more bytes than the " + expected.bytes() + " the recording has");
-        }
-        out.write(data);
-        digest.update(data);
-        received += data.length;
-        next++;
-        if (next == pieces) {
-            out.close();
+        this.order.accept(index, data.length);
+        this.out.write(data);
+        this.digest.update(data);
+        if (this.order.complete()) {
+            this.out.close();
         }
     }
 
     /** Whether every piece has come. */
     public boolean complete() {
-        return next == pieces;
+        return this.order.complete();
     }
 
     /** How many of its bytes have come, for a bar that shows it. */
     public long received() {
-        return received;
+        return this.order.received();
     }
 
     /** Whether every piece has come and they are exactly the recording they were sent as. */
     public boolean verified() {
-        return complete() && received == expected.bytes()
-                && HexFormat.of().formatHex(digest.digest()).equals(expected.hash());
+        return complete() && received() == this.expected.bytes()
+                && HexFormat.of().formatHex(this.digest.digest()).equals(this.expected.hash());
     }
 }

@@ -8,6 +8,7 @@
 package dev.jstech.core.audio.media;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.core.network.transfer.Pieces;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayDeque;
@@ -115,8 +116,8 @@ public final class MediaDownloads {
 
         /* The next piece, read from the recording's file where it starts. */
         byte[] read(final MediaStore store) throws IOException {
-            final long start = (long) index * MediaPiecePayload.PIECE_BYTES;
-            final int length = (int) Math.max(0L, Math.min(MediaPiecePayload.PIECE_BYTES, media.bytes() - start));
+            final long start = Pieces.start(index, MediaPiecePayload.PIECE_BYTES);
+            final int length = Pieces.length(index, media.bytes(), MediaPiecePayload.PIECE_BYTES);
             final byte[] piece = new byte[length];
             try (RandomAccessFile file = new RandomAccessFile(store.path(media).toFile(), "r")) {
                 file.seek(start);
