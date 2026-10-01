@@ -7,59 +7,25 @@
  */
 package dev.jstech.core.client.audio;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.audio.AudioPrefs;
-import dev.jstech.core.audio.AudioPrefsJson;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import net.neoforged.fml.loading.FMLPaths;
+import dev.jstech.core.audio.AudioSettings;
 
 /**
- * The player's sound preferences, read from their file the first time they are asked for and written back each time
- * they change. The file sits with the game's own options, since it is the player's and not any world's.
+ * The player's sound preferences, as the sound options and the mixer reach them: read from the player's settings file
+ * as the game starts ({@link AudioSettings}), and written back each time they change.
  */
 public final class AudioPrefsStore {
-
-    private static final String FILE_NAME = "jstech-audio.json";
-
-    private static AudioPrefs prefs;
 
     private AudioPrefsStore() {
     }
 
-    /** The preferences in force, read from the file on first use. */
-    public static synchronized AudioPrefs prefs() {
-        if (prefs == null) {
-            prefs = read();
-        }
-        return prefs;
+    /** The preferences in force. */
+    public static AudioPrefs prefs() {
+        return AudioSettings.prefs();
     }
 
-    /** Writes the preferences to their file; a file that cannot be written is said in the log and left as it was. */
-    public static synchronized void save() {
-        try {
-            Files.writeString(file(), AudioPrefsJson.write(prefs()), StandardCharsets.UTF_8);
-        } catch (final IOException e) {
-            JsCore.LOGGER.warn("The sound preferences could not be written to {}", file(), e);
-        }
-    }
-
-    private static AudioPrefs read() {
-        final Path file = file();
-        if (!Files.isRegularFile(file)) {
-            return new AudioPrefs();
-        }
-        try {
-            return AudioPrefsJson.read(Files.readString(file, StandardCharsets.UTF_8));
-        } catch (final IOException e) {
-            JsCore.LOGGER.warn("The sound preferences could not be read from {}; using the defaults", file, e);
-            return new AudioPrefs();
-        }
-    }
-
-    private static Path file() {
-        return FMLPaths.CONFIGDIR.get().resolve(FILE_NAME);
+    /** Writes the preferences to the player's settings file; one that cannot be written is said in the log. */
+    public static void save() {
+        AudioSettings.save(AudioSettings.prefs(), AudioSettings.FILE);
     }
 }

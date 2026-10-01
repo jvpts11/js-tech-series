@@ -480,6 +480,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   error a lower version gives for what came after it, and the line the choice wrote.
 
 ### Changed
+- The series' settings files are written by J's Core's settings files: `jstech-balance.toml` (the balance of the
+  Operations engine, the programs' time and the recordings), `jscomputers-server.toml` (the computers and
+  Soundfoundry) and the player's `jstech-audio.json`. They keep their names and their settings, so nothing set in them
+  is lost; each now says the version of its layout, and every balance setting has a comment saying what it does
+  along with its range. A sound preferences file with one volume written wrongly keeps the others.
 - The Vintage server boards hold the Integra Pentix Pro, as the boards of the time did: the MF MTX-V of the
   Mainframe takes four on Socket 8 and the MF EEB-V two. The Socket 7 chips stay on the desktop boards.
 - Vintage names, fixed to their years: the MF AT Standard Motherboard is the MF AT Classic, the MF PowerBasic 300B

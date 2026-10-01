@@ -13,6 +13,7 @@ package dev.jstech.core.config;
 public sealed interface IConfigValidationResult<T>
         permits IConfigValidationResult.Valid,
         IConfigValidationResult.Clamped,
+        IConfigValidationResult.Repaired,
         IConfigValidationResult.Rejected {
 
     T value();
@@ -27,6 +28,13 @@ public sealed interface IConfigValidationResult<T>
      * Numeric value was outside its range and was adjusted to the nearest bound.
      */
     record Clamped<T>(T value, T original) implements IConfigValidationResult<T> {
+    }
+
+    /**
+     * Value was partly unreadable, such as one entry of a map or a list written wrongly: what could be read is kept,
+     * and only the part that could not is left out.
+     */
+    record Repaired<T>(T value, String reason) implements IConfigValidationResult<T> {
     }
 
     /**

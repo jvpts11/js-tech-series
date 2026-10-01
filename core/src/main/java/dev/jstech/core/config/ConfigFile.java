@@ -142,8 +142,21 @@ public final class ConfigFile {
      * held to, passed on to what takes it, and the file written, unless it came from a newer version of the mod.
      */
     public <T> void set(final ConfigKey<T> key, final T value) {
+        stage(key, value);
+        save();
+    }
+
+    /**
+     * Sets a setting as {@link #set} does but leaves the file as it is, so several settings changed together are
+     * written once, by {@link #save}.
+     */
+    public <T> void stage(final ConfigKey<T> key, final T value) {
         own(key);
         store(key, this.validator.validate(key, key.plain(value)).value());
+    }
+
+    /** Writes the file as its settings are now, unless it came from a newer version of the mod. */
+    public void save() {
         if (!this.newer) {
             this.saver.run();
         }
@@ -340,7 +353,7 @@ public final class ConfigFile {
         }
 
         /** A comment above a section, at its dotted path. */
-        public Builder section(final String path, final String... lines) {
+        public Builder sectionComment(final String path, final String... lines) {
             this.sections.put(path, Arrays.asList(lines));
             return this;
         }

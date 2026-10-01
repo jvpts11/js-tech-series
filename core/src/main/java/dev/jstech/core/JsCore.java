@@ -9,7 +9,9 @@ package dev.jstech.core;
 
 import com.mojang.logging.LogUtils;
 import dev.jstech.core.api.CoreRegisterEvent;
-import dev.jstech.core.config.CoreConfigBridge;
+import dev.jstech.core.audio.AudioSettings;
+import dev.jstech.core.config.ConfigFiles;
+import dev.jstech.core.config.CoreConfigKeys;
 import dev.jstech.core.event.CoreEventDispatcher;
 import dev.jstech.core.language.LanguageRegistry;
 import dev.jstech.core.operation.OperationTypeRegistry;
@@ -68,8 +70,10 @@ public final class JsCore {
         // The data network lives on the level and the chunks as attachments the core owns.
         CoreAttachments.register(modEventBus);
         CoreItems.register(modEventBus);
-        // The balance of the Operations engine is series-wide: the core owns the server config file.
-        CoreConfigBridge.register(modEventBus, modContainer);
+        // The balance of the Operations engine is series-wide, so the Core owns the world's balance file.
+        ConfigFiles.register(CoreConfigKeys.FILE, modEventBus, modContainer);
+        // A player's sound preferences, read on their own game only.
+        ConfigFiles.register(AudioSettings.FILE, modEventBus, modContainer);
         /*
          * One moment for anything to be added, and one for the door to close. Everything of the series adds
          * itself through the same event an addon does, so the way in is the one that is tested every time

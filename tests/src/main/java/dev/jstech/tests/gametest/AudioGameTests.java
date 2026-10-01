@@ -14,7 +14,7 @@ import dev.jstech.core.audio.AudioChannels;
 import dev.jstech.core.audio.AudioDevice;
 import dev.jstech.core.audio.AudioDevices;
 import dev.jstech.core.audio.AudioPrefs;
-import dev.jstech.core.audio.AudioPrefsJson;
+import dev.jstech.core.audio.AudioSettings;
 import dev.jstech.core.audio.CueSoundPayload;
 import dev.jstech.core.audio.IAudioHost;
 import dev.jstech.core.audio.SoundContext;
@@ -27,9 +27,12 @@ import dev.jstech.core.audio.SoundSpace;
 import dev.jstech.core.audio.ToneSoundPayload;
 import dev.jstech.core.audio.pcm.Tone;
 import dev.jstech.core.audio.pcm.Waveform;
+import dev.jstech.core.config.ConfigFile;
+import dev.jstech.core.config.format.ConfigFormatException;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestSounds;
 import io.netty.buffer.Unpooled;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -103,16 +106,34 @@ public final class AudioGameTests {
         prefs.setVisualCues(true);
         prefs.setOcclusion(false);
         prefs.setDucking(false);
-        final AudioPrefs back = AudioPrefsJson.read(AudioPrefsJson.write(prefs));
+        // A file of the test's own, read into preferences of its own: the player's are left as they are.
+        final ConfigFile written = AudioSettings.file(new AudioPrefs());
+        AudioSettings.save(prefs, written);
+        final AudioPrefs back = new AudioPrefs();
+        final AudioPrefs broken = new AudioPrefs();
+        final AudioPrefs odd = new AudioPrefs();
+        try {
+            AudioSettings.file(back).read(written.write());
+            AudioSettings.file(odd).read(("{\"volumes\": {\"jscore:machines\": \"loud\", \"jscore:music\": 0.25},"
+                    + " \"muted\": 4}").getBytes(StandardCharsets.UTF_8));
+        } catch (final ConfigFormatException e) {
+            helper.fail("a file the preferences wrote could not be read: " + e.getMessage());
+            return;
+        }
         helper.assertTrue(back.volume("jscore:machines") == 0.5F && back.isMuted("jsc:computer/fan")
                 && back.visualCues() && !back.occlusion() && !back.ducking(),
                 "what the file kept comes back as it was");
-        final AudioPrefs broken = AudioPrefsJson.read("{ this is not json");
-        helper.assertTrue(broken.volume("jscore:machines") == 1.0F && broken.occlusion() && broken.ducking(),
-                "a file that cannot be read gives the defaults");
-        final AudioPrefs odd = AudioPrefsJson.read("{\"volumes\": {\"jscore:machines\": \"loud\"}, \"muted\": 4}");
-        helper.assertTrue(odd.volume("jscore:machines") == 1.0F && odd.mutedSounds().isEmpty(),
-                "and what is written wrongly is left at its default");
+        try {
+            AudioSettings.file(broken).read("{ this is not json".getBytes(StandardCharsets.UTF_8));
+            helper.fail("a file that is not JSON was read");
+            return;
+        } catch (final ConfigFormatException expected) {
+            helper.assertTrue(broken.volume("jscore:machines") == 1.0F && broken.occlusion() && broken.ducking(),
+                    "a file that cannot be read gives the defaults");
+        }
+        helper.assertTrue(odd.volume("jscore:machines") == 1.0F && odd.volume("jscore:music") == 0.25F
+                        && odd.mutedSounds().isEmpty(),
+                "and what is written wrongly is left at its default, the rest of it kept");
         helper.succeed();
     }
 

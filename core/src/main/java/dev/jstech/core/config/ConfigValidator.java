@@ -33,13 +33,15 @@ public final class ConfigValidator {
                     + " is used");
         }
         final DataResult<T> read = key.read(raw);
-        final Optional<T> value = read.error().isPresent() ? Optional.empty() : read.result();
+        final Optional<T> value = read.resultOrPartial();
+        final String why = read.error().map(DataResult.Error::message).orElse("no value");
         if (value.isEmpty()) {
-            final String why = read.error().map(DataResult.Error::message).orElse("no value");
             return rejected(key, "'" + key.dottedPath() + "' cannot be read from " + raw + " (" + why
                     + "); the default " + key.plain(key.defaultValue()) + " is used");
         }
         final T typed = value.get();
+        // Part of a map or a list could not be read: the rest is kept, as one who wrote one entry wrong meant.
+        final boolean partial = read.error().isPresent();
         if (key.allowed().isPresent() && !key.allowed().get().contains(typed)) {
             return rejected(key, "'" + key.dottedPath() + "' is " + typed + ", which is not one of "
                     + key.allowed().get() + "; the default " + key.defaultValue() + " is used");
@@ -53,6 +55,12 @@ public final class ConfigValidator {
                         + ", " + range.max() + "]; clamped to " + clamped);
                 return new IConfigValidationResult.Clamped<>(clamped, typed);
             }
+        }
+        if (partial) {
+            final String reason = "'" + key.dottedPath() + "' has a part that cannot be read (" + why
+                    + "); the rest is kept";
+            this.logger.warn(reason);
+            return new IConfigValidationResult.Repaired<>(typed, reason);
         }
         return new IConfigValidationResult.Valid<>(typed);
     }

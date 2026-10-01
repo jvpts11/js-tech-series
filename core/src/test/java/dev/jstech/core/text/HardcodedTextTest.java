@@ -150,7 +150,7 @@ class HardcodedTextTest {
             data(COMPUTERS + "sigma/SigmaVersions.java", 10, SIGNATURES + ", keyed by the version they came in"),
             data(COMPUTERS + "vm/program/NumberFunctions.java", 4, SIGNATURES),
             data(COMPUTERS + "vm/system/SystemApi.java", 1, SIGNATURES),
-            data("core/src/main/java/dev/jstech/core/config/ConfigValidator.java", 9,
+            data("core/src/main/java/dev/jstech/core/config/ConfigValidator.java", 11,
                     "why a configuration value was set aside, written to the log"),
             data("core/src/main/java/dev/jstech/core/config/ConfigFile.java", 1, SETTINGS_FILE),
             data("core/src/main/java/dev/jstech/core/config/ConfigKey.java", 1, SETTINGS_FILE),
@@ -303,7 +303,8 @@ class HardcodedTextTest {
                     || (this.name != null && DECLARATIONS.contains(this.name) && this.receiver == null)
                     || ("this".equals(this.receiver) && ADVANCEMENT_DECLARATIONS.contains(this.name))
                     // A config value's comment is written into the config file above it: a file's words, in English.
-                    || "comment".equals(this.name)
+                    // So is a section's, declared apart from the values in it.
+                    || "comment".equals(this.name) || "sectionComment".equals(this.name)
                     // A layout's text element is named for its overlap report; the words drawn there come elsewhere.
                     || (("layout".equals(this.receiver) || "l".equals(this.receiver)) && "text".equals(this.name))
                     || ("Text".equals(this.receiver) && "literal".equals(this.name))

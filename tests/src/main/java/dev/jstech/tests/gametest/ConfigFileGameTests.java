@@ -8,9 +8,12 @@
 package dev.jstech.tests.gametest;
 
 import com.mojang.serialization.Codec;
+import dev.jstech.computers.config.ComputersServerConfig;
+import dev.jstech.core.audio.AudioSettings;
 import dev.jstech.core.config.ConfigFile;
 import dev.jstech.core.config.ConfigKey;
 import dev.jstech.core.config.ConfigSide;
+import dev.jstech.core.config.CoreConfigKeys;
 import dev.jstech.core.config.IConfigLogger;
 import dev.jstech.core.config.IConfigUpgrade;
 import dev.jstech.core.config.format.ConfigFormatException;
@@ -247,10 +250,31 @@ public final class ConfigFileGameTests {
         helper.succeed();
     }
 
+    /**
+     * The series' own files keep the names and the settings they had before they moved onto the settings layer, so
+     * what a server or a player set in them is read as it was; a setting renamed without an upgrade step fails here.
+     */
+    @GameTest(template = ARENA)
+    public static void seriesFiles_keepTheirNamesAndTheirSettings(final GameTestHelper helper) {
+        same(helper, "jstech-balance.toml", CoreConfigKeys.FILE.fileName(), "the balance file");
+        same(helper, "jscomputers-server.toml", ComputersServerConfig.FILE.fileName(), "the computers' file");
+        same(helper, List.of("boot.show_boot_menu", "install_by_hand.gentoo_every_step",
+                        "install_by_hand.arch_every_step", "prompt.list_commands", "soundfoundry.catalog",
+                        "soundfoundry.ethernet_kilobytes_per_second", "soundfoundry.hbw_kilobytes_per_second",
+                        "soundfoundry.hpc_kilobytes_per_second"),
+                ComputersServerConfig.FILE.keys().stream().map(ConfigKey::dottedPath).toList(),
+                "the computers' settings");
+        same(helper, "jstech-audio.json", AudioSettings.FILE.fileName(), "the player's sound file");
+        same(helper, ConfigSide.CLIENT, AudioSettings.FILE.side(), "whose the sound file is");
+        same(helper, List.of("volumes", "muted", "visual_cues", "occlusion", "duck_under_alerts"),
+                AudioSettings.FILE.keys().stream().map(ConfigKey::dottedPath).toList(), "the sound settings");
+        helper.succeed();
+    }
+
     private static ConfigFile file(final IConfigFormat format) {
         return ConfigFile.builder("test", ConfigSide.SERVER, format)
                 .comment("A file for the tests.")
-                .section("boot", "Starting up.")
+                .sectionComment("boot", "Starting up.")
                 .key(MENU)
                 .key(SPEED)
                 .key(WORDS)

@@ -53,7 +53,7 @@ public final class TestSettings {
     private static ConfigFile file(final String name, final IConfigFormat format) {
         return ConfigFile.builder(name, ConfigSide.SERVER, format)
                 .comment("A settings file of the test mod.")
-                .section("boot", "Starting up.")
+                .sectionComment("boot", "Starting up.")
                 .key(MENU)
                 .key(SPEED)
                 .key(DIALECT)

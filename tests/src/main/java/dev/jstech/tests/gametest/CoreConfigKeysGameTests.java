@@ -8,14 +8,18 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.core.audio.media.MediaBalance;
+import dev.jstech.core.config.ConfigFile;
+import dev.jstech.core.config.ConfigKey;
 import dev.jstech.core.config.ConfigValidator;
 import dev.jstech.core.config.CoreConfigKeys;
-import dev.jstech.core.config.CoreConfigRegistry;
 import dev.jstech.core.config.IConfigLogger;
 import dev.jstech.core.config.IConfigValidationResult;
 import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.tests.JsTests;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -23,9 +27,9 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * The series' balance settings: every one declared, each defaulting to what the engine holds when nothing is set,
- * each pulled into its range, and each passed on into the balance it sets. The balance is the server's, so a test
- * that sets it puts it back before it ends.
+ * The series' balance file: every setting declared, each defaulting to what the engine holds when nothing is set,
+ * each pulled into its range, and each passed into the balance it sets when the file is read. The balance is the
+ * server's, so the test that reads values into it puts the file back as it was before it ends.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -38,17 +42,14 @@ public final class CoreConfigKeysGameTests {
 
     @GameTest(template = ARENA)
     public static void balance_declaresEverySetting(final GameTestHelper helper) {
-        final CoreConfigRegistry registry = CoreConfigKeys.registry();
-        same(helper, 13, registry.size(), "the settings declared");
-        for (final String path : new String[] {
-                "balance.hdd_latency_ticks", "balance.ssd_latency_ticks", "balance.nvme_latency_ticks",
-                "balance.operation_waiting_timeout_ticks", "balance.operation_priority_aging_ticks",
-                "balance.subframe_efficiency_factor", "balance.orphaned_operations_expiry_hours",
-                "balance.program_machine_micros", "balance.program_server_micros",
-                "media.download_kilobytes_per_second", "media.upload_kilobytes_per_second",
-                "media.max_file_megabytes", "media.player_quota_megabytes"}) {
-            helper.assertTrue(registry.isWhitelisted(path), path + " must be declared");
-        }
+        same(helper, List.of("balance.hdd_latency_ticks", "balance.ssd_latency_ticks", "balance.nvme_latency_ticks",
+                        "balance.operation_waiting_timeout_ticks", "balance.operation_priority_aging_ticks",
+                        "balance.subframe_efficiency_factor", "balance.orphaned_operations_expiry_hours",
+                        "balance.program_machine_micros", "balance.program_server_micros",
+                        "media.download_kilobytes_per_second", "media.upload_kilobytes_per_second",
+                        "media.max_file_megabytes", "media.player_quota_megabytes"),
+                CoreConfigKeys.FILE.keys().stream().map(ConfigKey::dottedPath).toList(), "the settings declared");
+        same(helper, "jstech-balance.toml", CoreConfigKeys.FILE.fileName(), "the file's name");
         helper.succeed();
     }
 
@@ -88,21 +89,26 @@ public final class CoreConfigKeysGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void balance_passesEachSettingOnIntoTheBalance(final GameTestHelper helper) {
+    public static void balance_passesEachSettingIntoTheBalanceAsTheFileIsRead(final GameTestHelper helper) {
+        final Map<String, Object> before = CoreConfigKeys.FILE.toPlain();
+        final Map<String, Object> balance = new LinkedHashMap<>();
+        balance.put("hdd_latency_ticks", 15);
+        balance.put("ssd_latency_ticks", 4);
+        balance.put("nvme_latency_ticks", 2);
+        balance.put("operation_waiting_timeout_ticks", 600);
+        balance.put("operation_priority_aging_ticks", 100);
+        balance.put("subframe_efficiency_factor", 0.8);
+        balance.put("orphaned_operations_expiry_hours", 2);
+        balance.put("program_machine_micros", 250);
+        balance.put("program_server_micros", 4000);
+        final Map<String, Object> media = new LinkedHashMap<>();
+        media.put("download_kilobytes_per_second", 200);
+        media.put("upload_kilobytes_per_second", 100);
+        media.put("max_file_megabytes", 0);
+        media.put("player_quota_megabytes", 64);
         try {
-            CoreConfigKeys.apply(CoreConfigKeys.HDD_LATENCY_TICKS, 15);
-            CoreConfigKeys.apply(CoreConfigKeys.SSD_LATENCY_TICKS, 4);
-            CoreConfigKeys.apply(CoreConfigKeys.NVME_LATENCY_TICKS, 2);
-            CoreConfigKeys.apply(CoreConfigKeys.OPERATION_WAITING_TIMEOUT_TICKS, 600);
-            CoreConfigKeys.apply(CoreConfigKeys.OPERATION_PRIORITY_AGING_TICKS, 100);
-            CoreConfigKeys.apply(CoreConfigKeys.SUBFRAME_EFFICIENCY_FACTOR, 0.8);
-            CoreConfigKeys.apply(CoreConfigKeys.ORPHANED_OPERATIONS_EXPIRY_HOURS, 2);
-            CoreConfigKeys.apply(CoreConfigKeys.PROGRAM_MACHINE_MICROS, 250);
-            CoreConfigKeys.apply(CoreConfigKeys.PROGRAM_SERVER_MICROS, 4000);
-            CoreConfigKeys.apply(CoreConfigKeys.MEDIA_DOWNLOAD_KILOBYTES_PER_SECOND, 200);
-            CoreConfigKeys.apply(CoreConfigKeys.MEDIA_UPLOAD_KILOBYTES_PER_SECOND, 100);
-            CoreConfigKeys.apply(CoreConfigKeys.MEDIA_MAX_FILE_MEGABYTES, 0);
-            CoreConfigKeys.apply(CoreConfigKeys.MEDIA_PLAYER_QUOTA_MEGABYTES, 64);
+            CoreConfigKeys.FILE.read(Map.of(ConfigFile.VERSION_KEY, 1, CoreConfigKeys.BALANCE, balance,
+                    CoreConfigKeys.MEDIA, media));
 
             same(helper, 15, OperationBalance.hddLatencyTicks(), "the hard disk's latency");
             same(helper, 4, OperationBalance.ssdLatencyTicks(), "the SSD's latency");
@@ -119,9 +125,7 @@ public final class CoreConfigKeysGameTests {
             same(helper, 0L, MediaBalance.maxFileBytes(), "a server whose owner set none takes no recording");
             same(helper, 64L * 1024 * 1024, MediaBalance.playerQuotaBytes(), "a player's quota");
         } finally {
-            OperationBalance.reset();
-            ExecutionBalance.reset();
-            MediaBalance.reset();
+            CoreConfigKeys.FILE.read(before);
         }
         helper.succeed();
     }

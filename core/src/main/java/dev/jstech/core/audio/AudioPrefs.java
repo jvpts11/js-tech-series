@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.audio;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -18,8 +19,8 @@ import java.util.TreeSet;
  * never want to hear, whether alerts are also shown, whether walls muffle what is behind them, and whether the other
  * channels are lowered while an alert plays.
  *
- * <p>It is the player's and not the world's, so it lives in a file of their own beside the game's options
- * ({@link AudioPrefsJson}). A volume is a share of the channel's sound, from nothing to all of it, and anything outside
+ * <p>It is the player's and not the world's, so it lives in a settings file of their own beside the game's options
+ * ({@link AudioSettings}). A volume is a share of the channel's sound, from nothing to all of it, and anything outside
  * that is held to the nearest end.
  */
 public final class AudioPrefs {
@@ -50,6 +51,12 @@ public final class AudioPrefs {
         return Collections.unmodifiableMap(new TreeMap<>(volumes));
     }
 
+    /** Every channel's volume at once, as a settings file holds them; a channel not named plays at full. */
+    public synchronized void setVolumes(final Map<String, Float> levels) {
+        volumes.clear();
+        levels.forEach(this::setVolume);
+    }
+
     /** Whether the player never wants to hear that sound, by its id: any sound of the game, not only the series'. */
     public synchronized boolean isMuted(final String sound) {
         return muted.contains(sound);
@@ -67,6 +74,12 @@ public final class AudioPrefs {
     /** The sounds the player has turned off, in order. */
     public synchronized Set<String> mutedSounds() {
         return Collections.unmodifiableSet(new TreeSet<>(muted));
+    }
+
+    /** Every sound turned off at once, as a settings file holds them. */
+    public synchronized void setMutedSounds(final Collection<String> sounds) {
+        muted.clear();
+        muted.addAll(sounds);
     }
 
     /** Whether an alert is also shown, for a player who plays without sound. */

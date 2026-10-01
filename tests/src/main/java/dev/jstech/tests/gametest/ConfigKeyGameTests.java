@@ -10,7 +10,6 @@ package dev.jstech.tests.gametest;
 import com.mojang.serialization.Codec;
 import dev.jstech.core.config.ConfigKey;
 import dev.jstech.core.config.ConfigValidator;
-import dev.jstech.core.config.CoreConfigRegistry;
 import dev.jstech.core.config.IConfigLogger;
 import dev.jstech.core.config.IConfigValidationResult;
 import dev.jstech.tests.JsTests;
@@ -148,22 +147,19 @@ public final class ConfigKeyGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void registry_keepsEachPathOnceInTheOrderGiven(final GameTestHelper helper) {
-        final CoreConfigRegistry registry = new CoreConfigRegistry();
-        final ConfigKey<Long> first = registry.register(ConfigKey.wholeLong("balance.x", 1L));
-        final ConfigKey<Long> second = registry.register(ConfigKey.wholeLong("balance.y", 2L));
+    public static void validator_keepsWhatCanBeReadOfAMapOrAList(final GameTestHelper helper) {
+        final List<String> log = new ArrayList<>();
+        final ConfigKey<Map<String, Float>> volumes = ConfigKey.of("volumes",
+                Codec.unboundedMap(Codec.STRING, Codec.FLOAT), Map.of());
 
-        helper.assertTrue(registry.lookup("balance.x").isPresent() && registry.isWhitelisted("balance.x"),
-                "a registered path is found");
-        helper.assertTrue(registry.lookup("unknown.path").isEmpty() && !registry.isWhitelisted("unknown.path"),
-                "an unknown path is not");
-        same(helper, List.of(first, second), new ArrayList<>(registry.allKeys()), "the order given");
-        try {
-            registry.register(ConfigKey.wholeLong("balance.x", 3L));
-            helper.fail("a second setting at one path was taken");
-        } catch (final IllegalStateException expected) {
-            helper.succeed();
-        }
+        final IConfigValidationResult<Map<String, Float>> result = new ConfigValidator(log::add)
+                .validate(volumes, Map.of("machines", "loud", "music", 0.25));
+
+        helper.assertTrue(result instanceof IConfigValidationResult.Repaired<Map<String, Float>>,
+                "a map with one entry written wrong is repaired: " + result);
+        same(helper, Map.of("music", 0.25f), result.value(), "what was kept of the map");
+        helper.assertTrue(log.size() == 1 && log.get(0).contains("the rest is kept"), "the log says so: " + log);
+        helper.succeed();
     }
 
     private static void same(final GameTestHelper helper, final Object expected, final Object actual,
