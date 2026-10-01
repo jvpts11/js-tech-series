@@ -114,6 +114,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A tick scheduler, in J's Core: a block that runs many things in a tick shares the tick's work among them in turns
   of a fixed size, gives what one leaves to the others, and stops at a deadline by the clock, the next tick starting
   with the first that went without. J's Computers' machines run their programs with it, as they did with their own.
+- Batches of moves that go through together or not at all, in J's Core: each step is asked first whether it would
+  move all it wants and nothing moves when any would come short; when a store takes less than it promised as the
+  batch moves, everything already moved is put back, last first. Steps come ready for putting items into and taking
+  them out of an item store (put back slot by slot), filling and draining a fluid store, and giving and taking
+  energy.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,
