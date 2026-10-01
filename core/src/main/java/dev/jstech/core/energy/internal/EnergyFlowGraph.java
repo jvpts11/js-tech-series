@@ -8,36 +8,50 @@
 package dev.jstech.core.energy.internal;
 
 import dev.jstech.core.energy.EnergyDistributionResult;
+import dev.jstech.core.energy.EnergyLoss;
+import dev.jstech.core.energy.EnergyNodeRole;
 import dev.jstech.core.energy.IEnergyCable;
 import dev.jstech.core.energy.IEnergyNode;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Deque;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.PriorityQueue;
+import java.util.TreeMap;
 
 /**
- * Internal structure that runs one supply→demand BFS tick.
+ * One energy network's shape, taken once, and the energy it moves in a tick. The way from each supplier to each
+ * receiver is the one that loses least, and of those the one through fewest cables; it is worked out the first time
+ * the supplier gives and kept while the shape lasts, so a tick only shares the energy out.
+ *
+ * <p>A tick gives in three rounds: generators feed consumers; what generators have left fills storage; storage feeds
+ * what consumers still want. In each round every supplier, in the order of its position, shares what it has among the
+ * receivers it reaches in proportion to what they want, never more than the cables on the way still carry.
  */
 public final class EnergyFlowGraph {
 
     private final Map<Long, IEnergyNode> nodes;
     private final Map<Long, IEnergyCable> cables;
     private final Map<Long, List<Long>> adjacency;
+    private final Map<Long, Map<Long, Route>> routes = new HashMap<>();
+
+    private static final Comparator<long[]> NEAREST =
+            Comparator.<long[]>comparingLong(step -> step[0]).thenComparingLong(step -> step[1])
+                    .thenComparingLong(step -> step[2]);
 
     public EnergyFlowGraph(
             final Map<Long, IEnergyNode> nodes,
             final Map<Long, IEnergyCable> cables,
             final Map<Long, List<Long>> adjacency) {
-        this.nodes = Map.copyOf(nodes);
+        this.nodes = new TreeMap<>(nodes);
         this.cables = Map.copyOf(cables);
-        this.adjacency = Map.copyOf(adjacency);
+        final Map<Long, List<Long>> copied = new HashMap<>();
+        adjacency.forEach((pos, next) -> copied.put(pos, List.copyOf(next)));
+        this.adjacency = copied;
     }
 
     /**
@@ -49,235 +63,221 @@ public final class EnergyFlowGraph {
             long totalDemand,
             long totalDelivered,
             Map<Long, Long> consumerDelivered,
-            Map<Long, Long> cableUsage) {
+            Map<Long, Long> cableUsage,
+            long totalLost) {
+    }
+
+    /** The way from a supplier to a receiver: its cables in order, what it loses, and whether any cable limits it. */
+    private record Route(long[] cables, int loss, boolean limited) {
     }
 
     public FlowResult distribute() {
-        // 1-2: collect reported supply and demand.
-        final Map<Long, Long> reportedSupply = new LinkedHashMap<>();
-        final Map<Long, Long> reportedDemand = new LinkedHashMap<>();
-        // Iterate in natural Long order for determinism.
-        nodes.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .forEach(e -> {
-                    final long pos = e.getKey();
-                    final IEnergyNode node = e.getValue();
-                    if (node.role().canSupply()) {
-                        final long s = Math.max(0L, node.supply());
-                        if (s > 0) {
-                            reportedSupply.put(pos, s);
-                        }
-                    }
-                    if (node.role().canConsume()) {
-                        final long d = Math.max(0L, node.demand());
-                        if (d > 0) {
-                            reportedDemand.put(pos, d);
-                        }
-                    }
-                });
-
+        final Map<Long, Long> supplyLeft = new LinkedHashMap<>();
+        final Map<Long, Long> demandLeft = new LinkedHashMap<>();
         long totalSupply = 0L;
-        for (final Long v : reportedSupply.values()) {
-            totalSupply += v;
-        }
         long totalDemand = 0L;
-        for (final Long v : reportedDemand.values()) {
-            totalDemand += v;
+        for (final Map.Entry<Long, IEnergyNode> entry : this.nodes.entrySet()) {
+            final IEnergyNode node = entry.getValue();
+            final EnergyNodeRole role = node.role();
+            if (role.canSupply()) {
+                final long supply = Math.max(0L, node.supply());
+                if (supply > 0) {
+                    supplyLeft.put(entry.getKey(), supply);
+                    totalSupply = saturatingAdd(totalSupply, supply);
+                }
+            }
+            if (role.canConsume()) {
+                final long demand = Math.max(0L, node.demand());
+                if (demand > 0) {
+                    demandLeft.put(entry.getKey(), demand);
+                    totalDemand = saturatingAdd(totalDemand, demand);
+                }
+            }
         }
-
-        // Empty case.
         if (totalSupply == 0L || totalDemand == 0L) {
-            return new FlowResult(totalSupply, totalDemand, 0L,
-                    Map.of(), Map.of());
+            return new FlowResult(totalSupply, totalDemand, 0L, Map.of(), Map.of(), 0L);
         }
 
-        // 3: remaining throughput per cable (Long.MAX_VALUE for T7).
-        final Map<Long, Long> remainingThroughput = new HashMap<>();
-        for (final Map.Entry<Long, IEnergyCable> e : cables.entrySet()) {
-            remainingThroughput.put(e.getKey(), e.getValue().maxThroughput());
+        final Tally tally = new Tally(supplyLeft, demandLeft);
+        tally.round(EnergyNodeRole.GENERATOR, EnergyNodeRole.CONSUMER);
+        tally.round(EnergyNodeRole.GENERATOR, EnergyNodeRole.STORAGE);
+        tally.round(EnergyNodeRole.STORAGE, EnergyNodeRole.CONSUMER);
+
+        for (final Map.Entry<Long, Long> sent : tally.sent.entrySet()) {
+            this.nodes.get(sent.getKey()).onSupplied(sent.getValue());
+        }
+        for (final Map.Entry<Long, Long> got : tally.delivered.entrySet()) {
+            this.nodes.get(got.getKey()).onConsumed(got.getValue());
+        }
+        return new FlowResult(totalSupply, totalDemand, tally.totalDelivered,
+                Map.copyOf(tally.delivered), Map.copyOf(tally.cableUsage), tally.totalLost);
+    }
+
+    /* The ways from source to every node it reaches, worked out once while the shape lasts. */
+    private Map<Long, Route> routesFrom(final long source) {
+        return this.routes.computeIfAbsent(source, this::findRoutes);
+    }
+
+    /*
+     * Least loss first, then fewest cables, then the lower position, so the way picked is the same on every run. Only
+     * cables are passed through: every other node is where a way ends, and a node right beside the source with no
+     * cable between them is not reached at all, so no way ever skips a cable's limit.
+     */
+    private Map<Long, Route> findRoutes(final long source) {
+        final Map<Long, long[]> best = new HashMap<>();
+        final Map<Long, Long> parent = new HashMap<>();
+        final PriorityQueue<long[]> queue = new PriorityQueue<>(NEAREST);
+        best.put(source, new long[] {0L, 0L});
+        queue.add(new long[] {0L, 0L, source});
+        final Map<Long, Route> found = new LinkedHashMap<>();
+        while (!queue.isEmpty()) {
+            final long[] step = queue.poll();
+            final long pos = step[2];
+            final long[] known = best.get(pos);
+            if (known[0] != step[0] || known[1] != step[1]) {
+                continue;
+            }
+            if (pos != source && this.nodes.containsKey(pos)) {
+                found.put(pos, routeTo(parent, source, pos, (int) step[0]));
+                continue;
+            }
+            for (final long next : this.adjacency.getOrDefault(pos, List.of())) {
+                final IEnergyCable cable = this.cables.get(next);
+                if (cable == null && (pos == source || !this.nodes.containsKey(next))) {
+                    continue;
+                }
+                final long loss = cable == null ? step[0] : EnergyLoss.along((int) step[0], cable.loss());
+                final long hops = step[1] + 1;
+                final long[] before = best.get(next);
+                if (before == null || loss < before[0] || loss == before[0] && hops < before[1]) {
+                    best.put(next, new long[] {loss, hops});
+                    parent.put(next, pos);
+                    queue.add(new long[] {loss, hops, next});
+                }
+            }
+        }
+        return found;
+    }
+
+    private Route routeTo(final Map<Long, Long> parent, final long source, final long target, final int loss) {
+        final List<Long> path = new ArrayList<>();
+        boolean limited = false;
+        long current = parent.get(target);
+        while (current != source) {
+            final IEnergyCable cable = this.cables.get(current);
+            path.add(current);
+            limited |= cable.maxThroughput() != Long.MAX_VALUE;
+            current = parent.get(current);
+        }
+        Collections.reverse(path);
+        final long[] steps = new long[path.size()];
+        for (int i = 0; i < steps.length; i++) {
+            steps[i] = path.get(i);
+        }
+        return new Route(steps, loss, limited);
+    }
+
+    private static long saturatingAdd(final long a, final long b) {
+        final long sum = a + b;
+        return sum < 0 ? Long.MAX_VALUE : sum;
+    }
+
+    /* What one tick gives and takes, kept across its three rounds. */
+    private final class Tally {
+
+        private final Map<Long, Long> supplyLeft;
+        private final Map<Long, Long> demandLeft;
+        private final Map<Long, Long> throughputLeft = new HashMap<>();
+        private final Map<Long, Long> sent = new LinkedHashMap<>();
+        private final Map<Long, Long> delivered = new LinkedHashMap<>();
+        private final Map<Long, Long> cableUsage = new HashMap<>();
+        private long totalDelivered;
+        private long totalLost;
+
+        private Tally(final Map<Long, Long> supplyLeft, final Map<Long, Long> demandLeft) {
+            this.supplyLeft = supplyLeft;
+            this.demandLeft = demandLeft;
         }
 
-        // Remaining demand per consumer, updated as flow accumulates.
-        final Map<Long, Long> remainingDemand = new LinkedHashMap<>(reportedDemand);
-
-        // Accumulated result.
-        final Map<Long, Long> consumerDelivered = new LinkedHashMap<>();
-        final Map<Long, Long> cableUsage = new HashMap<>();
-        long totalDelivered = 0L;
-
-        // 4: iterate generators in deterministic order.
-        for (final Map.Entry<Long, Long> gen : reportedSupply.entrySet()) {
-            final long generatorPos = gen.getKey();
-            final long generatorSupply = gen.getValue();
-            if (generatorSupply <= 0) {
-                continue;
+        private void round(final EnergyNodeRole from, final EnergyNodeRole to) {
+            for (final Map.Entry<Long, Long> supplier : this.supplyLeft.entrySet()) {
+                final long source = supplier.getKey();
+                if (supplier.getValue() > 0 && EnergyFlowGraph.this.nodes.get(source).role() == from) {
+                    give(source, to);
+                }
             }
+        }
 
-            // 4.1: BFS from the generator, recording paths.
-            final Map<Long, List<Long>> pathsToConsumers =
-                    bfsPaths(generatorPos, remainingDemand.keySet());
-
-            if (pathsToConsumers.isEmpty()) {
-                continue;
-            }
-
-            // 4.2: for each reached consumer, compute cap = min remaining
-            final Map<Long, Long> consumerCap = new LinkedHashMap<>();
-            final Map<Long, Long> consumerCurrentDemand = new LinkedHashMap<>();
-            for (final Map.Entry<Long, List<Long>> p : pathsToConsumers.entrySet()) {
-                final long consumerPos = p.getKey();
-                final long pathCap = minThroughputAlong(p.getValue(),
-                        remainingThroughput);
-                if (pathCap <= 0) {
+        private void give(final long source, final EnergyNodeRole to) {
+            final Map<Long, Route> reached = routesFrom(source);
+            final Map<Long, Long> wants = new LinkedHashMap<>();
+            final Map<Long, Long> caps = new HashMap<>();
+            for (final Map.Entry<Long, Long> receiver : this.demandLeft.entrySet()) {
+                final Route route = reached.get(receiver.getKey());
+                if (route == null || receiver.getValue() <= 0 || route.loss() == EnergyLoss.WHOLE
+                        || EnergyFlowGraph.this.nodes.get(receiver.getKey()).role() != to) {
                     continue;
                 }
-                final long demandLeft = remainingDemand.getOrDefault(consumerPos, 0L);
-                if (demandLeft <= 0) {
-                    continue;
+                final long cap = carries(route);
+                if (cap > 0) {
+                    wants.put(receiver.getKey(), EnergyLoss.toSend(receiver.getValue(), route.loss()));
+                    caps.put(receiver.getKey(), cap);
                 }
-                consumerCap.put(consumerPos, pathCap);
-                consumerCurrentDemand.put(consumerPos, demandLeft);
             }
-
-            if (consumerCurrentDemand.isEmpty()) {
-                continue;
+            if (wants.isEmpty()) {
+                return;
             }
-
-            // 4.3: split supply proportionally.
-            final Map<Long, Long> allocations = ProportionalSplitter.split(
-                    generatorSupply, consumerCurrentDemand, consumerCap);
-
-            if (allocations.isEmpty()) {
-                continue;
-            }
-
-            // 4.4: apply flow.
-            long deliveredByThisGenerator = 0L;
-            for (final Map.Entry<Long, Long> a : allocations.entrySet()) {
-                final long consumerPos = a.getKey();
-                final List<Long> path = pathsToConsumers.get(consumerPos);
+            final Map<Long, Long> shares = ProportionalSplitter.split(this.supplyLeft.get(source), wants, caps);
+            long given = 0L;
+            for (final Long receiver : wants.keySet()) {
+                final Route route = reached.get(receiver);
                 /*
-                 * Clamp to the LIVE remaining throughput along this path. The proportional split was computed
-                 * from per-consumer caps snapshotted before any flow was applied; when two or more consumers
-                 * share a bottleneck cable those caps overlap, so the split can sum to more than the cable can
-                 * carry. Applying each consumer's flow in order against the cable's live remaining capacity
-                 * keeps the total through any shared cable within its rated throughput, so no FE is created.
+                 * Clamped to what the way still carries: the shares were worked out from each way's limit before any
+                 * energy moved, and two ways through one cable would otherwise send more than it carries together.
                  */
-                final long amount = Math.min(a.getValue(), minThroughputAlong(path, remainingThroughput));
+                final long amount = Math.min(shares.getOrDefault(receiver, 0L), carries(route));
                 if (amount <= 0) {
                     continue;
                 }
-
-                // Subtract throughput from path cables.
-                for (final Long step : path) {
-                    if (cables.containsKey(step)) {
-                        final long current = remainingThroughput.get(step);
-                        if (current != Long.MAX_VALUE) {
-                            remainingThroughput.put(step, current - amount);
-                        }
-                        cableUsage.merge(step, amount, Long::sum);
+                for (final long cable : route.cables()) {
+                    final long left = left(cable);
+                    if (left != Long.MAX_VALUE) {
+                        this.throughputLeft.put(cable, left - amount);
                     }
+                    this.cableUsage.merge(cable, amount, EnergyFlowGraph::saturatingAdd);
                 }
-
-                // Update remaining demand and result.
-                remainingDemand.merge(consumerPos, -amount, Long::sum);
-                consumerDelivered.merge(consumerPos, amount, Long::sum);
-                deliveredByThisGenerator += amount;
+                final long arrived = EnergyLoss.delivered(amount, route.loss());
+                this.demandLeft.merge(receiver, -arrived, Long::sum);
+                this.delivered.merge(receiver, arrived, EnergyFlowGraph::saturatingAdd);
+                this.totalDelivered = saturatingAdd(this.totalDelivered, arrived);
+                this.totalLost = saturatingAdd(this.totalLost, amount - arrived);
+                given += amount;
             }
-            totalDelivered += deliveredByThisGenerator;
-
-            // Notify generator.
-            nodes.get(generatorPos).onSupplied(deliveredByThisGenerator);
-        }
-
-        // 5: notify consumers.
-        for (final Map.Entry<Long, Long> e : consumerDelivered.entrySet()) {
-            nodes.get(e.getKey()).onConsumed(e.getValue());
-        }
-
-        return new FlowResult(
-                totalSupply, totalDemand, totalDelivered,
-                Map.copyOf(consumerDelivered),
-                Map.copyOf(cableUsage));
-    }
-
-    private Map<Long, List<Long>> bfsPaths(
-            final long source,
-            final Set<Long> consumerPositions) {
-
-        final Map<Long, List<Long>> result = new LinkedHashMap<>();
-        if (consumerPositions.isEmpty()) {
-            return result;
-        }
-
-        // Classic BFS: visited + queue + parent map for path reconstruction.
-        final Set<Long> visited = new HashSet<>();
-        final Deque<Long> queue = new ArrayDeque<>();
-        final Map<Long, Long> parent = new HashMap<>();
-
-        visited.add(source);
-        queue.add(source);
-
-        while (!queue.isEmpty()) {
-            final long current = queue.pollFirst();
-
-            // If this is a consumer (and not the source), reconstruct path.
-            if (current != source && consumerPositions.contains(current)) {
-                result.put(current, reconstructCablePath(parent, source, current));
-            }
-
-            // Don't traverse through nodes (nodes are leaves from the flow
-            if (current != source && nodes.containsKey(current)) {
-                continue;
-            }
-
-            final List<Long> neighbors = adjacency.getOrDefault(current, List.of());
-            for (final Long next : neighbors) {
-                if (visited.add(next)) {
-                    parent.put(next, current);
-                    queue.addLast(next);
-                }
+            if (given > 0) {
+                this.supplyLeft.merge(source, -given, Long::sum);
+                this.sent.merge(source, given, EnergyFlowGraph::saturatingAdd);
             }
         }
 
-        return result;
-    }
-
-    private List<Long> reconstructCablePath(
-            final Map<Long, Long> parent,
-            final long source,
-            final long consumer) {
-
-        final ArrayList<Long> reversedPath = new ArrayList<>();
-        long current = parent.get(consumer);
-        while (current != source) {
-            if (cables.containsKey(current)) {
-                reversedPath.add(current);
+        /* The most the way still carries: the least any of its cables has left this tick. */
+        private long carries(final Route route) {
+            if (route.cables().length == 0) {
+                return 0L;
             }
-            current = parent.get(current);
-        }
-        Collections.reverse(reversedPath);
-        return List.copyOf(reversedPath);
-    }
-
-    private long minThroughputAlong(
-            final List<Long> path,
-            final Map<Long, Long> remainingThroughput) {
-        if (path.isEmpty()) {
-            /*
-             * A direct node-to-node connection with no cable in between is not a valid power path: treat it
-             * as non-traversable rather than an unlimited pipe (the MAX_VALUE sentinel) so a future direct
-             * wire can never bypass cable-tier throughput limits and silently create energy.
-             */
-            return 0L;
-        }
-        long min = Long.MAX_VALUE;
-        for (final Long cablePos : path) {
-            final long t = remainingThroughput.getOrDefault(cablePos, 0L);
-            if (t < min) {
-                min = t;
+            if (!route.limited()) {
+                return Long.MAX_VALUE;
             }
+            long least = Long.MAX_VALUE;
+            for (final long cable : route.cables()) {
+                least = Math.min(least, left(cable));
+            }
+            return least;
         }
-        return min;
+
+        /* What {@code cable} still carries this tick. */
+        private long left(final long cable) {
+            final Long left = this.throughputLeft.get(cable);
+            return left != null ? left : EnergyFlowGraph.this.cables.get(cable).maxThroughput();
+        }
     }
 }

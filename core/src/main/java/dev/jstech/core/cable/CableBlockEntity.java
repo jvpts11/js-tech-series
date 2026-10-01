@@ -12,7 +12,9 @@ import dev.jstech.core.blockentity.PartField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.connect.Neighbours;
+import dev.jstech.core.energy.CoreEnergy;
 import dev.jstech.core.grid.CoreGrids;
+import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridPlace;
 import dev.jstech.core.multipart.FaceParts;
 import dev.jstech.core.multipart.IFacePart;
@@ -46,13 +48,15 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.client.model.data.ModelData;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * The block entity of the Core's cable block: the wires running through it, each in its lane, the parts on its faces,
  * and which faces each wire crosses. A wire crosses a face where the block beyond holds a wire it joins, or is a device
- * that takes its line on that face; a part on a face closes it to wires.
+ * that takes its line on that face; a wire of energy also plugs into any block that offers the game's energy there. A
+ * part on a face closes it to wires.
  *
  * <p>Each wire is a place of the grid of its kind: it puts itself in as the block loads or as it is laid, joined to the
  * wires and devices it crosses to, and takes itself out as it is taken or the block goes. A wire of data keeps the
@@ -184,9 +188,19 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         return true;
     }
 
+    /** The wire in {@code lane}, or null when the lane is empty. */
+    public @Nullable Wire wireIn(final Lane lane) {
+        return this.bundle.at(lane);
+    }
+
     /** The faces the wire in {@code lane} crosses, a bit for each in the order of the game's directions. */
     public int links(final Lane lane) {
         return this.links[lane.id()] & FACE_BITS;
+    }
+
+    /** The faces the wire in {@code lane} plugs into a device on, a bit for each in the game's order of directions. */
+    public int plugs(final Lane lane) {
+        return this.links[lane.id()] >> PLUG_SHIFT & FACE_BITS;
     }
 
     /** Whether the wire of {@code type} crosses {@code face}. */
@@ -449,6 +463,7 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
             return false;
         }
         boolean changed = false;
+        boolean energyPlugs = false;
         for (final Wire wire : this.bundle.wires()) {
             final int lane = wire.slot().id();
             final int before = this.links[lane];
@@ -456,11 +471,16 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
             if (now != before) {
                 this.links[lane] = now;
                 changed = true;
+                energyPlugs |= wire.type().grid() == GridKind.POWER;
                 if (ownParts && this.inGrids && (now & FACE_BITS) != (before & FACE_BITS)) {
                     leave(server, wire);
                     enter(server, wire);
                 }
             }
+        }
+        if (energyPlugs) {
+            // The machines an energy wire plugs into are not in its grid: the energy grid hears of them here.
+            CoreEnergy.of(server).tapsChanged();
         }
         if (changed) {
             this.shape = null;
@@ -492,6 +512,10 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
             final BlockState state = server.getBlockState(next);
             if (state.getBlock() instanceof IFaceConnector device
                     && device.accepts(state, face.getOpposite(), wire.type().line())) {
+                linked |= bit | bit << PLUG_SHIFT;
+            } else if (wire.type().grid() == GridKind.POWER
+                    && server.getCapability(Capabilities.EnergyStorage.BLOCK, next, face.getOpposite()) != null) {
+                // An energy wire plugs into any block that offers the game's energy on that face.
                 linked |= bit | bit << PLUG_SHIFT;
             }
         }

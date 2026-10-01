@@ -7,6 +7,10 @@
  */
 package dev.jstech.industrial;
 
+import dev.jstech.core.cable.CableEntry;
+import dev.jstech.core.cable.CableType;
+import dev.jstech.core.cable.Lane;
+import dev.jstech.core.connect.Connection;
 import dev.jstech.core.content.BlockBuilder;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ContentTab;
@@ -14,6 +18,7 @@ import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.ModContent;
+import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.material.MaterialForm;
 import dev.jstech.core.material.MaterialItems;
 import dev.jstech.core.material.ModMaterial;
@@ -68,6 +73,7 @@ public final class IndustrialModule {
             }
         }
     });
+    private static final ContentTab.Section CABLES = INDUSTRIAL_TAB.section();
 
     // Recipes
 
@@ -118,6 +124,22 @@ public final class IndustrialModule {
             Device.of(() -> IndustrialModule.COAL_GENERATOR_BE.get()).ticks(CoalGeneratorBlockEntity::serverTick)
                     .opensMenu(CoalGeneratorMenu::new))
             .named("Coal Generator").register();
+
+    // Cables
+
+    /** The line energy runs along between machines. */
+    public static final Connection ENERGY_LINE =
+            Connection.of(ResourceLocation.fromNamespaceAndPath(JsIndustrial.MODID, "energy"));
+
+    /**
+     * The energy cable, laid in the Core's shared cable block in the energy lane: for now the only one, carrying any
+     * amount of energy any distance and losing none of it.
+     */
+    public static final CableEntry ENERGY_CABLE = CONTENT.cable("energy_cable", CableType.builder(ENERGY_LINE)
+                    .grid(GridKind.POWER).lane(Lane.BOTTOM_LEFT).carries(Long.MAX_VALUE, 0)
+                    .jacket(ResourceLocation.fromNamespaceAndPath(JsIndustrial.MODID, "block/cable/energy"))
+                    .plug(ResourceLocation.fromNamespaceAndPath(JsIndustrial.MODID, "block/cable/plug/energy")))
+            .named("Energy Cable").tab(CABLES).register();
 
     // Block entities
 

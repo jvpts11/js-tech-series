@@ -1,0 +1,20 @@
+{
+  "textures": {
+    "plug": "jsindustrial:block/cable/plugs",
+    "particle": "jsindustrial:block/cable/plugs"
+  },
+  "elements": [
+    {
+      "from": [5.25, 5.25, 0],
+      "to": [10.75, 10.75, 3],
+      "faces": {
+        "north": {"uv": [2, 2, 6, 6], "texture": "#plug"},
+        "south": {"uv": [2, 2, 6, 6], "texture": "#plug"},
+        "east": {"uv": [2, 2, 6, 6], "texture": "#plug"},
+        "west": {"uv": [2, 2, 6, 6], "texture": "#plug"},
+        "up": {"uv": [2, 2, 6, 6], "texture": "#plug"},
+        "down": {"uv": [2, 2, 6, 6], "texture": "#plug"}
+      }
+    }
+  ]
+}

@@ -11,7 +11,9 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.cable.Cables;
+import dev.jstech.core.cable.Lane;
 import dev.jstech.core.client.model.CableBakedModel;
+import dev.jstech.industrial.IndustrialModule;
 import java.util.List;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.model.BakedModel;
@@ -26,7 +28,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The shared cable block as a player sees it, to set beside the approved page of the cables: the four data lines in
  * one run, each in its lane, the access line turning off through a junction box, plugs where the run meets a router,
- * and a red and a blue backbone side by side with an uncoloured one joining both, each ring on its block.
+ * a red and a blue backbone side by side with an uncoloured one joining both, each ring on its block, and an energy
+ * run beside an access line, from a generator into a machine.
  */
 public final class CableBlockClientTests {
 
@@ -104,6 +107,34 @@ public final class CableBlockClientTests {
                 }, "red and blue side by side do not join")
                 .then(0, () -> ctx.player().setXRot(LOOK_DOWN))
                 .thenScreenshot(10, "colours")
+                .thenServer(0, level -> clear(ctx, level));
+    }
+
+    @ClientTest(timeoutTicks = 400)
+    public static void sharedBlock_runsEnergyInItsLaneIntoAMachine(final ClientTestContext ctx) {
+        final BlockPos last = new BlockPos(2, FLOOR, ROW);
+        ctx.thenTeleport(0, STAND, Direction.SOUTH)
+                .thenServer(0, level -> {
+                    level.setBlockAndUpdate(ctx.abs(new BlockPos(-3, FLOOR, ROW)),
+                            IndustrialModule.COAL_GENERATOR.get().defaultBlockState());
+                    level.setBlockAndUpdate(ctx.abs(new BlockPos(3, FLOOR, ROW)),
+                            IndustrialModule.COMPRESSOR.get().defaultBlockState());
+                    for (int x = -2; x <= 2; x++) {
+                        final BlockPos at = ctx.abs(new BlockPos(x, FLOOR, ROW));
+                        Cables.lay(level, at, IndustrialModule.ENERGY_CABLE.get());
+                        Cables.lay(level, at, ComputingModule.ETHERNET_CABLE.get());
+                    }
+                })
+                .thenWaitUntil(() -> {
+                    final CableBlockEntity end = clientCable(ctx, last);
+                    return end != null && (end.plugs(Lane.BOTTOM_LEFT) & 1 << Direction.EAST.get3DDataValue()) != 0;
+                }, 80, "the player's game to know the energy wire plugs into the machine")
+                .thenAssert(0, () -> {
+                    final CableBlockEntity end = clientCable(ctx, last);
+                    return end != null && (end.plugs(Lane.TOP_LEFT) & 1 << Direction.EAST.get3DDataValue()) == 0;
+                }, "the data wire beside it does not")
+                .then(0, () -> ctx.player().setXRot(LOOK_DOWN))
+                .thenScreenshot(10, "energy")
                 .thenServer(0, level -> clear(ctx, level));
     }
 

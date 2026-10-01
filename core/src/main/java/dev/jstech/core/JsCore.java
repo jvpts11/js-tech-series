@@ -14,6 +14,7 @@ import dev.jstech.core.audio.media.MediaLedgers;
 import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.config.ConfigFiles;
 import dev.jstech.core.config.CoreConfigKeys;
+import dev.jstech.core.energy.CoreEnergy;
 import dev.jstech.core.event.CoreEventDispatcher;
 import dev.jstech.core.language.LanguageRegistry;
 import dev.jstech.core.operation.OperationTypeRegistry;
@@ -76,6 +77,8 @@ public final class JsCore {
         // The cable block every mod's cables are laid in is the Core's own content.
         CoreCables.declare();
         CoreItems.register(modEventBus);
+        // The units energy is counted in, FE first, and the energy an item holds.
+        CoreEnergy.register(modEventBus);
         // The balance of the Operations engine is series-wide, so the Core owns the world's balance file.
         ConfigFiles.register(CoreConfigKeys.FILE, modEventBus, modContainer);
         // A player's sound preferences, read on their own game only.

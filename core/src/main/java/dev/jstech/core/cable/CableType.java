@@ -8,6 +8,7 @@
 package dev.jstech.core.cable;
 
 import dev.jstech.core.connect.Connection;
+import dev.jstech.core.energy.EnergyLoss;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridMember;
 import java.util.Objects;
@@ -21,8 +22,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A cable a mod lays in the Core's cable block: the line it carries and its generation, the grid it is a part of, the
- * lane it takes when it shares a block, how thick it is, how much it carries and how far a run of it reaches, and how
- * it looks. Registered in {@link CoreCables#REGISTRY}, each with the item that lays it, by a mod's own content.
+ * lane it takes when it shares a block, how thick it is, how much it carries, how far a run of it reaches and what it
+ * loses of what crosses it, and how it looks. Registered in {@link CoreCables#REGISTRY}, each with the item that lays
+ * it, by a mod's own content.
  *
  * <p>A cable that never shares a block takes no lane: a block that holds it holds nothing else.
  */
@@ -34,6 +36,7 @@ public final class CableType {
     private final int thickness;
     private final long throughput;
     private final int range;
+    private final int loss;
     private final ResourceLocation jacket;
     private final ResourceLocation plug;
     private final Supplier<? extends Item> item;
@@ -48,6 +51,7 @@ public final class CableType {
         this.thickness = builder.thickness;
         this.throughput = builder.throughput;
         this.range = builder.range;
+        this.loss = builder.loss;
         this.jacket = Objects.requireNonNull(builder.jacket, "a cable has a jacket");
         this.plug = Objects.requireNonNull(builder.plug, "a cable has a plug");
         this.item = Objects.requireNonNull(item, "item");
@@ -91,6 +95,11 @@ public final class CableType {
     /** How many cables a run of it reaches before it has to be renewed; 0 for no limit. */
     public int range() {
         return this.range;
+    }
+
+    /** The thousandths of what crosses one block of it that it loses; 0 for a cable that loses nothing. */
+    public int loss() {
+        return this.loss;
     }
 
     /**
@@ -138,6 +147,7 @@ public final class CableType {
         private int thickness = STANDARD_THICKNESS;
         private long throughput;
         private int range;
+        private int loss;
         private @Nullable ResourceLocation jacket;
         private @Nullable ResourceLocation plug;
 
@@ -186,6 +196,16 @@ public final class CableType {
             }
             this.throughput = amount;
             this.range = reach;
+            return this;
+        }
+
+        /** The thousandths of what crosses one block of it that it loses; nothing unless said. */
+        public Builder loses(final int thousandths) {
+            if (thousandths < 0 || thousandths > EnergyLoss.WHOLE) {
+                throw new IllegalArgumentException("a cable loses between 0 and " + EnergyLoss.WHOLE
+                        + " thousandths, not " + thousandths);
+            }
+            this.loss = thousandths;
             return this;
         }
 

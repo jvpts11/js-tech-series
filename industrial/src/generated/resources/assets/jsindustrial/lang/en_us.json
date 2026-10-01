@@ -3,5 +3,6 @@
   "block.jsindustrial.compressor": "Compressor",
   "block.jsindustrial.electric_furnace": "Electric Furnace",
   "block.jsindustrial.macerator": "Macerator",
+  "item.jsindustrial.energy_cable": "Energy Cable",
   "itemGroup.jsindustrial.industrial": "J's Industrial"
 }

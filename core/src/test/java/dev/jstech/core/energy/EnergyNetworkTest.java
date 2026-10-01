@@ -327,6 +327,141 @@ class EnergyNetworkTest {
         assertEquals(500L, cons.totalConsumed);
     }
 
+    @Test
+    void lossyCable_sendsEnoughForTheDemandToArrive() {
+        EnergyNetwork net = new EnergyNetwork();
+        TestNode gen = TestNode.generator(1000L);
+        TestNode cons = TestNode.consumer(500L);
+        net.addNode(GEN_A, gen);
+        net.addCable(CABLE_1, new LossyCable(Long.MAX_VALUE, 100));
+        net.addNode(CONS_A, cons);
+        net.connect(GEN_A, CABLE_1);
+        net.connect(CABLE_1, CONS_A);
+
+        EnergyDistributionResult result = net.tickDistribute();
+
+        // A tenth is lost on the way: 556 sent brings 500, and 555 would bring only 499.
+        assertEquals(500L, cons.totalConsumed);
+        assertEquals(556L, gen.totalSupplied);
+        assertEquals(56L, result.totalLost());
+        assertEquals(gen.totalSupplied, result.totalDelivered() + result.totalLost());
+    }
+
+    @Test
+    void lossyCables_addTheirLossesAlongTheWay() {
+        EnergyNetwork net = new EnergyNetwork();
+        TestNode gen = TestNode.generator(100L);
+        TestNode cons = TestNode.consumer(1000L);
+        net.addNode(GEN_A, gen);
+        net.addCable(CABLE_1, new LossyCable(Long.MAX_VALUE, 100));
+        net.addCable(CABLE_2, new LossyCable(Long.MAX_VALUE, 150));
+        net.addNode(CONS_A, cons);
+        net.connect(GEN_A, CABLE_1);
+        net.connect(CABLE_1, CABLE_2);
+        net.connect(CABLE_2, CONS_A);
+
+        EnergyDistributionResult result = net.tickDistribute();
+
+        assertEquals(75L, cons.totalConsumed);
+        assertEquals(25L, result.totalLost());
+    }
+
+    @Test
+    void route_takesTheWayThatLosesLeast() {
+        EnergyNetwork net = new EnergyNetwork();
+        TestNode cons = TestNode.consumer(100L);
+        net.addNode(GEN_A, TestNode.generator(1000L));
+        net.addCable(CABLE_1, new LossyCable(Long.MAX_VALUE, 200));
+        net.addCable(CABLE_2, new LossyCable(Long.MAX_VALUE, 0));
+        net.addCable(CABLE_3, new LossyCable(Long.MAX_VALUE, 0));
+        net.addNode(CONS_A, cons);
+        // The short way loses a fifth; the long way loses nothing.
+        net.connect(GEN_A, CABLE_1);
+        net.connect(CABLE_1, CONS_A);
+        net.connect(GEN_A, CABLE_2);
+        net.connect(CABLE_2, CABLE_3);
+        net.connect(CABLE_3, CONS_A);
+
+        EnergyDistributionResult result = net.tickDistribute();
+
+        assertEquals(100L, cons.totalConsumed);
+        assertEquals(0L, result.totalLost());
+        assertFalse(result.perCableUsage().containsKey(CABLE_1));
+        assertEquals(100L, result.perCableUsage().get(CABLE_3));
+    }
+
+    @Test
+    void route_amongEquallyLossyWaysTakesTheShortest() {
+        EnergyNetwork net = new EnergyNetwork();
+        net.addNode(GEN_A, TestNode.generator(1000L));
+        net.addCable(CABLE_1, new TestCable(EnergyTier.T7_SINGULARITY));
+        net.addCable(CABLE_2, new TestCable(EnergyTier.T7_SINGULARITY));
+        net.addCable(CABLE_3, new TestCable(EnergyTier.T7_SINGULARITY));
+        net.addNode(CONS_A, TestNode.consumer(100L));
+        net.connect(GEN_A, CABLE_2);
+        net.connect(CABLE_2, CABLE_3);
+        net.connect(CABLE_3, CONS_A);
+        net.connect(GEN_A, CABLE_1);
+        net.connect(CABLE_1, CONS_A);
+
+        EnergyDistributionResult result = net.tickDistribute();
+
+        assertEquals(100L, result.perCableUsage().get(CABLE_1));
+        assertFalse(result.perCableUsage().containsKey(CABLE_3));
+    }
+
+    @Test
+    void storage_takesWhatGeneratorsHaveLeftAfterTheConsumers() {
+        EnergyNetwork net = new EnergyNetwork();
+        TestNode gen = TestNode.generator(100L);
+        TestNode cons = TestNode.consumer(60L);
+        TestNode storage = TestNode.storage(0L, 1000L);
+        net.addNode(GEN_A, gen);
+        net.addCable(CABLE_1, new TestCable(EnergyTier.T7_SINGULARITY));
+        net.addNode(CONS_A, cons);
+        net.addNode(CONS_B, storage);
+        net.connect(GEN_A, CABLE_1);
+        net.connect(CABLE_1, CONS_A);
+        net.connect(CABLE_1, CONS_B);
+
+        net.tickDistribute();
+
+        assertEquals(60L, cons.totalConsumed);
+        assertEquals(40L, storage.totalConsumed);
+        assertEquals(100L, gen.totalSupplied);
+    }
+
+    @Test
+    void storage_feedsWhatConsumersStillWant() {
+        EnergyNetwork net = new EnergyNetwork();
+        TestNode gen = TestNode.generator(30L);
+        TestNode cons = TestNode.consumer(100L);
+        TestNode storage = TestNode.storage(500L, 1000L);
+        net.addNode(GEN_A, gen);
+        net.addCable(CABLE_1, new TestCable(EnergyTier.T7_SINGULARITY));
+        net.addNode(CONS_A, cons);
+        net.addNode(GEN_B, storage);
+        net.connect(GEN_A, CABLE_1);
+        net.connect(CABLE_1, CONS_A);
+        net.connect(CABLE_1, GEN_B);
+
+        net.tickDistribute();
+
+        assertEquals(100L, cons.totalConsumed);
+        assertEquals(70L, storage.totalSupplied);
+        assertEquals(0L, storage.totalConsumed);
+    }
+
+    @Test
+    void route_isKeptUntilTheShapeChanges() {
+        EnergyNetwork net = singlePathNetwork(1000L, 100L, EnergyTier.T7_SINGULARITY);
+        assertEquals(100L, net.tickDistribute().totalDelivered());
+
+        net.remove(CABLE_1);
+
+        assertEquals(0L, net.tickDistribute().totalDelivered());
+    }
+
     private static EnergyNetwork singlePathNetwork(
             long supply, long demand, EnergyTier tier) {
         EnergyNetwork net = new EnergyNetwork();
@@ -398,5 +533,16 @@ class EnergyNetworkTest {
      * Trivial test-only IEnergyCable.
      */
     private record TestCable(EnergyTier tier) implements IEnergyCable {
+
+        @Override
+        public long maxThroughput() {
+            return tier.maxThroughput();
+        }
+    }
+
+    /**
+     * Test-only IEnergyCable that loses thousandths of what crosses it.
+     */
+    private record LossyCable(long maxThroughput, int loss) implements IEnergyCable {
     }
 }

@@ -89,6 +89,16 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   wire or the part looked at, the block going with its last piece; a dye colours the wire looked at. A mod declares
   its cables with its content, each with its line, its lane, its thickness, how much it carries, how far it reaches,
   its jacket and the plug it ends in where it meets a device that takes it.
+- Energy in J's Core. FE is registered as the unit `jscore:fe` in a new synced registry of energy units, where a mod
+  adds its own with what it is worth in FE: an exact ratio of two whole numbers, rounding down so no energy is made
+  out of a rounding. An item can hold energy in the `jscore:energy` component, given the game's energy capability
+  with `CoreEnergy.holds`.
+- The energy grid moves energy, in J's Core. An energy wire plugs into every block beside it that offers the game's
+  energy on that face, and each tick generators feed consumers, what they have left fills storage, and storage feeds
+  what consumers still want, each share in proportion to what is wanted. A cable can lose thousandths of what crosses
+  it, and energy takes the way that loses least, worked out once while the grid keeps its shape.
+- J's Industrial's Energy Cable, laid in the shared cable block's energy lane: it carries any amount of energy any
+  distance and loses none of it.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,

@@ -8,13 +8,15 @@
 package dev.jstech.core.energy;
 
 /**
- * An energy cable: limits the rate of flow between nodes of the network.
+ * An energy cable: limits the rate of flow between nodes of the network, and may lose some of what crosses it.
  */
 public interface IEnergyCable {
 
-    EnergyTier tier();
+    /** The most energy that crosses the cable in a tick; {@link Long#MAX_VALUE} for no limit. */
+    long maxThroughput();
 
-    default long maxThroughput() {
-        return tier().maxThroughput();
+    /** The thousandths of what crosses the cable that it loses, from 0 to {@link EnergyLoss#WHOLE}. */
+    default int loss() {
+        return 0;
     }
 }

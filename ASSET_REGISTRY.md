@@ -138,6 +138,9 @@ Language files (`lang/`) are text, not assets, and are not listed; the language 
 | --- | --- | --- | --- | --- |
 | `industrial/src/main/resources/jsindustrial_{logo,icon}.png` | J's Industrial's logo and square icon | The mods list: the logo drawn over the series logo, the icon in lists that show one | AI-generated | AI assistant, with a generator script |
 | `industrial/src/main/resources/assets/jsindustrial/textures/block/*.png` | The Coal Generator, Compressor, Electric Furnace and Macerator: front, side and top | Faces of the machine blocks | AI-generated | AI assistant, with a generator script |
+| `industrial/src/main/resources/assets/jsindustrial/textures/block/cable/energy.png` | The Energy Cable's jacket: red, wound, with copper at the cut end | Laid on the energy wires in the Core's cable block, and on the cable's item | AI-generated | AI assistant, with a generator script, from the approved round of cable mocks |
+| `industrial/src/main/resources/assets/jsindustrial/textures/block/cable/plugs.png` | A flat swatch of the energy plug's dark red | The plug an energy wire ends in where it meets a machine | AI-generated | AI assistant, with a generator script, from the approved round of cable mocks |
+| `industrial/src/main/resources/assets/jsindustrial/models/block/cable/plug/energy.json` | The energy plug | Placed by the cable block where an energy wire meets a machine, turned to the face and moved to the energy lane | AI-generated | AI assistant, written by hand from the approved round of cable mocks |
 | `industrial/src/generated/resources/assets/**` | Block states, block and item models and the English file | Written from J's Industrial's declarations | Datagen | J's Industrial's data generation |
 
 ## Art that lives in the code

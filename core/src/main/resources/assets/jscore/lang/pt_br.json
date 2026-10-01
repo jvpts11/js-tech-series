@@ -69,6 +69,8 @@
   "jscore.configuration.media.tooltip": "As gravações que os jogadores ouvem e trazem: quanto da conexão elas ocupam e qual o tamanho máximo de cada uma.",
   "jscore.configuration.media.upload_kilobytes_per_second": "Velocidade de upload",
   "jscore.configuration.media.upload_kilobytes_per_second.tooltip": "Quantos kilobytes por segundo um jogador envia ao servidor de uma gravação que ele traz.",
+  "jscore.energy.fe": "Forge Energy",
+  "jscore.energy.fe.symbol": "FE",
   "jscore.era.advanced": "Advanced",
   "jscore.era.exa": "Exa",
   "jscore.era.legacy": "Legacy",
