@@ -111,6 +111,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that does not read is left out with a line in the log saying why. A synced one is sent to every player as they
   join and after every reload, and their game keeps it apart from the server's. A mod can also declare a registry
   datapacks fill, sent to every player with the world's registries.
+- A tick scheduler, in J's Core: a block that runs many things in a tick shares the tick's work among them in turns
+  of a fixed size, gives what one leaves to the others, and stops at a deadline by the clock, the next tick starting
+  with the first that went without. J's Computers' machines run their programs with it, as they did with their own.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,
