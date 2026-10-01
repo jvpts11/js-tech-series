@@ -126,6 +126,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The series on the debug screen (F3), in J's Core: each part of the series adds a panel of lines under its name, the
   sound system's first, and the pieces of work the series times are listed with their average and longest time over
   the last hundred runs, the energy grid's tick among them.
+- Inventories, in J's Core: item filters that let pass only what they list or everything but it, each rule naming an
+  item exactly (a worn tool is not a new one), an item whatever its damage and components, or a tag, and carrying an
+  amount a bus can read; what each face of a block lets through (closed, in, out, or both), named from the block's
+  own point of view so it turns with the block; and moves of items, fluid and energy from one store to another that
+  never lose anything on the way, into an item's own inventory as well.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,

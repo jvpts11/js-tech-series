@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.connect;
 
+import dev.jstech.core.id.IStableName;
 import java.util.Objects;
 import java.util.Optional;
 import net.minecraft.core.Direction;
@@ -23,14 +24,25 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
  * one a block that can face up or down has. A block facing up or down keeps north as its top, and its left and right
  * follow from its top and its front.
  */
-public enum RelativeFace {
+public enum RelativeFace implements IStableName {
 
-    FRONT,
-    BACK,
-    LEFT,
-    RIGHT,
-    TOP,
-    BOTTOM;
+    FRONT("front"),
+    BACK("back"),
+    LEFT("left"),
+    RIGHT("right"),
+    TOP("top"),
+    BOTTOM("bottom");
+
+    private final String serializedName;
+
+    RelativeFace(final String serializedName) {
+        this.serializedName = serializedName;
+    }
+
+    @Override
+    public String serializedName() {
+        return this.serializedName;
+    }
 
     /** The way {@code state} faces, when it has a facing at all. */
     public static Optional<Direction> facingOf(final BlockState state) {
