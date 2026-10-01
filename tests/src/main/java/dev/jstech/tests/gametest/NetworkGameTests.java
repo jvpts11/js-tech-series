@@ -37,7 +37,7 @@ import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.network.FailoverRole;
 import dev.jstech.core.network.NetworkSystem;
-import dev.jstech.core.persistence.NetworkRegistrySavedData;
+import dev.jstech.core.persistence.NetworkRegistry;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NetworkUuidState;
 import dev.jstech.tests.JsTests;
@@ -3319,6 +3319,6 @@ public final class NetworkGameTests {
     }
 
     private static NetworkUuidState registryState(final GameTestHelper helper, final NetworkUuid uuid) {
-        return NetworkRegistrySavedData.get(helper.getLevel()).networkState(uuid);
+        return NetworkRegistry.networkState(helper.getLevel(), uuid);
     }
 }

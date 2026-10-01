@@ -14,7 +14,7 @@ import dev.jstech.core.network.ConnectivityIndex;
 import dev.jstech.core.network.FailoverRole;
 import dev.jstech.core.network.MainframeNode;
 import dev.jstech.core.network.NetworkSystem;
-import dev.jstech.core.persistence.NetworkRegistrySavedData;
+import dev.jstech.core.persistence.NetworkRegistry;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
@@ -169,12 +169,12 @@ final class MainframeNetworking {
         waitTicks = 0;
         final NetworkUuid effective = adopted != null ? adopted : mainframe.nativeNetworkUuid();
         if (adopted == null) {
-            NetworkRegistrySavedData.get(level).addNetwork(effective);
+            NetworkRegistry.addNetwork(level, effective);
         }
         setConflict(level, primaryPeerPresent);
         if (primaryPeerPresent) {
             // Two owners on one network: collapse it until they are physically separated.
-            NetworkRegistrySavedData.get(level).setNetworkState(effective, NetworkUuidState.CONFLICTED);
+            NetworkRegistry.setNetworkState(level, effective, NetworkUuidState.CONFLICTED);
             mainframe.networkAttachment().attachTo(null);
             unregister(system);
             return;
@@ -234,7 +234,7 @@ final class MainframeNetworking {
         index.anchor(here, effective, cables);
         mainframe.networkAttachment().attachTo(effective);
         // Restore the network from any prior CONFLICTED or ORPHANED state, since adopting it revives it.
-        NetworkRegistrySavedData.get(level).setNetworkState(effective, NetworkUuidState.ACTIVE);
+        NetworkRegistry.setNetworkState(level, effective, NetworkUuidState.ACTIVE);
         system.registerMainframe(new MainframeNode(mainframe.nodeUuid(), effective, mainframe.capacity(),
                 FailoverRole.NONE, Optional.empty(), 0L));
         system.recordMainframePosition(effective, here);
@@ -296,9 +296,8 @@ final class MainframeNetworking {
         for (final long cable : adjacentCables(level)) {
             index.networkOf(cable).ifPresent(owned::add);
         }
-        final NetworkRegistrySavedData registry = NetworkRegistrySavedData.get(level);
         for (final NetworkUuid net : owned) {
-            registry.setNetworkState(net, NetworkUuidState.ORPHANED);
+            NetworkRegistry.setNetworkState(level, net, NetworkUuidState.ORPHANED);
         }
     }
 
@@ -306,12 +305,11 @@ final class MainframeNetworking {
     void eraseOwnedNetwork(final ServerLevel level) {
         final NetworkSystem system = NetworkSystem.get(level);
         final ConnectivityIndex index = system.connectivity();
-        final NetworkRegistrySavedData registry = NetworkRegistrySavedData.get(level);
         for (final NetworkUuid net : new LinkedHashSet<>(Arrays.asList(
                 mainframe.networkAttachment().network(), mainframe.networkAttachment().registered()))) {
             if (net != null) {
                 index.clearNetwork(net);
-                registry.removeNetwork(net);
+                NetworkRegistry.removeNetwork(level, net);
             }
         }
         mainframe.networkAttachment().attachTo(null);

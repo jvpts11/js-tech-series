@@ -31,6 +31,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -217,14 +218,16 @@ public final class AdvancementGameTests {
         OperationMilestones.report(mainframe, away, ComputingOperations.SELECT,
                 new OperationRecord(OperationRecord.TYPE_SELECT, StorageKey.of(new ItemStack(Items.OAK_LOG)), 64L,
                         64L, OperationRecord.STATUS_COMPLETED, List.of()));
-        final PendingAwards pending = PendingAwards.of(helper.getLevel().getServer());
-        helper.assertTrue(pending.waitingFor(away).contains(new PendingAwards.Award(JscEvents.SELECT_DONE, "")),
-                "what a player away earned waits for them; got " + pending.waitingFor(away));
+        final MinecraftServer server = helper.getLevel().getServer();
+        helper.assertTrue(PendingAwards.waitingFor(server, away)
+                        .contains(new PendingAwards.Award(JscEvents.SELECT_DONE, "")),
+                "what a player away earned waits for them; got " + PendingAwards.waitingFor(server, away));
         final ServerPlayer player = join(helper, away);
         try {
-            pending.deliver(player);
+            PendingAwards.deliver(player);
             helper.assertTrue(done(player, "networks/select_from_chest"), "joining, they are given it");
-            helper.assertTrue(pending.waitingFor(away).isEmpty(), "and it is not kept to be given twice");
+            helper.assertTrue(PendingAwards.waitingFor(server, away).isEmpty(),
+                    "and it is not kept to be given twice");
         } finally {
             leave(player);
         }
@@ -240,7 +243,7 @@ public final class AdvancementGameTests {
         JscEvents.awardOperator(computer, JscEvents.DATACENTER_FORMED);
         final ServerPlayer player = join(helper, away);
         try {
-            PendingAwards.of(helper.getLevel().getServer()).deliver(player);
+            PendingAwards.deliver(player);
             helper.assertTrue(done(player, "hardware/someone_elses_computer"), "the operator earns it on joining");
         } finally {
             leave(player);

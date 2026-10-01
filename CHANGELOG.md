@@ -496,6 +496,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   error a lower version gives for what came after it, and the line the choice wrote.
 
 ### Changed
+- What the series kept with a world in files of its own is kept as states, each file carrying the version of its
+  layout: the data networks of each dimension and the awards players earned while away stay in the files they were
+  in, and the ledger of a world's recordings moves from the text file beside them into the world's saved data, as
+  `jstech_media_ledger.dat`. A world saved before is read as it was; the text ledger is read once and goes once the
+  world has been saved with it.
 - The series' settings files are written by J's Core's settings files: `jstech-balance.toml` (the balance of the
   Operations engine, the programs' time and the recordings), `jscomputers-server.toml` (the computers and
   Soundfoundry) and the player's `jstech-audio.json`. They keep their names and their settings, so nothing set in them

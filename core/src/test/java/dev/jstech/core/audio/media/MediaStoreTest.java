@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -32,7 +33,7 @@ class MediaStoreTest {
 
     @Test
     void put_keepsARecordingOnceUnderItsHash(@TempDir final Path root) throws IOException {
-        final MediaStore store = new MediaStore(root);
+        final MediaStore store = new MediaStore(root, new KeptLedger());
         final byte[] wav = wav(RATE);
         final MediaId first = store.put(wav, "wav");
         final MediaId again = store.put(wav, "wav");
@@ -45,7 +46,7 @@ class MediaStoreTest {
 
     @Test
     void put_refusesAFileThatIsNotWhatItsKindSays(@TempDir final Path root) throws IOException {
-        final MediaStore store = new MediaStore(root);
+        final MediaStore store = new MediaStore(root, new KeptLedger());
         final byte[] notOgg = "this is not a recording".getBytes(StandardCharsets.US_ASCII);
         assertThrows(IOException.class, () -> store.put(notOgg, "ogg"));
         assertFalse(store.has(MediaId.of(notOgg, "ogg")));
@@ -54,7 +55,7 @@ class MediaStoreTest {
 
     @Test
     void adopt_takesAnArrivedFileIntoPlace(@TempDir final Path root) throws IOException {
-        final MediaStore store = new MediaStore(root);
+        final MediaStore store = new MediaStore(root, new KeptLedger());
         final byte[] wav = wav(RATE * 2);
         final MediaId id = MediaId.of(wav, "wav");
         final Path arrived = store.newIncoming(id);
@@ -67,7 +68,7 @@ class MediaStoreTest {
 
     @Test
     void has_isFalseForTheRightHashWithAnotherSize(@TempDir final Path root) throws IOException {
-        final MediaStore store = new MediaStore(root);
+        final MediaStore store = new MediaStore(root, new KeptLedger());
         final MediaId kept = store.put(wav(RATE), "wav");
         assertTrue(store.has(kept));
         assertFalse(store.has(new MediaId(kept.hash(), kept.format(), 1L)),
@@ -76,7 +77,7 @@ class MediaStoreTest {
 
     @Test
     void sweepIncoming_clearsWhatAStoppedServerLeftHalfArrived(@TempDir final Path root) throws IOException {
-        final MediaStore store = new MediaStore(root);
+        final MediaStore store = new MediaStore(root, new KeptLedger());
         Files.write(store.newIncoming(MediaId.of(new byte[] {1}, "wav")), new byte[] {1});
         store.sweepIncoming();
         assertEquals(0, countFiles(root));
@@ -85,7 +86,7 @@ class MediaStoreTest {
     @Test
     void prune_takesOutWhatNothingUsedAndGivesTheRoomBack(@TempDir final Path root) throws IOException {
         final long[] now = {0L};
-        final MediaStore store = new MediaStore(root, () -> now[0]);
+        final MediaStore store = new MediaStore(root, () -> now[0], new KeptLedger());
         final MediaId old = store.put(wav(RATE), "wav");
         store.broughtBy(old, PLAYER);
         now[0] = 10 * DAY;
@@ -101,7 +102,7 @@ class MediaStoreTest {
     @Test
     void prune_leavesWhatAModStillNeeds(@TempDir final Path root) throws IOException {
         final long[] now = {0L};
-        final MediaStore store = new MediaStore(root, () -> now[0]);
+        final MediaStore store = new MediaStore(root, () -> now[0], new KeptLedger());
         final MediaId offered = store.put(wav(RATE), "wav");
         now[0] = 100 * DAY;
         assertEquals(0, store.prune(DAY, Set.of(offered)).count());
@@ -110,23 +111,59 @@ class MediaStoreTest {
 
     @Test
     void flush_keepsWhoBroughtWhatForTheNextStart(@TempDir final Path root) throws IOException {
-        final MediaStore store = new MediaStore(root);
+        final KeptLedger keeper = new KeptLedger();
+        final MediaStore store = new MediaStore(root, keeper);
         final MediaId song = store.put(wav(RATE), "wav");
         store.broughtBy(song, PLAYER);
         store.flush();
-        final MediaStore again = new MediaStore(root);
+        final MediaStore again = new MediaStore(root, keeper);
         assertEquals(song.bytes(), again.broughtBytes(PLAYER));
         assertEquals(1, again.size().count());
     }
 
     @Test
     void newStore_writesDownRecordingsKeptBeforeThereWasALedger(@TempDir final Path root) throws IOException {
-        final MediaStore first = new MediaStore(root);
+        final MediaStore first = new MediaStore(root, new KeptLedger());
         first.put(wav(RATE), "wav");
         first.put(wav(RATE * 3), "wav");
-        final MediaStore.Held held = new MediaStore(root).size();
+        final MediaStore.Held held = new MediaStore(root, new KeptLedger()).size();
         assertEquals(2, held.count());
         assertEquals(wav(RATE).length + wav(RATE * 3).length, held.bytes());
+    }
+
+    @Test
+    void newStore_readsTheTextLedgerOfBeforeOnceItsKeeperHasNone(@TempDir final Path root) throws IOException {
+        final MediaId song = new MediaStore(root, new KeptLedger()).put(wav(RATE), "wav");
+        final Path text = root.resolve("ledger.txt");
+        Files.writeString(text, MediaLedger.HEADER + "\n" + song.fileName() + " " + song.bytes() + " 0 " + PLAYER
+                + "\n", StandardCharsets.UTF_8);
+        final KeptLedger keeper = new KeptLedger();
+
+        final MediaStore store = new MediaStore(root, keeper);
+        assertEquals(song.bytes(), store.broughtBytes(PLAYER), "whoever brought it, as the text ledger had it");
+        store.flush();
+        assertEquals(1, keeper.kept.size(), "the ledger, handed to its keeper");
+        assertTrue(Files.exists(text), "the text stays until the world has the ledger");
+
+        final MediaStore next = new MediaStore(root, keeper);
+        assertEquals(song.bytes(), next.broughtBytes(PLAYER), "whoever brought it, as the keeper has it");
+        assertFalse(Files.exists(text), "the text goes once the keeper has the ledger");
+    }
+
+    /** A keeper that holds the ledger in memory, as the world does between saves; null until it keeps one. */
+    private static final class KeptLedger implements IMediaLedgerKeeper {
+
+        private List<MediaLedger.Entry> kept;
+
+        @Override
+        public List<MediaLedger.Entry> load() {
+            return kept;
+        }
+
+        @Override
+        public void keep(final List<MediaLedger.Entry> entries) {
+            kept = List.copyOf(entries);
+        }
     }
 
     /* Every file under the store, the incoming folder's included. */

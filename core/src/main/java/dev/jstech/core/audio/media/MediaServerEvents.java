@@ -17,6 +17,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.slf4j.Logger;
 
@@ -29,7 +30,7 @@ import org.slf4j.Logger;
 public final class MediaServerEvents {
 
     private static final Logger LOGGER = LogUtils.getLogger();
-    /** How often the ledger is written out when something in it changed: once a minute. */
+    /** How often the ledger goes to the world when something in it changed: once a minute. */
     private static final int FLUSH_EVERY = 1200;
 
     private MediaServerEvents() {
@@ -39,7 +40,7 @@ public final class MediaServerEvents {
     public static void onServerStarting(final ServerStartingEvent event) {
         final Path root = event.getServer().getWorldPath(LevelResource.ROOT).resolve("jstech").resolve("media");
         try {
-            final MediaStore store = new MediaStore(root);
+            final MediaStore store = new MediaStore(root, MediaLedgers.keeperOf(event.getServer()));
             store.sweepIncoming();
             MediaStore.use(store);
         } catch (final IOException cannotOpen) {
@@ -49,9 +50,14 @@ public final class MediaServerEvents {
         }
     }
 
+    /* The ledger goes to the world before the world is saved for the last time. */
+    @SubscribeEvent
+    public static void onServerStopping(final ServerStoppingEvent event) {
+        MediaStore.current().ifPresent(MediaStore::flush);
+    }
+
     @SubscribeEvent
     public static void onServerStopped(final ServerStoppedEvent event) {
-        MediaStore.current().ifPresent(MediaServerEvents::flush);
         MediaStore.use(null);
         MediaSessions.clear();
     }
@@ -61,16 +67,7 @@ public final class MediaServerEvents {
         MediaDownloads.tick(event.getServer());
         MediaSessions.tick(event.getServer());
         if (event.getServer().getTickCount() % FLUSH_EVERY == 0) {
-            MediaStore.current().ifPresent(MediaServerEvents::flush);
-        }
-    }
-
-    /* The ledger of who brought what and when it was used is written out now and then, and when the server stops. */
-    private static void flush(final MediaStore store) {
-        try {
-            store.flush();
-        } catch (final IOException cannotWrite) {
-            LOGGER.warn("The ledger of the world's recordings could not be written: {}", cannotWrite.getMessage());
+            MediaStore.current().ifPresent(MediaStore::flush);
         }
     }
 

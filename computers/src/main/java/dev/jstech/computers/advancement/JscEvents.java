@@ -142,7 +142,7 @@ public final class JscEvents {
         if (here != null) {
             award(here, event, detail);
         } else {
-            PendingAwards.of(server).keep(player, event, detail == null ? "" : detail);
+            PendingAwards.keep(server, player, event, detail == null ? "" : detail);
         }
     }
 

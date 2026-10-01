@@ -22,7 +22,8 @@ import org.jetbrains.annotations.Nullable;
  * out recordings nobody has used for a long time.
  *
  * <p>A recording's use is written down to the hour at most, so a song played over and over does not make the ledger
- * be written out every time. The ledger is kept as text, a line to a recording, beside the recordings themselves.
+ * be kept again every time. The ledger is kept with the world, by whatever its store is handed to keep it. A world from
+ * before that kept it as text beside the recordings, a line to a recording, which is still read once.
  *
  * <p>This class is pure and carries no Minecraft dependency.
  */
@@ -31,7 +32,7 @@ final class MediaLedger {
     private final Map<String, Entry> entries = new HashMap<>();
     private boolean dirty;
 
-    /** What the ledger's text starts with, so a file that is something else is not read as one. */
+    /** What the text ledger of before started with, so a file that is something else is not read as one. */
     static final String HEADER = "JSMEDIA1";
     /** How much time has to pass before a recording's use is written down again. */
     static final long GRAIN_MILLIS = 60L * 60L * 1000L;
@@ -45,6 +46,15 @@ final class MediaLedger {
      * @param broughtBy who brought it first, or null for a recording nobody brought (a catalogue's)
      */
     record Entry(MediaId media, long lastUsed, @Nullable UUID broughtBy) {
+    }
+
+    /** A ledger holding {@code kept}, as it was last kept. */
+    static MediaLedger of(final Collection<Entry> kept) {
+        final MediaLedger ledger = new MediaLedger();
+        for (final Entry entry : kept) {
+            ledger.entries.put(entry.media().fileName(), entry);
+        }
+        return ledger;
     }
 
     /** A recording was made use of at {@code now}; one the ledger does not know yet is written down. */
@@ -123,27 +133,32 @@ final class MediaLedger {
         }
     }
 
-    /** Whether something changed since the ledger was last written out. */
+    /** Whether something changed since the ledger was last kept. */
     synchronized boolean dirty() {
         return dirty;
     }
 
-    /** The ledger as text, which it is then taken to have been written out as. */
-    synchronized String write() {
-        final StringBuilder out = new StringBuilder(HEADER).append('\n');
-        final List<String> names = new ArrayList<>(entries.keySet());
-        names.sort(null);
-        for (final String name : names) {
-            final Entry entry = entries.get(name);
-            out.append(name).append(' ').append(entry.media().bytes()).append(' ').append(entry.lastUsed())
-                    .append(' ').append(entry.broughtBy() == null ? NOBODY : entry.broughtBy().toString())
-                    .append('\n');
-        }
-        dirty = false;
-        return out.toString();
+    /** Marks the ledger as changed, for one read from somewhere it is no longer kept. */
+    synchronized void markChanged() {
+        dirty = true;
     }
 
-    /** A ledger as its text has it; a line that cannot be read is left out, and text that is no ledger reads empty. */
+    /** Every entry, by the name of its recording, which the ledger is then taken to have been kept as. */
+    synchronized List<Entry> taken() {
+        final List<String> names = new ArrayList<>(entries.keySet());
+        names.sort(null);
+        final List<Entry> out = new ArrayList<>(names.size());
+        for (final String name : names) {
+            out.add(entries.get(name));
+        }
+        dirty = false;
+        return out;
+    }
+
+    /**
+     * A ledger as the text of before had it; a line that cannot be read is left out, and text that is no ledger reads
+     * empty.
+     */
     static MediaLedger read(final String text) {
         final MediaLedger ledger = new MediaLedger();
         final String[] lines = text.split("\n");

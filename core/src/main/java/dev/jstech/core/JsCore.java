@@ -10,13 +10,16 @@ package dev.jstech.core;
 import com.mojang.logging.LogUtils;
 import dev.jstech.core.api.CoreRegisterEvent;
 import dev.jstech.core.audio.AudioSettings;
+import dev.jstech.core.audio.media.MediaLedgers;
 import dev.jstech.core.config.ConfigFiles;
 import dev.jstech.core.config.CoreConfigKeys;
 import dev.jstech.core.event.CoreEventDispatcher;
 import dev.jstech.core.language.LanguageRegistry;
 import dev.jstech.core.operation.OperationTypeRegistry;
+import dev.jstech.core.persistence.NetworkRegistry;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.registry.CoreAttachments;
+import dev.jstech.core.state.CoreStates;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModLoader;
@@ -74,6 +77,9 @@ public final class JsCore {
         ConfigFiles.register(CoreConfigKeys.FILE, modEventBus, modContainer);
         // A player's sound preferences, read on their own game only.
         ConfigFiles.register(AudioSettings.FILE, modEventBus, modContainer);
+        // What the Core keeps with a world: each dimension's data networks, and the ledger of its recordings.
+        CoreStates.register(NetworkRegistry.NETWORKS);
+        MediaLedgers.register();
         /*
          * One moment for anything to be added, and one for the door to close. Everything of the series adds
          * itself through the same event an addon does, so the way in is the one that is tested every time

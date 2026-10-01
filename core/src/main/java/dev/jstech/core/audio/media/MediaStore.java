@@ -30,7 +30,8 @@ import org.jetbrains.annotations.Nullable;
  * is not what its kind says is refused before it takes any room.
  *
  * <p>It lives with the world, so the recordings travel with the save and a world copied to another server keeps its
- * music. The world's own folder is handed in, which keeps this free of the game and testable anywhere.
+ * music. The world's own folder and what keeps the ledger are handed in, which keeps this free of the game and testable
+ * anywhere.
  */
 public final class MediaStore {
 
@@ -40,28 +41,44 @@ public final class MediaStore {
     private final Map<String, MediaInfo> infos = new ConcurrentHashMap<>();
     /** Who brought each recording and when it was last used. */
     private final MediaLedger ledger;
+    private final IMediaLedgerKeeper keeper;
     private final LongSupplier clock;
 
     private static final String INCOMING = "incoming";
-    /** The file the ledger is kept in, beside the recordings. */
+    /** The file the ledger was kept in, beside the recordings, before it was kept with the world. */
     private static final String LEDGER = "ledger.txt";
 
     private static volatile @Nullable MediaStore current;
 
-    /** The store in {@code root}, which is made when it is not there yet. */
-    public MediaStore(final Path root) throws IOException {
-        this(root, System::currentTimeMillis);
+    /** The store in {@code root}, which is made when it is not there yet, its ledger kept by {@code keeper}. */
+    MediaStore(final Path root, final IMediaLedgerKeeper keeper) throws IOException {
+        this(root, System::currentTimeMillis, keeper);
     }
 
-    /** The same, telling the time by {@code clock}, in milliseconds since the epoch. */
-    public MediaStore(final Path root, final LongSupplier clock) throws IOException {
+    /**
+     * The same, telling the time by {@code clock}, in milliseconds since the epoch.
+     *
+     * <p>A ledger never kept by {@code keeper} is read from the text file the store kept it in before, when there is
+     * one, and kept at the next {@link #flush()}. That file goes once the keeper has the ledger.
+     */
+    MediaStore(final Path root, final LongSupplier clock, final IMediaLedgerKeeper keeper) throws IOException {
         this.root = root;
         this.incoming = root.resolve(INCOMING);
+        this.keeper = keeper;
         this.clock = clock;
         Files.createDirectories(incoming);
-        final Path ledgerFile = root.resolve(LEDGER);
-        this.ledger = Files.isRegularFile(ledgerFile)
-                ? MediaLedger.read(Files.readString(ledgerFile, StandardCharsets.UTF_8)) : new MediaLedger();
+        final Path textLedger = root.resolve(LEDGER);
+        final List<MediaLedger.Entry> kept = keeper.load();
+        if (kept != null) {
+            this.ledger = MediaLedger.of(kept);
+            // A text ledger still here was read in an earlier run, and the world was saved with it since.
+            Files.deleteIfExists(textLedger);
+        } else if (Files.isRegularFile(textLedger)) {
+            this.ledger = MediaLedger.read(Files.readString(textLedger, StandardCharsets.UTF_8));
+            this.ledger.markChanged();
+        } else {
+            this.ledger = new MediaLedger();
+        }
         ledger.reconcile(held(), clock.getAsLong());
     }
 
@@ -161,14 +178,14 @@ public final class MediaStore {
         return new Held(count, bytes);
     }
 
-    /** Writes the ledger out when something in it changed; whatever calls this does so now and then. */
-    public void flush() throws IOException {
-        if (!ledger.dirty()) {
-            return;
+    /**
+     * Hands the ledger to its keeper when something in it changed; whatever calls this does so now and then, and
+     * before the world is saved for the last time.
+     */
+    public void flush() {
+        if (ledger.dirty()) {
+            keeper.keep(ledger.taken());
         }
-        final Path temporary = Files.createTempFile(incoming, LEDGER, ".part");
-        Files.writeString(temporary, ledger.write(), StandardCharsets.UTF_8);
-        move(temporary, root.resolve(LEDGER));
     }
 
     /**

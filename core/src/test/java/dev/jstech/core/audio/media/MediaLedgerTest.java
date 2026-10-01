@@ -58,9 +58,9 @@ class MediaLedgerTest {
         final MediaLedger ledger = new MediaLedger();
         final MediaId song = media('f', 1L);
         ledger.used(song, 0L);
-        ledger.write();
+        ledger.taken();
         ledger.used(song, MediaLedger.GRAIN_MILLIS - 1L);
-        assertFalse(ledger.dirty(), "a use within the hour changes nothing worth writing");
+        assertFalse(ledger.dirty(), "a use within the hour changes nothing worth keeping");
         ledger.used(song, MediaLedger.GRAIN_MILLIS);
         assertTrue(ledger.dirty());
     }
@@ -77,13 +77,26 @@ class MediaLedgerTest {
     }
 
     @Test
-    void read_givesBackWhatWriteWrote() {
+    void of_givesBackWhatTakenTook() {
         final MediaLedger ledger = new MediaLedger();
         final MediaId song = media('3', 4_096L);
         final MediaId other = media('4', 8L);
         ledger.brought(song, ALICE, 123L);
         ledger.used(other, 456L);
-        final MediaLedger read = MediaLedger.read(ledger.write());
+        final MediaLedger again = MediaLedger.of(ledger.taken());
+        assertFalse(ledger.dirty(), "what was taken is kept");
+        assertEquals(4_096L, again.broughtBytes(ALICE));
+        assertEquals(List.of(song), again.unusedSince(124L, Set.of(other)));
+        assertEquals(2, again.entries().size());
+    }
+
+    @Test
+    void read_takesTheTextLedgerOfBefore() {
+        final MediaId song = media('5', 4_096L);
+        final MediaId other = media('6', 8L);
+        final String text = MediaLedger.HEADER + "\n" + song.fileName() + " 4096 123 " + ALICE + "\n"
+                + other.fileName() + " 8 456 -\n";
+        final MediaLedger read = MediaLedger.read(text);
         assertEquals(4_096L, read.broughtBytes(ALICE));
         assertEquals(List.of(song), read.unusedSince(124L, Set.of(other)));
         assertEquals(2, read.entries().size());
