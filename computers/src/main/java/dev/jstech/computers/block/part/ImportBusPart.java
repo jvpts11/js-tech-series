@@ -17,6 +17,7 @@ import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.persistence.SavedValue;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.Direction;
@@ -47,8 +48,8 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
     private int ticksSinceFlush;
 
     @Override
-    public CablePartType type() {
-        return CablePartType.IMPORT;
+    public PartType<?> type() {
+        return ComputingParts.IMPORT.get();
     }
 
     @Override

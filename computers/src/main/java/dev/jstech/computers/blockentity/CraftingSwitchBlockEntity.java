@@ -10,7 +10,7 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.block.part.AbstractBusPart;
-import dev.jstech.computers.block.part.CablePartType;
+import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.PartField;
@@ -310,9 +310,7 @@ public class CraftingSwitchBlockEntity extends SyncedBlockEntity {
             }
             final Direction from = origin.get(current);
             for (final Direction face : SIDES) {
-                if (cable.getPart(face) instanceof AbstractBusPart bus
-                        && (bus.type() == CablePartType.INPUT
-                        || bus.type() == CablePartType.RECEIVING)) {
+                if (cable.getPart(face) instanceof AbstractBusPart bus && ComputingParts.isCrafting(bus.type())) {
                     final BlockPos machinePos = current.relative(face);
                     final var machineBlock = level.getBlockState(machinePos).getBlock();
                     // Network hardware is never a machine, even when a bus happens to point at it.

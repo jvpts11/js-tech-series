@@ -8,61 +8,69 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.DataCableBlock;
-import dev.jstech.computers.block.part.CablePartType;
-import dev.jstech.computers.block.part.ICablePart;
+import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.PartField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
+import dev.jstech.core.multipart.FaceParts;
+import dev.jstech.core.multipart.IFacePart;
+import dev.jstech.core.multipart.IPartHost;
+import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.network.ConnectivityIndex;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.INetworkBridge;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.persistence.ISaveUpgrade;
+import dev.jstech.core.persistence.SaveLayout;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NumericTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.Containers;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
  * BlockEntity backing a {@link DataCableBlock}: the parts mounted on its faces, saved whole, of which the players who
  * see it are sent only which kind sits on which face, enough to draw and shape the cable.
+ *
+ * <p>Its layout is at version 2: version 1 saved each part's kind as a number of the cable's own, version 2 by the
+ * id the kind is registered under with the Core's parts.
  */
-public class DataCableBlockEntity extends SyncedBlockEntity {
+public class DataCableBlockEntity extends SyncedBlockEntity implements IPartHost {
 
-    private final ICablePart[] parts = new ICablePart[6];
-    private final byte[] partTypes = {-1, -1, -1, -1, -1, -1};
-    private final PartField mounted = fields().part("Parts", new PartsPart()).save().toClient();
+    private final FaceParts parts = new FaceParts(this);
+    private final PartField mounted = fields().part(FaceParts.KEY, parts).save().toClient();
     @Nullable
     private NetworkUuid loadedNetwork;
 
+    /** The cable's layout: the parts' kinds by their ids since version 2. */
+    public static final SaveLayout LAYOUT = SaveLayout.builder(JsComputers.MODID + ":data_cable")
+            .version(2)
+            .upgrade(1, ISaveUpgrade.compound(DataCableBlockEntity::kindsByTheirIds))
+            .build();
+
     public DataCableBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.DATA_CABLE_BE.get(), pos, state);
+        fields().layout(LAYOUT);
         fields().part("Network", new NetworkPart()).save();
     }
 
     public static void serverTick(final Level level, final BlockPos pos,
                                   final BlockState state, final DataCableBlockEntity cable) {
-        if (!(level instanceof ServerLevel)) {
-            return;
-        }
-        for (final ICablePart part : cable.parts) {
-            if (part != null) {
-                part.serverTick();
-            }
+        if (level instanceof ServerLevel) {
+            cable.parts.tick();
         }
     }
 
@@ -70,6 +78,23 @@ public class DataCableBlockEntity extends SyncedBlockEntity {
         return getBlockState().getBlock() instanceof DataCableBlock cable
                 ? cable.tier()
                 : DataTier.T1_ETHERNET;
+    }
+
+    // What the parts see of the cable
+
+    @Override
+    public @Nullable Level partLevel() {
+        return level;
+    }
+
+    @Override
+    public BlockPos partPos() {
+        return worldPosition;
+    }
+
+    @Override
+    public void partChanged() {
+        mounted.changed();
     }
 
     // Helpers the parts use to reach the world, the network and neighbors
@@ -114,69 +139,44 @@ public class DataCableBlockEntity extends SyncedBlockEntity {
 
     // Part hosting
 
+    /** The parts on the cable's faces. */
+    public FaceParts parts() {
+        return parts;
+    }
+
     public boolean hasPart(final Direction face) {
-        return partTypes[face.get3DDataValue()] >= 0;
+        return parts.has(face);
     }
 
     @Nullable
-    public CablePartType partType(final Direction face) {
-        return CablePartType.find(partTypes[face.get3DDataValue()]);
+    public PartType<?> partType(final Direction face) {
+        return parts.type(face);
     }
 
     @Nullable
-    public ICablePart getPart(final Direction face) {
-        return parts[face.get3DDataValue()];
+    public IFacePart getPart(final Direction face) {
+        return parts.get(face);
     }
 
-    public void addPart(final Direction face, final ICablePart part) {
-        final int idx = face.get3DDataValue();
-        part.attach(this, face);
-        parts[idx] = part;
-        partTypes[idx] = (byte) part.type().id();
-        mounted.changed();
+    public void addPart(final Direction face, final IFacePart part) {
+        parts.add(face, part);
     }
 
     @Nullable
-    public ICablePart removePart(final Direction face) {
-        final int idx = face.get3DDataValue();
-        final ICablePart removed = parts[idx];
-        parts[idx] = null;
-        partTypes[idx] = -1;
-        if (removed != null) {
-            mounted.changed();
-        }
-        return removed;
+    public IFacePart removePart(final Direction face) {
+        return parts.remove(face);
     }
 
     public boolean hasAnyPart() {
-        for (final byte type : partTypes) {
-            if (type >= 0) {
-                return true;
-            }
-        }
-        return false;
+        return parts.any();
     }
 
     public void dropAllParts(final ServerLevel serverLevel) {
-        for (int i = 0; i < parts.length; i++) {
-            final ICablePart part = parts[i];
-            if (part == null) {
-                continue;
-            }
-            part.dropContents(serverLevel);
-            Containers.dropItemStack(serverLevel, worldPosition.getX(), worldPosition.getY(),
-                    worldPosition.getZ(), part.partItem());
-            parts[i] = null;
-            partTypes[i] = -1;
-        }
+        parts.dropAll(serverLevel, worldPosition);
     }
 
     public void dropAllBuffers(final ServerLevel serverLevel) {
-        for (final ICablePart part : parts) {
-            if (part != null) {
-                part.dropContents(serverLevel);
-            }
-        }
+        parts.dropContents(serverLevel);
     }
 
     // Connectivity (transient runtime index)
@@ -221,65 +221,18 @@ public class DataCableBlockEntity extends SyncedBlockEntity {
         return neighbors;
     }
 
-    /** The mounted parts: saved whole, face by face; the players are sent only the kind on each face. */
-    private final class PartsPart implements IFieldPart {
-
-        @Override
-        public void save(final CompoundTag tag, final HolderLookup.Provider registries) {
-            final ListTag list = new ListTag();
-            for (int i = 0; i < parts.length; i++) {
-                final ICablePart part = parts[i];
-                if (part == null) {
-                    continue;
-                }
-                final CompoundTag entry = new CompoundTag();
-                entry.putByte("Face", (byte) i);
-                entry.putByte("Type", (byte) part.type().id());
-                final CompoundTag data = new CompoundTag();
-                part.save(data, registries);
-                entry.put("Data", data);
-                list.add(entry);
-            }
-            if (!list.isEmpty()) {
-                tag.put("Parts", list);
-            }
-        }
-
-        @Override
-        public void load(final CompoundTag tag, final HolderLookup.Provider registries) {
-            Arrays.fill(parts, null);
-            Arrays.fill(partTypes, (byte) -1);
-            final ListTag list = tag.getList("Parts", Tag.TAG_COMPOUND);
-            for (int i = 0; i < list.size(); i++) {
-                final CompoundTag entry = list.getCompound(i);
-                final int idx = entry.getByte("Face") & 0xFF;
-                final CablePartType type = CablePartType.find(entry.getByte("Type"));
-                if (idx >= parts.length || type == null) {
-                    continue;
-                }
-                final Direction face = Direction.from3DDataValue(idx);
-                final ICablePart part = type.create();
-                part.attach(DataCableBlockEntity.this, face);
-                part.load(entry.getCompound("Data"), registries);
-                parts[idx] = part;
-                partTypes[idx] = (byte) type.id();
-            }
-        }
-
-        @Override
-        public void writeClient(final CompoundTag tag, final HolderLookup.Provider registries) {
-            tag.putByteArray("PartTypes", partTypes.clone());
-        }
-
-        @Override
-        public void readClient(final CompoundTag tag, final HolderLookup.Provider registries) {
-            if (tag.contains("PartTypes")) {
-                final byte[] incoming = tag.getByteArray("PartTypes");
-                for (int i = 0; i < partTypes.length; i++) {
-                    partTypes[i] = i < incoming.length ? incoming[i] : (byte) -1;
+    /* Version 1 to 2: each part's kind, saved as a number of the cable's own, becomes the id it is registered by. */
+    private static CompoundTag kindsByTheirIds(final CompoundTag cable) {
+        for (final Tag element : cable.getList(FaceParts.KEY, Tag.TAG_COMPOUND)) {
+            final CompoundTag entry = (CompoundTag) element;
+            if (entry.get("Type") instanceof NumericTag number) {
+                final String id = ComputingParts.FORMER_NUMBERS.get(number.getAsInt());
+                if (id != null) {
+                    entry.putString("Type", id);
                 }
             }
         }
+        return cable;
     }
 
     /**

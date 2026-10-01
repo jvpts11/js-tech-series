@@ -7,8 +7,11 @@
  */
 package dev.jstech.core.connect;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.Objects;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ExtraCodecs;
 
 /**
  * What reaches a face of a block: a line, the job a cable does (a network's access or backbone, a machine's power, a
@@ -23,6 +26,12 @@ import net.minecraft.resources.ResourceLocation;
  * @param generation how new it is, from 0
  */
 public record Connection(ResourceLocation line, int generation) {
+
+    /** How a connection is saved: its line and, past the first, its generation. */
+    public static final Codec<Connection> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            ResourceLocation.CODEC.fieldOf("line").forGetter(Connection::line),
+            ExtraCodecs.NON_NEGATIVE_INT.optionalFieldOf("generation", 0).forGetter(Connection::generation)
+    ).apply(instance, Connection::new));
 
     public Connection {
         Objects.requireNonNull(line, "line");

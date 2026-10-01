@@ -10,6 +10,7 @@ package dev.jstech.computers.block.part;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.menu.InputBusMenu;
+import dev.jstech.core.multipart.PartType;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -24,8 +25,8 @@ import net.minecraft.world.item.ItemStack;
 public final class InputBusPart extends ExportBusPart {
 
     @Override
-    public CablePartType type() {
-        return CablePartType.INPUT;
+    public PartType<?> type() {
+        return ComputingParts.INPUT.get();
     }
 
     @Override

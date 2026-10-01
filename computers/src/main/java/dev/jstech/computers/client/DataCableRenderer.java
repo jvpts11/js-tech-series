@@ -11,8 +11,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.block.part.CablePartType;
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.core.multipart.PartType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -47,18 +47,11 @@ public class DataCableRenderer implements BlockEntityRenderer<DataCableBlockEnti
         final ModelBlockRenderer renderer = mc.getBlockRenderer().getModelRenderer();
         final VertexConsumer consumer = buffer.getBuffer(RenderType.cutout());
         for (final Direction face : Direction.values()) {
-            final CablePartType type = cable.partType(face);
+            final PartType<?> type = cable.partType(face);
             if (type == null) {
                 continue;
             }
-            final ModelResourceLocation modelLocation = switch (type) {
-                case IMPORT -> IMPORT_MODEL;
-                case EXPORT -> EXPORT_MODEL;
-                // Input feeds like an Export, Receiving pulls like an Import; they reuse the part models for now.
-                case INPUT -> EXPORT_MODEL;
-                case RECEIVING -> IMPORT_MODEL;
-            };
-            final BakedModel model = mc.getModelManager().getModel(modelLocation);
+            final BakedModel model = mc.getModelManager().getModel(ModelResourceLocation.standalone(type.model()));
             pose.pushPose();
             orient(pose, face);
             renderer.renderModel(pose.last(), consumer, cable.getBlockState(), model,

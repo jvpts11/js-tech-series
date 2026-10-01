@@ -9,7 +9,7 @@ package dev.jstech.computers.menu;
 
 import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.block.part.AbstractBusPart;
-import dev.jstech.computers.block.part.CablePartType;
+import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.gui.layout.BusLayout;
 import dev.jstech.core.gui.layout.GuiLayout;
@@ -121,8 +121,7 @@ public abstract class AbstractBusMenu extends CoreMenu {
      * the crafting engine, so those controls hide and their buttons are refused server-side.
      */
     public boolean stockControlsApply() {
-        final CablePartType kind = part.type();
-        return kind != CablePartType.INPUT && kind != CablePartType.RECEIVING;
+        return !ComputingParts.isCrafting(part.type());
     }
 
     public int min() {

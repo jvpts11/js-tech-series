@@ -10,6 +10,8 @@ package dev.jstech.computers.block.part;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.core.multipart.IFacePart;
+import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.text.GameText;
@@ -17,6 +19,7 @@ import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.List;
+import java.util.function.Supplier;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -34,12 +37,13 @@ import net.minecraft.world.level.block.SoundType;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A part item: right-clicking a data cable attaches an {@link ICablePart} of this item's type to one of the cable's faces, like an AE2 bus snapping onto a cable.
+ * A part item: right-clicking a data cable attaches an {@link IFacePart} of this item's type to one of the cable's
+ * faces, like an AE2 bus snapping onto a cable.
  */
 @TextHolder
 public class CablePartItem extends Item {
 
-    private final CablePartType type;
+    private final Supplier<? extends PartType<?>> type;
 
     private static final TextKey IMPORT_TOOLTIP = TextKey.of("item.jsc.import_bus.tooltip",
             "Right-click a data cable to attach; pulls items into the network");
@@ -54,7 +58,7 @@ public class CablePartItem extends Item {
     private static final TextKey ON_DATA_CABLES = TextKey.of("item.jsc.bus.on_data_cables",
             "Storage buses mount on data cables");
 
-    public CablePartItem(final Properties properties, final CablePartType type) {
+    public CablePartItem(final Properties properties, final Supplier<? extends PartType<?>> type) {
         super(properties);
         this.type = type;
     }
@@ -62,12 +66,17 @@ public class CablePartItem extends Item {
     @Override
     public void appendHoverText(final ItemStack stack, final TooltipContext context,
                                 final List<Component> tooltip, final TooltipFlag flag) {
-        final TextKey what = switch (type) {
-            case IMPORT -> IMPORT_TOOLTIP;
-            case EXPORT -> EXPORT_TOOLTIP;
-            case INPUT -> INPUT_TOOLTIP;
-            case RECEIVING -> RECEIVING_TOOLTIP;
-        };
+        final PartType<?> kind = type.get();
+        final TextKey what;
+        if (kind == ComputingParts.IMPORT.get()) {
+            what = IMPORT_TOOLTIP;
+        } else if (kind == ComputingParts.EXPORT.get()) {
+            what = EXPORT_TOOLTIP;
+        } else if (kind == ComputingParts.INPUT.get()) {
+            what = INPUT_TOOLTIP;
+        } else {
+            what = RECEIVING_TOOLTIP;
+        }
         tooltip.add(GameText.component(what).withStyle(ChatFormatting.GRAY));
     }
 
@@ -129,7 +138,7 @@ public class CablePartItem extends Item {
          * crafting cable would autonomously move items the crafting engine is accounting for (and vice versa
          * the crafting buses are inert), so a mismatched mount is refused with a hint instead.
          */
-        final boolean craftingPart = type == CablePartType.INPUT || type == CablePartType.RECEIVING;
+        final boolean craftingPart = ComputingParts.isCrafting(type.get());
         final boolean craftingCable =
                 cable.tier() == DataTier.CRAFTING;
         if (craftingPart != craftingCable) {
@@ -140,9 +149,8 @@ public class CablePartItem extends Item {
             return InteractionResult.FAIL;
         }
         if (!level.isClientSide()) {
-            cable.addPart(face, type.create());
-            if (level instanceof ServerLevel server && context.getPlayer() != null
-                    && (type == CablePartType.IMPORT || type == CablePartType.EXPORT)) {
+            cable.addPart(face, type.get().create());
+            if (level instanceof ServerLevel server && context.getPlayer() != null && !craftingPart) {
                 reportPair(server, cable, context.getPlayer());
             }
             level.playSound(null, cable.getBlockPos(), SoundType.METAL.getPlaceSound(),
@@ -190,7 +198,8 @@ public class CablePartItem extends Item {
 
     /* An Import Bus and an Export Bus on one network: items now come in and go out on their own. */
     private void reportPair(final ServerLevel level, final DataCableBlockEntity placedOn, final Player player) {
-        final CablePartType other = type == CablePartType.IMPORT ? CablePartType.EXPORT : CablePartType.IMPORT;
+        final PartType<?> other = type.get() == ComputingParts.IMPORT.get()
+                ? ComputingParts.EXPORT.get() : ComputingParts.IMPORT.get();
         final NetworkSystem system = NetworkSystem.get(level);
         final NetworkUuid network = system.connectivity().networkOf(placedOn.getBlockPos().asLong()).orElse(null);
         if (network == null) {
@@ -199,7 +208,7 @@ public class CablePartItem extends Item {
         for (final long encoded : system.connectivity().positionsOf(network)) {
             if (level.getBlockEntity(BlockPos.of(encoded)) instanceof DataCableBlockEntity cable) {
                 for (final Direction face : Direction.values()) {
-                    final ICablePart part = cable.getPart(face);
+                    final IFacePart part = cable.getPart(face);
                     if (part != null && part.type() == other) {
                         JscEvents.award(player, JscEvents.BUSES_PAIRED);
                         return;

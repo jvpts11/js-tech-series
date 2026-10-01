@@ -1,7 +1,3 @@
-CablePartType.CablePartType EXPORT (1, TextKey.of("jsc.bus.kind.export", "Export"))
-CablePartType.CablePartType IMPORT (0, TextKey.of("jsc.bus.kind.import", "Import"))
-CablePartType.CablePartType INPUT (2, TextKey.of("jsc.bus.kind.input", "Input"))
-CablePartType.CablePartType RECEIVING (3, TextKey.of("jsc.bus.kind.receiving", "Receiving"))
 CliStyle.CliStyle ACCENT (7)
 CliStyle.CliStyle BLUE (11)
 CliStyle.CliStyle BRIGHT (14)

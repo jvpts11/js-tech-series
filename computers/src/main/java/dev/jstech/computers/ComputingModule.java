@@ -53,7 +53,7 @@ import dev.jstech.computers.block.VintageMonitorBlock;
 import dev.jstech.computers.block.VintagePersonalComputerBlock;
 import dev.jstech.computers.block.VintageServerRackBlock;
 import dev.jstech.computers.block.part.CablePartItem;
-import dev.jstech.computers.block.part.CablePartType;
+import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
@@ -122,6 +122,7 @@ import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemBuilder;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.content.ModContent;
+import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.tier.IndustrialTier;
@@ -130,6 +131,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -448,13 +450,13 @@ public final class ComputingModule {
     // Interaction buses: parts mounted on a cable's face that move items between the network and an inventory.
 
     public static final ItemEntry<CablePartItem> IMPORT_BUS_ITEM =
-            bus("import_bus", CablePartType.IMPORT, "block/import_bus_part").named("Import Bus").register();
+            bus("import_bus", ComputingParts.IMPORT, "block/import_bus_part").named("Import Bus").register();
     public static final ItemEntry<CablePartItem> EXPORT_BUS_ITEM =
-            bus("export_bus", CablePartType.EXPORT, "block/export_bus_part").named("Export Bus").register();
+            bus("export_bus", ComputingParts.EXPORT, "block/export_bus_part").named("Export Bus").register();
     public static final ItemEntry<CablePartItem> INPUT_BUS_ITEM =
-            bus("input_bus", CablePartType.INPUT, "block/export_bus_part").named("Crafting Input Bus").register();
+            bus("input_bus", ComputingParts.INPUT, "block/export_bus_part").named("Crafting Input Bus").register();
     public static final ItemEntry<CablePartItem> RECEIVING_BUS_ITEM =
-            bus("receiving_bus", CablePartType.RECEIVING, "block/import_bus_part").named("Crafting Receiving Bus")
+            bus("receiving_bus", ComputingParts.RECEIVING, "block/import_bus_part").named("Crafting Receiving Bus")
                     .register();
 
     /*
@@ -769,7 +771,8 @@ public final class ComputingModule {
     }
 
     /** A bus's item shows the part it mounts as. */
-    private static ItemBuilder<CablePartItem> bus(final String id, final CablePartType type, final String model) {
+    private static ItemBuilder<CablePartItem> bus(final String id, final Supplier<? extends PartType<?>> type,
+                                                  final String model) {
         return CONTENT.item(id, properties -> new CablePartItem(properties, type))
                 .look(IItemLook.parent(model)).tab(RACKS);
     }

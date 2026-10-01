@@ -13,6 +13,7 @@ import dev.jstech.computers.advancement.PendingAwards;
 import dev.jstech.computers.advancement.ProgramTravels;
 import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.computers.audio.MusicImports;
+import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.audio.catalog.SoundfoundryCatalog;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.integration.mekanism.MekanismIntegration;
@@ -63,6 +64,8 @@ public class JsComputers {
         modEventBus.addListener(FMLLoadCompleteEvent.class, event -> event.enqueueWork(OsRegistry::freeze));
 
         ComputingModule.register(modEventBus);
+        // The buses mounted on cables, registered with the Core's parts.
+        ComputingParts.register(modEventBus);
         MachineOperators.register(modEventBus);
         ProgramTravels.register(modEventBus);
         // What each player earned while away, kept with the world until they join.

@@ -11,6 +11,8 @@ import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.storage.ChemicalBridges;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.multipart.IFacePart;
+import dev.jstech.core.multipart.IPartHost;
 import dev.jstech.core.util.Utf8Text;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -30,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * hysteresis, and a continuous/redstone mode) over a data cable face. Only the per-tick transfer direction
  * differs, which each subclass supplies in {@link #serverTick()}.
  */
-public abstract sealed class AbstractBusPart implements ICablePart permits ImportBusPart, ExportBusPart {
+public abstract sealed class AbstractBusPart implements IFacePart permits ImportBusPart, ExportBusPart {
 
     public static final int MODE_CONTINUOUS = 0;
     public static final int MODE_REDSTONE = 1;
@@ -61,8 +63,11 @@ public abstract sealed class AbstractBusPart implements ICablePart permits Impor
     protected String name = "";
 
     @Override
-    public void attach(final DataCableBlockEntity host, final Direction face) {
-        this.host = host;
+    public void attach(final IPartHost host, final Direction face) {
+        if (!(host instanceof DataCableBlockEntity cable)) {
+            throw new IllegalArgumentException("a bus mounts on a data cable, not on " + host);
+        }
+        this.host = cable;
         this.face = face;
     }
 
@@ -71,7 +76,7 @@ public abstract sealed class AbstractBusPart implements ICablePart permits Impor
         return true;
     }
 
-    /** Builds this bus's configuration menu, dispatched by {@link CablePartType} so the cable stays generic. */
+    /** Builds this bus's configuration menu, each bus its own, so the cable stays generic. */
     public abstract AbstractContainerMenu createMenu(int containerId, Inventory inventory,
                                                      DataCableBlockEntity cable, Direction mountedFace);
 

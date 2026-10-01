@@ -65,6 +65,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   joins through it ask the same ports, so they never disagree. A block entity hears which of its faces saw its
   neighbour change, and a block's faces can tell which of the eight blocks around them in their plane they join, for
   textures that run across many blocks.
+- Multipart blocks, in J's Core: thin parts mounted on a block's six faces, one a face, whose kinds any mod registers
+  with the Core, and a bundle of up to nine wires through the block's middle beside them, each wire a line in one
+  generation and one colour or none. A block keeps its parts and wires as fields of its block entity; they are
+  saved whole, and the players who see the block are sent only what draws it. Which part a player points at is
+  worked out the same way for every block. J's Computers' buses are now parts of the Core's.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,

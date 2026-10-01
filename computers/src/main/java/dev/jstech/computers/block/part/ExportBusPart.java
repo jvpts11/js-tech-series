@@ -16,6 +16,7 @@ import dev.jstech.computers.operation.NetworkSelectOperation;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -34,8 +35,8 @@ public non-sealed class ExportBusPart extends AbstractBusPart {
     private int ticksSinceExport;
 
     @Override
-    public CablePartType type() {
-        return CablePartType.EXPORT;
+    public PartType<?> type() {
+        return ComputingParts.EXPORT.get();
     }
 
     @Override

@@ -9,8 +9,8 @@ package dev.jstech.computers;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.DataCableBlock;
-import dev.jstech.computers.block.part.ICablePart;
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.core.multipart.IFacePart;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -50,7 +50,7 @@ public final class CablePartBreakHandler {
             return; // aiming at the cable itself: let it break (its parts drop with it)
         }
         event.setCanceled(true);
-        final ICablePart removed = cable.removePart(face);
+        final IFacePart removed = cable.removePart(face);
         if (removed == null) {
             return;
         }

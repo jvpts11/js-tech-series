@@ -9,7 +9,8 @@ package dev.jstech.computers.crafting;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.part.AbstractBusPart;
-import dev.jstech.computers.block.part.CablePartType;
+import dev.jstech.computers.block.part.ComputingParts;
+import dev.jstech.core.multipart.PartType;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
@@ -161,8 +162,8 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
          * Sided machines route through crafting buses when present: an Input Bus aimed at the machine carries
          * the deliveries, a Receiving Bus the pickups. Without buses both ride the switch-touched face.
          */
-        final IDataPort inPort = portFor(CablePartType.INPUT);
-        final IDataPort outPort = portFor(CablePartType.RECEIVING);
+        final IDataPort inPort = portFor(ComputingParts.INPUT.get());
+        final IDataPort outPort = portFor(ComputingParts.RECEIVING.get());
         if (inPort.isEmpty() && outPort.isEmpty()) {
             machine = null; // the machine was broken/removed; re-resolve next tick
             return;
@@ -420,7 +421,7 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
                     instanceof DataCableBlockEntity cable
                     && cable.getPart(d.getOpposite())
                     instanceof AbstractBusPart bus
-                    && bus.type() == CablePartType.INPUT) {
+                    && bus.type() == ComputingParts.INPUT.get()) {
                 filters.add(bus.filterKey()); // null = an unfiltered bus, a wildcard
             }
         }
@@ -481,7 +482,7 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
      * key, so a machine fed two ingredients from two sides routes each to the correct face; an unfiltered bus
      * carries anything. Without a bus, the switch-touched face serves both directions.
      */
-    private IDataPort portFor(final CablePartType kind) {
+    private IDataPort portFor(final PartType<?> kind) {
         final List<IDataPort> faces = new ArrayList<>();
         for (final Direction d : Direction.values()) {
             final BlockPos cablePos = machine.machinePos().relative(d);
