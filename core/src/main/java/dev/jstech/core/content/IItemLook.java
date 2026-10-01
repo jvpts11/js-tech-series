@@ -32,6 +32,9 @@ public sealed interface IItemLook
     /** A cable's item: a length of the cable, as thick as it is, in its own jacket. */
     IItemLook CABLE = Standard.CABLE;
 
+    /** A fluid's bucket: the game's bucket with the fluid it holds drawn in it. */
+    IItemLook BUCKET = Standard.BUCKET;
+
     /** The model given, as it is: {@code "block/ethernet_cable_core"}. */
     static IItemLook parent(final String model) {
         return new Parent(model);
@@ -43,7 +46,8 @@ public sealed interface IItemLook
         FLAT,
         DRAWN_BY_ENTITY,
         HANDMADE,
-        CABLE
+        CABLE,
+        BUCKET
     }
 
     /** An item whose model is another model, unchanged. */

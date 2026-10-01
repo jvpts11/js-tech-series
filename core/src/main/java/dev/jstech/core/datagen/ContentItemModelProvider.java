@@ -15,10 +15,12 @@ import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.content.ModContent;
 import net.minecraft.data.PackOutput;
+import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.neoforged.neoforge.client.model.generators.ItemModelProvider;
 import net.neoforged.neoforge.client.model.generators.ModelFile;
+import net.neoforged.neoforge.client.model.generators.loaders.DynamicFluidContainerModelBuilder;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 
 /**
@@ -61,9 +63,23 @@ public final class ContentItemModelProvider extends ItemModelProvider {
                 // Written by hand beside the textures; nothing to generate.
             }
             case IItemLook.Standard.CABLE -> cable(id, item);
+            case IItemLook.Standard.BUCKET -> bucket(id, item);
             case IItemLook.Parent parent -> getBuilder(id)
                     .parent(new ModelFile.UncheckedModelFile(ContentFiles.named(modid, parent.model())));
         }
+    }
+
+    /* The game's bucket with its fluid drawn in, by NeoForge's fluid container model. */
+    private void bucket(final String id, final Item item) {
+        if (!(item instanceof BucketItem bucket)) {
+            throw new IllegalStateException(id + " is declared to look like a bucket and is none");
+        }
+        getBuilder(id)
+                .parent(new ModelFile.UncheckedModelFile("neoforge:item/bucket"))
+                .customLoader(DynamicFluidContainerModelBuilder::begin)
+                .fluid(bucket.content)
+                .applyTint(true)
+                .end();
     }
 
     /* A length of the cable in its own jacket, from the Core's model of a cable as thick as it is. */

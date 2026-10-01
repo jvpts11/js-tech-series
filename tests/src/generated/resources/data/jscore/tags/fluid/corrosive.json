@@ -1,0 +1,6 @@
+{
+  "values": [
+    "jstests:test_acid",
+    "jstests:flowing_test_acid"
+  ]
+}

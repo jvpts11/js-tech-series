@@ -11,6 +11,7 @@ import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.config.ConfigTexts;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ContentTab;
+import dev.jstech.core.content.FluidEntry;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.text.TextKey;
@@ -54,6 +55,9 @@ public final class ContentLanguageProvider extends LanguageProvider {
         }
         for (final ItemEntry<?> item : content.declaredItems()) {
             add(item.get().getDescriptionId(), item.english());
+        }
+        for (final FluidEntry fluid : content.declaredFluids()) {
+            add(fluid.type().getDescriptionId(), fluid.english());
         }
         for (final SoundKey sound : content.declaredSounds()) {
             add(sound.subtitle().key(), sound.subtitle().english());

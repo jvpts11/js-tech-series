@@ -39,13 +39,16 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.Fluid;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
+import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.registries.DataPackRegistryEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -73,9 +76,12 @@ public final class ModContent {
     private final List<DeferredHolder<BlockEntityType<?>, ? extends BlockEntityType<?>>> declaredBlockEntities =
             new ArrayList<>();
     private final List<CableEntry> declaredCables = new ArrayList<>();
+    private final List<FluidEntry> declaredFluids = new ArrayList<>();
     private final List<Consumer<DataPackRegistryEvent.NewRegistry>> datapackRegistries = new ArrayList<>();
     private @Nullable DeferredRegister<CableType> cables;
     private DeferredRegister.@Nullable DataComponents components;
+    private @Nullable DeferredRegister<FluidType> fluidTypes;
+    private @Nullable DeferredRegister<Fluid> fluids;
 
     /* Every mod's content, by mod id, in the order the mods made theirs. */
     private static final Map<String, ModContent> BY_MOD = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -125,6 +131,11 @@ public final class ModContent {
     /** Starts declaring an item that is not a block's, made from its properties. */
     public <I extends Item> ItemBuilder<I> item(final String id, final Function<Item.Properties, ? extends I> factory) {
         return new ItemBuilder<>(this, id, factory);
+    }
+
+    /** Starts declaring a fluid: its type, its still and flowing fluid, and for a liquid its block and bucket. */
+    public FluidBuilder fluid(final String id) {
+        return new FluidBuilder(this, id);
     }
 
     /** Starts declaring a cable laid in the Core's cable block, and the item that lays it, under one id. */
@@ -199,6 +210,11 @@ public final class ModContent {
         return Collections.unmodifiableList(declaredCables);
     }
 
+    /** The fluids declared so far, in declaration order. */
+    public List<FluidEntry> declaredFluids() {
+        return Collections.unmodifiableList(declaredFluids);
+    }
+
     /**
      * Declares a component the mod's items can carry, saved with {@code codec} and sent to players with
      * {@code streamCodec}; an item starts with it through {@link ItemBuilder#component}.
@@ -233,6 +249,10 @@ public final class ModContent {
         if (components != null) {
             components.register(modEventBus);
         }
+        if (fluidTypes != null) {
+            fluidTypes.register(modEventBus);
+            fluids.register(modEventBus);
+        }
         if (!datapackRegistries.isEmpty()) {
             modEventBus.addListener(DataPackRegistryEvent.NewRegistry.class,
                     event -> datapackRegistries.forEach(registry -> registry.accept(event)));
@@ -250,6 +270,23 @@ public final class ModContent {
 
     void declare(final CableEntry entry) {
         declaredCables.add(entry);
+    }
+
+    DeferredRegister<FluidType> fluidTypeRegister() {
+        if (fluidTypes == null) {
+            fluidTypes = DeferredRegister.create(NeoForgeRegistries.Keys.FLUID_TYPES, modid);
+            fluids = DeferredRegister.create(Registries.FLUID, modid);
+        }
+        return fluidTypes;
+    }
+
+    DeferredRegister<Fluid> fluidRegister() {
+        fluidTypeRegister();
+        return fluids;
+    }
+
+    void declare(final FluidEntry entry) {
+        declaredFluids.add(entry);
     }
 
     DeferredRegister.Blocks blockRegister() {

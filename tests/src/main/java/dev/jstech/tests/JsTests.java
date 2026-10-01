@@ -37,6 +37,8 @@ public final class JsTests {
         TestBlocks.declare();
         // Items that hold everything an item can, to prove the Core's items with state.
         TestItems.declare();
+        // A corrosive liquid and a hot gas, to prove the Core's fluids and pipes.
+        TestFluids.declare();
         // A registry datapacks fill and notes read from datapack files, both sent to the players.
         TestData.declare();
         TestSounds.CONTENT.register(modEventBus);

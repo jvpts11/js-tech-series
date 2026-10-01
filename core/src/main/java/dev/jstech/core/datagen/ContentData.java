@@ -52,6 +52,9 @@ public final class ContentData {
         data.client(new ContentCueProvider(output, content));
         data.server(new ContentLootProvider(output, data.lookup(), content));
         data.server(new ContentBlockTagsProvider(output, data.lookup(), content, data.existingFiles()));
+        if (!content.declaredFluids().isEmpty()) {
+            data.server(new ContentFluidTagsProvider(output, data.lookup(), content, data.existingFiles()));
+        }
         data.server(new RecipeMachinesProvider(output, content));
         return data;
     }

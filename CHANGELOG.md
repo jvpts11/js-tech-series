@@ -131,6 +131,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   amount a bus can read; what each face of a block lets through (closed, in, out, or both), named from the block's
   own point of view so it turns with the block; and moves of items, fluid and energy from one store to another that
   never lose anything on the way, into an item's own inventory as well.
+- Fluids declared in J's Core: a mod declares a fluid once, with its name, its textures and tint, how hot, heavy and
+  thick it is and how bright it glows, and the Core registers its type, its still and flowing fluid and, for a liquid,
+  the block it pours as and its bucket, drawn with the fluid inside; the generator writes their names, the bucket's
+  model and the fluid's tags. A gas is lighter than air, never poured into the world nor held in a bucket, only kept
+  in tanks; it is tagged a gas for the Core and for other mods. A fluid can be marked corrosive.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,

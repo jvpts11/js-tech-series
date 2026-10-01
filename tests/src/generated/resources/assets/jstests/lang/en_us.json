@@ -1,7 +1,11 @@
 {
   "block.jstests.connected_panel": "Connected panel",
+  "block.jstests.test_acid": "Test Acid",
+  "fluid_type.jstests.test_acid": "Test Acid",
+  "fluid_type.jstests.test_gas": "Test Gas",
   "item.jstests.full_tool": "Full Test Tool",
   "item.jstests.modes_tool": "Modes Test Tool",
+  "item.jstests.test_acid_bucket": "Test Acid Bucket",
   "itemGroup.jstests.tests": "Test Items",
   "jstests.audio_device.buzzer": "Test buzzer",
   "jstests.mode.clear": "Clear",

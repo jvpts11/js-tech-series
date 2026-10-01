@@ -1,0 +1,6 @@
+{
+  "parent": "neoforge:item/bucket",
+  "apply_tint": true,
+  "fluid": "jstests:test_acid",
+  "loader": "neoforge:fluid_container"
+}

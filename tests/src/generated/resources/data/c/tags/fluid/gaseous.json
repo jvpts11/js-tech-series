@@ -1,0 +1,6 @@
+{
+  "values": [
+    "jstests:test_gas",
+    "jstests:flowing_test_gas"
+  ]
+}
