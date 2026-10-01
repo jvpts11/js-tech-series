@@ -131,7 +131,7 @@ public final class ColumnHeader extends UiComponent {
 
     @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
-        g.fill(x(), y(), right(), bottom(), ctx.skin().listHover());
+        Grounds.fill(g, x(), y(), right(), bottom(), ctx.skin().listHover());
         g.fill(x(), bottom() - 1, right(), bottom(), ctx.skin().edge());
         final String arrow = ascending ? " ^" : " v";
         for (int i = 0; i < labels.size() && i < columnX.length; i++) {
@@ -139,8 +139,8 @@ public final class ColumnHeader extends UiComponent {
             if (i > 0) {
                 g.fill(columnX[i] - 3, y() + 1, columnX[i] - 2, bottom() - 1, ctx.skin().edge());
             }
-            g.drawString(ctx.font(), labels.get(i) + (sortable && i == sortColumn ? arrow : ""), columnX[i], y() + 1,
-                    ctx.skin().dim(), false);
+            Draw.text(g, ctx.font(), labels.get(i) + (sortable && i == sortColumn ? arrow : ""), columnX[i], y() + 1,
+                    ctx.skin().dim(), ctx.skin().listHover());
         }
     }
 

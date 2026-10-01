@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.client.gui.screen;
 
+import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -67,11 +69,11 @@ public final class ModalDialog extends Screen {
         this.renderBackground(graphics, mouseX, mouseY, partialTick);
         // Dim the parent further with a translucent overlay.
         final ScreenPalette.Colours colours = ScreenPalette.get();
-        graphics.fill(0, 0, this.width, this.height, colours.dialogDim());
-        graphics.drawCenteredString(
-                this.font, this.title, this.width / 2, this.height / 2 - 30, colours.dialogTitle());
-        graphics.drawCenteredString(
-                this.font, this.message, this.width / 2, this.height / 2 - 10, colours.dialogMessage());
+        Grounds.fill(graphics, 0, 0, this.width, this.height, colours.dialogDim());
+        Draw.textCentered(graphics, this.font, this.title, this.width / 2, this.height / 2 - 30,
+                colours.dialogTitle());
+        Draw.textCentered(graphics, this.font, this.message, this.width / 2, this.height / 2 - 10,
+                colours.dialogMessage());
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 

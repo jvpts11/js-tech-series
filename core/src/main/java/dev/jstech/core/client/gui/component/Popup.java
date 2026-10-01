@@ -124,10 +124,10 @@ public class Popup extends Panel {
     @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
         ctx.skin().windowFrame(g, x(), y(), width(), height());
-        g.fill(x() + 1, y() + 1, right() - 1, bottom() - 1, ctx.skin().windowBg());
+        Grounds.fill(g, x() + 1, y() + 1, right() - 1, bottom() - 1, ctx.skin().windowBg());
         final String text = title.get();
         if (!text.isEmpty()) {
-            g.drawString(ctx.font(), text, x() + TITLE_X, y() + TITLE_Y, ctx.skin().text(), false);
+            Draw.text(g, ctx.font(), text, x() + TITLE_X, y() + TITLE_Y, ctx.skin().text(), ctx.skin().windowBg());
         }
         super.render(g, ctx);
     }

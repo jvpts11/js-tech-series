@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.gui.theme;
 
+import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.palette.Palette;
 import java.util.function.Supplier;
 import net.minecraft.client.gui.GuiGraphics;
@@ -125,7 +126,7 @@ public final class EraTheme {
     public void window(final GuiGraphics g, final int x, final int y, final int w, final int h) {
         final EraPalette p = colours.get();
         g.fill(x - 1, y - 1, x + w + 1, y + h + 1, p.outer());
-        g.fill(x, y, x + w, y + h, p.screen());
+        Grounds.fill(g, x, y, x + w, y + h, p.screen());
         /*
          * Double-bevel themes (e.g., Legacy) draw a raised 3D frame just inside the outer border,
          * giving the window the "dialog box" look authentic to the era.
@@ -142,13 +143,13 @@ public final class EraTheme {
     public void slot(final GuiGraphics g, final int x, final int y) {
         final EraPalette p = colours.get();
         g.fill(x - 1, y - 1, x + 17, y + 17, p.slotEdge());
-        g.fill(x, y, x + 16, y + 16, p.slotBg());
+        Grounds.fill(g, x, y, x + 16, y + 16, p.slotBg());
         bevel(g, p, x, y, 18, 18, true);
     }
 
     public void panel(final GuiGraphics g, final int x, final int y, final int w, final int h) {
         final EraPalette p = colours.get();
-        g.fill(x, y, x + w, y + h, p.panel());
+        Grounds.fill(g, x, y, x + w, y + h, p.panel());
         g.fill(x, y, x + w, y + 1, p.line());
         // Panels use a sunken bevel (inverted edges) on double-bevel themes to convey a recessed display area.
         bevelSunken(g, p, x, y, w, h);
@@ -164,7 +165,7 @@ public final class EraTheme {
 
     public void headerBar(final GuiGraphics g, final int cx, final int cy, final int cw) {
         final EraPalette p = colours.get();
-        g.fill(cx, cy, cx + cw, cy + 16, s.glassBands() ? p.tabOn() : p.panel());
+        Grounds.fill(g, cx, cy, cx + cw, cy + 16, s.glassBands() ? p.tabOn() : p.panel());
         sheen(g, p, cx, cy, cw, 16);
         g.fill(cx, cy + 16, cx + cw, cy + 17, s.accentRule() ? p.accent() : p.line());
     }
@@ -172,7 +173,7 @@ public final class EraTheme {
     public void button(final GuiGraphics g, final int x, final int y, final int w, final int h,
                        final boolean hovered) {
         final EraPalette p = colours.get();
-        g.fill(x, y, x + w, y + h, hovered ? p.hover() : p.panel());
+        Grounds.fill(g, x, y, x + w, y + h, hovered ? p.hover() : p.panel());
         sheen(g, p, x, y, w, h);
         g.fill(x, y, x + w, y + 1, p.line());
         bevel(g, p, x, y, w, h, !hovered);
@@ -181,7 +182,7 @@ public final class EraTheme {
     /** The ground of the selected tab, which its label is drawn over in {@link #tabLabelOn()}. */
     public void selectedTab(final GuiGraphics g, final int x, final int y, final int w, final int h) {
         final EraPalette p = colours.get();
-        g.fill(x, y, x + w, y + h, p.tabOn());
+        Grounds.fill(g, x, y, x + w, y + h, p.tabOn());
         sheen(g, p, x, y, w, h);
     }
 

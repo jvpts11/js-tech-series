@@ -73,8 +73,8 @@ public final class Button extends UiComponent {
             ctx.skin().button(g, ctx.font(), x(), y(), width(), height(), "", hovered(ctx), pressed, primary);
             final int tw = Math.round(ctx.font().width(text) * labelScale);
             final int th = Math.round(7 * labelScale);
-            Texts.scaled(g, ctx.font(), text, x() + (width() - tw) / 2, y() + (height() - th) / 2 + (pressed ? 1 : 0),
-                    labelScale, ctx.skin().text());
+            Draw.textScaled(g, ctx.font(), text, x() + (width() - tw) / 2,
+                    y() + (height() - th) / 2 + (pressed ? 1 : 0), ctx.skin().text(), labelScale);
         }
         if (!enabled()) {
             Draw.disabled(g, x(), y(), width(), height());

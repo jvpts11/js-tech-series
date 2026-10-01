@@ -12,6 +12,8 @@ import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.CdeScheme;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.client.gui.skin.ISkin;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -383,15 +385,16 @@ public final class OsSkin implements ISkin {
     public void button(final GuiGraphics g, final Font font, final int x, final int y, final int w, final int h,
                        final String label, final boolean hovered, final boolean pressed, final boolean primary) {
         chrome.button(g, this, x, y, w, h, hovered, pressed, primary);
-        g.drawString(font, label, x + (w - font.width(label)) / 2, y + (h - 7) / 2 + (pressed ? 1 : 0),
-                chrome.buttonText(this, primary), false);
+        // The chrome says what face it painted, and the label is shadowed by that.
+        Draw.text(g, font, label, x + (w - font.width(label)) / 2, y + (h - 7) / 2 + (pressed ? 1 : 0),
+                chrome.buttonText(this, primary));
     }
 
     /** A text input field. */
     @Override
     public void field(final GuiGraphics g, final int x, final int y, final int w, final int h,
                       final boolean focused) {
-        g.fill(x, y, x + w, y + h, fieldBg());
+        Grounds.fill(g, x, y, x + w, y + h, fieldBg());
         chrome.field(g, this, x, y, w, h, focused);
     }
 
@@ -400,8 +403,7 @@ public final class OsSkin implements ISkin {
     public void tab(final GuiGraphics g, final Font font, final int x, final int y, final int w, final int h,
                     final String label, final boolean active) {
         chrome.tab(g, this, x, y, w, h, active);
-        g.drawString(font, label, x + (w - font.width(label)) / 2, y + (h - 7) / 2, chrome.tabText(this, active),
-                false);
+        Draw.text(g, font, label, x + (w - font.width(label)) / 2, y + (h - 7) / 2, chrome.tabText(this, active));
     }
 
     /** A list/grid row background for the hover and selection states. */
@@ -409,12 +411,12 @@ public final class OsSkin implements ISkin {
     public void listRow(final GuiGraphics g, final int x, final int y, final int w, final int h,
                         final boolean hovered, final boolean selected) {
         if (selected) {
-            g.fill(x, y, x + w, y + h, listSelect());
+            Grounds.fill(g, x, y, x + w, y + h, listSelect());
             if (chrome.selectionBar()) {
                 g.fill(x, y, x + 3, y + h, accent());
             }
         } else if (hovered) {
-            g.fill(x, y, x + w, y + h, listHover());
+            Grounds.fill(g, x, y, x + w, y + h, listHover());
         }
     }
 

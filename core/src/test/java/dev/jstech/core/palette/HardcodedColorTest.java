@@ -44,6 +44,8 @@ class HardcodedColorTest {
      * is exact, so a colour added next to them is still caught.
      */
     private static final Map<String, Data> DATA = Map.of(
+            "core/src/main/java/dev/jstech/core/gui/TextShadow.java", new Data(2,
+                    "the two ends of the grey scale, which an undeclared ground is taken to be; not a look"),
             "computers/src/main/java/dev/jstech/computers/os/fs/PixImage.java", new Data(16,
                     "the colours the in-game image format stores its pixels as: a file's contents, not the look"),
             "computers/src/main/java/dev/jstech/computers/program/install/voice/KernelVoices.java", new Data(2,

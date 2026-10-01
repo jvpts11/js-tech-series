@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.core.client.gui.component.Grounds;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -37,6 +38,14 @@ final class ChromeShapes {
             final int inset = bottom - i;
             g.fill(x + inset, y + h - i - 1, x + w - inset, y + h - i, color);
         }
+        Grounds.declare(g, x, y, x + w, y + h, color);
+    }
+
+    /** A top-to-bottom gradient fill, said to be the tone of its middle, which is what text on it is shadowed by. */
+    static void vGradient(final GuiGraphics g, final int x1, final int y1, final int x2, final int y2, final int top,
+                          final int bottom) {
+        g.fillGradient(x1, y1, x2, y2, top, bottom);
+        Grounds.declare(g, x1, y1, x2, y2, middle(top, bottom));
     }
 
     /**
@@ -80,6 +89,7 @@ final class ChromeShapes {
             final int cb = (int) (lb + (rb - lb) * t);
             g.fill(x + i, y, x + Math.min(w, i + 2), y + h, OPAQUE | cr << 16 | cg << 8 | cb);
         }
+        Grounds.declare(g, x, y, x + w, y + h, OPAQUE | middle(left, right));
     }
 
     /** A 1px outline of a single colour. */
@@ -138,5 +148,14 @@ final class ChromeShapes {
         final int gg = Math.max(0, (argb >> 8 & 0xFF) - 28);
         final int b = Math.max(0, (argb & 0xFF) - 28);
         return OPAQUE | r << 16 | gg << 8 | b;
+    }
+
+    /* The colour half way between two, channel by channel, alpha included. */
+    private static int middle(final int a, final int b) {
+        int out = 0;
+        for (int shift = 0; shift <= 24; shift += 8) {
+            out |= (((a >>> shift & 0xFF) + (b >>> shift & 0xFF)) / 2) << shift;
+        }
+        return out;
     }
 }

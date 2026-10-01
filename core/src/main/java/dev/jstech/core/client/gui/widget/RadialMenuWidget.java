@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.gui.widget;
 
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.logic.RadialGeometry;
 
 import net.minecraft.client.Minecraft;
@@ -87,10 +88,7 @@ public final class RadialMenuWidget extends AbstractWidget {
             final int ly = centerY() - (int) Math.round(Math.cos(midAngle) * labelRadius);
             final int color = (i == selectedSegment) ? WidgetPalette.get().radialChosen()
                     : WidgetPalette.get().radialLabel();
-            graphics.drawCenteredString(
-                    Minecraft.getInstance().font,
-                    segmentLabels.get(i),
-                    lx, ly - 4, color);
+            Draw.textCentered(graphics, Minecraft.getInstance().font, segmentLabels.get(i), lx, ly - 4, color);
         }
     }
 

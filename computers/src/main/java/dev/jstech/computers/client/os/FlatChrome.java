@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -90,7 +91,7 @@ final class FlatChrome implements IFormChrome {
     @Override
     public void panel(final GuiGraphics g, final OsSkin skin, final int x, final int y, final int w, final int h) {
         final Colours c = this.palette.get();
-        g.fill(x, y, x + w, y + h, c.panel());
+        Grounds.fill(g, x, y, x + w, y + h, c.panel());
         ChromeShapes.outline(g, x, y, w, h, c.edge());
     }
 
@@ -151,7 +152,7 @@ final class FlatChrome implements IFormChrome {
     public void statusBar(final GuiGraphics g, final OsSkin skin, final int x, final int y, final int w,
                           final int h) {
         final Colours c = this.palette.get();
-        g.fill(x, y, x + w, y + h, c.statusBar());
+        Grounds.fill(g, x, y, x + w, y + h, c.statusBar());
         g.fill(x, y, x + w, y + 1, c.edge());
     }
 

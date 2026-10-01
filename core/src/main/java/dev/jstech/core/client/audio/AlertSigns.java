@@ -103,7 +103,7 @@ public final class AlertSigns {
         g.fill(x - 1, y - 1, x + width + 1, y + HEIGHT + 1, colours.border());
         g.fill(x, y, x + width, y + HEIGHT, colours.ground());
         g.fill(x + 4, y + 3, x + 13, y + 12, colours.border());
-        g.drawString(font, MARK, x + 8, y + 4, colours.mark(), false);
+        Draw.text(g, font, MARK, x + 8, y + 4, colours.mark(), colours.border());
         Draw.text(g, font, sign.label(), x + 17, y + 4, colours.text(), colours.ground());
         if (direction > 0) {
             Draw.text(g, font, RIGHT, x + width - 3 - arrow, y + 4, colours.arrow(), colours.ground());

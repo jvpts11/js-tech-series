@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.menu.DesktopMenu;
+import dev.jstech.core.client.gui.component.Grounds;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -43,8 +44,18 @@ public final class OffscreenDesktop implements DesktopSurface {
         this.width = areaWidth;
         this.height = areaHeight;
         final DesktopViewport view = state.view();
-        return state.paint(g, (int) Math.floor(view.localX(mouseX)), (int) Math.floor(view.localY(mouseY)),
-                partialTick);
+        /*
+         * The grounds this desktop declares are in the units of the picture it is drawn into, not the screen's: they
+         * start from none and are forgotten once it is drawn, so neither another monitor's nor the screen's text reads
+         * them as its own.
+         */
+        Grounds.clear();
+        try {
+            return state.paint(g, (int) Math.floor(view.localX(mouseX)), (int) Math.floor(view.localY(mouseY)),
+                    partialTick);
+        } finally {
+            Grounds.clear();
+        }
     }
 
     /** What the desktop lists as things it can start, in the order its launcher shows them. */

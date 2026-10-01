@@ -129,6 +129,7 @@ public class TextField extends UiComponent {
         ctx.skin().field(g, x(), y(), width(), height(), focused);
         final String shown = focused ? state.edit() : state.value();
         final int textY = y() + (height() - 7) / 2;
+        final int ground = ctx.skin().fieldBg();
         if (focused) {
             /*
              * The caret has to stay in view: when the text is wider than the field, what is shown is
@@ -154,20 +155,21 @@ public class TextField extends UiComponent {
                     g.fill(sx, textY - 1, ex, textY + 8, ComponentPalette.get().selection());
                 }
             }
-            g.drawString(ctx.font(), visible, x() + 3, textY, ctx.skin().text(), false);
+            Draw.text(g, ctx.font(), visible, x() + 3, textY, ctx.skin().text(), ground);
             final int caretX = x() + 3 + ctx.font().width(shown.substring(offset, caret));
             g.fill(caretX, textY - 1, caretX + 1, textY + 8, ctx.skin().text());
             if (!tail.isEmpty()) {
-                g.drawString(ctx.font(), tail, x() + 3 + ctx.font().width(visible) + 1, textY, ctx.skin().dim(), false);
+                Draw.text(g, ctx.font(), tail, x() + 3 + ctx.font().width(visible) + 1, textY, ctx.skin().dim(),
+                        ground);
             }
             return;
         }
         if (shown.isEmpty()) {
-            g.drawString(ctx.font(), Texts.clip(ctx.font(), placeholder.get(), width() - 6), x() + 3, textY,
-                    ctx.skin().dim(), false);
+            Draw.text(g, ctx.font(), Texts.clip(ctx.font(), placeholder.get(), width() - 6), x() + 3, textY,
+                    ctx.skin().dim(), ground);
         } else {
-            g.drawString(ctx.font(), Texts.clip(ctx.font(), shown, width() - 6), x() + 3, textY,
-                    ctx.skin().text(), false);
+            Draw.text(g, ctx.font(), Texts.clip(ctx.font(), shown, width() - 6), x() + 3, textY,
+                    ctx.skin().text(), ground);
         }
     }
 

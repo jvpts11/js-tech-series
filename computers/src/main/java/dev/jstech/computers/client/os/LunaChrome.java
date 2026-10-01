@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -60,13 +61,13 @@ final class LunaChrome implements IFormChrome {
         final int radius = skin.topRadius();
         if (!active) {
             ChromeShapes.roundedRect(g, x, y, w, h, c.idleTitle(), radius, 0);
-            g.fillGradient(x, y + radius, x + w, y + h, c.idleTitleFrom(), c.idleTitleTo());
+            ChromeShapes.vGradient(g, x, y + radius, x + w, y + h, c.idleTitleFrom(), c.idleTitleTo());
             return;
         }
         // A smooth two-stop vertical gradient with a bright top gloss line, closer to the Luna glass.
         ChromeShapes.roundedRect(g, x, y, w, h, c.title(), radius, 0);
-        g.fillGradient(x, y + radius, x + w, y + h / 2, c.titleCrownFrom(), c.titleCrownTo());
-        g.fillGradient(x, y + h / 2, x + w, y + h, c.titleBaseFrom(), c.titleBaseTo());
+        ChromeShapes.vGradient(g, x, y + radius, x + w, y + h / 2, c.titleCrownFrom(), c.titleCrownTo());
+        ChromeShapes.vGradient(g, x, y + h / 2, x + w, y + h, c.titleBaseFrom(), c.titleBaseTo());
         g.fill(x + radius, y + 1, x + w - radius, y + 2, c.titleGloss());
         g.fill(x, y + h - 1, x + w, y + h, c.titleShade());
     }
@@ -93,7 +94,7 @@ final class LunaChrome implements IFormChrome {
     @Override
     public void panel(final GuiGraphics g, final OsSkin skin, final int x, final int y, final int w, final int h) {
         final Colours c = this.palette.get();
-        g.fill(x, y, x + w, y + h, c.panel());
+        Grounds.fill(g, x, y, x + w, y + h, c.panel());
         ChromeShapes.outline(g, x, y, w, h, c.edge());
     }
 
@@ -103,9 +104,9 @@ final class LunaChrome implements IFormChrome {
         final Colours c = this.palette.get();
         // A glossier vertical sheen: bright top half, then the blue-tinted body.
         final int lit = hovered ? c.buttonHover() : c.buttonTop();
-        g.fillGradient(x, y, x + w, y + h / 2, pressed ? c.pressedTop() : lit,
+        ChromeShapes.vGradient(g, x, y, x + w, y + h / 2, pressed ? c.pressedTop() : lit,
                 pressed ? c.pressedMid() : c.buttonMid());
-        g.fillGradient(x, y + h / 2, x + w, y + h, pressed ? c.pressedMid() : c.buttonLower(),
+        ChromeShapes.vGradient(g, x, y + h / 2, x + w, y + h, pressed ? c.pressedMid() : c.buttonLower(),
                 pressed ? lit : c.buttonBottom());
         g.fill(x + 1, y + 1, x + w - 1, y + 2, c.buttonGloss());
         ChromeShapes.outline(g, x, y, w, h, primary ? c.primaryRim() : c.buttonRim());
@@ -123,11 +124,11 @@ final class LunaChrome implements IFormChrome {
                     final boolean active) {
         final Colours c = this.palette.get();
         if (active) {
-            g.fillGradient(x, y, x + w, y + h, c.tabTop(), c.tabBottom());
+            ChromeShapes.vGradient(g, x, y, x + w, y + h, c.tabTop(), c.tabBottom());
             g.fill(x, y, x + w, y + 2, c.tabStrip());
             ChromeShapes.outline(g, x, y, w, h, c.tabRim());
         } else {
-            g.fillGradient(x, y, x + w, y + h, c.idleTabTop(), c.idleTabBottom());
+            ChromeShapes.vGradient(g, x, y, x + w, y + h, c.idleTabTop(), c.idleTabBottom());
             ChromeShapes.outline(g, x, y, w, h, c.idleTabRim());
         }
     }
@@ -150,7 +151,7 @@ final class LunaChrome implements IFormChrome {
     public void statusBar(final GuiGraphics g, final OsSkin skin, final int x, final int y, final int w,
                           final int h) {
         final Colours c = this.palette.get();
-        g.fill(x, y, x + w, y + h, c.statusBar());
+        Grounds.fill(g, x, y, x + w, y + h, c.statusBar());
         g.fill(x, y, x + w, y + 1, c.edge());
     }
 

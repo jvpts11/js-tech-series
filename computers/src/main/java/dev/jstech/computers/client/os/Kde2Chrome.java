@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -56,11 +57,11 @@ final class Kde2Chrome implements IFormChrome {
         // Three stops, a light crown over a dark base, closed by a border line. A window behind keeps its
         // gradient and loses its colour, as an inactive window of that age did.
         if (active) {
-            g.fillGradient(x, y, x + w, y + h / 2, c.crownFrom(), c.crownTo());
-            g.fillGradient(x, y + h / 2, x + w, y + h, c.baseFrom(), c.baseTo());
+            ChromeShapes.vGradient(g, x, y, x + w, y + h / 2, c.crownFrom(), c.crownTo());
+            ChromeShapes.vGradient(g, x, y + h / 2, x + w, y + h, c.baseFrom(), c.baseTo());
         } else {
-            g.fillGradient(x, y, x + w, y + h / 2, c.idleCrownFrom(), c.idleCrownTo());
-            g.fillGradient(x, y + h / 2, x + w, y + h, c.idleBaseFrom(), c.idleBaseTo());
+            ChromeShapes.vGradient(g, x, y, x + w, y + h / 2, c.idleCrownFrom(), c.idleCrownTo());
+            ChromeShapes.vGradient(g, x, y + h / 2, x + w, y + h, c.idleBaseFrom(), c.idleBaseTo());
         }
         g.fill(x, y + h - 1, x + w, y + h, c.border());
     }
@@ -83,7 +84,7 @@ final class Kde2Chrome implements IFormChrome {
     @Override
     public void panel(final GuiGraphics g, final OsSkin skin, final int x, final int y, final int w, final int h) {
         final Colours c = this.palette.get();
-        g.fill(x, y, x + w, y + h, c.panel());
+        Grounds.fill(g, x, y, x + w, y + h, c.panel());
         ChromeShapes.outline(g, x, y, w, h, c.edge());
     }
 
@@ -92,9 +93,9 @@ final class Kde2Chrome implements IFormChrome {
                        final boolean hovered, final boolean pressed, final boolean primary) {
         final Colours c = this.palette.get();
         if (pressed) {
-            g.fillGradient(x, y, x + w, y + h, c.studShade(), c.light());
+            ChromeShapes.vGradient(g, x, y, x + w, y + h, c.studShade(), c.light());
         } else {
-            g.fillGradient(x, y, x + w, y + h, hovered ? c.hover() : c.light(), c.shade());
+            ChromeShapes.vGradient(g, x, y, x + w, y + h, hovered ? c.hover() : c.light(), c.shade());
         }
         ChromeShapes.outline(g, x, y, w, h, primary ? c.focus() : c.edge());
     }
@@ -111,9 +112,9 @@ final class Kde2Chrome implements IFormChrome {
                     final boolean active) {
         final Colours c = this.palette.get();
         if (active) {
-            g.fillGradient(x, y, x + w, y + h, c.light(), c.panel());
+            ChromeShapes.vGradient(g, x, y, x + w, y + h, c.light(), c.panel());
         } else {
-            g.fillGradient(x, y, x + w, y + h, c.idleTabFrom(), c.idleTabTo());
+            ChromeShapes.vGradient(g, x, y, x + w, y + h, c.idleTabFrom(), c.idleTabTo());
         }
         ChromeShapes.outline(g, x, y, w, h, c.edge());
     }
@@ -130,7 +131,7 @@ final class Kde2Chrome implements IFormChrome {
     public void statusBar(final GuiGraphics g, final OsSkin skin, final int x, final int y, final int w,
                           final int h) {
         final Colours c = this.palette.get();
-        g.fillGradient(x, y, x + w, y + h, c.statusFrom(), c.statusTo());
+        ChromeShapes.vGradient(g, x, y, x + w, y + h, c.statusFrom(), c.statusTo());
         g.fill(x, y, x + w, y + 1, c.border());
     }
 

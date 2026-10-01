@@ -11,6 +11,7 @@ import dev.jstech.core.gui.TextShadow;
 import dev.jstech.core.gui.layout.WindowGeometry;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 import org.joml.Matrix4f;
 
 /**
@@ -71,6 +72,45 @@ public final class Draw {
         g.pose().translate(x, y, 0);
         g.pose().scale(scale, scale, 1.0f);
         g.drawString(font, text, 1, 1, TextShadow.of(color, ground), false);
+        g.drawString(font, text, 0, 0, color, false);
+        g.pose().popPose();
+    }
+
+    /** Shadowed text on whatever ground was declared under it ({@link Grounds}). */
+    public static void text(final GuiGraphics g, final Font font, final String text, final int x, final int y,
+                            final int color) {
+        g.drawString(font, text, x + 1, y + 1, Grounds.shadow(g, x, y, color), false);
+        g.drawString(font, text, x, y, color, false);
+    }
+
+    /** Shadowed text centred on {@code cx}, on whatever ground was declared under it. */
+    public static void textCentered(final GuiGraphics g, final Font font, final String text, final int cx,
+                                    final int y, final int color) {
+        text(g, font, text, cx - font.width(text) / 2, y, color);
+    }
+
+    /** A line of game text, styles and all, with a shadow that suits {@code ground}. */
+    public static void text(final GuiGraphics g, final Font font, final Component text, final int x, final int y,
+                            final int color, final int ground) {
+        g.drawString(font, text, x + 1, y + 1, TextShadow.of(color, ground), false);
+        g.drawString(font, text, x, y, color, false);
+    }
+
+    /** A shadowed line of game text, styles and all, centred on {@code cx}, on the ground declared under it. */
+    public static void textCentered(final GuiGraphics g, final Font font, final Component text, final int cx,
+                                    final int y, final int color) {
+        final int x = cx - font.width(text) / 2;
+        g.drawString(font, text, x + 1, y + 1, Grounds.shadow(g, x, y, color), false);
+        g.drawString(font, text, x, y, color, false);
+    }
+
+    /** Shadowed text at {@code scale}, anchored at its top-left corner, on whatever ground was declared under it. */
+    public static void textScaled(final GuiGraphics g, final Font font, final String text, final int x, final int y,
+                                  final int color, final float scale) {
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0);
+        g.pose().scale(scale, scale, 1.0f);
+        g.drawString(font, text, 1, 1, Grounds.shadow(g, 0, 0, color), false);
         g.drawString(font, text, 0, 0, color, false);
         g.pose().popPose();
     }

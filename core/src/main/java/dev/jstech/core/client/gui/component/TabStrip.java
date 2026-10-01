@@ -152,8 +152,8 @@ public final class TabStrip extends UiComponent {
             if (close > 0) {
                 // The mark is part of the tab, drawn on the same ground, lit when the mouse is over it.
                 final boolean over = ctx.over(tx + tw - close, y(), close, height());
-                g.drawString(ctx.font(), "x", tx + tw - close + 2, y() + (height() - 7) / 2,
-                        over ? ctx.skin().text() : ctx.skin().dim(), false);
+                Draw.text(g, ctx.font(), "x", tx + tw - close + 2, y() + (height() - 7) / 2,
+                        over ? ctx.skin().text() : ctx.skin().dim());
             }
         }
         if (underline) {

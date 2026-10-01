@@ -105,10 +105,11 @@ public final class CommandLine extends UiComponent {
 
     @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
-        g.fill(x(), y(), right(), bottom(), background);
+        Grounds.fill(g, x(), y(), right(), bottom(), background);
         final String idle = idleText.get();
         if (isFocused() && input.edit().isEmpty() && !idle.isEmpty()) {
-            g.drawString(ctx.font(), Texts.trim(ctx.font(), idle, width() - 6), x() + 3, y() + 2, idleColor.getAsInt(), false);
+            Draw.text(g, ctx.font(), Texts.trim(ctx.font(), idle, width() - 6), x() + 3, y() + 2,
+                    idleColor.getAsInt(), background);
             return;
         }
         /*
@@ -129,11 +130,11 @@ public final class CommandLine extends UiComponent {
             g.fill(left, y() + 1, left + ctx.font().width(shown.substring(Math.min(from, shown.length()), to)),
                     y() + 11, ComponentPalette.get().consolePicked());
         }
-        g.drawString(ctx.font(), shown, x() + 3, y() + 2, textColor, false);
+        Draw.text(g, ctx.font(), shown, x() + 3, y() + 2, textColor, background);
         if (isFocused()) {
             final int visibleCaret = Math.max(0, Math.min(shown.length(), caretAt - dropped));
             final int cx = x() + 3 + ctx.font().width(shown.substring(0, visibleCaret));
-            g.drawString(ctx.font(), "_", cx, y() + 2, textColor, false);
+            Draw.text(g, ctx.font(), "_", cx, y() + 2, textColor, background);
         }
     }
 

@@ -132,11 +132,12 @@ public final class MenuBar extends UiComponent {
         for (int i = 0; i < this.titles.size(); i++) {
             final String title = this.titles.get(i);
             final int w = ctx.font().width(title);
-            if (i == this.open && this.menu.isOpen()) {
+            final boolean lit = i == this.open && this.menu.isOpen();
+            if (lit) {
                 g.fill(mx - 2, y() + 1, mx + w + 2, y() + height() - 1, ctx.skin().accent());
             }
-            g.drawString(ctx.font(), title, mx, y() + 1,
-                    i == this.open && this.menu.isOpen() ? ComponentPalette.get().litText() : ctx.skin().text(), false);
+            Draw.text(g, ctx.font(), title, mx, y() + 1, lit ? ComponentPalette.get().litText() : ctx.skin().text(),
+                    lit ? ctx.skin().accent() : ctx.skin().panelBg());
             mx += w + GAP;
         }
         if (this.menu.isOpen()) {

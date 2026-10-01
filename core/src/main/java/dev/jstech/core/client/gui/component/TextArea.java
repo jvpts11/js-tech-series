@@ -134,7 +134,7 @@ public final class TextArea extends UiComponent {
         int ry = y() + 1;
         for (int i = scroll; i < doc.lineCount() && i - scroll < visible; i++) {
             final String text = doc.line(i);
-            g.drawString(ctx.font(), text, x() + INSET - shift, ry + 1, ctx.skin().text(), false);
+            Draw.text(g, ctx.font(), text, x() + INSET - shift, ry + 1, ctx.skin().text(), ctx.skin().fieldBg());
             if (focused && i == doc.cursorLine()) {
                 final int cx = x() + INSET - shift
                         + ctx.font().width(text.substring(0, Math.min(doc.cursorCol(), text.length())));

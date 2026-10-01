@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -72,7 +73,7 @@ final class BevelChrome implements IFormChrome {
     @Override
     public void panel(final GuiGraphics g, final OsSkin skin, final int x, final int y, final int w, final int h) {
         final Colours c = this.palette.get();
-        g.fill(x, y, x + w, y + h, c.face());
+        Grounds.fill(g, x, y, x + w, y + h, c.face());
         relief(g, c, x, y, w, h, false);
     }
 
@@ -80,7 +81,7 @@ final class BevelChrome implements IFormChrome {
     public void button(final GuiGraphics g, final OsSkin skin, final int x, final int y, final int w, final int h,
                        final boolean hovered, final boolean pressed, final boolean primary) {
         final Colours c = this.palette.get();
-        g.fill(x, y, x + w, y + h, c.face());
+        Grounds.fill(g, x, y, x + w, y + h, c.face());
         relief(g, c, x, y, w, h, !pressed);
         // The default (primary) button carries the classic dotted focus rectangle just inside its face.
         if (primary && !pressed) {
@@ -99,7 +100,7 @@ final class BevelChrome implements IFormChrome {
                     final boolean active) {
         final Colours c = this.palette.get();
         final int tall = h + (active ? 2 : 0);
-        g.fill(x, y, x + w, y + tall, c.face());
+        Grounds.fill(g, x, y, x + w, y + tall, c.face());
         relief(g, c, x, y, w, tall, true);
     }
 
@@ -115,7 +116,7 @@ final class BevelChrome implements IFormChrome {
     public void statusBar(final GuiGraphics g, final OsSkin skin, final int x, final int y, final int w,
                           final int h) {
         final Colours c = this.palette.get();
-        g.fill(x, y, x + w, y + h, c.face());
+        Grounds.fill(g, x, y, x + w, y + h, c.face());
         // A status bar is not a raised box: only a shadow line along its top, with a lit line under it.
         g.fill(x, y, x + w, y + 1, c.shadow());
         g.fill(x, y + 1, x + w, y + 2, c.highlight());

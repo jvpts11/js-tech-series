@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.client.gui.screen;
 
+import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.component.Grounds;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 
@@ -83,13 +85,9 @@ public abstract class TabbedScreen extends CoreScreen {
             final boolean active = i == activeTabIndex;
             // Background tint: brighter for the active tab.
             final int bg = active ? ScreenPalette.get().tabActive() : ScreenPalette.get().tabIdle();
-            graphics.fill(tabX, 0, tabX + tabWidth, tabBarHeight, bg);
-            graphics.drawCenteredString(
-                    this.font,
-                    tabs.get(i).title(),
-                    tabX + tabWidth / 2,
-                    (tabBarHeight - this.font.lineHeight) / 2,
-                    ScreenPalette.get().tabText());
+            Grounds.fill(graphics, tabX, 0, tabX + tabWidth, tabBarHeight, bg);
+            Draw.textCentered(graphics, this.font, tabs.get(i).title(), tabX + tabWidth / 2,
+                    (tabBarHeight - this.font.lineHeight) / 2, ScreenPalette.get().tabText());
         }
     }
 

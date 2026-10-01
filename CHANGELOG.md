@@ -155,6 +155,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   blocks, and one model of the Core draws every family, where each used to need a model class of its own. The Core
   runs without GeckoLib; a mod that draws with it brings it. J's Computers' Mainframes, racks, Pattern Encoders and
   drives, and the items that show them in a slot, are drawn this way.
+- Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
+  and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
+  a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The
+  Core's components, era themes, dialogs and tables and J's Computers' desktop skins say what they paint, so every
+  label, field, menu, list, button and tab drawn through them has its shadow. Centred text on the machine screens
+  no longer uses the game's dark shadow, which smeared on the light panels of the Legacy and Advanced eras.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,

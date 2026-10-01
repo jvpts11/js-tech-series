@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.gui.theme;
 
+import dev.jstech.core.client.gui.component.Draw;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -172,9 +173,13 @@ public final class JsTechTheme {
         g.drawString(f, s, xRight - f.width(s), y, color, false);
     }
 
+    /**
+     * Text centred on {@code cx}, shadowed by the ground it is drawn on: the theme's window, panel, button, slot,
+     * header and selected tab each say what they are as they are painted, and the shadow follows the shadow rule.
+     */
     public static void textCenter(final GuiGraphics g, final Font f, final String s, final int cx,
                                   final int y, final int color) {
-        g.drawCenteredString(f, s, cx, y, color);
+        Draw.textCentered(g, f, s, cx, y, color);
     }
 
     public static int widthS(final Font f, final String s) {

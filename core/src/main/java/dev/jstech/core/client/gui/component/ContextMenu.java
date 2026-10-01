@@ -232,7 +232,7 @@ public final class ContextMenu extends UiComponent {
             }
         }
         g.fill(x() - 1, y() - 1, right() + 1, bottom() + 1, ComponentPalette.get().menuShade());
-        g.fill(x(), y(), right(), bottom(), ctx.skin().panelBg());
+        Grounds.fill(g, x(), y(), right(), bottom(), ctx.skin().panelBg());
         int iy = y() + 1;
         for (int i = 0; i < items.size(); i++) {
             final Item item = items.get(i);
@@ -241,14 +241,15 @@ public final class ContextMenu extends UiComponent {
             } else {
                 // The mouse lights what it is over; with the mouse elsewhere the keyboard's item stays lit.
                 final boolean lit = item.enabled() && (i == hover || i == openChild || (hover < 0 && i == selected));
+                final int ground = lit ? ctx.skin().accent() : ctx.skin().panelBg();
                 if (lit) {
-                    g.fill(x() + 1, iy, right() - 1, iy + itemHeight, ctx.skin().accent());
+                    g.fill(x() + 1, iy, right() - 1, iy + itemHeight, ground);
                 }
                 final int colour = lit ? ComponentPalette.get().litText()
                         : item.enabled() ? ctx.skin().text() : ctx.skin().dim();
-                g.drawString(ctx.font(), item.label(), x() + 4, iy + 2, colour, false);
+                Draw.text(g, ctx.font(), item.label(), x() + 4, iy + 2, colour, ground);
                 if (item.hasChildren()) {
-                    g.drawString(ctx.font(), ">", right() - 7, iy + 2, colour, false);
+                    Draw.text(g, ctx.font(), ">", right() - 7, iy + 2, colour, ground);
                 }
             }
             iy += itemHeight;

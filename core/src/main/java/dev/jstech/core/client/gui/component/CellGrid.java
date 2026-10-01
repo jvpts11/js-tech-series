@@ -228,10 +228,10 @@ public final class CellGrid extends UiComponent {
                 final int cy = y() + row * cellH;
                 final boolean hovered = enabled() && ctx.over(cx, cy, w, h);
                 if (wells) {
-                    g.fill(cx, cy, cx + w, cy + h, ctx.skin().fieldBg());
+                    Grounds.fill(g, cx, cy, cx + w, cy + h, ctx.skin().fieldBg());
                     Draw.outline(g, cx, cy, w, h, marked.test(index) ? ctx.skin().accent() : ctx.skin().edge());
                     if (hovered) {
-                        g.fill(cx + 1, cy + 1, cx + w - 1, cy + h - 1, ctx.skin().listHover());
+                        Grounds.fill(g, cx + 1, cy + 1, cx + w - 1, cy + h - 1, ctx.skin().listHover());
                     }
                 } else {
                     ctx.skin().listRow(g, cx, cy, w, h, hovered, selected.test(index));
@@ -242,10 +242,10 @@ public final class CellGrid extends UiComponent {
         if (cues != Cues.NONE) {
             final int cueX = cues == Cues.LEFT ? x() - 7 : x() + width() + 2;
             if (scroll > 0) {
-                g.drawString(ctx.font(), "^", cueX, y(), ctx.skin().dim(), false);
+                Draw.text(g, ctx.font(), "^", cueX, y(), ctx.skin().dim());
             }
             if (scroll + visibleRows < totalRows) {
-                g.drawString(ctx.font(), "v", cueX, y() + height() - 9, ctx.skin().dim(), false);
+                Draw.text(g, ctx.font(), "v", cueX, y() + height() - 9, ctx.skin().dim());
             }
         }
     }

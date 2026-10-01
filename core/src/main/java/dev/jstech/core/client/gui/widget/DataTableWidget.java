@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.client.gui.widget;
 
+import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.client.gui.logic.PaginationState;
 
 import net.minecraft.client.Minecraft;
@@ -87,14 +89,10 @@ public abstract class DataTableWidget<T> extends RowListWidget<T> {
 
         final WidgetPalette.Colours colours = WidgetPalette.get();
         // Header row.
-        graphics.fill(getX(), getY(), getX() + width, getY() + headerHeight, colours.tableHeader());
+        Grounds.fill(graphics, getX(), getY(), getX() + width, getY() + headerHeight, colours.tableHeader());
         for (int col = 0; col < columnHeaders.size(); col++) {
-            graphics.drawString(
-                    Minecraft.getInstance().font,
-                    columnHeaders.get(col),
-                    columnX(col) + 2,
-                    getY() + (headerHeight - 8) / 2,
-                    colours.tableHeaderText());
+            Draw.text(graphics, Minecraft.getInstance().font, columnHeaders.get(col), columnX(col) + 2,
+                    getY() + (headerHeight - 8) / 2, colours.tableHeaderText(), colours.tableHeader());
         }
 
         // Body rows for the current page.
@@ -104,7 +102,7 @@ public abstract class DataTableWidget<T> extends RowListWidget<T> {
             final int rowY = getY() + headerHeight + (i - first) * rowHeight;
             // Alternating row background for readability.
             final int bg = ((i - first) % 2 == 0) ? colours.tableRowEven() : colours.tableRowOdd();
-            graphics.fill(getX(), rowY, getX() + width, rowY + rowHeight, bg);
+            Grounds.fill(graphics, getX(), rowY, getX() + width, rowY + rowHeight, bg);
             for (int col = 0; col < columnHeaders.size(); col++) {
                 renderCell(graphics, itemList.get(i), col,
                         columnX(col) + 2, rowY + (rowHeight - 8) / 2);

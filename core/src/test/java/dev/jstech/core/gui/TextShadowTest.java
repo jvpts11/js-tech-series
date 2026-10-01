@@ -73,4 +73,24 @@ class TextShadowTest {
     void of_keepsTheLettersAlpha() {
         assertEquals(0x80, TextShadow.of(0x80FFFFFF, 0xFF000000) >>> 24);
     }
+
+    @Test
+    void assumedGround_isBlackUnderALightLetter_andWhiteUnderADarkOne() {
+        assertEquals(0xFF000000, TextShadow.assumedGround(0xFFCDD6E2));
+        assertEquals(0xFF000000, TextShadow.assumedGround(0xFF39D6C4));
+        assertEquals(0xFFFFFFFF, TextShadow.assumedGround(0xFF1B2437));
+        assertEquals(0xFFFFFFFF, TextShadow.assumedGround(0xFF000080));
+    }
+
+    /** On a ground nobody declared the shadow still follows the rule: a tone of the letter, never a copy of it. */
+    @Test
+    void of_onTheAssumedGround_isNeverTheLetter_andStandsApartFromIt() {
+        for (final int[] pair : WRITTEN) {
+            final int letter = pair[0];
+            final int shadow = TextShadow.of(letter, TextShadow.assumedGround(letter));
+            assertNotEquals(letter, shadow, Integer.toHexString(letter));
+            assertTrue(ColorContrast.ratio(letter, shadow) > 1.5, Integer.toHexString(letter) + " under "
+                    + Integer.toHexString(shadow) + " reads as a second copy of itself");
+        }
+    }
 }

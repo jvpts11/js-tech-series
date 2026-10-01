@@ -8,6 +8,7 @@
 package dev.jstech.core.client.gui.theme;
 
 import dev.jstech.core.gui.ColorContrast;
+import dev.jstech.core.gui.TextShadow;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.tier.HardwareEra;
@@ -161,6 +162,23 @@ class EraThemeTest {
         }
     }
 
+    /**
+     * Text is shadowed by the ground its skin declares under it: on every ground of every skin the shadow is still
+     * there to be seen, and it never reads louder than the letter it is under.
+     */
+    @Test
+    void everyEraSkin_shadowShowsOnItsGroundAndStaysQuieterThanTheLetter() {
+        for (final EraTheme skin : EVERY_SKIN) {
+            final EraPalette p = skin.palette();
+            for (final int ground : new int[] {p.screen(), p.panel(), p.hover()}) {
+                for (final int letter : new int[] {p.text(), p.dim(), p.accent(), p.green(), p.amber(), p.red()}) {
+                    assertShadowed(letter, ground);
+                }
+            }
+            assertShadowed(p.tabLabelOn(), p.tabOn());
+        }
+    }
+
     @Test
     void transition_textStaysReadableOnTheLighterBand() {
         // The upper band is the selected tab's colour with the sheen over it, the lightest ground the skin draws.
@@ -222,6 +240,14 @@ class EraThemeTest {
         final double ratio = ColorContrast.ratio(fg, bg);
         assertTrue(ratio >= min, String.format("contrast %.2f below %.1f for fg=%06X bg=%06X",
                 ratio, min, fg & 0xFFFFFF, bg & 0xFFFFFF));
+    }
+
+    private static void assertShadowed(final int letter, final int ground) {
+        final int shadow = TextShadow.of(letter, ground);
+        final String pair = String.format("fg=%06X bg=%06X", letter & 0xFFFFFF, ground & 0xFFFFFF);
+        assertTrue(ColorContrast.ratio(shadow, ground) > 1.15, "the shadow is lost on its ground for " + pair);
+        assertTrue(ColorContrast.ratio(shadow, ground) < ColorContrast.ratio(letter, ground),
+                "the shadow reads louder than the letter for " + pair);
     }
 
     /** An opaque colour with a translucent one painted over it, the way the screen blends a fill. */

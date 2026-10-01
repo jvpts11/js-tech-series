@@ -42,6 +42,7 @@ public final class Breadcrumbs extends UiComponent {
     public void render(final GuiGraphics g, final UiContext ctx) {
         lastFont = ctx.font();
         ctx.skin().field(g, x(), y(), width(), height(), false);
+        final int ground = ctx.skin().fieldBg();
         final List<Crumb> trail = crumbs.get();
         final int cy = y() + (height() - 7) / 2;
         final int maxX = x() + width() - INSET;
@@ -53,15 +54,16 @@ public final class Breadcrumbs extends UiComponent {
                 // As much of the crumb as fits, so a long volume name still reads, then the dots.
                 final int room = maxX - px - ctx.font().width("..");
                 final String head = room > 0 ? ctx.font().plainSubstrByWidth(label, room) : "";
-                g.drawString(ctx.font(), head + "..", px, cy, ctx.skin().dim(), false);
+                Draw.text(g, ctx.font(), head + "..", px, cy, ctx.skin().dim(), ground);
                 break;
             }
             final boolean last = i == trail.size() - 1;
             final boolean hover = !last && ctx.over(px - 1, y() + 1, w + 2, height() - 2);
-            g.drawString(ctx.font(), label, px, cy, hover ? ctx.skin().accent() : (last ? ctx.skin().text() : ctx.skin().dim()), false);
+            Draw.text(g, ctx.font(), label, px, cy,
+                    hover ? ctx.skin().accent() : (last ? ctx.skin().text() : ctx.skin().dim()), ground);
             px += w;
             if (!last) {
-                g.drawString(ctx.font(), SEPARATOR, px, cy, ctx.skin().dim(), false);
+                Draw.text(g, ctx.font(), SEPARATOR, px, cy, ctx.skin().dim(), ground);
                 px += ctx.font().width(SEPARATOR);
             }
         }
