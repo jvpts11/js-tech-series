@@ -76,6 +76,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   between two places, and the length of each run of one cable against how far it reaches, are worked out when the
   grid changes and kept until it changes again, never on every tick. Only the data grid carries the identity of a
   network; the data network's index is now the data grid.
+- Models put together as the game runs, in J's Core: a multipart block draws its parts and the pieces of its wires on
+  top of its own model, and a block can have faces that run on into the blocks it joins, drawn from five tiles a
+  quarter of a face at a time. Both are drawn into the world's mesh, built again only when a block changes.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,
@@ -513,6 +516,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   error a lower version gives for what came after it, and the line the choice wrote.
 
 ### Changed
+- The buses on a cable are drawn with the cable in the world's mesh, rather than on their own every frame, and their
+  faces are shaded as they are turned.
 - A data cable beside a rack cabinet shows a connection only on the cabinet's back, where the cabinet links its
   cables; it used to show one on any face of the cabinet without linking there.
 - What the series kept with a world in files of its own is kept as states, each file carrying the version of its

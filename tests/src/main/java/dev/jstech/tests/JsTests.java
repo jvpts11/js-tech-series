@@ -34,6 +34,7 @@ public final class JsTests {
         LOGGER.warn("J's Tech Series Tests {} loaded. This is a development-only test mod: it is not part of the"
                 + " series, adds nothing to the game and must not be installed.", modContainer.getModInfo().getVersion());
         // The sounds the tests play through the series' sound system, on files the game already has.
+        TestBlocks.declare();
         TestSounds.CONTENT.register(modEventBus);
         // A state of every scope, on both sides, since the client tests watch them arrive.
         TestStates.register();

@@ -48,6 +48,7 @@ public final class ClientTestSuite {
             LiveInstallClientTests.class,
             McNetSpaceClientTests.class,
             MediaDriveClientTests.class,
+            MultipartModelClientTests.class,
             TaskbarClientTests.class,
             TerminalEditorClientTests.class,
             MekanismClientTests.class,

@@ -38,7 +38,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 
 /**
@@ -165,7 +164,6 @@ public final class ComputingClientSetup {
 
     @SubscribeEvent
     public static void registerRenderers(final EntityRenderersEvent.RegisterRenderers event) {
-        event.registerBlockEntityRenderer(ComputingModule.DATA_CABLE_BE.get(), DataCableRenderer::new);
         event.registerBlockEntityRenderer(ComputingModule.TANK_BE.get(), TankRenderer::new);
         // Every rack cabinet (server, per era, and supercomputer) is one GeckoLib model on its controller.
         event.registerBlockEntityRenderer(ComputingModule.SERVER_RACK_BE.get(), RackRenderer::new);
@@ -175,11 +173,5 @@ public final class ComputingClientSetup {
         event.registerBlockEntityRenderer(ComputingModule.PATTERN_ENCODER_BE.get(), PatternEncoderRenderer::new);
         // The floppy, CD and DVD drives the same way; the Dock Station keeps its block model.
         event.registerBlockEntityRenderer(ComputingModule.MEDIA_READER_BE.get(), MediaDriveRenderer::new);
-    }
-
-    @SubscribeEvent
-    public static void registerExtraModels(final ModelEvent.RegisterAdditional event) {
-        event.register(DataCableRenderer.IMPORT_MODEL);
-        event.register(DataCableRenderer.EXPORT_MODEL);
     }
 }

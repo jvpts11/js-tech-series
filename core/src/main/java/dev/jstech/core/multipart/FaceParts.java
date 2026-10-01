@@ -8,7 +8,9 @@
 package dev.jstech.core.multipart;
 
 import dev.jstech.core.blockentity.IFieldPart;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -134,6 +136,18 @@ public final class FaceParts implements IFieldPart {
             this.parts[i] = null;
             this.kinds[i] = NONE;
         }
+    }
+
+    /** What the parts draw: each kind's model turned to its face, on either side. */
+    public ModelLayout layout() {
+        final List<PlacedModel> models = new ArrayList<>();
+        for (final Direction face : Direction.values()) {
+            final PartType<?> type = type(face);
+            if (type != null) {
+                models.add(PlacedModel.facing(type.model(), face));
+            }
+        }
+        return models.isEmpty() ? ModelLayout.EMPTY : new ModelLayout(models);
     }
 
     /** The shape of every part mounted, within the block. */

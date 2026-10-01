@@ -27,14 +27,14 @@ public final class ConnectedFaces {
     /** Where a model finds the masks of the block it draws. */
     public static final ModelProperty<FaceMasks> MASKS = new ModelProperty<>();
 
-    public static final int UP = 1;
-    public static final int UP_RIGHT = 1 << 1;
-    public static final int RIGHT = 1 << 2;
-    public static final int DOWN_RIGHT = 1 << 3;
-    public static final int DOWN = 1 << 4;
-    public static final int DOWN_LEFT = 1 << 5;
-    public static final int LEFT = 1 << 6;
-    public static final int UP_LEFT = 1 << 7;
+    public static final int UP = ConnectedQuadrants.UP;
+    public static final int UP_RIGHT = ConnectedQuadrants.UP_RIGHT;
+    public static final int RIGHT = ConnectedQuadrants.RIGHT;
+    public static final int DOWN_RIGHT = ConnectedQuadrants.DOWN_RIGHT;
+    public static final int DOWN = ConnectedQuadrants.DOWN;
+    public static final int DOWN_LEFT = ConnectedQuadrants.DOWN_LEFT;
+    public static final int LEFT = ConnectedQuadrants.LEFT;
+    public static final int UP_LEFT = ConnectedQuadrants.UP_LEFT;
 
     private ConnectedFaces() {
     }

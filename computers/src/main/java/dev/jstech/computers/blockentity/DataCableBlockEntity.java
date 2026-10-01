@@ -18,6 +18,7 @@ import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.multipart.FaceParts;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.IPartHost;
+import dev.jstech.core.multipart.ModelLayout;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.network.ConnectivityIndex;
 import dev.jstech.core.network.DataTier;
@@ -36,6 +37,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.client.model.data.ModelData;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -200,10 +202,17 @@ public class DataCableBlockEntity extends SyncedBlockEntity implements IPartHost
     /* The parts changed on the client: the render mesh and the collision and selection shape follow them. */
     @Override
     protected void afterClientUpdate() {
+        requestModelDataUpdate();
         if (level != null) {
             final BlockState state = getBlockState();
             level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
         }
+    }
+
+    /* The cable's model draws the parts on its faces from this, into the world's mesh. */
+    @Override
+    public ModelData getModelData() {
+        return ModelData.builder().with(ModelLayout.PROPERTY, parts.layout()).build();
     }
 
     private Set<Long> networkNeighbors(final ServerLevel serverLevel) {
