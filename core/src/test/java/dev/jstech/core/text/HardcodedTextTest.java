@@ -78,6 +78,7 @@ class HardcodedTextTest {
     private static final String FILES = "folder names and the contents of files on a virtual disk";
     private static final String SIGNATURES = "signatures of the programming language's own calls";
     private static final String SAVE_TAG = "the tag a machine's parts are saved under";
+    private static final String SETTINGS_FILE = "a settings file's own comments, English like every comment in it";
 
     /**
      * The files whose fixed text is data, not words to translate, and how many pieces each holds. The count is exact,
@@ -149,8 +150,10 @@ class HardcodedTextTest {
             data(COMPUTERS + "sigma/SigmaVersions.java", 10, SIGNATURES + ", keyed by the version they came in"),
             data(COMPUTERS + "vm/program/NumberFunctions.java", 4, SIGNATURES),
             data(COMPUTERS + "vm/system/SystemApi.java", 1, SIGNATURES),
-            data("core/src/main/java/dev/jstech/core/config/ConfigValidator.java", 11,
+            data("core/src/main/java/dev/jstech/core/config/ConfigValidator.java", 9,
                     "why a configuration value was set aside, written to the log"),
+            data("core/src/main/java/dev/jstech/core/config/ConfigFile.java", 1, SETTINGS_FILE),
+            data("core/src/main/java/dev/jstech/core/config/ConfigKey.java", 1, SETTINGS_FILE),
             data(INDUSTRIAL + "client/CoalGeneratorScreen.java", 1, "the energy unit's symbol"),
             data(INDUSTRIAL + "client/ProcessingMachineScreen.java", 1, "the energy unit's symbol"));
 

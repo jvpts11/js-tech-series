@@ -9,6 +9,7 @@ package dev.jstech.tests;
 
 import com.mojang.logging.LogUtils;
 import dev.jstech.core.JsCore;
+import dev.jstech.tests.testkit.TestSettings;
 import dev.jstech.tests.testkit.ToyLanguage;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -39,6 +40,8 @@ public final class JsTests {
              * while the game loads; a client run stays as a player sees it.
              */
             JsCore.languages().register(new ToyLanguage());
+            // A world's settings file in every format, where the settings tests can read and write them.
+            TestSettings.register(modEventBus, modContainer);
         }
     }
 }

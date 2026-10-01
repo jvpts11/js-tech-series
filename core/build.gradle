@@ -13,6 +13,82 @@ sourceSets.main.resources {
     exclude("src/generated/**/.cache")
 }
 
+dependencies {
+    /*
+     * SnakeYAML, the YAML format of the settings files. NeoForge brings the TOML and JSON libraries and none for
+     * YAML, so the Core carries it inside its own jar (Apache-2.0; its notice is in THIRD_PARTY_NOTICES.md). The
+     * floor is the newest release: every version before 2.0 builds any class a file names (CVE-2022-1471), and
+     * the settings are read with the safe constructor all the same.
+     */
+    jarJar(implementation("org.yaml:snakeyaml")) {
+        version {
+            strictly '[2.7,3.0)'
+            prefer '2.7'
+        }
+    }
+    /*
+     * The TOML and JSON libraries the settings formats are written on come with the game, and the unit tests run
+     * without it; they get the same two, at the versions NeoForge brings, and nothing else of the game.
+     */
+    testRuntimeOnly 'com.electronwill.night-config:toml:3.8.3'
+    testRuntimeOnly 'com.google.code.gson:gson:2.10.1'
+}
+
+// The notices of the third-party work this mod carries, beside its own licence, and the licences they come under.
+tasks.named('jar', Jar).configure {
+    from(rootProject.file('THIRD_PARTY_NOTICES.md')) {
+        into 'META-INF'
+    }
+    from(rootProject.file('licenses/Apache-2.0.txt')) {
+        into 'META-INF/licenses'
+    }
+}
+
+/*
+ * A library carried inside the Core's jar has to be really there, and has to have its notice: the check opens the
+ * built jar, finds each jar nested in it, and fails when one is missing or has no section in the notices.
+ */
+def checkCarriedLibraries = tasks.register('checkCarriedLibraries') {
+    group = 'verification'
+    description = 'Checks that the libraries the Core carries are in its jar and in THIRD_PARTY_NOTICES.md.'
+    def built = tasks.named('jar', Jar).flatMap { it.archiveFile }
+    def notices = rootProject.file('THIRD_PARTY_NOTICES.md')
+    inputs.file(built)
+    inputs.file(notices)
+    doLast {
+        // Each library: the name of its section in the notices, and the licence text it needs shipped beside it.
+        def carried = [snakeyaml: [name: 'SnakeYAML', licence: 'Apache-2.0.txt']]
+        def nested = []
+        def entries = [] as Set
+        new java.util.zip.ZipFile(built.get().asFile).withCloseable { zip ->
+            zip.entries().each { entry ->
+                entries << entry.name
+                if (entry.name.startsWith('META-INF/jarjar/') && entry.name.endsWith('.jar')) {
+                    nested << entry.name.substring('META-INF/jarjar/'.length())
+                }
+            }
+        }
+        def text = notices.getText('UTF-8')
+        carried.each { artifact, about ->
+            if (!nested.any { it.startsWith(artifact + '-') }) {
+                throw new GradleException("The Core's jar does not carry ${artifact}; it has ${nested}")
+            }
+            if (!text.contains("## ${about.name}")) {
+                throw new GradleException(
+                        "THIRD_PARTY_NOTICES.md has no section for ${about.name}, which the Core carries")
+            }
+            if (!entries.contains("META-INF/licenses/${about.licence}".toString())) {
+                throw new GradleException("The Core's jar carries ${about.name} without its licence, ${about.licence}")
+            }
+        }
+        def unknown = nested.findAll { jar -> !carried.keySet().any { jar.startsWith(it + '-') } }
+        if (!unknown.isEmpty()) {
+            throw new GradleException("The Core's jar carries ${unknown}, which this check does not know of")
+        }
+    }
+}
+tasks.named('check').configure { dependsOn checkCarriedLibraries }
+
 neoForge {
     version = project.neo_version
 

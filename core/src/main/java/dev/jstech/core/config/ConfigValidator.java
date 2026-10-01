@@ -7,79 +7,58 @@
  */
 package dev.jstech.core.config;
 
+import com.mojang.serialization.DataResult;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
- * Validates a raw value against a {@link ConfigKey}, returning an {@link IConfigValidationResult}.
+ * Takes what a file holds for a setting and gives the value the setting will have: what was written, when it reads as
+ * the setting's kind of value and keeps to what the setting is held to; the nearer end of its range, for a number
+ * outside it; the default, for anything else. Each value it does not take as written is said in the log.
  */
 public final class ConfigValidator {
 
     private final IConfigLogger logger;
 
     public ConfigValidator(final IConfigLogger logger) {
-        this.logger = Objects.requireNonNull(logger, "logger must not be null");
+        this.logger = Objects.requireNonNull(logger, "logger");
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> IConfigValidationResult<T> validate(
-            final ConfigKey<T> key,
-            final Object rawValue) {
-        Objects.requireNonNull(key, "key must not be null");
-
-        // Rule 1: null -> Rejected.
-        if (rawValue == null) {
-            final String reason = "value for key '" + key.dottedPath()
-                    + "' is null; using default";
-            logger.warn(reason);
-            return new IConfigValidationResult.Rejected<>(
-                    key.defaultValue(), reason);
+    /** What {@code raw}, a plain value read from a file, gives {@code key}; null is a value the file does not have. */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public <T> IConfigValidationResult<T> validate(final ConfigKey<T> key, final Object raw) {
+        Objects.requireNonNull(key, "key");
+        if (raw == null) {
+            return rejected(key, "'" + key.dottedPath() + "' has no value; the default " + key.plain(key.defaultValue())
+                    + " is used");
         }
-
-        // Rule 2: type mismatch -> Rejected.
-        if (!key.valueClass().isInstance(rawValue)) {
-            final String reason = "value for key '" + key.dottedPath()
-                    + "' has wrong type: expected "
-                    + key.valueClass().getSimpleName()
-                    + ", got " + rawValue.getClass().getSimpleName()
-                    + "; using default";
-            logger.warn(reason);
-            return new IConfigValidationResult.Rejected<>(
-                    key.defaultValue(), reason);
+        final DataResult<T> read = key.read(raw);
+        final Optional<T> value = read.error().isPresent() ? Optional.empty() : read.result();
+        if (value.isEmpty()) {
+            final String why = read.error().map(DataResult.Error::message).orElse("no value");
+            return rejected(key, "'" + key.dottedPath() + "' cannot be read from " + raw + " (" + why
+                    + "); the default " + key.plain(key.defaultValue()) + " is used");
         }
-
-        final T typedValue = (T) rawValue;
-
-        /*
-         * Rule 3: value not in the string whitelist -> Rejected (default substituted).
-         * There is no "nearest valid" string to clamp to, so the safe house rule is to fall back to the
-         * default, which the key guarantees is itself whitelisted.
-         */
-        if (key.whitelist().isPresent() && !key.whitelist().get().contains(typedValue)) {
-            final String reason = "value '" + typedValue + "' for key '"
-                    + key.dottedPath() + "' is not one of " + key.whitelist().get()
-                    + "; using default '" + key.defaultValue() + "'";
-            logger.warn(reason);
-            return new IConfigValidationResult.Rejected<>(key.defaultValue(), reason);
+        final T typed = value.get();
+        if (key.allowed().isPresent() && !key.allowed().get().contains(typed)) {
+            return rejected(key, "'" + key.dottedPath() + "' is " + typed + ", which is not one of "
+                    + key.allowed().get() + "; the default " + key.defaultValue() + " is used");
         }
-
-        // Rule 4: numeric out of range -> Clamped.
         if (key.range().isPresent()) {
-            @SuppressWarnings("rawtypes")
             final ConfigKeyRange range = key.range().get();
-            @SuppressWarnings("unchecked")
-            final boolean inRange = range.contains((Number & Comparable) typedValue);
-            if (!inRange) {
-                @SuppressWarnings("unchecked")
-                final T clamped = (T) range.clamp((Number & Comparable) typedValue);
-                final String reason = "value " + typedValue + " for key '"
-                        + key.dottedPath() + "' is outside range ["
-                        + range.min() + ", " + range.max()
-                        + "]; clamped to " + clamped;
-                logger.warn(reason);
-                return new IConfigValidationResult.Clamped<>(clamped, typedValue);
+            final Comparable number = (Comparable) typed;
+            if (!range.contains((Number & Comparable) number)) {
+                final T clamped = (T) range.clamp((Number & Comparable) number);
+                this.logger.warn("'" + key.dottedPath() + "' is " + typed + ", outside its range [" + range.min()
+                        + ", " + range.max() + "]; clamped to " + clamped);
+                return new IConfigValidationResult.Clamped<>(clamped, typed);
             }
         }
+        return new IConfigValidationResult.Valid<>(typed);
+    }
 
-        return new IConfigValidationResult.Valid<>(typedValue);
+    private <T> IConfigValidationResult<T> rejected(final ConfigKey<T> key, final String reason) {
+        this.logger.warn(reason);
+        return new IConfigValidationResult.Rejected<>(key.defaultValue(), reason);
     }
 }

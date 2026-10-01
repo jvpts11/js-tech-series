@@ -3,6 +3,29 @@
 The J's Tech Series is licensed under the LGPL-3.0 (see `COPYING.LESSER` and `COPYING`). It carries the
 third-party work listed here, each under its own licence, whose notice is reproduced below as that licence asks.
 
+## SnakeYAML
+
+J's Core reads and writes settings files in YAML with SnakeYAML, which it carries unchanged inside its own jar
+(`META-INF/jarjar/`), since NeoForge brings no YAML library of its own. SnakeYAML is licensed under the Apache
+License, Version 2.0, whose full text is in `licenses/Apache-2.0.txt` here and in `META-INF/licenses/` of the
+Core's jar.
+
+https://bitbucket.org/snakeyaml/snakeyaml
+
+```
+Copyright (c) 2008, SnakeYAML
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License
+is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied. See the License for the specific language governing permissions and limitations under
+the License.
+```
+
 ## neofetch
 
 J's Computers' `screenfetch` command draws the logos of the systems it runs on as neofetch draws them: the art and

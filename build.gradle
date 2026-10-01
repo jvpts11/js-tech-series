@@ -88,6 +88,15 @@ subprojects {
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     }
 
+    /*
+     * The Core carries SnakeYAML inside its jar. Every development run loads the Core, and in one the game takes a
+     * library that is not a mod only from this configuration, so each run gets it, at the version the Core carries.
+     */
+    def snakeYaml = dependencies.create('org.yaml:snakeyaml:2.7')
+    configurations.matching { it.name == 'additionalRuntimeClasspath' }.configureEach {
+        it.dependencies.add(snakeYaml)
+    }
+
     tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
         // Every error of a change that touches many files at once, not the first hundred.

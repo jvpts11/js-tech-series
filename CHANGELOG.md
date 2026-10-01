@@ -33,6 +33,16 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Removed: `ArchitectureSpec.runs` (ask the `IsaSpec` from `toIsa()`), and `DesktopEnvironmentDef.programFor`.
 
 ### Added
+- One way to write a settings file, in J's Core, for any mod built on it. A mod declares a file once (its name,
+  whether it is a player's, common to every game or a world's, its format and the version of its layout) and each
+  setting in it: a flag, a number held to a range, a word held to a list, or anything with a codec, with the comment
+  a person reads above it. Files are written in TOML, JSON, JSON5, YAML or NBT, with their comments, ranges and
+  defaults wherever the format has room for comments. A TOML file is NeoForge's own, so NeoForge keeps it in step
+  with the players and reads it again when it is edited; the others the Core reads and writes whole. Every file
+  carries the version of its layout: an older one is upgraded by the steps its mod declares before it is read, one
+  from a newer mod is read and never written over, and one that cannot be read is kept aside as `.unreadable` while
+  the defaults are used. YAML is read through SnakeYAML 2.7, which J's Core now carries inside its jar, with its
+  safe reader only, so a file can never name a class for the game to build.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,

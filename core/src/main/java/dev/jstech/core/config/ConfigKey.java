@@ -7,126 +7,180 @@
  */
 package dev.jstech.core.config;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.JavaOps;
+import dev.jstech.core.config.format.PlainValues;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Typed declaration of a single config entry: its TOML path, its type, its default value, and (depending on the type)
- * either an allowed numeric range (clamped) or a string whitelist (substituted with the default when violated).
+ * One setting: where it sits in its file, how its value is written, what it is when nobody set it, what it is held to,
+ * and the comment a person reads above it.
  *
- * <p>A key has at most one constraint: a numeric {@code range} or a string {@code whitelist}, never both.
+ * <p>The value is written through a {@link Codec}, so a setting can hold anything that has one: a number or a word,
+ * and as well a list, a map, an id or a record of its own. A setting is held to at most one thing: a number to a
+ * range, into which a value outside it is pulled to the nearer end; or a word to a list, outside which a value falls
+ * back to the default. Either way a slip in a file costs one setting its value, not the world its settings.
+ *
+ * <p>Declared once and kept as a constant: {@code ConfigKey.whole("media.download_kilobytes_per_second", 256)
+ * .range(16, 65_536).comment("...")}.
+ *
+ * @param path         where it sits: its sections, then its own name
+ * @param codec        how its value is written in a file and read back
+ * @param defaultValue what it is when nobody set it, or when what was set cannot be read
+ * @param range        the range a number is pulled into, when it has one
+ * @param allowed      the only words a text may be, when it is held to a list
+ * @param comment      what a person reads above it in the file, a line each
  */
-public record ConfigKey<T>(
-        List<String> path,
-        Class<T> valueClass,
-        T defaultValue,
-        Optional<ConfigKeyRange<?>> range,
-        Optional<List<String>> whitelist) {
+public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Optional<ConfigKeyRange<?>> range,
+                           Optional<List<String>> allowed, List<String> comment) {
 
     public ConfigKey {
-        Objects.requireNonNull(path, "path must not be null");
-        Objects.requireNonNull(valueClass, "valueClass must not be null");
-        Objects.requireNonNull(defaultValue, "defaultValue must not be null");
-        Objects.requireNonNull(range, "range must not be null (use Optional.empty)");
-        Objects.requireNonNull(whitelist, "whitelist must not be null (use Optional.empty)");
+        Objects.requireNonNull(path, "path");
+        Objects.requireNonNull(codec, "codec");
+        Objects.requireNonNull(defaultValue, "defaultValue");
+        Objects.requireNonNull(range, "range");
+        Objects.requireNonNull(allowed, "allowed");
+        Objects.requireNonNull(comment, "comment");
         if (path.isEmpty()) {
-            throw new IllegalArgumentException("path must not be empty");
+            throw new IllegalArgumentException("a setting needs a name");
         }
         for (final String segment : path) {
-            if (segment == null || segment.isBlank()) {
-                throw new IllegalArgumentException(
-                        "path segments must be non-blank, got: " + path);
+            if (segment == null || segment.isBlank() || segment.contains(".")) {
+                throw new IllegalArgumentException("each part of a setting's path is a name without dots: " + path);
             }
         }
         path = List.copyOf(path);
-        if (!valueClass.isInstance(defaultValue)) {
-            throw new IllegalArgumentException(
-                    "defaultValue type mismatch: expected " + valueClass.getSimpleName()
-                            + ", got " + defaultValue.getClass().getSimpleName());
-        }
-        if (range.isPresent() && whitelist.isPresent()) {
-            throw new IllegalArgumentException(
-                    "a key cannot have both a numeric range and a string whitelist: " + path);
+        comment = List.copyOf(comment);
+        if (range.isPresent() && allowed.isPresent()) {
+            throw new IllegalArgumentException("a setting is held to a range or to a list, not both: " + path);
         }
         if (range.isPresent()) {
-            /*
-             * A range's bounds must be the key's own value type, or the validator would later cast the
-             * value to the bound type and throw instead of clamping (a Boolean key with a numeric range,
-             * or an Integer value with a Long range, must be rejected here, not crash at use).
-             */
-            final Object min = range.get().min();
-            final Object max = range.get().max();
-            if (!valueClass.isInstance(min) || !valueClass.isInstance(max)) {
-                throw new IllegalArgumentException(
-                        "range bounds must match the key's value type " + valueClass.getSimpleName()
-                                + ", got " + min.getClass().getSimpleName());
-            }
+            checkRange(path, defaultValue, range.get());
         }
-        if (whitelist.isPresent()) {
-            /*
-             * A whitelist only makes sense for string-valued keys, and the default must itself be allowed,
-             * otherwise a rejected value would be substituted with a value that is also not in the list.
-             */
-            if (!String.class.equals(valueClass)) {
-                throw new IllegalArgumentException(
-                        "whitelist is only supported for String keys, got " + valueClass.getSimpleName());
-            }
-            final List<String> allowed = whitelist.get();
-            if (allowed.isEmpty()) {
-                throw new IllegalArgumentException("whitelist must not be empty: " + path);
-            }
-            if (!allowed.contains(defaultValue)) {
-                throw new IllegalArgumentException(
-                        "default value " + defaultValue + " is not in the whitelist " + allowed);
-            }
-            whitelist = Optional.of(List.copyOf(allowed));
+        if (allowed.isPresent()) {
+            checkAllowed(path, defaultValue, allowed.get());
+            allowed = Optional.of(List.copyOf(allowed.get()));
         }
     }
 
-    /**
-     * Backwards-compatible constructor for keys with no string whitelist (only a numeric range or no constraint at all).
-     */
-    public ConfigKey(
-            final List<String> path,
-            final Class<T> valueClass,
-            final T defaultValue,
-            final Optional<ConfigKeyRange<?>> range) {
-        this(path, valueClass, defaultValue, range, Optional.empty());
+    /** A setting that is on or off. */
+    public static ConfigKey<Boolean> flag(final String path, final boolean defaultValue) {
+        return of(path, Codec.BOOL, defaultValue);
     }
 
-    public static <T> ConfigKey<T> of(
-            final List<String> path,
-            final Class<T> valueClass,
-            final T defaultValue) {
-        return new ConfigKey<>(path, valueClass, defaultValue, Optional.empty(), Optional.empty());
+    /** A whole number. */
+    public static ConfigKey<Integer> whole(final String path, final int defaultValue) {
+        return of(path, Codec.INT, defaultValue);
     }
 
-    public static <N extends Number & Comparable<N>> ConfigKey<N> ranged(
-            final List<String> path,
-            final Class<N> valueClass,
-            final N defaultValue,
-            final ConfigKeyRange<N> range) {
-        if (!range.contains(defaultValue)) {
-            throw new IllegalArgumentException(
-                    "defaultValue " + defaultValue + " is outside declared range "
-                            + "[" + range.min() + ", " + range.max() + "]");
-        }
-        return new ConfigKey<>(path, valueClass, defaultValue, Optional.of(range), Optional.empty());
+    /** A whole number too large for an int, such as a count of bytes. */
+    public static ConfigKey<Long> wholeLong(final String path, final long defaultValue) {
+        return of(path, Codec.LONG, defaultValue);
     }
 
-    /**
-     * Declares a string key whose value is restricted to a fixed set. A value outside the set is rejected by the
-     * {@link ConfigValidator} and replaced with the default, so the loaded value is always one of the allowed strings.
-     */
-    public static ConfigKey<String> whitelisted(
-            final List<String> path,
-            final String defaultValue,
-            final List<String> allowed) {
-        return new ConfigKey<>(path, String.class, defaultValue, Optional.empty(), Optional.of(allowed));
+    /** A number with a fraction. */
+    public static ConfigKey<Double> number(final String path, final double defaultValue) {
+        return of(path, Codec.DOUBLE, defaultValue);
     }
 
+    /** A piece of text. */
+    public static ConfigKey<String> text(final String path, final String defaultValue) {
+        return of(path, Codec.STRING, defaultValue);
+    }
+
+    /** A setting of any kind that has a codec, at a dotted path ({@code "section.name"}). */
+    public static <T> ConfigKey<T> of(final String path, final Codec<T> codec, final T defaultValue) {
+        return new ConfigKey<>(ConfigTree.path(path), codec, defaultValue, Optional.empty(), Optional.empty(),
+                List.of());
+    }
+
+    /** The same setting, a number held to {@code min} and {@code max}, both included. */
+    public <N extends Number & Comparable<N>> ConfigKey<T> range(final N min, final N max) {
+        return new ConfigKey<>(this.path, this.codec, this.defaultValue, Optional.of(new ConfigKeyRange<>(min, max)),
+                Optional.empty(), this.comment);
+    }
+
+    /** The same setting, a text held to these words; any other falls back to the default. */
+    public ConfigKey<T> allowing(final String... words) {
+        return new ConfigKey<>(this.path, this.codec, this.defaultValue, Optional.empty(),
+                Optional.of(List.of(words)), this.comment);
+    }
+
+    /** The same setting, with these lines above it in the file. */
+    public ConfigKey<T> comment(final String... lines) {
+        return new ConfigKey<>(this.path, this.codec, this.defaultValue, this.range, this.allowed,
+                Arrays.asList(lines));
+    }
+
+    /** Where it sits, written with dots: {@code "boot.show_boot_menu"}. */
     public String dottedPath() {
-        return String.join(".", path);
+        return String.join(".", this.path);
+    }
+
+    /** Its own name, the last part of its path. */
+    public String name() {
+        return this.path.get(this.path.size() - 1);
+    }
+
+    /** A value of it as a file holds it: plain maps, lists, text, numbers and booleans. */
+    public Object plain(final T value) {
+        return PlainValues.value(this.codec.encodeStart(JavaOps.INSTANCE, value)
+                .getOrThrow(problem -> new IllegalArgumentException(dottedPath() + " cannot hold " + value + ": "
+                        + problem)));
+    }
+
+    /** What a file holds for it, read as a value of it, or why it cannot be. */
+    public DataResult<T> read(final Object plain) {
+        return this.codec.parse(JavaOps.INSTANCE, PlainValues.shapedLike(plain, plain(this.defaultValue)));
+    }
+
+    /**
+     * The lines a file writes above it: its own comment, then what it is held to and its default, so a person editing
+     * the file by hand knows the bounds without looking them up.
+     */
+    public List<String> describedComment() {
+        final List<String> out = new ArrayList<>(this.comment);
+        this.range.ifPresent(bounds -> out.add("Range: " + bounds.min() + " to " + bounds.max()));
+        this.allowed.ifPresent(words -> out.add("One of: " + String.join(", ", words)));
+        out.add("Default: " + plain(this.defaultValue));
+        return out;
+    }
+
+    private static void checkRange(final List<String> path, final Object defaultValue, final ConfigKeyRange<?> range) {
+        /*
+         * The bounds have to be the setting's own kind of number, or the value would be compared with a bound of
+         * another class and throw where it should have been pulled into the range.
+         */
+        if (defaultValue.getClass() != range.min().getClass() || defaultValue.getClass() != range.max().getClass()) {
+            throw new IllegalArgumentException("the range of " + path + " has to be in its own kind of number, "
+                    + defaultValue.getClass().getSimpleName() + ", not " + range.min().getClass().getSimpleName());
+        }
+        if (!inside(range, defaultValue)) {
+            throw new IllegalArgumentException("the default of " + path + ", " + defaultValue
+                    + ", is outside its range [" + range.min() + ", " + range.max() + "]");
+        }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static boolean inside(final ConfigKeyRange range, final Object value) {
+        return range.contains((Number & Comparable) value);
+    }
+
+    private static void checkAllowed(final List<String> path, final Object defaultValue, final List<String> words) {
+        // A word that falls back to the default has to fall back to a word that is allowed itself.
+        if (!(defaultValue instanceof String word)) {
+            throw new IllegalArgumentException("only a text setting can be held to a list of words: " + path);
+        }
+        if (words.isEmpty()) {
+            throw new IllegalArgumentException("the words " + path + " is held to cannot be none");
+        }
+        if (!words.contains(word)) {
+            throw new IllegalArgumentException("the default of " + path + ", " + word + ", is not one of " + words);
+        }
     }
 }
