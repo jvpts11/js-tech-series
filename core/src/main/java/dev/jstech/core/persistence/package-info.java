@@ -6,6 +6,7 @@
  * This file is part of J's Core.
  */
 /**
- * Persistence foundation: SavedData and AttachmentType base classes.
+ * What a world keeps and how it is read back: the layout each kind of saved thing is written in, with the version it
+ * carries and the steps that bring an older save up to today's, and the saved data of the Core itself.
  */
 package dev.jstech.core.persistence;

@@ -47,6 +47,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   there in sections, each setting and section under a name of its own, short enough to be read whole, with its
   comment as the tooltip, in English and in Portuguese. A mod built on the Core names each setting and section of a
   TOML file where it declares it, and the names go into the mod's English language file with everything else.
+- Saves that carry the version of their layout, in J's Core, for any mod built on it. A mod declares once, for each
+  kind of thing it saves (a block entity's tag, an attachment, a value saved whole), the version of its layout and
+  the steps that bring an older save up to it, and every save then carries the version it was written in. A save from
+  before there were versions is read as the version before the first; one written by a newer version of the mod is
+  read as far as it can be, and the log says so. Settings files count their versions the same way.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,

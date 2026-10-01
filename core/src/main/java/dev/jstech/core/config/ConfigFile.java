@@ -10,6 +10,7 @@ package dev.jstech.core.config;
 import dev.jstech.core.config.format.ConfigFormatException;
 import dev.jstech.core.config.format.IConfigFormat;
 import dev.jstech.core.config.format.PlainValues;
+import dev.jstech.core.persistence.UpgradeChain;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -18,7 +19,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import org.slf4j.LoggerFactory;
@@ -58,7 +58,7 @@ public final class ConfigFile {
     private final Map<String, String> sectionTitles;
     private final Map<String, ConfigKey<?>> keys;
     private final Map<String, Consumer<Object>> uses;
-    private final Map<Integer, IConfigUpgrade> upgrades;
+    private final UpgradeChain<Map<String, Object>> upgrades;
     private final ConfigValidator validator;
     private final IConfigLogger logger;
     /** Each setting's value as read, by its dotted path; a setting not read yet is at its default. */
@@ -74,13 +74,13 @@ public final class ConfigFile {
         this.name = builder.name;
         this.side = builder.side;
         this.format = builder.format;
-        this.version = builder.version;
+        this.upgrades = builder.upgrades.build();
+        this.version = this.upgrades.version();
         this.comment = List.copyOf(builder.comment);
         this.sections = Collections.unmodifiableMap(new LinkedHashMap<>(builder.sections));
         this.sectionTitles = Collections.unmodifiableMap(new LinkedHashMap<>(builder.sectionTitles));
         this.keys = Collections.unmodifiableMap(new LinkedHashMap<>(builder.keys));
         this.uses = Map.copyOf(builder.uses);
-        this.upgrades = Map.copyOf(builder.upgrades);
         this.logger = builder.logger;
         this.validator = new ConfigValidator(builder.logger);
     }
@@ -190,18 +190,13 @@ public final class ConfigFile {
     public ReadOutcome read(final Map<String, Object> file) {
         final Map<String, Object> plain = PlainValues.map(file);
         final int found = versionOf(plain);
-        final boolean fromNewer = found > this.version;
+        final boolean fromNewer = this.upgrades.isNewer(found);
         final boolean upgraded = found < this.version;
         if (fromNewer) {
             this.logger.warn(fileName() + " was written by a newer version of its mod (layout " + found + ", this one "
                     + "knows " + this.version + "); it is read as far as it can be and not written over");
         }
-        for (int at = found; at < this.version; at++) {
-            final IConfigUpgrade step = this.upgrades.get(at);
-            if (step != null) {
-                step.upgrade(plain);
-            }
-        }
+        this.upgrades.upgrade(plain, found);
         boolean corrected = false;
         for (final ConfigKey<?> key : this.keys.values()) {
             corrected |= take(key, ConfigTree.get(plain, key.path()));
@@ -329,8 +324,7 @@ public final class ConfigFile {
         private final Map<String, String> sectionTitles = new LinkedHashMap<>();
         private final Map<String, ConfigKey<?>> keys = new LinkedHashMap<>();
         private final Map<String, Consumer<Object>> uses = new LinkedHashMap<>();
-        private final Map<Integer, IConfigUpgrade> upgrades = new TreeMap<>();
-        private int version = 1;
+        private final UpgradeChain.Builder<Map<String, Object>> upgrades;
         private List<String> comment = List.of();
         private IConfigLogger logger = LoggerFactory.getLogger(ConfigFile.class)::warn;
 
@@ -342,14 +336,12 @@ public final class ConfigFile {
             this.name = name;
             this.side = Objects.requireNonNull(side, "side");
             this.format = Objects.requireNonNull(format, "format");
+            this.upgrades = UpgradeChain.builder(name);
         }
 
         /** The version of the file's layout, counted from 1; raise it when a step is needed to read older files. */
         public Builder version(final int layout) {
-            if (layout < 1) {
-                throw new IllegalArgumentException("a layout's version counts from 1, not " + layout);
-            }
-            this.version = layout;
+            this.upgrades.version(layout);
             return this;
         }
 
@@ -389,12 +381,11 @@ public final class ConfigFile {
 
         /** The step that takes a file of layout {@code from} to layout {@code from + 1}. */
         public Builder upgrade(final int from, final IConfigUpgrade step) {
-            if (from < 0) {
-                throw new IllegalArgumentException("a layout's version is never below 0: " + from);
-            }
-            if (this.upgrades.putIfAbsent(from, Objects.requireNonNull(step, "step")) != null) {
-                throw new IllegalArgumentException("two steps from layout " + from + " in " + this.name);
-            }
+            Objects.requireNonNull(step, "step");
+            this.upgrades.step(from, values -> {
+                step.upgrade(values);
+                return values;
+            });
             return this;
         }
 
@@ -405,12 +396,6 @@ public final class ConfigFile {
         }
 
         public ConfigFile build() {
-            for (final int from : this.upgrades.keySet()) {
-                if (from >= this.version) {
-                    throw new IllegalArgumentException("a step from layout " + from + " in " + this.name
-                            + ", which is only at layout " + this.version);
-                }
-            }
             for (final String path : this.keys.keySet()) {
                 if (path.equals(VERSION_KEY)) {
                     throw new IllegalArgumentException(VERSION_KEY + " is the file's own, not a setting's");
