@@ -10,6 +10,7 @@ package dev.jstech.tests;
 import com.mojang.logging.LogUtils;
 import dev.jstech.core.JsCore;
 import dev.jstech.tests.testkit.TestSettings;
+import dev.jstech.tests.testkit.TestStates;
 import dev.jstech.tests.testkit.ToyLanguage;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -34,6 +35,8 @@ public final class JsTests {
                 + " series, adds nothing to the game and must not be installed.", modContainer.getModInfo().getVersion());
         // The sounds the tests play through the series' sound system, on files the game already has.
         TestSounds.CONTENT.register(modEventBus);
+        // A state of every scope, on both sides, since the client tests watch them arrive.
+        TestStates.register();
         if (GameTestHooks.isGametestServer()) {
             /*
              * The language API's tests need a language that is not the series' own, and languages are only taken

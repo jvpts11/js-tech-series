@@ -52,6 +52,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the steps that bring an older save up to it, and every save then carries the version it was written in. A save from
   before there were versions is read as the version before the first; one written by a newer version of the mod is
   read as far as it can be, and the log says so. Settings files count their versions the same way.
+- States, in J's Core, for any mod built on it: a value a mod keeps with a world for the whole server, for each
+  dimension, for each player (read and changed whether they are online or not) or for each team. A state is declared
+  once, with its codec, its default and the version of its layout, and saved with the world in a file of its own. A
+  synced state sends each player the value that is theirs to see: the server's to everyone, a dimension's to whoever
+  is in it, a player's to that player alone, a team's to the players on it. Teams are the game's scoreboard teams
+  unless a mod hands the Core a source of teams of its own. A state's file saved by a newer version of its mod is read
+  as far as it can be, and the file as that version left it is kept beside it once, as `<name>.newer-v<N>.dat`.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,
