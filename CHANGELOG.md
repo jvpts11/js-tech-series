@@ -501,6 +501,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   in, and the ledger of a world's recordings moves from the text file beside them into the world's saved data, as
   `jstech_media_ledger.dat`. A world saved before is read as it was; the text ledger is read once and goes once the
   world has been saved with it.
+- Everything else the series saves carries the version of its layout too: every block entity of J's Core, J's
+  Computers and J's Industrial, the networks a chunk is on, the operator of a machine, the programs a player first ran
+  and the store of what the drives hold. A save from before is read as it was, and saved again with its version.
 - The series' settings files are written by J's Core's settings files: `jstech-balance.toml` (the balance of the
   Operations engine, the programs' time and the recordings), `jscomputers-server.toml` (the computers and
   Soundfoundry) and the player's `jstech-audio.json`. They keep their names and their settings, so nothing set in them

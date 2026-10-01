@@ -8,6 +8,7 @@
 package dev.jstech.computers.advancement;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.core.persistence.SaveLayout;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -50,8 +51,13 @@ public final class MachineOperators {
 
     private static final UUID NOBODY = new UUID(0L, 0L);
 
+    /** The layout the operator is saved in; a machine saved before it had one holds the bare id. */
+    public static final SaveLayout LAYOUT = SaveLayout.of(JsComputers.MODID + ":operator");
+
     public static final Supplier<AttachmentType<UUID>> OPERATOR = ATTACHMENT_TYPES.register("operator",
-            () -> AttachmentType.builder(() -> NOBODY).serialize(UUIDUtil.CODEC, id -> !NOBODY.equals(id)).build());
+            () -> AttachmentType.builder(() -> NOBODY)
+                    .serialize(LAYOUT.codec(UUIDUtil.CODEC), id -> !NOBODY.equals(id))
+                    .build());
 
     private MachineOperators() {
     }

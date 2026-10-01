@@ -8,13 +8,16 @@
 package dev.jstech.core.blockentity;
 
 import com.mojang.serialization.Codec;
+import dev.jstech.core.persistence.SaveLayout;
 import dev.jstech.core.util.BlockDrops;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.neoforged.neoforge.capabilities.BlockCapability;
@@ -24,7 +27,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.IntSupplier;
@@ -36,6 +42,10 @@ import java.util.function.Supplier;
  *
  * <p>Fields are declared as the block entity is built, in its field initialisers. The first save, load, update or
  * menu closes the declarations, since a menu's data is laid out from them and must never shift under it.
+ *
+ * <p>Every save carries the version of the block entity's layout, under {@value SaveLayout#VERSION_KEY}: the first,
+ * unless the block entity declares a {@link #layout} of its own with steps from older ones. A save from before block
+ * entities carried a version reads as version 0.
  */
 public final class BlockEntityFields {
 
@@ -46,14 +56,38 @@ public final class BlockEntityFields {
     private final List<StateMirror<?>> mirrors = new ArrayList<>();
     private final List<BiConsumer<ServerLevel, BlockPos>> brokenListeners = new ArrayList<>();
     private boolean closed;
+    private @Nullable SaveLayout layout;
     private @Nullable MenuData menuData;
     /* What the block offers to pipes and cables, found once when the declarations close: asked on every lookup. */
     private @Nullable FieldItemHandler exposedItems;
     private @Nullable FieldEnergyStorage exposedEnergy;
     private @Nullable FieldFluidTank exposedFluid;
 
+    /** The first layout of each kind of block entity that declares none, made once a kind, named by its id. */
+    private static final Map<BlockEntityType<?>, SaveLayout> FIRST_LAYOUTS = new ConcurrentHashMap<>();
+
     BlockEntityFields(final SyncedBlockEntity owner) {
         this.owner = owner;
+    }
+
+    /**
+     * Declares the layout the block entity is saved in, when it is past its first: its version, and the steps that
+     * bring a save of an older version up to it. Declared once, in a field initialiser, from a constant shared by
+     * every block entity of the kind.
+     */
+    public void layout(final SaveLayout declared) {
+        checkOpen(SaveLayout.VERSION_KEY);
+        if (this.layout != null) {
+            throw new IllegalStateException("the layout is declared twice");
+        }
+        this.layout = Objects.requireNonNull(declared, "declared");
+    }
+
+    /** The layout the block entity is saved in. */
+    public SaveLayout layout() {
+        final SaveLayout declared = this.layout;
+        return declared != null ? declared : FIRST_LAYOUTS.computeIfAbsent(owner.getType(),
+                type -> SaveLayout.of(String.valueOf(BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(type))));
     }
 
     /** Declares an int, starting at {@code initial}. */
@@ -189,10 +223,12 @@ public final class BlockEntityFields {
                 field.write(tag, registries);
             }
         }
+        layout().stamp(tag);
     }
 
-    void load(final CompoundTag tag, final HolderLookup.Provider registries) {
+    void load(final CompoundTag saved, final HolderLookup.Provider registries) {
         close();
+        final CompoundTag tag = layout().read(saved);
         for (final IField field : fields) {
             if (!field.flags().saved()) {
                 continue;
@@ -280,6 +316,9 @@ public final class BlockEntityFields {
 
     private FieldFlags flags(final String key) {
         checkOpen(key);
+        if (SaveLayout.VERSION_KEY.equals(key)) {
+            throw new IllegalStateException("'" + key + "' is where the save keeps its version, not a field");
+        }
         if (!keys.add(key)) {
             throw new IllegalStateException("field '" + key + "' is declared twice");
         }

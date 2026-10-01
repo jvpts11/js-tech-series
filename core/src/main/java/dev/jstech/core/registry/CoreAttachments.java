@@ -11,6 +11,7 @@ import com.mojang.serialization.Codec;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.persistence.CoreChunkData;
+import dev.jstech.core.persistence.SaveLayout;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.UUIDUtil;
 import net.neoforged.bus.api.IEventBus;
@@ -45,10 +46,13 @@ public final class CoreAttachments {
             ATTACHMENT_TYPES.register("network_system",
                     () -> AttachmentType.builder(NetworkSystem::new).build());
 
+    /** The layout a chunk's networks are saved in; a chunk saved before it had one holds the bare list. */
+    public static final SaveLayout CHUNK_NETWORKS_LAYOUT = SaveLayout.of(JsCore.MODID + ":chunk_networks");
+
     public static final Supplier<AttachmentType<CoreChunkData>> CHUNK_NETWORKS =
             ATTACHMENT_TYPES.register("chunk_networks",
                     () -> AttachmentType.builder(CoreChunkData::empty)
-                            .serialize(CHUNK_DATA_CODEC)
+                            .serialize(CHUNK_NETWORKS_LAYOUT.codec(CHUNK_DATA_CODEC))
                             .build());
 
     public static void register(final IEventBus modEventBus) {

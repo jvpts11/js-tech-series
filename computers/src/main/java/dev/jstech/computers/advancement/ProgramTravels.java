@@ -9,6 +9,7 @@ package dev.jstech.computers.advancement;
 
 import com.mojang.serialization.Codec;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.core.persistence.SaveLayout;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
@@ -31,9 +32,13 @@ public final class ProgramTravels {
 
     private static final int REMEMBERED = 64;
 
+    /** The layout a player's first runs are saved in; a player saved before it had one holds the bare map. */
+    public static final SaveLayout LAYOUT = SaveLayout.of(JsComputers.MODID + ":program_first_run");
+
     public static final Supplier<AttachmentType<Map<String, Long>>> FIRST_RUN = ATTACHMENT_TYPES.register(
             "program_first_run", () -> AttachmentType.<Map<String, Long>>builder(() -> new HashMap<>())
-                    .serialize(Codec.unboundedMap(Codec.STRING, Codec.LONG).xmap(HashMap::new, map -> map),
+                    .serialize(LAYOUT.codec(Codec.unboundedMap(Codec.STRING, Codec.LONG)
+                                    .<Map<String, Long>>xmap(HashMap::new, map -> map)),
                             map -> !map.isEmpty())
                     .copyOnDeath()
                     .build());

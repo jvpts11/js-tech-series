@@ -9,6 +9,9 @@ package dev.jstech.computers.storage;
 
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.DataResult;
+import dev.jstech.computers.JsComputers;
+import dev.jstech.core.persistence.SaveFiles;
+import dev.jstech.core.persistence.SaveLayout;
 import dev.jstech.core.persistence.SavedValue;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -37,15 +40,22 @@ import java.util.UUID;
  * <p>A save encodes only the volumes written since the last one. Every key is an item stack run through
  * its codec, and the autosave of a base with thousands of drives spent whole seconds of one tick encoding
  * contents nobody had touched; an unchanged volume now hands its last encoding to the next save as it is.
+ *
+ * <p>The file carries the version of its layout. One saved before it did reads as version 0; one a newer version
+ * of the mod saved is read as far as it can be, and kept aside once before it is saved over.
  */
 public final class StorageVolumes extends SavedData {
 
     public static final String DATA_NAME = "jsc_storage_volumes";
+    /** The layout the file is saved in. */
+    public static final SaveLayout LAYOUT = SaveLayout.of(JsComputers.MODID + ":storage_volumes");
     private static final Logger LOGGER = LogUtils.getLogger();
 
     private final Map<UUID, StorageVolume> volumes = new HashMap<>();
     /** Each volume's contents as last encoded, dropped the moment the volume is written. */
     private final Map<UUID, Tag> encoded = new HashMap<>();
+    /** The version a newer mod saved the file in, until its copy is kept; 0 when none did. */
+    private int newer;
 
     public StorageVolumes() {
     }
@@ -55,7 +65,12 @@ public final class StorageVolumes extends SavedData {
     }
 
     public static StorageVolumes get(final MinecraftServer server) {
-        return server.overworld().getDataStorage().computeIfAbsent(factory(), DATA_NAME);
+        final StorageVolumes store = server.overworld().getDataStorage().computeIfAbsent(factory(), DATA_NAME);
+        if (store.newer > 0) {
+            SaveFiles.keepNewerCopy(server.overworld(), DATA_NAME, store.newer);
+            store.newer = 0;
+        }
+        return store;
     }
 
     /** The running server's store, or null off the server thread (a client, a render pass). */
@@ -134,11 +149,16 @@ public final class StorageVolumes extends SavedData {
             list.add(one);
         }
         tag.put("Volumes", list);
-        return tag;
+        return LAYOUT.stamp(tag);
     }
 
-    private static StorageVolumes load(final CompoundTag tag, final HolderLookup.Provider registries) {
+    private static StorageVolumes load(final CompoundTag saved, final HolderLookup.Provider registries) {
         final StorageVolumes store = new StorageVolumes();
+        final int found = SaveLayout.versionOf(saved);
+        if (LAYOUT.isNewer(found)) {
+            store.newer = found;
+        }
+        final CompoundTag tag = LAYOUT.read(saved);
         final RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, registries);
         for (final Tag element : tag.getList("Volumes", Tag.TAG_COMPOUND)) {
             final CompoundTag one = (CompoundTag) element;
@@ -157,6 +177,9 @@ public final class StorageVolumes extends SavedData {
                 }
             }
             store.volumes.put(id, volume);
+        }
+        if (found < LAYOUT.version()) {
+            store.setDirty(); // written again at the next save, in today's layout
         }
         return store;
     }
