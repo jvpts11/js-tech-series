@@ -3,10 +3,11 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Core.
  */
-package dev.jstech.computers.storage;
+package dev.jstech.core.chemical;
 
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -15,12 +16,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
-
 /**
- * What an integration must provide for its chemicals to be network data: a port onto a block's chemical
- * capability, and the identity of a chemical (existence, name, colour) by registry id. The core never names a
- * chemical mod; a bridge is registered only when its mod is present.
+ * What an integration provides for a chemical mod's chemicals to be moved and stored like fluids: a port onto a
+ * block's chemical capability, and the identity of a chemical (existence, name, colour) by registry id. Nothing else
+ * names a chemical mod; a bridge is registered only when its mod is present.
  */
 public interface IChemicalBridge {
 

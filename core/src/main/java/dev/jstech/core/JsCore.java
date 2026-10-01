@@ -17,6 +17,7 @@ import dev.jstech.core.config.CoreConfigKeys;
 import dev.jstech.core.energy.CoreEnergy;
 import dev.jstech.core.event.CoreEventDispatcher;
 import dev.jstech.core.input.CoreKeys;
+import dev.jstech.core.integration.mekanism.MekanismIntegration;
 import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.language.LanguageRegistry;
 import dev.jstech.core.operation.OperationTypeRegistry;
@@ -85,6 +86,8 @@ public final class JsCore {
         ItemStates.register(modEventBus);
         // The Core's own keys, declared before the player's game makes its key bindings.
         CoreKeys.declare();
+        // Soft integrations: each one checks for its mod and stays a no-op without it.
+        MekanismIntegration.bootstrap();
         // The balance of the Operations engine is series-wide, so the Core owns the world's balance file.
         ConfigFiles.register(CoreConfigKeys.FILE, modEventBus, modContainer);
         // A player's sound preferences, read on their own game only.

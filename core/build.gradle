@@ -32,6 +32,10 @@ dependencies {
      */
     testRuntimeOnly 'com.electronwill.night-config:toml:3.8.3'
     testRuntimeOnly 'com.google.code.gson:gson:2.10.1'
+
+    // Mekanism API: the chemical bridge compiles against it, but no Mekanism class is loaded unless Mekanism is
+    // present (soft dependency, guarded at runtime).
+    compileOnly "mekanism:Mekanism:${mekanism_version}:api"
 }
 
 // The notices of the third-party work this mod carries, beside its own licence, and the licences they come under.

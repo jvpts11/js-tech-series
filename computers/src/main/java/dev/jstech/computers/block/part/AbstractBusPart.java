@@ -9,10 +9,10 @@ package dev.jstech.computers.block.part;
 
 import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.storage.ChemicalBridges;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.chemical.ChemicalBridges;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.IPartHost;
 import dev.jstech.core.util.Utf8Text;

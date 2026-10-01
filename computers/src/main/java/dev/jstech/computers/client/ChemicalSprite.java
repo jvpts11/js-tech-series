@@ -8,8 +8,8 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.storage.ChemicalBridges;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.chemical.ChemicalBridges;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;

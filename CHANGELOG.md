@@ -568,6 +568,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   error a lower version gives for what came after it, and the line the choice wrote.
 
 ### Changed
+- The bridge to Mekanism's chemicals lives in J's Core now, still behind its guard: every mod of the series reaches
+  Mekanism's gases, infusions, pigments and slurries through the Core, and none needs Mekanism to run. A check of the
+  sources keeps every optional mod (Mekanism, JEI, EMI, FTB, ComputerCraft) named only inside an integration, and
+  out of the class that starts it.
 - The `recipe_machines` files that tell the Pattern Studio which machines run which recipe types are read by the
   Core's registry of datapack files: a file with a value that is neither a machine id nor a list of them is now left
   out whole, with a line in the log saying why.

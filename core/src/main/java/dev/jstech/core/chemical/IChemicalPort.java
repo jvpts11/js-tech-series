@@ -3,19 +3,17 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Core.
  */
-package dev.jstech.computers.storage;
-
-import net.minecraft.resources.ResourceLocation;
+package dev.jstech.core.chemical;
 
 import java.util.List;
+import net.minecraft.resources.ResourceLocation;
 
 /**
- * A block's chemical inventory as the network sees it: substances identified by registry id and measured in
- * millibuckets, with no knowledge of which mod provides them. An {@link IChemicalBridge} supplies ports for the
- * blocks of the mod it integrates; the storage engine moves data through them exactly as it does for items and
- * fluids.
+ * A block's chemical inventory, seen without knowing which mod provides it: substances identified by registry id and
+ * measured in millibuckets. An {@link IChemicalBridge} supplies ports for the blocks of the mod it integrates, so a
+ * network or a bus moves chemicals through them as it moves items and fluids.
  */
 public interface IChemicalPort {
 

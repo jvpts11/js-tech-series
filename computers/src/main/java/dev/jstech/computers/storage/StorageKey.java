@@ -11,6 +11,8 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.core.chemical.ChemicalBridges;
+import dev.jstech.core.chemical.IChemicalBridge;
 import dev.jstech.core.util.Sizes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;

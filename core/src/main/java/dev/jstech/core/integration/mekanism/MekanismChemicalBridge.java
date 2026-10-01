@@ -3,12 +3,12 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Core.
  */
-package dev.jstech.computers.integration.mekanism;
+package dev.jstech.core.integration.mekanism;
 
-import dev.jstech.computers.storage.IChemicalBridge;
-import dev.jstech.computers.storage.IChemicalPort;
+import dev.jstech.core.chemical.IChemicalBridge;
+import dev.jstech.core.chemical.IChemicalPort;
 import mekanism.api.Action;
 import mekanism.api.MekanismAPI;
 import mekanism.api.chemical.Chemical;
@@ -32,9 +32,9 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Mekanism's chemicals (gases, infusions, pigments, slurries, one unified registry since 10.7) as network
- * data. The block capability is recreated by its registered name, so the bridge depends on the Mekanism API
- * jar alone and on nothing from the mod's internals.
+ * Mekanism's chemicals (gases, infusions, pigments, slurries, one unified registry since 10.7), moved and stored like
+ * fluids. The block capability is recreated by its registered name, so the bridge depends on the Mekanism API jar
+ * alone and on nothing from the mod's internals.
  */
 final class MekanismChemicalBridge implements IChemicalBridge {
 

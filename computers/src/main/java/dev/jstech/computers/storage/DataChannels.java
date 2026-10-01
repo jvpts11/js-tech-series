@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.storage;
 
+import dev.jstech.core.chemical.ChemicalBridges;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;

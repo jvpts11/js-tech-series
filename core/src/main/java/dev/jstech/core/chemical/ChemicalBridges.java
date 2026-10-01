@@ -3,14 +3,17 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Core.
  */
-package dev.jstech.computers.storage;
+package dev.jstech.core.chemical;
 
-import dev.jstech.computers.JsComputers;
+import dev.jstech.core.JsCore;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -19,13 +22,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 /**
- * The registered {@link IChemicalBridge}s. With no bridge (no chemical mod present) every query answers "no
- * such chemical", so chemical keys are inert data the network can still store, move and display by id.
+ * The registered {@link IChemicalBridge}s. With no bridge (no chemical mod present) every query answers "no such
+ * chemical", so chemical ids are inert data that can still be stored, moved and shown by id.
  */
 @PaletteHolder
 public final class ChemicalBridges {
@@ -33,7 +32,7 @@ public final class ChemicalBridges {
     private static final List<IChemicalBridge> BRIDGES = new CopyOnWriteArrayList<>();
 
     /** The tint a chemical with no bridge to explain it falls back to. */
-    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "storage/chemical",
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsCore.MODID, "chemical",
             new Colours(0xFF8FA3B7));
 
     private ChemicalBridges() {

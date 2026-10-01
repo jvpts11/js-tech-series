@@ -3,17 +3,17 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Core.
  */
-package dev.jstech.computers.integration.mekanism;
+package dev.jstech.core.integration.mekanism;
 
-import dev.jstech.computers.storage.ChemicalBridges;
+import dev.jstech.core.chemical.ChemicalBridges;
 import net.neoforged.fml.ModList;
 
 /**
- * Soft integration with Mekanism: when the mod is present, its chemicals become network data through a
- * {@link MekanismChemicalBridge}. Nothing here touches a Mekanism class unless {@link #isLoaded()} is true,
- * so the mod runs unchanged without Mekanism.
+ * Soft integration with Mekanism: when the mod is present, its chemicals can be moved and stored like fluids through a
+ * {@link MekanismChemicalBridge}. Nothing here touches a Mekanism class unless {@link #isLoaded()} is true, so every
+ * mod of the series runs unchanged without Mekanism.
  */
 public final class MekanismIntegration {
 

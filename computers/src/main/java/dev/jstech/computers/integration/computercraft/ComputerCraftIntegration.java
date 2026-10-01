@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.integration.computercraft;
 
-import dan200.computercraft.api.ComputerCraftAPI;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.gateway.IGatewayBridge;
 import net.neoforged.fml.ModList;
@@ -48,9 +47,12 @@ public final class ComputerCraftIntegration {
         }
     }
 
-    // Each kept in its own method so the classes behind it are only resolved once the mod is known to be there.
+    /*
+     * Each kept in its own method, on a class of its own, so the classes behind it are only resolved once the mod is
+     * known to be there and this class names none of them.
+     */
     private static String version() {
-        return ComputerCraftAPI.getInstalledVersion();
+        return ComputerCraftVersion.installed();
     }
 
     private static IGatewayBridge newBridge(final NetworkGatewayBlockEntity gateway) {

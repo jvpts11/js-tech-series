@@ -9,11 +9,11 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.operation.NetworkStorage;
-import dev.jstech.computers.storage.ChemicalBridges;
-import dev.jstech.computers.storage.IChemicalPort;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.chemical.ChemicalBridges;
+import dev.jstech.core.chemical.IChemicalPort;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import io.netty.buffer.Unpooled;

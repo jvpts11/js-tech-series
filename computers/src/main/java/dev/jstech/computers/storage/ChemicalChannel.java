@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.storage;
 
+import dev.jstech.core.chemical.IChemicalBridge;
+import dev.jstech.core.chemical.IChemicalPort;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;

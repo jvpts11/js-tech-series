@@ -15,6 +15,7 @@ import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.StorageVolume;
+import dev.jstech.core.chemical.ChemicalBridges;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.gametest.framework.GameTest;
@@ -78,7 +79,7 @@ public final class DiskUsageGameTests {
         helper.assertTrue(both.equals("Used 44%: 12 items, 22,944 mB of fluid, 500 mB of chemical across 3 types"), "got: " + both);
         // Chemicals are named only while a chemical mod (Mekanism on the dev runtime) is present.
         final String capacity = "Holds 80 items, or 80,000 mB of fluid"
-                + (dev.jstech.computers.storage.ChemicalBridges.anyRegistered() ? " or chemical" : "");
+                + (ChemicalBridges.anyRegistered() ? " or chemical" : "");
         helper.assertTrue(DiskUsage.capacityLine(80).english().equals(capacity),
                 "got: " + DiskUsage.capacityLine(80).english());
         helper.assertTrue(DiskUsage.EMPTY.isEmpty() && !water.isEmpty(), "emptiness follows the weight");
