@@ -16,6 +16,7 @@ import dev.jstech.core.config.ConfigFiles;
 import dev.jstech.core.config.CoreConfigKeys;
 import dev.jstech.core.energy.CoreEnergy;
 import dev.jstech.core.event.CoreEventDispatcher;
+import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.language.LanguageRegistry;
 import dev.jstech.core.operation.OperationTypeRegistry;
 import dev.jstech.core.persistence.NetworkRegistry;
@@ -79,6 +80,8 @@ public final class JsCore {
         CoreItems.register(modEventBus);
         // The units energy is counted in, FE first, and the energy an item holds.
         CoreEnergy.register(modEventBus);
+        // The components an item keeps its mode, its fluid and its stacks in.
+        ItemStates.register(modEventBus);
         // The balance of the Operations engine is series-wide, so the Core owns the world's balance file.
         ConfigFiles.register(CoreConfigKeys.FILE, modEventBus, modContainer);
         // A player's sound preferences, read on their own game only.

@@ -99,6 +99,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   it, and energy takes the way that loses least, worked out once while the grid keeps its shape.
 - J's Industrial's Energy Cable, laid in the shared cable block's energy lane: it carries any amount of energy any
   distance and loses none of it.
+- Items with state, in J's Core. An item says where it is declared what it holds besides itself: modes it switches
+  between, energy, one fluid, stacks, and components it starts with (a mod declares its own components with its
+  content). The Core gives it the game's capability for each, keeps each in a component that is saved and sent with
+  the item, makes it stack alone when it keeps anything inside, and lists what it holds in its tooltip. An item that
+  holds stacks takes no other item that does. The new Change Item Mode key moves the item in the main hand on to its
+  next mode, or back one with shift held, and says the new mode on the action bar; it has no key until the player
+  gives it one.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,

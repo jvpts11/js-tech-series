@@ -1,6 +1,12 @@
 {
   "block.jstests.connected_panel": "Connected panel",
+  "item.jstests.full_tool": "Full Test Tool",
+  "item.jstests.modes_tool": "Modes Test Tool",
+  "itemGroup.jstests.tests": "Test Items",
   "jstests.audio_device.buzzer": "Test buzzer",
+  "jstests.mode.clear": "Clear",
+  "jstests.mode.mark": "Mark",
+  "jstests.mode.scan": "Scan",
   "subtitles.jstests.test.beep": "A test beep",
   "subtitles.jstests.test.click": "A test click",
   "subtitles.jstests.test.hum": "A test hum",

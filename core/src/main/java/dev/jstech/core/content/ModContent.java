@@ -7,11 +7,13 @@
  */
 package dev.jstech.core.content;
 
+import com.mojang.serialization.Codec;
 import dev.jstech.core.audio.SoundCue;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.CoreCables;
+import dev.jstech.core.item.ItemStates;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -21,7 +23,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -31,14 +36,16 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * What one mod puts in the game, declared in one place: its blocks, its items, the block entities its blocks make
- * and its creative tabs.
+ * What one mod puts in the game, declared in one place: its blocks, its items and the components they carry, the
+ * block entities its blocks make and its creative tabs.
  *
  * <p>A block or an item is declared once, with everything about it, and nothing else lists it again: the
  * generator writes its block state, models, name, loot and tags from the declaration, the tab shows it from the
@@ -62,6 +69,7 @@ public final class ModContent {
             new ArrayList<>();
     private final List<CableEntry> declaredCables = new ArrayList<>();
     private @Nullable DeferredRegister<CableType> cables;
+    private DeferredRegister.@Nullable DataComponents components;
 
     /* Every mod's content, by mod id, in the order the mods made theirs. */
     private static final Map<String, ModContent> BY_MOD = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -185,12 +193,30 @@ public final class ModContent {
         return Collections.unmodifiableList(declaredCables);
     }
 
+    /**
+     * Declares a component the mod's items can carry, saved with {@code codec} and sent to players with
+     * {@code streamCodec}; an item starts with it through {@link ItemBuilder#component}.
+     */
+    public <T> DeferredHolder<DataComponentType<?>, DataComponentType<T>> component(
+            final String id, final Codec<T> codec, final StreamCodec<? super RegistryFriendlyByteBuf, T> streamCodec) {
+        if (components == null) {
+            components = DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, modid);
+        }
+        return components.registerComponentType(id, builder -> builder.persistent(codec)
+                .networkSynchronized(streamCodec));
+    }
+
     /** Hands the registrations to the mod's event bus; call it once, after every declaration class has loaded. */
     public void register(final IEventBus modEventBus) {
         Arrays.asList(blocks, items, blockEntities, tabs, sounds).forEach(register -> register.register(modEventBus));
         if (cables != null) {
             cables.register(modEventBus);
         }
+        if (components != null) {
+            components.register(modEventBus);
+        }
+        modEventBus.addListener(RegisterCapabilitiesEvent.class, this::giveItemsTheirCapabilities);
+        modEventBus.addListener(ModifyDefaultComponentsEvent.class, this::giveItemsTheirComponents);
     }
 
     DeferredRegister<CableType> cableRegister() {
@@ -230,5 +256,23 @@ public final class ModContent {
 
     void declare(final SoundCue cue) {
         declaredCues.add(cue);
+    }
+
+    /* An item that holds something gets the game's capability for each thing it holds. */
+    private void giveItemsTheirCapabilities(final RegisterCapabilitiesEvent event) {
+        for (final ItemEntry<?> item : declaredItems) {
+            if (!item.state().isNothing()) {
+                ItemStates.registerCapabilities(event, item, item.state());
+            }
+        }
+    }
+
+    /* An item declared with components starts with them. */
+    private void giveItemsTheirComponents(final ModifyDefaultComponentsEvent event) {
+        for (final ItemEntry<?> item : declaredItems) {
+            if (!item.defaults().isEmpty()) {
+                event.modify(item, patch -> item.defaults().forEach(given -> given.applyTo(patch)));
+            }
+        }
     }
 }

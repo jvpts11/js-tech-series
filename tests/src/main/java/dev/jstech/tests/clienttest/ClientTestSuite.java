@@ -50,6 +50,7 @@ public final class ClientTestSuite {
             MediaDriveClientTests.class,
             MultipartModelClientTests.class,
             CableBlockClientTests.class,
+            ItemStateClientTests.class,
             TaskbarClientTests.class,
             TerminalEditorClientTests.class,
             MekanismClientTests.class,

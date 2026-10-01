@@ -79,6 +79,13 @@
   "jscore.era.standard": "Standard",
   "jscore.era.transition": "Transition",
   "jscore.era.vintage": "Vintage",
+  "jscore.item.energy": "Energia: %s de %s",
+  "jscore.item.fluid": "%s: %s de %s mB",
+  "jscore.item.fluid.empty": "Sem fluido, cabem %s mB",
+  "jscore.item.items": "Guarda %s de %s pilhas",
+  "jscore.item.mode": "Modo: %s",
+  "jscore.item.mode.hint": "%s troca o modo",
+  "jscore.item.mode.no_key": "Dê uma tecla a Trocar o Modo do Item para trocar o modo",
   "jscore.language.complaint": "%s(%s,%s): erro %s: %s",
   "jscore.media.broken": "A gravação não chegou inteira",
   "jscore.media.busy": "Espere as gravações que já estão a caminho",
@@ -129,5 +136,6 @@
   "jscore.sound_mixer.turned_off_count": "%s de %s desligados",
   "jscore.text.joined": "%s%s%s",
   "key.categories.jstech": "J's Tech Series",
+  "key.jscore.item_mode": "Trocar o Modo do Item",
   "key.jscore.turn_off_last_sound": "Desligar o Último Som"
 }

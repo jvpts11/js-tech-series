@@ -35,6 +35,8 @@ public final class JsTests {
                 + " series, adds nothing to the game and must not be installed.", modContainer.getModInfo().getVersion());
         // The sounds the tests play through the series' sound system, on files the game already has.
         TestBlocks.declare();
+        // Items that hold everything an item can, to prove the Core's items with state.
+        TestItems.declare();
         TestSounds.CONTENT.register(modEventBus);
         // A cable that never shares a block, to show the shared block refusing it company.
         TestCableTypes.register(modEventBus);
