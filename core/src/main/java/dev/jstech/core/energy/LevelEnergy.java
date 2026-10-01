@@ -7,9 +7,11 @@
  */
 package dev.jstech.core.energy;
 
+import dev.jstech.core.JsCore;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.Lane;
 import dev.jstech.core.cable.Wire;
+import dev.jstech.core.diagnostic.Diagnostics;
 import dev.jstech.core.energy.internal.EnergyNetwork;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.Grid;
@@ -25,6 +27,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -48,6 +51,9 @@ public final class LevelEnergy {
     private long builtVersion = -1L;
     private long builtTaps = -1L;
     private long taps;
+
+    /** What the debug screen calls the time the energy grid takes to move a tick's energy. */
+    public static final ResourceLocation TIMING = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "energy_grid");
 
     /** What each connected part of the grid moved in the last tick. */
     public List<EnergyDistributionResult> lastTick() {
@@ -80,11 +86,13 @@ public final class LevelEnergy {
             this.builtVersion = grid.version();
             this.builtTaps = this.taps;
         }
+        final long start = System.nanoTime();
         final List<EnergyDistributionResult> results = new ArrayList<>(this.parts.size());
         for (final EnergyNetwork part : this.parts) {
             results.add(part.tickDistribute());
         }
         this.lastTick = results;
+        Diagnostics.record(TIMING, start);
     }
 
     /*

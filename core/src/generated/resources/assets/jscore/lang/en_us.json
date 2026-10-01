@@ -69,6 +69,8 @@
   "jscore.configuration.media.tooltip": "The recordings players hear and bring: how much of the connection they take, and how big one may be.",
   "jscore.configuration.media.upload_kilobytes_per_second": "Upload speed",
   "jscore.configuration.media.upload_kilobytes_per_second.tooltip": "How many kilobytes a second a player sends the server of a recording they bring.",
+  "jscore.diagnostic.timing": "%s: %s ms, at most %s ms",
+  "jscore.diagnostic.timings": "Timings",
   "jscore.energy.fe": "Forge Energy",
   "jscore.energy.fe.symbol": "FE",
   "jscore.era.advanced": "Advanced",

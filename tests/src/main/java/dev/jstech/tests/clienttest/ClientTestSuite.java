@@ -52,6 +52,8 @@ public final class ClientTestSuite {
             CableBlockClientTests.class,
             ItemStateClientTests.class,
             DataRegistryClientTests.class,
+            KeyActionClientTests.class,
+            DiagnosticsClientTests.class,
             TaskbarClientTests.class,
             TerminalEditorClientTests.class,
             MekanismClientTests.class,

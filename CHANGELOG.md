@@ -119,6 +119,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   batch moves, everything already moved is put back, last first. Steps come ready for putting items into and taking
   them out of an item store (put back slot by slot), filling and draining a fluid store, and giving and taking
   energy.
+- Key actions, in J's Core: a mod declares a key once, with its name, the key it starts on and what the server does
+  when it is pressed; the player's game makes the key binding from it and sends the press to the server by itself.
+  Turn Off Last Sound and Change Item Mode are key actions now, under the same names, so a key a player gave them
+  stays given.
+- The series on the debug screen (F3), in J's Core: each part of the series adds a panel of lines under its name, the
+  sound system's first, and the pieces of work the series times are listed with their average and longest time over
+  the last hundred runs, the energy grid's tick among them.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,

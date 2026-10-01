@@ -31,14 +31,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.ItemLike;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.fluids.SimpleFluidContent;
 import net.neoforged.neoforge.fluids.capability.templates.FluidHandlerItemStack;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.jetbrains.annotations.Nullable;
@@ -57,15 +53,13 @@ import org.jetbrains.annotations.Nullable;
  *         .register();
  * }</pre>
  *
- * <p>The mode key changes the mode of the item in the main hand, on the server, which tells the player the new one on
- * the action bar; with shift held it goes back one.
+ * <p>The mode key, a key action of the Core's, changes the mode of the item in the main hand, on the server, which
+ * tells the player the new one on the action bar; with shift held it goes back one.
  */
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class ItemStates {
 
     private static final DeferredRegister.DataComponents COMPONENTS =
             DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, JsCore.MODID);
-    private static final String NETWORK_VERSION = "1";
 
     /** The id of the mode an item is in; an item that has none set is in its first. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> MODE =
@@ -198,20 +192,5 @@ public final class ItemStates {
             event.registerItem(Capabilities.ItemHandler.ITEM,
                     (stack, context) -> new ItemInventory(stack, state.slots()), item);
         }
-    }
-
-    @SubscribeEvent
-    public static void onRegisterPayloads(final RegisterPayloadHandlersEvent event) {
-        event.registrar(NETWORK_VERSION).playToServer(ItemModePayload.TYPE, ItemModePayload.STREAM_CODEC,
-                ItemStates::onItemMode);
-    }
-
-    /* Runs on the server: the payload is only ever sent to it. */
-    private static void onItemMode(final ItemModePayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player) {
-                cycleHeld(player, payload.backwards());
-            }
-        });
     }
 }

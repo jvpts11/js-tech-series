@@ -55,7 +55,7 @@ final class AudioOptionsTab implements Tab {
         lowerUnderAlerts = toggle(SoundMixerTexts.LOWER_UNDER_ALERTS, SoundMixerTexts.LOWER_UNDER_ALERTS_TIP,
                 prefs.ducking(), AudioPrefs::setDucking);
         key = Button.builder(CommonComponents.optionNameValue(GameText.component(AudioTexts.TURN_OFF_LAST_SOUND),
-                AudioKeys.TURN_OFF_LAST_SOUND.getTranslatedKeyMessage()), button -> {
+                AudioKeys.key().getTranslatedKeyMessage()), button -> {
                     final Minecraft minecraft = Minecraft.getInstance();
                     screen.rememberTab(INDEX);
                     minecraft.setScreen(new KeyBindsScreen(screen, minecraft.options));

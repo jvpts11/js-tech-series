@@ -7,10 +7,11 @@
  */
 package dev.jstech.core.client.audio;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.audio.AudioTexts;
 import dev.jstech.core.audio.LastSoundToggle;
+import dev.jstech.core.client.input.KeyActionsClient;
+import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import net.minecraft.Util;
@@ -22,36 +23,31 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The sound system's key: it turns off the last sound the player heard around them and says which on the action bar,
- * and a second press soon after brings it back. It has no key of its own until the player gives it one, since the
- * game and the mods beside it already take nearly every key.
+ * What the sound system's key does on the player's game ({@link CoreKeys#TURN_OFF_LAST_SOUND}): it turns off the last
+ * sound the player heard around them and says which on the action bar, and a second press soon after brings it back.
+ * It has no key of its own until the player gives it one, since the game and the mods beside it already take nearly
+ * every key.
  */
 @EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class AudioKeys {
-
-    public static final KeyMapping TURN_OFF_LAST_SOUND = new KeyMapping(AudioTexts.TURN_OFF_LAST_SOUND.key(),
-            InputConstants.UNKNOWN.getValue(), AudioTexts.KEY_CATEGORY.key());
 
     private static final LastSoundToggle TOGGLE = new LastSoundToggle(LastSoundToggle.DEFAULT_UNDO_MILLIS);
 
     private AudioKeys() {
     }
 
-    @SubscribeEvent
-    public static void onRegisterKeys(final RegisterKeyMappingsEvent event) {
-        event.register(TURN_OFF_LAST_SOUND);
+    /** The game's key binding of the sound system's key. */
+    public static KeyMapping key() {
+        return KeyActionsClient.mapping(CoreKeys.TURN_OFF_LAST_SOUND);
     }
 
     @SubscribeEvent
-    public static void onClientTick(final ClientTickEvent.Post event) {
-        while (TURN_OFF_LAST_SOUND.consumeClick()) {
-            turnOffLastSound();
-        }
+    public static void onClientSetup(final FMLClientSetupEvent event) {
+        KeyActionsClient.onPress(CoreKeys.TURN_OFF_LAST_SOUND, AudioKeys::turnOffLastSound);
     }
 
     /**
@@ -67,7 +63,7 @@ public final class AudioKeys {
         final Component message = switch (outcome.kind()) {
             case NOTHING -> GameText.component(AudioTexts.NOTHING_HEARD);
             case TURNED_OFF -> GameText.component(AudioTexts.TURNED_OFF.with(nameOf(outcome.sound()),
-                    GameText.of(TURN_OFF_LAST_SOUND.getTranslatedKeyMessage())));
+                    GameText.of(key().getTranslatedKeyMessage())));
             case BACK_ON -> GameText.component(AudioTexts.BACK_ON.with(nameOf(outcome.sound())));
         };
         if (outcome.kind() == LastSoundToggle.Kind.TURNED_OFF) {

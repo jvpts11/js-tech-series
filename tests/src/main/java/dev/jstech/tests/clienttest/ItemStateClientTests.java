@@ -7,7 +7,8 @@
  */
 package dev.jstech.tests.clienttest;
 
-import dev.jstech.core.client.item.ItemStateClient;
+import dev.jstech.core.client.input.KeyActionsClient;
+import dev.jstech.core.input.CoreKeys;
 import dev.jstech.tests.TestItems;
 import java.util.List;
 import net.minecraft.network.chat.Component;
@@ -33,7 +34,8 @@ public final class ItemStateClientTests {
                     && lines.contains("No fluid, holds 4000 mB") && lines.contains("Holds 0 of 4 stacks")
                     && lines.contains("Give Change Item Mode a key to change the mode");
         }, "the full tool's tooltip says its mode, energy, fluid, stacks and how to change the mode")
-                .thenAssert(0, () -> List.of(ctx.mc().options.keyMappings).contains(ItemStateClient.CHANGE_MODE),
+                .thenAssert(0, () -> List.of(ctx.mc().options.keyMappings)
+                        .contains(KeyActionsClient.mapping(CoreKeys.CHANGE_ITEM_MODE)),
                         "the mode key is among the game's keys");
     }
 

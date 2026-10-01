@@ -14,22 +14,22 @@ import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.audio.SoundKeys;
 import dev.jstech.core.audio.SoundMixerTexts;
 import dev.jstech.core.client.GameLocale;
+import dev.jstech.core.client.diagnostic.DiagnosticsClient;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 
 /**
- * The sound system on the game's debug screen (F3), in its right-hand column where the game shows what it has inside:
- * how many running sounds the director keeps out of its budget, the rooms, what is muffled and by how many walls, how
- * far the other channels are lowered under an alert, the last sound heard and how many are turned off.
+ * The sound system's panel on the game's debug screen (F3), under the Sound Mixer's name: how many running sounds the
+ * director keeps out of its budget, the rooms, what is muffled and by how many walls, how far the other channels are
+ * lowered under an alert, the last sound heard and how many are turned off.
  */
 @EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class AudioDebugLines {
@@ -40,11 +40,8 @@ public final class AudioDebugLines {
     }
 
     @SubscribeEvent
-    public static void onDebugText(final CustomizeGuiOverlayEvent.DebugText event) {
-        final List<String> right = event.getRight();
-        right.add("");
-        right.add(ChatFormatting.UNDERLINE + GameText.resolve(SoundMixerTexts.TITLE));
-        right.addAll(lines());
+    public static void onClientSetup(final FMLClientSetupEvent event) {
+        DiagnosticsClient.panel(SoundMixerTexts.TITLE, AudioDebugLines::lines);
     }
 
     /** The lines under the header, as they read now. */
