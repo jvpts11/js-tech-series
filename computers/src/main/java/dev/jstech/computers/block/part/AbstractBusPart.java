@@ -14,6 +14,8 @@ import dev.jstech.computers.bus.BusActivity;
 import dev.jstech.computers.bus.BusClaims;
 import dev.jstech.computers.bus.BusCondition;
 import dev.jstech.computers.bus.BusFeature;
+import dev.jstech.computers.bus.BusSettings;
+import dev.jstech.computers.menu.AbstractBusMenu;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
@@ -61,9 +63,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Its settings: a name, by which software finds it; on or off; continuous, or on demand (only with a redstone
  * signal); a filter of up to five items, only these or all but these, with tags on the Advanced and a loose match that
- * takes an item whatever its damage and components; what the faced chest keeps and how many a move takes, for every
- * item or, from the Transition, for each listed item; a priority over the network's other buses; and conditions. Each
- * move is an Operation, and what the bus did lately, its holds as well, is its {@link BusActivity}.
+ * takes an item whatever its damage and components; what the faced chest keeps and how many a move takes, for the
+ * whole bus or, on the Transition, for each listed item; a priority over the network's other buses; and conditions.
+ * Each move is an Operation, and what the bus did lately, its holds as well, is its {@link BusActivity}.
  */
 public abstract sealed class AbstractBusPart implements IFacePart permits ImportBusPart, ExportBusPart {
 
@@ -108,15 +110,6 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
     public static final int MAX_NAME_LENGTH = 32;
     public static final int MAX_CONDITIONS = 4;
     public static final int MAX_TAGS = 4;
-    /** The words the settings go by where software sets them, and where the window marks what a program set. */
-    public static final String SETTING_POWER = "power";
-    public static final String SETTING_MODE = "mode";
-    public static final String SETTING_FILTER = "filter";
-    public static final String SETTING_KEEP = "keep";
-    public static final String SETTING_MAX = "max";
-    public static final String SETTING_PRIORITY = "priority";
-    public static final String SETTING_CONDITIONS = "conditions";
-    public static final String SETTING_MATCH = "match";
     /** How long, in ticks, a bus must have made no move for another bus waiting on it to go. */
     public static final long FINISHED_AFTER = 40L;
     /* How often the conditions are looked at again: a network's stock is a sum worth not taking every tick. */
@@ -140,8 +133,9 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
     }
 
     /*
-     * Using the bus opens its configuration menu; picking it off the cable is a left-click, handled where the cable
-     * block breaks, so it never breaks the cable. The open packet carries the bus's name so the field shows it.
+     * Using the bus opens its window; picking it off the cable is a left-click, handled where the cable block breaks,
+     * so it never breaks the cable. The open packet carries the bus's name, so the field shows it, and its era, which
+     * decides the window's rows and so where the inventory sits under them.
      */
     @Override
     public boolean use(final ServerPlayer player) {
@@ -151,12 +145,7 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
         final CableBlockEntity cable = this.host;
         final Direction mounted = this.face;
         player.openMenu(new SimpleMenuProvider((id, inventory, opener) -> createMenu(id, inventory, cable, mounted),
-                        partItem().getHoverName()),
-                buffer -> {
-                    buffer.writeBlockPos(cable.getBlockPos());
-                    buffer.writeByte(mounted.get3DDataValue());
-                    buffer.writeUtf(this.name);
-                });
+                partItem().getHoverName()), AbstractBusMenu.Opening.of(cable, mounted, this)::write);
         return true;
     }
 
@@ -231,6 +220,11 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
         return linked;
     }
 
+    /** Whether the bus's cable reaches a network now: asked of the cable, for a bus that does not tick, too. */
+    public boolean reachesNetwork() {
+        return network() != null;
+    }
+
     public String name() {
         return name;
     }
@@ -238,6 +232,71 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
     /** The program that set {@code setting} last, or empty when it was set by hand or never. */
     public String setBy(final String setting) {
         return setBy.getOrDefault(setting, "");
+    }
+
+    /** How the bus is set, as plain values its window and software read alike. */
+    public BusSettings settings() {
+        final List<String> listed = new ArrayList<>();
+        for (int slot = 0; slot < filter.getSlots(); slot++) {
+            final StorageKey key = keyIn(slot);
+            listed.add(key == null ? "" : key.id());
+        }
+        return new BusSettings(name, era, listed, exclude, keep, max, boxed(itemKeep), boxed(itemMax), priority,
+                conditions, tags.stream().map(ResourceLocation::toString).toList(), fuzzy, powered,
+                mode == MODE_REDSTONE, setBy);
+    }
+
+    /** What each filter slot holds, copies to show. */
+    public List<ItemStack> filterStacks() {
+        final List<ItemStack> stacks = new ArrayList<>();
+        for (int slot = 0; slot < filter.getSlots(); slot++) {
+            stacks.add(filter.getStackInSlot(slot).copy());
+        }
+        return stacks;
+    }
+
+    /** What the filter lists, slot by slot, empty slots left out: a crafting bus routes its face by these. */
+    public List<StorageKey> filterKeys() {
+        final List<StorageKey> keys = new ArrayList<>();
+        for (int slot = 0; slot < filter.getSlots(); slot++) {
+            final StorageKey key = keyIn(slot);
+            if (key != null) {
+                keys.add(key);
+            }
+        }
+        return keys;
+    }
+
+    /** The first filter slot that lists nothing, or -1 when every one lists something. */
+    public int firstEmptyFilterSlot() {
+        for (int slot = 0; slot < filter.getSlots(); slot++) {
+            if (filter.getStackInSlot(slot).isEmpty()) {
+                return slot;
+            }
+        }
+        return -1;
+    }
+
+    /** How many items a tick the bus's cable carries, 0 when it is on none. */
+    public long cableCarries() {
+        if (host == null) {
+            return 0L;
+        }
+        final Wire wire = DataWires.networkWire(host);
+        final DataLink link = wire == null ? null : DataWires.linkOf(wire);
+        return link == null ? 0L : link.throughput();
+    }
+
+    /**
+     * The era whose skin the bus's window wears: its own; a crafting bus, which is one design for every era, wears
+     * the skin of the Mainframe that commands it, the Standard's when it reaches none.
+     */
+    public HardwareEra skin() {
+        if (!ComputingParts.isCrafting(type())) {
+            return era;
+        }
+        final MainframeBlockEntity mainframe = mainframe();
+        return mainframe == null ? HardwareEra.STANDARD : mainframe.mainframeEra();
     }
 
     /** Sets the bus name, trimmed and cut to fit; an empty name means the bus is unaddressable by query. */
@@ -264,7 +323,7 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
             return false;
         }
         filter.setStackInSlot(slot, stack.isEmpty() ? ItemStack.EMPTY : stack.copyWithCount(1));
-        return changed(SETTING_FILTER, by);
+        return changed(BusSettings.FILTER, by);
     }
 
     public boolean setExclude(final boolean allBut, final String by) {
@@ -272,7 +331,7 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
             return false;
         }
         exclude = allBut;
-        return changed(SETTING_FILTER, by);
+        return changed(BusSettings.FILTER, by);
     }
 
     public boolean setKeep(final int count, final String by) {
@@ -280,7 +339,7 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
             return false;
         }
         keep = Math.max(0, count);
-        return changed(SETTING_KEEP, by);
+        return changed(BusSettings.KEEP, by);
     }
 
     public boolean setMax(final int count, final String by) {
@@ -288,7 +347,7 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
             return false;
         }
         max = Math.max(0, count);
-        return changed(SETTING_MAX, by);
+        return changed(BusSettings.MAX, by);
     }
 
     /** A keep and a max for the item in filter slot {@code slot}; zero falls back to the bus's own. */
@@ -298,7 +357,7 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
         }
         itemKeep[slot] = Math.max(0, keepCount);
         itemMax[slot] = Math.max(0, maxCount);
-        return changed(SETTING_KEEP, by);
+        return changed(BusSettings.KEEP, by);
     }
 
     public boolean setPriority(final int value, final String by) {
@@ -306,7 +365,7 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
             return false;
         }
         priority = value;
-        return changed(SETTING_PRIORITY, by);
+        return changed(BusSettings.PRIORITY, by);
     }
 
     public boolean addCondition(final BusCondition condition, final String by) {
@@ -315,7 +374,7 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
         }
         conditions.add(condition);
         conditionsCheckedAt = Long.MIN_VALUE;
-        return changed(SETTING_CONDITIONS, by);
+        return changed(BusSettings.CONDITIONS, by);
     }
 
     public boolean removeCondition(final int index, final String by) {
@@ -324,7 +383,7 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
         }
         conditions.remove(index);
         conditionsCheckedAt = Long.MIN_VALUE;
-        return changed(SETTING_CONDITIONS, by);
+        return changed(BusSettings.CONDITIONS, by);
     }
 
     public boolean setTags(final List<ResourceLocation> listed, final String by) {
@@ -333,7 +392,25 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
         }
         tags.clear();
         tags.addAll(listed.subList(0, Math.min(MAX_TAGS, listed.size())));
-        return changed(SETTING_FILTER, by);
+        return changed(BusSettings.FILTER, by);
+    }
+
+    /** Lists the tag {@code id} as well, while there is room for another and it is not listed yet. */
+    public boolean addTag(final ResourceLocation id, final String by) {
+        if (!can(BusFeature.TAGS) || tags.size() >= MAX_TAGS || tags.contains(id)) {
+            return false;
+        }
+        tags.add(id);
+        return changed(BusSettings.FILTER, by);
+    }
+
+    /** Takes the tag listed at {@code index} off. */
+    public boolean removeTag(final int index, final String by) {
+        if (index < 0 || index >= tags.size()) {
+            return false;
+        }
+        tags.remove(index);
+        return changed(BusSettings.FILTER, by);
     }
 
     public boolean setFuzzy(final boolean loose, final String by) {
@@ -341,17 +418,17 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
             return false;
         }
         fuzzy = loose;
-        return changed(SETTING_MATCH, by);
+        return changed(BusSettings.MATCH, by);
     }
 
     public boolean setPowered(final boolean on, final String by) {
         powered = on;
-        return changed(SETTING_POWER, by);
+        return changed(BusSettings.POWER, by);
     }
 
     public boolean setMode(final int newMode, final String by) {
         mode = newMode == MODE_REDSTONE ? MODE_REDSTONE : MODE_CONTINUOUS;
-        return changed(SETTING_MODE, by);
+        return changed(BusSettings.MODE, by);
     }
 
     public void adjustKeep(final int delta) {
@@ -426,12 +503,7 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
 
     /** How many items a tick the bus moves on its cable: its era's speed, never more than the cable carries. */
     public long speed() {
-        if (host == null) {
-            return 0L;
-        }
-        final Wire wire = DataWires.networkWire(host);
-        final DataLink link = wire == null ? null : DataWires.linkOf(wire);
-        return link == null ? 0L : abilities.speedOn(link.throughput());
+        return abilities.speedOn(cableCarries());
     }
 
     /** Whether a redstone-mode bus is currently held off because its block has no neighbor signal. */
@@ -693,5 +765,13 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
 
     private static void copyInto(final int[] from, final int[] to) {
         System.arraycopy(from, 0, to, 0, Math.min(from.length, to.length));
+    }
+
+    private static List<Integer> boxed(final int[] values) {
+        final List<Integer> list = new ArrayList<>();
+        for (final int value : values) {
+            list.add(value);
+        }
+        return list;
     }
 }

@@ -409,9 +409,9 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
 
     /**
      * Whether {@code m}'s Crafting Input Buses can carry every one of this pattern's inputs at once: each input
-     * must be assignable to a distinct Input Bus whose filter selects it, and an unfiltered bus is a wildcard
-     * that carries anything. A machine with no Input Bus is fed through its switch-touched face and accepts
-     * anything, exactly as before this check existed.
+     * must be assignable to a distinct lane whose filter selects it, a bus giving a lane to each item it lists, and
+     * an unfiltered bus one lane that is a wildcard and carries anything. A machine with no Input Bus is fed through
+     * its switch-touched face and accepts anything, exactly as before this check existed.
      */
     private boolean machineCanRoute(final CraftingSwitchBlockEntity.DeclaredMachine m) {
         final List<StorageKey> filters = new ArrayList<>();
@@ -422,7 +422,12 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
                     && cable.getPart(d.getOpposite())
                     instanceof AbstractBusPart bus
                     && bus.type() == ComputingParts.INPUT.get()) {
-                filters.add(bus.filterKey()); // null = an unfiltered bus, a wildcard
+                final List<StorageKey> listed = bus.filterKeys();
+                if (listed.isEmpty()) {
+                    filters.add(null); // an unfiltered bus, a wildcard
+                } else {
+                    filters.addAll(listed);
+                }
             }
         }
         if (filters.isEmpty()) {
@@ -478,8 +483,8 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
      * The port to move data through for the given bus kind. Every crafting cable adjacent to the machine with an
      * Input Bus (deliveries) or Receiving Bus (pickups) mounted against it contributes its machine face, and the
      * faces act as one port, which is how sided machines whose I/O faces differ from the switch-touched face, or
-     * that spread outputs over several faces, are driven. A bus carrying a filter restricts its face to that one
-     * key, so a machine fed two ingredients from two sides routes each to the correct face; an unfiltered bus
+     * that spread outputs over several faces, are driven. A bus carrying a filter restricts its face to the keys it
+     * lists, so a machine fed two ingredients from two sides routes each to the correct face; an unfiltered bus
      * carries anything. Without a bus, the switch-touched face serves both directions.
      */
     private IDataPort portFor(final PartType<?> kind) {
@@ -495,10 +500,10 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
                 if (!port.isEmpty()) {
                     /*
                      * Honor the bus filter so the player can pin which face each ingredient (or output) uses:
-                     * a filtered face carries only that key, an empty filter carries anything.
+                     * a filtered face carries only what it lists, an empty filter carries anything.
                      */
-                    final StorageKey filter = bus.filterKey();
-                    faces.add(filter == null ? port : new FilteredDataPort(port, filter));
+                    final List<StorageKey> listed = bus.filterKeys();
+                    faces.add(listed.isEmpty() ? port : new FilteredDataPort(port, listed));
                 }
             }
         }

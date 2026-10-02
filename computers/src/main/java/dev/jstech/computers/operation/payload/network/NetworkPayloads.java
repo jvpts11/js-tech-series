@@ -25,6 +25,8 @@ import dev.jstech.computers.menu.AbstractBusMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.ServerRouterMenu;
 import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.operation.payload.BusEditPayload;
+import dev.jstech.computers.operation.payload.BusStatePayload;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
@@ -103,6 +105,17 @@ public final class NetworkPayloads {
         ComputerAccess.onMenu(registrar, SetBusNamePayload.TYPE, SetBusNamePayload.STREAM_CODEC,
                 AbstractBusMenu.class, AbstractBusMenu::cablePos, SetBusNamePayload::cablePos,
                 NetworkPayloads::handleSetBusName);
+        ComputerAccess.onMenu(registrar, BusEditPayload.TYPE, BusEditPayload.STREAM_CODEC, AbstractBusMenu.class,
+                (payload, menu, player, level) -> menu.edit(player, payload));
+        registrar.playToClient(BusStatePayload.TYPE, BusStatePayload.STREAM_CODEC,
+                ClientPayloadHandlers.onMainThread(NetworkPayloads::handleBusState));
+    }
+
+    /* The state of the bus whose window the player has open, if it is still that window. */
+    private static void handleBusState(final BusStatePayload payload, final Player player) {
+        if (player.containerMenu instanceof AbstractBusMenu menu && menu.containerId == payload.containerId()) {
+            menu.accept(payload);
+        }
     }
 
     private static void handleRenameServerRouter(final RenameServerRouterPayload payload, final ServerRouterMenu menu,

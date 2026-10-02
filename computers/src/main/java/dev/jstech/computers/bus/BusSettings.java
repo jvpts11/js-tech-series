@@ -1,0 +1,82 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Computers.
+ */
+package dev.jstech.computers.bus;
+
+import dev.jstech.core.tier.HardwareEra;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Everything a bus is set to, as plain values: what its window shows and what software reads back, the same in both,
+ * so each says what the other set.
+ *
+ * @param name       the name software finds it by, empty when it has none
+ * @param era        the era it is of, which decides what it can be set to
+ * @param filter     what each of its filter slots lists, by the text id of what is there, empty for an empty slot
+ * @param exclude    whether it moves all but what it lists rather than only that
+ * @param keep       what the faced chest keeps of each item
+ * @param max        the most a move takes, 0 for as many as it can
+ * @param itemKeep   for each filter slot, what the chest keeps of that item, 0 for nothing of its own
+ * @param itemMax    for each filter slot, the most a move of that item takes, 0 for nothing of its own
+ * @param priority   which of the network's buses goes first when they want the same thing, the higher first
+ * @param conditions what it waits for before it moves
+ * @param tags       the item tags it lists besides its slots, by id
+ * @param fuzzy      whether it takes an item whatever its damage and components
+ * @param powered    whether it is on
+ * @param onDemand   whether it moves only while its cable has a redstone signal
+ * @param setBy      which setting a program set last, by the setting's word, and that program's name
+ */
+public record BusSettings(String name, HardwareEra era, List<String> filter, boolean exclude, int keep, int max,
+                          List<Integer> itemKeep, List<Integer> itemMax, int priority, List<BusCondition> conditions,
+                          List<String> tags, boolean fuzzy, boolean powered, boolean onDemand,
+                          Map<String, String> setBy) {
+
+    /** The words the settings go by where software sets them, and where the window marks what a program set. */
+    public static final String POWER = "power";
+    public static final String MODE = "mode";
+    public static final String FILTER = "filter";
+    public static final String KEEP = "keep";
+    public static final String MAX = "max";
+    public static final String PRIORITY = "priority";
+    public static final String CONDITIONS = "conditions";
+    public static final String MATCH = "match";
+
+    public BusSettings {
+        name = name == null ? "" : name;
+        filter = List.copyOf(filter);
+        itemKeep = List.copyOf(itemKeep);
+        itemMax = List.copyOf(itemMax);
+        conditions = List.copyOf(conditions);
+        tags = List.copyOf(tags);
+        setBy = Map.copyOf(setBy);
+    }
+
+    /** A new bus of {@code era}: no name, nothing listed, nothing kept, on, and moving all the time. */
+    public static BusSettings fresh(final HardwareEra era) {
+        final List<String> empty = List.of("", "", "", "", "");
+        final List<Integer> zeros = List.of(0, 0, 0, 0, 0);
+        return new BusSettings("", era, empty, false, 0, 0, zeros, zeros, 0, List.of(), List.of(), false, true, false,
+                Map.of());
+    }
+
+    /** What the bus of its era can be set to. */
+    public BusAbilities abilities() {
+        return BusAbilities.of(era);
+    }
+
+    /** Whether any filter slot lists something. */
+    public boolean listsAny() {
+        return filter.stream().anyMatch(id -> !id.isEmpty());
+    }
+
+    /** The program that set {@code setting} last, or empty when a hand did or nothing has. */
+    public String setByOf(final String setting) {
+        return setBy.getOrDefault(setting, "");
+    }
+}

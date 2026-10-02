@@ -10,11 +10,13 @@ package dev.jstech.computers.gui.layout;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.computers.bus.BusAbilities;
 import dev.jstech.computers.gui.CdeBackdrop;
 import dev.jstech.computers.gui.CdeScheme;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.tier.HardwareEra;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -75,7 +77,14 @@ class LayoutAuditTest {
     /** Every layout, at the sizes/states worth auditing (worst cases for the parametrized ones). */
     private static List<AuditCase> cases() {
         final List<AuditCase> c = new ArrayList<>();
-        c.add(new AuditCase("BusLayout", BusLayout.layout(), true));
+        // Each era's bus window, and the rows its Configure tab scrolls, laid out flat at their most.
+        for (final HardwareEra era : HardwareEra.values()) {
+            c.add(new AuditCase("BusLayout(" + era + ")", BusLayout.frame(BusAbilities.of(era), false), true));
+            c.add(new AuditCase("BusLayout.rows(" + era + ")",
+                    BusLayout.content(BusLayout.Shape.most(BusAbilities.of(era), false)), false));
+        }
+        c.add(new AuditCase("BusLayout(crafting)", BusLayout.frame(BusAbilities.of(HardwareEra.STANDARD), true),
+                true));
         c.add(new AuditCase("SoundfoundryLayout", SoundfoundryLayout.layout(), true));
         // Virtual Studio's Properties at the most it holds: every instruction set and every version beside Default.
         c.add(new AuditCase("StudioPropertiesLayout", StudioPropertiesLayout.layout(5, 4), true));

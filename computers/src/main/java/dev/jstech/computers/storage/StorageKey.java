@@ -98,6 +98,29 @@ public final class StorageKey {
         return BuiltInRegistries.ITEM.getOptional(location).map(StorageKey::of).orElse(null);
     }
 
+    /**
+     * The key a text id of {@link #id()} names ({@code item|minecraft:iron_ingot}), or null when it names nothing
+     * known: what a log line written with the id is shown with again.
+     */
+    @Nullable
+    public static StorageKey byId(final String id) {
+        final int bar = id == null ? -1 : id.indexOf('|');
+        if (bar < 0) {
+            return null;
+        }
+        final ResourceLocation location = ResourceLocation.tryParse(id.substring(bar + 1));
+        if (location == null) {
+            return null;
+        }
+        return switch (id.substring(0, bar)) {
+            case "item" -> BuiltInRegistries.ITEM.getOptional(location).map(StorageKey::of).orElse(null);
+            case "fluid" -> BuiltInRegistries.FLUID.getOptional(location).map(fluid -> new FluidStack(fluid, 1))
+                    .filter(stack -> !stack.isEmpty()).map(StorageKey::of).orElse(null);
+            case "chemical" -> StorageKey.chemical(location);
+            default -> null;
+        };
+    }
+
     public Kind kind() {
         return kind;
     }

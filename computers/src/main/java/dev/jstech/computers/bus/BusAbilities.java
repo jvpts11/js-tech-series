@@ -14,9 +14,10 @@ import java.util.Set;
 
 /**
  * What a bus of an era can be set to do, and how fast it moves. The Vintage bus takes one kind at a time, with no
- * filter; the Legacy one filters and has a keep and a max; the Transition one a keep and a max for each item it lists;
- * the Standard one a priority and conditions; the Advanced one filters by tag and matches loosely. Each era can do all
- * the earlier eras could, and a bus never moves faster than the cable it sits on carries.
+ * filter; the Legacy one filters and has a keep and a max; the Transition one sets them for each item it lists
+ * instead; the Standard one has the Legacy's keep and max again, with a priority and conditions; the Advanced one
+ * filters by tag and matches loosely as well. What an era can be set to do is what its window shows, so whatever
+ * software sets on a bus can be set by hand too; and a bus never moves faster than the cable it sits on carries.
  *
  * @param era          the era of the bus
  * @param itemsPerTick how many items it moves a tick at most, before the cable's cap
@@ -39,11 +40,12 @@ public record BusAbilities(HardwareEra era, int itemsPerTick, Set<BusFeature> fe
         return switch (era) {
             case VINTAGE -> new BusAbilities(era, 1, EnumSet.noneOf(BusFeature.class));
             case LEGACY -> new BusAbilities(era, 8, EnumSet.of(BusFeature.FILTER, BusFeature.QUANTITIES));
-            case TRANSITION -> new BusAbilities(era, 16,
-                    EnumSet.of(BusFeature.FILTER, BusFeature.QUANTITIES, BusFeature.ITEM_QUANTITIES));
+            case TRANSITION -> new BusAbilities(era, 16, EnumSet.of(BusFeature.FILTER, BusFeature.ITEM_QUANTITIES));
             case STANDARD -> new BusAbilities(era, 32, EnumSet.of(BusFeature.FILTER, BusFeature.QUANTITIES,
-                    BusFeature.ITEM_QUANTITIES, BusFeature.PRIORITY, BusFeature.CONDITIONS));
-            case ADVANCED, EXA, SINGULARITY -> new BusAbilities(era, 64, EnumSet.allOf(BusFeature.class));
+                    BusFeature.PRIORITY, BusFeature.CONDITIONS));
+            case ADVANCED, EXA, SINGULARITY -> new BusAbilities(era, 64, EnumSet.of(BusFeature.FILTER,
+                    BusFeature.QUANTITIES, BusFeature.PRIORITY, BusFeature.CONDITIONS, BusFeature.TAGS,
+                    BusFeature.FUZZY));
         };
     }
 

@@ -31,14 +31,33 @@ class BusAbilitiesTest {
     }
 
     @Test
-    void of_givesEachEraWhatTheEarlierOnesCould() {
-        final HardwareEra[] eras = HardwareEra.values();
-        for (int i = 1; i < eras.length; i++) {
-            final BusAbilities earlier = BusAbilities.of(eras[i - 1]);
-            final BusAbilities later = BusAbilities.of(eras[i]);
-            assertTrue(later.features().containsAll(earlier.features()), eras[i] + " can do all " + eras[i - 1]
-                    + " could");
+    void of_givesEveryEraAfterTheVintageAFilter() {
+        for (final HardwareEra era : HardwareEra.values()) {
+            assertEquals(era != HardwareEra.VINTAGE, BusAbilities.of(era).can(BusFeature.FILTER), era.name());
         }
+    }
+
+    @Test
+    void of_givesTheTransitionItsQuantitiesItemByItem() {
+        final BusAbilities transition = BusAbilities.of(HardwareEra.TRANSITION);
+
+        assertTrue(transition.can(BusFeature.ITEM_QUANTITIES));
+        assertFalse(transition.can(BusFeature.QUANTITIES));
+    }
+
+    @Test
+    void of_givesTheStandardAndTheAdvancedQuantitiesForTheWholeBus() {
+        for (final HardwareEra era : new HardwareEra[] {HardwareEra.LEGACY, HardwareEra.STANDARD,
+                HardwareEra.ADVANCED}) {
+            assertTrue(BusAbilities.of(era).can(BusFeature.QUANTITIES), era.name());
+            assertFalse(BusAbilities.of(era).can(BusFeature.ITEM_QUANTITIES), era.name());
+        }
+    }
+
+    @Test
+    void of_givesTheAdvancedAllTheStandardCould() {
+        assertTrue(BusAbilities.of(HardwareEra.ADVANCED).features()
+                .containsAll(BusAbilities.of(HardwareEra.STANDARD).features()));
     }
 
     @Test

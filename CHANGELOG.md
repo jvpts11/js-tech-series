@@ -301,6 +301,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A storage bus mounts on an access or a backbone cable of its era or an earlier one.
 - A bus can be switched off, and keeps a log of what it did lately: each move it made, and each time it held back and
   why (what the chest keeps, no room, a condition). What a program set on a bus is marked with the program's name.
+- Each bus's window has three tabs, in its era's skin: Configure, the rows its era can be set to, which scroll above
+  the inventory when they do not all fit; Activity, what it moved and why it held back, at the hour it happened; and
+  Software, its address and the IQL statements and the calls that set it as it is set, with which programs set what. A
+  setting a program set carries the program's mark until a hand changes it in the window.
+- Conditions and tags are written in the bus's window: the network's stock of an item or a tag, the hours of the day,
+  another bus having finished.
+- A Crafting Input or Receiving Bus routes its face by every item its filter lists, up to five, and its window wears
+  the skin of the Mainframe that commands it.
+- A menu's player inventory can be shown on some pages of a screen and hidden on the others, in J's Core.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

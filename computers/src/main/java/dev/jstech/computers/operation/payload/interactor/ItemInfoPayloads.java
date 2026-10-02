@@ -147,7 +147,7 @@ public final class ItemInfoPayloads {
             for (final Direction dir : Direction.values()) {
                 if (cable.getPart(dir)
                         instanceof AbstractBusPart bus
-                        && key.equals(bus.filterKey())) {
+                        && bus.filterKeys().contains(key)) {
                     buses.add(new ItemDetailPayload.BusRef(bus.name(), bus.type().text()));
                 }
             }

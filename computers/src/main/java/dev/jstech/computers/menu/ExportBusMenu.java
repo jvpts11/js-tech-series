@@ -7,42 +7,41 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.block.part.ExportBusPart;
+import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.tier.HardwareEra;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.level.Level;
 
 /**
- * Menu for configuring an Export Bus part mounted on a data cable. All behavior lives in
- * {@link AbstractBusMenu}; this only binds the export menu type and the create/fromNetwork factories.
+ * The window of an Export Bus. All behavior lives in {@link AbstractBusMenu}; this only binds the export menu type and
+ * the create/fromNetwork factories.
  */
 public class ExportBusMenu extends AbstractBusMenu {
 
     public ExportBusMenu(final int containerId, final Inventory playerInventory, final ExportBusPart part,
-                         final Level level, final BlockPos cablePos, final Direction face, final String busName) {
-        super(ComputingMenus.EXPORT_BUS_MENU.get(), containerId, playerInventory, part, level, cablePos, face, busName);
+                         final Level level, final Opening opening) {
+        super(ComputingMenus.EXPORT_BUS_MENU.get(), containerId, playerInventory, part, level, opening, false);
     }
 
     public static ExportBusMenu create(final int containerId, final Inventory playerInventory,
                                        final CableBlockEntity cable, final Direction face) {
-        final ExportBusPart part = cable.getPart(face) instanceof ExportBusPart real ? real : new ExportBusPart(HardwareEra.STANDARD);
-        return new ExportBusMenu(containerId, playerInventory, part, cable.getLevel(), cable.getBlockPos(),
-                face, part.name());
+        // A part gone from the face leaves a window on a stand-in, which its validity closes at once.
+        final ExportBusPart part = cable.getPart(face) instanceof ExportBusPart real ? real
+                : new ExportBusPart(HardwareEra.STANDARD);
+        return new ExportBusMenu(containerId, playerInventory, part, cable.getLevel(), Opening.of(cable, face, part));
     }
 
     public static ExportBusMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                             final RegistryFriendlyByteBuf buf) {
-        final BlockPos pos = buf.readBlockPos();
-        final Direction face = Direction.from3DDataValue(buf.readByte());
-        final String busName = buf.readUtf();
+        final Opening opening = Opening.read(buf);
         final Level level = playerInventory.player.level();
-        final ExportBusPart part = level.getBlockEntity(pos) instanceof CableBlockEntity cable
-                && cable.getPart(face) instanceof ExportBusPart real ? real : new ExportBusPart(HardwareEra.STANDARD);
-        return new ExportBusMenu(containerId, playerInventory, part, level, pos, face, busName);
+        final ExportBusPart part = level.getBlockEntity(opening.pos()) instanceof CableBlockEntity cable
+                && cable.getPart(opening.face()) instanceof ExportBusPart real ? real
+                : new ExportBusPart(opening.era());
+        return new ExportBusMenu(containerId, playerInventory, part, level, opening);
     }
 }

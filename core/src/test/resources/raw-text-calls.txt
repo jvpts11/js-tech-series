@@ -1,6 +1,5 @@
 # The lines of text each file still draws raw, without the shadow its ground gives it.
 # A file may draw fewer, never more; one not listed draws none. Lower a count when a file draws fewer.
-1 computers/src/main/java/dev/jstech/computers/client/AbstractBusScreen.java
 8 computers/src/main/java/dev/jstech/computers/client/BootSplashArt.java
 18 computers/src/main/java/dev/jstech/computers/client/ComputerTerminalScreen.java
 13 computers/src/main/java/dev/jstech/computers/client/CraftTerminalTab.java

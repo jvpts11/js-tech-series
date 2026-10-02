@@ -95,6 +95,7 @@ class HardcodedTextTest {
             data(COMPUTERS + "client/MaintenanceTerminalTab.java", 3, QUERY),
             data(COMPUTERS + "client/NmsApp.java", 4, QUERY),
             data(COMPUTERS + "operation/payload/terminal/TerminalPayloads.java", 3, QUERY),
+            data(COMPUTERS + "bus/BusScript.java", 9, QUERY + ", writing a bus's settings as software sets them"),
             data(COMPUTERS + "client/os/CodeWorkspace.java", 2, "lines of code a stub is written with"),
             data(COMPUTERS + "client/os/DeskFiles.java", 1, PRODUCTS),
             data(COMPUTERS + "client/os/FilesApp.java", 1, PRODUCTS),

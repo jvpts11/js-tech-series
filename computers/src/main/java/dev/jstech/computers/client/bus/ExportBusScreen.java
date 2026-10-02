@@ -5,17 +5,14 @@
  *
  * This file is part of J's Computers.
  */
-package dev.jstech.computers.client;
+package dev.jstech.computers.client.bus;
 
 import dev.jstech.computers.menu.ExportBusMenu;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
-/**
- * Configuration screen for the Export Bus. All drawing lives in {@link AbstractBusScreen}; this only
- * supplies the title and the filter hint.
- */
+/** The Export Bus's window. All of it lives in {@link AbstractBusScreen}; this only names it. */
 public class ExportBusScreen extends AbstractBusScreen<ExportBusMenu> {
 
     public ExportBusScreen(final ExportBusMenu menu, final Inventory inventory, final Component title) {
@@ -25,10 +22,5 @@ public class ExportBusScreen extends AbstractBusScreen<ExportBusMenu> {
     @Override
     protected TextKey windowTitle() {
         return BusTexts.EXPORT_TITLE;
-    }
-
-    @Override
-    protected TextKey filterHint() {
-        return BusTexts.EXPORT_HINT;
     }
 }

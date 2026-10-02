@@ -96,10 +96,10 @@ public final class BusFilterRoutingGameTests {
     public static void unfilteredPort_carriesAnyKey(final GameTestHelper helper) {
         // An empty filter is a wildcard, so an unfiltered bus behaves exactly like the raw machine face.
         final ItemStackHandler face = new ItemStackHandler(1);
-        final IDataPort wild = new FilteredDataPort(new ExternalDataPort(face, null), null);
+        final IDataPort wild = new FilteredDataPort(new ExternalDataPort(face, null), List.of());
         final long inserted = wild.insert(StorageKey.of(Items.STONE), 7, false);
         helper.assertTrue(inserted == 7 && face.getStackInSlot(0).getCount() == 7,
-                "a null filter must carry anything; face held " + face.getStackInSlot(0).getCount());
+                "an empty filter must carry anything; face held " + face.getStackInSlot(0).getCount());
         helper.succeed();
     }
 

@@ -135,15 +135,25 @@ public abstract class CoreMenu extends AbstractContainerMenu {
 
     /** Adds the player's inventory with the top-left of its grid at {@code at}, the hotbar below it. */
     protected final PlayerSlots playerInventory(final Inventory inventory, final GuiLayout.SlotPosition at) {
+        return playerInventory(inventory, at, () -> true);
+    }
+
+    /**
+     * The same, shown only while {@code shown} says so: a screen with pages, only some of which have the inventory
+     * under them, hides it on the others, where its slots are neither drawn nor clicked.
+     */
+    protected final PlayerSlots playerInventory(final Inventory inventory, final GuiLayout.SlotPosition at,
+                                                final BooleanSupplier shown) {
         final int mainStart = slots.size();
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(inventory, col + row * 9 + 9, at.x() + col * PITCH, at.y() + row * PITCH));
+                addSlot(inventorySlot(inventory, col + row * 9 + 9, at.x() + col * PITCH, at.y() + row * PITCH,
+                        shown));
             }
         }
         final int hotbarStart = slots.size();
         for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(inventory, col, at.x() + col * PITCH, at.y() + HOTBAR_GAP));
+            addSlot(inventorySlot(inventory, col, at.x() + col * PITCH, at.y() + HOTBAR_GAP, shown));
         }
         return new PlayerSlots(new SlotGroup(mainStart, hotbarStart, true),
                 new SlotGroup(hotbarStart, slots.size(), true));
@@ -193,5 +203,16 @@ public abstract class CoreMenu extends AbstractContainerMenu {
             }
         }
         return null;
+    }
+
+    /* A slot of the player's inventory that is there only while {@code shown} says so. */
+    private static Slot inventorySlot(final Inventory inventory, final int index, final int x, final int y,
+                                      final BooleanSupplier shown) {
+        return new Slot(inventory, index, x, y) {
+            @Override
+            public boolean isActive() {
+                return shown.getAsBoolean();
+            }
+        };
     }
 }

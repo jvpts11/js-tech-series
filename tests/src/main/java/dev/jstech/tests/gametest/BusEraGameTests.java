@@ -15,6 +15,7 @@ import dev.jstech.computers.block.part.ImportBusPart;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.bus.BusActivity;
 import dev.jstech.computers.bus.BusCondition;
+import dev.jstech.computers.bus.BusSettings;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
@@ -199,7 +200,7 @@ public final class BusEraGameTests {
                     helper.assertTrue(chest.countItem(Items.COBBLESTONE) > 64, "the bus stopped well before the chest"
                             + " was empty; it holds " + chest.countItem(Items.COBBLESTONE));
                     helper.assertTrue(has(bus, BusActivity.WAITING, BusActivity.HELD), "and says it waits");
-                    helper.assertValueEqual(bus.setBy(AbstractBusPart.SETTING_CONDITIONS), "Stock keeper",
+                    helper.assertValueEqual(bus.setBy(BusSettings.CONDITIONS), "Stock keeper",
                             "the condition is marked with the program that set it");
                 })
                 .thenSucceed();

@@ -8,143 +8,115 @@
 package dev.jstech.computers.menu;
 
 import dev.jstech.computers.block.part.AbstractBusPart;
-import dev.jstech.computers.block.part.ComputingParts;
+import dev.jstech.computers.block.part.BusEdits;
+import dev.jstech.computers.block.part.ExportBusPart;
+import dev.jstech.computers.bus.BusAbilities;
+import dev.jstech.computers.bus.BusSettings;
 import dev.jstech.computers.gui.layout.BusLayout;
+import dev.jstech.computers.operation.payload.BusEditPayload;
+import dev.jstech.computers.operation.payload.BusStatePayload;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuValidity;
-import dev.jstech.core.menu.MenuValue;
 import dev.jstech.core.menu.PlayerSlots;
+import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.MenuType;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.items.ItemStackHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.function.BooleanSupplier;
+import java.util.List;
 import java.util.function.Predicate;
 
 /**
- * Shared menu for the four bus parts (Import, Export, Input, Receiving): a single ghost filter slot, the
- * min/max stock steppers, the mode toggle, and the player inventory. Every bus exposes an identical
- * configuration surface, so the slot wiring, the stepper buttons, the synced values and the shift-click
- * transfer all live here; the subclasses only register their own {@link MenuType} and the create/fromNetwork
- * factories. The bus name rides in the open packet and is edited back to the server by a dedicated payload,
- * not through the synced values (which are ints).
+ * The window of a bus (Import, Export, and the crafting Input and Receiving): its three tabs over the player's
+ * inventory, which only Configure shows. Everything the window shows that is not a slot comes from the server as one
+ * {@link BusStatePayload}, sent when it opens and again whenever the bus changes; everything changed in it goes back as
+ * a {@link BusEditPayload}, which this menu applies to the bus it is open on. The filter's cells are drawn, not slots:
+ * a click puts what the cursor carries in them, as a copy, and takes nothing from the player.
  */
 public abstract class AbstractBusMenu extends CoreMenu {
 
     private final AbstractBusPart part;
+    /* The player the window is open for. */
+    private final Player owner;
     private final BlockPos cablePos;
     private final Direction face;
-    private final MenuValue minValue;
-    private final MenuValue maxValue;
-    private final MenuValue modeValue;
-    private final MenuValue linkedFlag;
+    private final HardwareEra era;
+    private final boolean crafting;
     private String busName;
-
-    public static final int FILTER_SLOT = 0;
-
-    // Stepper button ids: field + direction + step.
-    public static final int BTN_MIN_DOWN1 = 0;
-    public static final int BTN_MIN_UP1 = 1;
-    public static final int BTN_MIN_DOWN16 = 2;
-    public static final int BTN_MIN_UP16 = 3;
-    public static final int BTN_MAX_DOWN1 = 4;
-    public static final int BTN_MAX_UP1 = 5;
-    public static final int BTN_MAX_DOWN16 = 6;
-    public static final int BTN_MAX_UP16 = 7;
-    public static final int BTN_MODE = 8;
+    /* Whether the inventory is shown: the client's Configure tab is open. The server's copy always has it. */
+    private boolean inventoryShown = true;
+    /* What the window shows: on the client, the last state received; on the server, the last one sent. */
+    @Nullable
+    private BusStatePayload state;
+    private int sinceChecked;
 
     /** How far a player may stand from the cable and keep this menu open, in blocks. */
     private static final double REACH_BLOCKS = 8.0;
+    /** How often, in ticks, the server looks for a change to send. */
+    private static final int CHECK_EVERY = 5;
 
     protected AbstractBusMenu(final MenuType<?> type, final int containerId, final Inventory playerInventory,
-                              final AbstractBusPart part, final Level level, final BlockPos cablePos,
-                              final Direction face, final String busName) {
-        super(type, containerId, playerInventory, validity(level, cablePos, face, part));
+                              final AbstractBusPart part, final Level level, final Opening opening,
+                              final boolean crafting) {
+        super(type, containerId, playerInventory, validity(level, opening.pos(), opening.face(), part));
         this.part = part;
-        this.cablePos = cablePos;
-        this.face = face;
-        this.busName = busName == null ? "" : busName;
-
-        final GuiLayout layout = BusLayout.layout();
-        slots(filterSlot(part.getFilterHandler(), layout.slotAt("filterSlot"), this::filterApplies));
-        final PlayerSlots playerSlots = playerInventory(playerInventory, layout.playerInventoryAt());
+        this.owner = playerInventory.player;
+        this.cablePos = opening.pos();
+        this.face = opening.face();
+        this.era = opening.era();
+        this.crafting = crafting;
+        this.busName = opening.name();
+        final GuiLayout.SlotPosition at = new GuiLayout.SlotPosition(BusLayout.INV_X,
+                BusLayout.inventoryY(BusAbilities.of(era), crafting));
+        final PlayerSlots playerSlots = playerInventory(playerInventory, at, () -> inventoryShown);
         shiftClick(playerSlots.main(), playerSlots.hotbar());
         shiftClick(playerSlots.hotbar(), playerSlots.main());
+    }
 
-        this.minValue = value(part::keep);
-        this.maxValue = value(part::max);
-        this.modeValue = value(part::mode);
-        this.linkedFlag = flag(part::linked);
+    /** What a bus's window is opened with, written by the server and read by the client before the menu is made. */
+    public record Opening(BlockPos pos, Direction face, String name, HardwareEra era) {
 
-        /*
-         * The passive crafting buses (Input, Receiving) have no stock window, so these ids are registered only
-         * where one exists: on a passive bus the server refuses them (clickMenuButton answers false) instead of
-         * accepting a press that does nothing.
-         */
-        if (stockControlsApply()) {
-            button(BTN_MIN_DOWN1, player -> part.adjustKeep(-1));
-            button(BTN_MIN_UP1, player -> part.adjustKeep(1));
-            button(BTN_MIN_DOWN16, player -> part.adjustKeep(-16));
-            button(BTN_MIN_UP16, player -> part.adjustKeep(16));
-            button(BTN_MAX_DOWN1, player -> part.adjustMax(-1));
-            button(BTN_MAX_UP1, player -> part.adjustMax(1));
-            button(BTN_MAX_DOWN16, player -> part.adjustMax(-16));
-            button(BTN_MAX_UP16, player -> part.adjustMax(16));
-            button(BTN_MODE, player -> part.toggleMode());
+        public void write(final FriendlyByteBuf buf) {
+            buf.writeBlockPos(pos);
+            buf.writeByte(face.get3DDataValue());
+            buf.writeUtf(name, AbstractBusPart.MAX_NAME_LENGTH);
+            buf.writeVarInt(era.level());
+        }
+
+        public static Opening read(final FriendlyByteBuf buf) {
+            return new Opening(buf.readBlockPos(), Direction.from3DDataValue(buf.readByte()),
+                    buf.readUtf(AbstractBusPart.MAX_NAME_LENGTH), HardwareEra.fromLevel(buf.readVarInt()));
+        }
+
+        /** The opening of the window on {@code part}, on {@code cable}'s face {@code face}. */
+        public static Opening of(final CableBlockEntity cable, final Direction face, final AbstractBusPart part) {
+            return new Opening(cable.getBlockPos(), face, part.name(), part.era());
         }
     }
 
-    /**
-     * Whether this bus exposes a filter. Every bus does: on the autonomous Import/Export buses it selects what
-     * to move, and on the passive crafting Input/Receiving buses it pins what the mounted face carries so the
-     * crafting engine can route each ingredient (or each output) to the correct face. An empty filter means the
-     * face carries anything, matching the raw machine face.
-     */
-    public boolean filterApplies() {
-        return true;
+    /** The era of the bus, which decides its rows; its window's skin comes with its state. */
+    public HardwareEra era() {
+        return era;
     }
 
-    /**
-     * Whether the stock controls (min/max window and continuous/redstone mode) apply to this bus. Only the
-     * autonomous Import and Export buses hold stock; the crafting Input and Receiving buses are demand-driven by
-     * the crafting engine, so those controls hide and their buttons are refused server-side.
-     */
-    public boolean stockControlsApply() {
-        return !ComputingParts.isCrafting(part.type());
+    /** Whether it is a crafting bus, which has its filter and nothing else to set. */
+    public boolean crafting() {
+        return crafting;
     }
 
-    public int min() {
-        return minValue.get();
-    }
-
-    public int max() {
-        return maxValue.get();
-    }
-
-    public int mode() {
-        return modeValue.get();
-    }
-
-    public boolean linked() {
-        return linkedFlag.isSet();
-    }
-
-    public ItemStack filterStack() {
-        return getSlot(FILTER_SLOT).getItem();
-    }
-
-    public String busName() {
-        return busName;
+    /** Whether the bus sends out of the network (an Export Bus, a Crafting Input Bus) rather than bringing in. */
+    public boolean exports() {
+        return part instanceof ExportBusPart;
     }
 
     public BlockPos cablePos() {
@@ -155,48 +127,76 @@ public abstract class AbstractBusMenu extends CoreMenu {
         return face;
     }
 
+    public String busName() {
+        return busName;
+    }
+
     /** Updates the locally-known name after the server confirms an edit, so the field stays in sync. */
     public void setBusNameLocal(final String name) {
         this.busName = name == null ? "" : name;
     }
 
-    @Override
-    public void clicked(final int slotId, final int button, final ClickType type, final Player player) {
-        /*
-         * Clicking the filter slot sets it from the carried item (a copy), or clears
-         * it with an empty cursor, so the player's item is never consumed.
-         */
-        if (slotId == FILTER_SLOT) {
-            if (filterApplies()) {
-                part.setFilter(getCarried());
-            }
-            return;
-        }
-        super.clicked(slotId, button, type, player);
+    /** The last state the window received, or null before the first arrives. */
+    @Nullable
+    public BusStatePayload state() {
+        return state;
     }
 
-    /**
-     * A slot the player only ever sets by clicking (never by dropping an item in), shown only while
-     * {@code active} says this bus carries a filter.
-     */
-    private static Slot filterSlot(final ItemStackHandler handler, final GuiLayout.SlotPosition at,
-                                   final BooleanSupplier active) {
-        return new SlotItemHandler(handler, 0, at.x(), at.y()) {
-            @Override
-            public boolean mayPlace(final ItemStack stack) {
-                return false;
-            }
+    /** What the bus is set to as the window last heard, or a new bus of its era before it has heard. */
+    public BusSettings settings() {
+        return state == null ? BusSettings.fresh(era) : state.settings();
+    }
 
-            @Override
-            public boolean mayPickup(final Player player) {
-                return false;
-            }
+    /** What filter slot {@code slot} lists, to draw, as the window last heard. */
+    public ItemStack filterStack(final int slot) {
+        final List<ItemStack> stacks = state == null ? List.of() : state.filter();
+        return slot >= 0 && slot < stacks.size() ? stacks.get(slot) : ItemStack.EMPTY;
+    }
 
-            @Override
-            public boolean isActive() {
-                return active.getAsBoolean();
-            }
-        };
+    /** Takes the state the server sent; the client's copy only. */
+    public void accept(final BusStatePayload received) {
+        this.state = received;
+        this.busName = received.settings().name();
+    }
+
+    /** Shows or hides the inventory with the tab: only Configure has it. */
+    public void showInventory(final boolean shown) {
+        this.inventoryShown = shown;
+    }
+
+    /** Applies a change made in the window, on the server, and sends the window what it changed. */
+    public void edit(final ServerPlayer player, final BusEditPayload edit) {
+        if (BusEdits.apply(part, edit, getCarried())) {
+            send(player, true);
+        }
+    }
+
+    @Override
+    public void broadcastChanges() {
+        super.broadcastChanges();
+        if (onClient() || ++sinceChecked < CHECK_EVERY && state != null) {
+            return;
+        }
+        sinceChecked = 0;
+        if (owner instanceof ServerPlayer player && player.containerMenu == this) {
+            send(player, false);
+        }
+    }
+
+    /* Sends the bus's state when it changed since the last one sent, or {@code always}. */
+    private void send(final ServerPlayer player, final boolean always) {
+        final BusStatePayload now = new BusStatePayload(containerId, part.settings(), part.filterStacks(),
+                part.reachesNetwork(), part.speed(), part.cableCarries(), part.skin(), part.activity().entries());
+        if (always || state == null || !same(state, now)) {
+            state = now;
+            PacketDistributor.sendToPlayer(player, now);
+        }
+    }
+
+    /* Whether two states show the same; the filter's stacks follow its ids. */
+    private static boolean same(final BusStatePayload a, final BusStatePayload b) {
+        return a.settings().equals(b.settings()) && a.linked() == b.linked() && a.speed() == b.speed()
+                && a.carries() == b.carries() && a.skin() == b.skin() && a.activity().equals(b.activity());
     }
 
     /**
