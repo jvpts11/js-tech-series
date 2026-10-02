@@ -183,12 +183,12 @@ public final class HardwareItems {
 
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_BABYAT_VINTAGE = board("motherboard_babyat_vintage",
             new MotherboardSpec(FormFactor.BABY_AT, HardwareEra.VINTAGE,
-                    CpuSocketId.SOCKET_3, 1, Set.of(RamGeneration.SIMM), 4, PcieGeneration.ISA, 4, 2, 2))
+                    CpuSocketId.SOCKET_3, 1, Set.of(RamGeneration.SIMM), 4, PcieGeneration.ISA, 4, 2))
             .named("MF Baby-AT I Motherboard").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_AT_VINTAGE = board("motherboard_at_vintage",
             new MotherboardSpec(FormFactor.AT, HardwareEra.VINTAGE,
                     CpuSocketId.SOCKET_7, 1, Set.of(RamGeneration.SIMM, RamGeneration.EDO), 8,
-                    PcieGeneration.PCI, 7, 4, 2))
+                    PcieGeneration.PCI, 7, 4))
             .named("MF AT Classic Motherboard").register();
     /*
      * The top of the Vintage: a 440BX board for the Slot 1 cartridges, with SDRAM and the first AGP. A board has one
@@ -196,13 +196,13 @@ public final class HardwareItems {
      */
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_AT_VINTAGE_SLOT1 =
             board("motherboard_at_vintage_slot1", new MotherboardSpec(FormFactor.AT, HardwareEra.VINTAGE,
-                    CpuSocketId.SLOT_1, 1, Set.of(RamGeneration.SDRAM), 8, PcieGeneration.AGP_2X, 7, 4, 2))
+                    CpuSocketId.SLOT_1, 1, Set.of(RamGeneration.SDRAM), 8, PcieGeneration.AGP_2X, 7, 4))
                     .named("MF AT Slot 1 Motherboard").register();
     // The Mainframe's board: four Pentium Pros, as the 450GX boards of the time held.
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_VINTAGE = board("motherboard_mtx_vintage",
             new MotherboardSpec(FormFactor.MTX, HardwareEra.VINTAGE,
                     CpuSocketId.SOCKET_8, 4, Set.of(RamGeneration.SIMM, RamGeneration.EDO), 16,
-                    PcieGeneration.PCI, 8, 4, 8))
+                    PcieGeneration.PCI, 8, 4))
             .named("MF MTX-V Motherboard").register();
     /*
      * Dual-socket server board for vintage-era rack hardware, two Pentium Pros as on a 440FX board; more RAM slots
@@ -211,7 +211,7 @@ public final class HardwareItems {
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_VINTAGE = board("motherboard_eeb_vintage",
             new MotherboardSpec(FormFactor.EEB, HardwareEra.VINTAGE,
                     CpuSocketId.SOCKET_8, 2, Set.of(RamGeneration.SIMM, RamGeneration.EDO), 16,
-                    PcieGeneration.PCI, 10, 8, 8))
+                    PcieGeneration.PCI, 10, 8))
             .named("MF EEB-V Server Board").register();
 
     /*
@@ -450,44 +450,44 @@ public final class HardwareItems {
      */
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_LEGACY_S370 =
             board("motherboard_atx_legacy_s370", new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY,
-                    CpuSocketId.SOCKET_370, 1, Set.of(RamGeneration.SDRAM), 4, PcieGeneration.AGP_4X, 4, 4, 4))
+                    CpuSocketId.SOCKET_370, 1, Set.of(RamGeneration.SDRAM), 4, PcieGeneration.AGP_4X, 4, 4))
                     .named("MF ATX Legacy Motherboard (Socket 370)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_LEGACY_SKA = board("motherboard_atx_legacy_ska",
             new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY,
                     CpuSocketId.SOCKET_A, 1, Set.of(RamGeneration.SDRAM, RamGeneration.DDR), 4,
-                    PcieGeneration.AGP_8X, 4, 4, 4))
+                    PcieGeneration.AGP_8X, 4, 4))
             .named("MF ATX Legacy Motherboard (Socket A)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_LEGACY_478 =
             board("motherboard_atx_legacy_478", new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY,
-                    CpuSocketId.SOCKET_478, 1, Set.of(RamGeneration.DDR), 4, PcieGeneration.AGP_8X, 4, 4, 4))
+                    CpuSocketId.SOCKET_478, 1, Set.of(RamGeneration.DDR), 4, PcieGeneration.AGP_8X, 4, 4))
                     .named("MF ATX Legacy Motherboard (Socket 478)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_LEGACY_754 =
             board("motherboard_atx_legacy_754", new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY,
-                    CpuSocketId.SOCKET_754, 1, Set.of(RamGeneration.DDR), 4, PcieGeneration.AGP_8X, 4, 4, 4))
+                    CpuSocketId.SOCKET_754, 1, Set.of(RamGeneration.DDR), 4, PcieGeneration.AGP_8X, 4, 4))
                     .named("MF ATX Legacy Motherboard (Socket 754)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_LEGACY_LGA775 =
             board("motherboard_atx_legacy_lga775", new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY,
                     CpuSocketId.LGA_775, 1, Set.of(RamGeneration.DDR, RamGeneration.DDR2), 4,
-                    PcieGeneration.PCIE_1_0, 4, 4, 4))
+                    PcieGeneration.PCIE_1_0, 4, 4))
                     .named("MF ATX Legacy Motherboard (LGA 775)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_LEGACY_939 =
             board("motherboard_atx_legacy_939", new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY,
-                    CpuSocketId.SOCKET_939, 1, Set.of(RamGeneration.DDR), 4, PcieGeneration.PCIE_1_0, 4, 4, 4))
+                    CpuSocketId.SOCKET_939, 1, Set.of(RamGeneration.DDR), 4, PcieGeneration.PCIE_1_0, 4, 4))
                     .named("MF ATX Legacy Motherboard (Socket 939)").register();
     // The server boards: two Servos on Socket 604, two Opteras on Socket 940, four on the Mainframe's, all on DDR.
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_LEGACY_604 =
             board("motherboard_eatx_legacy_604", new MotherboardSpec(FormFactor.EATX, HardwareEra.LEGACY,
-                    CpuSocketId.SOCKET_604, 2, Set.of(RamGeneration.DDR), 8, PcieGeneration.PCIE_1_0, 6, 6, 4))
+                    CpuSocketId.SOCKET_604, 2, Set.of(RamGeneration.DDR), 8, PcieGeneration.PCIE_1_0, 6, 6))
                     .named("MF EATX Legacy Motherboard (2x Socket 604)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_LEGACY_S940 =
             board("motherboard_eatx_legacy_s940", new MotherboardSpec(FormFactor.EATX, HardwareEra.LEGACY,
                     CpuSocketId.SOCKET_940, 2, Set.of(RamGeneration.DDR), 8,
-                    PcieGeneration.PCIE_1_0, 6, 6, 4))
+                    PcieGeneration.PCIE_1_0, 6, 6))
                     .named("MF EATX Legacy Motherboard (2x Socket 940)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_LEGACY = board("motherboard_mtx_legacy",
             new MotherboardSpec(FormFactor.MTX, HardwareEra.LEGACY,
                     CpuSocketId.SOCKET_940, 4, Set.of(RamGeneration.DDR), 24,
-                    PcieGeneration.PCIE_1_0, 8, 6, 8))
+                    PcieGeneration.PCIE_1_0, 8, 6))
             .named("MF MTX-L Motherboard").register();
 
     /*
@@ -764,24 +764,24 @@ public final class HardwareItems {
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_TRANSITION_775 =
             board("motherboard_atx_transition_775", new MotherboardSpec(FormFactor.ATX, HardwareEra.TRANSITION,
                     CpuSocketId.LGA_775, 1, Set.of(RamGeneration.DDR2, RamGeneration.DDR3), 4, PcieGeneration.PCIE_2_0,
-                    4, 4, 4))
+                    4, 4))
                     .named("MF ATX Transition Motherboard (LGA 775)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_TRANSITION_AM2 =
             board("motherboard_atx_transition_am2", new MotherboardSpec(FormFactor.ATX, HardwareEra.TRANSITION,
-                    CpuSocketId.AM2, 1, Set.of(RamGeneration.DDR2), 4, PcieGeneration.PCIE_2_0, 4, 4, 4))
+                    CpuSocketId.AM2, 1, Set.of(RamGeneration.DDR2), 4, PcieGeneration.PCIE_2_0, 4, 4))
                     .named("MF ATX Transition Motherboard (AM2)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_TRANSITION_AM3 =
             board("motherboard_atx_transition_am3", new MotherboardSpec(FormFactor.ATX, HardwareEra.TRANSITION,
-                    CpuSocketId.AM3, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_2_0, 4, 2, 4))
+                    CpuSocketId.AM3, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_2_0, 4, 2))
                     .named("MF ATX Transition Motherboard (AM3)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_TRANSITION_1156 =
             board("motherboard_atx_transition_1156", new MotherboardSpec(FormFactor.ATX, HardwareEra.TRANSITION,
-                    CpuSocketId.LGA_1156, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_2_0, 4, 4, 4))
+                    CpuSocketId.LGA_1156, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_2_0, 4, 4))
                     .named("MF ATX Transition Motherboard (LGA 1156)").register();
     // The workstation board of the LGA 1366 Centro c7.
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_TRANSITION_1366 =
             board("motherboard_eatx_transition_1366", new MotherboardSpec(FormFactor.EATX, HardwareEra.TRANSITION,
-                    CpuSocketId.LGA_1366, 1, Set.of(RamGeneration.DDR3), 6, PcieGeneration.PCIE_2_0, 7, 6, 4))
+                    CpuSocketId.LGA_1366, 1, Set.of(RamGeneration.DDR3), 6, PcieGeneration.PCIE_2_0, 7, 6))
                     .named("MF EATX Transition Motherboard (LGA 1366)").register();
     /*
      * The server boards: two Servos on LGA 771 or LGA 1366, two Opteras on Socket F, four on the Mainframe's. The
@@ -789,19 +789,19 @@ public final class HardwareItems {
      */
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_TRANSITION_771 =
             board("motherboard_transition_771", new MotherboardSpec(FormFactor.EATX, HardwareEra.TRANSITION,
-                    CpuSocketId.LGA_771, 2, Set.of(RamGeneration.DDR2), 8, PcieGeneration.PCIE_1_0, 6, 6, 4))
+                    CpuSocketId.LGA_771, 2, Set.of(RamGeneration.DDR2), 8, PcieGeneration.PCIE_1_0, 6, 6))
                     .named("MF EATX Transition Motherboard (2x LGA 771)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_T_1366 =
             board("motherboard_eeb_t_1366", new MotherboardSpec(FormFactor.EEB, HardwareEra.TRANSITION,
-                    CpuSocketId.LGA_1366, 2, Set.of(RamGeneration.DDR3), 12, PcieGeneration.PCIE_2_0, 6, 6, 6))
+                    CpuSocketId.LGA_1366, 2, Set.of(RamGeneration.DDR3), 12, PcieGeneration.PCIE_2_0, 6, 6))
                     .named("MF EEB-T Server Board (2x LGA 1366)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_T_F =
             board("motherboard_eeb_t_f", new MotherboardSpec(FormFactor.EEB, HardwareEra.TRANSITION,
-                    CpuSocketId.SOCKET_F, 2, Set.of(RamGeneration.DDR2), 16, PcieGeneration.PCIE_1_0, 6, 6, 6))
+                    CpuSocketId.SOCKET_F, 2, Set.of(RamGeneration.DDR2), 16, PcieGeneration.PCIE_1_0, 6, 6))
                     .named("MF EEB-T Server Board (2x Socket F)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_T =
             board("motherboard_mtx_t", new MotherboardSpec(FormFactor.MTX, HardwareEra.TRANSITION,
-                    CpuSocketId.SOCKET_F, 4, Set.of(RamGeneration.DDR2), 32, PcieGeneration.PCIE_1_0, 8, 6, 8))
+                    CpuSocketId.SOCKET_F, 4, Set.of(RamGeneration.DDR2), 32, PcieGeneration.PCIE_1_0, 8, 6))
                     .named("MF MTX-T Motherboard (4x Socket F)").register();
 
     /*
@@ -1028,32 +1028,32 @@ public final class HardwareItems {
      */
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_STANDARD_1155 =
             board("motherboard_atx_standard_1155", new MotherboardSpec(FormFactor.ATX, HardwareEra.STANDARD,
-                    CpuSocketId.LGA_1155, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_3_0, 4, 2, 4))
+                    CpuSocketId.LGA_1155, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_3_0, 4, 2))
                     .named("MF ATX Standard Motherboard (LGA 1155)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_STANDARD_LGA1150 =
             board("motherboard_atx_standard_lga1150", new MotherboardSpec(FormFactor.ATX, HardwareEra.STANDARD,
-                    CpuSocketId.LGA_1150, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_3_0, 4, 2, 4))
+                    CpuSocketId.LGA_1150, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_3_0, 4, 2))
                     .named("MF ATX Standard Motherboard (LGA 1150)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_STANDARD_AM3P =
             board("motherboard_atx_standard_am3p", new MotherboardSpec(FormFactor.ATX, HardwareEra.STANDARD,
-                    CpuSocketId.AM3_PLUS, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_2_0, 4, 2, 4))
+                    CpuSocketId.AM3_PLUS, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_2_0, 4, 2))
                     .named("MF ATX Standard Motherboard (AM3+)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_STANDARD_FM2P =
             board("motherboard_atx_standard_fm2p", new MotherboardSpec(FormFactor.ATX, HardwareEra.STANDARD,
-                    CpuSocketId.FM2_PLUS, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_3_0, 4, 2, 4))
+                    CpuSocketId.FM2_PLUS, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_3_0, 4, 2))
                     .named("MF ATX Standard Motherboard (FM2+)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_STANDARD_2011 =
             board("motherboard_eatx_standard_2011", new MotherboardSpec(FormFactor.EATX, HardwareEra.STANDARD,
-                    CpuSocketId.LGA_2011, 1, Set.of(RamGeneration.DDR3), 8, PcieGeneration.PCIE_3_0, 7, 4, 4))
+                    CpuSocketId.LGA_2011, 1, Set.of(RamGeneration.DDR3), 8, PcieGeneration.PCIE_3_0, 7, 4))
                     .named("MF EATX Standard Motherboard (LGA 2011)").register();
     // The G34 server boards, two Opteras or four, on the PCIe 2.0 of their chipset.
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_S_G34 =
             board("motherboard_eeb_s_g34", new MotherboardSpec(FormFactor.EEB, HardwareEra.STANDARD,
-                    CpuSocketId.G34, 2, Set.of(RamGeneration.DDR3), 16, PcieGeneration.PCIE_2_0, 6, 6, 6))
+                    CpuSocketId.G34, 2, Set.of(RamGeneration.DDR3), 16, PcieGeneration.PCIE_2_0, 6, 6))
                     .named("MF EEB-S Server Board (2x G34)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_S_G34 =
             board("motherboard_mtx_s_g34", new MotherboardSpec(FormFactor.MTX, HardwareEra.STANDARD,
-                    CpuSocketId.G34, 4, Set.of(RamGeneration.DDR3), 32, PcieGeneration.PCIE_2_0, 8, 6, 8))
+                    CpuSocketId.G34, 4, Set.of(RamGeneration.DDR3), 32, PcieGeneration.PCIE_2_0, 8, 6))
                     .named("MF MTX-S Motherboard (4x G34)").register();
 
     //  ADVANCED: PCIe 4.0 and 5.0, DDR4 and DDR5, the Way and hybrid Centro processors, the Epic and Servo servers
@@ -1475,66 +1475,66 @@ public final class HardwareItems {
      */
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_ADVANCED_AM4 =
             board("motherboard_atx_advanced_am4", new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED,
-                    CpuSocketId.AM4, 1, Set.of(RamGeneration.DDR4), 4, PcieGeneration.PCIE_4_0, 4, 2, 4))
+                    CpuSocketId.AM4, 1, Set.of(RamGeneration.DDR4), 4, PcieGeneration.PCIE_4_0, 4, 2))
                     .named("MF ATX Advanced Motherboard (AM4)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_ADVANCED_AM5 =
             board("motherboard_atx_advanced_am5", new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED,
-                    CpuSocketId.AM5, 1, Set.of(RamGeneration.DDR5), 4, PcieGeneration.PCIE_5_0, 4, 2, 4))
+                    CpuSocketId.AM5, 1, Set.of(RamGeneration.DDR5), 4, PcieGeneration.PCIE_5_0, 4, 2))
                     .named("MF ATX Advanced Motherboard (AM5)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_ADVANCED_1151 =
             board("motherboard_atx_advanced_1151", new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED,
-                    CpuSocketId.LGA_1151, 1, Set.of(RamGeneration.DDR4), 4, PcieGeneration.PCIE_3_0, 4, 2, 4))
+                    CpuSocketId.LGA_1151, 1, Set.of(RamGeneration.DDR4), 4, PcieGeneration.PCIE_3_0, 4, 2))
                     .named("MF ATX Advanced Motherboard (LGA 1151)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_ADVANCED_1200 =
             board("motherboard_atx_advanced_1200", new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED,
-                    CpuSocketId.LGA_1200, 1, Set.of(RamGeneration.DDR4), 4, PcieGeneration.PCIE_3_0, 4, 2, 4))
+                    CpuSocketId.LGA_1200, 1, Set.of(RamGeneration.DDR4), 4, PcieGeneration.PCIE_3_0, 4, 2))
                     .named("MF ATX Advanced Motherboard (LGA 1200)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_ADVANCED_1700 =
             board("motherboard_atx_advanced_1700", new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED,
                     CpuSocketId.LGA_1700, 1, Set.of(RamGeneration.DDR4, RamGeneration.DDR5), 4,
-                    PcieGeneration.PCIE_5_0, 4, 2, 4))
+                    PcieGeneration.PCIE_5_0, 4, 2))
                     .named("MF ATX Advanced Motherboard (LGA 1700)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_ADVANCED_1851 =
             board("motherboard_atx_advanced_1851", new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED,
-                    CpuSocketId.LGA_1851, 1, Set.of(RamGeneration.DDR5), 4, PcieGeneration.PCIE_5_0, 4, 2, 4))
+                    CpuSocketId.LGA_1851, 1, Set.of(RamGeneration.DDR5), 4, PcieGeneration.PCIE_5_0, 4, 2))
                     .named("MF ATX Advanced Motherboard (LGA 1851)").register();
     // The workstation boards.
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_ADVANCED_2066 =
             board("motherboard_eatx_advanced_2066", new MotherboardSpec(FormFactor.EATX, HardwareEra.ADVANCED,
-                    CpuSocketId.LGA_2066, 1, Set.of(RamGeneration.DDR4), 8, PcieGeneration.PCIE_3_0, 7, 4, 4))
+                    CpuSocketId.LGA_2066, 1, Set.of(RamGeneration.DDR4), 8, PcieGeneration.PCIE_3_0, 7, 4))
                     .named("MF EATX Advanced WS Motherboard (LGA 2066)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_ADVANCED_STR4 =
             board("motherboard_eatx_advanced_str4", new MotherboardSpec(FormFactor.EATX, HardwareEra.ADVANCED,
-                    CpuSocketId.STR4, 1, Set.of(RamGeneration.DDR4), 8, PcieGeneration.PCIE_3_0, 7, 4, 4))
+                    CpuSocketId.STR4, 1, Set.of(RamGeneration.DDR4), 8, PcieGeneration.PCIE_3_0, 7, 4))
                     .named("MF EATX Advanced WS Motherboard (sTR4)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_ADVANCED_STR5 =
             board("motherboard_eatx_advanced_str5", new MotherboardSpec(FormFactor.EATX, HardwareEra.ADVANCED,
-                    CpuSocketId.STR5, 1, Set.of(RamGeneration.DDR5), 8, PcieGeneration.PCIE_5_0, 7, 4, 4))
+                    CpuSocketId.STR5, 1, Set.of(RamGeneration.DDR5), 8, PcieGeneration.PCIE_5_0, 7, 4))
                     .named("MF EATX Advanced WS Motherboard (sTR5)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_ADVANCED_4677 =
             board("motherboard_eatx_advanced_4677", new MotherboardSpec(FormFactor.EATX, HardwareEra.ADVANCED,
-                    CpuSocketId.LGA_4677, 1, Set.of(RamGeneration.DDR5), 8, PcieGeneration.PCIE_5_0, 7, 4, 4))
+                    CpuSocketId.LGA_4677, 1, Set.of(RamGeneration.DDR5), 8, PcieGeneration.PCIE_5_0, 7, 4))
                     .named("MF EATX Advanced WS Motherboard (LGA 4677)").register();
     // The two-way server boards.
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_A_SP3 =
             board("motherboard_eeb_a_sp3", new MotherboardSpec(FormFactor.EEB, HardwareEra.ADVANCED,
-                    CpuSocketId.SP3, 2, Set.of(RamGeneration.DDR4), 16, PcieGeneration.PCIE_4_0, 6, 6, 6))
+                    CpuSocketId.SP3, 2, Set.of(RamGeneration.DDR4), 16, PcieGeneration.PCIE_4_0, 6, 6))
                     .named("MF EEB-A Server Board (2x SP3)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_A_SP5 =
             board("motherboard_eeb_a_sp5", new MotherboardSpec(FormFactor.EEB, HardwareEra.ADVANCED,
-                    CpuSocketId.SP5, 2, Set.of(RamGeneration.DDR5), 24, PcieGeneration.PCIE_5_0, 6, 6, 6))
+                    CpuSocketId.SP5, 2, Set.of(RamGeneration.DDR5), 24, PcieGeneration.PCIE_5_0, 6, 6))
                     .named("MF EEB-A Server Board (2x SP5)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_A_3647 =
             board("motherboard_eeb_a_3647", new MotherboardSpec(FormFactor.EEB, HardwareEra.ADVANCED,
-                    CpuSocketId.LGA_3647, 2, Set.of(RamGeneration.DDR4), 16, PcieGeneration.PCIE_3_0, 6, 6, 6))
+                    CpuSocketId.LGA_3647, 2, Set.of(RamGeneration.DDR4), 16, PcieGeneration.PCIE_3_0, 6, 6))
                     .named("MF EEB-A Server Board (2x LGA 3647)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_A_4189 =
             board("motherboard_eeb_a_4189", new MotherboardSpec(FormFactor.EEB, HardwareEra.ADVANCED,
-                    CpuSocketId.LGA_4189, 2, Set.of(RamGeneration.DDR4), 16, PcieGeneration.PCIE_4_0, 6, 6, 6))
+                    CpuSocketId.LGA_4189, 2, Set.of(RamGeneration.DDR4), 16, PcieGeneration.PCIE_4_0, 6, 6))
                     .named("MF EEB-A Server Board (2x LGA 4189)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_A_4677 =
             board("motherboard_eeb_a_4677", new MotherboardSpec(FormFactor.EEB, HardwareEra.ADVANCED,
-                    CpuSocketId.LGA_4677, 2, Set.of(RamGeneration.DDR5), 16, PcieGeneration.PCIE_5_0, 6, 6, 6))
+                    CpuSocketId.LGA_4677, 2, Set.of(RamGeneration.DDR5), 16, PcieGeneration.PCIE_5_0, 6, 6))
                     .named("MF EEB-A Server Board (2x LGA 4677)").register();
     /*
      * The Mainframe's four-way boards: real four-socket Xeon boards on LGA 3647 and 4189, and four Epics on SP3 and
@@ -1542,19 +1542,19 @@ public final class HardwareItems {
      */
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_A_SP3 =
             board("motherboard_mtx_a_sp3", new MotherboardSpec(FormFactor.MTX, HardwareEra.ADVANCED,
-                    CpuSocketId.SP3, 4, Set.of(RamGeneration.DDR4), 64, PcieGeneration.PCIE_4_0, 8, 6, 8))
+                    CpuSocketId.SP3, 4, Set.of(RamGeneration.DDR4), 64, PcieGeneration.PCIE_4_0, 8, 6))
                     .named("MF MTX-A Motherboard (4x SP3)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_A_SP5 =
             board("motherboard_mtx_a_sp5", new MotherboardSpec(FormFactor.MTX, HardwareEra.ADVANCED,
-                    CpuSocketId.SP5, 4, Set.of(RamGeneration.DDR5), 64, PcieGeneration.PCIE_5_0, 8, 6, 8))
+                    CpuSocketId.SP5, 4, Set.of(RamGeneration.DDR5), 64, PcieGeneration.PCIE_5_0, 8, 6))
                     .named("MF MTX-A Motherboard (4x SP5)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_A_3647 =
             board("motherboard_mtx_a_3647", new MotherboardSpec(FormFactor.MTX, HardwareEra.ADVANCED,
-                    CpuSocketId.LGA_3647, 4, Set.of(RamGeneration.DDR4), 48, PcieGeneration.PCIE_3_0, 8, 6, 8))
+                    CpuSocketId.LGA_3647, 4, Set.of(RamGeneration.DDR4), 48, PcieGeneration.PCIE_3_0, 8, 6))
                     .named("MF MTX-A Motherboard (4x LGA 3647)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_A_4189 =
             board("motherboard_mtx_a_4189", new MotherboardSpec(FormFactor.MTX, HardwareEra.ADVANCED,
-                    CpuSocketId.LGA_4189, 4, Set.of(RamGeneration.DDR4), 48, PcieGeneration.PCIE_3_0, 8, 6, 8))
+                    CpuSocketId.LGA_4189, 4, Set.of(RamGeneration.DDR4), 48, PcieGeneration.PCIE_3_0, 8, 6))
                     .named("MF MTX-A Motherboard (4x LGA 4189)").register();
 
     /*

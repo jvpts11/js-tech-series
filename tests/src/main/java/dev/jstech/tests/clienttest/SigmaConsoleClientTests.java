@@ -163,7 +163,7 @@ public final class SigmaConsoleClientTests {
         return ctx.screen(CommandPromptScreen.class);
     }
 
-    /** A Vintage machine's parts: its board, a CPU, memory, a supply and a disk. */
+    /** A Vintage machine's parts: its board, a CPU, memory, a supply, a VGA card for its monitor and a disk. */
     private static void buildVintage(final PersonalComputerBlockEntity computer) {
         final ItemStackHandler hardware = computer.getHardware();
         hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
@@ -173,6 +173,8 @@ public final class SigmaConsoleClientTests {
         hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(HardwareItems.RAM_SIMM_4.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(HardwareItems.PSU_300.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START,
+                new ItemStack(HardwareItems.GPU_VGA_256.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
     }

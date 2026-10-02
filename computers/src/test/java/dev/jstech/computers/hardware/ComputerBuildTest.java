@@ -24,7 +24,7 @@ class ComputerBuildTest {
 
     private static MotherboardSpec mtxStandard() {
         return new MotherboardSpec(FormFactor.MTX, HardwareEra.STANDARD, CpuSocketId.LGA_2011, 4,
-                Set.of(RamGeneration.DDR3), 24, PcieGeneration.PCIE_3_0, 10, 4, 8);
+                Set.of(RamGeneration.DDR3), 24, PcieGeneration.PCIE_3_0, 10, 4);
     }
 
     private static CpuSpec standardCpu() {

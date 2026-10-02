@@ -34,11 +34,11 @@ class MotherboardSpecTest {
     @Test
     void constructor_refusesNoMemoryGeneration() {
         assertThrows(IllegalArgumentException.class, () -> new MotherboardSpec(FormFactor.ATX,
-                HardwareEra.TRANSITION, CpuSocketId.LGA_775, 1, Set.of(), 4, PcieGeneration.PCIE_1_0, 2, 4, 6));
+                HardwareEra.TRANSITION, CpuSocketId.LGA_775, 1, Set.of(), 4, PcieGeneration.PCIE_1_0, 2, 4));
     }
 
     private static MotherboardSpec board(final HardwareEra era) {
         return new MotherboardSpec(FormFactor.ATX, era, CpuSocketId.LGA_775, 1, Set.of(RamGeneration.DDR2), 4,
-                PcieGeneration.PCIE_1_0, 2, 4, 6);
+                PcieGeneration.PCIE_1_0, 2, 4);
     }
 }

@@ -39,7 +39,7 @@ class PerEraBuildTest {
 
     private static MotherboardSpec vintageBoard() {
         return new MotherboardSpec(FormFactor.BABY_AT, HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1,
-                Set.of(RamGeneration.SIMM), 4, PcieGeneration.PCI, 4, 2, 2);
+                Set.of(RamGeneration.SIMM), 4, PcieGeneration.PCI, 4, 2);
     }
 
     private static CpuSpec vintageCpu() {
@@ -74,17 +74,17 @@ class PerEraBuildTest {
 
     private static MotherboardSpec vintageSocket7Board() {
         return new MotherboardSpec(FormFactor.AT, HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1,
-                Set.of(RamGeneration.SIMM, RamGeneration.EDO), 8, PcieGeneration.PCI, 7, 4, 2);
+                Set.of(RamGeneration.SIMM, RamGeneration.EDO), 8, PcieGeneration.PCI, 7, 4);
     }
 
     private static MotherboardSpec vintageSlot1Board() {
         return new MotherboardSpec(FormFactor.AT, HardwareEra.VINTAGE, CpuSocketId.SLOT_1, 1,
-                Set.of(RamGeneration.SDRAM), 8, PcieGeneration.AGP_2X, 7, 4, 2);
+                Set.of(RamGeneration.SDRAM), 8, PcieGeneration.AGP_2X, 7, 4);
     }
 
     private static MotherboardSpec vintageServerBoard() {
         return new MotherboardSpec(FormFactor.EEB, HardwareEra.VINTAGE, CpuSocketId.SOCKET_8, 2,
-                Set.of(RamGeneration.SIMM, RamGeneration.EDO), 16, PcieGeneration.PCI, 10, 8, 8);
+                Set.of(RamGeneration.SIMM, RamGeneration.EDO), 16, PcieGeneration.PCI, 10, 8);
     }
 
     private static CpuSpec pentiumIii() {
@@ -143,7 +143,7 @@ class PerEraBuildTest {
 
     private static MotherboardSpec legacyBoard() {
         return new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY, CpuSocketId.LGA_775, 1,
-                Set.of(RamGeneration.DDR, RamGeneration.DDR2), 4, PcieGeneration.PCIE_1_0, 4, 4, 4);
+                Set.of(RamGeneration.DDR, RamGeneration.DDR2), 4, PcieGeneration.PCIE_1_0, 4, 4);
     }
 
     private static CpuSpec legacyCpu() {
@@ -178,12 +178,12 @@ class PerEraBuildTest {
 
     private static MotherboardSpec legacySocket370Board() {
         return new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY, CpuSocketId.SOCKET_370, 1,
-                Set.of(RamGeneration.SDRAM), 4, PcieGeneration.AGP_4X, 4, 4, 4);
+                Set.of(RamGeneration.SDRAM), 4, PcieGeneration.AGP_4X, 4, 4);
     }
 
     private static MotherboardSpec legacySocket939Board() {
         return new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY, CpuSocketId.SOCKET_939, 1,
-                Set.of(RamGeneration.DDR), 4, PcieGeneration.PCIE_1_0, 4, 4, 4);
+                Set.of(RamGeneration.DDR), 4, PcieGeneration.PCIE_1_0, 4, 4);
     }
 
     private static CpuSpec fx55() {
@@ -228,7 +228,7 @@ class PerEraBuildTest {
     @Test
     void legacyServerBuild_twoServosOnSocket604_isPowered() {
         final MotherboardSpec board = new MotherboardSpec(FormFactor.EATX, HardwareEra.LEGACY, CpuSocketId.SOCKET_604,
-                2, Set.of(RamGeneration.DDR), 8, PcieGeneration.PCIE_1_0, 6, 6, 4);
+                2, Set.of(RamGeneration.DDR), 8, PcieGeneration.PCIE_1_0, 6, 6);
         final CpuSpec servo = new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_604, 1, 3200, 92, false);
         assertTrue(new ComputerBuild(board, List.of(servo, servo), List.of(), List.of(ddr()), psu(500)).isPowered());
     }
@@ -237,7 +237,7 @@ class PerEraBuildTest {
     void legacyMainframeBuild_ddr2Memory_isNotPowered() {
         // The four-way Socket 940 board of the Mainframe took DDR; DDR2 came after the Opteras it was built for.
         final MotherboardSpec board = new MotherboardSpec(FormFactor.MTX, HardwareEra.LEGACY, CpuSocketId.SOCKET_940,
-                4, Set.of(RamGeneration.DDR), 24, PcieGeneration.PCIE_1_0, 8, 6, 8);
+                4, Set.of(RamGeneration.DDR), 24, PcieGeneration.PCIE_1_0, 8, 6);
         final CpuSpec optera = new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_940, 1, 2400, 89, false);
         final RamSpec ddr2 = new RamSpec(HardwareEra.LEGACY, RamGeneration.DDR2, 128, 9);
         assertFalse(build(board, optera, ddr2, psu(500)).isPowered());
@@ -252,7 +252,7 @@ class PerEraBuildTest {
     private static MotherboardSpec transitionBoard(final CpuSocketId socket, final Set<RamGeneration> ram,
                                                    final int sockets) {
         return new MotherboardSpec(FormFactor.ATX, HardwareEra.TRANSITION, socket, sockets, ram, 8,
-                PcieGeneration.PCIE_2_0, 4, 4, 4);
+                PcieGeneration.PCIE_2_0, 4, 4);
     }
 
     private static RamSpec ddr3() {
@@ -317,7 +317,7 @@ class PerEraBuildTest {
 
     private static MotherboardSpec standardBoard() {
         return new MotherboardSpec(FormFactor.ATX, HardwareEra.STANDARD, CpuSocketId.LGA_1150, 1,
-                Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_3_0, 4, 2, 4);
+                Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_3_0, 4, 2);
     }
 
     private static CpuSpec standardCpu() {
@@ -355,7 +355,7 @@ class PerEraBuildTest {
     private static MotherboardSpec standardBoard(final CpuSocketId socket, final PcieGeneration bus,
                                                  final int sockets) {
         return new MotherboardSpec(FormFactor.ATX, HardwareEra.STANDARD, socket, sockets, Set.of(RamGeneration.DDR3),
-                16, bus, 4, 2, 4);
+                16, bus, 4, 2);
     }
 
     @Test
@@ -414,7 +414,7 @@ class PerEraBuildTest {
     private static MotherboardSpec advancedBoard(final CpuSocketId socket, final Set<RamGeneration> ram,
                                                  final int sockets) {
         return new MotherboardSpec(FormFactor.ATX, HardwareEra.ADVANCED, socket, sockets, ram, 16,
-                PcieGeneration.PCIE_5_0, 4, 2, 4);
+                PcieGeneration.PCIE_5_0, 4, 2);
     }
 
     private static RamSpec ddr4() {

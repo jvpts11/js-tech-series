@@ -18,6 +18,7 @@ import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.core.peripheral.PeripheralCableType;
+import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -445,13 +446,23 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
-    public int maxEndpoints() {
-        return rack.asUnit(row, rack::maxEndpoints);
+    public int ports(final PortKind kind) {
+        return rack.asUnit(row, () -> rack.ports(kind));
     }
 
     @Override
-    public void onEndpointLinked(final long endpointPos) {
-        rack.onEndpointLinked(endpointPos);
+    public int portsInUse(final PortKind kind) {
+        return rack.portsInUse(kind);
+    }
+
+    @Override
+    public boolean holdsPort(final long endpointPos) {
+        return rack.holdsPort(endpointPos);
+    }
+
+    @Override
+    public void onEndpointLinked(final long endpointPos, final PortKind kind) {
+        rack.onEndpointLinked(endpointPos, kind);
     }
 
     @Override

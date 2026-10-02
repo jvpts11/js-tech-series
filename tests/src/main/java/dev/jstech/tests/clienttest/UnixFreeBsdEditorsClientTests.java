@@ -371,7 +371,10 @@ public final class UnixFreeBsdEditorsClientTests {
                 new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
     }
 
-    /** The Vintage Personal Computer build MC-DOS installs on: a period board, CPU, RAM, PSU and a disk. */
+    /**
+     * The Vintage Personal Computer build MC-DOS installs on: a period board, CPU, RAM, PSU, a VGA card for the
+     * monitor and a disk.
+     */
     private static void buildVintage(final PersonalComputerBlockEntity computer) {
         final ItemStackHandler hardware = computer.getHardware();
         hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
@@ -381,6 +384,8 @@ public final class UnixFreeBsdEditorsClientTests {
         hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(HardwareItems.RAM_SIMM_4.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(HardwareItems.PSU_300.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START,
+                new ItemStack(HardwareItems.GPU_VGA_256.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
     }

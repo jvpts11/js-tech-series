@@ -2647,7 +2647,7 @@ public final class NetworkGameTests {
         final BlockPos cable = new BlockPos(2, 2, 2);
         final BlockPos mon = new BlockPos(3, 2, 2);
         final PersonalComputerBlockEntity computer = placeRunningPC(helper, pc);
-        // A GPU lets the computer host up to 4 monitors.
+        // A Standard graphics card gives the computer four video outputs, one for each monitor.
         computer.getHardware().setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START,
                 new ItemStack(ComputingModule.GPU_HD_7970.get()));
         helper.setBlock(cable, ComputingModule.PERIPHERAL_CABLE.get());
@@ -2701,7 +2701,7 @@ public final class NetworkGameTests {
         final BlockPos controller = new BlockPos(3, 2, 3);
         final Direction facing = Direction.NORTH;
         final MainframeBlockEntity be = formRunningMainframe(helper, controller, facing);
-        // A GPU lets the Mainframe host monitors (maxEndpoints = GPUs * 4).
+        // A graphics card gives the Mainframe the video outputs its monitors take.
         be.getInventory().setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
                 new ItemStack(ComputingModule.GPU_HD_7970.get()));
         // A cable on the far side-column part's outward face never touches the controller.

@@ -39,6 +39,7 @@ import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
@@ -198,7 +199,7 @@ public final class ClusterManagerGameTests {
             throw new IllegalStateException("no reader at " + readerPos);
         }
         final ClusterManagementComputerBlockEntity manager = managerAt(helper);
-        manager.peripheralEndpoints().add(helper.absolutePos(readerPos).asLong());
+        manager.onEndpointLinked(helper.absolutePos(readerPos).asLong(), PortKind.DEVICE);
         reader.onOwnerLinked(helper.absolutePos(MANAGER).asLong());
         final ItemStack disc = new ItemStack(ComputingModule.CD_ROM.get());
         MediaItem.setKind(disc, kind);

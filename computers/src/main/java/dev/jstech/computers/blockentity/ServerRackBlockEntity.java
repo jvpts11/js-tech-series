@@ -18,6 +18,7 @@ import dev.jstech.computers.block.ServerRackStructure;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.hardware.MachinePorts;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.item.RackGadgetItem;
@@ -69,6 +70,8 @@ import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
 import dev.jstech.core.peripheral.IPeripheralOwnerSupport;
+import dev.jstech.core.peripheral.PeripheralPorts;
+import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -1264,7 +1267,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
      * monitor cannot address the bays (that takes a KVM switch), so the delegating host goes dark.
      */
 
-    private final Set<Long> linkedPeripherals = new HashSet<>();
+    private final PeripheralEndpoints linkedPeripherals = new PeripheralEndpoints();
     private NodeUuid fallbackNode;
 
     /*
@@ -2207,8 +2210,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     // IPeripheralOwnerSupport: monitors and media readers cable to the rack itself.
 
     @Override
-    public Set<Long> peripheralEndpoints() {
-        return linkedPeripherals;
+    public PeripheralPorts peripheralPorts() {
+        return linkedPeripherals.ports();
     }
 
     @Override
@@ -2217,7 +2220,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     }
 
     @Override
-    public int maxEndpoints() {
+    public int ports(final PortKind kind) {
         /*
          * Cabling a monitor to the cabinet only needs SOME machine with ports, and which one the screen
          * ends up showing is the KVM's business, decided when the player uses the monitor. Reading
@@ -2228,7 +2231,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         for (final int slot : computerSlots()) {
             final ComputerBuild build = buildAt(slot);
             if (build != null) {
-                ports = Math.max(ports, build.motherboard().peripheralPorts());
+                ports = Math.max(ports, MachinePorts.of(build, kind));
             }
         }
         return ports;
@@ -2259,10 +2262,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         Arrays.fill(buildCached, false);
         frontSlots.deserializeNBT(registries, tag.getCompound("FrontSlots"));
         resizeAfterLoad(frontSlots, CAPACITY_U * RackLayout.SLOTS_PER_U);
-        linkedPeripherals.clear();
-        for (final long endpoint : tag.getLongArray("Peripherals")) {
-            linkedPeripherals.add(endpoint);
-        }
+        linkedPeripherals.load(tag);
         bayPowerOff = tag.getInt("BayPowerOff");
         servicePanelOff = tag.getBoolean("ServicePanelOff");
         // The machine the monitor was switched to; activeChannel() still falls back if that row is empty now.
@@ -2297,7 +2297,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         flushConsoles();
         tag.put("Servers", servers.serializeNBT(registries));
         tag.put("FrontSlots", frontSlots.serializeNBT(registries));
-        tag.putLongArray("Peripherals", new ArrayList<>(linkedPeripherals));
+        linkedPeripherals.save(tag);
         tag.putInt("BayPowerOff", bayPowerOff);
         tag.putBoolean("ServicePanelOff", servicePanelOff);
         tag.putInt("ActiveChannel", activeChannel);

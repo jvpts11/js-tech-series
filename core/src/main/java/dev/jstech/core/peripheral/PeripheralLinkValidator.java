@@ -94,14 +94,14 @@ public final class PeripheralLinkValidator {
         }
 
         /*
-         * Owner capacity check, but allow re-linking the same endpoint
+         * The endpoint needs a free port of its own kind, but re-linking one already linked takes nothing more
          * (idempotent re-establish after periodic validation).
          */
-        final List<Long> currentLinks = owner.linkedEndpoints();
-        if (currentLinks.size() >= owner.maxEndpoints()
-                && !currentLinks.contains(endpointPos)) {
-            return new ILinkResult.OwnerAtCapacity(
-                    ownerPos, currentLinks.size(), owner.maxEndpoints());
+        final PortKind kind = endpoint.portKind();
+        final int inUse = owner.portsInUse(kind);
+        final int ports = owner.ports(kind);
+        if (inUse >= ports && !owner.linkedEndpoints().contains(endpointPos)) {
+            return new ILinkResult.OwnerAtCapacity(ownerPos, kind, inUse, ports);
         }
 
         final PeripheralCableType requiredType = owner.cableType();
@@ -110,7 +110,7 @@ public final class PeripheralLinkValidator {
 
         return switch (pathResult) {
             case IPathSearchResult.Found(int length) -> {
-                owner.onEndpointLinked(endpointPos);
+                owner.onEndpointLinked(endpointPos, kind);
                 endpoint.onOwnerLinked(ownerPos);
                 yield new ILinkResult.Established(ownerPos, endpointPos, length);
             }

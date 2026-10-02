@@ -33,9 +33,10 @@ public sealed interface ILinkResult
     }
 
     /**
-     * The owner has reached its hardware-bounded maximum number of linked endpoints (motherboard ports, PCIe slots, machine faces).
+     * Every port of the kind the endpoint takes on the owner is in use, or the owner has none of that kind: a
+     * screen with no video output free, say.
      */
-    record OwnerAtCapacity(long ownerPos, int currentCount, int maxAllowed)
+    record OwnerAtCapacity(long ownerPos, PortKind kind, int currentCount, int maxAllowed)
             implements ILinkResult {
     }
 

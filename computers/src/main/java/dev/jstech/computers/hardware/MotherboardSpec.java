@@ -13,7 +13,9 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Immutable specification of a motherboard, the chassis that bounds an assembly: which CPU socket and how many of them, how many RAM slots and which generations they accept, how many PCIe slots and their bus generation, and how many peripheral ports.
+ * Immutable specification of a motherboard, the chassis that bounds an assembly: which CPU socket and how many of
+ * them, how many RAM slots and which generations they accept, how many PCIe slots and their bus generation, and how
+ * many disks. Its device ports come with its era, as {@link MachinePorts} counts them.
  */
 public record MotherboardSpec(FormFactor formFactor,
                               HardwareEra era,
@@ -23,8 +25,7 @@ public record MotherboardSpec(FormFactor formFactor,
                               int ramSlots,
                               PcieGeneration pcieGeneration,
                               int pcieSlots,
-                              int diskSlots,
-                              int peripheralPorts) {
+                              int diskSlots) {
 
     public MotherboardSpec {
         Objects.requireNonNull(formFactor, "formFactor must not be null");
@@ -46,9 +47,6 @@ public record MotherboardSpec(FormFactor formFactor,
         }
         if (diskSlots < 0) {
             throw new IllegalArgumentException("diskSlots must be >= 0; got " + diskSlots);
-        }
-        if (peripheralPorts < 0) {
-            throw new IllegalArgumentException("peripheralPorts must be >= 0; got " + peripheralPorts);
         }
     }
 

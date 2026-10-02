@@ -44,6 +44,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.peripheral.IPeripheralOwner;
+import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -239,9 +240,18 @@ abstract class ServerCliShell implements ICliComputer {
         return sigma() != null;
     }
 
+    /* Whether the machine has a port of any kind a peripheral could take. */
     @Override
     public boolean hasPorts() {
-        return hostBlock instanceof IPeripheralOwner owner && owner.maxEndpoints() > 0;
+        if (!(hostBlock instanceof IPeripheralOwner owner)) {
+            return false;
+        }
+        for (final PortKind kind : PortKind.values()) {
+            if (owner.ports(kind) > 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

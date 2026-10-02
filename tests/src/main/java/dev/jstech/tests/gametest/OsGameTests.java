@@ -106,9 +106,9 @@ public final class OsGameTests {
         final BlockPos mainframePos = new BlockPos(2, 2, 2);
         final BlockPos readerPos = mainframePos.east(); // placed adjacent, no cable needed for adjacency
 
-        // Place a Mainframe with a GPU so it has peripheral ports, then add a Media Reader next to it.
+        // Place a Mainframe, whose board gives the reader a device port, then add a Media Reader next to it.
         final MainframeBlockEntity mainframe = placeRunningMainframeWithDisk(helper, mainframePos);
-        // Install a GPU so the mainframe has peripheral ports (peripheralPorts from the motherboard).
+        // And a graphics card, for the video outputs a monitor would take.
         mainframe.getInventory().setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
                 new ItemStack(ComputingModule.GPU_HD_7970.get()));
         helper.setBlock(readerPos, ComputingModule.CD_DRIVE.get());

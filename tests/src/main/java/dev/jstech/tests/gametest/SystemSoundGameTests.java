@@ -108,7 +108,8 @@ public final class SystemSoundGameTests {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final PersonalComputerBlockEntity pc = machine(world, ComputingModule.TRANSITION_PERSONAL_COMPUTER.get(),
                 HardwareItems.MOTHERBOARD_ATX_TRANSITION_775.get(), HardwareItems.CPU_INTEGRA_CENTRO_2_DUO_E6600.get(),
-                HardwareItems.RAM_DDR2_2048.get(), HardwareItems.PSU_450B.get());
+                HardwareItems.RAM_DDR2_2048.get(), HardwareItems.PSU_450B.get(),
+                HardwareItems.GPU_VERTEX_8600_GT.get());
         world.placeMonitor(MONITOR, Direction.EAST);
         helper.startSequence()
                 .thenExecuteAfter(LINKED, () -> helper.assertTrue(
@@ -121,12 +122,14 @@ public final class SystemSoundGameTests {
     private static PersonalComputerBlockEntity legacy(final TestWorldBuilder world) {
         return machine(world, ComputingModule.LEGACY_PERSONAL_COMPUTER.get(),
                 HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get(), HardwareItems.CPU_INTEGRA_PENTIX_4_560.get(),
-                HardwareItems.RAM_DDR_1024.get(), HardwareItems.PSU_500B.get());
+                HardwareItems.RAM_DDR_1024.get(), HardwareItems.PSU_500B.get(),
+                HardwareItems.GPU_VERTEX_6600_GT.get());
     }
 
+    /* A machine with its graphics card in the second card slot, the first left for a sound card. */
     private static PersonalComputerBlockEntity machine(final TestWorldBuilder world, final Block block,
                                                        final ItemLike board, final ItemLike cpu, final ItemLike ram,
-                                                       final ItemLike psu) {
+                                                       final ItemLike psu, final ItemLike gpu) {
         world.setBlock(COMPUTER, block);
         final PersonalComputerBlockEntity pc = world.blockEntity(COMPUTER, PersonalComputerBlockEntity.class);
         final ItemStackHandler hardware = pc.getHardware();
@@ -134,6 +137,7 @@ public final class SystemSoundGameTests {
         hardware.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT, new ItemStack(cpu));
         hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START, new ItemStack(ram));
         hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(psu));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START + 1, new ItemStack(gpu));
         hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         return pc;

@@ -10,6 +10,7 @@ package dev.jstech.core.peripheral;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -181,8 +182,8 @@ class PeripheralLinkValidatorTest {
     @Test
     void ownerAtMaxEndpoints_returnsOwnerAtCapacity() {
         TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 2);
-        owner.onEndpointLinked(50L);
-        owner.onEndpointLinked(60L);
+        owner.onEndpointLinked(50L, PortKind.DEVICE);
+        owner.onEndpointLinked(60L, PortKind.DEVICE);
         TestEndpoint endpoint = new TestEndpoint(PeripheralCableType.COMPUTING);
 
         Map<Long, List<Long>> adj = Map.of(
@@ -194,8 +195,53 @@ class PeripheralLinkValidatorTest {
 
         ILinkResult.OwnerAtCapacity cap = assertInstanceOf(
                 ILinkResult.OwnerAtCapacity.class, result);
+        assertEquals(PortKind.DEVICE, cap.kind());
         assertEquals(2, cap.currentCount());
         assertEquals(2, cap.maxAllowed());
+    }
+
+    @Test
+    void portsFull_ofOneKind_leaveTheOtherKindsFree() {
+        // Both device ports are taken, and a screen still finds its video output.
+        TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 2).with(PortKind.VIDEO, 1);
+        owner.onEndpointLinked(50L, PortKind.DEVICE);
+        owner.onEndpointLinked(60L, PortKind.DEVICE);
+        TestEndpoint screen = new TestEndpoint(PeripheralCableType.COMPUTING, PortKind.VIDEO);
+
+        ILinkResult result = build(adjacent(), owner, screen, Map.of()).tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+
+        assertInstanceOf(ILinkResult.Established.class, result);
+        assertEquals(1, owner.portsInUse(PortKind.VIDEO));
+        assertEquals(2, owner.portsInUse(PortKind.DEVICE));
+    }
+
+    @Test
+    void ownerWithoutAPortOfTheKind_refusesTheEndpoint() {
+        // Plenty of device ports, but no video output: a screen is not linked.
+        TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8);
+        TestEndpoint screen = new TestEndpoint(PeripheralCableType.COMPUTING, PortKind.VIDEO);
+
+        ILinkResult result = build(adjacent(), owner, screen, Map.of()).tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+
+        ILinkResult.OwnerAtCapacity cap = assertInstanceOf(ILinkResult.OwnerAtCapacity.class, result);
+        assertEquals(PortKind.VIDEO, cap.kind());
+        assertEquals(0, cap.maxAllowed());
+        assertTrue(owner.linkedEndpoints().isEmpty());
+    }
+
+    @Test
+    void holdsPort_isLostByTheLastLinkedWhenPortsDrop() {
+        TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8).with(PortKind.VIDEO, 2);
+        owner.onEndpointLinked(50L, PortKind.VIDEO);
+        owner.onEndpointLinked(60L, PortKind.VIDEO);
+        assertTrue(owner.holdsPort(60L));
+
+        // A card with one output taken out: the screen linked first keeps its port.
+        owner.with(PortKind.VIDEO, 1);
+
+        assertTrue(owner.holdsPort(50L));
+        assertFalse(owner.holdsPort(60L));
+        assertFalse(owner.holdsPort(70L));
     }
 
     @Test
@@ -205,8 +251,8 @@ class PeripheralLinkValidatorTest {
          * and should succeed even when capacity is full.
          */
         TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 2);
-        owner.onEndpointLinked(ENDPOINT_POS); // pre-linked
-        owner.onEndpointLinked(60L);          // at capacity now
+        owner.onEndpointLinked(ENDPOINT_POS, PortKind.DEVICE); // pre-linked
+        owner.onEndpointLinked(60L, PortKind.DEVICE);          // at capacity now
         TestEndpoint endpoint = new TestEndpoint(PeripheralCableType.COMPUTING);
         endpoint.onOwnerLinked(OWNER_POS);    // matching the existing link
 
@@ -308,6 +354,11 @@ class PeripheralLinkValidatorTest {
 
     // ─── Helpers ────────────────────────────────────────────────────────────
 
+    /* The owner and the endpoint side by side, with no cable between them. */
+    private static Map<Long, List<Long>> adjacent() {
+        return Map.of(OWNER_POS, List.of(ENDPOINT_POS), ENDPOINT_POS, List.of(OWNER_POS));
+    }
+
     private static PeripheralLinkValidator build(
             Map<Long, List<Long>> adjacency,
             IPeripheralOwner owner,
@@ -321,45 +372,50 @@ class PeripheralLinkValidatorTest {
     }
 
     /**
-     * Mutable test-only IPeripheralOwner.
+     * Mutable test-only owner with so many device ports, and whatever other ports {@link #with} gives it.
      */
-    private static final class TestOwner implements IPeripheralOwner {
+    private static final class TestOwner implements IPeripheralOwnerSupport {
         private final PeripheralCableType cableType;
-        private final int maxEndpoints;
-        private final List<Long> linked = new ArrayList<>();
+        private final Map<PortKind, Integer> ports = new EnumMap<>(PortKind.class);
+        private final PeripheralPorts linked = new PeripheralPorts();
 
-        TestOwner(PeripheralCableType cableType, int maxEndpoints) {
+        TestOwner(PeripheralCableType cableType, int devicePorts) {
             this.cableType = cableType;
-            this.maxEndpoints = maxEndpoints;
+            this.ports.put(PortKind.DEVICE, devicePorts);
+        }
+
+        TestOwner with(PortKind kind, int count) {
+            ports.put(kind, count);
+            return this;
         }
 
         @Override public PeripheralCableType cableType() { return cableType; }
-        @Override public List<Long> linkedEndpoints() { return List.copyOf(linked); }
-        @Override public int maxEndpoints() { return maxEndpoints; }
-        @Override public void onEndpointLinked(long endpointPos) {
-            if (!linked.contains(endpointPos)) {
-                linked.add(endpointPos);
-            }
-        }
-        @Override public void onEndpointUnlinked(long endpointPos) {
-            linked.removeIf(p -> p == endpointPos);
-        }
+        @Override public int ports(PortKind kind) { return ports.getOrDefault(kind, 0); }
+        @Override public PeripheralPorts peripheralPorts() { return linked; }
+        @Override public void markPeripheralChange() { }
     }
 
     /**
-     * Mutable test-only IPeripheralEndpoint.
+     * Mutable test-only IPeripheralEndpoint, taking a device port unless told another kind.
      */
     private static final class TestEndpoint implements IPeripheralEndpoint {
         private final PeripheralCableType cableType;
+        private final PortKind kind;
         private Optional<Long> ownerPos = Optional.empty();
 
         TestEndpoint(PeripheralCableType cableType) {
+            this(cableType, PortKind.DEVICE);
+        }
+
+        TestEndpoint(PeripheralCableType cableType, PortKind kind) {
             this.cableType = cableType;
+            this.kind = kind;
         }
 
         @Override public PeripheralCableType cableType() { return cableType; }
         @Override public Optional<Long> linkedOwner() { return ownerPos; }
         @Override public void onOwnerLinked(long pos) { this.ownerPos = Optional.of(pos); }
         @Override public void onOwnerUnlinked() { this.ownerPos = Optional.empty(); }
+        @Override public PortKind portKind() { return kind; }
     }
 }

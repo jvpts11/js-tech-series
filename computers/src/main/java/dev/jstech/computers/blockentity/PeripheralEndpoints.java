@@ -7,41 +7,39 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.core.peripheral.PeripheralPorts;
 import net.minecraft.nbt.CompoundTag;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
-
 /**
- * What one computer has on the other end of its peripheral cables, each by the packed position of the
- * endpoint: the monitors at its desk, and whatever else such a cable reaches, a card reader among them.
+ * What one machine has on the other end of its peripheral cables, each by the packed position of the endpoint with
+ * the kind of port it takes: the monitors at its desk on its video outputs, its speakers on its audio output, and
+ * whatever else such a cable reaches on its device ports. Kept for a computer and for a rack alike.
  *
- * <p>The set is handed out as it stands rather than copied, because linking and unlinking a peripheral
- * are made on it directly by the owner support the computer implements.
+ * <p>The record is handed out as it stands rather than copied, because linking and unlinking a peripheral are made
+ * on it directly by the owner support the machine implements.
  */
 final class PeripheralEndpoints {
 
-    private final Set<Long> linked = new LinkedHashSet<>();
+    private final PeripheralPorts ports = new PeripheralPorts();
 
-    /* The name these positions have had on disk since the days when only a monitor could be one. */
-    private static final String LINKED = "LinkedMonitors";
+    private static final String POSITIONS = "LinkedPeripherals";
+    private static final String KINDS = "LinkedPeripheralKinds";
 
-    /** The endpoints as they stand: the set itself, which is where a link is made and unmade. */
-    Set<Long> all() {
-        return this.linked;
+    /** The links as they stand: the record itself, which is where a link is made and unmade. */
+    PeripheralPorts ports() {
+        return this.ports;
     }
 
     void save(final CompoundTag tag) {
-        if (this.linked.isEmpty()) {
+        if (this.ports.endpoints().isEmpty()) {
             return;
         }
-        tag.putLongArray(LINKED, this.linked.stream().mapToLong(Long::longValue).toArray());
+        tag.putLongArray(POSITIONS, this.ports.positions());
+        tag.putIntArray(KINDS, this.ports.kindIds());
     }
 
+    /* A save from before the kinds of port has no kinds; its peripherals link again, each on a port of its kind. */
     void load(final CompoundTag tag) {
-        this.linked.clear();
-        for (final long endpoint : tag.getLongArray(LINKED)) {
-            this.linked.add(endpoint);
-        }
+        this.ports.restore(tag.getLongArray(POSITIONS), tag.getIntArray(KINDS));
     }
 }

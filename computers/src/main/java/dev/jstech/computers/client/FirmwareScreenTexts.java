@@ -148,7 +148,8 @@ public final class FirmwareScreenTexts {
     static final TextKey ARCH_BITS = TextKey.of("jsc.firmware.screen.arch_bits", "%s  (%s-bit)");
     static final TextKey CORES_AT = TextKey.of("jsc.firmware.screen.cores_at", "%s @ %s MHz");
     static final TextKey RAM_SLOTS = TextKey.of("jsc.firmware.screen.ram_slots", "%s MB  (%s of %s slots)");
-    static final TextKey MONITORS_PORTS = TextKey.of("jsc.firmware.screen.monitors_ports", "%s of %s ports linked");
+    static final TextKey MONITORS_PORTS = TextKey.of("jsc.firmware.screen.monitors_ports",
+            "%s of %s video outputs in use");
     static final TextKey LABEL_PROCESSOR = TextKey.of("jsc.firmware.screen.label_processor", "Processor");
     static final TextKey LABEL_ISA = TextKey.of("jsc.firmware.screen.label_isa", "Instruction Set");
     static final TextKey LABEL_CORES = TextKey.of("jsc.firmware.screen.label_cores", "Cores");

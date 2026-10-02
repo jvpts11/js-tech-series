@@ -22,6 +22,7 @@ import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.PeripheralLink;
+import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -70,6 +71,12 @@ public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheral
     @Override
     public PeripheralCableType cableType() {
         return link.cableType();
+    }
+
+    /** A screen takes a video output of its computer. */
+    @Override
+    public PortKind portKind() {
+        return PortKind.VIDEO;
     }
 
     @Override

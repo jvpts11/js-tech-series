@@ -333,6 +333,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   through it and the crafting buses' while a machine is fed or emptied through them, and go dark a few seconds after.
 - A part can have a model for while it is at work, its lamps lit and blinking by an animated texture, in J's Core;
   the block is drawn again only when the part starts or stops working.
+- Peripherals take ports by kind, as on a real computer, in place of one count of ports on the board: a monitor takes
+  a video output of a graphics card (one on a Vintage card, two on a Legacy or Transition one, four on a Standard or
+  Advanced one), a pair of speakers the audio output of the sound card, or of the board from the Transition on, and
+  every other peripheral a device port of the board (two on the Vintage, then four, six, eight and ten). A server
+  board has a video output of its own for its console. A machine without a graphics card has nowhere to plug a
+  monitor. A peripheral with no free port of its kind waits unlinked and links when one frees; taking out a card
+  unlinks the monitors it fed. The numbers are first estimates.
+- Port kinds for peripherals, in J's Core: an owner has so many ports of each kind and a peripheral takes one of its
+  own; an owner that loses ports unlinks the peripherals it linked last.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

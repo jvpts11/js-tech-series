@@ -249,7 +249,8 @@ interface DesktopInspection {
     @Nullable
     default int[] applicationManagerPoint(final String windowTitle, final String name) {
         final DesktopWindow w = desktop().windowFor(windowTitle);
-        final int[] at = w != null && w.app() instanceof ApplicationManagerApp app ? app.iconCentre(name) : null;
+        final int[] at = w != null && w.drawn() && w.app() instanceof ApplicationManagerApp app
+                ? app.iconCentre(name) : null;
         return at == null ? null : screen(at);
     }
 
@@ -280,8 +281,8 @@ interface DesktopInspection {
         if (manager == null) {
             return null;
         }
-        int[] at = manager.colorPage() == null ? null : manager.colorPage().rowCentre(name);
-        if (at == null && manager.backdropPage() != null) {
+        int[] at = shown(manager.colorPage()) ? manager.colorPage().rowCentre(name) : null;
+        if (at == null && shown(manager.backdropPage())) {
             at = manager.backdropPage().rowCentre(name);
         }
         return at == null ? null : screen(at);
@@ -295,8 +296,8 @@ interface DesktopInspection {
             return null;
         }
         final int[] at = color
-                ? manager.colorPage() == null ? null : manager.colorPage().buttonCentre(button)
-                : manager.backdropPage() == null ? null : manager.backdropPage().buttonCentre(button);
+                ? shown(manager.colorPage()) ? manager.colorPage().buttonCentre(button) : null
+                : shown(manager.backdropPage()) ? manager.backdropPage().buttonCentre(button) : null;
         return at == null ? null : screen(at);
     }
 
@@ -308,7 +309,7 @@ interface DesktopInspection {
     default int[] styleAudioPoint(final String part, final int value) {
         final StyleManagerApp manager = styleManager();
         final CdeAudioPage page = manager == null ? null : manager.audioPage();
-        final int[] at = page == null ? null : page.partCentre(part, value);
+        final int[] at = shown(page) ? page.partCentre(part, value) : null;
         return at == null ? null : screen(at);
     }
 
@@ -583,25 +584,42 @@ interface DesktopInspection {
         return new int[] {view.screenX(local[0]), view.screenY(local[1])};
     }
 
+    /*
+     * The Style Manager once its window has been drawn: a program learns where it stands by drawing, so before its
+     * first frame the places it gives for its controls are not where they will be.
+     */
     @Nullable
     private StyleManagerApp styleManager() {
         for (final DesktopWindow w : desktop().wm().all()) {
-            if (w.app() instanceof StyleManagerApp manager) {
+            if (w.drawn() && w.app() instanceof StyleManagerApp manager) {
                 return manager;
             }
         }
         return null;
     }
 
-    /** The Occupy Workspace dialog that is up, front-most first, or null. */
+    /** The Occupy Workspace dialog that is up and drawn, front-most first, or null. */
     @Nullable
     private OccupyWorkspaceDialog occupyDialog() {
         final List<DesktopWindow> windows = desktop().wm().all();
         for (int i = windows.size() - 1; i >= 0; i--) {
-            if (windows.get(i).app() instanceof OccupyWorkspaceDialog dialog) {
+            if (windows.get(i).drawn() && windows.get(i).app() instanceof OccupyWorkspaceDialog dialog) {
                 return dialog;
             }
         }
         return null;
+    }
+
+    /* Whether {@code app} is up in a window that has been drawn. */
+    private boolean shown(@Nullable final IDesktopApp app) {
+        if (app == null) {
+            return false;
+        }
+        for (final DesktopWindow w : desktop().wm().all()) {
+            if (w.app() == app) {
+                return w.drawn();
+            }
+        }
+        return false;
     }
 }

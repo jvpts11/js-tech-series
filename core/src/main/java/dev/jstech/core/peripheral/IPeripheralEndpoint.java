@@ -21,4 +21,9 @@ public interface IPeripheralEndpoint {
     void onOwnerLinked(long ownerPos);
 
     void onOwnerUnlinked();
+
+    /** The kind of port the peripheral takes on its owner; a device port unless it is a screen or a speaker. */
+    default PortKind portKind() {
+        return PortKind.DEVICE;
+    }
 }

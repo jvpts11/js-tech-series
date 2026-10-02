@@ -24,6 +24,7 @@ import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.MachinePorts;
 import dev.jstech.computers.hardware.SoundCardSpec;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.DiskItem;
@@ -73,6 +74,8 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.peripheral.IPeripheralOwnerSupport;
+import dev.jstech.core.peripheral.PeripheralPorts;
+import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -1141,13 +1144,13 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     }
 
     /*
-     * Peripheral ownership: the endpoint set + standard owner methods come from
-     * IPeripheralOwnerSupport; only the capacity is hardware-dependent (4 monitors per GPU).
+     * Peripheral ownership: the links and the standard owner methods come from IPeripheralOwnerSupport; only how
+     * many ports of each kind the machine has depends on its hardware.
      */
 
     @Override
-    public Set<Long> peripheralEndpoints() {
-        return peripherals.all();
+    public PeripheralPorts peripheralPorts() {
+        return peripherals.ports();
     }
 
     @Override
@@ -1155,13 +1158,11 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         setChanged();
     }
 
+    /** Its board's device ports, its graphics cards' video outputs and its audio output; none without a build. */
     @Override
-    public int maxEndpoints() {
+    public int ports(final PortKind kind) {
         final ComputerBuild build = currentBuild();
-        if (build == null) {
-            return 0;
-        }
-        return build.motherboard().peripheralPorts();
+        return build == null ? 0 : MachinePorts.of(build, kind);
     }
 
     /*

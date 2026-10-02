@@ -49,6 +49,9 @@ public final class AutomationManagerClientTests {
                 .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
                 .thenRightClick(SETTLE, MONITOR)
                 .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
+                // The desktop opens a program it has been told is installed; that word comes after the desktop does.
+                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).launcherLabels().contains("Automation Manager"),
+                        SCREEN_WAIT, "the desktop to list the Automation Manager")
                 .then(SETTLE, () -> DesktopScreen.requestOpen(AutomationManagerApp.TITLE))
                 .thenWaitUntil(() -> manager(ctx) != null && manager(ctx).hasState(), SCREEN_WAIT,
                         "the Automation Manager to hear from the Mainframe")

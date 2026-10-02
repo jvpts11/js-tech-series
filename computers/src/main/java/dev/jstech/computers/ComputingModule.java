@@ -703,11 +703,11 @@ public final class ComputingModule {
 
     public static final ItemEntry<MotherboardItem> MOTHERBOARD_MTX_S_2011 = part("motherboard_mtx_s_2011",
             properties -> new MotherboardItem(properties, new MotherboardSpec(FormFactor.MTX, HardwareEra.STANDARD,
-                    CpuSocketId.LGA_2011, 4, Set.of(RamGeneration.DDR3), 48, PcieGeneration.PCIE_3_0, 8, 6, 8)))
+                    CpuSocketId.LGA_2011, 4, Set.of(RamGeneration.DDR3), 48, PcieGeneration.PCIE_3_0, 8, 6)))
             .named("MF MTX-S Motherboard (4x LGA 2011)").register();
     public static final ItemEntry<MotherboardItem> MOTHERBOARD_EEB_S_2011 = part("motherboard_eeb_s_2011",
             properties -> new MotherboardItem(properties, new MotherboardSpec(FormFactor.EEB, HardwareEra.STANDARD,
-                    CpuSocketId.LGA_2011, 2, Set.of(RamGeneration.DDR3), 16, PcieGeneration.PCIE_3_0, 6, 6, 6)))
+                    CpuSocketId.LGA_2011, 2, Set.of(RamGeneration.DDR3), 16, PcieGeneration.PCIE_3_0, 6, 6)))
             .named("MF EEB-S Server Board (2x LGA 2011)").register();
     public static final ItemEntry<CpuItem> CPU_SERVO_2620 = part("cpu_integra_servo_2620", properties -> new CpuItem(
             properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 6, 2000, 95, false)

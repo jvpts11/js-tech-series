@@ -11,18 +11,22 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * An {@link IPeripheralOwner} that keeps its linked endpoints in a backing set, so the
- * computing-side block entities share one implementation of the owner contract instead of
- * each repeating it. Only the capacity ({@link #maxEndpoints()}) stays per-owner, since it
- * depends on the installed hardware.
+ * An {@link IPeripheralOwner} that keeps its linked endpoints in a {@link PeripheralPorts}, so the block entities that
+ * own peripherals share one implementation of the owner contract instead of each repeating it. Only how many ports of
+ * each kind it has ({@link #ports}) stays per owner, since it depends on the installed hardware.
  */
 public interface IPeripheralOwnerSupport extends IPeripheralOwner {
 
-    /** The live, mutable set of linked endpoint positions backing this owner. */
-    Set<Long> peripheralEndpoints();
+    /** The live record of linked endpoints backing this owner. */
+    PeripheralPorts peripheralPorts();
 
-    /** Marks the owner dirty after its endpoint set changes (typically {@code setChanged()}). */
+    /** Marks the owner dirty after its endpoints change (typically {@code setChanged()}). */
     void markPeripheralChange();
+
+    /** The linked endpoints' positions: a live view, in the order they were linked. */
+    default Set<Long> peripheralEndpoints() {
+        return peripheralPorts().endpoints();
+    }
 
     @Override
     default PeripheralCableType cableType() {
@@ -35,15 +39,26 @@ public interface IPeripheralOwnerSupport extends IPeripheralOwner {
     }
 
     @Override
-    default void onEndpointLinked(final long endpointPos) {
-        if (peripheralEndpoints().add(endpointPos)) {
+    default int portsInUse(final PortKind kind) {
+        return peripheralPorts().inUse(kind);
+    }
+
+    @Override
+    default boolean holdsPort(final long endpointPos) {
+        final PortKind kind = peripheralPorts().kindOf(endpointPos);
+        return kind != null && peripheralPorts().holds(endpointPos, ports(kind));
+    }
+
+    @Override
+    default void onEndpointLinked(final long endpointPos, final PortKind kind) {
+        if (peripheralPorts().link(endpointPos, kind)) {
             markPeripheralChange();
         }
     }
 
     @Override
     default void onEndpointUnlinked(final long endpointPos) {
-        if (peripheralEndpoints().remove(endpointPos)) {
+        if (peripheralPorts().unlink(endpointPos)) {
             markPeripheralChange();
         }
     }

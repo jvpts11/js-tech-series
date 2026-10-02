@@ -96,6 +96,12 @@ public final class DesktopWindow {
     private int restoreW;
     private int restoreH;
 
+    /*
+     * Whether the window has been drawn yet. Its program learns where it stands by drawing in it, so until then the
+     * places the program reports for its controls are not yet where they will be drawn.
+     */
+    private boolean drawn;
+
     // The rectangle actually drawn this frame (differs from x/y/w/h when maximized); hit tests use it.
     private int curX;
     private int curY;
@@ -450,6 +456,11 @@ public final class DesktopWindow {
         this.focused = value;
     }
 
+    /** Whether the window has been drawn at least once, so its program knows where its controls stand. */
+    public boolean drawn() {
+        return this.drawn;
+    }
+
     public void render(final GuiGraphics g, final Font font, final OsSkin skin,
                        final int mouseX, final int mouseY, final float partialTick,
                        final int screenW, final int screenH, final int taskbarH) {
@@ -461,6 +472,7 @@ public final class DesktopWindow {
                        final int mouseX, final int mouseY, final float partialTick,
                        final int screenW, final int screenH, final int taskbarH, final int workTop) {
         resolveGeometry(screenW, screenH, taskbarH, workTop);
+        this.drawn = true;
         // Where the buttons stand is the skin's to say, and the hit tests below have to agree with the drawing.
         this.menuAtLeft = skin.menuAtLeft();
         final int wx = curX;

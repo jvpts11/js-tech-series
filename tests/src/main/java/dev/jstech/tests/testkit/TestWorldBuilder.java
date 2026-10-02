@@ -237,6 +237,8 @@ public final class TestWorldBuilder {
                 new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
                 new ItemStack(ComputingModule.PSU_650G.get()));
+        hw.setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START,
+                new ItemStack(ComputingModule.GPU_HD_7970.get()));
         /*
          * A machine on a real base has a disk with a system on it. Without one the computer powers on into
          * its firmware with nothing to boot, which is not what the base is meant to demonstrate.
@@ -270,6 +272,8 @@ public final class TestWorldBuilder {
                 new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START,
                 new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START + 1,
+                new ItemStack(ComputingModule.GPU_HD_7970.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
                 new ItemStack(ComputingModule.PSU_650G.get()));
         // Solid state for the same reason as the personal computer above: the disk decides how long it takes.
@@ -305,6 +309,8 @@ public final class TestWorldBuilder {
                 new ItemStack(HardwareItems.RAM_DDR_1024.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START,
                 new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START + 1,
+                new ItemStack(HardwareItems.GPU_VERTEX_6600_GT.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
                 new ItemStack(HardwareItems.PSU_500B.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,

@@ -61,7 +61,10 @@ public final class PeripheralLink {
         owner.set(null);
     }
 
-    /** Once a tick on the server: links to an owner the cables reach, or drops a link whose owner or cable is gone. */
+    /**
+     * Once a tick on the server: links to an owner the cables reach, or drops a link whose owner or cable is gone, or
+     * whose port the owner no longer has (its card taken out), to wait for a free one.
+     */
     public void tick(final ServerLevel level, final BlockPos self) {
         final long here = self.asLong();
         final Long at = owner.get();
@@ -77,8 +80,9 @@ public final class PeripheralLink {
             // An owner whose chunk is away cannot be asked; the link stands until it can be, and nothing is loaded.
             return;
         }
-        final boolean ownerPresent = level.getBlockEntity(ownerAt) instanceof IPeripheralOwner;
-        if (!ownerPresent || !world.validator(level).isLinkStillValid(at, here, type)) {
+        final boolean holds = level.getBlockEntity(ownerAt) instanceof IPeripheralOwner linkedTo
+                && linkedTo.holdsPort(here);
+        if (!holds || !world.validator(level).isLinkStillValid(at, here, type)) {
             unlink(level, self);
         }
     }

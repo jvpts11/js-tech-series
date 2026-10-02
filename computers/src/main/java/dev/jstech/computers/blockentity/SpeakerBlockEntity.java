@@ -22,6 +22,7 @@ import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.PeripheralLink;
+import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -79,6 +80,12 @@ public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheral
     @Override
     public PeripheralCableType cableType() {
         return link.cableType();
+    }
+
+    /** A speaker takes half of an audio output, which drives a pair. */
+    @Override
+    public PortKind portKind() {
+        return PortKind.AUDIO;
     }
 
     @Override

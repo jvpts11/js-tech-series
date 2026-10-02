@@ -378,6 +378,9 @@ public final class SoundPassGameTests {
         hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(HardwareItems.RAM_DDR_1024.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(HardwareItems.PSU_500B.get()));
+        // A graphics card, for the video output a monitor beside it takes.
+        hardware.setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START,
+                new ItemStack(HardwareItems.GPU_VERTEX_6600_GT.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         return pc;

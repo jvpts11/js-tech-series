@@ -161,8 +161,12 @@ public final class InstallMediaClientTests {
                     world.setBlock(DRIVE, disc.drive());
                     world.placeMonitor(MONITOR, Direction.EAST);
                 })
+                // The drive links on one of the server's next ticks, however many of the client's those take.
+                .thenWaitUntilServer(level -> ctx.abs(COMPUTER).equals(drive(ctx, level).ownerPos()), SCREEN_WAIT,
+                        "the drive to link to the computer beside it",
+                        level -> "linked to " + drive(ctx, level).ownerPos())
                 // The program's install disc, seated in the drive beside the computer.
-                .thenServer(SETTLE * 3, level -> {
+                .thenServer(SETTLE, level -> {
                     final ItemStack medium = new ItemStack(disc.medium());
                     MediaItem.setKind(medium, MediaKind.PROGRAM_INSTALL);
                     MediaItem.setPayload(medium, jsc(disc.program()));

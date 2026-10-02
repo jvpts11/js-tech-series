@@ -15,6 +15,7 @@ import dev.jstech.computers.blockentity.TankBlockEntity;
 import dev.jstech.core.material.MaterialForm;
 import dev.jstech.core.material.MaterialItems;
 import dev.jstech.core.material.ModMaterial;
+import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.blockentity.CoalGeneratorBlockEntity;
 import dev.jstech.industrial.blockentity.CompressorBlockEntity;
@@ -245,7 +246,7 @@ public final class CoreKitGameTests {
             return;
         }
         final long speakerAt = helper.absolutePos(MACHINE).asLong();
-        computer.onEndpointLinked(speakerAt);
+        computer.onEndpointLinked(speakerAt, PortKind.AUDIO);
         machine(helper, SpeakerBlockEntity.class).onOwnerLinked(helper.absolutePos(OWNER).asLong());
 
         helper.setBlock(MACHINE, Blocks.AIR);

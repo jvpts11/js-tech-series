@@ -98,6 +98,9 @@ public final class SourceBuildClientTests {
                     parts.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
                             new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
                     parts.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
+                    // A graphics card for the video output the monitor takes.
+                    parts.setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
+                            new ItemStack(ComputingModule.GPU_HD_7970.get()));
                     parts.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
                             new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
                     machine.togglePower();

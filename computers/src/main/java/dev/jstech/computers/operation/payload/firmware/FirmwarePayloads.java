@@ -29,7 +29,6 @@ import dev.jstech.computers.block.IPostScreenOpener;
 import dev.jstech.computers.block.ISystemBootScreenOpener;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
-import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.BootSequenceScreen;
 import dev.jstech.computers.client.FirmwareScreen;
@@ -74,6 +73,7 @@ import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.rack.RaidMode;
+import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
@@ -280,13 +280,8 @@ public final class FirmwarePayloads {
                 ramName = GameText.of(part.getHoverName());
             }
         }
-        int monitors = 0;
-        for (final long endpoint : computer.linkedEndpoints()) {
-            if (level.getBlockEntity(BlockPos.of(endpoint))
-                    instanceof MonitorBlockEntity) {
-                monitors++;
-            }
-        }
+        // The monitors linked, each on a video output, against the outputs the machine's cards give it.
+        final int monitors = machine.portsInUse(PortKind.VIDEO);
         // What the player called it is theirs; what kind of machine it is, the game names.
         final Text name = computer.customName().isEmpty()
                 ? GameText.of(level.getBlockState(pos).getBlock().getName()) : Text.literal(computer.customName());
@@ -295,7 +290,7 @@ public final class FirmwarePayloads {
                 cpu == null ? "" : cpu.isa().name(), cpu == null ? 0 : cpu.isa().bits(),
                 boardName, (int) Math.min(Integer.MAX_VALUE, computer.ramTotalMb()),
                 build == null ? 0 : build.rams().size(), machine.boardRamSlots(), ramName, gpuName, monitors,
-                machine.maxEndpoints(), era == null ? Text.EMPTY : era.text());
+                machine.ports(PortKind.VIDEO), era == null ? Text.EMPTY : era.text());
     }
 
     /**

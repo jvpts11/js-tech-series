@@ -9,6 +9,7 @@ package dev.jstech.tests.clienttest;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.Window;
+import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
@@ -63,6 +64,9 @@ public final class ClientTestContext {
     private final BlockPos origin;
     private final List<Queued> queue = new ArrayList<>();
     private final List<String> screenshots = new ArrayList<>();
+
+    /* How long a peripheral may take to link before it is clicked: a few ticks alone, far more on a loaded machine. */
+    private static final int PERIPHERAL_LINK_WAIT = 200;
 
     ClientTestContext(final Minecraft mc, final String testName, final BlockPos origin) {
         this.mc = mc;
@@ -283,6 +287,15 @@ public final class ClientTestContext {
 
     /** Right-clicks the block at {@code relative} with the empty hand, the way the player opens a GUI. */
     public ClientTestContext thenRightClick(final int delayTicks, final BlockPos relative) {
+        /*
+         * A peripheral is waited for until it has linked to its machine: a monitor clicked before its link is made
+         * opens nothing, and how many ticks the link takes is the server's business, more of them on a loaded
+         * machine. A block that is no peripheral passes at once.
+         */
+        thenWaitUntilServer(level -> !(level.getBlockEntity(abs(relative)) instanceof IPeripheralEndpoint peripheral)
+                        || peripheral.linkedOwner().isPresent(), PERIPHERAL_LINK_WAIT,
+                "the peripheral at " + relative + " to link to its machine before it is clicked",
+                level -> "it is linked to nothing");
         return then(delayTicks, () -> rightClick(relative));
     }
 

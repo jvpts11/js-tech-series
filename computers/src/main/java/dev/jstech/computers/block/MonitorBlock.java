@@ -59,6 +59,7 @@ import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
 import dev.jstech.core.peripheral.IPeripheralOwner;
+import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
@@ -750,10 +751,11 @@ public class MonitorBlock extends DeviceBlock implements IPeripheralConnectable,
             return GameText.component(MonitorTexts.NO_COMPUTER);
         }
         if (serverLevel.getBlockEntity(BlockPos.of(host.getAsLong())) instanceof IPeripheralOwner owner) {
-            if (owner.maxEndpoints() <= 0) {
+            final int outputs = owner.ports(PortKind.VIDEO);
+            if (outputs <= 0) {
                 return GameText.component(MonitorTexts.NO_GPU);
             }
-            if (owner.linkedEndpoints().size() >= owner.maxEndpoints()) {
+            if (owner.portsInUse(PortKind.VIDEO) >= outputs) {
                 return GameText.component(MonitorTexts.AT_CAPACITY);
             }
         }
