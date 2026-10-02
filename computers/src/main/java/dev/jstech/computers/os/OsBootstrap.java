@@ -520,17 +520,20 @@ public final class OsBootstrap {
                     .described("Plan a craft before committing it: what it needs, what is missing and what it will"
                             + " cost.")
                     .withEra(STANDARD).withHouse(SoftwareHouse.AUTODECK).withRam(64),
-            // The Automation Engine is a headless Mainframe service; it needs the modern OS (Frames 11, rank 3).
-            ProgramSpec.of(rl("automation_engine"), "autoeng", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 3,
+            /*
+             * The Automation Engine is a headless Mainframe service, and the only one that keeps and fires the jobs;
+             * it reaches back to Frames XP (rank 2), so a Legacy network keeps its jobs.
+             */
+            ProgramSpec.of(rl("automation_engine"), "autoeng", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 2,
                             HostScope.MAINFRAME)
                     .named("Automation Engine")
-                    .described("The service that runs standing automation rules on the Mainframe.")
-                    .withEra(STANDARD).withHouse(SoftwareHouse.RED_CAP).withRam(64),
-            // The Automation Manager is a modern automation front-end -> Frames 11 (rank 3).
-            ProgramSpec.of(rl("automation_manager"), "automgr", false, LATER_DESKTOPS, 64, ProgramKind.APP, 3,
+                    .described("The service that keeps the network's jobs and fires them on time.")
+                    .withEra(LEGACY).withHouse(SoftwareHouse.RED_CAP).withRam(64),
+            // The Automation Manager is the Automation Engine's front-end -> Frames XP or newer (rank 2).
+            ProgramSpec.of(rl("automation_manager"), "automgr", false, LATER_DESKTOPS, 64, ProgramKind.APP, 2,
                             HostScope.ANY)
-                    .named("Automation Manager").described("Write and supervise the rules the Automation Engine runs.")
-                    .withEra(STANDARD).withHouse(SoftwareHouse.RED_CAP).withRam(96),
+                    .named("Automation Manager").described("Write and supervise the jobs the Automation Engine runs.")
+                    .withEra(LEGACY).withHouse(SoftwareHouse.RED_CAP).withRam(96),
             /*
              * Server services: headless daemons that only make sense on a machine mounted in a rack,
              * which is what gives a server its ROLE: hardware decides capacity, software decides job.

@@ -34,13 +34,17 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Automation Manager: the front-end for the network's standing jobs. It shows whether a job engine is
+ * Automation Manager: the front-end for the network's standing jobs. It shows whether the Automation Engine is
  * online on the Mainframe, lists the saved jobs with pause/resume/delete, and creates new ones from a form
- * (Keep Stock / Batch Craft / Periodic Move / IQL script) that the server compiles into jobs; no IQL is
- * typed here. Requires the Automation Engine (or the IQL Engine) on the Mainframe for jobs to actually run.
+ * (Restock below / Batch Craft / Periodic Move / IQL script) that the server compiles into jobs; no IQL is
+ * typed here. Jobs are the Automation Engine's alone: "at this time, or when this happens, do that", whichever
+ * engine plans the network's work.
  */
 @PaletteHolder
 public final class AutomationManagerApp implements IDesktopApp {
+
+    /** The window's title in English, which is how a desktop is asked to open it. */
+    public static final String TITLE = AutomationManagerTexts.TITLE.english();
 
     private static final int REFRESH_FRAMES = 40;
     /**
@@ -54,7 +58,7 @@ public final class AutomationManagerApp implements IDesktopApp {
     private static final int FIELD_MAX = 48;
 
     private static final TextKey[] TYPE_LABELS =
-            {AutomationTexts.KEEP_STOCK, AutomationTexts.BATCH_CRAFT, AutomationTexts.MOVE, AutomationTexts.IQL};
+            {AutomationTexts.RESTOCK_BELOW, AutomationTexts.BATCH_CRAFT, AutomationTexts.MOVE, AutomationTexts.IQL};
 
     private final BlockPos host;
     private final BlockPos monitorPos;
@@ -109,6 +113,7 @@ public final class AutomationManagerApp implements IDesktopApp {
     private final TextField itemField;
     private final Label amountCaption;
     private final TextField amountField;
+    private final Label restockNote;
     private final Label intervalCaption;
     private final TextField intervalField;
     private final Label fromCaption;
@@ -149,9 +154,11 @@ public final class AutomationManagerApp implements IDesktopApp {
         itemCaption = root.add(new Label(() -> GameText.resolve(newType == CreateAutomationJobPayload.TYPE_PERIODIC_MOVE
                 ? AutomationTexts.ITEM_OR_ALL : AutomationTexts.ITEM_ID), Label.Tone.DIM));
         itemField = root.add(new TokenField());
-        amountCaption = root.add(new Label(() -> GameText.resolve(newType == CreateAutomationJobPayload.TYPE_KEEP_STOCK
-                ? AutomationTexts.KEEP_AT_LEAST : AutomationTexts.AMOUNT), Label.Tone.DIM));
+        amountCaption = root.add(new Label(() -> GameText.resolve(
+                newType == CreateAutomationJobPayload.TYPE_RESTOCK_BELOW ? AutomationTexts.WHEN_BELOW
+                        : AutomationTexts.AMOUNT), Label.Tone.DIM));
         amountField = root.add(new DigitField());
+        restockNote = root.add(new Label(GameText.resolve(AutomationTexts.RESTOCK_NOTE), Label.Tone.DIM));
         intervalCaption = root.add(new Label(GameText.resolve(AutomationTexts.EVERY), Label.Tone.DIM));
         intervalField = root.add(new TokenField());
         fromCaption = root.add(new Label(GameText.resolve(AutomationTexts.FROM), Label.Tone.DIM));
@@ -285,16 +292,21 @@ public final class AutomationManagerApp implements IDesktopApp {
         final int rowY = fy + 14;
         final int colW = (w - 6) / 2;
         final int right = x + colW + 6;
-        for (final var c : List.of(nameCaption, nameField, itemCaption, itemField, amountCaption, amountField, intervalCaption,
-                intervalField, fromCaption, fromField, toCaption, toField, scriptCaption, noScriptsLabel, scripts)) {
+        for (final var c : List.of(nameCaption, nameField, itemCaption, itemField, amountCaption, amountField,
+                restockNote, intervalCaption, intervalField, fromCaption, fromField, toCaption, toField, scriptCaption,
+                noScriptsLabel, scripts)) {
             c.setVisible(false);
         }
+        final int cw = font.width(create.label()) + 14;
         if (ready) {
             field(nameCaption, nameField, x, rowY, colW);
             switch (newType) {
-                case CreateAutomationJobPayload.TYPE_KEEP_STOCK -> {
+                case CreateAutomationJobPayload.TYPE_RESTOCK_BELOW -> {
                     field(itemCaption, itemField, right, rowY, colW);
                     field(amountCaption, amountField, x, rowY + 24, colW);
+                    // Under the fields and clear of the Create button: a restock does not count what is coming.
+                    restockNote.setVisible(true);
+                    restockNote.setBounds(x, rowY + 48, w - cw - 6, 8);
                 }
                 case CreateAutomationJobPayload.TYPE_BATCH_CRAFT -> {
                     field(itemCaption, itemField, right, rowY, colW);
@@ -317,8 +329,22 @@ public final class AutomationManagerApp implements IDesktopApp {
             }
         }
         create.setVisible(ready);
-        final int cw = font.width(create.label()) + 14;
         create.setBounds(x + w - cw, fy + FORM_H - 12, cw, 12);
+    }
+
+    /** Whether the server has answered, so the window shows the network rather than waiting for it. */
+    public boolean hasState() {
+        return data != null;
+    }
+
+    /** Whether the window shows the Automation Engine online. */
+    public boolean engineOnline() {
+        return data != null && data.engineOnline();
+    }
+
+    /** Whether the form is showing the line that says a restock does not count what is on its way. */
+    public boolean restockNoteShown() {
+        return restockNote.visible();
     }
 
     private static void field(final Label caption, final TextField field, final int x, final int y, final int w) {

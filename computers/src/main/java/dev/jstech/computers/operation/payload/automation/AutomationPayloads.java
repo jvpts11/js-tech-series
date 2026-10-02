@@ -15,10 +15,9 @@ import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.CreateAutomationJobPayload;
 import dev.jstech.computers.operation.payload.JobActionPayload;
 import dev.jstech.computers.operation.payload.RequestAutomationPayload;
-import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
-import dev.jstech.computers.program.Programs;
+import dev.jstech.computers.program.IqlEngine;
 import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.computers.program.iql.IqlDuration;
 import dev.jstech.computers.program.iql.IqlSavedObject;
@@ -77,11 +76,11 @@ public final class AutomationPayloads {
         if (mf == null) {
             return new AutomationPayload(false, AutomationPayload.NO_MAINFRAME.text(), List.of(), List.of());
         }
-        final boolean online = mf.isAutomationEngineActive() || mf.runningEngine() != null;
-        // The engines go by their programs' names, which are data.
-        final ProgramSpec engine = mf.activeEngine() == null ? null : Programs.get(mf.activeEngine());
+        // Jobs are the Automation Engine's alone, whichever Network Operations Engine the network runs.
+        final boolean online = mf.isAutomationEngineActive();
+        // The engine goes by its program's name, which is data.
         final Text label = mf.isAutomationEngineInstalled() ? Text.literal("Automation Engine")
-                : engine != null ? Text.literal(engine.name().english()) : AutomationPayload.NO_ENGINE.text();
+                : AutomationPayload.NO_ENGINE.text();
         final List<AutomationPayload.JobRow> rows = new ArrayList<>();
         for (final var job : mf.iqlCatalog().ofType(
                 IqlDefinition.ObjectType.JOB)) {
@@ -112,7 +111,7 @@ public final class AutomationPayloads {
             return AutomationPayload.PERIODIC_MOVE.text();
         }
         if (b.startsWith("CRAFT")) {
-            return (kind == IqlDefinition.TriggerKind.WHEN ? AutomationPayload.KEEP_STOCK
+            return (kind == IqlDefinition.TriggerKind.WHEN ? AutomationPayload.RESTOCK_BELOW
                     : AutomationPayload.BATCH_CRAFT).text();
         }
         return AutomationPayload.CUSTOM.text();
@@ -139,6 +138,10 @@ public final class AutomationPayloads {
         if (mf == null) {
             return;
         }
+        if (!mf.isAutomationEngineInstalled()) {
+            jobError(player, IqlEngine.JOBS_NEED_AUTOMATION.text());
+            return;
+        }
         final var def = compileJob(player, mf, payload);
         if (def != null) {
             mf.iqlCatalog().put(
@@ -161,9 +164,9 @@ public final class AutomationPayloads {
         final var every = IqlDefinition.TriggerKind.EVERY;
         final var when = IqlDefinition.TriggerKind.WHEN;
         switch (p.jobType()) {
-            case CreateAutomationJobPayload.TYPE_KEEP_STOCK -> {
+            case CreateAutomationJobPayload.TYPE_RESTOCK_BELOW -> {
                 if (item.isEmpty()) {
-                    jobError(player, CreateAutomationJobPayload.KEEP_STOCK_NEEDS_ITEM.text());
+                    jobError(player, CreateAutomationJobPayload.RESTOCK_NEEDS_ITEM.text());
                     return null;
                 }
                 return IqlDefinition.create(

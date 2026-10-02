@@ -31,14 +31,17 @@ final class AutomationTexts {
 
     // The new-job form.
     static final TextKey NEW_JOB = TextKey.of("jsc.automation.new_job", "NEW JOB");
-    static final TextKey KEEP_STOCK = TextKey.of("jsc.automation.form.keep_stock", "Keep Stock");
+    static final TextKey RESTOCK_BELOW = TextKey.of("jsc.automation.form.restock_below", "Restock below");
     static final TextKey BATCH_CRAFT = TextKey.of("jsc.automation.form.batch_craft", "Batch Craft");
     static final TextKey MOVE = TextKey.of("jsc.automation.form.move", "Move");
     static final TextKey IQL = TextKey.of("jsc.automation.form.iql", "IQL");
     static final TextKey NAME = TextKey.of("jsc.automation.form.name", "Name");
     static final TextKey ITEM_OR_ALL = TextKey.of("jsc.automation.form.item_or_all", "Item (blank=all)");
     static final TextKey ITEM_ID = TextKey.of("jsc.automation.form.item_id", "Item id");
-    static final TextKey KEEP_AT_LEAST = TextKey.of("jsc.automation.form.keep_at_least", "Keep at least");
+    static final TextKey WHEN_BELOW = TextKey.of("jsc.automation.form.when_below", "When below");
+    /** What a restock does not count, so nobody mistakes it for keeping a stock. */
+    static final TextKey RESTOCK_NOTE =
+            TextKey.of("jsc.automation.form.restock_note", "Does not count what is already on its way.");
     static final TextKey AMOUNT = TextKey.of("jsc.automation.form.amount", "Amount");
     static final TextKey EVERY = TextKey.of("jsc.automation.form.every", "Every (30s)");
     static final TextKey FROM = TextKey.of("jsc.automation.form.from", "From");

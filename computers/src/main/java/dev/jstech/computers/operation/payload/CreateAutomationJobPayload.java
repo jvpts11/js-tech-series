@@ -17,7 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 
 /**
  * Client to server: the Automation Manager's "New job" form. The server compiles the fields into a saved
- * IQL job (so no IQL is typed by the player): Keep Stock becomes {@code WHEN qty(item) < amount AS CRAFT
+ * IQL job (so no IQL is typed by the player): Restock below becomes {@code WHEN qty(item) < amount AS CRAFT
  * amount item}, Batch Craft becomes {@code EVERY interval AS CRAFT amount item}, and Periodic Move becomes
  * {@code EVERY interval AS MOVE amount item FROM from TO to}. Fields not used by a type are ignored.
  */
@@ -26,7 +26,11 @@ public record CreateAutomationJobPayload(BlockPos host, BlockPos monitorPos, int
                                          String item, long amount, String from, String to, String interval)
         implements CustomPacketPayload {
 
-    public static final int TYPE_KEEP_STOCK = 0;
+    /**
+     * Crafts more when the network holds fewer than the amount. It does not count what is already on its way, so
+     * it is a restock, not a stock kept: keeping a state is a Network Operations Engine's work.
+     */
+    public static final int TYPE_RESTOCK_BELOW = 0;
     public static final int TYPE_BATCH_CRAFT = 1;
     public static final int TYPE_PERIODIC_MOVE = 2;
     /** Runs a stored .iql script (its name in {@code item}) every {@code interval}. */
@@ -34,8 +38,8 @@ public record CreateAutomationJobPayload(BlockPos host, BlockPos monitorPos, int
 
     // Why a form did not make a job.
     public static final TextKey NEEDS_NAME = TextKey.of("jsc.automation.error.needs_name", "Give the job a name.");
-    public static final TextKey KEEP_STOCK_NEEDS_ITEM =
-            TextKey.of("jsc.automation.error.keep_stock_needs_item", "Keep Stock needs an item.");
+    public static final TextKey RESTOCK_NEEDS_ITEM =
+            TextKey.of("jsc.automation.error.restock_needs_item", "Restock below needs an item.");
     public static final TextKey BATCH_CRAFT_NEEDS = TextKey.of("jsc.automation.error.batch_craft_needs",
             "Batch Craft needs an item and a valid interval (e.g. 30s, 5m).");
     public static final TextKey PERIODIC_MOVE_NEEDS = TextKey.of("jsc.automation.error.periodic_move_needs",

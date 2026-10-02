@@ -1492,6 +1492,8 @@ public final class NetworkGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 8, () -> {
                     rackBe.getServerStorage(0).insert(Items.COBBLESTONE, 1_000_000L);
+                    // Jobs are the Automation Engine's to keep and fire.
+                    mainframe.installAutomationEngine();
                     final ServerCliComputer machine = new ServerCliComputer(mainframe, helper.getLevel());
                     // EVERY 1t: the agent (evaluating every 10 ticks) fires this within a couple of evaluations.
                     helper.assertTrue(runIql(mainframe, machine, "CREATE JOB drainer AS DROP 100 cobblestone EVERY 1t")
@@ -2046,6 +2048,7 @@ public final class NetworkGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 6, () -> {
                     rackBe.getServerStorage(0).insert(Items.COBBLESTONE, 1000);
+                    mainframe.installAutomationEngine();
                     runIql(mainframe, new ServerCliComputer(mainframe, helper.getLevel()),
                             "CREATE JOB killer AS DROP 64 cobblestone EVERY 5t");
                     mainframe.pauseJob("killer"); // paused from the start, so it must never fire

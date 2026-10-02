@@ -49,11 +49,11 @@ public final class IqlJobAgent {
     public void tick(final MainframeBlockEntity mainframe, final ServerLevel level) {
         clock++;
         /*
-         * Either fires the jobs: the network's engine or the Automation Engine (with the Automation Manager). A
-         * player needs only one of them for their jobs to run.
+         * Jobs are the Automation Engine's: "at this time, or when this happens, do that", the same whichever
+         * Network Operations Engine plans the network's work. A job's body is the network's language, so it still
+         * needs an engine running to be answered.
          */
-        if ((mainframe.runningEngine() == null && !mainframe.isAutomationEngineActive())
-                || clock % EVAL_INTERVAL != 0) {
+        if (!mainframe.isAutomationEngineActive() || clock % EVAL_INTERVAL != 0) {
             return;
         }
         final List<IqlSavedObject> jobs = mainframe.iqlCatalog().ofType(IqlDefinition.ObjectType.JOB);

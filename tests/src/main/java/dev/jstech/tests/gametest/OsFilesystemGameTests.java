@@ -581,12 +581,14 @@ public final class OsFilesystemGameTests {
                 "a gated program must be refused when no OS is installed");
         helper.assertTrue(OsRegistry.canRunProgram(mcDos, unknown, cpu, vram),
                 "an unregistered program declares no requirement and must pass");
-        // The 11-only Automation Manager: refused on Frames XP, allowed on Frames 11.
+        // The Automation Manager reaches back to Frames XP, so a Legacy network keeps its jobs; not to Frames 95.
         final ResourceLocation frames11 = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_11");
         final ResourceLocation autoMgr =
                 ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "automation_manager");
-        helper.assertFalse(OsRegistry.canRunProgram(framesXp, autoMgr, cpu, vram),
-                "the Automation Manager needs Frames 11, so Frames XP must refuse it");
+        helper.assertFalse(OsRegistry.canRunProgram(frames95, autoMgr, cpu, vram),
+                "the Automation Manager needs Frames XP or newer, so Frames 95 must refuse it");
+        helper.assertTrue(OsRegistry.canRunProgram(framesXp, autoMgr, cpu, vram),
+                "the Automation Manager must run on Frames XP");
         helper.assertTrue(OsRegistry.canRunProgram(frames11, autoMgr, cpu, vram),
                 "the Automation Manager must run on Frames 11");
         helper.succeed();

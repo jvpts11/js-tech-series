@@ -50,6 +50,9 @@ public final class IqlEngine {
     private static final TextKey SYNTAX = TextKey.of("jsc.service.iql.syntax", "syntax: %s");
     private static final TextKey NO_SAVED_OBJECTS = TextKey.of("jsc.service.iql.no_saved_objects",
             "the network's engine keeps no views, procedures or jobs");
+    /** Why a job is not made: jobs are the Automation Engine's, whichever engine plans the network's work. */
+    public static final TextKey JOBS_NEED_AUTOMATION = TextKey.of("jsc.service.iql.jobs_need_automation",
+            "jobs are kept by the Automation Engine; install it on the Mainframe first");
     private static final TextKey CREATED = TextKey.of("jsc.service.iql.created", "%s %s created");
     private static final TextKey NO_SUCH_OBJECT = TextKey.of("jsc.service.iql.no_such_object", "no %s named %s");
     private static final TextKey DROPPED = TextKey.of("jsc.service.iql.dropped", "%s %s dropped");
@@ -149,6 +152,10 @@ public final class IqlEngine {
     }
 
     private Outcome create(final IqlDefinition definition) {
+        // A job is the Automation Engine's to keep and fire; the statement only asks for one.
+        if (definition.objectType() == IqlDefinition.ObjectType.JOB && !mainframe.isAutomationEngineInstalled()) {
+            return Outcome.fail(JOBS_NEED_AUTOMATION.text());
+        }
         mainframe.iqlCatalog().put(IqlSavedObject.from(definition));
         mainframe.markIqlCatalogChanged();
         // A job fires later with nobody at the keyboard; it is credited to whoever set it up.

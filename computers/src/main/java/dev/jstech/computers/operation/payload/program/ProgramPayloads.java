@@ -82,27 +82,29 @@ public final class ProgramPayloads {
     }
 
     /**
-     * The processes running on the host at {@code hostPos}: the network's engine and the jobs if it is a Mainframe
-     * with an engine chosen, else an empty list (a computer with no service).
+     * The processes running on the host at {@code hostPos}: on a Mainframe, the network's engine and the jobs the
+     * Automation Engine fires, else an empty list (a computer with no service).
      */
     public static void dispatchProcesses(final ServerPlayer player, final BlockPos hostPos,
                                          final ServerLevel level) {
         final List<ProcessListPayload.ProcessLine> lines = new ArrayList<>();
-        if (level.getBlockEntity(hostPos) instanceof MainframeBlockEntity mainframe
-                && mainframe.activeEngine() != null) {
-            final boolean running = mainframe.engineRunning();
-            final ProgramSpec engine = Programs.get(mainframe.activeEngine());
-            // A service goes by its program's name, which is data.
-            final String name = engine == null ? mainframe.activeEngine().toString() : engine.name().english();
-            lines.add(new ProcessListPayload.ProcessLine(ProcessListPayload.KIND_SERVICE, name,
-                    running ? ProcessListPayload.ProcessState.RUNNING : ProcessListPayload.ProcessState.STOPPED,
-                    (running ? ProcessListPayload.ENGINE_SERVING : ProcessListPayload.ENGINE_STOPPED).text()));
+        if (level.getBlockEntity(hostPos) instanceof MainframeBlockEntity mainframe) {
+            if (mainframe.activeEngine() != null) {
+                final boolean running = mainframe.engineRunning();
+                final ProgramSpec engine = Programs.get(mainframe.activeEngine());
+                // A service goes by its program's name, which is data.
+                final String name = engine == null ? mainframe.activeEngine().toString() : engine.name().english();
+                lines.add(new ProcessListPayload.ProcessLine(ProcessListPayload.KIND_SERVICE, name,
+                        running ? ProcessListPayload.ProcessState.RUNNING : ProcessListPayload.ProcessState.STOPPED,
+                        (running ? ProcessListPayload.ENGINE_SERVING : ProcessListPayload.ENGINE_STOPPED).text()));
+            }
+            final boolean firing = mainframe.isAutomationEngineActive();
             for (final IqlSavedObject job
                     : mainframe.iqlCatalog().ofType(
                             IqlDefinition.ObjectType.JOB)) {
                 final boolean paused = mainframe.isJobPaused(job.name());
                 final ProcessListPayload.ProcessState state = paused ? ProcessListPayload.ProcessState.PAUSED
-                        : running ? ProcessListPayload.ProcessState.ACTIVE : ProcessListPayload.ProcessState.IDLE;
+                        : firing ? ProcessListPayload.ProcessState.ACTIVE : ProcessListPayload.ProcessState.IDLE;
                 lines.add(new ProcessListPayload.ProcessLine(ProcessListPayload.KIND_JOB, job.name(),
                         state, jobDetail(job)));
             }

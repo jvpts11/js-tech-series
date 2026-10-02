@@ -37,7 +37,7 @@ public record AutomationPayload(boolean engineOnline, Text engineLabel, List<Job
     public static final TextKey NO_ENGINE = TextKey.of("jsc.automation.no_engine", "none");
     // The kinds of job the list names, and a job that runs only when asked.
     public static final TextKey PERIODIC_MOVE = TextKey.of("jsc.automation.periodic_move", "Periodic Move");
-    public static final TextKey KEEP_STOCK = TextKey.of("jsc.automation.keep_stock", "Keep Stock");
+    public static final TextKey RESTOCK_BELOW = TextKey.of("jsc.automation.restock_below", "Restock below");
     public static final TextKey BATCH_CRAFT = TextKey.of("jsc.automation.batch_craft", "Batch Craft");
     public static final TextKey CUSTOM = TextKey.of("jsc.automation.custom", "Custom");
     public static final TextKey MANUAL = TextKey.of("jsc.automation.manual", "manual");

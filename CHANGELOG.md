@@ -219,6 +219,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A software house's tools are written for its own engine. The Network Management Studio opens only on a network
   running the Midsoft IQL Server, from its 2000 version on; anywhere else it stays installed and says "No compatible
   Midsoft IQL Server was found on this network." An engine is a package of its own kind.
+- The jobs are the Automation Engine's alone: "at this time, or when this happens, do that", the same whichever
+  engine plans the network's work. A job is made only where the Automation Engine is installed (IQL's CREATE JOB says
+  so where it is not) and fires only while it runs. The Automation Engine and its Manager now reach back to Frames
+  XP, so a Legacy network keeps its jobs. The Manager's "Keep Stock" is now "Restock below", and it says it does
+  not count what is already on its way.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

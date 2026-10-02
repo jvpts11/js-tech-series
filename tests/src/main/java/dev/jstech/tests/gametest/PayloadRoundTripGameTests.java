@@ -198,7 +198,7 @@ public final class PayloadRoundTripGameTests {
     @GameTest(template = ARENA)
     public static void automation_createJobRoundTrips(final GameTestHelper helper) {
         roundTrip(helper, CreateAutomationJobPayload.STREAM_CODEC, new CreateAutomationJobPayload(HOST, MONITOR,
-                CreateAutomationJobPayload.TYPE_KEEP_STOCK, "Logs", "minecraft:oak_log", 640L, "", "", "20s"));
+                CreateAutomationJobPayload.TYPE_RESTOCK_BELOW, "Logs", "minecraft:oak_log", 640L, "", "", "20s"));
         helper.succeed();
     }
 
