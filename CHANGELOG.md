@@ -283,6 +283,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The Optical Network Card, from the Standard. The backbone's fibre enters a Mainframe, a Server Rack or a Cluster
   Management Computer only while the machine holds one, a rack when any server seated in it does; without one the
   machine takes the copper of its backbone alone. It fits a PCIe slot and is drawn inside the computers that seat it.
+- The Network Manager shows how each node is linked. The Devices tab has a LINK column with the cable and its speed,
+  and a square for an Optical Network Card; a machine joined to the network that lost its link is listed as "no
+  link", and the line under the list says why: its fibre bends where no Optical Router turns it, or a run is longer
+  than its cable reaches. The Map draws each link by its line (the fibre thick and aqua, an earlier era's cable in
+  dashes, a link down red), with its speed, the Optical Routers the fibre goes through and a legend; a node's card
+  has a NETWORK section. The Hardware tab, which now scrolls, adds the optical links up and down, the backbone and the
+  slowest link in use.
+- The data network tells what lies cut off beyond a run too long, and how long each run is, in J's Core.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

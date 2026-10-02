@@ -67,7 +67,7 @@
 2 computers/src/main/java/dev/jstech/computers/client/os/MinesweeperApp.java
 1 computers/src/main/java/dev/jstech/computers/client/os/MotifMenu.java
 6 computers/src/main/java/dev/jstech/computers/client/os/NetworkInteractorApp.java
-18 computers/src/main/java/dev/jstech/computers/client/os/NetworkManagerApp.java
+14 computers/src/main/java/dev/jstech/computers/client/os/NetworkManagerApp.java
 2 computers/src/main/java/dev/jstech/computers/client/os/OccupyWorkspaceDialog.java
 1 computers/src/main/java/dev/jstech/computers/client/os/OpenWithPopup.java
 4 computers/src/main/java/dev/jstech/computers/client/os/PaintApp.java

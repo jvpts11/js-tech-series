@@ -18,12 +18,12 @@ import net.minecraft.network.codec.StreamCodec;
  * and the online flag, it carries the enrichment the Network Manager's Devices list and Map tooltip show:
  * the computer's custom name (empty when unnamed), its processor clock, graphics memory, free and total
  * storage, the public-share permille of its system disk ({@code -1} when not applicable, e.g. a server or
- * subframe with no directly readable disk), and its installed OS label.
+ * subframe with no directly readable disk), its installed OS label, and how it is linked to the network.
  */
 @TextHolder
 public record NetworkNodeInfo(int kind, String id, String name, String detail, boolean online,
                               int cpuMhz, int vramMb, long storageFreeMb, long storageTotalMb,
-                              int publicPermille, String osLabel) {
+                              int publicPermille, String osLabel, NodeLink link) {
 
     // What kind of machine a node is, as the Network Manager tags it.
     private static final TextKey MAINFRAME = TextKey.of("jsc.network_node.mainframe", "MAINFRAME");
@@ -63,6 +63,7 @@ public record NetworkNodeInfo(int kind, String id, String name, String detail, b
         buf.writeVarLong(info.storageTotalMb);
         buf.writeVarInt(info.publicPermille);
         buf.writeUtf(info.osLabel);
+        NodeLink.STREAM_CODEC.encode(buf, info.link);
     }
 
     private static NetworkNodeInfo decode(final RegistryFriendlyByteBuf buf) {
@@ -77,8 +78,15 @@ public record NetworkNodeInfo(int kind, String id, String name, String detail, b
         final long storageTotalMb = buf.readVarLong();
         final int publicPermille = buf.readVarInt();
         final String osLabel = buf.readUtf();
+        final NodeLink link = NodeLink.STREAM_CODEC.decode(buf);
         return new NetworkNodeInfo(kind, id, name, detail, online, cpuMhz, vramMb,
-                storageFreeMb, storageTotalMb, publicPermille, osLabel);
+                storageFreeMb, storageTotalMb, publicPermille, osLabel, link);
+    }
+
+    /** The same node with its link told. */
+    public NetworkNodeInfo withLink(final NodeLink told) {
+        return new NetworkNodeInfo(kind, id, name, detail, online, cpuMhz, vramMb, storageFreeMb, storageTotalMb,
+                publicPermille, osLabel, told);
     }
 
     /** What kind of machine the node is, as a short tag in the player's language. */

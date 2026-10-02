@@ -622,6 +622,24 @@ class ConnectivityIndexTest {
                 "though the cables still touch, which is what a reload keeps");
     }
 
+    @Test
+    void cutOffPositions_areWhatLiesBeyondARunTooLong() {
+        final NetworkUuid network = NetworkUuid.random();
+        index.onCablePlaced(pos(-2, 0, 0), Set.of(), ETHERNET);
+        final long beyond = layThinCoaxThenRouterThenEthernet(THIN_COAX.range() + 1);
+        index.onCablePlaced(pos(-1, 0, 0), Set.of(pos(-2, 0, 0), pos(0, 0, 0)));
+        index.assignUuid(pos(-2, 0, 0), network);
+        index.anchor(DEVICE, network, Set.of(pos(-2, 0, 0)));
+        final Set<Long> cutOff = index.cutOffPositions(network);
+        assertTrue(cutOff.contains(beyond), "what lies beyond the run is cut off");
+        assertTrue(cutOff.contains(pos(0, 0, 0)), "and so is the run itself");
+        assertFalse(cutOff.contains(pos(-2, 0, 0)) || cutOff.contains(pos(-1, 0, 0)),
+                "while the owner's side of it is not");
+        assertTrue(index.runTooLong(pos(0, 0, 0)), "the run is too long");
+        assertEquals(THIN_COAX.range() + 1, index.runLength(pos(0, 0, 0)), "by one cable");
+        assertTrue(index.cutOffPositions(NetworkUuid.random()).isEmpty(), "another network has nothing cut off");
+    }
+
     /*
      * Lays {@code length} cables of thin coax along x from the origin, a router after them and two Ethernet cables
      * after the router, and gives back the last Ethernet cable's position.

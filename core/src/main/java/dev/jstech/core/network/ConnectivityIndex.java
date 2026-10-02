@@ -120,6 +120,33 @@ public final class ConnectivityIndex {
         return result;
     }
 
+    /**
+     * Every position joined to the given network that does not reach its owner: what lies beyond a run longer than its
+     * cable reaches, cut off by it. A read-only scan, for whoever tells a player why part of the network is off it.
+     */
+    public Set<Long> cutOffPositions(final NetworkUuid network) {
+        if (network == null) {
+            return Set.of();
+        }
+        final Set<Long> result = new LinkedHashSet<>();
+        for (final long pos : grid.positions()) {
+            if (network.equals(rootToUuid.get(grid.rootOf(pos))) && !reachesItsOwner(pos, network)) {
+                result.add(pos);
+            }
+        }
+        return result;
+    }
+
+    /** How many cables the run at {@code encodedPos} has, its own cable unbroken; 0 for a device or none. */
+    public int runLength(final long encodedPos) {
+        return grid.runLength(encodedPos);
+    }
+
+    /** Whether the run at {@code encodedPos} is longer than its cable reaches, so it carries nothing across. */
+    public boolean runTooLong(final long encodedPos) {
+        return grid.runTooLong(encodedPos);
+    }
+
     /** What data cable is at that position, or empty for a position that is no cable (a router) or none. */
     public Optional<DataLink> linkOf(final long encodedPos) {
         final GridMember member = grid.memberOf(encodedPos);

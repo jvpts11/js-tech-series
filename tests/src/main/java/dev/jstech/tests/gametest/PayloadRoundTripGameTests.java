@@ -18,9 +18,12 @@ import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload;
 import dev.jstech.computers.operation.payload.IqlResultPayload;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
+import dev.jstech.computers.operation.payload.NetworkManagerPayload;
+import dev.jstech.computers.operation.payload.NetworkNodeInfo;
 import dev.jstech.computers.operation.payload.NetworkServersPayload;
 import dev.jstech.computers.operation.payload.NetworkServicesPayload;
 import dev.jstech.computers.operation.payload.NiGridClickPayload;
+import dev.jstech.computers.operation.payload.NodeLink;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.OperationsLogPayload;
 import dev.jstech.computers.operation.payload.TerminalSelectPayload;
@@ -29,9 +32,12 @@ import dev.jstech.computers.operation.payload.UiEventPayload;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.network.DataLine;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
@@ -146,6 +152,24 @@ public final class PayloadRoundTripGameTests {
                 new NetworkServicesPayload.Replacement("Midsoft IQL Server", "NextgreIQL 16", 120, 341, 3, 1_204)));
         roundTrip(helper, EngineActionPayload.STREAM_CODEC,
                 new EngineActionPayload(HOST, EngineActionPayload.REPLACE, "jstests:plain_engine"));
+        helper.succeed();
+    }
+
+    /* A node on the fibre through an optical router, one whose fibre bends, one cut off by a run too long. */
+    @GameTest(template = ARENA)
+    public static void network_managerRoundTripsWithItsLinks(final GameTestHelper helper) {
+        final DataLink fibre = new DataLink(DataLine.BACKBONE, HardwareEra.STANDARD);
+        final DataLink thinCoax = new DataLink(DataLine.ACCESS, HardwareEra.VINTAGE);
+        final List<NetworkNodeInfo> nodes = List.of(
+                new NetworkNodeInfo(NetworkNodeInfo.KIND_MAINFRAME, "1a2b", "Core", "96 it/t", true, 2000, 0, 0L, 0L,
+                        NetworkNodeInfo.SHARE_UNKNOWN, "Frames 11", NodeLink.up(fibre, true, 140, HOST.asLong())),
+                new NetworkNodeInfo(NetworkNodeInfo.KIND_SERVER, "9e03", "Storage B", "", false, 0, 0, 0L, 0L,
+                        NetworkNodeInfo.SHARE_UNKNOWN, "", NodeLink.bends(fibre, true, MONITOR.asLong())),
+                new NetworkNodeInfo(NetworkNodeInfo.KIND_PC, "3f9a", "Old Lab", "", true, 0, 0, 0L, 0L, 200,
+                        "Frames XP", NodeLink.tooLong(thinCoax, false, 33)));
+        roundTrip(helper, NetworkManagerPayload.STREAM_CODEC, new NetworkManagerPayload(HOST, "1a2b-77e0", nodes,
+                new NetworkManagerPayload.Hardware(96L, 3, 4_096L, 1_284_330L, 1, 1, fibre.serializedName(),
+                        thinCoax.serializedName(), "Old Lab"), NetworkManagerPayload.Statistics.EMPTY));
         helper.succeed();
     }
 

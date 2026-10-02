@@ -51,7 +51,7 @@ class LayoutAuditTest {
             "PersonalComputerLayout", "MainframeLayout", "ServerAssemblyLayout", "KvmChannelLayout",
             "SystemBootLayout", "CommandPromptLayout", "OsInstallLayout", "InstallerLayout",
             "BootSequenceLayout", "FirmwareLayout", "SettingsLayout", "StudioPropertiesLayout",
-            "NetworkServicesLayout");
+            "NetworkServicesLayout", "NetworkLinksLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -259,6 +259,11 @@ class LayoutAuditTest {
                 NetworkServicesLayout.DEFAULT_CONTENT_W, 16, 32, true, 2, new int[] {84, 44, 72}, 64), false));
         c.add(new AuditCase("NetworkServicesLayout(narrowest)", NetworkServicesLayout.layout(
                 NetworkServicesLayout.MIN_CONTENT_W, 3, 2, true, 2, new int[] {84, 44, 72}, 64), false));
+        c.add(new AuditCase("NetworkLinksLayout(default)", NetworkLinksLayout.devices(
+                NetworkServicesLayout.DEFAULT_W - NetworkServicesLayout.WINDOW_PAD, NetworkServicesLayout.DEFAULT_H - 38,
+                true), false));
+        c.add(new AuditCase("NetworkLinksLayout(narrowest)", NetworkLinksLayout.devices(
+                NetworkServicesLayout.MIN_W - NetworkServicesLayout.WINDOW_PAD, 150 - 38, true), false));
         // The trash window in each of its three looks, at its smallest and at its first size.
         for (final int[] size : new int[][]{
                 {TrashLayout.MIN_W - TrashLayout.FRAME_W, TrashLayout.MIN_H - TrashLayout.FRAME_H},

@@ -31,18 +31,35 @@ public record NetworkManagerPayload(BlockPos hostPos, String networkId, List<Net
     /**
      * Network-wide hardware totals the Hardware tab shows: the orchestration capacity in items/tick, the
      * number of parallel dispatch queues, the RAM buffer in items, and the total addressable storage in items
-     * (the one unit every disk shares, whatever era it was made for).
+     * (the one unit every disk shares, whatever era it was made for); then the network's links: how many nodes with
+     * an Optical Network Card have their link up and how many down, the Mainframe's own link (the backbone), and the
+     * slowest link a node on the network is plugged into, with that node's name. A link is a cable's serialized name,
+     * empty for none.
      */
-    public record Hardware(long capacity, int queues, long ramBuffer, long storageItems) {
-        public static final Hardware EMPTY = new Hardware(0L, 0, 0L, 0L);
+    public record Hardware(long capacity, int queues, long ramBuffer, long storageItems, int opticalUp,
+                           int opticalDown, String backbone, String slowest, String slowestNode) {
+        public static final Hardware EMPTY = new Hardware(0L, 0, 0L, 0L, 0, 0, "", "", "");
 
+        // Hand-written because the field count is past what StreamCodec.composite overloads accept.
         public static final StreamCodec<RegistryFriendlyByteBuf, Hardware> STREAM_CODEC =
-                StreamCodec.composite(
-                        ByteBufCodecs.VAR_LONG, Hardware::capacity,
-                        ByteBufCodecs.VAR_INT, Hardware::queues,
-                        ByteBufCodecs.VAR_LONG, Hardware::ramBuffer,
-                        ByteBufCodecs.VAR_LONG, Hardware::storageItems,
-                        Hardware::new);
+                StreamCodec.of(Hardware::encode, Hardware::decode);
+
+        private static void encode(final RegistryFriendlyByteBuf buf, final Hardware hardware) {
+            buf.writeVarLong(hardware.capacity);
+            buf.writeVarInt(hardware.queues);
+            buf.writeVarLong(hardware.ramBuffer);
+            buf.writeVarLong(hardware.storageItems);
+            buf.writeVarInt(hardware.opticalUp);
+            buf.writeVarInt(hardware.opticalDown);
+            buf.writeUtf(hardware.backbone, 32);
+            buf.writeUtf(hardware.slowest, 32);
+            buf.writeUtf(hardware.slowestNode, 64);
+        }
+
+        private static Hardware decode(final RegistryFriendlyByteBuf buf) {
+            return new Hardware(buf.readVarLong(), buf.readVarInt(), buf.readVarLong(), buf.readVarLong(),
+                    buf.readVarInt(), buf.readVarInt(), buf.readUtf(32), buf.readUtf(32), buf.readUtf(64));
+        }
     }
 
     /**
