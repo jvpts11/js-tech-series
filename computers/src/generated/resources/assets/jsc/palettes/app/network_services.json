@@ -1,0 +1,11 @@
+{
+  "dialogDim": "#B0000000",
+  "engine": "#FF3A6AE0",
+  "good": "#FF2EA043",
+  "hotRow": "#22E0A020",
+  "idle": "#FF9A9A9A",
+  "noteEdge": "#FFE8C98A",
+  "noteGround": "#30E0A020",
+  "subframe": "#FF7B52C9",
+  "warn": "#FFE0A020"
+}

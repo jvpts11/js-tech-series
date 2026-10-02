@@ -55,6 +55,7 @@ import dev.jstech.core.operation.OperationStatistics;
 import dev.jstech.core.operation.SelfTestOperationTask;
 import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.time.GameCalendar;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayDeque;
@@ -1665,6 +1666,40 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     /** Starts or stops the chosen engine; false when there is none or nothing changes. */
     public boolean setEngineRunning(final boolean running) {
         return services.setEngineRunning(running);
+    }
+
+    /**
+     * Begins replacing the network's engine with an installed one; false when that cannot be. The network has no
+     * engine until the new one is up, which takes longer the more kinds of item the network holds.
+     */
+    public boolean replaceEngine(final ResourceLocation target) {
+        if (level == null) {
+            return false;
+        }
+        return services.replaceEngine(target, level.getGameTime(), liveOperations().size(), indexedTypes());
+    }
+
+    /** The replacement of the engine under way, or {@code null} when there is none. */
+    @Nullable
+    public EngineReplacement engineReplacement() {
+        return services.replacement();
+    }
+
+    /** How long the running engine has been up, in ticks; none when no engine runs. */
+    public long engineUpTicks() {
+        return level == null ? 0L : services.engineUpTicks(level.getGameTime());
+    }
+
+    /** Counts one request the network's engine planned today. */
+    public void notePlanned() {
+        if (level != null) {
+            services.notePlanned(GameCalendar.day(level.getDayTime()));
+        }
+    }
+
+    /** How many requests the network's engine planned today, in game days. */
+    public int plansToday() {
+        return level == null ? 0 : services.plansToday(GameCalendar.day(level.getDayTime()));
     }
 
     public boolean isAutomationEngineInstalled() {

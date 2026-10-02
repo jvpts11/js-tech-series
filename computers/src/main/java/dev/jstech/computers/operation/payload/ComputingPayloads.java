@@ -38,6 +38,7 @@ import dev.jstech.computers.operation.payload.interactor.NetworkInteractorPayloa
 import dev.jstech.computers.operation.payload.iql.IqlPayloads;
 import dev.jstech.computers.operation.payload.machine.MachinePayloads;
 import dev.jstech.computers.operation.payload.network.NetworkPayloads;
+import dev.jstech.computers.operation.payload.network.NetworkServicesPayloads;
 import dev.jstech.computers.operation.payload.operations.OperationsPayloads;
 import dev.jstech.computers.operation.payload.program.ConsolePayloads;
 import dev.jstech.computers.operation.payload.program.DesktopShellPayloads;
@@ -92,6 +93,7 @@ public final class ComputingPayloads {
         CraftPlannerPayloads.register(registrar);
         CraftManagerPayloads.register(registrar);
         NetworkPayloads.register(registrar);
+        NetworkServicesPayloads.register(registrar);
         MachinePayloads.register(registrar);
         FirmwarePayloads.register(registrar);
         InstallerPayloads.register(registrar);

@@ -12,12 +12,14 @@ import dev.jstech.computers.operation.payload.ClusterManagerStatePayload;
 import dev.jstech.computers.operation.payload.CreateAutomationJobPayload;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
+import dev.jstech.computers.operation.payload.EngineActionPayload;
 import dev.jstech.computers.operation.payload.FileSavedPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload;
 import dev.jstech.computers.operation.payload.IqlResultPayload;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
 import dev.jstech.computers.operation.payload.NetworkServersPayload;
+import dev.jstech.computers.operation.payload.NetworkServicesPayload;
 import dev.jstech.computers.operation.payload.NiGridClickPayload;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.OperationsLogPayload;
@@ -124,6 +126,26 @@ public final class PayloadRoundTripGameTests {
     public static void files_savedAnswerCarriesALongPath(final GameTestHelper helper) {
         roundTrip(helper, FileSavedPayload.STREAM_CODEC,
                 new FileSavedPayload(true, FileSavedPayload.SAVED.with("progs/" + "a".repeat(154))));
+        helper.succeed();
+    }
+
+    /* Every part of the Services tab filled, a replacement under way, and the names at the longest it is sent. */
+    @GameTest(template = ARENA)
+    public static void network_servicesRoundTrip(final GameTestHelper helper) {
+        final String longest = "M".repeat(NetworkServicesPayload.MAX_NAME);
+        final NetworkServicesPayload.Engine engine = new NetworkServicesPayload.Engine("jstests:plain_engine",
+                longest, "16", "Nextgre", "MF-1a2b3c", NetworkServicesPayload.ENGINE_REPLACING, "IQL", 96,
+                List.of("procedures_and_views", "subscriptions"), 1_204, 3, 3_744_000L, 318, 3);
+        roundTrip(helper, NetworkServicesPayload.STREAM_CODEC, new NetworkServicesPayload(HOST, engine,
+                List.of(new NetworkServicesPayload.EngineRow("jsc:iqlengine", "Midsoft IQL Server", "Midsoft", "2022",
+                        NetworkServicesPayload.ROW_INSTALLED)),
+                List.of(new NetworkServicesPayload.SubframeRow("SUB-52ddaa", "", "", true),
+                        new NetworkServicesPayload.SubframeRow("SUB-8f10bb", "jsc:iqlengine", longest, false)),
+                List.of(new NetworkServicesPayload.ServiceRow("Automation Engine", "Red Cap", "4.0",
+                        NetworkServicesPayload.SERVICE_RUNNING)),
+                new NetworkServicesPayload.Replacement("Midsoft IQL Server", "NextgreIQL 16", 120, 341, 3, 1_204)));
+        roundTrip(helper, EngineActionPayload.STREAM_CODEC,
+                new EngineActionPayload(HOST, EngineActionPayload.REPLACE, "jstests:plain_engine"));
         helper.succeed();
     }
 

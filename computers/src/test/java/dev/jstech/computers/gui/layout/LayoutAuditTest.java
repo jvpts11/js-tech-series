@@ -50,7 +50,8 @@ class LayoutAuditTest {
             "VolumePopupLayout", "SoundfoundryLayout", "SoundfoundryShareLayout", "SoundfoundryStandardLayout",
             "PersonalComputerLayout", "MainframeLayout", "ServerAssemblyLayout", "KvmChannelLayout",
             "SystemBootLayout", "CommandPromptLayout", "OsInstallLayout", "InstallerLayout",
-            "BootSequenceLayout", "FirmwareLayout", "SettingsLayout", "StudioPropertiesLayout");
+            "BootSequenceLayout", "FirmwareLayout", "SettingsLayout", "StudioPropertiesLayout",
+            "NetworkServicesLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -253,6 +254,11 @@ class LayoutAuditTest {
                 CdeStyleLayout.backdropLayout(CdeBackdrop.values().length), true));
         c.add(new AuditCase("WorkstationInfoLayout", WorkstationInfoLayout.layout(), true));
         c.add(new AuditCase("HelpViewerLayout", HelpViewerLayout.layout(), true));
+        // The Network Manager's Services tab scrolls, so it is held to being clean at its widest and its narrowest.
+        c.add(new AuditCase("NetworkServicesLayout(default)", NetworkServicesLayout.layout(
+                NetworkServicesLayout.DEFAULT_CONTENT_W, 16, 32, true, 2, new int[] {84, 44, 72}, 64), false));
+        c.add(new AuditCase("NetworkServicesLayout(narrowest)", NetworkServicesLayout.layout(
+                NetworkServicesLayout.MIN_CONTENT_W, 3, 2, true, 2, new int[] {84, 44, 72}, 64), false));
         // The trash window in each of its three looks, at its smallest and at its first size.
         for (final int[] size : new int[][]{
                 {TrashLayout.MIN_W - TrashLayout.FRAME_W, TrashLayout.MIN_H - TrashLayout.FRAME_H},

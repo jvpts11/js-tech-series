@@ -65,6 +65,8 @@ public final class TabStrip extends UiComponent {
 
     /** Room for the close mark at the right of a tab that can be closed. */
     private static final int CLOSE_W = 9;
+    /** The least padding a fitted tab keeps when the labels are squeezed to fit the strip. */
+    private static final int MIN_FITTED_PADDING = 4;
     private IntConsumer onClose;
 
     /**
@@ -140,8 +142,20 @@ public final class TabStrip extends UiComponent {
         final int close = onClose == null ? 0 : CLOSE_W;
         if (labelPadding >= 0) {
             final int[] measured = new int[current.size()];
+            int words = 0;
             for (int i = 0; i < current.size(); i++) {
-                measured[i] = ctx.font().width(current.get(i)) + labelPadding + close;
+                measured[i] = ctx.font().width(current.get(i));
+                words += measured[i] + close;
+            }
+            /*
+             * Labels that would run past the strip with their padding give up padding first, evenly, so a long
+             * language or a narrow window still shows every tab rather than pushing the last ones off the end.
+             */
+            final int padding = current.isEmpty() || words + labelPadding * current.size() <= width()
+                    ? labelPadding
+                    : Math.max(MIN_FITTED_PADDING, (width() - words) / current.size());
+            for (int i = 0; i < current.size(); i++) {
+                measured[i] += padding + close;
             }
             widths = measured;
         }

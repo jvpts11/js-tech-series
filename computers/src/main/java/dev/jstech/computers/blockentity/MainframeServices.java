@@ -60,6 +60,22 @@ final class MainframeServices {
     /** Whether the active engine is started; a stopped one plans nothing, as if there were none. */
     private boolean engineRunning = true;
 
+    /** A replacement of the engine under way, or {@code null}; while one is, the network has no engine. */
+    @Nullable
+    private EngineReplacement replacement;
+
+    /** The game time the running engine came up at, or {@code -1} while none runs. */
+    private long engineStartedAt = -1L;
+
+    /** The game time of the last tick, so a Mainframe that was off or unloaded starts its engine's clock again. */
+    private long lastTickAt = -1L;
+
+    /** The day, in game days, that {@link #plansToday} counts for. */
+    private long plansDay = -1L;
+
+    /** How many requests the engine planned on {@link #plansDay}. */
+    private int plansToday;
+
     /**
      * The saved views, procedures and jobs. It is kept whether or not the Engine is installed, because
      * taking the Engine off is not the same as throwing away what somebody wrote with it.
@@ -124,13 +140,57 @@ final class MainframeServices {
         return engineRunning;
     }
 
-    /** The engine planning the network's work now: chosen, started, and on a Mainframe that is running. */
+    /**
+     * The engine planning the network's work now: chosen, started, not being replaced, and on a Mainframe that is
+     * running.
+     */
     @Nullable
     INetworkEngine runningEngine() {
-        if (activeEngine == null || !engineRunning || !mainframe.isRunning()) {
+        if (activeEngine == null || !engineRunning || replacement != null || !mainframe.isRunning()) {
             return null;
         }
         return NetworkEngines.get(activeEngine);
+    }
+
+    /** The replacement of the engine under way, or {@code null} when there is none. */
+    @Nullable
+    EngineReplacement replacement() {
+        return replacement;
+    }
+
+    /**
+     * Begins replacing the network's engine with {@code target}, which has to be installed; false when it is not,
+     * when it is the engine running already, when a replacement is under way, or when the Mainframe is off. The
+     * network has no engine until the replacement is over.
+     */
+    boolean replaceEngine(final ResourceLocation target, final long now, final int inFlight, final int itemTypes) {
+        if (replacement != null || !engines.containsKey(target) || !mainframe.isRunning()
+                || target.equals(activeEngine) && engineRunning) {
+            return false;
+        }
+        replacement = EngineReplacement.begin(activeEngine, target, now, inFlight, itemTypes);
+        mainframe.setChanged();
+        return true;
+    }
+
+    /** How long the running engine has been up at {@code now}, in ticks; none when no engine runs. */
+    long engineUpTicks(final long now) {
+        return engineStartedAt < 0 || runningEngine() == null ? 0L : Math.max(0L, now - engineStartedAt);
+    }
+
+    /** Counts one request the engine planned, on game day {@code day}. */
+    void notePlanned(final long day) {
+        if (day != plansDay) {
+            plansDay = day;
+            plansToday = 0;
+        }
+        plansToday++;
+        mainframe.setChanged();
+    }
+
+    /** How many requests the engine planned on game day {@code day}. */
+    int plansToday(final long day) {
+        return day == plansDay ? plansToday : 0;
     }
 
     /**
@@ -160,17 +220,25 @@ final class MainframeServices {
         if (program.equals(activeEngine)) {
             activeEngine = null;
         }
+        /*
+         * Taking off the engine a replacement was bringing up ends the replacement; the engine it was replacing was
+         * stopped on the way, and stays chosen and stopped until somebody starts it again.
+         */
+        if (replacement != null && program.equals(replacement.to())) {
+            replacement = null;
+            engineRunning = false;
+        }
         mainframe.setChanged();
         return true;
     }
 
     /**
      * Makes an installed engine the one that plans the network's work, and starts it; false when it is not installed
-     * or is that one already, started. What the engine before it planned carries on: an Operation belongs to the
-     * network once it is made, not to the engine that made it.
+     * or is that one already, started, or while a replacement is under way. What the engine before it planned
+     * carries on: an Operation belongs to the network once it is made, not to the engine that made it.
      */
     boolean activateEngine(final ResourceLocation program) {
-        if (!engines.containsKey(program) || program.equals(activeEngine) && engineRunning) {
+        if (replacement != null || !engines.containsKey(program) || program.equals(activeEngine) && engineRunning) {
             return false;
         }
         activeEngine = program;
@@ -179,9 +247,9 @@ final class MainframeServices {
         return true;
     }
 
-    /** Starts or stops the active engine; false when there is none, or nothing to change. */
+    /** Starts or stops the active engine; false when there is none, nothing to change, or a replacement is on. */
     boolean setEngineRunning(final boolean running) {
-        if (activeEngine == null || engineRunning == running) {
+        if (replacement != null || activeEngine == null || engineRunning == running) {
             return false;
         }
         engineRunning = running;
@@ -193,8 +261,26 @@ final class MainframeServices {
         return catalog;
     }
 
-    /** Runs the jobs whose moment has come, which is the one thing here that happens by itself. */
+    /**
+     * Runs the jobs whose moment has come, brings up the engine a replacement was bringing up once its time is
+     * over, and keeps the running engine's clock.
+     */
     void tick(final ServerLevel level) {
+        final long now = level.getGameTime();
+        if (replacement != null && replacement.done(now)) {
+            activeEngine = replacement.to();
+            engineRunning = true;
+            replacement = null;
+            engineStartedAt = now;
+            mainframe.setChanged();
+        }
+        // A gap since the last tick means the Mainframe was off or unloaded, and its engine was down with it.
+        if (runningEngine() == null) {
+            engineStartedAt = -1L;
+        } else if (engineStartedAt < 0 || now - lastTickAt > 1) {
+            engineStartedAt = now;
+        }
+        lastTickAt = now;
         jobAgent.tick(mainframe, level);
     }
 
@@ -327,6 +413,7 @@ final class MainframeServices {
         byProgram.values().forEach(IMainframeService::uninstall);
         engines.clear();
         activeEngine = null;
+        replacement = null;
         mainframe.setChanged();
     }
 
@@ -338,6 +425,13 @@ final class MainframeServices {
             tag.putString("ActiveEngine", activeEngine.toString());
         }
         tag.putBoolean("EngineRunning", engineRunning);
+        if (replacement != null) {
+            tag.put("EngineReplacement", replacement.save());
+        }
+        tag.putLong("EngineStartedAt", engineStartedAt);
+        tag.putLong("EngineLastTick", lastTickAt);
+        tag.putLong("PlansDay", plansDay);
+        tag.putInt("PlansToday", plansToday);
         tag.putBoolean("AutomationEngineInstalled", automationEngineInstalled);
         tag.putBoolean("MirrorInstalled", mirrorInstalled);
         if (!shelved.isEmpty()) {
@@ -388,6 +482,13 @@ final class MainframeServices {
             activeEngine = active != null && engines.containsKey(active) ? active : null;
             engineRunning = tag.getBoolean("EngineRunning");
         }
+        final EngineReplacement saved = tag.contains("EngineReplacement")
+                ? EngineReplacement.load(tag.getCompound("EngineReplacement")) : null;
+        replacement = saved != null && engines.containsKey(saved.to()) ? saved : null;
+        engineStartedAt = tag.contains("EngineStartedAt") ? tag.getLong("EngineStartedAt") : -1L;
+        lastTickAt = tag.contains("EngineLastTick") ? tag.getLong("EngineLastTick") : -1L;
+        plansDay = tag.contains("PlansDay") ? tag.getLong("PlansDay") : -1L;
+        plansToday = tag.getInt("PlansToday");
         automationEngineInstalled = tag.getBoolean("AutomationEngineInstalled");
         mirrorInstalled = tag.getBoolean("MirrorInstalled");
         shelved.clear();

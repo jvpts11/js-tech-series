@@ -12,9 +12,12 @@ import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.engine.EngineSwap;
+import dev.jstech.computers.gui.layout.NetworkServicesLayout;
 import dev.jstech.computers.operation.payload.CancelOperationPayload;
 import dev.jstech.computers.operation.payload.NetworkManagerPayload;
 import dev.jstech.computers.operation.payload.NetworkNodeInfo;
+import dev.jstech.computers.operation.payload.NetworkServicesPayload;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.RequestNetworkManagerPayload;
 import dev.jstech.computers.operation.payload.RequestNiOperationsPayload;
@@ -55,10 +58,11 @@ import java.util.function.Supplier;
 
 /**
  * The Network Manager desktop app, exclusive to the Mainframe (the node that holds the network index).
- * It is a windowed task manager for the whole data network, with five tabs: Devices (every node),
+ * It is a windowed task manager for the whole data network, with seven tabs: Devices (every node),
  * Processes (live Operations), Hardware (the network's compute and storage totals), Map (the topology),
- * and Log (the recent Operations feed). Nodes carry the computer's name and specs; a Map node shows a
- * full tooltip on hover, and a logged Operation opens a detail dialog with its sub-operations.
+ * Log (the recent Operations feed), Stats (the last hour by type) and Services (the engine that plans the
+ * network's work and the other software the Mainframe runs for it). Nodes carry the computer's name and specs;
+ * a Map node shows a full tooltip on hover, and a logged Operation opens a detail dialog with its sub-operations.
  *
  * <p>The tabs, the tables, the hardware readout, the scrollbars and the detail dialog are components; the
  * map is a canvas of its own, since its nodes are dragged, panned and zoomed rather than listed.
@@ -66,12 +70,16 @@ import java.util.function.Supplier;
 @PaletteHolder
 public final class NetworkManagerApp implements IDesktopApp {
 
+    /** The window's title in English, which is also the key a test opens it by. */
+    public static final String TITLE = NetworkManagerAppTexts.TITLE.english();
+
     private static final int TAB_DEVICES = 0;
     private static final int TAB_PROCESSES = 1;
     private static final int TAB_HARDWARE = 2;
     private static final int TAB_MAP = 3;
     private static final int TAB_LOG = 4;
     private static final int TAB_STATS = 5;
+    private static final int TAB_SERVICES = 6;
     private static final int STAT_ROW_H = 12;
     private static final int STATS_REFRESH_FRAMES = 100;
 
@@ -185,6 +193,7 @@ public final class NetworkManagerApp implements IDesktopApp {
     private final Label detailPrioValue;
     private final Button detailPrioUp;
     private final Button detailCancel;
+    private final NetworkServicesView services;
 
     public NetworkManagerApp(final BlockPos host, final BlockPos monitorPos) {
         this.host = host;
@@ -192,7 +201,9 @@ public final class NetworkManagerApp implements IDesktopApp {
 
         tabs = root.add(new TabStrip(words(NetworkManagerTexts.DEVICES, NetworkManagerTexts.PROCESSES,
                 NetworkManagerTexts.HARDWARE, NetworkManagerTexts.MAP, NetworkManagerTexts.LOG,
-                NetworkManagerTexts.STATS)).fitToLabels(14).setOnSelect(this::selectTab));
+                NetworkManagerTexts.STATS, NetworkServicesTexts.TAB)).fitToLabels(14).setOnSelect(this::selectTab));
+        services = new NetworkServicesView(host);
+        root.add(services.component());
         loadingLabel = root.add(new Label(GameText.resolve(NetworkManagerTexts.LOADING), Label.Tone.DIM));
         netLabel = root.add(new Label(this::networkText, Label.Tone.DIM));
 
@@ -283,6 +294,57 @@ public final class NetworkManagerApp implements IDesktopApp {
         }
     }
 
+    /** Routes what the Services tab shows to the open window. */
+    public static void acceptServices(final NetworkServicesPayload payload) {
+        if (active != null) {
+            active.services.accept(payload);
+        }
+    }
+
+    /** Whether the Services tab has heard from the Mainframe; for tests. */
+    public boolean servicesReady() {
+        return services.hasState();
+    }
+
+    /** The state of the engine on the Services tab's card, one of {@link NetworkServicesPayload}'s; for tests. */
+    public byte servicesEngineState() {
+        return services.engineState();
+    }
+
+    /** The step a replacement of the engine is on, or {@code null}; for tests. */
+    @Nullable
+    public EngineSwap.Step servicesReplacementStep() {
+        return services.replacementStep();
+    }
+
+    public boolean servicesChooserOpen() {
+        return services.chooserOpen();
+    }
+
+    public boolean servicesProgressOpen() {
+        return services.progressOpen();
+    }
+
+    /** The centre of the Services tab, where a test clicks to show it. */
+    public int[] servicesTabPoint() {
+        return tabs.tabCenter(TAB_SERVICES);
+    }
+
+    /** The centre of one of the card's buttons ({@code stop}, {@code start}, {@code replace}); for tests. */
+    public int[] servicesButtonPoint(final String which) {
+        return services.buttonPoint(which);
+    }
+
+    /** The centre of the dialog's line for an engine, by its package; for tests. */
+    public int[] servicesOptionPoint(final String program) {
+        return services.optionPoint(program);
+    }
+
+    /** The centre of the dialog's Replace or Start button; for tests. */
+    public int[] servicesConfirmPoint() {
+        return services.confirmPoint();
+    }
+
     /** Routes the live in-flight Operations (and craft-slot capacity) to the open window. */
     public static void acceptActiveOps(final List<OperationRecord> ops, final int slotsUsed, final int slotsTotal) {
         if (active != null) {
@@ -333,17 +395,17 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     @Override
     public int defaultWidth() {
-        return 300;
+        return NetworkServicesLayout.DEFAULT_W;
     }
 
     @Override
     public int defaultHeight() {
-        return 196;
+        return NetworkServicesLayout.DEFAULT_H;
     }
 
     @Override
     public int minWidth() {
-        return 250;
+        return NetworkServicesLayout.MIN_W;
     }
 
     @Override
@@ -417,11 +479,15 @@ public final class NetworkManagerApp implements IDesktopApp {
     private void selectTab(final int target) {
         tab = target;
         detailPopup.close();
+        services.closeDialogs();
         if (target == TAB_PROCESSES || target == TAB_LOG) {
             requestOps();
         }
         if (target == TAB_STATS) {
             PacketDistributor.sendToServer(new RequestNetworkManagerPayload(host));
+        }
+        if (target == TAB_SERVICES) {
+            services.request();
         }
     }
 
@@ -448,6 +514,9 @@ public final class NetworkManagerApp implements IDesktopApp {
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
         g.fill(x, y, x + width, y + height, skin.windowBg());
         layout(x, y, width, height);
+        // The Services tab sits where every tab's content does: under the tabs and the network's line.
+        services.layout(x + 6, y + 34, width - NetworkServicesLayout.WINDOW_PAD, height - 38,
+                data != null && tab == TAB_SERVICES, skin, font);
         root.render(g, ctx);
         if (devList.visible()) {
             // Column separators, so each column reads as its own lane.
@@ -989,13 +1058,16 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     @Override
     public boolean modalActive() {
-        return detailPopup.isOpen();
+        return detailPopup.isOpen() || services.modalOpen();
     }
 
     @Override
     public void renderModal(final GuiGraphics g, final Font font, final int x, final int y,
                             final int width, final int height, final int mouseX, final int mouseY) {
         if (!detailPopup.isOpen()) {
+            if (services.modalOpen()) {
+                services.renderModal(g, new UiContext(skin, font, mouseX, mouseY, 0f), x, y, width, height);
+            }
             return;
         }
         detailPopup.renderIn(g, new UiContext(skin, font, mouseX, mouseY, 0f), x, y, width, height);
@@ -1057,8 +1129,9 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     @Override
     public void mouseClicked(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
-        if (detailPopup.isOpen()) {
-            detailPopup.mouseClicked(mouseX, mouseY, button);
+        final Popup dialog = openDialog();
+        if (dialog != null) {
+            dialog.mouseClicked(mouseX, mouseY, button);
             return;
         }
         root.mouseClicked(mouseX, mouseY, button);
@@ -1066,8 +1139,9 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     @Override
     public void mouseDragged(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
-        if (detailPopup.isOpen()) {
-            detailPopup.mouseDragged(mouseX, mouseY, button);
+        final Popup dialog = openDialog();
+        if (dialog != null) {
+            dialog.mouseDragged(mouseX, mouseY, button);
         } else {
             root.mouseDragged(mouseX, mouseY, button);
         }
@@ -1075,8 +1149,9 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     @Override
     public void mouseReleased(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
-        if (detailPopup.isOpen()) {
-            detailPopup.mouseReleased(mouseX, mouseY, button);
+        final Popup dialog = openDialog();
+        if (dialog != null) {
+            dialog.mouseReleased(mouseX, mouseY, button);
         } else {
             root.mouseReleased(mouseX, mouseY, button);
         }
@@ -1084,8 +1159,9 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     @Override
     public boolean mouseScrolled(final double delta) {
-        if (detailPopup.isOpen()) {
-            return detailPopup.mouseScrolled(lastMouseX, lastMouseY, delta);
+        final Popup dialog = openDialog();
+        if (dialog != null) {
+            return dialog.mouseScrolled(lastMouseX, lastMouseY, delta);
         }
         if (root.mouseScrolled(lastMouseX, lastMouseY, delta)) {
             return true;
@@ -1105,7 +1181,14 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
-        return detailPopup.isOpen() && detailPopup.keyPressed(key, scanCode, modifiers);
+        final Popup dialog = openDialog();
+        return dialog != null && dialog.keyPressed(key, scanCode, modifiers);
+    }
+
+    /** The dialog that takes the window's clicks and keys while it is open: an Operation's detail or a service's. */
+    @Nullable
+    private Popup openDialog() {
+        return detailPopup.isOpen() ? detailPopup : services.openDialog();
     }
 
     private static Colours colours() {

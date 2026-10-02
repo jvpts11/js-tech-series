@@ -233,6 +233,19 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - `install iqlengine` installs the engine the way every program is installed, from its disc at the Mainframe,
   written down with the system so the memory it holds is counted; it used to switch it on from any computer with no
   disc.
+- The Network Manager has a Services tab. At the top, the engine that plans the network's work: its state, the
+  Mainframe it runs on, its dialect, the memory it takes, how long it has been up, how many requests it planned
+  today, its indexes and what it can do, with Stop and Replace (Configure is there and does nothing yet). Under it,
+  the engines installed, the Subframes (one that runs another engine is marked "takes no work", and a note says what
+  would put it back to work) and the other services, the Automation Engine and the Mirror. With no engine running
+  the card says what still works and offers Start.
+- Replacing the engine asks first, saying where new requests will go, that the Operations in flight finish on their
+  plans, that scripts in the old maker's own statements may stop working, and which Subframes will take no work.
+  Then it takes time, more for a network holding more kinds of item (from two seconds up to two minutes), and the
+  window shows the steps with a bar; the network has no engine until the new one is up. A replacement under way is
+  written down with the Mainframe.
+- The Network Manager opens wider, so its seven tabs fit, and tabs that do not fit their strip give up some of
+  their padding instead of running off its end (J's Core).
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

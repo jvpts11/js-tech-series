@@ -57,7 +57,12 @@ public final class JsTests {
             JsCore.languages().register(new ToyLanguage());
             // A world's settings file in every format, where the settings tests can read and write them.
             TestSettings.register(modEventBus, modContainer);
-            // An engine another mod brings, so a Mainframe can be swapped onto one that is not the series' own.
+        }
+        if (GameTestHooks.isGametestServer() || Boolean.getBoolean("jsc.clienttests")) {
+            /*
+             * An engine another mod brings, so a Mainframe can be swapped onto one that is not the series' own: on
+             * the GameTest server, and in the client tests that replace an engine from the Network Manager.
+             */
             TestEngines.register(modEventBus);
         }
     }

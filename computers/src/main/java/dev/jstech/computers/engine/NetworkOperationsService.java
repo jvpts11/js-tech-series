@@ -87,7 +87,7 @@ public final class NetworkOperationsService {
                                        final String label, @Nullable final Set<NodeUuid> from) {
         final INetworkEngine engine = engine();
         if (engine != null) {
-            return engine.pull(core, key, demand, to, label, from);
+            return planned(engine.pull(core, key, demand, to, label, from));
         }
         return from == null ? core.submitNetworkSelect(key, demand, to, label)
                 : core.submitNetworkSelect(key, demand, to, label, from);
@@ -97,7 +97,8 @@ public final class NetworkOperationsService {
     @Nullable
     public NetworkInsertOperation push(final StorageKey key, final long amount, final String label) {
         final INetworkEngine engine = engine();
-        return engine != null ? engine.push(core, key, amount, label) : core.submitNetworkInsert(key, amount, label);
+        return engine != null ? planned(engine.push(core, key, amount, label))
+                : core.submitNetworkInsert(key, amount, label);
     }
 
     /** Moves {@code demand} of {@code key} from the servers in {@code from} into {@code to}. */
@@ -105,7 +106,7 @@ public final class NetworkOperationsService {
     public NetworkSelectOperation move(final StorageKey key, final long demand, final IDataSink to,
                                        final String label, final Set<NodeUuid> from) {
         final INetworkEngine engine = engine();
-        return engine != null ? engine.move(core, key, demand, to, label, from)
+        return engine != null ? planned(engine.move(core, key, demand, to, label, from))
                 : core.submitNetworkMove(key, demand, to, label, from);
     }
 
@@ -114,7 +115,7 @@ public final class NetworkOperationsService {
     public NetworkSelectOperation export(final StorageKey key, final long demand, final IDataSink to,
                                          final String label) {
         final INetworkEngine engine = engine();
-        return engine != null ? engine.export(core, key, demand, to, label)
+        return engine != null ? planned(engine.export(core, key, demand, to, label))
                 : core.submitNetworkDelete(key, demand, to, label);
     }
 
@@ -123,7 +124,7 @@ public final class NetworkOperationsService {
     public NetworkSelectOperation fill(final StorageKey key, final long demand, final IDataSink to,
                                        final String label) {
         final INetworkEngine engine = engine();
-        return engine != null ? engine.fill(core, key, demand, to, label)
+        return engine != null ? planned(engine.fill(core, key, demand, to, label))
                 : core.submitNetworkSelect(key, demand, to, label);
     }
 
@@ -131,7 +132,7 @@ public final class NetworkOperationsService {
     @Nullable
     public INetworkOperation craft(final CraftRequest request) {
         final INetworkEngine engine = engine();
-        return engine == null ? null : engine.craft(core, request);
+        return engine == null ? null : planned(engine.craft(core, request));
     }
 
     /** Runs one machine recipe; refused when no engine is running. */
@@ -139,7 +140,7 @@ public final class NetworkOperationsService {
     public NetworkProcessingOperation process(final ProcessingPattern pattern, final long demand,
                                               final String label) {
         final INetworkEngine engine = engine();
-        return engine == null ? null : engine.process(core, pattern, demand, label);
+        return engine == null ? null : planned(engine.process(core, pattern, demand, label));
     }
 
     /** Runs one multi-stage recipe; refused when no engine is running. */
@@ -147,7 +148,7 @@ public final class NetworkOperationsService {
     public NetworkMultiStageOperation pipeline(final MultiStagePattern pattern, final long demand,
                                                final String label) {
         final INetworkEngine engine = engine();
-        return engine == null ? null : engine.pipeline(core, pattern, demand, label);
+        return engine == null ? null : planned(engine.pipeline(core, pattern, demand, label));
     }
 
     /** How the running engine plans a craft before anything is made, or {@code null} when no engine is running. */
@@ -163,6 +164,16 @@ public final class NetworkOperationsService {
         if (engine == null) {
             return new IqlEngine.Outcome(false, UNAVAILABLE.text(), List.of());
         }
+        core.notePlanned();
         return engine.query(core, caller, statement, rowLimit);
+    }
+
+    /** Counts a request the engine took on, for the plans the network's services show for today. */
+    @Nullable
+    private <T> T planned(@Nullable final T operation) {
+        if (operation != null) {
+            core.notePlanned();
+        }
+        return operation;
     }
 }
