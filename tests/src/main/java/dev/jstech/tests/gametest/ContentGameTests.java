@@ -7,7 +7,16 @@
  */
 package dev.jstech.tests.gametest;
 
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.block.IComputerCase;
+import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.item.CabinetBlockItem;
+import dev.jstech.computers.item.CpuItem;
+import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.item.IExpansionCardItem;
+import dev.jstech.computers.item.MotherboardItem;
+import dev.jstech.computers.item.PsuItem;
+import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.os.OsBootstrap;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.core.content.BlockEntry;
@@ -21,6 +30,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -58,6 +68,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 public final class ContentGameTests {
 
     private static final String ARENA = "empty";
+    /** The board forms the small computers' cases hold. */
+    private static final Set<FormFactor> SMALL_BOARDS = EnumSet.of(FormFactor.BABY_AT, FormFactor.AT, FormFactor.ATX,
+            FormFactor.EATX);
 
     private ContentGameTests() {
     }
@@ -278,6 +291,36 @@ public final class ContentGameTests {
         report(helper, wrong, "GeckoLib looks without their files");
     }
 
+    /**
+     * Every part a small computer takes is drawn inside it by a model of its own, and every case has the cooler it
+     * sets on the processor.
+     */
+    @GameTest(template = ARENA)
+    public static void installableParts_haveTheModelsTheComputersDrawThemBy(final GameTestHelper helper) {
+        final List<String> wrong = new ArrayList<>();
+        int parts = 0;
+        for (final Item item : BuiltInRegistries.ITEM) {
+            final ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
+            if (!JsComputers.MODID.equals(id.getNamespace()) || !installable(item)) {
+                continue;
+            }
+            parts++;
+            partFiles(id.getPath()).stream().filter(file -> !exists(file))
+                    .forEach(file -> wrong.add(id + " has no " + file));
+        }
+        for (final Block block : BuiltInRegistries.BLOCK) {
+            if (block instanceof IComputerCase chassis) {
+                partFiles("cooler_" + chassis.caseStyle().caseName(chassis.chassisEra())).stream()
+                        .filter(file -> !exists(file))
+                        .forEach(file -> wrong.add(BuiltInRegistries.BLOCK.getKey(block) + " has no " + file));
+            }
+        }
+        if (parts == 0) {
+            wrong.add("no item goes into a small computer");
+        }
+        report(helper, wrong, "parts the computers cannot draw");
+    }
+
     /** Every program says what it does, in the language file, where its install disc and the lists show it. */
     @GameTest(template = ARENA)
     public static void programs_sayWhatTheyDo(final GameTestHelper helper) {
@@ -311,6 +354,24 @@ public final class ContentGameTests {
     private static List<ResourceLocation> filesOf(final GeoLook<?> look, final BlockEntity made) {
         final GeoLook<Object> family = (GeoLook<Object>) look;
         return List.of(family.modelOf(made), family.textureOf(made), family.animationFile());
+    }
+
+    /**
+     * Whether a small computer takes the item and draws it: a board of the forms its cases hold, or any other part. A
+     * board for two processors is a server's, drawn on its own, and has no place in a small case yet.
+     */
+    private static boolean installable(final Item item) {
+        if (item instanceof MotherboardItem board) {
+            return SMALL_BOARDS.contains(board.spec().formFactor()) && board.spec().cpuSlots() == 1;
+        }
+        return item instanceof CpuItem || item instanceof RamItem || item instanceof IExpansionCardItem
+                || item instanceof PsuItem || item instanceof DiskItem;
+    }
+
+    /** The model a part is drawn by inside a computer, and its atlas. */
+    private static List<ResourceLocation> partFiles(final String part) {
+        return List.of(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "geo/part/" + part + ".geo.json"),
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/block/part/" + part + ".png"));
     }
 
     /** Whether a file of a mod's assets is there. */

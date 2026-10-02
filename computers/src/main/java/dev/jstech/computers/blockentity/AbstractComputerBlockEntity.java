@@ -168,6 +168,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         }, (tag, registries) -> {
             hardware.load(tag, registries, hardwareNbtKey());
             hardware.markDirty();
+            partsChanged();
         })).save();
         fields().part("Power", IFieldPart.of((tag, registries) -> power.save(tag),
                 (tag, registries) -> power.load(tag))).save();
@@ -191,6 +192,11 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         power.hardwareChanged(buildValid());
         setChanged();
         HardwareMilestones.report(this);
+        partsChanged();
+    }
+
+    /** The parts in the machine have changed or been read from the save: a machine that shows them updates its look. */
+    protected void partsChanged() {
     }
 
     // Hardware assembly

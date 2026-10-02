@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
@@ -19,8 +20,14 @@ import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -32,7 +39,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * A small computer's left side, the panel that comes off: it comes on, sneaking and using the case with an empty hand
  * takes it off and puts it back, so does the button on each machine's assembly screen, and it stays as it was left
- * through a save and on every player's screen.
+ * through a save and on every player's screen. And what is behind it: the parts in the machine, which every player
+ * who sees it is told of.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -41,6 +49,7 @@ public final class ComputerCaseGameTests {
     private static final String ARENA = "empty";
     private static final BlockPos WHERE = new BlockPos(2, 2, 2);
     private static final String SIDE_OFF = "SidePanelOff";
+    private static final String INSTALLED = "Installed";
 
     private ComputerCaseGameTests() {
     }
@@ -107,6 +116,42 @@ public final class ComputerCaseGameTests {
                     "the screen's button takes the side off the " + computer.getBlockState().getBlock());
         }
         helper.succeed();
+    }
+
+    /**
+     * The players who see a computer are told which item is in each of its slots, so they see each part inside it:
+     * as it goes in, as it comes out, and when the machine is read from the save before anything changes.
+     */
+    @GameTest(template = ARENA)
+    public static void installedParts_areToldToThePlayersWhoSeeTheMachine(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = place(helper, WHERE, ComputingModule.PERSONAL_COMPUTER.get(),
+                PersonalComputerBlockEntity.class);
+        final HolderLookup.Provider registries = helper.getLevel().registryAccess();
+        final Item board = HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get();
+        final Item cpu = HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get();
+        pc.getHardware().setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT, new ItemStack(board));
+        pc.getHardware().setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT, new ItemStack(cpu));
+
+        helper.assertValueEqual(pc.installedPart(PersonalComputerBlockEntity.CPU_SLOT), id(cpu), "the processor");
+        helper.assertTrue(pc.installedPart(PersonalComputerBlockEntity.PSU_SLOT) == null, "an empty slot holds none");
+        final ListTag told = pc.getUpdateTag(registries).getList(INSTALLED, Tag.TAG_STRING);
+        helper.assertValueEqual(told.size(), PersonalComputerBlockEntity.HARDWARE_SLOTS, "the slots the client hears");
+        helper.assertValueEqual(told.getString(PersonalComputerBlockEntity.MOTHERBOARD_SLOT), id(board).toString(),
+                "the board the client hears");
+
+        pc.getHardware().setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT, ItemStack.EMPTY);
+        helper.assertTrue(pc.installedPart(PersonalComputerBlockEntity.CPU_SLOT) == null,
+                "a part taken out is gone from what the client hears");
+        final PersonalComputerBlockEntity loaded = new PersonalComputerBlockEntity(pc.getBlockPos(),
+                pc.getBlockState());
+        loaded.loadWithComponents(pc.saveWithFullMetadata(registries), registries);
+        helper.assertValueEqual(loaded.installedPart(PersonalComputerBlockEntity.MOTHERBOARD_SLOT), id(board),
+                "the board of a machine read from the save");
+        helper.succeed();
+    }
+
+    private static ResourceLocation id(final Item item) {
+        return BuiltInRegistries.ITEM.getKey(item);
     }
 
     private static <T extends AbstractSmallComputerBlockEntity> T place(final GameTestHelper helper,
