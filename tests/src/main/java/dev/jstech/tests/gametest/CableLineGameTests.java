@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.MainframeBlock;
+import dev.jstech.computers.block.OpticalPort;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.Lane;
@@ -100,13 +101,16 @@ public final class CableLineGameTests {
         helper.succeed();
     }
 
-    /** A machine takes its era's cable and every earlier one's, never a later one's. */
+    /**
+     * A machine takes its era's cable and every earlier one's, never a later one's. Each is asked as if it held an
+     * Optical Network Card, which the fibre needs on top of the era.
+     */
     @GameTest(template = ARENA)
     public static void ports_takeTheirErasCableAndEveryEarlierOne(final GameTestHelper helper) {
         final BlockPos at = new BlockPos(2, 2, 2);
         for (int machine = 0; machine < MAINFRAMES.size(); machine++) {
             helper.setBlock(at, MAINFRAMES.get(machine).get());
-            final BlockState state = helper.getBlockState(at);
+            final BlockState state = helper.getBlockState(at).setValue(OpticalPort.OPTICAL, true);
             final IFaceConnector ports = (IFaceConnector) state.getBlock();
             for (int cable = 0; cable < BACKBONES.size(); cable++) {
                 final boolean takes = ports.accepts(state, Direction.EAST, BACKBONES.get(cable).get().line());

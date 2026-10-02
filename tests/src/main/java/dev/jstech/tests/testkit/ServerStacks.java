@@ -15,6 +15,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Rack computers built and ready to seat, for tests that need a working machine rather than the assembly that makes
@@ -63,7 +64,16 @@ public final class ServerStacks {
         return stack;
     }
 
+    /** The default server with an Optical Network Card in its first card slot, which puts its cabinet on the fibre. */
+    public static ItemStack opticalServer() {
+        return built(ComputingModule.SERVER.get(), true, ComputingModule.OPTICAL_NETWORK_CARD.get());
+    }
+
     private static ItemStack built(final Item machine, final boolean withCpu, final boolean withPhi) {
+        return built(machine, withCpu, withPhi ? ComputingModule.PHI_5100.get() : null);
+    }
+
+    private static ItemStack built(final Item machine, final boolean withCpu, @Nullable final Item card) {
         final ItemStack stack = new ItemStack(machine);
         final NonNullList<ItemStack> hardware = NonNullList.withSize(ServerHardwareHandler.SLOTS, ItemStack.EMPTY);
         hardware.set(ServerHardwareHandler.MOBO, new ItemStack(ComputingModule.MOTHERBOARD_EEB_S_2011.get()));
@@ -71,8 +81,8 @@ public final class ServerStacks {
             hardware.set(ServerHardwareHandler.CPU_START, new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
         }
         hardware.set(ServerHardwareHandler.RAM_START, new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-        if (withPhi) {
-            hardware.set(ServerHardwareHandler.GPU_START, new ItemStack(ComputingModule.PHI_5100.get()));
+        if (card != null) {
+            hardware.set(ServerHardwareHandler.GPU_START, new ItemStack(card));
         }
         hardware.set(ServerHardwareHandler.PSU, new ItemStack(ComputingModule.PSU_650G.get()));
         stack.set(ComputingComponents.SERVER_HARDWARE.get(), ItemContainerContents.fromItems(hardware));

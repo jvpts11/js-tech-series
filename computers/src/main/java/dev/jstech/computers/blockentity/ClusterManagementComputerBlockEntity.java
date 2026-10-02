@@ -9,6 +9,7 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.ClusterManagementComputerBlock;
+import dev.jstech.computers.block.OpticalPort;
 import dev.jstech.computers.datacenter.DatacenterSection;
 import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
 import dev.jstech.computers.hardware.ComputerBuild;
@@ -145,6 +146,15 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
     @Override
     protected void unregisterNode(final NetworkSystem system, final NetworkUuid network) {
         system.unregisterPersonalComputer(network, nodeUuid());
+    }
+
+    /* An Optical Network Card put in or taken out opens or closes the machine's fibre port. */
+    @Override
+    protected void partsChanged() {
+        super.partsChanged();
+        if (level != null && !level.isClientSide()) {
+            OpticalPort.set(level, List.of(worldPosition), OpticalPort.holdsCard(currentBuild()));
+        }
     }
 
     // the card

@@ -10,10 +10,11 @@ package dev.jstech.computers.hardware;
 /**
  * What every PCIe expansion card exposes to a {@link ComputerBuild}, regardless of what the card does: the bus generation it needs (to check it fits the board), its power draw, and its {@link ExpansionCardKind}.
  *
- * <p>The card kinds are a closed set, so this is sealed to exactly the three concrete specs. That lets callers rely on {@link #kind()} being exhaustive and keeps a stray external implementation from claiming a slot.
+ * <p>The card kinds are a closed set, so this is sealed to exactly the concrete specs, one for each kind of card. That lets callers rely on {@link #kind()} being exhaustive and keeps a stray external implementation from claiming a slot.
  */
 public sealed interface IExpansionCardSpec
-        permits GpuSpec, CraftingCardSpec, PhiCoprocessorSpec, ClusterInterfaceCardSpec, SoundCardSpec {
+        permits GpuSpec, CraftingCardSpec, PhiCoprocessorSpec, ClusterInterfaceCardSpec, SoundCardSpec,
+        NetworkCardSpec {
 
     PcieGeneration bus();
 

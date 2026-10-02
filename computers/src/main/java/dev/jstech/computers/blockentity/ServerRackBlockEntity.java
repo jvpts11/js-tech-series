@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.block.DataWires;
+import dev.jstech.computers.block.OpticalPort;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRackPartBlock;
 import dev.jstech.computers.block.ServerRackStructure;
@@ -391,6 +392,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             setChanged();
             updateBayVisuals();
             syncDisplayEra(); // a swapped machine can be of another era than the one it replaced
+            updateOpticalPort();
         }
     };
 
@@ -709,6 +711,18 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             setChanged();
         }
     };
+
+    /* An Optical Network Card in any server seated here opens the cabinet's fibre port; the last one out shuts it. */
+    private void updateOpticalPort() {
+        if (level == null || level.isClientSide() || !(getBlockState().getBlock() instanceof ServerRackBlock block)) {
+            return;
+        }
+        boolean optical = false;
+        for (int slot = 0; slot < servers.getSlots() && !optical; slot++) {
+            optical = OpticalPort.holdsCard(ServerItem.build(servers.getStackInSlot(slot)));
+        }
+        block.setOptical(level, worldPosition, optical);
+    }
 
     private void updateBayVisuals() {
         if (!(level instanceof ServerLevel serverLevel)) {

@@ -15,6 +15,7 @@ import dev.jstech.computers.menu.MainframeMenu;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
 import dev.jstech.core.multiblock.IMultiblockGeometry;
 import dev.jstech.core.multiblock.MultiblockPatternGeometry;
+import dev.jstech.core.connect.Connection;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.id.StableCodecs;
@@ -44,6 +45,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -55,8 +57,8 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
 
     private final HardwareEra era;
     /*
-     * The Mainframe sits on the backbone, on any face, its era's cable and every earlier one's; it never takes the
-     * access line directly (a router joins that).
+     * The Mainframe sits on the backbone, on any face, its era's cable and every earlier one's, the fibre only with an
+     * Optical Network Card; it never takes the access line directly (a router joins that).
      */
     private final FacePorts ports;
 
@@ -69,7 +71,8 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
         super(properties);
         this.era = era;
         this.ports = FacePorts.everyFace(DataLines.upTo(era, DataLine.BACKBONE));
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH)
+                .setValue(OpticalPort.OPTICAL, false));
     }
 
     @Override
@@ -101,8 +104,24 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
     }
 
     @Override
+    public boolean accepts(final BlockState state, final Direction face, final Connection offered) {
+        return IFaceConnector.super.accepts(state, face, offered) && OpticalPort.admits(state, offered);
+    }
+
+    @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, OpticalPort.OPTICAL);
+    }
+
+    /** Says on the Mainframe and every part of it whether it holds an Optical Network Card. */
+    public void setOptical(final Level level, final BlockPos controller, final boolean optical) {
+        final BlockState state = level.getBlockState(controller);
+        if (!(state.getBlock() instanceof MainframeBlock)) {
+            return;
+        }
+        final List<BlockPos> blocks = new ArrayList<>(geometry().partPositions(controller, state.getValue(FACING)));
+        blocks.add(controller);
+        OpticalPort.set(level, blocks, optical);
     }
 
     @Override
@@ -132,7 +151,9 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
                 .setValue(FACING, facing)
                 .setValue(MainframePartBlock.CORE,
                         MainframeStructure.isCentralColumn(controller, facing, part))
-                .setValue(MainframePartBlock.ERA, era.level());
+                .setValue(MainframePartBlock.ERA, era.level())
+                .setValue(OpticalPort.OPTICAL, controllerState.hasProperty(OpticalPort.OPTICAL)
+                        && controllerState.getValue(OpticalPort.OPTICAL));
     }
 
     @Override

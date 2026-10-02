@@ -12,6 +12,7 @@ import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.MainframeStructure;
+import dev.jstech.computers.block.OpticalPort;
 import dev.jstech.computers.crafting.CraftPlanner;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.ICraftIo;
@@ -519,6 +520,15 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     @Override
     public Set<Long> networkCables(final ServerLevel level) {
         return networking.adjacentCables(level);
+    }
+
+    /* An Optical Network Card put in or taken out opens or closes the cabinet's fibre port. */
+    @Override
+    protected void partsChanged() {
+        super.partsChanged();
+        if (level != null && !level.isClientSide() && getBlockState().getBlock() instanceof MainframeBlock block) {
+            block.setOptical(level, worldPosition, OpticalPort.holdsCard(currentBuild()));
+        }
     }
 
     // Operation dispatch (the virtual-thread runtime)

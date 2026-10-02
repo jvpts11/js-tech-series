@@ -82,7 +82,8 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
                 .setValue(FRONT, false)
                 .setValue(COMPUTE, false)
                 .setValue(FACING, Direction.NORTH)
-                .setValue(ServerRackBlock.BAYS, 0));
+                .setValue(ServerRackBlock.BAYS, 0)
+                .setValue(OpticalPort.OPTICAL, false));
     }
 
     /** A part is collision and a link back to the controller; the cabinet model is drawn from there. */
@@ -105,17 +106,18 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
      * A compute cabinet is on the high-compute fabric only; a server cabinet takes every data tier but that one, and
      * both only through the cabinet's back, where the cabinet links its cables. The cable's rendered nub and the
      * cabinet's own link follow this same rule, so a data cable on a supercomputer cabinet neither shows a
-     * connection nor makes one.
+     * connection nor makes one. The fibre only when a server in the cabinet holds an Optical Network Card.
      */
     @Override
     public boolean accepts(final BlockState state, final Direction face, final Connection offered) {
         return IFaceConnector.super.accepts(state, face, offered)
-                && state.getValue(COMPUTE) == (DataLines.of(offered.line()) == DataLine.HPC);
+                && state.getValue(COMPUTE) == (DataLines.of(offered.line()) == DataLine.HPC)
+                && OpticalPort.admits(state, offered);
     }
 
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(TOP, FRONT, COMPUTE, FACING, ServerRackBlock.BAYS);
+        builder.add(TOP, FRONT, COMPUTE, FACING, ServerRackBlock.BAYS, OpticalPort.OPTICAL);
     }
 
     @Override

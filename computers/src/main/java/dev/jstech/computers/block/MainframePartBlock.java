@@ -12,6 +12,7 @@ import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.MainframePartBlockEntity;
 import dev.jstech.computers.menu.MainframeMenu;
+import dev.jstech.core.connect.Connection;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
@@ -81,7 +82,8 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
         registerDefaultState(stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
                 .setValue(CORE, false)
-                .setValue(ERA, HardwareEra.STANDARD.level()));
+                .setValue(ERA, HardwareEra.STANDARD.level())
+                .setValue(OpticalPort.OPTICAL, false));
     }
 
     @Override
@@ -95,9 +97,15 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
         return PORTS;
     }
 
+    /* The fibre only when the Mainframe holds an Optical Network Card, which its controller stamps on every part. */
+    @Override
+    public boolean accepts(final BlockState state, final Direction face, final Connection offered) {
+        return IFaceConnector.super.accepts(state, face, offered) && OpticalPort.admits(state, offered);
+    }
+
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, CORE, ERA);
+        builder.add(FACING, CORE, ERA, OpticalPort.OPTICAL);
     }
 
     @Override

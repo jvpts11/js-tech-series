@@ -74,6 +74,7 @@ import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.hardware.Microarchitectures;
 import dev.jstech.computers.hardware.MotherboardSpec;
+import dev.jstech.computers.hardware.NetworkCardSpec;
 import dev.jstech.computers.hardware.PcieGeneration;
 import dev.jstech.computers.hardware.PhiCoprocessorSpec;
 import dev.jstech.computers.hardware.PsuSpec;
@@ -88,6 +89,7 @@ import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.GpuItem;
 import dev.jstech.computers.item.MainframeBlockItem;
 import dev.jstech.computers.item.MotherboardItem;
+import dev.jstech.computers.item.NetworkCardItem;
 import dev.jstech.computers.item.PhiCoprocessorItem;
 import dev.jstech.computers.item.PsuItem;
 import dev.jstech.computers.item.RackGadgetItem;
@@ -731,6 +733,11 @@ public final class ComputingModule {
             properties -> new ClusterInterfaceCardItem(properties, new ClusterInterfaceCardSpec(HardwareEra.ADVANCED,
                     IndustrialTier.T5, PcieGeneration.PCIE_4_0, ClusterInterfaceCardSpec.Reach.ALL, 8, 75)))
             .named("Fabric DPU").register();
+    /* The fibre backbone's adapter: a Mainframe, a rack (in any of its servers) or a CMC takes the fibre with one. */
+    public static final ItemEntry<NetworkCardItem> OPTICAL_NETWORK_CARD = part("optical_network_card",
+            properties -> new NetworkCardItem(properties, new NetworkCardSpec(HardwareEra.STANDARD,
+                    PcieGeneration.PCIE_3_0, 15)))
+            .named("Optical Network Card").register();
     public static final ItemEntry<PhiCoprocessorItem> PHI_5100 =
             phi("phi_5100", new PhiCoprocessorSpec(IndustrialTier.T3, 2, 60, 1050, 225))
                     .named("Integra Phi 5100 Co-processor").register();

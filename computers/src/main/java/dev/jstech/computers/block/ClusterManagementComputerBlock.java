@@ -12,6 +12,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.menu.ClusterManagementComputerMenu;
+import dev.jstech.core.connect.Connection;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
 import dev.jstech.core.connect.IFaceConnector;
@@ -59,7 +60,8 @@ public class ClusterManagementComputerBlock extends HorizontalDirectionalBlock
     private final CaseStyle caseStyle;
     /*
      * A management machine lives on the network, on its back: its era's access line through a router, or the
-     * backbone directly. Never the compute fabric; the racks are reached over the network.
+     * backbone directly, the fibre only with an Optical Network Card. Never the compute fabric; the racks are reached
+     * over the network.
      */
     private final FacePorts ports;
 
@@ -77,7 +79,8 @@ public class ClusterManagementComputerBlock extends HorizontalDirectionalBlock
         this.ports = FacePorts.builder()
                 .port(FaceRule.BACK, DataLines.upTo(era, DataLine.ACCESS, DataLine.BACKBONE))
                 .build();
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH)
+                .setValue(OpticalPort.OPTICAL, false));
     }
 
     public HardwareEra era() {
@@ -121,8 +124,13 @@ public class ClusterManagementComputerBlock extends HorizontalDirectionalBlock
     }
 
     @Override
+    public boolean accepts(final BlockState state, final Direction face, final Connection offered) {
+        return IFaceConnector.super.accepts(state, face, offered) && OpticalPort.admits(state, offered);
+    }
+
+    @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, OpticalPort.OPTICAL);
     }
 
     @Override

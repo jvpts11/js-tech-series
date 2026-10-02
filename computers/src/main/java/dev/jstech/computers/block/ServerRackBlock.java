@@ -20,6 +20,7 @@ import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
 import dev.jstech.core.multiblock.IMultiblockGeometry;
 import dev.jstech.core.multiblock.MultiblockPatternGeometry;
+import dev.jstech.core.connect.Connection;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
 import dev.jstech.core.connect.IFaceConnector;
@@ -60,6 +61,7 @@ import net.minecraft.world.phys.HitResult;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -93,7 +95,8 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
         this.ports = FacePorts.builder()
                 .port(FaceRule.BACK, DataLines.upTo(era, DataLine.BACKBONE))
                 .build();
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(BAYS, 0));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(BAYS, 0)
+                .setValue(OpticalPort.OPTICAL, false));
     }
 
     @Override
@@ -133,9 +136,26 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
         return ports;
     }
 
+    /* The fibre only when a server seated in the cabinet holds an Optical Network Card. */
+    @Override
+    public boolean accepts(final BlockState state, final Direction face, final Connection offered) {
+        return IFaceConnector.super.accepts(state, face, offered) && OpticalPort.admits(state, offered);
+    }
+
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, BAYS);
+        builder.add(FACING, BAYS, OpticalPort.OPTICAL);
+    }
+
+    /** Says on the cabinet and every part of it whether a server seated in it holds an Optical Network Card. */
+    public void setOptical(final Level level, final BlockPos controller, final boolean optical) {
+        final BlockState state = level.getBlockState(controller);
+        if (!(state.getBlock() instanceof ServerRackBlock)) {
+            return;
+        }
+        final List<BlockPos> blocks = new ArrayList<>(geometry().partPositions(controller, state.getValue(FACING)));
+        blocks.add(controller);
+        OpticalPort.set(level, blocks, optical);
     }
 
     @Override
@@ -162,7 +182,9 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
                 .setValue(ServerRackPartBlock.COMPUTE,
                         rackType() == RackChassis.RackType.SUPERCOMPUTER)
                 .setValue(ServerRackPartBlock.FRONT,
-                        ServerRackStructure.isFrontBayBlock(controller, facing, part));
+                        ServerRackStructure.isFrontBayBlock(controller, facing, part))
+                .setValue(OpticalPort.OPTICAL, controllerState.hasProperty(OpticalPort.OPTICAL)
+                        && controllerState.getValue(OpticalPort.OPTICAL));
     }
 
     @Override

@@ -22,5 +22,8 @@ public enum ExpansionCardKind {
     CLUSTER_INTERFACE,
 
     /** A sound card: what a Vintage or Legacy computer plays its sound through, beyond the beeps of its case. */
-    SOUND
+    SOUND,
+
+    /** A network adapter: the Optical Network Card, what lets a machine on the backbone take the fibre. */
+    NETWORK
 }

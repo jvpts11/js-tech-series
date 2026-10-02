@@ -280,6 +280,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - An HBW Interface finds its nodes along any high compute cable of its era or an earlier one, in each Supercomputer
   Rack that takes that cable: the Transition's InfiniBand reaches the Standard's racks, and the OSFP only the
   Advanced's.
+- The Optical Network Card, from the Standard. The backbone's fibre enters a Mainframe, a Server Rack or a Cluster
+  Management Computer only while the machine holds one, a rack when any server seated in it does; without one the
+  machine takes the copper of its backbone alone. It fits a PCIe slot and is drawn inside the computers that seat it.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The
