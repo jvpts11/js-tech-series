@@ -882,6 +882,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The unused hook for the Modonomicon guidebook: the series' manuals will be drawn by J's Core itself.
 
 ### Fixed
+- A run of pipes whose pipes stand no temperature in common carries nothing. It used to carry a fluid at exactly
+  the coldest temperature of the warmer pipe, which the colder pipe does not stand: a pipe made for 100 to 200 K
+  joined to one made for 300 to 400 K let water at 300 K through.
 - A program in front of a machine's own prompt, on a machine with no desktop, reads what is typed there: the line
   went to the shell as a command instead, so such a program could never be answered.
 - An array in Σ and Σ# answers to `Length`, the number of places it has, which Σ's own advice for `foreach` told

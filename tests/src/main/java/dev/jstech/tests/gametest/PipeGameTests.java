@@ -19,6 +19,7 @@ import dev.jstech.tests.TestFluids;
 import dev.jstech.tests.testkit.TestCables;
 import java.util.List;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -36,7 +37,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * Pipes of the Core's fluid grid: a run moves what its slowest pipe carries in a tick from an output into an input,
  * leaves where it is a fluid it is not made for (a gas, a corrosive, one hotter than it stands), carries them when it
- * is made for them, and fills a tank.
+ * is made for them, and fills a tank; a run of pipes with no temperature in common carries nothing.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -65,6 +66,23 @@ public final class PipeGameTests {
             helper.assertTrue(input.getFluid().is(Fluids.WATER) && input.getFluidAmount() > 0, "water arrives");
             helper.assertTrue(output.getFluidAmount() + input.getFluidAmount() == 10_000, "and none is lost");
         });
+    }
+
+    /**
+     * A pipe that stands 100 to 200 K and one that stands 300 to 400 K have no temperature in common, so a run of the
+     * two carries nothing: water at 300 K, which the second stands on its own, does not pass them both.
+     */
+    @GameTest(template = ARENA)
+    public static void and_ofPipesWithNoTemperatureInCommon_carriesNothing(final GameTestHelper helper) {
+        final int water = Fluids.WATER.getFluidType().getTemperature();
+        final PipeLimits cold = new PipeLimits(water - 200, water - 100, Set.of());
+        final PipeLimits hot = new PipeLimits(water, water + 100, Set.of());
+        helper.assertTrue(hot.carries(Fluids.WATER), "the hot pipe alone carries water at " + water + " K");
+        helper.assertFalse(cold.and(hot).carries(Fluids.WATER), "a run of both does not");
+        helper.assertFalse(hot.and(cold).carries(Fluids.WATER), "whichever way round it is joined");
+        helper.assertTrue(new PipeLimits(water - 200, water + 50, Set.of()).and(hot).carries(Fluids.WATER),
+                "while pipes whose temperatures meet carry what both stand");
+        helper.succeed();
     }
 
     @GameTest(template = ARENA, timeoutTicks = 100)
