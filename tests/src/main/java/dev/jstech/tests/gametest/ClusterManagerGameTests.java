@@ -37,6 +37,7 @@ import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
@@ -50,6 +51,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -150,9 +152,16 @@ public final class ClusterManagerGameTests {
 
     /** A supercomputer on the backbone with two nodes seated (rows 0 and 2), each with a drive to install to. */
     private static ServerRackBlockEntity placeSupercomputer(final GameTestHelper helper) {
-        helper.setBlock(HUB, ComputingModule.HBW_INTERFACE.get());
-        TestCables.lay(helper, FABRIC, ComputingModule.HPC_CABLE);
-        helper.setBlock(NODE_RACK, ComputingModule.SUPERCOMPUTER_RACK.get());
+        return placeSupercomputer(helper, ComputingModule.HBW_INTERFACE.get(), ComputingModule.HPC_CABLE,
+                ComputingModule.SUPERCOMPUTER_RACK.get());
+    }
+
+    /** The same, of the interface, the fabric cable and the cabinet given. */
+    private static ServerRackBlockEntity placeSupercomputer(final GameTestHelper helper, final Block hub,
+                                                            final CableEntry fabric, final Block cabinet) {
+        helper.setBlock(HUB, hub);
+        TestCables.lay(helper, FABRIC, fabric);
+        helper.setBlock(NODE_RACK, cabinet);
         final ServerRackBlockEntity rack = rackAt(helper, NODE_RACK);
         for (final int row : new int[] {0, 2}) {
             rack.getServers().setStackInSlot(row, ServerStacks.defaultSupercomputerNode());
@@ -331,6 +340,26 @@ public final class ClusterManagerGameTests {
                     helper.assertTrue(manager.datacenterSections().isEmpty(), "no router, no sections");
                     helper.assertTrue(manager.medium(MediaKind.OS_INSTALL) == null,
                             "no linked reader means no install medium");
+                })
+                .thenSucceed();
+    }
+
+    /** The Advanced supercomputer, on the OSFP fabric behind its era's HBW Interface, is reached by the Fabric DPU. */
+    @GameTest(template = ARENA)
+    public static void manager_reachesTheAdvancedSupercomputerThroughTheFabricDpu(final GameTestHelper helper) {
+        final ClusterManagementComputerBlockEntity manager = placeBackbone(helper,
+                new ItemStack(ComputingModule.FABRIC_DPU.get()));
+        placeSupercomputer(helper, ComputingModule.ADVANCED_HBW_INTERFACE.get(), ComputingModule.OSFP_CABLE,
+                ComputingModule.ADVANCED_SUPERCOMPUTER_RACK.get());
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    helper.assertTrue(manager.managerReady() && manager.reaches(RackChassis.RackType.SUPERCOMPUTER),
+                            "the Fabric DPU reaches the supercomputers");
+                    final List<HbwInterfaceBlockEntity> hubs = manager.supercomputers();
+                    helper.assertTrue(hubs.size() == 1 && hubs.get(0).clusterOnline(),
+                            "the Advanced supercomputer is the network's one, online; got " + hubs.size());
+                    helper.assertTrue(manager.nodesOf(supercomputerRef(manager)).size() == 2,
+                            "its two nodes, found along the OSFP");
                 })
                 .thenSucceed();
     }

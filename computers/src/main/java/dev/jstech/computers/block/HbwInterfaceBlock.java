@@ -8,10 +8,12 @@
 package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
 import dev.jstech.core.tier.HardwareEra;
@@ -37,21 +39,33 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The HBW Interface: the single point where a Supercomputer cluster meets the network.
+ * The HBW Interface: the single point where a Supercomputer cluster meets the network. Each one has an era: the
+ * Standard's, and the Advanced's that takes the OSFP fabric.
  */
 @TextHolder
 public class HbwInterfaceBlock extends Block implements EntityBlock, IFaceConnector {
 
-    public static final MapCodec<HbwInterfaceBlock> CODEC = simpleCodec(HbwInterfaceBlock::new);
-    /* The backbone on one side, the cluster fabric on the other, each up to the cable of the interface's age. */
-    private static final FacePorts PORTS =
-            FacePorts.everyFace(DataLines.upTo(HardwareEra.STANDARD, DataLine.BACKBONE, DataLine.HPC));
+    private final HardwareEra era;
+    /* The backbone on one side, the cluster fabric on the other, each up to the cable of the interface's era. */
+    private final FacePorts ports;
+
+    public static final MapCodec<HbwInterfaceBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+            propertiesCodec(),
+            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(HbwInterfaceBlock::era)
+    ).apply(i, HbwInterfaceBlock::new));
 
     private static final TextKey TOOLTIP =
             TextKey.of("item.jsc.hbw_interface.tooltip", "Uplinks a node cluster to the HBW backbone");
 
-    public HbwInterfaceBlock(final Properties properties) {
+    public HbwInterfaceBlock(final Properties properties, final HardwareEra era) {
         super(properties);
+        this.era = era;
+        this.ports = FacePorts.everyFace(DataLines.upTo(era, DataLine.BACKBONE, DataLine.HPC));
+    }
+
+    /** The era the interface belongs to: the newest backbone and fabric cables it takes. */
+    public HardwareEra era() {
+        return era;
     }
 
     @Override
@@ -67,7 +81,7 @@ public class HbwInterfaceBlock extends Block implements EntityBlock, IFaceConnec
 
     @Override
     public FacePorts ports() {
-        return PORTS;
+        return ports;
     }
 
     @Override

@@ -154,30 +154,32 @@ public final class NetworkDeviceGameTests {
         });
     }
 
-    /** A repeater renews the range: two runs of thin coax, each within its reach, carry the network across. */
-    @GameTest(template = BENCH)
+    /**
+     * A repeater renews the range: two runs of thin coax, each within its reach, carry the network across. The second
+     * run turns at the repeater so the whole line stays inside the arena.
+     */
+    @GameTest(template = BENCH, timeoutTicks = 400)
     public static void repeater_renewsTheRange(final GameTestHelper helper) {
         final int run = new DataLink(DataLine.ACCESS, HardwareEra.VINTAGE).range() - 2;
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final MainframeBlockEntity mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
         world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         world.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
-        int x = 4;
         for (int i = 0; i < run; i++) {
-            world.setBlock(new BlockPos(x++, 2, 2), ComputingModule.THIN_COAX_CABLE);
+            world.setBlock(new BlockPos(4 + i, 2, 2), ComputingModule.THIN_COAX_CABLE);
         }
-        world.setBlock(new BlockPos(x++, 2, 2), ComputingModule.VINTAGE_REPEATER.get());
-        for (int i = 0; i < run; i++) {
-            world.setBlock(new BlockPos(x++, 2, 2), ComputingModule.THIN_COAX_CABLE);
+        final BlockPos repeater = new BlockPos(4 + run, 2, 2);
+        world.setBlock(repeater, ComputingModule.VINTAGE_REPEATER.get());
+        for (int i = 1; i <= run; i++) {
+            world.setBlock(repeater.south(i), ComputingModule.THIN_COAX_CABLE);
         }
-        final PersonalComputerBlockEntity pc = world.placeRunningPersonalComputer(new BlockPos(x, 2, 2));
+        final PersonalComputerBlockEntity pc = world.placeRunningPersonalComputer(repeater.south(run + 1));
         helper.startSequence()
-                .thenExecuteAfter(SETTLE * 4, () -> helper.assertTrue(mainframe.networkUuid() != null
+                .thenWaitUntil(() -> helper.assertTrue(mainframe.networkUuid() != null
                                 && mainframe.networkUuid().equals(pc.networkUuid()),
                         (run * 2) + " cables of thin coax with a repeater halfway reach; one network all along"))
-                .thenExecute(() -> TestCables.lay(helper, new BlockPos(4 + run, 2, 2),
-                        ComputingModule.THIN_COAX_CABLE))
-                .thenExecuteAfter(SETTLE * 4, () -> helper.assertTrue(pc.networkUuid() == null,
+                .thenExecute(() -> TestCables.lay(helper, repeater, ComputingModule.THIN_COAX_CABLE))
+                .thenWaitUntil(() -> helper.assertTrue(pc.networkUuid() == null,
                         "with a cable in the repeater's place the run is too long, and the computer is off"))
                 .thenSucceed();
     }

@@ -27,7 +27,8 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
  * server in the shape of its own age (a silver Transition server in a black Transition rack, every age's in the
  * Advanced one); a rack's roof seen from above twice a few ticks apart, its fans' rotors turned and their
  * housings still; and the Supercomputer Racks of the Standard and the Advanced side by side, their livery panels on
- * and then off, each node in the shape of its own age (a Standard node in the Advanced cabinet too).
+ * and then off, each node in the shape of its own age (a Standard node in the Advanced cabinet too), each with the HBW
+ * Interface of its age in front of it.
  */
 public final class RackClientTests {
 
@@ -113,6 +114,8 @@ public final class RackClientTests {
             advanced.getServers().setStackInSlot(0, ServerStacks.advancedSupercomputerNode());
             advanced.getServers().setStackInSlot(2, ServerStacks.advancedSupercomputerNode());
             advanced.getServers().setStackInSlot(4, ServerStacks.defaultSupercomputerNode());
+            world.setBlock(STANDARD_SUPERCOMPUTER.offset(1, 0, 1), ComputingModule.HBW_INTERFACE.get());
+            world.setBlock(ADVANCED_SUPERCOMPUTER.offset(1, 0, 1), ComputingModule.ADVANCED_HBW_INTERFACE.get());
         })
                 .thenTeleport(SETTLE, STANDARD_SUPERCOMPUTER.south(AWAY), Direction.NORTH)
                 .thenScreenshot(SETTLE, "supercomputer-standard")

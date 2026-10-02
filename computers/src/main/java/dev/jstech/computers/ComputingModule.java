@@ -461,14 +461,19 @@ public final class ComputingModule {
 
     /*
      * The HBW Interface: a supercomputer's racks are tied together by the high-compute fabric and uplinked to the
-     * data network by one of these.
+     * data network by one of these. The Standard's, and the Advanced's that takes the OSFP fabric and the OM5 backbone.
      */
     public static final BlockEntry<HbwInterfaceBlock> HBW_INTERFACE =
-            CONTENT.block("hbw_interface", HbwInterfaceBlock::new)
+            CONTENT.block("hbw_interface", properties -> new HbwInterfaceBlock(properties, HardwareEra.STANDARD))
             .properties(properties -> properties.mapColor(MapColor.COLOR_GRAY).strength(2.0F).noOcclusion())
             .named("HBW Interface").look(IBlockLook::column).item().tab(CLUSTER).register();
+    public static final BlockEntry<HbwInterfaceBlock> ADVANCED_HBW_INTERFACE =
+            CONTENT.block("advanced_hbw_interface", properties -> new HbwInterfaceBlock(properties,
+                    HardwareEra.ADVANCED))
+            .properties(properties -> properties.mapColor(MapColor.SNOW).strength(2.0F).noOcclusion())
+            .named("Advanced HBW Interface").look(IBlockLook::column).item().tab(CLUSTER).register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<HbwInterfaceBlockEntity>> HBW_INTERFACE_BE =
-            CONTENT.blockEntity("hbw_interface", HbwInterfaceBlockEntity::new, HBW_INTERFACE);
+            CONTENT.blockEntity("hbw_interface", HbwInterfaceBlockEntity::new, HBW_INTERFACE, ADVANCED_HBW_INTERFACE);
 
     /*
      * Pattern Encoders burn .craft files onto removable media, one per era: the Standard one writes DVDs, CDs and USB

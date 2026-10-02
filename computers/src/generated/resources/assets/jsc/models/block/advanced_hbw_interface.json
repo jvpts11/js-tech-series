@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "jsc:block/advanced_hbw_interface_top",
+    "side": "jsc:block/advanced_hbw_interface_side"
+  }
+}

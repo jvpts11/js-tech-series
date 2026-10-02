@@ -67,12 +67,12 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
             BlockStateProperties.HORIZONTAL_FACING;
 
     /*
-     * The network and the compute fabric on the back, every era's: a part does not know its cabinet's age, so the
-     * cabinet's own block is where the age is held to.
+     * The backbone and the compute fabric on the back, every era's: a part does not know its cabinet's age, so the
+     * cabinet's own block is where the age is held to. A rack is on the backbone; the access line is for the small
+     * computers, which reach it through a router.
      */
     private static final FacePorts PORTS = FacePorts.builder()
-            .port(FaceRule.BACK, DataLines.upTo(HardwareEra.ADVANCED, DataLine.ACCESS, DataLine.BACKBONE,
-                    DataLine.HPC))
+            .port(FaceRule.BACK, DataLines.upTo(HardwareEra.ADVANCED, DataLine.BACKBONE, DataLine.HPC))
             .build();
 
     public ServerRackPartBlock(final Properties properties) {

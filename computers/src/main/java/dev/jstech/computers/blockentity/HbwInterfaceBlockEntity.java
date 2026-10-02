@@ -18,8 +18,15 @@ import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.Cables;
+import dev.jstech.core.cable.Wire;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.network.DataLine;
+import dev.jstech.core.network.DataLines;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -62,6 +69,10 @@ public class HbwInterfaceBlockEntity extends SyncedBlockEntity {
 
     /** A node found on the fabric: the cabinet it is mounted in and the unit row it occupies. */
     public record NodeRef(BlockPos rack, int row) {
+    }
+
+    /* A place the survey reached, and the high-compute cable it reached it along: none at the interface itself. */
+    private record Reach(BlockPos pos, @Nullable CableType fabric) {
     }
 
     /*
@@ -134,29 +145,34 @@ public class HbwInterfaceBlockEntity extends SyncedBlockEntity {
         final List<NodeRef> discovered = new ArrayList<>();
         final Set<BlockPos> seenControllers = new HashSet<>();
         final Set<BlockPos> visited = new HashSet<>();
-        final ArrayDeque<BlockPos> queue = new ArrayDeque<>();
-        queue.add(worldPosition);
+        final ArrayDeque<Reach> queue = new ArrayDeque<>();
+        final FacePorts own = getBlockState().getBlock() instanceof IFaceConnector connector ? connector.ports() : null;
+        queue.add(new Reach(worldPosition, null));
         visited.add(worldPosition);
         int steps = 0;
         while (!queue.isEmpty() && steps++ < 256) {
-            final BlockPos current = queue.poll();
+            final Reach current = queue.poll();
             for (final Direction direction : Direction.values()) {
-                final BlockPos neighbor = current.relative(direction);
-                if (!visited.add(neighbor)) {
-                    continue;
-                }
-                // The fabric is the high-compute cable only. A cabinet is a leaf on it, not a conduit.
-                if (Cables.holds(serverLevel, neighbor, ComputingModule.HPC_CABLE.get())) {
-                    queue.add(neighbor);
+                final BlockPos neighbor = current.pos().relative(direction);
+                /*
+                 * The fabric is a run of one high-compute cable, of an era the interface takes; a run of another era
+                 * beside it is a run of its own. A cabinet is a leaf on it, not a conduit.
+                 */
+                final CableType fabric = fabricAt(serverLevel, neighbor);
+                if (fabric != null && (current.fabric() == null ? takes(own, fabric) : fabric == current.fabric())) {
+                    if (visited.add(neighbor)) {
+                        queue.add(new Reach(neighbor, fabric));
+                    }
                     continue;
                 }
                 /*
-                 * A Supercomputer Rack on the fabric: every node mounted in it, in rack order, is a
-                 * candidate slot. Cabinets are taken in discovery order, so slot numbering is stable
+                 * A Supercomputer Rack on the fabric, of the cable's era or a later one: every node mounted in it, in
+                 * rack order, is a candidate slot. Cabinets are taken in discovery order, so slot numbering is stable
                  * for a given build and does not shuffle between surveys.
                  */
                 final ServerRackBlockEntity rack = cabinetAt(serverLevel, neighbor);
                 if (rack != null && rack.rackType() == RackChassis.RackType.SUPERCOMPUTER
+                        && (current.fabric() == null || takes(portsOf(rack), current.fabric()))
                         && seenControllers.add(rack.getBlockPos())) {
                     /*
                      * The cabinet's link light: this survey already walks the whole fabric every tick, so
@@ -199,6 +215,43 @@ public class HbwInterfaceBlockEntity extends SyncedBlockEntity {
         this.nodes = List.copyOf(discovered);
         this.unslottedNodes = Math.max(0, discovered.size() - PhiCoprocessorSpec.SLOT_COUNT);
         this.parallelCrafts = budget;
+    }
+
+    /* The high-compute cable in the cable block at {@code pos}, of whatever era, or null when it holds none. */
+    @Nullable
+    private static CableType fabricAt(final ServerLevel level, final BlockPos pos) {
+        final CableBlockEntity cable = Cables.at(level, pos);
+        if (cable == null) {
+            return null;
+        }
+        for (final Wire wire : cable.wires()) {
+            final DataLink link = DataLines.linkOf(wire.type().line());
+            if (link != null && link.line() == DataLine.HPC) {
+                return wire.type();
+            }
+        }
+        return null;
+    }
+
+    /*
+     * Whether a port of {@code ports}, on any face, takes {@code cable}: the era rule alone, since the cabinets have
+     * always been found on the fabric whichever way they face.
+     */
+    private static boolean takes(@Nullable final FacePorts ports, final CableType cable) {
+        if (ports == null) {
+            return false;
+        }
+        for (final FacePorts.Port port : ports.ports()) {
+            if (port.takes(cable.line())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Nullable
+    private static FacePorts portsOf(final ServerRackBlockEntity rack) {
+        return rack.getBlockState().getBlock() instanceof IFaceConnector connector ? connector.ports() : null;
     }
 
     /** The rack a block belongs to (the controller itself or any part of the cabinet), or null. */

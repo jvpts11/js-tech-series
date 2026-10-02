@@ -105,6 +105,7 @@ public final class FaceConnectionGameTests {
     @GameTest(template = ARENA)
     public static void devices_takeTheirCablesWhereTheyAlwaysDid(final GameTestHelper helper) {
         final Connection ethernet = DataLines.of(new DataLink(DataLine.ACCESS, HardwareEra.LEGACY));
+        final Connection hbw = DataLines.of(new DataLink(DataLine.BACKBONE, HardwareEra.LEGACY));
         final Connection crafting = DataLines.of(new DataLink(DataLine.CRAFTING, HardwareEra.VINTAGE));
         final Connection hpc = DataLines.of(new DataLink(DataLine.HPC, HardwareEra.STANDARD));
         final BlockState crafter = ComputingModule.CRAFTING_COMPUTER.get().defaultBlockState()
@@ -118,12 +119,13 @@ public final class FaceConnectionGameTests {
         final BlockState part = ComputingModule.SERVER_RACK_PART.get().defaultBlockState()
                 .setValue(ServerRackPartBlock.FACING, Direction.NORTH);
         final IFaceConnector partPorts = (IFaceConnector) part.getBlock();
-        helper.assertTrue(partPorts.accepts(part, Direction.SOUTH, ethernet), "a server cabinet's back");
-        helper.assertTrue(!partPorts.accepts(part, Direction.EAST, ethernet), "not a server cabinet's side");
+        helper.assertTrue(partPorts.accepts(part, Direction.SOUTH, hbw), "the backbone on a server cabinet's back");
+        helper.assertTrue(!partPorts.accepts(part, Direction.EAST, hbw), "not a server cabinet's side");
+        helper.assertTrue(!partPorts.accepts(part, Direction.SOUTH, ethernet), "no access line on a server cabinet");
         helper.assertTrue(!partPorts.accepts(part, Direction.SOUTH, hpc), "no fabric on a server cabinet");
         final BlockState compute = part.setValue(ServerRackPartBlock.COMPUTE, true);
         helper.assertTrue(partPorts.accepts(compute, Direction.SOUTH, hpc), "the fabric on a compute cabinet");
-        helper.assertTrue(!partPorts.accepts(compute, Direction.SOUTH, ethernet), "no data on a compute cabinet");
+        helper.assertTrue(!partPorts.accepts(compute, Direction.SOUTH, hbw), "no data on a compute cabinet");
         helper.succeed();
     }
 

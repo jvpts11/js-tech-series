@@ -71,7 +71,7 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
         implements IFaceConnector {
 
     private final HardwareEra era;
-    /* The network on its back: its era's access and backbone cables and every earlier one's. */
+    /* The backbone on its back, its era's cable and every earlier one's; the small computers reach it by a router. */
     private final FacePorts ports;
 
     public static final MapCodec<ServerRackBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
@@ -91,7 +91,7 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
         super(properties);
         this.era = era;
         this.ports = FacePorts.builder()
-                .port(FaceRule.BACK, DataLines.upTo(era, DataLine.ACCESS, DataLine.BACKBONE))
+                .port(FaceRule.BACK, DataLines.upTo(era, DataLine.BACKBONE))
                 .build();
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(BAYS, 0));
     }

@@ -272,6 +272,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   reach over at it, so a cable can go twice as far with a repeater halfway.
 - The routers, optical routers and repeaters wear the same face on all six sides, the connector of their era in the
   middle and two blinking lamps above it.
+- The small computers reach the network through a router: the access line goes from them to a router, and the
+  Mainframe and the Server Racks take only the backbone.
+- The Advanced HBW Interface, the Advanced supercomputer's uplink, in the era's white with finned OSFP cages: it takes
+  the OSFP fabric and every earlier high compute cable, and the backbone up to OM5. A Cluster Management Computer
+  reaches the Advanced supercomputer through the Fabric DPU.
+- An HBW Interface finds its nodes along any high compute cable of its era or an earlier one, in each Supercomputer
+  Rack that takes that cable: the Transition's InfiniBand reaches the Standard's racks, and the OSFP only the
+  Advanced's.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The
