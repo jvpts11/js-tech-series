@@ -171,6 +171,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   case puts it, and a supply made for the other end of the case is turned over, without the leads made for its own
   board. The parts are drawn when the side is off, or through a case's glass or mesh. A board for two processors has
   no place in a small case yet and is not drawn.
+- A small computer's power lamp is lit while it runs, and its disk lamp blinks while it works its disk, whatever the
+  disk. Its fans turn while it runs: the case's own, and those of the parts in it, the cooler's and the cards'.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

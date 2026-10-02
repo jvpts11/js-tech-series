@@ -158,6 +158,11 @@ final class ComputerSounds implements IAudible {
         }
     }
 
+    /** Whether the machine worked its disk a moment ago, whatever the disk: what the light for the disk shows. */
+    boolean diskBusy(final long now) {
+        return now < seeksUntil;
+    }
+
     void saveForClient(final CompoundTag tag) {
         tag.putBoolean(NBT_TURNING, turning);
         tag.putBoolean(NBT_SEEKING, seeking);

@@ -35,6 +35,7 @@ import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
  * A small computer's left side, the panel that comes off: it comes on, sneaking and using the case with an empty hand
@@ -50,6 +51,11 @@ public final class ComputerCaseGameTests {
     private static final BlockPos WHERE = new BlockPos(2, 2, 2);
     private static final String SIDE_OFF = "SidePanelOff";
     private static final String INSTALLED = "Installed";
+    private static final String LAMPS = "Lamps";
+    /** The disk lamp's bit among the lamps the client hears. */
+    private static final int DISK_LAMP = 2;
+    /** How long after the disk is worked its lamp stays on. */
+    private static final int DISK_LAMP_TICKS = 30;
 
     private ComputerCaseGameTests() {
     }
@@ -148,6 +154,36 @@ public final class ComputerCaseGameTests {
         helper.assertValueEqual(loaded.installedPart(PersonalComputerBlockEntity.MOTHERBOARD_SLOT), id(board),
                 "the board of a machine read from the save");
         helper.succeed();
+    }
+
+    /**
+     * The disk lamp lights when the machine works its disk and goes out a moment after; the power lamp lights when
+     * the machine runs. The players who see the machine are told both.
+     */
+    @GameTest(template = ARENA)
+    public static void lamps_showTheMachineRunningAndItsDiskWorking(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = place(helper, WHERE, ComputingModule.PERSONAL_COMPUTER.get(),
+                PersonalComputerBlockEntity.class);
+        final HolderLookup.Provider registries = helper.getLevel().registryAccess();
+        helper.assertFalse(pc.visualRunning(), "a machine just placed is off");
+        pc.diskWorked(helper.getLevel());
+        helper.assertTrue(pc.visualDiskBusy(), "the disk lamp lights when the disk is worked");
+        helper.assertValueEqual(pc.getUpdateTag(registries).getInt(LAMPS), DISK_LAMP, "the lamps the client hears");
+        helper.runAfterDelay(DISK_LAMP_TICKS + 1, () -> {
+            helper.assertFalse(pc.visualDiskBusy(), "and goes out a moment after");
+            final ItemStackHandler hardware = pc.getHardware();
+            hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
+                    new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
+            hardware.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
+                    new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get()));
+            hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
+                    new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
+            hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
+                    new ItemStack(ComputingModule.PSU_650G.get()));
+            pc.togglePower();
+            helper.assertTrue(pc.visualRunning(), "the power lamp lights when the machine runs");
+            helper.succeed();
+        });
     }
 
     private static ResourceLocation id(final Item item) {

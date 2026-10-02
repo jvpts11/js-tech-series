@@ -397,6 +397,11 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         sounds.diskWorked(level);
     }
 
+    /** Whether the machine worked its disk a moment ago, on the server. */
+    boolean diskBusy() {
+        return level != null && sounds.diskBusy(level.getGameTime());
+    }
+
     /**
      * What else the machine keeps sounding while it does it, over its disk, heard from its block: nothing for most
      * machines. Read on the client, from what the server sent it.

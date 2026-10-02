@@ -43,6 +43,25 @@ public final class ComputerCaseClientTests {
     /** The machines built with their parts stand in a row, apart enough for each to be seen on its own. */
     private static final int BUILD_SPACING = 3;
     private static final int BUILD_Z = 16;
+    /**
+     * The machines switched on, a block up at the eye, apart from the rows, each built as one of the builds below:
+     * one seen through its glass, one open whose cooler's fan faces the open side.
+     */
+    private static final BlockPos THROUGH_GLASS = new BlockPos(4, 3, 24);
+    private static final BlockPos OPEN = new BlockPos(8, 3, 24);
+    private static final String GLASS_BUILD = "advanced-aesthetic";
+    private static final String OPEN_BUILD = "legacy-939";
+    /** Ticks between two looks at the turning fans, and between two looks at a blinking lamp (it blinks each 5). */
+    private static final int FAN_GAP = 3;
+    private static final int BLINK_GAP = 5;
+    /** How long the machines may take to be known running once switched on. */
+    private static final int RUNS_WITHIN = 100;
+    /** The machines of the two ages whose skins came with them, opened one by one in a row of their own. */
+    private static final int SKIN_Z = 30;
+    private static final List<BlockEntry<?>> SKINNED = List.of(ComputingModule.TRANSITION_PERSONAL_COMPUTER,
+            ComputingModule.TRANSITION_CRAFTING_COMPUTER, ComputingModule.TRANSITION_CLUSTER_MANAGEMENT_COMPUTER,
+            ComputingModule.ADVANCED_PERSONAL_COMPUTER, ComputingModule.ADVANCED_CRAFTING_COMPUTER,
+            ComputingModule.ADVANCED_CLUSTER_MANAGEMENT_COMPUTER);
     /** One machine per case, after the builds round 17 showed, and two holding parts of other ages. */
     private static final List<Build> BUILDS = List.of(
             new Build("vintage-486", ComputingModule.VINTAGE_PERSONAL_COMPUTER, "motherboard_babyat_vintage",
@@ -57,7 +76,7 @@ public final class ComputerCaseClientTests {
                     List.of("gpu_3d_blaster", "serial_console_card"), "psu_300", List.of("disk_vaultis_trench_200m")),
             new Build("legacy-939", ComputingModule.LEGACY_PERSONAL_COMPUTER, "motherboard_atx_legacy_939",
                     "cpu_velocion_sprint_64_fx_55", List.of("ram_ddr_1024", "ram_ddr_1024"),
-                    List.of("gpu_radiance_x800_xt", "sound_card_tone_blaster_live"), "psu_500b",
+                    List.of("gpu_radiance_x800_xt", "sound_card_tone_blaster_audigy"), "psu_500b",
                     List.of("disk_vaultis_link_ide_40g")),
             new Build("legacy-crafting", ComputingModule.LEGACY_CRAFTING_COMPUTER, "motherboard_atx_legacy_478",
                     "cpu_integra_pentix_4_2_4c", List.of("ram_ddr_256", "ram_ddr_256"),
@@ -210,6 +229,73 @@ public final class ComputerCaseClientTests {
             ctx.thenTeleport(SETTLE, new BlockPos(i * BUILD_SPACING, 2, BUILD_Z - 2), Direction.SOUTH)
                     .thenScreenshot(SETTLE, BUILDS.get(i).name());
         }
+    }
+
+    /**
+     * Two machines switched on. Through the glass of the one with its side on, its parts and its turning fans; in the
+     * open one, the cooler's fan facing the open side, caught twice a few ticks apart as it turns; on its front the
+     * power lamp lit, and the disk lamp blinking while it works its disk, caught lit and dark.
+     */
+    @ClientTest(timeoutTicks = 600)
+    public static void running_lightsItsLampsAndTurnsItsFans(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+            for (final BlockPos at : List.of(THROUGH_GLASS, OPEN)) {
+                final Build build = build(at.equals(OPEN) ? OPEN_BUILD : GLASS_BUILD);
+                world.setBlock(at, build.machine().get().defaultBlockState()
+                        .setValue(HorizontalDirectionalBlock.FACING, Direction.WEST));
+                final AbstractSmallComputerBlockEntity computer =
+                        world.blockEntity(at, AbstractSmallComputerBlockEntity.class);
+                build.install(computer);
+                if (at.equals(OPEN)) {
+                    computer.toggleSidePanel();
+                }
+                computer.togglePower();
+            }
+        })
+                .thenWaitUntil(() -> runs(ctx, THROUGH_GLASS) && runs(ctx, OPEN), RUNS_WITHIN,
+                        "both machines to run, as their players see them")
+                .thenTeleport(SETTLE, new BlockPos(THROUGH_GLASS.getX(), 2, THROUGH_GLASS.getZ() - 2),
+                        Direction.SOUTH)
+                .thenScreenshot(SETTLE, "through-the-glass")
+                .thenTeleport(SETTLE, new BlockPos(OPEN.getX(), 2, OPEN.getZ() - 2), Direction.SOUTH)
+                .thenScreenshot(SETTLE, "cooler-fan-turned")
+                .thenScreenshot(FAN_GAP, "cooler-fan-turned-further")
+                .thenTeleport(SETTLE, new BlockPos(OPEN.getX() - 2, 2, OPEN.getZ()), Direction.EAST)
+                .thenBuild(0, world -> world.blockEntity(OPEN, AbstractSmallComputerBlockEntity.class)
+                        .diskWorked(world.level()))
+                .thenScreenshot(SETTLE, "disk-lamp-a")
+                .thenScreenshot(BLINK_GAP, "disk-lamp-b");
+    }
+
+    /**
+     * The assembly screens of the Transition and Advanced machines, each in the skin of its age: the case says the
+     * age, whatever board is in it.
+     */
+    @ClientTest(timeoutTicks = 900)
+    public static void assemblyScreens_wearTheSkinOfTheirAge(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+            for (int i = 0; i < SKINNED.size(); i++) {
+                world.setBlock(new BlockPos(i * 2, 2, SKIN_Z), SKINNED.get(i).get().defaultBlockState()
+                        .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
+            }
+        });
+        for (int i = 0; i < SKINNED.size(); i++) {
+            final BlockPos at = new BlockPos(i * 2, 2, SKIN_Z);
+            ctx.thenTeleport(SETTLE, at.south(2), Direction.NORTH)
+                    .thenRightClick(SETTLE, at)
+                    .thenScreenshot(SETTLE * 2, SKINNED.get(i).getId().getPath())
+                    .then(0, () -> ctx.mc().setScreen(null));
+        }
+    }
+
+    private static Build build(final String name) {
+        return BUILDS.stream().filter(b -> b.name().equals(name)).findFirst().orElseThrow();
+    }
+
+    /** Whether the player's game knows the machine there runs. */
+    private static boolean runs(final ClientTestContext ctx, final BlockPos relative) {
+        return ctx.mc().level != null && ctx.mc().level.getBlockEntity(ctx.abs(relative))
+                instanceof AbstractSmallComputerBlockEntity computer && computer.visualRunning();
     }
 
     /** An age's cases, row by row from the floor up. */

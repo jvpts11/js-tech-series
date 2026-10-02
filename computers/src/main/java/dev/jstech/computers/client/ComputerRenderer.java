@@ -22,6 +22,8 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.cache.GeckoLibCache;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
@@ -30,8 +32,9 @@ import software.bernie.geckolib.renderer.GeoBlockRenderer;
 
 /**
  * Draws a small computer as its case: the tower of its age, or the one of three cases a later machine comes in, its
- * front toward whoever placed it and its left side on or off as the player left it. Its lamps stay dark: the case shows
- * the machine as it stands, switched off.
+ * front toward whoever placed it and its left side on or off as the player left it. The power lamp is lit while the
+ * machine runs and the disk lamp blinks while it works its disk; the case's fans turn with the machine, by its
+ * animation, and so do the fans of the parts in it, turned here.
  *
  * <p>Inside it, each part the player installed is drawn by a model of its own, chosen by the item: the board on the
  * tray, and on the board's seats the processor, the memory, the cards and an M.2 drive; on the case's seats the supply
@@ -56,6 +59,10 @@ public final class ComputerRenderer<T extends AbstractSmallComputerBlockEntity> 
     private static final String LEAD = "lead_";
     private static final String DISK = "disk_";
     private static final String M2 = "m2";
+    /** A part's fan is a bone named for the axis it turns about: spin_x_, spin_y_ or spin_z_ and its name. */
+    private static final String SPIN = "spin_";
+    /** The ticks a fan takes to turn once, as the case's own fans turn in its animation. */
+    private static final int FAN_TICKS = 20;
     /** Half a supply's height, in the model's units: a supply turned over turns about its middle. */
     private static final float PSU_HALF_HEIGHT = 1.75f;
     private static final float UNITS = 16f;
@@ -76,8 +83,10 @@ public final class ComputerRenderer<T extends AbstractSmallComputerBlockEntity> 
                           final float partialTick, final int packedLight, final int packedOverlay, final int colour) {
         super.preRender(poseStack, computer, model, bufferSource, buffer, isReRender, partialTick, packedLight,
                 packedOverlay, colour);
-        DeviceLamps.show(model, ComputingLooks.COMPUTER_POWER_LAMP, false);
-        DeviceLamps.show(model, ComputingLooks.COMPUTER_DISK_LAMP, false);
+        final boolean running = computer.visualRunning();
+        DeviceLamps.show(model, ComputingLooks.COMPUTER_POWER_LAMP, running);
+        DeviceLamps.show(model, ComputingLooks.COMPUTER_DISK_LAMP,
+                running && computer.visualDiskBusy() && DeviceLamps.blinkLit(computer.getLevel()));
         DeviceLamps.show(model, ComputingLooks.COMPUTER_SIDE_PANEL, !computer.sidePanelOff());
     }
 
@@ -108,6 +117,11 @@ public final class ComputerRenderer<T extends AbstractSmallComputerBlockEntity> 
 
     private static Optional<GeoBone> seat(final @Nullable BakedGeoModel model, final String name) {
         return model == null ? Optional.empty() : model.getBone(SEAT + name);
+    }
+
+    /** How far a running machine's fans have turned at this moment, in radians. */
+    private static float turned(final @Nullable Level level, final float partialTick) {
+        return level == null ? 0f : (level.getGameTime() % FAN_TICKS + partialTick) / FAN_TICKS * Mth.TWO_PI;
     }
 
     /** Where a part's model and texture are. */
@@ -144,6 +158,8 @@ public final class ComputerRenderer<T extends AbstractSmallComputerBlockEntity> 
         private final int packedLight;
         private final int packedOverlay;
         private final int colour;
+        /** How far the parts' fans have turned: they stand still while the machine is off. */
+        private final float turned;
 
         Drawing(final PoseStack poseStack, final T computer, final IComputerCase chassis, final BakedGeoModel caseModel,
                 final MultiBufferSource bufferSource, final float partialTick, final int packedLight,
@@ -157,6 +173,7 @@ public final class ComputerRenderer<T extends AbstractSmallComputerBlockEntity> 
             this.packedLight = packedLight;
             this.packedOverlay = packedOverlay;
             this.colour = colour;
+            this.turned = computer.visualRunning() ? turned(computer.getLevel(), partialTick) : 0f;
         }
 
         void parts() {
@@ -247,10 +264,25 @@ public final class ComputerRenderer<T extends AbstractSmallComputerBlockEntity> 
             final RenderType type = getGeoModel().getRenderType(computer, part.texture());
             final VertexConsumer buffer = bufferSource.getBuffer(type);
             for (final GeoBone bone : part.model().topLevelBones()) {
+                spin(bone);
                 renderRecursively(poseStack, computer, bone, type, bufferSource, buffer, true, partialTick,
                         packedLight, packedOverlay, colour);
             }
             poseStack.popPose();
+        }
+
+        /** Turns the fans under a bone about their axes; the part's model is shared, so they are set every frame. */
+        private void spin(final GeoBone bone) {
+            for (final GeoBone child : bone.getChildBones()) {
+                final String name = child.getName();
+                if (name.startsWith(SPIN)) {
+                    final char axis = name.charAt(SPIN.length());
+                    child.setRotX(axis == 'x' ? turned : 0f);
+                    child.setRotY(axis == 'y' ? turned : 0f);
+                    child.setRotZ(axis == 'z' ? turned : 0f);
+                }
+                spin(child);
+            }
         }
     }
 }
