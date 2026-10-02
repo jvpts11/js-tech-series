@@ -46,6 +46,7 @@ import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.network.FailoverRole;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.network.SubframeNode;
 import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.operation.OperationDispatch;
 import dev.jstech.core.operation.OperationPriority;
@@ -1235,24 +1236,46 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     /**
      * The orchestration capacity the scheduler runs at: this Mainframe's own plus the share every active
-     * Subframe on the network lends it. Read from the network registry each tick, so a Subframe powering on
-     * or off changes the rate at once.
+     * Subframe on the network that takes its work lends it. Read from the network registry each tick, so a
+     * Subframe powering on or off, or changing its engine, changes the rate at once.
      */
     public long pooledCapacity() {
         long total = capacity();
-        if (networkUuid() != null && level instanceof ServerLevel serverLevel) {
-            total += NetworkSystem.get(serverLevel).subframeCapacityOf(networkUuid());
+        for (final SubframeNode subframe : networkSubframes()) {
+            if (takesWork(subframe)) {
+                total += subframe.contributedCapacity();
+            }
         }
         return total;
     }
 
-    /** The parallel queues the scheduler grants: this Mainframe's (CPU + GPUs) plus the Subframes' GPUs. */
+    /** The parallel queues the scheduler grants: this Mainframe's (CPU + GPUs) plus the GPUs of the Subframes. */
     public int pooledQueues() {
         int total = parallelQueues();
-        if (networkUuid() != null && level instanceof ServerLevel serverLevel) {
-            total += NetworkSystem.get(serverLevel).subframeQueuesOf(networkUuid());
+        for (final SubframeNode subframe : networkSubframes()) {
+            if (takesWork(subframe)) {
+                total += subframe.contributedQueues();
+            }
         }
         return total;
+    }
+
+    /**
+     * Whether a Subframe of the network takes this Mainframe's work: it must run the engine this Mainframe chose,
+     * and one that runs another takes none until the two are the same again. One that names no engine of its own
+     * works with whatever runs here.
+     */
+    public boolean takesWork(final SubframeNode subframe) {
+        final ResourceLocation engine = activeEngine();
+        return subframe.runsWith(engine == null ? "" : engine.toString());
+    }
+
+    /** The Subframes registered on this Mainframe's network, whatever they run. */
+    public List<SubframeNode> networkSubframes() {
+        if (networkUuid() != null && level instanceof ServerLevel serverLevel) {
+            return NetworkSystem.get(serverLevel).subframesOf(networkUuid());
+        }
+        return List.of();
     }
 
     @Override

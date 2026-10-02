@@ -14,7 +14,9 @@ import org.junit.jupiter.api.Test;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SubframeNodeTest {
 
@@ -39,6 +41,18 @@ class SubframeNodeTest {
                 Optional.empty()
         );
         assertEquals(0L, sub.contributedCapacity());
+    }
+
+    @Test
+    void runsWith_itsOwnSoftwareOnlyOrAnyWhenItNamesNone() {
+        final var named = new SubframeNode(NodeUuid.random(), NetworkUuid.random(), 1000L,
+                Optional.of(NodeUuid.random()), 1, "mod:engine");
+        final var unnamed = new SubframeNode(NodeUuid.random(), NetworkUuid.random(), 1000L,
+                Optional.of(NodeUuid.random()), 1);
+        assertTrue(named.runsWith("mod:engine"));
+        assertFalse(named.runsWith("mod:other"));
+        assertFalse(named.runsWith(SubframeNode.ANY_SOFTWARE));
+        assertTrue(unnamed.runsWith("mod:other") && unnamed.runsWith(SubframeNode.ANY_SOFTWARE));
     }
 
     @Test

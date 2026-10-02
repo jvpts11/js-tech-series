@@ -20,13 +20,18 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.content.BlockEntry;
+import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.network.SubframeNode;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.uuid.NodeUuid;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.CraftFiles;
 import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.TestEngines;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -39,8 +44,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The network's Network Operations Engines: the Midsoft IQL Server every Mainframe ships with, in the version of its
- * age; the door every request comes in by; and the three levels of the contract, the network's (always there),
- * the engine's (every engine) and the extras (only the engine that offers them).
+ * age; the door every request comes in by; the three levels of the contract, the network's (always there), the
+ * engine's (every engine) and the extras (only the engine that offers them); the Subframes, which work only on the
+ * engine their Mainframe runs; and a swap, which hands only new work to the new engine.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -156,6 +162,80 @@ public final class NetworkEngineGameTests {
                     helper.assertTrue(query(mainframe, machine, "CREATE VIEW stock AS QUERY items").ok(),
                             "the Midsoft IQL Server keeps them");
                 })
+                .thenSucceed();
+    }
+
+    /** A Subframe running another engine than its Mainframe's takes no work until the two run the same. */
+    @GameTest(template = ARENA)
+    public static void subframe_takesNoWorkUntilItRunsTheMainframesEngine(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = storageNetwork(helper);
+        final NodeUuid id = NodeUuid.random();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final SubframeNode subframe = new SubframeNode(id, mainframe.networkUuid(), 1000L,
+                            Optional.of(mainframe.nodeUuid()), 1, TestEngines.PLAIN.toString());
+                    NetworkSystem.get(helper.getLevel()).registerSubframe(subframe);
+                    helper.assertTrue(!mainframe.takesWork(subframe)
+                                    && mainframe.pooledCapacity() == mainframe.capacity()
+                                    && mainframe.pooledQueues() == mainframe.parallelQueues(),
+                            "a Subframe on another engine lends neither capacity nor queues");
+                    mainframe.installEngine(TestEngines.PLAIN);
+                    mainframe.activateEngine(TestEngines.PLAIN);
+                    helper.assertTrue(mainframe.takesWork(subframe)
+                                    && mainframe.pooledCapacity() == mainframe.capacity()
+                                            + subframe.contributedCapacity()
+                                    && mainframe.pooledQueues() == mainframe.parallelQueues() + 1,
+                            "on the same engine it works for the Mainframe again");
+                    NetworkSystem.get(helper.getLevel()).unregisterSubframe(mainframe.networkUuid(), id);
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A swap in the middle of a craft: the new requests go to the new engine, and the craft carries on with the plan
+     * it was made with, because an Operation belongs to the network once it is made.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void swap_midCraftLetsTheCraftFinishOnItsOwnPlan(final GameTestHelper helper) {
+        final TestWorldBuilder.CraftingNetwork net = TestWorldBuilder.forGameTest(helper).buildCraftingNetwork();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    net.seed(Items.OAK_LOG, 2);
+                    net.cc().loadPattern(CraftFiles.oakPlanks());
+                })
+                .thenExecuteAfter(SETTLE, () -> {
+                    final NetworkOperationsService network = net.mainframe().networkOperations();
+                    helper.assertTrue(network.craft(CraftRequest.of(StorageKey.of(Items.OAK_PLANKS), 8, false,
+                            "test", null)) != null, "the Midsoft IQL Server takes the craft");
+                    net.mainframe().installEngine(TestEngines.PLAIN);
+                    helper.assertTrue(net.mainframe().activateEngine(TestEngines.PLAIN),
+                            "the swap goes through with the craft in flight");
+                    helper.assertTrue(network.engine() != null
+                                    && TestEngines.PLAIN.equals(network.engine().def().program()),
+                            "what is asked from now on goes to the new engine");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(net.storage(helper.getLevel()).count(Items.OAK_PLANKS) == 8,
+                        "the craft made its 8 planks on the plan it was made with"))
+                .thenSucceed();
+    }
+
+    /** With the engine stopped in the middle of a craft, the craft still finishes: the network does the work. */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void stop_midCraftLetsTheCraftFinish(final GameTestHelper helper) {
+        final TestWorldBuilder.CraftingNetwork net = TestWorldBuilder.forGameTest(helper).buildCraftingNetwork();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    net.seed(Items.OAK_LOG, 2);
+                    net.cc().loadPattern(CraftFiles.oakPlanks());
+                })
+                .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertTrue(net.mainframe().networkOperations().craft(CraftRequest.of(
+                                    StorageKey.of(Items.OAK_PLANKS), 8, false, "test", null)) != null,
+                            "the craft is taken");
+                    net.mainframe().setEngineRunning(false);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(net.storage(helper.getLevel()).count(Items.OAK_PLANKS) == 8,
+                        "the craft made its 8 planks with the engine stopped"))
                 .thenSucceed();
     }
 
