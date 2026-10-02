@@ -15,13 +15,13 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * BlockEntity backing the Personal Router: a whole block of the data grid that joins every data wire crossing into
- * it, so the access and the backbone it touches are one network.
+ * Behind a router: a whole block of the data grid that joins every data wire its faces take, so the access line and
+ * the backbone it touches, or the fibre runs an optical router turns, are one network.
  */
-public class PersonalRouterBlockEntity extends SyncedBlockEntity {
+public class RouterBlockEntity extends SyncedBlockEntity {
 
-    public PersonalRouterBlockEntity(final BlockPos pos, final BlockState state) {
-        super(ComputingModule.PERSONAL_ROUTER_BE.get(), pos, state);
+    public RouterBlockEntity(final BlockPos pos, final BlockState state) {
+        super(ComputingModule.ROUTER_BE.get(), pos, state);
     }
 
     @Override

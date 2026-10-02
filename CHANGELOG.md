@@ -257,11 +257,21 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Speed and range count on every line. A run longer than its cable reaches carries nothing, so whatever is only
   beyond it is off the network; an Operation reading a server moves no faster than the slowest cable between the
   Mainframe and that server. The speeds and ranges are first estimates.
-- The backbone's fibre runs only straight: a cable laid against its side is left out, and the optical router will be
+- The backbone's fibre runs only straight: a cable laid against its side is left out, and the optical router is
   what turns it. A long distance line runs between two ends and takes no third, is thicker than the other cables,
   and shares no block. The long distance cables have no use until the Gateway computers come.
 - Cables that keep a shape, in J's Core: a cable can be declared to run only straight or to join at most so many
   faces in a block, and it keeps the joins it already has when another cable is laid against it.
+- A router for every era: the Vintage Router, the Personal Router of the Legacy, and the Transition, Standard and
+  Advanced Routers. Each joins its era's access line to its backbone, and takes the cables of both lines of its era
+  and of every earlier one on any of its six faces, all of them one network.
+- The Optical Router, from the Standard, and the Advanced Optical Router take only the backbone's fibre, from the
+  Standard's to their own era's, and are where it turns and branches.
+- A repeater for every era, from the Vintage Repeater to the Advanced Repeater. The access, backbone, high compute
+  and crafting cables run through it each on its own, never joining one another there, and each run starts its
+  reach over at it, so a cable can go twice as far with a repeater halfway.
+- The routers, optical routers and repeaters wear the same face on all six sides, the connector of their era in the
+  middle and two blinking lamps above it.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

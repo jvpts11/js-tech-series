@@ -35,7 +35,9 @@ import dev.jstech.computers.block.NetworkGatewayBlock;
 import dev.jstech.computers.block.PatternEncoderBlock;
 import dev.jstech.computers.block.PeripheralCableBlock;
 import dev.jstech.computers.block.PersonalComputerBlock;
-import dev.jstech.computers.block.PersonalRouterBlock;
+import dev.jstech.computers.block.DataWires;
+import dev.jstech.computers.block.RepeaterBlock;
+import dev.jstech.computers.block.RouterBlock;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRackPartBlock;
 import dev.jstech.computers.block.ServerRouterBlock;
@@ -55,7 +57,8 @@ import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.blockentity.PersonalRouterBlockEntity;
+import dev.jstech.computers.blockentity.RepeaterBlockEntity;
+import dev.jstech.computers.blockentity.RouterBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
 import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
@@ -230,16 +233,44 @@ public final class ComputingModule {
     public static final BlockEntry<PeripheralCableBlock> PERIPHERAL_CABLE =
             cable("peripheral_cable", PeripheralCableBlock::new, NETWORK).named("Peripheral Cable").register();
 
-    // Routers: the facing carries the port panel; the Server Router's back is its Mainframe uplink.
+    /*
+     * Routers and repeaters: plain blocks with six equal faces, each a plate with its era's connector, framed in the
+     * kind's colour, with two lamps. A router per era joins its access line to its backbone (the Personal Router is the
+     * Legacy one); the optical routers turn and branch the fibre; a repeater per era renews a run's range. The Server
+     * Router's back is its Mainframe uplink.
+     */
 
-    public static final BlockEntry<PersonalRouterBlock> PERSONAL_ROUTER =
-            CONTENT.block("personal_router", PersonalRouterBlock::new)
-                    .properties(properties -> properties.mapColor(MapColor.COLOR_LIGHT_BLUE).strength(0.5F)
-                            .sound(SoundType.METAL).noOcclusion())
-                    .named("Personal Router").look(IBlockLook::orientable).item().tab(NETWORK).register();
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PersonalRouterBlockEntity>>
-            PERSONAL_ROUTER_BE =
-            CONTENT.blockEntity("personal_router", PersonalRouterBlockEntity::new, PERSONAL_ROUTER);
+    public static final BlockEntry<RouterBlock> VINTAGE_ROUTER =
+            router("vintage_router", HardwareEra.VINTAGE, false, "router_vintage").named("Vintage Router").register();
+    public static final BlockEntry<RouterBlock> PERSONAL_ROUTER =
+            router("personal_router", HardwareEra.LEGACY, false, "router_legacy").named("Personal Router").register();
+    public static final BlockEntry<RouterBlock> TRANSITION_ROUTER = router("transition_router",
+            HardwareEra.TRANSITION, false, "router_transition").named("Transition Router").register();
+    public static final BlockEntry<RouterBlock> STANDARD_ROUTER = router("standard_router", HardwareEra.STANDARD,
+            false, "router_standard").named("Standard Router").register();
+    public static final BlockEntry<RouterBlock> ADVANCED_ROUTER = router("advanced_router", HardwareEra.ADVANCED,
+            false, "router_advanced").named("Advanced Router").register();
+    public static final BlockEntry<RouterBlock> OPTICAL_ROUTER = router("optical_router", HardwareEra.STANDARD,
+            true, "optical_standard").named("Optical Router").register();
+    public static final BlockEntry<RouterBlock> ADVANCED_OPTICAL_ROUTER = router("advanced_optical_router",
+            HardwareEra.ADVANCED, true, "optical_advanced").named("Advanced Optical Router").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RouterBlockEntity>> ROUTER_BE =
+            CONTENT.blockEntity("personal_router", RouterBlockEntity::new, VINTAGE_ROUTER, PERSONAL_ROUTER,
+                    TRANSITION_ROUTER, STANDARD_ROUTER, ADVANCED_ROUTER, OPTICAL_ROUTER, ADVANCED_OPTICAL_ROUTER);
+
+    public static final BlockEntry<RepeaterBlock> VINTAGE_REPEATER =
+            repeater("vintage_repeater", HardwareEra.VINTAGE).named("Vintage Repeater").register();
+    public static final BlockEntry<RepeaterBlock> LEGACY_REPEATER =
+            repeater("legacy_repeater", HardwareEra.LEGACY).named("Legacy Repeater").register();
+    public static final BlockEntry<RepeaterBlock> TRANSITION_REPEATER =
+            repeater("transition_repeater", HardwareEra.TRANSITION).named("Transition Repeater").register();
+    public static final BlockEntry<RepeaterBlock> STANDARD_REPEATER =
+            repeater("standard_repeater", HardwareEra.STANDARD).named("Standard Repeater").register();
+    public static final BlockEntry<RepeaterBlock> ADVANCED_REPEATER =
+            repeater("advanced_repeater", HardwareEra.ADVANCED).named("Advanced Repeater").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RepeaterBlockEntity>> REPEATER_BE =
+            CONTENT.blockEntity("repeater", RepeaterBlockEntity::new, VINTAGE_REPEATER, LEGACY_REPEATER,
+                    TRANSITION_REPEATER, STANDARD_REPEATER, ADVANCED_REPEATER);
 
     public static final BlockEntry<ServerRouterBlock> SERVER_ROUTER =
             CONTENT.block("server_router", ServerRouterBlock::new)
@@ -815,12 +846,7 @@ public final class ComputingModule {
         if (link.betweenTwoEnds()) {
             builder.alone().thickness(LONG_DISTANCE_PIXELS).joinsAtMost(DataLink.ENDS);
         } else {
-            builder.lane(switch (line) {
-                case ACCESS -> Lane.TOP_LEFT;
-                case BACKBONE -> Lane.TOP;
-                case HPC -> Lane.MIDDLE;
-                default -> Lane.RIGHT;
-            });
+            builder.lane(DataWires.laneOf(line));
         }
         return CONTENT.cable(id, builder);
     }
@@ -832,6 +858,26 @@ public final class ComputingModule {
         return CONTENT.block(id, factory).properties(ComputingModule::cableProperties)
                 .look(IBlockLook.pipe("block/" + id, "block/cable_core", "block/cable_arm"))
                 .item().itemLook(IItemLook.parent("block/" + id + "_core")).tab(section);
+    }
+
+    /* A router of {@code era}, or its optical router, wearing the network device model of the same name. */
+    private static BlockBuilder<RouterBlock> router(final String id, final HardwareEra era, final boolean optical,
+                                                    final String model) {
+        return networkDevice(CONTENT.block(id, properties -> new RouterBlock(properties, era, optical)), model);
+    }
+
+    /* The repeater of {@code era}. */
+    private static BlockBuilder<RepeaterBlock> repeater(final String id, final HardwareEra era) {
+        return networkDevice(CONTENT.block(id, properties -> new RepeaterBlock(properties, era)),
+                "repeater_" + era.serializedName());
+    }
+
+    /* A network device: a metal block with six equal faces, the model shipped with its lamps, in the network tab. */
+    private static <B extends Block> BlockBuilder<B> networkDevice(final BlockBuilder<B> block, final String model) {
+        return block.properties(properties -> properties.mapColor(MapColor.METAL).strength(0.5F)
+                        .sound(SoundType.METAL))
+                .look(IBlockLook.fixed(new IBlockModel.Handmade("network/" + model)))
+                .item().itemLook(IItemLook.parent("block/network/" + model)).tab(NETWORK);
     }
 
     private static BlockBuilder<MainframeBlock> mainframe(final String id, final HardwareEra era) {

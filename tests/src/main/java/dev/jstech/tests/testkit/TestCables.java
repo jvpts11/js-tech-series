@@ -86,6 +86,19 @@ public final class TestCables {
                 .inSameNetwork(first.getAsLong(), second.getAsLong());
     }
 
+    /**
+     * Whether the wire of {@code first} at {@code a} and the wire of {@code second} at {@code b} are joined by the data
+     * grid: for blocks that hold more than one wire.
+     */
+    public static boolean wiresJoined(final GameTestHelper helper, final BlockPos a, final Supplier<CableType> first,
+                                      final BlockPos b, final Supplier<CableType> second) {
+        final ServerLevel level = helper.getLevel();
+        final OptionalLong one = Cables.number(level, helper.absolutePos(a), first.get());
+        final OptionalLong other = Cables.number(level, helper.absolutePos(b), second.get());
+        return one.isPresent() && other.isPresent() && NetworkSystem.get(level).connectivity()
+                .inSameNetwork(one.getAsLong(), other.getAsLong());
+    }
+
     /** The cable block at {@code relative}; fails the test when there is none. */
     public static CableBlockEntity cable(final GameTestHelper helper, final BlockPos relative) {
         if (!(helper.getBlockEntity(relative) instanceof CableBlockEntity cable)) {

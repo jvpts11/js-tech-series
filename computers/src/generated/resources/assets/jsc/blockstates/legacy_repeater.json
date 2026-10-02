@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/network/repeater_legacy"
+    }
+  }
+}

@@ -10,6 +10,7 @@ package dev.jstech.computers.block;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.Cables;
+import dev.jstech.core.cable.Lane;
 import dev.jstech.core.cable.Wire;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.GridKind;
@@ -136,6 +137,48 @@ public final class DataWires {
     /** Takes the router at {@code pos} out of the data grid. */
     public static void removeRouter(final ServerLevel level, final BlockPos pos) {
         CoreGrids.remove(level, GridKind.DATA, GridPlace.whole(pos.asLong()));
+    }
+
+    /**
+     * Puts the repeater at {@code pos} in the data grid: a place in the lane of each line it carries, joined to the
+     * wires of that lane on its faces, so a line runs on through it and no two lines meet in it. A place that is in
+     * already stays as it is.
+     */
+    public static void placeRepeater(final ServerLevel level, final BlockPos pos) {
+        for (final DataLine line : RepeaterBlock.LINES) {
+            final Lane lane = laneOf(line);
+            final List<GridPlace> joined = new ArrayList<>();
+            for (final Direction face : Direction.values()) {
+                final BlockPos next = pos.relative(face);
+                for (final Wire wire : Cables.reaching(level, pos, face)) {
+                    if (wire.slot() == lane && linkOf(wire) != null) {
+                        joined.add(GridPlace.wire(next.asLong(), lane.id()));
+                    }
+                }
+            }
+            CoreGrids.place(level, GridKind.DATA, GridPlace.wire(pos.asLong(), lane.id()), GridMember.DEVICE, joined);
+        }
+    }
+
+    /** Takes the repeater at {@code pos} out of the data grid, every lane of it. */
+    public static void removeRepeater(final ServerLevel level, final BlockPos pos) {
+        for (final DataLine line : RepeaterBlock.LINES) {
+            CoreGrids.remove(level, GridKind.DATA, GridPlace.wire(pos.asLong(), laneOf(line).id()));
+        }
+    }
+
+    /**
+     * The lane each data line runs in when it shares a cable block, the same in every era of it: access top left,
+     * backbone top middle, high compute in the middle, crafting middle right. The long distance line shares no block,
+     * and takes the middle as a cable alone does.
+     */
+    public static Lane laneOf(final DataLine line) {
+        return switch (line) {
+            case ACCESS -> Lane.TOP_LEFT;
+            case BACKBONE -> Lane.TOP;
+            case HPC, LONG_DISTANCE -> Lane.MIDDLE;
+            case CRAFTING -> Lane.RIGHT;
+        };
     }
 
     /** The number the router at {@code pos} is known by in the data grid, if it is in. */
