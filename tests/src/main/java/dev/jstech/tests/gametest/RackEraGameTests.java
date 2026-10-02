@@ -10,8 +10,10 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.item.ServerHardwareHandler;
+import dev.jstech.computers.item.ServerItem;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -19,6 +21,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
@@ -49,8 +52,12 @@ public final class RackEraGameTests {
         return rack;
     }
 
-    private static ItemStack stack(final net.minecraft.world.item.Item item) {
+    private static ItemStack stack(final Item item) {
         return new ItemStack(item);
+    }
+
+    private static boolean fits(final ServerHardwareHandler handler, final int slot, final Item part) {
+        return handler.insertItem(slot, stack(part), false).isEmpty();
     }
 
     @GameTest(template = ARENA)
@@ -181,6 +188,80 @@ public final class RackEraGameTests {
                     final int advanced = ServerRackBlockEntity.UNIT_SERVER_ADVANCED;
                     helper.assertValueEqual(ServerRackBlockEntity.UNIT_BONES[advanced], "server_1u_advanced",
                             "the bone the Advanced server shows in its row");
+                })
+                .thenSucceed();
+    }
+
+    /** The Advanced Supercomputer Rack seats its own node and the Standard one, each shown as itself, and no server. */
+    @GameTest(template = ARENA)
+    public static void advancedSupercomputerRack_seatsTheNodesOfItsEraAndEarlier(final GameTestHelper helper) {
+        final ServerRackBlockEntity cabinet = placeRack(helper, new BlockPos(2, 2, 2),
+                ComputingModule.ADVANCED_SUPERCOMPUTER_RACK.get());
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ItemStackHandler rows = cabinet.getServers();
+                    helper.assertTrue(rows.isItemValid(0, stack(ComputingModule.ADVANCED_SUPERCOMPUTER_NODE.get()))
+                                    && rows.isItemValid(2, stack(ComputingModule.SUPERCOMPUTER_NODE.get())),
+                            "the Advanced cabinet seats its own node and the Standard one");
+                    helper.assertFalse(rows.isItemValid(4, stack(ComputingModule.ADVANCED_SERVER.get())),
+                            "a supercomputer cabinet never seats a server, whatever its era");
+                    rows.setStackInSlot(0, ServerStacks.advancedSupercomputerNode());
+                    rows.setStackInSlot(2, ServerStacks.defaultSupercomputerNode());
+                    helper.assertTrue(cabinet.unitCodeAt(0) == ServerRackBlockEntity.UNIT_NODE_2U_ADVANCED
+                                    && cabinet.unitCodeAt(2) == ServerRackBlockEntity.UNIT_NODE_2U,
+                            "each node shows in the cabinet in the shape of its own era");
+                    helper.assertTrue(cabinet.anyComputerSeated(), "the Advanced node is a computer to the cabinet");
+                    helper.assertValueEqual(ClusterManagementComputerBlockEntity.nodeName(cabinet, 0), "node",
+                            "the cluster calls the Advanced node a node");
+                })
+                .thenSucceed();
+    }
+
+    /** The Advanced node seats only in its era's cabinet: too new for the Standard one, the wrong kind for servers. */
+    @GameTest(template = ARENA)
+    public static void advancedSupercomputerNode_isRefusedByEveryOtherRack(final GameTestHelper helper) {
+        final ServerRackBlockEntity standard = placeRack(helper, new BlockPos(1, 2, 2),
+                ComputingModule.SUPERCOMPUTER_RACK.get());
+        final ServerRackBlockEntity servers = placeRack(helper, new BlockPos(5, 2, 2),
+                ComputingModule.ADVANCED_SERVER_RACK.get());
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ItemStack node = ServerStacks.advancedSupercomputerNode();
+                    helper.assertFalse(standard.getServers().isItemValid(0, node),
+                            "the Standard Supercomputer Rack refuses the later era's node");
+                    helper.assertFalse(servers.getServers().isItemValid(0, node),
+                            "an Advanced Server Rack refuses a node, though of its own era");
+                })
+                .thenSucceed();
+    }
+
+    /** The Advanced node is built from the Advanced parts: its era's board, the Phi 9000 and the Tessera cards. */
+    @GameTest(template = ARENA)
+    public static void advancedSupercomputerNode_assemblesFromTheAdvancedParts(final GameTestHelper helper) {
+        final Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        final InteractionHand hand = InteractionHand.MAIN_HAND;
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    player.setItemInHand(hand, stack(ComputingModule.ADVANCED_SUPERCOMPUTER_NODE.get()));
+                    final ServerHardwareHandler node = new ServerHardwareHandler(player, hand);
+                    helper.assertFalse(node.insertItem(ServerHardwareHandler.MOBO,
+                                    stack(ComputingModule.MOTHERBOARD_EEB_S_2011.get()), true).isEmpty(),
+                            "the Advanced node refuses a Standard board");
+                    final int sleds = ServerHardwareHandler.GPU_START;
+                    final boolean fitted =
+                            fits(node, ServerHardwareHandler.MOBO, HardwareItems.MOTHERBOARD_EEB_A_SP3.get())
+                            && fits(node, ServerHardwareHandler.CPU_START, HardwareItems.CPU_VELOCION_EPIC_7251.get())
+                            && fits(node, ServerHardwareHandler.RAM_START, HardwareItems.RAM_DDR4_16384.get())
+                            && fits(node, sleds, ComputingModule.PHI_9000.get())
+                            && fits(node, sleds + 1, HardwareItems.GPU_TESSERA_V100.get())
+                            && fits(node, sleds + 2, HardwareItems.GPU_TESSERA_A100.get())
+                            && fits(node, sleds + 3, HardwareItems.GPU_TESSERA_H100.get())
+                            && fits(node, ServerHardwareHandler.PSU, HardwareItems.PSU_1200P.get());
+                    helper.assertTrue(fitted, "the era's board, an Epic, DDR4, the Phi 9000 and three Tesseras go in");
+                    helper.assertFalse(node.insertItem(sleds + 4, stack(ComputingModule.PHI_7290.get()), true)
+                            .isEmpty(), "a node takes one co-processor");
+                    helper.assertTrue(ServerItem.build(player.getItemInHand(hand)) != null,
+                            "the parts make a computer");
                 })
                 .thenSucceed();
     }

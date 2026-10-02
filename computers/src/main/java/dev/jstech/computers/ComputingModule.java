@@ -497,9 +497,9 @@ public final class ComputingModule {
                     .register();
 
     /*
-     * The Server Racks, one per era, and the Supercomputer Rack, which seats only Supercomputer Nodes and whose rear
-     * port takes only the high-compute fabric. A cabinet takes servers of its own era or earlier; it is drawn as one
-     * model by its controller, which hands its item over itself when broken.
+     * The Server Racks, one per era, and the Supercomputer Racks of the Standard and the Advanced, which seat only
+     * Supercomputer Nodes and whose rear port takes only the high-compute fabric. A cabinet takes servers of its own
+     * era or earlier; it is drawn as one model by its controller, which hands its item over itself when broken.
      */
 
     public static final BlockEntry<ServerRackBlock> VINTAGE_SERVER_RACK =
@@ -513,14 +513,17 @@ public final class ComputingModule {
     public static final BlockEntry<ServerRackBlock> ADVANCED_SERVER_RACK =
             serverRack("advanced_server_rack", HardwareEra.ADVANCED).named("Advanced Server Rack").register();
     public static final BlockEntry<SupercomputerRackBlock> SUPERCOMPUTER_RACK =
-            rack("supercomputer_rack", SupercomputerRackBlock::new).named("Supercomputer Rack").register();
+            supercomputerRack("supercomputer_rack", HardwareEra.STANDARD).named("Supercomputer Rack").register();
+    public static final BlockEntry<SupercomputerRackBlock> ADVANCED_SUPERCOMPUTER_RACK =
+            supercomputerRack("advanced_supercomputer_rack", HardwareEra.ADVANCED)
+                    .named("Advanced Supercomputer Rack").register();
     public static final BlockEntry<ServerRackPartBlock> SERVER_RACK_PART =
             CONTENT.block("server_rack_part", ServerRackPartBlock::new).properties(ComputingModule::rackProperties)
                     .named("Server Rack").look(RACK_BODY).register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ServerRackBlockEntity>> SERVER_RACK_BE =
             CONTENT.blockEntity("server_rack", ServerRackBlockEntity::new,
                     SERVER_RACK, SUPERCOMPUTER_RACK, LEGACY_SERVER_RACK, VINTAGE_SERVER_RACK, TRANSITION_SERVER_RACK,
-                    ADVANCED_SERVER_RACK);
+                    ADVANCED_SERVER_RACK, ADVANCED_SUPERCOMPUTER_RACK);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ServerRackPartBlockEntity>>
             SERVER_RACK_PART_BE = CONTENT.blockEntity("server_rack_part", ServerRackPartBlockEntity::new,
                     SERVER_RACK_PART);
@@ -570,10 +573,13 @@ public final class ComputingModule {
             serverCase("compute_server_case").named("Compute Server Case").register();
     public static final ItemEntry<ServerItem> COMPUTE_SERVER =
             server("compute_server", RackChassis.COMPUTE_SERVER, SERVERS).named("Compute Server").register();
-    // The supercomputer's node is a rack computer too, shown with the machines.
+    // The supercomputer's nodes are rack computers too, shown with the machines.
     public static final ItemEntry<ServerItem> SUPERCOMPUTER_NODE =
             server("supercomputer_node", RackChassis.SUPERCOMPUTER_NODE, MACHINES).named("Supercomputer Node")
                     .register();
+    public static final ItemEntry<ServerItem> ADVANCED_SUPERCOMPUTER_NODE =
+            server("advanced_supercomputer_node", RackChassis.ADVANCED_SUPERCOMPUTER_NODE, MACHINES)
+                    .named("Advanced Supercomputer Node").register();
 
     // Rack equipment: bay gadgets serve the machine in their row; rack units spend the cabinet's unit budget.
 
@@ -885,6 +891,10 @@ public final class ComputingModule {
 
     private static BlockBuilder<ServerRackBlock> serverRack(final String id, final HardwareEra era) {
         return rack(id, properties -> new ServerRackBlock(properties, era));
+    }
+
+    private static BlockBuilder<SupercomputerRackBlock> supercomputerRack(final String id, final HardwareEra era) {
+        return rack(id, properties -> new SupercomputerRackBlock(properties, era));
     }
 
     private static <B extends Block> BlockBuilder<B> rack(final String id,

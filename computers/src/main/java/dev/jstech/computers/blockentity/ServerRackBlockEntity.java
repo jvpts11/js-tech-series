@@ -138,16 +138,17 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     public static final int UNIT_NODE_2U = 6;
     public static final int UNIT_SERVER_TRANSITION = 7;
     public static final int UNIT_SERVER_ADVANCED = 8;
-    public static final int UNIT_KVM_SWITCH = 9;
-    public static final int UNIT_RACK_UPS = 10;
-    public static final int UNIT_COOLING_UNIT = 11;
+    public static final int UNIT_NODE_2U_ADVANCED = 9;
+    public static final int UNIT_KVM_SWITCH = 10;
+    public static final int UNIT_RACK_UPS = 11;
+    public static final int UNIT_COOLING_UNIT = 12;
     /** The codes up to this one are computers; the ones after are the units that serve them. */
-    public static final int LAST_COMPUTER_UNIT = UNIT_SERVER_ADVANCED;
+    public static final int LAST_COMPUTER_UNIT = UNIT_NODE_2U_ADVANCED;
 
     /** The model bone names, indexed by unit code. */
     public static final String[] UNIT_BONES = {"", "server_1u_standard", "server_1u_legacy", "server_1u_vintage",
-            "storage_2u", "compute_2u", "node_2u", "server_1u_transition", "server_1u_advanced", "kvm_switch",
-            "rack_ups", "cooling_unit"};
+            "storage_2u", "compute_2u", "node_2u", "server_1u_transition", "server_1u_advanced", "node_2u_advanced",
+            "kvm_switch", "rack_ups", "cooling_unit"};
 
     private static final RawAnimation FANS =
             RawAnimation.begin().thenLoop("animation.rack.fans");
@@ -210,6 +211,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                 case SUPERCOMPUTER_NODE -> UNIT_NODE_2U;
                 case TRANSITION_SERVER -> UNIT_SERVER_TRANSITION;
                 case ADVANCED_SERVER -> UNIT_SERVER_ADVANCED;
+                case ADVANCED_SUPERCOMPUTER_NODE -> UNIT_NODE_2U_ADVANCED;
             };
         }
         for (final RackUnitItem.Kind kind
@@ -223,6 +225,11 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             }
         }
         return UNIT_NONE;
+    }
+
+    /** Whether a unit code is a supercomputer node, of any era: the rows whose chassis bands light. */
+    public static boolean isNodeUnit(final int unitCode) {
+        return unitCode == UNIT_NODE_2U || unitCode == UNIT_NODE_2U_ADVANCED;
     }
 
     /** Whether the bay at {@code slot} is switched on, on either side. */

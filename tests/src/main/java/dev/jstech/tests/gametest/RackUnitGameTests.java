@@ -17,6 +17,7 @@ import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.program.Programs;
+import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.computers.storage.DriveVolumes;
@@ -875,16 +876,12 @@ public final class RackUnitGameTests {
         final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    helper.assertTrue(rack.rackType()
-                                    == dev.jstech.computers.rack.RackChassis.RackType.SERVER,
+                    helper.assertTrue(rack.rackType() == RackChassis.RackType.SERVER,
                             "the Server Rack is the general cabinet");
-                    // The three server chassis belong to this cabinet; the supercomputer node does not.
-                    for (final var chassis : dev.jstech.computers.rack.RackChassis.values()) {
-                        final boolean server = chassis
-                                != dev.jstech.computers.rack.RackChassis.SUPERCOMPUTER_NODE;
-                        helper.assertTrue((chassis.rackType()
-                                        == dev.jstech.computers.rack.RackChassis.RackType.SERVER)
-                                        == server,
+                    // The server chassis belong to this cabinet; the supercomputer nodes, of every era, do not.
+                    for (final RackChassis chassis : RackChassis.values()) {
+                        final boolean server = !chassis.isSupercomputerNode();
+                        helper.assertTrue((chassis.rackType() == RackChassis.RackType.SERVER) == server,
                                 chassis + (server ? " belongs in the Server Rack"
                                         : " belongs in the Supercomputer Rack"));
                     }

@@ -139,9 +139,8 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
              * exists for it, and accepting GPUs alone here left that slot unable to seat anything.
              */
             if (stack.getItem() instanceof PhiCoprocessorItem) {
-                return ServerItem.chassisOf(held())
-                        == RackChassis.SUPERCOMPUTER_NODE
-                        && !holdsCoprocessorOutside(slot);
+                final RackChassis chassis = ServerItem.chassisOf(held());
+                return chassis != null && chassis.isSupercomputerNode() && !holdsCoprocessorOutside(slot);
             }
             return stack.getItem() instanceof GpuItem;
         }

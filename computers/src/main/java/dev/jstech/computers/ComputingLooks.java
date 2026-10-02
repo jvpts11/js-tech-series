@@ -85,7 +85,7 @@ public final class ComputingLooks {
     /** The model of a rack's cabinet: by kind first, then by era. */
     public static String rack(final ServerRackBlockEntity rack) {
         if (rack.getBlockState().getBlock() instanceof SupercomputerRackBlock) {
-            return "supercomputer_rack";
+            return rack.rackEra() == HardwareEra.ADVANCED ? "advanced_supercomputer_rack" : "supercomputer_rack";
         }
         return switch (rack.rackEra()) {
             case VINTAGE -> "vintage_server_rack";

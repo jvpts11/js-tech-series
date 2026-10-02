@@ -32,7 +32,12 @@ public enum RackChassis {
     /** The Transition 1U server: two sockets, its four drives and a gadget filling the unit's front, two cards. */
     TRANSITION_SERVER(1, 4, 1, 2, 2, RackType.SERVER, HardwareEra.TRANSITION),
     /** The Advanced 1U server: two sockets, four drives and a gadget filling the unit's front, any cards. */
-    ADVANCED_SERVER(1, 4, 1, 2, Integer.MAX_VALUE, RackType.SERVER, HardwareEra.ADVANCED);
+    ADVANCED_SERVER(1, 4, 1, 2, Integer.MAX_VALUE, RackType.SERVER, HardwareEra.ADVANCED),
+    /**
+     * The Advanced 2U node: four accelerator sleds (the Phi and three GPUs) and two NVMe carriers, seated only in a
+     * Supercomputer Rack of its era.
+     */
+    ADVANCED_SUPERCOMPUTER_NODE(2, 2, 1, 2, 4, RackType.SUPERCOMPUTER, HardwareEra.ADVANCED);
 
     /** The kind of cabinet a chassis seats in. */
     public enum RackType {
@@ -62,6 +67,11 @@ public enum RackChassis {
 
     public RackType rackType() {
         return rackType;
+    }
+
+    /** Whether this is a supercomputer's node: the chassis the fabric surveys and the co-processor goes in. */
+    public boolean isSupercomputerNode() {
+        return rackType == RackType.SUPERCOMPUTER;
     }
 
     /** The era of the case: the boards it takes and the cabinets that seat it follow from this. */

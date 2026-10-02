@@ -167,7 +167,7 @@ public class ServerItem extends Item
     @Override
     public void appendHoverText(final ItemStack stack, final TooltipContext context,
                                 final List<Component> tooltip, final TooltipFlag flag) {
-        tooltip.add(GameText.component(chassis == RackChassis.SUPERCOMPUTER_NODE ? NODE_TOOLTIP : TOOLTIP)
+        tooltip.add(GameText.component(chassis.isSupercomputerNode() ? NODE_TOOLTIP : TOOLTIP)
                 .withStyle(ChatFormatting.GRAY));
         HardwareTooltip.appendEra(tooltip, chassis.era());
         // Drives (and therefore stored data) belong to the rack bay, not to this item.

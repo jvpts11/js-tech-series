@@ -12,18 +12,22 @@ import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ItemEntry;
+import dev.jstech.tests.testkit.ServerStacks;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 
 /**
  * The Server Racks of every age side by side, each holding 1U servers of its own age and the ages before it, every
  * server in the shape of its own age (a silver Transition server in a black Transition rack, every age's in the
- * Advanced one); and a rack's roof seen from above twice a few ticks apart, its fans' rotors turned and their
- * housings still.
+ * Advanced one); a rack's roof seen from above twice a few ticks apart, its fans' rotors turned and their
+ * housings still; and the Supercomputer Racks of the Standard and the Advanced side by side, their livery panels on
+ * and then off, each node in the shape of its own age (a Standard node in the Advanced cabinet too).
  */
 public final class RackClientTests {
 
@@ -37,6 +41,9 @@ public final class RackClientTests {
     private static final BlockPos ABOVE = new BlockPos(2, 6, 17);
     private static final float LOOK_DOWN = 35.0F;
     private static final int FAN_GAP = 3;
+    /** The two supercomputer cabinets, facing south side by side, well clear of the server racks. */
+    private static final BlockPos STANDARD_SUPERCOMPUTER = new BlockPos(0, 2, 24);
+    private static final BlockPos ADVANCED_SUPERCOMPUTER = new BlockPos(SPACING, 2, 24);
 
     /** Each age's rack and the servers it holds, from the top row down. */
     private static final List<Cabinet> CABINETS = List.of(
@@ -92,6 +99,37 @@ public final class RackClientTests {
                 .then(SETTLE, () -> ctx.player().setXRot(LOOK_DOWN))
                 .thenScreenshot(SETTLE, "roof")
                 .thenScreenshot(FAN_GAP, "roof-turned-further");
+    }
+
+    @ClientTest(timeoutTicks = 900)
+    public static void supercomputerRacks_showTheirNodesUnderTheirPanels(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+            final ServerRackBlockEntity standard = cabinet(world, STANDARD_SUPERCOMPUTER,
+                    ComputingModule.SUPERCOMPUTER_RACK.get());
+            standard.getServers().setStackInSlot(0, ServerStacks.defaultSupercomputerNode());
+            standard.getServers().setStackInSlot(2, ServerStacks.defaultSupercomputerNode());
+            final ServerRackBlockEntity advanced = cabinet(world, ADVANCED_SUPERCOMPUTER,
+                    ComputingModule.ADVANCED_SUPERCOMPUTER_RACK.get());
+            advanced.getServers().setStackInSlot(0, ServerStacks.advancedSupercomputerNode());
+            advanced.getServers().setStackInSlot(2, ServerStacks.advancedSupercomputerNode());
+            advanced.getServers().setStackInSlot(4, ServerStacks.defaultSupercomputerNode());
+        })
+                .thenTeleport(SETTLE, STANDARD_SUPERCOMPUTER.south(AWAY), Direction.NORTH)
+                .thenScreenshot(SETTLE, "supercomputer-standard")
+                .thenTeleport(SETTLE, ADVANCED_SUPERCOMPUTER.south(AWAY), Direction.NORTH)
+                .thenScreenshot(SETTLE, "supercomputer-advanced")
+                .thenBuild(0, world -> {
+                    world.blockEntity(STANDARD_SUPERCOMPUTER, ServerRackBlockEntity.class).toggleServicePanel();
+                    world.blockEntity(ADVANCED_SUPERCOMPUTER, ServerRackBlockEntity.class).toggleServicePanel();
+                })
+                .thenScreenshot(SETTLE, "supercomputer-advanced-open")
+                .thenTeleport(SETTLE, STANDARD_SUPERCOMPUTER.south(AWAY), Direction.NORTH)
+                .thenScreenshot(SETTLE, "supercomputer-standard-open");
+    }
+
+    private static ServerRackBlockEntity cabinet(final TestWorldBuilder world, final BlockPos at, final Block block) {
+        world.setBlock(at, block.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
+        return world.blockEntity(at, ServerRackBlockEntity.class);
     }
 
     private static BlockPos rack(final int index) {

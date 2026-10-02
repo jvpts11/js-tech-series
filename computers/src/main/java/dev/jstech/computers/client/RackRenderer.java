@@ -103,8 +103,8 @@ public final class RackRenderer extends GeoBlockRenderer<ServerRackBlockEntity> 
         final int seated = rack.unitCodeAt(row);
         if (unit.equals("band")) {
             // A chassis band lights for both rows a seated 2U node covers.
-            return seated == ServerRackBlockEntity.UNIT_NODE_2U
-                    || (row > 0 && rack.unitCodeAt(row - 1) == ServerRackBlockEntity.UNIT_NODE_2U);
+            return ServerRackBlockEntity.isNodeUnit(seated)
+                    || (row > 0 && ServerRackBlockEntity.isNodeUnit(rack.unitCodeAt(row - 1)));
         }
         return seated != ServerRackBlockEntity.UNIT_NONE
                 && unit.equals(ServerRackBlockEntity.UNIT_BONES[seated]);

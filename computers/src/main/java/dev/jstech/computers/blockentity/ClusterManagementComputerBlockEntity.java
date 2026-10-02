@@ -660,7 +660,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
             return custom;
         }
         final RackChassis chassis = ServerItem.chassisOf(stack);
-        return chassis == RackChassis.SUPERCOMPUTER_NODE ? "node" : "server";
+        return chassis != null && chassis.isSupercomputerNode() ? "node" : "server";
     }
 
     // local storage, like a PC: what is on the installed disks

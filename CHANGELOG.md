@@ -188,6 +188,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   Advanced's any number; each seats in a rack of its age or later, and every rack draws every server it can seat in
   that server's own shape. Their items and their empty cases show the server's face.
 - A Server Rack's roof fans turn as fans: the housing stays still and only the rotor turns in it.
+- The Advanced Supercomputer Rack and its node. The rack keeps the Standard one's shape (the hollow shell, the cooling
+  unit on its roof with the coolant going in and out on different blocks, the livery panel over the service opening,
+  a lit band per row) in the era's near black with white light, its livery a white trace stepping across it like a
+  circuit. The Advanced Supercomputer Node, 2U, has four accelerator sleds with white latches, two NVMe carriers, a
+  honeycomb vent and a white line on its ear; it takes the Advanced parts, up to four cards (the co-processor and
+  three GPUs), and seats only in its era's rack, which seats the Standard node too and draws each node as it is.
+- A rack refusing a chassis of a later era than its own now says so, instead of telling the player to take it to the
+  kind of rack they are already at.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

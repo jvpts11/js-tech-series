@@ -438,22 +438,23 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
         final ItemStack carried = menu.getCarried();
         final RackChassis carriedChassis =
                 ServerItem.chassisOf(carried);
-        final boolean refused = carriedChassis != null
-                && Minecraft.getInstance().level != null
-                && Minecraft.getInstance().level.getBlockEntity(menu.rackPos())
-                        instanceof ServerRackBlockEntity rack
-                && !rack.acceptsChassis(carried);
+        final ServerRackBlockEntity rack = Minecraft.getInstance().level != null
+                && Minecraft.getInstance().level.getBlockEntity(menu.rackPos()) instanceof ServerRackBlockEntity found
+                ? found : null;
+        final boolean refused = carriedChassis != null && rack != null && !rack.acceptsChassis(carried);
         for (int row = 0; row < ROWS; row++) {
             final int top = ServerRackLayout.rowY(row);
             if (relY < top || relY >= top + ServerRackLayout.SLOT) {
                 continue;
             }
             if (refused) {
-                final TextKey belongs = switch (carriedChassis.rackType()) {
-                    case SERVER -> ServerRackTexts.BELONGS_IN_SERVER_RACK;
-                    case SUPERCOMPUTER -> ServerRackTexts.BELONGS_IN_SUPERCOMPUTER_RACK;
-                    case AI -> ServerRackTexts.BELONGS_IN_AI_RACK;
-                };
+                // The right kind of cabinet refuses only a chassis of a later era than its own.
+                final TextKey belongs = carriedChassis.rackType() == rack.rackType() ? ServerRackTexts.NEWER_THAN_RACK
+                        : switch (carriedChassis.rackType()) {
+                            case SERVER -> ServerRackTexts.BELONGS_IN_SERVER_RACK;
+                            case SUPERCOMPUTER -> ServerRackTexts.BELONGS_IN_SUPERCOMPUTER_RACK;
+                            case AI -> ServerRackTexts.BELONGS_IN_AI_RACK;
+                        };
                 g.renderTooltip(font, GameText.component(belongs), mouseX, mouseY);
                 return;
             }

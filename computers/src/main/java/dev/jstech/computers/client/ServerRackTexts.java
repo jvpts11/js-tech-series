@@ -38,6 +38,8 @@ final class ServerRackTexts {
             TextKey.of("jsc.rack.belongs_in_supercomputer_rack", "This chassis belongs in a Supercomputer Rack");
     static final TextKey BELONGS_IN_AI_RACK =
             TextKey.of("jsc.rack.belongs_in_ai_rack", "This chassis belongs in an AI Rack");
+    static final TextKey NEWER_THAN_RACK =
+            TextKey.of("jsc.rack.newer_than_rack", "This chassis is of a later era than this rack");
     static final TextKey ARRAY_MEMBER = TextKey.of("jsc.rack.array_member", "Array member slot - %s");
     static final TextKey GADGET_CONFIGURED = TextKey.of("jsc.rack.gadget_configured",
             "Gadget bay - a RAID Controller is configured in the machine's firmware (STORAGE)");

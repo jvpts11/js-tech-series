@@ -8,6 +8,7 @@
 package dev.jstech.tests.testkit;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.registry.ComputingComponents;
 import net.minecraft.core.NonNullList;
@@ -17,7 +18,8 @@ import net.minecraft.world.item.component.ItemContainerContents;
 
 /**
  * Rack computers built and ready to seat, for tests that need a working machine rather than the assembly that makes
- * one: the Standard board, CPU, RAM and supply, and whatever a kind of machine adds.
+ * one: the Standard board, CPU, RAM and supply, and whatever a kind of machine adds; the Advanced node with the
+ * Advanced parts.
  */
 public final class ServerStacks {
 
@@ -42,6 +44,23 @@ public final class ServerStacks {
     /** A node ready to run: board, CPU, RAM, supply, and the entry crafting co-processor in its slot. */
     public static ItemStack defaultSupercomputerNode() {
         return built(ComputingModule.SUPERCOMPUTER_NODE.get(), true, true);
+    }
+
+    /**
+     * An Advanced node ready to run: the era's server board, an Epic, DDR4, the Phi 9000 and a Tessera H100 in its
+     * accelerator sleds, and a supply for them.
+     */
+    public static ItemStack advancedSupercomputerNode() {
+        final ItemStack stack = new ItemStack(ComputingModule.ADVANCED_SUPERCOMPUTER_NODE.get());
+        final NonNullList<ItemStack> hardware = NonNullList.withSize(ServerHardwareHandler.SLOTS, ItemStack.EMPTY);
+        hardware.set(ServerHardwareHandler.MOBO, new ItemStack(HardwareItems.MOTHERBOARD_EEB_A_SP3.get()));
+        hardware.set(ServerHardwareHandler.CPU_START, new ItemStack(HardwareItems.CPU_VELOCION_EPIC_7251.get()));
+        hardware.set(ServerHardwareHandler.RAM_START, new ItemStack(HardwareItems.RAM_DDR4_16384.get()));
+        hardware.set(ServerHardwareHandler.GPU_START, new ItemStack(ComputingModule.PHI_9000.get()));
+        hardware.set(ServerHardwareHandler.GPU_START + 1, new ItemStack(HardwareItems.GPU_TESSERA_H100.get()));
+        hardware.set(ServerHardwareHandler.PSU, new ItemStack(HardwareItems.PSU_1200P.get()));
+        stack.set(ComputingComponents.SERVER_HARDWARE.get(), ItemContainerContents.fromItems(hardware));
+        return stack;
     }
 
     private static ItemStack built(final Item machine, final boolean withCpu, final boolean withPhi) {

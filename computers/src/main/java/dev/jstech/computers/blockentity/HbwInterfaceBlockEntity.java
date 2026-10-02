@@ -164,8 +164,8 @@ public class HbwInterfaceBlockEntity extends SyncedBlockEntity {
                      */
                     rack.noteFabricUplink(serverLevel.getGameTime(), networkUuid != null);
                     for (final int row : rack.computerSlots()) {
-                        if (ServerItem.chassisOf(rack.getServers().getStackInSlot(row))
-                                == RackChassis.SUPERCOMPUTER_NODE) {
+                        final RackChassis chassis = ServerItem.chassisOf(rack.getServers().getStackInSlot(row));
+                        if (chassis != null && chassis.isSupercomputerNode()) {
                             discovered.add(new NodeRef(rack.getBlockPos(), row));
                         }
                     }
