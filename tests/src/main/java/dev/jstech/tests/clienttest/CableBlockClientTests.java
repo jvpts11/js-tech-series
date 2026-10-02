@@ -69,11 +69,14 @@ public final class CableBlockClientTests {
                     return model instanceof CableBakedModel && !model.getQuads(state, null, RandomSource.create(0L),
                             turn.getModelData(), RenderType.cutout()).isEmpty();
                 }, "the wires drawn by the cable block's own model")
-                .thenAssert(0, () -> {
+                // The end of the run hears of the router on its own update, which may come after the turn's.
+                .thenWaitUntil(() -> {
                     final CableBlockEntity end = clientCable(ctx, new BlockPos(-2, FLOOR, ROW));
-                    return end != null && end.crosses(ComputingModule.ETHERNET_CABLE.get(), Direction.WEST)
-                            && !end.crosses(ComputingModule.HPC_CABLE.get(), Direction.WEST);
-                }, "the router takes the access and backbone lines, and only those")
+                    return end != null && end.crosses(ComputingModule.ETHERNET_CABLE.get(), Direction.WEST);
+                }, 80, "the player's game to know the run reaches the router")
+                .thenAssert(0, () -> !clientCable(ctx, new BlockPos(-2, FLOOR, ROW))
+                        .crosses(ComputingModule.HPC_CABLE.get(), Direction.WEST),
+                        "the router takes the access and backbone lines, and only those")
                 .then(0, () -> ctx.player().setXRot(LOOK_DOWN))
                 .thenScreenshot(10, "four-lines")
                 .thenServer(0, level -> clear(ctx, level));

@@ -64,8 +64,11 @@ neoForge {
 
         // Client tests: real client windows that create a test world, drive the screens with synthetic
         // input, take screenshots and write run/clienttests/shard-<i>/clienttests/report.txt. The suite is
-        // split round-robin over `clientShards` windows (default 4) so shards can run side by side:
-        //   .\gradlew.bat runClientTests0   (one shard)   -PclientShards=6 to change the split.
+        // split over `clientShards` windows (default 4) so shards can run side by side: by the ticks each test
+        // took last time (run/clienttests/durations.txt, written by every run) so the shards end together, or
+        // round-robin when nothing was measured yet.
+        //   .\gradlew.bat runClientTests0   (one shard)   -PclientShards=6 to change the split; every shard at
+        //   once: runClientTests0 ... runClientTests5 -PclientShards=6 --parallel
         def clientShards = (providers.gradleProperty('clientShards').getOrElse('4')) as int
         (0..<clientShards).each { shard ->
             create("clientTests${shard}") {

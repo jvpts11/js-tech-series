@@ -12,6 +12,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The explicit list of client test classes. Tests are discovered by reflection from these classes only (
@@ -118,15 +119,48 @@ public final class ClientTestSuite {
         return entries;
     }
 
-    /** The slice of the suite that shard {@code shard} of {@code shards} runs (round-robin by index). */
-    public static List<Entry> shard(final int shard, final int shards) {
+    /**
+     * The slice of the suite that shard {@code shard} of {@code shards} runs. Knowing how many ticks each test took
+     * last time, the longest go first, each to the shard with the least to do so far, so the shards end together and
+     * no shard waits on the one that drew the long tests; a test never measured counts as the measured ones'
+     * average. Knowing nothing, round-robin by index. Every shard reads the same durations, so each takes its own
+     * slice of one split and no test runs twice or not at all.
+     */
+    public static List<Entry> shard(final int shard, final int shards, final Map<String, Integer> ticks) {
         final List<Entry> all = all();
         final List<Entry> mine = new ArrayList<>();
-        for (int i = 0; i < all.size(); i++) {
-            if (i % shards == shard) {
-                mine.add(all.get(i));
+        if (ticks.isEmpty()) {
+            for (int i = 0; i < all.size(); i++) {
+                if (i % shards == shard) {
+                    mine.add(all.get(i));
+                }
+            }
+            return mine;
+        }
+        final int unknown = (int) ticks.values().stream().mapToInt(Integer::intValue).average().orElse(0);
+        final List<Entry> longestFirst = new ArrayList<>(all);
+        longestFirst.sort(Comparator.comparingInt((Entry e) -> -ticks.getOrDefault(e.name(), unknown))
+                .thenComparing(Entry::name));
+        final long[] load = new long[shards];
+        for (final Entry entry : longestFirst) {
+            int least = 0;
+            for (int other = 1; other < shards; other++) {
+                if (load[other] < load[least]) {
+                    least = other;
+                }
+            }
+            load[least] += ticks.getOrDefault(entry.name(), unknown);
+            if (least == shard) {
+                mine.add(entry);
             }
         }
+        mine.sort(Comparator.comparingInt(Entry::index));
         return mine;
+    }
+
+    /** The ticks a slice is expected to take, from the same durations its split was made with. */
+    public static long expectedTicks(final List<Entry> slice, final Map<String, Integer> ticks) {
+        final int unknown = (int) ticks.values().stream().mapToInt(Integer::intValue).average().orElse(0);
+        return slice.stream().mapToLong(entry -> ticks.getOrDefault(entry.name(), unknown)).sum();
     }
 }

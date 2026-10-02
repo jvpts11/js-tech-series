@@ -37,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -142,7 +143,11 @@ public final class ClientTestRunner {
         if (!(mc.screen instanceof TitleScreen) || mc.getOverlay() != null) {
             return;
         }
-        tests = ClientTestSuite.shard(SHARD, SHARDS);
+        final Map<String, Integer> durations = ClientTestDurations.read(runDirectory(mc));
+        tests = ClientTestSuite.shard(SHARD, SHARDS, durations);
+        LOGGER.info("[JSC-CT] shard {}/{} split {}, expected to take {} ticks", SHARD, SHARDS,
+                durations.isEmpty() ? "round-robin" : "by the ticks each test took last time",
+                ClientTestSuite.expectedTicks(tests, durations));
         if (!ONLY.isEmpty()) {
             final String needle = ONLY.toLowerCase(java.util.Locale.ROOT);
             tests = tests.stream()
@@ -341,6 +346,7 @@ public final class ClientTestRunner {
     private void finish(final Minecraft mc) {
         final Path file = mc.gameDirectory.toPath().resolve("clienttests").resolve("report.txt");
         report.write(file, SHARD, SHARDS);
+        ClientTestDurations.record(runDirectory(mc), report.results());
         enter(State.DONE);
         if (this.askedForNothing || report.failures() > 0) {
             LOGGER.error("[JSC-CT] this run failed: {} of {} tests failed{}",
@@ -354,5 +360,13 @@ public final class ClientTestRunner {
             System.exit(1);
         }
         mc.stop();
+    }
+
+    /**
+     * Where every shard's game directory is, and the durations the shards share. The game directory is "." in a
+     * run, so it is made whole before its parent is taken: the parent of "shard-0/." is the shard itself.
+     */
+    private static Path runDirectory(final Minecraft mc) {
+        return mc.gameDirectory.toPath().toAbsolutePath().normalize().getParent();
     }
 }
