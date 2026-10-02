@@ -104,6 +104,88 @@ public final class RackEraGameTests {
     }
 
     @GameTest(template = ARENA)
+    public static void rackEra_transitionRackSeatsItsEraAndEarlier(final GameTestHelper helper) {
+        final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2),
+                ComputingModule.TRANSITION_SERVER_RACK.get());
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ItemStackHandler rows = rack.getServers();
+                    helper.assertTrue(rows.isItemValid(0, stack(ComputingModule.VINTAGE_SERVER.get()))
+                                    && rows.isItemValid(1, stack(ComputingModule.LEGACY_SERVER.get()))
+                                    && rows.isItemValid(2, stack(ComputingModule.TRANSITION_SERVER.get())),
+                            "a Transition rack seats the Vintage, Legacy and Transition servers");
+                    helper.assertFalse(rows.isItemValid(3, stack(ComputingModule.SERVER.get())),
+                            "a Transition rack refuses a Standard server");
+                    helper.assertFalse(rows.isItemValid(4, stack(ComputingModule.ADVANCED_SERVER.get())),
+                            "a Transition rack refuses an Advanced server");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void rackEra_advancedRackSeatsEveryEra(final GameTestHelper helper) {
+        final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2),
+                ComputingModule.ADVANCED_SERVER_RACK.get());
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ItemStackHandler rows = rack.getServers();
+                    helper.assertTrue(rows.isItemValid(0, stack(ComputingModule.VINTAGE_SERVER.get()))
+                                    && rows.isItemValid(1, stack(ComputingModule.LEGACY_SERVER.get()))
+                                    && rows.isItemValid(2, stack(ComputingModule.TRANSITION_SERVER.get()))
+                                    && rows.isItemValid(3, stack(ComputingModule.SERVER.get()))
+                                    && rows.isItemValid(4, stack(ComputingModule.ADVANCED_SERVER.get())),
+                            "an Advanced rack seats every era of server");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void serverCase_transitionAndAdvancedTakeOnlyBoardsOfTheirEra(final GameTestHelper helper) {
+        final Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        final InteractionHand hand = InteractionHand.MAIN_HAND;
+        final ItemStack transitionBoard = stack(HardwareItems.MOTHERBOARD_EEB_T_1366.get());
+        final ItemStack advancedBoard = stack(HardwareItems.MOTHERBOARD_EEB_A_SP3.get());
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    player.setItemInHand(hand, stack(ComputingModule.TRANSITION_SERVER.get()));
+                    final ServerHardwareHandler transition = new ServerHardwareHandler(player, hand);
+                    helper.assertTrue(transition.insertItem(ServerHardwareHandler.MOBO, transitionBoard.copy(), true)
+                            .isEmpty(), "a Transition case takes a Transition server board");
+                    helper.assertFalse(transition.insertItem(ServerHardwareHandler.MOBO, advancedBoard.copy(), true)
+                            .isEmpty(), "a Transition case refuses an Advanced board");
+
+                    player.setItemInHand(hand, stack(ComputingModule.ADVANCED_SERVER.get()));
+                    final ServerHardwareHandler advanced = new ServerHardwareHandler(player, hand);
+                    helper.assertTrue(advanced.insertItem(ServerHardwareHandler.MOBO, advancedBoard.copy(), true)
+                            .isEmpty(), "an Advanced case takes an Advanced server board");
+                    helper.assertFalse(advanced.insertItem(ServerHardwareHandler.MOBO, transitionBoard.copy(), true)
+                            .isEmpty(), "an Advanced case refuses a Transition board");
+                })
+                .thenSucceed();
+    }
+
+    /** The new eras' 1U servers report their own rows, and count as the computers a rack lights its bar for. */
+    @GameTest(template = ARENA)
+    public static void rackModel_reportsTheTransitionAndAdvancedServers(final GameTestHelper helper) {
+        final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2),
+                ComputingModule.ADVANCED_SERVER_RACK.get());
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ItemStackHandler rows = rack.getServers();
+                    rows.setStackInSlot(0, stack(ComputingModule.TRANSITION_SERVER.get()));
+                    rows.setStackInSlot(1, stack(ComputingModule.ADVANCED_SERVER.get()));
+                    helper.assertTrue(rack.unitCodeAt(0) == ServerRackBlockEntity.UNIT_SERVER_TRANSITION
+                                    && rack.unitCodeAt(1) == ServerRackBlockEntity.UNIT_SERVER_ADVANCED,
+                            "each row reports the new server it holds");
+                    helper.assertTrue(rack.anyComputerSeated(), "the new servers are computers to the rack");
+                    final int advanced = ServerRackBlockEntity.UNIT_SERVER_ADVANCED;
+                    helper.assertValueEqual(ServerRackBlockEntity.UNIT_BONES[advanced], "server_1u_advanced",
+                            "the bone the Advanced server shows in its row");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
     public static void serverCase_takesOnlyBoardsOfItsEra(final GameTestHelper helper) {
         final Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         final InteractionHand hand = InteractionHand.MAIN_HAND;

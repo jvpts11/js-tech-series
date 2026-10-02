@@ -136,13 +136,18 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     public static final int UNIT_STORAGE_2U = 4;
     public static final int UNIT_COMPUTE_2U = 5;
     public static final int UNIT_NODE_2U = 6;
-    public static final int UNIT_KVM_SWITCH = 7;
-    public static final int UNIT_RACK_UPS = 8;
-    public static final int UNIT_COOLING_UNIT = 9;
+    public static final int UNIT_SERVER_TRANSITION = 7;
+    public static final int UNIT_SERVER_ADVANCED = 8;
+    public static final int UNIT_KVM_SWITCH = 9;
+    public static final int UNIT_RACK_UPS = 10;
+    public static final int UNIT_COOLING_UNIT = 11;
+    /** The codes up to this one are computers; the ones after are the units that serve them. */
+    public static final int LAST_COMPUTER_UNIT = UNIT_SERVER_ADVANCED;
 
     /** The model bone names, indexed by unit code. */
     public static final String[] UNIT_BONES = {"", "server_1u_standard", "server_1u_legacy", "server_1u_vintage",
-            "storage_2u", "compute_2u", "node_2u", "kvm_switch", "rack_ups", "cooling_unit"};
+            "storage_2u", "compute_2u", "node_2u", "server_1u_transition", "server_1u_advanced", "kvm_switch",
+            "rack_ups", "cooling_unit"};
 
     private static final RawAnimation FANS =
             RawAnimation.begin().thenLoop("animation.rack.fans");
@@ -203,6 +208,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                 case STORAGE_SERVER -> UNIT_STORAGE_2U;
                 case COMPUTE_SERVER -> UNIT_COMPUTE_2U;
                 case SUPERCOMPUTER_NODE -> UNIT_NODE_2U;
+                case TRANSITION_SERVER -> UNIT_SERVER_TRANSITION;
+                case ADVANCED_SERVER -> UNIT_SERVER_ADVANCED;
             };
         }
         for (final RackUnitItem.Kind kind
@@ -229,7 +236,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     /** Whether any seated machine's bay is on: what spins the roof fans and lights the bar. */
     public boolean anyBayOn() {
         for (int slot = 0; slot < CAPACITY_U; slot++) {
-            if (unitCodeAt(slot) != UNIT_NONE && unitCodeAt(slot) <= UNIT_NODE_2U && bayLit(slot)) {
+            if (unitCodeAt(slot) != UNIT_NONE && unitCodeAt(slot) <= LAST_COMPUTER_UNIT && bayLit(slot)) {
                 return true;
             }
         }
@@ -240,7 +247,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     public boolean anyComputerSeated() {
         for (int slot = 0; slot < CAPACITY_U; slot++) {
             final int code = unitCodeAt(slot);
-            if (code != UNIT_NONE && code <= UNIT_NODE_2U) {
+            if (code != UNIT_NONE && code <= LAST_COMPUTER_UNIT) {
                 return true;
             }
         }

@@ -8,6 +8,7 @@
 package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
@@ -22,6 +23,7 @@ import dev.jstech.core.multiblock.MultiblockPatternGeometry;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
 import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.text.GameText;
@@ -62,13 +64,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * The Server Rack: a 2-wide, 3-tall, 2-deep multiblock cabinet that is logically a single rack.
+ * The Server Rack: a 2-wide, 3-tall, 2-deep multiblock cabinet that is logically a single rack, one block for every
+ * era, the era given where it is declared.
  */
 @TextHolder
 public class ServerRackBlock extends AbstractMultiblockControllerBlock
         implements IFaceConnector {
 
-    public static final MapCodec<ServerRackBlock> CODEC = simpleCodec(ServerRackBlock::new);
+    private final HardwareEra era;
+
+    public static final MapCodec<ServerRackBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+            propertiesCodec(),
+            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(ServerRackBlock::era)
+    ).apply(i, ServerRackBlock::new));
 
     public static final IntegerProperty BAYS =
             IntegerProperty.create("bays", 0, 3);
@@ -83,8 +91,9 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
     private static final TextKey ROW_TAKEN =
             TextKey.of("block.jsc.rack.row_taken", "That rack unit is taken or too small for this");
 
-    public ServerRackBlock(final Properties properties) {
+    public ServerRackBlock(final Properties properties, final HardwareEra era) {
         super(properties);
+        this.era = era;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(BAYS, 0));
     }
 
@@ -107,7 +116,7 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
      * takes everything and a Vintage rack takes only Vintage servers.
      */
     public HardwareEra era() {
-        return HardwareEra.STANDARD;
+        return era;
     }
 
     /**
@@ -117,14 +126,6 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
     @Override
     protected RenderShape getRenderShape(final BlockState state) {
         return RenderShape.ENTITYBLOCK_ANIMATED;
-    }
-
-    /**
-     * The item this cabinet drops when torn down and is picked as. A typed cabinet answers with its own,
-     * so dismantling a Supercomputer Rack never hands the player a Server Rack.
-     */
-    protected Item blockItem() {
-        return ComputingModule.SERVER_RACK.item();
     }
 
     /* A Server Rack takes any data cable on its back but the high-compute fabric, the supercomputer cabinet's alone. */
@@ -167,7 +168,8 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
 
     @Override
     protected void dropContents(final ServerLevel level, final BlockPos controller) {
-        Block.popResource(level, controller, new ItemStack(blockItem()));
+        // Its own item, so a broken cabinet gives back its era, and a Supercomputer Rack never a Server Rack.
+        Block.popResource(level, controller, new ItemStack(asItem()));
         if (level.getBlockEntity(controller) instanceof ServerRackBlockEntity rack) {
             // The servers fall out with the cabinet rather than slide out of it, which is heard as the cabinet.
             rack.quietly(() -> BlockDrops.spill(level, controller, rack.getServers()));
@@ -326,7 +328,7 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
     public ItemStack getCloneItemStack(final BlockState state, final HitResult target, final LevelReader level,
                                        final BlockPos pos, final Player player) {
         return level.getBlockEntity(pos) instanceof ServerRackBlockEntity rack
-                ? pickFrom(rack, pos, pos, target, blockItem())
+                ? pickFrom(rack, pos, pos, target, asItem())
                 : super.getCloneItemStack(state, target, level, pos, player);
     }
 

@@ -158,7 +158,7 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
         if (level.getBlockEntity(pos) instanceof ServerRackPartBlockEntity part && part.controllerPos() != null
                 && level.getBlockEntity(part.controllerPos()) instanceof ServerRackBlockEntity rack
                 && rack.getBlockState().getBlock() instanceof ServerRackBlock cabinet) {
-            return ServerRackBlock.pickFrom(rack, part.controllerPos(), pos, target, cabinet.blockItem());
+            return ServerRackBlock.pickFrom(rack, part.controllerPos(), pos, target, cabinet.asItem());
         }
         return super.getCloneItemStack(state, target, level, pos, player);
     }

@@ -28,7 +28,11 @@ public enum RackChassis {
     /** 2U, four sockets, compute first. */
     COMPUTE_SERVER(2, 1, 1, 4, Integer.MAX_VALUE, RackType.SERVER, HardwareEra.STANDARD),
     /** 2U node of a supercomputer: one Phi and one GPU, seated only in a Supercomputer Rack. */
-    SUPERCOMPUTER_NODE(2, 1, 1, 2, 2, RackType.SUPERCOMPUTER, HardwareEra.STANDARD);
+    SUPERCOMPUTER_NODE(2, 1, 1, 2, 2, RackType.SUPERCOMPUTER, HardwareEra.STANDARD),
+    /** The Transition 1U server: two sockets, its four drives and a gadget filling the unit's front, two cards. */
+    TRANSITION_SERVER(1, 4, 1, 2, 2, RackType.SERVER, HardwareEra.TRANSITION),
+    /** The Advanced 1U server: two sockets, four drives and a gadget filling the unit's front, any cards. */
+    ADVANCED_SERVER(1, 4, 1, 2, Integer.MAX_VALUE, RackType.SERVER, HardwareEra.ADVANCED);
 
     /** The kind of cabinet a chassis seats in. */
     public enum RackType {

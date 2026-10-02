@@ -8,13 +8,12 @@
 package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
-import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
 import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
-import net.minecraft.world.item.Item;
+import dev.jstech.core.tier.HardwareEra;
 
 /**
  * The Supercomputer Rack: the same 8U cabinet as the Server Rack (units, front slots, KVM, the
@@ -34,7 +33,7 @@ public class SupercomputerRackBlock extends ServerRackBlock {
             .build();
 
     public SupercomputerRackBlock(final Properties properties) {
-        super(properties);
+        super(properties, HardwareEra.STANDARD);
     }
 
     @Override
@@ -45,11 +44,6 @@ public class SupercomputerRackBlock extends ServerRackBlock {
     @Override
     public RackChassis.RackType rackType() {
         return RackChassis.RackType.SUPERCOMPUTER;
-    }
-
-    @Override
-    protected Item blockItem() {
-        return ComputingModule.SUPERCOMPUTER_RACK.item();
     }
 
     @Override

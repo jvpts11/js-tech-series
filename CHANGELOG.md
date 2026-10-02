@@ -178,6 +178,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   middle of its front; the Advanced's is near black after the z14 and z15, its door a perforated sheet folded into
   facets, with a line of white light up each side. Each takes the MTX board of its own age, and their lights come on
   while the machine runs on a build that makes a computer.
+- The Transition and Advanced Server Racks and servers. The Transition rack is gloss black with brushed-silver posts,
+  honeycomb rear doors and a header with a silver badge and a blue lamp; the Advanced rack is the era's white with
+  hidden screws, finely perforated rear doors and a white line on the header. The Transition 1U server, after the HP
+  DL360 G5 and the Dell PowerEdge 1950, has a brushed-silver face with four 2.5" drives, a slim DVD and a blue power
+  light; the Advanced one, after the HPE DL360 Gen10 and the Dell R650, is black with slim NVMe carriers, a honeycomb
+  vent and a white light. Both take two processors, four drives and a gadget, the Transition's two cards and the
+  Advanced's any number; each seats in a rack of its age or later, and every rack draws every server it can seat in
+  that server's own shape. Their items and their empty cases show the server's face.
+- A Server Rack's roof fans turn as fans: the housing stays still and only the rotor turns in it.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

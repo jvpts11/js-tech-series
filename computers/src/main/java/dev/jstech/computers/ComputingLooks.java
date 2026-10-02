@@ -87,13 +87,12 @@ public final class ComputingLooks {
         if (rack.getBlockState().getBlock() instanceof SupercomputerRackBlock) {
             return "supercomputer_rack";
         }
-        final HardwareEra era = rack.rackEra();
-        if (era == HardwareEra.VINTAGE) {
-            return "vintage_server_rack";
-        }
-        if (era == HardwareEra.LEGACY) {
-            return "legacy_server_rack";
-        }
-        return "server_rack";
+        return switch (rack.rackEra()) {
+            case VINTAGE -> "vintage_server_rack";
+            case LEGACY -> "legacy_server_rack";
+            case TRANSITION -> "transition_server_rack";
+            case ADVANCED -> "advanced_server_rack";
+            default -> "server_rack";
+        };
     }
 }

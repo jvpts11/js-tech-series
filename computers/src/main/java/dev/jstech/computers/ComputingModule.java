@@ -28,7 +28,6 @@ import dev.jstech.computers.block.CraftingSwitchBlock;
 import dev.jstech.computers.block.HbwInterfaceBlock;
 import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.block.LegacyMonitorBlock;
-import dev.jstech.computers.block.LegacyServerRackBlock;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.MainframePartBlock;
 import dev.jstech.computers.block.MonitorBlock;
@@ -44,7 +43,6 @@ import dev.jstech.computers.block.SpeakerBlock;
 import dev.jstech.computers.block.SupercomputerRackBlock;
 import dev.jstech.computers.block.TankBlock;
 import dev.jstech.computers.block.VintageMonitorBlock;
-import dev.jstech.computers.block.VintageServerRackBlock;
 import dev.jstech.computers.block.part.CablePartItem;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
@@ -504,12 +502,16 @@ public final class ComputingModule {
      * model by its controller, which hands its item over itself when broken.
      */
 
-    public static final BlockEntry<VintageServerRackBlock> VINTAGE_SERVER_RACK =
-            rack("vintage_server_rack", VintageServerRackBlock::new).named("Vintage Server Rack").register();
-    public static final BlockEntry<LegacyServerRackBlock> LEGACY_SERVER_RACK =
-            rack("legacy_server_rack", LegacyServerRackBlock::new).named("Legacy Server Rack").register();
+    public static final BlockEntry<ServerRackBlock> VINTAGE_SERVER_RACK =
+            serverRack("vintage_server_rack", HardwareEra.VINTAGE).named("Vintage Server Rack").register();
+    public static final BlockEntry<ServerRackBlock> LEGACY_SERVER_RACK =
+            serverRack("legacy_server_rack", HardwareEra.LEGACY).named("Legacy Server Rack").register();
+    public static final BlockEntry<ServerRackBlock> TRANSITION_SERVER_RACK =
+            serverRack("transition_server_rack", HardwareEra.TRANSITION).named("Transition Server Rack").register();
     public static final BlockEntry<ServerRackBlock> SERVER_RACK =
-            rack("server_rack", ServerRackBlock::new).named("Server Rack").register();
+            serverRack("server_rack", HardwareEra.STANDARD).named("Server Rack").register();
+    public static final BlockEntry<ServerRackBlock> ADVANCED_SERVER_RACK =
+            serverRack("advanced_server_rack", HardwareEra.ADVANCED).named("Advanced Server Rack").register();
     public static final BlockEntry<SupercomputerRackBlock> SUPERCOMPUTER_RACK =
             rack("supercomputer_rack", SupercomputerRackBlock::new).named("Supercomputer Rack").register();
     public static final BlockEntry<ServerRackPartBlock> SERVER_RACK_PART =
@@ -517,7 +519,8 @@ public final class ComputingModule {
                     .named("Server Rack").look(RACK_BODY).register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ServerRackBlockEntity>> SERVER_RACK_BE =
             CONTENT.blockEntity("server_rack", ServerRackBlockEntity::new,
-                    SERVER_RACK, SUPERCOMPUTER_RACK, LEGACY_SERVER_RACK, VINTAGE_SERVER_RACK);
+                    SERVER_RACK, SUPERCOMPUTER_RACK, LEGACY_SERVER_RACK, VINTAGE_SERVER_RACK, TRANSITION_SERVER_RACK,
+                    ADVANCED_SERVER_RACK);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ServerRackPartBlockEntity>>
             SERVER_RACK_PART_BE = CONTENT.blockEntity("server_rack_part", ServerRackPartBlockEntity::new,
                     SERVER_RACK_PART);
@@ -547,10 +550,18 @@ public final class ComputingModule {
             serverCase("legacy_server_case").named("Legacy Server Case").register();
     public static final ItemEntry<ServerItem> LEGACY_SERVER =
             server("legacy_server", RackChassis.LEGACY_SERVER, SERVERS).named("Legacy Server").register();
+    public static final ItemEntry<ServerCaseItem> TRANSITION_SERVER_CASE =
+            serverCase("transition_server_case").named("Transition Server Case").register();
+    public static final ItemEntry<ServerItem> TRANSITION_SERVER =
+            server("transition_server", RackChassis.TRANSITION_SERVER, SERVERS).named("Transition Server").register();
     public static final ItemEntry<ServerCaseItem> SERVER_CASE =
             serverCase("server_case").named("Server Case").register();
     public static final ItemEntry<ServerItem> SERVER =
             server("server", RackChassis.SERVER, SERVERS).named("Server").register();
+    public static final ItemEntry<ServerCaseItem> ADVANCED_SERVER_CASE =
+            serverCase("advanced_server_case").named("Advanced Server Case").register();
+    public static final ItemEntry<ServerItem> ADVANCED_SERVER =
+            server("advanced_server", RackChassis.ADVANCED_SERVER, SERVERS).named("Advanced Server").register();
     public static final ItemEntry<ServerCaseItem> STORAGE_SERVER_CASE =
             serverCase("storage_server_case").named("Storage Server Case").register();
     public static final ItemEntry<ServerItem> STORAGE_SERVER =
@@ -870,6 +881,10 @@ public final class ComputingModule {
         return new IBlockModel.SixFaces(name, "block/network_gateway_top", "block/network_gateway_top", front,
                 "block/network_gateway_back", "block/network_gateway_side", "block/network_gateway_side",
                 "block/network_gateway_side");
+    }
+
+    private static BlockBuilder<ServerRackBlock> serverRack(final String id, final HardwareEra era) {
+        return rack(id, properties -> new ServerRackBlock(properties, era));
     }
 
     private static <B extends Block> BlockBuilder<B> rack(final String id,
