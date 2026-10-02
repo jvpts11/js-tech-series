@@ -17,6 +17,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.DyeColor;
@@ -35,6 +36,10 @@ import org.jetbrains.annotations.Nullable;
  * takes. How much a pipe carries in a tick is the pressure it holds; a gas needs a pipe that takes gases.
  *
  * <p>A cable that never shares a block takes no lane: a block that holds it holds nothing else.
+ *
+ * <p>Some cables keep a shape: one that runs only straight joins along a single axis in a block, so it never turns a
+ * corner; one that joins at most so many faces in a block never branches past that, so a cable that joins two runs
+ * from one end to the other with nothing branching off it.
  */
 public final class CableType {
 
@@ -49,6 +54,8 @@ public final class CableType {
     private final ResourceLocation jacket;
     private final ResourceLocation plug;
     private final Supplier<? extends Item> item;
+    private final boolean straight;
+    private final int mostJoins;
 
     private CableType(final Builder builder, final Supplier<? extends Item> item) {
         this.line = Objects.requireNonNull(builder.line, "a cable carries a line");
@@ -57,6 +64,8 @@ public final class CableType {
             throw new IllegalStateException("a cable that shares blocks takes a lane: " + this.line.line());
         }
         this.lane = builder.alone ? null : builder.lane;
+        this.straight = builder.straight;
+        this.mostJoins = builder.mostJoins;
         this.thickness = builder.thickness;
         this.throughput = builder.throughput;
         this.range = builder.range;
@@ -117,6 +126,16 @@ public final class CableType {
         return this.pipe;
     }
 
+    /** Whether it runs only straight: in a block it joins along one axis, so it never turns a corner. */
+    public boolean runsStraight() {
+        return this.straight;
+    }
+
+    /** The most faces it joins in a block; 0 for no limit. */
+    public int mostJoins() {
+        return this.mostJoins;
+    }
+
     /**
      * Its jacket's texture, 32 pixels square: the side with the length along u in the top left (16 by its thickness),
      * the same side with the length along v beside it, and the cut end below.
@@ -168,6 +187,8 @@ public final class CableType {
         private final Set<TagKey<Fluid>> takes = new HashSet<>();
         private @Nullable ResourceLocation jacket;
         private @Nullable ResourceLocation plug;
+        private boolean straight;
+        private int mostJoins;
 
         /** How thick a cable is unless it says otherwise, in pixels. */
         private static final int STANDARD_THICKNESS = 4;
@@ -240,6 +261,21 @@ public final class CableType {
         /** As a pipe, it is made for fluids marked {@code mark}: a gas, a corrosive fluid. */
         public Builder takes(final TagKey<Fluid> mark) {
             this.takes.add(Objects.requireNonNull(mark, "mark"));
+            return this;
+        }
+
+        /** It runs only straight: in a block it joins along one axis, and something else has to turn it. */
+        public Builder runsStraight() {
+            this.straight = true;
+            return this;
+        }
+
+        /** It joins at most {@code faces} faces in a block, so it branches no further; two runs it end to end. */
+        public Builder joinsAtMost(final int faces) {
+            if (faces < 1 || faces > Direction.values().length) {
+                throw new IllegalArgumentException("a cable joins between 1 and 6 faces, not " + faces);
+            }
+            this.mostJoins = faces;
             return this;
         }
 

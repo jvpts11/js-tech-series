@@ -341,7 +341,7 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
                 continue; // the uplink side is never a datacenter section
             }
             final List<Long> wires = DataWires.numbersReaching(level, worldPosition, face,
-                    wire -> DataWires.tierOf(wire) != null);
+                    wire -> DataWires.linkOf(wire) != null);
             if (wires.isEmpty()) {
                 continue; // no cable on this face
             }

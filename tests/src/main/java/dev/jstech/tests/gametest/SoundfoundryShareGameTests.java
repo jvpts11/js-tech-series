@@ -27,7 +27,9 @@ import dev.jstech.computers.program.SongDownload;
 import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.audio.media.MediaInfo;
 import dev.jstech.core.audio.media.MediaStore;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLine;
+import dev.jstech.core.network.DataLink;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestMedia;
@@ -56,6 +58,7 @@ public final class SoundfoundryShareGameTests {
 
     private static final String ARENA = "empty";
     private static final int SETTLE = 8;
+    private static final DataLink ETHERNET = new DataLink(DataLine.ACCESS, HardwareEra.LEGACY);
     private static final String SHARER = "studio";
 
     private SoundfoundryShareGameTests() {
@@ -74,7 +77,7 @@ public final class SoundfoundryShareGameTests {
                             .filter(one -> one.source() != SongDownload.FROM_CATALOG).toList();
                     helper.assertTrue(shared.size() == 1 && shared.getFirst().title().equals("Harbour Song.wav")
                                     && shared.getFirst().from().equals(SHARER)
-                                    && shared.getFirst().link() == DataTier.T1_ETHERNET,
+                                    && ETHERNET.equals(shared.getFirst().link()),
                             "the shared song is found, from the computer sharing it, over its Ethernet; found "
                                     + found);
                     helper.assertTrue(SoundfoundryShare.peerCount(helper.getLevel(), base.asker()) == 1,
@@ -96,7 +99,7 @@ public final class SoundfoundryShareGameTests {
                     helper.assertTrue(said.isEmpty(), "the song is on its way; said " + said.english());
                     final SongDownload download = downloads(base.asker()).getFirst();
                     helper.assertTrue(download.status() == SongDownload.Status.RUNNING
-                                    && download.link() == DataTier.T1_ETHERNET,
+                                    && ETHERNET.equals(download.link()),
                             "over the Ethernet between them");
                 })
                 .thenExecuteAfter(3, () -> {
@@ -170,7 +173,7 @@ public final class SoundfoundryShareGameTests {
                     final Text said = base.asker().musicDownloads().start(level, SongDownload.FROM_CATALOG,
                             offered[0].path(), false);
                     helper.assertTrue(said.isEmpty(), "and one is on its way; said " + said.english());
-                    helper.assertTrue(downloads(base.asker()).getFirst().link() == DataTier.T1_ETHERNET,
+                    helper.assertTrue(ETHERNET.equals(downloads(base.asker()).getFirst().link()),
                             "at the speed of the computer's own cable");
                 })
                 .thenWaitUntil(() -> helper.assertTrue(

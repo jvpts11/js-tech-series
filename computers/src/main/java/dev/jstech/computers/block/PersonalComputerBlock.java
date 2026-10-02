@@ -18,8 +18,8 @@ import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
-import dev.jstech.core.network.DataTier;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.tier.HardwareEra;
@@ -59,20 +59,20 @@ public class PersonalComputerBlock extends HorizontalDirectionalBlock
 
     private final HardwareEra era;
     private final CaseStyle caseStyle;
+    /** The access line on its back, its era's cable and every earlier one's. */
+    private final FacePorts ports;
 
     public static final MapCodec<PersonalComputerBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
             StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(PersonalComputerBlock::era),
             StableCodecs.byName(CaseStyle.class).fieldOf("case").forGetter(PersonalComputerBlock::caseStyle)
     ).apply(i, PersonalComputerBlock::new));
-    private static final FacePorts PORTS = FacePorts.builder()
-            .port(FaceRule.BACK, DataLines.of(DataTier.T1_ETHERNET))
-            .build();
 
     public PersonalComputerBlock(final Properties properties, final HardwareEra era, final CaseStyle caseStyle) {
         super(properties);
         this.era = era;
         this.caseStyle = caseStyle;
+        this.ports = FacePorts.builder().port(FaceRule.BACK, DataLines.upTo(era, DataLine.ACCESS)).build();
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
@@ -126,7 +126,7 @@ public class PersonalComputerBlock extends HorizontalDirectionalBlock
     /* PCs are Ethernet-only, on their back; they reach HBW through a Personal Router. */
     @Override
     public FacePorts ports() {
-        return PORTS;
+        return ports;
     }
 
     @Override

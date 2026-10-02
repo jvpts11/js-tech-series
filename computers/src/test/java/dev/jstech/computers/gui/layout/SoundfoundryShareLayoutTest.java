@@ -10,7 +10,9 @@ package dev.jstech.computers.gui.layout;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import dev.jstech.computers.gui.layout.SoundfoundryLayout.Rect;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLine;
+import dev.jstech.core.network.DataLink;
+import dev.jstech.core.tier.HardwareEra;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -26,11 +28,13 @@ class SoundfoundryShareLayoutTest {
     @Test
     void signalOf_lightsMoreBarsForFasterCables() {
         assertEquals(0, SoundfoundryShareLayout.signalOf(null));
-        assertEquals(2, SoundfoundryShareLayout.signalOf(DataTier.T1_ETHERNET));
-        assertEquals(4, SoundfoundryShareLayout.signalOf(DataTier.T2_HBW));
-        assertEquals(5, SoundfoundryShareLayout.signalOf(DataTier.HPC));
-        assertEquals(2, SoundfoundryShareLayout.signalOf(DataTier.CRAFTING),
+        assertEquals(2, SoundfoundryShareLayout.signalOf(new DataLink(DataLine.ACCESS, HardwareEra.LEGACY)));
+        assertEquals(4, SoundfoundryShareLayout.signalOf(new DataLink(DataLine.BACKBONE, HardwareEra.LEGACY)));
+        assertEquals(5, SoundfoundryShareLayout.signalOf(new DataLink(DataLine.HPC, HardwareEra.STANDARD)));
+        assertEquals(2, SoundfoundryShareLayout.signalOf(new DataLink(DataLine.CRAFTING, HardwareEra.VINTAGE)),
                 "a cable songs go over at Ethernet's speed shows as Ethernet");
+        assertEquals(2, SoundfoundryShareLayout.signalOf(new DataLink(DataLine.BACKBONE, HardwareEra.STANDARD)),
+                "and so does a new cable with no song speed of its own");
     }
 
     @Test

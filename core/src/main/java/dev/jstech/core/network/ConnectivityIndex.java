@@ -13,7 +13,6 @@ import dev.jstech.core.grid.GridPlaces;
 import dev.jstech.core.uuid.NetworkUuid;
 
 import java.util.Collection;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -30,6 +29,10 @@ import org.jetbrains.annotations.Nullable;
  * <p>A part of the grid takes the identity its owner gives it, keeps it when cables join it, and settles a conflict
  * when two networks' cables meet. A part cut away from its owner loses it.
  *
+ * <p>Range counts: a run of one cable longer than its cable reaches carries nothing, so what lies only beyond it is
+ * off the network, though the cables still touch. The network a position is on is the one whose owner it reaches
+ * without crossing such a run.
+ *
  * <p>What this calls a position is the number the dimension's {@link GridPlaces} gives a place
  * of the grid: one wire in a lane of a cable block, or a whole block for a device such as a router. A device that is
  * no position of the grid (a computer touching cables) is named by its block's own packed position where it bridges
@@ -44,32 +47,40 @@ public final class ConnectivityIndex {
      * this index, so these are what let a removal tell the fragment that still reaches it from one it cut away.
      */
     private final Map<Long, Anchor> anchors = new HashMap<>();
-    /* What kind of cable each position is; a position with none (a router) limits nothing that passes through it. */
-    private final Map<Long, DataTier> tiers = new HashMap<>();
-
-    /* Each tier's cable as the grid holds it: its line, how much it carries and how far a run of it reaches. */
-    private static final Map<DataTier, GridMember> MEMBERS = new EnumMap<>(DataTier.class);
-
-    static {
-        for (final DataTier tier : DataTier.values()) {
-            MEMBERS.put(tier, GridMember.cable(tier.line(), 0, tier.maxThroughput(), tier.maxLength()));
-        }
-    }
 
     /** The grid itself, for what any grid answers: the runs, their lengths, the ways through it. */
     public Grid grid() {
         return grid;
     }
 
-    // Queries
-
-    public Optional<NetworkUuid> networkOf(final long encodedPos) {
-        final int root = grid.rootOf(encodedPos);
-        return root < 0 ? Optional.empty() : Optional.ofNullable(rootToUuid.get(root));
+    /** What a cable of {@code link} stands for in the data grid. */
+    public static GridMember member(final DataLink link) {
+        return GridMember.cable(link.line().lineId(), link.generation(), link.throughput(), link.range());
     }
 
+    // Queries
+
+    /**
+     * The network {@code encodedPos} is on: the one its part of the grid belongs to, if it reaches that network's
+     * owner without crossing a run longer than its cable reaches.
+     */
+    public Optional<NetworkUuid> networkOf(final long encodedPos) {
+        final NetworkUuid uuid = joinedUuid(encodedPos);
+        return uuid != null && reachesItsOwner(encodedPos, uuid) ? Optional.of(uuid) : Optional.empty();
+    }
+
+    /**
+     * The network the cables {@code encodedPos} is joined to belong to, whether or not a run too long lies between it
+     * and the network's owner: what a cable keeps across a reload, where reaching is worked out again.
+     */
+    public Optional<NetworkUuid> joinedNetwork(final long encodedPos) {
+        return Optional.ofNullable(joinedUuid(encodedPos));
+    }
+
+    /** Whether two positions reach each other, along cables and devices, with no run too long between them. */
     public boolean inSameNetwork(final long encodedA, final long encodedB) {
-        return grid.connected(encodedA, encodedB);
+        final int part = grid.livePartOf(encodedA);
+        return part >= 0 && part == grid.livePartOf(encodedB);
     }
 
     public boolean contains(final long encodedPos) {
@@ -102,16 +113,18 @@ public final class ConnectivityIndex {
         }
         final Set<Long> result = new LinkedHashSet<>();
         for (final long pos : grid.positions()) {
-            if (network.equals(rootToUuid.get(grid.rootOf(pos)))) {
+            if (network.equals(rootToUuid.get(grid.rootOf(pos))) && reachesItsOwner(pos, network)) {
                 result.add(pos);
             }
         }
         return result;
     }
 
-    /** What kind of cable is at that position, or empty for a position that is no cable (a router) or none. */
-    public Optional<DataTier> tierOf(final long encodedPos) {
-        return Optional.ofNullable(tiers.get(encodedPos));
+    /** What data cable is at that position, or empty for a position that is no cable (a router) or none. */
+    public Optional<DataLink> linkOf(final long encodedPos) {
+        final GridMember member = grid.memberOf(encodedPos);
+        return member == null || member.isDevice() ? Optional.empty()
+                : Optional.ofNullable(DataLink.of(member.line(), member.generation()));
     }
 
     /**
@@ -121,9 +134,9 @@ public final class ConnectivityIndex {
      *
      * @return the slowest cable on that way, or empty when nothing joins the two, or nothing but devices lies between
      */
-    public Optional<DataTier> slowestBetween(final Collection<Long> from, final Collection<Long> to) {
+    public Optional<DataLink> slowestBetween(final Collection<Long> from, final Collection<Long> to) {
         final OptionalLong at = grid.slowestBetween(from, to);
-        return at.isPresent() ? Optional.ofNullable(tiers.get(at.getAsLong())) : Optional.empty();
+        return at.isPresent() ? linkOf(at.getAsLong()) : Optional.empty();
     }
 
     // Mutations
@@ -134,13 +147,13 @@ public final class ConnectivityIndex {
     }
 
     /**
-     * Puts in a cable of that tier, joined to those of its neighbours already in that it joins.
+     * Puts in a cable of that link, joined to those of its neighbours already in that it joins.
      *
-     * @param tier the kind of cable, or null for a position that carries the network without being a cable
+     * @param link the cable, or null for a position that carries the network without being a cable
      */
     public IPlacementResult onCablePlaced(final long encodedPos, final Set<Long> neighbors,
-                                         @Nullable final DataTier tier) {
-        return place(encodedPos, neighbors, tier == null ? GridMember.DEVICE : MEMBERS.get(tier));
+                                         @Nullable final DataLink link) {
+        return place(encodedPos, neighbors, link == null ? GridMember.DEVICE : member(link));
     }
 
     /**
@@ -150,10 +163,6 @@ public final class ConnectivityIndex {
     public IPlacementResult place(final long node, final Collection<Long> neighbors, final GridMember member) {
         if (grid.contains(node)) {
             throw new IllegalStateException("Position already registered: " + node);
-        }
-        final DataTier tier = member.isDevice() ? null : DataTier.ofLine(member.line());
-        if (tier != null) {
-            tiers.put(node, tier);
         }
         final Set<Integer> joinedRoots = grid.place(node, member, neighbors);
         NetworkUuid firstSeen = null;
@@ -270,14 +279,16 @@ public final class ConnectivityIndex {
         if (!grid.contains(encodedPos)) {
             throw new IllegalStateException("Position not registered: " + encodedPos);
         }
-        final Optional<NetworkUuid> previousUuid = networkOf(encodedPos);
+        final Optional<NetworkUuid> previousUuid = joinedNetwork(encodedPos);
         // Snapshot every cable's current UUID before the grid works its parts out again.
         final Map<Long, NetworkUuid> uuidByPos = new HashMap<>();
         for (final long pos : grid.positions()) {
-            networkOf(pos).ifPresent(uuid -> uuidByPos.put(pos, uuid));
+            final NetworkUuid uuid = joinedUuid(pos);
+            if (uuid != null) {
+                uuidByPos.put(pos, uuid);
+            }
         }
         final Grid.Removal removal = grid.remove(encodedPos);
-        tiers.remove(encodedPos);
         final Set<Long> affected = removal.affected();
         final boolean severed = removal.fragments() >= 2;
         /*
@@ -309,7 +320,37 @@ public final class ConnectivityIndex {
         grid.clear();
         rootToUuid.clear();
         anchors.clear();
-        tiers.clear();
+    }
+
+    /* The network the part {@code encodedPos} is joined into belongs to, or null. */
+    @Nullable
+    private NetworkUuid joinedUuid(final long encodedPos) {
+        final int root = grid.rootOf(encodedPos);
+        return root < 0 ? null : rootToUuid.get(root);
+    }
+
+    /*
+     * Whether {@code encodedPos} reaches an owner of {@code network} without crossing a run too long. A network whose
+     * owner has not reported its cables yet (right after a world loads) is taken to reach it.
+     */
+    private boolean reachesItsOwner(final long encodedPos, final NetworkUuid network) {
+        final int part = grid.livePartOf(encodedPos);
+        if (part < 0) {
+            return false;
+        }
+        boolean anchored = false;
+        for (final Anchor anchor : anchors.values()) {
+            if (!anchor.network().equals(network)) {
+                continue;
+            }
+            for (final long cable : anchor.cables()) {
+                anchored = true;
+                if (grid.livePartOf(cable) == part) {
+                    return true;
+                }
+            }
+        }
+        return !anchored;
     }
 
     /**

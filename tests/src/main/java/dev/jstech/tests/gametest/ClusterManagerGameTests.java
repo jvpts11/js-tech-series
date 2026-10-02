@@ -669,8 +669,9 @@ public final class ClusterManagerGameTests {
     private static ClusterManagementComputerBlockEntity placeVintageManagerOnBackbone(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         world.placeRunningMainframe(MAINFRAME);
-        TestCables.lay(helper, CABLE_A, ComputingModule.HBW_CABLE);
-        TestCables.lay(helper, CABLE_B, ComputingModule.HBW_CABLE);
+        // A Vintage machine takes its own era's backbone, the thick coax, which the newer devices take too.
+        TestCables.lay(helper, CABLE_A, ComputingModule.THICK_COAX_CABLE);
+        TestCables.lay(helper, CABLE_B, ComputingModule.THICK_COAX_CABLE);
         helper.setBlock(MANAGER, ComputingModule.VINTAGE_CLUSTER_MANAGEMENT_COMPUTER.get());
         world.faceRearTowardCable(MANAGER);
         final ClusterManagementComputerBlockEntity manager = managerAt(helper);

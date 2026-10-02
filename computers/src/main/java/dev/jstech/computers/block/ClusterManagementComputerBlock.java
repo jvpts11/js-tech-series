@@ -16,8 +16,8 @@ import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
-import dev.jstech.core.network.DataTier;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
 import dev.jstech.core.tier.HardwareEra;
@@ -57,25 +57,26 @@ public class ClusterManagementComputerBlock extends HorizontalDirectionalBlock
 
     private final HardwareEra era;
     private final CaseStyle caseStyle;
+    /*
+     * A management machine lives on the network, on its back: its era's access line through a router, or the
+     * backbone directly. Never the compute fabric; the racks are reached over the network.
+     */
+    private final FacePorts ports;
 
     public static final MapCodec<ClusterManagementComputerBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
             StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(ClusterManagementComputerBlock::era),
             StableCodecs.byName(CaseStyle.class).fieldOf("case").forGetter(ClusterManagementComputerBlock::caseStyle)
     ).apply(i, ClusterManagementComputerBlock::new));
-    /*
-     * A management machine lives on the backbone, on its back: Ethernet through a router, or the bandwidth and fibre
-     * cables directly. Never the compute fabric; the racks are reached over the network.
-     */
-    private static final FacePorts PORTS = FacePorts.builder()
-            .port(FaceRule.BACK, DataLines.of(DataTier.T1_ETHERNET, DataTier.T2_HBW, DataTier.T3_FIBER))
-            .build();
 
     public ClusterManagementComputerBlock(final Properties properties, final HardwareEra era,
                                           final CaseStyle caseStyle) {
         super(properties);
         this.era = era;
         this.caseStyle = caseStyle;
+        this.ports = FacePorts.builder()
+                .port(FaceRule.BACK, DataLines.upTo(era, DataLine.ACCESS, DataLine.BACKBONE))
+                .build();
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
@@ -116,7 +117,7 @@ public class ClusterManagementComputerBlock extends HorizontalDirectionalBlock
 
     @Override
     public FacePorts ports() {
-        return PORTS;
+        return ports;
     }
 
     @Override

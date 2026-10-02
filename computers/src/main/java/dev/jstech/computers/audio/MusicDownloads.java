@@ -18,7 +18,7 @@ import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.audio.media.MediaInfo;
 import dev.jstech.core.audio.media.MediaReceipt;
 import dev.jstech.core.audio.media.MediaStore;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.text.Text;
 import java.io.IOException;
 import java.util.List;
@@ -65,7 +65,7 @@ public final class MusicDownloads {
         final String name;
         final MediaId media;
         final String from;
-        final DataTier link;
+        final DataLink link;
         if (source == SongDownload.FROM_CATALOG) {
             final CatalogTrack track = SoundfoundryShare.storeOpen(computer) ? SoundfoundryShare.catalogTrack(path)
                     : null;
@@ -183,7 +183,7 @@ public final class MusicDownloads {
     }
 
     private void look(final ServerLevel level, final List<SongDownload> downloads) {
-        DataTier own = null;
+        DataLink own = null;
         boolean ownKnown = false;
         for (final SongDownload download : downloads) {
             if (!download.active()) {
@@ -228,7 +228,7 @@ public final class MusicDownloads {
     }
 
     /* Lists a song on its way over a way whose slowest cable is that one; why it cannot be, or empty. */
-    private Text listed(final SongDownload download, @Nullable final DataTier link) {
+    private Text listed(final SongDownload download, @Nullable final DataLink link) {
         final SoundfoundryState state = computer.console().soundfoundry();
         if (state.downloading(download.media())) {
             return SoundfoundryTexts.ALREADY.with(download.name());
@@ -252,7 +252,7 @@ public final class MusicDownloads {
         return false;
     }
 
-    private void lookAtCatalog(final SongDownload download, @Nullable final DataTier own) {
+    private void lookAtCatalog(final SongDownload download, @Nullable final DataLink own) {
         final CatalogTrack track = SoundfoundryShare.storeOpen(computer)
                 ? SoundfoundryShare.catalogTrack(download.path()) : null;
         if (track == null || !track.media().equals(download.media())) {
@@ -323,7 +323,7 @@ public final class MusicDownloads {
     }
 
     /* A way whose cable is unknown is taken at the slowest cable's speed. */
-    private static long speedOf(@Nullable final DataTier link) {
-        return ComputersServerConfig.songBytesPerSecond(link == null ? DataTier.T1_ETHERNET : link);
+    private static long speedOf(@Nullable final DataLink link) {
+        return ComputersServerConfig.songBytesPerSecond(link);
     }
 }

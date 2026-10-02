@@ -63,7 +63,8 @@ import dev.jstech.core.audio.Audio;
 import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLine;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
 import dev.jstech.core.peripheral.IPeripheralOwnerSupport;
@@ -1184,8 +1185,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                 continue; // a face internal to the cabinet (the front layer's rear)
             }
             cables.addAll(DataWires.numbersReaching(level, p, back, wire -> {
-                final DataTier tier = DataWires.tierOf(wire);
-                return tier != null && tier != DataTier.HPC;
+                final DataLink link = DataWires.linkOf(wire);
+                return link != null && link.line() != DataLine.HPC;
             }));
         }
         /*

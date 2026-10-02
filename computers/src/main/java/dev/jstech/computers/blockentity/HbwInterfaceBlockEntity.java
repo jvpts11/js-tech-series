@@ -19,7 +19,7 @@ import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.cable.Cables;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -241,11 +241,11 @@ public class HbwInterfaceBlockEntity extends SyncedBlockEntity {
         };
     }
 
-    /* The HBW wire the interface reads its network off, by the number its grid knows it by. */
+    /* The backbone wire the interface reads its network off, by the number its grid knows it by. */
     private long adjacentHbwCable(final ServerLevel serverLevel) {
         for (final Direction direction : Direction.values()) {
             final List<Long> wires = DataWires.numbersReaching(serverLevel, worldPosition, direction,
-                    DataWires.of(DataTier.T2_HBW));
+                    DataWires.of(DataLine.BACKBONE));
             if (!wires.isEmpty()) {
                 return wires.getFirst();
             }

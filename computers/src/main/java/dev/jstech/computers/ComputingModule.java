@@ -117,8 +117,9 @@ import dev.jstech.core.content.ItemBuilder;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.multipart.PartType;
+import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.tier.IndustrialTier;
 import java.util.ArrayList;
@@ -175,24 +176,57 @@ public final class ComputingModule {
     private static final CabinetBlockItem.Fit DEVICE_FIT = new CabinetBlockItem.Fit(16.0F, 0.0F, -0.5F, 0.0F);
     /** A device's lamps, dark on its item, whatever the devices in the world show. */
     private static final List<String> DEVICE_LAMPS = List.of(MediaBay.POWER_LAMP, MediaBay.BUSY_LAMP);
+    /** How thick the long distance line is, in pixels; every other data cable is four. */
+    private static final int LONG_DISTANCE_PIXELS = 6;
     /** A small computer's lamps, dark on its item. */
     private static final List<String> COMPUTER_LAMPS =
             List.of(ComputingLooks.COMPUTER_POWER_LAMP, ComputingLooks.COMPUTER_DISK_LAMP);
 
     /*
-     * Cables. The data cables are laid in the Core's cable block, each in the lane of its line: access top left,
-     * backbone top middle, compute in the middle, crafting middle right. The Crafting cable links a Crafting Switch to
-     * its computer.
+     * Cables. Each data line has a cable of its own in each era, laid in the Core's cable block in the lane of its
+     * line: access top left, backbone top middle, compute in the middle, crafting middle right. The long distance
+     * line is thicker and never shares a block. The Crafting cable links a Crafting Switch to its computer, one cable
+     * for every era.
      */
 
-    public static final CableEntry ETHERNET_CABLE = dataCable("ethernet_cable", DataTier.T1_ETHERNET, Lane.TOP_LEFT,
+    public static final CableEntry THIN_COAX_CABLE = dataCable("thin_coax_cable", DataLine.ACCESS,
+            HardwareEra.VINTAGE, "thin_coax", "bnc").named("Thin Coaxial Cable").tab(NETWORK).register();
+    public static final CableEntry ETHERNET_CABLE = dataCable("ethernet_cable", DataLine.ACCESS, HardwareEra.LEGACY,
             "ethernet", "rj45").named("Ethernet Cable").tab(NETWORK).register();
-    public static final CableEntry HBW_CABLE = dataCable("hbw_cable", DataTier.T2_HBW, Lane.TOP, "hbw", "hbw")
-            .named("HBW Cable").tab(NETWORK).register();
-    public static final CableEntry HPC_CABLE = dataCable("hpc_cable", DataTier.HPC, Lane.MIDDLE, "hpc", "qsfp")
-            .named("High Compute Cable").tab(CLUSTER).register();
-    public static final CableEntry CRAFTING_CABLE = dataCable("crafting_cable", DataTier.CRAFTING, Lane.RIGHT,
-            "crafting", "crafting").named("Crafting Cable").tab(CLUSTER).register();
+    public static final CableEntry CAT5E_CABLE = dataCable("cat5e_cable", DataLine.ACCESS, HardwareEra.TRANSITION,
+            "cat5e", "rj45_boot").named("Cat 5e Cable").tab(NETWORK).register();
+    public static final CableEntry GIGABIT_CABLE = dataCable("gigabit_cable", DataLine.ACCESS, HardwareEra.STANDARD,
+            "gigabit", "rj45_snagless").named("Gigabit Ethernet Cable").tab(NETWORK).register();
+    public static final CableEntry CAT6A_CABLE = dataCable("cat6a_cable", DataLine.ACCESS, HardwareEra.ADVANCED,
+            "cat6a", "rj45_shielded").named("Cat 6a Cable").tab(NETWORK).register();
+    public static final CableEntry THICK_COAX_CABLE = dataCable("thick_coax_cable", DataLine.BACKBONE,
+            HardwareEra.VINTAGE, "thick_coax", "tap").named("Thick Coaxial Cable").tab(NETWORK).register();
+    public static final CableEntry HBW_CABLE = dataCable("hbw_cable", DataLine.BACKBONE, HardwareEra.LEGACY, "hbw",
+            "hbw").named("HBW Cable").tab(NETWORK).register();
+    public static final CableEntry CX4_CABLE = dataCable("cx4_cable", DataLine.BACKBONE, HardwareEra.TRANSITION,
+            "cx4", "cx4").named("10GBASE-CX4 Cable").tab(NETWORK).register();
+    public static final CableEntry FIBRE_CABLE = dataCable("fibre_cable", DataLine.BACKBONE, HardwareEra.STANDARD,
+            "fibre", "lc").named("Fibre Optic Cable").tab(NETWORK).register();
+    public static final CableEntry OM5_CABLE = dataCable("om5_cable", DataLine.BACKBONE, HardwareEra.ADVANCED, "om5",
+            "mpo").named("OM5 Fibre Cable").tab(NETWORK).register();
+    public static final CableEntry TELEPHONE_LINE = dataCable("telephone_line", DataLine.LONG_DISTANCE,
+            HardwareEra.VINTAGE, "telephone", "rj11").named("Telephone Line").tab(NETWORK).register();
+    public static final CableEntry LEASED_LINE = dataCable("leased_line", DataLine.LONG_DISTANCE, HardwareEra.LEGACY,
+            "leased", "rj48").named("Leased Line").tab(NETWORK).register();
+    public static final CableEntry T3_LINE = dataCable("t3_line", DataLine.LONG_DISTANCE, HardwareEra.TRANSITION,
+            "t3", "bnc_pair").named("T3 Line").tab(NETWORK).register();
+    public static final CableEntry VLDC_CABLE = dataCable("vldc_cable", DataLine.LONG_DISTANCE, HardwareEra.STANDARD,
+            "vldc", "vldc").named("VLDC Cable").tab(NETWORK).register();
+    public static final CableEntry DARK_FIBRE_CABLE = dataCable("dark_fibre_cable", DataLine.LONG_DISTANCE,
+            HardwareEra.ADVANCED, "dark_fibre", "sc_duplex").named("Dark Fibre Cable").tab(NETWORK).register();
+    public static final CableEntry INFINIBAND_CABLE = dataCable("infiniband_cable", DataLine.HPC,
+            HardwareEra.TRANSITION, "ib_qdr", "qsfp_bail").named("InfiniBand Cable").tab(CLUSTER).register();
+    public static final CableEntry HPC_CABLE = dataCable("hpc_cable", DataLine.HPC, HardwareEra.STANDARD, "hpc",
+            "qsfp").named("High Compute Cable").tab(CLUSTER).register();
+    public static final CableEntry OSFP_CABLE = dataCable("osfp_cable", DataLine.HPC, HardwareEra.ADVANCED,
+            "osfp_dac", "osfp").named("OSFP Cable").tab(CLUSTER).register();
+    public static final CableEntry CRAFTING_CABLE = dataCable("crafting_cable", DataLine.CRAFTING,
+            HardwareEra.VINTAGE, "crafting", "crafting").named("Crafting Cable").tab(CLUSTER).register();
     public static final BlockEntry<PeripheralCableBlock> PERIPHERAL_CABLE =
             cable("peripheral_cable", PeripheralCableBlock::new, NETWORK).named("Peripheral Cable").register();
 
@@ -764,15 +798,31 @@ public final class ComputingModule {
     }
 
     /*
-     * A data cable of {@code tier}, laid in {@code lane}, carrying what its tier carries, in the jacket and with the
-     * plug of the same names.
+     * The data cable of {@code line} in {@code era}, carrying what that link carries, in the jacket and with the plug
+     * of the same names. Each line has a lane of its own, the same in every era; the long distance line has none and
+     * is thicker, since a block that holds it holds nothing else.
      */
-    private static CableBuilder dataCable(final String id, final DataTier tier, final Lane lane, final String jacket,
-                                          final String plug) {
-        return CONTENT.cable(id, CableType.builder(DataLines.of(tier)).lane(lane)
-                .carries(tier.maxThroughput(), tier.maxLength())
+    private static CableBuilder dataCable(final String id, final DataLine line, final HardwareEra era,
+                                          final String jacket, final String plug) {
+        final DataLink link = new DataLink(line, era);
+        final CableType.Builder builder = CableType.builder(DataLines.of(link))
+                .carries(link.throughput(), link.range())
                 .jacket(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/" + jacket))
-                .plug(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/plug/" + plug)));
+                .plug(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/plug/" + plug));
+        if (link.straight()) {
+            builder.runsStraight();
+        }
+        if (link.betweenTwoEnds()) {
+            builder.alone().thickness(LONG_DISTANCE_PIXELS).joinsAtMost(DataLink.ENDS);
+        } else {
+            builder.lane(switch (line) {
+                case ACCESS -> Lane.TOP_LEFT;
+                case BACKBONE -> Lane.TOP;
+                case HPC -> Lane.MIDDLE;
+                default -> Lane.RIGHT;
+            });
+        }
+        return CONTENT.cable(id, builder);
     }
 
     /** A cable: a core, an arm toward each side it connects to, and the core as its item. */

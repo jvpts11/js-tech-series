@@ -15,8 +15,10 @@ import dev.jstech.core.content.Device;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.DeviceBlock;
+import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.INetworkBridge;
+import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -36,8 +38,9 @@ import net.minecraft.world.phys.BlockHitResult;
 public class ServerRouterBlock extends DeviceBlock implements IFaceConnector, INetworkBridge {
 
     public static final MapCodec<ServerRouterBlock> CODEC = simpleCodec(ServerRouterBlock::new);
-    /* The router takes any cable family, on any face. */
-    private static final FacePorts PORTS = FacePorts.everyFace(DataLines.every());
+    /* The router takes any data line, every era of it, on any face. */
+    private static final FacePorts PORTS =
+            FacePorts.everyFace(DataLines.upTo(HardwareEra.ADVANCED, DataLine.values()));
 
     /** The router's block entity, ticking to keep its place in the network and its sections. */
     private static final Device<ServerRouterBlockEntity> DEVICE =

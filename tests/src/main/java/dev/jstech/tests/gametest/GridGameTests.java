@@ -11,8 +11,9 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
 import java.util.Objects;
@@ -65,8 +66,9 @@ public final class GridGameTests {
             helper.assertTrue(data.contains(a) && data.contains(b) && data.contains(c), "every cable in the grid");
             helper.assertTrue(data.connected(a, b), "two Ethernet cables join");
             helper.assertTrue(!data.connected(b, c), "Ethernet and HBW stay apart");
-            helper.assertTrue(Objects.equals(DataTier.T1_ETHERNET.line(), data.memberOf(a).line()),
-                    "a cable stands as its tier's line");
+            helper.assertTrue(Objects.equals(DataLine.ACCESS.lineId(), data.memberOf(a).line())
+                            && data.memberOf(a).generation() == HardwareEra.LEGACY.id(),
+                    "a cable stands as its line, in its era's generation");
             helper.assertTrue(data.runLength(a) == 2, "the two Ethernet cables are one run");
         });
     }

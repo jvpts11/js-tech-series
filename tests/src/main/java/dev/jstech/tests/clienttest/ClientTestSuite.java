@@ -64,6 +64,7 @@ public final class ClientTestSuite {
             TaskbarClientTests.class,
             TerminalEditorClientTests.class,
             MekanismClientTests.class,
+            CableLineClientTests.class,
             NetworkInteractorClientTests.class,
             NetworkServicesClientTests.class,
             NetworkSharesClientTests.class,

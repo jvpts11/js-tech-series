@@ -25,7 +25,7 @@ import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.SongDownload;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.audio.media.MediaId;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.NetworkSystem;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +62,7 @@ public final class SoundfoundryShare {
      * @param hostname what it is called on the network
      * @param link     the slowest cable on the way to it
      */
-    public record Peer(AbstractComputerBlockEntity machine, String hostname, DataTier link) {
+    public record Peer(AbstractComputerBlockEntity machine, String hostname, DataLink link) {
     }
 
     /**
@@ -77,7 +77,7 @@ public final class SoundfoundryShare {
      * @param link   the slowest cable on the way to that computer, or null for the catalogue
      */
     public record Found(String title, String artist, MediaId media, String from, long source, String path,
-                        @Nullable DataTier link) {
+                        @Nullable DataLink link) {
     }
 
     /** Where a computer keeps the songs it shares. */
@@ -160,12 +160,12 @@ public final class SoundfoundryShare {
 
     /** The fastest cable a computer is plugged into, which is how fast the catalogue reaches it; null for none. */
     @Nullable
-    public static DataTier ownLink(final ServerLevel level, final AbstractComputerBlockEntity computer) {
-        DataTier fastest = null;
+    public static DataLink ownLink(final ServerLevel level, final AbstractComputerBlockEntity computer) {
+        DataLink fastest = null;
         for (final long cable : computer.networkCables(level)) {
-            final DataTier tier = NetworkSystem.get(level).connectivity().tierOf(cable).orElse(null);
-            if (tier != null && (fastest == null || tier.maxThroughput() > fastest.maxThroughput())) {
-                fastest = tier;
+            final DataLink link = NetworkSystem.get(level).connectivity().linkOf(cable).orElse(null);
+            if (link != null && (fastest == null || link.throughput() > fastest.throughput())) {
+                fastest = link;
             }
         }
         return fastest;

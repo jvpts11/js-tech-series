@@ -15,8 +15,8 @@ import dev.jstech.computers.menu.MainframeMenu;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
+import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
-import dev.jstech.core.network.DataTier;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
 import dev.jstech.core.tier.HardwareEra;
@@ -49,7 +49,12 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
         implements EntityBlock, IFaceConnector, IPeripheralConnectable {
 
     public static final MapCodec<MainframePartBlock> CODEC = simpleCodec(MainframePartBlock::new);
-    private static final FacePorts PORTS = FacePorts.everyFace(DataLines.of(DataTier.T2_HBW));
+    /*
+     * The backbone, on any face, as the controller takes it. A part does not know its Mainframe's age, so it takes
+     * every era's backbone; the controller's own faces are where the age is held to.
+     */
+    private static final FacePorts PORTS =
+            FacePorts.everyFace(DataLines.upTo(HardwareEra.ADVANCED, DataLine.BACKBONE));
 
     @Override
     public PeripheralCableType peripheralType() {

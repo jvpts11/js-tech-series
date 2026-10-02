@@ -9,7 +9,7 @@ package dev.jstech.computers.program;
 
 import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.id.StableNames;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextCodecs;
 import io.netty.buffer.ByteBuf;
@@ -32,7 +32,6 @@ final class SoundfoundryStorage {
     private static final String DOWNLOADS = "Downloads";
     private static final StableNames<SongDownload.Status> STATUSES = StableNames.of(SongDownload.Status.class);
     private static final StableNames<SongDownload.Kind> KINDS = StableNames.of(SongDownload.Kind.class);
-    private static final StableNames<DataTier> TIERS = StableNames.of(DataTier.class);
 
     private SoundfoundryStorage() {
     }
@@ -131,7 +130,8 @@ final class SoundfoundryStorage {
         final SongDownload download = SongDownload.restored(kind, d.getString("Name"), media, source,
                 d.getString("Server"), d.getString("Path"), d.getString("From"), d.getBoolean("Playlist"));
         download.restore(d.getLong("Done"), STATUSES.byName(d.getString("Status"), SongDownload.Status.WAITING),
-                TIERS.find(d.getString("Link")), d.contains("Trouble") ? textOf(d.getByteArray("Trouble")) : Text.EMPTY);
+                DataLink.byName(d.getString("Link")),
+                d.contains("Trouble") ? textOf(d.getByteArray("Trouble")) : Text.EMPTY);
         return download;
     }
 

@@ -226,14 +226,14 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         return GridPlace.wire(this.worldPosition.asLong(), Wire.of(type).slot().id());
     }
 
-    /** The network the wire of {@code type} is a part of, on the server; empty for none, or a wire not of data. */
+    /**
+     * The network the wire of {@code type} is on, on the server: the one it reaches the owner of without crossing a run
+     * longer than its cable reaches. Empty for none, or a wire not of data.
+     */
     public Optional<NetworkUuid> network(final CableType type) {
-        if (!(this.level instanceof ServerLevel server) || !type.grid().carriesNetwork() || !holds(type)) {
-            return Optional.empty();
-        }
-        final OptionalLong number = CoreGrids.places(server).find(place(type));
+        final OptionalLong number = dataNumber(type);
         return number.isEmpty() ? Optional.empty()
-                : NetworkSystem.get(server).connectivity().networkOf(number.getAsLong());
+                : NetworkSystem.get((ServerLevel) this.level).connectivity().networkOf(number.getAsLong());
     }
 
     // The parts
@@ -444,7 +444,7 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         if (saved != null && wire.type().grid().carriesNetwork()) {
             final long number = CoreGrids.places(server).number(place);
             final ConnectivityIndex index = NetworkSystem.get(server).connectivity();
-            if (index.networkOf(number).isEmpty()) {
+            if (index.joinedNetwork(number).isEmpty()) {
                 index.assignUuid(number, saved);
             }
         }
@@ -452,6 +452,14 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
 
     private void leave(final ServerLevel server, final Wire wire) {
         CoreGrids.remove(server, wire.type().grid(), place(wire.type()));
+    }
+
+    /* The number the wire of {@code type} is known by in the data grid, on the server, for a data wire held here. */
+    private OptionalLong dataNumber(final CableType type) {
+        if (!(this.level instanceof ServerLevel server) || !type.grid().carriesNetwork() || !holds(type)) {
+            return OptionalLong.empty();
+        }
+        return CoreGrids.places(server).find(place(type));
     }
 
     /*
@@ -513,7 +521,8 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
             if (state.getBlock() instanceof CableBlock) {
                 if (server.getBlockEntity(next) instanceof CableBlockEntity other) {
                     final Wire there = other.bundle.of(wire.type());
-                    if (there != null && wire.joins(there) && !other.parts.has(face.getOpposite())) {
+                    if (there != null && wire.joins(there) && !other.parts.has(face.getOpposite())
+                            && other.roomFor(wire.type(), face.getOpposite())) {
                         linked |= bit;
                     }
                 }
@@ -532,7 +541,28 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
                 linked |= bit | bit << PLUG_SHIFT;
             }
         }
-        return linked;
+        return shaped(wire.type(), linked, before);
+    }
+
+    /* Whether the wire of {@code type} here could join one more cable on {@code face} and keep its shape. */
+    private boolean roomFor(final CableType type, final Direction face) {
+        final Wire mine = this.bundle.of(type);
+        if (mine == null) {
+            return false;
+        }
+        final int joined = this.links[mine.slot().id()] & FACE_BITS;
+        final int bit = 1 << face.get3DDataValue();
+        return (joined & bit) != 0 || WireShape.allows(type.runsStraight(), type.mostJoins(), joined | bit);
+    }
+
+    /* The faces a wire that keeps a shape joins, out of those it could; its plugs follow the faces it keeps. */
+    private static int shaped(final CableType type, final int linked, final int before) {
+        if (!type.runsStraight() && type.mostJoins() <= 0) {
+            return linked;
+        }
+        final int faces = WireShape.select(type.runsStraight(), type.mostJoins(), linked & FACE_BITS,
+                before & FACE_BITS);
+        return faces | (linked & (faces << PLUG_SHIFT));
     }
 
     private void bundleChanged() {
@@ -628,9 +658,13 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         public void save(final CompoundTag tag, final HolderLookup.Provider registries) {
             tag.putIntArray(LINKS, CableBlockEntity.this.links.clone());
             final ListTag networks = new ListTag();
-            if (CableBlockEntity.this.level instanceof ServerLevel) {
+            if (CableBlockEntity.this.level instanceof ServerLevel server) {
                 for (final Wire wire : CableBlockEntity.this.bundle.wires()) {
-                    network(wire.type()).ifPresent(network -> {
+                    // What the wire is joined into is kept, reached or not: reaching is worked out again on load.
+                    final OptionalLong number = dataNumber(wire.type());
+                    final Optional<NetworkUuid> joined = number.isEmpty() ? Optional.empty()
+                            : NetworkSystem.get(server).connectivity().joinedNetwork(number.getAsLong());
+                    joined.ifPresent(network -> {
                         final CompoundTag entry = new CompoundTag();
                         entry.putString(LANE, wire.slot().serializedName());
                         entry.putString(NETWORK, network.asString());

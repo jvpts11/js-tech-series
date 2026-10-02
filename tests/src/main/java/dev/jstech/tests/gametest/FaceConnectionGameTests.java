@@ -18,8 +18,10 @@ import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.connect.IJoinRule;
 import dev.jstech.core.connect.Neighbours;
 import dev.jstech.core.connect.RelativeFace;
+import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLink;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -102,9 +104,9 @@ public final class FaceConnectionGameTests {
 
     @GameTest(template = ARENA)
     public static void devices_takeTheirCablesWhereTheyAlwaysDid(final GameTestHelper helper) {
-        final Connection ethernet = DataLines.of(DataTier.T1_ETHERNET);
-        final Connection crafting = DataLines.of(DataTier.CRAFTING);
-        final Connection hpc = DataLines.of(DataTier.HPC);
+        final Connection ethernet = DataLines.of(new DataLink(DataLine.ACCESS, HardwareEra.LEGACY));
+        final Connection crafting = DataLines.of(new DataLink(DataLine.CRAFTING, HardwareEra.VINTAGE));
+        final Connection hpc = DataLines.of(new DataLink(DataLine.HPC, HardwareEra.STANDARD));
         final BlockState crafter = ComputingModule.CRAFTING_COMPUTER.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH);
         final IFaceConnector crafterPorts = (IFaceConnector) crafter.getBlock();

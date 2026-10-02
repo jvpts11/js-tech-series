@@ -13,7 +13,7 @@ import dev.jstech.computers.program.SongDownload;
 import dev.jstech.computers.program.SoundfoundryState;
 import dev.jstech.core.audio.media.MediaTags;
 import dev.jstech.core.id.StableNames;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextCodecs;
 import java.util.ArrayList;
@@ -52,7 +52,6 @@ public record SoundfoundryShareStatePayload(BlockPos hostPos, Optional<List<Foun
     private static final int MAX_PATH = SoundfoundryActionPayload.MAX_PATH;
     /** The longest name of a cable or of a download's status. */
     private static final int MAX_NAME = 32;
-    private static final StableNames<DataTier> TIERS = StableNames.of(DataTier.class);
     private static final StableNames<SongDownload.Status> STATUSES = StableNames.of(SongDownload.Status.class);
 
     public static final CustomPacketPayload.Type<SoundfoundryShareStatePayload> TYPE =
@@ -105,14 +104,14 @@ public record SoundfoundryShareStatePayload(BlockPos hostPos, Optional<List<Foun
     }
 
     /** A cable as it travels: by its name, or {@code ""} for none. */
-    public static String linkOf(@Nullable final DataTier tier) {
-        return tier == null ? "" : tier.serializedName();
+    public static String linkOf(@Nullable final DataLink link) {
+        return link == null ? "" : link.serializedName();
     }
 
     /** A cable as it came, or null for none. */
     @Nullable
-    public static DataTier tierOf(final String link) {
-        return TIERS.find(link);
+    public static DataLink linkNamed(final String link) {
+        return DataLink.byName(link);
     }
 
     @Override

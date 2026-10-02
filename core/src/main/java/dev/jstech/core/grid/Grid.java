@@ -59,6 +59,9 @@ public final class Grid {
     private final Map<Long, Integer> runOf = new HashMap<>();
     private final List<Integer> runLengths = new ArrayList<>();
     private boolean runsKnown;
+    /* Each position's part once the runs longer than their cable reaches are taken as carrying nothing. */
+    private final Map<Long, Integer> livePartOf = new HashMap<>();
+    private boolean livePartsKnown;
     private long version;
 
     private static final int MOST_REMEMBERED = 256;
@@ -306,6 +309,18 @@ public final class Grid {
         return member != null && member.range() > 0 && runLength(pos) > member.range();
     }
 
+    /**
+     * The part {@code pos} is in when every run longer than its cable reaches carries nothing: what is joined to it
+     * along cables and through bridging devices without crossing such a run. Two positions in one part reach each
+     * other; a position on a run too long is in no part.
+     *
+     * @return the part's number, or -1 for a position on a run too long, or not in the grid
+     */
+    public int livePartOf(final long pos) {
+        knowLiveParts();
+        return this.livePartOf.getOrDefault(pos, -1);
+    }
+
     /** Forgets everything. */
     public void clear() {
         changed();
@@ -323,6 +338,7 @@ public final class Grid {
         this.componentCache.clear();
         this.slowestCache.clear();
         this.runsKnown = false;
+        this.livePartsKnown = false;
     }
 
     private void rebuild(final Set<Long> survivors) {
@@ -472,6 +488,34 @@ public final class Grid {
             this.runLengths.add(length);
         }
         this.runsKnown = true;
+    }
+
+    /* Works out each position's live part once a version: a walk through the grid, the runs too long left out. */
+    private void knowLiveParts() {
+        if (this.livePartsKnown) {
+            return;
+        }
+        this.livePartOf.clear();
+        int next = 0;
+        final Deque<Long> queue = new ArrayDeque<>();
+        for (final long start : this.posToId.keySet()) {
+            if (this.livePartOf.containsKey(start) || runTooLong(start)) {
+                continue;
+            }
+            final int part = next++;
+            this.livePartOf.put(start, part);
+            queue.add(start);
+            while (!queue.isEmpty()) {
+                for (final long neighbour : neighboursOf(queue.poll())) {
+                    if (!this.livePartOf.containsKey(neighbour) && this.posToId.containsKey(neighbour)
+                            && !runTooLong(neighbour)) {
+                        this.livePartOf.put(neighbour, part);
+                        queue.add(neighbour);
+                    }
+                }
+            }
+        }
+        this.livePartsKnown = true;
     }
 
     /**

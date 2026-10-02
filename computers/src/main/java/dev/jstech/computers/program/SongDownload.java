@@ -9,7 +9,7 @@ package dev.jstech.computers.program;
 
 import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.id.IStableName;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.text.Text;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +35,7 @@ public final class SongDownload {
     private Status status = Status.RUNNING;
     /** The slowest cable on the way the last time it was looked at, or null while none is known. */
     @Nullable
-    private DataTier link;
+    private DataLink link;
     private Text trouble = Text.EMPTY;
 
     /** What {@link #source()} is for a song from the server's catalogue. */
@@ -207,7 +207,7 @@ public final class SongDownload {
     }
 
     @Nullable
-    public DataTier link() {
+    public DataLink link() {
         return link;
     }
 
@@ -251,7 +251,7 @@ public final class SongDownload {
     }
 
     /** It can be reached, over a way whose slowest cable is {@code value}; a waiting song comes in again. */
-    public void reached(@Nullable final DataTier value) {
+    public void reached(@Nullable final DataLink value) {
         link = value;
         if (status == Status.WAITING) {
             status = Status.RUNNING;
@@ -279,7 +279,7 @@ public final class SongDownload {
     }
 
     /** Puts back how it stood when the machine was saved. */
-    public void restore(final long doneBytes, final Status value, @Nullable final DataTier lastLink,
+    public void restore(final long doneBytes, final Status value, @Nullable final DataLink lastLink,
                         final Text why) {
         done = Math.clamp(doneBytes, 0L, bytes());
         status = value;

@@ -12,8 +12,9 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -42,8 +43,9 @@ import org.jetbrains.annotations.Nullable;
 public class HbwInterfaceBlock extends Block implements EntityBlock, IFaceConnector {
 
     public static final MapCodec<HbwInterfaceBlock> CODEC = simpleCodec(HbwInterfaceBlock::new);
-    /* The backbone on one side, the cluster fabric on the other. */
-    private static final FacePorts PORTS = FacePorts.everyFace(DataLines.of(DataTier.T2_HBW, DataTier.HPC));
+    /* The backbone on one side, the cluster fabric on the other, each up to the cable of the interface's age. */
+    private static final FacePorts PORTS =
+            FacePorts.everyFace(DataLines.upTo(HardwareEra.STANDARD, DataLine.BACKBONE, DataLine.HPC));
 
     private static final TextKey TOOLTIP =
             TextKey.of("item.jsc.hbw_interface.tooltip", "Uplinks a node cluster to the HBW backbone");

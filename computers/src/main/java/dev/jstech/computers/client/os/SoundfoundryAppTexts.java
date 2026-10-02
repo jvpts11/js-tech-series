@@ -106,15 +106,8 @@ final class SoundfoundryAppTexts {
     static final TextKey SHARED_FROM = TextKey.of("jsc.soundfoundry.share.shared_from", "Shared from %s");
     static final TextKey NOTHING_SHARED = TextKey.of("jsc.soundfoundry.share.nothing_shared",
             "Put songs in %s to share them with the network");
-    /* The cables a song can come over, by the slowest on its way. */
+    /* Where a catalogue song comes from; a shared one is told by the slowest cable on its way. */
     static final TextKey LINK_CATALOG = TextKey.of("jsc.soundfoundry.link.catalog", "Catalog");
-    static final TextKey LINK_ETHERNET = TextKey.of("jsc.soundfoundry.link.ethernet", "Ethernet");
-    static final TextKey LINK_HBW = TextKey.of("jsc.soundfoundry.link.hbw", "HBW");
-    static final TextKey LINK_FIBER = TextKey.of("jsc.soundfoundry.link.fiber", "Fiber");
-    static final TextKey LINK_VLDC = TextKey.of("jsc.soundfoundry.link.vldc", "VLDC");
-    static final TextKey LINK_QUANTUM = TextKey.of("jsc.soundfoundry.link.quantum", "Quantum");
-    static final TextKey LINK_HPC = TextKey.of("jsc.soundfoundry.link.hpc", "HPC");
-    static final TextKey LINK_CRAFTING = TextKey.of("jsc.soundfoundry.link.crafting", "Crafting");
 
     /* The dialogs. */
     static final TextKey OPEN_TITLE = TextKey.of("jsc.soundfoundry.dialog.open", "Open Song");

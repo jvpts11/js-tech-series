@@ -11,8 +11,9 @@ import com.mojang.serialization.MapCodec;
 import dev.jstech.computers.blockentity.PersonalRouterBlockEntity;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.network.INetworkBridge;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -34,9 +35,12 @@ public class PersonalRouterBlock extends HorizontalDirectionalBlock
         implements EntityBlock, IFaceConnector, INetworkBridge {
 
     public static final MapCodec<PersonalRouterBlock> CODEC = simpleCodec(PersonalRouterBlock::new);
-    /* The Personal Router bridges exactly the two access and backbone tiers it converts between, on any face. */
-    private static final FacePorts PORTS = FacePorts.everyFace(
-            DataLines.of(DataTier.T1_ETHERNET, DataTier.T2_HBW));
+    /*
+     * The Personal Router is the Legacy router: it joins the access line to the backbone on any face, the Legacy cables
+     * and the Vintage ones before them.
+     */
+    private static final FacePorts PORTS =
+            FacePorts.everyFace(DataLines.upTo(HardwareEra.LEGACY, DataLine.ACCESS, DataLine.BACKBONE));
 
     public PersonalRouterBlock(final Properties properties) {
         super(properties);

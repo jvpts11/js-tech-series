@@ -14,7 +14,7 @@ import dev.jstech.computers.os.fs.RecordingFile;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.SoundfoundryListeners;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.NetworkSystem;
 import java.util.List;
 import java.util.Optional;
@@ -107,7 +107,7 @@ public final class SoundfoundryServers {
     }
 
     /** The slowest cable between the computer and the server, which is as fast as a song goes between them. */
-    public static Optional<DataTier> linkTo(final ServerLevel level, final AbstractComputerBlockEntity computer,
+    public static Optional<DataLink> linkTo(final ServerLevel level, final AbstractComputerBlockEntity computer,
                                             final ServerServices.Host host) {
         final NetworkSystem system = NetworkSystem.get(level);
         return system.connectivity().slowestBetween(computer.networkCables(level),

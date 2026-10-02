@@ -145,7 +145,7 @@ final class MainframeNetworking {
 
         NetworkUuid adopted = null;
         for (final long cable : cables) {
-            final Optional<NetworkUuid> segment = index.networkOf(cable);
+            final Optional<NetworkUuid> segment = index.joinedNetwork(cable);
             if (segment.isPresent()) {
                 adopted = segment.get();
                 break;
@@ -226,7 +226,7 @@ final class MainframeNetworking {
                              final Set<Long> cables, final NetworkUuid effective) {
         // A cable whose BlockEntity has not registered yet (mid chunk-load) is skipped, picked up later.
         for (final long cable : cables) {
-            if (index.contains(cable) && !effective.equals(index.networkOf(cable).orElse(null))) {
+            if (index.contains(cable) && !effective.equals(index.joinedNetwork(cable).orElse(null))) {
                 index.assignUuid(cable, effective);
             }
         }
@@ -295,7 +295,7 @@ final class MainframeNetworking {
             owned.add(registered);
         }
         for (final long cable : adjacentCables(level)) {
-            index.networkOf(cable).ifPresent(owned::add);
+            index.joinedNetwork(cable).ifPresent(owned::add);
         }
         for (final NetworkUuid net : owned) {
             NetworkRegistry.setNetworkState(level, net, NetworkUuidState.ORPHANED);

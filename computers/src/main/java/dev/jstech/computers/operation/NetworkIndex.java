@@ -22,6 +22,8 @@ import dev.jstech.computers.operation.index.StorageLockTable;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.network.ConnectivityIndex;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
 import dev.jstech.core.operation.IOperationResult;
@@ -30,6 +32,7 @@ import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -387,6 +390,23 @@ public final class NetworkIndex {
                 .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack
                         ? hardwareCapOf(rack, loc.slot()) : Long.MAX_VALUE)
                 .orElse(Long.MAX_VALUE);
+    }
+
+    /**
+     * How fast data crosses the network between its Mainframe and {@code server}'s rack, in items a tick: what the
+     * slowest cable on the best way between them carries. Without a cable between them to tell (a store of the
+     * Mainframe's own, a rack touching it), nothing on the network limits it.
+     */
+    public static long serverLinkCap(final ServerLevel level, final NetworkUuid network, final NodeUuid server) {
+        final NetworkSystem system = NetworkSystem.get(level);
+        final Optional<Long> mainframe = system.mainframePositionOf(network);
+        final Optional<NetworkSystem.ServerLocation> rack = system.locationOf(server);
+        if (mainframe.isEmpty() || rack.isEmpty()) {
+            return Long.MAX_VALUE;
+        }
+        final ConnectivityIndex index = system.connectivity();
+        return index.slowestBetween(index.bridgedBy(mainframe.get()), index.bridgedBy(rack.get().rackPos()))
+                .map(DataLink::throughput).orElse(Long.MAX_VALUE);
     }
 
     private static long hardwareCapOf(final ServerRackBlockEntity rack, final int slot) {

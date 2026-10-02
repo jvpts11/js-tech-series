@@ -41,11 +41,13 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.connect.Connection;
 import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.FailoverRole;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.persistence.NetworkRegistry;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NetworkUuidState;
 import dev.jstech.tests.JsTests;
@@ -3264,7 +3266,7 @@ public final class NetworkGameTests {
                         net.minecraft.core.Direction.NORTH));
         final net.minecraft.world.level.block.state.BlockState state = helper.getBlockState(pc);
         final IFaceConnector block = (IFaceConnector) state.getBlock();
-        final Connection ethernet = DataLines.of(DataTier.T1_ETHERNET);
+        final Connection ethernet = DataLines.of(new DataLink(DataLine.ACCESS, HardwareEra.LEGACY));
         // A north-facing computer's rear is south: only that face takes a cable.
         helper.assertTrue(block.accepts(state, net.minecraft.core.Direction.SOUTH, ethernet),
                 "the rear (south) face must accept a cable");
@@ -3279,7 +3281,7 @@ public final class NetworkGameTests {
         helper.setBlock(mf, ComputingModule.MAINFRAME.get());
         final net.minecraft.world.level.block.state.BlockState mfState = helper.getBlockState(mf);
         final IFaceConnector mainframe = (IFaceConnector) mfState.getBlock();
-        final Connection hbw = DataLines.of(DataTier.T2_HBW);
+        final Connection hbw = DataLines.of(new DataLink(DataLine.BACKBONE, HardwareEra.LEGACY));
         helper.assertTrue(mainframe.accepts(mfState, net.minecraft.core.Direction.EAST, hbw),
                 "the Mainframe accepts a cable on any face");
         helper.assertTrue(mainframe.accepts(mfState, net.minecraft.core.Direction.UP, hbw),

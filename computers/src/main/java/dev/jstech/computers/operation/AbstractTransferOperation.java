@@ -99,7 +99,12 @@ public abstract class AbstractTransferOperation implements INetworkOperation {
                                    final int ramLatencyTicks,
                                    @Nullable final ILatencyScheduler scheduler) {
         final int diskLatency = tier.latencyTicks();
-        final long cap = NetworkIndex.serverThroughputCap(level, server);
+        /*
+         * A server's share moves no faster than its own hardware, nor than the slowest cable between it and the
+         * Mainframe, which is worked out from the network as it stands when the Operation starts.
+         */
+        final long cap = Math.min(NetworkIndex.serverThroughputCap(level, server),
+                NetworkIndex.serverLinkCap(level, network, server));
         final Source source;
         if (scheduler != null) {
             source = new Source(server, new TransferState(quantity, 0), cap, false, ramLatencyTicks <= 0);

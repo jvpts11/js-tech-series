@@ -246,6 +246,22 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   written down with the Mainframe.
 - The Network Manager opens wider, so its seven tabs fit, and tabs that do not fit their strip give up some of
   their padding instead of running off its end (J's Core).
+- The data cables are lines by job, with a cable of each line for each era. Access, which joins the small computers
+  to a router: Thin Coaxial, Ethernet, Cat 5e, Gigabit Ethernet and Cat 6a. Backbone, which joins the routers, the
+  Mainframe and the racks: Thick Coaxial, HBW, 10GBASE-CX4, Fibre Optic and OM5 Fibre. Long distance, which will join
+  two networks between Gateway computers: the Telephone Line, the Leased Line, the T3 Line, VLDC and Dark Fibre.
+  High compute, for a supercomputer's nodes: InfiniBand from the Transition, High Compute and OSFP. And one Crafting
+  Cable for every era. Each wears its own jacket and ends in its era's plug where it meets a device.
+- A machine takes its own era's cable of a line and every earlier era's, never a later one's, and two eras of one
+  line touching do not join: they meet at a router of the newer era.
+- Speed and range count on every line. A run longer than its cable reaches carries nothing, so whatever is only
+  beyond it is off the network; an Operation reading a server moves no faster than the slowest cable between the
+  Mainframe and that server. The speeds and ranges are first estimates.
+- The backbone's fibre runs only straight: a cable laid against its side is left out, and the optical router will be
+  what turns it. A long distance line runs between two ends and takes no third, is thicker than the other cables,
+  and shares no block. The long distance cables have no use until the Gateway computers come.
+- Cables that keep a shape, in J's Core: a cable can be declared to run only straight or to join at most so many
+  faces in a block, and it keeps the joins it already has when another cable is laid against it.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

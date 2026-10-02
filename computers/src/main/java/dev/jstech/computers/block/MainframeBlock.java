@@ -18,8 +18,8 @@ import dev.jstech.core.multiblock.MultiblockPatternGeometry;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
-import dev.jstech.core.network.DataTier;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.tier.HardwareEra;
@@ -54,20 +54,21 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
         IPeripheralConnectable, IEraChassisBlock {
 
     private final HardwareEra era;
+    /*
+     * The Mainframe sits on the backbone, on any face, its era's cable and every earlier one's; it never takes the
+     * access line directly (a router joins that).
+     */
+    private final FacePorts ports;
 
     public static final MapCodec<MainframeBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
             StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(MainframeBlock::era)
     ).apply(i, MainframeBlock::new));
-    /*
-     * The Mainframe sits on the HBW backbone, on any face; it never takes an Ethernet access link directly (a
-     * Personal Router bridges that).
-     */
-    private static final FacePorts PORTS = FacePorts.everyFace(DataLines.of(DataTier.T2_HBW));
 
     public MainframeBlock(final Properties properties, final HardwareEra era) {
         super(properties);
         this.era = era;
+        this.ports = FacePorts.everyFace(DataLines.upTo(era, DataLine.BACKBONE));
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
@@ -96,7 +97,7 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
 
     @Override
     public FacePorts ports() {
-        return PORTS;
+        return ports;
     }
 
     @Override

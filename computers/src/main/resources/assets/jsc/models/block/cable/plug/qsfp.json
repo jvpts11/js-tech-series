@@ -5,39 +5,207 @@
   },
   "elements": [
     {
-      "from": [5, 5.5, 0],
-      "to": [11, 10.5, 5],
+      "from": [
+        5.0,
+        5.5,
+        0
+      ],
+      "to": [
+        11.0,
+        10.5,
+        5
+      ],
       "faces": {
-        "north": {"uv": [1, 5, 3, 7], "texture": "#plug"},
-        "south": {"uv": [1, 5, 3, 7], "texture": "#plug"},
-        "east": {"uv": [1, 5, 3, 7], "texture": "#plug"},
-        "west": {"uv": [1, 5, 3, 7], "texture": "#plug"},
-        "up": {"uv": [1, 5, 3, 7], "texture": "#plug"},
-        "down": {"uv": [1, 5, 3, 7], "texture": "#plug"}
+        "north": {
+          "uv": [
+            0.5,
+            0.5,
+            1.5,
+            1.5
+          ],
+          "texture": "#plug"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            0.5,
+            1.5,
+            1.5
+          ],
+          "texture": "#plug"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            0.5,
+            1.5,
+            1.5
+          ],
+          "texture": "#plug"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            0.5,
+            1.5,
+            1.5
+          ],
+          "texture": "#plug"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            0.5,
+            1.5,
+            1.5
+          ],
+          "texture": "#plug"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            0.5,
+            1.5,
+            1.5
+          ],
+          "texture": "#plug"
+        }
       }
     },
     {
-      "from": [7.25, 10.025, 5],
-      "to": [8.75, 10.775, 10],
+      "from": [
+        7.25,
+        10.025,
+        5
+      ],
+      "to": [
+        8.75,
+        10.775,
+        10
+      ],
       "faces": {
-        "north": {"uv": [5, 5, 7, 7], "texture": "#plug"},
-        "south": {"uv": [5, 5, 7, 7], "texture": "#plug"},
-        "east": {"uv": [5, 5, 7, 7], "texture": "#plug"},
-        "west": {"uv": [5, 5, 7, 7], "texture": "#plug"},
-        "up": {"uv": [5, 5, 7, 7], "texture": "#plug"},
-        "down": {"uv": [5, 5, 7, 7], "texture": "#plug"}
+        "north": {
+          "uv": [
+            8.5,
+            4.5,
+            9.5,
+            5.5
+          ],
+          "texture": "#plug"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            4.5,
+            9.5,
+            5.5
+          ],
+          "texture": "#plug"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            4.5,
+            9.5,
+            5.5
+          ],
+          "texture": "#plug"
+        },
+        "west": {
+          "uv": [
+            8.5,
+            4.5,
+            9.5,
+            5.5
+          ],
+          "texture": "#plug"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            4.5,
+            9.5,
+            5.5
+          ],
+          "texture": "#plug"
+        },
+        "down": {
+          "uv": [
+            8.5,
+            4.5,
+            9.5,
+            5.5
+          ],
+          "texture": "#plug"
+        }
       }
     },
     {
-      "from": [5.5, 5.5, 5],
-      "to": [10.5, 10.5, 7],
+      "from": [
+        5.5,
+        5.5,
+        5
+      ],
+      "to": [
+        10.5,
+        10.5,
+        7
+      ],
       "faces": {
-        "north": {"uv": [13, 1, 15, 3], "texture": "#plug"},
-        "south": {"uv": [13, 1, 15, 3], "texture": "#plug"},
-        "east": {"uv": [13, 1, 15, 3], "texture": "#plug"},
-        "west": {"uv": [13, 1, 15, 3], "texture": "#plug"},
-        "up": {"uv": [13, 1, 15, 3], "texture": "#plug"},
-        "down": {"uv": [13, 1, 15, 3], "texture": "#plug"}
+        "north": {
+          "uv": [
+            4.5,
+            0.5,
+            5.5,
+            1.5
+          ],
+          "texture": "#plug"
+        },
+        "south": {
+          "uv": [
+            4.5,
+            0.5,
+            5.5,
+            1.5
+          ],
+          "texture": "#plug"
+        },
+        "east": {
+          "uv": [
+            4.5,
+            0.5,
+            5.5,
+            1.5
+          ],
+          "texture": "#plug"
+        },
+        "west": {
+          "uv": [
+            4.5,
+            0.5,
+            5.5,
+            1.5
+          ],
+          "texture": "#plug"
+        },
+        "up": {
+          "uv": [
+            4.5,
+            0.5,
+            5.5,
+            1.5
+          ],
+          "texture": "#plug"
+        },
+        "down": {
+          "uv": [
+            4.5,
+            0.5,
+            5.5,
+            1.5
+          ],
+          "texture": "#plug"
+        }
       }
     }
   ]

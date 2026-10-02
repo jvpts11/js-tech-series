@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.audio.SongSearch;
+import dev.jstech.computers.block.DataLinkNames;
 import dev.jstech.computers.client.audio.SoundfoundryShares;
 import dev.jstech.computers.gui.layout.SoundfoundryLayout;
 import dev.jstech.computers.gui.layout.SoundfoundryLayout.Rect;
@@ -20,7 +21,7 @@ import dev.jstech.computers.program.SongDownload;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.logic.TextEditState;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -505,7 +506,7 @@ public final class SoundfoundryShareApp implements IDesktopApp {
         headerWord(g, font, x + SoundfoundryShareLayout.LINK_X, y, SoundfoundryAppTexts.COLUMN_LINK);
         final List<SoundfoundryShareStatePayload.Found> found = known == null ? List.of() : known.found();
         foundScroll = clampScroll(foundScroll, found.size(), SoundfoundryShareLayout.ROWS);
-        final DataTier own = known == null ? null : SoundfoundryShareStatePayload.tierOf(known.state().ownLink());
+        final DataLink own = known == null ? null : SoundfoundryShareStatePayload.linkNamed(known.state().ownLink());
         for (int row = 0; row < SoundfoundryShareLayout.ROWS; row++) {
             final int index = foundScroll + row;
             if (index >= found.size()) {
@@ -560,7 +561,7 @@ public final class SoundfoundryShareApp implements IDesktopApp {
 
     private void renderFound(final GuiGraphics g, final Font font, final int x, final int ry,
                              final SoundfoundryShareStatePayload.Found found, final boolean picked,
-                             @Nullable final DataTier own) {
+                             @Nullable final DataLink own) {
         final SoundfoundrySkin.Colours c = SoundfoundrySkin.c();
         final int ground = picked ? c.rowPicked() : c.lcd();
         if (picked) {
@@ -581,7 +582,7 @@ public final class SoundfoundryShareApp implements IDesktopApp {
             Draw.text(g, font, Texts.clip(font, found.from().toUpperCase(Locale.ROOT), fromRoom),
                     x + SoundfoundryShareLayout.FROM_X, ry, c.listInk(), ground);
         }
-        final DataTier link = store ? own : SoundfoundryShareStatePayload.tierOf(found.link());
+        final DataLink link = store ? own : SoundfoundryShareStatePayload.linkNamed(found.link());
         final String linkName = store ? words(SoundfoundryAppTexts.LINK_CATALOG) : linkName(link);
         final int linkRoom = SoundfoundryShareLayout.SIGNAL_X - SoundfoundryShareLayout.LINK_X - 4;
         Draw.text(g, font, Texts.clip(font, linkName, linkRoom), x + SoundfoundryShareLayout.LINK_X, ry,
@@ -625,7 +626,7 @@ public final class SoundfoundryShareApp implements IDesktopApp {
         } else if (fetch.from().isEmpty()) {
             via = words(SoundfoundryAppTexts.FROM_STORE);
         } else {
-            final DataTier link = SoundfoundryShareStatePayload.tierOf(fetch.link());
+            final DataLink link = SoundfoundryShareStatePayload.linkNamed(fetch.link());
             final String from = fetch.from().toUpperCase(Locale.ROOT);
             via = GameText.resolve(link == null ? SoundfoundryAppTexts.FROM_HOST.with(from)
                     : SoundfoundryAppTexts.FROM_VIA.with(from, linkName(link)));
@@ -764,19 +765,8 @@ public final class SoundfoundryShareApp implements IDesktopApp {
         Draw.text(g, font, words(word), x, y + SoundfoundryShareLayout.HEADER.y() + 2, c.ink(), c.header());
     }
 
-    private static String linkName(@Nullable final DataTier tier) {
-        if (tier == null) {
-            return "";
-        }
-        return words(switch (tier) {
-            case T1_ETHERNET -> SoundfoundryAppTexts.LINK_ETHERNET;
-            case T2_HBW -> SoundfoundryAppTexts.LINK_HBW;
-            case T3_FIBER -> SoundfoundryAppTexts.LINK_FIBER;
-            case T4_VLDC -> SoundfoundryAppTexts.LINK_VLDC;
-            case T6_QUANTUM -> SoundfoundryAppTexts.LINK_QUANTUM;
-            case HPC -> SoundfoundryAppTexts.LINK_HPC;
-            case CRAFTING -> SoundfoundryAppTexts.LINK_CRAFTING;
-        });
+    private static String linkName(@Nullable final DataLink link) {
+        return link == null ? "" : words(DataLinkNames.of(link));
     }
 
     private static String megabytes(final long bytes) {

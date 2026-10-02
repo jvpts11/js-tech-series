@@ -11,16 +11,21 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.core.audio.media.MediaId;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLine;
+import dev.jstech.core.network.DataLink;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.text.Text;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class SongDownloadTest {
 
-    private static final long BYTES = 10_000L;
-
     private SongDownload download;
+
+    private static final long BYTES = 10_000L;
+    private static final DataLink ETHERNET = new DataLink(DataLine.ACCESS, HardwareEra.LEGACY);
+    private static final DataLink HBW = new DataLink(DataLine.BACKBONE, HardwareEra.LEGACY);
+    private static final DataLink HPC = new DataLink(DataLine.HPC, HardwareEra.STANDARD);
 
     @BeforeEach
     void setUp() {
@@ -43,9 +48,9 @@ class SongDownloadTest {
         download.advance(1_000L, 1_000L);
         assertEquals(0L, download.done());
         assertEquals(SongDownload.Status.WAITING, download.status());
-        download.reached(DataTier.T2_HBW);
+        download.reached(HBW);
         assertEquals(SongDownload.Status.RUNNING, download.status(), "a way back makes it come in again");
-        assertEquals(DataTier.T2_HBW, download.link());
+        assertEquals(HBW, download.link());
     }
 
     @Test
@@ -62,15 +67,15 @@ class SongDownloadTest {
         download.failed(Text.literal("gone"));
         assertEquals(SongDownload.Status.FAILED, download.status());
         assertEquals("gone", download.trouble().english());
-        download.reached(DataTier.T1_ETHERNET);
+        download.reached(ETHERNET);
         assertEquals(SongDownload.Status.FAILED, download.status(), "a way back does not bring a failed song back");
     }
 
     @Test
     void restore_putsBackHowItStoodWithinItsSize() {
-        download.restore(BYTES * 3, SongDownload.Status.WAITING, DataTier.HPC, Text.EMPTY);
+        download.restore(BYTES * 3, SongDownload.Status.WAITING, HPC, Text.EMPTY);
         assertEquals(BYTES, download.done());
         assertEquals(SongDownload.Status.WAITING, download.status());
-        assertEquals(DataTier.HPC, download.link());
+        assertEquals(HPC, download.link());
     }
 }

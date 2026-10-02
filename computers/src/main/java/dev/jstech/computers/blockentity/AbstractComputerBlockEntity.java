@@ -70,7 +70,7 @@ import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.peripheral.IPeripheralOwnerSupport;
 import dev.jstech.core.tier.HardwareEra;
@@ -910,7 +910,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
      * The slowest cable between this computer and that one, which is as fast as data can go between them, or
      * empty when no cable joins them.
      */
-    public Optional<DataTier> slowestCableTo(final ServerLevel level, final AbstractComputerBlockEntity other) {
+    public Optional<DataLink> slowestCableTo(final ServerLevel level, final AbstractComputerBlockEntity other) {
         return NetworkSystem.get(level).connectivity()
                 .slowestBetween(networkCables(level), other.networkCables(level));
     }

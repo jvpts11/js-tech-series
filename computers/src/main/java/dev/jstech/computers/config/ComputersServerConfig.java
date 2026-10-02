@@ -12,9 +12,12 @@ import dev.jstech.core.config.ConfigFiles;
 import dev.jstech.core.config.ConfigKey;
 import dev.jstech.core.config.ConfigSide;
 import dev.jstech.core.config.format.ConfigFormats;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLine;
+import dev.jstech.core.network.DataLink;
+import dev.jstech.core.tier.HardwareEra;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The settings of the computers themselves, {@code jscomputers-server.toml} beside the world.
@@ -29,6 +32,9 @@ public final class ComputersServerConfig {
     private static final int HBW_SPEED = 2_048;
     private static final int HPC_SPEED = 8_192;
     private static final int MOST_SPEED = 1_048_576;
+    /* The two cables with a speed of their own for songs. */
+    private static final DataLink HBW = new DataLink(DataLine.BACKBONE, HardwareEra.LEGACY);
+    private static final DataLink HPC = new DataLink(DataLine.HPC, HardwareEra.STANDARD);
 
     public static final ConfigKey<Boolean> SHOW_BOOT_MENU = ConfigKey.flag("boot.show_boot_menu", true)
             .comment("Whether a machine whose system brings a boot manager stops at it every time it starts: GRUB "
@@ -141,13 +147,19 @@ public final class ComputersServerConfig {
         return FILE.get(SOUNDFOUNDRY_CATALOG);
     }
 
-    /** How fast a song comes over a way whose slowest cable is {@code tier}, in bytes a second. */
-    public static long songBytesPerSecond(final DataTier tier) {
-        final int kilobytes = switch (tier) {
-            case T2_HBW -> FILE.get(HBW_KILOBYTES_PER_SECOND);
-            case HPC -> FILE.get(HPC_KILOBYTES_PER_SECOND);
-            default -> FILE.get(ETHERNET_KILOBYTES_PER_SECOND);
-        };
+    /**
+     * How fast a song comes over a way whose slowest cable is {@code link}, in bytes a second: the HBW and the HPC
+     * cables have speeds of their own for songs, and every other cable, or a way not yet known, goes at the Ethernet's.
+     */
+    public static long songBytesPerSecond(@Nullable final DataLink link) {
+        final int kilobytes;
+        if (HBW.equals(link)) {
+            kilobytes = FILE.get(HBW_KILOBYTES_PER_SECOND);
+        } else if (HPC.equals(link)) {
+            kilobytes = FILE.get(HPC_KILOBYTES_PER_SECOND);
+        } else {
+            kilobytes = FILE.get(ETHERNET_KILOBYTES_PER_SECOND);
+        }
         return kilobytes * 1_024L;
     }
 }

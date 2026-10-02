@@ -17,8 +17,9 @@ import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
+import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -65,8 +66,13 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
     public static final DirectionProperty FACING =
             BlockStateProperties.HORIZONTAL_FACING;
 
+    /*
+     * The network and the compute fabric on the back, every era's: a part does not know its cabinet's age, so the
+     * cabinet's own block is where the age is held to.
+     */
     private static final FacePorts PORTS = FacePorts.builder()
-            .port(FaceRule.BACK, DataLines.every())
+            .port(FaceRule.BACK, DataLines.upTo(HardwareEra.ADVANCED, DataLine.ACCESS, DataLine.BACKBONE,
+                    DataLine.HPC))
             .build();
 
     public ServerRackPartBlock(final Properties properties) {
@@ -104,7 +110,7 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
     @Override
     public boolean accepts(final BlockState state, final Direction face, final Connection offered) {
         return IFaceConnector.super.accepts(state, face, offered)
-                && state.getValue(COMPUTE) == offered.equals(DataLines.of(DataTier.HPC));
+                && state.getValue(COMPUTE) == (DataLines.of(offered.line()) == DataLine.HPC);
     }
 
     @Override

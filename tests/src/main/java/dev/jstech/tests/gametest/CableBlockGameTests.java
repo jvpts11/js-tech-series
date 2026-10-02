@@ -26,8 +26,10 @@ import dev.jstech.core.grid.GridKind;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestCableTypes;
 import dev.jstech.tests.testkit.TestCables;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -36,6 +38,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.DyeColor;
@@ -304,16 +307,26 @@ public final class CableBlockGameTests {
     @GameTest(template = ARENA)
     public static void cables_areDeclaredThroughTheCore(final GameTestHelper helper) {
         final List<CableEntry> declared = ModContent.of("jsc").declaredCables();
-        same(helper, List.of(ComputingModule.ETHERNET_CABLE, ComputingModule.HBW_CABLE, ComputingModule.HPC_CABLE,
-                ComputingModule.CRAFTING_CABLE), declared, "the four data cables, declared");
+        helper.assertTrue(declared.size() == 19 && declared.contains(ComputingModule.ETHERNET_CABLE)
+                        && declared.contains(ComputingModule.CRAFTING_CABLE),
+                "the nineteen data cables, declared; got " + declared.size());
+        // Each line has one lane, the same for all its eras, and no two lines share one.
+        final Map<ResourceLocation, Lane> laneOfLine = new HashMap<>();
         final Set<Lane> lanes = new HashSet<>();
         for (final CableEntry entry : declared) {
             same(helper, entry.id(), CoreCables.REGISTRY.getKey(entry.get()), entry.id() + " registered under its id");
             helper.assertTrue(entry.asItem() instanceof CableItem item && item.type() == entry.get(),
                     entry.id() + "'s item lays it");
-            helper.assertTrue(entry.get().grid() == GridKind.DATA && entry.get().thickness() == 4,
-                    entry.id() + " is a four-pixel data cable");
-            helper.assertTrue(lanes.add(entry.get().lane().orElseThrow()), entry.id() + " takes a lane of its own");
+            helper.assertTrue(entry.get().grid() == GridKind.DATA, entry.id() + " is a data cable");
+            if (entry.get().alone()) {
+                helper.assertTrue(entry.get().thickness() == 6, entry.id() + " is six pixels and shares no block");
+                continue;
+            }
+            helper.assertTrue(entry.get().thickness() == 4, entry.id() + " is four pixels");
+            final Lane lane = entry.get().lane().orElseThrow();
+            final Lane before = laneOfLine.putIfAbsent(entry.get().line().line(), lane);
+            helper.assertTrue(before == null ? lanes.add(lane) : before == lane,
+                    entry.id() + " takes its line's lane, which no other line takes");
         }
         helper.succeed();
     }

@@ -24,15 +24,14 @@ import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
-import dev.jstech.core.network.DataTier;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
-import java.util.EnumSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -72,6 +71,8 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
         implements IFaceConnector {
 
     private final HardwareEra era;
+    /* The network on its back: its era's access and backbone cables and every earlier one's. */
+    private final FacePorts ports;
 
     public static final MapCodec<ServerRackBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
@@ -81,11 +82,6 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
     public static final IntegerProperty BAYS =
             IntegerProperty.create("bays", 0, 3);
 
-    private static final FacePorts PORTS = FacePorts.builder()
-            .port(FaceRule.BACK, DataLines.of(EnumSet.complementOf(EnumSet.of(DataTier.HPC))
-                    .toArray(DataTier[]::new)))
-            .build();
-
     private static final TextKey WRONG_CHASSIS =
             TextKey.of("block.jsc.rack.wrong_chassis", "This chassis belongs in a different rack");
     private static final TextKey ROW_TAKEN =
@@ -94,6 +90,9 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
     public ServerRackBlock(final Properties properties, final HardwareEra era) {
         super(properties);
         this.era = era;
+        this.ports = FacePorts.builder()
+                .port(FaceRule.BACK, DataLines.upTo(era, DataLine.ACCESS, DataLine.BACKBONE))
+                .build();
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(BAYS, 0));
     }
 
@@ -128,10 +127,10 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
         return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
-    /* A Server Rack takes any data cable on its back but the high-compute fabric, the supercomputer cabinet's alone. */
+    /* A Server Rack takes the network on its back, never the high-compute fabric, the supercomputer cabinet's alone. */
     @Override
     public FacePorts ports() {
-        return PORTS;
+        return ports;
     }
 
     @Override

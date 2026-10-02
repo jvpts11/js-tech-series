@@ -15,7 +15,9 @@ import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridMember;
 import dev.jstech.core.grid.GridPlace;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLine;
+import dev.jstech.core.network.DataLines;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.INetworkBridge;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -37,25 +39,29 @@ public final class DataWires {
     private DataWires() {
     }
 
-    /** The data tier {@code wire} is a cable of, or null for a wire that carries no data. */
-    public static @Nullable DataTier tierOf(final Wire wire) {
-        return wire.type().grid().carriesNetwork() ? DataTier.ofLine(wire.type().line().line().toString()) : null;
+    /** The data cable {@code wire} is, its line and era, or null for a wire that carries no data. */
+    public static @Nullable DataLink linkOf(final Wire wire) {
+        return wire.type().grid().carriesNetwork() ? DataLines.linkOf(wire.type().line()) : null;
     }
 
     /** Whether {@code wire} carries the network: data, and not the crafting line, which runs apart from it. */
     public static boolean isNetwork(final Wire wire) {
-        final DataTier tier = tierOf(wire);
-        return tier != null && tier != DataTier.CRAFTING;
+        final DataLink link = linkOf(wire);
+        return link != null && link.line() != DataLine.CRAFTING;
     }
 
     /** Whether {@code wire} is the crafting line, from Crafting Switches to their Crafting Computer. */
     public static boolean isCrafting(final Wire wire) {
-        return tierOf(wire) == DataTier.CRAFTING;
+        final DataLink link = linkOf(wire);
+        return link != null && link.line() == DataLine.CRAFTING;
     }
 
-    /** Whether {@code wire} is a data cable of {@code tier}. */
-    public static Predicate<Wire> of(final DataTier tier) {
-        return wire -> tierOf(wire) == tier;
+    /** Whether {@code wire} is a data cable of {@code line}, in any era. */
+    public static Predicate<Wire> of(final DataLine line) {
+        return wire -> {
+            final DataLink link = linkOf(wire);
+            return link != null && link.line() == line;
+        };
     }
 
     /** The first wire of the cable block that carries the network, or null when it holds none. */
@@ -116,7 +122,7 @@ public final class DataWires {
         for (final Direction face : Direction.values()) {
             final BlockPos next = pos.relative(face);
             for (final Wire wire : Cables.reaching(level, pos, face)) {
-                if (tierOf(wire) != null) {
+                if (linkOf(wire) != null) {
                     joined.add(GridPlace.wire(next.asLong(), wire.slot().id()));
                 }
             }

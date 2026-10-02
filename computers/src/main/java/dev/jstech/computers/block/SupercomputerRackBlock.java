@@ -13,8 +13,8 @@ import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
-import dev.jstech.core.network.DataTier;
 import dev.jstech.core.tier.HardwareEra;
 
 /**
@@ -31,15 +31,14 @@ public class SupercomputerRackBlock extends ServerRackBlock {
             StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(SupercomputerRackBlock::era)
     ).apply(i, SupercomputerRackBlock::new));
     /*
-     * Only the compute fabric reaches a supercomputer cabinet. A data cable on this port would put the nodes on the
-     * data network directly, which is exactly what the HBW Interface exists to prevent.
+     * Only the compute fabric reaches a supercomputer cabinet, its era's and every earlier one's. A data cable on this
+     * port would put the nodes on the data network directly, which is exactly what the HBW Interface exists to prevent.
      */
-    private static final FacePorts PORTS = FacePorts.builder()
-            .port(FaceRule.BACK, DataLines.of(DataTier.HPC))
-            .build();
+    private final FacePorts compute;
 
     public SupercomputerRackBlock(final Properties properties, final HardwareEra era) {
         super(properties, era);
+        this.compute = FacePorts.builder().port(FaceRule.BACK, DataLines.upTo(era, DataLine.HPC)).build();
     }
 
     @Override
@@ -54,6 +53,6 @@ public class SupercomputerRackBlock extends ServerRackBlock {
 
     @Override
     public FacePorts ports() {
-        return PORTS;
+        return compute;
     }
 }

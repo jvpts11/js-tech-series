@@ -12,8 +12,9 @@ import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
 import dev.jstech.computers.menu.CraftingSwitchMenu;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockEntityTickers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -40,7 +41,7 @@ public class CraftingSwitchBlock extends Block
         implements EntityBlock, IFaceConnector {
 
     /* Only the crafting cable attaches, on any face; the switch is not a data-network device. */
-    private static final FacePorts PORTS = FacePorts.everyFace(DataLines.of(DataTier.CRAFTING));
+    private static final FacePorts PORTS = FacePorts.everyFace(DataLines.upTo(HardwareEra.VINTAGE, DataLine.CRAFTING));
 
     public CraftingSwitchBlock(final Properties properties) {
         super(properties);

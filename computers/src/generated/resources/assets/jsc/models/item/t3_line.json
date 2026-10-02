@@ -1,0 +1,6 @@
+{
+  "parent": "jscore:block/cable/item_6",
+  "textures": {
+    "jacket": "jsc:block/cable/t3"
+  }
+}

@@ -9,7 +9,9 @@ package dev.jstech.computers.gui.layout;
 
 import dev.jstech.computers.gui.layout.SoundfoundryLayout.Rect;
 import dev.jstech.core.gui.layout.GuiLayout;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.DataLine;
+import dev.jstech.core.network.DataLink;
+import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.ToIntFunction;
@@ -95,18 +97,17 @@ public final class SoundfoundryShareLayout {
     }
 
     /**
-     * How many of a row's five bars are lit for a way whose slowest cable is {@code tier}: as many as its songs come
+     * How many of a row's five bars are lit for a way whose slowest cable is {@code link}: as many as its songs come
      * fast, a cable with no speed of its own for songs counting as the Ethernet it goes at; none when it is unknown.
      */
-    public static int signalOf(@Nullable final DataTier tier) {
-        if (tier == null) {
+    public static int signalOf(@Nullable final DataLink link) {
+        if (link == null) {
             return 0;
         }
-        return switch (tier) {
-            case T2_HBW -> 4;
-            case HPC -> 5;
-            default -> 2;
-        };
+        if (link.line() == DataLine.BACKBONE && link.era() == HardwareEra.LEGACY) {
+            return 4;
+        }
+        return link.line() == DataLine.HPC && link.era() == HardwareEra.STANDARD ? 5 : 2;
     }
 
     /** Which found song a point is on, or -1. */
