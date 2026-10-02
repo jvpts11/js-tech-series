@@ -63,8 +63,6 @@ public final class InstallService {
     private final ServerLevel level;
     /** The packages the machine installs over the network, which is what says whether it already has one. */
     private final PackageService packages;
-    /** The network's own language, since its engine is installed on the Mainframe rather than here. */
-    private final IqlService iql;
 
     private static final TextKey NO_SUCH = TextKey.of("jsc.service.install.no_such", "no such program: %s");
     private static final TextKey NEEDS_DISC =
@@ -81,11 +79,10 @@ public final class InstallService {
             TextKey.of("jsc.service.install.rebooting", "Installation complete. Rebooting into the new system ...");
 
     public InstallService(final IComputerTerminalHost terminal, final ServerLevel level,
-                          final PackageService packages, final IqlService iql) {
+                          final PackageService packages) {
         this.terminal = terminal;
         this.level = level;
         this.packages = packages;
-        this.iql = iql;
     }
 
     /**
@@ -144,10 +141,10 @@ public final class InstallService {
         if (program == null) {
             return ICliComputer.OpResult.fail(NO_SUCH.with(programId));
         }
-        if (program.id().equals(Programs.IQL_ENGINE)) {
-            // The Engine is a service on the Mainframe, not a console-local app, so install it there.
-            return this.iql.control("install");
-        }
+        /*
+         * An engine installs the way every program does: from its disc, at the machine it lives on, written down
+         * with the system so the memory it holds is counted. It used to be switched on from anywhere with no disc.
+         */
         final MediaFormat medium = this.installMediumFor(program.id());
         if (medium == null) {
             return ICliComputer.OpResult.fail(NEEDS_DISC.with(program.commandName()));

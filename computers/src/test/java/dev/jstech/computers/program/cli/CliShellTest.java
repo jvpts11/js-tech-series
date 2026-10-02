@@ -10,7 +10,11 @@ package dev.jstech.computers.program.cli;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
+import dev.jstech.computers.program.iql.IqlOperation;
+import dev.jstech.computers.program.iql.IqlParseResult;
+import dev.jstech.computers.program.iql.IqlParser;
 import dev.jstech.computers.program.iql.IqlVerb;
+import dev.jstech.core.text.Text;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -401,6 +405,18 @@ class CliShellTest {
                 final dev.jstech.computers.program.iql.IqlOperation operation) {
             lastCall = "execute(" + operation.verb() + "," + operation.item() + "," + operation.quantity() + ")";
             return OpResult.ok("queued " + operation.verb());
+        }
+
+        /** Answers a whole statement as an engine would: a read from the stock, an action through execute. */
+        @Override public StatementResult runStatement(final String statement, final int rowLimit) {
+            final IqlParseResult parsed = IqlParser.tryParse(statement);
+            final IqlOperation op = parsed.operation();
+            if (op.verb() == IqlVerb.QUERY || op.verb() == IqlVerb.COUNT) {
+                final List<StoredItem> rows = queryObject(op.item(), op.where(), "", rowLimit);
+                return new StatementResult(true, Text.literal(rows.size() + " rows"), rows);
+            }
+            final OpResult result = execute(op);
+            return new StatementResult(result.ok(), result.message(), List.of());
         }
     }
 }

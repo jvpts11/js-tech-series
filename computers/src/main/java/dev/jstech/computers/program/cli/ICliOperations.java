@@ -147,6 +147,16 @@ public interface ICliOperations {
         return ICliComputer.OpResult.fail(Refusals.UNREACHABLE);
     }
 
+    /**
+     * Runs a whole statement of the network's language through the network's door, in the dialect of the engine
+     * running there: a read, an action or a definition alike.
+     *
+     * @param rowLimit how many rows a read may bring back when the statement sets no limit of its own
+     */
+    default ICliComputer.StatementResult runStatement(final String statement, final int rowLimit) {
+        return new ICliComputer.StatementResult(false, Refusals.UNREACHABLE.text(), List.of());
+    }
+
     /** Controls the network's IQL Engine service: {@code install}/{@code start}/{@code stop}/{@code status}. */
     default ICliComputer.OpResult engineControl(final String action) {
         return ICliComputer.OpResult.fail(Refusals.ENGINE_OFF_NETWORK);

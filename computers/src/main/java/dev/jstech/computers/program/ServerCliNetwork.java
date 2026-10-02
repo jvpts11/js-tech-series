@@ -259,4 +259,10 @@ abstract class ServerCliNetwork extends ServerCliFiles {
     public OpResult execute(final IqlOperation op) {
         return iql().execute(op);
     }
+
+    @Override
+    public StatementResult runStatement(final String statement, final int rowLimit) {
+        final IqlEngine.Outcome outcome = iql().run(statement, rowLimit);
+        return new StatementResult(outcome.ok(), outcome.said(), outcome.rows());
+    }
 }

@@ -24,8 +24,11 @@ import dev.jstech.computers.program.iql.IqlVerb;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 /**
  * The runtime of the network's language, as an engine that speaks it runs it: it takes a statement and either runs
@@ -50,6 +53,8 @@ public final class IqlEngine {
     private static final TextKey SYNTAX = TextKey.of("jsc.service.iql.syntax", "syntax: %s");
     private static final TextKey NO_SAVED_OBJECTS = TextKey.of("jsc.service.iql.no_saved_objects",
             "the network's engine keeps no views, procedures or jobs");
+    private static final TextKey GUARD_NOT_MET =
+            TextKey.of("jsc.service.iql.guard_not_met", "the IF did not hold, so the %s was not run");
     /** Why a job is not made: jobs are the Automation Engine's, whichever engine plans the network's work. */
     public static final TextKey JOBS_NEED_AUTOMATION = TextKey.of("jsc.service.iql.jobs_need_automation",
             "jobs are kept by the Automation Engine; install it on the Mainframe first");
@@ -198,11 +203,57 @@ public final class IqlEngine {
                 return run(view.body(), depth + 1); // QUERY <view> runs the saved query
             }
             final int limit = operation.limit() > 0 ? operation.limit() : queryRowLimit;
-            // Pass the whole WHERE so the read filters on every field (qty/name/damaged/...), not just name.
-            return Outcome.rows(computer.queryObject(operation.item(), operation.where(), "", limit));
+            final boolean ordered = !operation.orderBy().isEmpty();
+            /*
+             * Pass the whole WHERE so the read filters on every field (qty/name/damaged/...), not just name. An
+             * ORDER BY sorts every row there is before the LIMIT takes the first ones, so the limit is applied after.
+             */
+            final List<ICliComputer.StoredItem> rows =
+                    computer.queryObject(operation.item(), operation.where(), "", ordered ? queryRowLimit : limit);
+            return Outcome.rows(ordered ? ordered(rows, operation).stream().limit(limit).toList() : rows);
+        }
+        // The IF guard decides whether the action runs at all, read against the network's holding of its item.
+        if (operation.guard() != null && !operation.guard().matches(guardRow(operation))) {
+            return Outcome.ok(GUARD_NOT_MET.with(operation.verb().name()));
         }
         final ICliComputer.OpResult result = computer.execute(operation);
         return new Outcome(result.ok(), result.message(), List.of());
+    }
+
+    /** The rows sorted by the statement's ORDER BY: quantity as a number, name and item as words. */
+    private static List<ICliComputer.StoredItem> ordered(final List<ICliComputer.StoredItem> rows,
+                                                         final IqlOperation operation) {
+        final Comparator<ICliComputer.StoredItem> order = switch (operation.orderBy().toLowerCase(Locale.ROOT)) {
+            case "qty", "count", "amount", "quantity" -> Comparator.comparingLong(ICliComputer.StoredItem::quantity);
+            case "name", "item" -> Comparator.comparing(row -> row.name().english().toLowerCase(Locale.ROOT));
+            default -> null;
+        };
+        if (order == null) {
+            return rows;
+        }
+        final List<ICliComputer.StoredItem> sorted = new ArrayList<>(rows);
+        sorted.sort(operation.orderByDescending() ? order.reversed() : order);
+        return sorted;
+    }
+
+    /**
+     * What an IF guard reads: the item the statement names, as the network holds it ({@code qty} is all of it, every
+     * variant counted), or the whole network's holding for a {@code *}.
+     */
+    private Function<String, String> guardRow(final IqlOperation operation) {
+        final String item = operation.isAnyItem() ? null
+                : operation.item().substring(operation.item().indexOf(':') + 1);
+        final IIqlCondition only = item == null ? null
+                : new IIqlCondition.Comparison("item", IIqlCondition.Op.EQ, item);
+        final List<ICliComputer.StoredItem> rows = computer.queryObject("items", only, "", queryRowLimit);
+        final long total = rows.stream().mapToLong(ICliComputer.StoredItem::quantity).sum();
+        final String name = rows.isEmpty() ? operation.item() : rows.get(0).name().english();
+        return field -> switch (field.toLowerCase(Locale.ROOT)) {
+            case "qty", "count", "amount" -> Long.toString(total);
+            case "item" -> item == null ? IqlOperation.ANY_ITEM : item;
+            case "name" -> name;
+            default -> null;
+        };
     }
 
     private static String typeName(final IqlDefinition.ObjectType type) {

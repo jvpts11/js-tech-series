@@ -316,4 +316,16 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
             return fail(Text.literal(message));
         }
     }
+
+    /**
+     * What a whole statement of the network's language answered: whether it was taken, what it says, and the rows a
+     * read brought back.
+     */
+    record StatementResult(boolean ok, Text said, List<StoredItem> rows) {
+
+        public StatementResult {
+            said = said == null ? Text.EMPTY : said;
+            rows = rows == null ? List.of() : List.copyOf(rows);
+        }
+    }
 }

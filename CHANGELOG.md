@@ -224,6 +224,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   so where it is not) and fires only while it runs. The Automation Engine and its Manager now reach back to Frames
   XP, so a Legacy network keeps its jobs. The Manager's "Keep Stock" is now "Restock below", and it says it does
   not count what is already on its way.
+- The network's language reads what it was always written with. A definition (a view, a procedure, a job) typed at
+  the prompt's `iql` or written in a file of statements goes to the engine, where it used to answer "iql failed:
+  null" or stop the file. An `IF` decides whether an action runs at all, reading the network's holding of its item.
+  An `ORDER BY` sorts every row before the `LIMIT` takes the first ones. A `WHERE` on a `SELECT`, a `MOVE`, a
+  `DELETE` or a `DROP` picks the variants it touches (a damaged tool, a name), where it used to be read and ignored
+  without a word.
+- `install iqlengine` installs the engine the way every program is installed, from its disc at the Mainframe,
+  written down with the system so the memory it holds is counted; it used to switch it on from any computer with no
+  disc.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

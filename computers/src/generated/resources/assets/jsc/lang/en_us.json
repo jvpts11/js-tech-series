@@ -4255,6 +4255,7 @@
   "jsc.service.iql.created": "%s %s created",
   "jsc.service.iql.destination_unavailable": "the destination server is unavailable",
   "jsc.service.iql.dropped": "%s %s dropped",
+  "jsc.service.iql.guard_not_met": "the IF did not hold, so the %s was not run",
   "jsc.service.iql.import_queued": "MOVE queued: import from %s",
   "jsc.service.iql.installed": "Midsoft IQL Server installed on the Mainframe",
   "jsc.service.iql.jobs_need_automation": "jobs are kept by the Automation Engine; install it on the Mainframe first",

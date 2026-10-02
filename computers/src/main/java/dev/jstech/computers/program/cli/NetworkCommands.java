@@ -8,7 +8,6 @@
 package dev.jstech.computers.program.cli;
 
 
-import dev.jstech.computers.program.iql.IqlOperation;
 import dev.jstech.computers.program.iql.IqlParseResult;
 import dev.jstech.computers.program.iql.IqlParser;
 import dev.jstech.computers.program.iql.IqlVerb;
@@ -135,28 +134,34 @@ final class NetworkCommands {
                 ctx.out().error(SYNTAX.with(parsed.error()));
                 return;
             }
-            final IqlOperation op = parsed.operation();
-            if (op.verb() == IqlVerb.QUERY || op.verb() == IqlVerb.COUNT) {
-                if (!ctx.computer().onNetwork()) {
-                    ctx.out().error(NOT_ON_NETWORK);
-                    return;
-                }
-                final int limit = op.limit() > 0 ? op.limit() : QUERY_LIMIT;
-                final List<ICliComputer.StoredItem> items = ctx.computer().queryObject(op.item(),
-                        op.where(), "", limit);
-                if (items.isEmpty()) {
-                    ctx.out().dim(NO_ROWS);
-                    return;
-                }
-                for (final ICliComputer.StoredItem item : items) {
-                    ctx.out().row(item.detail().isEmpty() ? item.name()
-                                    : TextLists.join(" · ", List.of(item.name(), item.detail())),
-                            Text.literal(CliText.group(item.quantity())));
-                }
+            final boolean read = !parsed.isDefinition() && (parsed.operation().verb() == IqlVerb.QUERY
+                    || parsed.operation().verb() == IqlVerb.COUNT);
+            if (read && !ctx.computer().onNetwork()) {
+                ctx.out().error(NOT_ON_NETWORK);
                 return;
             }
-            final ICliComputer.OpResult result = ctx.computer().execute(op);
-            ctx.out().styled(result.message(), result.ok() ? CliStyle.OK : CliStyle.ERROR);
+            /*
+             * The whole statement goes to the network's engine, so a definition (a view, a procedure, a job) is
+             * answered here exactly as in the studio, instead of being parsed as an action it is not.
+             */
+            final ICliComputer.StatementResult outcome = ctx.computer().runStatement(ctx.rest(0), QUERY_LIMIT);
+            if (!outcome.ok()) {
+                ctx.out().error(outcome.said());
+                return;
+            }
+            if (!read) {
+                ctx.out().styled(outcome.said(), CliStyle.OK);
+                return;
+            }
+            if (outcome.rows().isEmpty()) {
+                ctx.out().dim(NO_ROWS);
+                return;
+            }
+            for (final ICliComputer.StoredItem item : outcome.rows()) {
+                ctx.out().row(item.detail().isEmpty() ? item.name()
+                                : TextLists.join(" · ", List.of(item.name(), item.detail())),
+                        Text.literal(CliText.group(item.quantity())));
+            }
         }
     }
 

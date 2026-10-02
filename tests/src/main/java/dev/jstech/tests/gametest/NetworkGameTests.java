@@ -1420,13 +1420,15 @@ public final class NetworkGameTests {
                     final var cli = new dev.jstech.computers.program.ServerCliComputer(
                             (dev.jstech.computers.terminal.IComputerTerminalHost) computer,
                             helper.getLevel());
-                    // The Mainframe ships with the engine; taken off, 'install iqlengine' puts it back on.
+                    /*
+                     * The Mainframe ships with the engine. Taken off, it goes back on from its disc at the Mainframe,
+                     * as the disc's setup does, and not from any computer with no disc at all.
+                     */
                     mainframe.uninstallEngine(NetworkEngines.MIDSOFT_IQL_SERVER.program());
-                    helper.assertTrue(cli.install("iqlengine").ok(),
-                            "'install iqlengine' must install the Engine on the Mainframe");
-                    helper.assertTrue(mainframe.installedEngines()
-                                    .containsKey(NetworkEngines.MIDSOFT_IQL_SERVER.program()),
-                            "the Engine must be installed after 'install iqlengine'");
+                    helper.assertFalse(cli.install("iqlengine").ok(),
+                            "'install iqlengine' at a computer with no disc installs nothing");
+                    helper.assertTrue(mainframe.installEngine(NetworkEngines.MIDSOFT_IQL_SERVER.program()),
+                            "the Engine goes back on the Mainframe");
                     helper.assertTrue(cli.iqlEngineInstalled(),
                             "the computer must report the Engine installed");
 

@@ -37,6 +37,7 @@ import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -167,6 +168,59 @@ public final class IqlService {
         return key == null ? List.of() : List.of(key);
     }
 
+    /**
+     * The keys an action touches, its {@code WHERE}, {@code ORDER BY} and {@code LIMIT} taken into account. Without
+     * them it is {@link #keysFor(String, NodeUuid)}. With them, every variant the network holds of the item (every
+     * item, for {@code *}) is a row: the {@code WHERE} keeps the ones it matches (a damaged tool, a name), the
+     * {@code ORDER BY} sorts them and the {@code LIMIT} takes the first ones, so the action moves exactly those.
+     */
+    public List<StorageKey> keysFor(final IqlOperation op, @Nullable final NodeUuid scopeServer) {
+        final boolean narrowed = op.where() != null || !op.orderBy().isEmpty() || op.limit() > 0;
+        final NetworkUuid net = this.terminal.networkUuid();
+        if (!narrowed || net == null) {
+            return this.keysFor(op.item(), scopeServer);
+        }
+        final StorageKey named = op.isAnyItem() ? null : StorageKey.byName(op.item());
+        if (!op.isAnyItem() && named == null) {
+            return List.of();
+        }
+        final NetworkStorage storage = scopeServer == null
+                ? NetworkStorage.of(this.level, net)
+                : NetworkStorage.ofServers(this.level, List.of(scopeServer));
+        final String server = scopeServer == null ? "" : NetworkLookup.serverLabel(this.level, scopeServer);
+        final List<Map.Entry<StorageKey, Long>> rows = new ArrayList<>();
+        for (final Map.Entry<StorageKey, Long> entry : storage.query().entrySet()) {
+            final boolean sameItem = named == null || entry.getKey().item() == named.item();
+            if (sameItem && (op.where() == null
+                    || op.where().matches(NetworkReadService.rowOf(entry.getKey(), entry.getValue(), server)))) {
+                rows.add(entry);
+            }
+        }
+        if (!op.orderBy().isEmpty()) {
+            final Comparator<Map.Entry<StorageKey, Long>> order = Comparator.comparing(
+                    entry -> NetworkReadService.rowOf(entry.getKey(), entry.getValue(), server).apply(op.orderBy()),
+                    IqlService::compareFields);
+            rows.sort(op.orderByDescending() ? order.reversed() : order);
+        }
+        final int cap = op.limit() > 0 ? Math.min(op.limit(), MAX_WILDCARD_TYPES) : MAX_WILDCARD_TYPES;
+        return rows.stream().limit(cap).map(Map.Entry::getKey).toList();
+    }
+
+    /**
+     * Orders two values of a field the way a person reads them: as numbers when both are numbers, else as words
+     * regardless of case. A field the row does not have sorts after every value it does have.
+     */
+    public static int compareFields(@Nullable final String a, @Nullable final String b) {
+        if (a == null || b == null) {
+            return a == null ? (b == null ? 0 : 1) : -1;
+        }
+        try {
+            return Double.compare(Double.parseDouble(a), Double.parseDouble(b));
+        } catch (final NumberFormatException notNumbers) {
+            return a.compareToIgnoreCase(b);
+        }
+    }
+
     /** How a statement reads back: "N item types" for a {@code *}, else "qty item". */
     public static Text describe(final IqlOperation op, final List<StorageKey> keys) {
         if (op.isAnyItem()) {
@@ -202,7 +256,7 @@ public final class IqlService {
                 return ICliComputer.OpResult.fail(NO_SERVER.with(op.from()));
             }
         }
-        final List<StorageKey> keys = this.keysFor(op.item(), from);
+        final List<StorageKey> keys = this.keysFor(op, from);
         if (keys.isEmpty()) {
             return op.isAnyItem() ? ICliComputer.OpResult.fail(NOTHING_TO_SELECT)
                     : ICliComputer.OpResult.fail(OperationsService.UNKNOWN_ITEM.with(op.item()));
@@ -246,7 +300,7 @@ public final class IqlService {
             }
             target = bus.port();
         }
-        final List<StorageKey> keys = this.keysFor(op.item(), null);
+        final List<StorageKey> keys = this.keysFor(op, null);
         if (keys.isEmpty()) {
             return op.isAnyItem()
                     ? ICliComputer.OpResult.ok(NOTHING_TO.with(verb.toLowerCase(Locale.ROOT)))
@@ -350,11 +404,16 @@ public final class IqlService {
      * reads comes from this machine's network, and what it asks to be done lands here.
      */
     public IqlEngine.Outcome run(final String statement) {
+        return this.run(statement, ROW_LIMIT);
+    }
+
+    /** The same, a read bringing back at most {@code rowLimit} rows when the statement sets no limit of its own. */
+    public IqlEngine.Outcome run(final String statement, final int rowLimit) {
         final MainframeBlockEntity mainframe = this.mainframe();
         if (mainframe == null) {
             return new IqlEngine.Outcome(false, OperationsService.NO_MAINFRAME.text(), List.of());
         }
-        return mainframe.networkOperations().query(this.view(), statement, ROW_LIMIT);
+        return mainframe.networkOperations().query(this.view(), statement, rowLimit);
     }
 
 
@@ -407,7 +466,7 @@ public final class IqlService {
         if (destSink == null) {
             return ICliComputer.OpResult.fail(DESTINATION_UNAVAILABLE);
         }
-        final List<StorageKey> keys = this.keysFor(op.item(), source);
+        final List<StorageKey> keys = this.keysFor(op, source);
         if (keys.isEmpty()) {
             return op.isAnyItem() ? ICliComputer.OpResult.fail(NOTHING_TO_MOVE)
                     : ICliComputer.OpResult.fail(OperationsService.UNKNOWN_ITEM.with(op.item()));
@@ -430,7 +489,7 @@ public final class IqlService {
         if (port.isEmpty()) {
             return ICliComputer.OpResult.fail(BUS_TOUCHES_NOTHING.with(op.to()));
         }
-        final List<StorageKey> keys = this.keysFor(op.item(), null);
+        final List<StorageKey> keys = this.keysFor(op, null);
         if (keys.isEmpty()) {
             return op.isAnyItem() ? ICliComputer.OpResult.ok(NOTHING_TO_MOVE)
                     : ICliComputer.OpResult.fail(OperationsService.UNKNOWN_ITEM.with(op.item()));
@@ -566,7 +625,8 @@ public final class IqlService {
          * The whole file is read before any of it runs, so a mistake on the third line stops the run before the
          * first two have moved anything.
          */
-        final List<IqlOperation> operations = new ArrayList<>();
+        final List<IqlParseResult> statements = new ArrayList<>();
+        final List<String> texts = new ArrayList<>();
         for (final String statement : statementsOf(read.message().english())) {
             final IqlParseResult parsed = IqlParser.tryParse(statement);
             if (!parsed.ok()) {
@@ -576,17 +636,26 @@ public final class IqlService {
              * QUERY/COUNT are read operations that produce rows, not timed operations; they cannot be
              * dispatched via execute(). The caller should use 'operation' for those.
              */
-            if (parsed.operation().verb() == IqlVerb.QUERY || parsed.operation().verb() == IqlVerb.COUNT) {
+            if (!parsed.isDefinition() && (parsed.operation().verb() == IqlVerb.QUERY
+                    || parsed.operation().verb() == IqlVerb.COUNT)) {
                 return ICliComputer.FsResult.fail(NO_READS_IN_RUN.with(path));
             }
-            operations.add(parsed.operation());
+            statements.add(parsed);
+            texts.add(statement);
         }
-        if (operations.isEmpty()) {
+        if (statements.isEmpty()) {
             return ICliComputer.FsResult.fail(NOTHING_TO_RUN_IN.with(path));
         }
         ICliComputer.OpResult last = null;
-        for (final IqlOperation operation : operations) {
-            last = this.execute(operation);
+        for (int i = 0; i < statements.size(); i++) {
+            // A definition is the engine's to keep, so it goes through the network's door as the studio sends it.
+            if (statements.get(i).isDefinition()) {
+                final IqlEngine.Outcome defined = this.run(texts.get(i));
+                last = defined.ok() ? ICliComputer.OpResult.ok(defined.said())
+                        : ICliComputer.OpResult.fail(defined.said());
+            } else {
+                last = this.execute(statements.get(i).operation());
+            }
             if (!last.ok()) {
                 break;
             }

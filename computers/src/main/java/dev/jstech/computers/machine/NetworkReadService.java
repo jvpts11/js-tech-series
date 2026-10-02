@@ -226,8 +226,11 @@ public final class NetworkReadService {
         return null;
     }
 
-    /** The fields a WHERE can test on an item row: item id, name, qty, server (scoped), damaged, durability. */
-    private static Function<String, String> rowOf(final StorageKey key, final long qty, final String scopedServer) {
+    /**
+     * The fields a WHERE can test on an item row: item id, name, qty, server (scoped), damaged, durability. A read and
+     * an action read the same row, so a filter means the same thing in both.
+     */
+    static Function<String, String> rowOf(final StorageKey key, final long qty, final String scopedServer) {
         return field -> switch (field.toLowerCase(Locale.ROOT)) {
             case "item" -> itemPath(key);
             case "name" -> key.displayName().getString();

@@ -356,7 +356,7 @@ abstract class ServerCliShell implements ICliComputer {
 
     /** What is installed on this machine, and the installing itself, as this shell reaches it. */
     protected InstallService installs() {
-        return new InstallService(host, level, packages(), iql());
+        return new InstallService(host, level, packages());
     }
 
     /** The packages this machine installs over its network's Mirror, as this shell reaches them. */
