@@ -56,7 +56,7 @@ public final class MachineMemory {
                  * What the machine came with (a Mainframe's engine) is there with no package written down, and
                  * weighs what it holds whenever it runs all the same.
                  */
-                if (spec.kind() == ProgramKind.SERVICE
+                if (spec.kind().runsInBackground()
                         && (console.isInstalled(spec.id().toString()) || host.cameWith(spec))
                         && host.serviceRunning(spec)) {
                     ledger.add(spec.displayName(), spec.ramMbOn(os, builtHere(console, spec))

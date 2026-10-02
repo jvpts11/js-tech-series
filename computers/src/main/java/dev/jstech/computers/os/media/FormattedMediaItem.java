@@ -150,7 +150,7 @@ public class FormattedMediaItem extends MediaItem {
                                     + " · " + Branding.year(spec.era()))
                                     .withStyle(ChatFormatting.GRAY)));
                     tooltip.add(GameText.component(spec != null
-                            && spec.kind() == ProgramKind.SERVICE
+                            && spec.kind().runsInBackground()
                             ? SERVICE_DISC : PROGRAM_DISC).withStyle(ChatFormatting.YELLOW));
                     // What it actually does, so a disc is not just a name on a shelf.
                     tooltip.add(Component.translatable("program.jsc." + payload.getPath() + ".desc")

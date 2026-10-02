@@ -164,7 +164,7 @@ public final class PackageService {
              * The hardware is the one thing that is already true of a machine still being built by hand, so the era
              * rule every other way of installing keeps is kept here too.
              */
-            if (spec.installable() && spec.kind() != ProgramKind.SERVICE && spec.platforms().contains(Platform.LINUX)
+            if (spec.installable() && !spec.kind().runsInBackground() && spec.platforms().contains(Platform.LINUX)
                     && named(typed, spec, hasATree) && this.gates.machine(spec) == null
                     && this.gates.era(spec) == null) {
                 return SourceChains.packageOf(spec);
@@ -184,7 +184,7 @@ public final class PackageService {
         final List<ICliComputer.PackageInfo> out = new ArrayList<>();
         for (final ProgramSpec spec : this.offered()) {
             out.add(new ICliComputer.PackageInfo(spec.commandName(), spec.displayName()
-                    + (spec.kind() == ProgramKind.SERVICE ? " (service)" : ""), this.has(spec)));
+                    + (spec.kind().runsInBackground() ? " (service)" : ""), this.has(spec)));
         }
         out.addAll(this.mirror.shelved());
         return out;
@@ -234,7 +234,7 @@ public final class PackageService {
         final BlockEntity machine = (BlockEntity) this.terminal;
         final ComputerConsoleState console = this.terminal.console();
         if (this.manager().compilesFromSource() && machine instanceof IOsHost builder && console != null
-                && !(machine instanceof MainframeBlockEntity && spec.kind() == ProgramKind.SERVICE)
+                && !(machine instanceof MainframeBlockEntity && spec.kind().runsInBackground())
                 && InstallGates.fits(builder, spec, true)) {
             return ICliPackages.Installing.running(new TtyScriptProcess(SourceBuild.of(spec, builder, ask,
                     () -> builtHere(machine, console, spec))));
@@ -411,7 +411,7 @@ public final class PackageService {
         final BlockEntity machine = (BlockEntity) this.terminal;
         final ComputerConsoleState console = this.terminal.console();
         // A Mainframe service switches its flag on directly (a prebuilt daemon, so no source build either).
-        if (machine instanceof MainframeBlockEntity mf && spec.kind() == ProgramKind.SERVICE) {
+        if (machine instanceof MainframeBlockEntity mf && spec.kind().runsInBackground()) {
             final IMainframeService service = mf.service(spec.id());
             final boolean switchedOn = service != null && service.install();
             /*

@@ -129,7 +129,7 @@ final class PortsTree {
         }
         return switch (port.kind()) {
             case APP -> "misc";
-            case SERVICE, OPERATING_SPACE -> "net";
+            case SERVICE, OPERATING_SPACE, NETWORK_ENGINE -> "net";
             case HYBRID -> "sysutils";
             case DESKTOP_ENVIRONMENT -> "x11";
         };

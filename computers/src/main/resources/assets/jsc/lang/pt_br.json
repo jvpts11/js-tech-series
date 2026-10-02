@@ -2230,6 +2230,8 @@
   "jsc.emacs.quit": "Sair",
   "jsc.emacs.undefined": "%s não está definido",
   "jsc.emacs.undo": "Desfazer",
+  "jsc.engine.missing_capabilities": "%s precisa de um engine que ofereça %s.",
+  "jsc.engine.no_compatible": "Nenhum %s compatível foi encontrado nesta rede.",
   "jsc.engine.unavailable": "Network Operations Service indisponível",
   "jsc.exceed.live_cells": "%s células ativas",
   "jsc.exceed.new_sheet": "Nova planilha",

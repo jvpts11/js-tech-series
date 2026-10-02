@@ -108,7 +108,7 @@ final class SourceChains {
     private static String category(final ProgramKind kind) {
         return switch (kind) {
             case APP -> "app-misc";
-            case SERVICE -> "net-misc";
+            case SERVICE, NETWORK_ENGINE -> "net-misc";
             case HYBRID -> "app-admin";
             case DESKTOP_ENVIRONMENT -> "x11-wm";
             /* A whole interface, as a desktop is, for a machine that draws no windows at all. */

@@ -38,7 +38,7 @@ public final class TestEngines {
     public static void register(final IEventBus modEventBus) {
         modEventBus.addListener(ComputersRegisterEvent.class, event -> {
             event.program(ProgramSpec.of(PLAIN, "plainengine", false, EnumSet.allOf(Platform.class), 8,
-                            ProgramKind.SERVICE, 0, HostScope.MAINFRAME)
+                            ProgramKind.NETWORK_ENGINE, 0, HostScope.MAINFRAME)
                     .named("Plain Engine")
                     .described("An engine with nothing past what every engine answers."));
             final Map<HardwareEra, String> versions = new EnumMap<>(HardwareEra.class);

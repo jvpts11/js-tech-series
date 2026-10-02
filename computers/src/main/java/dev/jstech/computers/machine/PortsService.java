@@ -303,7 +303,7 @@ public final class PortsService {
             return BROKEN.with(pkg, broken.message());
         }
         final BlockEntity machine = (BlockEntity) this.terminal;
-        if (machine instanceof MainframeBlockEntity && port.kind() == ProgramKind.SERVICE) {
+        if (machine instanceof MainframeBlockEntity && port.kind().runsInBackground()) {
             return PREBUILT.with(pkg, Text.literal("pkg install " + PortsTree.name(port)));
         }
         if (!(machine instanceof IOsHost host) || this.terminal.console() == null) {

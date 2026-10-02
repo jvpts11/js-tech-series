@@ -2230,6 +2230,8 @@
   "jsc.emacs.quit": "Quit",
   "jsc.emacs.undefined": "%s is undefined",
   "jsc.emacs.undo": "Undo",
+  "jsc.engine.missing_capabilities": "%s needs an engine that offers %s.",
+  "jsc.engine.no_compatible": "No compatible %s was found on this network.",
   "jsc.engine.unavailable": "Network Operations Service unavailable",
   "jsc.exceed.live_cells": "%s live cells",
   "jsc.exceed.new_sheet": "New sheet",

@@ -57,6 +57,7 @@ import org.jetbrains.annotations.ApiStatus;
  * @param ramMb        megabytes the program holds while it runs; 0 means "derive it": a bundled program
  *                     weighs a share of the system that ships it, anything else weighs by its generation
  *                     ({@link RamLedger#eraWeightMb})
+ * @param requires     what it needs of the network's engine, checked when it is opened
  */
 @ApiStatus.Experimental
 public record ProgramSpec(
@@ -76,12 +77,13 @@ public record ProgramSpec(
         HardwareEra minEra,
         HardwareEra era,
         SoftwareHouse house,
-        int ramMb
+        int ramMb,
+        ProgramRequirement requires
 ) {
 
     /*
-     * A codec takes sixteen fields at most, so the name and the description travel as one pair of fields, written
-     * side by side in the same object as the rest.
+     * A codec takes sixteen fields at most, so the name and the description travel as one pair of fields, and the
+     * memory and what the program requires as another, written side by side in the same object as the rest.
      */
     public static final Codec<ProgramSpec> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             ResourceLocation.CODEC.fieldOf("id").forGetter(ProgramSpec::id),
@@ -108,11 +110,13 @@ public record ProgramSpec(
                     .optionalFieldOf("era", null)
                     .forGetter(ProgramSpec::era),
             SoftwareHouse.CODEC.optionalFieldOf("house", SoftwareHouse.BUNDLED).forGetter(ProgramSpec::house),
-            Codec.INT.optionalFieldOf("ram_mb", 0).forGetter(ProgramSpec::ramMb)
+            Codec.mapPair(Codec.INT.optionalFieldOf("ram_mb", 0),
+                            ProgramRequirement.CODEC.optionalFieldOf("requires", ProgramRequirement.NONE))
+                    .forGetter(spec -> Pair.of(spec.ramMb(), spec.requires()))
     ).apply(inst, (id, commandName, names, preinstalled, platforms, minCpuMhz, minVramMb, minDiskMb, kind,
-                   minOsRank, hostScope, iconId, minEra, era, house, ramMb) -> new ProgramSpec(id, commandName,
+                   minOsRank, hostScope, iconId, minEra, era, house, needs) -> new ProgramSpec(id, commandName,
             names.getFirst(), names.getSecond(), preinstalled, platforms, minCpuMhz, minVramMb, minDiskMb, kind,
-            minOsRank, hostScope, iconId, minEra, era, house, ramMb)));
+            minOsRank, hostScope, iconId, minEra, era, house, needs.getFirst(), needs.getSecond())));
 
     /**
      * Compact constructor: fills sensible defaults from the id (command name and display name from the
@@ -152,6 +156,9 @@ public record ProgramSpec(
         if (ramMb < 0) {
             ramMb = 0;
         }
+        if (requires == null) {
+            requires = ProgramRequirement.NONE;
+        }
         platforms = Set.copyOf(platforms);
     }
 
@@ -180,19 +187,19 @@ public record ProgramSpec(
                                  final int minOsRank, final HostScope hostScope) {
         return new ProgramSpec(id, commandName, "", "", preinstalled, platforms, 0, 0, minDiskMb,
                 kind, minOsRank, hostScope, id, HardwareEra.VINTAGE, null,
-                SoftwareHouse.BUNDLED, 0);
+                SoftwareHouse.BUNDLED, 0, ProgramRequirement.NONE);
     }
 
     /** The same program, called this in English. */
     public ProgramSpec named(final String english) {
         return new ProgramSpec(id, commandName, english, description, preinstalled, platforms, minCpuMhz,
-                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, house, ramMb);
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, house, ramMb, requires);
     }
 
     /** The same program, saying what it does in one line of English. */
     public ProgramSpec described(final String english) {
         return new ProgramSpec(id, commandName, displayName, english, preinstalled, platforms, minCpuMhz,
-                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, house, ramMb);
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, house, ramMb, requires);
     }
 
     /**
@@ -202,7 +209,7 @@ public record ProgramSpec(
      */
     public ProgramSpec withMinEra(final HardwareEra oldest) {
         return new ProgramSpec(id, commandName, displayName, description, preinstalled, platforms, minCpuMhz,
-                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, oldest, era, house, ramMb);
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, oldest, era, house, ramMb, requires);
     }
 
     /**
@@ -211,19 +218,30 @@ public record ProgramSpec(
      */
     public ProgramSpec withEra(final HardwareEra generation) {
         return new ProgramSpec(id, commandName, displayName, description, preinstalled, platforms, minCpuMhz,
-                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, generation, house, ramMb);
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, generation, house, ramMb,
+                requires);
     }
 
     /** The same program, credited to {@code maker}: the name on its disc, its banner and its about line. */
     public ProgramSpec withHouse(final SoftwareHouse maker) {
         return new ProgramSpec(id, commandName, displayName, description, preinstalled, platforms, minCpuMhz,
-                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, maker, ramMb);
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, maker, ramMb, requires);
     }
 
     /** The same program, holding {@code megabytes} of RAM while it runs. */
     public ProgramSpec withRam(final int megabytes) {
         return new ProgramSpec(id, commandName, displayName, description, preinstalled, platforms, minCpuMhz,
-                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, house, megabytes);
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, house, megabytes, requires);
+    }
+
+    /**
+     * The same program, needing {@code requirement} of the network's engine: a house's tool names the engine it is
+     * written for, a portable one the capabilities it uses. It installs anywhere, and says what it did not find when
+     * it is opened on a network that cannot give it that.
+     */
+    public ProgramSpec requiring(final ProgramRequirement requirement) {
+        return new ProgramSpec(id, commandName, displayName, description, preinstalled, platforms, minCpuMhz,
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, house, ramMb, requirement);
     }
 
     /**

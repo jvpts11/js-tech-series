@@ -111,7 +111,7 @@ public final class InstallerProjection {
         final boolean linux = Platform.onlyUnixLike(spec.platforms());
         return new InstallerLayout.Facts(
                 spec.displayName(), spec.commandName(), spec.id().getPath(), false,
-                spec.kind() == ProgramKind.SERVICE, linux, Branding.year(spec.era()),
+                spec.kind().runsInBackground(), linux, Branding.year(spec.era()),
                 // A disc of a bundled program has no shipper to be credited to, so it says Midsoft.
                 spec.houseOr(SoftwareHouse.MIDSOFT).name(), spec.description(),
                 english(MinSpecTooltip.programMinSpecText(spec.id())),

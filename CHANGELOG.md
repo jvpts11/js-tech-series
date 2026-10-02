@@ -19,7 +19,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Added: `EngineDef`, `EngineCapability`, `ComputersRegisterEvent.engine` and `JsComputersApi.registerEngine`. A mod
   registers a Network Operations Engine by its package (a program registered like any other), the dialect it
   speaks, the version it ships in for each age of Mainframe and the extras it offers; until it brings a planner of
-  its own it plans the way the Midsoft IQL Server does.
+  its own it plans the way the Midsoft IQL Server does. Its package is of the new kind `ProgramKind.NETWORK_ENGINE`.
+- Added: `ProgramRequirement` and `ProgramSpec.requires`, with `requiring`: a program says what it needs of the
+  network's engine (the engine it is written for and the oldest version of it, or the capabilities it uses), which
+  is checked when it is opened rather than when it is installed.
 - Changed: `IProgrammingLanguage.Complaint` carries its message as a `Text`, read in the language of whoever is
   shown it, with the `arguments` the message was written around; `text()` is the line a person reads, and
   `format()` is still the same line in English.
@@ -213,6 +216,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - An engine is the Mainframe's choice: a Subframe that runs another engine lends its Mainframe neither capacity nor
   queues until the two run the same one. Changing or stopping the engine hands only new work to the new one (or to
   none): every Operation already made carries on, a craft on the plan it was made with, after a reload too.
+- A software house's tools are written for its own engine. The Network Management Studio opens only on a network
+  running the Midsoft IQL Server, from its 2000 version on; anywhere else it stays installed and says "No compatible
+  Midsoft IQL Server was found on this network." An engine is a package of its own kind.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

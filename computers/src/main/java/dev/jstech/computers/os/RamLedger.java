@@ -187,7 +187,7 @@ public final class RamLedger {
             case SINGULARITY -> 1024;
         };
         return switch (kind) {
-            case SERVICE -> Math.max(1, base / 2);
+            case SERVICE, NETWORK_ENGINE -> Math.max(1, base / 2);
             case DESKTOP_ENVIRONMENT -> base * 2;
             default -> base;
         };

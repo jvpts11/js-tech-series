@@ -150,9 +150,10 @@ stable 1
 1 dev.jstech.computers.os.OsDef  static OsDef mediaInstalled(ResourceLocation, OsCapability, HardwareEra, ResourceLocation, int, Platform, String, Optional<ResourceLocation>, SoftwareHouse)
 2 dev.jstech.computers.os.OsDef  static OsDef terminalSystem(ResourceLocation, ResourceLocation, Platform, HardwareEra, int, String, ShellKind, PackageManagerKind, InstallMode, SoftwareHouse)
 1 dev.jstech.computers.os.OsDef  static final Codec<OsDef> CODEC
-2 dev.jstech.computers.os.ProgramSpec  type record(ResourceLocation id, String commandName, String displayName, String description, boolean preinstalled, Set<Platform> platforms, int minCpuMhz, int minVramMb, int minDiskMb, ProgramKind kind, int minOsRank, HostScope hostScope, ResourceLocation iconId, HardwareEra minEra, HardwareEra era, SoftwareHouse house, int ramMb)
+3 dev.jstech.computers.os.ProgramSpec  type record(ResourceLocation id, String commandName, String displayName, String description, boolean preinstalled, Set<Platform> platforms, int minCpuMhz, int minVramMb, int minDiskMb, ProgramKind kind, int minOsRank, HostScope hostScope, ResourceLocation iconId, HardwareEra minEra, HardwareEra era, SoftwareHouse house, int ramMb, ProgramRequirement requires)
 2 dev.jstech.computers.os.ProgramSpec  ProgramSpec described(String)
 2 dev.jstech.computers.os.ProgramSpec  ProgramSpec named(String)
+3 dev.jstech.computers.os.ProgramSpec  ProgramSpec requiring(ProgramRequirement)
 1 dev.jstech.computers.os.ProgramSpec  ProgramSpec withEra(HardwareEra)
 1 dev.jstech.computers.os.ProgramSpec  ProgramSpec withHouse(SoftwareHouse)
 1 dev.jstech.computers.os.ProgramSpec  ProgramSpec withMinEra(HardwareEra)

@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload.program;
 
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.client.CommandPromptScreen;
+import dev.jstech.computers.engine.EngineRequirements;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
@@ -18,6 +19,7 @@ import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.operation.payload.ConsoleInitPayload;
 import dev.jstech.computers.operation.payload.TerminalKeyboard;
 import dev.jstech.computers.operation.payload.WireLine;
+import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.RequestConsoleInitPayload;
 import dev.jstech.computers.operation.payload.RunCommandPayload;
@@ -246,6 +248,14 @@ public final class ConsolePayloads {
                     OperationRecord.STATUS_FAILED);
             player.displayClientMessage(GameText.component(ConsoleTexts.CANNOT_RUN_MESSAGE.with(
                     program.commandName())), false);
+            return;
+        }
+        // A house's tool opens only on a network running the engine it was written for.
+        final Text unmet = player.level() instanceof ServerLevel netLevel && host.networkUuid() != null
+                ? EngineRequirements.unmet(program, NetworkLookup.resolveMainframe(netLevel, host.networkUuid()))
+                : EngineRequirements.unmet(program, null);
+        if (unmet != null) {
+            sendConsoleLine(player, unmet, OperationRecord.STATUS_FAILED);
             return;
         }
         if (program.id().equals(Programs.NMS)) {

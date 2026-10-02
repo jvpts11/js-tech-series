@@ -52,8 +52,8 @@ public final class InstallMedia {
             case VINTAGE -> MediaFormat.FLOPPY;
             case LEGACY -> MediaFormat.CD;
             case TRANSITION -> MediaFormat.DVD;
-            case STANDARD -> kind == ProgramKind.SERVICE ? MediaFormat.USB : MediaFormat.DVD;
-            case ADVANCED, EXA, SINGULARITY -> kind == ProgramKind.SERVICE ? MediaFormat.USB : MediaFormat.BLU_RAY;
+            case STANDARD -> kind.runsInBackground() ? MediaFormat.USB : MediaFormat.DVD;
+            case ADVANCED, EXA, SINGULARITY -> kind.runsInBackground() ? MediaFormat.USB : MediaFormat.BLU_RAY;
         };
     }
 

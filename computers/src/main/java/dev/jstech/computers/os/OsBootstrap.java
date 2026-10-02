@@ -403,15 +403,17 @@ public final class OsBootstrap {
              * And each says the RAM it holds while it runs (withRam): the balancing estimates follow the
              * generation the tool was written in, so a modern tool is the heavier one.
              */
+            // The Midsoft IQL Server's studio: it opens on a network running that engine, from its 2000 version on.
             ProgramSpec.of(rl("nms"), "nms", false, DESKTOPS, 128, ProgramKind.APP, 2, HostScope.ANY)
                     .named("Network Management Studio")
                     .described("Query the network in IQL, inspect the index and run maintenance from one console.")
-                    .withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(128),
+                    .withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(128)
+                    .requiring(ProgramRequirement.engine(rl("iqlengine"), "2000")),
             /*
              * The Midsoft IQL Server is the Network Operations Engine every Mainframe ships with (the NMS is its
              * studio): every platform and every system, lives on the Mainframe, in a version for each age.
              */
-            ProgramSpec.of(rl("iqlengine"), "iqlengine", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 0,
+            ProgramSpec.of(rl("iqlengine"), "iqlengine", false, ALL_PLATFORMS, 32, ProgramKind.NETWORK_ENGINE, 0,
                             HostScope.MAINFRAME)
                     .named("Midsoft IQL Server")
                     .described("The engine that plans the network's work and answers it in IQL. The NMS is its"

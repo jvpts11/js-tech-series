@@ -12,16 +12,25 @@ import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.engine.CraftRequest;
+import dev.jstech.computers.engine.EngineCapability;
+import dev.jstech.computers.engine.EngineRequirements;
 import dev.jstech.computers.engine.EngineVerb;
 import dev.jstech.computers.engine.NetworkEngines;
 import dev.jstech.computers.engine.NetworkOperationsService;
+import dev.jstech.computers.os.HostScope;
+import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.ProgramKind;
+import dev.jstech.computers.os.ProgramRequirement;
+import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.IqlEngine;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.SubframeNode;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NodeUuid;
 import dev.jstech.tests.JsTests;
@@ -32,6 +41,7 @@ import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -236,6 +246,40 @@ public final class NetworkEngineGameTests {
                 })
                 .thenWaitUntil(() -> helper.assertTrue(net.storage(helper.getLevel()).count(Items.OAK_PLANKS) == 8,
                         "the craft made its 8 planks with the engine stopped"))
+                .thenSucceed();
+    }
+
+    /**
+     * An engine is a package of its own kind, and a house's tool says what it needs: opened where that is missing, it
+     * says what it did not find, and a portable program asks for capabilities rather than for an engine.
+     */
+    @GameTest(template = ARENA)
+    public static void requirement_isCheckedWhenTheProgramIsOpened(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = storageNetwork(helper);
+        final ProgramSpec explainer = ProgramSpec.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "explainer"),
+                        "explainer", false, Set.of(Platform.FRAMES), 8, ProgramKind.APP, 0, HostScope.ANY)
+                .named("Explainer")
+                .requiring(ProgramRequirement.capabilities(Set.of(EngineCapability.EXPLAIN)));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ProgramSpec studio = Programs.get(Programs.NMS);
+                    helper.assertTrue(Programs.get(MIDSOFT).kind() == ProgramKind.NETWORK_ENGINE,
+                            "an engine is a package of the engine kind");
+                    helper.assertTrue(EngineRequirements.unmet(studio, mainframe) == null,
+                            "the studio opens where the Midsoft IQL Server 2012 runs");
+                    helper.assertTrue(EngineRequirements.unmet(studio, null) != null,
+                            "and finds nothing on no network");
+                    helper.assertTrue(EngineRequirements.unmet(explainer, mainframe) != null,
+                            "no engine here offers what the explainer needs");
+
+                    mainframe.installEngine(TestEngines.PLAIN);
+                    mainframe.activateEngine(TestEngines.PLAIN);
+                    final Text missing = EngineRequirements.unmet(studio, mainframe);
+                    helper.assertTrue(missing != null && missing.english()
+                                    .equals("No compatible Midsoft IQL Server was found on this network."),
+                            "on another engine the studio says what it did not find; got "
+                                    + (missing == null ? "nothing" : missing.english()));
+                })
                 .thenSucceed();
     }
 
