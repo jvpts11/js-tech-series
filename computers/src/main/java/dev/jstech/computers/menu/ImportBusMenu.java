@@ -8,6 +8,7 @@
 package dev.jstech.computers.menu;
 
 import dev.jstech.computers.block.part.ImportBusPart;
+import dev.jstech.computers.gui.layout.BusLayout;
 import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.tier.HardwareEra;
@@ -24,7 +25,8 @@ public class ImportBusMenu extends AbstractBusMenu {
 
     public ImportBusMenu(final int containerId, final Inventory playerInventory, final ImportBusPart part,
                          final Level level, final Opening opening) {
-        super(ComputingMenus.IMPORT_BUS_MENU.get(), containerId, playerInventory, part, level, opening, false);
+        super(ComputingMenus.IMPORT_BUS_MENU.get(), containerId, playerInventory, part, level, opening,
+                BusLayout.Window.MOVER);
     }
 
     public static ImportBusMenu create(final int containerId, final Inventory playerInventory,

@@ -35,6 +35,7 @@ public final class ComputingParts {
     private static final TextKey EXPORT_NAME = TextKey.of("jsc.bus.kind.export", "Export");
     private static final TextKey INPUT_NAME = TextKey.of("jsc.bus.kind.input", "Input");
     private static final TextKey RECEIVING_NAME = TextKey.of("jsc.bus.kind.receiving", "Receiving");
+    private static final TextKey EXTERNAL_NAME = TextKey.of("jsc.bus.kind.external", "External Storage");
     private static final ResourceLocation IMPORT_MODEL = model("import_bus_part");
     private static final ResourceLocation EXPORT_MODEL = model("export_bus_part");
 
@@ -58,6 +59,17 @@ public final class ComputingParts {
             exportBus("export_bus", HardwareEra.STANDARD);
     public static final DeferredHolder<PartType<?>, PartType<ExportBusPart>> ADVANCED_EXPORT =
             exportBus("advanced_export_bus", HardwareEra.ADVANCED);
+    /* The External Storage Buses wear the Import Bus's model until each era's bus has its own. */
+    public static final DeferredHolder<PartType<?>, PartType<ExternalStorageBusPart>> VINTAGE_EXTERNAL =
+            externalBus("vintage_external_storage_bus", HardwareEra.VINTAGE);
+    public static final DeferredHolder<PartType<?>, PartType<ExternalStorageBusPart>> LEGACY_EXTERNAL =
+            externalBus("legacy_external_storage_bus", HardwareEra.LEGACY);
+    public static final DeferredHolder<PartType<?>, PartType<ExternalStorageBusPart>> TRANSITION_EXTERNAL =
+            externalBus("transition_external_storage_bus", HardwareEra.TRANSITION);
+    public static final DeferredHolder<PartType<?>, PartType<ExternalStorageBusPart>> EXTERNAL =
+            externalBus("external_storage_bus", HardwareEra.STANDARD);
+    public static final DeferredHolder<PartType<?>, PartType<ExternalStorageBusPart>> ADVANCED_EXTERNAL =
+            externalBus("advanced_external_storage_bus", HardwareEra.ADVANCED);
     /* Input feeds like an Export and Receiving pulls like an Import, so they are drawn with those buses' models. */
     public static final DeferredHolder<PartType<?>, PartType<InputBusPart>> INPUT = PARTS.register("input_bus",
             () -> new PartType<>(InputBusPart::new, INPUT_NAME, EXPORT_MODEL));
@@ -86,6 +98,34 @@ public final class ComputingParts {
     public static boolean isExport(final PartType<?> type) {
         return type == VINTAGE_EXPORT.get() || type == LEGACY_EXPORT.get() || type == TRANSITION_EXPORT.get()
                 || type == EXPORT.get() || type == ADVANCED_EXPORT.get();
+    }
+
+    /** Whether {@code type} is an External Storage Bus of any era. */
+    public static boolean isExternal(final PartType<?> type) {
+        return type == VINTAGE_EXTERNAL.get() || type == LEGACY_EXTERNAL.get() || type == TRANSITION_EXTERNAL.get()
+                || type == EXTERNAL.get() || type == ADVANCED_EXTERNAL.get();
+    }
+
+    /** The External Storage Bus of {@code era}; an era after the Advanced has the Advanced's. */
+    public static PartType<ExternalStorageBusPart> externalBus(final HardwareEra era) {
+        return switch (era) {
+            case VINTAGE -> VINTAGE_EXTERNAL.get();
+            case LEGACY -> LEGACY_EXTERNAL.get();
+            case TRANSITION -> TRANSITION_EXTERNAL.get();
+            case STANDARD -> EXTERNAL.get();
+            case ADVANCED, EXA, SINGULARITY -> ADVANCED_EXTERNAL.get();
+        };
+    }
+
+    /** The item of the External Storage Bus of {@code era}, which a broken bus gives back. */
+    public static ItemStack externalBusItem(final HardwareEra era) {
+        return new ItemStack(switch (era) {
+            case VINTAGE -> ComputingModule.VINTAGE_EXTERNAL_STORAGE_BUS_ITEM.get();
+            case LEGACY -> ComputingModule.LEGACY_EXTERNAL_STORAGE_BUS_ITEM.get();
+            case TRANSITION -> ComputingModule.TRANSITION_EXTERNAL_STORAGE_BUS_ITEM.get();
+            case STANDARD -> ComputingModule.EXTERNAL_STORAGE_BUS_ITEM.get();
+            case ADVANCED, EXA, SINGULARITY -> ComputingModule.ADVANCED_EXTERNAL_STORAGE_BUS_ITEM.get();
+        });
     }
 
     /** The Import Bus of {@code era}; an era after the Advanced has the Advanced's. */
@@ -140,6 +180,12 @@ public final class ComputingParts {
     private static DeferredHolder<PartType<?>, PartType<ExportBusPart>> exportBus(final String id,
                                                                                     final HardwareEra era) {
         return PARTS.register(id, () -> new PartType<>(() -> new ExportBusPart(era), EXPORT_NAME, EXPORT_MODEL));
+    }
+
+    private static DeferredHolder<PartType<?>, PartType<ExternalStorageBusPart>> externalBus(final String id,
+                                                                                             final HardwareEra era) {
+        return PARTS.register(id, () -> new PartType<>(() -> new ExternalStorageBusPart(era), EXTERNAL_NAME,
+                IMPORT_MODEL));
     }
 
     private static ResourceLocation model(final String name) {

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation;
 
+import dev.jstech.computers.block.part.ExternalStorageBusPart;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.hardware.ComputerBuild;
@@ -114,6 +115,10 @@ public final class NetworkIndex {
                 indexedModCounts.put(pc.nodeUuid(), pcBe.storageModCount());
             }
         }
+        for (final ExternalStorageBusPart bus : ExternalStores.of(level, network)) {
+            indexExternal(bus);
+            indexedModCounts.put(bus.node(), bus.signature());
+        }
     }
 
     public void analyzeIncremental(final ServerLevel level, final NetworkUuid network) {
@@ -151,10 +156,22 @@ public final class NetworkIndex {
                 }
             }
         }
+        /*
+         * An external inventory has no counter of its own (a hopper fills a chest without telling anyone), so what
+         * stands for one is a sum over what the network sees in it, read again each pass.
+         */
+        final Map<NodeUuid, ExternalStorageBusPart> liveExternal = new LinkedHashMap<>();
+        for (final ExternalStorageBusPart bus : ExternalStores.of(level, network)) {
+            liveExternal.put(bus.node(), bus);
+            final Long seen = indexedModCounts.get(bus.node());
+            if (seen == null || seen != bus.signature()) {
+                dirty.add(bus.node());
+            }
+        }
         // Nodes no longer on the network (or unresolvable) leave the catalog entirely.
         final List<NodeUuid> gone = new ArrayList<>();
         for (final NodeUuid indexed : indexedModCounts.keySet()) {
-            if (!live.containsKey(indexed) && !livePcs.containsKey(indexed)) {
+            if (!live.containsKey(indexed) && !livePcs.containsKey(indexed) && !liveExternal.containsKey(indexed)) {
                 gone.add(indexed);
             }
         }
@@ -184,11 +201,15 @@ public final class NetworkIndex {
                     && level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
                 indexServer(rack, loc.slot(), node);
                 indexedModCounts.put(node, rack.storageModCount(loc.slot()));
-            } else {
+            } else if (livePcs.containsKey(node)) {
                 final PersonalComputerBlockEntity pcBe = livePcs.get(node);
-                if (pcBe != null) {
-                    indexPc(pcBe, node);
-                    indexedModCounts.put(node, pcBe.storageModCount());
+                indexPc(pcBe, node);
+                indexedModCounts.put(node, pcBe.storageModCount());
+            } else {
+                final ExternalStorageBusPart bus = liveExternal.get(node);
+                if (bus != null) {
+                    indexExternal(bus);
+                    indexedModCounts.put(node, bus.signature());
                 }
             }
         }
@@ -204,6 +225,9 @@ public final class NetworkIndex {
             // PCs are indexed too; keeping their nodes registered stops vacuum treating them as ghosts.
             for (final NetworkSystem.PersonalComputerNode pc : system.personalComputersOf(network)) {
                 registered.add(pc.nodeUuid());
+            }
+            for (final ExternalStorageBusPart bus : ExternalStores.of(level, network)) {
+                registered.add(bus.node());
             }
         }
         int freed = 0;
@@ -326,6 +350,10 @@ public final class NetworkIndex {
                         new LinkedHashMap<>(pcBe.localStore().publicView()), pcBe.storageModCount()));
             }
         }
+        for (final ExternalStorageBusPart bus : ExternalStores.of(level, network)) {
+            snapshots.add(new NodeSnapshot(bus.node(), StorageTier.HDD, bus.latencyTicks(), bus.visible(),
+                    bus.signature()));
+        }
         dispatch.submit(context -> {
             /*
              * Somebody asked again while this was waiting its turn. Building would only be work for an answer
@@ -385,7 +413,25 @@ public final class NetworkIndex {
         });
     }
 
+    /*
+     * An External Storage Bus's inventory, at its own latency, ten times the slowest drive's, so a SELECT reads the
+     * network's own storage first and an external inventory only after it.
+     */
+    private void indexExternal(final ExternalStorageBusPart bus) {
+        bus.visible().forEach((key, quantity) -> {
+            if (quantity > 0L) {
+                catalog.computeIfAbsent(key, k -> new ArrayList<>())
+                        .add(new ItemLocation(bus.node(), StorageTier.HDD, quantity, bus.latencyTicks()));
+            }
+        });
+    }
+
     public static long serverThroughputCap(final ServerLevel level, final NodeUuid server) {
+        // An external inventory moves at a tenth of what its bus's cable carries.
+        final ExternalStorageBusPart external = ExternalStores.find(level, server);
+        if (external != null) {
+            return external.throughput();
+        }
         return NetworkSystem.get(level).locationOf(server)
                 .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack
                         ? hardwareCapOf(rack, loc.slot()) : Long.MAX_VALUE)
@@ -519,6 +565,14 @@ public final class NetworkIndex {
                         }
                     }
                 });
+            }
+            // An external inventory the network may write to, filled in the turn of its bus's priority.
+            for (final ExternalStorageBusPart bus : ExternalStores.of(level, network)) {
+                final long freeWeight = bus.room();
+                if (freeWeight > 0L) {
+                    room.put(bus.node(), new ItemLocation(bus.node(), StorageTier.HDD, freeWeight,
+                            bus.latencyTicks(), bus.fillPriority()));
+                }
             }
         }
         final List<ItemLocation> out = new ArrayList<>(room.size());

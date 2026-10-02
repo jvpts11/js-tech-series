@@ -10,6 +10,7 @@ package dev.jstech.computers.menu;
 import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.block.part.BusEdits;
 import dev.jstech.computers.block.part.ExportBusPart;
+import dev.jstech.computers.block.part.ExternalStorageBusPart;
 import dev.jstech.computers.bus.BusAbilities;
 import dev.jstech.computers.bus.BusSettings;
 import dev.jstech.computers.gui.layout.BusLayout;
@@ -51,7 +52,7 @@ public abstract class AbstractBusMenu extends CoreMenu {
     private final BlockPos cablePos;
     private final Direction face;
     private final HardwareEra era;
-    private final boolean crafting;
+    private final BusLayout.Window window;
     private String busName;
     /* Whether the inventory is shown: the client's Configure tab is open. The server's copy always has it. */
     private boolean inventoryShown = true;
@@ -67,17 +68,17 @@ public abstract class AbstractBusMenu extends CoreMenu {
 
     protected AbstractBusMenu(final MenuType<?> type, final int containerId, final Inventory playerInventory,
                               final AbstractBusPart part, final Level level, final Opening opening,
-                              final boolean crafting) {
+                              final BusLayout.Window window) {
         super(type, containerId, playerInventory, validity(level, opening.pos(), opening.face(), part));
         this.part = part;
         this.owner = playerInventory.player;
         this.cablePos = opening.pos();
         this.face = opening.face();
         this.era = opening.era();
-        this.crafting = crafting;
+        this.window = window;
         this.busName = opening.name();
         final GuiLayout.SlotPosition at = new GuiLayout.SlotPosition(BusLayout.INV_X,
-                BusLayout.inventoryY(BusAbilities.of(era), crafting));
+                BusLayout.inventoryY(BusLayout.abilities(era, window), window));
         final PlayerSlots playerSlots = playerInventory(playerInventory, at, () -> inventoryShown);
         shiftClick(playerSlots.main(), playerSlots.hotbar());
         shiftClick(playerSlots.hotbar(), playerSlots.main());
@@ -109,9 +110,19 @@ public abstract class AbstractBusMenu extends CoreMenu {
         return era;
     }
 
+    /** What kind of bus the window is for: one that moves, a crafting bus, or an External Storage Bus. */
+    public BusLayout.Window window() {
+        return window;
+    }
+
     /** Whether it is a crafting bus, which has its filter and nothing else to set. */
     public boolean crafting() {
-        return crafting;
+        return window == BusLayout.Window.CRAFTING;
+    }
+
+    /** What the bus can be set to, by its era and kind. */
+    public BusAbilities abilities() {
+        return BusLayout.abilities(era, window);
     }
 
     /** Whether the bus sends out of the network (an Export Bus, a Crafting Input Bus) rather than bringing in. */
@@ -144,7 +155,10 @@ public abstract class AbstractBusMenu extends CoreMenu {
 
     /** What the bus is set to as the window last heard, or a new bus of its era before it has heard. */
     public BusSettings settings() {
-        return state == null ? BusSettings.fresh(era) : state.settings();
+        if (state != null) {
+            return state.settings();
+        }
+        return window == BusLayout.Window.EXTERNAL ? BusSettings.freshExternal(era) : BusSettings.fresh(era);
     }
 
     /** What filter slot {@code slot} lists, to draw, as the window last heard. */
@@ -185,8 +199,10 @@ public abstract class AbstractBusMenu extends CoreMenu {
 
     /* Sends the bus's state when it changed since the last one sent, or {@code always}. */
     private void send(final ServerPlayer player, final boolean always) {
+        final ExternalStorageBusPart external = part instanceof ExternalStorageBusPart bus ? bus : null;
         final BusStatePayload now = new BusStatePayload(containerId, part.settings(), part.filterStacks(),
-                part.reachesNetwork(), part.speed(), part.cableCarries(), part.skin(), part.activity().entries());
+                part.reachesNetwork(), part.speed(), part.cableCarries(), part.skin(), part.activity().entries(),
+                external == null ? 0 : external.places(), external == null ? 0 : external.placesUsed());
         if (always || state == null || !same(state, now)) {
             state = now;
             PacketDistributor.sendToPlayer(player, now);
@@ -196,7 +212,8 @@ public abstract class AbstractBusMenu extends CoreMenu {
     /* Whether two states show the same; the filter's stacks follow its ids. */
     private static boolean same(final BusStatePayload a, final BusStatePayload b) {
         return a.settings().equals(b.settings()) && a.linked() == b.linked() && a.speed() == b.speed()
-                && a.carries() == b.carries() && a.skin() == b.skin() && a.activity().equals(b.activity());
+                && a.carries() == b.carries() && a.skin() == b.skin() && a.activity().equals(b.activity())
+                && a.places() == b.places() && a.placesUsed() == b.placesUsed();
     }
 
     /**

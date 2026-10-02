@@ -13,6 +13,7 @@ import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.CraftingComputerMenu;
 import dev.jstech.computers.menu.CraftingSwitchMenu;
+import dev.jstech.computers.menu.ExternalStorageBusMenu;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.menu.DosTerminalMenu;
 import dev.jstech.computers.menu.ExportBusMenu;
@@ -54,6 +55,9 @@ public final class ComputingMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<ImportBusMenu>> IMPORT_BUS_MENU =
             menu("import_bus", ImportBusMenu::fromNetwork);
+
+    public static final DeferredHolder<MenuType<?>, MenuType<ExternalStorageBusMenu>> EXTERNAL_STORAGE_BUS_MENU =
+            menu("external_storage_bus", ExternalStorageBusMenu::fromNetwork);
 
     public static final DeferredHolder<MenuType<?>, MenuType<InputBusMenu>> INPUT_BUS_MENU =
             menu("input_bus", InputBusMenu::fromNetwork);

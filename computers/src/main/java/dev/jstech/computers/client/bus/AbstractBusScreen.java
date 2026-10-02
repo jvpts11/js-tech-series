@@ -235,7 +235,7 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
         BusDraw.well(g, x + BusLayout.NAME_X, y + BusLayout.NAME_Y, BusLayout.NAME_W, BusLayout.NAME_H);
         configure.render(g, x, y, mouseX, mouseY, hasShiftDown());
         BusDraw.small(g, font, GameText.resolve(BusTexts.INVENTORY), x + BusLayout.INV_X,
-                y + BusLayout.inventoryLabelY(abilities(), menu.crafting()), JsTechTheme.dim());
+                y + BusLayout.inventoryLabelY(abilities(), menu.window()), JsTechTheme.dim());
         /*
          * Every active slot the menu placed. Drawing from the menu's own slots, rather than re-deriving the grid here,
          * means a change in where the inventory sits can never leave a frame drifted off its slot.
@@ -309,11 +309,11 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
     }
 
     private int configureHeight() {
-        return BusLayout.configureHeight(abilities(), menu.crafting());
+        return BusLayout.configureHeight(abilities(), menu.window());
     }
 
     private BusAbilities abilities() {
-        return BusAbilities.of(menu.era());
+        return menu.abilities();
     }
 
     private boolean linked() {

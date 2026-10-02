@@ -54,6 +54,8 @@ public class CablePartItem extends Item {
             "Right-click a data cable to attach; pulls items into the network");
     private static final TextKey EXPORT_TOOLTIP = TextKey.of("item.jsc.export_bus.tooltip",
             "Right-click a data cable to attach; pushes the filtered item out");
+    private static final TextKey EXTERNAL_TOOLTIP = TextKey.of("item.jsc.external_storage_bus.tooltip",
+            "Right-click a data cable beside an inventory; the network uses the inventory as its storage");
     private static final TextKey INPUT_TOOLTIP = TextKey.of("item.jsc.input_bus.tooltip",
             "Right-click a crafting cable to attach; marks the face machine crafts deliver inputs through");
     private static final TextKey RECEIVING_TOOLTIP = TextKey.of("item.jsc.receiving_bus.tooltip",
@@ -77,6 +79,8 @@ public class CablePartItem extends Item {
             what = IMPORT_TOOLTIP;
         } else if (ComputingParts.isExport(kind)) {
             what = EXPORT_TOOLTIP;
+        } else if (ComputingParts.isExternal(kind)) {
+            what = EXTERNAL_TOOLTIP;
         } else if (kind == ComputingParts.INPUT.get()) {
             what = INPUT_TOOLTIP;
         } else {
@@ -155,7 +159,8 @@ public class CablePartItem extends Item {
         }
         if (!level.isClientSide()) {
             cable.addPart(face, type.get().create());
-            if (level instanceof ServerLevel server && context.getPlayer() != null && !craftingPart) {
+            final boolean mover = ComputingParts.isImport(type.get()) || ComputingParts.isExport(type.get());
+            if (level instanceof ServerLevel server && context.getPlayer() != null && mover) {
                 reportPair(server, cable, context.getPlayer());
             }
             level.playSound(null, cable.getBlockPos(), SoundType.METAL.getPlaceSound(),

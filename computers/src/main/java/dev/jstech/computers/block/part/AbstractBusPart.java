@@ -67,7 +67,8 @@ import org.jetbrains.annotations.Nullable;
  * whole bus or, on the Transition, for each listed item; a priority over the network's other buses; and conditions.
  * Each move is an Operation, and what the bus did lately, its holds as well, is its {@link BusActivity}.
  */
-public abstract sealed class AbstractBusPart implements IFacePart permits ImportBusPart, ExportBusPart {
+public abstract sealed class AbstractBusPart implements IFacePart
+        permits ImportBusPart, ExportBusPart, ExternalStorageBusPart {
 
     protected CableBlockEntity host;
     protected Direction face = Direction.NORTH;
@@ -119,8 +120,13 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
     private static final Map<ServerLevel, BusClaims> CLAIMS = new WeakHashMap<>();
 
     protected AbstractBusPart(final HardwareEra era) {
+        this(era, BusAbilities.of(era));
+    }
+
+    /** A bus of {@code era} that can be set to what {@code abilities} say, which its kind decides. */
+    protected AbstractBusPart(final HardwareEra era, final BusAbilities abilities) {
         this.era = era;
-        this.abilities = BusAbilities.of(era);
+        this.abilities = abilities;
     }
 
     @Override
@@ -243,7 +249,12 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
         }
         return new BusSettings(name, era, listed, exclude, keep, max, boxed(itemKeep), boxed(itemMax), priority,
                 conditions, tags.stream().map(ResourceLocation::toString).toList(), fuzzy, powered,
-                mode == MODE_REDSTONE, setBy);
+                mode == MODE_REDSTONE, setBy, this instanceof ExternalStorageBusPart, access());
+    }
+
+    /** Which way the network may use what the bus faces; only an External Storage Bus lets it be anything else. */
+    public int access() {
+        return BusSettings.READ_WRITE;
     }
 
     /** What each filter slot holds, copies to show. */
@@ -668,7 +679,7 @@ public abstract sealed class AbstractBusPart implements IFacePart permits Import
     }
 
     /* Records who set {@code setting}: a program by its name, or a hand, which clears the mark. */
-    private boolean changed(final String setting, final String by) {
+    protected boolean changed(final String setting, final String by) {
         if (by == null || by.isEmpty()) {
             setBy.remove(setting);
         } else {

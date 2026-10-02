@@ -24,6 +24,7 @@ import dev.jstech.computers.client.audio.SoundfoundryPages;
 import dev.jstech.computers.client.audio.SoundfoundryShares;
 import dev.jstech.computers.client.audio.SoundfoundryStates;
 import dev.jstech.computers.client.bus.ExportBusScreen;
+import dev.jstech.computers.client.bus.ExternalStorageBusScreen;
 import dev.jstech.computers.client.bus.ImportBusScreen;
 import dev.jstech.computers.client.bus.InputBusScreen;
 import dev.jstech.computers.client.bus.ReceivingBusScreen;
@@ -161,6 +162,7 @@ public final class ComputingClientSetup {
                 });
         event.register(ComputingMenus.EXPORT_BUS_MENU.get(), ExportBusScreen::new);
         event.register(ComputingMenus.IMPORT_BUS_MENU.get(), ImportBusScreen::new);
+        event.register(ComputingMenus.EXTERNAL_STORAGE_BUS_MENU.get(), ExternalStorageBusScreen::new);
         event.register(ComputingMenus.CRAFTING_SWITCH_MENU.get(), CraftingSwitchScreen::new);
         event.register(ComputingMenus.INPUT_BUS_MENU.get(), InputBusScreen::new);
         event.register(ComputingMenus.RECEIVING_BUS_MENU.get(), ReceivingBusScreen::new);

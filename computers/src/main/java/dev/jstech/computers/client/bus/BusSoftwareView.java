@@ -83,6 +83,10 @@ final class BusSoftwareView {
         sections.clear();
         if (s.name().isEmpty()) {
             sections.add(new Section(BusTexts.ADDRESS, wrap(GameText.resolve(BusTexts.NO_NAME)), false));
+        } else if (BusScript.iql(s).isEmpty()) {
+            // A bus with nothing to set (the Vintage External Storage Bus) is still found by its address.
+            sections.add(new Section(BusTexts.ADDRESS, wrap(BusScript.address(s.name())), true));
+            sections.add(new Section(null, wrap(GameText.resolve(BusTexts.NOTHING_TO_SET)), false));
         } else {
             sections.add(new Section(BusTexts.ADDRESS, wrap(BusScript.address(s.name())), true));
             sections.add(new Section(BusTexts.IQL, wrapAll(BusScript.iql(s)), true));
@@ -154,6 +158,7 @@ final class BusSoftwareView {
             case BusSettings.PRIORITY -> BusTexts.SETTING_PRIORITY;
             case BusSettings.CONDITIONS -> BusTexts.SETTING_CONDITIONS;
             case BusSettings.MATCH -> BusTexts.SETTING_MATCH;
+            case BusSettings.ACCESS -> BusTexts.SETTING_ACCESS;
             default -> BusTexts.SETTING_FILTER;
         };
     }

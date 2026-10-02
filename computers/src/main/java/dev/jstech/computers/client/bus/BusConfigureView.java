@@ -173,16 +173,15 @@ final class BusConfigureView {
 
     /** How tall the rows' area is: fixed for the bus, so the inventory under it stays put. */
     int viewHeight() {
-        return BusLayout.configureView(abilities(), menu.crafting());
+        return BusLayout.configureView(abilities(), menu.window());
     }
 
     /* The rows as the bus is set now, and how tall they are together. */
     private void layOut() {
         final BusSettings s = menu.settings();
-        final BusLayout.Shape shape = new BusLayout.Shape(abilities(), menu.crafting(),
+        final BusLayout.Shape shape = new BusLayout.Shape(abilities(), menu.window(),
                 lines(introText()), itemRows(), tagLines(s), editingTag, lines(GameText.resolve(BusTexts.FUZZY_NOTE)),
-                Math.min(BusLayout.MOST_CONDITIONS, s.conditions().size()), editingCondition,
-                lines(GameText.resolve(BusTexts.CRAFTING_NOTE)));
+                Math.min(BusLayout.MOST_CONDITIONS, s.conditions().size()), editingCondition, lines(noteText()));
         rows = BusLayout.rows(shape);
         contentHeight = BusLayout.contentHeight(shape);
     }
@@ -194,10 +193,22 @@ final class BusConfigureView {
         switch (row.kind()) {
             case INTRO -> paragraph(g, introText(), x, y);
             case FUZZY_NOTE -> paragraph(g, GameText.resolve(BusTexts.FUZZY_NOTE), x, y);
-            case CRAFTING_NOTE -> paragraph(g, GameText.resolve(BusTexts.CRAFTING_NOTE), x, y);
+            case NOTE -> paragraph(g, noteText(), x, y);
             case NOW -> drawNow(g, x, y);
+            case HOLDS -> drawHolds(g, x, y);
+            case ACCESS -> {
+                label(g, BusTexts.ACCESS, x, y + 2);
+                drawToggle(g, toggle(row.kind()), x, y, px, py);
+                final Toggle access = toggle(row.kind());
+                final int last = access.xs().length - 1;
+                if (!s.setByOf(BusSettings.ACCESS).isEmpty()) {
+                    final int end = access.xs()[last] + access.ws()[last] + 4;
+                    BusDraw.mark(g, font, s.setByOf(BusSettings.ACCESS), x + end, y + access.lines()[last]
+                            * BusLayout.ROW + 2, BusLayout.RIGHT - end);
+                }
+            }
             case FILTER -> {
-                label(g, BusTexts.FILTER, x, y + 7);
+                label(g, menu.window() == BusLayout.Window.EXTERNAL ? BusTexts.SEES : BusTexts.FILTER, x, y + 7);
                 for (int i = 0; i < BusAbilities.FILTER_SLOTS; i++) {
                     BusDraw.cell(g, x + BusLayout.CONTROL_X + i * BusLayout.CELL, y + 1, menu.filterStack(i), true);
                 }
@@ -227,8 +238,9 @@ final class BusConfigureView {
                     s, BusSettings.MAX);
             case MODE -> toggleRow(g, BusTexts.MODE, toggle(row.kind()), x, y, px, py, s, BusSettings.MODE);
             case POWER -> toggleRow(g, BusTexts.POWER, toggle(row.kind()), x, y, px, py, s, BusSettings.POWER);
-            case PRIORITY -> stepper(g, BusTexts.PRIORITY, String.valueOf(s.priority()), "", x, y, px, py, s,
-                    BusSettings.PRIORITY);
+            case PRIORITY -> stepper(g, BusTexts.PRIORITY, String.valueOf(s.priority()),
+                    menu.window() == BusLayout.Window.EXTERNAL ? GameText.resolve(BusTexts.FILL_FIRST) : "", x, y, px,
+                    py, s, BusSettings.PRIORITY);
             case CONDITIONS_LABEL -> {
                 final int w = BusDraw.width(font, GameText.resolve(BusTexts.CONDITIONS));
                 heading(g, BusTexts.CONDITIONS, x, y);
@@ -387,8 +399,9 @@ final class BusConfigureView {
     private void drawToggle(final GuiGraphics g, final Toggle toggle, final int x, final int y, final int px,
                             final int py) {
         for (int i = 0; i < toggle.words().size(); i++) {
-            BusDraw.option(g, font, toggle.words().get(i), x + toggle.xs()[i], y, toggle.ws()[i],
-                    i == toggle.chosen(), over(px, py, toggle.xs()[i], 0, toggle.ws()[i], BusLayout.CONTROL_H));
+            final int line = toggle.lines()[i] * BusLayout.ROW;
+            BusDraw.option(g, font, toggle.words().get(i), x + toggle.xs()[i], y + line, toggle.ws()[i],
+                    i == toggle.chosen(), over(px, py, toggle.xs()[i], line, toggle.ws()[i], BusLayout.CONTROL_H));
         }
     }
 
@@ -472,7 +485,7 @@ final class BusConfigureView {
                     return true;
                 }
             }
-            case MATCH, FILTER_MODE, MODE, POWER -> {
+            case MATCH, FILTER_MODE, MODE, POWER, ACCESS -> {
                 return clickToggle(row.kind(), x, y);
             }
             case KEEP -> {
@@ -548,12 +561,13 @@ final class BusConfigureView {
     private boolean clickToggle(final BusLayout.Kind kind, final int x, final int y) {
         final Toggle toggle = toggle(kind);
         for (int i = 0; i < toggle.words().size(); i++) {
-            if (over(x, y, toggle.xs()[i], 0, toggle.ws()[i], BusLayout.CONTROL_H)) {
+            if (over(x, y, toggle.xs()[i], toggle.lines()[i] * BusLayout.ROW, toggle.ws()[i], BusLayout.CONTROL_H)) {
                 switch (kind) {
                     case MATCH -> edit(BusEditPayload.MATCH, 0, i);
                     case FILTER_MODE -> edit(BusEditPayload.EXCLUDE, 0, i);
                     case MODE -> edit(BusEditPayload.MODE, 0, i);
                     case POWER -> edit(BusEditPayload.POWER, 0, i == 0 ? 1L : 0L);
+                    case ACCESS -> edit(BusEditPayload.ACCESS, 0, i);
                     default -> {
                         return false;
                     }
@@ -657,6 +671,7 @@ final class BusConfigureView {
             case PRIORITY -> marked(s, BusSettings.PRIORITY, x, y, GameText.component(BusTexts.PRIORITY_HINT));
             case MODE -> marked(s, BusSettings.MODE, x, y, GameText.component(BusTexts.ON_DEMAND_HINT));
             case POWER -> marked(s, BusSettings.POWER, x, y);
+            case ACCESS -> marked(s, BusSettings.ACCESS, x, y);
             case MATCH -> marked(s, BusSettings.MATCH, x, y);
             case FILTER_MODE -> marked(s, BusSettings.FILTER, x, y);
             case CONDITIONS_LABEL -> marked(s, BusSettings.CONDITIONS, x, y);
@@ -759,14 +774,15 @@ final class BusConfigureView {
         return box;
     }
 
-    /** A toggle's words, where each option goes and how wide it is, and which is chosen. */
-    private record Toggle(List<String> words, int[] xs, int[] ws, int chosen) {
+    /** A toggle's words, where each option goes, on which of its lines, how wide it is, and which is chosen. */
+    private record Toggle(List<String> words, int[] xs, int[] ws, int chosen, int[] lines) {
     }
 
     private Toggle toggle(final BusLayout.Kind kind) {
         final BusSettings s = menu.settings();
         return switch (kind) {
             case MATCH -> options(BusLayout.CONTROL_X, s.fuzzy() ? 1 : 0, BusTexts.EXACT, BusTexts.FUZZY);
+            case ACCESS -> wrapped(s.access(), BusTexts.READ_WRITE, BusTexts.READ_ONLY, BusTexts.WRITE_ONLY);
             case FILTER_MODE -> {
                 final Toggle there = options(BusLayout.CONTROL_X, s.exclude() ? 1 : 0, BusTexts.ONLY_THESE,
                         BusTexts.ALL_BUT);
@@ -788,7 +804,27 @@ final class BusConfigureView {
             resolved.add(GameText.resolve(words[i]));
             widths[i] = BusDraw.optionWidth(font, resolved.get(i));
         }
-        return new Toggle(resolved, BusLayout.options(x, widths), widths, chosen);
+        return new Toggle(resolved, BusLayout.options(x, widths), widths, chosen, new int[words.length]);
+    }
+
+    /* A toggle whose options run on to a second line when they do not fit beside its word on one. */
+    private Toggle wrapped(final int chosen, final TextKey... words) {
+        final List<String> resolved = new ArrayList<>();
+        final List<Integer> widths = new ArrayList<>();
+        for (final TextKey word : words) {
+            resolved.add(GameText.resolve(word));
+            widths.add(BusDraw.optionWidth(font, resolved.get(resolved.size() - 1)));
+        }
+        final List<int[]> at = BusLayout.chips(widths);
+        final int[] xs = new int[words.length];
+        final int[] ws = new int[words.length];
+        final int[] lines = new int[words.length];
+        for (int i = 0; i < words.length; i++) {
+            xs[i] = at.get(i)[0];
+            ws[i] = widths.get(i);
+            lines[i] = at.get(i)[1];
+        }
+        return new Toggle(resolved, xs, ws, chosen, lines);
     }
 
     /* The words of the tag chips: each tag, then the chip that adds one while there is room and none is typed. */
@@ -851,7 +887,32 @@ final class BusConfigureView {
     }
 
     private String introText() {
+        if (menu.window() == BusLayout.Window.EXTERNAL) {
+            return GameText.resolve(BusTexts.INTRO_EXTERNAL);
+        }
         return GameText.resolve(exports() ? BusTexts.INTRO_EXPORT : BusTexts.INTRO_IMPORT);
+    }
+
+    /* The note at the end of the rows: what a crafting bus carries, or that an external inventory is slower. */
+    private String noteText() {
+        return GameText.resolve(menu.window() == BusLayout.Window.EXTERNAL ? BusTexts.EXTERNAL_NOTE
+                : BusTexts.CRAFTING_NOTE);
+    }
+
+    /* What an External Storage Bus's inventory holds, as the network is shown it. */
+    private void drawHolds(final GuiGraphics g, final int x, final int y) {
+        label(g, BusTexts.HOLDS, x, y + 2);
+        final BusStatePayload state = menu.state();
+        final int places = state == null ? 0 : state.places();
+        final String value = places <= 0 ? GameText.resolve(BusTexts.NOTHING_FACED)
+                : GameText.resolve(BusTexts.HOLDS_VALUE.with(places, state.placesUsed()));
+        BusDraw.small(g, font, BusDraw.clip(font, value, BusLayout.RIGHT - BusLayout.CONTROL_X), x
+                + BusLayout.CONTROL_X, y + 2, places <= 0 ? JsTechTheme.dim() : JsTechTheme.text());
+        final int noteX = BusLayout.CONTROL_X + BusDraw.width(font, value) + 5;
+        if (places > 0 && noteX < BusLayout.RIGHT - 10) {
+            BusDraw.small(g, font, BusDraw.clip(font, GameText.resolve(BusTexts.HOLDS_NOTE), BusLayout.RIGHT - noteX),
+                    x + noteX, y + 2, JsTechTheme.dim());
+        }
     }
 
     private String keepNote() {
@@ -863,7 +924,7 @@ final class BusConfigureView {
     }
 
     private BusAbilities abilities() {
-        return BusAbilities.of(menu.era());
+        return menu.abilities();
     }
 
     /* Whether the bus sends out of the network rather than bringing in. */

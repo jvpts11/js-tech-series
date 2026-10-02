@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation;
 
+import dev.jstech.computers.block.part.ExternalStorageBusPart;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
@@ -275,13 +276,25 @@ public abstract class AbstractTransferOperation implements INetworkOperation {
                     : (!source.diskReady || !source.ramReady || source.state.waitingOnLatency())
                             ? OperationRecord.SubRow.SUB_READING
                     : OperationRecord.SubRow.SUB_STREAMING;
-            subs.add(new OperationRecord.SubRow("SRV-" + shortId(source.server.asString()),
-                    source.state.total(), source.state.moved(), state));
+            subs.add(new OperationRecord.SubRow(nodeLabel(source.server), source.state.total(), source.state.moved(),
+                    state));
         }
         return subs;
     }
 
     protected static String shortId(final String uuid) {
         return ShortId.of(uuid);
+    }
+
+    /**
+     * How a node a move went through is written on its row: a server by its short id, an External Storage Bus by
+     * its name, or its short id when it has none.
+     */
+    protected final String nodeLabel(final NodeUuid node) {
+        final ExternalStorageBusPart external = ExternalStores.find(level, node);
+        if (external == null) {
+            return "SRV-" + shortId(node.asString());
+        }
+        return external.name().isEmpty() ? "EXT-" + shortId(node.asString()) : external.name();
     }
 }

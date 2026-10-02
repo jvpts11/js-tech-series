@@ -93,6 +93,35 @@ class StorageAllocatorTest {
     }
 
     @Test
+    void allocateByPriority_fillsTheHighestPriorityFirstHoweverSlow() {
+        final Allocation plan = StorageAllocator.allocateByPriority(List.of(
+                new ItemLocation(A, StorageTier.NVME, 100),
+                new ItemLocation(B, StorageTier.HDD, 60, 400, 5)), 80);
+
+        assertEquals(60L, plan.perServer().get(B), "the storage of priority 5 is filled first");
+        assertEquals(20L, plan.perServer().get(A), "and the network's own takes the rest");
+    }
+
+    @Test
+    void allocateByPriority_fillsALowerPriorityLast() {
+        final Allocation plan = StorageAllocator.allocateByPriority(List.of(
+                new ItemLocation(A, StorageTier.HDD, 100, 400, -1),
+                new ItemLocation(B, StorageTier.HDD, 100)), 100);
+
+        assertEquals(100L, plan.perServer().get(B));
+        assertNull(plan.perServer().get(A));
+    }
+
+    @Test
+    void allocate_readsTheFastestWhateverItsPriority() {
+        final Allocation plan = StorageAllocator.allocate(List.of(
+                new ItemLocation(A, StorageTier.NVME, 100),
+                new ItemLocation(B, StorageTier.HDD, 100, 400, 5)), 100);
+
+        assertEquals(100L, plan.perServer().get(A));
+    }
+
+    @Test
     void allocate_emptyForZeroDemand() {
         final Allocation plan = StorageAllocator.allocate(List.of(
                 new ItemLocation(A, StorageTier.NVME, 100)), 0);

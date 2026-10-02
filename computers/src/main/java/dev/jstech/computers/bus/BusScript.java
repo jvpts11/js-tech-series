@@ -63,7 +63,17 @@ public final class BusScript {
                 }
             }
         }
-        lines.add(bus + "MODE " + (settings.onDemand() ? "ON DEMAND" : "CONTINUOUS"));
+        if (settings.external()) {
+            if (can.can(BusFeature.ACCESS)) {
+                lines.add(bus + "ACCESS " + switch (settings.access()) {
+                    case BusSettings.READ_ONLY -> "READ ONLY";
+                    case BusSettings.WRITE_ONLY -> "WRITE ONLY";
+                    default -> "READ AND WRITE";
+                });
+            }
+        } else {
+            lines.add(bus + "MODE " + (settings.onDemand() ? "ON DEMAND" : "CONTINUOUS"));
+        }
         if (can.can(BusFeature.PRIORITY) && settings.priority() != 0) {
             lines.add(bus + "PRIORITY " + settings.priority());
         }
@@ -115,7 +125,14 @@ public final class BusScript {
                 }
             }
         }
-        if (settings.onDemand()) {
+        if (settings.external() && can.can(BusFeature.ACCESS)) {
+            calls.add(switch (settings.access()) {
+                case BusSettings.READ_ONLY -> "readOnly()";
+                case BusSettings.WRITE_ONLY -> "writeOnly()";
+                default -> "readWrite()";
+            });
+        }
+        if (!settings.external() && settings.onDemand()) {
             calls.add("onDemand()");
         }
         if (can.can(BusFeature.PRIORITY) && settings.priority() != 0) {
@@ -133,6 +150,10 @@ public final class BusScript {
             }
         }
         if (calls.isEmpty()) {
+            // A bus with nothing to set: an External Storage Bus of the Vintage has nothing to write at all.
+            if (settings.external()) {
+                return List.of();
+            }
             calls.add("on()");
         }
         final String bus = "bus(" + text(settings.name()) + ")";

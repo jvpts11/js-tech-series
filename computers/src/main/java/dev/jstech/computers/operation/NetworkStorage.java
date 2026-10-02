@@ -7,7 +7,9 @@
  */
 package dev.jstech.computers.operation;
 
+import dev.jstech.computers.block.part.ExternalStorageBusPart;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.bus.BusSettings;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
@@ -23,6 +25,7 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,13 +38,21 @@ import java.util.Set;
 public final class NetworkStorage {
 
     /**
-     * One node's store paired with the node identity that selects it for filtering, and whether it accepts inserts (a PC's public area is a read-only SELECT-source).
+     * One node's store paired with the node identity that selects it for filtering, whether it accepts inserts (a
+     * PC's public area is a read-only SELECT-source), and which storage is filled first: the network's own is 0, an
+     * External Storage Bus can be set above or below it.
      */
-    private record Entry(NodeUuid node, INodeStore store, boolean acceptsInsert) {
+    private record Entry(NodeUuid node, INodeStore store, boolean acceptsInsert, int priority) {
+
+        Entry(final NodeUuid node, final INodeStore store, final boolean acceptsInsert) {
+            this(node, store, acceptsInsert, 0);
+        }
     }
 
     private final List<Entry> entries;
     private final Map<NodeUuid, Entry> byNode;
+    /* The stores in the order they are filled: the highest priority first, ties as the network lists them. */
+    private final List<Entry> fillOrder;
 
     private NetworkStorage(final List<Entry> entries) {
         this.entries = entries;
@@ -49,6 +60,9 @@ public final class NetworkStorage {
         for (final Entry entry : entries) {
             byNode.putIfAbsent(entry.node(), entry);
         }
+        final List<Entry> filled = new ArrayList<>(entries);
+        filled.sort(Comparator.comparingInt(Entry::priority).reversed());
+        this.fillOrder = filled;
     }
 
     /**
@@ -107,6 +121,11 @@ public final class NetworkStorage {
             if (level.getBlockEntity(BlockPos.of(pc.pos())) instanceof PersonalComputerBlockEntity pcBe) {
                 entries.add(new Entry(pc.nodeUuid(), new PcPublicNodeStore(pcBe.localStore()), false));
             }
+        }
+        // An External Storage Bus lends the network the inventory it faces, read and written as its access allows.
+        for (final ExternalStorageBusPart bus : ExternalStores.of(level, network)) {
+            entries.add(new Entry(bus.node(), new ExternalNodeStore(bus), bus.access() != BusSettings.READ_ONLY,
+                    bus.fillPriority()));
         }
         return new NetworkStorage(entries);
     }
@@ -281,7 +300,7 @@ public final class NetworkStorage {
         }
         final StorageKey key = StorageKey.of(stack);
         long remaining = stack.getCount();
-        for (final Entry entry : entries) {
+        for (final Entry entry : fillOrder) {
             if (remaining <= 0L) {
                 break;
             }
@@ -303,7 +322,7 @@ public final class NetworkStorage {
             return 0L;
         }
         long remaining = amount;
-        for (final Entry entry : entries) {
+        for (final Entry entry : fillOrder) {
             if (remaining <= 0L) {
                 break;
             }
@@ -322,7 +341,7 @@ public final class NetworkStorage {
         }
         final StorageKey key = StorageKey.of(stack);
         long remaining = stack.getCount();
-        for (final Entry entry : entries) {
+        for (final Entry entry : fillOrder) {
             if (remaining <= 0L) {
                 break;
             }

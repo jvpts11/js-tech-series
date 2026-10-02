@@ -143,7 +143,7 @@ public final class BusWindowGameTests {
         bus.addCondition(BusCondition.hours(18, 6), "Night shift");
         bus.activity().moved(100L, "item|minecraft:iron_ore", 23L, false);
         final BusStatePayload sent = new BusStatePayload(7, bus.settings(), bus.filterStacks(), true, 64L, 256L,
-                HardwareEra.ADVANCED, bus.activity().entries());
+                HardwareEra.ADVANCED, bus.activity().entries(), 27, 14);
         final RegistryFriendlyByteBuf wire = new RegistryFriendlyByteBuf(Unpooled.buffer(),
                 helper.getLevel().registryAccess());
         try {
@@ -153,7 +153,8 @@ public final class BusWindowGameTests {
             helper.assertTrue(got.activity().equals(sent.activity()), "the log");
             helper.assertTrue(got.filter().get(0).is(Items.IRON_ORE), "the filter's ore, to draw");
             helper.assertTrue(got.speed() == 64L && got.carries() == 256L && got.linked()
-                    && got.skin() == HardwareEra.ADVANCED && got.containerId() == 7, "and the rest");
+                    && got.skin() == HardwareEra.ADVANCED && got.containerId() == 7 && got.places() == 27
+                    && got.placesUsed() == 14, "and the rest");
             helper.assertTrue(wire.readableBytes() == 0, "with nothing left over on the wire");
         } finally {
             wire.release();

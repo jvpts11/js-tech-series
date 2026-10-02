@@ -10,6 +10,7 @@ package dev.jstech.computers.gui.layout;
 import dev.jstech.computers.bus.BusAbilities;
 import dev.jstech.computers.bus.BusFeature;
 import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.tier.HardwareEra;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -160,7 +161,9 @@ public final class BusLayout {
 
     /* The most lines a paragraph is given room for when the window's size is set: longer ones scroll. */
     private static final int INTRO_LINES = 3;
-    private static final int CRAFTING_LINES = 4;
+    private static final int NOTE_LINES = 4;
+    /* The lines an External Storage Bus's access takes: its three options do not fit beside its word on one. */
+    private static final int ACCESS_LINES = 2;
     private static final int[] TAB_X = {8, 64, 114};
     private static final int[] TAB_W = {54, 48, 48};
 
@@ -173,9 +176,17 @@ public final class BusLayout {
 
     /** What a row of the Configure tab is. */
     public enum Kind {
-        INTRO, NOW, FILTER, ITEMS_LABEL, ITEM, ADD_ITEM, TAGS, TAG_EDITOR, MATCH, FUZZY_NOTE, FILTER_MODE, KEEP,
-        MAX, MODE, POWER, PRIORITY, CONDITIONS_LABEL, CONDITION, ADD_CONDITION, CONDITION_EDITOR, SPEED,
-        CRAFTING_NOTE
+        INTRO, NOW, HOLDS, FILTER, ITEMS_LABEL, ITEM, ADD_ITEM, TAGS, TAG_EDITOR, MATCH, FUZZY_NOTE, FILTER_MODE,
+        ACCESS, KEEP, MAX, MODE, POWER, PRIORITY, CONDITIONS_LABEL, CONDITION, ADD_CONDITION, CONDITION_EDITOR,
+        SPEED, NOTE
+    }
+
+    /**
+     * What kind of bus a window is for: one that moves (an Import or an Export Bus), a crafting bus, which has its
+     * filter and nothing else to set, or an External Storage Bus, which lends the network an inventory.
+     */
+    public enum Window {
+        MOVER, CRAFTING, EXTERNAL
     }
 
     /**
@@ -183,25 +194,30 @@ public final class BusLayout {
      * now, with the lines its paragraphs take in the window's letters.
      *
      * @param abilities      what the bus's era can be set to
-     * @param crafting       whether it is a crafting bus, which has its filter and nothing else to set
-     * @param introLines     the lines the Vintage bus's paragraph takes
+     * @param window         what kind of bus it is
+     * @param introLines     the lines the paragraph of a Vintage bus takes
      * @param itemRows       the Transition rows shown, one per item listed and any empty one between them
      * @param tagLines       the lines the Advanced bus's tags take
      * @param editingTag     whether a tag is being typed
      * @param fuzzyLines     the lines the loose match's note takes
      * @param conditions     how many conditions the bus has
      * @param editingCondition whether a condition is being written
-     * @param craftingLines  the lines the crafting bus's note takes
+     * @param noteLines      the lines the note at the end of a crafting or an external bus's rows takes
      */
-    public record Shape(BusAbilities abilities, boolean crafting, int introLines, int itemRows, int tagLines,
+    public record Shape(BusAbilities abilities, Window window, int introLines, int itemRows, int tagLines,
                         boolean editingTag, int fuzzyLines, int conditions, boolean editingCondition,
-                        int craftingLines) {
+                        int noteLines) {
 
         /** The rows at their most: every item, every condition, both editors open, every paragraph long. */
-        public static Shape most(final BusAbilities abilities, final boolean crafting) {
-            return new Shape(abilities, crafting, INTRO_LINES, BusAbilities.FILTER_SLOTS, 2, true, 3,
-                    MOST_CONDITIONS - 1, true, CRAFTING_LINES);
+        public static Shape most(final BusAbilities abilities, final Window window) {
+            return new Shape(abilities, window, INTRO_LINES, BusAbilities.FILTER_SLOTS, 2, true, 3,
+                    MOST_CONDITIONS - 1, true, NOTE_LINES);
         }
+    }
+
+    /** What a bus of {@code era} in a window of that kind can be set to. */
+    public static BusAbilities abilities(final HardwareEra era, final Window window) {
+        return window == Window.EXTERNAL ? BusAbilities.external(era) : BusAbilities.of(era);
     }
 
     /** The Configure rows of a bus of that shape, in order, from the top of the scrolled area. */
@@ -209,9 +225,13 @@ public final class BusLayout {
         final BusAbilities can = shape.abilities();
         final List<Row> rows = new ArrayList<>();
         final int[] y = {0};
-        if (shape.crafting()) {
+        if (shape.window() == Window.CRAFTING) {
             add(rows, y, Kind.FILTER, CELL + 2, 0);
-            add(rows, y, Kind.CRAFTING_NOTE, paragraph(shape.craftingLines()), 0);
+            add(rows, y, Kind.NOTE, paragraph(shape.noteLines()), 0);
+            return rows;
+        }
+        if (shape.window() == Window.EXTERNAL) {
+            externalRows(shape, rows, y);
             return rows;
         }
         if (!can.can(BusFeature.FILTER)) {
@@ -265,6 +285,38 @@ public final class BusLayout {
         return rows;
     }
 
+    /*
+     * An External Storage Bus's rows: what the inventory holds; then the Vintage bus's paragraph, or what the network
+     * sees of it, which way it may use it and in what turn it fills it, and the note that it is slower.
+     */
+    private static void externalRows(final Shape shape, final List<Row> rows, final int[] y) {
+        final BusAbilities can = shape.abilities();
+        add(rows, y, Kind.HOLDS, ROW, 0);
+        if (!can.can(BusFeature.FILTER)) {
+            add(rows, y, Kind.INTRO, paragraph(shape.introLines()), 0);
+            return;
+        }
+        add(rows, y, Kind.FILTER, CELL + 2, 0);
+        if (can.can(BusFeature.TAGS)) {
+            add(rows, y, Kind.TAGS, ROW * Math.max(1, shape.tagLines()), 0);
+            if (shape.editingTag()) {
+                add(rows, y, Kind.TAG_EDITOR, ROW, 0);
+            }
+        }
+        if (can.can(BusFeature.FUZZY)) {
+            add(rows, y, Kind.MATCH, ROW, 0);
+            add(rows, y, Kind.FUZZY_NOTE, paragraph(shape.fuzzyLines()), 0);
+        }
+        add(rows, y, Kind.FILTER_MODE, ROW, 0);
+        if (can.can(BusFeature.ACCESS)) {
+            add(rows, y, Kind.ACCESS, ACCESS_LINES * ROW, 0);
+        }
+        if (can.can(BusFeature.PRIORITY)) {
+            add(rows, y, Kind.PRIORITY, ROW, 0);
+        }
+        add(rows, y, Kind.NOTE, paragraph(shape.noteLines()), 0);
+    }
+
     /** How tall the rows of that shape are together. */
     public static int contentHeight(final Shape shape) {
         final List<Row> rows = rows(shape);
@@ -277,23 +329,23 @@ public final class BusLayout {
      * {@link #CONFIGURE_VIEW_MOST}. It is fixed for the bus, so the inventory under it never moves while the window is
      * open; rows past it scroll.
      */
-    public static int configureView(final BusAbilities abilities, final boolean crafting) {
-        return Math.min(CONFIGURE_VIEW_MOST, contentHeight(Shape.most(abilities, crafting)));
+    public static int configureView(final BusAbilities abilities, final Window window) {
+        return Math.min(CONFIGURE_VIEW_MOST, contentHeight(Shape.most(abilities, window)));
     }
 
     /** The window's height on Configure. */
-    public static int configureHeight(final BusAbilities abilities, final boolean crafting) {
-        return CONFIGURE_VIEW_Y + configureView(abilities, crafting) + INVENTORY_BLOCK;
+    public static int configureHeight(final BusAbilities abilities, final Window window) {
+        return CONFIGURE_VIEW_Y + configureView(abilities, window) + INVENTORY_BLOCK;
     }
 
     /** Where the inventory's word goes on Configure. */
-    public static int inventoryLabelY(final BusAbilities abilities, final boolean crafting) {
-        return CONFIGURE_VIEW_Y + configureView(abilities, crafting) + 3;
+    public static int inventoryLabelY(final BusAbilities abilities, final Window window) {
+        return CONFIGURE_VIEW_Y + configureView(abilities, window) + 3;
     }
 
     /** Where the inventory's grid starts on Configure; the menu places the player's slots from it. */
-    public static int inventoryY(final BusAbilities abilities, final boolean crafting) {
-        return CONFIGURE_VIEW_Y + configureView(abilities, crafting) + 13;
+    public static int inventoryY(final BusAbilities abilities, final Window window) {
+        return CONFIGURE_VIEW_Y + configureView(abilities, window) + 13;
     }
 
     /** The Software tab's rows' area, as tall as its sections up to what the window holds. */
@@ -353,20 +405,20 @@ public final class BusLayout {
      * The window's frame on Configure, for the checks: header, title, lamp, tabs, name, the rows' area and its
      * scrollbar, and the inventory.
      */
-    public static GuiLayout frame(final BusAbilities abilities, final boolean crafting) {
-        final int view = configureView(abilities, crafting);
-        final GuiLayout l = new GuiLayout(WIDTH, configureHeight(abilities, crafting))
+    public static GuiLayout frame(final BusAbilities abilities, final Window window) {
+        final int view = configureView(abilities, window);
+        final GuiLayout l = new GuiLayout(WIDTH, configureHeight(abilities, window))
                 .box("header", HEADER_X, HEADER_Y, HEADER_W, 17)
                 .box("nameField", NAME_X, NAME_Y, NAME_W, NAME_H)
                 .box("rows", LABEL_X, CONFIGURE_VIEW_Y, ROW_W, view)
                 .box("scrollbar", SCROLL_X, CONFIGURE_VIEW_Y, SCROLL_W, view)
-                .playerInventory(INV_X, inventoryY(abilities, crafting));
+                .playerInventory(INV_X, inventoryY(abilities, window));
         for (int tab = 0; tab < TABS; tab++) {
             l.box("tab" + tab, TAB_X[tab], TAB_Y, TAB_W[tab], TAB_H);
         }
         l.text("title", TITLE_X, TITLE_Y, TITLE_MOST_CHARS, 1.0f);
         l.text("nameLabel", LABEL_X, NAME_Y + 2, 4, 0.75f);
-        l.text("invLabel", INV_X, inventoryLabelY(abilities, crafting), 9, 0.75f);
+        l.text("invLabel", INV_X, inventoryLabelY(abilities, window), 9, 0.75f);
         return l;
     }
 
@@ -380,9 +432,24 @@ public final class BusLayout {
             final String n = row.kind().name().toLowerCase() + row.index();
             final int y = row.y();
             switch (row.kind()) {
-                case INTRO, FUZZY_NOTE, CRAFTING_NOTE -> {
+                case INTRO, FUZZY_NOTE, NOTE -> {
                     for (int line = 0; line < (row.height() - 2) / LINE; line++) {
                         l.text(n + "_" + line, LABEL_X, y + 1 + line * LINE, 34, 0.75f);
+                    }
+                }
+                case HOLDS -> {
+                    l.text(n + "_label", LABEL_X, y + 2, 5, 0.75f);
+                    l.text(n + "_value", CONTROL_X, y + 2, 17, 0.75f);
+                }
+                case ACCESS -> {
+                    // "READ AND WRITE" and "READ ONLY" on the first line, "WRITE ONLY" under them.
+                    l.text(n + "_label", LABEL_X, y + 2, 6, 0.75f);
+                    final int[] widths = {Math.round(13 * GuiLayout.GLYPH_WIDTH * 0.75f) + OPTION_PAD,
+                            Math.round(9 * GuiLayout.GLYPH_WIDTH * 0.75f) + OPTION_PAD,
+                            Math.round(10 * GuiLayout.GLYPH_WIDTH * 0.75f) + OPTION_PAD};
+                    final List<int[]> at = chips(List.of(widths[0], widths[1], widths[2]));
+                    for (int i = 0; i < at.size(); i++) {
+                        l.box(n + "_option" + i, at.get(i)[0], y + at.get(i)[1] * ROW, widths[i], CONTROL_H);
                     }
                 }
                 case NOW -> {

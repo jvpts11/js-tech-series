@@ -270,7 +270,7 @@ public final class NetworkSelectOperation extends AbstractTransferOperation {
     private OperationRecord buildRecord(final byte recordStatus, final boolean includeSubs) {
         final List<OperationRecord.MoveRow> moves = new ArrayList<>();
         movedPerServer.forEach((server, moved) ->
-                moves.add(new OperationRecord.MoveRow("SRV-" + shortId(server.asString()), moved, destinationLabel)));
+                moves.add(new OperationRecord.MoveRow(nodeLabel(server), moved, destinationLabel)));
         final List<OperationRecord.SubRow> subs = includeSubs ? subRows() : List.of();
         return new OperationRecord(operationId, recordType, key, demand, movedTotal,
                 recordStatus, priority(), List.copyOf(moves), subs).withCause(cause());

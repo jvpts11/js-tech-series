@@ -49,6 +49,23 @@ public record BusAbilities(HardwareEra era, int itemsPerTick, Set<BusFeature> fe
         };
     }
 
+    /**
+     * The abilities of an External Storage Bus of {@code era}, which moves nothing itself: the network reaches the
+     * inventory it faces as storage of its own. The Vintage one shows all of it; the Legacy and the Transition ones
+     * what their filter lets through, read and written or only one of the two; the Standard one adds which storage
+     * the network fills first; the Advanced one tags and the loose match.
+     */
+    public static BusAbilities external(final HardwareEra era) {
+        return switch (era) {
+            case VINTAGE -> new BusAbilities(era, 0, EnumSet.noneOf(BusFeature.class));
+            case LEGACY, TRANSITION -> new BusAbilities(era, 0, EnumSet.of(BusFeature.FILTER, BusFeature.ACCESS));
+            case STANDARD -> new BusAbilities(era, 0, EnumSet.of(BusFeature.FILTER, BusFeature.ACCESS,
+                    BusFeature.PRIORITY));
+            case ADVANCED, EXA, SINGULARITY -> new BusAbilities(era, 0, EnumSet.of(BusFeature.FILTER,
+                    BusFeature.ACCESS, BusFeature.PRIORITY, BusFeature.TAGS, BusFeature.FUZZY));
+        };
+    }
+
     /** Whether the bus can be set to do {@code feature}. */
     public boolean can(final BusFeature feature) {
         return features.contains(feature);

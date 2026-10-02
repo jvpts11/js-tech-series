@@ -99,4 +99,31 @@ public final class ExternalDataPort implements IDataPort {
         }
         return keys;
     }
+
+    /** How many slots and tanks the face offers, of every kind together. */
+    public int places() {
+        int places = 0;
+        for (final IDataChannel channel : channels.values()) {
+            places += channel.places();
+        }
+        return places;
+    }
+
+    /** How many of them hold something. */
+    public int placesUsed() {
+        int used = 0;
+        for (final IDataChannel channel : channels.values()) {
+            used += channel.placesUsed();
+        }
+        return used;
+    }
+
+    /** How much more the face has room for, by weight, of every kind together. */
+    public long room() {
+        long room = 0L;
+        for (final IDataChannel channel : channels.values()) {
+            room += channel.room();
+        }
+        return room;
+    }
 }

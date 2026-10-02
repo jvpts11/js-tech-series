@@ -136,6 +136,27 @@ class BusScriptTest {
     }
 
     @Test
+    void iql_writesAnExternalBusesAccessAndNoMode() {
+        final BusSettings external = new BusSettings("Chest wall", HardwareEra.STANDARD,
+                List.of("item|minecraft:log", "", "", "", ""), false, 0, 0, List.of(0, 0, 0, 0, 0),
+                List.of(0, 0, 0, 0, 0), 2, List.of(), List.of(), false, true, false, Map.of(), true,
+                BusSettings.READ_ONLY);
+
+        assertEquals(List.of("SET BUS 'Chest wall' FILTER ONLY log", "SET BUS 'Chest wall' ACCESS READ ONLY",
+                "SET BUS 'Chest wall' PRIORITY 2"), BusScript.iql(external));
+        assertEquals(List.of("var b = bus(\"Chest wall\");", "b.only(\"log\");", "b.readOnly();", "b.priority(2);"),
+                BusScript.sigma(external));
+    }
+
+    @Test
+    void iql_writesNothingForAVintageExternalBus() {
+        final BusSettings vintage = BusSettings.freshExternal(HardwareEra.VINTAGE);
+
+        assertTrue(BusScript.iql(vintage).isEmpty());
+        assertTrue(BusScript.sigma(vintage).isEmpty());
+    }
+
+    @Test
     void shortId_dropsTheVanillaNamespaceAndNamesOtherKinds() {
         assertEquals("iron_ore", BusScript.shortId("item|minecraft:iron_ore"));
         assertEquals("create:brass_ingot", BusScript.shortId("item|create:brass_ingot"));

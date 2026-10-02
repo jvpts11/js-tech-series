@@ -61,6 +61,8 @@ public final class BusEdits {
                 yield condition != null && bus.addCondition(condition, "");
             }
             case BusEditPayload.REMOVE_CONDITION -> bus.removeCondition(slot, "");
+            case BusEditPayload.ACCESS -> bus instanceof ExternalStorageBusPart external
+                    && external.setAccess((int) value, "");
             default -> false;
         };
     }

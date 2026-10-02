@@ -622,6 +622,20 @@ public final class ComputingModule {
             bus("export_bus", ComputingParts.EXPORT, "block/export_bus_part").named("Export Bus").register();
     public static final ItemEntry<CablePartItem> ADVANCED_EXPORT_BUS_ITEM = bus("advanced_export_bus",
             ComputingParts.ADVANCED_EXPORT, "block/export_bus_part").named("Advanced Export Bus").register();
+    public static final ItemEntry<CablePartItem> VINTAGE_EXTERNAL_STORAGE_BUS_ITEM = bus(
+            "vintage_external_storage_bus", ComputingParts.VINTAGE_EXTERNAL, "block/import_bus_part")
+            .named("Vintage External Storage Bus").register();
+    public static final ItemEntry<CablePartItem> LEGACY_EXTERNAL_STORAGE_BUS_ITEM = bus(
+            "legacy_external_storage_bus", ComputingParts.LEGACY_EXTERNAL, "block/import_bus_part")
+            .named("Legacy External Storage Bus").register();
+    public static final ItemEntry<CablePartItem> TRANSITION_EXTERNAL_STORAGE_BUS_ITEM = bus(
+            "transition_external_storage_bus", ComputingParts.TRANSITION_EXTERNAL, "block/import_bus_part")
+            .named("Transition External Storage Bus").register();
+    public static final ItemEntry<CablePartItem> EXTERNAL_STORAGE_BUS_ITEM = bus("external_storage_bus",
+            ComputingParts.EXTERNAL, "block/import_bus_part").named("External Storage Bus").register();
+    public static final ItemEntry<CablePartItem> ADVANCED_EXTERNAL_STORAGE_BUS_ITEM = bus(
+            "advanced_external_storage_bus", ComputingParts.ADVANCED_EXTERNAL, "block/import_bus_part")
+            .named("Advanced External Storage Bus").register();
     public static final ItemEntry<CablePartItem> INPUT_BUS_ITEM =
             bus("input_bus", ComputingParts.INPUT, "block/export_bus_part").named("Crafting Input Bus").register();
     public static final ItemEntry<CablePartItem> RECEIVING_BUS_ITEM =

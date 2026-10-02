@@ -310,6 +310,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A Crafting Input or Receiving Bus routes its face by every item its filter lists, up to five, and its window wears
   the skin of the Mainframe that commands it.
 - A menu's player inventory can be shown on some pages of a screen and hidden on the others, in J's Core.
+- The External Storage Bus, of every era: it moves nothing itself, the network uses the inventory it faces as
+  storage of its own, ten times slower than its servers. The Vintage one shows the network all of it; from the
+  Legacy, a filter decides what the network sees, and the network may read and write it, only read it, or only write
+  to it; from the Standard, a priority decides which storage the network fills first; the Advanced one filters by
+  tag and matches loosely as well. Its window tells how many slots the inventory has and how many are in use.
+- What comes into the network fills the storage of the highest priority first, then the fastest.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

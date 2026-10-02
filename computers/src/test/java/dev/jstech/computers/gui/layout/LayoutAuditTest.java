@@ -77,14 +77,15 @@ class LayoutAuditTest {
     /** Every layout, at the sizes/states worth auditing (worst cases for the parametrized ones). */
     private static List<AuditCase> cases() {
         final List<AuditCase> c = new ArrayList<>();
-        // Each era's bus window, and the rows its Configure tab scrolls, laid out flat at their most.
-        for (final HardwareEra era : HardwareEra.values()) {
-            c.add(new AuditCase("BusLayout(" + era + ")", BusLayout.frame(BusAbilities.of(era), false), true));
-            c.add(new AuditCase("BusLayout.rows(" + era + ")",
-                    BusLayout.content(BusLayout.Shape.most(BusAbilities.of(era), false)), false));
+        // Each era's window of each kind of bus, and the rows its Configure tab scrolls, laid out flat at their most.
+        for (final BusLayout.Window window : BusLayout.Window.values()) {
+            for (final HardwareEra era : HardwareEra.values()) {
+                final BusAbilities can = BusLayout.abilities(era, window);
+                c.add(new AuditCase("BusLayout(" + window + " " + era + ")", BusLayout.frame(can, window), true));
+                c.add(new AuditCase("BusLayout.rows(" + window + " " + era + ")",
+                        BusLayout.content(BusLayout.Shape.most(can, window)), false));
+            }
         }
-        c.add(new AuditCase("BusLayout(crafting)", BusLayout.frame(BusAbilities.of(HardwareEra.STANDARD), true),
-                true));
         c.add(new AuditCase("SoundfoundryLayout", SoundfoundryLayout.layout(), true));
         // Virtual Studio's Properties at the most it holds: every instruction set and every version beside Default.
         c.add(new AuditCase("StudioPropertiesLayout", StudioPropertiesLayout.layout(5, 4), true));

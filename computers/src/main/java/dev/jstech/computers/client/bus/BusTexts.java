@@ -21,6 +21,23 @@ final class BusTexts {
     static final TextKey IMPORT_TITLE = TextKey.of("jsc.bus.screen.import_title", "IMPORT BUS");
     static final TextKey INPUT_TITLE = TextKey.of("jsc.bus.screen.input_title", "CRAFTING INPUT BUS");
     static final TextKey RECEIVING_TITLE = TextKey.of("jsc.bus.screen.receiving_title", "CRAFTING RECEIVING BUS");
+    static final TextKey EXTERNAL_TITLE = TextKey.of("jsc.bus.screen.external_title", "EXTERNAL STORAGE BUS");
+    static final TextKey HOLDS = TextKey.of("jsc.bus.screen.holds", "HOLDS");
+    static final TextKey HOLDS_VALUE = TextKey.of("jsc.bus.screen.holds_value", "%s slots, %s used");
+    static final TextKey HOLDS_NOTE = TextKey.of("jsc.bus.screen.holds_note", "shown to the network as its storage");
+    static final TextKey NOTHING_FACED = TextKey.of("jsc.bus.screen.nothing_faced", "no inventory before it");
+    static final TextKey SEES = TextKey.of("jsc.bus.screen.sees", "SEES");
+    static final TextKey ACCESS = TextKey.of("jsc.bus.screen.access", "ACCESS");
+    static final TextKey READ_WRITE = TextKey.of("jsc.bus.screen.read_write", "READ AND WRITE");
+    static final TextKey READ_ONLY = TextKey.of("jsc.bus.screen.read_only", "READ ONLY");
+    static final TextKey WRITE_ONLY = TextKey.of("jsc.bus.screen.write_only", "WRITE ONLY");
+    static final TextKey INTRO_EXTERNAL = TextKey.of("jsc.bus.screen.intro_external",
+            "The network sees and uses all of it. 10x slower than its own storage.");
+    static final TextKey EXTERNAL_NOTE = TextKey.of("jsc.bus.screen.external_note",
+            "10x slower than the network's own storage.");
+    static final TextKey FILL_FIRST = TextKey.of("jsc.bus.screen.fill_first", "fill this before lower ones");
+    static final TextKey NOTHING_TO_SET = TextKey.of("jsc.bus.screen.nothing_to_set",
+            "Nothing to set: the network sees and uses all of the inventory.");
     static final TextKey CELL_HINT = TextKey.of("jsc.bus.screen.cell_hint",
             "Click with an item to list it here; with nothing in hand, to clear it");
     static final TextKey NAME_FIELD = TextKey.of("jsc.bus.screen.name_field", "name");
@@ -137,6 +154,7 @@ final class BusTexts {
     static final TextKey SETTING_PRIORITY = TextKey.of("jsc.bus.screen.setting_priority", "the priority");
     static final TextKey SETTING_CONDITIONS = TextKey.of("jsc.bus.screen.setting_conditions", "the conditions");
     static final TextKey SETTING_MATCH = TextKey.of("jsc.bus.screen.setting_match", "the match");
+    static final TextKey SETTING_ACCESS = TextKey.of("jsc.bus.screen.setting_access", "the access");
 
     private BusTexts() {
     }

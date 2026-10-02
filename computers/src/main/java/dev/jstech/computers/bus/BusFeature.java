@@ -23,5 +23,7 @@ public enum BusFeature {
     /** Listing items by their tags as well as one by one. */
     TAGS,
     /** Taking an item whatever its damage and its components, as the item it is. */
-    FUZZY
+    FUZZY,
+    /** Which way the network may use an external inventory: to read and write, to read only, or to write only. */
+    ACCESS
 }

@@ -46,7 +46,8 @@ public final class BusWindowClientTests {
     private static final List<Supplier<? extends PartType<? extends AbstractBusPart>>> BUSES = List.of(
             ComputingParts.VINTAGE_IMPORT, ComputingParts.LEGACY_IMPORT, ComputingParts.TRANSITION_IMPORT,
             ComputingParts.IMPORT, ComputingParts.ADVANCED_IMPORT, ComputingParts.VINTAGE_EXPORT,
-            ComputingParts.INPUT);
+            ComputingParts.INPUT, ComputingParts.VINTAGE_EXTERNAL, ComputingParts.LEGACY_EXTERNAL,
+            ComputingParts.ADVANCED_EXTERNAL);
 
     private BusWindowClientTests() {
     }
@@ -57,7 +58,7 @@ public final class BusWindowClientTests {
                 .thenServer(SETTLE, level -> mount(ctx, level))
                 .thenTeleport(SETTLE, PLAYER, Direction.NORTH);
         final String[] names = {"vintage", "legacy", "transition", "standard", "advanced", "vintage-export",
-                "crafting-input"};
+                "crafting-input", "vintage-external", "legacy-external", "advanced-external"};
         for (int i = 0; i < BUSES.size(); i++) {
             final BlockPos cable = cableOf(i);
             final String name = names[i];
@@ -83,6 +84,19 @@ public final class BusWindowClientTests {
                                 && bus(ctx, level, 1).setBy(BusSettings.KEEP).isEmpty(), SCREEN_WAIT,
                         "the Legacy bus to keep 17, by hand", level -> "keep " + bus(ctx, level, 1).keep()
                                 + " set by " + bus(ctx, level, 1).setBy(BusSettings.KEEP))
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                .thenAwaitNoScreen(SCREEN_WAIT);
+
+        // The Legacy External Storage Bus made read only by a click on its access.
+        final BusLayout.Row access = BusLayout.rows(new BusLayout.Shape(BusAbilities.external(HardwareEra.LEGACY),
+                BusLayout.Window.EXTERNAL, 2, 0, 1, false, 1, 0, false, 2)).stream()
+                .filter(r -> r.kind() == BusLayout.Kind.ACCESS).findFirst().orElseThrow();
+        open(ctx, cableOf(8))
+                .then(SETTLE, () -> ctx.clickGui(120, BusLayout.CONFIGURE_VIEW_Y + access.y() + 4))
+                .thenWaitUntilServer(level -> bus(ctx, level, 8).access() == BusSettings.READ_ONLY, SCREEN_WAIT,
+                        "the Legacy External Storage Bus to be read only", level -> "access "
+                                + bus(ctx, level, 8).access())
+                .thenScreenshot(SETTLE, "legacy-external-read-only")
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT);
 
@@ -172,7 +186,7 @@ public final class BusWindowClientTests {
         final int content = BusLayout.contentHeight(shape(HardwareEra.STANDARD,
                 screen.getMenu().settings().conditions().size(), kind == BusLayout.Kind.CONDITION_EDITOR));
         final int scroll = Math.max(0, content - BusLayout.configureView(BusAbilities.of(HardwareEra.STANDARD),
-                false));
+                BusLayout.Window.MOVER));
         ctx.clickGui(x, BusLayout.CONFIGURE_VIEW_Y + row.y() - scroll + dy);
     }
 
@@ -183,7 +197,8 @@ public final class BusWindowClientTests {
     }
 
     private static BusLayout.Shape shape(final HardwareEra era, final int conditions, final boolean editing) {
-        return new BusLayout.Shape(BusAbilities.of(era), false, 2, 2, 1, false, 1, conditions, editing, 1);
+        return new BusLayout.Shape(BusAbilities.of(era), BusLayout.Window.MOVER, 2, 2, 1, false, 1, conditions,
+                editing, 1);
     }
 
     private static AbstractBusScreen<?> screen(final ClientTestContext ctx) {

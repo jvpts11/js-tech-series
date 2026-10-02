@@ -75,6 +75,30 @@ class BusAbilitiesTest {
     }
 
     @Test
+    void external_givesTheVintageNothingToSetAndTheLaterErasAccess() {
+        assertTrue(BusAbilities.external(HardwareEra.VINTAGE).features().isEmpty());
+        assertTrue(BusAbilities.external(HardwareEra.LEGACY).can(BusFeature.ACCESS));
+        assertTrue(BusAbilities.external(HardwareEra.LEGACY).can(BusFeature.FILTER));
+        assertFalse(BusAbilities.external(HardwareEra.TRANSITION).can(BusFeature.PRIORITY));
+    }
+
+    @Test
+    void external_givesThePriorityFromTheStandardAndTagsOnTheAdvanced() {
+        assertTrue(BusAbilities.external(HardwareEra.STANDARD).can(BusFeature.PRIORITY));
+        assertFalse(BusAbilities.external(HardwareEra.STANDARD).can(BusFeature.TAGS));
+        assertTrue(BusAbilities.external(HardwareEra.ADVANCED).can(BusFeature.TAGS));
+        assertTrue(BusAbilities.external(HardwareEra.ADVANCED).can(BusFeature.FUZZY));
+    }
+
+    @Test
+    void external_neverKeepsQuantitiesOrConditions() {
+        for (final HardwareEra era : HardwareEra.values()) {
+            assertFalse(BusAbilities.external(era).can(BusFeature.QUANTITIES), era.name());
+            assertFalse(BusAbilities.external(era).can(BusFeature.CONDITIONS), era.name());
+        }
+    }
+
+    @Test
     void speedOn_neverPassesTheCable() {
         final BusAbilities advanced = BusAbilities.of(HardwareEra.ADVANCED);
 

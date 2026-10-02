@@ -31,11 +31,14 @@ import java.util.Map;
  * @param powered    whether it is on
  * @param onDemand   whether it moves only while its cable has a redstone signal
  * @param setBy      which setting a program set last, by the setting's word, and that program's name
+ * @param external   whether it is an External Storage Bus, which moves nothing and shows its inventory to the network
+ * @param access     for an External Storage Bus, which way the network may use it: {@link #READ_WRITE},
+ *                   {@link #READ_ONLY} or {@link #WRITE_ONLY}
  */
 public record BusSettings(String name, HardwareEra era, List<String> filter, boolean exclude, int keep, int max,
                           List<Integer> itemKeep, List<Integer> itemMax, int priority, List<BusCondition> conditions,
                           List<String> tags, boolean fuzzy, boolean powered, boolean onDemand,
-                          Map<String, String> setBy) {
+                          Map<String, String> setBy, boolean external, int access) {
 
     /** The words the settings go by where software sets them, and where the window marks what a program set. */
     public static final String POWER = "power";
@@ -46,6 +49,13 @@ public record BusSettings(String name, HardwareEra era, List<String> filter, boo
     public static final String PRIORITY = "priority";
     public static final String CONDITIONS = "conditions";
     public static final String MATCH = "match";
+    public static final String ACCESS = "access";
+    /** The network reads the inventory and writes to it. */
+    public static final int READ_WRITE = 0;
+    /** The network only reads it: it is never filled. */
+    public static final int READ_ONLY = 1;
+    /** The network only writes to it: what is in it is never taken, nor seen. */
+    public static final int WRITE_ONLY = 2;
 
     public BusSettings {
         name = name == null ? "" : name;
@@ -55,6 +65,17 @@ public record BusSettings(String name, HardwareEra era, List<String> filter, boo
         conditions = List.copyOf(conditions);
         tags = List.copyOf(tags);
         setBy = Map.copyOf(setBy);
+        access = access == READ_ONLY || access == WRITE_ONLY ? access : READ_WRITE;
+    }
+
+    /** The settings of a bus that moves: an Import, an Export, or a crafting bus. */
+    public BusSettings(final String name, final HardwareEra era, final List<String> filter, final boolean exclude,
+                       final int keep, final int max, final List<Integer> itemKeep, final List<Integer> itemMax,
+                       final int priority, final List<BusCondition> conditions, final List<String> tags,
+                       final boolean fuzzy, final boolean powered, final boolean onDemand,
+                       final Map<String, String> setBy) {
+        this(name, era, filter, exclude, keep, max, itemKeep, itemMax, priority, conditions, tags, fuzzy, powered,
+                onDemand, setBy, false, READ_WRITE);
     }
 
     /** A new bus of {@code era}: no name, nothing listed, nothing kept, on, and moving all the time. */
@@ -65,9 +86,16 @@ public record BusSettings(String name, HardwareEra era, List<String> filter, boo
                 Map.of());
     }
 
-    /** What the bus of its era can be set to. */
+    /** A new External Storage Bus of {@code era}: the whole inventory, read and written. */
+    public static BusSettings freshExternal(final HardwareEra era) {
+        final BusSettings bus = fresh(era);
+        return new BusSettings("", era, bus.filter(), false, 0, 0, bus.itemKeep(), bus.itemMax(), 0, List.of(),
+                List.of(), false, true, false, Map.of(), true, READ_WRITE);
+    }
+
+    /** What the bus of its era and kind can be set to. */
     public BusAbilities abilities() {
-        return BusAbilities.of(era);
+        return external ? BusAbilities.external(era) : BusAbilities.of(era);
     }
 
     /** Whether any filter slot lists something. */

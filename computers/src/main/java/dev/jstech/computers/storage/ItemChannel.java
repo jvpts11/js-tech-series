@@ -95,4 +95,32 @@ public record ItemChannel(IItemHandler items) implements IDataChannel {
         }
         return new ArrayList<>(keys);
     }
+
+    @Override
+    public int places() {
+        return items.getSlots();
+    }
+
+    @Override
+    public int placesUsed() {
+        int used = 0;
+        for (int slot = 0; slot < items.getSlots(); slot++) {
+            if (!items.getStackInSlot(slot).isEmpty()) {
+                used++;
+            }
+        }
+        return used;
+    }
+
+    @Override
+    public long room() {
+        long free = 0L;
+        for (int slot = 0; slot < items.getSlots(); slot++) {
+            final ItemStack inSlot = items.getStackInSlot(slot);
+            final int limit = items.getSlotLimit(slot);
+            free += inSlot.isEmpty() ? limit
+                    : Math.max(0, Math.min(limit, inSlot.getMaxStackSize()) - inSlot.getCount());
+        }
+        return free * StorageKey.MB_EQ_PER_ITEM;
+    }
 }

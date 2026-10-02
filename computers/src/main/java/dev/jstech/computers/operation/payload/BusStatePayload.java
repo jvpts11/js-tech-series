@@ -37,9 +37,12 @@ import java.util.Map;
  * @param carries     how many its cable carries a tick
  * @param skin        the era whose skin the window wears: the bus's, or for a crafting bus its Mainframe's
  * @param activity    what it did lately, newest first
+ * @param places      for an External Storage Bus, how many slots and tanks its inventory has
+ * @param placesUsed  and how many of them hold something
  */
 public record BusStatePayload(int containerId, BusSettings settings, List<ItemStack> filter, boolean linked,
-                              long speed, long carries, HardwareEra skin, List<BusActivity.Entry> activity)
+                              long speed, long carries, HardwareEra skin, List<BusActivity.Entry> activity,
+                              int places, int placesUsed)
         implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<BusStatePayload> TYPE =
@@ -107,6 +110,10 @@ public record BusStatePayload(int containerId, BusSettings settings, List<ItemSt
             buf.writeByte(e.reason());
             buf.writeVarLong(e.detail());
         }
+        buf.writeBoolean(s.external());
+        buf.writeVarInt(s.access());
+        buf.writeVarInt(p.places);
+        buf.writeVarInt(p.placesUsed);
     }
 
     private static BusStatePayload read(final RegistryFriendlyByteBuf buf) {
@@ -156,9 +163,14 @@ public record BusStatePayload(int containerId, BusSettings settings, List<ItemSt
             activity.add(new BusActivity.Entry(buf.readVarLong(), buf.readUtf(MAX_TEXT), buf.readVarLong(),
                     buf.readByte(), buf.readByte(), buf.readVarLong()));
         }
+        final boolean external = buf.readBoolean();
+        final int access = buf.readVarInt();
+        final int places = buf.readVarInt();
+        final int placesUsed = buf.readVarInt();
         final BusSettings settings = new BusSettings(name, era, filter, exclude, keep, max, itemKeep, itemMax,
-                priority, conditions, tags, fuzzy, powered, onDemand, setBy);
-        return new BusStatePayload(containerId, settings, filterStacks, linked, speed, carries, skin, activity);
+                priority, conditions, tags, fuzzy, powered, onDemand, setBy, external, access);
+        return new BusStatePayload(containerId, settings, filterStacks, linked, speed, carries, skin, activity,
+                places, placesUsed);
     }
 
     private static void writeStrings(final FriendlyByteBuf buf, final List<String> values) {

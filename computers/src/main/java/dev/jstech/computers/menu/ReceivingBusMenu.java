@@ -8,6 +8,7 @@
 package dev.jstech.computers.menu;
 
 import dev.jstech.computers.block.part.ReceivingBusPart;
+import dev.jstech.computers.gui.layout.BusLayout;
 import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.core.cable.CableBlockEntity;
 import net.minecraft.core.Direction;
@@ -23,7 +24,8 @@ public class ReceivingBusMenu extends AbstractBusMenu {
 
     public ReceivingBusMenu(final int containerId, final Inventory playerInventory, final ReceivingBusPart part,
                             final Level level, final Opening opening) {
-        super(ComputingMenus.RECEIVING_BUS_MENU.get(), containerId, playerInventory, part, level, opening, true);
+        super(ComputingMenus.RECEIVING_BUS_MENU.get(), containerId, playerInventory, part, level, opening,
+                BusLayout.Window.CRAFTING);
     }
 
     public static ReceivingBusMenu create(final int containerId, final Inventory playerInventory,
