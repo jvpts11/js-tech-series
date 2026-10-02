@@ -24,6 +24,7 @@ public final class ClientTestSuite {
             AudioClientTests.class,
             SoundMixerClientTests.class,
             MachineSoundClientTests.class,
+            MainframeClientTests.class,
             MediaClientTests.class,
             MusicImportClientTests.class,
             SoundfoundryClientTests.class,

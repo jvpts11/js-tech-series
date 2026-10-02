@@ -10,12 +10,17 @@ package dev.jstech.computers.datagen.advancement;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.advancement.HardwareMilestones;
 import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.block.IComputerCase;
+import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.advancements.Criterion;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.advancements.critereon.ItemPredicate;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ItemLike;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -30,19 +35,7 @@ public final class HardwareAdvancements extends AdvancementTab {
     public HardwareAdvancements() {
         super("hardware", ResourceLocation.withDefaultNamespace("textures/block/iron_block.png"));
         this.root(ComputingModule.PERSONAL_COMPUTER.item(), "Hardware", "Get your hands on a computer",
-                () -> InventoryChangeTrigger.TriggerInstance.hasItems(ItemPredicate.Builder.item().of(
-                        ComputingModule.PERSONAL_COMPUTER.item(),
-                        ComputingModule.VINTAGE_PERSONAL_COMPUTER.item(),
-                        ComputingModule.LEGACY_PERSONAL_COMPUTER.item(),
-                        ComputingModule.MAINFRAME.item(),
-                        ComputingModule.VINTAGE_MAINFRAME.item(),
-                        ComputingModule.LEGACY_MAINFRAME.item(),
-                        ComputingModule.CRAFTING_COMPUTER.item(),
-                        ComputingModule.VINTAGE_CRAFTING_COMPUTER.item(),
-                        ComputingModule.LEGACY_CRAFTING_COMPUTER.item(),
-                        ComputingModule.CLUSTER_MANAGEMENT_COMPUTER.item(),
-                        ComputingModule.VINTAGE_CLUSTER_MANAGEMENT_COMPUTER.item(),
-                        ComputingModule.LEGACY_CLUSTER_MANAGEMENT_COMPUTER.item())));
+                () -> InventoryChangeTrigger.TriggerInstance.hasItems(ItemPredicate.Builder.item().of(computers())));
 
         this.task("pc_master_race", "root", ComputingModule.MONITOR.item(), "PC Master Race",
                 "Watch a computer pass its power-on self-test", on(JscEvents.POST_PASSED));
@@ -84,5 +77,13 @@ public final class HardwareAdvancements extends AdvancementTab {
 
     private static Supplier<Criterion<?>> built(final HardwareEra era) {
         return on(JscEvents.ERA_BUILT, HardwareMilestones.eraDetail(era));
+    }
+
+    /** Every computer a player can hold: the small ones in every age and case, and the Mainframes of every age. */
+    private static ItemLike[] computers() {
+        return BuiltInRegistries.ITEM.stream()
+                .filter(item -> item instanceof BlockItem held && (held.getBlock() instanceof IComputerCase
+                        || held.getBlock() instanceof MainframeBlock))
+                .toArray(ItemLike[]::new);
     }
 }

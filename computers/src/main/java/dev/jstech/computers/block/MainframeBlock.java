@@ -8,6 +8,7 @@
 package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.menu.MainframeMenu;
@@ -16,6 +17,7 @@ import dev.jstech.core.multiblock.IMultiblockGeometry;
 import dev.jstech.core.multiblock.MultiblockPatternGeometry;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
@@ -30,7 +32,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
@@ -46,49 +47,46 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * The Mainframe, the network's orchestrator.
+ * The Mainframe, the network's orchestrator: one block for every era, the era given where it is declared.
  */
 public class MainframeBlock extends AbstractMultiblockControllerBlock
         implements IFaceConnector,
         IPeripheralConnectable, IEraChassisBlock {
 
-    public static final MapCodec<MainframeBlock> CODEC = simpleCodec(MainframeBlock::new);
+    private final HardwareEra era;
+
+    public static final MapCodec<MainframeBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+            propertiesCodec(),
+            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(MainframeBlock::era)
+    ).apply(i, MainframeBlock::new));
     /*
      * The Mainframe sits on the HBW backbone, on any face; it never takes an Ethernet access link directly (a
      * Personal Router bridges that).
      */
     private static final FacePorts PORTS = FacePorts.everyFace(DataLines.of(DataTier.T2_HBW));
 
+    public MainframeBlock(final Properties properties, final HardwareEra era) {
+        super(properties);
+        this.era = era;
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+    }
+
     @Override
     public PeripheralCableType peripheralType() {
         return PeripheralCableType.COMPUTING;
     }
 
-    public MainframeBlock(final Properties properties) {
-        super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
-    }
-
     /**
-     * The hardware era this Mainframe belongs to. It selects the block's skin and gates which MTX board
-     * installs: only a board of this same era is accepted and counted in the build. The base is
-     * {@link HardwareEra#STANDARD}; the Vintage and Legacy variants override it.
+     * The hardware era this Mainframe belongs to. It selects the cabinet's model and skin and gates which MTX board
+     * installs: only a board of this same era is accepted and counted in the build.
      */
     public HardwareEra era() {
-        return HardwareEra.STANDARD;
+        return era;
     }
 
     @Override
     public HardwareEra chassisEra() {
         return era();
-    }
-
-    /**
-     * The item this Mainframe drops and is picked as: its own era variant. Overridden per era so a
-     * broken or pick-blocked Mainframe yields the matching era's item.
-     */
-    protected Item blockItem() {
-        return ComputingModule.MAINFRAME.item();
     }
 
     @Override
@@ -138,7 +136,8 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
 
     @Override
     protected void dropContents(final ServerLevel level, final BlockPos controller) {
-        Block.popResource(level, controller, new ItemStack(blockItem()));
+        // Its own item, so a broken Mainframe gives back the era it was.
+        Block.popResource(level, controller, new ItemStack(asItem()));
         if (level.getBlockEntity(controller) instanceof MainframeBlockEntity be) {
             BlockDrops.spill(level, controller, be.getInventory());
         }

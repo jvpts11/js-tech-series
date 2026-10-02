@@ -62,13 +62,13 @@ public final class ComputingLooks {
 
     /** The model of a Mainframe cabinet of {@code era}. */
     public static String mainframe(final HardwareEra era) {
-        if (era == HardwareEra.VINTAGE) {
-            return "vintage_mainframe";
-        }
-        if (era == HardwareEra.LEGACY) {
-            return "legacy_mainframe";
-        }
-        return "mainframe";
+        return switch (era) {
+            case VINTAGE -> "vintage_mainframe";
+            case LEGACY -> "legacy_mainframe";
+            case TRANSITION -> "transition_mainframe";
+            case ADVANCED -> "advanced_mainframe";
+            default -> "mainframe";
+        };
     }
 
     /** The model of a Pattern Encoder body of {@code era}. */

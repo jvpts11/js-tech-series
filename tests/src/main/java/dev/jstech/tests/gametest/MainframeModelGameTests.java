@@ -7,7 +7,9 @@
  */
 package dev.jstech.tests.gametest;
 
+import dev.jstech.computers.ComputingLooks;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
@@ -16,6 +18,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -128,8 +131,10 @@ public final class MainframeModelGameTests {
     @GameTest(template = ARENA)
     public static void mainframeModel_eachEraDrawsItsOwnCabinetOverTheWholeFootprint(final GameTestHelper helper) {
         final MainframeBlockEntity standard = place(helper, new BlockPos(1, 2, 1), ComputingModule.MAINFRAME.get());
-        final MainframeBlockEntity vintage = place(helper, new BlockPos(5, 2, 1), ComputingModule.VINTAGE_MAINFRAME.get());
-        final MainframeBlockEntity legacy = place(helper, new BlockPos(1, 2, 5), ComputingModule.LEGACY_MAINFRAME.get());
+        final MainframeBlockEntity vintage = place(helper, new BlockPos(5, 2, 1),
+                ComputingModule.VINTAGE_MAINFRAME.get());
+        final MainframeBlockEntity legacy = place(helper, new BlockPos(1, 2, 5),
+                ComputingModule.LEGACY_MAINFRAME.get());
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     helper.assertTrue(standard.mainframeEra() == dev.jstech.core.tier.HardwareEra.STANDARD
@@ -143,6 +148,25 @@ public final class MainframeModelGameTests {
                     final net.minecraft.world.phys.AABB box = standard.renderBox();
                     helper.assertTrue(box.getXsize() >= 3.0D && box.getYsize() >= 2.0D && box.getZsize() >= 2.0D,
                             "the render box covers the whole footprint, not just the controller");
+                })
+                .thenSucceed();
+    }
+
+    /** The Transition and Advanced cabinets, each drawn by the model of its own age. */
+    @GameTest(template = ARENA)
+    public static void mainframeModel_transitionAndAdvancedDrawTheirOwnCabinets(final GameTestHelper helper) {
+        final MainframeBlockEntity transition = place(helper, new BlockPos(1, 2, 1),
+                ComputingModule.TRANSITION_MAINFRAME.get());
+        final MainframeBlockEntity advanced = place(helper, new BlockPos(5, 2, 1),
+                ComputingModule.ADVANCED_MAINFRAME.get());
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertValueEqual(ComputingLooks.MAINFRAME.modelOf(transition),
+                            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
+                                    "geo/transition_mainframe.geo.json"), "the Transition cabinet's model");
+                    helper.assertValueEqual(ComputingLooks.MAINFRAME.modelOf(advanced),
+                            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
+                                    "geo/advanced_mainframe.geo.json"), "the Advanced cabinet's model");
                 })
                 .thenSucceed();
     }

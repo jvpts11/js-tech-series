@@ -27,7 +27,6 @@ import dev.jstech.computers.block.CraftingComputerBlock;
 import dev.jstech.computers.block.CraftingSwitchBlock;
 import dev.jstech.computers.block.HbwInterfaceBlock;
 import dev.jstech.computers.block.IComputerCase;
-import dev.jstech.computers.block.LegacyMainframeBlock;
 import dev.jstech.computers.block.LegacyMonitorBlock;
 import dev.jstech.computers.block.LegacyServerRackBlock;
 import dev.jstech.computers.block.MainframeBlock;
@@ -44,7 +43,6 @@ import dev.jstech.computers.block.ServerRouterBlock;
 import dev.jstech.computers.block.SpeakerBlock;
 import dev.jstech.computers.block.SupercomputerRackBlock;
 import dev.jstech.computers.block.TankBlock;
-import dev.jstech.computers.block.VintageMainframeBlock;
 import dev.jstech.computers.block.VintageMonitorBlock;
 import dev.jstech.computers.block.VintageServerRackBlock;
 import dev.jstech.computers.block.part.CablePartItem;
@@ -224,23 +222,28 @@ public final class ComputingModule {
             CONTENT.blockEntity("server_router", ServerRouterBlockEntity::new, SERVER_ROUTER);
 
     /*
-     * Mainframes: the same orchestrator and block entity in three eras, differing by era, accepted board and skin. A
-     * 3x2x2 cabinet drawn as one model by the controller; the controller hands its item over itself when broken,
-     * and the part blocks of the structure are taken down without drops.
+     * Mainframes: the same orchestrator and block entity in every era, differing by era, accepted board, cabinet and
+     * skin. A 3x2x2 cabinet drawn as one model by the controller; the controller hands its item over itself when
+     * broken, and the part blocks of the structure are taken down without drops.
      */
 
     public static final BlockEntry<MainframeBlock> MAINFRAME =
-            mainframe("mainframe", MainframeBlock::new).named("Mainframe").register();
-    public static final BlockEntry<VintageMainframeBlock> VINTAGE_MAINFRAME =
-            mainframe("vintage_mainframe", VintageMainframeBlock::new).named("Vintage Mainframe").register();
-    public static final BlockEntry<LegacyMainframeBlock> LEGACY_MAINFRAME =
-            mainframe("legacy_mainframe", LegacyMainframeBlock::new).named("Legacy Mainframe").register();
+            mainframe("mainframe", HardwareEra.STANDARD).named("Mainframe").register();
+    public static final BlockEntry<MainframeBlock> VINTAGE_MAINFRAME =
+            mainframe("vintage_mainframe", HardwareEra.VINTAGE).named("Vintage Mainframe").register();
+    public static final BlockEntry<MainframeBlock> LEGACY_MAINFRAME =
+            mainframe("legacy_mainframe", HardwareEra.LEGACY).named("Legacy Mainframe").register();
+    public static final BlockEntry<MainframeBlock> TRANSITION_MAINFRAME =
+            mainframe("transition_mainframe", HardwareEra.TRANSITION).named("Transition Mainframe").register();
+    public static final BlockEntry<MainframeBlock> ADVANCED_MAINFRAME =
+            mainframe("advanced_mainframe", HardwareEra.ADVANCED).named("Advanced Mainframe").register();
     public static final BlockEntry<MainframePartBlock> MAINFRAME_PART =
             CONTENT.block("mainframe_part", MainframePartBlock::new).properties(ComputingModule::mainframeProperties)
                     .named("Mainframe").look(MAINFRAME_BODY).tag(BlockTags.MINEABLE_WITH_PICKAXE).register();
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MainframeBlockEntity>> MAINFRAME_BE =
-            CONTENT.blockEntity("mainframe", MainframeBlockEntity::new, MAINFRAME, VINTAGE_MAINFRAME, LEGACY_MAINFRAME);
+            CONTENT.blockEntity("mainframe", MainframeBlockEntity::new, MAINFRAME, VINTAGE_MAINFRAME, LEGACY_MAINFRAME,
+                    TRANSITION_MAINFRAME, ADVANCED_MAINFRAME);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MainframePartBlockEntity>>
             MAINFRAME_PART_BE = CONTENT.blockEntity("mainframe_part", MainframePartBlockEntity::new, MAINFRAME_PART);
 
@@ -764,9 +767,9 @@ public final class ComputingModule {
                 .item().itemLook(IItemLook.parent("block/" + id + "_core")).tab(section);
     }
 
-    private static <B extends Block> BlockBuilder<B> mainframe(final String id,
-                                                              final Function<BlockBehaviour.Properties, B> factory) {
-        return CONTENT.block(id, factory).properties(ComputingModule::mainframeProperties).look(MAINFRAME_BODY)
+    private static BlockBuilder<MainframeBlock> mainframe(final String id, final HardwareEra era) {
+        return CONTENT.block(id, properties -> new MainframeBlock(properties, era))
+                .properties(ComputingModule::mainframeProperties).look(MAINFRAME_BODY)
                 .geo(ComputingLooks.MAINFRAME)
                 .item((block, properties) -> new MainframeBlockItem(block, properties, id))
                 .itemLook(IItemLook.DRAWN_BY_ENTITY).drops(Drops.NONE).tag(BlockTags.MINEABLE_WITH_PICKAXE)

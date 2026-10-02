@@ -90,6 +90,9 @@ public final class MainframeRenderer extends GeoBlockRenderer<MainframeBlockEnti
         show(model, "lamp_fault", running && !valid);
         show(model, "lightbar_plinth", running && valid);
         show(model, "lightbar_cornice", running && valid);
+        // The Transition cabinet's blue slit down the mullion, the Advanced one's white lines up its sides.
+        show(model, "lightbar_slit", running && valid);
+        show(model, "lightbar_edges", running && valid);
         show(model, "service_panel", !mainframe.servicePanelOff());
     }
 

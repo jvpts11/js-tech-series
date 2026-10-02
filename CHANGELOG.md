@@ -173,6 +173,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   no place in a small case yet and is not drawn.
 - A small computer's power lamp is lit while it runs, and its disk lamp blinks while it works its disk, whatever the
   disk. Its fans turn while it runs: the case's own, and those of the parts in it, the cooler's and the cards'.
+- The Transition and Advanced Mainframes. The Transition's cabinet is gloss black after the IBM z9 and z10, with
+  brushed-silver fins down its sides, a honeycomb service door, a silver badge and a blue slit of light down the
+  middle of its front; the Advanced's is near black after the z14 and z15, its door a perforated sheet folded into
+  facets, with a line of white light up each side. Each takes the MTX board of its own age, and their lights come on
+  while the machine runs on a build that makes a computer.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The
