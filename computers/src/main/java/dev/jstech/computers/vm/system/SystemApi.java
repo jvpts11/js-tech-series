@@ -51,7 +51,8 @@ public final class SystemApi {
             computer(), holdingInfo(), serverInfo(), network(), stockEvent(), subscription(), remoteComputer(),
             iqlResult(), iql(), workStat(), mainframe(), askResult(), operationInfo(), operations(), ccComputer(),
             ccPeripheral(), gatewayMessage(), gateway(), widget(), window(), box("Row"), box("Column"), label(),
-            button(), textBox(), checkBox(), progressBar(), listBox(), canvas(), messageBox(), sound(), speaker());
+            button(), textBox(), checkBox(), progressBar(), listBox(), canvas(), messageBox(), sound(), speaker(),
+            bus(), busItem());
 
     private static final Map<String, TypeSpec> BY_TYPE = new HashMap<>();
     /** Every way of writing a call, under its owner and name, so a lookup does not walk the whole system. */
@@ -771,6 +772,46 @@ public final class SystemApi {
         speaker.recordValue(STRING, "Name");
         speaker.onObject(BOOL, "Play", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
         return new TypeSpec(SOUND, "Speaker", speaker.members);
+    }
+
+    /**
+     * A bus of the machine's network, found by the name its owner gave it, or null when none is called so. Each setting
+     * is set as its window sets it, refused where the bus's era cannot be set to it, and marked on the bus with the
+     * program that set it; each hands the bus back, so they are written one after another:
+     * {@code bus("Ore in").Keep(16).Max(64);}. A filter of several items is one text, the items parted by commas.
+     */
+    private static TypeSpec bus() {
+        final Members bus = new Members("Bus");
+        bus.onType("Bus", "Named", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), STRING);
+        bus.recordValue(STRING, "Name");
+        final CallCost set = CallCost.of(SigmaCosts.GLANCE_NETWORK);
+        for (final String toggle : List.of("On", "Off", "Continuous", "OnDemand", "ReadWrite", "ReadOnly",
+                "WriteOnly")) {
+            bus.onObject("Bus", toggle, MemberKind.WORLD, set);
+        }
+        for (final String listed : List.of("Only", "AllBut", "Tag")) {
+            bus.onObject("Bus", listed, MemberKind.WORLD, set, STRING);
+        }
+        for (final String count : List.of("Keep", "Max", "Priority")) {
+            bus.onObject("Bus", count, MemberKind.WORLD, set, INT);
+        }
+        bus.onObject("Bus", "Fuzzy", MemberKind.WORLD, set, BOOL);
+        bus.onObject("Bus", "WhenStock", MemberKind.WORLD, set, STRING, INT);
+        bus.onObject("Bus", "WhenStockTag", MemberKind.WORLD, set, STRING, INT);
+        bus.onObject("Bus", "Between", MemberKind.WORLD, set, INT, INT);
+        bus.onObject("Bus", "After", MemberKind.WORLD, set, "Bus");
+        bus.onObject("BusItem", "Item", MemberKind.WORLD, set, STRING);
+        return new TypeSpec(NETWORK, "Bus", bus.members);
+    }
+
+    /** One item a Transition bus lists, whose own keep and max are set as the bus's are. */
+    private static TypeSpec busItem() {
+        final Members item = new Members("BusItem");
+        item.recordValue(STRING, "Bus");
+        item.recordValue(STRING, "Item");
+        item.onObject("BusItem", "Keep", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), INT);
+        item.onObject("BusItem", "Max", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), INT);
+        return new TypeSpec(NETWORK, "BusItem", item.members);
     }
 
     /** Gathers the members of one type, in the order they are declared. */

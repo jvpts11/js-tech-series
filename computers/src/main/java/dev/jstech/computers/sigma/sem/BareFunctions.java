@@ -228,6 +228,8 @@ public final class BareFunctions {
         same("isdigit", CHARACTER, "IsDigit", form("bool", "char c"));
         same("isalpha", CHARACTER, "IsLetter", form("bool", "char c"));
         same("isspace", CHARACTER, "IsWhiteSpace", form("bool", "char c"));
+        // A bus of the network by its name, as its window and the IQL name it.
+        same("bus", "Bus", "Named", form("Bus", "string name"));
     }
 
     private BareFunctions() {

@@ -14,6 +14,7 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.iql.IIqlCondition;
 import dev.jstech.computers.program.iql.IIqlView;
+import dev.jstech.computers.program.iql.IqlBusStatement;
 import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.computers.program.iql.IqlDefinitionParser;
 import dev.jstech.computers.program.iql.IqlOperation;
@@ -29,6 +30,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Function;
+import java.util.function.Supplier;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The runtime of the network's language, as an engine that speaks it runs it: it takes a statement and either runs
@@ -70,6 +73,9 @@ public final class IqlEngine {
             TextKey.of("jsc.service.iql.procedure_ran_many", "procedure %s ran %s statements");
     private static final TextKey ROWS_ONE = TextKey.of("jsc.service.iql.rows_one", "%s row");
     private static final TextKey ROWS_MANY = TextKey.of("jsc.service.iql.rows_many", "%s rows");
+
+    /* The job whose body is running now, on the server's thread, so what it sets on a bus is marked with its name. */
+    private static final ThreadLocal<String> RUNNING_JOB = new ThreadLocal<>();
 
     public IqlEngine(final MainframeBlockEntity mainframe, final IIqlView computer, final int queryRowLimit,
                      final boolean savedObjects) {
@@ -122,6 +128,21 @@ public final class IqlEngine {
         }
     }
 
+    /** Runs {@code body} as the job named {@code job}: what it sets on a bus is marked with the job's name. */
+    public static <T> T asJob(final String job, final Supplier<T> body) {
+        final String outer = RUNNING_JOB.get();
+        RUNNING_JOB.set(job);
+        try {
+            return body.get();
+        } finally {
+            if (outer == null) {
+                RUNNING_JOB.remove();
+            } else {
+                RUNNING_JOB.set(outer);
+            }
+        }
+    }
+
     public Outcome run(final String statement) {
         final Outcome outcome = run(statement, 0);
         // Somebody's statement, not a job firing on its own: those run with nobody acting.
@@ -142,6 +163,10 @@ public final class IqlEngine {
         if (parsed.isDefinition()) {
             return runDefinition(parsed.definition(), depth);
         }
+        if (parsed.isBus()) {
+            final String job = RUNNING_JOB.get();
+            return IqlBusSetter.apply(mainframe, parsed.bus(), job == null ? IqlBusSetter.TYPED : job);
+        }
         return runOperation(parsed.operation(), depth);
     }
 
@@ -157,6 +182,14 @@ public final class IqlEngine {
     }
 
     private Outcome create(final IqlDefinition definition) {
+        /*
+         * A job that switches a bus on between two hours of the day is the bus's own hours, kept on the bus and marked
+         * with the job's name: the bus moves only then, which a job firing once as the hours begin could not say.
+         */
+        final IqlBusStatement hours = busHours(definition);
+        if (hours != null) {
+            return IqlBusSetter.apply(mainframe, hours, definition.name());
+        }
         // A job is the Automation Engine's to keep and fire; the statement only asks for one.
         if (definition.objectType() == IqlDefinition.ObjectType.JOB && !mainframe.isAutomationEngineInstalled()) {
             return Outcome.fail(JOBS_NEED_AUTOMATION.text());
@@ -168,6 +201,27 @@ public final class IqlEngine {
             Acting.current().ifPresent(player -> MachineOperators.note(mainframe, player));
         }
         return Outcome.ok(CREATED.with(typeName(definition.objectType()), definition.name()));
+    }
+
+    /* {@code CREATE JOB n AS SET BUS 'x' ON WHEN TIME BETWEEN a AND b} as the bus's hours, or null for any other. */
+    @Nullable
+    private static IqlBusStatement busHours(final IqlDefinition definition) {
+        if (definition.objectType() != IqlDefinition.ObjectType.JOB
+                || definition.triggerKind() != IqlDefinition.TriggerKind.WHEN
+                || !IqlBusStatement.isSetBus(definition.body())) {
+            return null;
+        }
+        final int[] hours = IqlBusStatement.hoursOf(definition.triggerSpec());
+        if (hours == null) {
+            return null;
+        }
+        try {
+            final IqlBusStatement body = IqlBusStatement.parse(definition.body());
+            return body.change() instanceof IqlBusStatement.Power power && power.on()
+                    ? new IqlBusStatement(body.bus(), new IqlBusStatement.Hours(hours[0], hours[1])) : null;
+        } catch (final IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private Outcome drop(final IqlDefinition definition) {

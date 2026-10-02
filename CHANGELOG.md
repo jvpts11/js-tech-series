@@ -316,6 +316,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   to it; from the Standard, a priority decides which storage the network fills first; the Advanced one filters by
   tag and matches loosely as well. Its window tells how many slots the inventory has and how many are in use.
 - What comes into the network fills the storage of the highest priority first, then the fastest.
+- IQL sets a bus by its name: `SET BUS 'Ore in' KEEP 16 MAX 64`, and the filter (only these, all but these, by
+  tag), the loose match, each item's own quantities, the mode, the priority, on or off, an External Storage Bus's
+  access, and what it waits for (the network's stock of an item or a tag, another bus); a job that switches a bus on
+  between two hours of the day keeps it to those hours. A name in single quotes is read as one, as in SQL.
+- Programs set buses too, in both languages: `bus("Ore in").Keep(16).Max(64);`, with a call for every setting. A
+  setting set from software carries the name of the program or the job that set it, which the bus's window marks,
+  and what the bus's era cannot be set to is refused as it is in the window.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

@@ -62,6 +62,11 @@ public final class SubsetRules {
             Map.entry("Script", Set.of("OnInit", "OnTick", "OnDestroy")),
             Map.entry("Sound", Set.of("Beep", "Tones", "Play", "Stop")),
             Map.entry("Speaker", Set.of("Named", "Name", "Play")),
+            // A bus of the network, set as its window sets it: what bus() comes down to, and every setting.
+            Map.entry("Bus", Set.of("Named", "Name", "On", "Off", "Continuous", "OnDemand", "ReadWrite", "ReadOnly",
+                    "WriteOnly", "Only", "AllBut", "Tag", "Keep", "Max", "Priority", "Fuzzy", "WhenStock",
+                    "WhenStockTag", "Between", "After", "Item")),
+            Map.entry("BusItem", Set.of("Bus", "Item", "Keep", "Max")),
             // What rand and srand come down to, and nothing past them: a whole number drawn, and a start chosen.
             Map.entry("Random", Set.of("Next", "Seed")));
 

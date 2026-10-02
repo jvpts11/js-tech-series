@@ -145,7 +145,7 @@ class HardcodedTextTest {
             data(COMPUTERS + "sigma/LanguageLevel.java", 1, PRODUCTS),
             data(COMPUTERS + "sigma/edit/SigmaCompletions.java", 2,
                     "the marks for who declares a candidate, which are never drawn"),
-            data(COMPUTERS + "sigma/sem/BareFunctions.java", 28, SIGNATURES),
+            data(COMPUTERS + "sigma/sem/BareFunctions.java", 29, SIGNATURES),
             data(COMPUTERS + "sigma/SigmaVersions.java", 10, SIGNATURES + ", keyed by the version they came in"),
             data(COMPUTERS + "vm/program/NumberFunctions.java", 4, SIGNATURES),
             data(COMPUTERS + "vm/system/SystemApi.java", 1, SIGNATURES),

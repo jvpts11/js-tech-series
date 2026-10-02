@@ -69,7 +69,10 @@ public final class IqlJobAgent {
                 if (machine == null) {
                     machine = IqlEngine.viewOf(new ServerCliComputer(mainframe, level));
                 }
-                mainframe.networkOperations().query(machine, job.body(), QUERY_ROW_LIMIT);
+                final IIqlView caller = machine;
+                // What the job sets on a bus is marked with the job's name.
+                IqlEngine.asJob(job.name(),
+                        () -> mainframe.networkOperations().query(caller, job.body(), QUERY_ROW_LIMIT));
                 JscEvents.awardOperator(mainframe, JscEvents.IQL_JOB);
             }
         }

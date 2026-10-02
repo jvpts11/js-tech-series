@@ -80,6 +80,17 @@ public final class IqlError extends IllegalArgumentException {
     static final TextKey EXEC_ONE_NAME = TextKey.of("jsc.iql.error.exec_one_name",
             "EXEC takes a single procedure name");
 
+    // A bus's settings.
+    static final TextKey BUS_NEEDS_NAME = TextKey.of("jsc.iql.error.bus_needs_name",
+            "SET BUS needs the bus's name, in quotes when it has spaces");
+    static final TextKey BUS_NEEDS_SETTING = TextKey.of("jsc.iql.error.bus_needs_setting",
+            "SET BUS needs a setting: ON, OFF, MODE, FILTER, MATCH, KEEP, MAX, PRIORITY, WHEN, AFTER BUS or ACCESS");
+    static final TextKey BUS_UNKNOWN_SETTING = TextKey.of("jsc.iql.error.bus_unknown_setting",
+            "a bus has no setting %s");
+    static final TextKey NOT_AN_HOUR = TextKey.of("jsc.iql.error.not_an_hour", "not an hour of the day: %s");
+    static final TextKey A_LIST = TextKey.of("jsc.iql.error.a_list", "a list of items");
+    static final TextKey A_COUNT = TextKey.of("jsc.iql.error.a_count", "a count");
+
     // A duration.
     static final TextKey EMPTY_DURATION = TextKey.of("jsc.iql.error.empty_duration", "empty duration");
     static final TextKey NOT_A_DURATION = TextKey.of("jsc.iql.error.not_a_duration", "not a duration: %s");

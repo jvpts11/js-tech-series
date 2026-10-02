@@ -90,6 +90,7 @@ final class MachineCalls {
         RemoteComputerCalls.bind(bindings);
         GatewayCalls.bind(bindings);
         SoundCalls.bind(bindings);
+        BusCalls.bind(bindings);
         return Map.copyOf(bindings);
     }
 

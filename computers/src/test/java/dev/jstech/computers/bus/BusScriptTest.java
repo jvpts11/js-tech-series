@@ -110,7 +110,7 @@ class BusScriptTest {
     void sigma_chainsASingleCallOnTheBus() {
         final BusSettings legacy = legacy(List.of("", "", "", "", ""), false, 16, 64);
 
-        assertEquals(List.of("bus(\"Ore in\").keep(16).max(64);"), BusScript.sigma(legacy));
+        assertEquals(List.of("bus(\"Ore in\").Keep(16).Max(64);"), BusScript.sigma(legacy));
     }
 
     @Test
@@ -118,13 +118,13 @@ class BusScriptTest {
         final BusSettings standard = with(BusSettings.fresh(HardwareEra.STANDARD), "Ore in", 5,
                 List.of(BusCondition.after("Coal in")));
 
-        assertEquals(List.of("var b = bus(\"Ore in\");", "b.priority(5);", "b.after(bus(\"Coal in\"));"),
+        assertEquals(List.of("Bus b = bus(\"Ore in\");", "b.Priority(5);", "b.After(bus(\"Coal in\"));"),
                 BusScript.sigma(standard));
     }
 
     @Test
     void sigma_writesAFreshBusAsSwitchedOn() {
-        assertEquals(List.of("bus(\"Ore in\").on();"),
+        assertEquals(List.of("bus(\"Ore in\").On();"),
                 BusScript.sigma(named(BusSettings.fresh(HardwareEra.VINTAGE), "Ore in")));
     }
 
@@ -132,7 +132,7 @@ class BusScriptTest {
     void sigma_escapesAQuoteInTheName() {
         final List<String> lines = BusScript.sigma(named(BusSettings.fresh(HardwareEra.VINTAGE), "a\"b"));
 
-        assertEquals("bus(\"a\\\"b\").on();", lines.get(0));
+        assertEquals("bus(\"a\\\"b\").On();", lines.get(0));
     }
 
     @Test
@@ -144,7 +144,7 @@ class BusScriptTest {
 
         assertEquals(List.of("SET BUS 'Chest wall' FILTER ONLY log", "SET BUS 'Chest wall' ACCESS READ ONLY",
                 "SET BUS 'Chest wall' PRIORITY 2"), BusScript.iql(external));
-        assertEquals(List.of("var b = bus(\"Chest wall\");", "b.only(\"log\");", "b.readOnly();", "b.priority(2);"),
+        assertEquals(List.of("Bus b = bus(\"Chest wall\");", "b.Only(\"log\");", "b.ReadOnly();", "b.Priority(2);"),
                 BusScript.sigma(external));
     }
 

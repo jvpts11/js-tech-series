@@ -26,7 +26,8 @@ public final class SigmaVersions {
     public static final int NEWEST = 2;
 
     /** The types of the library that came after the first version, with the version each came in. */
-    private static final Map<String, Integer> LIBRARY_TYPES = Map.of("Sound", 2, "Speaker", 2, "char", 2, "FILE", 2);
+    private static final Map<String, Integer> LIBRARY_TYPES = Map.of("Sound", 2, "Speaker", 2, "char", 2, "FILE", 2,
+            "Bus", 2, "BusItem", 2);
     /**
      * The members that came after the first version on a type that was already there, each written as its owner,
      * its name and the types it takes, with the version it came in.

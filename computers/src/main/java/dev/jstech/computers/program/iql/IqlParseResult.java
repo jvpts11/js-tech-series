@@ -20,21 +20,32 @@ import dev.jstech.core.text.Text;
  * {@code definition}/{@code error} is non-null on a given result; use {@link #isDefinition()} to tell an
  * action from a Layer-2 definition.
  */
-public record IqlParseResult(IqlOperation operation, IqlDefinition definition, Text error, int position) {
+public record IqlParseResult(IqlOperation operation, IqlDefinition definition, IqlBusStatement bus, Text error,
+                             int position) {
 
     /** Sentinel for "no particular token" (empty input, or a whole-statement error). */
     public static final int NO_POSITION = -1;
 
     public static IqlParseResult ok(final IqlOperation operation) {
-        return new IqlParseResult(operation, null, null, NO_POSITION);
+        return new IqlParseResult(operation, null, null, null, NO_POSITION);
     }
 
     public static IqlParseResult okDefinition(final IqlDefinition definition) {
-        return new IqlParseResult(null, definition, null, NO_POSITION);
+        return new IqlParseResult(null, definition, null, null, NO_POSITION);
+    }
+
+    /** A {@code SET BUS} statement, which sets one of a bus's settings. */
+    public static IqlParseResult okBus(final IqlBusStatement bus) {
+        return new IqlParseResult(null, null, bus, null, NO_POSITION);
     }
 
     public static IqlParseResult error(final Text error, final int position) {
-        return new IqlParseResult(null, null, error, position);
+        return new IqlParseResult(null, null, null, error, position);
+    }
+
+    /** Whether this parsed to a {@code SET BUS} statement. */
+    public boolean isBus() {
+        return bus != null;
     }
 
     public boolean ok() {

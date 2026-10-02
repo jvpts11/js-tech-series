@@ -22,7 +22,8 @@ import java.util.List;
  *   <li>Grouping parentheses ({@code (a OR b)}) become their own tokens.</li>
  *   <li>A parenthesis glued to the right of an identifier is a function call and stays inside the word,
  *       so {@code qty(cobblestone)} is one token and is never confused with grouping.</li>
- *   <li>Double-quoted runs become a single string token, letting a value carry spaces.</li>
+ *   <li>Double-quoted runs become a single string token, letting a value carry spaces; so do single-quoted
+ *       ones, a name as the SQL family writes it, two quotes standing for one inside it.</li>
  * </ul>
  */
 final class IqlLexer {
@@ -55,6 +56,10 @@ final class IqlLexer {
                 }
                 tokens.add(new Token(Type.STRING, input.substring(start, j)));
                 i = (j < n) ? j + 1 : j; // step past the closing quote when present
+                continue;
+            }
+            if (c == '\'') {
+                i = readQuoted(input, i + 1, tokens);
                 continue;
             }
             if (c == '(') {
@@ -128,6 +133,32 @@ final class IqlLexer {
                 }
             }
         }
+        return i;
+    }
+
+    /*
+     * A single-quoted name, as the SQL family writes one: two quotes in a row stand for one inside it. Reads from
+     * {@code start}, just past the opening quote, and returns the index past the closing one.
+     */
+    private static int readQuoted(final String input, final int start, final List<Token> tokens) {
+        final int n = input.length();
+        final StringBuilder sb = new StringBuilder();
+        int i = start;
+        while (i < n) {
+            final char ch = input.charAt(i);
+            if (ch == '\'') {
+                if (i + 1 < n && input.charAt(i + 1) == '\'') {
+                    sb.append('\'');
+                    i += 2;
+                    continue;
+                }
+                i++;
+                break;
+            }
+            sb.append(ch);
+            i++;
+        }
+        tokens.add(new Token(Type.STRING, sb.toString()));
         return i;
     }
 

@@ -94,24 +94,23 @@ public final class BusScript {
     }
 
     /**
-     * The Σ calls that set the bus as {@code settings} has it: chained on the bus when there is one, and on a variable
-     * holding it, a line each, when there are more.
+     * The Σ calls that set the bus as {@code settings} has it, as the library names them: chained on the bus when there
+     * is one, and on a variable holding it, a line each, when there are more. A filter of several items is one text.
      */
     public static List<String> sigma(final BusSettings settings) {
         final BusAbilities can = settings.abilities();
         final List<String> calls = new ArrayList<>();
         if (!settings.powered()) {
-            calls.add("off()");
+            calls.add("Off()");
         }
         if (can.can(BusFeature.FILTER) && settings.listsAny()) {
-            calls.add((settings.exclude() ? "allBut(" : "only(") + String.join(", ",
-                    listed(settings).stream().map(BusScript::text).toList()) + ")");
+            calls.add((settings.exclude() ? "AllBut(" : "Only(") + text(String.join(", ", listed(settings))) + ")");
         }
         if (can.can(BusFeature.TAGS)) {
-            settings.tags().forEach(tag -> calls.add("tag(" + text(tag) + ")"));
+            settings.tags().forEach(tag -> calls.add("Tag(" + text(tag) + ")"));
         }
         if (can.can(BusFeature.FUZZY) && settings.fuzzy()) {
-            calls.add("fuzzy(true)");
+            calls.add("Fuzzy(true)");
         }
         if (can.can(BusFeature.QUANTITIES)) {
             addQuantities(calls, "", settings.keep(), settings.max());
@@ -120,32 +119,32 @@ public final class BusScript {
             for (int slot = 0; slot < settings.filter().size(); slot++) {
                 final String id = settings.filter().get(slot);
                 if (!id.isEmpty()) {
-                    addQuantities(calls, "item(" + text(shortId(id)) + ").", settings.itemKeep().get(slot),
+                    addQuantities(calls, "Item(" + text(shortId(id)) + ").", settings.itemKeep().get(slot),
                             settings.itemMax().get(slot));
                 }
             }
         }
         if (settings.external() && can.can(BusFeature.ACCESS)) {
             calls.add(switch (settings.access()) {
-                case BusSettings.READ_ONLY -> "readOnly()";
-                case BusSettings.WRITE_ONLY -> "writeOnly()";
-                default -> "readWrite()";
+                case BusSettings.READ_ONLY -> "ReadOnly()";
+                case BusSettings.WRITE_ONLY -> "WriteOnly()";
+                default -> "ReadWrite()";
             });
         }
         if (!settings.external() && settings.onDemand()) {
-            calls.add("onDemand()");
+            calls.add("OnDemand()");
         }
         if (can.can(BusFeature.PRIORITY) && settings.priority() != 0) {
-            calls.add("priority(" + settings.priority() + ")");
+            calls.add("Priority(" + settings.priority() + ")");
         }
         if (can.can(BusFeature.CONDITIONS)) {
             for (final BusCondition condition : settings.conditions()) {
                 calls.add(switch (condition.kind()) {
                     case STOCK -> condition.onTag()
-                            ? "whenStockTag(" + text(condition.subject().substring(1)) + ", " + condition.below() + ")"
-                            : "whenStock(" + text(shortId(condition.subject())) + ", " + condition.below() + ")";
-                    case AFTER -> "after(bus(" + text(condition.subject()) + "))";
-                    case HOURS -> "between(" + condition.fromHour() + ", " + condition.toHour() + ")";
+                            ? "WhenStockTag(" + text(condition.subject().substring(1)) + ", " + condition.below() + ")"
+                            : "WhenStock(" + text(shortId(condition.subject())) + ", " + condition.below() + ")";
+                    case AFTER -> "After(bus(" + text(condition.subject()) + "))";
+                    case HOURS -> "Between(" + condition.fromHour() + ", " + condition.toHour() + ")";
                 });
             }
         }
@@ -154,14 +153,15 @@ public final class BusScript {
             if (settings.external()) {
                 return List.of();
             }
-            calls.add("on()");
+            calls.add("On()");
         }
         final String bus = "bus(" + text(settings.name()) + ")";
         if (calls.size() == 1) {
             return List.of(bus + "." + calls.get(0) + ";");
         }
         final List<String> lines = new ArrayList<>();
-        lines.add("var b = " + bus + ";");
+        // The type written out rather than var, which the smaller language has not: the lines are both languages'.
+        lines.add("Bus b = " + bus + ";");
         calls.forEach(call -> lines.add("b." + call + ";"));
         return lines;
     }
@@ -204,10 +204,10 @@ public final class BusScript {
         }
         final StringBuilder call = new StringBuilder(on);
         if (keep > 0) {
-            call.append("keep(").append(keep).append(')');
+            call.append("Keep(").append(keep).append(')');
         }
         if (max > 0) {
-            call.append(keep > 0 ? "." : "").append("max(").append(max).append(')');
+            call.append(keep > 0 ? "." : "").append("Max(").append(max).append(')');
         }
         calls.add(call.toString());
     }

@@ -59,6 +59,14 @@ public final class IqlParser {
         if (input == null || input.isBlank()) {
             return IqlParseResult.error(IqlError.EMPTY_STATEMENT.text(), IqlParseResult.NO_POSITION);
         }
+        // A bus's settings are their own statement: SET BUS 'name' setting.
+        if (IqlBusStatement.isSetBus(input)) {
+            try {
+                return IqlParseResult.okBus(IqlBusStatement.parse(input));
+            } catch (final IllegalArgumentException e) {
+                return IqlParseResult.error(reason(e), IqlParseResult.NO_POSITION);
+            }
+        }
         /*
          * Layer 2 first: CREATE/DROP/EXEC of a saved object. tryParse returns null (and we fall through)
          * for an ordinary action; it throws only when the text *is* a malformed definition.
