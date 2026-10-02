@@ -93,6 +93,21 @@ public final class BusEraGameTests {
                 .thenSucceed();
     }
 
+    /** A bus is busy, its lamps blinking, while it moves, and goes idle a few seconds after its last move. */
+    @GameTest(template = ARENA, timeoutTicks = 300)
+    public static void import_isBusyWhileItMovesAndIdleAfter(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = network(helper, ComputingModule.HBW_CABLE);
+        chest(helper, SOUTH_CHEST, new ItemStack(Items.COBBLESTONE, 64));
+        final ImportBusPart bus = mount(helper, Direction.SOUTH, ComputingParts.IMPORT.get());
+        helper.assertFalse(bus.busy(), "a bus just mounted is idle");
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(stock(helper, mainframe, Items.COBBLESTONE) == 64,
+                        "all 64 have gone in"))
+                .thenExecute(() -> helper.assertTrue(bus.busy(), "the bus is busy as it moves"))
+                .thenWaitUntil(() -> helper.assertFalse(bus.busy(), "the bus goes idle once it has nothing to move"))
+                .thenSucceed();
+    }
+
     /** A bus never moves faster than its cable carries: the Advanced bus on the Legacy's Ethernet moves at 16. */
     @GameTest(template = ARENA)
     public static void advanced_movesNoFasterThanItsCable(final GameTestHelper helper) {

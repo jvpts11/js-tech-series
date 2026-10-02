@@ -25,6 +25,14 @@ public interface IPartHost {
     /** Something a part keeps changed: the block is to be saved and its players sent what they see. */
     void partChanged();
 
+    /**
+     * Only how a part looks changed, such as whether it is at work: its players are sent what they see, and nothing
+     * a part closes or opens on the block is worked out again.
+     */
+    default void partLooksChanged() {
+        partChanged();
+    }
+
     /** The server level the block is in, or null on a player's game or before it is placed. */
     default @Nullable ServerLevel partServerLevel() {
         return partLevel() instanceof ServerLevel server ? server : null;

@@ -323,6 +323,16 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Programs set buses too, in both languages: `bus("Ore in").Keep(16).Max(64);`, with a call for every setting. A
   setting set from software carries the name of the program or the job that set it, which the bus's window marks,
   and what the bus's era cannot be set to is refused as it is in the window.
+- Each bus has a model of its own: a metal clamp round the cable, a ring in its kind's colour (green the Import,
+  orange the Export, violet the External Storage, brown the crafting buses), a funnel opening to the inventory for
+  the buses that take from it, a nozzle for the ones that put into it and a wide thin panel for the External Storage
+  Bus, chevrons along its sides pointing where the items go, and a plate against the inventory with its mark over its
+  era's grille. Its housing is in its era's colours, the crafting buses' in the crafting line's amber, and so is its
+  item.
+- A bus's four lamps blink while it moves items, the External Storage Bus's while the network reads or writes
+  through it and the crafting buses' while a machine is fed or emptied through them, and go dark a few seconds after.
+- A part can have a model for while it is at work, its lamps lit and blinking by an animated texture, in J's Core;
+  the block is drawn again only when the part starts or stops working.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

@@ -13,6 +13,7 @@ import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
@@ -39,8 +40,12 @@ public final class ReceivingBusPart extends ImportBusPart {
     public void serverTick() {
         /*
          * Passive: autonomous pulling would steal a craft's outputs into the bus buffer while the operation
-         * is trying to collect and account for them.
+         * is trying to collect and account for them. Only its lamps go out after the engine's last pull.
          */
+        final ServerLevel level = serverLevel();
+        if (level != null) {
+            settleLamps(level.getGameTime());
+        }
     }
 
     @Override

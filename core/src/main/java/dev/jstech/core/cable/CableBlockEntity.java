@@ -292,6 +292,11 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         }
     }
 
+    @Override
+    public void partLooksChanged() {
+        this.partsField.changed();
+    }
+
     // Shape, aim and drops
 
     /** How the wires lie, worked out from what the block holds. */

@@ -75,6 +75,7 @@ public non-sealed class ExportBusPart extends AbstractBusPart {
         if (level == null) {
             return;
         }
+        settleLamps(level.getGameTime());
         final NetworkUuid network = network();
         linked = network != null;
         // Wait for the in-flight DELETE to finish before starting another.
@@ -134,6 +135,7 @@ public non-sealed class ExportBusPart extends AbstractBusPart {
         final long moved = activeOp.moved();
         if (sentKey != null && moved > 0L) {
             activity.moved(level.getGameTime(), sentKey.id(), moved, moved < sentAmount);
+            worked(level.getGameTime());
         }
         activeOp = null;
         sentKey = null;

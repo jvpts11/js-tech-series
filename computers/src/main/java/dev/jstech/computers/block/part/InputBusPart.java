@@ -13,6 +13,7 @@ import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
@@ -38,6 +39,10 @@ public final class InputBusPart extends ExportBusPart {
     @Override
     public void serverTick() {
         // Passive: autonomous pushing would race the crafting engine's measured feeding (and its accounting).
+        final ServerLevel level = serverLevel();
+        if (level != null) {
+            settleLamps(level.getGameTime());
+        }
     }
 
     @Override

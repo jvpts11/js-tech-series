@@ -103,6 +103,7 @@ public final class ExternalStorageGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(external.countItem(Items.EMERALD) == 10,
                         "the ten emeralds went into the chest of priority 5; it holds "
                                 + external.countItem(Items.EMERALD)))
+                .thenExecute(() -> helper.assertTrue(bus.busy(), "what the network put through it lights its lamps"))
                 .thenSucceed();
     }
 

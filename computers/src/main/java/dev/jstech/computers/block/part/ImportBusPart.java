@@ -78,6 +78,9 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
     @Override
     public void serverTick() {
         final ServerLevel level = serverLevel();
+        if (level != null) {
+            settleLamps(level.getGameTime());
+        }
         if (activeOp != null) {
             if (!activeOp.isDone()) {
                 return;
@@ -241,6 +244,7 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
         if (flushedKey != null) {
             if (flushedAmount - leftover > 0L) {
                 activity.moved(now, flushedKey.id(), flushedAmount - leftover, leftover > 0L);
+                worked(now);
             }
             if (leftover > 0L) {
                 activity.held(now, flushedKey.id(), BusActivity.FULL, 0L);

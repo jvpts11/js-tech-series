@@ -26,6 +26,14 @@ public interface IFacePart {
     /** The part was mounted on {@code face} of {@code host}, or read back there from a save. */
     void attach(IPartHost host, Direction face);
 
+    /**
+     * Whether the part is at work now, on the server; its kind's busy model shows it on the players' games. A part
+     * that can be busy calls {@link IPartHost#partChanged} when this changes, which sends it to the players.
+     */
+    default boolean busy() {
+        return false;
+    }
+
     /** Runs once a tick on the server while the block is loaded. */
     default void serverTick() {
     }

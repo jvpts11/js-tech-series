@@ -14,6 +14,7 @@ import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.function.Supplier;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
@@ -36,8 +37,9 @@ public final class ComputingParts {
     private static final TextKey INPUT_NAME = TextKey.of("jsc.bus.kind.input", "Input");
     private static final TextKey RECEIVING_NAME = TextKey.of("jsc.bus.kind.receiving", "Receiving");
     private static final TextKey EXTERNAL_NAME = TextKey.of("jsc.bus.kind.external", "External Storage");
-    private static final ResourceLocation IMPORT_MODEL = model("import_bus_part");
-    private static final ResourceLocation EXPORT_MODEL = model("export_bus_part");
+    /** Where the buses' models are, by the bus's id; the item of a bus wears its idle model. */
+    public static final String MODELS = "block/bus/";
+    private static final String BUSY = "_busy";
 
     public static final DeferredHolder<PartType<?>, PartType<ImportBusPart>> VINTAGE_IMPORT =
             importBus("vintage_import_bus", HardwareEra.VINTAGE);
@@ -59,7 +61,6 @@ public final class ComputingParts {
             exportBus("export_bus", HardwareEra.STANDARD);
     public static final DeferredHolder<PartType<?>, PartType<ExportBusPart>> ADVANCED_EXPORT =
             exportBus("advanced_export_bus", HardwareEra.ADVANCED);
-    /* The External Storage Buses wear the Import Bus's model until each era's bus has its own. */
     public static final DeferredHolder<PartType<?>, PartType<ExternalStorageBusPart>> VINTAGE_EXTERNAL =
             externalBus("vintage_external_storage_bus", HardwareEra.VINTAGE);
     public static final DeferredHolder<PartType<?>, PartType<ExternalStorageBusPart>> LEGACY_EXTERNAL =
@@ -70,11 +71,11 @@ public final class ComputingParts {
             externalBus("external_storage_bus", HardwareEra.STANDARD);
     public static final DeferredHolder<PartType<?>, PartType<ExternalStorageBusPart>> ADVANCED_EXTERNAL =
             externalBus("advanced_external_storage_bus", HardwareEra.ADVANCED);
-    /* Input feeds like an Export and Receiving pulls like an Import, so they are drawn with those buses' models. */
+    /* Input feeds like an Export and Receiving pulls like an Import, so they share those shapes, in amber. */
     public static final DeferredHolder<PartType<?>, PartType<InputBusPart>> INPUT = PARTS.register("input_bus",
-            () -> new PartType<>(InputBusPart::new, INPUT_NAME, EXPORT_MODEL));
+            () -> type(InputBusPart::new, INPUT_NAME, "input_bus"));
     public static final DeferredHolder<PartType<?>, PartType<ReceivingBusPart>> RECEIVING = PARTS.register(
-            "receiving_bus", () -> new PartType<>(ReceivingBusPart::new, RECEIVING_NAME, IMPORT_MODEL));
+            "receiving_bus", () -> type(ReceivingBusPart::new, RECEIVING_NAME, "receiving_bus"));
 
     private ComputingParts() {
     }
@@ -174,21 +175,29 @@ public final class ComputingParts {
 
     private static DeferredHolder<PartType<?>, PartType<ImportBusPart>> importBus(final String id,
                                                                                     final HardwareEra era) {
-        return PARTS.register(id, () -> new PartType<>(() -> new ImportBusPart(era), IMPORT_NAME, IMPORT_MODEL));
+        return PARTS.register(id, () -> type(() -> new ImportBusPart(era), IMPORT_NAME, id));
     }
 
     private static DeferredHolder<PartType<?>, PartType<ExportBusPart>> exportBus(final String id,
                                                                                     final HardwareEra era) {
-        return PARTS.register(id, () -> new PartType<>(() -> new ExportBusPart(era), EXPORT_NAME, EXPORT_MODEL));
+        return PARTS.register(id, () -> type(() -> new ExportBusPart(era), EXPORT_NAME, id));
     }
 
     private static DeferredHolder<PartType<?>, PartType<ExternalStorageBusPart>> externalBus(final String id,
                                                                                              final HardwareEra era) {
-        return PARTS.register(id, () -> new PartType<>(() -> new ExternalStorageBusPart(era), EXTERNAL_NAME,
-                IMPORT_MODEL));
+        return PARTS.register(id, () -> type(() -> new ExternalStorageBusPart(era), EXTERNAL_NAME, id));
+    }
+
+    /*
+     * A bus kind, drawn with the model of its own id: its era's casing, its kind's shape and colour, its lamps dark;
+     * while it moves, the same model with the lamps blinking.
+     */
+    private static <P extends AbstractBusPart> PartType<P> type(final Supplier<P> factory, final TextKey name,
+                                                                final String id) {
+        return new PartType<>(factory, name, model(id), model(id + BUSY));
     }
 
     private static ResourceLocation model(final String name) {
-        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/" + name);
+        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, MODELS + name);
     }
 }

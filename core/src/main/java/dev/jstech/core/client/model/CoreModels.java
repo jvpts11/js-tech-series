@@ -85,6 +85,9 @@ public final class CoreModels {
     public static void onRegisterAdditional(final ModelEvent.RegisterAdditional event) {
         for (final PartType<?> type : CoreParts.REGISTRY) {
             event.register(ModelResourceLocation.standalone(type.model()));
+            if (type.hasBusyModel()) {
+                event.register(ModelResourceLocation.standalone(type.model(true)));
+            }
         }
         for (final CableType type : CoreCables.REGISTRY) {
             event.register(ModelResourceLocation.standalone(type.plug()));

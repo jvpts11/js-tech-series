@@ -81,6 +81,7 @@ public final class ExternalStorageBusPart extends AbstractBusPart {
             return;
         }
         final long now = level.getGameTime();
+        settleLamps(now);
         if (registeredAt == Long.MIN_VALUE || now - registeredAt >= REGISTER_EVERY) {
             registeredAt = now;
             linked = network() != null;
@@ -138,12 +139,14 @@ public final class ExternalStorageBusPart extends AbstractBusPart {
 
     /** Takes up to {@code amount} of {@code key} out of the inventory for the network, where it may read. */
     public long take(final StorageKey key, final long amount) {
-        return access == BusSettings.WRITE_ONLY || !admits(key) ? 0L : neighborPort().extract(key, amount, false);
+        final long taken = access == BusSettings.WRITE_ONLY || !admits(key) ? 0L
+                : neighborPort().extract(key, amount, false);
+        return lit(taken);
     }
 
     /** Puts up to {@code amount} of {@code key} into the inventory for the network, where it may write. */
     public long give(final StorageKey key, final long amount) {
-        return takesIn(key) ? neighborPort().insert(key, amount, false) : 0L;
+        return lit(takesIn(key) ? neighborPort().insert(key, amount, false) : 0L);
     }
 
     /** Whether the network may write {@code key} into the inventory. */
@@ -210,5 +213,14 @@ public final class ExternalStorageBusPart extends AbstractBusPart {
         super.load(tag, registries);
         final int saved = tag.getInt("Access");
         access = saved == BusSettings.READ_ONLY || saved == BusSettings.WRITE_ONLY ? saved : BusSettings.READ_WRITE;
+    }
+
+    /* What the network moved through the bus lights its lamps; gives the amount back. */
+    private long lit(final long moved) {
+        final ServerLevel level = serverLevel();
+        if (moved > 0L && level != null) {
+            worked(level.getGameTime());
+        }
+        return moved;
     }
 }

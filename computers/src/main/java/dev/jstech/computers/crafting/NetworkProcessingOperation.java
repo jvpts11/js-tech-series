@@ -21,6 +21,7 @@ import dev.jstech.computers.storage.IDataPort;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.FilteredDataPort;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.storage.WatchedDataPort;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
@@ -503,7 +504,10 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
                      * a filtered face carries only what it lists, an empty filter carries anything.
                      */
                     final List<StorageKey> listed = bus.filterKeys();
-                    faces.add(listed.isEmpty() ? port : new FilteredDataPort(port, listed));
+                    final IDataPort face = listed.isEmpty() ? port : new FilteredDataPort(port, listed);
+                    // What goes through the face lights the bus's lamps.
+                    final long now = level.getGameTime();
+                    faces.add(new WatchedDataPort(face, () -> bus.worked(now)));
                 }
             }
         }

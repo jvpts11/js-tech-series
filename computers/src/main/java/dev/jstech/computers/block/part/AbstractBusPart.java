@@ -103,6 +103,9 @@ public abstract sealed class AbstractBusPart implements IFacePart
     protected final BusActivity activity = new BusActivity();
     private long conditionsCheckedAt = Long.MIN_VALUE;
     private boolean conditionsHeld = true;
+    /* Whether the lamps blink, and when the bus last moved anything; neither is saved, a loaded bus is idle. */
+    private boolean busy;
+    private long workedAt = Long.MIN_VALUE;
 
     public static final int MODE_CONTINUOUS = 0;
     /** On demand: the bus moves only while its cable block has a redstone signal. */
@@ -115,6 +118,11 @@ public abstract sealed class AbstractBusPart implements IFacePart
     public static final long FINISHED_AFTER = 40L;
     /* How often the conditions are looked at again: a network's stock is a sum worth not taking every tick. */
     private static final long CONDITIONS_EVERY = 20L;
+    /*
+     * How long the lamps keep blinking after the last move. A bus that moves every second or two blinks on without a
+     * pause, since each start and stop builds its block's mesh again on the players' games.
+     */
+    private static final long BUSY_FOR = 60L;
 
     /* Each level's wants of its buses, which say which bus goes first. */
     private static final Map<ServerLevel, BusClaims> CLAIMS = new WeakHashMap<>();
@@ -172,6 +180,21 @@ public abstract sealed class AbstractBusPart implements IFacePart
     /** What the bus did lately. */
     public BusActivity activity() {
         return activity;
+    }
+
+    /** Whether the bus moved something lately, which its lamps show by blinking. */
+    @Override
+    public boolean busy() {
+        return busy;
+    }
+
+    /** The bus moved something at {@code now}: its lamps blink until it has made no move for a while. */
+    public void worked(final long now) {
+        workedAt = now;
+        if (!busy) {
+            busy = true;
+            hostChangedForPlayers();
+        }
     }
 
     public ItemStackHandler getFilterHandler() {
@@ -584,6 +607,14 @@ public abstract sealed class AbstractBusPart implements IFacePart
         }
     }
 
+    /** Puts the lamps out once the bus has made no move for a while; run from each tick. */
+    protected void settleLamps(final long now) {
+        if (busy && now - workedAt >= BUSY_FOR) {
+            busy = false;
+            hostChangedForPlayers();
+        }
+    }
+
     protected boolean can(final BusFeature feature) {
         return abilities.can(feature);
     }
@@ -772,6 +803,13 @@ public abstract sealed class AbstractBusPart implements IFacePart
             return true;
         }
         return bus.activity.idleFor(level.getGameTime(), FINISHED_AFTER);
+    }
+
+    /* The lamps changed: the players who see the cable are sent its parts again, which draws them anew. */
+    private void hostChangedForPlayers() {
+        if (host != null) {
+            host.partLooksChanged();
+        }
     }
 
     private static void copyInto(final int[] from, final int[] to) {

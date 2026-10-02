@@ -41,6 +41,8 @@ public final class FaceParts implements IFieldPart {
     private final IFacePart[] parts = new IFacePart[FACES];
     /** Each face's kind, as the registry numbers it; on a player's game the only thing known of the parts. */
     private final int[] kinds = new int[FACES];
+    /* On a player's game, which faces' parts are at work, a bit a face; the server asks the parts themselves. */
+    private int busy;
 
     /** Where the parts are saved, a compound each. */
     public static final String KEY = "Parts";
@@ -50,6 +52,7 @@ public final class FaceParts implements IFieldPart {
     private static final String TYPE = "Type";
     private static final String DATA = "Data";
     private static final String CLIENT_KINDS = "PartKinds";
+    private static final String CLIENT_BUSY = "PartBusy";
 
     public FaceParts(final IPartHost host) {
         this.host = Objects.requireNonNull(host, "host");
@@ -138,16 +141,22 @@ public final class FaceParts implements IFieldPart {
         }
     }
 
-    /** What the parts draw: each kind's model turned to its face, on either side. */
+    /** What the parts draw: each kind's model, its busy one for a part at work, turned to its face, on either side. */
     public ModelLayout layout() {
+        final int working = busyFaces();
         final List<PlacedModel> models = new ArrayList<>();
         for (final Direction face : Direction.values()) {
             final PartType<?> type = type(face);
             if (type != null) {
-                models.add(PlacedModel.facing(type.model(), face));
+                models.add(PlacedModel.facing(type.model((working & 1 << face.get3DDataValue()) != 0), face));
             }
         }
         return models.isEmpty() ? ModelLayout.EMPTY : new ModelLayout(models);
+    }
+
+    /** Whether the part on {@code face} is at work, on either side; false when there is none. */
+    public boolean busy(final Direction face) {
+        return (busyFaces() & 1 << face.get3DDataValue()) != 0;
     }
 
     /** The shape of every part mounted, within the block. */
@@ -206,6 +215,7 @@ public final class FaceParts implements IFieldPart {
     @Override
     public void writeClient(final CompoundTag tag, final HolderLookup.Provider registries) {
         tag.putIntArray(CLIENT_KINDS, this.kinds.clone());
+        tag.putByte(CLIENT_BUSY, (byte) busyFaces());
     }
 
     @Override
@@ -217,5 +227,18 @@ public final class FaceParts implements IFieldPart {
         for (int i = 0; i < FACES; i++) {
             this.kinds[i] = i < incoming.length ? incoming[i] : NONE;
         }
+        this.busy = tag.getByte(CLIENT_BUSY) & 0xFF;
+    }
+
+    /* The faces whose parts are at work, a bit a face: asked of the parts on the server, as last sent on a game. */
+    private int busyFaces() {
+        int faces = this.busy;
+        for (int i = 0; i < FACES; i++) {
+            final IFacePart part = this.parts[i];
+            if (part != null && part.busy()) {
+                faces |= 1 << i;
+            }
+        }
+        return faces;
     }
 }

@@ -603,44 +603,43 @@ public final class ComputingModule {
     // Interaction buses: parts mounted on a cable's face that move items between the network and an inventory.
 
     public static final ItemEntry<CablePartItem> VINTAGE_IMPORT_BUS_ITEM = bus("vintage_import_bus",
-            ComputingParts.VINTAGE_IMPORT, "block/import_bus_part").named("Vintage Import Bus").register();
+            ComputingParts.VINTAGE_IMPORT).named("Vintage Import Bus").register();
     public static final ItemEntry<CablePartItem> LEGACY_IMPORT_BUS_ITEM = bus("legacy_import_bus",
-            ComputingParts.LEGACY_IMPORT, "block/import_bus_part").named("Legacy Import Bus").register();
+            ComputingParts.LEGACY_IMPORT).named("Legacy Import Bus").register();
     public static final ItemEntry<CablePartItem> TRANSITION_IMPORT_BUS_ITEM = bus("transition_import_bus",
-            ComputingParts.TRANSITION_IMPORT, "block/import_bus_part").named("Transition Import Bus").register();
+            ComputingParts.TRANSITION_IMPORT).named("Transition Import Bus").register();
     public static final ItemEntry<CablePartItem> IMPORT_BUS_ITEM =
-            bus("import_bus", ComputingParts.IMPORT, "block/import_bus_part").named("Import Bus").register();
+            bus("import_bus", ComputingParts.IMPORT).named("Import Bus").register();
     public static final ItemEntry<CablePartItem> ADVANCED_IMPORT_BUS_ITEM = bus("advanced_import_bus",
-            ComputingParts.ADVANCED_IMPORT, "block/import_bus_part").named("Advanced Import Bus").register();
+            ComputingParts.ADVANCED_IMPORT).named("Advanced Import Bus").register();
     public static final ItemEntry<CablePartItem> VINTAGE_EXPORT_BUS_ITEM = bus("vintage_export_bus",
-            ComputingParts.VINTAGE_EXPORT, "block/export_bus_part").named("Vintage Export Bus").register();
+            ComputingParts.VINTAGE_EXPORT).named("Vintage Export Bus").register();
     public static final ItemEntry<CablePartItem> LEGACY_EXPORT_BUS_ITEM = bus("legacy_export_bus",
-            ComputingParts.LEGACY_EXPORT, "block/export_bus_part").named("Legacy Export Bus").register();
+            ComputingParts.LEGACY_EXPORT).named("Legacy Export Bus").register();
     public static final ItemEntry<CablePartItem> TRANSITION_EXPORT_BUS_ITEM = bus("transition_export_bus",
-            ComputingParts.TRANSITION_EXPORT, "block/export_bus_part").named("Transition Export Bus").register();
+            ComputingParts.TRANSITION_EXPORT).named("Transition Export Bus").register();
     public static final ItemEntry<CablePartItem> EXPORT_BUS_ITEM =
-            bus("export_bus", ComputingParts.EXPORT, "block/export_bus_part").named("Export Bus").register();
+            bus("export_bus", ComputingParts.EXPORT).named("Export Bus").register();
     public static final ItemEntry<CablePartItem> ADVANCED_EXPORT_BUS_ITEM = bus("advanced_export_bus",
-            ComputingParts.ADVANCED_EXPORT, "block/export_bus_part").named("Advanced Export Bus").register();
+            ComputingParts.ADVANCED_EXPORT).named("Advanced Export Bus").register();
     public static final ItemEntry<CablePartItem> VINTAGE_EXTERNAL_STORAGE_BUS_ITEM = bus(
-            "vintage_external_storage_bus", ComputingParts.VINTAGE_EXTERNAL, "block/import_bus_part")
+            "vintage_external_storage_bus", ComputingParts.VINTAGE_EXTERNAL)
             .named("Vintage External Storage Bus").register();
     public static final ItemEntry<CablePartItem> LEGACY_EXTERNAL_STORAGE_BUS_ITEM = bus(
-            "legacy_external_storage_bus", ComputingParts.LEGACY_EXTERNAL, "block/import_bus_part")
+            "legacy_external_storage_bus", ComputingParts.LEGACY_EXTERNAL)
             .named("Legacy External Storage Bus").register();
     public static final ItemEntry<CablePartItem> TRANSITION_EXTERNAL_STORAGE_BUS_ITEM = bus(
-            "transition_external_storage_bus", ComputingParts.TRANSITION_EXTERNAL, "block/import_bus_part")
+            "transition_external_storage_bus", ComputingParts.TRANSITION_EXTERNAL)
             .named("Transition External Storage Bus").register();
     public static final ItemEntry<CablePartItem> EXTERNAL_STORAGE_BUS_ITEM = bus("external_storage_bus",
-            ComputingParts.EXTERNAL, "block/import_bus_part").named("External Storage Bus").register();
+            ComputingParts.EXTERNAL).named("External Storage Bus").register();
     public static final ItemEntry<CablePartItem> ADVANCED_EXTERNAL_STORAGE_BUS_ITEM = bus(
-            "advanced_external_storage_bus", ComputingParts.ADVANCED_EXTERNAL, "block/import_bus_part")
+            "advanced_external_storage_bus", ComputingParts.ADVANCED_EXTERNAL)
             .named("Advanced External Storage Bus").register();
     public static final ItemEntry<CablePartItem> INPUT_BUS_ITEM =
-            bus("input_bus", ComputingParts.INPUT, "block/export_bus_part").named("Crafting Input Bus").register();
+            bus("input_bus", ComputingParts.INPUT).named("Crafting Input Bus").register();
     public static final ItemEntry<CablePartItem> RECEIVING_BUS_ITEM =
-            bus("receiving_bus", ComputingParts.RECEIVING, "block/import_bus_part").named("Crafting Receiving Bus")
-                    .register();
+            bus("receiving_bus", ComputingParts.RECEIVING).named("Crafting Receiving Bus").register();
 
     /*
      * Servers, and the cases they are assembled in. A case of an era takes only boards of that era, and its server
@@ -1050,10 +1049,10 @@ public final class ComputingModule {
     }
 
     /** A bus's item shows the part it mounts as. */
-    private static ItemBuilder<CablePartItem> bus(final String id, final Supplier<? extends PartType<?>> type,
-                                                  final String model) {
+    /* A bus's item, wearing the bus's own model, idle, as it sits on a cable. */
+    private static ItemBuilder<CablePartItem> bus(final String id, final Supplier<? extends PartType<?>> type) {
         return CONTENT.item(id, properties -> new CablePartItem(properties, type))
-                .look(IItemLook.parent(model)).tab(RACKS);
+                .look(IItemLook.parent(ComputingParts.MODELS + id)).tab(RACKS);
     }
 
     private static ItemBuilder<ServerCaseItem> serverCase(final String id) {
