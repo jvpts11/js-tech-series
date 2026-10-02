@@ -75,6 +75,11 @@ final class AssemblyTexts {
     static final TextKey AUTO_ON = TextKey.of("jsc.assembly.auto_on", "AUTO: ON");
     static final TextKey AUTO_OFF = TextKey.of("jsc.assembly.auto_off", "AUTO: OFF");
 
+    // A small computer's left side, taken off or put back from its screen.
+    static final TextKey SIDE = TextKey.of("jsc.assembly.side", "SIDE");
+    static final TextKey SIDE_OPEN = TextKey.of("jsc.assembly.side_open", "OPEN");
+    static final TextKey SIDE_CLOSED = TextKey.of("jsc.assembly.side_closed", "CLOSED");
+
     // The Mainframe's operations and its narrower buttons.
     static final TextKey QUEUED = TextKey.of("jsc.assembly.queued", "QUEUED");
     static final TextKey RUNNING = TextKey.of("jsc.assembly.running", "RUNNING");

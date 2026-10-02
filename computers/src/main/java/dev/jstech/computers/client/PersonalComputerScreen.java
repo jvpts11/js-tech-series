@@ -81,6 +81,10 @@ public class PersonalComputerScreen extends AbstractAssemblyScreen<PersonalCompu
                 PersonalComputerLayout.COL_R_W, PersonalComputerLayout.BTN_H,
                 hover(mouseX, mouseY, PersonalComputerLayout.AUTO_X, PersonalComputerLayout.AUTO_Y,
                         PersonalComputerLayout.COL_R_W, PersonalComputerLayout.BTN_H));
+        JsTechTheme.button(g, x + PersonalComputerLayout.SIDE_X, y + PersonalComputerLayout.SIDE_Y,
+                PersonalComputerLayout.SIDE_W, PersonalComputerLayout.SIDE_H,
+                hover(mouseX, mouseY, PersonalComputerLayout.SIDE_X, PersonalComputerLayout.SIDE_Y,
+                        PersonalComputerLayout.SIDE_W, PersonalComputerLayout.SIDE_H));
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
@@ -159,6 +163,11 @@ public class PersonalComputerScreen extends AbstractAssemblyScreen<PersonalCompu
         JsTechTheme.textCenter(g, font, GameText.resolve(auto ? AssemblyTexts.AUTO_ON : AssemblyTexts.AUTO_OFF),
                 PersonalComputerLayout.AUTO_X + PersonalComputerLayout.COL_R_W / 2,
                 PersonalComputerLayout.AUTO_Y + 4, auto ? JsTechTheme.accent() : JsTechTheme.dim());
+        final boolean sideOff = menu.isSidePanelOff();
+        JsTechTheme.tileTextS(g, font, PersonalComputerLayout.SIDE_X, PersonalComputerLayout.SIDE_Y,
+                GameText.resolve(AssemblyTexts.SIDE),
+                GameText.resolve(sideOff ? AssemblyTexts.SIDE_OPEN : AssemblyTexts.SIDE_CLOSED),
+                sideOff ? JsTechTheme.accent() : JsTechTheme.text());
     }
 
     private int psuColor() {
@@ -188,6 +197,11 @@ public class PersonalComputerScreen extends AbstractAssemblyScreen<PersonalCompu
             if (hover((int) mouseX, (int) mouseY, PersonalComputerLayout.AUTO_X, PersonalComputerLayout.AUTO_Y,
                     PersonalComputerLayout.COL_R_W, PersonalComputerLayout.BTN_H)) {
                 sendButton(PersonalComputerMenu.BUTTON_AUTOSTART);
+                return true;
+            }
+            if (hover((int) mouseX, (int) mouseY, PersonalComputerLayout.SIDE_X, PersonalComputerLayout.SIDE_Y,
+                    PersonalComputerLayout.SIDE_W, PersonalComputerLayout.SIDE_H)) {
+                sendButton(PersonalComputerMenu.BUTTON_SIDE_PANEL);
                 return true;
             }
         }

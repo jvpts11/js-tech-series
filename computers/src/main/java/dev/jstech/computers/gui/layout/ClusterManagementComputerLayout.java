@@ -59,6 +59,16 @@ public final class ClusterManagementComputerLayout {
     public static final int INV_Y = 138;
     public static final int HOTBAR_GAP = 58;
 
+    /*
+     * The case's left side, off or on: a small button beside the inventory, under the end of the right column, its
+     * caption written small over its state. Its widest words (the Portuguese ones) are seven letters.
+     */
+    public static final int SIDE_X = 176;
+    public static final int SIDE_Y = INV_Y;
+    public static final int SIDE_W = 60;
+    public static final int SIDE_H = 20;
+    public static final int SIDE_CHARS = 7;
+
     // Hardware caption rows, shared by the left column's labels and the layout's own text() entries.
     public static final int LABEL_ROW_1_Y = 27;
     public static final int LABEL_ROW_2_Y = 60;
@@ -99,7 +109,8 @@ public final class ClusterManagementComputerLayout {
                 .box("tileClusters", COL_R, TILE_Y2, COL_R_W, TILE_H)
                 .box("tileManagement", COL_R, TILE_Y3, COL_R_W, TILE_H)
                 .box("btnPower", POWER_X, POWER_Y, COL_R_W, BTN_H)
-                .box("btnAuto", AUTO_X, AUTO_Y, COL_R_W, BTN_H);
+                .box("btnAuto", AUTO_X, AUTO_Y, COL_R_W, BTN_H)
+                .box("btnSide", SIDE_X, SIDE_Y, SIDE_W, SIDE_H);
         l.playerInventory(INV_X, INV_Y);
         l.text("titleCmc", 12, 11, 3, 1.0f);
         l.text("statusPill", WIDTH - 6 * 7, 11, 7, 1.0f);
@@ -109,6 +120,8 @@ public final class ClusterManagementComputerLayout {
         l.text("lblRam", RIGHT_X, LABEL_ROW_2_Y, 3, 1.0f);
         l.text("lblDisk", MOBO_X, LABEL_ROW_3_Y, 4, 1.0f);
         l.text("lblPcie", RIGHT_X, LABEL_ROW_3_Y, 4, 1.0f);
+        l.text("lblSide", SIDE_X + 3, SIDE_Y + 3, SIDE_CHARS, 0.75f);
+        l.text("valSide", SIDE_X + 3, SIDE_Y + 11, SIDE_CHARS, 0.75f);
         return l;
     }
 }

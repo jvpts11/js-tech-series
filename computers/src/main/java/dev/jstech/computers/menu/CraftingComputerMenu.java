@@ -36,6 +36,7 @@ public class CraftingComputerMenu extends AbstractAssemblyComputerMenu {
 
     public static final int BUTTON_POWER = 0;
     public static final int BUTTON_AUTOSTART = 1;
+    public static final int BUTTON_SIDE_PANEL = 2;
 
     public CraftingComputerMenu(final int containerId, final Inventory playerInventory,
                                 final CraftingComputerBlockEntity be) {
@@ -75,6 +76,7 @@ public class CraftingComputerMenu extends AbstractAssemblyComputerMenu {
 
         button(BUTTON_POWER, p -> blockEntity.togglePower());
         button(BUTTON_AUTOSTART, p -> blockEntity.toggleAutoStart());
+        button(BUTTON_SIDE_PANEL, p -> blockEntity.toggleSidePanel());
     }
 
     public static CraftingComputerMenu fromNetwork(final int containerId, final Inventory playerInventory,
@@ -139,6 +141,11 @@ public class CraftingComputerMenu extends AbstractAssemblyComputerMenu {
 
     public boolean isAutoStart() {
         return blockEntity.assemblyAutoStart();
+    }
+
+    /** Whether the case's left side is off. */
+    public boolean isSidePanelOff() {
+        return blockEntity.sidePanelOff();
     }
 
     public boolean isOnNetwork() {

@@ -19,7 +19,8 @@ import software.bernie.geckolib.renderer.GeoBlockRenderer;
 
 /**
  * Draws a small computer as its case: the tower of its age, or the one of three cases a later machine comes in, its
- * front toward whoever placed it. Its lamps stay dark: the case shows the machine as it stands, switched off.
+ * front toward whoever placed it and its left side on or off as the player left it. Its lamps stay dark: the case shows
+ * the machine as it stands, switched off.
  *
  * @param <T> which of the small computers
  */
@@ -37,5 +38,6 @@ public final class ComputerRenderer<T extends AbstractSmallComputerBlockEntity> 
                 packedOverlay, colour);
         DeviceLamps.show(model, ComputingLooks.COMPUTER_POWER_LAMP, false);
         DeviceLamps.show(model, ComputingLooks.COMPUTER_DISK_LAMP, false);
+        DeviceLamps.show(model, ComputingLooks.COMPUTER_SIDE_PANEL, !computer.sidePanelOff());
     }
 }

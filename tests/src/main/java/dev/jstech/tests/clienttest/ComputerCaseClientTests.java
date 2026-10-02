@@ -29,6 +29,8 @@ public final class ComputerCaseClientTests {
     /** How far from the cases the camera stands, and how far apart the ages are. */
     private static final int AWAY = 5;
     private static final int AGE_SPACING = 8;
+    /** The closed case whose side is taken off. */
+    private static final BlockPos CASE = new BlockPos(4, 2, 6);
 
     /** The ages, each its rows of cases from the floor up: in a row the three machines, in one case. */
     private static final List<Age> AGES = List.of(
@@ -84,6 +86,24 @@ public final class ComputerCaseClientTests {
                     .thenTeleport(SETTLE, new BlockPos(middle, 2, SIDE_Z - AWAY), Direction.SOUTH)
                     .thenScreenshot(SETTLE, AGES.get(age).name() + "-side");
         }
+    }
+
+    /**
+     * A closed case has its side taken off by sneaking and using it, which shows its inside; its assembly screen then
+     * says the side is open.
+     */
+    @ClientTest(timeoutTicks = 600)
+    public static void sideTakenOff_showsTheInsideAndTheScreenSaysSo(final ClientTestContext ctx) {
+        // Turned to the west, the case's left side faces north, toward the camera.
+        ctx.thenBuild(0, world -> world.setBlock(CASE, ComputingModule.ADVANCED_PERSONAL_COMPUTER.get()
+                        .defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.WEST)))
+                .thenTeleport(SETTLE, CASE.north(3), Direction.SOUTH)
+                .thenScreenshot(SETTLE, "side-on")
+                .thenSneakClick(SETTLE, CASE, Direction.NORTH)
+                .thenScreenshot(SETTLE, "side-off")
+                .thenRightClick(SETTLE, CASE)
+                .thenScreenshot(SETTLE * 2, "screen-says-open")
+                .then(0, () -> ctx.mc().setScreen(null));
     }
 
     /** An age's cases, row by row from the floor up. */

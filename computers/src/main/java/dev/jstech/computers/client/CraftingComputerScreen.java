@@ -86,6 +86,10 @@ public class CraftingComputerScreen extends AbstractAssemblyScreen<CraftingCompu
                 CraftingComputerLayout.COL_R_W, CraftingComputerLayout.BTN_H,
                 hover(mouseX, mouseY, CraftingComputerLayout.AUTO_X, CraftingComputerLayout.AUTO_Y,
                         CraftingComputerLayout.COL_R_W, CraftingComputerLayout.BTN_H));
+        JsTechTheme.button(g, x + CraftingComputerLayout.SIDE_X, y + CraftingComputerLayout.SIDE_Y,
+                CraftingComputerLayout.SIDE_W, CraftingComputerLayout.SIDE_H,
+                hover(mouseX, mouseY, CraftingComputerLayout.SIDE_X, CraftingComputerLayout.SIDE_Y,
+                        CraftingComputerLayout.SIDE_W, CraftingComputerLayout.SIDE_H));
 
         // Player inventory slots.
         for (int row = 0; row < 3; row++) {
@@ -178,6 +182,11 @@ public class CraftingComputerScreen extends AbstractAssemblyScreen<CraftingCompu
         JsTechTheme.textCenter(g, font, GameText.resolve(auto ? AssemblyTexts.AUTO_ON : AssemblyTexts.AUTO_OFF),
                 CraftingComputerLayout.AUTO_X + CraftingComputerLayout.COL_R_W / 2,
                 CraftingComputerLayout.AUTO_Y + 4, auto ? JsTechTheme.accent() : JsTechTheme.dim());
+        final boolean sideOff = menu.isSidePanelOff();
+        JsTechTheme.tileTextS(g, font, CraftingComputerLayout.SIDE_X, CraftingComputerLayout.SIDE_Y,
+                GameText.resolve(AssemblyTexts.SIDE),
+                GameText.resolve(sideOff ? AssemblyTexts.SIDE_OPEN : AssemblyTexts.SIDE_CLOSED),
+                sideOff ? JsTechTheme.accent() : JsTechTheme.text());
     }
 
     private static String formatFactor(final int factorX100) {
@@ -214,6 +223,11 @@ public class CraftingComputerScreen extends AbstractAssemblyScreen<CraftingCompu
             if (hover((int) mouseX, (int) mouseY, CraftingComputerLayout.AUTO_X, CraftingComputerLayout.AUTO_Y,
                     CraftingComputerLayout.COL_R_W, CraftingComputerLayout.BTN_H)) {
                 sendButton(CraftingComputerMenu.BUTTON_AUTOSTART);
+                return true;
+            }
+            if (hover((int) mouseX, (int) mouseY, CraftingComputerLayout.SIDE_X, CraftingComputerLayout.SIDE_Y,
+                    CraftingComputerLayout.SIDE_W, CraftingComputerLayout.SIDE_H)) {
+                sendButton(CraftingComputerMenu.BUTTON_SIDE_PANEL);
                 return true;
             }
         }

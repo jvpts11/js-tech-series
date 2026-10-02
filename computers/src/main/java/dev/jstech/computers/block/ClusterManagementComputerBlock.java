@@ -134,6 +134,11 @@ public class ClusterManagementComputerBlock extends HorizontalDirectionalBlock
                                                final Player player, final BlockHitResult hit) {
         if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof ClusterManagementComputerBlockEntity computer) {
+            // Sneaking takes the left side off the case, or puts it back, to see what is inside.
+            if (player.isShiftKeyDown()) {
+                computer.toggleSidePanel();
+                return InteractionResult.sidedSuccess(false);
+            }
             serverPlayer.openMenu(new SimpleMenuProvider(
                     (id, inventory, p) -> new ClusterManagementComputerMenu(id, inventory, computer),
                     Component.translatable("block.jsc.cluster_management_computer")),

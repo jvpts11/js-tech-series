@@ -86,6 +86,10 @@ public class ClusterManagementComputerScreen extends AbstractAssemblyScreen<Clus
                 ClusterManagementComputerLayout.COL_R_W, ClusterManagementComputerLayout.BTN_H,
                 hover(mouseX, mouseY, ClusterManagementComputerLayout.AUTO_X, ClusterManagementComputerLayout.AUTO_Y,
                         ClusterManagementComputerLayout.COL_R_W, ClusterManagementComputerLayout.BTN_H));
+        JsTechTheme.button(g, x + ClusterManagementComputerLayout.SIDE_X, y + ClusterManagementComputerLayout.SIDE_Y,
+                ClusterManagementComputerLayout.SIDE_W, ClusterManagementComputerLayout.SIDE_H,
+                hover(mouseX, mouseY, ClusterManagementComputerLayout.SIDE_X, ClusterManagementComputerLayout.SIDE_Y,
+                        ClusterManagementComputerLayout.SIDE_W, ClusterManagementComputerLayout.SIDE_H));
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
@@ -172,6 +176,11 @@ public class ClusterManagementComputerScreen extends AbstractAssemblyScreen<Clus
         JsTechTheme.textCenter(g, font, GameText.resolve(auto ? AssemblyTexts.AUTO_ON : AssemblyTexts.AUTO_OFF),
                 ClusterManagementComputerLayout.AUTO_X + ClusterManagementComputerLayout.COL_R_W / 2,
                 ClusterManagementComputerLayout.AUTO_Y + 4, auto ? JsTechTheme.accent() : JsTechTheme.dim());
+        final boolean sideOff = menu.isSidePanelOff();
+        JsTechTheme.tileTextS(g, font, ClusterManagementComputerLayout.SIDE_X,
+                ClusterManagementComputerLayout.SIDE_Y, GameText.resolve(AssemblyTexts.SIDE),
+                GameText.resolve(sideOff ? AssemblyTexts.SIDE_OPEN : AssemblyTexts.SIDE_CLOSED),
+                sideOff ? JsTechTheme.accent() : JsTechTheme.text());
     }
 
     private int psuColor() {
@@ -202,6 +211,12 @@ public class ClusterManagementComputerScreen extends AbstractAssemblyScreen<Clus
                     ClusterManagementComputerLayout.AUTO_Y, ClusterManagementComputerLayout.COL_R_W,
                     ClusterManagementComputerLayout.BTN_H)) {
                 sendButton(ClusterManagementComputerMenu.BUTTON_AUTOSTART);
+                return true;
+            }
+            if (hover((int) mouseX, (int) mouseY, ClusterManagementComputerLayout.SIDE_X,
+                    ClusterManagementComputerLayout.SIDE_Y, ClusterManagementComputerLayout.SIDE_W,
+                    ClusterManagementComputerLayout.SIDE_H)) {
+                sendButton(ClusterManagementComputerMenu.BUTTON_SIDE_PANEL);
                 return true;
             }
         }

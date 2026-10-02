@@ -136,6 +136,11 @@ public class CraftingComputerBlock extends HorizontalDirectionalBlock
             final BlockHitResult hit) {
         if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof CraftingComputerBlockEntity computer) {
+            // Sneaking takes the left side off the case, or puts it back, to see what is inside.
+            if (player.isShiftKeyDown()) {
+                computer.toggleSidePanel();
+                return InteractionResult.sidedSuccess(false);
+            }
             serverPlayer.openMenu(
                     new SimpleMenuProvider(
                             (id, inventory, p) -> new CraftingComputerMenu(

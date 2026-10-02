@@ -100,6 +100,16 @@ public final class CraftingComputerLayout {
     public static final int INV_Y = 138;
     public static final int HOTBAR_GAP = 58;
 
+    /*
+     * The case's left side, off or on: a small button beside the inventory, under the end of the right column, its
+     * caption written small over its state. Its widest words (the Portuguese ones) are seven letters.
+     */
+    public static final int SIDE_X = 176;
+    public static final int SIDE_Y = INV_Y;
+    public static final int SIDE_W = 60;
+    public static final int SIDE_H = 20;
+    public static final int SIDE_CHARS = 7;
+
     // Hardware caption rows, shared by the left column's labels and the layout's own text() entries.
     public static final int LABEL_ROW_1_Y = 27;
     public static final int LABEL_ROW_2_Y = 60;
@@ -152,7 +162,8 @@ public final class CraftingComputerLayout {
                 .box("tileCraft",    COL_R, TILE_Y1, COL_R_W, TILE_H)
                 .box("tileRom",      COL_R, TILE_Y2, COL_R_W, TILE_H)
                 .box("btnPower",     POWER_X, POWER_Y, COL_R_W, BTN_H)
-                .box("btnAuto",      AUTO_X,  AUTO_Y,  COL_R_W, BTN_H);
+                .box("btnAuto",      AUTO_X,  AUTO_Y,  COL_R_W, BTN_H)
+                .box("btnSide",      SIDE_X,  SIDE_Y,  SIDE_W,  SIDE_H);
 
         // Player inventory
         l.playerInventory(INV_X, INV_Y);
@@ -167,6 +178,8 @@ public final class CraftingComputerLayout {
         l.text("lblDisk",      MOBO_X,               LABEL_ROW_3_Y, 4, 1.0f);  // "DISK"
         l.text("lblPcie",      RIGHT_X,              LABEL_ROW_3_Y, 4, 1.0f);  // "PCIE"
         l.text("lblNetwork",   COL_R,                NETWORK_Y,     7, 1.0f);  // "NETWORK"
+        l.text("lblSide",      SIDE_X + 3,           SIDE_Y + 3,    SIDE_CHARS, 0.75f);  // "SIDE"
+        l.text("valSide",      SIDE_X + 3,           SIDE_Y + 11,   SIDE_CHARS, 0.75f);  // "CLOSED"
 
         return l;
     }

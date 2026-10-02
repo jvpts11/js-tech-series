@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.core.blockentity.BoolField;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -23,10 +24,22 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerBlockEntity implements GeoBlockEntity {
 
     private final AnimatableInstanceCache geckoCache = GeckoLibUtil.createInstanceCache(this);
+    /** The left side taken off the case, showing what the player put inside; the world and the screen both show it. */
+    private final BoolField sidePanelOff = fields().flag("SidePanelOff", false).save().toClient().toMenu();
 
     protected AbstractSmallComputerBlockEntity(final BlockEntityType<?> type, final BlockPos pos,
                                                final BlockState state, final ComputerHardwareLayout layout) {
         super(type, pos, state, layout);
+    }
+
+    /** Whether the left side is off the case. */
+    public boolean sidePanelOff() {
+        return sidePanelOff.get();
+    }
+
+    /** Takes the left side off the case, or puts it back. */
+    public void toggleSidePanel() {
+        sidePanelOff.set(!sidePanelOff.get());
     }
 
     @Override

@@ -32,6 +32,7 @@ public class ClusterManagementComputerMenu extends AbstractAssemblyComputerMenu 
 
     public static final int BUTTON_POWER = 0;
     public static final int BUTTON_AUTOSTART = 1;
+    public static final int BUTTON_SIDE_PANEL = 2;
 
     public ClusterManagementComputerMenu(final int containerId, final Inventory playerInventory,
                                          final ClusterManagementComputerBlockEntity be) {
@@ -72,6 +73,7 @@ public class ClusterManagementComputerMenu extends AbstractAssemblyComputerMenu 
 
         button(BUTTON_POWER, p -> blockEntity.togglePower());
         button(BUTTON_AUTOSTART, p -> blockEntity.toggleAutoStart());
+        button(BUTTON_SIDE_PANEL, p -> blockEntity.toggleSidePanel());
     }
 
     public static ClusterManagementComputerMenu fromNetwork(final int containerId, final Inventory playerInventory,
@@ -136,6 +138,11 @@ public class ClusterManagementComputerMenu extends AbstractAssemblyComputerMenu 
 
     public boolean isAutoStart() {
         return blockEntity.assemblyAutoStart();
+    }
+
+    /** Whether the case's left side is off. */
+    public boolean isSidePanelOff() {
+        return blockEntity.sidePanelOff();
     }
 
     public boolean isOnNetwork() {
