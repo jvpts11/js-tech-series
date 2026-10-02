@@ -882,6 +882,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The unused hook for the Modonomicon guidebook: the series' manuals will be drawn by J's Core itself.
 
 ### Fixed
+- A base with cables ticks as fast as it did before the shared cable block. Machines that look at the blocks round
+  them every tick for a cable (the Crafting Switch and the Crafting Computer finding their machines, the racks finding
+  their network) asked the game for a block entity at every place, and a place with no cable answered only after a
+  lookup, a check of what waits to be loaded and an attempt to make one. They now look at the block first, and a
+  loaded base's tick is back to what it was, a third to a half lighter.
 - A run of pipes whose pipes stand no temperature in common carries nothing. It used to carry a fluid at exactly
   the coldest temperature of the warmer pipe, which the colder pipe does not stand: a pipe made for 100 to 200 K
   joined to one made for 300 to 400 K let water at 300 K through.

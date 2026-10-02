@@ -37,19 +37,27 @@ public final class Cables {
      * stands there.
      */
     public static List<Wire> reaching(final BlockGetter level, final BlockPos pos, final Direction face) {
-        return level.getBlockEntity(pos.relative(face)) instanceof CableBlockEntity cable
-                ? cable.wiresThrough(face.getOpposite())
-                : List.of();
+        final CableBlockEntity cable = at(level, pos.relative(face));
+        return cable == null ? List.of() : cable.wiresThrough(face.getOpposite());
     }
 
-    /** The cable block at {@code pos}, or null when none stands there. */
+    /**
+     * The cable block at {@code pos}, or null when none stands there.
+     *
+     * <p>The block is looked at before its block entity is asked for. Most places a device asks about hold no cable,
+     * and asking the game for the block entity of a place that has none is not free: it looks the place up, takes it
+     * off the list of block entities waiting to load, and goes to make one before finding the block has none. Machines
+     * ask about the places round them every tick, so that cost was paid many times over.
+     */
     public static @Nullable CableBlockEntity at(final BlockGetter level, final BlockPos pos) {
-        return level.getBlockEntity(pos) instanceof CableBlockEntity cable ? cable : null;
+        return level.getBlockState(pos).getBlock() instanceof CableBlock
+                && level.getBlockEntity(pos) instanceof CableBlockEntity cable ? cable : null;
     }
 
     /** Whether the block at {@code pos} is a cable block holding a wire of {@code type}. */
     public static boolean holds(final BlockGetter level, final BlockPos pos, final CableType type) {
-        return level.getBlockEntity(pos) instanceof CableBlockEntity cable && cable.holds(type);
+        final CableBlockEntity cable = at(level, pos);
+        return cable != null && cable.holds(type);
     }
 
     /** The number the wire of {@code type} in the cable block at {@code pos} is known by in its grid, if it is in. */

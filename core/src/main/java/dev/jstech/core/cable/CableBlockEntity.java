@@ -508,14 +508,17 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
                 linked |= before & (bit | bit << PLUG_SHIFT);
                 continue;
             }
-            if (server.getBlockEntity(next) instanceof CableBlockEntity other) {
-                final Wire there = other.bundle.of(wire.type());
-                if (there != null && wire.joins(there) && !other.parts.has(face.getOpposite())) {
-                    linked |= bit;
+            // The block is read first: asking a place that holds no cable for its block entity costs a lookup for none.
+            final BlockState state = server.getBlockState(next);
+            if (state.getBlock() instanceof CableBlock) {
+                if (server.getBlockEntity(next) instanceof CableBlockEntity other) {
+                    final Wire there = other.bundle.of(wire.type());
+                    if (there != null && wire.joins(there) && !other.parts.has(face.getOpposite())) {
+                        linked |= bit;
+                    }
                 }
                 continue;
             }
-            final BlockState state = server.getBlockState(next);
             if (state.getBlock() instanceof IFaceConnector device
                     && device.accepts(state, face.getOpposite(), wire.type().line())) {
                 linked |= bit | bit << PLUG_SHIFT;
