@@ -169,8 +169,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   and the disks where the case of that age keeps them, an M.2 drive on the board; and on the processor the cooler
   the case brings, unless the processor is a Slot 1 cartridge with its own. A part of another age sits where this
   case puts it, and a supply made for the other end of the case is turned over, without the leads made for its own
-  board. The parts are drawn when the side is off, or through a case's glass or mesh. A board for two processors has
-  no place in a small case yet and is not drawn.
+  board. In an Advanced case the hard disks sit in the cage under the shroud, hidden like the supply, and the helium
+  disks above 8 TB are drawn each with its own sealed lid and label. The parts are drawn when the side is off, or
+  through a case's glass or mesh. A board for two processors has no place in a small case yet and is not drawn.
 - A small computer's power lamp is lit while it runs, and its disk lamp blinks while it works its disk, whatever the
   disk. Its fans turn while it runs: the case's own, and those of the parts in it, the cooler's and the cards'.
 - The Transition and Advanced Mainframes. The Transition's cabinet is gloss black after the IBM z9 and z10, with

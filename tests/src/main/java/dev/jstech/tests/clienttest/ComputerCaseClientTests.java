@@ -105,7 +105,7 @@ public final class ComputerCaseClientTests {
             new Build("standard-cluster", ComputingModule.HIGH_PERFORMANCE_CLUSTER_MANAGEMENT_COMPUTER,
                     "motherboard_atx_standard_lga1150", "cpu_integra_servo_1231_v3",
                     List.of("ram_ddr3_8192", "ram_ddr3_8192", "ram_ddr3_8192", "ram_ddr3_8192"),
-                    List.of("gpu_vertex_gt_730", "fabric_host_adapter"), "psu_850g", List.of("disk_hdd_8t")),
+                    List.of("gpu_vertex_gt_730", "fabric_host_adapter"), "psu_850g", List.of("disk_hdd_16t")),
             new Build("advanced-neutral", ComputingModule.ADVANCED_PERSONAL_COMPUTER,
                     "motherboard_atx_advanced_1151", "cpu_integra_centro_c9_9900k",
                     List.of("ram_ddr4_16384", "ram_ddr4_16384"), List.of("gpu_vertex_gtx_1080_ti"), "psu_1000g",
@@ -113,7 +113,7 @@ public final class ComputerCaseClientTests {
             new Build("advanced-high-performance", ComputingModule.ADVANCED_HIGH_PERFORMANCE_PERSONAL_COMPUTER,
                     "motherboard_atx_advanced_1700", "cpu_integra_centro_c9_13900k",
                     List.of("ram_ddr5_32768", "ram_ddr5_32768", "ram_ddr5_32768", "ram_ddr5_32768"),
-                    List.of("gpu_vertex_rtx_4090"), "psu_1200p", List.of("disk_nvme_8t")),
+                    List.of("gpu_vertex_rtx_4090"), "psu_1200p", List.of("disk_nvme_8t", "disk_hdd_24t")),
             new Build("advanced-aesthetic", ComputingModule.ADVANCED_AESTHETIC_PERSONAL_COMPUTER,
                     "motherboard_atx_advanced_1851", "cpu_integra_centro_ultra_c9_285k",
                     List.of("ram_ddr5_16384", "ram_ddr5_16384", "ram_ddr5_16384", "ram_ddr5_16384"),
@@ -206,7 +206,8 @@ public final class ComputerCaseClientTests {
     /**
      * Each case with a machine built in it and its side off, seen from the open side: every part drawn by its own
      * model in its place, the board's parts on the board's seats, the supply and the disks on the case's, the case's
-     * cooler on the processor (none on a cartridge that brings its own). The last two machines hold parts of other
+     * cooler on the processor (none on a cartridge that brings its own); an Advanced case's hard disk is in the cage
+     * under its shroud, hidden like its supply. The last two machines hold parts of other
      * ages: a supply made for the other end of the case is turned over and has no leads, a card and a disk of an
      * older age sit where this case puts them.
      */
