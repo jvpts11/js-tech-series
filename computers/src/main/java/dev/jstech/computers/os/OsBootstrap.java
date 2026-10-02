@@ -20,6 +20,7 @@ import static dev.jstech.core.tier.HardwareEra.STANDARD;
 import static dev.jstech.core.tier.HardwareEra.VINTAGE;
 import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.computers.api.JsComputersApi;
+import dev.jstech.computers.engine.NetworkEngines;
 import net.neoforged.fml.common.EventBusSubscriber;
 
 import java.util.Optional;
@@ -48,6 +49,8 @@ public final class OsBootstrap {
         registerDesktops();
         registerSpaces();
         registerPrograms();
+        // The engine every Mainframe ships with, whose package is the Midsoft IQL Server program above.
+        JsComputersApi.registerEngine(NetworkEngines.MIDSOFT_IQL_SERVER);
     }
 
     /**
@@ -405,13 +408,14 @@ public final class OsBootstrap {
                     .described("Query the network in IQL, inspect the index and run maintenance from one console.")
                     .withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(128),
             /*
-             * The IQL Engine is a headless Mainframe service (the NMS is its client): every platform, lives on
-             * the Mainframe, follows the NMS OS version (Frames XP or newer).
+             * The Midsoft IQL Server is the Network Operations Engine every Mainframe ships with (the NMS is its
+             * studio): every platform and every system, lives on the Mainframe, in a version for each age.
              */
-            ProgramSpec.of(rl("iqlengine"), "iqlengine", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 2,
+            ProgramSpec.of(rl("iqlengine"), "iqlengine", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 0,
                             HostScope.MAINFRAME)
-                    .named("IQL Engine")
-                    .described("The service that compiles and runs IQL on the Mainframe. The NMS is its front end.")
+                    .named("Midsoft IQL Server")
+                    .described("The engine that plans the network's work and answers it in IQL. The NMS is its"
+                            + " studio.")
                     .withEra(LEGACY).withHouse(SoftwareHouse.MIDSOFT).withRam(24),
             // The Crafting Manager installs only on a Crafting Computer -> Frames XP or newer.
             ProgramSpec.of(rl("crafting_manager"), "craftmgr", false, DESKTOPS, 128, ProgramKind.APP, 2,

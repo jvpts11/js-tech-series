@@ -295,7 +295,7 @@ public final class GatewayManager {
             final StorageKey key = StorageKey.of(held);
             final int count = held.getCount();
             slots.setStackInSlot(i, ItemStack.EMPTY);
-            final NetworkInsertOperation op = mainframe.submitNetworkInsert(key, count, label);
+            final NetworkInsertOperation op = mainframe.networkOperations().push(key, count, label);
             if (op == null) {
                 slots.setStackInSlot(i, held);
                 continue;

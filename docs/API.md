@@ -22,6 +22,8 @@ because a mod cannot add anything without holding them:
 - What a machine is and what can be installed on one: `IsaSpec`, `KernelDef`, `OsDef`, `ProgramSpec`,
   `DesktopEnvironmentDef` and `OperatingSpaceDef`, with `ArchitectureSpec`, the former name of `IsaSpec`,
   for one more cycle.
+- What a Mainframe can run to plan its network's work: `EngineDef`, a Network Operations Engine, and the
+  `EngineCapability` values it may offer.
 - What a screen of a mod's own is handed: `ComputerTerminalMenu`, the machine's menu, which an operating
   space is given because the items in it are the server's.
 
@@ -32,8 +34,8 @@ Everything public in one of these is part of the promise, as it is in the two pa
 Each mod opens its registries once, while the game loads, by firing one event on the mod bus:
 
 - `CoreRegisterEvent`, for languages and kinds of Operation.
-- `ComputersRegisterEvent`, for instruction set architectures (ISAs), kernels, operating systems, programs and
-  desktops.
+- `ComputersRegisterEvent`, for instruction set architectures (ISAs), kernels, operating systems, programs,
+  desktops and Network Operations Engines.
 
 Listen for the one you need and add what you have. After the loading is done every registry is closed and
 refuses to change, so that what a world knows how to do does not change under it while somebody plays it.

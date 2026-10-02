@@ -11,6 +11,7 @@ import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.program.iql.IIqlCondition;
+import dev.jstech.computers.program.iql.IIqlView;
 import dev.jstech.computers.program.iql.IqlConditionParser;
 import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.computers.program.iql.IqlDuration;
@@ -48,10 +49,10 @@ public final class IqlJobAgent {
     public void tick(final MainframeBlockEntity mainframe, final ServerLevel level) {
         clock++;
         /*
-         * Either service enables job firing: the IQL Engine (with the NMS) or the Automation Engine
-         * (with the Automation Manager). A player needs only one installed for their jobs to run.
+         * Either fires the jobs: the network's engine or the Automation Engine (with the Automation Manager). A
+         * player needs only one of them for their jobs to run.
          */
-        if ((!mainframe.isIqlEngineActive() && !mainframe.isAutomationEngineActive())
+        if ((mainframe.runningEngine() == null && !mainframe.isAutomationEngineActive())
                 || clock % EVAL_INTERVAL != 0) {
             return;
         }
@@ -59,16 +60,16 @@ public final class IqlJobAgent {
         if (jobs.isEmpty()) {
             return;
         }
-        IqlEngine engine = null;
+        IIqlView machine = null;
         for (final IqlSavedObject job : jobs) {
             if (mainframe.isJobPaused(job.name())) {
                 continue; // a paused job never fires until it is restarted from the Processes tab
             }
             if (shouldFire(job, mainframe, level)) {
-                if (engine == null) {
-                    engine = new IqlEngine(mainframe, new ServerCliComputer(mainframe, level), QUERY_ROW_LIMIT);
+                if (machine == null) {
+                    machine = IqlEngine.viewOf(new ServerCliComputer(mainframe, level));
                 }
-                engine.run(job.body());
+                mainframe.networkOperations().query(machine, job.body(), QUERY_ROW_LIMIT);
                 JscEvents.awardOperator(mainframe, JscEvents.IQL_JOB);
             }
         }

@@ -10,6 +10,7 @@ package dev.jstech.computers.operation;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.crafting.MultiStagePattern;
 import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.engine.CraftRequest;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.network.NetworkCategory;
@@ -114,22 +115,25 @@ public final class ComputingOperations {
         if (registry.contains(SELECT)) {
             return;
         }
+        // Every kind that asks for work goes in through the network's door, to whichever engine runs there.
         registry.register(timed(SELECT, PullArgs.class, OperationCategory.STORAGE, a -> accepted(
-                a.mainframe().submitNetworkSelect(a.key(), a.demand(), a.destination(), a.label(), a.sources()),
+                a.mainframe().networkOperations().pull(a.key(), a.demand(), a.destination(), a.label(), a.sources()),
                 a.priority())));
         registry.register(timed(MOVE, PullArgs.class, OperationCategory.STORAGE, a -> accepted(
-                a.mainframe().submitNetworkMove(a.key(), a.demand(), a.destination(), a.label(), a.sources()),
+                a.mainframe().networkOperations().move(a.key(), a.demand(), a.destination(), a.label(), a.sources()),
                 a.priority())));
         registry.register(timed(DELETE, PullArgs.class, OperationCategory.STORAGE, a -> accepted(
-                a.mainframe().submitNetworkDelete(a.key(), a.demand(), a.destination(), a.label()), a.priority())));
+                a.mainframe().networkOperations().export(a.key(), a.demand(), a.destination(), a.label()),
+                a.priority())));
         registry.register(timed(INSERT, InsertArgs.class, OperationCategory.STORAGE, a -> accepted(
-                a.mainframe().submitNetworkInsert(a.key(), a.amount(), a.label()), a.priority())));
+                a.mainframe().networkOperations().push(a.key(), a.amount(), a.label()), a.priority())));
         registry.register(timed(CRAFT, CraftArgs.class, OperationCategory.CRAFTING, a -> accepted(
-                a.mainframe().submitCraftRequest(a.key(), a.demand(), a.partial(), a.label(), null), a.priority())));
+                a.mainframe().networkOperations().craft(CraftRequest.of(a.key(), a.demand(), a.partial(), a.label(),
+                        null)), a.priority())));
         registry.register(timed(PROCESSING, ProcessingArgs.class, OperationCategory.CRAFTING, a -> accepted(
-                a.mainframe().submitNetworkProcessing(a.pattern(), a.demand(), a.label()), a.priority())));
+                a.mainframe().networkOperations().process(a.pattern(), a.demand(), a.label()), a.priority())));
         registry.register(timed(MULTI_STAGE, MultiStageArgs.class, OperationCategory.CRAFTING, a -> accepted(
-                a.mainframe().submitNetworkMultiStage(a.pattern(), a.demand(), a.label()), a.priority())));
+                a.mainframe().networkOperations().pipeline(a.pattern(), a.demand(), a.label()), a.priority())));
         registry.register(instant(ANALYZE, IndexArgs.class, OperationCategory.NETWORK, a -> {
             a.mainframe().networkIndex().analyzeIncremental(a.level(), a.mainframe().networkUuid());
             return OperationStatus.COMPLETED;

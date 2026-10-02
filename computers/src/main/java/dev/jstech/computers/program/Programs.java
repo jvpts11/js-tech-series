@@ -43,7 +43,10 @@ public final class Programs {
     public static final ResourceLocation NMS =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "nms");
 
-    /** The IQL Engine: a background service installed on the Mainframe (the network's "SQL Server"). */
+    /**
+     * The Midsoft IQL Server: the Network Operations Engine every Mainframe ships with (the network's "SQL Server").
+     * The id is the one the package always had, which is also what the prompt's {@code iqlengine} command names.
+     */
     public static final ResourceLocation IQL_ENGINE =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "iqlengine");
 

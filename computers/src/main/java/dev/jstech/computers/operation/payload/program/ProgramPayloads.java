@@ -27,7 +27,9 @@ import dev.jstech.computers.operation.payload.UiEventPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.operation.payload.UninstallProgramPayload;
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.fs.FsPaths;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.program.cli.CliTexts;
@@ -80,16 +82,19 @@ public final class ProgramPayloads {
     }
 
     /**
-     * The processes running on the host at {@code hostPos}: the IQL Engine and its jobs if it is a Mainframe
-     * with the Engine installed, else an empty list (a computer with no service).
+     * The processes running on the host at {@code hostPos}: the network's engine and the jobs if it is a Mainframe
+     * with an engine chosen, else an empty list (a computer with no service).
      */
     public static void dispatchProcesses(final ServerPlayer player, final BlockPos hostPos,
                                          final ServerLevel level) {
         final List<ProcessListPayload.ProcessLine> lines = new ArrayList<>();
         if (level.getBlockEntity(hostPos) instanceof MainframeBlockEntity mainframe
-                && mainframe.isIqlEngineInstalled()) {
-            final boolean running = mainframe.isIqlEngineRunning();
-            lines.add(new ProcessListPayload.ProcessLine(ProcessListPayload.KIND_SERVICE, "IQL Engine",
+                && mainframe.activeEngine() != null) {
+            final boolean running = mainframe.engineRunning();
+            final ProgramSpec engine = Programs.get(mainframe.activeEngine());
+            // A service goes by its program's name, which is data.
+            final String name = engine == null ? mainframe.activeEngine().toString() : engine.name().english();
+            lines.add(new ProcessListPayload.ProcessLine(ProcessListPayload.KIND_SERVICE, name,
                     running ? ProcessListPayload.ProcessState.RUNNING : ProcessListPayload.ProcessState.STOPPED,
                     (running ? ProcessListPayload.ENGINE_SERVING : ProcessListPayload.ENGINE_STOPPED).text()));
             for (final IqlSavedObject job
@@ -127,11 +132,11 @@ public final class ProgramPayloads {
         }
         if (payload.kind() == ProcessListPayload.KIND_SERVICE) {
             switch (payload.action()) {
-                case ProcessActionPayload.ACTION_STOP -> mainframe.setIqlEngineRunning(false);
-                case ProcessActionPayload.ACTION_START -> mainframe.setIqlEngineRunning(true);
+                case ProcessActionPayload.ACTION_STOP -> mainframe.setEngineRunning(false);
+                case ProcessActionPayload.ACTION_START -> mainframe.setEngineRunning(true);
                 case ProcessActionPayload.ACTION_RESTART -> {
-                    mainframe.setIqlEngineRunning(false);
-                    mainframe.setIqlEngineRunning(true);
+                    mainframe.setEngineRunning(false);
+                    mainframe.setEngineRunning(true);
                 }
                 default -> { /* END has no meaning for a service */ }
             }

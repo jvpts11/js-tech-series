@@ -88,7 +88,7 @@ public final class TerminalLocalPayloads {
         if (taken <= 0L) {
             return;
         }
-        final var op = mainframe.submitNetworkInsert(key, taken, "local");
+        final var op = mainframe.networkOperations().push(key, taken, "local");
         if (op == null) {
             host.localStore().insert(key, taken); // no live dispatcher: put it straight back
             return;

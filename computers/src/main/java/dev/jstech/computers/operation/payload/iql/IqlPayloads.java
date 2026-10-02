@@ -10,6 +10,7 @@ package dev.jstech.computers.operation.payload.iql;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.NmsApp;
+import dev.jstech.computers.engine.NetworkEngines;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
@@ -41,6 +42,7 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextLists;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -122,9 +124,8 @@ public final class IqlPayloads {
             return;
         }
         final var computer = new ServerCliComputer(host, level);
-        final var engine = new IqlEngine(
-                mainframe, computer, IqlResultPayload.MAX_ROWS);
-        final var outcome = engine.run(payload.statement());
+        final var outcome = mainframe.networkOperations().query(IqlEngine.viewOf(computer), payload.statement(),
+                IqlResultPayload.MAX_ROWS);
         final List<IqlResultPayload.Row> rows = new ArrayList<>(outcome.rows().size());
         for (final var item : outcome.rows()) {
             final Text label = item.detail().isEmpty() ? item.name()
@@ -184,11 +185,14 @@ public final class IqlPayloads {
     }
 
     private static NmsSchemaPayload.EngineSnapshot engineSnapshot(final MainframeBlockEntity mainframe) {
-        if (mainframe == null || !mainframe.isIqlEngineInstalled()) {
+        // The studio is the Midsoft IQL Server's: it shows that engine, whichever the network runs.
+        final ResourceLocation midsoft = NetworkEngines.MIDSOFT_IQL_SERVER.program();
+        if (mainframe == null || !mainframe.installedEngines().containsKey(midsoft)) {
             return NmsSchemaPayload.EngineSnapshot.offline();
         }
         final var catalog = mainframe.iqlCatalog();
-        return new NmsSchemaPayload.EngineSnapshot(mainframe.isIqlEngineRunning()
+        final boolean serving = midsoft.equals(mainframe.activeEngine()) && mainframe.engineRunning();
+        return new NmsSchemaPayload.EngineSnapshot(serving
                         ? NmsSchemaPayload.EngineState.RUNNING : NmsSchemaPayload.EngineState.STOPPED,
                 objectNames(catalog.ofType(
                         IqlDefinition.ObjectType.VIEW)),

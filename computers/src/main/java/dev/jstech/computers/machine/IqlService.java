@@ -10,6 +10,7 @@ package dev.jstech.computers.machine;
 import dev.jstech.computers.block.part.NamedBus;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.engine.NetworkEngines;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.NetworkInsertOperation;
@@ -41,15 +42,18 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * The network's own language, as what runs on one of its computers speaks it.
  *
- * <p>A statement goes to the engine on the network's Mainframe exactly as it would from the prompt or the management
- * studio. A statement of the network's second layer (a view, a procedure, a job) needs the engine installed there; a
- * plain one needs only a Mainframe.
+ * <p>A statement goes through the network's door to the engine running on its Mainframe, exactly as it would from
+ * the prompt or the management studio, and is answered in that engine's dialect. The core of the language, which
+ * every engine accepts, is carried out here as the door's verbs: a SELECT is a pull, an INSERT a push, a MOVE a move
+ * and a DELETE an export, so it means the same whichever engine runs. A statement of the network's second layer (a
+ * view, a procedure) needs an engine that keeps them.
  */
 @TextHolder
 public final class IqlService {
@@ -76,20 +80,20 @@ public final class IqlService {
     private static final TextKey NOTHING_TO = TextKey.of("jsc.service.iql.nothing_to", "nothing to %s");
     private static final TextKey QUEUED = TextKey.of("jsc.service.iql.queued", "%s queued: %s");
     private static final TextKey NO_HOST = TextKey.of("jsc.service.iql.no_host",
-            "the network has no running Mainframe to host the IQL Engine");
-    private static final TextKey INSTALLED =
-            TextKey.of("jsc.service.iql.installed", "IQL Engine installed on the Mainframe and started");
+            "the network has no running Mainframe to host the Midsoft IQL Server");
+    private static final TextKey INSTALLED = TextKey.of("jsc.service.iql.installed",
+            "Midsoft IQL Server installed on the Mainframe");
     private static final TextKey ALREADY_INSTALLED =
-            TextKey.of("jsc.service.iql.already_installed", "the IQL Engine is already installed");
-    private static final TextKey STARTED = TextKey.of("jsc.service.iql.started", "IQL Engine started");
+            TextKey.of("jsc.service.iql.already_installed", "the Midsoft IQL Server is already installed");
+    private static final TextKey STARTED = TextKey.of("jsc.service.iql.started", "Midsoft IQL Server started");
     private static final TextKey ALREADY_RUNNING =
-            TextKey.of("jsc.service.iql.already_running", "the IQL Engine is already running");
+            TextKey.of("jsc.service.iql.already_running", "the Midsoft IQL Server is already running");
     private static final TextKey NOT_INSTALLED =
-            TextKey.of("jsc.service.iql.not_installed", "the IQL Engine is not installed");
-    private static final TextKey STOPPED = TextKey.of("jsc.service.iql.stopped", "IQL Engine stopped");
+            TextKey.of("jsc.service.iql.not_installed", "the Midsoft IQL Server is not installed");
+    private static final TextKey STOPPED = TextKey.of("jsc.service.iql.stopped", "Midsoft IQL Server stopped");
     private static final TextKey ALREADY_STOPPED =
-            TextKey.of("jsc.service.iql.already_stopped", "the IQL Engine is already stopped");
-    private static final TextKey STATUS = TextKey.of("jsc.service.iql.status", "IQL Engine: %s");
+            TextKey.of("jsc.service.iql.already_stopped", "the Midsoft IQL Server is already stopped");
+    private static final TextKey STATUS = TextKey.of("jsc.service.iql.status", "Midsoft IQL Server: %s");
     private static final TextKey STATE_NOT_INSTALLED =
             TextKey.of("jsc.service.iql.state.not_installed", "not installed");
     private static final TextKey STATE_RUNNING = TextKey.of("jsc.service.iql.state.running", "running");
@@ -134,13 +138,6 @@ public final class IqlService {
     private final OperationsService operations;
     /** The network a statement reads, for the servers it names and the rows a query brings back. */
     private final NetworkReadService network;
-
-    /** The Mainframe the kept engine runs on, which is what says whether it can be kept. */
-    @Nullable
-    private MainframeBlockEntity mainframe;
-
-    @Nullable
-    private IqlEngine engine;
 
     public IqlService(final IComputerTerminalHost terminal, final ServerLevel level, final FileService files,
                       final OperationsService operations, final NetworkReadService network) {
@@ -213,9 +210,9 @@ public final class IqlService {
         int queued = 0;
         for (final StorageKey key : keys) {
             final var operation = prioritize(from == null
-                    ? mainframe.submitNetworkSelect(key, OperationsService.demand(op.quantity()),
+                    ? mainframe.networkOperations().pull(key, OperationsService.demand(op.quantity()),
                             this.terminal.localStorage(), this.terminal.originLabel(MoveLabels.IQL))
-                    : mainframe.submitNetworkMove(key, OperationsService.demand(op.quantity()),
+                    : mainframe.networkOperations().move(key, OperationsService.demand(op.quantity()),
                             this.terminal.localStorage(), this.terminal.originLabel(MoveLabels.IQL),
                             Set.of(from)), op);
             if (operation != null) {
@@ -265,7 +262,7 @@ public final class IqlService {
             if (stock.getOrDefault(key, 0L) <= 0L) {
                 continue;
             }
-            if (prioritize(mainframe.submitNetworkDelete(key, OperationsService.demand(op.quantity()), target,
+            if (prioritize(mainframe.networkOperations().export(key, OperationsService.demand(op.quantity()), target,
                     this.terminal.originLabel(MoveLabels.IQL)), op) != null) {
                 queued++;
             }
@@ -287,26 +284,33 @@ public final class IqlService {
     }
 
     /**
-     * Installs the engine on the network's Mainframe, starts it, stops it, or says how it stands.
+     * Installs the Midsoft IQL Server on the network's Mainframe, starts it, stops it, or says how it stands.
      *
      * <p>The engine is the network's, not this machine's, so it is installed where the network is run from and every
-     * computer of the network speaks to that one.
+     * computer of the network speaks to that one. Starting it makes it the engine that plans the network's work;
+     * stopping it leaves the network without one until it, or another, is started.
      */
     public ICliComputer.OpResult control(final String action) {
         final MainframeBlockEntity mainframe = this.mainframe();
         if (mainframe == null) {
             return ICliComputer.OpResult.fail(NO_HOST);
         }
+        final ResourceLocation midsoft = NetworkEngines.MIDSOFT_IQL_SERVER.program();
+        final boolean installed = mainframe.installedEngines().containsKey(midsoft);
+        final boolean serving = serving(mainframe);
         return switch (action.toLowerCase(Locale.ROOT)) {
-            case "install" -> mainframe.installIqlEngine()
+            case "install" -> mainframe.installEngine(midsoft)
                     ? ICliComputer.OpResult.ok(INSTALLED)
                     : ICliComputer.OpResult.fail(ALREADY_INSTALLED);
-            case "start" -> mainframe.setIqlEngineRunning(true)
-                    ? ICliComputer.OpResult.ok(STARTED)
-                    : ICliComputer.OpResult.fail(mainframe.isIqlEngineInstalled() ? ALREADY_RUNNING : NOT_INSTALLED);
-            case "stop" -> mainframe.setIqlEngineRunning(false)
-                    ? ICliComputer.OpResult.ok(STOPPED)
-                    : ICliComputer.OpResult.fail(mainframe.isIqlEngineInstalled() ? ALREADY_STOPPED : NOT_INSTALLED);
+            case "start" -> !installed ? ICliComputer.OpResult.fail(NOT_INSTALLED)
+                    : serving ? ICliComputer.OpResult.fail(ALREADY_RUNNING)
+                    : (midsoft.equals(mainframe.activeEngine()) ? mainframe.setEngineRunning(true)
+                            : mainframe.activateEngine(midsoft))
+                            ? ICliComputer.OpResult.ok(STARTED) : ICliComputer.OpResult.fail(ALREADY_RUNNING);
+            case "stop" -> !installed ? ICliComputer.OpResult.fail(NOT_INSTALLED)
+                    : !serving ? ICliComputer.OpResult.fail(ALREADY_STOPPED)
+                    : mainframe.setEngineRunning(false) ? ICliComputer.OpResult.ok(STOPPED)
+                            : ICliComputer.OpResult.fail(ALREADY_STOPPED);
             case "status", "" -> ICliComputer.OpResult.ok(STATUS.with(this.stateText()));
             // The verbs are what is typed, so they are written as typed in every language.
             default -> ICliComputer.OpResult.fail(
@@ -314,19 +318,21 @@ public final class IqlService {
         };
     }
 
-    /** Whether the network's Mainframe has the engine installed, which is what gates the Engine's own commands. */
+    /** Whether the network's Mainframe has the Midsoft IQL Server installed. */
     public boolean installed() {
         final MainframeBlockEntity mainframe = this.mainframe();
-        return mainframe != null && mainframe.isIqlEngineInstalled();
+        return mainframe != null
+                && mainframe.installedEngines().containsKey(NetworkEngines.MIDSOFT_IQL_SERVER.program());
     }
 
-    /** How the engine stands on the network's Mainframe, in the words every view shows. */
+    /** How the Midsoft IQL Server stands on the network's Mainframe, in the words every view shows. */
     public Text stateText() {
         final MainframeBlockEntity mainframe = this.mainframe();
-        if (mainframe == null || !mainframe.isIqlEngineInstalled()) {
+        if (mainframe == null
+                || !mainframe.installedEngines().containsKey(NetworkEngines.MIDSOFT_IQL_SERVER.program())) {
             return STATE_NOT_INSTALLED.text();
         }
-        return (mainframe.isIqlEngineRunning() ? STATE_RUNNING : STATE_STOPPED).text();
+        return (serving(mainframe) ? STATE_RUNNING : STATE_STOPPED).text();
     }
 
     /** The same in English, for a listing that still carries its states as words. */
@@ -334,24 +340,23 @@ public final class IqlService {
         return this.stateText().english();
     }
 
-    /**
-     * The engine that runs statements on the network's Mainframe, or null when the machine is on no network with one.
-     *
-     * <p>One engine serves every statement while the network's Mainframe stays the same one, and is made again only
-     * when the network has another, so asking is a lookup rather than a new engine each time.
-     */
-    @Nullable
-    public IqlEngine engine() {
-        final MainframeBlockEntity current = this.mainframe();
-        if (current == null) {
-            this.mainframe = null;
-            this.engine = null;
-        } else if (current != this.mainframe) {
-            this.mainframe = current;
-            this.engine = new IqlEngine(current, this.view(), ROW_LIMIT);
-        }
-        return this.engine;
+    /** Whether the machine is on a network with a Mainframe, which a statement needs to go anywhere. */
+    public boolean onNetwork() {
+        return this.mainframe() != null;
     }
+
+    /**
+     * Runs a statement through the network's door, in the dialect of the engine running on its Mainframe: what it
+     * reads comes from this machine's network, and what it asks to be done lands here.
+     */
+    public IqlEngine.Outcome run(final String statement) {
+        final MainframeBlockEntity mainframe = this.mainframe();
+        if (mainframe == null) {
+            return new IqlEngine.Outcome(false, OperationsService.NO_MAINFRAME.text(), List.of());
+        }
+        return mainframe.networkOperations().query(this.view(), statement, ROW_LIMIT);
+    }
+
 
     /**
      * Runs an INSERT.
@@ -409,7 +414,7 @@ public final class IqlService {
         }
         int queued = 0;
         for (final StorageKey key : keys) {
-            if (prioritize(mainframe.submitNetworkMove(key, OperationsService.demand(op.quantity()), destSink,
+            if (prioritize(mainframe.networkOperations().move(key, OperationsService.demand(op.quantity()), destSink,
                     this.terminal.originLabel(MoveLabels.IQL), Set.of(source)), op) != null) {
                 queued++;
             }
@@ -436,7 +441,7 @@ public final class IqlService {
             if (stock.getOrDefault(key, 0L) <= 0L) {
                 continue;
             }
-            if (prioritize(mainframe.submitNetworkDelete(key, OperationsService.demand(op.quantity()), port,
+            if (prioritize(mainframe.networkOperations().export(key, OperationsService.demand(op.quantity()), port,
                     this.terminal.originLabel(MoveLabels.IQL)), op) != null) {
                 queued++;
             }
@@ -471,7 +476,7 @@ public final class IqlService {
                 continue;
             }
             final NetworkInsertOperation insert = prioritize(
-                    mainframe.submitNetworkInsert(key, pulled, this.terminal.originLabel(MoveLabels.IQL)), op);
+                    mainframe.networkOperations().push(key, pulled, this.terminal.originLabel(MoveLabels.IQL)), op);
             if (insert != null) {
                 insert.onSettle(() -> {
                     final long left = insert.leftover();
@@ -614,14 +619,20 @@ public final class IqlService {
      * Runs the statements a file holds, one a line, the way the studio saves them: blank lines and lines starting with
      * {@code --} are skipped, the first refusal ends the run, and what the last statement run answered is the answer.
      */
-    public static IqlEngine.Outcome runEach(final IqlEngine engine, final String text) {
+    public IqlEngine.Outcome runEach(final String text) {
         IqlEngine.Outcome last = new IqlEngine.Outcome(true, NOTHING_TO_RUN.text(), List.of());
         for (final String statement : statementsOf(text)) {
-            last = engine.run(statement);
+            last = this.run(statement);
             if (!last.ok()) {
                 break;
             }
         }
         return last;
+    }
+
+    /** Whether the Midsoft IQL Server is the engine planning the network's work now. */
+    private static boolean serving(final MainframeBlockEntity mainframe) {
+        return NetworkEngines.MIDSOFT_IQL_SERVER.program().equals(mainframe.activeEngine())
+                && mainframe.engineRunning();
     }
 }

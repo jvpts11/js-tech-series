@@ -141,7 +141,7 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
          * Push the buffered data into the network as a timed INSERT; whatever does not fit comes back
          * as the Operation's leftover and is re-buffered when it finishes (above).
          */
-        activeOp = mainframe.submitNetworkInsert(payloadKey, payloadAmount, MoveLabels.bus("Import Bus", name()));
+        activeOp = mainframe.networkOperations().push(payloadKey, payloadAmount, MoveLabels.bus("Import Bus", name()));
         flushedKey = payloadKey;
         flushedAmount = payloadAmount;
         if (activeOp == null) {

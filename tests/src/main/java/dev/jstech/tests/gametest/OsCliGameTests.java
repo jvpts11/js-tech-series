@@ -13,6 +13,7 @@ import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.engine.NetworkEngines;
 import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
@@ -978,6 +979,8 @@ public final class OsCliGameTests {
                     final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
                     final var shell = dev.jstech.computers.program.cli.CliCommands.newShell(
                             cli.shellFamily(), 52);
+                    // The Mainframe ships with the engine; taken off, it is a package like any other.
+                    mainframe.uninstallEngine(NetworkEngines.MIDSOFT_IQL_SERVER.program());
                     helper.assertTrue(text(shell.run("apt install iqlengine", cli)).contains("could not resolve mirror"),
                             "without a Mirror, apt must fail to resolve the mirror");
                     helper.assertTrue(text(shell.run("mirror install", cli)).contains("Mirror installed"),
@@ -985,7 +988,8 @@ public final class OsCliGameTests {
                     helper.assertTrue(mainframe.isMirrorInstalled(), "the Mirror flag must be set");
                     helper.assertTrue(text(shell.run("apt install iqlengine", cli)).contains("done"),
                             "with the Mirror serving, apt must install the IQL Engine package");
-                    helper.assertTrue(mainframe.isIqlEngineInstalled(),
+                    helper.assertTrue(mainframe.installedEngines().containsKey(
+                                    NetworkEngines.MIDSOFT_IQL_SERVER.program()),
                             "installing the iqlengine package must switch the Engine on");
                     helper.assertTrue(text(shell.run("apt install iqlengine", cli)).contains("newest version"),
                             "a second install must report the package as already installed");

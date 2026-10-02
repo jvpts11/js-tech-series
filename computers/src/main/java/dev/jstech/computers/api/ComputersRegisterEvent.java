@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.api;
 
+import dev.jstech.computers.engine.EngineDef;
 import dev.jstech.computers.hardware.ArchitectureSpec;
 import dev.jstech.computers.hardware.IsaSpec;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
@@ -90,5 +91,15 @@ public final class ComputersRegisterEvent extends Event implements IModBusEvent 
      */
     public void operatingSpace(final OperatingSpaceDef space) {
         JsComputersApi.registerSpace(space);
+    }
+
+    /**
+     * Adds a Network Operations Engine, which a Mainframe can then install and run to plan its network's work.
+     *
+     * <p>Register its package as a program too, the way any software is; this says what that package installs.
+     */
+    @ApiStatus.Experimental
+    public void engine(final EngineDef engine) {
+        JsComputersApi.registerEngine(engine);
     }
 }

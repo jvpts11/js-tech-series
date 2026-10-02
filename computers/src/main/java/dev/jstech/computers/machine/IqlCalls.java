@@ -33,54 +33,52 @@ final class IqlCalls {
     private static final TextKey NO_MAINFRAME =
             TextKey.of("jsc.service.iql.calls.no_mainframe", "this computer is not on a network with a Mainframe");
 
-    /** The Java that answers a call with the engine on the network's Mainframe in hand. */
+    /** The Java that answers a call, the machine on a network with a Mainframe. */
     @FunctionalInterface
     private interface IEngineFunction {
-        Object call(IqlService iql, IqlEngine engine, IWorldCall call, Object[] arguments, int line);
+        Object call(IqlService iql, IWorldCall call, Object[] arguments, int line);
     }
 
     private IqlCalls() {
     }
 
     static void bind(final Map<MemberId, MachineCalls.Binding<?>> bindings) {
-        iql(bindings, "Run", (iql, engine, call, arguments, line) -> result(call, engine.run(text(arguments, 0))),
-                STRING);
-        iql(bindings, "Query", (iql, engine, call, arguments, line) -> {
-            final IqlEngine.Outcome outcome = engine.run(text(arguments, 0));
+        iql(bindings, "Run", (iql, call, arguments, line) -> result(call, iql.run(text(arguments, 0))), STRING);
+        iql(bindings, "Query", (iql, call, arguments, line) -> {
+            final IqlEngine.Outcome outcome = iql.run(text(arguments, 0));
             if (!outcome.ok()) {
                 throw new Halt(Halt.Reason.REFUSED, line, outcome.said());
             }
             return rows(outcome);
         }, STRING);
-        final IEngineFunction exec = (iql, engine, call, arguments, line) -> {
+        final IEngineFunction exec = (iql, call, arguments, line) -> {
             final StringBuilder statement = new StringBuilder("EXEC ").append(text(arguments, 0));
             if (arguments.length > 1 && arguments[1] instanceof Values.ListValue given) {
                 for (final Object each : given.items()) {
                     statement.append(' ').append(each);
                 }
             }
-            return result(call, engine.run(statement.toString()));
+            return result(call, iql.run(statement.toString()));
         };
         iql(bindings, "Exec", exec, STRING);
         iql(bindings, "Exec", exec, STRING, "List<string>");
-        iql(bindings, "RunFile", (iql, engine, call, arguments, line) -> {
+        iql(bindings, "RunFile", (iql, call, arguments, line) -> {
             final ICliComputer.FsResult read = iql.read(text(arguments, 0));
             if (!read.ok()) {
                 throw new Halt(Halt.Reason.NO_OBJECT, line, read.message());
             }
-            return result(call, IqlService.runEach(engine, read.message().english()));
+            return result(call, iql.runEach(read.message().english()));
         }, STRING);
     }
 
-    /** Binds a call that needs the engine on the network's Mainframe, and stops the program when there is none. */
+    /** Binds a call that needs a network with a Mainframe, and stops the program on a machine without one. */
     private static void iql(final Map<MemberId, MachineCalls.Binding<?>> bindings, final String name,
                             final IEngineFunction function, final String... parameters) {
         MachineCalls.bind(bindings, MachineServices::iql, "Iql", name, (iql, call, target, arguments, line) -> {
-            final IqlEngine engine = iql.engine();
-            if (engine == null) {
+            if (!iql.onNetwork()) {
                 throw new Halt(Halt.Reason.NO_NETWORK, line, NO_MAINFRAME.text());
             }
-            return function.call(iql, engine, call, arguments, line);
+            return function.call(iql, call, arguments, line);
         }, parameters);
     }
 

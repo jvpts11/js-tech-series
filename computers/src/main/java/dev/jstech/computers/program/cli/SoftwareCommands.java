@@ -371,7 +371,7 @@ final class SoftwareCommands {
     static final class IqlEngineCommand implements ICliCommand {
 
         private static final TextKey SUMMARY = TextKey.of("jsc.cli.software.iqlengine.summary",
-                "start/stop the network's IQL Engine service");
+                "start/stop the network's Midsoft IQL Server");
 
         /** A service of the network, run from the machine that orchestrates it. */
         @Override public CommandScope scope() {

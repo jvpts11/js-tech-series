@@ -149,7 +149,7 @@ public final class DataHandoff {
                 return Outcome.NO_ROOM;
             }
             final DataContainers.Drained data = drained.get();
-            final NetworkInsertOperation op = mainframe.submitNetworkInsert(data.key(), data.amount(), label);
+            final NetworkInsertOperation op = mainframe.networkOperations().push(data.key(), data.amount(), label);
             if (op == null) {
                 return Outcome.NO_DISPATCHER;
             }
@@ -167,7 +167,7 @@ public final class DataHandoff {
         }
         final int count = Math.min(amount, stack.getCount());
         final ItemStack inFlight = stack.copyWithCount(count);
-        final NetworkInsertOperation op = mainframe.submitNetworkInsert(StorageKey.of(inFlight), count, label);
+        final NetworkInsertOperation op = mainframe.networkOperations().push(StorageKey.of(inFlight), count, label);
         if (op == null) {
             return Outcome.NO_DISPATCHER;
         }
@@ -237,7 +237,7 @@ public final class DataHandoff {
             return Outcome.NO_ROOM;
         }
         final CollectingSink sink = new CollectingSink();
-        final NetworkSelectOperation op = mainframe.submitNetworkSelect(key, want, sink, label);
+        final NetworkSelectOperation op = mainframe.networkOperations().fill(key, want, sink, label);
         if (op == null) {
             return Outcome.NO_DISPATCHER;
         }
@@ -274,7 +274,7 @@ public final class DataHandoff {
             return Outcome.NOTHING;
         }
         final CollectingSink sink = new CollectingSink();
-        final NetworkSelectOperation op = mainframe.submitNetworkSelect(key, quantity, sink, label);
+        final NetworkSelectOperation op = mainframe.networkOperations().pull(key, quantity, sink, label);
         if (op == null) {
             return Outcome.NO_DISPATCHER;
         }

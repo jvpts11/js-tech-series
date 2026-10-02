@@ -9,6 +9,8 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.engine.CraftRequest;
+import dev.jstech.computers.engine.EngineVerb;
 import dev.jstech.computers.operation.DataHandoff;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.MoveLabels;
@@ -176,7 +178,7 @@ public final class OperationsService {
         if (mainframe == null) {
             return ICliComputer.OpResult.fail(NO_MAINFRAME);
         }
-        final var op = mainframe.submitNetworkSelect(key, demand(quantity), this.terminal.localStorage(),
+        final var op = mainframe.networkOperations().pull(key, demand(quantity), this.terminal.localStorage(),
                 this.terminal.originLabel(origin));
         if (op == null) {
             return ICliComputer.OpResult.fail(SELECT_FAILED);
@@ -208,7 +210,7 @@ public final class OperationsService {
         }
         final MainframeBlockEntity mainframe = this.mainframe();
         final var op = mainframe == null ? null
-                : mainframe.submitNetworkInsert(key, taken, this.terminal.originLabel(origin));
+                : mainframe.networkOperations().push(key, taken, this.terminal.originLabel(origin));
         if (op == null) {
             this.terminal.localStore().insert(key, taken); // no dispatcher: put it straight back, never lose it
             return ICliComputer.OpResult.fail(NO_MAINFRAME);
@@ -239,12 +241,16 @@ public final class OperationsService {
         if (mainframe == null) {
             return ICliComputer.OpResult.fail(NO_MAINFRAME);
         }
+        final Text unavailable = mainframe.networkOperations().refusal(EngineVerb.CRAFT);
+        if (unavailable != null) {
+            return ICliComputer.OpResult.fail(unavailable);
+        }
         /*
          * Route through the shared entry point so the CLI and IQL craft a machine or multi-stage recipe
          * directly (not only a bench-planned tree), exactly as the terminal and Network Interactor do.
          */
-        final var op = mainframe.submitCraftRequest(key, demand(quantity), true,
-                this.terminal.originLabel(origin), null);
+        final var op = mainframe.networkOperations().craft(CraftRequest.of(key, demand(quantity), true,
+                this.terminal.originLabel(origin), null));
         if (op == null) {
             return ICliComputer.OpResult.fail(NO_PATTERN.with(key.displayName().getString()));
         }

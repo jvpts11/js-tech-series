@@ -66,6 +66,8 @@ class ApiSurfaceTest {
             "IProgrammingLanguage", "OperationType", "IOperationArgs",
             // the computers: what a machine is, and what can be installed on one
             "IsaSpec", "KernelDef", "OsDef", "ProgramSpec", "DesktopEnvironmentDef", "OperatingSpaceDef",
+            // the engines a Mainframe can run to plan its network's work, and what they may offer
+            "EngineDef", "EngineCapability",
             // the former name of IsaSpec, deprecated for one cycle before it goes
             "ArchitectureSpec",
             /*

@@ -171,7 +171,7 @@ public interface ICliOperations {
         static final TextKey CANNOT_CANCEL =
                 TextKey.of("jsc.cli.operations.cannot_cancel", "this computer cannot cancel network operations");
         static final TextKey ENGINE_OFF_NETWORK = TextKey.of("jsc.cli.operations.engine_off_network",
-                "the IQL Engine can only be controlled from a networked computer");
+                "the Midsoft IQL Server can only be controlled from a networked computer");
 
         private Refusals() {
         }

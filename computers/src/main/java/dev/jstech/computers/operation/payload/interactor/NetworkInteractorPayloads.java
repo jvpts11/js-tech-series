@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload.interactor;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.os.NetworkInteractorApp;
+import dev.jstech.computers.engine.CraftRequest;
 import dev.jstech.computers.operation.DataHandoff;
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.NetworkStorage;
@@ -133,8 +134,8 @@ public final class NetworkInteractorPayloads {
         }
         final long qty = Math.min(payload.quantity(), Integer.MAX_VALUE);
         final var op = dest.move()
-                ? mainframe.submitNetworkMove(payload.key(), qty, dest.handler(), dest.label(), sources)
-                : mainframe.submitNetworkSelect(payload.key(), qty, dest.handler(), dest.label(), sources);
+                ? mainframe.networkOperations().move(payload.key(), qty, dest.handler(), dest.label(), sources)
+                : mainframe.networkOperations().pull(payload.key(), qty, dest.handler(), dest.label(), sources);
         if (op != null) {
             op.setPriority(payload.priority());
             if (!dest.move()) {
@@ -277,7 +278,7 @@ public final class NetworkInteractorPayloads {
             if (mainframe == null) {
                 return;
             }
-            final var op = mainframe.submitNetworkSelect(key, safeAmount, host.localStorage(),
+            final var op = mainframe.networkOperations().pull(key, safeAmount, host.localStorage(),
                     host.originLabel(MoveLabels.INTERACTOR));
             if (op != null) {
                 op.setPriority(payload.priority());
@@ -297,7 +298,7 @@ public final class NetworkInteractorPayloads {
             if (taken <= 0L) {
                 return;
             }
-            final var op = mainframe.submitNetworkInsert(key, taken, host.originLabel(MoveLabels.INTERACTOR));
+            final var op = mainframe.networkOperations().push(key, taken, host.originLabel(MoveLabels.INTERACTOR));
             if (op == null) {
                 host.localStore().insert(key, taken); // no live dispatcher: put it straight back
                 return;
@@ -418,8 +419,8 @@ public final class NetworkInteractorPayloads {
          * The shared entry point runs a machine or multi-stage recipe directly, else plans a recursive
          * craft; refreshNi resends the Network Interactor now and again when the operation settles.
          */
-        mainframe.submitCraftRequest(StorageKey.of(payload.result()), safeAmount, true,
-                host.originLabel(MoveLabels.INTERACTOR), refreshNi);
+        mainframe.networkOperations().craft(CraftRequest.of(StorageKey.of(payload.result()), safeAmount, true,
+                host.originLabel(MoveLabels.INTERACTOR), refreshNi));
         refreshNi.run();
     }
 

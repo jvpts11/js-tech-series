@@ -286,8 +286,8 @@ public final class TerminalPayloads {
         }
         final StorageKey key = payload.key();
         final var op = dest.move()
-                ? mainframe.submitNetworkMove(key, payload.quantity(), dest.handler(), dest.label(), sources)
-                : mainframe.submitNetworkSelect(key, payload.quantity(), dest.handler(), dest.label(), sources);
+                ? mainframe.networkOperations().move(key, payload.quantity(), dest.handler(), dest.label(), sources)
+                : mainframe.networkOperations().pull(key, payload.quantity(), dest.handler(), dest.label(), sources);
         if (op != null) {
             if (!dest.move()) {
                 op.abortWhen(gone(host)); // the pull lands in this computer: stop once it is gone

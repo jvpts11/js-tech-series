@@ -9,9 +9,9 @@ package dev.jstech.computers.operation.payload.crafting;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.os.CraftPlannerApp;
-import dev.jstech.computers.crafting.CraftPlanner;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.engine.ICraftPlanning;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.CraftPlanPayload;
@@ -75,21 +75,21 @@ public final class CraftPlannerPayloads {
     private static CraftPlannerPayload collectCraftPlanner(final ServerLevel level, final NetworkUuid net,
                                                            final StorageKey key, final long quantity) {
         final MainframeBlockEntity mf = resolveMainframe(level, net);
-        if (mf == null) {
+        // A craft's plan is the network's engine's to make: with none running there is nothing to show.
+        final ICraftPlanning planner = mf == null ? null : mf.networkOperations().planner();
+        if (planner == null) {
             return new CraftPlannerPayload(key.stack(1), quantity, false, false, 0L, 0L,
                     List.of(), List.of(), List.of());
         }
         final var patterns = mf.networkPatterns();
         final var machines = mf.networkProcessingPatterns();
         final Map<StorageKey, Long> stock = mf.networkIndex().snapshot();
-        final var plan = CraftPlanner.plan(
-                key, quantity, patterns, machines, stock);
+        final var plan = planner.plan(key, quantity, patterns, machines, stock);
         if (plan.steps().isEmpty()) {
             return new CraftPlannerPayload(key.stack(1), quantity, false, false, 0L, 0L,
                     List.of(), List.of(), List.of());
         }
-        final long maxFeasible = CraftPlanner.maxFeasible(
-                key, quantity, patterns, machines, stock);
+        final long maxFeasible = planner.maxFeasible(key, quantity, patterns, machines, stock);
         final List<CraftPlannerPayload.Stage> stages = new ArrayList<>();
         for (final var step : plan.steps()) {
             if (stages.size() >= CraftPlannerPayload.MAX_STAGES) {

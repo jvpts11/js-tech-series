@@ -91,7 +91,7 @@ public non-sealed class ExportBusPart extends AbstractBusPart {
             return;
         }
         // Pull the data out of the network into the faced block (item or fluid) as a timed DELETE.
-        activeOp = mainframe.submitNetworkDelete(key, want, dest, MoveLabels.bus("Export Bus", name()));
+        activeOp = mainframe.networkOperations().export(key, want, dest, MoveLabels.bus("Export Bus", name()));
     }
 
     private long computeWant(final ExternalDataPort dest, final StorageKey key, final long batch) {

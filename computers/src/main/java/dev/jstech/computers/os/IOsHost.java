@@ -347,6 +347,14 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
     }
 
     /**
+     * Whether {@code program} is on this machine though no package of it is written down, because the machine came
+     * with it: a Mainframe's engine. Nothing, unless the machine says.
+     */
+    default boolean cameWith(final ProgramSpec program) {
+        return false;
+    }
+
+    /**
      * Told after a service was taken off this machine, so whatever it was keeping can go with it.
      *
      * <p>A service that holds something of its own, a history or a body of source, has to be able to let go

@@ -12,6 +12,7 @@ import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.engine.NetworkEngines;
 import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
@@ -229,6 +230,8 @@ public final class FreeBsdGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     final ServerCliComputer cli = new ServerCliComputer(mainframe, helper.getLevel());
                     final CliShell shell = CliCommands.newShell(cli.shellFamily(), 52);
+                    // The Mainframe ships with the engine; taken off, it is a package like any other.
+                    mainframe.uninstallEngine(NetworkEngines.MIDSOFT_IQL_SERVER.program());
                     final String unreachable = text(shell.run("pkg install iqlengine", cli));
                     helper.assertTrue(unreachable.contains("pkg: ") && unreachable.contains("mirror"),
                             "with no Mirror pkg says so, naming itself as it does; got " + unreachable);
@@ -238,7 +241,8 @@ public final class FreeBsdGameTests {
                     helper.assertTrue(installed.contains("Updating Mirror repository catalogue...")
                                     && installed.contains("done"),
                             "it looks at the repository first and then installs; got " + installed);
-                    helper.assertTrue(mainframe.isIqlEngineInstalled(), "and the Engine is on");
+                    helper.assertTrue(mainframe.installedEngines().containsKey(
+                            NetworkEngines.MIDSOFT_IQL_SERVER.program()), "and the Engine is on");
                     helper.assertTrue(text(shell.run("pkg install iqlengine", cli)).contains("already installed"),
                             "a second time there is nothing to do, said its way");
                     helper.assertTrue(text(shell.run("pkg info", cli)).contains("iqlengine"),

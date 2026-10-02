@@ -144,7 +144,7 @@ public final class ShellCoverageGameTests {
         final Fleet fleet = wire(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    helper.assertTrue(fleet.mainframe().installIqlEngine(), "the IQL Engine installs on the Mainframe");
+                    // The engine comes with the Mainframe; the Mirror is put on by hand.
                     fleet.mainframe().installMirror();
 
                     final List<String> elsewhere = shell(helper, fleet.lab(), "iqlengine status");
@@ -152,14 +152,14 @@ public final class ShellCoverageGameTests {
                             "a service of the network is worked from the machine that runs it; got " + elsewhere);
 
                     final List<String> status = shell(helper, fleet.mainframe(), "iqlengine status");
-                    helper.assertTrue(says(status, "IQL Engine: running"), "the engine runs; got " + status);
+                    helper.assertTrue(says(status, "Midsoft IQL Server: running"), "the engine runs; got " + status);
                     final List<String> stopped = shell(helper, fleet.mainframe(), "iqlengine stop");
-                    helper.assertTrue(says(stopped, "IQL Engine stopped"), "it stops; got " + stopped);
+                    helper.assertTrue(says(stopped, "Midsoft IQL Server stopped"), "it stops; got " + stopped);
                     final List<String> started = shell(helper, fleet.mainframe(), "iqlengine start");
-                    helper.assertTrue(says(started, "IQL Engine started"), "and starts again; got " + started);
+                    helper.assertTrue(says(started, "Midsoft IQL Server started"), "and starts again; got " + started);
 
                     final List<String> services = shell(helper, fleet.mainframe(), "services");
-                    helper.assertTrue(says(services, "IQL Engine") && says(services, "running")
+                    helper.assertTrue(says(services, "Midsoft IQL Server") && says(services, "running")
                                     && says(services, "Mirror") && says(services, "serving"),
                             "services lists both with their state; got " + services);
                 })

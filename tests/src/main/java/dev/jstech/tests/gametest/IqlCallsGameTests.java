@@ -122,8 +122,8 @@ public final class IqlCallsGameTests {
                         helper.assertTrue(halt.reason() == Halt.Reason.NO_OBJECT, "as missing; got " + halt.reason());
                     }
                     final IqlService iql = pc.services().iql();
-                    helper.assertTrue(iql != null && iql.engine() != null && iql.engine() == iql.engine(),
-                            "one engine serves every statement while the network's Mainframe stays the same");
+                    helper.assertTrue(iql != null && iql.onNetwork() && iql.run("QUERY items").ok(),
+                            "a statement goes through the network's door to the engine its Mainframe runs");
                 })
                 .thenSucceed();
     }

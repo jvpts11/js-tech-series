@@ -20,6 +20,10 @@ import dev.jstech.computers.block.part.ExportBusPart;
 import dev.jstech.computers.block.part.ImportBusPart;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.engine.NetworkEngines;
+import dev.jstech.computers.program.IqlEngine;
+import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
@@ -1416,17 +1420,17 @@ public final class NetworkGameTests {
                     final var cli = new dev.jstech.computers.program.ServerCliComputer(
                             (dev.jstech.computers.terminal.IComputerTerminalHost) computer,
                             helper.getLevel());
-                    // 'install iqlengine' (the normal install command) installs the Engine service on the Mainframe.
+                    // The Mainframe ships with the engine; taken off, 'install iqlengine' puts it back on.
+                    mainframe.uninstallEngine(NetworkEngines.MIDSOFT_IQL_SERVER.program());
                     helper.assertTrue(cli.install("iqlengine").ok(),
                             "'install iqlengine' must install the Engine on the Mainframe");
-                    helper.assertTrue(mainframe.isIqlEngineInstalled(),
+                    helper.assertTrue(mainframe.installedEngines()
+                                    .containsKey(NetworkEngines.MIDSOFT_IQL_SERVER.program()),
                             "the Engine must be installed after 'install iqlengine'");
                     helper.assertTrue(cli.iqlEngineInstalled(),
                             "the computer must report the Engine installed");
-                    final var engine = new dev.jstech.computers.program.IqlEngine(
-                            mainframe, cli, 64);
 
-                    helper.assertTrue(engine.run("CREATE VIEW stock AS QUERY items").ok(),
+                    helper.assertTrue(runIql(mainframe, cli, "CREATE VIEW stock AS QUERY items").ok(),
                             "CREATE VIEW must succeed");
                     helper.assertTrue(mainframe.iqlCatalog().contains(viewType, "stock"),
                             "the catalog must hold the created view");
@@ -1440,29 +1444,31 @@ public final class NetworkGameTests {
                     helper.assertTrue(schema.engine().state() == NmsSchemaPayload.EngineState.RUNNING,
                             "the NMS must show the Engine as running");
 
-                    final var query = engine.run("QUERY stock");
+                    final var query = runIql(mainframe, cli, "QUERY stock");
                     helper.assertTrue(query.ok(), "QUERY <view> must run the saved query: " + query.message());
                     helper.assertFalse(query.rows().isEmpty(), "QUERY <view> must return the network's rows");
 
                     // QUERY * returns every item; the full WHERE really filters by qty now (cobblestone = 200).
-                    helper.assertFalse(engine.run("QUERY *").rows().isEmpty(), "QUERY * must return all items");
-                    helper.assertFalse(engine.run("QUERY items WHERE qty > 100").rows().isEmpty(),
+                    helper.assertFalse(runIql(mainframe, cli, "QUERY *").rows().isEmpty(),
+                            "QUERY * must return all items");
+                    helper.assertFalse(runIql(mainframe, cli, "QUERY items WHERE qty > 100").rows().isEmpty(),
                             "WHERE qty > 100 must keep the 200 cobblestone");
-                    helper.assertTrue(engine.run("QUERY items WHERE qty > 1000").rows().isEmpty(),
+                    helper.assertTrue(runIql(mainframe, cli, "QUERY items WHERE qty > 1000").rows().isEmpty(),
                             "WHERE qty > 1000 must filter out the 200 cobblestone");
 
-                    helper.assertTrue(engine.run("CREATE PROCEDURE refresh AS { QUERY items; QUERY servers }").ok(),
+                    helper.assertTrue(runIql(mainframe, cli,
+                                    "CREATE PROCEDURE refresh AS { QUERY items; QUERY servers }").ok(),
                             "CREATE PROCEDURE must succeed");
-                    helper.assertTrue(engine.run("EXEC refresh").ok(),
+                    helper.assertTrue(runIql(mainframe, cli, "EXEC refresh").ok(),
                             "EXEC must run the procedure's statements in order");
 
-                    // Gate: a stopped Engine rejects definitions; ad-hoc actions are unaffected.
-                    mainframe.setIqlEngineRunning(false);
-                    helper.assertFalse(engine.run("CREATE VIEW v2 AS QUERY items").ok(),
+                    // A stopped engine plans nothing, so the network answers no statement until it starts again.
+                    mainframe.setEngineRunning(false);
+                    helper.assertFalse(runIql(mainframe, cli, "CREATE VIEW v2 AS QUERY items").ok(),
                             "a CREATE must fail when the Engine is stopped");
-                    mainframe.setIqlEngineRunning(true);
+                    mainframe.setEngineRunning(true);
 
-                    helper.assertTrue(engine.run("DROP VIEW stock").ok(), "DROP VIEW must succeed");
+                    helper.assertTrue(runIql(mainframe, cli, "DROP VIEW stock").ok(), "DROP VIEW must succeed");
                     helper.assertFalse(mainframe.iqlCatalog().contains(viewType, "stock"),
                             "the view must be gone after DROP");
                 })
@@ -1486,18 +1492,21 @@ public final class NetworkGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 8, () -> {
                     rackBe.getServerStorage(0).insert(Items.COBBLESTONE, 1_000_000L);
-                    mainframe.installIqlEngine();
-                    final var engine = new dev.jstech.computers.program.IqlEngine(mainframe,
-                            new dev.jstech.computers.program.ServerCliComputer(
-                                    mainframe, helper.getLevel()), 64);
+                    final ServerCliComputer machine = new ServerCliComputer(mainframe, helper.getLevel());
                     // EVERY 1t: the agent (evaluating every 10 ticks) fires this within a couple of evaluations.
-                    helper.assertTrue(engine.run("CREATE JOB drainer AS DROP 100 cobblestone EVERY 1t").ok(),
-                            "CREATE JOB must succeed");
+                    helper.assertTrue(runIql(mainframe, machine, "CREATE JOB drainer AS DROP 100 cobblestone EVERY 1t")
+                                    .ok(), "CREATE JOB must succeed");
                 })
                 .thenExecuteAfter(60, () -> helper.assertTrue(
                         mainframe.completedOps() > 0 || !mainframe.recentOperations().isEmpty(),
                         "the EVERY job must have fired its DROP operation by now"))
                 .thenSucceed();
+    }
+
+    /** A statement run through the network's door, the way a machine of the network runs one. */
+    private static IqlEngine.Outcome runIql(final MainframeBlockEntity mainframe, final ICliComputer machine,
+                                            final String statement) {
+        return mainframe.networkOperations().query(IqlEngine.viewOf(machine), statement, 64);
     }
 
     private static boolean cliContains(
@@ -1962,10 +1971,8 @@ public final class NetworkGameTests {
                         rackBe.getServerStorage(0).insert(Items.COBBLESTONE, 200))
                 .thenExecuteAfter(10, () -> {
                     // Run the export only after the network has indexed the server's stock.
-                    final var engine = new dev.jstech.computers.program.IqlEngine(mainframe,
-                            new dev.jstech.computers.program.ServerCliComputer(mainframe,
-                                    helper.getLevel()), 64);
-                    final var outcome = engine.run("DELETE cobblestone TO out");
+                    final var outcome = runIql(mainframe, new ServerCliComputer(mainframe, helper.getLevel()),
+                            "DELETE cobblestone TO out");
                     helper.assertTrue(outcome.ok(), "DELETE TO a named bus should be accepted: " + outcome.message());
                 })
                 .thenExecuteAfter(40, () -> {
@@ -2011,10 +2018,8 @@ public final class NetworkGameTests {
                     if (helper.getBlockEntity(barrel) instanceof net.minecraft.world.Container c) {
                         c.setItem(0, new ItemStack(Items.COBBLESTONE, 64));
                     }
-                    final var engine = new dev.jstech.computers.program.IqlEngine(mainframe,
-                            new dev.jstech.computers.program.ServerCliComputer(mainframe,
-                                    helper.getLevel()), 64);
-                    final var outcome = engine.run("INSERT cobblestone FROM in");
+                    final var outcome = runIql(mainframe, new ServerCliComputer(mainframe, helper.getLevel()),
+                            "INSERT cobblestone FROM in");
                     helper.assertTrue(outcome.ok(), "INSERT FROM a named bus should be accepted: " + outcome.message());
                 })
                 .thenExecuteAfter(80, () -> {
@@ -2041,11 +2046,8 @@ public final class NetworkGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 6, () -> {
                     rackBe.getServerStorage(0).insert(Items.COBBLESTONE, 1000);
-                    mainframe.installIqlEngine();
-                    final var engine = new dev.jstech.computers.program.IqlEngine(mainframe,
-                            new dev.jstech.computers.program.ServerCliComputer(mainframe,
-                                    helper.getLevel()), 64);
-                    engine.run("CREATE JOB killer AS DROP 64 cobblestone EVERY 5t");
+                    runIql(mainframe, new ServerCliComputer(mainframe, helper.getLevel()),
+                            "CREATE JOB killer AS DROP 64 cobblestone EVERY 5t");
                     mainframe.pauseJob("killer"); // paused from the start, so it must never fire
                 })
                 .thenExecuteAfter(40, () -> {
@@ -2067,7 +2069,6 @@ public final class NetworkGameTests {
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, new BlockPos(1, 2, 2));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 6, () -> {
-                    mainframe.installIqlEngine();
                     mainframe.setSavedScript("QUERY items WHERE qty > 10");
                     final var schema = dev.jstech.computers.operation.payload.iql.IqlPayloads
                             .nmsSchema(helper.getLevel(), mainframe);

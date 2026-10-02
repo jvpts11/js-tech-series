@@ -15,8 +15,10 @@ import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.CreateAutomationJobPayload;
 import dev.jstech.computers.operation.payload.JobActionPayload;
 import dev.jstech.computers.operation.payload.RequestAutomationPayload;
+import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.computers.program.iql.IqlDuration;
 import dev.jstech.computers.program.iql.IqlSavedObject;
@@ -75,10 +77,11 @@ public final class AutomationPayloads {
         if (mf == null) {
             return new AutomationPayload(false, AutomationPayload.NO_MAINFRAME.text(), List.of(), List.of());
         }
-        final boolean online = mf.isAutomationEngineActive() || mf.isIqlEngineActive();
+        final boolean online = mf.isAutomationEngineActive() || mf.runningEngine() != null;
         // The engines go by their programs' names, which are data.
+        final ProgramSpec engine = mf.activeEngine() == null ? null : Programs.get(mf.activeEngine());
         final Text label = mf.isAutomationEngineInstalled() ? Text.literal("Automation Engine")
-                : mf.isIqlEngineInstalled() ? Text.literal("IQL Engine") : AutomationPayload.NO_ENGINE.text();
+                : engine != null ? Text.literal(engine.name().english()) : AutomationPayload.NO_ENGINE.text();
         final List<AutomationPayload.JobRow> rows = new ArrayList<>();
         for (final var job : mf.iqlCatalog().ofType(
                 IqlDefinition.ObjectType.JOB)) {

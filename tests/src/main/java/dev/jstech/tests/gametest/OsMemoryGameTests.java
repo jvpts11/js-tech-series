@@ -12,6 +12,7 @@ import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.engine.NetworkEngines;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.os.HostScope;
@@ -88,12 +89,12 @@ public final class OsMemoryGameTests {
                     mainframe.setNeedsPost(false);
                     helper.assertTrue(mainframe.ramTotalMb() == 2048,
                             "two DDR-1024 modules are 2048 MB; got " + mainframe.ramTotalMb());
+                    // The engine the Mainframe ships with is stopped first, so the system is seen alone.
+                    mainframe.setEngineRunning(false);
                     helper.assertTrue(mainframe.ramReservedMb() == 64,
                             "Frames XP holds 64 MB for itself; got " + mainframe.ramReservedMb());
 
-                    // By the whole id, which is what every install path on a real machine writes down.
-                    mainframe.console().install("jsc:iqlengine");
-                    mainframe.installIqlEngine();
+                    mainframe.setEngineRunning(true);
                     helper.assertTrue(mainframe.ramReservedMb() == 88,
                             "a running service holds its share on top of the system; got "
                                     + mainframe.ramReservedMb());
@@ -122,19 +123,19 @@ public final class OsMemoryGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     mainframe.setNeedsPost(false);
-                    mainframe.console().install("jsc:iqlengine");
-                    mainframe.installIqlEngine();
+                    // The engine the Mainframe ships with, running.
                     helper.assertTrue(mainframe.ramReservedMb() == 88,
                             "the Engine holds its 24 MB while it runs; got " + mainframe.ramReservedMb());
 
-                    mainframe.setIqlEngineRunning(false);
+                    mainframe.setEngineRunning(false);
                     helper.assertTrue(mainframe.ramReservedMb() == 64,
                             "a service that is stopped holds nothing, though it is still installed; got "
                                     + mainframe.ramReservedMb());
-                    helper.assertTrue(mainframe.console().isInstalled("jsc:iqlengine"),
+                    helper.assertTrue(mainframe.installedEngines().containsKey(
+                                    NetworkEngines.MIDSOFT_IQL_SERVER.program()),
                             "and stopping it did not uninstall it");
 
-                    mainframe.setIqlEngineRunning(true);
+                    mainframe.setEngineRunning(true);
                     helper.assertTrue(mainframe.ramReservedMb() == 88,
                             "starting it again takes the memory back; got " + mainframe.ramReservedMb());
                 })
@@ -147,17 +148,20 @@ public final class OsMemoryGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     mainframe.setNeedsPost(false);
-                    // 2048 MB minus the system's 64 leaves 1984: fifteen 128 MB studios fit, the sixteenth does not.
+                    /*
+                     * 2048 MB minus the system's 64 and the 24 of the engine it ships with leaves 1960: fifteen 128 MB
+                     * studios fit, the sixteenth does not.
+                     */
                     final List<OpenWindow> asked = new ArrayList<>();
                     for (int i = 0; i < 20; i++) {
                         asked.add(new OpenWindow("jsc:nms", 10 + i, 10, 200, 140, false, false));
                     }
                     final List<OpenWindow> kept = mainframe.windowsWithinBudget(asked);
-                    helper.assertTrue(kept.size() == 15, "fifteen studios fit in 1984 MB; kept " + kept.size());
+                    helper.assertTrue(kept.size() == 15, "fifteen studios fit in 1960 MB; kept " + kept.size());
                     helper.assertTrue(kept.equals(asked.subList(0, 15)), "the oldest windows are the ones kept");
 
                     mainframe.setOpenWindows(kept);
-                    helper.assertTrue(mainframe.ramLedger().usedMb() == 64 + 15 * 128,
+                    helper.assertTrue(mainframe.ramLedger().usedMb() == 64 + 24 + 15 * 128,
                             "the kept layout fills the RAM; got " + mainframe.ramLedger().usedMb());
                     helper.assertTrue(mainframe.windowsWithinBudget(asked.subList(0, 3)).size() == 3,
                             "a layout that fits comes back whole");
@@ -234,6 +238,8 @@ public final class OsMemoryGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     mainframe.setNeedsPost(false);
+                    // The engine the Mainframe ships with is stopped, so the system and the desktop weigh alone.
+                    mainframe.setEngineRunning(false);
                     helper.assertTrue(mainframe.ramReservedMb() == 48,
                             "Ubuntu at the TTY holds 48 MB; got " + mainframe.ramReservedMb());
                     mainframe.console().install("jsc:kde_plasma");

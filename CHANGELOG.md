@@ -7,7 +7,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### API
-- J's Core's API is at version 2 and J's Computers' at version 2. Everything this release adds to either, or
+- J's Core's API is at version 2 and J's Computers' at version 3. Everything this release adds to either, or
   changes, carries `@ApiStatus.Experimental`: it keeps the mark through this release and loses it when the next
   cycle begins. Each mod's API is now kept line by line, every type and member a mod can reach with the version
   that brought it, and the tests fail when the code and that list disagree; `docs/API.md` says how.
@@ -16,6 +16,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   instruction set alone, which is what the method does unless overridden.
 - Added: `IsaSpec`, `ComputersRegisterEvent.isa` and `JsComputersApi.registerIsa`, which take over from
   `ArchitectureSpec`, `architecture` and `registerArchitecture`.
+- Added: `EngineDef`, `EngineCapability`, `ComputersRegisterEvent.engine` and `JsComputersApi.registerEngine`. A mod
+  registers a Network Operations Engine by its package (a program registered like any other), the dialect it
+  speaks, the version it ships in for each age of Mainframe and the extras it offers; until it brings a planner of
+  its own it plans the way the Midsoft IQL Server does.
 - Changed: `IProgrammingLanguage.Complaint` carries its message as a `Text`, read in the language of whoever is
   shown it, with the `arguments` the message was written around; `text()` is the line a person reads, and
   `format()` is still the same line in English.
@@ -196,6 +200,16 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   three GPUs), and seats only in its era's rack, which seats the Standard node too and draws each node as it is.
 - A rack refusing a chassis of a later era than its own now says so, instead of telling the player to take it to the
   kind of rack they are already at.
+- The Network Operations Engines. What makes a storage network work is software its Mainframe runs: every new
+  Mainframe, of every age and system, ships with the Midsoft IQL Server installed and running, in the version of its
+  age (4.2 on a Vintage Mainframe, 2000 on a Legacy, 2008 on a Transition, 2012 on a Standard, 2022 on an Advanced).
+  It is the IQL Engine of before under its own name, and it keeps the views and procedures. Everything that asks the
+  network for work (the Network Interactor, the terminals, the buses, the gateways, the craft dialogs, the programs
+  and the network's language) comes in by one door, the Network Operations Service, which hands it to the engine
+  running; computers bind to the network, not to an engine. With no engine running the network still pulls, pushes,
+  moves, exports and fills, but crafting, a craft's plan and the language are refused with "Network Operations
+  Service unavailable", and the Network Interactor offers nothing to craft. A running engine weighs its memory on
+  the Mainframe.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

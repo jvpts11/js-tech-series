@@ -16,6 +16,7 @@ import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
@@ -137,8 +138,9 @@ public final class Installers {
         if (mainframe == null) {
             return Text.EMPTY;
         }
+        final ProgramSpec engine = mainframe.activeEngine() == null ? null : Programs.get(mainframe.activeEngine());
         return Text.literal(String.join(", ", Stream.of(
-                        mainframe.isIqlEngineInstalled() ? "IQL Engine" : null,
+                        engine == null ? null : engine.name().english(),
                         mainframe.isAutomationEngineInstalled() ? "Automation Engine" : null,
                         mainframe.isMirrorInstalled() ? "Mirror" : null)
                 .filter(Objects::nonNull).toList()));

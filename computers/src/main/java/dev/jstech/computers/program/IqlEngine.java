@@ -28,11 +28,11 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * The IQL Engine's runtime: it takes a statement and either runs it as an immediate action/query (through the
- * two-method view it is handed) or, for a Layer-2 statement, stores/runs a saved object against the Mainframe's
- * catalog. CREATE/DROP touch the catalog; EXEC runs a procedure's statements in order, stopping at the
- * first error (the chosen default); a QUERY whose object is a view name runs the saved query. Touching the
- * catalog requires the Engine to be installed and running on the Mainframe; ad-hoc actions do not.
+ * The runtime of the network's language, as an engine that speaks it runs it: it takes a statement and either runs
+ * it as an immediate action/query (through the two-method view it is handed) or, for a Layer-2 statement,
+ * stores/runs a saved object against the Mainframe's catalog. CREATE/DROP touch the catalog; EXEC runs a procedure's
+ * statements in order, stopping at the first error (the chosen default); a QUERY whose object is a view name runs
+ * the saved query. Touching the catalog needs an engine that keeps views and procedures; ad-hoc actions do not.
  */
 @TextHolder
 public final class IqlEngine {
@@ -40,14 +40,16 @@ public final class IqlEngine {
     private final MainframeBlockEntity mainframe;
     private final IIqlView computer;
     private final int queryRowLimit;
+    /** Whether the engine running this keeps views and procedures; one that does not refuses Layer 2. */
+    private final boolean savedObjects;
 
     private static final int RECURSION_GUARD = 32;
 
     private static final TextKey TOO_DEEP = TextKey.of("jsc.service.iql.too_deep",
             "IQL recursion too deep (a procedure or view referencing itself?)");
     private static final TextKey SYNTAX = TextKey.of("jsc.service.iql.syntax", "syntax: %s");
-    private static final TextKey ENGINE_NOT_RUNNING = TextKey.of("jsc.service.iql.engine_not_running",
-            "the IQL Engine is not running on the Mainframe, install and start it first");
+    private static final TextKey NO_SAVED_OBJECTS = TextKey.of("jsc.service.iql.no_saved_objects",
+            "the network's engine keeps no views, procedures or jobs");
     private static final TextKey CREATED = TextKey.of("jsc.service.iql.created", "%s %s created");
     private static final TextKey NO_SUCH_OBJECT = TextKey.of("jsc.service.iql.no_such_object", "no %s named %s");
     private static final TextKey DROPPED = TextKey.of("jsc.service.iql.dropped", "%s %s dropped");
@@ -61,20 +63,16 @@ public final class IqlEngine {
     private static final TextKey ROWS_ONE = TextKey.of("jsc.service.iql.rows_one", "%s row");
     private static final TextKey ROWS_MANY = TextKey.of("jsc.service.iql.rows_many", "%s rows");
 
-    public IqlEngine(final MainframeBlockEntity mainframe, final IIqlView computer,
-                     final int queryRowLimit) {
+    public IqlEngine(final MainframeBlockEntity mainframe, final IIqlView computer, final int queryRowLimit,
+                     final boolean savedObjects) {
         this.mainframe = mainframe;
         this.computer = computer;
         this.queryRowLimit = queryRowLimit;
-    }
-
-    /** The same engine for whoever holds a whole computer: it is taken as the two things the engine asks of it. */
-    public IqlEngine(final MainframeBlockEntity mainframe, final ICliComputer computer, final int queryRowLimit) {
-        this(mainframe, viewOf(computer), queryRowLimit);
+        this.savedObjects = savedObjects;
     }
 
     /** A computer seen as what the engine needs: one way to read, one way to act. */
-    private static IIqlView viewOf(final ICliComputer computer) {
+    public static IIqlView viewOf(final ICliComputer computer) {
         return new IIqlView() {
             @Override
             public List<ICliComputer.StoredItem> queryObject(final String object,
@@ -140,8 +138,8 @@ public final class IqlEngine {
     }
 
     private Outcome runDefinition(final IqlDefinition definition, final int depth) {
-        if (!mainframe.isIqlEngineActive()) {
-            return Outcome.fail(ENGINE_NOT_RUNNING.text());
+        if (!savedObjects) {
+            return Outcome.fail(NO_SAVED_OBJECTS.text());
         }
         return switch (definition.verb()) {
             case CREATE -> create(definition);

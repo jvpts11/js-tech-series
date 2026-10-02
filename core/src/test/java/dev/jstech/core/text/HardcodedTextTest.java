@@ -121,8 +121,6 @@ class HardcodedTextTest {
             data(COMPUTERS + "machine/MachinePrograms.java", 1, "a word for the log"),
             data(COMPUTERS + "machine/PortsTree.java", 2, FILES),
             data(COMPUTERS + "machine/SourceChains.java", 14, "build flags, as a source build prints and reads them"),
-            data(COMPUTERS + "operation/payload/program/ProgramPayloads.java", 1,
-                    "a process's name, which the actions on the process address it by"),
             data(COMPUTERS + "os/Branding.java", 2, PRODUCTS),
             data(COMPUTERS + "os/KernelNames.java", 3, "kernel names as a system reports them"),
             data(COMPUTERS + "os/OsBootstrap.java", 5, PRODUCTS),

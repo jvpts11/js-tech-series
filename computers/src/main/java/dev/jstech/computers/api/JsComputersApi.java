@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.api;
 
+import dev.jstech.computers.engine.EngineDef;
+import dev.jstech.computers.engine.NetworkEngines;
 import dev.jstech.computers.hardware.ArchitectureSpec;
 import dev.jstech.computers.hardware.IsaSpec;
 import dev.jstech.computers.hardware.Isas;
@@ -37,7 +39,7 @@ public final class JsComputersApi {
      * <p>How settled it is, and how long something lives once it is marked as going, are the series'
      * answers rather than this mod's: see the Core's.
      */
-    public static final int VERSION = 2;
+    public static final int VERSION = 3;
 
     private JsComputersApi() {
     }
@@ -102,5 +104,17 @@ public final class JsComputersApi {
      */
     public static void registerSpace(final OperatingSpaceDef space) {
         OsRegistry.registerSpace(space);
+    }
+
+    /**
+     * Adds a Network Operations Engine, which a Mainframe can then install, choose and run to plan its network's
+     * work. Its package is a program registered like any other; this says what the engine it installs is.
+     *
+     * <p>Until the engine brings a planner of its own, it plans the way the Midsoft IQL Server does, so a network
+     * never runs on an engine that cannot do the work.
+     */
+    @ApiStatus.Experimental
+    public static void registerEngine(final EngineDef engine) {
+        NetworkEngines.register(engine);
     }
 }

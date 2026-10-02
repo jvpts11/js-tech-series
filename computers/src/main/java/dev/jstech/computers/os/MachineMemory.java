@@ -52,7 +52,12 @@ public final class MachineMemory {
                  * matched nothing, so no service ever weighed anything here and none of them was listed as
                  * running, whatever the player had installed.
                  */
-                if (spec.kind() == ProgramKind.SERVICE && console.isInstalled(spec.id().toString())
+                /*
+                 * What the machine came with (a Mainframe's engine) is there with no package written down, and
+                 * weighs what it holds whenever it runs all the same.
+                 */
+                if (spec.kind() == ProgramKind.SERVICE
+                        && (console.isInstalled(spec.id().toString()) || host.cameWith(spec))
                         && host.serviceRunning(spec)) {
                     ledger.add(spec.displayName(), spec.ramMbOn(os, builtHere(console, spec))
                             + host.serviceLoadMb(spec), RamLedger.Kind.SERVICE);

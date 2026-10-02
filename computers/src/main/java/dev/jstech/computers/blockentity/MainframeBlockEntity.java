@@ -21,6 +21,8 @@ import dev.jstech.computers.crafting.NetworkMultiStageOperation;
 import dev.jstech.computers.crafting.NetworkProcessingOperation;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.engine.INetworkEngine;
+import dev.jstech.computers.engine.NetworkOperationsService;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.operation.INetworkOperation;
@@ -308,8 +310,10 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     // Set when the block is being destroyed, so setRemoved can tell a break (discard) from a chunk unload (keep).
     private boolean broken;
 
-    /** The software installed on this Mainframe: the IQL Engine, the Automation Engine and the Mirror. */
+    /** The software installed on this Mainframe: its engines, the Automation Engine and the Mirror. */
     private final MainframeServices services = new MainframeServices(this);
+    /** The door the network's work comes in by, handing it to the engine running here. */
+    private final NetworkOperationsService networkOperations = new NetworkOperationsService(this);
 
     private static final int OPERATION_LOG_MAX = 32;
     private static final int FAILOVER_PROMOTE_DELAY = 60;
@@ -1574,6 +1578,12 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         return own != null ? own.active() : super.serviceRunning(service);
     }
 
+    /** The engines are what a Mainframe comes with, there with no package of them written down. */
+    @Override
+    public boolean cameWith(final ProgramSpec program) {
+        return services.installedEngines().containsKey(program.id());
+    }
+
     /** The service that program installs on a Mainframe, or {@code null} when it is not one. */
     @Nullable
     public IMainframeService service(final ResourceLocation programId) {
@@ -1584,27 +1594,54 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         return services.catalog();
     }
 
-    public boolean isIqlEngineInstalled() {
-        return services.iqlEngineInstalled();
+    /**
+     * The network's door: everything that asks the network to do work comes in through it, and never to the submit
+     * methods here, which are the Operations core that the door's engine hands its plans to.
+     */
+    public NetworkOperationsService networkOperations() {
+        return networkOperations;
     }
 
-    public boolean isIqlEngineRunning() {
-        return services.iqlEngineRunning();
+    /** The engines installed on this Mainframe, by the package that installs each, with each one's version. */
+    public Map<ResourceLocation, String> installedEngines() {
+        return services.installedEngines();
     }
 
-    /** The Engine is usable only when installed, not stopped, and the Mainframe itself is powered. */
-    public boolean isIqlEngineActive() {
-        return services.iqlEngineActive();
+    /** The engine chosen to plan the network's work, started or not; {@code null} when the network has none. */
+    @Nullable
+    public ResourceLocation activeEngine() {
+        return services.activeEngine();
     }
 
-    /** Installs the Engine on the Mainframe; returns false if it was already installed. */
-    public boolean installIqlEngine() {
-        return services.installIqlEngine();
+    /** Whether the chosen engine is started. */
+    public boolean engineRunning() {
+        return services.engineRunning();
     }
 
-    /** Starts or stops the installed Engine service; returns false if there is nothing to change. */
-    public boolean setIqlEngineRunning(final boolean running) {
-        return services.setIqlEngineRunning(running);
+    /** The engine planning the network's work now, or {@code null}: none chosen, it is stopped, or this is off. */
+    @Nullable
+    public INetworkEngine runningEngine() {
+        return services.runningEngine();
+    }
+
+    /** Installs an engine in the version of this Mainframe's age; false when that cannot be or it is there. */
+    public boolean installEngine(final ResourceLocation program) {
+        return services.installEngine(program);
+    }
+
+    /** Takes an engine off; taking the active one leaves the network without. */
+    public boolean uninstallEngine(final ResourceLocation program) {
+        return services.uninstallEngine(program);
+    }
+
+    /** Makes an installed engine the one that plans the network's work, started. */
+    public boolean activateEngine(final ResourceLocation program) {
+        return services.activateEngine(program);
+    }
+
+    /** Starts or stops the chosen engine; false when there is none or nothing changes. */
+    public boolean setEngineRunning(final boolean running) {
+        return services.setEngineRunning(running);
     }
 
     public boolean isAutomationEngineInstalled() {
@@ -1662,11 +1699,6 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     /** Removes the Mirror service; returns false if it was not installed. */
     public boolean uninstallMirror() {
         return services.uninstallMirror();
-    }
-
-    /** Removes the IQL Engine service (stopping it); returns false if it was not installed. */
-    public boolean uninstallIqlEngine() {
-        return services.uninstallIqlEngine();
     }
 
     /** Removes the Automation Engine service; returns false if it was not installed. */

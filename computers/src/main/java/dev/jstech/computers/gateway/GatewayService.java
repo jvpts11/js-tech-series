@@ -10,6 +10,9 @@ package dev.jstech.computers.gateway;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
+import dev.jstech.computers.engine.CraftRequest;
+import dev.jstech.computers.engine.EngineVerb;
+import dev.jstech.computers.engine.NetworkOperationsService;
 import dev.jstech.computers.machine.ProgramLauncher;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.MoveLabels;
@@ -303,7 +306,7 @@ public final class GatewayService {
         final String what = "pull " + count(quantity) + " " + name;
         operations(caller, what);
         final StorageKey key = resolve(name);
-        final NetworkSelectOperation op = mainframe().submitNetworkSelect(key, demand(quantity),
+        final NetworkSelectOperation op = mainframe().networkOperations().pull(key, demand(quantity),
                 new BufferSink(gateway.buffer()), label(caller));
         if (op == null) {
             throw denied(caller, what, COULD_NOT_START.with("SELECT"));
@@ -333,7 +336,7 @@ public final class GatewayService {
         if (taken == 0L) {
             throw denied(caller, what, BUFFER_HOLDS_NONE.with(name));
         }
-        final NetworkInsertOperation op = mainframe().submitNetworkInsert(key, taken, label(caller));
+        final NetworkInsertOperation op = mainframe().networkOperations().push(key, taken, label(caller));
         if (op == null) {
             returnToBuffer(key, taken);
             throw denied(caller, what, COULD_NOT_START.with("INSERT"));
@@ -352,12 +355,17 @@ public final class GatewayService {
         final String what = "craft " + count(quantity) + " " + name;
         operations(caller, what);
         final StorageKey key = resolve(name);
+        final NetworkOperationsService network = mainframe().networkOperations();
+        final Text unavailable = network.refusal(EngineVerb.CRAFT);
+        if (unavailable != null) {
+            throw denied(caller, what, unavailable);
+        }
         final INetworkOperation[] made = new INetworkOperation[1];
-        final INetworkOperation op = mainframe().submitCraftRequest(key, demand(quantity), true, label(caller), () -> {
+        final INetworkOperation op = network.craft(CraftRequest.of(key, demand(quantity), true, label(caller), () -> {
             if (made[0] != null) {
                 settled(caller, made[0]);
             }
-        });
+        }));
         if (op == null) {
             throw denied(caller, what, NO_PATTERN.with(name));
         }

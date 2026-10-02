@@ -204,7 +204,7 @@ public final class ClusterManagerPayloads {
         if (sources.isEmpty()) {
             return;
         }
-        final var op = mainframe.submitNetworkMove(payload.key(), payload.quantity(), dest.localStorage(),
+        final var op = mainframe.networkOperations().move(payload.key(), payload.quantity(), dest.localStorage(),
                 cmc.originLabel(MoveLabels.CLUSTER_MANAGER), sources);
         if (op != null) {
             op.onSettle(() -> PacketDistributor.sendToPlayer(player, buildClusterManagerState(cmc, level,

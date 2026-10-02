@@ -16,6 +16,7 @@ import dev.jstech.computers.crafting.MultiStagePattern;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.crafting.RecipeChoice;
+import dev.jstech.computers.engine.ICraftPlanning;
 import dev.jstech.computers.operation.payload.CraftPlanPayload;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.GameText;
@@ -42,10 +43,10 @@ public final class CraftPlanMath {
     /**
      * Every recipe that makes {@code key}, described for the craft dialog's cards: name, kind, machines, stages,
      * time, and the direct inputs for {@code quantity} against the stock, with whether each input that is
-     * short can be crafted by something else on the network.
+     * short can be crafted by something else on the network. Planned the way the network's engine plans.
      */
     static List<RecipeChoice> recipeChoices(
-            final ServerLevel level, final MainframeBlockEntity mainframe,
+            final ServerLevel level, final MainframeBlockEntity mainframe, final ICraftPlanning planner,
             final List<NetworkRecipe> recipes, final StorageKey key,
             final long quantity, final List<ProcessingPattern> machines,
             final Map<StorageKey, Long> stock) {
@@ -91,7 +92,7 @@ public final class CraftPlanMath {
                             Math.min(stock.getOrDefault(in.getKey(), 0L), need)));
                 }
                 final var patterns = mainframe.patternsPreferring(bench);
-                final var plan = CraftPlanner.plan(key, quantity, patterns, machines, stock);
+                final var plan = planner.plan(key, quantity, patterns, machines, stock);
                 estimate = estimateTicks(level, mainframe, plan);
                 stages = Math.max(1, plan.steps().size());
                 feasible = plan.feasible();
@@ -112,8 +113,7 @@ public final class CraftPlanMath {
             }
             // A processing run whose short inputs something makes runs as one tree, so it is feasible after all.
             if (!feasible && recipe.proc().isPresent() && shortCraftable) {
-                feasible = CraftPlanner
-                        .plan(key, quantity, mainframe.networkPatterns(), machines, stock).feasible();
+                feasible = planner.plan(key, quantity, mainframe.networkPatterns(), machines, stock).feasible();
             }
             out.add(new RecipeChoice(recipe.displayText(), kind, machineNames, stages,
                     estimate, inputs, feasible));
@@ -126,12 +126,12 @@ public final class CraftPlanMath {
                        List<CraftPlanPayload.Row> rows, boolean feasible, long maxFeasible) {
     }
 
-    /** Plans {@code quantity} of {@code key} and shapes the dialog's rows; pure over its inputs. */
-    static PlanPreview planPreview(final StorageKey key, final long quantity,
+    /** Plans {@code quantity} of {@code key} the engine's way and shapes the dialog's rows; pure over its inputs. */
+    static PlanPreview planPreview(final ICraftPlanning planner, final StorageKey key, final long quantity,
                                    final List<CraftingPattern> patterns,
                                    final List<ProcessingPattern> machines,
                                    final Map<StorageKey, Long> stock) {
-        final var plan = CraftPlanner.plan(key, quantity, patterns, machines, stock);
+        final var plan = planner.plan(key, quantity, patterns, machines, stock);
         // Raw-ingredient rows: total needed (consumed + still missing) vs what the network has.
         final Map<StorageKey, Long> need = new LinkedHashMap<>(plan.rawConsumption());
         plan.missing().forEach((k, v) -> need.merge(k, v, Long::sum));
@@ -148,7 +148,7 @@ public final class CraftPlanMath {
         }
         final boolean feasible = plan.feasible();
         final long maxFeasible = feasible ? quantity
-                : CraftPlanner.maxFeasible(key, quantity, patterns, machines, stock);
+                : planner.maxFeasible(key, quantity, patterns, machines, stock);
         return new PlanPreview(plan, List.copyOf(rows), feasible, maxFeasible);
     }
 

@@ -9,6 +9,7 @@ package dev.jstech.tests;
 
 import com.mojang.logging.LogUtils;
 import dev.jstech.core.JsCore;
+import dev.jstech.tests.testkit.TestEngines;
 import dev.jstech.tests.testkit.TestSettings;
 import dev.jstech.tests.testkit.TestStates;
 import dev.jstech.tests.testkit.ToyLanguage;
@@ -56,6 +57,8 @@ public final class JsTests {
             JsCore.languages().register(new ToyLanguage());
             // A world's settings file in every format, where the settings tests can read and write them.
             TestSettings.register(modEventBus, modContainer);
+            // An engine another mod brings, so a Mainframe can be swapped onto one that is not the series' own.
+            TestEngines.register(modEventBus);
         }
     }
 }

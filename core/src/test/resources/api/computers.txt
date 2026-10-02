@@ -7,6 +7,7 @@ stable 1
 1 dev.jstech.computers.api.ComputersRegisterEvent  type final class extends Event implements IModBusEvent
 1 dev.jstech.computers.api.ComputersRegisterEvent  deprecated void architecture(ArchitectureSpec)
 1 dev.jstech.computers.api.ComputersRegisterEvent  void desktop(DesktopEnvironmentDef)
+3 dev.jstech.computers.api.ComputersRegisterEvent  void engine(EngineDef)
 1 dev.jstech.computers.api.ComputersRegisterEvent  void fileOpener(String)
 2 dev.jstech.computers.api.ComputersRegisterEvent  void isa(IsaSpec)
 1 dev.jstech.computers.api.ComputersRegisterEvent  void kernel(KernelDef)
@@ -17,6 +18,7 @@ stable 1
 1 dev.jstech.computers.api.JsComputersApi  deprecated static void registerArchitecture(ArchitectureSpec)
 1 dev.jstech.computers.api.JsComputersApi  static final int VERSION
 1 dev.jstech.computers.api.JsComputersApi  static void registerDesktop(DesktopEnvironmentDef)
+3 dev.jstech.computers.api.JsComputersApi  static void registerEngine(EngineDef)
 1 dev.jstech.computers.api.JsComputersApi  static void registerFileOpener(String)
 2 dev.jstech.computers.api.JsComputersApi  static void registerIsa(IsaSpec)
 1 dev.jstech.computers.api.JsComputersApi  static void registerKernel(KernelDef)
@@ -28,6 +30,18 @@ stable 1
 1 dev.jstech.computers.api.client.OperatingSpaceScreens  type final class
 1 dev.jstech.computers.api.client.OperatingSpaceScreens  static IOperatingSpaceScreen get(ResourceLocation)
 1 dev.jstech.computers.api.client.OperatingSpaceScreens  static void register(ResourceLocation, IOperatingSpaceScreen)
+3 dev.jstech.computers.engine.EngineCapability  type enum implements IStableName
+3 dev.jstech.computers.engine.EngineCapability  DECLARATIVE_STATE
+3 dev.jstech.computers.engine.EngineCapability  EXPLAIN
+3 dev.jstech.computers.engine.EngineCapability  EXTENSIONS
+3 dev.jstech.computers.engine.EngineCapability  PLANNER_HINTS
+3 dev.jstech.computers.engine.EngineCapability  PROCEDURES_AND_VIEWS
+3 dev.jstech.computers.engine.EngineCapability  SUBSCRIPTIONS
+3 dev.jstech.computers.engine.EngineCapability  String serializedName()
+3 dev.jstech.computers.engine.EngineDef  type record(ResourceLocation program, String dialect, Map<HardwareEra, String> versions, Set<EngineCapability> extras)
+3 dev.jstech.computers.engine.EngineDef  String versionFor(HardwareEra)
+3 dev.jstech.computers.engine.EngineDef  boolean madeFor(HardwareEra)
+3 dev.jstech.computers.engine.EngineDef  boolean offers(EngineCapability)
 1 dev.jstech.computers.hardware.ArchitectureSpec  type deprecated record(String id, String name, int bits, Set<String> runs)
 2 dev.jstech.computers.hardware.ArchitectureSpec  IsaSpec toIsa()
 2 dev.jstech.computers.hardware.IsaSpec  type record(String id, String name, int bits, Set<String> runs)
