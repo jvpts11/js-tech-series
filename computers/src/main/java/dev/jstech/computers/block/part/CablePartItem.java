@@ -12,12 +12,16 @@ import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.Cables;
+import dev.jstech.core.cable.Wire;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.PartType;
+import dev.jstech.core.network.DataLine;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.List;
 import java.util.function.Supplier;
@@ -57,7 +61,7 @@ public class CablePartItem extends Item {
     private static final TextKey ON_CRAFTING_CABLES = TextKey.of("item.jsc.bus.on_crafting_cables",
             "Crafting buses mount on crafting cables");
     private static final TextKey ON_DATA_CABLES = TextKey.of("item.jsc.bus.on_data_cables",
-            "Storage buses mount on data cables");
+            "Storage buses mount on access and backbone cables of their era or an earlier one");
 
     public CablePartItem(final Properties properties, final Supplier<? extends PartType<?>> type) {
         super(properties);
@@ -69,9 +73,9 @@ public class CablePartItem extends Item {
                                 final List<Component> tooltip, final TooltipFlag flag) {
         final PartType<?> kind = type.get();
         final TextKey what;
-        if (kind == ComputingParts.IMPORT.get()) {
+        if (ComputingParts.isImport(kind)) {
             what = IMPORT_TOOLTIP;
-        } else if (kind == ComputingParts.EXPORT.get()) {
+        } else if (ComputingParts.isExport(kind)) {
             what = EXPORT_TOOLTIP;
         } else if (kind == ComputingParts.INPUT.get()) {
             what = INPUT_TOOLTIP;
@@ -138,8 +142,10 @@ public class CablePartItem extends Item {
          * holds both takes both.
          */
         final boolean craftingPart = ComputingParts.isCrafting(type.get());
+        final IFacePart made = type.get().create();
+        final HardwareEra era = made instanceof AbstractBusPart bus ? bus.era() : HardwareEra.STANDARD;
         final boolean fits = craftingPart ? DataWires.holds(cable, DataWires::isCrafting)
-                : DataWires.holds(cable, DataWires::isNetwork);
+                : DataWires.holds(cable, wire -> takes(era, wire));
         if (!fits) {
             if (!level.isClientSide() && context.getPlayer() != null) {
                 context.getPlayer().displayClientMessage(
@@ -195,6 +201,13 @@ public class CablePartItem extends Item {
         return firstFree;
     }
 
+    /* Whether a storage bus of {@code era} mounts on {@code wire}: an access or backbone cable of its era or before. */
+    private static boolean takes(final HardwareEra era, final Wire wire) {
+        final DataLink link = DataWires.linkOf(wire);
+        return link != null && (link.line() == DataLine.ACCESS || link.line() == DataLine.BACKBONE)
+                && link.era().level() <= era.level();
+    }
+
     /* A face a bus can go on: no part there, and no wire crossing it, which a bus would cut. */
     private static boolean free(final CableBlockEntity cable, final Direction face) {
         return !cable.hasPart(face) && cable.wiresThrough(face).isEmpty();
@@ -210,8 +223,7 @@ public class CablePartItem extends Item {
 
     /* An Import Bus and an Export Bus on one network: items now come in and go out on their own. */
     private void reportPair(final ServerLevel level, final CableBlockEntity placedOn, final Player player) {
-        final PartType<?> other = type.get() == ComputingParts.IMPORT.get()
-                ? ComputingParts.EXPORT.get() : ComputingParts.IMPORT.get();
+        final boolean importing = ComputingParts.isImport(type.get());
         final NetworkSystem system = NetworkSystem.get(level);
         final NetworkUuid network = DataWires.networkOf(placedOn);
         if (network == null) {
@@ -221,7 +233,8 @@ public class CablePartItem extends Item {
             if (level.getBlockEntity(pos) instanceof CableBlockEntity cable) {
                 for (final Direction face : Direction.values()) {
                     final IFacePart part = cable.getPart(face);
-                    if (part != null && part.type() == other) {
+                    if (part != null && (importing ? ComputingParts.isExport(part.type())
+                            : ComputingParts.isImport(part.type()))) {
                         JscEvents.award(player, JscEvents.BUSES_PAIRED);
                         return;
                     }

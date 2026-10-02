@@ -602,10 +602,26 @@ public final class ComputingModule {
 
     // Interaction buses: parts mounted on a cable's face that move items between the network and an inventory.
 
+    public static final ItemEntry<CablePartItem> VINTAGE_IMPORT_BUS_ITEM = bus("vintage_import_bus",
+            ComputingParts.VINTAGE_IMPORT, "block/import_bus_part").named("Vintage Import Bus").register();
+    public static final ItemEntry<CablePartItem> LEGACY_IMPORT_BUS_ITEM = bus("legacy_import_bus",
+            ComputingParts.LEGACY_IMPORT, "block/import_bus_part").named("Legacy Import Bus").register();
+    public static final ItemEntry<CablePartItem> TRANSITION_IMPORT_BUS_ITEM = bus("transition_import_bus",
+            ComputingParts.TRANSITION_IMPORT, "block/import_bus_part").named("Transition Import Bus").register();
     public static final ItemEntry<CablePartItem> IMPORT_BUS_ITEM =
             bus("import_bus", ComputingParts.IMPORT, "block/import_bus_part").named("Import Bus").register();
+    public static final ItemEntry<CablePartItem> ADVANCED_IMPORT_BUS_ITEM = bus("advanced_import_bus",
+            ComputingParts.ADVANCED_IMPORT, "block/import_bus_part").named("Advanced Import Bus").register();
+    public static final ItemEntry<CablePartItem> VINTAGE_EXPORT_BUS_ITEM = bus("vintage_export_bus",
+            ComputingParts.VINTAGE_EXPORT, "block/export_bus_part").named("Vintage Export Bus").register();
+    public static final ItemEntry<CablePartItem> LEGACY_EXPORT_BUS_ITEM = bus("legacy_export_bus",
+            ComputingParts.LEGACY_EXPORT, "block/export_bus_part").named("Legacy Export Bus").register();
+    public static final ItemEntry<CablePartItem> TRANSITION_EXPORT_BUS_ITEM = bus("transition_export_bus",
+            ComputingParts.TRANSITION_EXPORT, "block/export_bus_part").named("Transition Export Bus").register();
     public static final ItemEntry<CablePartItem> EXPORT_BUS_ITEM =
             bus("export_bus", ComputingParts.EXPORT, "block/export_bus_part").named("Export Bus").register();
+    public static final ItemEntry<CablePartItem> ADVANCED_EXPORT_BUS_ITEM = bus("advanced_export_bus",
+            ComputingParts.ADVANCED_EXPORT, "block/export_bus_part").named("Advanced Export Bus").register();
     public static final ItemEntry<CablePartItem> INPUT_BUS_ITEM =
             bus("input_bus", ComputingParts.INPUT, "block/export_bus_part").named("Crafting Input Bus").register();
     public static final ItemEntry<CablePartItem> RECEIVING_BUS_ITEM =

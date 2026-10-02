@@ -81,7 +81,7 @@ public abstract class AbstractBusMenu extends CoreMenu {
         shiftClick(playerSlots.main(), playerSlots.hotbar());
         shiftClick(playerSlots.hotbar(), playerSlots.main());
 
-        this.minValue = value(part::min);
+        this.minValue = value(part::keep);
         this.maxValue = value(part::max);
         this.modeValue = value(part::mode);
         this.linkedFlag = flag(part::linked);
@@ -92,10 +92,10 @@ public abstract class AbstractBusMenu extends CoreMenu {
          * accepting a press that does nothing.
          */
         if (stockControlsApply()) {
-            button(BTN_MIN_DOWN1, player -> part.adjustMin(-1));
-            button(BTN_MIN_UP1, player -> part.adjustMin(1));
-            button(BTN_MIN_DOWN16, player -> part.adjustMin(-16));
-            button(BTN_MIN_UP16, player -> part.adjustMin(16));
+            button(BTN_MIN_DOWN1, player -> part.adjustKeep(-1));
+            button(BTN_MIN_UP1, player -> part.adjustKeep(1));
+            button(BTN_MIN_DOWN16, player -> part.adjustKeep(-16));
+            button(BTN_MIN_UP16, player -> part.adjustKeep(16));
             button(BTN_MAX_DOWN1, player -> part.adjustMax(-1));
             button(BTN_MAX_UP1, player -> part.adjustMax(1));
             button(BTN_MAX_DOWN16, player -> part.adjustMax(-16));

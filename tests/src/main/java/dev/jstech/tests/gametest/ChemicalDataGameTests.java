@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
@@ -183,7 +184,7 @@ public final class ChemicalDataGameTests {
                     final Optional<IChemicalPort> tank = ChemicalBridges.portFor(helper.getLevel(), world.absolute(TANK_A), Direction.UP);
                     helper.assertTrue(tank.isPresent() && tank.get().fill(OXYGEN, 500, false) == 500, "the tank must take 500 mB of oxygen");
                     if (world.getBlockEntity(BUS_CABLE) instanceof CableBlockEntity cable) {
-                        cable.addPart(Direction.SOUTH, new dev.jstech.computers.block.part.ImportBusPart());
+                        cable.addPart(Direction.SOUTH, ComputingParts.IMPORT.get().create());
                     }
                 })
                 .thenWaitUntil(() -> helper.assertTrue(net.storage(helper.getLevel()).count(oxygen) >= 500,
@@ -232,10 +233,10 @@ public final class ChemicalDataGameTests {
                     helper.assertTrue(ChemicalBridges.chemicalOf(filterItem[0]).filter(OXYGEN::equals).isPresent(),
                             "the tank item must carry the oxygen; got " + ChemicalBridges.chemicalOf(filterItem[0]));
                     if (world.getBlockEntity(BUS_CABLE) instanceof CableBlockEntity cable) {
-                        final var bus = new dev.jstech.computers.block.part.ExportBusPart();
+                        final var bus = ComputingParts.EXPORT.get().create();
                         cable.addPart(Direction.WEST, bus);
                         bus.setFilter(filterItem[0]);
-                        bus.adjustMax(300); // max: keep the faced block at 300 mB (a fresh part starts at 0)
+                        bus.adjustKeep(300); // keep: fill the faced block up to 300 mB (a fresh part starts at 0)
                     }
                 })
                 .thenWaitUntil(() -> {

@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.menu.ReceivingBusMenu;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.multipart.PartType;
+import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -23,6 +24,11 @@ import net.minecraft.world.item.ItemStack;
  * never transfers on its own.
  */
 public final class ReceivingBusPart extends ImportBusPart {
+
+    /* One design for every era: it only marks a face, and keeps the filter that routes it. */
+    public ReceivingBusPart() {
+        super(HardwareEra.STANDARD);
+    }
 
     @Override
     public PartType<?> type() {

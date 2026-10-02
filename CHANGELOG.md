@@ -291,6 +291,16 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   has a NETWORK section. The Hardware tab, which now scrolls, adds the optical links up and down, the backbone and the
   slowest link in use.
 - The data network tells what lies cut off beyond a run too long, and how long each run is, in J's Core.
+- Buses for every era. The Import and the Export Bus come in a Vintage, a Legacy, a Transition, a Standard and an
+  Advanced make. The Vintage bus moves an item a tick, one kind at a time, with no filter; the Legacy one eight, with a
+  filter of up to five items (only these, or all but these), what the faced chest keeps and how many a move takes; the
+  Transition one sixteen, with a keep and a max for each item it lists; the Standard one thirty-two, with a priority
+  over the network's other buses and conditions to wait for (the network's stock of an item, the hours of the day,
+  another bus having finished); the Advanced one sixty-four, filtering by tag as well and matching loosely, an item
+  whatever its damage and components. The speeds are first estimates, and no bus moves faster than its cable carries.
+- A storage bus mounts on an access or a backbone cable of its era or an earlier one.
+- A bus can be switched off, and keeps a log of what it did lately: each move it made, and each time it held back and
+  why (what the chest keeps, no room, a condition). What a program set on a bus is marked with the program's name.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

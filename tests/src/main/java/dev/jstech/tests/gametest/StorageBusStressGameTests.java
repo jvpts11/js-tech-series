@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.block.part.ExportBusPart;
 import dev.jstech.computers.block.part.ImportBusPart;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -81,10 +82,10 @@ public final class StorageBusStressGameTests {
                         world.setBlock(source, Blocks.BARREL);
                         world.setBlock(sink, Blocks.BARREL);
                         if (helper.getBlockEntity(cablePos) instanceof CableBlockEntity cable) {
-                            final ImportBusPart in = new ImportBusPart();
+                            final ImportBusPart in = ComputingParts.IMPORT.get().create();
                             cable.addPart(Direction.UP, in);
                             in.setFilter(new ItemStack(item));
-                            final ExportBusPart out = new ExportBusPart();
+                            final ExportBusPart out = ComputingParts.EXPORT.get().create();
                             cable.addPart(Direction.DOWN, out);
                             out.setFilter(new ItemStack(item));
                         }

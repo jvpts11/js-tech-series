@@ -33,7 +33,7 @@ final class BusTexts {
     static final TextKey LINKED = TextKey.of("jsc.bus.screen.linked", "LINKED");
     static final TextKey OFFLINE = TextKey.of("jsc.bus.screen.offline", "OFFLINE");
     static final TextKey NAME = TextKey.of("jsc.bus.screen.name", "NAME");
-    static final TextKey MIN = TextKey.of("jsc.bus.screen.min", "MIN");
+    static final TextKey MIN = TextKey.of("jsc.bus.screen.min", "KEEP");
     static final TextKey MAX = TextKey.of("jsc.bus.screen.max", "MAX");
     static final TextKey ANY = TextKey.of("jsc.bus.screen.any", "any");
     static final TextKey MODE = TextKey.of("jsc.bus.screen.mode", "MODE");

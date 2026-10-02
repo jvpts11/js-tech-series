@@ -1773,7 +1773,7 @@ public final class NetworkGameTests {
         // Import Bus part on the east face of the cable end, facing a barrel of cobblestone.
         final BlockPos cableEnd = new BlockPos(4, 2, 2);
         if (helper.getBlockEntity(cableEnd) instanceof CableBlockEntity cable) {
-            cable.addPart(Direction.EAST, new ImportBusPart());
+            cable.addPart(Direction.EAST, new ImportBusPart(HardwareEra.STANDARD));
         }
         final BlockPos barrel = new BlockPos(5, 2, 2);
         helper.setBlock(barrel, net.minecraft.world.level.block.Blocks.BARREL);
@@ -1821,7 +1821,7 @@ public final class NetworkGameTests {
 
         final BlockPos cableEnd = new BlockPos(4, 2, 2);
         if (helper.getBlockEntity(cableEnd) instanceof CableBlockEntity cable) {
-            cable.addPart(Direction.EAST, new ImportBusPart());
+            cable.addPart(Direction.EAST, new ImportBusPart(HardwareEra.STANDARD));
         }
         final BlockPos barrel = new BlockPos(5, 2, 2);
         helper.setBlock(barrel, Blocks.BARREL);
@@ -1875,7 +1875,7 @@ public final class NetworkGameTests {
         // Export Bus part on the east face of the cable end, facing a barrel.
         final BlockPos cableEnd = new BlockPos(4, 2, 2);
         if (helper.getBlockEntity(cableEnd) instanceof CableBlockEntity cable) {
-            cable.addPart(Direction.EAST, new ExportBusPart());
+            cable.addPart(Direction.EAST, new ExportBusPart(HardwareEra.STANDARD));
         }
         final BlockPos barrel = new BlockPos(5, 2, 2);
         helper.setBlock(barrel, net.minecraft.world.level.block.Blocks.BARREL);
@@ -1925,7 +1925,7 @@ public final class NetworkGameTests {
         TestWorldBuilder.mountDefaultServer(rackBe, 0);
         final BlockPos cableEnd = new BlockPos(4, 2, 2);
         if (helper.getBlockEntity(cableEnd) instanceof CableBlockEntity cable) {
-            final ImportBusPart bus = new ImportBusPart();
+            final ImportBusPart bus = new ImportBusPart(HardwareEra.STANDARD);
             cable.addPart(Direction.EAST, bus);
             bus.setFilter(new ItemStack(Items.COBBLESTONE)); // import only cobblestone, leave the dirt
         }
@@ -1966,7 +1966,7 @@ public final class NetworkGameTests {
         TestWorldBuilder.mountDefaultServer(rackBe, 0);
         final BlockPos cableEnd = new BlockPos(4, 2, 2);
         if (helper.getBlockEntity(cableEnd) instanceof CableBlockEntity cable) {
-            final ExportBusPart bus = new ExportBusPart();
+            final ExportBusPart bus = new ExportBusPart(HardwareEra.STANDARD);
             cable.addPart(Direction.EAST, bus);
             bus.setName("out"); // no filter, so it never auto-exports; the query drives it by name
         }
@@ -2012,7 +2012,7 @@ public final class NetworkGameTests {
         TestWorldBuilder.mountDefaultServer(rackBe, 0);
         final BlockPos cableEnd = new BlockPos(4, 2, 2);
         if (helper.getBlockEntity(cableEnd) instanceof CableBlockEntity cable) {
-            final ImportBusPart bus = new ImportBusPart();
+            final ImportBusPart bus = new ImportBusPart(HardwareEra.STANDARD);
             cable.addPart(Direction.EAST, bus);
             bus.setName("in");
             bus.toggleMode(); // redstone mode: with no signal it never auto-imports, so the query drives it
@@ -2317,10 +2317,10 @@ public final class NetworkGameTests {
             helper.fail("no cable block entity");
             return;
         }
-        final ExportBusPart part = new ExportBusPart();
+        final ExportBusPart part = new ExportBusPart(HardwareEra.STANDARD);
         cable.addPart(Direction.EAST, part);
         part.setFilter(new ItemStack(Items.COBBLESTONE));
-        part.adjustMin(5);
+        part.adjustKeep(5);
         part.adjustMax(20);
 
         final var registries = helper.getLevel().registryAccess();
@@ -2335,7 +2335,7 @@ public final class NetworkGameTests {
         helper.assertTrue(back.getPart(Direction.EAST) instanceof ExportBusPart, "the part type must persist");
         final ExportBusPart reloadedPart = (ExportBusPart) back.getPart(Direction.EAST);
         helper.assertTrue(reloadedPart.filterItem() == Items.COBBLESTONE, "the filter must persist");
-        helper.assertTrue(reloadedPart.min() == 5, "min must persist");
+        helper.assertTrue(reloadedPart.keep() == 5, "keep must persist");
         helper.assertTrue(reloadedPart.max() == 20, "max must persist");
         helper.succeed();
     }

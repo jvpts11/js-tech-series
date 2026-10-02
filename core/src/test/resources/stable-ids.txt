@@ -1,3 +1,6 @@
+BusCondition.Kind AFTER (2)
+BusCondition.Kind HOURS (1)
+BusCondition.Kind STOCK (0)
 CliStyle.CliStyle ACCENT (7)
 CliStyle.CliStyle BLUE (11)
 CliStyle.CliStyle BRIGHT (14)

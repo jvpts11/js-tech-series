@@ -240,6 +240,11 @@ public abstract class AbstractTransferOperation implements INetworkOperation {
         return done;
     }
 
+    /** How much the transfer has moved so far, all of it once it is done. */
+    public long moved() {
+        return movedTotal;
+    }
+
     @Override
     public OperationPriority priority() {
         return priority;

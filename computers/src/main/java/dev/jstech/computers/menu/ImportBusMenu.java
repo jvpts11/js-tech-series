@@ -10,6 +10,7 @@ package dev.jstech.computers.menu;
 import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.block.part.ImportBusPart;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -29,7 +30,7 @@ public class ImportBusMenu extends AbstractBusMenu {
 
     public static ImportBusMenu create(final int containerId, final Inventory playerInventory,
                                        final CableBlockEntity cable, final Direction face) {
-        final ImportBusPart part = cable.getPart(face) instanceof ImportBusPart real ? real : new ImportBusPart();
+        final ImportBusPart part = cable.getPart(face) instanceof ImportBusPart real ? real : new ImportBusPart(HardwareEra.STANDARD);
         return new ImportBusMenu(containerId, playerInventory, part, cable.getLevel(), cable.getBlockPos(),
                 face, part.name());
     }
@@ -41,7 +42,7 @@ public class ImportBusMenu extends AbstractBusMenu {
         final String busName = buf.readUtf();
         final Level level = playerInventory.player.level();
         final ImportBusPart part = level.getBlockEntity(pos) instanceof CableBlockEntity cable
-                && cable.getPart(face) instanceof ImportBusPart real ? real : new ImportBusPart();
+                && cable.getPart(face) instanceof ImportBusPart real ? real : new ImportBusPart(HardwareEra.STANDARD);
         return new ImportBusMenu(containerId, playerInventory, part, level, pos, face, busName);
     }
 }
