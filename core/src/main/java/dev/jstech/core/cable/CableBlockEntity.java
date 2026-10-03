@@ -26,6 +26,7 @@ import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.multipart.PlacedModel;
 import dev.jstech.core.network.ConnectivityIndex;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -39,6 +40,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
@@ -626,16 +628,23 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
                 box.maxX() * PIXEL, box.maxY() * PIXEL, box.maxZ() * PIXEL);
     }
 
-    /* A wire's plug, turned to its face and moved to where the wire crosses it. */
-    private static PlacedModel plugModel(final CableType type, final BundleShape.Plug plug) {
+    /*
+     * A wire's plug, turned to its face and moved to where the wire crosses it: the plug of the port it enters, a
+     * video plug at a screen, the cable's own anywhere else.
+     */
+    private PlacedModel plugModel(final CableType type, final BundleShape.Plug plug) {
         final int axis = BundleShape.axis(plug.face());
         final float[] offset = new float[3];
         final int across = axis == 0 ? 2 : 0;
         final int up = axis == 1 ? 2 : 1;
         offset[across] = (float) plug.across();
         offset[up] = (float) plug.up();
-        return new PlacedModel(type.plug(), Direction.from3DDataValue(plug.face()), offset[0], offset[1],
-                offset[2]);
+        final Direction face = Direction.from3DDataValue(plug.face());
+        final BlockPos beyond = this.worldPosition.relative(face);
+        final ResourceLocation model = this.level != null
+                && this.level.getBlockEntity(beyond) instanceof IPeripheralEndpoint peripheral
+                ? type.plug(peripheral.portKind()) : type.plug();
+        return new PlacedModel(model, face, offset[0], offset[1], offset[2]);
     }
 
     /**

@@ -55,9 +55,10 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.content.Device;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.peripheral.PeripheralCableType;
-import dev.jstech.core.peripheral.IPeripheralConnectable;
 import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.text.GameText;
@@ -87,6 +88,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The Monitor: a peripheral that displays the interface of the computer it is linked to (over a Peripheral Cable, ≤ 16 blocks).
@@ -95,7 +97,10 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * {@link LegacyMonitorBlock}) each wear their own era's textures and the {@code LIT} blockstate
  * texture resolves to the correct on-screen OS style.
  */
-public class MonitorBlock extends DeviceBlock implements IPeripheralConnectable, IEraChassisBlock {
+public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraChassisBlock {
+
+    /* Its port, worked out the first time it is asked: the era a monitor is of is its kind's to say. */
+    private @Nullable FacePorts ports;
 
     public static final MapCodec<MonitorBlock> CODEC = simpleCodec(MonitorBlock::new);
 
@@ -125,17 +130,21 @@ public class MonitorBlock extends DeviceBlock implements IPeripheralConnectable,
         return era();
     }
 
+    /** The video port of its era, in the middle of its back. */
+    @Override
+    public FacePorts ports() {
+        if (this.ports == null) {
+            this.ports = PeripheralSockets.back(era());
+        }
+        return this.ports;
+    }
+
     /** That its computer's sound comes out of it, and its era. */
     @Override
     public void appendHoverText(final ItemStack stack, final Item.TooltipContext context,
                                 final List<Component> tooltip, final TooltipFlag flag) {
         SoundHardwareTexts.appendMonitor(tooltip);
         HardwareTooltip.appendEra(tooltip, era());
-    }
-
-    @Override
-    public PeripheralCableType peripheralType() {
-        return PeripheralCableType.COMPUTING;
     }
 
     @Override

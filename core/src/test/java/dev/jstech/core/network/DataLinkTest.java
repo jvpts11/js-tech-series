@@ -62,15 +62,6 @@ class DataLinkTest {
     }
 
     @Test
-    void peripheralRange_growsWithTheEra() {
-        final int[] expected = {8, 12, 14, 16, 20};
-        for (int i = 0; i < ERAS.length; i++) {
-            assertEquals(expected[i], DataLink.peripheralRange(ERAS[i]), ERAS[i].name());
-        }
-        assertEquals(0, DataLink.peripheralRange(HardwareEra.EXA));
-    }
-
-    @Test
     void straight_onlyTheBackbonesFibre() {
         assertFalse(new DataLink(DataLine.BACKBONE, HardwareEra.TRANSITION).straight());
         assertTrue(new DataLink(DataLine.BACKBONE, HardwareEra.STANDARD).straight());

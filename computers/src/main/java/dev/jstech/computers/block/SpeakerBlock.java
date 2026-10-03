@@ -13,11 +13,11 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.menu.SpeakerMenu;
 import dev.jstech.core.audio.FrequencyResponse;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.id.StableCodecs;
-import dev.jstech.core.peripheral.IPeripheralConnectable;
-import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -35,9 +35,10 @@ import net.minecraft.world.phys.BlockHitResult;
  * monitor, and adds to it. Two of them beside a monitor play a stereo recording a side each. A Legacy speaker samples
  * at 22 kHz and loses the bass and the treble; a Standard one plays the whole range.
  */
-public class SpeakerBlock extends DeviceBlock implements IPeripheralConnectable, IEraChassisBlock {
+public class SpeakerBlock extends DeviceBlock implements IFaceConnector, IEraChassisBlock {
 
     private final HardwareEra era;
+    private final FacePorts ports;
 
     public static final MapCodec<SpeakerBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
@@ -54,6 +55,7 @@ public class SpeakerBlock extends DeviceBlock implements IPeripheralConnectable,
     public SpeakerBlock(final Properties properties, final HardwareEra era) {
         super(properties, DEVICE);
         this.era = era;
+        this.ports = PeripheralSockets.back(era);
     }
 
     /** The era of this speaker, which decides how well it plays. */
@@ -71,9 +73,10 @@ public class SpeakerBlock extends DeviceBlock implements IPeripheralConnectable,
         return era;
     }
 
+    /** The audio jack of its era, in the middle of its back. */
     @Override
-    public PeripheralCableType peripheralType() {
-        return PeripheralCableType.COMPUTING;
+    public FacePorts ports() {
+        return ports;
     }
 
     @Override

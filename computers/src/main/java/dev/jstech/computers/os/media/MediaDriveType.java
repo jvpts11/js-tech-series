@@ -12,6 +12,7 @@ import dev.jstech.core.id.StableNames;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.tier.HardwareEra;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
@@ -71,6 +72,19 @@ public enum MediaDriveType implements IStableName {
             case CD_DRIVE -> CD_NAME.text();
             case DVD_DRIVE -> DVD_NAME.text();
             case DOCK_STATION -> DOCK_NAME.text();
+        };
+    }
+
+    /**
+     * The era the drive is of, which decides the port on its back and so the peripheral cables it takes: the floppy
+     * drive the Vintage's parallel port, the CD drive the Legacy's USB, the DVD drive and the Dock the Standard's
+     * USB 3.
+     */
+    public HardwareEra era() {
+        return switch (this) {
+            case FLOPPY_DRIVE -> HardwareEra.VINTAGE;
+            case CD_DRIVE -> HardwareEra.LEGACY;
+            case DVD_DRIVE, DOCK_STATION -> HardwareEra.STANDARD;
         };
     }
 

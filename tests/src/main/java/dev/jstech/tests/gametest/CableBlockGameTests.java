@@ -307,9 +307,10 @@ public final class CableBlockGameTests {
     @GameTest(template = ARENA)
     public static void cables_areDeclaredThroughTheCore(final GameTestHelper helper) {
         final List<CableEntry> declared = ModContent.of("jsc").declaredCables();
-        helper.assertTrue(declared.size() == 19 && declared.contains(ComputingModule.ETHERNET_CABLE)
-                        && declared.contains(ComputingModule.CRAFTING_CABLE),
-                "the nineteen data cables, declared; got " + declared.size());
+        helper.assertTrue(declared.size() == 24 && declared.contains(ComputingModule.ETHERNET_CABLE)
+                        && declared.contains(ComputingModule.CRAFTING_CABLE)
+                        && declared.contains(ComputingModule.VINTAGE_PERIPHERAL_CABLE),
+                "the nineteen data cables and the five peripheral cables, declared; got " + declared.size());
         // Each line has one lane, the same for all its eras, and no two lines share one.
         final Map<ResourceLocation, Lane> laneOfLine = new HashMap<>();
         final Set<Lane> lanes = new HashSet<>();
@@ -317,7 +318,8 @@ public final class CableBlockGameTests {
             same(helper, entry.id(), CoreCables.REGISTRY.getKey(entry.get()), entry.id() + " registered under its id");
             helper.assertTrue(entry.asItem() instanceof CableItem item && item.type() == entry.get(),
                     entry.id() + "'s item lays it");
-            helper.assertTrue(entry.get().grid() == GridKind.DATA, entry.id() + " is a data cable");
+            helper.assertTrue(entry.get().grid() == GridKind.DATA || entry.get().grid() == GridKind.PERIPHERAL,
+                    entry.id() + " is a data or a peripheral cable");
             if (entry.get().alone()) {
                 helper.assertTrue(entry.get().thickness() == 6, entry.id() + " is six pixels and shares no block");
                 continue;

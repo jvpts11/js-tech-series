@@ -110,8 +110,10 @@ public final class GatewayManagerClientTests {
                 .thenWaitUntil(() -> "cc-bridge".equals(manager(ctx).selectedName()), SCREEN_WAIT,
                         "the rail and the pane to show the new name")
                 .then(SETTLE, () -> ctx.clickDesktop(manager(ctx).identifyCenter()))
-                .thenWaitUntil(() -> manager(ctx).statusLine().contains("blinking"), SCREEN_WAIT,
-                        "Identify to answer on the status line")
+                // The window never draws the reply's status line, and the next refresh replaces it; what the player
+                // sees of Identify is its row in the Gateway's log, which every refresh carries.
+                .thenWaitUntil(() -> manager(ctx).logWhats().contains("identify"), SCREEN_WAIT,
+                        "Identify to show in the Gateway's log")
                 .then(SETTLE, () -> ctx.clickDesktop(manager(ctx).clearBufferCenter()))
                 .thenWaitUntil(() -> manager(ctx).bufferUsedShown() == 0, SCREEN_WAIT,
                         "the buffer to empty into the network")

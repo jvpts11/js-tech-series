@@ -201,6 +201,68 @@ class PeripheralLinkValidatorTest {
     }
 
     @Test
+    void cableReach_limitsThePathBelowItsSystem() {
+        // Three cables of a run that reaches two: the path is too long, however far the system would go.
+        TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8);
+        TestEndpoint endpoint = new TestEndpoint(PeripheralCableType.COMPUTING);
+        Map<Long, List<Long>> adj = Map.of(
+                OWNER_POS, List.of(C1),
+                C1, List.of(OWNER_POS, C2),
+                C2, List.of(C1, C3),
+                C3, List.of(C2, ENDPOINT_POS),
+                ENDPOINT_POS, List.of(C3));
+        Map<Long, PeripheralCableType> cables = Map.of(
+                C1, PeripheralCableType.COMPUTING,
+                C2, PeripheralCableType.COMPUTING,
+                C3, PeripheralCableType.COMPUTING);
+
+        ILinkResult result = build(adj, owner, endpoint, cables, pos -> 2).tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+
+        ILinkResult.ExceedsMaxLength too = assertInstanceOf(ILinkResult.ExceedsMaxLength.class, result);
+        assertEquals(3, too.pathLength());
+        assertEquals(2, too.maxAllowed());
+    }
+
+    @Test
+    void cableReach_canGoPastItsSystemsLimit() {
+        // A run of twenty cables that reaches twenty links, past the system's sixteen.
+        TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8);
+        TestEndpoint endpoint = new TestEndpoint(PeripheralCableType.COMPUTING);
+        Map<Long, List<Long>> adj = new HashMap<>();
+        Map<Long, PeripheralCableType> cables = new HashMap<>();
+        long prev = OWNER_POS;
+        for (int i = 1; i <= 20; i++) {
+            long cable = 1000L + i;
+            adj.computeIfAbsent(prev, k -> new ArrayList<>()).add(cable);
+            adj.computeIfAbsent(cable, k -> new ArrayList<>()).add(prev);
+            cables.put(cable, PeripheralCableType.COMPUTING);
+            prev = cable;
+        }
+        adj.computeIfAbsent(prev, k -> new ArrayList<>()).add(ENDPOINT_POS);
+        adj.put(ENDPOINT_POS, List.of(prev));
+
+        ILinkResult result = build(adj, owner, endpoint, cables, pos -> 20).tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+
+        assertEquals(20, assertInstanceOf(ILinkResult.Established.class, result).pathLength());
+    }
+
+    @Test
+    void cableThatDoesNotLeadBack_isNoPath() {
+        // The cable beside the owner does not cross toward it (its wire takes no plug there): no path through it.
+        TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8);
+        TestEndpoint endpoint = new TestEndpoint(PeripheralCableType.COMPUTING);
+        Map<Long, List<Long>> adj = Map.of(
+                OWNER_POS, List.of(C1),
+                C1, List.of(ENDPOINT_POS),
+                ENDPOINT_POS, List.of(C1));
+
+        ILinkResult result = build(adj, owner, endpoint, Map.of(C1, PeripheralCableType.COMPUTING))
+                .tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+
+        assertInstanceOf(ILinkResult.NoPathFound.class, result);
+    }
+
+    @Test
     void portsFull_ofOneKind_leaveTheOtherKindsFree() {
         // Both device ports are taken, and a screen still finds its video output.
         TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 2).with(PortKind.VIDEO, 1);
@@ -369,6 +431,21 @@ class PeripheralLinkValidatorTest {
                 pos -> pos == OWNER_POS ? Optional.of(owner) : Optional.empty(),
                 pos -> pos == ENDPOINT_POS ? Optional.of(endpoint) : Optional.empty(),
                 PeripheralLinkValidator.adjacencyFrom(adjacency));
+    }
+
+    /* The same, every cable reaching {@code reach}. */
+    private static PeripheralLinkValidator build(
+            Map<Long, List<Long>> adjacency,
+            IPeripheralOwner owner,
+            IPeripheralEndpoint endpoint,
+            Map<Long, PeripheralCableType> cables,
+            PeripheralLinkValidator.IReachLookup reach) {
+        return new PeripheralLinkValidator(
+                pos -> Optional.ofNullable(cables.get(pos)),
+                pos -> pos == OWNER_POS ? Optional.of(owner) : Optional.empty(),
+                pos -> pos == ENDPOINT_POS ? Optional.of(endpoint) : Optional.empty(),
+                PeripheralLinkValidator.adjacencyFrom(adjacency),
+                reach);
     }
 
     /**

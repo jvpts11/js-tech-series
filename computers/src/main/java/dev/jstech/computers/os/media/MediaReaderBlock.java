@@ -10,11 +10,12 @@ package dev.jstech.computers.os.media;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.PeripheralSockets;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.id.StableCodecs;
-import dev.jstech.core.peripheral.IPeripheralConnectable;
-import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -45,14 +46,14 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * <p>The concrete drive (Floppy / CD / DVD / Dock) is decided by the {@link MediaDriveType} passed at registration,
  * which also controls which media formats the slot accepts.
  *
- * <p>Participates in the {@link PeripheralCableType#COMPUTING} peripheral system as an endpoint, so a reader placed
- * within 16 cable blocks of a computer auto-discovers and links to that computer. The computer can then query all
- * linked readers to locate OS installation media without requiring the reader to be physically adjacent.
+ * <p>A peripheral of its computer: against it, or on a peripheral cable into the port of its era on its back, it links
+ * to the computer, which then finds installation media in it without the reader having to stand beside it.
  */
 @TextHolder
-public class MediaReaderBlock extends DeviceBlock implements IPeripheralConnectable {
+public class MediaReaderBlock extends DeviceBlock implements IFaceConnector {
 
     private final MediaDriveType driveType;
+    private final FacePorts ports;
 
     public static final MapCodec<MediaReaderBlock> CODEC = RecordCodecBuilder.mapCodec(instance ->
             instance.group(
@@ -90,6 +91,7 @@ public class MediaReaderBlock extends DeviceBlock implements IPeripheralConnecta
     public MediaReaderBlock(final MediaDriveType driveType, final Properties properties) {
         super(properties, DEVICE);
         this.driveType = driveType;
+        this.ports = PeripheralSockets.back(driveType.era());
         registerDefaultState(defaultBlockState().setValue(LOADED, false));
     }
 
@@ -98,9 +100,10 @@ public class MediaReaderBlock extends DeviceBlock implements IPeripheralConnecta
         return driveType;
     }
 
+    /** The device port of the drive's era, in the middle of its back. */
     @Override
-    public PeripheralCableType peripheralType() {
-        return PeripheralCableType.COMPUTING;
+    public FacePorts ports() {
+        return ports;
     }
 
     @Override

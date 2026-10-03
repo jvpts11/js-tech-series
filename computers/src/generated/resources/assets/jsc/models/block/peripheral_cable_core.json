@@ -1,6 +1,0 @@
-{
-  "parent": "jsc:block/cable_core",
-  "textures": {
-    "cable": "jsc:block/peripheral_cable"
-  }
-}

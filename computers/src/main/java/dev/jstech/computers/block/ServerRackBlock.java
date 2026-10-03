@@ -27,6 +27,7 @@ import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
+import dev.jstech.core.peripheral.PeripheralLine;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -94,6 +95,7 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
         this.era = era;
         this.ports = FacePorts.builder()
                 .port(FaceRule.BACK, DataLines.upTo(era, DataLine.BACKBONE))
+                .port(FaceRule.EVERY, PeripheralLine.of(era))
                 .build();
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(BAYS, 0)
                 .setValue(OpticalPort.OPTICAL, false));

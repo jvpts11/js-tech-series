@@ -1,6 +1,6 @@
 {
   "parent": "jscore:block/cable/item_4",
   "textures": {
-    "jacket": "jsc:block/cable/periph_standard"
+    "jacket": "jsc:block/cable/periph_legacy"
   }
 }

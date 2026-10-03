@@ -20,7 +20,7 @@ import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
-import dev.jstech.core.peripheral.IPeripheralConnectable;
+import dev.jstech.core.peripheral.PeripheralLine;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
@@ -55,7 +55,7 @@ import org.jetbrains.annotations.Nullable;
  * The Personal Computer: the player's hands-on access point to the network, assembled on a consumer ATX board.
  */
 public class PersonalComputerBlock extends HorizontalDirectionalBlock
-        implements EntityBlock, IFaceConnector, IComputerCase, IPeripheralConnectable {
+        implements EntityBlock, IFaceConnector, IComputerCase {
 
     private final HardwareEra era;
     private final CaseStyle caseStyle;
@@ -72,13 +72,9 @@ public class PersonalComputerBlock extends HorizontalDirectionalBlock
         super(properties);
         this.era = era;
         this.caseStyle = caseStyle;
-        this.ports = FacePorts.builder().port(FaceRule.BACK, DataLines.upTo(era, DataLine.ACCESS)).build();
+        this.ports = FacePorts.builder().port(FaceRule.BACK, DataLines.upTo(era, DataLine.ACCESS))
+                .port(FaceRule.EVERY, PeripheralLine.of(era)).build();
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
-    }
-
-    @Override
-    public PeripheralCableType peripheralType() {
-        return PeripheralCableType.COMPUTING;
     }
 
     @Override

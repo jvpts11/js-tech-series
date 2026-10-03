@@ -21,6 +21,7 @@ import dev.jstech.computers.integration.computercraft.ComputerCraftIntegration;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -95,12 +96,13 @@ public final class NetworkGatewayGameTests {
     public static void gateway_reachesItsHostThroughACableOnTheBack(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         world.placeRunningPersonalComputer(COMPUTER);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.PERIPHERAL_CABLE.get());
-        helper.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERIPHERAL_CABLE.get());
+        // The Gateway's socket is serial, the Vintage cable's, which a Standard computer takes too.
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.VINTAGE_PERIPHERAL_CABLE);
+        TestCables.lay(helper, new BlockPos(3, 2, 2), ComputingModule.VINTAGE_PERIPHERAL_CABLE);
         final BlockPos at = new BlockPos(4, 2, 2);
         helper.setBlock(at, gateway(Direction.EAST));
         // A second Gateway on the same cable run, so the second default name is proven too.
-        helper.setBlock(new BlockPos(3, 2, 3), ComputingModule.PERIPHERAL_CABLE.get());
+        TestCables.lay(helper, new BlockPos(3, 2, 3), ComputingModule.VINTAGE_PERIPHERAL_CABLE);
         final BlockPos second = new BlockPos(3, 2, 4);
         helper.setBlock(second, gateway(Direction.SOUTH));
         helper.startSequence()

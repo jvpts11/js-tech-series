@@ -90,7 +90,9 @@ public final class CoreModels {
             }
         }
         for (final CableType type : CoreCables.REGISTRY) {
-            event.register(ModelResourceLocation.standalone(type.plug()));
+            for (final ResourceLocation plug : type.allPlugs()) {
+                event.register(ModelResourceLocation.standalone(plug));
+            }
         }
         for (final ResourceLocation model : STANDALONE) {
             event.register(ModelResourceLocation.standalone(model));

@@ -14,11 +14,11 @@ import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.menu.PatternEncoderMenu;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.id.StableCodecs;
-import dev.jstech.core.peripheral.IPeripheralConnectable;
-import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -46,9 +46,10 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * a sneak-click takes it out (unless a job holds it), and a plain click opens the bay's small panel.
  */
 @TextHolder
-public class PatternEncoderBlock extends DeviceBlock implements IPeripheralConnectable, IEraChassisBlock {
+public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, IEraChassisBlock {
 
     private final HardwareEra era;
+    private final FacePorts ports;
 
     public static final MapCodec<PatternEncoderBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
@@ -81,6 +82,7 @@ public class PatternEncoderBlock extends DeviceBlock implements IPeripheralConne
     public PatternEncoderBlock(final Properties properties, final HardwareEra era) {
         super(properties, DEVICE);
         this.era = era;
+        this.ports = PeripheralSockets.back(era);
     }
 
     /** The era of this encoder, which decides which media it writes. */
@@ -93,9 +95,10 @@ public class PatternEncoderBlock extends DeviceBlock implements IPeripheralConne
         return era;
     }
 
+    /** The device port of its era, in the middle of its back. */
     @Override
-    public PeripheralCableType peripheralType() {
-        return PeripheralCableType.COMPUTING;
+    public FacePorts ports() {
+        return ports;
     }
 
     @Override

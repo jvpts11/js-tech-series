@@ -19,6 +19,7 @@ import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
 import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
+import dev.jstech.core.peripheral.PeripheralLine;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -73,6 +74,7 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
      */
     private static final FacePorts PORTS = FacePorts.builder()
             .port(FaceRule.BACK, DataLines.upTo(HardwareEra.ADVANCED, DataLine.BACKBONE, DataLine.HPC))
+            .port(FaceRule.EVERY, PeripheralLine.of(HardwareEra.ADVANCED))
             .build();
 
     public ServerRackPartBlock(final Properties properties) {

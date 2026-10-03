@@ -69,6 +69,7 @@ public final class ClientTestSuite {
             NetworkLinksClientTests.class,
             BusWindowClientTests.class,
             BusModelClientTests.class,
+            PeripheralCableClientTests.class,
             NetworkInteractorClientTests.class,
             NetworkServicesClientTests.class,
             NetworkSharesClientTests.class,

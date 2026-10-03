@@ -60,6 +60,8 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -2650,8 +2652,9 @@ public final class NetworkGameTests {
         // A Standard graphics card gives the computer four video outputs, one for each monitor.
         computer.getHardware().setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START,
                 new ItemStack(ComputingModule.GPU_HD_7970.get()));
-        helper.setBlock(cable, ComputingModule.PERIPHERAL_CABLE.get());
-        helper.setBlock(mon, ComputingModule.MONITOR.get());
+        TestCables.lay(helper, cable, ComputingModule.PERIPHERAL_CABLE);
+        // Facing east, its back, where its video port is, takes the cable.
+        helper.setBlock(mon, monitorFacing(Direction.EAST));
         if (!(helper.getBlockEntity(mon) instanceof MonitorBlockEntity monitor)) {
             helper.fail("no monitor");
             return;
@@ -2682,8 +2685,8 @@ public final class NetworkGameTests {
         final PersonalComputerBlockEntity computer = placeRunningPC(helper, pc);
         computer.getHardware().setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START,
                 new ItemStack(ComputingModule.GPU_HD_7970.get()));
-        helper.setBlock(cable, ComputingModule.PERIPHERAL_CABLE.get());
-        helper.setBlock(mon, ComputingModule.MONITOR.get());
+        TestCables.lay(helper, cable, ComputingModule.PERIPHERAL_CABLE);
+        helper.setBlock(mon, monitorFacing(Direction.EAST));
         helper.startSequence()
                 // The link is near-instant; the screen boots ~20 ticks later, so by 30 ticks it is lit.
                 .thenExecuteAfter(30, () -> helper.assertTrue(
@@ -2708,8 +2711,9 @@ public final class NetworkGameTests {
         final BlockPos farPart = controller.relative(facing.getClockWise());
         final BlockPos cable = farPart.relative(facing.getClockWise());
         final BlockPos mon = cable.relative(facing.getClockWise());
-        helper.setBlock(cable, ComputingModule.PERIPHERAL_CABLE.get());
-        helper.setBlock(mon, ComputingModule.MONITOR.get());
+        TestCables.lay(helper, cable, ComputingModule.PERIPHERAL_CABLE);
+        // Its back to the cable: facing away from the Mainframe.
+        helper.setBlock(mon, monitorFacing(facing.getClockWise()));
         if (!(helper.getBlockEntity(mon) instanceof MonitorBlockEntity monitor)) {
             helper.fail("no monitor");
             return;
@@ -3300,6 +3304,11 @@ public final class NetworkGameTests {
 
     private static PersonalComputerBlockEntity placeRunningPC(final GameTestHelper helper, final BlockPos relative) {
         return TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(relative);
+    }
+
+    /* A Standard monitor whose front looks {@code facing}, its port on the back. */
+    private static BlockState monitorFacing(final Direction facing) {
+        return ComputingModule.MONITOR.get().defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, facing);
     }
 
     // Package-private so the performance benchmarks can reuse the powered-up Crafting Computer setup.

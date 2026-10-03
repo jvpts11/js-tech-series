@@ -45,27 +45,50 @@ public final class PeripheralLinkValidator {
     }
 
     /**
-     * Provides the 6 face-adjacent neighbors of a given position.
+     * The positions a position leads on to: for a block that is no cable, the six beside it; for a cable, only those
+     * its wire crosses to, the cables it joins and the blocks it plugs into. A step counts only where it leads back.
      */
     @FunctionalInterface
     public interface INeighborLookup {
         List<Long> neighborsOf(long pos);
     }
 
+    /**
+     * How many cables a run of the cable at a position reaches, its era's reach, or 0 when the cable says nothing and
+     * its system's limit holds.
+     */
+    @FunctionalInterface
+    public interface IReachLookup {
+        int reachAt(long pos);
+    }
+
     private final ICableLookup cableLookup;
     private final IOwnerLookup ownerLookup;
     private final IEndpointLookup endpointLookup;
     private final INeighborLookup neighborLookup;
+    private final IReachLookup reachLookup;
 
+    /** A validator whose cables all reach as far as their system allows. */
     public PeripheralLinkValidator(
             final ICableLookup cableLookup,
             final IOwnerLookup ownerLookup,
             final IEndpointLookup endpointLookup,
             final INeighborLookup neighborLookup) {
+        this(cableLookup, ownerLookup, endpointLookup, neighborLookup, pos -> 0);
+    }
+
+    /** A validator whose cables each say how far a run of them reaches: a path is as long as its shortest reach. */
+    public PeripheralLinkValidator(
+            final ICableLookup cableLookup,
+            final IOwnerLookup ownerLookup,
+            final IEndpointLookup endpointLookup,
+            final INeighborLookup neighborLookup,
+            final IReachLookup reachLookup) {
         this.cableLookup = cableLookup;
         this.ownerLookup = ownerLookup;
         this.endpointLookup = endpointLookup;
         this.neighborLookup = neighborLookup;
+        this.reachLookup = reachLookup;
     }
 
     public ILinkResult tryEstablishLink(
@@ -154,6 +177,7 @@ public final class PeripheralLinkValidator {
 
         final int maxLength = requiredType.maxLength();
         final Set<Long> visited = new HashSet<>();
+        // Each queued place: its position, how many cables it is from the owner, and the shortest reach on the way.
         final Deque<long[]> queue = new ArrayDeque<>();
 
         // The source may be a multiblock owner: seed BFS from every face of every
@@ -168,10 +192,8 @@ public final class PeripheralLinkValidator {
                     // Owner adjacent to endpoint, zero cables between them.
                     return new IPathSearchResult.Found(0);
                 }
-                if (visited.add(neighbor)
-                        && cableLookup.cableTypeAt(neighbor)
-                        .filter(t -> t == requiredType).isPresent()) {
-                    queue.addLast(new long[]{neighbor, 1L});
+                if (visited.add(neighbor) && enters(neighbor, src, requiredType)) {
+                    queue.addLast(new long[]{neighbor, 1L, reach(neighbor, maxLength)});
                 }
             }
         }
@@ -180,26 +202,38 @@ public final class PeripheralLinkValidator {
             final long[] current = queue.pollFirst();
             final long pos = current[0];
             final int distance = (int) current[1];
+            final int limit = (int) current[2];
 
             for (final long neighbor : neighborLookup.neighborsOf(pos)) {
                 if (neighbor == target) {
                     // First reach is shortest path (BFS invariant).
-                    if (distance <= maxLength) {
+                    if (distance <= limit) {
                         return new IPathSearchResult.Found(distance);
                     }
-                    return new IPathSearchResult.TooLong(distance, maxLength);
+                    return new IPathSearchResult.TooLong(distance, limit);
                 }
                 if (!visited.add(neighbor)) {
                     continue;
                 }
-                if (cableLookup.cableTypeAt(neighbor)
-                        .filter(t -> t == requiredType).isPresent()) {
-                    queue.addLast(new long[]{neighbor, distance + 1});
+                if (enters(neighbor, pos, requiredType)) {
+                    queue.addLast(new long[]{neighbor, distance + 1, Math.min(limit, reach(neighbor, maxLength))});
                 }
             }
         }
 
         return new IPathSearchResult.NotFound();
+    }
+
+    /* Whether a path steps from {@code from} into a cable of {@code type} at {@code pos} that leads back to it. */
+    private boolean enters(final long pos, final long from, final PeripheralCableType type) {
+        return cableLookup.cableTypeAt(pos).filter(t -> t == type).isPresent()
+                && neighborLookup.neighborsOf(pos).contains(from);
+    }
+
+    /* How far a run of the cable at {@code pos} reaches: its own reach, or its system's when it says none. */
+    private int reach(final long pos, final int systemMax) {
+        final int own = reachLookup.reachAt(pos);
+        return own > 0 ? own : systemMax;
     }
 
     // ─── Adjacency helper for tests ─────────────────────────────────────────

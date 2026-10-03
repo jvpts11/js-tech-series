@@ -55,8 +55,6 @@ public record DataLink(DataLine line, HardwareEra era) {
             {0, 0, 24, 32, 48},
             {16, 16, 16, 16, 16},
     };
-    /* How far a peripheral cable reaches in each era, from Vintage to Advanced. */
-    private static final int[] PERIPHERAL_RANGE = {8, 12, 14, 16, 20};
 
     public DataLink {
         Objects.requireNonNull(line, "line");
@@ -88,11 +86,6 @@ public record DataLink(DataLine line, HardwareEra era) {
         final DataLine line = DataLine.byName(name.substring(0, cut));
         final HardwareEra era = eraNamed(name.substring(cut + 1));
         return line == null || era == null ? null : new DataLink(line, era);
-    }
-
-    /** How far a peripheral cable of {@code era} reaches, in cables; 0 for an era with none. */
-    public static int peripheralRange(final HardwareEra era) {
-        return era.id() < PERIPHERAL_RANGE.length ? PERIPHERAL_RANGE[era.id()] : 0;
     }
 
     /** The link's name: the line and the era, {@code access_legacy}; the crafting line's is its own. */

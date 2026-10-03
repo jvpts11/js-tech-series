@@ -33,7 +33,6 @@ import dev.jstech.computers.block.MainframePartBlock;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.block.NetworkGatewayBlock;
 import dev.jstech.computers.block.PatternEncoderBlock;
-import dev.jstech.computers.block.PeripheralCableBlock;
 import dev.jstech.computers.block.PersonalComputerBlock;
 import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.block.RepeaterBlock;
@@ -110,6 +109,9 @@ import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.Lane;
+import dev.jstech.core.grid.GridKind;
+import dev.jstech.core.peripheral.PeripheralLine;
+import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.content.BlockBuilder;
 import dev.jstech.core.content.CableBuilder;
 import dev.jstech.core.content.BlockEntry;
@@ -232,8 +234,25 @@ public final class ComputingModule {
             "osfp_dac", "osfp").named("OSFP Cable").tab(CLUSTER).register();
     public static final CableEntry CRAFTING_CABLE = dataCable("crafting_cable", DataLine.CRAFTING,
             HardwareEra.VINTAGE, "crafting", "crafting").named("Crafting Cable").tab(CLUSTER).register();
-    public static final BlockEntry<PeripheralCableBlock> PERIPHERAL_CABLE =
-            cable("peripheral_cable", PeripheralCableBlock::new, NETWORK).named("Peripheral Cable").register();
+    /*
+     * The peripheral cables, one for each era, in the lane at the middle left: what a computer's screens, speakers and
+     * devices hang from. Each ends in the plug of the port it enters, the video plug at a screen and the device plug
+     * anywhere else; the Standard's keeps the id the one peripheral cable had.
+     */
+    public static final CableEntry VINTAGE_PERIPHERAL_CABLE = peripheralCable("vintage_peripheral_cable",
+            HardwareEra.VINTAGE, "periph_vintage", "db25", "de9").named("Vintage Peripheral Cable").tab(NETWORK)
+            .register();
+    public static final CableEntry LEGACY_PERIPHERAL_CABLE = peripheralCable("legacy_peripheral_cable",
+            HardwareEra.LEGACY, "periph_legacy", "usb", "vga").named("Legacy Peripheral Cable").tab(NETWORK)
+            .register();
+    public static final CableEntry TRANSITION_PERIPHERAL_CABLE = peripheralCable("transition_peripheral_cable",
+            HardwareEra.TRANSITION, "periph_transition", "usb_white", "dvi").named("Transition Peripheral Cable")
+            .tab(NETWORK).register();
+    public static final CableEntry PERIPHERAL_CABLE = peripheralCable("peripheral_cable", HardwareEra.STANDARD,
+            "periph_standard", "usb3", "hdmi").named("Peripheral Cable").tab(NETWORK).register();
+    public static final CableEntry ADVANCED_PERIPHERAL_CABLE = peripheralCable("advanced_peripheral_cable",
+            HardwareEra.ADVANCED, "periph_advanced", "usbc", "dp").named("Advanced Peripheral Cable").tab(NETWORK)
+            .register();
 
     /*
      * Routers and repeaters: plain blocks with six equal faces, each a plate with its era's connector, framed in the
@@ -851,10 +870,6 @@ public final class ComputingModule {
         return items <= lastStandard ? HardwareEra.STANDARD : HardwareEra.ADVANCED;
     }
 
-    private static BlockBehaviour.Properties cableProperties(final BlockBehaviour.Properties properties) {
-        return properties.mapColor(MapColor.COLOR_GRAY).strength(0.3F).sound(SoundType.WOOL).noOcclusion();
-    }
-
     /*
      * The cabinet is one model drawn by the controller, so the twelve blocks render nothing themselves: without
      * noOcclusion they would still cull their neighbours' faces and block light, leaving a machine-shaped hole in
@@ -892,13 +907,21 @@ public final class ComputingModule {
         return CONTENT.cable(id, builder);
     }
 
-    /** A cable: a core, an arm toward each side it connects to, and the core as its item. */
-    private static <B extends Block> BlockBuilder<B> cable(final String id,
-                                                          final Function<BlockBehaviour.Properties, B> factory,
-                                                          final ContentTab.Section section) {
-        return CONTENT.block(id, factory).properties(ComputingModule::cableProperties)
-                .look(IBlockLook.pipe("block/" + id, "block/cable_core", "block/cable_arm"))
-                .item().itemLook(IItemLook.parent("block/" + id + "_core")).tab(section);
+    /*
+     * The peripheral cable of {@code era}: no network on it, it reaches its era's run, and it ends in {@code
+     * devicePlug} at a device or a computer and in {@code videoPlug} at a screen.
+     */
+    private static CableBuilder peripheralCable(final String id, final HardwareEra era, final String jacket,
+                                                final String devicePlug, final String videoPlug) {
+        final CableType.Builder builder = CableType.builder(PeripheralLine.of(era))
+                .grid(GridKind.PERIPHERAL)
+                .lane(Lane.LEFT)
+                .carries(0L, PeripheralLine.range(era))
+                .jacket(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/" + jacket))
+                .plug(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/plug/" + devicePlug))
+                .plug(PortKind.VIDEO,
+                        ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/plug/" + videoPlug));
+        return CONTENT.cable(id, builder);
     }
 
     /* A router of {@code era}, or its optical router, wearing the network device model of the same name. */

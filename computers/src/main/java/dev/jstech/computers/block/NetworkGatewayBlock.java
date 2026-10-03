@@ -11,10 +11,11 @@ import com.mojang.serialization.MapCodec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.menu.NetworkGatewayMenu;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
-import dev.jstech.core.peripheral.IPeripheralConnectable;
-import dev.jstech.core.peripheral.PeripheralCableType;
+import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -27,9 +28,15 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
  * the status plate) looks at whoever placed it and its back (the peripheral cable socket) points at the
  * computer. A right-click opens its buffer; everything else about it is set on the host computer.
  */
-public class NetworkGatewayBlock extends DeviceBlock implements IPeripheralConnectable {
+public class NetworkGatewayBlock extends DeviceBlock implements IFaceConnector {
 
     public static final MapCodec<NetworkGatewayBlock> CODEC = simpleCodec(NetworkGatewayBlock::new);
+
+    /*
+     * Its socket is a serial port, the Vintage cable's: every computer takes that cable, so it serves every era, a
+     * cable of a later era never fitting it.
+     */
+    private static final FacePorts PORTS = PeripheralSockets.back(HardwareEra.VINTAGE);
 
     /** True while the status lights are on: linked to a host, or blinking for Identify. */
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
@@ -51,8 +58,8 @@ public class NetworkGatewayBlock extends DeviceBlock implements IPeripheralConne
     }
 
     @Override
-    public PeripheralCableType peripheralType() {
-        return PeripheralCableType.COMPUTING;
+    public FacePorts ports() {
+        return PORTS;
     }
 
     @Override

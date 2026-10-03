@@ -21,7 +21,7 @@ import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
-import dev.jstech.core.peripheral.IPeripheralConnectable;
+import dev.jstech.core.peripheral.PeripheralLine;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
@@ -52,8 +52,7 @@ import java.util.List;
  * The Mainframe, the network's orchestrator: one block for every era, the era given where it is declared.
  */
 public class MainframeBlock extends AbstractMultiblockControllerBlock
-        implements IFaceConnector,
-        IPeripheralConnectable, IEraChassisBlock {
+        implements IFaceConnector, IEraChassisBlock {
 
     private final HardwareEra era;
     /*
@@ -70,14 +69,9 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
     public MainframeBlock(final Properties properties, final HardwareEra era) {
         super(properties);
         this.era = era;
-        this.ports = FacePorts.everyFace(DataLines.upTo(era, DataLine.BACKBONE));
+        this.ports = FacePorts.everyFace(DataLines.upTo(era, DataLine.BACKBONE), PeripheralLine.of(era));
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH)
                 .setValue(OpticalPort.OPTICAL, false));
-    }
-
-    @Override
-    public PeripheralCableType peripheralType() {
-        return PeripheralCableType.COMPUTING;
     }
 
     /**

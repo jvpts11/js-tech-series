@@ -12,7 +12,10 @@ import dev.jstech.core.energy.EnergyLoss;
 import dev.jstech.core.fluid.PipeLimits;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridMember;
+import dev.jstech.core.peripheral.PortKind;
+import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -53,6 +56,7 @@ public final class CableType {
     private final PipeLimits pipe;
     private final ResourceLocation jacket;
     private final ResourceLocation plug;
+    private final Map<PortKind, ResourceLocation> plugs;
     private final Supplier<? extends Item> item;
     private final boolean straight;
     private final int mostJoins;
@@ -73,6 +77,7 @@ public final class CableType {
         this.pipe = new PipeLimits(builder.coldest, builder.hottest, builder.takes);
         this.jacket = Objects.requireNonNull(builder.jacket, "a cable has a jacket");
         this.plug = Objects.requireNonNull(builder.plug, "a cable has a plug");
+        this.plugs = builder.plugs.isEmpty() ? Map.of() : Map.copyOf(builder.plugs);
         this.item = Objects.requireNonNull(item, "item");
     }
 
@@ -149,6 +154,18 @@ public final class CableType {
         return this.plug;
     }
 
+    /** The plug it ends in at a peripheral whose port is of {@code kind}: its own for that kind, or its plug. */
+    public ResourceLocation plug(final PortKind kind) {
+        return this.plugs.getOrDefault(kind, this.plug);
+    }
+
+    /** Every plug it can end in: its own, and those it has for some kinds of port. */
+    public Set<ResourceLocation> allPlugs() {
+        final Set<ResourceLocation> all = new HashSet<>(this.plugs.values());
+        all.add(this.plug);
+        return all;
+    }
+
     /** The item that lays it. */
     public Item item() {
         return this.item.get();
@@ -187,6 +204,7 @@ public final class CableType {
         private final Set<TagKey<Fluid>> takes = new HashSet<>();
         private @Nullable ResourceLocation jacket;
         private @Nullable ResourceLocation plug;
+        private final Map<PortKind, ResourceLocation> plugs = new EnumMap<>(PortKind.class);
         private boolean straight;
         private int mostJoins;
 
@@ -288,6 +306,15 @@ public final class CableType {
         /** The standalone model of the plug it ends in at a device. */
         public Builder plug(final ResourceLocation model) {
             this.plug = Objects.requireNonNull(model, "model");
+            return this;
+        }
+
+        /**
+         * The standalone model of the plug it ends in at a peripheral whose port is of {@code kind}: a video plug at a
+         * screen, say, where the others take the cable's own plug.
+         */
+        public Builder plug(final PortKind kind, final ResourceLocation model) {
+            this.plugs.put(Objects.requireNonNull(kind, "kind"), Objects.requireNonNull(model, "model"));
             return this;
         }
 

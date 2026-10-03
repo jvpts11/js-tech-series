@@ -342,6 +342,17 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   unlinks the monitors it fed. The numbers are first estimates.
 - Port kinds for peripherals, in J's Core: an owner has so many ports of each kind and a peripheral takes one of its
   own; an owner that loses ports unlinks the peripherals it linked last.
+- A peripheral cable for each era, laid in the shared cable block beside the data cables: the Vintage beige cable
+  (DE-9 at a screen, DB-25 at a device), the Legacy black one (VGA and USB), the Transition white one (DVI and the
+  white USB), the Standard braided one (HDMI and USB 3) and the Advanced space grey one (DisplayPort and USB-C). Each
+  ends in the plug of the port it enters. A run reaches 8 cables on the Vintage, then 12, 14, 16 and 20. A port takes
+  its era's cable and every earlier one, so a newer computer takes an older device's cable and an older device never
+  takes a newer one; cables of two eras never join. A peripheral takes the cable on its back, where its model has the
+  port, and a computer on any face; a peripheral against its computer still needs no cable. The one Peripheral Cable
+  block is gone: the Standard's cable keeps its id.
+- The Network Gateway takes the Vintage serial cable, which every computer takes.
+- The peripheral line in J's Core: a cable can end in a different plug for each kind of port, and the peripheral
+  links follow the peripheral wires of the shared cable block, each run as far as its cable reaches.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

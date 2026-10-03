@@ -20,7 +20,7 @@ import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
 import dev.jstech.core.peripheral.PeripheralCableType;
-import dev.jstech.core.peripheral.IPeripheralConnectable;
+import dev.jstech.core.peripheral.PeripheralLine;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
@@ -54,7 +54,7 @@ import org.jetbrains.annotations.Nullable;
  * works without one; the computer makes it one machine to run.
  */
 public class ClusterManagementComputerBlock extends HorizontalDirectionalBlock
-        implements EntityBlock, IFaceConnector, IPeripheralConnectable, IComputerCase {
+        implements EntityBlock, IFaceConnector, IComputerCase {
 
     private final HardwareEra era;
     private final CaseStyle caseStyle;
@@ -78,6 +78,7 @@ public class ClusterManagementComputerBlock extends HorizontalDirectionalBlock
         this.caseStyle = caseStyle;
         this.ports = FacePorts.builder()
                 .port(FaceRule.BACK, DataLines.upTo(era, DataLine.ACCESS, DataLine.BACKBONE))
+                .port(FaceRule.EVERY, PeripheralLine.of(era))
                 .build();
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH)
                 .setValue(OpticalPort.OPTICAL, false));
@@ -111,11 +112,6 @@ public class ClusterManagementComputerBlock extends HorizontalDirectionalBlock
     @Override
     protected MapCodec<? extends ClusterManagementComputerBlock> codec() {
         return CODEC;
-    }
-
-    @Override
-    public PeripheralCableType peripheralType() {
-        return PeripheralCableType.COMPUTING;
     }
 
     @Override

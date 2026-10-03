@@ -19,7 +19,7 @@ import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
 import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
 import dev.jstech.core.peripheral.PeripheralCableType;
-import dev.jstech.core.peripheral.IPeripheralConnectable;
+import dev.jstech.core.peripheral.PeripheralLine;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -47,7 +47,7 @@ import org.jetbrains.annotations.Nullable;
  * A structural part of the Mainframe multiblock, one of the 11 non-controller blocks.
  */
 public class MainframePartBlock extends HorizontalDirectionalBlock
-        implements EntityBlock, IFaceConnector, IPeripheralConnectable {
+        implements EntityBlock, IFaceConnector {
 
     public static final MapCodec<MainframePartBlock> CODEC = simpleCodec(MainframePartBlock::new);
     /*
@@ -55,16 +55,8 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
      * every era's backbone; the controller's own faces are where the age is held to.
      */
     private static final FacePorts PORTS =
-            FacePorts.everyFace(DataLines.upTo(HardwareEra.ADVANCED, DataLine.BACKBONE));
-
-    @Override
-    public PeripheralCableType peripheralType() {
-        /*
-         * The whole Mainframe footprint is a COMPUTING peripheral owner, so a
-         * Peripheral Cable may attach to any part's face, not just the controller.
-         */
-        return PeripheralCableType.COMPUTING;
-    }
+            FacePorts.everyFace(DataLines.upTo(HardwareEra.ADVANCED, DataLine.BACKBONE),
+                    PeripheralLine.of(HardwareEra.ADVANCED));
 
     public static final BooleanProperty CORE = BooleanProperty.create("core");
 
