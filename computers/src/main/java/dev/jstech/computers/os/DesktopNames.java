@@ -19,6 +19,7 @@ import dev.jstech.core.text.TextKey;
 final class DesktopNames {
 
     static final TextKey MEGASHELL = TextKey.of("jsc.desktop.frames_11.command_prompt", "Megashell");
+    static final TextKey FRAMES_95_SYSTEM = TextKey.of("jsc.desktop.frames_95.device_manager", "System");
 
     static final TextKey KDE_FILES = TextKey.of("jsc.desktop.kde_plasma.files", "Dolphin");
     static final TextKey KDE_EDITOR = TextKey.of("jsc.desktop.kde_plasma.editor", "Kate");

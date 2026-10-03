@@ -213,6 +213,11 @@ public record DeviceMap(String host, Text board, List<Text> processors, List<Tex
         return blockId;
     }
 
+    /** The same machine under another name: the Frames editions write a computer's name in capitals. */
+    public DeviceMap withHost(final String name) {
+        return new DeviceMap(name, board, processors, memory, disks, video, audio, family, devicePorts, network, cards);
+    }
+
     /** How many device ports the machine has: the board's and every hub's on them. */
     public int devicePortsTotal() {
         return devicePorts.size() + hubPortsOf(devicePorts);
@@ -247,6 +252,40 @@ public record DeviceMap(String host, Text board, List<Text> processors, List<Tex
         for (final Device device : devices()) {
             if (device.pos() == pos) {
                 return device;
+            }
+        }
+        return null;
+    }
+
+    /** The port the device at {@code pos} is plugged into, or null when none of the machine's carries it. */
+    @Nullable
+    public Port portOf(final long pos) {
+        for (final VideoCard card : video) {
+            final Port found = portIn(card.outputs(), pos);
+            if (found != null) {
+                return found;
+            }
+        }
+        for (final AudioSource source : audio) {
+            final Port found = portIn(source.outputs(), pos);
+            if (found != null) {
+                return found;
+            }
+        }
+        return portIn(devicePorts, pos);
+    }
+
+    @Nullable
+    private static Port portIn(final List<Port> ports, final long pos) {
+        for (final Port port : ports) {
+            for (final Device device : port.plugged()) {
+                if (device.pos() == pos) {
+                    return port;
+                }
+                final Port deeper = portIn(device.ports(), pos);
+                if (deeper != null) {
+                    return deeper;
+                }
             }
         }
         return null;

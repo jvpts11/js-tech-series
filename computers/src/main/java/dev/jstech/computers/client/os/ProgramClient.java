@@ -91,6 +91,7 @@ public final class ProgramClient {
         register(rl("calculator"), (host, mon, os) -> new CalculatorApp());
         register(rl("network_manager"), (host, mon, os) -> new NetworkManagerApp(host, mon));
         register(rl("task_manager"), (host, mon, os) -> new TaskManagerApp(host, os));
+        register(rl("device_manager"), (host, mon, os) -> new DeviceManagerApp(host, os));
         // Installable programs.
         register(rl("nms"), (host, mon, os) ->
                 new NmsApp(host, mon));

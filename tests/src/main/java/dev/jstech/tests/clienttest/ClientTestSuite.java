@@ -40,6 +40,7 @@ public final class ClientTestSuite {
             CoreStateClientTests.class,
             CraftingChainClientTests.class,
             DesktopMenuClientTests.class,
+            DeviceManagerClientTests.class,
             ExposureClientTests.class,
             FilesSyncClientTests.class,
             FreeBsdClientTests.class,

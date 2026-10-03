@@ -394,6 +394,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   controller, its audio and network, the graphics and expansion cards) and `lsusb` what is plugged into its ports,
   `lsusb -t` as a tree with each hub's ports under the hub and the free ports too; on FreeBSD `pciconf -lv` and
   `usbconfig`. A device the computer disabled is marked by each.
+- The Device Manager on the Frames desktops: the machine's hardware and every port it has, what is plugged into each
+  and which are free, hubs with their own ports under them, and how many device ports are in use. Devices are listed
+  by port, by type or by connection, and a device is disabled or enabled again from it, crossed out while disabled.
+  Frames 95 keeps it in System Properties with the views as radio buttons and the actions as buttons under the tree;
+  Frames XP has its console window, the views in the View menu, the actions on a right-click and in the Action menu,
+  and a status bar that says what disabling a device does; Frames 11 has the views as a switch in its menu row.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

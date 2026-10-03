@@ -225,6 +225,11 @@ public final class OsBootstrap {
             rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
             rl("system_monitor"), rl("calculator"), rl("network_manager"));
 
+    /** What the Frames editions bundle: the same, and their Device Manager. */
+    private static final List<ResourceLocation> FRAMES_APPS = List.of(
+            rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
+            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("device_manager"));
+
     /** What CDE bundles: the same, and its Workstation Info, which no other desktop has. */
     private static final List<ResourceLocation> CDE_APPS = List.of(
             rl("network"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
@@ -236,11 +241,12 @@ public final class OsBootstrap {
      * with its chrome and the native names its bundled apps show.
      */
     private static final List<DesktopEnvironmentDef> BUILTIN_DESKTOPS = List.of(
-            new DesktopEnvironmentDef(rl("frames_95"), "Frames 95", PanelStyle.FRAMES_95, BUILTIN_APPS, Map.of(),
+            // Frames 95 keeps its Device Manager in System Properties, which its Control Panel calls System.
+            new DesktopEnvironmentDef(rl("frames_95"), "Frames 95", PanelStyle.FRAMES_95, FRAMES_APPS,
+                    Map.of(rl("device_manager"), DesktopNames.FRAMES_95_SYSTEM), SoftwareHouse.MIDSOFT),
+            new DesktopEnvironmentDef(rl("frames_xp"), "Frames XP", PanelStyle.FRAMES_XP, FRAMES_APPS, Map.of(),
                     SoftwareHouse.MIDSOFT),
-            new DesktopEnvironmentDef(rl("frames_xp"), "Frames XP", PanelStyle.FRAMES_XP, BUILTIN_APPS, Map.of(),
-                    SoftwareHouse.MIDSOFT),
-            new DesktopEnvironmentDef(rl("frames_11"), "Frames 11", PanelStyle.FRAMES_11, BUILTIN_APPS, Map.of(),
+            new DesktopEnvironmentDef(rl("frames_11"), "Frames 11", PanelStyle.FRAMES_11, FRAMES_APPS, Map.of(),
                     SoftwareHouse.MIDSOFT),
             new DesktopEnvironmentDef(rl("kde_plasma"), "KDE Plasma", PanelStyle.KDE, BUILTIN_APPS, Map.of(
                     rl("files"), DesktopNames.KDE_FILES, rl("editor"), DesktopNames.KDE_EDITOR,
@@ -391,6 +397,11 @@ public final class OsBootstrap {
             ProgramSpec.of(rl("task_manager"), "taskmgr", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY)
                     .named("Task Manager")
                     .described("What this machine is running, what it is spending, and how to end it."),
+            // The Frames editions' Device Manager: the machine's hardware and its ports, and a device disabled.
+            ProgramSpec.of(rl("device_manager"), "devmgmt", true, FRAMES_ONLY, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Device Manager")
+                    .described("The machine's hardware and every port it has: what is plugged into each, what is"
+                            + " free, and a device disabled or enabled again."),
 
             /*
              * Installables. The OS rank only gates the Frames editions (a Linux distribution ranks 0, so any
