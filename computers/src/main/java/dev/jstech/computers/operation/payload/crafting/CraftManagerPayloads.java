@@ -30,6 +30,7 @@ import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.util.Loaded;
 import java.util.Comparator;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
@@ -321,7 +322,7 @@ public final class CraftManagerPayloads {
         final String rawPos = slash < 0 ? rest : rest.substring(0, slash);
         try {
             final long encoded = Long.parseLong(rawPos);
-            if (level.getBlockEntity(BlockPos.of(encoded))
+            if (Loaded.blockEntity(level, BlockPos.of(encoded))
                     instanceof MediaReaderBlockEntity reader) {
                 reader.setChanged();
             }
@@ -358,7 +359,7 @@ public final class CraftManagerPayloads {
          * mean, wherever it sits.
          */
         for (final long endpoint : cc.linkedEndpoints()) {
-            if (level.getBlockEntity(BlockPos.of(endpoint))
+            if (Loaded.blockEntity(level, BlockPos.of(endpoint))
                     instanceof MediaReaderBlockEntity reader) {
                 final ItemStack m = reader.mediaSlot().getStackInSlot(0);
                 if (m.isEmpty()

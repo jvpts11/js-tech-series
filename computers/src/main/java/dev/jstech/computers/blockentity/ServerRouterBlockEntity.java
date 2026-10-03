@@ -27,6 +27,7 @@ import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
 import dev.jstech.core.network.ServerRouterElement;
 import dev.jstech.core.tier.IndustrialTier;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;
@@ -416,7 +417,7 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
                         racks.add(rack.getBlockPos().asLong());
                     }
                 } else if (neighbor instanceof ServerRackPartBlockEntity part && part.controllerPos() != null) {
-                    if (level.getBlockEntity(part.controllerPos()) instanceof ServerRackBlockEntity controller
+                    if (Loaded.blockEntity(level, part.controllerPos()) instanceof ServerRackBlockEntity controller
                             && controller.rackType()
                                     != RackChassis.RackType.SUPERCOMPUTER) {
                         racks.add(part.controllerPos().asLong());

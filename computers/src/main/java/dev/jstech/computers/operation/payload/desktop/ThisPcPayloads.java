@@ -51,6 +51,7 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.text.TextLists;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -131,7 +132,7 @@ public final class ThisPcPayloads {
                 slot++;
             }
             for (final long endpoint : computer.linkedEndpoints()) {
-                if (level.getBlockEntity(BlockPos.of(endpoint))
+                if (Loaded.blockEntity(level, BlockPos.of(endpoint))
                         instanceof MediaReaderBlockEntity reader) {
                     media.add(mediaRow(computer, payload.hostPos(), endpoint, reader));
                 }
@@ -296,7 +297,7 @@ public final class ThisPcPayloads {
         final Map<String, Text> names = new LinkedHashMap<>();
         for (final long endpoint : computer.linkedEndpoints()) {
             final BlockEntity be =
-                    level.getBlockEntity(BlockPos.of(endpoint));
+                    Loaded.blockEntity(level, BlockPos.of(endpoint));
             final Text label;
             if (be instanceof MediaReaderBlockEntity reader) {
                 label = (switch (reader.driveType()) {
@@ -340,7 +341,7 @@ public final class ThisPcPayloads {
                                          final ServerLevel level) {
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer
                 && computer.linkedEndpoints().contains(payload.readerPos())
-                && level.getBlockEntity(BlockPos.of(payload.readerPos()))
+                && Loaded.blockEntity(level, BlockPos.of(payload.readerPos()))
                         instanceof MediaReaderBlockEntity reader) {
             final ItemStack ejected = reader.ejectMedia();
             if (!ejected.isEmpty() && !player.addItem(ejected)) {
@@ -362,7 +363,7 @@ public final class ThisPcPayloads {
         }
         // The drive must be a media reader currently linked to this computer.
         if (!computer.linkedEndpoints().contains(payload.readerPos())
-                || !(level.getBlockEntity(BlockPos.of(payload.readerPos()))
+                || !(Loaded.blockEntity(level, BlockPos.of(payload.readerPos()))
                         instanceof MediaReaderBlockEntity reader)) {
             return;
         }

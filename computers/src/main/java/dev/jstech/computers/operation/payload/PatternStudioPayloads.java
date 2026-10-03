@@ -73,6 +73,7 @@ import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -513,7 +514,7 @@ public final class PatternStudioPayloads {
     @Nullable
     static PatternEncoderBlockEntity encoderOf(final ServerLevel level, final IOsHost host) {
         for (final long endpoint : host.linkedEndpoints()) {
-            if (level.getBlockEntity(BlockPos.of(endpoint)) instanceof PatternEncoderBlockEntity encoder) {
+            if (Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof PatternEncoderBlockEntity encoder) {
                 return encoder;
             }
         }
@@ -615,7 +616,7 @@ public final class PatternStudioPayloads {
             if (drives.size() >= PatternStudioStatePayload.MAX_DRIVES - 1) {
                 break;
             }
-            if (level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader) {
+            if (Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader) {
                 final ItemStack m = reader.mediaSlot().getStackInSlot(0);
                 if (m.isEmpty() || !(m.getItem() instanceof FormattedMediaItem fmt)) {
                     continue;

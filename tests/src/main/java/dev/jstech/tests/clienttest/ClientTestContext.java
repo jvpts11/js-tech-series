@@ -214,9 +214,17 @@ public final class ClientTestContext {
         return thenWaitUntil(() -> type.isInstance(mc.screen), maxTicks, "screen " + type.getSimpleName());
     }
 
-    /** Waits until no screen is open. */
+    /**
+     * Waits until no screen is open, and until the server has closed the player's window as well. A window closed on
+     * the client reaches the server as a packet, and the game closes whatever window the server has open when that
+     * packet lands, whichever window it was sent for: a step that opened the next window from the server before then
+     * would have it closed at once, with its screen still up on the client.
+     */
     public ClientTestContext thenAwaitNoScreen(final int maxTicks) {
-        return thenWaitUntil(() -> mc.screen == null, maxTicks, "no screen");
+        return thenWaitUntil(() -> mc.screen == null, maxTicks, "no screen")
+                .thenWaitUntilServer(level -> serverPlayer().containerMenu == serverPlayer().inventoryMenu, maxTicks,
+                        "the server to close the window",
+                        level -> "still open: " + serverPlayer().containerMenu.getClass().getSimpleName());
     }
 
     /**

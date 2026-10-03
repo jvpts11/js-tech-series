@@ -23,6 +23,7 @@ import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.ServerStorageContents;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.util.Loaded;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -84,7 +85,7 @@ public final class FileAccess {
             return ItemStack.EMPTY;
         }
         if (!computer.linkedEndpoints().contains(readerPos)
-                || !(level.getBlockEntity(BlockPos.of(readerPos))
+                || !(Loaded.blockEntity(level, BlockPos.of(readerPos))
                         instanceof MediaReaderBlockEntity reader)) {
             return ItemStack.EMPTY;
         }
@@ -110,7 +111,7 @@ public final class FileAccess {
         } catch (final NumberFormatException e) {
             return;
         }
-        if (level.getBlockEntity(BlockPos.of(readerPos))
+        if (Loaded.blockEntity(level, BlockPos.of(readerPos))
                 instanceof MediaReaderBlockEntity reader) {
             reader.setChanged();
             reader.fields().syncToClients();

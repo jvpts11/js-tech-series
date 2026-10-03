@@ -32,6 +32,7 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -121,7 +122,7 @@ public final class ClusterManagerStateBuilder {
                 used += store.usedWeight();
                 total += store.capacityWeight();
             }
-            final int mode = level.getBlockEntity(ref.routerPos()) instanceof ServerRouterBlockEntity router
+            final int mode = Loaded.blockEntity(level, ref.routerPos()) instanceof ServerRouterBlockEntity router
                     ? router.loadBalanceMode(ref.face()).id()
                     : LoadBalanceMode.ROUND_ROBIN.id();
             clusters.add(new ClusterManagerStatePayload.WireCluster(ClusterManagerStatePayload.KIND_DATACENTER, i,
@@ -140,7 +141,8 @@ public final class ClusterManagerStateBuilder {
             final var slots = hub.clusterSlots();
             int i = 0;
             for (final var node : hub.clusterNodes()) {
-                if (level.getBlockEntity(node.rack()) instanceof ServerRackBlockEntity rack && nodes.size() < ClusterManagerStatePayload.MAX_NODES) {
+                if (Loaded.blockEntity(level, node.rack()) instanceof ServerRackBlockEntity rack
+                        && nodes.size() < ClusterManagerStatePayload.MAX_NODES) {
                     final int rIdx = rackIndex.computeIfAbsent(node.rack(), r -> rackIndex.size() + 1);
                     final ItemStack server = rack.getServers().getStackInSlot(node.row());
                     final var host = rack.unitHost(node.row());
@@ -215,7 +217,7 @@ public final class ClusterManagerStateBuilder {
                             nodeState(cmc, rack, row, rack.getServers().getStackInSlot(row), host, -1, -1)));
                 }
             }
-            final int mode = level.getBlockEntity(ref.routerPos()) instanceof ServerRouterBlockEntity router
+            final int mode = Loaded.blockEntity(level, ref.routerPos()) instanceof ServerRouterBlockEntity router
                     ? router.loadBalanceMode(ref.face()).id()
                     : LoadBalanceMode.ROUND_ROBIN.id();
             final BlockPos rp = ref.routerPos();
@@ -231,16 +233,16 @@ public final class ClusterManagerStateBuilder {
             final NetworkUuid net = cmc.networkUuid();
             if (net != null) {
                 for (final var pc : system.personalComputersOf(net)) {
-                    if (level.getBlockEntity(BlockPos.of(pc.pos())) instanceof IComputerTerminalHost pcHost
+                    if (Loaded.blockEntity(level, BlockPos.of(pc.pos())) instanceof IComputerTerminalHost pcHost
                             && pcHost.localStorageCapacity() > 0L && dests.size() < ClusterManagerStatePayload.MAX_DESTS) {
-                        final String name = level.getBlockEntity(BlockPos.of(pc.pos()))
+                        final String name = Loaded.blockEntity(level, BlockPos.of(pc.pos()))
                                 instanceof IOsHost os && !os.customName().isEmpty()
                                 ? os.customName() : "PC-" + pc.nodeUuid().asString().substring(0, 4);
                         dests.add(new ClusterManagerStatePayload.WireDest(pc.pos(), Text.literal(name)));
                     }
                 }
                 system.mainframePositionOf(net).ifPresent(mfPos -> {
-                    if (level.getBlockEntity(BlockPos.of(mfPos)) instanceof IComputerTerminalHost host
+                    if (Loaded.blockEntity(level, BlockPos.of(mfPos)) instanceof IComputerTerminalHost host
                             && host.localStorageCapacity() > 0L) {
                         dests.add(new ClusterManagerStatePayload.WireDest(mfPos, MAINFRAME.text()));
                     }

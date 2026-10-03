@@ -77,6 +77,7 @@ import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -216,7 +217,7 @@ public final class FirmwarePayloads {
                     Text.EMPTY, os != null, -1));
         }
         for (final long endpoint : computer.linkedEndpoints()) {
-            if (!(level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader)) {
+            if (!(Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader)) {
                 continue;
             }
             final Text drive = reader.driveType().driveName();
@@ -443,7 +444,7 @@ public final class FirmwarePayloads {
                 MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos());
             }
             case FirmwareActionPayload.ACTION_BOOT_MEDIA -> {
-                if (level.getBlockEntity(BlockPos.of(payload.ref())) instanceof MediaReaderBlockEntity reader
+                if (Loaded.blockEntity(level, BlockPos.of(payload.ref())) instanceof MediaReaderBlockEntity reader
                         && reader.insertedKind() == MediaKind.OS_INSTALL && reader.insertedPayload() != null) {
                     final OsDef os = OsRegistry.getOs(reader.insertedPayload());
                     /*
@@ -519,7 +520,7 @@ public final class FirmwarePayloads {
             if (readerPos != ANY_READER && endpoint != readerPos) {
                 continue;
             }
-            if (!(level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader)
+            if (!(Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader)
                     || reader.insertedKind() != MediaKind.OS_INSTALL || reader.insertedPayload() == null) {
                 continue;
             }

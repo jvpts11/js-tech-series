@@ -38,6 +38,7 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -336,7 +337,7 @@ public final class InstallService {
             return out;
         }
         for (final long endpoint : computer.linkedEndpoints()) {
-            if (this.level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader
+            if (Loaded.blockEntity(this.level, BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader
                     && reader.insertedKind() == MediaKind.PROGRAM_INSTALL) {
                 final ProgramSpec spec = reader.insertedPayload() == null ? null
                         : Programs.get(reader.insertedPayload());
@@ -355,7 +356,7 @@ public final class InstallService {
             return null;
         }
         for (final long endpoint : computer.linkedEndpoints()) {
-            if (this.level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader
+            if (Loaded.blockEntity(this.level, BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader
                     && reader.insertedKind() == MediaKind.PROGRAM_INSTALL
                     && programId.equals(reader.insertedPayload())) {
                 return reader.insertedFormat();

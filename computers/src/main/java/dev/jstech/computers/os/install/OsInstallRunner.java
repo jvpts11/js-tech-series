@@ -24,6 +24,7 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -191,7 +192,7 @@ public final class OsInstallRunner {
         if (!job.hasReader()) {
             return false;
         }
-        return !(level.getBlockEntity(BlockPos.of(job.readerPos())) instanceof MediaReaderBlockEntity reader)
+        return !(Loaded.blockEntity(level, BlockPos.of(job.readerPos())) instanceof MediaReaderBlockEntity reader)
                 || reader.insertedKind() != MediaKind.OS_INSTALL
                 || reader.insertedPayload() == null
                 || !reader.insertedPayload().toString().equals(job.osId());

@@ -27,6 +27,7 @@ import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -150,7 +151,7 @@ public final class SoundfoundryShare {
     @Nullable
     public static Peer peerAt(final ServerLevel level, final AbstractComputerBlockEntity computer, final long pos) {
         if (computer.networkUuid() == null
-                || !(level.getBlockEntity(BlockPos.of(pos)) instanceof AbstractComputerBlockEntity peer)
+                || !(Loaded.blockEntity(level, BlockPos.of(pos)) instanceof AbstractComputerBlockEntity peer)
                 || peer == computer || !sharing(peer) || !computer.networkUuid().equals(peer.networkUuid())
                 || !(peer instanceof IComputerTerminalHost host)) {
             return null;

@@ -15,6 +15,7 @@ import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.Collection;
@@ -107,7 +108,7 @@ public final class NetworkStorage {
         final List<Entry> entries = new ArrayList<>();
         for (final ServerNode server : system.serversOf(network)) {
             system.locationOf(server.nodeUuid()).ifPresent(loc -> {
-                if (level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
+                if (Loaded.blockEntity(level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
                     entries.add(new Entry(server.nodeUuid(),
                             new ServerNodeStore(rack.getServerStorage(loc.slot())), true));
                 }
@@ -118,7 +119,7 @@ public final class NetworkStorage {
          * With the default-private permille this list is empty until the owner publishes some storage.
          */
         for (final NetworkSystem.PersonalComputerNode pc : system.personalComputersOf(network)) {
-            if (level.getBlockEntity(BlockPos.of(pc.pos())) instanceof PersonalComputerBlockEntity pcBe) {
+            if (Loaded.blockEntity(level, BlockPos.of(pc.pos())) instanceof PersonalComputerBlockEntity pcBe) {
                 entries.add(new Entry(pc.nodeUuid(), new PcPublicNodeStore(pcBe.localStore()), false));
             }
         }
@@ -135,7 +136,7 @@ public final class NetworkStorage {
         final List<Entry> entries = new ArrayList<>();
         for (final NodeUuid node : nodes) {
             system.locationOf(node).ifPresent(loc -> {
-                if (level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
+                if (Loaded.blockEntity(level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
                     entries.add(new Entry(node, new ServerNodeStore(rack.getServerStorage(loc.slot())), true));
                 }
             });

@@ -73,6 +73,7 @@ import dev.jstech.core.peripheral.IPeripheralOwnerSupport;
 import dev.jstech.core.peripheral.PeripheralPorts;
 import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.Arrays;
@@ -1573,7 +1574,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             return false;
         }
         for (final long endpoint : linkedEndpoints()) {
-            if (level.getBlockEntity(BlockPos.of(endpoint))
+            if (Loaded.blockEntity(level, BlockPos.of(endpoint))
                     instanceof MediaReaderBlockEntity reader
                     && reader.insertedKind() == MediaKind.OS_INSTALL
                     && reader.insertedPayload() != null) {

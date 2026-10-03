@@ -10,6 +10,7 @@ package dev.jstech.core.peripheral;
 import com.mojang.serialization.Codec;
 import dev.jstech.core.blockentity.BlockEntityFields;
 import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +91,7 @@ public final class PeripheralLink {
     /** Breaks the link from this side, freeing the owner's place for another peripheral; nothing when unlinked. */
     public void unlink(final ServerLevel level, final BlockPos self) {
         final Long at = owner.get();
-        if (at != null && level.getBlockEntity(BlockPos.of(at)) instanceof IPeripheralOwner linkedTo) {
+        if (at != null && Loaded.blockEntity(level, BlockPos.of(at)) instanceof IPeripheralOwner linkedTo) {
             linkedTo.onEndpointUnlinked(self.asLong());
         }
         unlinked();

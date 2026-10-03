@@ -36,6 +36,7 @@ import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -97,7 +98,7 @@ public final class FilePayloads {
                         VolumeLabel.of(computer.systemDisk(), DiskFilesPayload.LOCAL_DISK.text())));
             }
             for (final long endpoint : computer.linkedEndpoints()) {
-                if (level.getBlockEntity(BlockPos.of(endpoint))
+                if (Loaded.blockEntity(level, BlockPos.of(endpoint))
                         instanceof MediaReaderBlockEntity reader
                         && !reader.mediaSlot().getStackInSlot(0).isEmpty()) {
                     /*

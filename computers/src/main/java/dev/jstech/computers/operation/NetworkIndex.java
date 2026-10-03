@@ -30,6 +30,7 @@ import dev.jstech.core.network.ServerNode;
 import dev.jstech.core.operation.IOperationResult;
 import dev.jstech.core.operation.OperationDispatch;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.HashSet;
@@ -99,7 +100,7 @@ public final class NetworkIndex {
         final NetworkSystem system = NetworkSystem.get(level);
         for (final ServerNode server : system.serversOf(network)) {
             system.locationOf(server.nodeUuid()).ifPresent(loc -> {
-                if (level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
+                if (Loaded.blockEntity(level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
                     indexServer(rack, loc.slot(), server.nodeUuid());
                     indexedModCounts.put(server.nodeUuid(), rack.storageModCount(loc.slot()));
                 }
@@ -110,7 +111,7 @@ public final class NetworkIndex {
          * this adds nothing until the owner moves a slider, so a fresh PC stays invisible to SELECT.
          */
         for (final NetworkSystem.PersonalComputerNode pc : system.personalComputersOf(network)) {
-            if (level.getBlockEntity(BlockPos.of(pc.pos())) instanceof PersonalComputerBlockEntity pcBe) {
+            if (Loaded.blockEntity(level, BlockPos.of(pc.pos())) instanceof PersonalComputerBlockEntity pcBe) {
                 indexPc(pcBe, pc.nodeUuid());
                 indexedModCounts.put(pc.nodeUuid(), pcBe.storageModCount());
             }
@@ -133,7 +134,7 @@ public final class NetworkIndex {
         final List<NodeUuid> dirty = new ArrayList<>();
         for (final ServerNode server : system.serversOf(network)) {
             system.locationOf(server.nodeUuid()).ifPresent(loc -> {
-                if (level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
+                if (Loaded.blockEntity(level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
                     live.put(server.nodeUuid(), loc);
                     final Long seen = indexedModCounts.get(server.nodeUuid());
                     if (seen == null || seen != rack.storageModCount(loc.slot())) {
@@ -148,7 +149,7 @@ public final class NetworkIndex {
          */
         final Map<NodeUuid, PersonalComputerBlockEntity> livePcs = new LinkedHashMap<>();
         for (final NetworkSystem.PersonalComputerNode pc : system.personalComputersOf(network)) {
-            if (level.getBlockEntity(BlockPos.of(pc.pos())) instanceof PersonalComputerBlockEntity pcBe) {
+            if (Loaded.blockEntity(level, BlockPos.of(pc.pos())) instanceof PersonalComputerBlockEntity pcBe) {
                 livePcs.put(pc.nodeUuid(), pcBe);
                 final Long seen = indexedModCounts.get(pc.nodeUuid());
                 if (seen == null || seen != pcBe.storageModCount()) {
@@ -198,7 +199,7 @@ public final class NetworkIndex {
         for (final NodeUuid node : dirty) {
             final NetworkSystem.ServerLocation loc = live.get(node);
             if (loc != null
-                    && level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
+                    && Loaded.blockEntity(level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
                 indexServer(rack, loc.slot(), node);
                 indexedModCounts.put(node, rack.storageModCount(loc.slot()));
             } else if (livePcs.containsKey(node)) {
@@ -336,7 +337,7 @@ public final class NetworkIndex {
         final NetworkSystem system = NetworkSystem.get(level);
         for (final ServerNode server : system.serversOf(network)) {
             system.locationOf(server.nodeUuid()).ifPresent(loc -> {
-                if (level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
+                if (Loaded.blockEntity(level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
                     final StorageTier tier = tierOf(rack, loc.slot());
                     snapshots.add(new NodeSnapshot(server.nodeUuid(), tier, latencyOf(rack, loc.slot(), tier),
                             new LinkedHashMap<>(rack.getServerStorage(loc.slot()).view()),
@@ -345,7 +346,7 @@ public final class NetworkIndex {
             });
         }
         for (final NetworkSystem.PersonalComputerNode pc : system.personalComputersOf(network)) {
-            if (level.getBlockEntity(BlockPos.of(pc.pos())) instanceof PersonalComputerBlockEntity pcBe) {
+            if (Loaded.blockEntity(level, BlockPos.of(pc.pos())) instanceof PersonalComputerBlockEntity pcBe) {
                 snapshots.add(new NodeSnapshot(pc.nodeUuid(), StorageTier.HDD, StorageTier.HDD.latencyTicks(),
                         new LinkedHashMap<>(pcBe.localStore().publicView()), pcBe.storageModCount()));
             }
@@ -433,7 +434,7 @@ public final class NetworkIndex {
             return external.throughput();
         }
         return NetworkSystem.get(level).locationOf(server)
-                .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack
+                .map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack
                         ? hardwareCapOf(rack, loc.slot()) : Long.MAX_VALUE)
                 .orElse(Long.MAX_VALUE);
     }
@@ -488,7 +489,7 @@ public final class NetworkIndex {
     /** Returns the best (lowest) RAM staging latency in ticks for the server. Zero if unresolvable. */
     public static int serverRamLatencyTicks(final ServerLevel level, final NodeUuid server) {
         return NetworkSystem.get(level).locationOf(server)
-                .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack
+                .map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack
                         ? ramLatencyOf(rack, loc.slot()) : 0)
                 .orElse(0);
     }
@@ -557,7 +558,7 @@ public final class NetworkIndex {
             final NetworkSystem system = NetworkSystem.get(level);
             for (final ServerNode server : system.serversOf(network)) {
                 system.locationOf(server.nodeUuid()).ifPresent(loc -> {
-                    if (level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
+                    if (Loaded.blockEntity(level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
                         final long freeWeight = rack.getServerStorage(loc.slot()).freeWeight();
                         if (freeWeight > 0L) {
                             room.put(server.nodeUuid(), new ItemLocation(server.nodeUuid(),
@@ -758,7 +759,7 @@ public final class NetworkIndex {
     @Nullable
     private static ServerStore storeOf(final ServerLevel level, final NodeUuid server) {
         return NetworkSystem.get(level).locationOf(server)
-                .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack
+                .map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack
                         ? rack.getServerStorage(loc.slot()) : null)
                 .orElse(null);
     }

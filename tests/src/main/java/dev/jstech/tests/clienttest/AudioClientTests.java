@@ -71,6 +71,8 @@ public final class AudioClientTests {
     private static final String DEVICES = AudioChannels.DEVICES.id().toString();
     private static final String BEEP = TestSounds.BEEP.id().toString();
     private static final String ALERTS = AudioChannels.ALERTS.id().toString();
+    /** How long, in ticks, a test waits for the camera to catch up with the player. */
+    private static final int CAMERA_WAIT = 100;
 
     private AudioClientTests() {
     }
@@ -118,7 +120,8 @@ public final class AudioClientTests {
     public static void director_keepsTheBudgetMakesARoomOfManyAndLetsGo(final ClientTestContext ctx) {
         final CapturingAudioSink sink = new CapturingAudioSink();
         final List<Whirring> sources = new ArrayList<>();
-        ctx.then(0, () -> {
+        ctx.thenWaitUntil(() -> cameraAtPlayer(ctx), CAMERA_WAIT, "the camera to stand where the player is")
+                .then(0, () -> {
                     AudioEngine.useSink(sink);
                     final Vec3 at = ctx.player().position();
                     for (int i = 0; i < 30; i++) {
@@ -396,6 +399,15 @@ public final class AudioClientTests {
     private static Vec3 toTheRight(final ClientTestContext ctx) {
         final ListenerTransform listener = ctx.mc().getSoundManager().getListenerTransform();
         return listener.position().add(listener.right().scale(6));
+    }
+
+    /*
+     * Whether the camera stands where the player is. The director hears from the camera, which follows the player only
+     * when a frame is drawn: just after the player is moved to a test, with fewer frames than ticks, it can still be
+     * where they were, and what is placed around the player is out of its hearing.
+     */
+    private static boolean cameraAtPlayer(final ClientTestContext ctx) {
+        return ctx.mc().gameRenderer.getMainCamera().getPosition().distanceTo(ctx.player().getEyePosition()) < 1.0;
     }
 
     /* Opens the sound's stream as the game would, and reads what it would queue first: a second of samples. */

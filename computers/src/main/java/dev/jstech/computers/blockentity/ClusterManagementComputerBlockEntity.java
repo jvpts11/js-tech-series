@@ -41,6 +41,7 @@ import dev.jstech.core.network.ServerRouterElement;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -220,7 +221,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
             return hubs;
         }
         for (final NetworkSystem.SupercomputerNode node : NetworkSystem.get(serverLevel).supercomputersOf(networkUuid())) {
-            if (serverLevel.getBlockEntity(BlockPos.of(node.pos())) instanceof HbwInterfaceBlockEntity hub) {
+            if (Loaded.blockEntity(serverLevel, BlockPos.of(node.pos())) instanceof HbwInterfaceBlockEntity hub) {
                 hubs.add(hub);
             }
         }
@@ -255,7 +256,8 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
         final boolean refresh = now != routersRefreshedAt;
         routersRefreshedAt = now;
         for (final ServerRouterElement router : system.routersOf(networkUuid())) {
-            if (serverLevel.getBlockEntity(BlockPos.of(router.pos())) instanceof ServerRouterBlockEntity routerBe) {
+            if (Loaded.blockEntity(serverLevel, BlockPos.of(router.pos()))
+                    instanceof ServerRouterBlockEntity routerBe) {
                 if (refresh) {
                     routerBe.recomputeNow();
                 }
@@ -307,7 +309,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
              * off has left the network, and must still be listed so the manager can power it back on.
              */
             for (final long rackPos : section.section().rackPositions()) {
-                if (serverLevel.getBlockEntity(BlockPos.of(rackPos)) instanceof ServerRackBlockEntity rack) {
+                if (Loaded.blockEntity(serverLevel, BlockPos.of(rackPos)) instanceof ServerRackBlockEntity rack) {
                     for (final int row : rack.computerSlots()) {
                         nodes.add(new NodeRef(rack.getBlockPos(), row));
                     }
@@ -321,7 +323,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
     public Map<NodeRef, IOsHost> hostsOf(final ClusterRef ref) {
         final Map<NodeRef, IOsHost> hosts = new LinkedHashMap<>();
         for (final NodeRef node : nodesOf(ref)) {
-            if (level != null && level.getBlockEntity(node.rack()) instanceof ServerRackBlockEntity rack) {
+            if (level != null && Loaded.blockEntity(level, node.rack()) instanceof ServerRackBlockEntity rack) {
                 hosts.put(node, rack.unitHost(node.row()));
             }
         }
@@ -344,7 +346,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
             return null;
         }
         for (final long endpoint : linkedEndpoints()) {
-            if (level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader
+            if (Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader
                     && reader.insertedKind() == kind && reader.insertedPayload() != null) {
                 final ResourceLocation id = reader.insertedPayload();
                 return new Medium(id, labelFor(kind, id));

@@ -27,6 +27,7 @@ import dev.jstech.core.network.ServerNode;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -109,13 +110,13 @@ public final class RemoteComputerService {
             candidates.add(mainframe);
         }
         for (final NetworkSystem.PersonalComputerNode pc : system.personalComputersOf(network)) {
-            if (this.level.getBlockEntity(BlockPos.of(pc.pos())) instanceof PersonalComputerBlockEntity be) {
+            if (Loaded.blockEntity(this.level, BlockPos.of(pc.pos())) instanceof PersonalComputerBlockEntity be) {
                 candidates.add(be);
             }
         }
         for (final ServerNode server : system.serversOf(network)) {
             system.locationOf(server.nodeUuid()).ifPresent(loc -> {
-                if (this.level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
+                if (Loaded.blockEntity(this.level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
                     candidates.add(rack);
                 }
             });
@@ -224,7 +225,7 @@ public final class RemoteComputerService {
         if (console == null || console.sshTarget() == null) {
             return "";
         }
-        final BlockEntity target = this.level.getBlockEntity(BlockPos.of(console.sshTarget()));
+        final BlockEntity target = Loaded.blockEntity(this.level, BlockPos.of(console.sshTarget()));
         return target instanceof IComputerTerminalHost remote ? remote.hostname() : "";
     }
 
@@ -305,7 +306,8 @@ public final class RemoteComputerService {
             return null;
         }
         return NetworkSystem.get(this.level).mainframePositionOf(net)
-                .map(pos -> this.level.getBlockEntity(BlockPos.of(pos)) instanceof MainframeBlockEntity mf ? mf : null)
+                .map(pos -> Loaded.blockEntity(this.level, BlockPos.of(pos)) instanceof MainframeBlockEntity mf
+                        ? mf : null)
                 .orElse(null);
     }
 

@@ -49,6 +49,7 @@ import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
 import dev.jstech.core.network.SubframeNode;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -164,7 +165,7 @@ public final class NetworkPayloads {
             }
             final NodeUuid node = server.nodeUuid();
             final long free = system.locationOf(node)
-                    .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos()))
+                    .map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos()))
                             instanceof ServerRackBlockEntity rack
                             ? rack.getServerStorage(loc.slot()).free() : 0L)
                     .orElse(0L);
@@ -174,7 +175,7 @@ public final class NetworkPayloads {
             if (rows.size() >= NetworkServersPayload.MAX) {
                 break;
             }
-            if (level.getBlockEntity(BlockPos.of(pc.pos()))
+            if (Loaded.blockEntity(level, BlockPos.of(pc.pos()))
                     instanceof PersonalComputerBlockEntity pcBe && pcBe.localStorageCapacity() > 0L) {
                 rows.add(new NetworkServersPayload.ServerEntry(
                         pc.nodeUuid().asString(), pcLabel(pcBe, pc.nodeUuid()), pcBe.localStore().free()));
@@ -192,7 +193,7 @@ public final class NetworkPayloads {
             }
             final NodeUuid node = server.nodeUuid();
             final long free = system.locationOf(node)
-                    .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos()))
+                    .map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos()))
                             instanceof ServerRackBlockEntity rack
                             ? rack.getServerStorage(loc.slot()).free() : 0L)
                     .orElse(0L);
@@ -275,7 +276,7 @@ public final class NetworkPayloads {
                  * A Cluster Management Computer takes a PC's place on the network (same layout, same role
                  * in the topology), but the overview names it for what it is.
                  */
-                final int kind = level.getBlockEntity(BlockPos.of(pc.pos()))
+                final int kind = Loaded.blockEntity(level, BlockPos.of(pc.pos()))
                         instanceof ClusterManagementComputerBlockEntity
                         ? NetworkNodeInfo.KIND_CLUSTER_MANAGEMENT : NetworkNodeInfo.KIND_PC;
                 nodes.add(resolveComputerNode(level, kind, pc.nodeUuid().asString(),
@@ -297,7 +298,7 @@ public final class NetworkPayloads {
                  * not a single computer). It is on the network whenever its uplink is; it is online (able
                  * to take crafts) only with at least one rated node.
                  */
-                final String scName = level.getBlockEntity(BlockPos.of(sc.pos()))
+                final String scName = Loaded.blockEntity(level, BlockPos.of(sc.pos()))
                         instanceof HbwInterfaceBlockEntity hub
                         ? hub.customName() : "";
                 nodes.add(new NetworkNodeInfo(NetworkNodeInfo.KIND_SUPERCOMPUTER,
@@ -385,7 +386,7 @@ public final class NetworkPayloads {
         final long total = server.storageItems();
         final Optional<NetworkSystem.ServerLocation> location = system.locationOf(server.nodeUuid());
         final long free = location
-                .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos()))
+                .map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos()))
                         instanceof ServerRackBlockEntity rack
                         ? rack.getServerStorage(loc.slot()).free() : 0L)
                 .orElse(0L);
@@ -475,7 +476,7 @@ public final class NetworkPayloads {
                 continue;
             }
             final long used = system.locationOf(server.nodeUuid())
-                    .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos()))
+                    .map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos()))
                             instanceof ServerRackBlockEntity rack
                             ? rack.getServerStorage(loc.slot()).used() : 0L)
                     .orElse(0L);

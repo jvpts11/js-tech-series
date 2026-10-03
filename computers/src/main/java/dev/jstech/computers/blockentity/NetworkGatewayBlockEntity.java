@@ -39,6 +39,7 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.text.TextTags;
+import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -513,7 +514,7 @@ public class NetworkGatewayBlockEntity extends SyncedBlockEntity implements IPer
                     logged(hostName(), LOG_LINK.text(), linkKind(), GatewayLog.Tone.OK);
                 }
             });
-        } else if (!(level.getBlockEntity(BlockPos.of(owner)) instanceof IPeripheralOwner)
+        } else if (!(Loaded.blockEntity(level, BlockPos.of(owner)) instanceof IPeripheralOwner)
                 || !validator.isLinkStillValid(owner, self, PeripheralCableType.COMPUTING)
                 || !PeripheralLinks.socketReaches(level, socket, owner, PeripheralCableType.COMPUTING)) {
             final String was = hostName();

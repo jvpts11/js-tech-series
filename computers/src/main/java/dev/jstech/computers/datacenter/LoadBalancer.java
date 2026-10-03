@@ -11,6 +11,7 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;
@@ -42,7 +43,7 @@ public final class LoadBalancer {
 
     private static long freeWeightOf(final NetworkSystem system, final ServerLevel level, final NodeUuid node) {
         return system.locationOf(node)
-                .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack
+                .map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack
                         ? rack.getServerStorage(loc.slot()).freeWeight()
                         : 0L)
                 .orElse(0L);

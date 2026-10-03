@@ -21,6 +21,7 @@ import dev.jstech.core.operation.ILatencyScheduler;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;
@@ -100,7 +101,7 @@ public final class NetworkInsertOperation extends AbstractTransferOperation {
     @Nullable
     private ServerStore storeOf(final NodeUuid server) {
         return NetworkSystem.get(level).locationOf(server)
-                .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack
+                .map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack
                         ? rack.getServerStorage(loc.slot()) : null)
                 .orElse(null);
     }

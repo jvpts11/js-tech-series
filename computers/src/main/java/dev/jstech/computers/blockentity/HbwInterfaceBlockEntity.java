@@ -28,6 +28,7 @@ import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.LinkedHashMap;
@@ -194,7 +195,7 @@ public class HbwInterfaceBlockEntity extends SyncedBlockEntity {
             final NodeRef node = discovered.get(i);
             int code = SLOT_EMPTY;
             long crafts = 0;
-            if (serverLevel.getBlockEntity(node.rack()) instanceof ServerRackBlockEntity rack) {
+            if (Loaded.blockEntity(serverLevel, node.rack()) instanceof ServerRackBlockEntity rack) {
                 final ItemStack server = rack.getServers().getStackInSlot(node.row());
                 final PhiCoprocessorItem phi = installedPhi(server);
                 if (phi == null) {
@@ -262,7 +263,7 @@ public class HbwInterfaceBlockEntity extends SyncedBlockEntity {
             return rack;
         }
         if (be instanceof ServerRackPartBlockEntity part && part.controllerPos() != null
-                && level.getBlockEntity(part.controllerPos()) instanceof ServerRackBlockEntity rack) {
+                && Loaded.blockEntity(level, part.controllerPos()) instanceof ServerRackBlockEntity rack) {
             return rack;
         }
         return null;

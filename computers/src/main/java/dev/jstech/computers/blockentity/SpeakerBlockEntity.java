@@ -24,6 +24,7 @@ import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.PeripheralLink;
 import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -202,7 +203,7 @@ public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheral
         final String folded = wanted.toLowerCase(Locale.ROOT);
         for (final long endpoint : linkedTo.linkedEndpoints()) {
             if (endpoint != worldPosition.asLong()
-                    && level.getBlockEntity(BlockPos.of(endpoint)) instanceof SpeakerBlockEntity other
+                    && Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof SpeakerBlockEntity other
                     && other.name().toLowerCase(Locale.ROOT).equals(folded)) {
                 return true;
             }

@@ -21,6 +21,7 @@ import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.INetworkBridge;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.List;
@@ -105,7 +106,7 @@ public final class DataWires {
             return null;
         }
         return NetworkSystem.get(level).mainframePositionOf(network)
-                .map(pos -> level.getBlockEntity(BlockPos.of(pos)))
+                .map(pos -> Loaded.blockEntity(level, BlockPos.of(pos)))
                 .filter(MainframeBlockEntity.class::isInstance)
                 .map(MainframeBlockEntity.class::cast)
                 .orElse(null);

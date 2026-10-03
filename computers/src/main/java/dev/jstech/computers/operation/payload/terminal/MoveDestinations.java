@@ -16,6 +16,7 @@ import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.function.BooleanSupplier;
@@ -72,7 +73,7 @@ public final class MoveDestinations {
         // A Personal Computer on the network: a SELECT into its own local storage (leaves the network).
         for (final NetworkSystem.PersonalComputerNode pc : NetworkSystem.get(level).personalComputersOf(net)) {
             if (pc.nodeUuid().equals(target)
-                    && level.getBlockEntity(BlockPos.of(pc.pos())) instanceof PersonalComputerBlockEntity pcBe) {
+                    && Loaded.blockEntity(level, BlockPos.of(pc.pos())) instanceof PersonalComputerBlockEntity pcBe) {
                 return new Dest(new StoreSink(pcBe.localStore()),
                         pcLabel(pcBe, target), false, null);
             }
@@ -105,7 +106,7 @@ public final class MoveDestinations {
             return null;
         }
         return system.locationOf(target)
-                .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos()))
+                .map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos()))
                         instanceof ServerRackBlockEntity rack
                         ? new Dest(new StoreSink(
                                 rack.getServerStorage(loc.slot())),

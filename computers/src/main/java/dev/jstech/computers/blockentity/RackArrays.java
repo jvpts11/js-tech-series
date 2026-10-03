@@ -17,6 +17,7 @@ import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StorageVolume;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayList;
@@ -285,7 +286,7 @@ final class RackArrays {
             return; // an unnetworked bay has no index to confuse
         }
         rack.mainframePositionOn(serverLevel, network).ifPresent(pos -> {
-            if (serverLevel.getBlockEntity(BlockPos.of(pos)) instanceof MainframeBlockEntity mainframe) {
+            if (Loaded.blockEntity(serverLevel, BlockPos.of(pos)) instanceof MainframeBlockEntity mainframe) {
                 final String name = ServerItem.customName(stack);
                 mainframe.networkIndex().markBayHotPull(new NodeUuid(node),
                         name.isEmpty() ? "srv-" + node.toString().substring(0, 6) : name);

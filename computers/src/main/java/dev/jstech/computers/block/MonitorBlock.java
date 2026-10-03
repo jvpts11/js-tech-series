@@ -64,6 +64,7 @@ import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalLong;
@@ -759,7 +760,7 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
         if (host.isEmpty()) {
             return GameText.component(MonitorTexts.NO_COMPUTER);
         }
-        if (serverLevel.getBlockEntity(BlockPos.of(host.getAsLong())) instanceof IPeripheralOwner owner) {
+        if (Loaded.blockEntity(serverLevel, BlockPos.of(host.getAsLong())) instanceof IPeripheralOwner owner) {
             final int outputs = owner.ports(PortKind.VIDEO);
             if (outputs <= 0) {
                 return GameText.component(MonitorTexts.NO_GPU);

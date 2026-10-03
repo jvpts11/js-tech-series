@@ -9,6 +9,7 @@ package dev.jstech.computers.gateway;
 
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.core.peripheral.IPeripheralOwner;
+import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -28,7 +29,7 @@ public final class NetworkGateways {
     public static List<NetworkGatewayBlockEntity> linkedTo(final Level level, final IPeripheralOwner owner) {
         final List<NetworkGatewayBlockEntity> out = new ArrayList<>();
         for (final long endpoint : owner.linkedEndpoints()) {
-            if (level.getBlockEntity(BlockPos.of(endpoint)) instanceof NetworkGatewayBlockEntity gateway) {
+            if (Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof NetworkGatewayBlockEntity gateway) {
                 out.add(gateway);
             }
         }

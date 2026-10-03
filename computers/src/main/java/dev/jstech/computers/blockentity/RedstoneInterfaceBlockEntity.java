@@ -23,6 +23,7 @@ import dev.jstech.core.peripheral.PeripheralLink;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -313,7 +314,7 @@ public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity implements I
         final String folded = wanted.toLowerCase(Locale.ROOT);
         for (final long endpoint : linkedTo.linkedEndpoints()) {
             if (endpoint != worldPosition.asLong()
-                    && level.getBlockEntity(BlockPos.of(endpoint)) instanceof RedstoneInterfaceBlockEntity other
+                    && Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof RedstoneInterfaceBlockEntity other
                     && other.answersTo().toLowerCase(Locale.ROOT).equals(folded)) {
                 return true;
             }

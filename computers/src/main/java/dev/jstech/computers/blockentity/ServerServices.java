@@ -10,6 +10,7 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -90,7 +91,7 @@ public final class ServerServices {
             if (where == null) {
                 continue;
             }
-            if (!(level.getBlockEntity(BlockPos.of(where.rackPos())) instanceof ServerRackBlockEntity rack)) {
+            if (!(Loaded.blockEntity(level, BlockPos.of(where.rackPos())) instanceof ServerRackBlockEntity rack)) {
                 continue;
             }
             if (rack.hasService(where.slot(), program) && rack.unitRunning(where.slot())) {

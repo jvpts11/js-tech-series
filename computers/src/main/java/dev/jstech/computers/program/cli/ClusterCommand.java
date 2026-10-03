@@ -18,6 +18,7 @@ import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
@@ -226,7 +227,7 @@ public final class ClusterCommand implements ICliCommand {
                 rackIndex++;
                 lastRack = node.rack();
             }
-            if (!(cmc.getLevel().getBlockEntity(node.rack()) instanceof ServerRackBlockEntity rack)) {
+            if (!(Loaded.blockEntity(cmc.getLevel(), node.rack()) instanceof ServerRackBlockEntity rack)) {
                 continue;
             }
             final IOsHost host = rack.unitHost(node.row());
@@ -271,7 +272,7 @@ public final class ClusterCommand implements ICliCommand {
                     }
                     if (index == rackIndex && node.row() == row) {
                         final ServerRackBlockEntity rack =
-                                (ServerRackBlockEntity) cmc.getLevel().getBlockEntity(node.rack());
+                                (ServerRackBlockEntity) Loaded.blockEntity(cmc.getLevel(), node.rack());
                         if (rack != null && rack.bayPowerOn(row) != on && cmc.toggleNode(node.rack(), row)) {
                             ctx.out().ok(BAY_SWITCHED.with(ClusterManagementComputerBlockEntity.nodeName(rack, row),
                                     switched));

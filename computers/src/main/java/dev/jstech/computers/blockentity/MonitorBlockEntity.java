@@ -24,6 +24,7 @@ import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.PeripheralLink;
 import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -142,12 +143,12 @@ public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheral
     /* A fourth monitor on one computer is a battlestation, earned by whoever put this one up. */
     private void reportBattlestation(final ServerLevel level) {
         final BlockPos owner = link.ownerPos();
-        if (owner == null || !(level.getBlockEntity(owner) instanceof IPeripheralOwner linkedTo)) {
+        if (owner == null || !(Loaded.blockEntity(level, owner) instanceof IPeripheralOwner linkedTo)) {
             return;
         }
         int monitors = 0;
         for (final long endpoint : linkedTo.linkedEndpoints()) {
-            if (level.getBlockEntity(BlockPos.of(endpoint)) instanceof MonitorBlockEntity) {
+            if (Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof MonitorBlockEntity) {
                 monitors++;
             }
         }

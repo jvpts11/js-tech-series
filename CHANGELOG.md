@@ -1099,6 +1099,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The unused hook for the Modonomicon guidebook: the series' manuals will be drawn by J's Core itself.
 
 ### Fixed
+- Nothing in the mod loads a chunk any more by looking at a place it remembers. A monitor asking after its
+  computer, a computer counting its screens, speakers and drives, a Mainframe reaching the servers, racks and
+  computers of its network, a cluster's nodes, a hub's devices and the file and cluster screens all looked at the
+  block at the remembered place, and the game answered a place whose chunk was not loaded by loading it from the
+  disk, or making it, in the middle of the tick. Besides the stutter, a chunk caught that way while the game was
+  letting it go could stop every chunk from loading until the server restarted. A place whose chunk is not loaded
+  now counts as away, and an ssh session whose far machine is away ends as one whose machine has stopped.
 - The prompt's `iql` command, and a file of statements it runs, no longer fail on a `SET BUS` statement.
 - A base with cables ticks as fast as it did before the shared cable block. Machines that look at the blocks round
   them every tick for a cable (the Crafting Switch and the Crafting Computer finding their machines, the racks finding

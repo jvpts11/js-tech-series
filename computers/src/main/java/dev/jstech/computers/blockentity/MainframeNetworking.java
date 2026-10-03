@@ -20,6 +20,7 @@ import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuidState;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -362,7 +363,7 @@ final class MainframeNetworking {
             return found;
         }
         if (be instanceof MainframePartBlockEntity part && part.controllerPos() != null
-                && level.getBlockEntity(part.controllerPos()) instanceof MainframeBlockEntity controller) {
+                && Loaded.blockEntity(level, part.controllerPos()) instanceof MainframeBlockEntity controller) {
             return controller;
         }
         return null;

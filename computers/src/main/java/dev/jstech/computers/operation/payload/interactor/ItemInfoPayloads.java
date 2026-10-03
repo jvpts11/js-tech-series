@@ -27,6 +27,7 @@ import dev.jstech.core.cable.Cables;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.HashSet;
 import java.util.Set;
@@ -97,7 +98,7 @@ public final class ItemInfoPayloads {
                 break;
             }
             final long held = system.locationOf(server.nodeUuid())
-                    .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos()))
+                    .map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos()))
                             instanceof ServerRackBlockEntity rack
                             ? rack.getServerStorage(loc.slot()).count(key) : 0L)
                     .orElse(0L);

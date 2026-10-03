@@ -30,6 +30,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.HashSet;
@@ -78,7 +79,7 @@ public final class ClusterManagerPayloads {
         final List<ServerStore> stores = new ArrayList<>();
         for (final NodeUuid node : servers) {
             system.locationOf(node).ifPresent(loc -> {
-                if (level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
+                if (Loaded.blockEntity(level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
                     stores.add(rack.getServerStorage(loc.slot()));
                 }
             });
@@ -190,7 +191,7 @@ public final class ClusterManagerPayloads {
         final var ref = clusterRef(cmc, ClusterManagerStatePayload.KIND_DATACENTER, payload.index());
         final NetworkUuid net = cmc.networkUuid();
         if (ref == null || net == null
-                || !(level.getBlockEntity(BlockPos.of(payload.destPos())) instanceof IComputerTerminalHost dest)
+                || !(Loaded.blockEntity(level, BlockPos.of(payload.destPos())) instanceof IComputerTerminalHost dest)
                 || !net.equals(dest.networkUuid())) {
             return; // the destination must be on this machine's own network
         }

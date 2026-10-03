@@ -30,6 +30,7 @@ import dev.jstech.core.audio.StereoSide;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -230,7 +231,7 @@ final class ComputerAudioHost implements IAudioHost {
         }
         for (final long endpoint : machine.peripheralEndpoints()) {
             final BlockPos pos = BlockPos.of(endpoint);
-            if (level.getBlockEntity(pos) instanceof MonitorBlockEntity) {
+            if (Loaded.blockEntity(level, pos) instanceof MonitorBlockEntity) {
                 found.add(pos);
             }
         }
@@ -246,7 +247,7 @@ final class ComputerAudioHost implements IAudioHost {
             return found;
         }
         for (final long endpoint : machine.peripheralEndpoints()) {
-            if (level.getBlockEntity(BlockPos.of(endpoint)) instanceof SpeakerBlockEntity speaker) {
+            if (Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof SpeakerBlockEntity speaker) {
                 found.add(speaker);
             }
         }

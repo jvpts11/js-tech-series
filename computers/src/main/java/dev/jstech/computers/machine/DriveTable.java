@@ -27,6 +27,7 @@ import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -104,7 +105,7 @@ public final class DriveTable {
             if (letter > 'Z') {
                 break;
             }
-            if (!(level.getBlockEntity(BlockPos.of(pos)) instanceof MediaReaderBlockEntity reader)) {
+            if (!(Loaded.blockEntity(level, BlockPos.of(pos)) instanceof MediaReaderBlockEntity reader)) {
                 continue;
             }
             final ItemStack media = reader.mediaSlot().getStackInSlot(0);
