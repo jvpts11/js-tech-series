@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -29,6 +30,8 @@ class PeripheralLinkValidatorTest {
     private static final long C1 = 10L;
     private static final long C2 = 20L;
     private static final long C3 = 30L;
+    private static final long C4 = 40L;
+    private static final long HUB_POS = 3_000_000L;
 
     @Test
     void ownerAdjacentToEndpoint_zeroCablePathSucceeds() {
@@ -414,7 +417,191 @@ class PeripheralLinkValidatorTest {
         assertEquals(50, e.pathLength());
     }
 
+    @Test
+    void hub_givesItsPortsToTheDevicesCabledToIt() {
+        // The owner's one device port is the hub's; the device behind the hub takes one of the hub's.
+        TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 1);
+        TestHub hub = linkedHub(owner, 4);
+        TestEndpoint device = new TestEndpoint(PeripheralCableType.COMPUTING);
+        Map<Long, List<Long>> adj = Map.of(
+                OWNER_POS, List.of(HUB_POS),
+                HUB_POS, List.of(OWNER_POS, C1),
+                C1, List.of(HUB_POS, ENDPOINT_POS),
+                ENDPOINT_POS, List.of(C1));
+
+        ILinkResult result = build(adj, owner, Map.of(HUB_POS, hub, ENDPOINT_POS, device),
+                Map.of(C1, PeripheralCableType.COMPUTING), pos -> 0).tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+
+        assertEquals(1, assertInstanceOf(ILinkResult.Established.class, result).pathLength());
+        assertEquals(OptionalLong.of(HUB_POS), owner.hubOf(ENDPOINT_POS));
+        assertEquals(1, owner.portsInUseThrough(HUB_POS));
+        assertEquals(1, owner.portsInUse(PortKind.DEVICE));
+    }
+
+    @Test
+    void hubNotLinked_passesNothing() {
+        TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8);
+        TestHub hub = new TestHub(4);
+        TestEndpoint device = new TestEndpoint(PeripheralCableType.COMPUTING);
+
+        ILinkResult result = build(throughHub(), owner, Map.of(HUB_POS, hub, ENDPOINT_POS, device), Map.of(),
+                pos -> 0).tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+
+        assertInstanceOf(ILinkResult.NoPathFound.class, result);
+    }
+
+    @Test
+    void hubFull_refusesTheDevice() {
+        TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8);
+        TestHub hub = linkedHub(owner, 1);
+        owner.onEndpointLinkedThrough(77L, PortKind.DEVICE, HUB_POS);
+        TestEndpoint device = new TestEndpoint(PeripheralCableType.COMPUTING);
+
+        ILinkResult result = build(throughHub(), owner, Map.of(HUB_POS, hub, ENDPOINT_POS, device), Map.of(),
+                pos -> 0).tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+
+        ILinkResult.HubAtCapacity full = assertInstanceOf(ILinkResult.HubAtCapacity.class, result);
+        assertEquals(HUB_POS, full.hubPos());
+        assertEquals(1, full.currentCount());
+        assertEquals(1, full.maxAllowed());
+    }
+
+    @Test
+    void hubFull_letsTheDeviceTakeALongerWayWithRoom() {
+        // Against the full hub, and two cables from the owner, which has a free port: the cables win.
+        TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8);
+        TestHub hub = linkedHub(owner, 1);
+        owner.onEndpointLinkedThrough(77L, PortKind.DEVICE, HUB_POS);
+        TestEndpoint device = new TestEndpoint(PeripheralCableType.COMPUTING);
+        Map<Long, List<Long>> adj = Map.of(
+                OWNER_POS, List.of(HUB_POS, C1),
+                HUB_POS, List.of(OWNER_POS, ENDPOINT_POS),
+                C1, List.of(OWNER_POS, C2),
+                C2, List.of(C1, ENDPOINT_POS),
+                ENDPOINT_POS, List.of(HUB_POS, C2));
+        Map<Long, PeripheralCableType> cables = Map.of(C1, PeripheralCableType.COMPUTING,
+                C2, PeripheralCableType.COMPUTING);
+
+        ILinkResult result = build(adj, owner, Map.of(HUB_POS, hub, ENDPOINT_POS, device), cables, pos -> 0)
+                .tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+
+        assertEquals(2, assertInstanceOf(ILinkResult.Established.class, result).pathLength());
+        assertEquals(OptionalLong.empty(), owner.hubOf(ENDPOINT_POS));
+    }
+
+    @Test
+    void hub_passesNoScreen() {
+        TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8).with(PortKind.VIDEO, 2);
+        TestHub hub = linkedHub(owner, 4);
+        TestEndpoint screen = new TestEndpoint(PeripheralCableType.COMPUTING, PortKind.VIDEO);
+
+        ILinkResult result = build(throughHub(), owner, Map.of(HUB_POS, hub, ENDPOINT_POS, screen), Map.of(),
+                pos -> 0).tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+
+        assertInstanceOf(ILinkResult.NoPathFound.class, result);
+    }
+
+    @Test
+    void hub_startsTheReachAgain() {
+        // Two cables, the hub, two more: each run within a reach of two, which four cables in one run are not.
+        TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8);
+        TestHub hub = linkedHub(owner, 4);
+        TestEndpoint device = new TestEndpoint(PeripheralCableType.COMPUTING);
+        Map<Long, List<Long>> adj = Map.of(
+                OWNER_POS, List.of(C1),
+                C1, List.of(OWNER_POS, C2),
+                C2, List.of(C1, HUB_POS),
+                HUB_POS, List.of(C2, C3),
+                C3, List.of(HUB_POS, C4),
+                C4, List.of(C3, ENDPOINT_POS),
+                ENDPOINT_POS, List.of(C4));
+        Map<Long, PeripheralCableType> cables = Map.of(C1, PeripheralCableType.COMPUTING,
+                C2, PeripheralCableType.COMPUTING, C3, PeripheralCableType.COMPUTING,
+                C4, PeripheralCableType.COMPUTING);
+
+        ILinkResult result = build(adj, owner, Map.of(HUB_POS, hub, ENDPOINT_POS, device), cables, pos -> 2)
+                .tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+
+        assertEquals(4, assertInstanceOf(ILinkResult.Established.class, result).pathLength());
+    }
+
+    @Test
+    void hubHangingFromTheTarget_isNoWayToIt() {
+        // The only hub on the way is recorded as hanging from the very hub being linked: it cannot carry it.
+        TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8);
+        TestHub hub = new TestHub(4);
+        hub.onOwnerLinked(OWNER_POS);
+        owner.onEndpointLinkedThrough(HUB_POS, PortKind.DEVICE, ENDPOINT_POS);
+        TestHub target = new TestHub(4);
+
+        ILinkResult result = build(throughHub(), owner, Map.of(HUB_POS, hub, ENDPOINT_POS, target), Map.of(),
+                pos -> 0).tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+
+        assertInstanceOf(ILinkResult.NoPathFound.class, result);
+    }
+
+    @Test
+    void isLinkStillValid_isFalseOnceAHubStandsInTheWay() {
+        // Linked straight onto the owner's port, and now the only way runs through a hub: the link is made again.
+        TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8);
+        TestHub hub = linkedHub(owner, 4);
+        owner.onEndpointLinked(ENDPOINT_POS, PortKind.DEVICE);
+        TestEndpoint device = new TestEndpoint(PeripheralCableType.COMPUTING);
+        PeripheralLinkValidator validator = build(throughHub(), owner, Map.of(HUB_POS, hub, ENDPOINT_POS, device),
+                Map.of(), pos -> 0);
+
+        assertFalse(validator.isLinkStillValid(OWNER_POS, ENDPOINT_POS, PeripheralCableType.COMPUTING));
+
+        owner.onEndpointLinkedThrough(ENDPOINT_POS, PortKind.DEVICE, HUB_POS);
+        assertTrue(validator.isLinkStillValid(OWNER_POS, ENDPOINT_POS, PeripheralCableType.COMPUTING));
+    }
+
+    @Test
+    void isLinkStillValid_isFalseOnceTheHubUnlinks() {
+        TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8);
+        TestHub hub = linkedHub(owner, 4);
+        owner.onEndpointLinkedThrough(ENDPOINT_POS, PortKind.DEVICE, HUB_POS);
+        TestEndpoint device = new TestEndpoint(PeripheralCableType.COMPUTING);
+        PeripheralLinkValidator validator = build(throughHub(), owner, Map.of(HUB_POS, hub, ENDPOINT_POS, device),
+                Map.of(), pos -> 0);
+
+        hub.onOwnerUnlinked();
+
+        assertFalse(validator.isLinkStillValid(OWNER_POS, ENDPOINT_POS, PeripheralCableType.COMPUTING));
+    }
+
     // ─── Helpers ────────────────────────────────────────────────────────────
+
+    /* The owner, a hub against it, and the endpoint against the hub, with no cable anywhere. */
+    private static Map<Long, List<Long>> throughHub() {
+        return Map.of(
+                OWNER_POS, List.of(HUB_POS),
+                HUB_POS, List.of(OWNER_POS, ENDPOINT_POS),
+                ENDPOINT_POS, List.of(HUB_POS));
+    }
+
+    /* A hub of {@code ports} ports linked to {@code owner} on one of its device ports. */
+    private static TestHub linkedHub(TestOwner owner, int ports) {
+        TestHub hub = new TestHub(ports);
+        owner.onEndpointLinked(HUB_POS, PortKind.DEVICE);
+        hub.onOwnerLinked(OWNER_POS);
+        return hub;
+    }
+
+    /* Several endpoints, each at its position, every cable reaching {@code reach}. */
+    private static PeripheralLinkValidator build(
+            Map<Long, List<Long>> adjacency,
+            IPeripheralOwner owner,
+            Map<Long, IPeripheralEndpoint> endpoints,
+            Map<Long, PeripheralCableType> cables,
+            PeripheralLinkValidator.IReachLookup reach) {
+        return new PeripheralLinkValidator(
+                pos -> Optional.ofNullable(cables.get(pos)),
+                pos -> pos == OWNER_POS ? Optional.of(owner) : Optional.empty(),
+                pos -> Optional.ofNullable(endpoints.get(pos)),
+                PeripheralLinkValidator.adjacencyFrom(adjacency),
+                reach);
+    }
 
     /* The owner and the endpoint side by side, with no cable between them. */
     private static Map<Long, List<Long>> adjacent() {
@@ -494,5 +681,23 @@ class PeripheralLinkValidatorTest {
         @Override public void onOwnerLinked(long pos) { this.ownerPos = Optional.of(pos); }
         @Override public void onOwnerUnlinked() { this.ownerPos = Optional.empty(); }
         @Override public PortKind portKind() { return kind; }
+    }
+
+    /**
+     * Mutable test-only hub of so many device ports.
+     */
+    private static final class TestHub implements IPeripheralHub {
+        private final int ports;
+        private Optional<Long> ownerPos = Optional.empty();
+
+        TestHub(int ports) {
+            this.ports = ports;
+        }
+
+        @Override public int hubPorts() { return ports; }
+        @Override public PeripheralCableType cableType() { return PeripheralCableType.COMPUTING; }
+        @Override public Optional<Long> linkedOwner() { return ownerPos; }
+        @Override public void onOwnerLinked(long pos) { this.ownerPos = Optional.of(pos); }
+        @Override public void onOwnerUnlinked() { this.ownerPos = Optional.empty(); }
     }
 }

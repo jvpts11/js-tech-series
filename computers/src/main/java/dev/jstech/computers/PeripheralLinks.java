@@ -13,10 +13,12 @@ import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.Wire;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
+import dev.jstech.core.peripheral.IPeripheralHub;
 import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.PeripheralLink;
 import dev.jstech.core.peripheral.PeripheralLinkValidator;
+import dev.jstech.core.peripheral.PortKind;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -185,13 +187,34 @@ public final class PeripheralLinks {
     }
 
     /*
+     * The computer a linked hub at {@code pos} hangs from, when it passes a peripheral taking a port of {@code kind}:
+     * a peripheral reaching that hub hangs from the same computer, on one of the hub's ports.
+     */
+    private static OptionalLong ownerThroughHub(final ServerLevel level, final long pos, final PortKind kind) {
+        if (level.getBlockEntity(BlockPos.of(pos)) instanceof IPeripheralHub hub && hub.passes(kind)) {
+            final Optional<Long> owner = hub.linkedOwner();
+            if (owner.isPresent()) {
+                return OptionalLong.of(owner.get());
+            }
+        }
+        return OptionalLong.empty();
+    }
+
+    /* The computer standing at {@code pos}, or the one a hub standing there hangs from. */
+    private static OptionalLong ownerAtOrBehind(final ServerLevel level, final long pos, final PortKind kind) {
+        final OptionalLong owner = resolveOwnerPos(level, pos, PeripheralCableType.COMPUTING);
+        return owner.isPresent() ? owner : ownerThroughHub(level, pos, kind);
+    }
+
+    /*
      * The nearest computer from the peripheral at {@code endpointPos}: one on a seed place, against it, or one a
-     * peripheral wire leads to, entering each wire only where it plugs back into the place before it. A run stops at
-     * the reach of the shortest-reaching cable on it.
+     * peripheral wire leads to, entering each wire only where it plugs back into the place before it, or the one a
+     * linked hub so reached hangs from. A run stops at the reach of the shortest-reaching cable on it.
      */
     private static OptionalLong discoverFrom(final ServerLevel level, final long endpointPos,
                                              final List<Long> seeds) {
-        final PeripheralCableType type = PeripheralCableType.COMPUTING;
+        final PortKind kind = endpointAt(level, endpointPos).map(IPeripheralEndpoint::portKind)
+                .orElse(PortKind.DEVICE);
         final Set<Long> visited = new HashSet<>();
         // Each queued cable: its position, how many cables from the peripheral, and the shortest reach on the way.
         final Deque<long[]> queue = new ArrayDeque<>();
@@ -200,7 +223,7 @@ public final class PeripheralLinks {
             if (!visited.add(neighbor)) {
                 continue;
             }
-            final OptionalLong owner = resolveOwnerPos(level, neighbor, type);
+            final OptionalLong owner = ownerAtOrBehind(level, neighbor, kind);
             if (owner.isPresent()) {
                 return owner;
             }
@@ -217,7 +240,7 @@ public final class PeripheralLinks {
                 if (!visited.add(neighbor)) {
                     continue;
                 }
-                final OptionalLong owner = resolveOwnerPos(level, neighbor, type);
+                final OptionalLong owner = ownerAtOrBehind(level, neighbor, kind);
                 if (owner.isPresent()) {
                     return owner;
                 }

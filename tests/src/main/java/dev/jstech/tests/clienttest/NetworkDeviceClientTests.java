@@ -15,9 +15,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Block;
 
 /**
- * The devices of the data network, one era to a column from the Vintage at the west, to set beside their approved
- * pages: the routers in the front row, the optical routers a step up behind them, and the repeaters a step higher at
- * the back.
+ * The devices of the data network and the peripheral hubs, one era to a column from the Vintage at the west, to set
+ * beside their approved pages: the routers in the front row, the optical routers a step up behind them, the repeaters
+ * a step higher, and the hubs a step higher again at the back.
  */
 public final class NetworkDeviceClientTests {
 
@@ -38,7 +38,9 @@ public final class NetworkDeviceClientTests {
                 List.of(ComputingModule.OPTICAL_ROUTER, ComputingModule.ADVANCED_OPTICAL_ROUTER),
                 List.of(ComputingModule.VINTAGE_REPEATER, ComputingModule.LEGACY_REPEATER,
                         ComputingModule.TRANSITION_REPEATER, ComputingModule.STANDARD_REPEATER,
-                        ComputingModule.ADVANCED_REPEATER));
+                        ComputingModule.ADVANCED_REPEATER),
+                List.of(ComputingModule.VINTAGE_HUB, ComputingModule.LEGACY_HUB, ComputingModule.TRANSITION_HUB,
+                        ComputingModule.STANDARD_HUB, ComputingModule.ADVANCED_HUB));
         ctx.thenTeleport(0, STAND, Direction.SOUTH)
                 .thenServer(0, level -> {
                     for (int row = 0; row < rows.size(); row++) {

@@ -353,6 +353,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The Network Gateway takes the Vintage serial cable, which every computer takes.
 - The peripheral line in J's Core: a cable can end in a different plug for each kind of port, and the peripheral
   links follow the peripheral wires of the shared cable block, each run as far as its cable reaches.
+- A hub for each era, a plain block with six equal faces in the network tab: cabled to a computer, it takes one of
+  its device ports and offers its own, two on the Vintage switch box, four on the Legacy and Transition USB hubs and
+  seven on the Standard and Advanced ones. Every device cabled to a hub takes one of the hub's ports; when they are all
+  in use the next device waits, or links another way that has a port free. Screens and speakers do not pass through a
+  hub. The cable after a hub reaches as far again as the cable before it, and a hub may hang from another hub. A hub
+  taken away drops the devices behind it.
+- Hubs in J's Core: a peripheral can offer its owner more ports, and the link validator finds each peripheral's way
+  through the hubs linked to its owner, keeping with every link the hub it hangs from.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

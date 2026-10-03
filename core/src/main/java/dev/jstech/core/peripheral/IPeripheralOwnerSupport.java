@@ -8,6 +8,7 @@
 package dev.jstech.core.peripheral;
 
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.Set;
 
 /**
@@ -54,6 +55,23 @@ public interface IPeripheralOwnerSupport extends IPeripheralOwner {
         if (peripheralPorts().link(endpointPos, kind)) {
             markPeripheralChange();
         }
+    }
+
+    @Override
+    default void onEndpointLinkedThrough(final long endpointPos, final PortKind kind, final long hubPos) {
+        if (peripheralPorts().linkThrough(endpointPos, kind, hubPos)) {
+            markPeripheralChange();
+        }
+    }
+
+    @Override
+    default int portsInUseThrough(final long hubPos) {
+        return peripheralPorts().inUseThrough(hubPos);
+    }
+
+    @Override
+    default OptionalLong hubOf(final long endpointPos) {
+        return peripheralPorts().hubOf(endpointPos);
     }
 
     @Override

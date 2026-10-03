@@ -14,6 +14,7 @@ public sealed interface ILinkResult
         permits ILinkResult.Established,
         ILinkResult.AlreadyLinked,
         ILinkResult.OwnerAtCapacity,
+        ILinkResult.HubAtCapacity,
         ILinkResult.NoPathFound,
         ILinkResult.ExceedsMaxLength,
         ILinkResult.CableTypeMismatch {
@@ -38,6 +39,10 @@ public sealed interface ILinkResult
      */
     record OwnerAtCapacity(long ownerPos, PortKind kind, int currentCount, int maxAllowed)
             implements ILinkResult {
+    }
+
+    /** The endpoint's way to its owner runs through a hub, and every port of that hub is in use. */
+    record HubAtCapacity(long hubPos, PortKind kind, int currentCount, int maxAllowed) implements ILinkResult {
     }
 
     /**

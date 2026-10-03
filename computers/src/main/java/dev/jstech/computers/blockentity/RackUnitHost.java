@@ -27,6 +27,7 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.Set;
 
 /**
@@ -463,6 +464,21 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     @Override
     public void onEndpointLinked(final long endpointPos, final PortKind kind) {
         rack.onEndpointLinked(endpointPos, kind);
+    }
+
+    @Override
+    public void onEndpointLinkedThrough(final long endpointPos, final PortKind kind, final long hubPos) {
+        rack.onEndpointLinkedThrough(endpointPos, kind, hubPos);
+    }
+
+    @Override
+    public int portsInUseThrough(final long hubPos) {
+        return rack.portsInUseThrough(hubPos);
+    }
+
+    @Override
+    public OptionalLong hubOf(final long endpointPos) {
+        return rack.hubOf(endpointPos);
     }
 
     @Override

@@ -26,6 +26,7 @@ import dev.jstech.computers.block.ClusterManagementComputerBlock;
 import dev.jstech.computers.block.CraftingComputerBlock;
 import dev.jstech.computers.block.CraftingSwitchBlock;
 import dev.jstech.computers.block.HbwInterfaceBlock;
+import dev.jstech.computers.block.HubBlock;
 import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.block.LegacyMonitorBlock;
 import dev.jstech.computers.block.MainframeBlock;
@@ -50,6 +51,7 @@ import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
+import dev.jstech.computers.blockentity.HubBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.MainframePartBlockEntity;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
@@ -292,6 +294,26 @@ public final class ComputingModule {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RepeaterBlockEntity>> REPEATER_BE =
             CONTENT.blockEntity("repeater", RepeaterBlockEntity::new, VINTAGE_REPEATER, LEGACY_REPEATER,
                     TRANSITION_REPEATER, STANDARD_REPEATER, ADVANCED_REPEATER);
+
+    /*
+     * Hubs of the peripheral line, the same plain blocks as the routers: each takes one of its computer's device ports
+     * and offers its own, two on the Vintage's switch box, four on the Legacy and Transition USB hubs, seven on the
+     * Standard and Advanced ones.
+     */
+
+    public static final BlockEntry<HubBlock> VINTAGE_HUB = hub("vintage_hub", HardwareEra.VINTAGE)
+            .named("Vintage Hub").register();
+    public static final BlockEntry<HubBlock> LEGACY_HUB = hub("legacy_hub", HardwareEra.LEGACY)
+            .named("Legacy Hub").register();
+    public static final BlockEntry<HubBlock> TRANSITION_HUB = hub("transition_hub", HardwareEra.TRANSITION)
+            .named("Transition Hub").register();
+    public static final BlockEntry<HubBlock> STANDARD_HUB = hub("standard_hub", HardwareEra.STANDARD)
+            .named("Standard Hub").register();
+    public static final BlockEntry<HubBlock> ADVANCED_HUB = hub("advanced_hub", HardwareEra.ADVANCED)
+            .named("Advanced Hub").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<HubBlockEntity>> HUB_BE =
+            CONTENT.blockEntity("hub", HubBlockEntity::new, VINTAGE_HUB, LEGACY_HUB, TRANSITION_HUB, STANDARD_HUB,
+                    ADVANCED_HUB);
 
     public static final BlockEntry<ServerRouterBlock> SERVER_ROUTER =
             CONTENT.block("server_router", ServerRouterBlock::new)
@@ -934,6 +956,12 @@ public final class ComputingModule {
     private static BlockBuilder<RepeaterBlock> repeater(final String id, final HardwareEra era) {
         return networkDevice(CONTENT.block(id, properties -> new RepeaterBlock(properties, era)),
                 "repeater_" + era.serializedName());
+    }
+
+    /* The hub of {@code era}. */
+    private static BlockBuilder<HubBlock> hub(final String id, final HardwareEra era) {
+        return networkDevice(CONTENT.block(id, properties -> new HubBlock(properties, era)),
+                "hub_" + era.serializedName());
     }
 
     /* A network device: a metal block with six equal faces, the model shipped with its lamps, in the network tab. */

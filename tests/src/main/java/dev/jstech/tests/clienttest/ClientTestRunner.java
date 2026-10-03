@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -149,9 +150,11 @@ public final class ClientTestRunner {
                 durations.isEmpty() ? "round-robin" : "by the ticks each test took last time",
                 ClientTestSuite.expectedTicks(tests, durations));
         if (!ONLY.isEmpty()) {
-            final String needle = ONLY.toLowerCase(java.util.Locale.ROOT);
+            // Several names, each a part of a test's name, separated by commas: a test named like any of them runs.
+            final List<String> needles = Arrays.stream(ONLY.toLowerCase(java.util.Locale.ROOT).split(","))
+                    .map(String::trim).filter(n -> !n.isEmpty()).toList();
             tests = tests.stream()
-                    .filter(t -> t.name().toLowerCase(java.util.Locale.ROOT).contains(needle))
+                    .filter(t -> needles.stream().anyMatch(t.name().toLowerCase(java.util.Locale.ROOT)::contains))
                     .toList();
             /*
              * A name that matches nothing is a mistake, not an empty suite: whoever typed it meant to run

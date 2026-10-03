@@ -8,6 +8,7 @@
 package dev.jstech.core.peripheral;
 
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.Set;
 
 /**
@@ -32,8 +33,20 @@ public interface IPeripheralOwner {
      */
     boolean holdsPort(long endpointPos);
 
-    /** The endpoint at {@code endpointPos} was linked, taking a port of {@code kind}. */
+    /** The endpoint at {@code endpointPos} was linked, taking one of the owner's own ports of {@code kind}. */
     void onEndpointLinked(long endpointPos, PortKind kind);
+
+    /**
+     * The endpoint at {@code endpointPos} was linked through the {@link IPeripheralHub} at {@code hubPos}, taking one
+     * of the hub's ports of {@code kind} rather than one of the owner's.
+     */
+    void onEndpointLinkedThrough(long endpointPos, PortKind kind, long hubPos);
+
+    /** How many linked endpoints take a port of the hub at {@code hubPos}. */
+    int portsInUseThrough(long hubPos);
+
+    /** The hub the linked endpoint at {@code endpointPos} hangs from; empty when it is on the owner's own port. */
+    OptionalLong hubOf(long endpointPos);
 
     void onEndpointUnlinked(long endpointPos);
 
