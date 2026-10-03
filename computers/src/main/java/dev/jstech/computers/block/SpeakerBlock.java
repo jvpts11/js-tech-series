@@ -33,7 +33,8 @@ import net.minecraft.world.phys.BlockHitResult;
 /**
  * A speaker: a peripheral on the computer's peripheral cable that carries its system's sound somewhere other than the
  * monitor, and adds to it. Two of them beside a monitor play a stereo recording a side each. A Legacy speaker samples
- * at 22 kHz and loses the bass and the treble; a Standard one plays the whole range.
+ * at 22 kHz and loses the bass and the treble; a Transition satellite loses only the bass, which a subwoofer against
+ * one of its computer's satellites gives back; a Standard or an Advanced one plays the whole range.
  */
 public class SpeakerBlock extends DeviceBlock implements IFaceConnector, IEraChassisBlock {
 
@@ -47,6 +48,8 @@ public class SpeakerBlock extends DeviceBlock implements IFaceConnector, IEraCha
 
     /** What a Legacy speaker reproduces: sampled at 22 kHz, nothing under 150 Hz or over 7 kHz. */
     private static final FrequencyResponse LEGACY_RESPONSE = new FrequencyResponse(22_050, 0, 150, 7_000);
+    /** What a Transition satellite reproduces on its own: everything but the bass under 150 Hz. */
+    private static final FrequencyResponse SATELLITE_RESPONSE = new FrequencyResponse(0, 0, 150, 0);
 
     /** The speaker's block entity, ticking to keep its link. */
     private static final Device<SpeakerBlockEntity> DEVICE =
@@ -63,9 +66,18 @@ public class SpeakerBlock extends DeviceBlock implements IFaceConnector, IEraCha
         return era;
     }
 
-    /** What this speaker reproduces of a recording. */
-    public FrequencyResponse response() {
-        return era == HardwareEra.LEGACY ? LEGACY_RESPONSE : FrequencyResponse.FULL;
+    /**
+     * What this speaker reproduces of a recording, given whether a subwoofer stands against one of its computer's
+     * Transition satellites, which matters to a Transition speaker alone.
+     */
+    public FrequencyResponse response(final boolean subwoofer) {
+        if (era == HardwareEra.LEGACY) {
+            return LEGACY_RESPONSE;
+        }
+        if (era == HardwareEra.TRANSITION && !subwoofer) {
+            return SATELLITE_RESPONSE;
+        }
+        return FrequencyResponse.FULL;
     }
 
     @Override

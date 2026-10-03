@@ -1260,6 +1260,11 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         return audio.linkedSpeakers();
     }
 
+    /** Whether a subwoofer stands against one of its Transition satellites, which then play the bass too. */
+    public boolean hasSubwoofer() {
+        return audio.hasSubwoofer();
+    }
+
     /** Whether its speakers play, by the output its system chose and what is linked. */
     public boolean speakersPlay() {
         return audio.speakersPlay();

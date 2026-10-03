@@ -44,11 +44,11 @@ public final class SpeakerLayout {
                 .box("channelTile", CHANNEL_X, TILE_Y, TILE_W, TILE_H)
                 .box("playsTile", NAME_X, PLAYS_Y, PLAYS_W, TILE_H);
         l.text("title", 12, 10, 7, 1.0f);                       // "SPEAKER"
-        l.text("model", WIDTH - 12 - 9 * 6, 10, 9, 1.0f);      // "TONEWORKS", right-aligned
+        l.text("model", WIDTH - 12 - 13 * 6, 10, 13, 1.0f);    // "WATTWORKS T20", right-aligned
         l.text("nameLabel", 10, NAME_LABEL_Y, 4, 0.75f);        // "NAME"
         l.text("note", 10, NOTE_Y, 38, 0.75f);                  // "Programs find this speaker by its name"
         l.text("channel", CHANNEL_X + 3, TILE_Y + 11, 18, 0.75f);  // "Right, by position", "Off: monitor only"
-        l.text("plays", NAME_X + 3, PLAYS_Y + 11, 27, 0.75f);   // "22 kHz, bass and treble cut"
+        l.text("plays", NAME_X + 3, PLAYS_Y + 11, 35, 0.75f);   // "The whole range, with the subwoofer"
         return l;
     }
 }

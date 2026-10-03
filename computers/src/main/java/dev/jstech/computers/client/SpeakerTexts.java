@@ -16,7 +16,9 @@ final class SpeakerTexts {
 
     static final TextKey TITLE = TextKey.of("jsc.speaker.title", "SPEAKER");
     static final TextKey MODEL_LEGACY = TextKey.of("jsc.speaker.model_legacy", "TONEWORKS");
-    static final TextKey MODEL_STANDARD = TextKey.of("jsc.speaker.model_standard", "COBBLE");
+    static final TextKey MODEL_TRANSITION = TextKey.of("jsc.speaker.model_transition", "INSPIRA 2.1");
+    static final TextKey MODEL_STANDARD = TextKey.of("jsc.speaker.model_standard", "WATTWORKS T20");
+    static final TextKey MODEL_ADVANCED = TextKey.of("jsc.speaker.model_advanced", "COBBLE");
     static final TextKey NAME = TextKey.of("jsc.speaker.name", "NAME");
     static final TextKey NAME_FIELD = TextKey.of("jsc.speaker.name_field", "Speaker name");
     /** What a speaker is called until a player names it. */
@@ -36,6 +38,10 @@ final class SpeakerTexts {
     static final TextKey PLAYS = TextKey.of("jsc.speaker.plays", "PLAYS");
     static final TextKey PLAYS_LEGACY = TextKey.of("jsc.speaker.plays_legacy", "22 kHz, bass and treble cut");
     static final TextKey PLAYS_WHOLE = TextKey.of("jsc.speaker.plays_whole", "The whole range");
+    /** A Transition satellite with no subwoofer of its set beside any of its computer's satellites. */
+    static final TextKey PLAYS_SATELLITE = TextKey.of("jsc.speaker.plays_satellite", "Bass cut: no subwoofer");
+    static final TextKey PLAYS_SUBWOOFER = TextKey.of("jsc.speaker.plays_subwoofer",
+            "The whole range, with the subwoofer");
 
     private SpeakerTexts() {
     }

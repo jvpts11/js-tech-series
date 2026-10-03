@@ -9,12 +9,14 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.audio.SystemSound;
+import dev.jstech.computers.block.SpeakerBlock;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.core.audio.Audio;
 import dev.jstech.core.audio.AudioOutput;
 import dev.jstech.core.audio.FrequencyResponse;
 import dev.jstech.core.audio.StereoSide;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -30,8 +32,9 @@ import java.util.List;
 
 /**
  * The speakers: linked to a computer beside its monitor, each plays a side of a stereo recording by where it stands,
- * a Legacy one plays coarser than a Standard one, and a name is unique among one computer's speakers. The system
- * chooses whether its sound comes out of the monitor, the speakers or both, and how loud.
+ * a Legacy one plays coarser than a Standard one, a Transition satellite without the bass until a subwoofer stands
+ * against one of its set, and a name is unique among one computer's speakers. The system chooses whether its sound
+ * comes out of the monitor, the speakers or both, and how loud.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -43,6 +46,12 @@ public final class SpeakerGameTests {
     private static final BlockPos MONITOR = new BlockPos(6, 2, 2);
     private static final BlockPos NORTH_SPEAKER = new BlockPos(5, 2, 1);
     private static final BlockPos SOUTH_SPEAKER = new BlockPos(5, 2, 3);
+    /** Against the south speaker, and nothing else of the desk. */
+    private static final BlockPos SOUTH_SUBWOOFER = new BlockPos(5, 2, 4);
+    /** Against the north speaker, and nothing else of the desk. */
+    private static final BlockPos NORTH_SUBWOOFER = new BlockPos(5, 2, 0);
+    /** What a Transition satellite plays with no subwoofer: everything but the bass. */
+    private static final FrequencyResponse SATELLITE = new FrequencyResponse(0, 0, 150, 0);
     private static final int LINKED = 5;
 
     private SpeakerGameTests() {
@@ -81,6 +90,64 @@ public final class SpeakerGameTests {
                             "a speaker alone plays both sides, a Legacy one at 22 kHz and cut; got " + outputs);
                 })
                 .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void transitionSatellites_playTheBassOnlyWithASubwooferAgainstOne(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = computerWithMonitor(helper);
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final SpeakerBlockEntity north = speaker(world, NORTH_SPEAKER, ComputingModule.TRANSITION_SPEAKER.get());
+        speaker(world, SOUTH_SPEAKER, ComputingModule.TRANSITION_SPEAKER.get());
+        helper.startSequence()
+                .thenExecuteAfter(LINKED, () -> {
+                    final List<AudioOutput> alone = pc.audioHost().outputs();
+                    helper.assertTrue(alone.contains(new AudioOutput(centre(helper, NORTH_SPEAKER), StereoSide.LEFT,
+                                    SATELLITE)) && alone.contains(new AudioOutput(centre(helper, SOUTH_SPEAKER),
+                                    StereoSide.RIGHT, SATELLITE)),
+                            "two satellites alone play a side each, without the bass; got " + alone);
+                    helper.assertTrue(!north.subwoofer(), "and their screens say there is no subwoofer");
+                    world.setBlock(SOUTH_SUBWOOFER, ComputingModule.TRANSITION_SUBWOOFER.get());
+                    final List<AudioOutput> withSubwoofer = pc.audioHost().outputs();
+                    helper.assertTrue(withSubwoofer.contains(new AudioOutput(centre(helper, NORTH_SPEAKER),
+                                    StereoSide.LEFT, FrequencyResponse.FULL))
+                                    && withSubwoofer.contains(new AudioOutput(centre(helper, SOUTH_SPEAKER),
+                                    StereoSide.RIGHT, FrequencyResponse.FULL)),
+                            "a subwoofer against one of them gives both the whole range; got " + withSubwoofer);
+                    helper.assertTrue(north.subwoofer(), "and the screen of the one it does not touch says so too");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void subwoofer_leavesASpeakerOfAnotherEraAsItIs(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = computerWithMonitor(helper);
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        speaker(world, NORTH_SPEAKER, ComputingModule.LEGACY_SPEAKER.get());
+        world.setBlock(NORTH_SUBWOOFER, ComputingModule.TRANSITION_SUBWOOFER.get());
+        helper.startSequence()
+                .thenExecuteAfter(LINKED, () -> {
+                    final List<AudioOutput> outputs = pc.audioHost().outputs();
+                    helper.assertTrue(outputs.contains(new AudioOutput(centre(helper, NORTH_SPEAKER), StereoSide.BOTH,
+                                    new FrequencyResponse(22_050, 0, 150, 7_000))),
+                            "a Legacy speaker plays as coarse beside a Transition subwoofer; got " + outputs);
+                    helper.assertTrue(!pc.hasSubwoofer(), "which serves only the satellites of its own set");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void speakers_eachEraHasItsModel(final GameTestHelper helper) {
+        final List<SpeakerBlock> speakers = List.of(ComputingModule.LEGACY_SPEAKER.get(),
+                ComputingModule.TRANSITION_SPEAKER.get(), ComputingModule.SPEAKER.get(),
+                ComputingModule.ADVANCED_SPEAKER.get());
+        final List<HardwareEra> eras = speakers.stream().map(SpeakerBlock::era).toList();
+        helper.assertTrue(eras.equals(List.of(HardwareEra.LEGACY, HardwareEra.TRANSITION, HardwareEra.STANDARD,
+                HardwareEra.ADVANCED)), "the ToneWorks, the Inspira 2.1, the WattWorks T20 and the Cobble, an era"
+                + " each; got " + eras);
+        helper.assertTrue(ComputingModule.ADVANCED_SPEAKER.get().response(false).full()
+                        && ComputingModule.SPEAKER.get().response(false).full(),
+                "the Standard and the Advanced pairs play the whole range");
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)

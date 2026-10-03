@@ -16,6 +16,7 @@ import dev.jstech.computers.audio.SoundOutput;
 import dev.jstech.computers.audio.SpeakerSides;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.block.SubwooferBlock;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
@@ -49,7 +50,8 @@ import java.util.List;
  * A computer as the source of its system's sound: the device that plays it and where it comes out. A sound card, or
  * the sound built into a board from the Transition on, plays out of the monitors linked to the machine and out of its
  * speakers, which add to the monitors. Two or more speakers play a stereo recording a side each, by where they stand
- * against the monitor; a Legacy speaker plays it coarser than a Standard one. The system chooses among them and sets
+ * against the monitor; a Legacy speaker plays it coarser than a Standard one, and a Transition satellite without the
+ * bass until a subwoofer stands against one of the machine's satellites. The system chooses among them and sets
  * how loud they play. With no monitor and no speaker there is only the speaker inside the case, which beeps and plays
  * no recording.
  */
@@ -103,9 +105,10 @@ final class ComputerAudioHost implements IAudioHost {
             }
         }
         if (choice.speakersPlay(!monitors.isEmpty(), !speakers.isEmpty())) {
+            final boolean subwoofer = hasSubwoofer(speakers);
             for (final SpeakerBlockEntity speaker : speakers) {
                 outputs.add(new AudioOutput(Vec3.atCenterOf(speaker.getBlockPos()),
-                        sideOf(speaker.getBlockPos(), speakers.size()), speaker.response()));
+                        sideOf(speaker.getBlockPos(), speakers.size()), speaker.response(subwoofer)));
             }
         }
         if (outputs.isEmpty()) {
@@ -168,6 +171,11 @@ final class ComputerAudioHost implements IAudioHost {
         return speakers();
     }
 
+    /** Whether a subwoofer stands against one of the machine's Transition satellites, giving them back the bass. */
+    boolean hasSubwoofer() {
+        return hasSubwoofer(speakers());
+    }
+
     /** Whether a monitor plays, by the output the system chose and what is linked. */
     boolean monitorsPlay() {
         final boolean hasMonitors = !monitors().isEmpty();
@@ -220,6 +228,20 @@ final class ComputerAudioHost implements IAudioHost {
         final Direction left = state.getValue(MonitorBlock.FACING).getCounterClockWise();
         return SpeakerSides.sideOf(speakers, left.getStepX(), left.getStepZ(), speaker.getX() - monitor.getX(),
                 speaker.getZ() - monitor.getZ());
+    }
+
+    /* Whether a subwoofer stands against one of these speakers that is a Transition satellite; one is all a set uses. */
+    private boolean hasSubwoofer(final List<SpeakerBlockEntity> speakers) {
+        final Level level = machine.getLevel();
+        if (level == null) {
+            return false;
+        }
+        for (final SpeakerBlockEntity speaker : speakers) {
+            if (speaker.era() == HardwareEra.TRANSITION && SubwooferBlock.against(level, speaker.getBlockPos())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /* The monitors linked to the machine, in a fixed order, where its sound comes out. */

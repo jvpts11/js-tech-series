@@ -43,6 +43,7 @@ import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRackPartBlock;
 import dev.jstech.computers.block.ServerRouterBlock;
 import dev.jstech.computers.block.SpeakerBlock;
+import dev.jstech.computers.block.SubwooferBlock;
 import dev.jstech.computers.block.SupercomputerRackBlock;
 import dev.jstech.computers.block.TankBlock;
 import dev.jstech.computers.block.VintageMonitorBlock;
@@ -601,15 +602,28 @@ public final class ComputingModule {
                     VINTAGE_REDSTONE_INTERFACE, LEGACY_REDSTONE_INTERFACE, TRANSITION_REDSTONE_INTERFACE,
                     STANDARD_REDSTONE_INTERFACE, ADVANCED_REDSTONE_INTERFACE);
 
-    /* The speakers, which carry a computer's sound out beside its monitor: a Legacy model and a Standard one. */
+    /*
+     * The speakers, which carry a computer's sound out beside its monitor, a model each era from the Legacy on; and the
+     * subwoofer of the Transition set, which takes no cable: set against a satellite, it plays the bass they leave out.
+     */
     public static final BlockEntry<SpeakerBlock> LEGACY_SPEAKER =
             speaker("legacy_speaker", "speaker_legacy", HardwareEra.LEGACY, MapColor.COLOR_LIGHT_GRAY)
                     .named("Artisan ToneWorks").register();
+    public static final BlockEntry<SpeakerBlock> TRANSITION_SPEAKER =
+            speaker("transition_speaker", "speaker_transition", HardwareEra.TRANSITION, MapColor.COLOR_BLACK)
+                    .named("Artisan Inspira 2.1").register();
+    public static final BlockEntry<SubwooferBlock> TRANSITION_SUBWOOFER =
+            subwoofer("transition_subwoofer", "subwoofer_transition").named("Artisan Inspira 2.1 Subwoofer")
+                    .register();
     public static final BlockEntry<SpeakerBlock> SPEAKER =
             speaker("speaker", "speaker_standard", HardwareEra.STANDARD, MapColor.COLOR_BLACK)
+                    .named("Artisan WattWorks T20").register();
+    public static final BlockEntry<SpeakerBlock> ADVANCED_SPEAKER =
+            speaker("advanced_speaker", "speaker_advanced", HardwareEra.ADVANCED, MapColor.COLOR_BLACK)
                     .named("Artisan Cobble").register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SpeakerBlockEntity>> SPEAKER_BE =
-            CONTENT.blockEntity("speaker", SpeakerBlockEntity::new, LEGACY_SPEAKER, SPEAKER);
+            CONTENT.blockEntity("speaker", SpeakerBlockEntity::new, LEGACY_SPEAKER, TRANSITION_SPEAKER, SPEAKER,
+                    ADVANCED_SPEAKER);
 
     /*
      * The Network Gateway: a peripheral of one of our computers that is, on its other face, a ComputerCraft
@@ -1120,12 +1134,26 @@ public final class ComputingModule {
     /** A speaker: its grille in front, its sockets behind, set down facing whoever places it. */
     private static BlockBuilder<SpeakerBlock> speaker(final String id, final String textures, final HardwareEra era,
                                                       final MapColor color) {
-        final String face = "block/" + textures + "_";
         return CONTENT.block(id, properties -> new SpeakerBlock(properties, era))
                 .properties(properties -> properties.mapColor(color).strength(1.0F).sound(SoundType.METAL))
-                .look(IBlockLook.facing(new IBlockModel.SixFaces(id, face + "top", face + "top", face + "front",
-                        face + "back", face + "side", face + "side", face + "side")))
+                .look(IBlockLook.facing(speakerFaces(id, textures)))
                 .item().tab(DEVICES);
+    }
+
+    /** A subwoofer: its bass port in front, its driver on the sides, set down facing whoever places it. */
+    private static BlockBuilder<SubwooferBlock> subwoofer(final String id, final String textures) {
+        return CONTENT.block(id, SubwooferBlock::new)
+                .properties(properties -> properties.mapColor(MapColor.COLOR_BLACK).strength(1.0F)
+                        .sound(SoundType.METAL))
+                .look(IBlockLook.facing(speakerFaces(id, textures)))
+                .item().tab(DEVICES);
+    }
+
+    /* A speaker cabinet's faces: the front, the back, the top, and one texture for the sides and the bottom. */
+    private static IBlockModel speakerFaces(final String id, final String textures) {
+        final String face = "block/" + textures + "_";
+        return new IBlockModel.SixFaces(id, face + "top", face + "top", face + "front", face + "back", face + "side",
+                face + "side", face + "side");
     }
 
     /** The gateway's box: the modem socket on the front, the cable socket behind, louvres and hatches. */

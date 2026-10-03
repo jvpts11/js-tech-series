@@ -75,6 +75,11 @@ public class SpeakerMenu extends CoreMenu {
         return speaker.channel();
     }
 
+    /** Whether its computer has a subwoofer against a Transition satellite. */
+    public boolean subwoofer() {
+        return speaker.subwoofer();
+    }
+
     /**
      * What a speaker's screen opens with.
      *

@@ -140,7 +140,8 @@ public final class ProgramSounds {
         final AudioDevice device = computer.audioHost().audioDevice();
         final Vec3 at = Vec3.atCenterOf(speaker.getBlockPos());
         final StereoSide side = device.stereo() ? computer.speakerSide(speaker.getBlockPos()) : StereoSide.BOTH;
-        final MediaPlace place = new MediaPlace(at.x, at.y, at.z, side, device.response().through(speaker.response()));
+        final MediaPlace place = new MediaPlace(at.x, at.y, at.z, side,
+                device.response().through(speaker.response(computer.hasSubwoofer())));
         final String key = KEY + computer.getBlockPos().asLong() + "/" + speaker.getBlockPos().asLong();
         MediaSessions.play(level, key, ComputingSounds.MUSIC, song.media(), List.of(place),
                 computer.audioHost().audioVolume(), 0L, () -> ended(key));

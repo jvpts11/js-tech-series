@@ -130,10 +130,9 @@ public final class SpeakerScreen extends AbstractComputerScreen<SpeakerMenu> {
 
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
-        final boolean legacy = menu.opening().era() == HardwareEra.LEGACY;
+        final HardwareEra era = menu.opening().era();
         JsTechTheme.text(g, font, GameText.resolve(SpeakerTexts.TITLE), 12, 10, JsTechTheme.text());
-        JsTechTheme.textRight(g, font, GameText.resolve(legacy ? SpeakerTexts.MODEL_LEGACY
-                : SpeakerTexts.MODEL_STANDARD), WIDTH - 12, 10, JsTechTheme.accent());
+        JsTechTheme.textRight(g, font, GameText.resolve(model(era)), WIDTH - 12, 10, JsTechTheme.accent());
         JsTechTheme.textS(g, font, GameText.resolve(SpeakerTexts.NAME), 10, NAME_LABEL_Y, JsTechTheme.dim());
         renderName(g);
 
@@ -148,8 +147,29 @@ public final class SpeakerScreen extends AbstractComputerScreen<SpeakerMenu> {
         JsTechTheme.tileTextS(g, font, CHANNEL_X, TILE_Y, GameText.resolve(SpeakerTexts.CHANNEL),
                 fit(GameText.resolve(channelText(channel)), TILE_W - 6), channelColor(channel));
         JsTechTheme.tileTextS(g, font, NAME_X, PLAYS_Y, GameText.resolve(SpeakerTexts.PLAYS),
-                fit(GameText.resolve(legacy ? SpeakerTexts.PLAYS_LEGACY : SpeakerTexts.PLAYS_WHOLE), PLAYS_W - 6),
-                JsTechTheme.text());
+                fit(GameText.resolve(plays(era, menu.subwoofer())), PLAYS_W - 6), JsTechTheme.text());
+    }
+
+    /* The model of its era's speaker, as the header names it. */
+    private static TextKey model(final HardwareEra era) {
+        if (era == HardwareEra.LEGACY) {
+            return SpeakerTexts.MODEL_LEGACY;
+        }
+        if (era == HardwareEra.TRANSITION) {
+            return SpeakerTexts.MODEL_TRANSITION;
+        }
+        return era == HardwareEra.ADVANCED ? SpeakerTexts.MODEL_ADVANCED : SpeakerTexts.MODEL_STANDARD;
+    }
+
+    /* How well it plays: a Transition satellite as its set stands, with a subwoofer beside it or not. */
+    private static TextKey plays(final HardwareEra era, final boolean subwoofer) {
+        if (era == HardwareEra.LEGACY) {
+            return SpeakerTexts.PLAYS_LEGACY;
+        }
+        if (era == HardwareEra.TRANSITION) {
+            return subwoofer ? SpeakerTexts.PLAYS_SUBWOOFER : SpeakerTexts.PLAYS_SATELLITE;
+        }
+        return SpeakerTexts.PLAYS_WHOLE;
     }
 
     /*

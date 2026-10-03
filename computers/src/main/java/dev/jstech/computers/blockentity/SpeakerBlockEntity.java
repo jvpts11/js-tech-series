@@ -50,6 +50,8 @@ public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheral
     private final BoolField clash = fields().flag("NameClash", false).toMenu();
     /** Which side it plays for its computer, as its screen shows it. */
     private final DerivedInt channel = fields().derived("Channel", () -> workOutChannel()).toMenu();
+    /** Whether its computer has a subwoofer against a Transition satellite, as its screen shows it. */
+    private final DerivedInt subwoofer = fields().derived("Subwoofer", () -> workOutSubwoofer()).toMenu();
     /** The name being typed on its screen, taken when the screen closes; null while nothing is being typed. */
     @Nullable
     private String asked;
@@ -121,9 +123,9 @@ public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheral
         return getBlockState().getBlock() instanceof SpeakerBlock speaker ? speaker.era() : HardwareEra.STANDARD;
     }
 
-    /** What it reproduces of a recording. */
-    public FrequencyResponse response() {
-        return getBlockState().getBlock() instanceof SpeakerBlock speaker ? speaker.response()
+    /** What it reproduces of a recording, given whether its computer has a subwoofer against a Transition satellite. */
+    public FrequencyResponse response(final boolean subwoofer) {
+        return getBlockState().getBlock() instanceof SpeakerBlock speaker ? speaker.response(subwoofer)
                 : FrequencyResponse.FULL;
     }
 
@@ -135,6 +137,11 @@ public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheral
     /** Which side it plays for its computer: one of the {@code CHANNEL_} values. */
     public int channel() {
         return channel.getAsInt();
+    }
+
+    /** Whether its computer has a subwoofer against a Transition satellite, which gives the satellites the bass. */
+    public boolean subwoofer() {
+        return subwoofer.isSet();
     }
 
     /**
@@ -165,7 +172,7 @@ public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheral
         String computerName = "";
         String computerKind = "";
         final BlockPos owner = link.ownerPos();
-        if (owner != null && level.getBlockEntity(owner) instanceof AbstractComputerBlockEntity computer) {
+        if (owner != null && Loaded.blockEntity(level, owner) instanceof AbstractComputerBlockEntity computer) {
             computerName = computer.customName();
             computerKind = computer.getBlockState().getBlock().getDescriptionId();
         }
@@ -178,7 +185,7 @@ public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheral
         if (owner == null || !(level instanceof ServerLevel server)) {
             return CHANNEL_NONE;
         }
-        if (!(server.getBlockEntity(owner) instanceof AbstractComputerBlockEntity computer)) {
+        if (!(Loaded.blockEntity(server, owner) instanceof AbstractComputerBlockEntity computer)) {
             return CHANNEL_ALONE;
         }
         if (!computer.speakersPlay()) {
@@ -195,9 +202,17 @@ public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheral
         };
     }
 
+    /* Whether its computer has a subwoofer against one of its Transition satellites, worked out on the server. */
+    private boolean workOutSubwoofer() {
+        final BlockPos owner = link.ownerPos();
+        return owner != null && level instanceof ServerLevel server
+                && Loaded.blockEntity(server, owner) instanceof AbstractComputerBlockEntity computer
+                && computer.hasSubwoofer();
+    }
+
     private boolean anotherSpeakerIsCalled(final ServerLevel level, final String wanted) {
         final BlockPos owner = link.ownerPos();
-        if (owner == null || !(level.getBlockEntity(owner) instanceof IPeripheralOwner linkedTo)) {
+        if (owner == null || !(Loaded.blockEntity(level, owner) instanceof IPeripheralOwner linkedTo)) {
             return false;
         }
         final String folded = wanted.toLowerCase(Locale.ROOT);

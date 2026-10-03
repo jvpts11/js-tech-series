@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "jsc:block/speaker_advanced_top",
+    "east": "jsc:block/speaker_advanced_side",
+    "north": "jsc:block/speaker_advanced_front",
+    "particle": "jsc:block/speaker_advanced_side",
+    "south": "jsc:block/speaker_advanced_back",
+    "up": "jsc:block/speaker_advanced_top",
+    "west": "jsc:block/speaker_advanced_side"
+  }
+}

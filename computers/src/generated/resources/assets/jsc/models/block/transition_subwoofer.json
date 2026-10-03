@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "jsc:block/subwoofer_transition_top",
+    "east": "jsc:block/subwoofer_transition_side",
+    "north": "jsc:block/subwoofer_transition_front",
+    "particle": "jsc:block/subwoofer_transition_side",
+    "south": "jsc:block/subwoofer_transition_back",
+    "up": "jsc:block/subwoofer_transition_top",
+    "west": "jsc:block/subwoofer_transition_side"
+  }
+}

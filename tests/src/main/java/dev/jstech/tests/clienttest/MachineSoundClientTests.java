@@ -126,7 +126,7 @@ public final class MachineSoundClientTests {
                 .thenScreenshot(10, "speaker_standard_named")
                 .then(0, () -> ctx.player().closeContainer())
                 .thenWaitUntilServer(level -> "Desk left".equals(speakers[0].name()), 40,
-                        "the Cobble takes the name typed when its screen closes",
+                        "the WattWorks takes the name typed when its screen closes",
                         level -> "named " + speakers[0].name())
                 .thenRightClick(5, south)
                 .thenAwaitScreen(SpeakerScreen.class, 40)
@@ -137,6 +137,29 @@ public final class MachineSoundClientTests {
                 .thenScreenshot(2, "speaker_legacy_clash")
                 .then(0, () -> ctx.player().closeContainer())
                 .thenAssert(10, () -> speakers[1].name().isEmpty(), "and closing it keeps the name it had");
+    }
+
+    @ClientTest(timeoutTicks = 600)
+    public static void transitionSet_drawsAndItsScreenHearsOfTheSubwoofer(final ClientTestContext ctx) {
+        final BlockPos north = COMPUTER.north();
+        final BlockPos south = COMPUTER.south();
+        ctx.thenTeleport(SETTLE, COMPUTER.west(3), Direction.EAST)
+                .thenBuild(SETTLE, builder -> {
+                    builder.placeRunningPersonalComputer(COMPUTER);
+                    builder.placeMonitor(COMPUTER.east(), Direction.EAST);
+                    builder.setBlock(north, ComputingModule.TRANSITION_SPEAKER.get());
+                    builder.setBlock(south, ComputingModule.TRANSITION_SPEAKER.get());
+                    builder.setBlock(south.south(), ComputingModule.TRANSITION_SUBWOOFER.get());
+                    builder.setBlock(north.north(), ComputingModule.ADVANCED_SPEAKER.get());
+                })
+                .thenScreenshot(20, "speaker_transition_set")
+                .thenRightClick(5, north)
+                .thenAwaitScreen(SpeakerScreen.class, 40)
+                .thenWaitUntil(() -> ctx.screen(SpeakerScreen.class).getMenu().subwoofer(), 40,
+                        "the satellite's screen hears of the subwoofer against the other satellite")
+                .thenScreenshot(2, "speaker_transition_with_subwoofer")
+                .then(0, () -> ctx.player().closeContainer())
+                .thenAwaitNoScreen(40);
     }
 
     private static PersonalComputerBlockEntity legacyWithHardDrive(final TestWorldBuilder builder) {

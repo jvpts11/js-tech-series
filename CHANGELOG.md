@@ -379,6 +379,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   discs and, in its USB-C port, sticks. And the Blu-ray Drive, white all over with its slim tray high on the front,
   which reads Blu-ray discs and the older DVDs and CDs. Each takes its era's cable on its back, and each opens its
   tray with the sound the other disc drives make.
+- A speaker for every era from the Legacy on. The Transition has the Artisan Inspira 2.1, gloss black satellites
+  with a silver-framed mesh front, and its subwoofer, a block of its own with the bass port in front and the driver
+  on its sides. The satellites play everything but the bass, and a subwoofer set against one of them, with no cable
+  of its own, gives all of its computer's satellites the whole range; the speaker's window says which. The Standard
+  has a new pair, the Artisan WattWorks T20, tall and gloss black with the tweeter over a silver-ringed woofer, and
+  the Cobble moves to the Advanced. Each speaker takes half of an audio output, the window names its model.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The
