@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
+import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.cable.CableBlockEntity;
@@ -38,7 +39,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * The peripheral cables: one for each era, in the Core's cable block, each reaching its era's run. A port takes its
  * era's cable and every earlier one, so a newer computer takes an older device's cable and an older device never takes
- * a newer cable; cables of two eras never join; and each cable ends in the plug of the port it enters.
+ * a newer cable, the drives and the encoders alike; cables of two eras never join; and each cable ends in the plug of
+ * the port it enters.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -125,6 +127,35 @@ public final class PeripheralCableGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * A Pattern Encoder takes the device port of its era on its back: the cable of its era and every earlier one, as
+     * the drives do, and never a newer one.
+     */
+    @GameTest(template = ARENA)
+    public static void encoders_takeTheirErasCableAndEveryEarlierOne(final GameTestHelper helper) {
+        standardPcWithCard(helper);
+        // A Legacy cable east to a Legacy encoder, its back to the cable.
+        TestCables.lay(helper, new BlockPos(1, 2, 0), ComputingModule.LEGACY_PERIPHERAL_CABLE);
+        final BlockPos ownEra = new BlockPos(2, 2, 0);
+        helper.setBlock(ownEra, facingBlock(ComputingModule.LEGACY_PATTERN_ENCODER.get(), Direction.EAST));
+        // A Transition cable south to another Legacy encoder: a newer cable than its port takes.
+        TestCables.lay(helper, new BlockPos(0, 2, 1), ComputingModule.TRANSITION_PERIPHERAL_CABLE);
+        final BlockPos newer = new BlockPos(0, 2, 2);
+        helper.setBlock(newer, facingBlock(ComputingModule.LEGACY_PATTERN_ENCODER.get(), Direction.SOUTH));
+        // A Vintage cable up and over to a Standard encoder: an older cable, which its port takes.
+        TestCables.lay(helper, new BlockPos(0, 3, 0), ComputingModule.VINTAGE_PERIPHERAL_CABLE);
+        TestCables.lay(helper, new BlockPos(0, 3, 1), ComputingModule.VINTAGE_PERIPHERAL_CABLE);
+        final BlockPos older = new BlockPos(0, 3, 2);
+        helper.setBlock(older, facingBlock(ComputingModule.PATTERN_ENCODER.get(), Direction.SOUTH));
+        helper.startSequence()
+                .thenExecuteAfter(LINK_TICKS, () -> {
+                    helper.assertTrue(encoderLinked(helper, ownEra), "the Legacy encoder takes the Legacy cable");
+                    helper.assertTrue(!encoderLinked(helper, newer), "and not the Transition one");
+                    helper.assertTrue(encoderLinked(helper, older), "the Standard encoder takes the Vintage cable");
+                })
+                .thenSucceed();
+    }
+
     /** A run reaches its era's cables and no more: eight for the Vintage cable, so a ninth is too far. */
     @GameTest(template = ARENA)
     public static void vintageRun_reachesEightCables(final GameTestHelper helper) {
@@ -193,6 +224,11 @@ public final class PeripheralCableGameTests {
     private static boolean linked(final GameTestHelper helper, final BlockPos at) {
         return helper.getBlockEntity(at) instanceof MonitorBlockEntity monitor
                 && helper.absolutePos(PC).equals(monitor.ownerPos());
+    }
+
+    private static boolean encoderLinked(final GameTestHelper helper, final BlockPos at) {
+        return helper.getBlockEntity(at) instanceof PatternEncoderBlockEntity encoder
+                && helper.absolutePos(PC).equals(encoder.ownerPos());
     }
 
     private static boolean driveLinked(final GameTestHelper helper, final BlockPos at) {
