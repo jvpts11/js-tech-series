@@ -400,6 +400,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   Frames 95 keeps it in System Properties with the views as radio buttons and the actions as buttons under the tree;
   Frames XP has its console window, the views in the View menu, the actions on a right-click and in the Action menu,
   and a status bar that says what disabling a device does; Frames 11 has the views as a switch in its menu row.
+- The Midsoft Diagnostics on MC-DOS and MC-NET, which have no Device Manager: `msd` takes the whole terminal and
+  shows what the machine is made of (its processor, memory, graphics card, network, system and drives), and LPT
+  Ports and COM Ports open the list of the board's ports with what is attached to each and whether it is on, where a
+  device is enabled or disabled from the keyboard.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

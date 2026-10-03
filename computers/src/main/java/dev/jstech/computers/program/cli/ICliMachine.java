@@ -75,6 +75,14 @@ public interface ICliMachine {
         return null;
     }
 
+    /**
+     * Disables or enables the device standing at {@code pos} (packed) on one of the computer's own ports, as its
+     * Device Manager does; false when no device of the machine's stands there.
+     */
+    default boolean setDeviceDisabled(final long pos, final boolean disabled) {
+        return false;
+    }
+
     /** This computer's host name as a POSIX shell shows it (its name, or the OS id when unnamed). */
     default String hostname() {
         return "computer";

@@ -54,6 +54,7 @@ public final class ClientTestSuite {
             LiveInstallClientTests.class,
             McNetSpaceClientTests.class,
             MediaDriveClientTests.class,
+            MsdClientTests.class,
             MultipartModelClientTests.class,
             CableBlockClientTests.class,
             ItemStateClientTests.class,

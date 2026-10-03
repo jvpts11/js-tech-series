@@ -181,6 +181,12 @@ public record DeviceMap(String host, Text board, List<Text> processors, List<Tex
         return BOARD_NETWORK.with(cable);
     }
 
+    /** The cable's name alone when {@code adapter} is the board's network port, the adapter's name otherwise. */
+    public static Text cableOf(final Text adapter) {
+        return adapter instanceof Text.Translated named && named.key().equals(BOARD_NETWORK)
+                && !named.args().isEmpty() ? named.args().getFirst() : adapter;
+    }
+
     /** A hub by its name with how many ports it adds. */
     public static Text hubName(final Text name, final int ports) {
         return HUB.with(name, ports);

@@ -32,6 +32,8 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.interac.InteracState;
 import dev.jstech.computers.program.cli.interac.InteracView;
+import dev.jstech.computers.program.cli.msd.MsdState;
+import dev.jstech.computers.program.cli.msd.MsdView;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
@@ -298,7 +300,9 @@ public final class FilePayloads {
         String content = "";
         boolean exists = false;
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
-            final Optional<String> drawn = interacScreen(level, computer, player, payload.path());
+            final Optional<String> interac = interacScreen(level, computer, player, payload.path());
+            final Optional<String> drawn = interac.isPresent() ? interac
+                    : msdScreen(level, computer, player, payload.path());
             final Optional<String> read = drawn.isPresent() ? drawn
                     : readDiskFile(level, computer, payload.path());
             if (read.isPresent()) {
@@ -333,6 +337,19 @@ public final class FilePayloads {
         }
         final ServerCliComputer shell = new ServerCliComputer(terminal, level, player);
         return Optional.of(String.join("\n", InteracView.screen(shell, InteracState.of(path))));
+    }
+
+    /**
+     * The diagnostics screen of the Vintage systems, drawn by the machine, when that is what was asked for: asked
+     * for as a file is, and anything the name says was asked of a port carried out here, on the machine.
+     */
+    private static Optional<String> msdScreen(final ServerLevel level, final IOsHost computer,
+                                              final ServerPlayer player, final String path) {
+        if (!MsdState.names(path) || !(computer instanceof IComputerTerminalHost terminal)) {
+            return Optional.empty();
+        }
+        final ServerCliComputer shell = new ServerCliComputer(terminal, level, player);
+        return Optional.of(String.join("\n", MsdView.screen(shell, MsdState.of(path))));
     }
 
     /**

@@ -187,6 +187,15 @@ abstract class ServerCliShell implements ICliComputer {
     }
 
     @Override
+    public boolean setDeviceDisabled(final long pos, final boolean disabled) {
+        if (!(hostBlock instanceof IOsHost computer) || !computer.linkedEndpoints().contains(pos)) {
+            return false;
+        }
+        computer.setDisabled(pos, disabled);
+        return true;
+    }
+
+    @Override
     public ShellFamily shellFamily() {
         return ServerCliComputer.shellFamilyOf(hostBlock);
     }

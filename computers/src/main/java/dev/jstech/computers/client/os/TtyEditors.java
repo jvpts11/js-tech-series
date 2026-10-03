@@ -40,6 +40,8 @@ public final class TtyEditors {
          * changes is the network.
          */
         register("interac", InteracTuiKeys::new);
+        // The Vintage systems' diagnostics take it for the same reason: buttons and a list worked with the keys.
+        register("msd", MsdKeys::new);
         /*
          * vi is the same engine as vim, wearing a system's own voice: FreeBSD's nvi and UNIX System V's
          * original. Which of these a hand-over names is the machine's choice, made from the platform it runs

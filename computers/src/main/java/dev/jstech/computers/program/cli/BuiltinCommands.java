@@ -10,6 +10,7 @@ package dev.jstech.computers.program.cli;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.program.cli.interac.InteracCommand;
 import dev.jstech.computers.program.cli.man.ManCommands;
+import dev.jstech.computers.program.cli.msd.MsdCommand;
 import dev.jstech.computers.program.iql.IqlVerb;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,6 +98,8 @@ public final class BuiltinCommands {
                 new NetworkCommands.Operation(),
                 new InteracCommand(),
                 new MachineCommands.Devices(),
+                // The Vintage systems' diagnostics, where they disable a device, having no Device Manager.
+                new MsdCommand(),
                 new NetworkCommands.Ssh(),
                 new ShellCommands.Exit(),
                 new SoftwareCommands.Pckmgr("pckmgr", Set.of(Platform.FRAMES)),
