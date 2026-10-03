@@ -36,6 +36,7 @@ import dev.jstech.computers.block.NetworkGatewayBlock;
 import dev.jstech.computers.block.PatternEncoderBlock;
 import dev.jstech.computers.block.PersonalComputerBlock;
 import dev.jstech.computers.block.DataWires;
+import dev.jstech.computers.block.RedstoneInterfaceBlock;
 import dev.jstech.computers.block.RepeaterBlock;
 import dev.jstech.computers.block.RouterBlock;
 import dev.jstech.computers.block.ServerRackBlock;
@@ -58,6 +59,7 @@ import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.blockentity.RedstoneInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.RepeaterBlockEntity;
 import dev.jstech.computers.blockentity.RouterBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
@@ -185,6 +187,9 @@ public final class ComputingModule {
     private static final CabinetBlockItem.Fit DEVICE_FIT = new CabinetBlockItem.Fit(16.0F, 0.0F, -0.5F, 0.0F);
     /** A device's lamps, dark on its item, whatever the devices in the world show. */
     private static final List<String> DEVICE_LAMPS = List.of(MediaBay.POWER_LAMP, MediaBay.BUSY_LAMP);
+    /** A Redstone Interface's lit lens and mode lamps, dark on its item: the item shows the lens at rest. */
+    private static final List<String> REDSTONE_INTERFACE_LIT = List.of(ComputingLooks.REDSTONE_LENS_HALF,
+            ComputingLooks.REDSTONE_LENS_FULL, ComputingLooks.REDSTONE_LAMP_IN, ComputingLooks.REDSTONE_LAMP_OUT);
     /** How thick the long distance line is, in pixels; every other data cable is four. */
     private static final int LONG_DISTANCE_PIXELS = 6;
     /** A small computer's lamps, dark on its item. */
@@ -559,6 +564,31 @@ public final class ComputingModule {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MediaReaderBlockEntity>> MEDIA_READER_BE =
             CONTENT.blockEntity("media_reader", MediaReaderBlockEntity::new,
                     FLOPPY_DRIVE, CD_DRIVE, DVD_DRIVE, DOCK_STATION);
+
+    /*
+     * The Redstone Interfaces, one each era: a sensor on the peripheral cable that reads a redstone signal for its
+     * computer, or emits one, through its lens alone.
+     */
+
+    public static final BlockEntry<RedstoneInterfaceBlock> VINTAGE_REDSTONE_INTERFACE =
+            redstoneInterface("vintage_redstone_interface", HardwareEra.VINTAGE)
+                    .named("Vintage Redstone Interface").register();
+    public static final BlockEntry<RedstoneInterfaceBlock> LEGACY_REDSTONE_INTERFACE =
+            redstoneInterface("legacy_redstone_interface", HardwareEra.LEGACY)
+                    .named("Legacy Redstone Interface").register();
+    public static final BlockEntry<RedstoneInterfaceBlock> TRANSITION_REDSTONE_INTERFACE =
+            redstoneInterface("transition_redstone_interface", HardwareEra.TRANSITION)
+                    .named("Transition Redstone Interface").register();
+    public static final BlockEntry<RedstoneInterfaceBlock> STANDARD_REDSTONE_INTERFACE =
+            redstoneInterface("standard_redstone_interface", HardwareEra.STANDARD)
+                    .named("Standard Redstone Interface").register();
+    public static final BlockEntry<RedstoneInterfaceBlock> ADVANCED_REDSTONE_INTERFACE =
+            redstoneInterface("advanced_redstone_interface", HardwareEra.ADVANCED)
+                    .named("Advanced Redstone Interface").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RedstoneInterfaceBlockEntity>>
+            REDSTONE_INTERFACE_BE = CONTENT.blockEntity("redstone_interface", RedstoneInterfaceBlockEntity::new,
+                    VINTAGE_REDSTONE_INTERFACE, LEGACY_REDSTONE_INTERFACE, TRANSITION_REDSTONE_INTERFACE,
+                    STANDARD_REDSTONE_INTERFACE, ADVANCED_REDSTONE_INTERFACE);
 
     /* The speakers, which carry a computer's sound out beside its monitor: a Legacy model and a Standard one. */
     public static final BlockEntry<SpeakerBlock> LEGACY_SPEAKER =
@@ -1056,6 +1086,23 @@ public final class ComputingModule {
                 .geo(ComputingLooks.MEDIA_DRIVE)
                 .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.MEDIA_DRIVE, id,
                         DEVICE_FIT, DEVICE_LAMPS))
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(DEVICES);
+    }
+
+    /*
+     * A Redstone Interface, whose sensor its block entity draws: the block shows nothing but the particles a break
+     * scatters, taken from its atlas. Like an observer it carries no signal through itself, or the wire it powers
+     * would power it back and light whatever stands beside it.
+     */
+    private static BlockBuilder<RedstoneInterfaceBlock> redstoneInterface(final String id, final HardwareEra era) {
+        final String model = ComputingLooks.redstoneInterface(era);
+        return CONTENT.block(id, properties -> new RedstoneInterfaceBlock(properties, era))
+                .properties(properties -> properties.mapColor(MapColor.COLOR_RED).strength(1.0F)
+                        .sound(SoundType.METAL).noOcclusion().isRedstoneConductor((state, level, pos) -> false))
+                .look(IBlockLook.fixed(new IBlockModel.ParticleOnly(id + "_body", "block/redstone/" + model)))
+                .geo(ComputingLooks.REDSTONE_INTERFACE)
+                .item((block, properties) -> new CabinetBlockItem(block, properties,
+                        ComputingLooks.REDSTONE_INTERFACE, model, DEVICE_FIT, REDSTONE_INTERFACE_LIT))
                 .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(DEVICES);
     }
 

@@ -49,6 +49,7 @@ class LayoutAuditTest {
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
             "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout",
             "CdeStyleLayout", "WorkstationInfoLayout", "TrashLayout", "HelpViewerLayout", "SpeakerLayout",
+            "RedstoneInterfaceLayout",
             "VolumePopupLayout", "SoundfoundryLayout", "SoundfoundryShareLayout", "SoundfoundryStandardLayout",
             "PersonalComputerLayout", "MainframeLayout", "ServerAssemblyLayout", "KvmChannelLayout",
             "SystemBootLayout", "CommandPromptLayout", "OsInstallLayout", "InstallerLayout",
@@ -203,6 +204,7 @@ class LayoutAuditTest {
         c.add(new AuditCase("SettingsLayout(bevel, one wallpaper)",
                 SettingsLayout.layout(135, 1, false, false), false));
         c.add(new AuditCase("SpeakerLayout", SpeakerLayout.layout(), true));
+        c.add(new AuditCase("RedstoneInterfaceLayout", RedstoneInterfaceLayout.layout(), true));
         // Every volume control a panel opens, open and folded, with the English words at six pixels a letter.
         final VolumePopupLayout.Labels volumeWords = new VolumePopupLayout.Labels("Audio Volume", "Mute output",
                 "Sound output", List.of("Monitor", "Speakers", "Monitor and speakers"), "Desk left, Desk right",

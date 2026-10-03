@@ -11,6 +11,7 @@ import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.block.SupercomputerRackBlock;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
+import dev.jstech.computers.blockentity.RedstoneInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.content.GeoLook;
@@ -37,6 +38,15 @@ public final class ComputingLooks {
     /** The drives, one model each: a floppy drive, a CD drive and a DVD drive are different machines. */
     public static final GeoLook<MediaReaderBlockEntity> MEDIA_DRIVE = GeoLook.of(JsComputers.MODID, "media_drive",
             "media_drive", drive -> drive.driveType().serializedName());
+    /** The Redstone Interfaces, one model each era: the sensor of its day, its housing and the bezel of its lens. */
+    public static final GeoLook<RedstoneInterfaceBlockEntity> REDSTONE_INTERFACE = GeoLook.of(JsComputers.MODID,
+            "redstone", "redstone_interface", sensor -> redstoneInterface(sensor.era()));
+    /** A Redstone Interface's lens at each of the three brightnesses it is drawn in, and its two mode lamps. */
+    public static final String REDSTONE_LENS_DARK = "lens_0";
+    public static final String REDSTONE_LENS_HALF = "lens_8";
+    public static final String REDSTONE_LENS_FULL = "lens_15";
+    public static final String REDSTONE_LAMP_IN = "mode_in";
+    public static final String REDSTONE_LAMP_OUT = "mode_out";
     /**
      * The small computers' cases, a model for each machine in each case: the tower of each age, and from the Standard
      * age on the three cases a machine comes in. They share the fans' turning.
@@ -58,6 +68,12 @@ public final class ComputingLooks {
     /** The model of the small computer whose block is in {@code state}. */
     public static String computer(final BlockState state) {
         return state.getBlock() instanceof IComputerCase computer ? computer.caseModel() : FALLBACK_CASE;
+    }
+
+    /** The model of a Redstone Interface of {@code era}; an era after the Advanced has the Advanced's. */
+    public static String redstoneInterface(final HardwareEra era) {
+        final HardwareEra drawn = era.level() > HardwareEra.ADVANCED.level() ? HardwareEra.ADVANCED : era;
+        return drawn.serializedName() + "_redstone_interface";
     }
 
     /** The model of a Mainframe cabinet of {@code era}. */

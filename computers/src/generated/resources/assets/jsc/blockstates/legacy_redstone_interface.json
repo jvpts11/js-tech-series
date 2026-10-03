@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/legacy_redstone_interface_body"
+    }
+  }
+}

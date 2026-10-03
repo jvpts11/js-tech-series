@@ -145,6 +145,7 @@ public final class ComputingClientSetup {
         event.register(ComputingMenus.SERVER_RACK_MENU.get(), ServerRackScreen::new);
         event.register(ComputingMenus.SERVER_ROUTER_MENU.get(), ServerRouterScreen::new);
         event.register(ComputingMenus.SPEAKER_MENU.get(), SpeakerScreen::new);
+        event.register(ComputingMenus.REDSTONE_INTERFACE_MENU.get(), RedstoneInterfaceScreen::new);
         event.register(ComputingMenus.SERVER_ASSEMBLY_MENU.get(), ServerAssemblyScreen::new);
         /*
          * The one place an operating space is chosen. The mod's own is registered through the same door an
@@ -179,6 +180,9 @@ public final class ComputingClientSetup {
         event.registerBlockEntityRenderer(ComputingModule.PATTERN_ENCODER_BE.get(), PatternEncoderRenderer::new);
         // The floppy, CD and DVD drives the same way; the Dock Station keeps its block model.
         event.registerBlockEntityRenderer(ComputingModule.MEDIA_READER_BE.get(), MediaDriveRenderer::new);
+        // The Redstone Interfaces: the sensor of each era, its lens and mode lamps showing what it does.
+        event.registerBlockEntityRenderer(ComputingModule.REDSTONE_INTERFACE_BE.get(),
+                RedstoneInterfaceRenderer::new);
         // The small computers: each machine's case, by its age and the case it comes in.
         event.registerBlockEntityRenderer(ComputingModule.PERSONAL_COMPUTER_BE.get(), ComputerRenderer::new);
         event.registerBlockEntityRenderer(ComputingModule.CRAFTING_COMPUTER_BE.get(), ComputerRenderer::new);

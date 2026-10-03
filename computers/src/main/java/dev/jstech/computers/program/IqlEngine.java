@@ -20,6 +20,7 @@ import dev.jstech.computers.program.iql.IqlDefinitionParser;
 import dev.jstech.computers.program.iql.IqlOperation;
 import dev.jstech.computers.program.iql.IqlParseResult;
 import dev.jstech.computers.program.iql.IqlParser;
+import dev.jstech.computers.program.iql.IqlRedstoneStatement;
 import dev.jstech.computers.program.iql.IqlSavedObject;
 import dev.jstech.computers.program.iql.IqlVerb;
 import dev.jstech.core.text.Text;
@@ -100,6 +101,11 @@ public final class IqlEngine {
             public ICliComputer.OpResult execute(final IqlOperation operation) {
                 return computer.execute(operation);
             }
+
+            @Override
+            public ICliComputer.OpResult setRedstone(final IqlRedstoneStatement statement, final String by) {
+                return computer.setRedstone(statement, by);
+            }
         };
     }
 
@@ -166,6 +172,12 @@ public final class IqlEngine {
         if (parsed.isBus()) {
             final String job = RUNNING_JOB.get();
             return IqlBusSetter.apply(mainframe, parsed.bus(), job == null ? IqlBusSetter.TYPED : job);
+        }
+        if (parsed.isRedstone()) {
+            final String job = RUNNING_JOB.get();
+            final ICliComputer.OpResult set = computer.setRedstone(parsed.redstone(),
+                    job == null ? IqlBusSetter.TYPED : job);
+            return new Outcome(set.ok(), set.message(), List.of());
         }
         return runOperation(parsed.operation(), depth);
     }

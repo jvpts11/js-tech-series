@@ -70,6 +70,7 @@ public final class ClientTestSuite {
             BusWindowClientTests.class,
             BusModelClientTests.class,
             PeripheralCableClientTests.class,
+            RedstoneInterfaceClientTests.class,
             NetworkInteractorClientTests.class,
             NetworkServicesClientTests.class,
             NetworkSharesClientTests.class,

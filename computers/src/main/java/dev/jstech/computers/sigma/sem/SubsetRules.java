@@ -67,6 +67,8 @@ public final class SubsetRules {
                     "WriteOnly", "Only", "AllBut", "Tag", "Keep", "Max", "Priority", "Fuzzy", "WhenStock",
                     "WhenStockTag", "Between", "After", "Item")),
             Map.entry("BusItem", Set.of("Bus", "Item", "Keep", "Max")),
+            // A Redstone Interface of the machine: what redstone() comes down to, its two modes and its strength.
+            Map.entry("Redstone", Set.of("Named", "Name", "In", "Out", "Level")),
             // What rand and srand come down to, and nothing past them: a whole number drawn, and a start chosen.
             Map.entry("Random", Set.of("Next", "Seed")));
 

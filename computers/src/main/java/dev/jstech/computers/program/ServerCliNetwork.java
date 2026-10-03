@@ -10,6 +10,7 @@ package dev.jstech.computers.program;
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.program.iql.IIqlCondition;
 import dev.jstech.computers.program.iql.IqlOperation;
+import dev.jstech.computers.program.iql.IqlRedstoneStatement;
 import dev.jstech.computers.program.iql.IqlVerb;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.operation.OperationPriority;
@@ -258,6 +259,11 @@ abstract class ServerCliNetwork extends ServerCliFiles {
     @Override
     public OpResult execute(final IqlOperation op) {
         return iql().execute(op);
+    }
+
+    @Override
+    public OpResult setRedstone(final IqlRedstoneStatement statement, final String by) {
+        return IqlRedstoneSetter.apply(level, host, statement, by);
     }
 
     @Override

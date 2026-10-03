@@ -31,4 +31,10 @@ public interface IIqlView {
 
     /** Carries out a statement that changes something, and says how it went. */
     ICliComputer.OpResult execute(IqlOperation operation);
+
+    /**
+     * Makes one of this machine's own Redstone Interfaces read or emit, marked with {@code by}, and says how it went.
+     * An interface is the machine's, not the network's, so the machine that runs the statement is the one asked.
+     */
+    ICliComputer.OpResult setRedstone(IqlRedstoneStatement statement, String by);
 }

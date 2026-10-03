@@ -67,6 +67,14 @@ public final class IqlParser {
                 return IqlParseResult.error(reason(e), IqlParseResult.NO_POSITION);
             }
         }
+        // So is a Redstone Interface's mode: SET REDSTONE 'name' IN, or OUT and a strength.
+        if (IqlRedstoneStatement.isSetRedstone(input)) {
+            try {
+                return IqlParseResult.okRedstone(IqlRedstoneStatement.parse(input));
+            } catch (final IllegalArgumentException e) {
+                return IqlParseResult.error(reason(e), IqlParseResult.NO_POSITION);
+            }
+        }
         /*
          * Layer 2 first: CREATE/DROP/EXEC of a saved object. tryParse returns null (and we fall through)
          * for an ordinary action; it throws only when the text *is* a malformed definition.

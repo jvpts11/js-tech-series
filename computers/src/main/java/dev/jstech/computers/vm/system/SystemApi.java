@@ -52,7 +52,7 @@ public final class SystemApi {
             iqlResult(), iql(), workStat(), mainframe(), askResult(), operationInfo(), operations(), ccComputer(),
             ccPeripheral(), gatewayMessage(), gateway(), widget(), window(), box("Row"), box("Column"), label(),
             button(), textBox(), checkBox(), progressBar(), listBox(), canvas(), messageBox(), sound(), speaker(),
-            bus(), busItem());
+            bus(), busItem(), redstone());
 
     private static final Map<String, TypeSpec> BY_TYPE = new HashMap<>();
     /** Every way of writing a call, under its owner and name, so a lookup does not walk the whole system. */
@@ -772,6 +772,22 @@ public final class SystemApi {
         speaker.recordValue(STRING, "Name");
         speaker.onObject(BOOL, "Play", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
         return new TypeSpec(SOUND, "Speaker", speaker.members);
+    }
+
+    /**
+     * One of the Redstone Interfaces linked to the machine, found by the name it answers to, or null when none does.
+     * {@code In()} makes it read and {@code Out(n)} makes it emit {@code n}, from 0 to 15, each marked on it with the
+     * program that set it and handing it back; {@code Level()} is the strength it reads while it reads and emits while
+     * it emits, and 0 while nothing powers it: {@code redstone("Gate").Out(15);}.
+     */
+    private static TypeSpec redstone() {
+        final Members redstone = new Members("Redstone");
+        redstone.onType("Redstone", "Named", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), STRING);
+        redstone.recordValue(STRING, "Name");
+        redstone.onObject("Redstone", "In", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        redstone.onObject("Redstone", "Out", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), INT);
+        redstone.onObject(INT, "Level", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        return new TypeSpec(MACHINE, "Redstone", redstone.members);
     }
 
     /**

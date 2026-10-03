@@ -10,7 +10,6 @@ package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.program.iql.IqlParseResult;
 import dev.jstech.computers.program.iql.IqlParser;
-import dev.jstech.computers.program.iql.IqlVerb;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -134,8 +133,7 @@ final class NetworkCommands {
                 ctx.out().error(SYNTAX.with(parsed.error()));
                 return;
             }
-            final boolean read = !parsed.isDefinition() && (parsed.operation().verb() == IqlVerb.QUERY
-                    || parsed.operation().verb() == IqlVerb.COUNT);
+            final boolean read = parsed.isRead();
             if (read && !ctx.computer().onNetwork()) {
                 ctx.out().error(NOT_ON_NETWORK);
                 return;

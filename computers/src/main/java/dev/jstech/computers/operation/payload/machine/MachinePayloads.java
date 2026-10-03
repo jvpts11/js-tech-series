@@ -16,12 +16,14 @@ import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.IKvmScreenOpener;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
+import dev.jstech.computers.blockentity.RedstoneInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.client.os.RemoteControlApp;
 import dev.jstech.computers.machine.RemoteComputerService;
 import dev.jstech.computers.menu.AbstractAssemblyComputerMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
+import dev.jstech.computers.menu.RedstoneInterfaceMenu;
 import dev.jstech.computers.menu.ServerAssemblyMenu;
 import dev.jstech.computers.menu.ServerRackMenu;
 import dev.jstech.computers.menu.SpeakerMenu;
@@ -34,6 +36,7 @@ import dev.jstech.computers.operation.payload.RackBayPowerPayload;
 import dev.jstech.computers.operation.payload.RemoteControlPayload;
 import dev.jstech.computers.operation.payload.RemoteHostsPayload;
 import dev.jstech.computers.operation.payload.RenamePcPayload;
+import dev.jstech.computers.operation.payload.RenameRedstoneInterfacePayload;
 import dev.jstech.computers.operation.payload.RenameServerPayload;
 import dev.jstech.computers.operation.payload.RenameSpeakerPayload;
 import dev.jstech.computers.operation.payload.MachineSoundPayload;
@@ -75,6 +78,10 @@ public final class MachinePayloads {
         ComputerAccess.onMenu(registrar, RenameSpeakerPayload.TYPE, RenameSpeakerPayload.STREAM_CODEC,
                 SpeakerMenu.class, SpeakerMenu::speakerPos, RenameSpeakerPayload::speakerPos,
                 MachinePayloads::handleRenameSpeaker);
+        ComputerAccess.onMenu(registrar, RenameRedstoneInterfacePayload.TYPE,
+                RenameRedstoneInterfacePayload.STREAM_CODEC, RedstoneInterfaceMenu.class,
+                RedstoneInterfaceMenu::sensorPos, RenameRedstoneInterfacePayload::sensorPos,
+                MachinePayloads::handleRenameRedstoneInterface);
         registrar.playToClient(OpenKvmPayload.TYPE, OpenKvmPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(MachinePayloads::handleOpenKvm));
         ComputerAccess.accept(registrar, RemoteControlPayload.TYPE, RemoteControlPayload.STREAM_CODEC,
@@ -96,6 +103,14 @@ public final class MachinePayloads {
                                             final ServerPlayer player, final ServerLevel level) {
         if (level.getBlockEntity(menu.speakerPos()) instanceof SpeakerBlockEntity speaker) {
             speaker.ask(level, payload.name());
+        }
+    }
+
+    private static void handleRenameRedstoneInterface(final RenameRedstoneInterfacePayload payload,
+                                                      final RedstoneInterfaceMenu menu, final ServerPlayer player,
+                                                      final ServerLevel level) {
+        if (level.getBlockEntity(menu.sensorPos()) instanceof RedstoneInterfaceBlockEntity sensor) {
+            sensor.ask(level, payload.name());
         }
     }
 

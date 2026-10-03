@@ -230,6 +230,8 @@ public final class BareFunctions {
         same("isspace", CHARACTER, "IsWhiteSpace", form("bool", "char c"));
         // A bus of the network by its name, as its window and the IQL name it.
         same("bus", "Bus", "Named", form("Bus", "string name"));
+        // A Redstone Interface of the machine by the name it answers to, as its window and the IQL name it.
+        same("redstone", "Redstone", "Named", form("Redstone", "string name"));
     }
 
     private BareFunctions() {

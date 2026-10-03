@@ -41,9 +41,9 @@ class SigmaCorpusTest {
 
     /** The programs of the corpus, kept under {@code sigma/corpus} as source and as the listing each compiles to. */
     private static final List<String> PROGRAMS = List.of("Library", "Programs", "Machine", "Network", "Gateway",
-            "Ui", "Steps", "Values", "Sound", "OldNames", "Buses");
+            "Ui", "Steps", "Values", "Sound", "OldNames", "Buses", "Redstone");
     /** The programs built on what came after the first version, which that version refuses for it. */
-    private static final Set<String> LATER = Set.of("Sound", "OldNames", "Buses");
+    private static final Set<String> LATER = Set.of("Sound", "OldNames", "Buses", "Redstone");
 
     /**
      * The types the compiler declares as the language's own core, which the corpus is not about.

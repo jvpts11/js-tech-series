@@ -9,6 +9,7 @@ package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.program.iql.IqlOperation;
+import dev.jstech.computers.program.iql.IqlRedstoneStatement;
 import dev.jstech.computers.program.iql.IqlVerb;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -144,6 +145,14 @@ public interface ICliOperations {
 
     /** Runs a parsed effecting IQL statement (SELECT/INSERT/MOVE/CRAFT/DELETE/DROP/LOCK/...) against the network. */
     default ICliComputer.OpResult execute(final IqlOperation operation) {
+        return ICliComputer.OpResult.fail(Refusals.UNREACHABLE);
+    }
+
+    /**
+     * Makes one of this computer's own Redstone Interfaces read or emit, marked with {@code by}: a {@code SET
+     * REDSTONE} statement, which names an interface of the computer that runs it rather than of the network.
+     */
+    default ICliComputer.OpResult setRedstone(final IqlRedstoneStatement statement, final String by) {
         return ICliComputer.OpResult.fail(Refusals.UNREACHABLE);
     }
 

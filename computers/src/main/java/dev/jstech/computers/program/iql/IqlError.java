@@ -88,6 +88,14 @@ public final class IqlError extends IllegalArgumentException {
     static final TextKey BUS_UNKNOWN_SETTING = TextKey.of("jsc.iql.error.bus_unknown_setting",
             "a bus has no setting %s");
     static final TextKey NOT_AN_HOUR = TextKey.of("jsc.iql.error.not_an_hour", "not an hour of the day: %s");
+
+    // A Redstone Interface's mode.
+    static final TextKey REDSTONE_NEEDS_NAME = TextKey.of("jsc.iql.error.redstone_needs_name",
+            "SET REDSTONE needs the interface's name, in quotes when it has spaces");
+    static final TextKey REDSTONE_NEEDS_MODE = TextKey.of("jsc.iql.error.redstone_needs_mode",
+            "SET REDSTONE needs IN, or OUT and a strength from 0 to 15");
+    static final TextKey NOT_A_STRENGTH = TextKey.of("jsc.iql.error.not_a_strength",
+            "not a redstone strength, which runs from 0 to 15: %s");
     static final TextKey A_LIST = TextKey.of("jsc.iql.error.a_list", "a list of items");
     static final TextKey A_COUNT = TextKey.of("jsc.iql.error.a_count", "a count");
 

@@ -384,7 +384,7 @@ class SigmaCompletionsTest {
         final List<SigmaCompletions.Item> types = SigmaCompletions.within(LanguageLevel.SIGMA,
                 SigmaCompletions.types(this.builtIns, null, ""));
         assertEquals(List.of("Bus", "BusItem", "Computer", "Console", "Convert", "FILE", "File", "Math", "Program",
-                "Random", "Script", "Sound", "Speaker", "Time"), labels(types));
+                "Random", "Redstone", "Script", "Sound", "Speaker", "Time"), labels(types));
         assertEquals("Standard", named(types, "Console").owner());
         assertTrue(labels(SigmaCompletions.types(this.builtIns, null, "")).contains("Network"),
                 "which the full language still has");

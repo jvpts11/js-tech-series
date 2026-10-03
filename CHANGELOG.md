@@ -361,6 +361,19 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   taken away drops the devices behind it.
 - Hubs in J's Core: a peripheral can offer its owner more ports, and the link validator finds each peripheral's way
   through the hubs linked to its owner, keeping with every link the hub it hangs from.
+- A Redstone Interface for each era, in the devices tab: a small sensor on the peripheral cable, drawn as the sensor of
+  its day, that lets its computer read a redstone signal or emit one. It is placed as an observer is, its lens toward
+  what the player looks at, any of six ways, and only its lens reads or emits; emitting, it powers the block in front
+  as a lever does. Its lens shows the strength it reads or emits, its green lamp that it reads and its amber one that
+  it emits. It takes a device port, or a hub's, and with no computer to power it reads and emits nothing.
+- The Redstone Interface's window, in the skin of its era: its name, unique among its computer's interfaces, the
+  computer it hangs from and the signal at its lens, the IN and OUT buttons, the strength it emits chosen by clicking
+  one of sixteen cells, and the same setting written in IQL and in Sigma. What a program set is marked with its name,
+  and a setting made in the window clears the mark.
+- Programs set the Redstone Interfaces of the computer they run on: `redstone("Gate").Out(15)`, `.In()` and
+  `.Level()` in Sigma and Sigma#, and `SET REDSTONE 'Gate' IN` or `SET REDSTONE 'Gate' OUT 15` in IQL. A setting is
+  marked on the interface with the program's name, as on a bus.
+- The Sigma documentation describes the buses and the Redstone Interfaces.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The
@@ -1081,6 +1094,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The unused hook for the Modonomicon guidebook: the series' manuals will be drawn by J's Core itself.
 
 ### Fixed
+- The prompt's `iql` command, and a file of statements it runs, no longer fail on a `SET BUS` statement.
 - A base with cables ticks as fast as it did before the shared cable block. Machines that look at the blocks round
   them every tick for a cable (the Crafting Switch and the Crafting Computer finding their machines, the racks finding
   their network) asked the game for a block entity at every place, and a place with no cable answered only after a

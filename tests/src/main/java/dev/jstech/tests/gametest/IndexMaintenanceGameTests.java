@@ -59,8 +59,12 @@ public final class IndexMaintenanceGameTests {
                     helper.assertTrue(mainframe.networkIndex().available(COBBLE) == 100,
                             "reads keep the old catalog while the new one is built");
                 })
-                .thenExecuteAfter(3, () -> {
-                    helper.assertTrue(done[0], "the completion ran once the catalog was swapped in");
+                /*
+                 * The rebuild runs on a worker and comes back on a later tick of the Mainframe, as soon as the worker
+                 * is done: how many ticks that takes is the machine's load, so the completion is waited for.
+                 */
+                .thenWaitUntil(() -> helper.assertTrue(done[0], "the completion ran once the catalog was swapped in"))
+                .thenExecute(() -> {
                     helper.assertTrue(mainframe.networkIndex().available(COBBLE) == 100
                                     && mainframe.networkIndex().catalogSize() == 1
                                     && mainframe.networkIndex().indexedServerCount() == 1,

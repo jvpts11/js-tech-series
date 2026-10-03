@@ -17,6 +17,7 @@ import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.program.IqlEngine;
+import dev.jstech.computers.program.IqlRedstoneSetter;
 import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.iql.IIqlCondition;
@@ -24,7 +25,7 @@ import dev.jstech.computers.program.iql.IIqlView;
 import dev.jstech.computers.program.iql.IqlOperation;
 import dev.jstech.computers.program.iql.IqlParseResult;
 import dev.jstech.computers.program.iql.IqlParser;
-import dev.jstech.computers.program.iql.IqlVerb;
+import dev.jstech.computers.program.iql.IqlRedstoneStatement;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
@@ -597,6 +598,11 @@ public final class IqlService {
             public ICliComputer.OpResult execute(final IqlOperation operation) {
                 return IqlService.this.execute(operation);
             }
+
+            @Override
+            public ICliComputer.OpResult setRedstone(final IqlRedstoneStatement statement, final String by) {
+                return IqlRedstoneSetter.apply(IqlService.this.level, IqlService.this.terminal, statement, by);
+            }
         };
     }
 
@@ -636,8 +642,7 @@ public final class IqlService {
              * QUERY/COUNT are read operations that produce rows, not timed operations; they cannot be
              * dispatched via execute(). The caller should use 'operation' for those.
              */
-            if (!parsed.isDefinition() && (parsed.operation().verb() == IqlVerb.QUERY
-                    || parsed.operation().verb() == IqlVerb.COUNT)) {
+            if (parsed.isRead()) {
                 return ICliComputer.FsResult.fail(NO_READS_IN_RUN.with(path));
             }
             statements.add(parsed);
@@ -648,8 +653,11 @@ public final class IqlService {
         }
         ICliComputer.OpResult last = null;
         for (int i = 0; i < statements.size(); i++) {
-            // A definition is the engine's to keep, so it goes through the network's door as the studio sends it.
-            if (statements.get(i).isDefinition()) {
+            /*
+             * A definition is the engine's to keep, and a setting the engine's to make, so both go through the
+             * network's door as the studio sends them; only an action is carried out here.
+             */
+            if (statements.get(i).operation() == null) {
                 final IqlEngine.Outcome defined = this.run(texts.get(i));
                 last = defined.ok() ? ICliComputer.OpResult.ok(defined.said())
                         : ICliComputer.OpResult.fail(defined.said());

@@ -27,6 +27,7 @@ import dev.jstech.computers.menu.NetworkGatewayMenu;
 import dev.jstech.computers.menu.PatternEncoderMenu;
 import dev.jstech.computers.menu.PersonalComputerMenu;
 import dev.jstech.computers.menu.ReceivingBusMenu;
+import dev.jstech.computers.menu.RedstoneInterfaceMenu;
 import dev.jstech.computers.menu.ServerAssemblyMenu;
 import dev.jstech.computers.menu.ServerRackMenu;
 import dev.jstech.computers.menu.ServerRouterMenu;
@@ -100,6 +101,9 @@ public final class ComputingMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<SpeakerMenu>> SPEAKER_MENU =
             menu("speaker", SpeakerMenu::fromNetwork);
+
+    public static final DeferredHolder<MenuType<?>, MenuType<RedstoneInterfaceMenu>> REDSTONE_INTERFACE_MENU =
+            menu("redstone_interface", RedstoneInterfaceMenu::fromNetwork);
 
     // What a monitor shows
 

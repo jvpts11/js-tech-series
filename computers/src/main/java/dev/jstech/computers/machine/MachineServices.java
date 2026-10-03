@@ -92,6 +92,9 @@ public final class MachineServices implements IHost {
     @Nullable
     private BusService buses;
 
+    @Nullable
+    private RedstoneService redstone;
+
     public MachineServices(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
     }
@@ -331,6 +334,17 @@ public final class MachineServices implements IHost {
         return this.buses;
     }
 
+    /**
+     * The Redstone Interfaces linked to the machine, which its programs find by name, read and set.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public RedstoneService redstone() {
+        this.follow();
+        return this.redstone;
+    }
+
     /** Makes the shell and what goes through it again when the machine is in another world than before. */
     private void follow() {
         final Level level = this.machine.getLevel();
@@ -357,6 +371,7 @@ public final class MachineServices implements IHost {
             this.gateways = new GatewayBridgeService(this.machine, server);
             this.sound = new SoundService(this.machine, server);
             this.buses = new BusService(terminal, server);
+            this.redstone = new RedstoneService(this.machine, server);
         } else {
             this.shell = null;
             this.files = null;
@@ -373,6 +388,7 @@ public final class MachineServices implements IHost {
             this.gateways = null;
             this.sound = null;
             this.buses = null;
+            this.redstone = null;
         }
     }
 }

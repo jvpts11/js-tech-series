@@ -40,7 +40,8 @@ and `as`. It has no interfaces, records, delegates, events, properties, lambdas,
 generics, `var`, `lock`, threads, windows, `abstract`, or strings with holes in them, and every refusal says
 what to write instead. Its whole library is one namespace, `Standard` (`using Standard.*;`), with
 `Console`, `File`, `Program`, `Math`, `Convert`, `Time`, `Computer` and `Script`, each a handful of members, and
-from version 2 (see Versions below) `Sound`, `Speaker` and `Random`, whose `Next` and `Seed` are the whole of it.
+from version 2 (see Versions below) `Sound`, `Speaker`, `Bus`, `BusItem`, `Redstone` and `Random`, whose `Next` and
+`Seed` are the whole of it.
 
 It prints the way the languages of those machines printed, with `printf`, a call written with no type in
 front of it: `printf("%s has %d items\n", name, count);`. The format has to be written out in quotes,
@@ -156,7 +157,8 @@ project cannot reference a Σ# one.
 ## Versions
 
 Σ and Σ# have versions, one number for both, since Σ N is the subset of Σ# N. Version 1 is the language as it
-first shipped under these names; version 2 brings `Sound` and `Speaker`, the old names above with the calls
+first shipped under these names; version 2 brings `Sound` and `Speaker`, `Bus` and `BusItem`, `Redstone`, the
+old names above with the calls
 they gained, the rest of `printf`'s holes, `int Main` and `Main(string[] args)`, and `Random` in Σ's
 `Standard`. A version only ever adds: whatever
 version 1 takes, version 2 takes too and compiles to the same listing, so a newer compiler never breaks an
@@ -238,8 +240,8 @@ whether the text was a number.
 | `System.IO` | `Console` (print, read a line), `File` (the machine's disks and the network's shares) |
 | `System.Collections` | `List<T>`, `Map<K, V>` |
 | `System.Utils` | `Math`, `Convert`, `Random`, `Time` |
-| `System.Machine` | `Computer`: what the machine is made of and what it runs |
-| `System.Network` | `Network`, `Mainframe`, `Operations`' rows, `RemoteComputer`, `Iql` |
+| `System.Machine` | `Computer`: what the machine is made of and what it runs; `Redstone` (one of its Redstone Interfaces) |
+| `System.Network` | `Network`, `Mainframe`, `Operations`' rows, `RemoteComputer`, `Iql`, `Bus` and `BusItem` |
 | `System.Operations` | `Operations`: pull, push, craft, cancel, ask after an operation |
 | `System.Execution` | `Program`, `Process`, `ProcessMessage` |
 | `System.Threading` | `Thread`, and the `lock` statement |
@@ -342,6 +344,62 @@ Iql.RunFile(string path) -> IqlResult                         one statement a li
 A statement goes to the Mainframe as it would from the prompt or the Network Management Studio, under
 the program's name. Rows are maps keyed by their columns (`name`, `quantity`, `detail`). Plain
 statements need only a Mainframe; views, procedures and jobs need the IQL Engine installed on it.
+`SET BUS` sets one of the network's buses, as the `Bus` calls below do, and `SET REDSTONE` one of the Redstone
+Interfaces of the machine that runs the statement, as `Redstone` does.
+
+## The buses: `Bus`
+
+A bus is a port of the network on a data cable: an Import or Export Bus moving items between the network and
+the inventory it faces, or an External Storage Bus showing that inventory as the network's storage. A program
+sets it as its window does, and what a bus's era cannot be set to is refused there as it is in the window.
+
+```
+Bus.Named("Ore in") -> Bus                        the network's bus of that name, or null
+bus("Ore in")                                     the same
+ore.Name                                          its name
+ore.On(), ore.Off()                               moving, or not
+ore.Continuous(), ore.OnDemand()                  all the time, or only while its cable has a redstone signal
+ore.Only("iron_ore, coal"), ore.AllBut("dirt")    its filter, the items parted by commas
+ore.Tag("c:ores")                                 adds an item tag to the filter
+ore.Fuzzy(true)                                   matches an item whatever its damage and components
+ore.Keep(16), ore.Max(64)                         what the faced inventory keeps, the most one move takes
+ore.Priority(5)                                   which bus goes first, the higher before the lower
+ore.WhenStock("iron_ore", 512)                    moves only while the network holds less than that
+ore.WhenStockTag("c:ores", 4096)                  the same for every item of a tag
+ore.Between(18, 6)                                moves only between those hours, past midnight here
+ore.After(Bus.Named("Coal in"))                   waits until the other bus has been idle a while
+ore.Item("iron_ore") -> BusItem                   one listed item, with its own Keep(n) and Max(n)
+wall.ReadWrite(), wall.ReadOnly(), wall.WriteOnly()   how the network may use an External Storage Bus's inventory
+```
+
+Each setting hands the bus back, so they are written one after another: `bus("Ore in").Keep(16).Max(64);`.
+A setting is marked on the bus with the name of the program that set it, which its window shows. A setting the
+bus's era cannot take, an hour that is not one of the day's, or a bus that is gone halts the program, saying why.
+
+## Redstone: `Redstone`
+
+A Redstone Interface is a small sensor on a computer's peripheral cable, placed as an observer is: its lens
+faces what the player looked at while placing it. It either reads the redstone signal coming into its lens or
+emits a signal there, powering the block in front of the lens as a lever powers the block it stands on, and
+nothing on its other faces. It takes a device port of its computer, or of a hub, and with no computer at the
+other end of its cable it has no power: it reads and emits nothing, but keeps what it was set to.
+
+```
+Redstone.Named("Gate") -> Redstone                one of the machine's interfaces, or null
+redstone("Gate")                                  the same
+gate.Name                                         the name it answers to
+gate.In() -> Redstone                             it reads the signal at its lens
+gate.Out(15) -> Redstone                          it emits that strength at its lens, from 0 to 15
+gate.Level() -> int                               the strength it reads, or emits; 0 while nothing powers it
+```
+
+An interface belongs to its computer, not to the network: a program finds only the interfaces linked to the
+machine it runs on, by the name given in the interface's window, whatever the case of the letters. One with no
+name of its own answers to `Redstone Interface`, and a name is unique among one computer's interfaces. The window
+also shows the setting written as these calls, and what a program set is marked there with its name. Each setting hands the interface
+back and is marked on it with the program's name. A strength outside 0 to 15, or an interface no longer linked
+to the machine, halts the program. At the prompt or in a file of statements, `SET REDSTONE 'Gate' IN` and
+`SET REDSTONE 'Gate' OUT 15` do the same.
 
 ## Windows of its own: `System.UI`
 
