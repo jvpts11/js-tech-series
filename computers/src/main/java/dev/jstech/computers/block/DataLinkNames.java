@@ -10,6 +10,7 @@ package dev.jstech.computers.block;
 import dev.jstech.core.network.DataLink;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.tier.HardwareEra;
 
 /**
  * The short names the data cables go by where a screen says which cable a way runs over: a download's slowest cable, a
@@ -45,6 +46,11 @@ public final class DataLinkNames {
     private static final TextKey[] COMPUTE = {INFINIBAND, INFINIBAND, INFINIBAND, HPC, OSFP};
 
     private DataLinkNames() {
+    }
+
+    /** The short name of the access cable of {@code era}, which is the cable a board of that era takes. */
+    public static TextKey access(final HardwareEra era) {
+        return ACCESS[Math.min(era.id(), ACCESS.length - 1)];
     }
 
     /** The short name of the cable {@code link} is. */

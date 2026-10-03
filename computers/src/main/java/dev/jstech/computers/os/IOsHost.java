@@ -249,6 +249,14 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
     }
 
     /**
+     * The parts seated in this machine as items, which carry the names its system shows them by; nothing when it is
+     * not built from parts.
+     */
+    default List<ItemStack> hardwareStacks() {
+        return List.of();
+    }
+
+    /**
      * How many bits wide this machine's processor is, which is what a system names its architecture from. A
      * machine that cannot say what it is built of is taken for one of today's.
      */

@@ -14,6 +14,7 @@ import dev.jstech.computers.operation.payload.crafting.CraftManagerPayloads;
 import dev.jstech.computers.operation.payload.crafting.CraftPlannerPayloads;
 import dev.jstech.computers.operation.payload.crafting.CraftingPayloads;
 import dev.jstech.computers.operation.payload.desktop.DesktopPayloads;
+import dev.jstech.computers.operation.payload.desktop.DevicePayloads;
 import dev.jstech.computers.operation.payload.desktop.GamePayloads;
 import dev.jstech.computers.operation.payload.desktop.ThisPcPayloads;
 import dev.jstech.computers.operation.payload.desktop.WelcomePayloads;
@@ -81,6 +82,7 @@ public final class ComputingPayloads {
         ThisPcPayloads.register(registrar);
         WelcomePayloads.register(registrar);
         WorkstationInfoPayloads.register(registrar);
+        DevicePayloads.register(registrar);
         HelpPayloads.register(registrar);
         GamePayloads.register(registrar);
         IqlPayloads.register(registrar);

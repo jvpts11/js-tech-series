@@ -205,6 +205,11 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
+    public List<ItemStack> hardwareStacks() {
+        return rack.asUnit(row, rack::hardwareStacks);
+    }
+
+    @Override
     public boolean hasBootableMedium() {
         return rack.asUnit(row, rack::hasBootableMedium);
     }
@@ -449,6 +454,11 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     @Override
     public List<Long> enabledEndpoints() {
         return rack.enabledEndpoints();
+    }
+
+    @Override
+    public PortKind kindOf(final long endpointPos) {
+        return rack.kindOf(endpointPos);
     }
 
     @Override

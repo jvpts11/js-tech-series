@@ -1568,6 +1568,18 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         return soleBuild();
     }
 
+    /** The parts of the cabinet's one computer, as its server item carries them. */
+    @Override
+    public List<ItemStack> hardwareStacks() {
+        final int slot = soleComputerSlot();
+        if (slot < 0) {
+            return List.of();
+        }
+        final List<ItemStack> out = new ArrayList<>();
+        ServerItem.hardware(servers.getStackInSlot(slot)).nonEmptyItems().forEach(out::add);
+        return out;
+    }
+
     @Override
     public boolean hasBootableMedium() {
         if (level == null) {

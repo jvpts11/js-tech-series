@@ -45,6 +45,11 @@ public interface IPeripheralOwnerSupport extends IPeripheralOwner {
     }
 
     @Override
+    default PortKind kindOf(final long endpointPos) {
+        return peripheralPorts().kindOf(endpointPos);
+    }
+
+    @Override
     default boolean isDisabled(final long endpointPos) {
         return peripheralPorts().disabled(endpointPos);
     }

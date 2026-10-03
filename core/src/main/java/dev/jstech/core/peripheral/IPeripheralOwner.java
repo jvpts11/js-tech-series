@@ -10,6 +10,7 @@ package dev.jstech.core.peripheral;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.Set;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Contract for a BlockEntity that OWNS a set of peripheral endpoints via cables of one peripheral system. It has so
@@ -27,6 +28,12 @@ public interface IPeripheralOwner {
      */
     default List<Long> enabledEndpoints() {
         return linkedEndpoints();
+    }
+
+    /** The kind of port the linked endpoint at {@code endpointPos} takes, or null when it is not linked. */
+    @Nullable
+    default PortKind kindOf(final long endpointPos) {
+        return null;
     }
 
     /** Whether the linked endpoint at {@code endpointPos} is disabled, by itself or through a hub on its way. */

@@ -93,6 +93,7 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -308,6 +309,18 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
 
     public ItemStackHandler getHardware() {
         return hardware.handler();
+    }
+
+    @Override
+    public List<ItemStack> hardwareStacks() {
+        final ItemStackHandler slots = hardware.handler();
+        final List<ItemStack> out = new ArrayList<>(slots.getSlots());
+        for (int i = 0; i < slots.getSlots(); i++) {
+            if (!slots.getStackInSlot(i).isEmpty()) {
+                out.add(slots.getStackInSlot(i));
+            }
+        }
+        return out;
     }
 
     static boolean isSoundCard(final ItemStack stack) {
