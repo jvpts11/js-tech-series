@@ -358,7 +358,7 @@ public final class CraftManagerPayloads {
          * one with a blank medium in it may well come first: the disc the player just wrote is the one they
          * mean, wherever it sits.
          */
-        for (final long endpoint : cc.linkedEndpoints()) {
+        for (final long endpoint : cc.enabledEndpoints()) {
             if (Loaded.blockEntity(level, BlockPos.of(endpoint))
                     instanceof MediaReaderBlockEntity reader) {
                 final ItemStack m = reader.mediaSlot().getStackInSlot(0);

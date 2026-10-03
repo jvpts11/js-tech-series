@@ -513,7 +513,7 @@ public final class PatternStudioPayloads {
 
     @Nullable
     static PatternEncoderBlockEntity encoderOf(final ServerLevel level, final IOsHost host) {
-        for (final long endpoint : host.linkedEndpoints()) {
+        for (final long endpoint : host.enabledEndpoints()) {
             if (Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof PatternEncoderBlockEntity encoder) {
                 return encoder;
             }
@@ -612,7 +612,7 @@ public final class PatternStudioPayloads {
 
         // Drives: every linked reader holding a medium, then the system disk's crafts folder.
         final List<PatternStudioStatePayload.Drive> drives = new ArrayList<>();
-        for (final long endpoint : host.linkedEndpoints()) {
+        for (final long endpoint : host.enabledEndpoints()) {
             if (drives.size() >= PatternStudioStatePayload.MAX_DRIVES - 1) {
                 break;
             }

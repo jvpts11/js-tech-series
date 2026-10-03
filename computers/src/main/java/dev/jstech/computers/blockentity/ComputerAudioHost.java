@@ -244,14 +244,14 @@ final class ComputerAudioHost implements IAudioHost {
         return false;
     }
 
-    /* The monitors linked to the machine, in a fixed order, where its sound comes out. */
+    /* The monitors the machine drives, in a fixed order, where its sound comes out; a disabled one plays nothing. */
     private List<BlockPos> monitors() {
         final Level level = machine.getLevel();
         final List<BlockPos> found = new ArrayList<>();
         if (level == null) {
             return found;
         }
-        for (final long endpoint : machine.peripheralEndpoints()) {
+        for (final long endpoint : machine.enabledEndpoints()) {
             final BlockPos pos = BlockPos.of(endpoint);
             if (Loaded.blockEntity(level, pos) instanceof MonitorBlockEntity) {
                 found.add(pos);
@@ -261,14 +261,14 @@ final class ComputerAudioHost implements IAudioHost {
         return found;
     }
 
-    /* The speakers linked to the machine, in a fixed order. */
+    /* The speakers the machine drives, in a fixed order; a disabled one is not among them. */
     private List<SpeakerBlockEntity> speakers() {
         final Level level = machine.getLevel();
         final List<SpeakerBlockEntity> found = new ArrayList<>();
         if (level == null) {
             return found;
         }
-        for (final long endpoint : machine.peripheralEndpoints()) {
+        for (final long endpoint : machine.enabledEndpoints()) {
             if (Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof SpeakerBlockEntity speaker) {
                 found.add(speaker);
             }

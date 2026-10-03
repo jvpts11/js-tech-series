@@ -26,6 +26,7 @@ import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.PeripheralLink;
+import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -306,7 +307,7 @@ public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeriph
      */
     private boolean installingFromHere(final ServerLevel level) {
         final BlockPos owner = link.ownerPos();
-        if (owner == null || mediaStack().isEmpty() || !(level.getBlockEntity(owner) instanceof IOsHost host)) {
+        if (owner == null || mediaStack().isEmpty() || !(Loaded.blockEntity(level, owner) instanceof IOsHost host)) {
             return false;
         }
         final OsInstallJob job = host.installing();
@@ -321,12 +322,12 @@ public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeriph
 
     /*
      * A USB drive plugged in or pulled out is a device coming and going for the system of the computer it is linked
-     * to, which says so with its own sound when it is up at its desktop.
+     * to, which says so with its own sound when it is up at its desktop; a drive it disabled it does not hear.
      */
     private void deviceMoved(final ServerLevel server, final boolean in) {
         final BlockPos owner = link.ownerPos();
-        if (owner != null && server.getBlockEntity(owner) instanceof IOsHost host && host.isRunning()
-                && host.bootedDesktopId() != null) {
+        if (owner != null && Loaded.blockEntity(server, owner) instanceof IOsHost host && host.isRunning()
+                && host.bootedDesktopId() != null && !host.isDisabled(worldPosition.asLong())) {
             host.systemSound(server, in ? SystemSound.DEVICE_CONNECT : SystemSound.DEVICE_DISCONNECT);
         }
     }

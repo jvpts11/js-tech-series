@@ -447,6 +447,21 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
+    public List<Long> enabledEndpoints() {
+        return rack.enabledEndpoints();
+    }
+
+    @Override
+    public boolean isDisabled(final long endpointPos) {
+        return rack.isDisabled(endpointPos);
+    }
+
+    @Override
+    public boolean setDisabled(final long endpointPos, final boolean disabled) {
+        return rack.setDisabled(endpointPos, disabled);
+    }
+
+    @Override
     public int ports(final PortKind kind) {
         return rack.asUnit(row, () -> rack.ports(kind));
     }

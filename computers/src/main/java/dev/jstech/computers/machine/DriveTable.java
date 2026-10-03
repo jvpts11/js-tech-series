@@ -98,8 +98,8 @@ public final class DriveTable {
             table.add(new Drive(letter, disk, FilesystemKind.HIERARCHICAL, computer::setChanged));
             letter++;
         }
-        // Linked media readers, in ascending packed-position order for a stable letter assignment.
-        final List<Long> readers = new ArrayList<>(computer.linkedEndpoints());
+        // Enabled media readers, in ascending packed-position order for a stable letter assignment.
+        final List<Long> readers = new ArrayList<>(computer.enabledEndpoints());
         Collections.sort(readers);
         for (final long pos : readers) {
             if (letter > 'Z') {

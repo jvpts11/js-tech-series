@@ -58,7 +58,7 @@ public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheral
 
     /** The longest name a speaker takes, the same as a computer's. */
     public static final int MAX_NAME = 32;
-    /** Not linked to a computer, so it plays nothing. */
+    /** Not linked to a computer, or disabled by it, so it plays nothing. */
     public static final int CHANNEL_NONE = 0;
     /** The computer's only speaker, which plays both sides. */
     public static final int CHANNEL_ALONE = 1;
@@ -187,6 +187,9 @@ public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheral
         }
         if (!(Loaded.blockEntity(server, owner) instanceof AbstractComputerBlockEntity computer)) {
             return CHANNEL_ALONE;
+        }
+        if (computer.isDisabled(worldPosition.asLong())) {
+            return CHANNEL_NONE;
         }
         if (!computer.speakersPlay()) {
             return CHANNEL_OFF;

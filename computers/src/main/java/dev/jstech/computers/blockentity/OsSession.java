@@ -392,7 +392,7 @@ final class OsSession {
      */
     boolean validateOsSession() {
         final LiveInstallState live = liveInstall();
-        if (live != null && LiveMedium.holding(this.machine.getLevel(), this.machine.linkedEndpoints(),
+        if (live != null && LiveMedium.holding(this.machine.getLevel(), this.machine.enabledEndpoints(),
                 live.distro()) != LiveMedium.Answer.GONE) {
             /*
              * Asked, never acted on. This is a predicate: it is called by the network gate on every payload
@@ -417,7 +417,7 @@ final class OsSession {
         if (live == null) {
             return false;
         }
-        if (LiveMedium.holding(this.machine.getLevel(), this.machine.linkedEndpoints(), live.distro())
+        if (LiveMedium.holding(this.machine.getLevel(), this.machine.enabledEndpoints(), live.distro())
                 != LiveMedium.Answer.GONE) {
             return false;
         }

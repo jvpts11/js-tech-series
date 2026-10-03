@@ -216,7 +216,7 @@ public final class FirmwarePayloads {
                     spec == null ? "" : DiskSpec.sizeLabel(spec.capacityMb()),
                     Text.EMPTY, os != null, -1));
         }
-        for (final long endpoint : computer.linkedEndpoints()) {
+        for (final long endpoint : computer.enabledEndpoints()) {
             if (!(Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader)) {
                 continue;
             }
@@ -510,7 +510,7 @@ public final class FirmwarePayloads {
                                     final long readerPos, final int targetSlot) {
         final HardwareEra hostEra = computer.installedEra() != null ? computer.installedEra() : HardwareEra.STANDARD;
         Text failure = null;
-        for (final long endpoint : computer.linkedEndpoints()) {
+        for (final long endpoint : computer.enabledEndpoints()) {
             /*
              * -1 is the word for "any drive with an installer in it"; anything else names one drive by its packed
              * position. Asking whether that position is positive is not the same question: a drive west or north
@@ -659,10 +659,10 @@ public final class FirmwarePayloads {
                 ? computer.installedEra()
                 : HardwareEra.STANDARD;
 
-        // Walk every linked peripheral endpoint and look for a media reader with an OS installer.
-        for (final long endpointLong : computer.linkedEndpoints()) {
+        // Walk every enabled peripheral endpoint and look for a media reader with an OS installer.
+        for (final long endpointLong : computer.enabledEndpoints()) {
             final BlockPos endpointPos = BlockPos.of(endpointLong);
-            if (!(level.getBlockEntity(endpointPos) instanceof MediaReaderBlockEntity reader)) {
+            if (!(Loaded.blockEntity(level, endpointPos) instanceof MediaReaderBlockEntity reader)) {
                 continue;
             }
             if (reader.insertedKind() != MediaKind.OS_INSTALL) {

@@ -691,7 +691,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         if (level == null) {
             return false;
         }
-        for (final long endpoint : linkedEndpoints()) {
+        for (final long endpoint : enabledEndpoints()) {
             if (Loaded.blockEntity(level, BlockPos.of(endpoint))
                     instanceof MediaReaderBlockEntity reader
                     && reader.insertedKind() == MediaKind.OS_INSTALL

@@ -336,7 +336,7 @@ public final class InstallService {
         if (!(this.terminal instanceof IOsHost computer)) {
             return out;
         }
-        for (final long endpoint : computer.linkedEndpoints()) {
+        for (final long endpoint : computer.enabledEndpoints()) {
             if (Loaded.blockEntity(this.level, BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader
                     && reader.insertedKind() == MediaKind.PROGRAM_INSTALL) {
                 final ProgramSpec spec = reader.insertedPayload() == null ? null
@@ -355,7 +355,7 @@ public final class InstallService {
         if (!(this.terminal instanceof IOsHost computer)) {
             return null;
         }
-        for (final long endpoint : computer.linkedEndpoints()) {
+        for (final long endpoint : computer.enabledEndpoints()) {
             if (Loaded.blockEntity(this.level, BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader
                     && reader.insertedKind() == MediaKind.PROGRAM_INSTALL
                     && programId.equals(reader.insertedPayload())) {

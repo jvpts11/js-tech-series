@@ -113,9 +113,12 @@ public final class GatewayManager {
     private GatewayManager() {
     }
 
-    /** The Gateways on {@code host}'s ports; none when the block is not a computer with ports. */
+    /**
+     * The Gateways on {@code host}'s ports that it has not disabled; none when the block is not a computer with
+     * ports.
+     */
     public static List<NetworkGatewayBlockEntity> gatewaysOf(final ServerLevel level, @Nullable final BlockEntity host) {
-        return host instanceof IPeripheralOwner owner ? NetworkGateways.linkedTo(level, owner) : List.of();
+        return host instanceof IPeripheralOwner owner ? NetworkGateways.enabledOn(level, owner) : List.of();
     }
 
     /** The name a host signs the Gateway's log with. */

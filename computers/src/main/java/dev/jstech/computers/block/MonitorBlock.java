@@ -191,6 +191,12 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
             return InteractionResult.SUCCESS;
         }
         if (player instanceof ServerPlayer serverPlayer) {
+            // A monitor its computer disabled is dark to it, and opens none of its screens.
+            if (Loaded.blockEntity(level, owner) instanceof IPeripheralOwner linkedTo
+                    && linkedTo.isDisabled(pos.asLong())) {
+                serverPlayer.displayClientMessage(GameText.component(MonitorTexts.DISABLED), true);
+                return InteractionResult.SUCCESS;
+            }
             /*
              * One screen, one keyboard: whoever is at it keeps it. Asked before anything else, because what
              * follows ends the remote session the screen holds and opens a session over the one being read.

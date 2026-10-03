@@ -128,6 +128,8 @@ public final class GatewayService {
             TextKey.of("jsc.service.gateway.not_in_world", "the Gateway is not in a world");
     private static final TextKey NOT_LINKED =
             TextKey.of("jsc.service.gateway.not_linked", "the Gateway is not linked to a computer");
+    private static final TextKey DISABLED =
+            TextKey.of("jsc.service.gateway.disabled", "the Gateway is disabled on its computer");
     private static final TextKey WHICH_ITEM = TextKey.of("jsc.service.gateway.which_item", "which item?");
     private static final TextKey UNKNOWN_FLUID = TextKey.of("jsc.service.gateway.unknown_fluid", "unknown fluid: %s");
     private static final TextKey UNKNOWN_CHEMICAL =
@@ -159,7 +161,10 @@ public final class GatewayService {
         this.shell = new ServerCliComputer(terminal, level);
     }
 
-    /** The service for a linked Gateway; refused while the Gateway has no computer to answer for it. */
+    /**
+     * The service for a linked Gateway; refused while the Gateway has no computer to answer for it, or its computer
+     * disabled it.
+     */
     public static GatewayService of(final NetworkGatewayBlockEntity gateway) throws GatewayRefusedException {
         if (!(gateway.getLevel() instanceof ServerLevel level)) {
             throw new GatewayRefusedException(NOT_IN_WORLD.text());
@@ -167,6 +172,9 @@ public final class GatewayService {
         final IPeripheralOwner owner = gateway.owner();
         if (!(owner instanceof IComputerTerminalHost terminal) || !(owner instanceof BlockEntity)) {
             throw new GatewayRefusedException(NOT_LINKED.text());
+        }
+        if (owner.isDisabled(gateway.getBlockPos().asLong())) {
+            throw new GatewayRefusedException(DISABLED.text());
         }
         return new GatewayService(gateway, level, terminal);
     }

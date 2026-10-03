@@ -7,8 +7,11 @@
  */
 package dev.jstech.core.peripheral;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.Set;
@@ -20,8 +23,11 @@ import org.jetbrains.annotations.Nullable;
  * owner's, and is kept with the hub's position. When the owner has fewer ports of a kind than it has peripherals of
  * that kind on its own ports, as when a card is taken out, the ones linked first keep theirs.
  *
- * <p>It is saved as three arrays of the same length, the positions, the kinds' numbers and the hubs, which the owner
- * writes where it keeps the rest of its state.
+ * <p>A peripheral can be disabled: it stays linked and keeps its port, but its owner neither reads nor writes it, and
+ * the same holds for everything hanging from a disabled hub.
+ *
+ * <p>It is saved as three arrays of the same length, the positions, the kinds' numbers and the hubs, and a fourth of
+ * the disabled positions, which the owner writes where it keeps the rest of its state.
  */
 public final class PeripheralPorts {
 
@@ -31,6 +37,8 @@ public final class PeripheralPorts {
      * taken out through {@link #endpoints()} may stay behind, so every read asks {@link #linked} first.
      */
     private final Map<Long, Long> hubs = new HashMap<>();
+    /** The peripherals disabled by themselves; like {@link #hubs}, every read asks {@link #linked} first. */
+    private final Set<Long> disabled = new HashSet<>();
 
     /**
      * The linked positions, in the order they were linked: a live view, so taking one out of it unlinks it; a link is
@@ -52,10 +60,49 @@ public final class PeripheralPorts {
         return this.linked.put(pos, kind) != kind || before == null || before != hub;
     }
 
-    /** Unlinks the peripheral at {@code pos}; whether it was linked. */
+    /** Unlinks the peripheral at {@code pos}; whether it was linked. One linked again comes back enabled. */
     public boolean unlink(final long pos) {
         this.hubs.remove(pos);
+        this.disabled.remove(pos);
         return this.linked.remove(pos) != null;
+    }
+
+    /** Disables or enables the linked peripheral at {@code pos}; whether that changed anything. */
+    public boolean setDisabled(final long pos, final boolean off) {
+        if (!this.linked.containsKey(pos)) {
+            return false;
+        }
+        return off ? this.disabled.add(pos) : this.disabled.remove(pos);
+    }
+
+    /**
+     * Whether the linked peripheral at {@code pos} is disabled, by itself or because a hub on its way to the owner is.
+     * The walk up the hubs stops after as many steps as there are links, so a chain saved wrong cannot loop.
+     */
+    public boolean disabled(final long pos) {
+        long at = pos;
+        for (int step = 0; step <= this.linked.size() && this.linked.containsKey(at); step++) {
+            if (this.disabled.contains(at)) {
+                return true;
+            }
+            final Long hub = this.hubs.get(at);
+            if (hub == null) {
+                return false;
+            }
+            at = hub;
+        }
+        return false;
+    }
+
+    /** The linked positions its owner reads and writes, in the order they were linked: every one not disabled. */
+    public List<Long> enabled() {
+        final List<Long> out = new ArrayList<>(this.linked.size());
+        for (final long pos : this.linked.keySet()) {
+            if (!disabled(pos)) {
+                out.add(pos);
+            }
+        }
+        return out;
     }
 
     /** The kind of port the peripheral at {@code pos} takes, or null when it is not linked. */
@@ -150,22 +197,30 @@ public final class PeripheralPorts {
         return out;
     }
 
+    /** The peripherals disabled by themselves, for saving; one disabled only through its hub is not among them. */
+    public long[] disabledPositions() {
+        return this.disabled.stream().filter(this.linked::containsKey).mapToLong(Long::longValue).sorted().toArray();
+    }
+
     /**
      * Puts back what {@link #positions()} and {@link #kindIds()} saved, every peripheral on the owner's own ports. A
      * position saved without a kind it can read is left out: its peripheral finds itself unlinked and links again,
      * taking the port of its own kind.
      */
     public void restore(final long[] positions, final int[] kindIds) {
-        restore(positions, kindIds, new long[0]);
+        restore(positions, kindIds, new long[0], new long[0]);
     }
 
     /**
-     * Puts back what {@link #positions()}, {@link #kindIds()} and {@link #hubPositions()} saved. A save from before
-     * the hubs has no hubs, and its peripherals stand on the owner's own ports until their ways are checked.
+     * Puts back what {@link #positions()}, {@link #kindIds()}, {@link #hubPositions()} and {@link #disabledPositions()}
+     * saved. A save from before the hubs has no hubs, and its peripherals stand on the owner's own ports until their
+     * ways are checked; one from before a peripheral could be disabled has every peripheral enabled.
      */
-    public void restore(final long[] positions, final int[] kindIds, final long[] hubPositions) {
+    public void restore(final long[] positions, final int[] kindIds, final long[] hubPositions,
+                        final long[] disabledPositions) {
         this.linked.clear();
         this.hubs.clear();
+        this.disabled.clear();
         for (int i = 0; i < positions.length && i < kindIds.length; i++) {
             final PortKind kind = PortKind.byId(kindIds[i]);
             if (kind != null) {
@@ -173,6 +228,11 @@ public final class PeripheralPorts {
                 if (i < hubPositions.length && hubPositions[i] != positions[i]) {
                     this.hubs.put(positions[i], hubPositions[i]);
                 }
+            }
+        }
+        for (final long pos : disabledPositions) {
+            if (this.linked.containsKey(pos)) {
+                this.disabled.add(pos);
             }
         }
     }

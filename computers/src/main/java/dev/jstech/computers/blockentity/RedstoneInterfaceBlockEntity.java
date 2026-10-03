@@ -67,6 +67,8 @@ public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity implements I
     private final ValueField<String> setBy = fields().value("SetBy", Codec.STRING, "").save().toClient();
     /** Whether the name last asked for on its screen is one another interface of its computer already has. */
     private final BoolField clash = fields().flag("NameClash", false).toMenu();
+    /** Whether its computer disabled it, which leaves it linked and holding its port but unpowered. */
+    private final BoolField disabled = fields().flag("Disabled", false).toClient();
     /** What it emits at this moment, which the game asks for and its neighbours were last told of. */
     private int output;
     /** The name being typed on its screen, taken when the screen closes; null while nothing is being typed. */
@@ -96,12 +98,12 @@ public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity implements I
 
     /**
      * The interface linked to {@code owner} that answers to {@code name}, whatever the case of its letters, or null
-     * when none does: how what runs on a computer finds one of its interfaces.
+     * when none does: how what runs on a computer finds one of its interfaces. A disabled one is not found.
      */
     @Nullable
     public static RedstoneInterfaceBlockEntity linkedTo(final ServerLevel level, final IPeripheralOwner owner,
                                                        final String name) {
-        for (final long endpoint : owner.linkedEndpoints()) {
+        for (final long endpoint : owner.enabledEndpoints()) {
             final BlockPos at = BlockPos.of(endpoint);
             if (level.isLoaded(at) && level.getBlockEntity(at) instanceof RedstoneInterfaceBlockEntity sensor
                     && sensor.answersTo().equalsIgnoreCase(name)) {
@@ -137,9 +139,9 @@ public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity implements I
         return link.ownerPos();
     }
 
-    /** Whether its computer powers it: whether it is linked to one. */
+    /** Whether its computer powers it: whether it is linked to one that has not disabled it. */
     public boolean live() {
-        return link.linkedOwner().isPresent();
+        return link.linkedOwner().isPresent() && !disabled.get();
     }
 
     /** The name a player gave it; empty while it has none. */
@@ -201,7 +203,7 @@ public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity implements I
         String computerName = "";
         String computerKind = "";
         final BlockPos owner = link.ownerPos();
-        if (owner != null && level.getBlockEntity(owner) instanceof AbstractComputerBlockEntity computer) {
+        if (owner != null && Loaded.blockEntity(level, owner) instanceof AbstractComputerBlockEntity computer) {
             computerName = computer.customName();
             computerKind = computer.getBlockState().getBlock().getDescriptionId();
         }
@@ -279,6 +281,9 @@ public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity implements I
      * it emits changed, so a signal follows the computer within the tick it was set.
      */
     private void settle(final ServerLevel level, final BlockPos pos, final BlockState state) {
+        final BlockPos owner = link.ownerPos();
+        disabled.set(owner != null && Loaded.blockEntity(level, owner) instanceof IPeripheralOwner linkedTo
+                && linkedTo.isDisabled(pos.asLong()));
         final boolean powered = live();
         reading.set(powered && !emits() ? readFront(level, pos, state) : 0);
         final int now = powered && emits() ? strength() : 0;
@@ -308,7 +313,7 @@ public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity implements I
 
     private boolean anotherIsCalled(final ServerLevel level, final String wanted) {
         final BlockPos owner = link.ownerPos();
-        if (owner == null || !(level.getBlockEntity(owner) instanceof IPeripheralOwner linkedTo)) {
+        if (owner == null || !(Loaded.blockEntity(level, owner) instanceof IPeripheralOwner linkedTo)) {
             return false;
         }
         final String folded = wanted.toLowerCase(Locale.ROOT);

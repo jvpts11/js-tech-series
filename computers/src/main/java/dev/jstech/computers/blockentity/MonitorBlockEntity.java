@@ -158,14 +158,14 @@ public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheral
     }
 
     private void updateScreen(final ServerLevel level) {
-        // Lit only when the linked computer is actively running, not just linked but powered off.
+        // Lit only when the linked computer is actively running and drives it: not powered off, nor disabling it.
         final BlockPos owner = link.ownerPos();
         if (owner != null && !level.isLoaded(owner)) {
             return; // a computer whose chunk is away is not asked, nor loaded back; the screen stays as it is
         }
         final boolean computerRunning = owner != null
                 && level.getBlockEntity(owner) instanceof IOsHost host
-                && host.isRunning();
+                && host.isRunning() && !host.isDisabled(worldPosition.asLong());
         if (!computerRunning) {
             bootTicks = 0;
             if (lit.get()) {

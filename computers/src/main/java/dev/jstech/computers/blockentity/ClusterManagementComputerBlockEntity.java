@@ -345,7 +345,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
         if (level == null) {
             return null;
         }
-        for (final long endpoint : linkedEndpoints()) {
+        for (final long endpoint : enabledEndpoints()) {
             if (Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader
                     && reader.insertedKind() == kind && reader.insertedPayload() != null) {
                 final ResourceLocation id = reader.insertedPayload();

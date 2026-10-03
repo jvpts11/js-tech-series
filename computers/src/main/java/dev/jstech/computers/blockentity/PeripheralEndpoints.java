@@ -25,6 +25,7 @@ final class PeripheralEndpoints {
     private static final String POSITIONS = "LinkedPeripherals";
     private static final String KINDS = "LinkedPeripheralKinds";
     private static final String HUBS = "LinkedPeripheralHubs";
+    private static final String DISABLED = "DisabledPeripherals";
 
     /** The links as they stand: the record itself, which is where a link is made and unmade. */
     PeripheralPorts ports() {
@@ -38,13 +39,19 @@ final class PeripheralEndpoints {
         tag.putLongArray(POSITIONS, this.ports.positions());
         tag.putIntArray(KINDS, this.ports.kindIds());
         tag.putLongArray(HUBS, this.ports.hubPositions());
+        final long[] disabled = this.ports.disabledPositions();
+        if (disabled.length > 0) {
+            tag.putLongArray(DISABLED, disabled);
+        }
     }
 
     /*
      * A save from before the kinds of port has no kinds; its peripherals link again, each on a port of its kind. One
-     * from before the hubs has no hubs; its peripherals' ways are checked again on their next tick.
+     * from before the hubs has no hubs; its peripherals' ways are checked again on their next tick. One with nothing
+     * disabled has no list of them.
      */
     void load(final CompoundTag tag) {
-        this.ports.restore(tag.getLongArray(POSITIONS), tag.getIntArray(KINDS), tag.getLongArray(HUBS));
+        this.ports.restore(tag.getLongArray(POSITIONS), tag.getIntArray(KINDS), tag.getLongArray(HUBS),
+                tag.getLongArray(DISABLED));
     }
 }

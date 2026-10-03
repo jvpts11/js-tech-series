@@ -40,6 +40,25 @@ public interface IPeripheralOwnerSupport extends IPeripheralOwner {
     }
 
     @Override
+    default List<Long> enabledEndpoints() {
+        return peripheralPorts().enabled();
+    }
+
+    @Override
+    default boolean isDisabled(final long endpointPos) {
+        return peripheralPorts().disabled(endpointPos);
+    }
+
+    @Override
+    default boolean setDisabled(final long endpointPos, final boolean disabled) {
+        if (peripheralPorts().setDisabled(endpointPos, disabled)) {
+            markPeripheralChange();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
     default int portsInUse(final PortKind kind) {
         return peripheralPorts().inUse(kind);
     }

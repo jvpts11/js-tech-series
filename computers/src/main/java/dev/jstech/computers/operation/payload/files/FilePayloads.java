@@ -97,7 +97,7 @@ public final class FilePayloads {
                 volumes.add(new DiskFilesPayload.WireVolume("",
                         VolumeLabel.of(computer.systemDisk(), DiskFilesPayload.LOCAL_DISK.text())));
             }
-            for (final long endpoint : computer.linkedEndpoints()) {
+            for (final long endpoint : computer.enabledEndpoints()) {
                 if (Loaded.blockEntity(level, BlockPos.of(endpoint))
                         instanceof MediaReaderBlockEntity reader
                         && !reader.mediaSlot().getStackInSlot(0).isEmpty()) {

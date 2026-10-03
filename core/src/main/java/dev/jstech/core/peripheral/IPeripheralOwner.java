@@ -21,6 +21,24 @@ public interface IPeripheralOwner {
 
     List<Long> linkedEndpoints();
 
+    /**
+     * The linked endpoints the owner reads and writes: every linked one but those disabled, by themselves or through a
+     * hub on their way. A disabled endpoint stays linked and keeps its port.
+     */
+    default List<Long> enabledEndpoints() {
+        return linkedEndpoints();
+    }
+
+    /** Whether the linked endpoint at {@code endpointPos} is disabled, by itself or through a hub on its way. */
+    default boolean isDisabled(final long endpointPos) {
+        return false;
+    }
+
+    /** Disables or enables the linked endpoint at {@code endpointPos}; whether that changed anything. */
+    default boolean setDisabled(final long endpointPos, final boolean disabled) {
+        return false;
+    }
+
     /** How many ports of {@code kind} the owner has: how many endpoints of that kind it can have linked at once. */
     int ports(PortKind kind);
 

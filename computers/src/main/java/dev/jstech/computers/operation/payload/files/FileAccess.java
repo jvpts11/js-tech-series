@@ -84,7 +84,7 @@ public final class FileAccess {
         } catch (final NumberFormatException e) {
             return ItemStack.EMPTY;
         }
-        if (!computer.linkedEndpoints().contains(readerPos)
+        if (!computer.enabledEndpoints().contains(readerPos)
                 || !(Loaded.blockEntity(level, BlockPos.of(readerPos))
                         instanceof MediaReaderBlockEntity reader)) {
             return ItemStack.EMPTY;

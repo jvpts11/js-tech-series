@@ -25,21 +25,23 @@ public final class NetworkGateways {
     private NetworkGateways() {
     }
 
-    /** Every Gateway linked to {@code owner}, in the order the owner lists its endpoints. */
+    /**
+     * Every Gateway linked to {@code owner}, in the order the owner lists its endpoints, the disabled ones too: what
+     * numbers them, so a Gateway keeps its default name while another is disabled.
+     */
     public static List<NetworkGatewayBlockEntity> linkedTo(final Level level, final IPeripheralOwner owner) {
-        final List<NetworkGatewayBlockEntity> out = new ArrayList<>();
-        for (final long endpoint : owner.linkedEndpoints()) {
-            if (Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof NetworkGatewayBlockEntity gateway) {
-                out.add(gateway);
-            }
-        }
-        return out;
+        return gatewaysAt(level, owner.linkedEndpoints());
     }
 
-    /** The Gateway on {@code owner} called {@code name} (any case), or null. */
+    /** The Gateways {@code owner} reads and writes, in the order it lists its endpoints: every one not disabled. */
+    public static List<NetworkGatewayBlockEntity> enabledOn(final Level level, final IPeripheralOwner owner) {
+        return gatewaysAt(level, owner.enabledEndpoints());
+    }
+
+    /** The enabled Gateway on {@code owner} called {@code name} (any case), or null. */
     @Nullable
     public static NetworkGatewayBlockEntity named(final Level level, final IPeripheralOwner owner, final String name) {
-        for (final NetworkGatewayBlockEntity gateway : linkedTo(level, owner)) {
+        for (final NetworkGatewayBlockEntity gateway : enabledOn(level, owner)) {
             if (gateway.name().equalsIgnoreCase(name)) {
                 return gateway;
             }
@@ -47,14 +49,24 @@ public final class NetworkGateways {
         return null;
     }
 
-    /** The Gateway on {@code owner} standing at {@code pos}, or null when none of the owner's is there. */
+    /** The enabled Gateway on {@code owner} standing at {@code pos}, or null when none of the owner's is there. */
     @Nullable
     public static NetworkGatewayBlockEntity at(final Level level, final IPeripheralOwner owner, final long pos) {
-        for (final NetworkGatewayBlockEntity gateway : linkedTo(level, owner)) {
+        for (final NetworkGatewayBlockEntity gateway : enabledOn(level, owner)) {
             if (gateway.getBlockPos().asLong() == pos) {
                 return gateway;
             }
         }
         return null;
+    }
+
+    private static List<NetworkGatewayBlockEntity> gatewaysAt(final Level level, final List<Long> endpoints) {
+        final List<NetworkGatewayBlockEntity> out = new ArrayList<>();
+        for (final long endpoint : endpoints) {
+            if (Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof NetworkGatewayBlockEntity gateway) {
+                out.add(gateway);
+            }
+        }
+        return out;
     }
 }

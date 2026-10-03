@@ -82,10 +82,11 @@ public final class TerminalHosts {
         }
         /*
          * Anti-spoof: the monitor must actually be a linked peripheral of this host, so a player near any
-         * monitor cannot drive a foreign computer by sending that computer's position as the host.
+         * monitor cannot drive a foreign computer by sending that computer's position as the host; and one the host
+         * disabled shows it nothing.
          */
         if (!(host instanceof IPeripheralOwner owner)
-                || !owner.linkedEndpoints().contains(monitorPos.asLong())) {
+                || !owner.enabledEndpoints().contains(monitorPos.asLong())) {
             return null;
         }
         return host;

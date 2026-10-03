@@ -131,7 +131,7 @@ public final class ThisPcPayloads {
                 }
                 slot++;
             }
-            for (final long endpoint : computer.linkedEndpoints()) {
+            for (final long endpoint : computer.enabledEndpoints()) {
                 if (Loaded.blockEntity(level, BlockPos.of(endpoint))
                         instanceof MediaReaderBlockEntity reader) {
                     media.add(mediaRow(computer, payload.hostPos(), endpoint, reader));
@@ -295,7 +295,7 @@ public final class ThisPcPayloads {
     private static Text peripherals(final ServerLevel level, final IOsHost computer) {
         final Map<String, Integer> counts = new LinkedHashMap<>();
         final Map<String, Text> names = new LinkedHashMap<>();
-        for (final long endpoint : computer.linkedEndpoints()) {
+        for (final long endpoint : computer.enabledEndpoints()) {
             final BlockEntity be =
                     Loaded.blockEntity(level, BlockPos.of(endpoint));
             final Text label;
@@ -340,7 +340,7 @@ public final class ThisPcPayloads {
     private static void handleEjectMedia(final EjectMediaPayload payload, final ServerPlayer player,
                                          final ServerLevel level) {
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer
-                && computer.linkedEndpoints().contains(payload.readerPos())
+                && computer.enabledEndpoints().contains(payload.readerPos())
                 && Loaded.blockEntity(level, BlockPos.of(payload.readerPos()))
                         instanceof MediaReaderBlockEntity reader) {
             final ItemStack ejected = reader.ejectMedia();
@@ -362,7 +362,7 @@ public final class ThisPcPayloads {
             return;
         }
         // The drive must be a media reader currently linked to this computer.
-        if (!computer.linkedEndpoints().contains(payload.readerPos())
+        if (!computer.enabledEndpoints().contains(payload.readerPos())
                 || !(Loaded.blockEntity(level, BlockPos.of(payload.readerPos()))
                         instanceof MediaReaderBlockEntity reader)) {
             return;

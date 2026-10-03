@@ -147,7 +147,7 @@ class PeripheralPortsTest {
         saved.link(3L, PortKind.VIDEO);
 
         final PeripheralPorts loaded = new PeripheralPorts();
-        loaded.restore(saved.positions(), saved.kindIds(), saved.hubPositions());
+        loaded.restore(saved.positions(), saved.kindIds(), saved.hubPositions(), saved.disabledPositions());
 
         assertArrayEquals(new long[] {1L, 1L, 3L}, saved.hubPositions());
         assertEquals(OptionalLong.of(1L), loaded.hubOf(2L));
@@ -172,5 +172,84 @@ class PeripheralPortsTest {
         loaded.restore(new long[] {1L, 2L, 3L}, new int[] {PortKind.VIDEO.id(), 99});
 
         assertEquals(List.of(1L), List.copyOf(loaded.endpoints()));
+    }
+
+    @Test
+    void setDisabled_leavesThePeripheralLinkedAndHoldingItsPort() {
+        final PeripheralPorts ports = new PeripheralPorts();
+        ports.link(1L, PortKind.DEVICE);
+        ports.link(2L, PortKind.DEVICE);
+
+        assertTrue(ports.setDisabled(1L, true));
+        assertFalse(ports.setDisabled(1L, true));
+
+        assertTrue(ports.disabled(1L));
+        assertEquals(List.of(2L), ports.enabled());
+        assertEquals(List.of(1L, 2L), List.copyOf(ports.endpoints()));
+        assertEquals(2, ports.inUse(PortKind.DEVICE));
+        assertTrue(ports.holds(1L, 2));
+    }
+
+    @Test
+    void setDisabled_refusesWhatIsNotLinked() {
+        final PeripheralPorts ports = new PeripheralPorts();
+
+        assertFalse(ports.setDisabled(9L, true));
+        assertFalse(ports.disabled(9L));
+    }
+
+    @Test
+    void setDisabled_enablesAgain() {
+        final PeripheralPorts ports = new PeripheralPorts();
+        ports.link(1L, PortKind.VIDEO);
+        ports.setDisabled(1L, true);
+
+        assertTrue(ports.setDisabled(1L, false));
+
+        assertFalse(ports.disabled(1L));
+        assertEquals(List.of(1L), ports.enabled());
+    }
+
+    @Test
+    void disabled_reachesEverythingHangingFromADisabledHub() {
+        final PeripheralPorts ports = new PeripheralPorts();
+        ports.link(1L, PortKind.DEVICE);
+        ports.linkThrough(2L, PortKind.DEVICE, 1L);
+        ports.linkThrough(3L, PortKind.DEVICE, 2L);
+        ports.link(4L, PortKind.DEVICE);
+
+        ports.setDisabled(1L, true);
+
+        assertTrue(ports.disabled(2L));
+        assertTrue(ports.disabled(3L));
+        assertEquals(List.of(4L), ports.enabled());
+        assertArrayEquals(new long[] {1L}, ports.disabledPositions());
+    }
+
+    @Test
+    void unlink_forgetsThatAPeripheralWasDisabled() {
+        final PeripheralPorts ports = new PeripheralPorts();
+        ports.link(1L, PortKind.DEVICE);
+        ports.setDisabled(1L, true);
+
+        ports.unlink(1L);
+        ports.link(1L, PortKind.DEVICE);
+
+        assertFalse(ports.disabled(1L));
+    }
+
+    @Test
+    void restore_readsBackTheDisabledAndDropsOnesNoLongerLinked() {
+        final PeripheralPorts saved = new PeripheralPorts();
+        saved.link(1L, PortKind.DEVICE);
+        saved.link(2L, PortKind.AUDIO);
+        saved.setDisabled(2L, true);
+
+        final PeripheralPorts loaded = new PeripheralPorts();
+        loaded.restore(saved.positions(), saved.kindIds(), saved.hubPositions(), new long[] {2L, 7L});
+
+        assertTrue(loaded.disabled(2L));
+        assertFalse(loaded.disabled(7L));
+        assertArrayEquals(new long[] {2L}, loaded.disabledPositions());
     }
 }

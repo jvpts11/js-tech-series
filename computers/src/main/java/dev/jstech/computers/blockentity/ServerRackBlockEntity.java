@@ -1573,7 +1573,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         if (level == null) {
             return false;
         }
-        for (final long endpoint : linkedEndpoints()) {
+        for (final long endpoint : enabledEndpoints()) {
             if (Loaded.blockEntity(level, BlockPos.of(endpoint))
                     instanceof MediaReaderBlockEntity reader
                     && reader.insertedKind() == MediaKind.OS_INSTALL
@@ -1933,14 +1933,14 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         final LiveInstallState live = liveInstall();
         /* Asked, never acted on: see the same method on a personal computer for why that matters. */
         return (live != null
-                && LiveMedium.holding(level, linkedEndpoints(), live.distro()) != LiveMedium.Answer.GONE)
+                && LiveMedium.holding(level, enabledEndpoints(), live.distro()) != LiveMedium.Answer.GONE)
                 || installedOsId() != null;
     }
 
     @Override
     public boolean settleLiveInstall() {
         final LiveInstallState live = liveInstall();
-        if (live == null || LiveMedium.holding(level, linkedEndpoints(), live.distro())
+        if (live == null || LiveMedium.holding(level, enabledEndpoints(), live.distro())
                 != LiveMedium.Answer.GONE) {
             return false;
         }

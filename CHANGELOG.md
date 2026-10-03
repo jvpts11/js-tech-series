@@ -385,6 +385,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   of its own, gives all of its computer's satellites the whole range; the speaker's window says which. The Standard
   has a new pair, the Artisan WattWorks T20, tall and gloss black with the tweeter over a silver-ringed woofer, and
   the Cobble moves to the Advanced. Each speaker takes half of an audio output, the window names its model.
+- Disabled devices, in J's Core and J's Computers: a computer can disable a device on its ports, which stays linked
+  and keeps its port while the computer neither reads nor writes it, and everything hanging from a disabled hub with
+  it. A disabled monitor goes dark and opens none of its computer's screens, a disabled speaker plays nothing, a
+  disabled drive's disc is not seen, a disabled Redstone Interface neither reads nor emits and no program finds it,
+  and a disabled Gateway answers nothing. The computer remembers what it disabled.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The
