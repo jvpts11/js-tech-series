@@ -46,6 +46,8 @@ public final class PatternEncoderClientTests {
     private static final BlockPos VINTAGE = new BlockPos(4, 2, 2);
     private static final BlockPos LEGACY = new BlockPos(6, 2, 2);
     private static final BlockPos STANDARD = new BlockPos(8, 2, 2);
+    private static final BlockPos TRANSITION = new BlockPos(10, 2, 2);
+    private static final BlockPos ADVANCED = new BlockPos(12, 2, 2);
     private static final BlockPos PLAYER = new BlockPos(6, 2, 6);
     /** The block an item frame hangs on, beside the Vintage encoder. */
     private static final BlockPos FRAME_WALL = new BlockPos(5, 2, 2);
@@ -59,12 +61,16 @@ public final class PatternEncoderClientTests {
                     world.setBlock(VINTAGE, facingPlayer(ComputingModule.VINTAGE_PATTERN_ENCODER.get()));
                     world.setBlock(LEGACY, facingPlayer(ComputingModule.LEGACY_PATTERN_ENCODER.get()));
                     world.setBlock(STANDARD, facingPlayer(ComputingModule.PATTERN_ENCODER.get()));
+                    world.setBlock(TRANSITION, facingPlayer(ComputingModule.TRANSITION_PATTERN_ENCODER.get()));
+                    world.setBlock(ADVANCED, facingPlayer(ComputingModule.ADVANCED_PATTERN_ENCODER.get()));
                 })
                 .thenTeleport(SETTLE, PLAYER, Direction.NORTH)
                 .thenServer(SETTLE, level -> {
                     insert(ctx, level, VINTAGE, ComputingModule.FLOPPY_DISK.get());
                     insert(ctx, level, LEGACY, ComputingModule.CD_RW.get());
                     insert(ctx, level, STANDARD, ComputingModule.DVD_RW.get());
+                    insert(ctx, level, TRANSITION, ComputingModule.DVD_RW.get());
+                    insert(ctx, level, ADVANCED, ComputingModule.BD_RE.get());
                 })
                 .thenScreenshot(30, "all-loaded")
                 .thenAssert(0, () -> drawn(ctx, LEGACY).is(ComputingModule.CD_RW.get()),
@@ -94,6 +100,25 @@ public final class PatternEncoderClientTests {
                         "the Standard encoder draws the stick in its port")
                 .thenServer(0, level -> insert(ctx, level, STANDARD, null))
                 .thenScreenshot(USB_OUT, "standard-usb-leaving");
+
+        // The Transition's LightScribe burner and the Advanced's Blu-ray writer, each with its disc on its tray.
+        closeUp(ctx, TRANSITION)
+                .thenScreenshot(SETTLE, "transition-loaded")
+                .thenServer(0, level -> insert(ctx, level, TRANSITION, null))
+                .thenScreenshot(TRAY_OUT, "transition-tray-out")
+                .thenAssert(0, () -> drawn(ctx, TRANSITION).is(ComputingModule.DVD_RW.get()),
+                        "the Transition encoder draws its DVD on the open tray");
+
+        closeUp(ctx, ADVANCED)
+                .thenScreenshot(SETTLE, "advanced-loaded")
+                .thenServer(0, level -> insert(ctx, level, ADVANCED, null))
+                .thenScreenshot(TRAY_OUT, "advanced-tray-out")
+                .thenAssert(0, () -> drawn(ctx, ADVANCED).is(ComputingModule.BD_RE.get()),
+                        "the Advanced encoder draws its BD-RE on the open tray")
+                .thenServer(AFTER_EJECT, level -> insert(ctx, level, ADVANCED, ComputingModule.USB_FLASH_DRIVE.get()))
+                .thenScreenshot(20, "advanced-usb-in")
+                .thenAssert(0, () -> drawn(ctx, ADVANCED).is(ComputingModule.USB_FLASH_DRIVE.get()),
+                        "and the stick in its USB-C port");
 
         // From the side the stick shows it stands straight out of the port.
         standAt(ctx, STANDARD.east(2).south(), Direction.WEST)

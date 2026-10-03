@@ -49,6 +49,7 @@ public record ThisPcPayload(BlockPos host, WireMachine machine, List<WireDisk> d
     public static final TextKey FLOPPY_DRIVE = TextKey.of("jsc.this_pc.floppy_drive", "Floppy Drive");
     public static final TextKey CD_DRIVE = TextKey.of("jsc.this_pc.cd_drive", "CD Drive");
     public static final TextKey DVD_DRIVE = TextKey.of("jsc.this_pc.dvd_drive", "DVD Drive");
+    public static final TextKey BLU_RAY_DRIVE = TextKey.of("jsc.this_pc.blu_ray_drive", "Blu-ray Drive");
     public static final TextKey DOCK_STATION = TextKey.of("jsc.this_pc.dock_station", "Dock Station");
     public static final TextKey MONITOR = TextKey.of("jsc.this_pc.monitor", "Monitor");
     public static final TextKey COUNTED = TextKey.of("jsc.this_pc.counted", "%s × %s");

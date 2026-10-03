@@ -303,6 +303,7 @@ public final class ThisPcPayloads {
                     case FLOPPY_DRIVE -> ThisPcPayload.FLOPPY_DRIVE;
                     case CD_DRIVE -> ThisPcPayload.CD_DRIVE;
                     case DVD_DRIVE -> ThisPcPayload.DVD_DRIVE;
+                    case BLU_RAY_DRIVE -> ThisPcPayload.BLU_RAY_DRIVE;
                     case DOCK_STATION -> ThisPcPayload.DOCK_STATION;
                 }).text();
             } else if (be instanceof MonitorBlockEntity) {

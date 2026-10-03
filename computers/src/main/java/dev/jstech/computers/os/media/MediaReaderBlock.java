@@ -77,6 +77,8 @@ public class MediaReaderBlock extends DeviceBlock implements IFaceConnector {
             "floppy drive");
     private static final TextKey CD_DRIVE = TextKey.of("jsc.media.media_reader_block.cd_drive", "CD drive");
     private static final TextKey DVD_DRIVE = TextKey.of("jsc.media.media_reader_block.dvd_drive", "DVD drive");
+    private static final TextKey BLU_RAY_DRIVE = TextKey.of("jsc.media.media_reader_block.blu_ray_drive",
+            "Blu-ray drive");
     private static final TextKey DOCK_STATION = TextKey.of("jsc.media.media_reader_block.dock_station",
             "dock station");
 
@@ -175,6 +177,7 @@ public class MediaReaderBlock extends DeviceBlock implements IFaceConnector {
             case FLOPPY_DRIVE -> FLOPPY_DRIVE;
             case CD_DRIVE -> CD_DRIVE;
             case DVD_DRIVE -> DVD_DRIVE;
+            case BLU_RAY_DRIVE -> BLU_RAY_DRIVE;
             case DOCK_STATION -> DOCK_STATION;
         };
     }

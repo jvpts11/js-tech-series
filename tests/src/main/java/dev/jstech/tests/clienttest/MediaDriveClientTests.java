@@ -23,7 +23,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * The floppy, CD and DVD drives as a player sees them: each the drive of its day, the very medium the player put in
+ * The floppy, CD, DVD and Blu-ray drives as a player sees them: each the drive of its day, the very medium the player put in
  * drawn in it (a floppy in the slot, a disc on the tray), a medium taken out still drawn on its way out and then
  * gone, the power lamp lit once a computer is linked, and the drive's item dark in a frame. The Dock Station beside
  * them keeps its block model. Each drive is shot close up in the middle of the clip that moves its medium.
@@ -44,6 +44,7 @@ public final class MediaDriveClientTests {
     private static final BlockPos CD = new BlockPos(6, 2, 2);
     private static final BlockPos DVD = new BlockPos(8, 2, 2);
     private static final BlockPos DOCK = new BlockPos(10, 2, 2);
+    private static final BlockPos BLU_RAY = new BlockPos(12, 2, 2);
     private static final BlockPos PLAYER = new BlockPos(7, 2, 6);
     /** The block an item frame hangs on, beside the Floppy Drive. */
     private static final BlockPos FRAME_WALL = new BlockPos(5, 2, 2);
@@ -58,6 +59,7 @@ public final class MediaDriveClientTests {
                     world.setBlock(CD, facingPlayer(ComputingModule.CD_DRIVE.get()));
                     world.setBlock(DVD, facingPlayer(ComputingModule.DVD_DRIVE.get()));
                     world.setBlock(DOCK, facingPlayer(ComputingModule.DOCK_STATION.get()));
+                    world.setBlock(BLU_RAY, facingPlayer(ComputingModule.BLU_RAY_DRIVE.get()));
                 })
                 .thenTeleport(SETTLE, PLAYER, Direction.NORTH)
                 .thenServer(SETTLE, level -> {
@@ -65,6 +67,7 @@ public final class MediaDriveClientTests {
                     insert(ctx, level, CD, ComputingModule.CD_ROM.get());
                     insert(ctx, level, DVD, ComputingModule.DVD_RW.get());
                     insert(ctx, level, DOCK, ComputingModule.USB_FLASH_DRIVE.get());
+                    insert(ctx, level, BLU_RAY, ComputingModule.BD_ROM.get());
                 })
                 .thenScreenshot(30, "all-loaded")
                 .thenAssert(0, () -> drawn(ctx, CD).is(ComputingModule.CD_ROM.get()),
@@ -90,6 +93,14 @@ public final class MediaDriveClientTests {
                 .thenScreenshot(TRAY_OUT, "dvd-tray-out")
                 .thenServer(AFTER_EJECT, level -> insert(ctx, level, DVD, ComputingModule.CD_RW.get()))
                 .thenScreenshot(30, "dvd-reads-a-cd");
+
+        // The Blu-ray drive, white all over, its slim tray high on the front, with the BD-ROM on it.
+        closeUp(ctx, BLU_RAY)
+                .thenScreenshot(SETTLE, "blu-ray-loaded")
+                .thenServer(0, level -> insert(ctx, level, BLU_RAY, null))
+                .thenScreenshot(TRAY_OUT, "blu-ray-tray-out")
+                .thenAssert(0, () -> drawn(ctx, BLU_RAY).is(ComputingModule.BD_ROM.get()),
+                        "the Blu-ray drive draws its disc on the open tray");
 
         /*
          * With a computer behind it the Floppy Drive's power lamp lights, which needs the link on the client; the

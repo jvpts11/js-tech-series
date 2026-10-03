@@ -42,6 +42,36 @@ public final class OsMediaGameTests {
     private static final int SETTLE = 4;
 
     /**
+     * The Blu-ray drive reads Blu-ray discs and, as the DVD drive reads CDs, the older optical discs; never a floppy or
+     * a stick. A disc it accepts lands in its slot.
+     */
+    @GameTest(template = ARENA)
+    public static void bluRayDrive_readsBluRayAndTheOlderDiscs(final GameTestHelper helper) {
+        final BlockPos at = new BlockPos(2, 2, 2);
+        helper.setBlock(at, ComputingModule.BLU_RAY_DRIVE.get());
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    if (!(helper.getBlockEntity(at) instanceof MediaReaderBlockEntity drive)) {
+                        throw new IllegalStateException("the Blu-ray drive is missing its block entity");
+                    }
+                    helper.assertTrue(drive.acceptsMedia(new ItemStack(ComputingModule.BD_ROM.get())),
+                            "it reads a BD-ROM");
+                    helper.assertTrue(drive.acceptsMedia(new ItemStack(ComputingModule.BD_RE.get())),
+                            "and a BD-RE");
+                    helper.assertTrue(drive.acceptsMedia(new ItemStack(ComputingModule.DVD_ROM.get()))
+                            && drive.acceptsMedia(new ItemStack(ComputingModule.CD_ROM.get())),
+                            "and the older optical discs");
+                    helper.assertTrue(!drive.acceptsMedia(new ItemStack(ComputingModule.FLOPPY_DISK.get()))
+                            && !drive.acceptsMedia(new ItemStack(ComputingModule.USB_FLASH_DRIVE.get())),
+                            "but no floppy and no stick");
+                    final ItemStack left = drive.insertMedia(new ItemStack(ComputingModule.BD_ROM.get()));
+                    helper.assertTrue(left.isEmpty() && !drive.mediaSlot().getStackInSlot(0).isEmpty(),
+                            "the disc it takes lands in its slot");
+                })
+                .thenSucceed();
+    }
+
+    /**
      * Every drive takes the media it is built for and refuses the rest, and a disc that a drive accepts
      * actually lands in its slot. A drive that will not take its own format is a dead end for the player.
      */

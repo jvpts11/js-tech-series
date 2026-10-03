@@ -95,7 +95,11 @@ public final class ComputingLooks {
         if (era == HardwareEra.LEGACY) {
             return "legacy_pattern_encoder";
         }
-        return "pattern_encoder";
+        if (era == HardwareEra.TRANSITION) {
+            return "transition_pattern_encoder";
+        }
+        // An era after the Advanced has the Advanced's.
+        return era.level() >= HardwareEra.ADVANCED.level() ? "advanced_pattern_encoder" : "pattern_encoder";
     }
 
     /** The model of a rack's cabinet: by kind first, then by era. */

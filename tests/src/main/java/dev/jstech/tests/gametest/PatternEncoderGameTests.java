@@ -100,6 +100,46 @@ public final class PatternEncoderGameTests {
         helper.succeed();
     }
 
+    /** The Transition and Advanced encoders, placed: each reports its era and takes the media its era burns. */
+    @GameTest(template = ARENA)
+    public static void encoder_ofTheNewErasTakesItsMediaWhenPlaced(final GameTestHelper helper) {
+        final PatternEncoderBlockEntity transition = place(helper, new BlockPos(1, 2, 1),
+                ComputingModule.TRANSITION_PATTERN_ENCODER.get());
+        final PatternEncoderBlockEntity advanced = place(helper, new BlockPos(3, 2, 1),
+                ComputingModule.ADVANCED_PATTERN_ENCODER.get());
+        final ItemStack cdRw = new ItemStack(ComputingModule.CD_RW.get());
+        final ItemStack dvdRw = new ItemStack(ComputingModule.DVD_RW.get());
+        final ItemStack bdRe = new ItemStack(ComputingModule.BD_RE.get());
+        final ItemStack usb = new ItemStack(ComputingModule.USB_FLASH_DRIVE.get());
+        helper.assertTrue(transition.era() == HardwareEra.TRANSITION && advanced.era() == HardwareEra.ADVANCED,
+                "each block reports its era");
+        helper.assertTrue(transition.acceptsMedia(dvdRw) && transition.acceptsMedia(cdRw),
+                "the Transition encoder takes a DVD-RW and a CD-RW");
+        helper.assertFalse(transition.acceptsMedia(bdRe) || transition.acceptsMedia(usb),
+                "but no Blu-ray and no stick");
+        helper.assertTrue(advanced.acceptsMedia(bdRe) && advanced.acceptsMedia(usb),
+                "the Advanced encoder takes a BD-RE and a stick");
+        helper.assertFalse(advanced.acceptsMedia(dvdRw) || advanced.acceptsMedia(cdRw),
+                "but leaves the older discs to the older encoders");
+        helper.succeed();
+    }
+
+    /** The Advanced encoder burns a file onto a BD-RE, through the same seek, write and verify. */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void advancedEncoder_burnsABluRay(final GameTestHelper helper) {
+        final HolderLookup.Provider reg = helper.getLevel().registryAccess();
+        final PatternEncoderBlockEntity encoder = place(helper, POS, ComputingModule.ADVANCED_PATTERN_ENCODER.get());
+        encoder.media().setStackInSlot(0, new ItemStack(ComputingModule.BD_RE.get()));
+        final String content = CraftFile.serialize(CraftFiles.oakPlanks(), reg).orElseThrow();
+        helper.assertTrue(encoder.queueBurn("oak_planks", content), "the job is queued");
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(encoder.phase() == PatternEncoderBlockEntity.Phase.DONE,
+                        "the burn to finish; it is at " + encoder.phase()))
+                .thenExecute(() -> helper.assertTrue(CraftFiles.count(encoder.mediaStack()) == 1,
+                        "the file is on the disc"))
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void encoder_burnsAQueuedFileThroughSeekWriteAndVerify(final GameTestHelper helper) {
         final HolderLookup.Provider reg = helper.getLevel().registryAccess();

@@ -38,7 +38,10 @@ public enum MediaDriveType implements IStableName {
     DVD_DRIVE("dvd_drive", EnumSet.of(MediaFormat.DVD, MediaFormat.CD)),
 
     /** Reads USB flash drives; also used for disk diagnostics and recovery. */
-    DOCK_STATION("dock_station", EnumSet.of(MediaFormat.USB));
+    DOCK_STATION("dock_station", EnumSet.of(MediaFormat.USB)),
+
+    /** Reads Blu-ray discs and, as the DVD drive reads CDs, the older optical discs: DVDs and CDs. */
+    BLU_RAY_DRIVE("blu_ray_drive", EnumSet.of(MediaFormat.BLU_RAY, MediaFormat.DVD, MediaFormat.CD));
 
     private static final StableNames<MediaDriveType> NAMES = StableNames.of(MediaDriveType.class);
 
@@ -46,6 +49,8 @@ public enum MediaDriveType implements IStableName {
     private static final TextKey CD_NAME = TextKey.of("jsc.media.media_drive_type.cd_drive", "CD drive");
     private static final TextKey DVD_NAME = TextKey.of("jsc.media.media_drive_type.dvd_drive", "DVD drive");
     private static final TextKey DOCK_NAME = TextKey.of("jsc.media.media_drive_type.dock_station", "Dock Station");
+    private static final TextKey BLU_RAY_NAME = TextKey.of("jsc.media.media_drive_type.blu_ray_drive",
+            "Blu-ray drive");
 
     private final String serializedName;
     private final Set<MediaFormat> accepted;
@@ -72,19 +77,21 @@ public enum MediaDriveType implements IStableName {
             case CD_DRIVE -> CD_NAME.text();
             case DVD_DRIVE -> DVD_NAME.text();
             case DOCK_STATION -> DOCK_NAME.text();
+            case BLU_RAY_DRIVE -> BLU_RAY_NAME.text();
         };
     }
 
     /**
      * The era the drive is of, which decides the port on its back and so the peripheral cables it takes: the floppy
      * drive the Vintage's parallel port, the CD drive the Legacy's USB, the DVD drive and the Dock the Standard's
-     * USB 3.
+     * USB 3, the Blu-ray drive the Advanced's USB-C.
      */
     public HardwareEra era() {
         return switch (this) {
             case FLOPPY_DRIVE -> HardwareEra.VINTAGE;
             case CD_DRIVE -> HardwareEra.LEGACY;
             case DVD_DRIVE, DOCK_STATION -> HardwareEra.STANDARD;
+            case BLU_RAY_DRIVE -> HardwareEra.ADVANCED;
         };
     }
 

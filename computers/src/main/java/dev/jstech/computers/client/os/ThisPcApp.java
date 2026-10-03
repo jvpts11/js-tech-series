@@ -1100,6 +1100,7 @@ public final class ThisPcApp implements IDesktopApp {
             case FLOPPY_DRIVE -> ThisPcTexts.FLOPPY;
             case CD_DRIVE -> ThisPcTexts.CD;
             case DVD_DRIVE -> ThisPcTexts.DVD;
+            case BLU_RAY_DRIVE -> ThisPcTexts.BLU_RAY;
             case DOCK_STATION -> ThisPcTexts.USB;
         });
     }

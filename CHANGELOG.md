@@ -374,6 +374,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   `.Level()` in Sigma and Sigma#, and `SET REDSTONE 'Gate' IN` or `SET REDSTONE 'Gate' OUT 15` in IQL. A setting is
   marked on the interface with the program's name, as on a bus.
 - The Sigma documentation describes the buses and the Redstone Interfaces.
+- Two Pattern Encoders for the new eras: the Transition one, a LightScribe DVD burner in silver and gloss black that
+  writes DVDs and CDs, and the Advanced one, a Blu-ray writer in space grey with a white front that writes Blu-ray
+  discs and, in its USB-C port, sticks. And the Blu-ray Drive, white all over with its slim tray high on the front,
+  which reads Blu-ray discs and the older DVDs and CDs. Each takes its era's cable on its back, and each opens its
+  tray with the sound the other disc drives make.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

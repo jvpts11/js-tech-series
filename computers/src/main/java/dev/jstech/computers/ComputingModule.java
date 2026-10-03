@@ -524,9 +524,17 @@ public final class ComputingModule {
             CONTENT.blockEntity("hbw_interface", HbwInterfaceBlockEntity::new, HBW_INTERFACE, ADVANCED_HBW_INTERFACE);
 
     /*
-     * Pattern Encoders burn .craft files onto removable media, one per era: the Standard one writes DVDs, CDs and USB
-     * sticks, the Legacy one CDs, the Vintage one floppies. The body is drawn by the block entity.
+     * Pattern Encoders burn .craft files onto removable media, one per era: the Advanced one writes Blu-ray discs and
+     * USB sticks, the Standard one DVDs, CDs and USB sticks, the Transition one, a LightScribe burner, DVDs and CDs,
+     * the Legacy one CDs, the Vintage one floppies. The body is drawn by the block entity.
      */
+
+    public static final BlockEntry<PatternEncoderBlock> ADVANCED_PATTERN_ENCODER =
+            encoder("advanced_pattern_encoder", MapColor.COLOR_GRAY, HardwareEra.ADVANCED)
+                    .named("Advanced Pattern Encoder").register();
+    public static final BlockEntry<PatternEncoderBlock> TRANSITION_PATTERN_ENCODER =
+            encoder("transition_pattern_encoder", MapColor.COLOR_LIGHT_GRAY, HardwareEra.TRANSITION)
+                    .named("Transition Pattern Encoder").register();
 
     public static final BlockEntry<PatternEncoderBlock> PATTERN_ENCODER =
             encoder("pattern_encoder", MapColor.COLOR_GRAY, HardwareEra.STANDARD).named("Pattern Encoder").register();
@@ -538,7 +546,8 @@ public final class ComputingModule {
                     .named("Vintage Pattern Encoder").register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PatternEncoderBlockEntity>>
             PATTERN_ENCODER_BE = CONTENT.blockEntity("pattern_encoder", PatternEncoderBlockEntity::new,
-                    PATTERN_ENCODER, LEGACY_PATTERN_ENCODER, VINTAGE_PATTERN_ENCODER);
+                    PATTERN_ENCODER, LEGACY_PATTERN_ENCODER, VINTAGE_PATTERN_ENCODER, TRANSITION_PATTERN_ENCODER,
+                    ADVANCED_PATTERN_ENCODER);
 
     /*
      * Media drives: one block per drive type, each linked to a computer over the Peripheral Cable. A drive is drawn
@@ -553,6 +562,8 @@ public final class ComputingModule {
             drive("cd_drive", MediaDriveType.CD_DRIVE, MapColor.COLOR_LIGHT_GRAY).named("CD Drive").register();
     public static final BlockEntry<MediaReaderBlock> DVD_DRIVE =
             drive("dvd_drive", MediaDriveType.DVD_DRIVE, MapColor.COLOR_BLACK).named("DVD Drive").register();
+    public static final BlockEntry<MediaReaderBlock> BLU_RAY_DRIVE =
+            drive("blu_ray_drive", MediaDriveType.BLU_RAY_DRIVE, MapColor.SNOW).named("Blu-ray Drive").register();
     public static final BlockEntry<MediaReaderBlock> DOCK_STATION =
             CONTENT.block("dock_station", properties -> new MediaReaderBlock(MediaDriveType.DOCK_STATION, properties))
                     .properties(properties -> properties.mapColor(MapColor.COLOR_BLACK).strength(1.5F)
@@ -563,7 +574,7 @@ public final class ComputingModule {
                     .item().tab(DEVICES).register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MediaReaderBlockEntity>> MEDIA_READER_BE =
             CONTENT.blockEntity("media_reader", MediaReaderBlockEntity::new,
-                    FLOPPY_DRIVE, CD_DRIVE, DVD_DRIVE, DOCK_STATION);
+                    FLOPPY_DRIVE, CD_DRIVE, DVD_DRIVE, BLU_RAY_DRIVE, DOCK_STATION);
 
     /*
      * The Redstone Interfaces, one each era: a sensor on the peripheral cable that reads a redstone signal for its

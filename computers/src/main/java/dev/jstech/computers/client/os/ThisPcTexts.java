@@ -48,6 +48,7 @@ final class ThisPcTexts {
     static final TextKey FLOPPY = TextKey.of("jsc.this_pc.floppy", "Floppy");
     static final TextKey CD = TextKey.of("jsc.this_pc.cd", "CD");
     static final TextKey DVD = TextKey.of("jsc.this_pc.dvd", "DVD");
+    static final TextKey BLU_RAY = TextKey.of("jsc.this_pc.blu_ray", "Blu-ray");
     static final TextKey USB = TextKey.of("jsc.this_pc.usb", "USB");
     static final TextKey NO_DISC = TextKey.of("jsc.this_pc.no_disc", "no disc");
     static final TextKey DRIVE_AWAY = TextKey.of("jsc.this_pc.drive_away", "%s drive, %s blocks away");
