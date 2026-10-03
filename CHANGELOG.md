@@ -390,6 +390,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   it. A disabled monitor goes dark and opens none of its computer's screens, a disabled speaker plays nothing, a
   disabled drive's disc is not seen, a disabled Redstone Interface neither reads nor emits and no program finds it,
   and a disabled Gateway answers nothing. The computer remembers what it disabled.
+- The device tools at a Unix prompt: on Linux `lspci` lists what sits on the board (the board itself, its port
+  controller, its audio and network, the graphics and expansion cards) and `lsusb` what is plugged into its ports,
+  `lsusb -t` as a tree with each hub's ports under the hub and the free ports too; on FreeBSD `pciconf -lv` and
+  `usbconfig`. A device the computer disabled is marked by each.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

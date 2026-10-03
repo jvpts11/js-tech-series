@@ -138,6 +138,8 @@ class HardcodedTextTest {
             data(COMPUTERS + "os/fs/TrashFolder.java", 1, FILES),
             data(COMPUTERS + "program/KnotRepository.java", 1, "a revision's message as the repository stores it"),
             data(COMPUTERS + "program/cli/ConsoleGreeting.java", 3, PRODUCTS),
+            data(COMPUTERS + "program/cli/DeviceCommands.java", 19,
+                    "the PCI classes and the words of the device tools, which read the same in every language"),
             data(COMPUTERS + "program/cli/ICliFiles.java", 1, COMMANDS),
             data(COMPUTERS + "program/cli/ICliProcesses.java", 2, COMMANDS),
             data(COMPUTERS + "program/cli/ICliRemote.java", 2, COMMANDS),

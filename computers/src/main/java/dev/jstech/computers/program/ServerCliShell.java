@@ -39,6 +39,8 @@ import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.UnixTree;
+import dev.jstech.computers.os.devices.DeviceMap;
+import dev.jstech.computers.os.devices.DeviceMaps;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
@@ -177,6 +179,11 @@ abstract class ServerCliShell implements ICliComputer {
     public String hostname() {
         // The host resolves its own name so the shell, the provenance rows and the remote host list agree.
         return host.hostname();
+    }
+
+    @Override
+    public DeviceMap devices() {
+        return hostBlock instanceof IOsHost computer ? DeviceMaps.of(level, computer) : null;
     }
 
     @Override

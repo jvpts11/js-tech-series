@@ -11,6 +11,7 @@ import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.UnixTree;
+import dev.jstech.computers.os.devices.DeviceMap;
 import dev.jstech.computers.program.job.JobWhen;
 import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.core.text.Text;
@@ -62,6 +63,15 @@ public interface ICliMachine {
 
     /** The block entity behind this shell, for commands that exist on one kind of machine only. */
     default Object hostBlock() {
+        return null;
+    }
+
+    /**
+     * The computer's hardware and ports as its Device Manager reads them, or null when there is no machine to read:
+     * what the device tools of a prompt list.
+     */
+    @Nullable
+    default DeviceMap devices() {
         return null;
     }
 
