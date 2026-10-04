@@ -232,6 +232,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
          */
         input = new EditBox(font, -4000, -4000, 40, 11, GameText.component(CommandPromptTexts.COMMAND));
         input.setBordered(false);
+        input.setTextShadow(false);
         input.setMaxLength(RunCommandPayload.MAX_LEN);
         input.setFocused(true);
         // A real edit (typing/backspace) restarts Tab cycling; our own programmatic setValue does not.

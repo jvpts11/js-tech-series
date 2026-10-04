@@ -10,6 +10,7 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.ProcessActionPayload;
 import dev.jstech.computers.operation.payload.ProcessListPayload;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.GuiGraphics;
@@ -165,7 +166,7 @@ final class ProcessesTerminalTab extends AbstractTerminalTab {
         g.fill(x, y + h - 1, x + w, y + h, LINE());
         g.fill(x, y, x + 1, y + h, LINE());
         g.fill(x + w - 1, y, x + w, y + h, LINE());
-        g.drawCenteredString(font(), label, x + w / 2, y + (h - 8) / 2, textColor);
+        Draw.textCentered(g,font(), label, x + w / 2, y + (h - 8) / 2, textColor);
     }
 
     private void cogIcon(final GuiGraphics g, final int x, final int y) {

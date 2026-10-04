@@ -55,6 +55,7 @@ final class TerminalQuantityBox {
         }
         final EditBox made = new EditBox(font, -4000, -4000, this.width, this.height,
                 GameText.component(TerminalGridTexts.QUANTITY));
+        made.setTextShadow(false);
         made.setMaxLength(this.maxLength);
         made.setFilter(s -> s.isEmpty() || s.chars().allMatch(Character::isDigit));
         made.setResponder(this::typed);

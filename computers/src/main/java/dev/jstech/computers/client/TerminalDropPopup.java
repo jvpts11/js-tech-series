@@ -13,6 +13,7 @@ import dev.jstech.computers.operation.payload.NetworkItemEntry;
 import dev.jstech.computers.operation.payload.NetworkServersPayload;
 import dev.jstech.computers.operation.payload.TerminalDropPayload;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
@@ -112,7 +113,7 @@ final class TerminalDropPopup {
             final boolean hov = inRect(mouseX, mouseY, bx, py + 30, segW - 2, 14);
             g.fill(bx, py + 30, bx + segW - 2, py + 44,
                     on ? JsTechTheme.red() : (hov ? c.controlHover() : c.control()));
-            g.drawCenteredString(screen.tabFont(), GameText.resolve(SCOPES[i]), bx + (segW - 2) / 2, py + 33,
+            Draw.textCentered(g,screen.tabFont(), GameText.resolve(SCOPES[i]), bx + (segW - 2) / 2, py + 33,
                     on ? c.dangerInk() : JsTechTheme.dim());
         }
 
@@ -137,13 +138,13 @@ final class TerminalDropPopup {
         final int by = py + DROP_H - 22;
         final boolean cancelHov = inRect(mouseX, mouseY, px + 8, by, 70, 16);
         g.fill(px + 8, by, px + 78, by + 16, cancelHov ? c.cancelHover() : c.control());
-        g.drawCenteredString(screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.CANCEL), px + 43, by + 4,
+        Draw.textCentered(g,screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.CANCEL), px + 43, by + 4,
                 JsTechTheme.text());
         final boolean canConfirm = confirmEnabled();
         final boolean confHov = inRect(mouseX, mouseY, px + 84, by, DROP_W - 92, 16);
         g.fill(px + 84, by, px + DROP_W - 8, by + 16,
                 !canConfirm ? c.dangerOff() : (confHov ? c.dangerHover() : c.danger()));
-        g.drawCenteredString(screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.CONFIRM_DROP),
+        Draw.textCentered(g,screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.CONFIRM_DROP),
                 px + 84 + (DROP_W - 92) / 2, by + 4, canConfirm ? c.dangerInk() : JsTechTheme.dim());
         g.pose().popPose();
     }
@@ -234,10 +235,10 @@ final class TerminalDropPopup {
         final boolean rh = inRect(mouseX, mouseY, px + DROP_W - 22, bodyY, 14, 14);
         final TerminalPopupPalette.Colours c = TerminalPopupPalette.get();
         g.fill(px + 8, bodyY, px + 22, bodyY + 14, lh ? c.controlHover() : c.control());
-        g.drawCenteredString(screen.tabFont(), "<", px + 15, bodyY + 3, JsTechTheme.accent());
+        Draw.textCentered(g,screen.tabFont(), "<", px + 15, bodyY + 3, JsTechTheme.accent());
         g.fill(px + DROP_W - 22, bodyY, px + DROP_W - 8, bodyY + 14, rh ? c.controlHover() : c.control());
-        g.drawCenteredString(screen.tabFont(), ">", px + DROP_W - 15, bodyY + 3, JsTechTheme.accent());
-        g.drawCenteredString(screen.tabFont(),
+        Draw.textCentered(g,screen.tabFont(), ">", px + DROP_W - 15, bodyY + 3, JsTechTheme.accent());
+        Draw.textCentered(g,screen.tabFont(),
                 screen.tabFont().plainSubstrByWidth(target.name(), DROP_W - 56),
                 px + DROP_W / 2, bodyY + 3, JsTechTheme.text());
         g.drawString(screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.WIPES_SERVER), px + 8, bodyY + 20,

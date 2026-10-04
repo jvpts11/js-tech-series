@@ -9,6 +9,7 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.GuiGraphics;
@@ -51,7 +52,7 @@ final class TasksTerminalTab extends AbstractTerminalTab {
     public void renderTabLabels(final GuiGraphics g, final int cx, final int cy, final int cw) {
         final int sw = cw / 3;
         for (int i = 0; i < 3; i++) {
-            g.drawCenteredString(font(), GameText.resolve(TASK_SUBTABS[i]), cx + i * sw + sw / 2, cy + 28,
+            Draw.textCentered(g,font(), GameText.resolve(TASK_SUBTABS[i]), cx + i * sw + sw / 2, cy + 28,
                     i == screen.taskSubTab ? ACCENT() : DIM());
         }
         switch (screen.taskSubTab) {

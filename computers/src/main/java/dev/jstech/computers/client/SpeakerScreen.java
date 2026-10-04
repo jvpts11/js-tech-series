@@ -86,6 +86,7 @@ public final class SpeakerScreen extends AbstractComputerScreen<SpeakerMenu> {
                 GameText.component(SpeakerTexts.NAME_FIELD));
         // Unbordered, its text starts where the field draws it, so a click lands the caret on the letter clicked.
         nameBox.setBordered(false);
+        nameBox.setTextShadow(false);
         nameBox.setMaxLength(SpeakerBlockEntity.MAX_NAME);
         nameBox.setValue(menu.opening().name());
         nameBox.setResponder(name ->

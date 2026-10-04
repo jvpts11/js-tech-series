@@ -9,6 +9,7 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.boot.BootSplash;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -129,7 +130,7 @@ public final class BootSplashArt {
          */
         if (going && endsDark && total > 0 && ticks >= total * SAFE_FROM / 100) {
             g.fill(x, y, x + w, y + h, c.safeGround());
-            g.drawCenteredString(font, GameText.resolve(MonitorScreenTexts.SAFE_TO_TURN_OFF),
+            Draw.textCentered(g,font, GameText.resolve(MonitorScreenTexts.SAFE_TO_TURN_OFF),
                     x + w / 2, y + h / 2 - 4, c.safeText());
             return;
         }
@@ -144,7 +145,7 @@ public final class BootSplashArt {
          * one thing that screen deliberately did not have.
          */
         if (going) {
-            g.drawCenteredString(font, message, x + w / 2, y + h * 71 / 100, c.message());
+            Draw.textCentered(g,font, message, x + w / 2, y + h * 71 / 100, c.message());
             return;
         }
         final int band = Math.max(6, h / 16);
@@ -284,7 +285,7 @@ public final class BootSplashArt {
             SplashLogos.draw(g, SplashLogos.JSC, x + w / 2, logoY);
         } else {
             big(g, font, title, x + w / 2, logoY + 6, c.greeting());
-            g.drawCenteredString(font, subtitle, x + w / 2, logoY + SplashLogos.H + 2, c.subtitle());
+            Draw.textCentered(g,font, subtitle, x + w / 2, logoY + SplashLogos.H + 2, c.subtitle());
         }
 
         /*
@@ -306,7 +307,7 @@ public final class BootSplashArt {
 
         /* The one word this edition puts on its way down, under the mark it came up behind. */
         if (title.isEmpty() && !subtitle.isEmpty()) {
-            g.drawCenteredString(font, subtitle, x + w / 2, cy + 20, c.goodbye());
+            Draw.textCentered(g,font, subtitle, x + w / 2, cy + 20, c.goodbye());
         }
     }
 

@@ -10,6 +10,7 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.index.IndexHealth;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -106,10 +107,10 @@ final class MaintenanceTerminalTab extends AbstractTerminalTab {
         }
         final int ink = PALETTE.get().ink();
         final int halfW = (cw - 4) / 2;
-        g.drawCenteredString(font(), "ANALYZE", cx + halfW / 2, cy + MNT_BTN_ROW1_Y + 4, ink);
-        g.drawCenteredString(font(), "VACUUM", cx + halfW + 4 + halfW / 2, cy + MNT_BTN_ROW1_Y + 4, ink);
-        g.drawCenteredString(font(), "REINDEX", cx + cw / 2, cy + MNT_BTN_REINDEX_Y + 4, ink);
-        g.drawCenteredString(font(), GameText.resolve(TerminalUpkeepTexts.DROP_DATA_BUTTON), cx + cw / 2,
+        Draw.textCentered(g,font(), "ANALYZE", cx + halfW / 2, cy + MNT_BTN_ROW1_Y + 4, ink);
+        Draw.textCentered(g,font(), "VACUUM", cx + halfW + 4 + halfW / 2, cy + MNT_BTN_ROW1_Y + 4, ink);
+        Draw.textCentered(g,font(), "REINDEX", cx + cw / 2, cy + MNT_BTN_REINDEX_Y + 4, ink);
+        Draw.textCentered(g,font(), GameText.resolve(TerminalUpkeepTexts.DROP_DATA_BUTTON), cx + cw / 2,
                 cy + MNT_BTN_DROP_Y + 4, ink);
         if (!screen.maintHint.isEmpty()) {
             g.drawString(font(), GameText.resolve(screen.maintHint), cx, cy + MNT_BTN_DROP_Y + MNT_BTN_H + 2,

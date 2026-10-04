@@ -92,6 +92,7 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
         nameBox = new EditBox(font, leftPos + BusLayout.NAME_X + 3, topPos + BusLayout.NAME_Y + 2,
                 BusLayout.NAME_W - 6, BusLayout.NAME_H - 3, GameText.component(BusTexts.NAME_FIELD));
         nameBox.setBordered(false);
+        nameBox.setTextShadow(false);
         nameBox.setMaxLength(AbstractBusPart.MAX_NAME_LENGTH);
         nameBox.setTextColor(JsTechTheme.text());
         // Set the value before the responder so restoring it (open, or a window resize) sends no packet.

@@ -413,12 +413,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every row of the Device Manager and of the Info Center has its icon, drawn in the look of the desktop it is on (the
   period one of Frames 95 and the older Linux desktops, Frames XP's with its gloss, the flat modern one): the board's
   parts, every port, and every device that stands on one, the monitors, speakers and drives of each era with their own.
-- Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
-  and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
-  a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The
-  Core's components, era themes, dialogs and tables and J's Computers' desktop skins say what they paint, so every
-  label, field, menu, list, button and tab drawn through them has its shadow. Centred text on the machine screens
-  no longer uses the game's dark shadow, which smeared on the light panels of the Legacy and Advanced eras.
+- Text is drawn plain, with no shadow, on every screen of the series: the labels, fields, menus, lists, buttons,
+  tabs, terminals and the machine screens, which used the game's dark shadow and smeared on the light panels. In
+  J's Core, whoever paints a background still says which colour it is, and the rule for a shadow worked out from the
+  letter and that ground is kept, so a shadow can come back where it reads better.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,

@@ -47,7 +47,7 @@ class HardcodedTextTest {
 
     /** Methods that put what they are handed in front of a player. */
     private static final Set<String> SINKS = Set.of("drawString", "drawCenteredString", "drawWordWrap",
-            "text", "textS", "textRight", "textCenter", "textSRight", "textSCenter",
+            "text", "textS", "textRight", "textCenter", "textSRight", "textSCenter", "textCentered", "textScaled",
             "line", "error", "ok", "fail", "warn", "info", "dim", "accent", "header", "row", "entry", "say", "plain",
             "showBalloon", "raise", "displayClientMessage", "sendSystemMessage", "broadcastSystemMessage",
             "sendConsoleLine", "setTooltip", "withTooltip", "setPlaceholder", "submenu");

@@ -67,6 +67,7 @@ public class CraftingSwitchScreen extends CoreContainerScreen<CraftingSwitchMenu
         super.init();
         nameBox = new EditBox(this.font, leftPos + CraftingSwitchLayout.NAME_X, topPos + CraftingSwitchLayout.NAME_Y,
                 CraftingSwitchLayout.NAME_W, CraftingSwitchLayout.NAME_H, Component.empty());
+        nameBox.setTextShadow(false);
         nameBox.setMaxLength(48);
         nameBox.setBordered(true);
         nameBox.setResponder(this::onNameChanged);

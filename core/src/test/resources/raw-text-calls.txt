@@ -1,6 +1,6 @@
-# The lines of text each file still draws raw, without the shadow its ground gives it.
+# The lines of text each file still draws raw, outside Draw.text, which is where a shadow would come back.
 # A file may draw fewer, never more; one not listed draws none. Lower a count when a file draws fewer.
-8 computers/src/main/java/dev/jstech/computers/client/BootSplashArt.java
+4 computers/src/main/java/dev/jstech/computers/client/BootSplashArt.java
 18 computers/src/main/java/dev/jstech/computers/client/ComputerTerminalScreen.java
 13 computers/src/main/java/dev/jstech/computers/client/CraftTerminalTab.java
 9 computers/src/main/java/dev/jstech/computers/client/CraftingSwitchScreen.java
@@ -10,22 +10,21 @@
 16 computers/src/main/java/dev/jstech/computers/client/InstallerScreen.java
 1 computers/src/main/java/dev/jstech/computers/client/IqlEditor.java
 7 computers/src/main/java/dev/jstech/computers/client/LocalTerminalTab.java
-9 computers/src/main/java/dev/jstech/computers/client/MaintenanceTerminalTab.java
+5 computers/src/main/java/dev/jstech/computers/client/MaintenanceTerminalTab.java
 1 computers/src/main/java/dev/jstech/computers/client/MonitorFrame.java
 4 computers/src/main/java/dev/jstech/computers/client/NetworkGatewayScreen.java
-19 computers/src/main/java/dev/jstech/computers/client/NetworkTerminalTab.java
+14 computers/src/main/java/dev/jstech/computers/client/NetworkTerminalTab.java
 12 computers/src/main/java/dev/jstech/computers/client/OpsTerminalTab.java
 13 computers/src/main/java/dev/jstech/computers/client/OsInstallScreen.java
-4 computers/src/main/java/dev/jstech/computers/client/PatternEncoderScreen.java
-25 computers/src/main/java/dev/jstech/computers/client/PatternsTerminalTab.java
-6 computers/src/main/java/dev/jstech/computers/client/ProcessesTerminalTab.java
-10 computers/src/main/java/dev/jstech/computers/client/StorageTerminalTab.java
-2 computers/src/main/java/dev/jstech/computers/client/SystemBootScreen.java
-12 computers/src/main/java/dev/jstech/computers/client/TasksTerminalTab.java
-10 computers/src/main/java/dev/jstech/computers/client/TerminalCraftPopup.java
-15 computers/src/main/java/dev/jstech/computers/client/TerminalDropPopup.java
+3 computers/src/main/java/dev/jstech/computers/client/PatternEncoderScreen.java
+18 computers/src/main/java/dev/jstech/computers/client/PatternsTerminalTab.java
+5 computers/src/main/java/dev/jstech/computers/client/ProcessesTerminalTab.java
+7 computers/src/main/java/dev/jstech/computers/client/StorageTerminalTab.java
+11 computers/src/main/java/dev/jstech/computers/client/TasksTerminalTab.java
+8 computers/src/main/java/dev/jstech/computers/client/TerminalCraftPopup.java
+9 computers/src/main/java/dev/jstech/computers/client/TerminalDropPopup.java
 8 computers/src/main/java/dev/jstech/computers/client/TerminalOperationPopup.java
-18 computers/src/main/java/dev/jstech/computers/client/TerminalRequestPopup.java
+12 computers/src/main/java/dev/jstech/computers/client/TerminalRequestPopup.java
 1 computers/src/main/java/dev/jstech/computers/client/TextWall.java
 1 computers/src/main/java/dev/jstech/computers/client/os/ApplicationManagerApp.java
 7 computers/src/main/java/dev/jstech/computers/client/os/ArchiverApp.java
@@ -36,7 +35,7 @@
 3 computers/src/main/java/dev/jstech/computers/client/os/CdeExitDialog.java
 2 computers/src/main/java/dev/jstech/computers/client/os/CdeLaunchers.java
 4 computers/src/main/java/dev/jstech/computers/client/os/CdePanels.java
-4 computers/src/main/java/dev/jstech/computers/client/os/CdeSplashArt.java
+3 computers/src/main/java/dev/jstech/computers/client/os/CdeSplashArt.java
 1 computers/src/main/java/dev/jstech/computers/client/os/CdeStylePages.java
 1 computers/src/main/java/dev/jstech/computers/client/os/ChromeShapes.java
 16 computers/src/main/java/dev/jstech/computers/client/os/ClusterManagerApp.java

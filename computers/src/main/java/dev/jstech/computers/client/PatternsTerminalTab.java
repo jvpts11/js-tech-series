@@ -18,6 +18,7 @@ import dev.jstech.computers.operation.payload.RemoveRomCraftPayload;
 import dev.jstech.computers.operation.payload.RequestCraftManagerPayload;
 import dev.jstech.computers.operation.payload.RequestPatternStudioPayload;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -388,11 +389,11 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
         }
         g.drawString(font(), GameText.resolve(SEND_DRAFT_TO), px, SEND_Y - 10, DIM(), false);
         final boolean draft = studio != null && !studio.preview().isEmpty();
-        g.drawCenteredString(font(), GameText.resolve(SEND_ENCODER), SEND_ENCODER_X + SEND_W / 2, SEND_Y + 2,
+        Draw.textCentered(g,font(), GameText.resolve(SEND_ENCODER), SEND_ENCODER_X + SEND_W / 2, SEND_Y + 2,
                 draft && encoderLinked() ? ACCENT() : DIM());
-        g.drawCenteredString(font(), GameText.resolve(SEND_DISK), SEND_DISK_X + SEND_W / 2, SEND_Y + 2,
+        Draw.textCentered(g,font(), GameText.resolve(SEND_DISK), SEND_DISK_X + SEND_W / 2, SEND_Y + 2,
                 draft ? ACCENT() : DIM());
-        g.drawCenteredString(font(), GameText.resolve(SEND_ROM), SEND_ROM_X + SEND_W / 2, SEND_Y + 2,
+        Draw.textCentered(g,font(), GameText.resolve(SEND_ROM), SEND_ROM_X + SEND_W / 2, SEND_Y + 2,
                 draft ? ACCENT() : DIM());
     }
 
@@ -410,9 +411,9 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
         if (files.isEmpty()) {
             g.drawString(font(), GameText.resolve(NOTHING_TO_LOAD), GRID_X + 4, LIST_Y + 2, DIM(), false);
         }
-        g.drawCenteredString(font(), GameText.resolve(LOAD_ALL), GRID_X + ACTION_W / 2, ACTION_Y + 2,
+        Draw.textCentered(g,font(), GameText.resolve(LOAD_ALL), GRID_X + ACTION_W / 2, ACTION_Y + 2,
                 files.isEmpty() ? DIM() : ACCENT());
-        g.drawCenteredString(font(), GameText.resolve(LOAD_ONE), GRID_X + ACTION_W + 6 + ACTION_W / 2, ACTION_Y + 2,
+        Draw.textCentered(g,font(), GameText.resolve(LOAD_ONE), GRID_X + ACTION_W + 6 + ACTION_W / 2, ACTION_Y + 2,
                 pickedFile >= 0 ? ACCENT() : DIM());
 
         final List<CraftManagerStatePayload.WireRomEntry> rom = romEntries();
@@ -427,9 +428,9 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
         if (rom.isEmpty()) {
             g.drawString(font(), GameText.resolve(NOTHING_TAUGHT), PANE_X + 4, LIST_Y + 2, DIM(), false);
         }
-        g.drawCenteredString(font(), GameText.resolve(UNLOAD), PANE_X + (ACTION_W - 8) / 2, ACTION_Y + 2,
+        Draw.textCentered(g,font(), GameText.resolve(UNLOAD), PANE_X + (ACTION_W - 8) / 2, ACTION_Y + 2,
                 pickedRom >= 0 ? ACCENT() : DIM());
-        g.drawCenteredString(font(), GameText.resolve(DOWNLOAD), PANE_X + ACTION_W + 2 + (ACTION_W - 8) / 2,
+        Draw.textCentered(g,font(), GameText.resolve(DOWNLOAD), PANE_X + ACTION_W + 2 + (ACTION_W - 8) / 2,
                 ACTION_Y + 2, pickedRom >= 0 && hasMedium() ? ACCENT() : DIM());
     }
 

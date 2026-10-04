@@ -10,6 +10,7 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -75,15 +76,15 @@ final class StorageTerminalTab extends AbstractTerminalTab {
         final String t = GameText.resolve(
                 (shown == 1 ? TerminalGridTexts.ONE_TYPE : TerminalGridTexts.TYPES).with(shown));
         g.drawString(font(), t, cx + cw - font().width(t), TOOLBAR_Y + 3, DIM(), false);
-        g.drawCenteredString(font(),
+        Draw.textCentered(g,font(),
                 GameText.resolve(screen.sortByQuantity ? TerminalGridTexts.QUANTITY : TerminalGridTexts.NAME),
                 SORT_X + SORT_W / 2, TOOLBAR_Y + 3, ACCENT());
         final String mod = screen.modFilter();
-        g.drawCenteredString(font(),
+        Draw.textCentered(g,font(),
                 mod.isEmpty() ? GameText.resolve(TerminalGridTexts.MOD) : font().plainSubstrByWidth(mod, MOD_W - 6),
                 MOD_X + MOD_W / 2, TOOLBAR_Y + 3, mod.isEmpty() ? DIM() : ACCENT());
         final boolean holding = !menu.getCarried().isEmpty();
-        g.drawCenteredString(font(), GameText.resolve(TerminalGridTexts.STORE_ALL),
+        Draw.textCentered(g,font(), GameText.resolve(TerminalGridTexts.STORE_ALL),
                 DEPOSIT_X + DEPOSIT_W / 2 + 4, DEPOSIT_Y + 2, holding ? ACCENT() : DIM());
         sliderBandLabels(g);
     }

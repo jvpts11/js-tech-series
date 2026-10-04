@@ -279,7 +279,7 @@ final class InstallerFrames {
         final Wizard c = WIZARD.get();
         g.fillGradient(sx, sy, sx + sw, sy + sh, c.groundFrom(), c.groundTo());
         final String title = GameText.resolve(flow.style().title(flow.systemName()));
-        g.drawString(font, title, sx + 14, sy + 8, c.titleInk(), true);
+        g.drawString(font, title, sx + 14, sy + 8, c.titleInk(), false);
 
         final int dx = sx + 22;
         final int dy = sy + 26;

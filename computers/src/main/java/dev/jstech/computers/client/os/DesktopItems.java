@@ -95,7 +95,7 @@ public final class DesktopItems {
         if (label != null) {
             g.pose().pushPose();
             g.pose().translate(0.0F, 0.0F, DesktopZ.BAND_COUNT);
-            g.drawString(font, label, x + 17 - font.width(label), y + 9, PALETTE.get().badgeInk(), true);
+            g.drawString(font, label, x + 17 - font.width(label), y + 9, PALETTE.get().badgeInk(), false);
             g.pose().popPose();
         }
     }

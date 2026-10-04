@@ -29,6 +29,7 @@ import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.layout.PatternEncoderLayout;
 import dev.jstech.computers.menu.PatternEncoderMenu;
 import dev.jstech.computers.os.VolumeLabel;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
@@ -232,7 +233,7 @@ public class PatternEncoderScreen extends AbstractComputerScreen<PatternEncoderM
             final boolean lit = isHovered() && active;
             theme.button(g, getX(), getY(), getWidth(), getHeight(), lit);
             final int color = !active ? theme.dim() : lit ? theme.text() : theme.accent();
-            g.drawCenteredString(font, getMessage(), getX() + getWidth() / 2, getY() + (getHeight() - 8) / 2, color);
+            Draw.textCentered(g,font, getMessage(), getX() + getWidth() / 2, getY() + (getHeight() - 8) / 2, color);
         }
     }
 }

@@ -174,6 +174,7 @@ public final class RedstoneInterfaceScreen extends AbstractComputerScreen<Redsto
         nameBox = new EditBox(font, leftPos + MARGIN + 2, topPos + NAME_Y, WIDTH - 2 * MARGIN - 4, NAME_H,
                 GameText.component(RedstoneInterfaceTexts.NAME_FIELD));
         nameBox.setBordered(false);
+        nameBox.setTextShadow(false);
         nameBox.setMaxLength(RedstoneInterfaceBlockEntity.MAX_NAME);
         nameBox.setValue(menu.opening().name());
         nameBox.setResponder(name ->

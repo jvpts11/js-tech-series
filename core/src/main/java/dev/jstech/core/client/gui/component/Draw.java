@@ -47,70 +47,60 @@ public final class Draw {
     }
 
     /**
-     * Text with a shadow under it that suits what it is written on.
+     * Text written on a ground of that colour, plain, with no shadow under it.
      *
-     * <p>The game's own shadow is a dark copy of the letter, which is a shadow on a dark ground and a smear on a
-     * light one. This one is a unit down and to the right in the colour {@link TextShadow} works out from the
-     * letter and the ground, so it is there on a black glass and on a cream panel alike.
+     * <p>The series draws its letters plain: a shadow, even one worked out from the letter and the ground as
+     * {@link TextShadow} does, made small text harder to read on many of its screens. The ground is still said in
+     * every call, and the grounds are still declared ({@link Grounds}), so a shadow can come back to the places it
+     * suits without touching the callers.
      *
      * @param ground the colour of what the text is written on
      */
     public static void text(final GuiGraphics g, final Font font, final String text, final int x, final int y,
                             final int color, final int ground) {
-        // The common case draws straight, with no pose pushed: this runs for nearly every letter on a desktop.
-        g.drawString(font, text, x + 1, y + 1, TextShadow.of(color, ground), false);
         g.drawString(font, text, x, y, color, false);
     }
 
-    /**
-     * The same shadowed text, drawn at {@code scale} and anchored at its top-left corner: a hero title larger
-     * than the plain text around it, without losing the shadow that keeps it legible on any ground.
-     */
+    /** The same text drawn at {@code scale} and anchored at its top-left corner: a hero title larger than the rest. */
     public static void text(final GuiGraphics g, final Font font, final String text, final int x, final int y,
                             final int color, final int ground, final float scale) {
         g.pose().pushPose();
         g.pose().translate(x, y, 0);
         g.pose().scale(scale, scale, 1.0f);
-        g.drawString(font, text, 1, 1, TextShadow.of(color, ground), false);
         g.drawString(font, text, 0, 0, color, false);
         g.pose().popPose();
     }
 
-    /** Shadowed text on whatever ground was declared under it ({@link Grounds}). */
+    /** Text on whatever ground was declared under it ({@link Grounds}). */
     public static void text(final GuiGraphics g, final Font font, final String text, final int x, final int y,
                             final int color) {
-        g.drawString(font, text, x + 1, y + 1, Grounds.shadow(g, x, y, color), false);
         g.drawString(font, text, x, y, color, false);
     }
 
-    /** Shadowed text centred on {@code cx}, on whatever ground was declared under it. */
+    /** Text centred on {@code cx}, on whatever ground was declared under it. */
     public static void textCentered(final GuiGraphics g, final Font font, final String text, final int cx,
                                     final int y, final int color) {
         text(g, font, text, cx - font.width(text) / 2, y, color);
     }
 
-    /** A line of game text, styles and all, with a shadow that suits {@code ground}. */
+    /** A line of game text, styles and all, written on a ground of that colour. */
     public static void text(final GuiGraphics g, final Font font, final Component text, final int x, final int y,
                             final int color, final int ground) {
-        g.drawString(font, text, x + 1, y + 1, TextShadow.of(color, ground), false);
         g.drawString(font, text, x, y, color, false);
     }
 
-    /** A shadowed line of game text, styles and all, centred on {@code cx}, on the ground declared under it. */
+    /** A line of game text, styles and all, centred on {@code cx}, on the ground declared under it. */
     public static void textCentered(final GuiGraphics g, final Font font, final Component text, final int cx,
                                     final int y, final int color) {
-        final int x = cx - font.width(text) / 2;
-        g.drawString(font, text, x + 1, y + 1, Grounds.shadow(g, x, y, color), false);
-        g.drawString(font, text, x, y, color, false);
+        g.drawString(font, text, cx - font.width(text) / 2, y, color, false);
     }
 
-    /** Shadowed text at {@code scale}, anchored at its top-left corner, on whatever ground was declared under it. */
+    /** Text at {@code scale}, anchored at its top-left corner, on whatever ground was declared under it. */
     public static void textScaled(final GuiGraphics g, final Font font, final String text, final int x, final int y,
                                   final int color, final float scale) {
         g.pose().pushPose();
         g.pose().translate(x, y, 0);
         g.pose().scale(scale, scale, 1.0f);
-        g.drawString(font, text, 1, 1, Grounds.shadow(g, 0, 0, color), false);
         g.drawString(font, text, 0, 0, color, false);
         g.pose().popPose();
     }

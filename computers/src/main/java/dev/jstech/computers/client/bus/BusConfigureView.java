@@ -767,6 +767,7 @@ final class BusConfigureView {
         final EditBox box = new EditBox(font, 0, 0, BusLayout.TAG_FIELD_W, BusLayout.CONTROL_H - 2,
                 GameText.component(hint));
         box.setBordered(false);
+        box.setTextShadow(false);
         box.setMaxLength(most);
         box.setTextColor(JsTechTheme.text());
         box.setHint(GameText.component(hint));

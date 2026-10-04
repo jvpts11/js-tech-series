@@ -12,6 +12,7 @@ import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
 import dev.jstech.computers.operation.payload.ServerBreakdownPayload;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.util.FormattedCharSequence;
@@ -68,15 +69,15 @@ final class NetworkTerminalTab extends AbstractTerminalTab {
         final String kinds = GameText.resolve(
                 (shown == 1 ? TerminalGridTexts.ONE_KIND : TerminalGridTexts.KINDS).with(shown));
         g.drawString(font(), kinds, cx + cw - font().width(kinds), TOOLBAR_Y + 3, DIM(), false);
-        g.drawCenteredString(font(),
+        Draw.textCentered(g,font(),
                 GameText.resolve(screen.sortByQuantity ? TerminalGridTexts.QUANTITY : TerminalGridTexts.NAME),
                 SORT_X + SORT_W / 2, TOOLBAR_Y + 3, ACCENT());
         final String mod = screen.modFilter();
-        g.drawCenteredString(font(),
+        Draw.textCentered(g,font(),
                 mod.isEmpty() ? GameText.resolve(TerminalGridTexts.MOD) : font().plainSubstrByWidth(mod, MOD_W - 6),
                 MOD_X + MOD_W / 2, TOOLBAR_Y + 3, mod.isEmpty() ? DIM() : ACCENT());
         final boolean holding = !menu.getCarried().isEmpty();
-        g.drawCenteredString(font(), GameText.resolve(TerminalGridTexts.DEPOSIT_ALL),
+        Draw.textCentered(g,font(), GameText.resolve(TerminalGridTexts.DEPOSIT_ALL),
                 DEPOSIT_X + DEPOSIT_W / 2 + 4, DEPOSIT_Y + 2, holding ? ACCENT() : DIM());
         renderPane(g);
     }
@@ -134,10 +135,10 @@ final class NetworkTerminalTab extends AbstractTerminalTab {
             };
             g.drawString(font(), GameText.resolve(TerminalGridTexts.HAS_PATTERN), px + 6, PANE_Y + 95, dot, false);
         }
-        g.drawCenteredString(font(), GameText.resolve(TerminalGridTexts.GET),
+        Draw.textCentered(g,font(), GameText.resolve(TerminalGridTexts.GET),
                 ComputerTerminalScreen.PANE_GET_X + ComputerTerminalScreen.PANE_BTN_W / 2,
                 ComputerTerminalScreen.PANE_BTN_Y + 2, ACCENT());
-        g.drawCenteredString(font(), GameText.resolve(TerminalGridTexts.CRAFT),
+        Draw.textCentered(g,font(), GameText.resolve(TerminalGridTexts.CRAFT),
                 ComputerTerminalScreen.PANE_CRAFT_X + ComputerTerminalScreen.PANE_BTN_W / 2,
                 ComputerTerminalScreen.PANE_BTN_Y + 2, pattern == null ? DIM() : ACCENT());
     }

@@ -49,7 +49,7 @@ public final class TermPainter {
      *
      * @param pitch   how far apart the rows are, in the same units as the pose
      * @param colorOf the colour a style has on this glass, which a one-colour tube answers differently
-     * @param ground  the colour of the glass the rows are on, which is what their shadow is worked out against
+     * @param ground  the colour of the glass the rows are on, which a shadow under them would be worked out against
      */
     public void draw(final GuiGraphics g, final Font font, final List<TermRow> rows, final int x, final int y,
                      final int pitch, final ToIntFunction<CliStyle> colorOf, final int ground) {
@@ -78,19 +78,13 @@ public final class TermPainter {
     }
 
     /**
-     * One row into the batch: every piece's shadow, and then every piece over them.
+     * One row into the batch, every piece in its colour, plain.
      *
-     * <p>The shadow is a second copy a unit down and to the right, in a colour worked out from the letter and
-     * the glass rather than the dark copy of the letter the game would use, which is only a shadow on a dark
-     * ground. It goes in ahead of the letters so that no letter is ever under its neighbour's.
+     * <p>The glass is plain text with no shadow, as the series' other screens are now. The ground the rows are on is
+     * still handed down, which is what a shadow worked out from it ({@link TextShadow}) would need again.
      */
     private static void pieces(final GuiGraphics g, final Font font, final List<Piece> row, final int x, final int y,
                                final ToIntFunction<CliStyle> colorOf, final int ground, final Matrix4f pose) {
-        for (final Piece piece : row) {
-            font.drawInBatch(piece.text(), x + piece.x() + 1, y + 1,
-                    TextShadow.of(colorOf.applyAsInt(piece.style()), ground), false, pose, g.bufferSource(),
-                    Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
-        }
         for (final Piece piece : row) {
             font.drawInBatch(piece.text(), x + piece.x(), y, colorOf.applyAsInt(piece.style()), false, pose,
                     g.bufferSource(), Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);

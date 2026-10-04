@@ -10,7 +10,6 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.CdeStyle;
-import dev.jstech.core.gui.TextShadow;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -74,10 +73,7 @@ public final class CdeSplashArt {
                 : CdeSplashArtTexts.STARTING_ON_WORKSTATION.with(hostName));
         final int lx = (w - font.width(line)) / 2;
         final int ly = py + PLATE_H + LINE_GAP;
-        final int lineInk = PALETTE.get().lineInk();
-        // White on a patterned ground stays legible over a shadow worked out from the letter and that ground.
-        g.drawString(font, line, lx + 1, ly + 1, TextShadow.of(lineInk, p.backdropA()), false);
-        g.drawString(font, line, lx, ly, lineInk, false);
+        g.drawString(font, line, lx, ly, PALETTE.get().lineInk(), false);
         g.pose().popPose();
     }
 

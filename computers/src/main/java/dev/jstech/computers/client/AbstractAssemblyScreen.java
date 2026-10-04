@@ -46,6 +46,7 @@ public abstract class AbstractAssemblyScreen<T extends AbstractContainerMenu> ex
                                 final Consumer<String> responder) {
         nameBox = new EditBox(font, leftPos + x, topPos + y, width, 11, GameText.component(AssemblyTexts.NAME));
         nameBox.setBordered(false);
+        nameBox.setTextShadow(false);
         nameBox.setMaxLength(maxLength);
         /*
          * The rename field sits on a dark header strip in every era, so its text is the well's own colour, not

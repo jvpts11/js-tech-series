@@ -14,6 +14,7 @@ import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootSplash;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.gui.Phosphor;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -187,9 +188,9 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
          * the top corner, the way a machine reading out its own start does.
          */
         if (this.sequence.lines().isEmpty()) {
-            g.drawCenteredString(font, GameText.resolve(this.sequence.title()), x + W / 2,
+            Draw.textCentered(g,font, GameText.resolve(this.sequence.title()), x + W / 2,
                     y + H / 2 + SystemBootLayout.TITLE_CENTER_DY, text);
-            g.drawCenteredString(font, GameText.resolve(this.sequence.subtitle()), x + W / 2,
+            Draw.textCentered(g,font, GameText.resolve(this.sequence.subtitle()), x + W / 2,
                     y + H / 2 + SystemBootLayout.SUBTITLE_CENTER_DY, dim);
             drawBar(g, x, y);
             return;

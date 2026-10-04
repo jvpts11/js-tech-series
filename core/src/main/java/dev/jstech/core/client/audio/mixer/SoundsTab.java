@@ -56,6 +56,7 @@ final class SoundsTab implements Tab {
         search = new EditBox(font, 0, 0, SoundMixerLayout.FULL - SoundMixerLayout.SEARCH_TEXT_INSET - 4, 12,
                 GameText.component(SoundMixerTexts.SEARCH_HINT));
         search.setBordered(false);
+        search.setTextShadow(false);
         search.setHint(GameText.component(SoundMixerTexts.SEARCH_HINT).withColor(SoundMixerPalette.get().hint()));
         search.setResponder(query -> refresh());
         count = new StringWidget(SoundMixerLayout.SHOW_X - 4, 9, CommonComponents.EMPTY, font);

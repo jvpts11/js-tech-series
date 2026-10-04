@@ -13,6 +13,7 @@ import dev.jstech.computers.operation.payload.CraftCatalogPayload;
 import dev.jstech.computers.operation.payload.CraftPlanRequestPayload;
 import dev.jstech.computers.operation.payload.CraftSubmitPayload;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.text.GameText;
@@ -141,7 +142,7 @@ final class TerminalCraftPopup {
             final int bx = px + 134 + i * 16;
             g.fill(bx, py + 30, bx + 15, py + 44,
                     hover(mouseX, mouseY, bx, py + 30, 15, 14) ? JsTechTheme.hover() : JsTechTheme.screen());
-            g.drawCenteredString(screen.tabFont(), STEP_LABELS[i], bx + 8, py + 33, JsTechTheme.accent());
+            Draw.textCentered(g,screen.tabFont(), STEP_LABELS[i], bx + 8, py + 33, JsTechTheme.accent());
         }
 
         g.drawString(screen.tabFont(), GameText.resolve(TerminalTexts.PLAN_RAW), px + 6, py + 52, JsTechTheme.dim(),
@@ -278,7 +279,7 @@ final class TerminalCraftPopup {
                         final String label, final int color, final boolean hovered) {
         g.fill(x, y, x + w, y + 14, hovered ? JsTechTheme.hover() : JsTechTheme.screen());
         g.fill(x, y, x + w, y + 1, JsTechTheme.line());
-        g.drawCenteredString(screen.tabFont(), label, x + w / 2, y + 3, color);
+        Draw.textCentered(g,screen.tabFont(), label, x + w / 2, y + 3, color);
     }
 
     private static boolean hover(final double mouseX, final double mouseY, final int x, final int y,

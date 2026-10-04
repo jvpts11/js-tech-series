@@ -260,6 +260,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         final EditBox box = new EditBox(font, leftPos + NET_X + 4, topPos + TOOLBAR_Y + 2,
                 SEARCH_W - 8, TOOLBAR_H - 3, GameText.component(TerminalTexts.SEARCH));
         box.setBordered(false);
+        box.setTextShadow(false);
         /*
          * The fields are built outside a render pass, so color them from the resolved era theme (not the bound
          * static); containerTick keeps them in step when a board swap changes the host era.
@@ -1701,7 +1702,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
                 final String c = fmt(count);
                 g.pose().pushPose();
                 g.pose().translate(0, 0, 200);
-                g.drawString(font, c, x + 17 - font.width(c), y + 9, HIGHLIGHTS.get().dataCount(), true);
+                g.drawString(font, c, x + 17 - font.width(c), y + 9, HIGHLIGHTS.get().dataCount(), false);
                 g.pose().popPose();
             }
         } else {

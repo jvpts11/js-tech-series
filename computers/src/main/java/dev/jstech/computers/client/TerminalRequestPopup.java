@@ -16,6 +16,7 @@ import dev.jstech.computers.operation.payload.ServerBreakdownPayload;
 import dev.jstech.computers.operation.payload.TerminalLocalUploadPayload;
 import dev.jstech.computers.operation.payload.TerminalLocalWithdrawPayload;
 import dev.jstech.computers.operation.payload.TerminalSelectPayload;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
@@ -146,7 +147,7 @@ final class TerminalRequestPopup {
             final boolean advHover = inRect(mouseX, mouseY, px + POPUP_W - 44, py + 5, 36, 12);
             g.fill(px + POPUP_W - 44, py + 5, px + POPUP_W - 8, py + 17,
                     this.advanced ? JsTechTheme.accent() : (advHover ? c.controlHover() : c.control()));
-            g.drawCenteredString(screen.tabFont(), GameText.resolve(TerminalGridTexts.ADVANCED), px + POPUP_W - 26,
+            Draw.textCentered(g,screen.tabFont(), GameText.resolve(TerminalGridTexts.ADVANCED), px + POPUP_W - 26,
                     py + 7, this.advanced ? c.onAccent() : JsTechTheme.dim());
         }
 
@@ -155,14 +156,14 @@ final class TerminalRequestPopup {
         this.qty.render(g, mouseX, mouseY, partialTick);
         final boolean maxHover = inRect(mouseX, mouseY, px + POPUP_W - 58, py + 30, 50, 14);
         g.fill(px + POPUP_W - 58, py + 30, px + POPUP_W - 8, py + 44, maxHover ? c.actionHover() : c.action());
-        g.drawCenteredString(screen.tabFont(), GameText.resolve(TerminalGridTexts.MAX), px + POPUP_W - 33, py + 33,
+        Draw.textCentered(g,screen.tabFont(), GameText.resolve(TerminalGridTexts.MAX), px + POPUP_W - 33, py + 33,
                 c.actionInk());
 
         for (int i = 0; i < STEP_LABELS.length; i++) {
             final int bx = px + 8 + i * 23;
             final boolean hover = inRect(mouseX, mouseY, bx, py + 48, 22, 14);
             g.fill(bx, py + 48, bx + 22, py + 62, hover ? c.controlHover() : c.control());
-            g.drawCenteredString(screen.tabFont(), STEP_LABELS[i], bx + 11, py + 51,
+            Draw.textCentered(g,screen.tabFont(), STEP_LABELS[i], bx + 11, py + 51,
                     STEP_AMOUNTS[i] > 0 ? JsTechTheme.accent() : JsTechTheme.amber());
         }
 
@@ -413,9 +414,9 @@ final class TerminalRequestPopup {
             final boolean rh = inRect(mouseX, mouseY, px + POPUP_W - 22, py + 152, 14, 14);
             final TerminalPopupPalette.Colours c = TerminalPopupPalette.get();
             g.fill(px + 8, py + 152, px + 22, py + 166, lh ? c.controlHover() : c.control());
-            g.drawCenteredString(screen.tabFont(), "<", px + 15, py + 155, JsTechTheme.accent());
+            Draw.textCentered(g,screen.tabFont(), "<", px + 15, py + 155, JsTechTheme.accent());
             g.fill(px + POPUP_W - 22, py + 152, px + POPUP_W - 8, py + 166, rh ? c.controlHover() : c.control());
-            g.drawCenteredString(screen.tabFont(), ">", px + POPUP_W - 15, py + 155, JsTechTheme.accent());
+            Draw.textCentered(g,screen.tabFont(), ">", px + POPUP_W - 15, py + 155, JsTechTheme.accent());
             final String text = screen.tabFont().plainSubstrByWidth(GameText.resolve(
                     TerminalGridTexts.WITH_FREE.with(target.name(), ComputerTerminalScreen.fmt(target.free()))),
                     POPUP_W - 52);
@@ -430,7 +431,7 @@ final class TerminalRequestPopup {
         final boolean hover = inRect(mouseX, mouseY, x, y, w, 16);
         final TerminalPopupPalette.Colours c = TerminalPopupPalette.get();
         g.fill(x, y, x + w, y + 16, hover ? c.actionHover() : c.action());
-        g.drawCenteredString(screen.tabFont(), label, x + w / 2, y + 4, c.actionInk());
+        Draw.textCentered(g,screen.tabFont(), label, x + w / 2, y + 4, c.actionInk());
     }
 
     private static boolean inRect(final double mx, final double my, final int x, final int y,

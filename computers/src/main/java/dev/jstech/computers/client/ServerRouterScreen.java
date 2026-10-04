@@ -47,6 +47,7 @@ public final class ServerRouterScreen extends CoreContainerScreen<ServerRouterMe
                 ServerRouterLayout.WIDTH - 2 * ServerRouterLayout.NAME_X - 4, ServerRouterLayout.NAME_H - 4,
                 GameText.component(ServerRouterTexts.NAME_FIELD));
         nameBox.setBordered(false);
+        nameBox.setTextShadow(false);
         nameBox.setMaxLength(RenameServerRouterPayload.MAX_LEN);
         nameBox.setValue(menu.initialName());
         nameBox.setResponder(s ->
