@@ -34,10 +34,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The Mekanism build as the player drives it: with the alloy machine patterns and the frame recipe in the Recipe
- * ROM, one request (from the Network Interactor's Crafting tab on the Frames desktop, or typed at the MC-DOS
- * Command Prompt) must plan the whole tree, run the infuser three times over through its buses and finish on
- * the bench with Fusion Reactor Frames.
+ * The Mekanism build as the player drives it: with the alloy machine patterns in the infuser's Crafting Interface
+ * and the frame recipe in the Crafting Card, one request (from the Network Interactor's Crafting tab on the Frames
+ * desktop, or typed at the MC-DOS Command Prompt) must plan the whole tree, run the infuser three times over through
+ * its routers and finish on the bench with Fusion Reactor Frames.
  */
 public final class MekanismClientTests {
 
@@ -58,7 +58,7 @@ public final class MekanismClientTests {
     private static final ResourceLocation MC_DOS = ResourceLocation.fromNamespaceAndPath("jsc", "mc_dos");
     /**
      * The chain runs through an Ultimate Infusing Factory rather than a bare Metallurgic Infuser. It is the
-     * same machine to the mod (one declared type behind buses) but it works nine operations at a time, so
+     * same machine to the interface (fed through the same faces) but it works nine operations at a time, so
      * the twelve infusions this build needs take a fraction of the ticks. The bare infuser stays covered by
      * the machine GameTests, which leaves both a raw machine and a factory under test.
      */
@@ -78,17 +78,17 @@ public final class MekanismClientTests {
         return new ProcessingPattern(
                 List.of(new ProcessingPattern.ProcessingInput(in, 1), new ProcessingPattern.ProcessingInput(extra, extraCount)),
                 List.of(new ProcessingPattern.ProcessingOutput(out, 1, 100)),
-                INFUSER.toString(), 400);
+                400);
     }
 
-    /**
-     * Tells the engine to fill this machine rather than hand it one lot at a time. A factory works several
-     * operations at once, and the default one-lot-per-cycle feed leaves all but one of its slots idle, so the
-     * chain ran as slowly as it would on a bare machine. This is the Machines tab's own Feed setting.
-     */
-    private static void fillTheFactory(final CraftingComputerBlockEntity cc) {
-        cc.setMachineConfig(INFUSER.toString(),
-                new CraftingComputerBlockEntity.MachineConfig(0, false, true));
+    /* The three steps up the alloy ladder, in the factory's interface, each input routed to the face that takes it. */
+    private static void holdAlloyChain(final TestWorldBuilder world) {
+        MekanismRig.hold(world, NetworkRecipe.ofProcessing(infuse(StorageKey.of(Items.COPPER_INGOT),
+                StorageKey.of(Items.REDSTONE), 1, MekanismRig.itemKey(ALLOY_INFUSED))));
+        MekanismRig.hold(world, NetworkRecipe.ofProcessing(infuse(MekanismRig.itemKey(ALLOY_INFUSED),
+                MekanismRig.itemKey(DUST_DIAMOND), 2, MekanismRig.itemKey(ALLOY_REINFORCED))));
+        MekanismRig.hold(world, NetworkRecipe.ofProcessing(infuse(MekanismRig.itemKey(ALLOY_REINFORCED),
+                MekanismRig.itemKey(DUST_REFINED_OBSIDIAN), 4, MekanismRig.itemKey(ALLOY_ATOMIC))));
     }
 
     /**
@@ -140,25 +140,17 @@ public final class MekanismClientTests {
                 .thenServer(SETTLE + 2, level -> {
                     final TestWorldBuilder world = TestWorldBuilder.at(level, ctx.origin());
                     MekanismRig.mountBuses(world);
-                    MekanismRig.mountBottomInputBus(world);
-                    // Flat patterns in the Recipe ROM: one per recipe, nothing chained by hand.
+                    MekanismRig.mountBottomInputRouter(world);
+                    // Flat patterns: the bench one in the card, one per machine step in the interface.
                     final CraftingComputerBlockEntity cc = world.blockEntity(CRAFTING_COMPUTER, CraftingComputerBlockEntity.class);
-                    fillTheFactory(cc);
                     tuneMachines(ctx, level);
-                    ctx.assertTrue(cc.loadPattern(framePattern()), "the frame pattern loads into the ROM");
-                    ctx.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(infuse(
-                            StorageKey.of(Items.COPPER_INGOT), StorageKey.of(Items.REDSTONE), 1, MekanismRig.itemKey(ALLOY_INFUSED)))),
-                            "the infused alloy pattern loads into the ROM");
-                    ctx.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(infuse(
-                            MekanismRig.itemKey(ALLOY_INFUSED), MekanismRig.itemKey(DUST_DIAMOND), 2, MekanismRig.itemKey(ALLOY_REINFORCED)))),
-                            "the reinforced alloy pattern loads into the ROM");
-                    ctx.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(infuse(
-                            MekanismRig.itemKey(ALLOY_REINFORCED), MekanismRig.itemKey(DUST_REFINED_OBSIDIAN), 4, MekanismRig.itemKey(ALLOY_ATOMIC)))),
-                            "the atomic alloy pattern loads into the ROM");
+                    ctx.assertTrue(cc.loadPattern(framePattern()), "the frame pattern loads into the card");
+                    holdAlloyChain(world);
                 })
                 .thenServer(SETTLE + 2, level -> {
                     final TestWorldBuilder world = TestWorldBuilder.at(level, ctx.origin());
-                    ctx.assertTrue(MekanismRig.discovered(world, INFUSER), "the switch must declare the infuser through its buses");
+                    ctx.assertTrue(MekanismRig.reaches(world, INFUSER),
+                            "the interface must feed the factory through its routers");
                     ctx.assertTrue(world.blockEntity(MAINFRAME, MainframeBlockEntity.class).networkProcessingPatterns().size() == 3,
                             "the Mainframe must see the three machine patterns");
                 })
@@ -253,17 +245,11 @@ public final class MekanismClientTests {
                 .thenServer(SETTLE + 2, level -> {
                     final TestWorldBuilder world = TestWorldBuilder.at(level, ctx.origin());
                     MekanismRig.mountBuses(world);
-                    MekanismRig.mountBottomInputBus(world);
+                    MekanismRig.mountBottomInputRouter(world);
                     final CraftingComputerBlockEntity cc = world.blockEntity(CRAFTING_COMPUTER, CraftingComputerBlockEntity.class);
-                    fillTheFactory(cc);
                     tuneMachines(ctx, level);
-                    ctx.assertTrue(cc.loadPattern(framePattern()), "the frame pattern loads into the ROM");
-                    ctx.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(infuse(
-                            StorageKey.of(Items.COPPER_INGOT), StorageKey.of(Items.REDSTONE), 1, MekanismRig.itemKey(ALLOY_INFUSED)))), "infused loads");
-                    ctx.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(infuse(
-                            MekanismRig.itemKey(ALLOY_INFUSED), MekanismRig.itemKey(DUST_DIAMOND), 2, MekanismRig.itemKey(ALLOY_REINFORCED)))), "reinforced loads");
-                    ctx.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(infuse(
-                            MekanismRig.itemKey(ALLOY_REINFORCED), MekanismRig.itemKey(DUST_REFINED_OBSIDIAN), 4, MekanismRig.itemKey(ALLOY_ATOMIC)))), "atomic loads");
+                    ctx.assertTrue(cc.loadPattern(framePattern()), "the frame pattern loads into the card");
+                    holdAlloyChain(world);
                 })
                 .thenTeleport(SETTLE + 2, PLAYER_AT_MONITOR, Direction.WEST)
                 .thenRightClick(SETTLE, MONITOR)

@@ -34,7 +34,7 @@ public final class CraftPlanner {
 
     /**
      * One recipe executed {@code runs} times, inputs guaranteed by the steps before it: either a bench pattern
-     * a Crafting Computer runs, or a machine pattern the network feeds through a Crafting Switch.
+     * a Crafting Computer runs, or a machine pattern the network feeds through a Crafting Interface.
      */
     public record Step(@Nullable CraftingPattern pattern, @Nullable ProcessingPattern machine, long runs) {
 

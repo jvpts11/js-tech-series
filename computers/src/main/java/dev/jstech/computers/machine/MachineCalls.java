@@ -92,6 +92,7 @@ final class MachineCalls {
         SoundCalls.bind(bindings);
         BusCalls.bind(bindings);
         RedstoneCalls.bind(bindings);
+        CraftingCalls.bind(bindings);
         return Map.copyOf(bindings);
     }
 

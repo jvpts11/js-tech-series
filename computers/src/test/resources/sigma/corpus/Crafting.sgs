@@ -1,0 +1,28 @@
+using System.*;
+using System.IO.*;
+using System.Network.*;
+namespace Corpus;
+class CraftingCorpus {
+    static void Main() {
+        CraftInterface kiln = craftInterface("Kiln");
+        if (kiln != null) {
+            kiln.Exclusive(true).MaxJobs(4).Pause();
+            kiln.Resume();
+            Console.PrintLine(kiln.Name);
+        }
+        CraftRouter north = craftRouter("North");
+        if (north != null) {
+            north.Only("gravel").Fuzzy(false);
+            north.AllBut("dirt");
+            north.Tag("c:sands");
+            north.Any();
+            Console.PrintLine(north.Name);
+        }
+        CraftInterface mixer = CraftInterface.Named("Mixer");
+        CraftRouter west = CraftRouter.Named("West");
+        if (mixer != null && west != null) {
+            mixer.Route("Coarse dirt", "gravel", west);
+            mixer.Route("Coarse dirt", "dirt", null);
+        }
+    }
+}

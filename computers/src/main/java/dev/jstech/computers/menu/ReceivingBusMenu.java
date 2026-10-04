@@ -25,7 +25,7 @@ public class ReceivingBusMenu extends AbstractBusMenu {
     public ReceivingBusMenu(final int containerId, final Inventory playerInventory, final ReceivingBusPart part,
                             final Level level, final Opening opening) {
         super(ComputingMenus.RECEIVING_BUS_MENU.get(), containerId, playerInventory, part, level, opening,
-                BusLayout.Window.CRAFTING);
+                BusLayout.Window.RECEIVING);
     }
 
     public static ReceivingBusMenu create(final int containerId, final Inventory playerInventory,

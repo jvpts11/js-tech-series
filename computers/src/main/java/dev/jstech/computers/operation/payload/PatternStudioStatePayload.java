@@ -24,28 +24,27 @@ import java.util.List;
  * Server to client: everything the Pattern Studio window shows, in one message. The three drafts as the
  * workbench holds them (with the network's stock behind each cell and what an "any" cell would resolve to
  * right now), the drives the computer can read recipe files from and what is on them, the linked encoder's
- * state, the machines the network declares, and whether each draft is already in this computer's Recipe ROM.
+ * state, and whether each draft is loaded already: a bench recipe in a card's ROM, a machine or pipeline recipe in an
+ * interface this computer drives.
  *
  * <p>Every string is cut to its wire field by the builder: a string too long for its field disconnects the
  * player, so nothing here is allowed to grow with a name or a mod id.
  */
 public record PatternStudioStatePayload(
         List<BenchCell> bench, ItemStack preview, String benchName, String benchNote, String benchOpened,
-        List<ProcCell> inputs, List<ProcCell> outputs, String machineType, int timeout,
+        List<ProcCell> inputs, List<ProcCell> outputs, int timeout,
         String procName, String procNote, String procOpened,
         List<Stage> stages, String pipeName, String pipeNote, String pipeOpened,
-        List<Drive> drives, Encoder encoder, List<Machine> machines,
+        List<Drive> drives, Encoder encoder,
         boolean craftingComputer, boolean hasCard, boolean romHasBench, boolean romHasProc, boolean romHasPipe,
         Text status, int tabHint) implements CustomPacketPayload {
 
     public static final int MAX_NAME = 64;
     public static final int MAX_NOTE = 256;
     public static final int MAX_TAG = 128;
-    public static final int MAX_LABEL = 64;
     public static final int MAX_KEY = 96;
     public static final int MAX_FILES = 64;
     public static final int MAX_DRIVES = 8;
-    public static final int MAX_MACHINES = 48;
     public static final int MAX_STAGES = 16;
 
     /** A bench cell: the ghost item, the tag it accepts, what it resolves to now, and the stock of that. */
@@ -118,14 +117,6 @@ public record PatternStudioStatePayload(
         }
     }
 
-    /** A machine type the network declares (a switch face hosts one), as a picker entry. */
-    public record Machine(String typeKey, String label) {
-        static final StreamCodec<RegistryFriendlyByteBuf, Machine> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.stringUtf8(MAX_KEY), Machine::typeKey,
-                ByteBufCodecs.stringUtf8(MAX_LABEL), Machine::label,
-                Machine::new);
-    }
-
     public static final CustomPacketPayload.Type<PatternStudioStatePayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "pattern_studio_state"));
 
@@ -140,7 +131,6 @@ public record PatternStudioStatePayload(
         buf.writeUtf(p.benchOpened(), MAX_NAME);
         writeList(buf, p.inputs(), ProcCell.STREAM_CODEC, PatternWorkbench.PROC_GRID);
         writeList(buf, p.outputs(), ProcCell.STREAM_CODEC, PatternWorkbench.PROC_GRID);
-        buf.writeUtf(p.machineType(), MAX_KEY);
         buf.writeVarInt(p.timeout());
         buf.writeUtf(p.procName(), MAX_NAME);
         buf.writeUtf(p.procNote(), MAX_NOTE);
@@ -151,7 +141,6 @@ public record PatternStudioStatePayload(
         buf.writeUtf(p.pipeOpened(), MAX_NAME);
         writeList(buf, p.drives(), Drive.STREAM_CODEC, MAX_DRIVES);
         Encoder.STREAM_CODEC.encode(buf, p.encoder());
-        writeList(buf, p.machines(), Machine.STREAM_CODEC, MAX_MACHINES);
         buf.writeBoolean(p.craftingComputer());
         buf.writeBoolean(p.hasCard());
         buf.writeBoolean(p.romHasBench());
@@ -169,7 +158,6 @@ public record PatternStudioStatePayload(
         final String benchOpened = buf.readUtf(MAX_NAME);
         final List<ProcCell> inputs = readList(buf, ProcCell.STREAM_CODEC, PatternWorkbench.PROC_GRID);
         final List<ProcCell> outputs = readList(buf, ProcCell.STREAM_CODEC, PatternWorkbench.PROC_GRID);
-        final String machineType = buf.readUtf(MAX_KEY);
         final int timeout = buf.readVarInt();
         final String procName = buf.readUtf(MAX_NAME);
         final String procNote = buf.readUtf(MAX_NOTE);
@@ -180,7 +168,6 @@ public record PatternStudioStatePayload(
         final String pipeOpened = buf.readUtf(MAX_NAME);
         final List<Drive> drives = readList(buf, Drive.STREAM_CODEC, MAX_DRIVES);
         final Encoder encoder = Encoder.STREAM_CODEC.decode(buf);
-        final List<Machine> machines = readList(buf, Machine.STREAM_CODEC, MAX_MACHINES);
         final boolean cc = buf.readBoolean();
         final boolean hasCard = buf.readBoolean();
         final boolean romBench = buf.readBoolean();
@@ -189,8 +176,8 @@ public record PatternStudioStatePayload(
         final Text status = TextCodecs.STREAM_CODEC.decode(buf);
         final int tabHint = buf.readVarInt();
         return new PatternStudioStatePayload(bench, preview, benchName, benchNote, benchOpened, inputs, outputs,
-                machineType, timeout, procName, procNote, procOpened, stages, pipeName, pipeNote, pipeOpened,
-                drives, encoder, machines, cc, hasCard, romBench, romProc, romPipe, status, tabHint);
+                timeout, procName, procNote, procOpened, stages, pipeName, pipeNote, pipeOpened,
+                drives, encoder, cc, hasCard, romBench, romProc, romPipe, status, tabHint);
     }
 
     private static <T> void writeList(final RegistryFriendlyByteBuf buf, final List<T> list,
@@ -222,7 +209,6 @@ public record PatternStudioStatePayload(
         outputs = List.copyOf(outputs);
         stages = List.copyOf(stages);
         drives = List.copyOf(drives);
-        machines = List.copyOf(machines);
     }
 
     @Override

@@ -8,10 +8,11 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.blockentity.TankBlockEntity;
+import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.core.material.MaterialForm;
 import dev.jstech.core.material.MaterialItems;
 import dev.jstech.core.material.ModMaterial;
@@ -42,6 +43,10 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * The Core's construction kit as the machines use it: fields declared once and saved, loaded, sent and shown to the
@@ -220,20 +225,22 @@ public final class CoreKitGameTests {
 
     @GameTest(template = ARENA)
     public static void partField_savesAndSendsWhatItWrites(final GameTestHelper helper) {
-        helper.setBlock(MACHINE, ComputingModule.CRAFTING_SWITCH.get());
-        final CraftingSwitchBlockEntity craftingSwitch = machine(helper, CraftingSwitchBlockEntity.class);
-        craftingSwitch.setFaceName(Direction.EAST, "Furnace");
-        craftingSwitch.setFaceActive(Direction.EAST, false);
+        helper.setBlock(MACHINE, ComputingModule.CRAFTING_COMPUTER.get());
+        final CraftingComputerBlockEntity computer = machine(helper, CraftingComputerBlockEntity.class);
+        computer.getHardware().setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START,
+                new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()));
+        final List<ItemStack> grid = new ArrayList<>(Collections.nCopies(CraftingPattern.GRID_SIZE, ItemStack.EMPTY));
+        grid.set(0, new ItemStack(Items.OAK_LOG));
+        helper.assertTrue(computer.loadPattern(new CraftingPattern(grid, new ItemStack(Items.OAK_PLANKS, 4))),
+                "a pattern goes into the card");
         final HolderLookup.Provider registries = helper.getLevel().registryAccess();
 
-        final BlockEntity loaded = BlockEntity.loadStatic(craftingSwitch.getBlockPos(),
-                craftingSwitch.getBlockState(), craftingSwitch.saveWithFullMetadata(registries), registries);
-        helper.assertTrue(loaded instanceof CraftingSwitchBlockEntity copy
-                && "Furnace".equals(copy.faceName(Direction.EAST)) && !copy.faceActive(Direction.EAST),
-                "the faces' settings are saved by the part that writes them");
-        final CompoundTag update = craftingSwitch.getUpdateTag(registries);
-        helper.assertTrue(update.contains("MachineMask") && update.contains("Name" + Direction.EAST.get3DDataValue()),
-                "the players are sent the survey and the faces' settings");
+        final BlockEntity loaded = BlockEntity.loadStatic(computer.getBlockPos(), computer.getBlockState(),
+                computer.saveWithFullMetadata(registries), registries);
+        helper.assertTrue(loaded instanceof CraftingComputerBlockEntity copy && copy.romUsed() == 1,
+                "the hardware is saved by the part that writes it, the card's ROM with it");
+        final CompoundTag update = computer.getUpdateTag(registries);
+        helper.assertTrue(update.contains("Networked"), "the players are sent what the attachment part writes");
         helper.succeed();
     }
 

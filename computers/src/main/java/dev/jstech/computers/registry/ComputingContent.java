@@ -43,7 +43,7 @@ public final class ComputingContent {
     /** The machines: Mainframes, monitors, computers, and the node a supercomputer is built from. */
     public static final ContentTab.Section MACHINES = TAB.section();
 
-    /** What ties a local cluster together: the fabric cables, the crafting switch and the uplink. */
+    /** What ties a local cluster together: the fabric cables and the uplink. */
     public static final ContentTab.Section CLUSTER = TAB.section();
 
     /** The devices at a desk: pattern encoders, drives and the gateway. */

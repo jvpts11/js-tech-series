@@ -24,7 +24,6 @@ import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.CaseStyle;
 import dev.jstech.computers.block.ClusterManagementComputerBlock;
 import dev.jstech.computers.block.CraftingComputerBlock;
-import dev.jstech.computers.block.CraftingSwitchBlock;
 import dev.jstech.computers.block.HbwInterfaceBlock;
 import dev.jstech.computers.block.HubBlock;
 import dev.jstech.computers.block.IComputerCase;
@@ -51,7 +50,6 @@ import dev.jstech.computers.block.part.CablePartItem;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.HubBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -207,8 +205,8 @@ public final class ComputingModule {
     /*
      * Cables. Each data line has a cable of its own in each era, laid in the Core's cable block in the lane of its
      * line: access top left, backbone top middle, compute in the middle, crafting middle right. The long distance
-     * line is thicker and never shares a block. The Crafting cable links a Crafting Switch to its computer, one cable
-     * for every era.
+     * line is thicker and never shares a block. The Crafting cable links a Crafting Computer to its interfaces, and an
+     * interface to its routers, one cable for every era.
      */
 
     public static final CableEntry THIN_COAX_CABLE = dataCable("thin_coax_cable", DataLine.ACCESS,
@@ -521,15 +519,6 @@ public final class ComputingModule {
                     ADVANCED_HIGH_PERFORMANCE_CLUSTER_MANAGEMENT_COMPUTER,
                     ADVANCED_AESTHETIC_CLUSTER_MANAGEMENT_COMPUTER);
 
-    // Crafting Switch: declares up to 5 adjacent machines, wired to a Crafting Computer over the crafting cable.
-    public static final BlockEntry<CraftingSwitchBlock> CRAFTING_SWITCH =
-            CONTENT.block("crafting_switch", CraftingSwitchBlock::new)
-                    .properties(properties -> properties.strength(1.5F))
-                    .named("Crafting Switch").look(IBlockLook::cubeAll).item().tab(CLUSTER).register();
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CraftingSwitchBlockEntity>>
-            CRAFTING_SWITCH_BE =
-            CONTENT.blockEntity("crafting_switch", CraftingSwitchBlockEntity::new, CRAFTING_SWITCH);
-
     /*
      * The HBW Interface: a supercomputer's racks are tied together by the high-compute fabric and uplinked to the
      * data network by one of these. The Standard's, and the Advanced's that takes the OSFP fabric and the OM5 backbone.
@@ -789,8 +778,20 @@ public final class ComputingModule {
     public static final ItemEntry<CablePartItem> ADVANCED_EXTERNAL_STORAGE_BUS_ITEM = bus(
             "advanced_external_storage_bus", ComputingParts.ADVANCED_EXTERNAL)
             .named("Advanced External Storage Bus").register();
-    public static final ItemEntry<CablePartItem> INPUT_BUS_ITEM =
-            bus("input_bus", ComputingParts.INPUT).named("Crafting Input Bus").register();
+    // The autocrafting parts on the crafting cable: an interface of each era, the router and the Receiving Bus.
+    public static final ItemEntry<CablePartItem> VINTAGE_CRAFTING_INTERFACE_ITEM = bus("vintage_crafting_interface",
+            ComputingParts.VINTAGE_INTERFACE).named("Vintage Crafting Interface").register();
+    public static final ItemEntry<CablePartItem> LEGACY_CRAFTING_INTERFACE_ITEM = bus("legacy_crafting_interface",
+            ComputingParts.LEGACY_INTERFACE).named("Legacy Crafting Interface").register();
+    public static final ItemEntry<CablePartItem> TRANSITION_CRAFTING_INTERFACE_ITEM = bus(
+            "transition_crafting_interface", ComputingParts.TRANSITION_INTERFACE)
+            .named("Transition Crafting Interface").register();
+    public static final ItemEntry<CablePartItem> CRAFTING_INTERFACE_ITEM = bus("crafting_interface",
+            ComputingParts.INTERFACE).named("Crafting Interface").register();
+    public static final ItemEntry<CablePartItem> ADVANCED_CRAFTING_INTERFACE_ITEM = bus("advanced_crafting_interface",
+            ComputingParts.ADVANCED_INTERFACE).named("Advanced Crafting Interface").register();
+    public static final ItemEntry<CablePartItem> CRAFTING_ROUTER_ITEM = bus("crafting_input_router",
+            ComputingParts.ROUTER).named("Crafting Input Router").register();
     public static final ItemEntry<CablePartItem> RECEIVING_BUS_ITEM =
             bus("receiving_bus", ComputingParts.RECEIVING).named("Crafting Receiving Bus").register();
 
@@ -882,18 +883,36 @@ public final class ComputingModule {
             properties, new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 2048, 3072, 250)
                     .on(Microarchitectures.GCN, "Tahiti", 925)))
             .named("Velocion Radiance HD 7970").register();
+    /*
+     * The Crafting Cards, one or two for each era on that era's slot: the ISA card of the Vintage boards, the PCI card
+     * of the Legacy, the T2 and T3 of the Transition, the PCIe 3.0 card of the Standard and the T4 of the Advanced.
+     * The newer cards are faster and run more pipelines; their era says how many interfaces each drives and how many
+     * bench recipes its ROM keeps. The numbers are estimates.
+     */
+    public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_ISA = part("crafting_card_isa",
+            properties -> new CraftingCardItem(properties, new CraftingCardSpec(HardwareEra.VINTAGE,
+                    IndustrialTier.T1, PcieGeneration.ISA, 0.02, 1, 10)))
+            .named("Forge Logic Crafting Card ISA").register();
+    public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_PCI = part("crafting_card_pci",
+            properties -> new CraftingCardItem(properties, new CraftingCardSpec(HardwareEra.LEGACY,
+                    IndustrialTier.T2, PcieGeneration.PCI, 0.03, 2, 25)))
+            .named("Forge Logic Crafting Card PCI").register();
     public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_T2 = part("crafting_card_t2",
-            properties -> new CraftingCardItem(properties,
-                    new CraftingCardSpec(IndustrialTier.T2, PcieGeneration.PCIE_1_0, 0.05, 2, 75)))
+            properties -> new CraftingCardItem(properties, new CraftingCardSpec(HardwareEra.TRANSITION,
+                    IndustrialTier.T2, PcieGeneration.PCIE_1_0, 0.05, 2, 75)))
             .named("Forge Logic Crafting Card").register();
     public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_T3 = part("crafting_card_t3",
-            properties -> new CraftingCardItem(properties,
-                    new CraftingCardSpec(IndustrialTier.T3, PcieGeneration.PCIE_2_0, 0.1, 4, 100)))
+            properties -> new CraftingCardItem(properties, new CraftingCardSpec(HardwareEra.TRANSITION,
+                    IndustrialTier.T3, PcieGeneration.PCIE_2_0, 0.1, 4, 100)))
             .named("Forge Logic Crafting Card T3").register();
+    public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_PCIE3 = part("crafting_card_pcie3",
+            properties -> new CraftingCardItem(properties, new CraftingCardSpec(HardwareEra.STANDARD,
+                    IndustrialTier.T3, PcieGeneration.PCIE_3_0, 0.15, 6, 110)))
+            .named("Forge Logic Crafting Card PCIe 3.0").register();
     // The card of the Advanced boards, twice the tier before it again.
     public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_T4 = part("crafting_card_t4",
-            properties -> new CraftingCardItem(properties,
-                    new CraftingCardSpec(IndustrialTier.T4, PcieGeneration.PCIE_4_0, 0.2, 8, 125)))
+            properties -> new CraftingCardItem(properties, new CraftingCardSpec(HardwareEra.ADVANCED,
+                    IndustrialTier.T4, PcieGeneration.PCIE_4_0, 0.2, 8, 125)))
             .named("Forge Logic Crafting Card T4").register();
     /*
      * The Cluster Interface Cards: exclusive to the Cluster Management Computer, one per era. Each era

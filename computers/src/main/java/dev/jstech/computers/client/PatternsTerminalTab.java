@@ -57,11 +57,12 @@ import static dev.jstech.computers.client.PatternTexts.UNLOAD;
  *
  * <p>A pattern is born at a Pattern Encoder and nowhere else. The encoder writes the {@code .craft} onto
  * the medium in its bay, the medium is carried to a drive linked to a Crafting Computer, and it is loaded
- * from there into the machine's Recipe ROM, which is what the network then offers as a craft. None of that
- * is changed here, and nothing here encodes a pattern by itself.
+ * from there (a bench recipe into a card's ROM, a machine recipe into a Crafting Interface the machine drives),
+ * which is what the network then offers as a craft. None of that is changed here, and nothing here encodes a
+ * pattern by itself.
  *
  * <p>What was missing was the loading. The two programs that do it are declared for desktops only, so a
- * Crafting Computer running a network system could not put a single pattern into its own ROM: the one
+ * Crafting Computer running a network system could not load a single pattern of its own: the one
  * player this system exists for could not autocraft with recipes of their own. This heading is those two
  * programs' work with their requirements intact, done by the space rather than by a window, since a
  * machine with no windows runs no graphical programs.
@@ -99,9 +100,6 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
     private static final int ACTION_Y = LIST_Y + LIST_ROWS * ROW_H + 3;
     private static final int ACTION_W = 74;
     private static final int ACTION_H = 12;
-
-    /** How many patterns a Recipe ROM holds, which is what the count beside it is measured against. */
-    private static final int ROM_LIMIT = CraftManagerStatePayload.MAX_ROM_ENTRIES;
 
     /** The one heading open at a time, so a reply from the machine knows which view to reach. */
     @Nullable
@@ -301,20 +299,20 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
     private boolean clickedActions(final double mouseX, final double mouseY, final int x, final int y) {
         final String volume = manager == null ? "" : manager.mediaVolumeKey();
         if (inRect(mouseX, mouseY, x + GRID_X, y + ACTION_Y, ACTION_W, ACTION_H) && !volume.isEmpty()) {
-            PacketDistributor.sendToServer(new LoadFromMediaPayload(menu.hostPos(), volume, List.of(), true));
+            PacketDistributor.sendToServer(new LoadFromMediaPayload(menu.hostPos(), volume, List.of(), true, -1));
             refreshIn = 1;
             return true;
         }
         if (inRect(mouseX, mouseY, x + GRID_X + ACTION_W + 6, y + ACTION_Y, ACTION_W, ACTION_H)
                 && pickedFile >= 0 && pickedFile < mediaFiles().size() && !volume.isEmpty()) {
             PacketDistributor.sendToServer(new LoadFromMediaPayload(menu.hostPos(), volume,
-                    List.of(mediaFiles().get(pickedFile)), false));
+                    List.of(mediaFiles().get(pickedFile)), false, -1));
             refreshIn = 1;
             return true;
         }
         if (inRect(mouseX, mouseY, x + PANE_X, y + ACTION_Y, ACTION_W - 8, ACTION_H) && pickedRomEntry() != null) {
             PacketDistributor.sendToServer(new RemoveRomCraftPayload(menu.hostPos(),
-                    List.of(pickedRomEntry().index())));
+                    List.of(pickedRomEntry().ref())));
             pickedRom = -1;
             refreshIn = 1;
             return true;
@@ -322,7 +320,7 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
         if (inRect(mouseX, mouseY, x + PANE_X + ACTION_W + 2, y + ACTION_Y, ACTION_W - 8, ACTION_H)
                 && pickedRomEntry() != null && !volume.isEmpty()) {
             PacketDistributor.sendToServer(new DownloadToMediaPayload(menu.hostPos(), volume,
-                    List.of(pickedRomEntry().index())));
+                    List.of(pickedRomEntry().ref())));
             refreshIn = 1;
             return true;
         }
@@ -418,7 +416,7 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
 
         final List<CraftManagerStatePayload.WireRomEntry> rom = romEntries();
         g.drawString(font(), GameText.resolve(RECIPE_ROM), PANE_X, SPLIT_Y + 6, TEXT(), false);
-        final String count = GameText.resolve(ROM_COUNT.with(rom.size(), ROM_LIMIT));
+        final String count = GameText.resolve(ROM_COUNT.with(rom.size(), romCapacity()));
         g.drawString(font(), count, PANE_X + PANE_W - font().width(count), SPLIT_Y + 6, ACCENT(), false);
         for (int i = 0; i < LIST_ROWS && i + romScroll < rom.size(); i++) {
             final CraftManagerStatePayload.WireRomEntry entry = rom.get(i + romScroll);
@@ -457,8 +455,20 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
         return manager == null ? List.of() : manager.mediaFiles();
     }
 
+    /* Every recipe the machine keeps, its cards' ROM and its interfaces', in listing order. */
     private List<CraftManagerStatePayload.WireRomEntry> romEntries() {
-        return manager == null ? List.of() : manager.romEntries();
+        return manager == null ? List.of() : manager.entries();
+    }
+
+    /* How many recipes its cards and interfaces keep at most together, which the count is measured against. */
+    private int romCapacity() {
+        int capacity = 0;
+        if (manager != null) {
+            for (final CraftManagerStatePayload.WirePlace place : manager.places()) {
+                capacity += place.capacity();
+            }
+        }
+        return capacity;
     }
 
     @Nullable

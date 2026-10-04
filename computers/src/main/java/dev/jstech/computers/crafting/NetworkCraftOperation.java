@@ -1029,6 +1029,16 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         }
     }
 
+    /** Whether one of its machine steps made something: then the craft passed through a machine. */
+    public boolean madeOnAMachine() {
+        for (int i = 0; i < plan.steps().size(); i++) {
+            if (plan.steps().get(i).isMachine() && runsDone[i] > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private long producedSoFar() {
         if (plan.steps().isEmpty()) {
             return 0;

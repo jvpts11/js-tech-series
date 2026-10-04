@@ -24,6 +24,29 @@ class BusScriptTest {
     }
 
     @Test
+    void routerAddress_putsTheNameAfterTheRouterScheme() {
+        assertEquals("router://North", BusScript.routerAddress("North"));
+    }
+
+    @Test
+    void routerIql_writesAnEmptyFilterAsTakingAnything() {
+        assertEquals(List.of("SET ROUTER 'North' FILTER NONE"),
+                BusScript.routerIql(named(BusSettings.fresh(HardwareEra.STANDARD), "North")));
+        assertEquals(List.of("craftRouter(\"North\").Any();"),
+                BusScript.routerSigma(named(BusSettings.fresh(HardwareEra.STANDARD), "North")));
+    }
+
+    @Test
+    void routerIql_writesItsFilterAndNoneOfAMoversSettings() {
+        final BusSettings router = new BusSettings("North", HardwareEra.STANDARD,
+                List.of("item|minecraft:gravel", "item|minecraft:sand", "", "", ""), false, 16, 64,
+                List.of(0, 0, 0, 0, 0), List.of(0, 0, 0, 0, 0), 5, List.of(), List.of(), false, true, true, Map.of());
+
+        assertEquals(List.of("SET ROUTER 'North' FILTER ONLY gravel, sand"), BusScript.routerIql(router));
+        assertEquals(List.of("craftRouter(\"North\").Only(\"gravel, sand\");"), BusScript.routerSigma(router));
+    }
+
+    @Test
     void iql_writesAFreshBusAsItsModeAlone() {
         assertEquals(List.of("SET BUS 'Ore in' MODE CONTINUOUS"),
                 BusScript.iql(named(BusSettings.fresh(HardwareEra.LEGACY), "Ore in")));

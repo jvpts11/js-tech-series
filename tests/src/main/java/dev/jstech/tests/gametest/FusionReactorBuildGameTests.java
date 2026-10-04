@@ -16,6 +16,8 @@ import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.CraftingRig;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -49,7 +51,6 @@ public final class FusionReactorBuildGameTests {
 
     private static final String ARENA = "empty";
     private static final int SETTLE = MekanismRig.SETTLE;
-    private static final String INFUSER_ID = "mekanism:metallurgic_infuser";
     // The 5x5x5 sits east of the machine rig, its minimum corner here (arena-relative).
     private static final BlockPos SHELL_MIN = new BlockPos(9, 2, 9);
     private static final BlockPos CONTROLLER = SHELL_MIN.offset(2, 4, 2);
@@ -80,11 +81,15 @@ public final class FusionReactorBuildGameTests {
                 List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(in), 1),
                         new ProcessingPattern.ProcessingInput(StorageKey.of(extra), extraCount)),
                 List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(out), 1, 100)),
-                INFUSER_ID, 400);
+                400);
     }
 
-    /** Loads every recipe of the shell into the computer's Recipe ROM: five machine patterns, nine bench ones. */
-    private static void loadRecipes(final GameTestHelper helper, final CraftingComputerBlockEntity cc) {
+    /**
+     * Loads every recipe of the shell: the five machine patterns into the infuser's interface, the nine bench ones
+     * into the cards' ROM, which takes two cards more than the one the computer has.
+     */
+    private static void loadRecipes(final GameTestHelper helper, final TestWorldBuilder world,
+                                    final CraftingComputerBlockEntity cc) {
         final Item frame = gen("fusion_reactor_frame");
         final Item atomic = mek("alloy_atomic");
         final Item ultimate = mek("ultimate_control_circuit");
@@ -95,8 +100,9 @@ public final class FusionReactorBuildGameTests {
                 infuse(mek("ingot_osmium"), Items.REDSTONE, 2, mek("basic_control_circuit")),
                 infuse(Items.IRON_INGOT, Items.COAL, 1, mek("enriched_iron"))};
         for (final ProcessingPattern machine : machines) {
-            helper.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(machine)), "machine recipe must load");
+            MekanismRig.hold(world, NetworkRecipe.ofProcessing(machine));
         }
+        CraftingRig.addCards(cc, 2);
         final CraftingPattern[] benches = {
                 bench("A#A#X#A#A", Map.of('A', atomic, '#', mek("pellet_polonium"), 'X', mek("steel_casing")), frame, 4),
                 bench("ACA      ", Map.of('A', atomic, 'C', mek("elite_control_circuit")), ultimate, 1),
@@ -220,9 +226,9 @@ public final class FusionReactorBuildGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     MekanismRig.mountBuses(helper);
-                    MekanismRig.mountBottomInputBus(helper);
+                    MekanismRig.mountBottomInputRouter(helper);
                     seedRawStock((item, count) -> rig.net().seed(item, count));
-                    loadRecipes(helper, rig.net().cc());
+                    loadRecipes(helper, rig.world(), rig.net().cc());
                 })
                 /*
                  * Request the parts one after another; each craft plans its own machine steps. Assertion

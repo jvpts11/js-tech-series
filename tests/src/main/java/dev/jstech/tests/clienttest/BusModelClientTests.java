@@ -53,7 +53,7 @@ public final class BusModelClientTests {
                         new ItemStack(ComputingModule.EXPORT_BUS_ITEM.get()),
                         new ItemStack(ComputingModule.EXTERNAL_STORAGE_BUS_ITEM.get()),
                         new ItemStack(ComputingModule.ADVANCED_IMPORT_BUS_ITEM.get()),
-                        new ItemStack(ComputingModule.INPUT_BUS_ITEM.get()),
+                        new ItemStack(ComputingModule.CRAFTING_ROUTER_ITEM.get()),
                         new ItemStack(ComputingModule.RECEIVING_BUS_ITEM.get()))
                 .thenServer(0, level -> {
                     for (int i = 0; i < ERAS.size(); i++) {

@@ -33,13 +33,11 @@ public final class BlockEntry<B extends Block> extends DeferredBlock<B> {
     private final @Nullable IItemLook itemLook;
     private final Drops drops;
     private final List<TagKey<Block>> tags;
-    private final List<ResourceLocation> recipeTypes;
     private final @Nullable GeoLook<?> geoLook;
 
     BlockEntry(final ResourceLocation id, final String english, final IBlockLook look,
                final @Nullable DeferredItem<Item> item, final @Nullable IItemLook itemLook, final Drops drops,
-               final List<TagKey<Block>> tags, final List<ResourceLocation> recipeTypes,
-               final @Nullable GeoLook<?> geoLook) {
+               final List<TagKey<Block>> tags, final @Nullable GeoLook<?> geoLook) {
         super(ResourceKey.create(Registries.BLOCK, id));
         this.english = english;
         this.look = look;
@@ -47,7 +45,6 @@ public final class BlockEntry<B extends Block> extends DeferredBlock<B> {
         this.itemLook = itemLook;
         this.drops = drops;
         this.tags = List.copyOf(tags);
-        this.recipeTypes = List.copyOf(recipeTypes);
         this.geoLook = geoLook;
     }
 
@@ -84,11 +81,6 @@ public final class BlockEntry<B extends Block> extends DeferredBlock<B> {
     /** The block tags it was declared into, such as the one saying which tool mines it. */
     public List<TagKey<Block>> declaredTags() {
         return tags;
-    }
-
-    /** The recipe types this block is the machine for. */
-    public List<ResourceLocation> recipeTypes() {
-        return recipeTypes;
     }
 
     /** How it is drawn with GeckoLib, when it is. */

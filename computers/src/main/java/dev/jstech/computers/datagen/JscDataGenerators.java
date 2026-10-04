@@ -22,7 +22,7 @@ import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 /**
  * Entry point for all data generation, run via {@code ./gradlew runData}: what the declared content needs, the names
- * the mod keeps in registries of its own, and its advancements and recipe machines.
+ * the mod keeps in registries of its own, and its advancements.
  */
 @EventBusSubscriber(modid = JsComputers.MODID)
 public final class JscDataGenerators {
@@ -35,7 +35,6 @@ public final class JscDataGenerators {
         final ContentData data = ContentData.gather(event, ComputingContent.CONTENT)
                 .alsoNaming(JscDataGenerators::systemsAndPrograms)
                 .alsoNaming(JscAdvancementTabs::translations);
-        data.server(new JscRecipeMachinesProvider(data.output()));
         data.server(new JscAdvancementProvider(data.output(), data.lookup(), data.existingFiles()));
         data.server(new ConditionalAdvancementProvider(data.output(), data.lookup()));
     }

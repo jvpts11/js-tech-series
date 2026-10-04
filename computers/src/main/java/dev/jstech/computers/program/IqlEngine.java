@@ -173,6 +173,10 @@ public final class IqlEngine {
             final String job = RUNNING_JOB.get();
             return IqlBusSetter.apply(mainframe, parsed.bus(), job == null ? IqlBusSetter.TYPED : job);
         }
+        if (parsed.isCrafting()) {
+            final String job = RUNNING_JOB.get();
+            return IqlCraftingSetter.apply(mainframe, parsed.crafting(), job == null ? IqlBusSetter.TYPED : job);
+        }
         if (parsed.isRedstone()) {
             final String job = RUNNING_JOB.get();
             final ICliComputer.OpResult set = computer.setRedstone(parsed.redstone(),

@@ -33,7 +33,8 @@ import dev.jstech.computers.monitor.IMonitorPictureSink;
 import dev.jstech.computers.printer.IPrintedPaperReader;
 import dev.jstech.computers.client.bus.ExternalStorageBusScreen;
 import dev.jstech.computers.client.bus.ImportBusScreen;
-import dev.jstech.computers.client.bus.InputBusScreen;
+import dev.jstech.computers.client.bus.CraftingInterfaceScreen;
+import dev.jstech.computers.client.bus.CraftingRouterScreen;
 import dev.jstech.computers.client.bus.ReceivingBusScreen;
 import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.DesktopScreen;
@@ -183,9 +184,9 @@ public final class ComputingClientSetup {
         event.register(ComputingMenus.EXPORT_BUS_MENU.get(), ExportBusScreen::new);
         event.register(ComputingMenus.IMPORT_BUS_MENU.get(), ImportBusScreen::new);
         event.register(ComputingMenus.EXTERNAL_STORAGE_BUS_MENU.get(), ExternalStorageBusScreen::new);
-        event.register(ComputingMenus.CRAFTING_SWITCH_MENU.get(), CraftingSwitchScreen::new);
-        event.register(ComputingMenus.INPUT_BUS_MENU.get(), InputBusScreen::new);
+        event.register(ComputingMenus.CRAFTING_ROUTER_MENU.get(), CraftingRouterScreen::new);
         event.register(ComputingMenus.RECEIVING_BUS_MENU.get(), ReceivingBusScreen::new);
+        event.register(ComputingMenus.CRAFTING_INTERFACE_MENU.get(), CraftingInterfaceScreen::new);
     }
 
     @SubscribeEvent

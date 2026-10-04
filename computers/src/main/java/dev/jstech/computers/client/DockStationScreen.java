@@ -29,6 +29,21 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
+import static dev.jstech.computers.client.DockStationTexts.DOCKED;
+import static dev.jstech.computers.client.DockStationTexts.EJECT;
+import static dev.jstech.computers.client.DockStationTexts.EMPTY;
+import static dev.jstech.computers.client.DockStationTexts.EMPTY_DISK;
+import static dev.jstech.computers.client.DockStationTexts.FULL_PERCENT;
+import static dev.jstech.computers.client.DockStationTexts.HOST;
+import static dev.jstech.computers.client.DockStationTexts.LETTERED;
+import static dev.jstech.computers.client.DockStationTexts.LINKED;
+import static dev.jstech.computers.client.DockStationTexts.MOUNTED;
+import static dev.jstech.computers.client.DockStationTexts.NOTE_1;
+import static dev.jstech.computers.client.DockStationTexts.NOTE_2;
+import static dev.jstech.computers.client.DockStationTexts.NO_HOST;
+import static dev.jstech.computers.client.DockStationTexts.OFFLINE;
+import static dev.jstech.computers.client.DockStationTexts.USED;
+
 /**
  * The Dock Station's window, in the skin of its era (the Standard): the computer it is docked to, then each tray and
  * the USB port with what it holds, the letter that is on the computer, its name, its era and how full it is, whether
@@ -36,21 +51,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class DockStationScreen extends AbstractComputerScreen<DockStationMenu> {
 
-    /* The window's words, kept in their own holder, where a server can read them without this screen. */
-    private static final TextKey HOST = DockStationTexts.HOST;
-    private static final TextKey NO_HOST = DockStationTexts.NO_HOST;
-    private static final TextKey LETTERED = DockStationTexts.LETTERED;
-    private static final TextKey USED = DockStationTexts.USED;
-    private static final TextKey EMPTY_DISK = DockStationTexts.EMPTY_DISK;
-    private static final TextKey FULL_PERCENT = DockStationTexts.FULL_PERCENT;
-    private static final TextKey MOUNTED = DockStationTexts.MOUNTED;
-    private static final TextKey DOCKED = DockStationTexts.DOCKED;
-    private static final TextKey EMPTY = DockStationTexts.EMPTY;
-    private static final TextKey EJECT = DockStationTexts.EJECT;
-    private static final TextKey NOTE_1 = DockStationTexts.NOTE_1;
-    private static final TextKey NOTE_2 = DockStationTexts.NOTE_2;
-    private static final TextKey LINKED = DockStationTexts.LINKED;
-    private static final TextKey OFFLINE = DockStationTexts.OFFLINE;
+    /* The window's words live in DockStationTexts, their own holder, where a server can read them without it. */
     private static final TextKey[] ROW_LABELS = {DockStationTexts.BAY_HDD, DockStationTexts.BAY_SSD,
         DockStationTexts.BAY_NVME, DockStationTexts.USB};
 

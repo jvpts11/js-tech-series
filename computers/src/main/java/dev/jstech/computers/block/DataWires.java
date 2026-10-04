@@ -52,7 +52,7 @@ public final class DataWires {
         return link != null && link.line() != DataLine.CRAFTING;
     }
 
-    /** Whether {@code wire} is the crafting line, from Crafting Switches to their Crafting Computer. */
+    /** Whether {@code wire} is the crafting line, from a Crafting Computer to its interfaces and their routers. */
     public static boolean isCrafting(final Wire wire) {
         final DataLink link = linkOf(wire);
         return link != null && link.line() == DataLine.CRAFTING;

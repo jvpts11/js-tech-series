@@ -39,10 +39,11 @@ import java.util.Map;
  * @param activity    what it did lately, newest first
  * @param places      for an External Storage Bus, how many slots and tanks its inventory has
  * @param placesUsed  and how many of them hold something
+ * @param crafting    for a crafting part, what it is part of, its warnings and what it credited
  */
 public record BusStatePayload(int containerId, BusSettings settings, List<ItemStack> filter, boolean linked,
                               long speed, long carries, HardwareEra skin, List<BusActivity.Entry> activity,
-                              int places, int placesUsed)
+                              int places, int placesUsed, CraftingView crafting)
         implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<BusStatePayload> TYPE =
@@ -114,6 +115,7 @@ public record BusStatePayload(int containerId, BusSettings settings, List<ItemSt
         buf.writeVarInt(s.access());
         buf.writeVarInt(p.places);
         buf.writeVarInt(p.placesUsed);
+        CraftingView.write(buf, p.crafting);
     }
 
     private static BusStatePayload read(final RegistryFriendlyByteBuf buf) {
@@ -167,10 +169,11 @@ public record BusStatePayload(int containerId, BusSettings settings, List<ItemSt
         final int access = buf.readVarInt();
         final int places = buf.readVarInt();
         final int placesUsed = buf.readVarInt();
+        final CraftingView crafting = CraftingView.read(buf);
         final BusSettings settings = new BusSettings(name, era, filter, exclude, keep, max, itemKeep, itemMax,
                 priority, conditions, tags, fuzzy, powered, onDemand, setBy, external, access);
         return new BusStatePayload(containerId, settings, filterStacks, linked, speed, carries, skin, activity,
-                places, placesUsed);
+                places, placesUsed, crafting);
     }
 
     private static void writeStrings(final FriendlyByteBuf buf, final List<String> values) {

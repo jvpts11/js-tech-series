@@ -25,16 +25,13 @@ import java.util.List;
  */
 public record SetProcessingPatternPayload(BlockPos host, BlockPos monitorPos,
                                           List<PatternWorkbench.DataCell> inputs,
-                                          List<PatternWorkbench.DataCell> outputs,
-                                          String recipeType)
+                                          List<PatternWorkbench.DataCell> outputs)
         implements CustomPacketPayload {
 
     public static final Type<SetProcessingPatternPayload> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "jei_set_processing_pattern"));
 
     private static final int MAX_CELLS = PatternWorkbench.PROC_GRID;
-    /** The recipe type id ("minecraft:smelting"), which the server maps to a machine; empty when unknown. */
-    public static final int MAX_TYPE = 96;
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SetProcessingPatternPayload> STREAM_CODEC =
             StreamCodec.composite(
@@ -44,7 +41,6 @@ public record SetProcessingPatternPayload(BlockPos host, BlockPos monitorPos,
                     SetProcessingPatternPayload::inputs,
                     PatternWorkbench.DataCell.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_CELLS)),
                     SetProcessingPatternPayload::outputs,
-                    ByteBufCodecs.stringUtf8(MAX_TYPE), SetProcessingPatternPayload::recipeType,
                     SetProcessingPatternPayload::new);
 
     /* Copied on the way in, so what arrives from a client cannot change under whoever is acting on it. */

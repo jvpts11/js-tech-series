@@ -8,14 +8,15 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.crafting.NetworkProcessingOperation;
+import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.chemical.ChemicalBridges;
 import dev.jstech.core.chemical.IChemicalPort;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -31,7 +32,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Real Mekanism machines driven by the network through a Crafting Switch and its buses, with chemicals handled
+ * Real Mekanism machines driven by the network through a Crafting Interface and its routers, with chemicals handled
  * as ordinary data: water becomes oxygen in an Electrolytic Separator, and oxygen plus raw ore becomes clumps
  * in a Purification Chamber. The rig is {@link MekanismRig}.
  */
@@ -73,7 +74,8 @@ public final class MekanismProcessingGameTests {
                             List.of(new ProcessingPattern.ProcessingInput(water(), 200)),
                             List.of(new ProcessingPattern.ProcessingOutput(oxygen, 100, 100),
                                     new ProcessingPattern.ProcessingOutput(hydrogen, 200, 100)),
-                            SEPARATOR.toString(), 200);
+                            200);
+                    MekanismRig.hold(rig.world(), NetworkRecipe.ofProcessing(pattern));
                     op[0] = rig.net().mainframe().submitNetworkProcessing(pattern, 200, "battery");
                     helper.assertTrue(op[0] != null, "the Mainframe must accept the processing operation");
                 })
@@ -106,13 +108,14 @@ public final class MekanismProcessingGameTests {
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     final NetworkStorage storage = rig.net().storage(helper.getLevel());
                     helper.assertTrue(storage.insert(water(), 4000) == 4000, "4 000 mB of water must go in as data");
-                    MekanismRig.assertDiscovered(helper, SEPARATOR);
+                    MekanismRig.assertReaches(helper, SEPARATOR);
                     // One lot: 200 mB of water splits into 200 mB of hydrogen and 100 mB of oxygen.
                     final ProcessingPattern pattern = new ProcessingPattern(
                             List.of(new ProcessingPattern.ProcessingInput(water(), 200)),
                             List.of(new ProcessingPattern.ProcessingOutput(oxygen, 100, 100),
                                     new ProcessingPattern.ProcessingOutput(hydrogen, 200, 100)),
-                            SEPARATOR.toString(), 200);
+                            200);
+                    MekanismRig.hold(rig.world(), NetworkRecipe.ofProcessing(pattern));
                     op[0] = rig.net().mainframe().submitNetworkProcessing(pattern, 200, "battery");
                     helper.assertTrue(op[0] != null, "the Mainframe must accept the processing operation");
                 })
@@ -123,7 +126,8 @@ public final class MekanismProcessingGameTests {
                     final var tank = helper.getLevel().getCapability(Capabilities.FluidHandler.BLOCK,
                             helper.absolutePos(MACHINE), Direction.UP);
                     helper.assertTrue(tank != null && tank.getFluidInTank(0).getAmount() > 0,
-                            "the Input Bus must have fed water into the separator; tank=" + (tank == null ? "none" : tank.getFluidInTank(0)));
+                            "the router must have fed water into the separator; tank="
+                                    + (tank == null ? "none" : tank.getFluidInTank(0)));
                 })
                 .thenWaitUntil(() -> {
                     MekanismRig.power(helper);
@@ -160,13 +164,14 @@ public final class MekanismProcessingGameTests {
                     final NetworkStorage storage = rig.net().storage(helper.getLevel());
                     rig.net().seed(Items.RAW_IRON, 8);
                     helper.assertTrue(storage.insert(oxygen, 2000) == 2000, "2 000 mB of oxygen must go in as data");
-                    MekanismRig.assertDiscovered(helper, PURIFICATION_CHAMBER);
+                    MekanismRig.assertReaches(helper, PURIFICATION_CHAMBER);
                     // One lot: a raw iron and the 200 mB of oxygen one purification burns become two clumps.
                     final ProcessingPattern pattern = new ProcessingPattern(
                             List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.RAW_IRON), 1),
                                     new ProcessingPattern.ProcessingInput(oxygen, 200)),
                             List.of(new ProcessingPattern.ProcessingOutput(clump, 2, 100)),
-                            PURIFICATION_CHAMBER.toString(), 400);
+                            400);
+                    MekanismRig.hold(rig.world(), NetworkRecipe.ofProcessing(pattern));
                     op[0] = rig.net().mainframe().submitNetworkProcessing(pattern, 4, "battery");
                     helper.assertTrue(op[0] != null, "the Mainframe must accept the processing operation");
                 })
@@ -178,12 +183,13 @@ public final class MekanismProcessingGameTests {
                     final var items = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK,
                             helper.absolutePos(MACHINE), Direction.UP);
                     helper.assertTrue(top.isPresent() && top.get().count(OXYGEN) > 0,
-                            "the Input Bus must have fed oxygen into the chamber; got " + top.map(t -> t.count(OXYGEN)).orElse(-1L));
+                            "the router must have fed oxygen into the chamber; got "
+                                    + top.map(t -> t.count(OXYGEN)).orElse(-1L));
                     boolean rawIronInside = false;
                     for (int slot = 0; items != null && slot < items.getSlots(); slot++) {
                         rawIronInside |= items.getStackInSlot(slot).is(Items.RAW_IRON);
                     }
-                    helper.assertTrue(rawIronInside, "the Input Bus must have fed raw iron into the chamber");
+                    helper.assertTrue(rawIronInside, "the router must have fed raw iron into the chamber");
                 })
                 .thenWaitUntil(() -> {
                     MekanismRig.power(helper);
@@ -228,12 +234,13 @@ public final class MekanismProcessingGameTests {
                     final NetworkStorage storage = rig.net().storage(helper.getLevel());
                     rig.net().seed(Items.RAW_IRON, 8);
                     helper.assertTrue(storage.insert(oxygen, 2000) == 2000, "2 000 mB of oxygen must go in as data");
-                    MekanismRig.assertDiscovered(helper, PURIFICATION_CHAMBER);
+                    MekanismRig.assertReaches(helper, PURIFICATION_CHAMBER);
                     final ProcessingPattern pattern = new ProcessingPattern(
                             List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.RAW_IRON), 1),
                                     new ProcessingPattern.ProcessingInput(oxygen, 25)),
                             List.of(new ProcessingPattern.ProcessingOutput(clump, 2, 100)),
-                            PURIFICATION_CHAMBER.toString(), 400);
+                            400);
+                    MekanismRig.hold(rig.world(), NetworkRecipe.ofProcessing(pattern));
                     op[0] = rig.net().mainframe().submitNetworkProcessing(pattern, 4, "battery");
                     helper.assertTrue(op[0] != null, "the Mainframe must accept the processing operation");
                 })
@@ -269,25 +276,24 @@ public final class MekanismProcessingGameTests {
         final NetworkProcessingOperation[] op = new NetworkProcessingOperation[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    final dev.jstech.tests.testkit.TestWorldBuilder world = rig.world();
-                    // Right (west) face: the run cable already touches it; left (east) and front (north) spurs.
-                    if (world.getBlockEntity(MekanismRig.CABLE_WEST) instanceof CableBlockEntity cable) {
-                        cable.addPart(Direction.EAST, new dev.jstech.computers.block.part.InputBusPart());
-                    }
-                    MekanismRig.mountLeftInputBus(world);
+                    final TestWorldBuilder world = rig.world();
+                    // A router on each side face, one input each, and the bus on the front for the fuel.
+                    MekanismRig.mountRightInputRouter(world);
+                    MekanismRig.mountLeftInputRouter(world);
                     MekanismRig.mountFrontReceivingBus(world);
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     final NetworkStorage storage = rig.net().storage(helper.getLevel());
                     helper.assertTrue(storage.insert(deuterium, 1000) == 1000 && storage.insert(tritium, 1000) == 1000,
                             "both fuel gases must go in as data");
-                    MekanismRig.assertDiscovered(helper, MekanismRig.mek("chemical_infuser"));
+                    MekanismRig.assertReaches(helper, MekanismRig.mek("chemical_infuser"));
                     // One lot: 100 mB of each gas make 200 mB of D-T fuel.
                     final ProcessingPattern pattern = new ProcessingPattern(
                             List.of(new ProcessingPattern.ProcessingInput(deuterium, 100),
                                     new ProcessingPattern.ProcessingInput(tritium, 100)),
                             List.of(new ProcessingPattern.ProcessingOutput(fuel, 200, 100)),
-                            MekanismRig.mek("chemical_infuser").toString(), 200);
+                            200);
+                    MekanismRig.hold(rig.world(), NetworkRecipe.ofProcessing(pattern));
                     op[0] = rig.net().mainframe().submitNetworkProcessing(pattern, 600, "battery");
                     helper.assertTrue(op[0] != null, "the Mainframe must accept the processing operation");
                 })

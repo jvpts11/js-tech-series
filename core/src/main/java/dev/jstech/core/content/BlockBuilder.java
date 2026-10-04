@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -35,7 +34,6 @@ public final class BlockBuilder<B extends Block> {
     private final String id;
     private final Function<BlockBehaviour.Properties, ? extends B> factory;
     private final List<TagKey<Block>> tags = new ArrayList<>();
-    private final List<ResourceLocation> recipeTypes = new ArrayList<>();
     private BlockBehaviour.Properties properties = BlockBehaviour.Properties.of();
     private @Nullable String english;
     private @Nullable IBlockLook look;
@@ -108,12 +106,6 @@ public final class BlockBuilder<B extends Block> {
         return this;
     }
 
-    /** A recipe type this block is the machine for, so a network knows where such a recipe runs. */
-    public BlockBuilder<B> machineFor(final ResourceLocation recipeType) {
-        recipeTypes.add(recipeType);
-        return this;
-    }
-
     /** It is drawn with GeckoLib, by its block entity, as {@code family} says. */
     public BlockBuilder<B> geo(final GeoLook<?> family) {
         this.geoLook = family;
@@ -140,8 +132,7 @@ public final class BlockBuilder<B extends Block> {
         final DeferredItem<Item> item = itemMade == null ? null
                 : content.itemRegister().register(id, () -> itemMade.apply(block.get(), new Item.Properties()));
         final BlockEntry<B> entry = new BlockEntry<>(block.getId(), english, look, item,
-                item == null ? null : itemLook != null ? itemLook : IItemLook.OF_BLOCK, dropped, tags, recipeTypes,
-                geoLook);
+                item == null ? null : itemLook != null ? itemLook : IItemLook.OF_BLOCK, dropped, tags, geoLook);
         if (section != null) {
             section.add(entry);
         }

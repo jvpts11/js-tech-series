@@ -52,7 +52,7 @@ public final class SystemApi {
             iqlResult(), iql(), workStat(), mainframe(), askResult(), operationInfo(), operations(), ccComputer(),
             ccPeripheral(), gatewayMessage(), gateway(), widget(), window(), box("Row"), box("Column"), label(),
             button(), textBox(), checkBox(), progressBar(), listBox(), canvas(), messageBox(), sound(), speaker(),
-            bus(), busItem(), redstone());
+            bus(), busItem(), redstone(), craftInterface(), craftRouter());
 
     private static final Map<String, TypeSpec> BY_TYPE = new HashMap<>();
     /** Every way of writing a call, under its owner and name, so a lookup does not walk the whole system. */
@@ -828,6 +828,43 @@ public final class SystemApi {
         item.onObject("BusItem", "Keep", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), INT);
         item.onObject("BusItem", "Max", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), INT);
         return new TypeSpec(NETWORK, "BusItem", item.members);
+    }
+
+    /**
+     * A Crafting Interface of the machine's crafting network, found by the name its window gives it, or null when none
+     * is called so. Each setting is set as its window sets it, marked on it with the program that set it, and hands it
+     * back: {@code craftInterface("Kiln A").Exclusive(true).MaxJobs(4);}. {@code Route} sends one input of a pattern it
+     * holds through one router of its own cable, named by the pattern and the input; a null router routes that input by
+     * the routers' filters again.
+     */
+    private static TypeSpec craftInterface() {
+        final Members part = new Members("CraftInterface");
+        part.onType("CraftInterface", "Named", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), STRING);
+        part.recordValue(STRING, "Name");
+        final CallCost set = CallCost.of(SigmaCosts.GLANCE_NETWORK);
+        part.onObject("CraftInterface", "Exclusive", MemberKind.WORLD, set, BOOL);
+        part.onObject("CraftInterface", "MaxJobs", MemberKind.WORLD, set, INT);
+        part.onObject("CraftInterface", "Pause", MemberKind.WORLD, set);
+        part.onObject("CraftInterface", "Resume", MemberKind.WORLD, set);
+        part.onObject("CraftInterface", "Route", MemberKind.WORLD, set, STRING, STRING, "CraftRouter");
+        return new TypeSpec(NETWORK, "CraftInterface", part.members);
+    }
+
+    /**
+     * A Crafting Input Router of the machine's crafting network, by its name, or null: its filter set as a bus's is,
+     * which decides the inputs it carries, an empty one taking anything: {@code craftRouter("North").Only("gravel");}.
+     */
+    private static TypeSpec craftRouter() {
+        final Members router = new Members("CraftRouter");
+        router.onType("CraftRouter", "Named", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), STRING);
+        router.recordValue(STRING, "Name");
+        final CallCost set = CallCost.of(SigmaCosts.GLANCE_NETWORK);
+        for (final String listed : List.of("Only", "AllBut", "Tag")) {
+            router.onObject("CraftRouter", listed, MemberKind.WORLD, set, STRING);
+        }
+        router.onObject("CraftRouter", "Any", MemberKind.WORLD, set);
+        router.onObject("CraftRouter", "Fuzzy", MemberKind.WORLD, set, BOOL);
+        return new TypeSpec(NETWORK, "CraftRouter", router.members);
     }
 
     /** Gathers the members of one type, in the order they are declared. */

@@ -68,13 +68,12 @@ public final class MachineCraftDataGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void processingPattern_normalizesTimeoutAndMachine(final GameTestHelper helper) {
-        helper.assertTrue(new ProcessingPattern(List.of(in(Items.IRON_INGOT, 1)), List.of(out(Items.COPPER_INGOT, 1, 100)),
-                "m", 0).timeoutTicks() == 1, "timeout 0 normalizes to 1");
-        helper.assertTrue(new ProcessingPattern(List.of(in(Items.IRON_INGOT, 1)), List.of(out(Items.COPPER_INGOT, 1, 100)),
-                "m", -99).timeoutTicks() == 1, "negative timeout normalizes to 1");
-        helper.assertTrue(new ProcessingPattern(List.of(in(Items.IRON_INGOT, 1)), List.of(out(Items.COPPER_INGOT, 1, 100)),
-                null, 200).machineType().isEmpty(), "null machine normalizes to empty string");
+    public static void processingPattern_normalizesTimeout(final GameTestHelper helper) {
+        helper.assertTrue(new ProcessingPattern(List.of(in(Items.IRON_INGOT, 1)),
+                List.of(out(Items.COPPER_INGOT, 1, 100)), 0).timeoutTicks() == 1, "timeout 0 normalizes to 1");
+        helper.assertTrue(new ProcessingPattern(List.of(in(Items.IRON_INGOT, 1)),
+                List.of(out(Items.COPPER_INGOT, 1, 100)), -99).timeoutTicks() == 1,
+                "negative timeout normalizes to 1");
         helper.succeed();
     }
 
@@ -82,7 +81,7 @@ public final class MachineCraftDataGameTests {
     public static void processingPattern_ingredientTotalsMergeDuplicates(final GameTestHelper helper) {
         final ProcessingPattern p = new ProcessingPattern(
                 List.of(in(Items.IRON_INGOT, 3), in(Items.IRON_INGOT, 5), in(Items.COAL, 2)),
-                List.of(out(Items.IRON_BLOCK, 1, 100)), "jsindustrial:compressor", 200);
+                List.of(out(Items.IRON_BLOCK, 1, 100)), 200);
         final Map<StorageKey, Long> totals = p.ingredientTotals();
         helper.assertTrue(totals.get(StorageKey.of(Items.IRON_INGOT)) == 8L, "iron totals merge to 8");
         helper.assertTrue(totals.get(StorageKey.of(Items.COAL)) == 2L, "coal totals to 2");
@@ -93,19 +92,21 @@ public final class MachineCraftDataGameTests {
     @GameTest(template = ARENA)
     public static void processingPattern_primaryOutputAndSameRecipe(final GameTestHelper helper) {
         final ProcessingPattern base = new ProcessingPattern(List.of(in(Items.IRON_INGOT, 1)),
-                List.of(out(Items.COPPER_INGOT, 2, 100), out(Items.GOLD_NUGGET, 1, 50)), "jsindustrial:macerator", 200);
+                List.of(out(Items.COPPER_INGOT, 2, 100), out(Items.GOLD_NUGGET, 1, 50)), 200);
         helper.assertTrue(base.primaryOutput() != null
                 && base.primaryOutput().key().equals(StorageKey.of(Items.COPPER_INGOT)), "primary is the first output");
-        helper.assertTrue(new ProcessingPattern(List.of(), List.of(), "x", 1).primaryOutput() == null,
+        helper.assertTrue(new ProcessingPattern(List.of(), List.of(), 1).primaryOutput() == null,
                 "no outputs means null primary");
 
         helper.assertTrue(base.sameRecipe(copy(base)), "an identical pattern is the same recipe");
-        helper.assertFalse(base.sameRecipe(new ProcessingPattern(base.inputs(), base.outputs(), "OTHER", 200)),
-                "a different machine is a different recipe");
+        helper.assertTrue(base.sameRecipe(base.withName("Crusher", "a note")),
+                "a name and a note do not make another recipe");
+        helper.assertTrue(base.sameRecipe(new ProcessingPattern(base.inputs(), base.outputs(), 400)),
+                "nor does another timeout");
         helper.assertFalse(base.sameRecipe(new ProcessingPattern(List.of(in(Items.GOLD_INGOT, 1)), base.outputs(),
-                "jsindustrial:macerator", 200)), "a different input is a different recipe");
+                200)), "a different input is a different recipe");
         helper.assertFalse(base.sameRecipe(new ProcessingPattern(base.inputs(),
-                List.of(out(Items.COPPER_INGOT, 2, 100), out(Items.GOLD_NUGGET, 1, 75)), "jsindustrial:macerator", 200)),
+                List.of(out(Items.COPPER_INGOT, 2, 100), out(Items.GOLD_NUGGET, 1, 75)), 200)),
                 "a different output chance is a different recipe");
         helper.succeed();
     }
@@ -117,7 +118,7 @@ public final class MachineCraftDataGameTests {
                 List.of(in(Items.IRON_INGOT, 7), fluidIn(Fluids.WATER, 250)),
                 List.of(out(Items.COPPER_INGOT, 3, 100), out(Items.GOLD_NUGGET, 1, 1),
                         fluidOut(Fluids.LAVA, 50, 99)),
-                "jsindustrial:compressor", 175);
+                175);
         final String snbt = CraftFile.serializeProcessing(original, reg).orElseThrow();
         helper.assertTrue("proc".equals(CraftFile.typeOf(snbt)), "tagged as proc");
         final ProcessingPattern back = CraftFile.parseProcessing(snbt, reg).orElseThrow();
@@ -134,7 +135,7 @@ public final class MachineCraftDataGameTests {
     public static void craftFile_multiStageMixedRoundTrip(final GameTestHelper helper) {
         final HolderLookup.Provider reg = helper.getLevel().registryAccess();
         final ProcessingPattern proc = new ProcessingPattern(List.of(in(Items.IRON_INGOT, 1)),
-                List.of(out(Items.IRON_BLOCK, 1, 100)), "jsindustrial:compressor", 200);
+                List.of(out(Items.IRON_BLOCK, 1, 100)), 200);
         final CraftingPattern bench = new CraftingPattern(grid(new ItemStack(Items.IRON_INGOT)),
                 new ItemStack(Items.IRON_BLOCK));
         final MultiStagePattern original = new MultiStagePattern(
@@ -163,9 +164,9 @@ public final class MachineCraftDataGameTests {
     @GameTest(template = ARENA)
     public static void networkRecipe_resultKeyAndSameRecipe(final GameTestHelper helper) {
         final ProcessingPattern itemProc = new ProcessingPattern(List.of(in(Items.IRON_INGOT, 1)),
-                List.of(out(Items.COPPER_INGOT, 1, 100)), "jsindustrial:macerator", 200);
+                List.of(out(Items.COPPER_INGOT, 1, 100)), 200);
         final ProcessingPattern fluidProc = new ProcessingPattern(List.of(in(Items.IRON_INGOT, 1)),
-                List.of(fluidOut(Fluids.WATER, 1000, 100)), "jsindustrial:compressor", 200);
+                List.of(fluidOut(Fluids.WATER, 1000, 100)), 200);
         final NetworkRecipe r1 = NetworkRecipe.ofProcessing(itemProc);
         helper.assertTrue(r1.usesMachine(), "a processing recipe uses a machine");
         helper.assertTrue(r1.resultKey().equals(StorageKey.of(Items.COPPER_INGOT)), "item result key");
@@ -218,7 +219,7 @@ public final class MachineCraftDataGameTests {
                 net.minecraft.network.chat.Component.literal("Excalibur"));
         final ProcessingPattern pattern = new ProcessingPattern(
                 List.of(new ProcessingInput(StorageKey.of(named), 1L)),
-                List.of(out(Items.IRON_INGOT, 1, 100)), "jsc:x", 200);
+                List.of(out(Items.IRON_INGOT, 1, 100)), 200);
         final ProcessingPattern back = CraftFile.parseProcessing(
                 CraftFile.serializeProcessing(pattern, reg).orElseThrow(), reg).orElseThrow();
         helper.assertTrue(back.inputs().get(0).key().equals(StorageKey.of(named)),
@@ -249,7 +250,7 @@ public final class MachineCraftDataGameTests {
     }
 
     private static ProcessingPattern copy(final ProcessingPattern p) {
-        return new ProcessingPattern(p.inputs(), p.outputs(), p.machineType(), p.timeoutTicks());
+        return new ProcessingPattern(p.inputs(), p.outputs(), p.timeoutTicks());
     }
 
     private static List<ItemStack> grid(final ItemStack first) {

@@ -16,7 +16,6 @@ import dev.jstech.computers.audio.MusicImports;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.audio.catalog.SoundfoundryCatalog;
 import dev.jstech.computers.config.ComputersServerConfig;
-import dev.jstech.computers.crafting.RecipeMachines;
 import dev.jstech.computers.machine.MachineListing;
 import dev.jstech.computers.machine.SigmaLanguage;
 import dev.jstech.computers.operation.ComputingOperations;
@@ -74,8 +73,6 @@ public class JsComputers {
         MusicImports.register();
         // The catalogue's songs stay on the server however long nobody plays them.
         MediaKeepers.register(SoundfoundryCatalog::media);
-        // Which machines run which recipe types, read from datapacks.
-        RecipeMachines.declare();
     }
 
     /**

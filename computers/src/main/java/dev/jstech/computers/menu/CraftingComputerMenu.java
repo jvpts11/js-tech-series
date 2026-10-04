@@ -168,7 +168,13 @@ public class CraftingComputerMenu extends AbstractAssemblyComputerMenu {
         return blockEntity.assemblyRomUsed();
     }
 
+    /** How many bench recipes the cards' ROM keeps at most together. */
     public int romLimit() {
-        return CraftingComputerBlockEntity.RECIPE_ROM_LIMIT;
+        return blockEntity.assemblyRomSize();
+    }
+
+    /** How many Crafting Interfaces the cards drive together while the computer runs. */
+    public int interfaces() {
+        return blockEntity.assemblyInterfaces();
     }
 }

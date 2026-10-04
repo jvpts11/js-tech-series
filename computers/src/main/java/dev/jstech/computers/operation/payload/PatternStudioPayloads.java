@@ -21,6 +21,7 @@ import static dev.jstech.computers.operation.payload.PatternStudioTexts.ENCODER_
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.ENCODER_WRITING;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.IN_FOLDER;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.LOADED;
+import static dev.jstech.computers.operation.payload.PatternStudioTexts.LOADED_INTO;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.MACHINE_INCOMPLETE;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.MACHINE_STAGE_ADDED;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.NOT_LOADED;
@@ -28,6 +29,7 @@ import static dev.jstech.computers.operation.payload.PatternStudioTexts.NOT_MACH
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.NOT_PIPELINE;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.NOT_RECIPE_FILE;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.NO_ENCODER;
+import static dev.jstech.computers.operation.payload.PatternStudioTexts.NO_INTERFACE_ROOM;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.NO_PATTERN_ENCODER;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.NO_SYSTEM_DISK;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.ONLY_CRAFTING_COMPUTER;
@@ -42,21 +44,19 @@ import static dev.jstech.computers.operation.payload.PatternStudioTexts.STAGE_AD
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.SYSTEM_DISK;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.block.part.CraftingInterfacePart;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.client.ComputerTerminalScreen;
 import dev.jstech.computers.client.os.PatternStudioApp;
 import dev.jstech.computers.crafting.AnyTagResolver;
 import dev.jstech.computers.crafting.CraftingPattern;
-import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.computers.crafting.MultiStagePattern;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.crafting.RecipeBook;
-import dev.jstech.computers.crafting.RecipeMachines;
 import dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk;
 import dev.jstech.computers.operation.payload.crafting.CraftManagerPayloads;
 import dev.jstech.computers.operation.payload.files.FileAccess;
@@ -80,7 +80,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingRecipe;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -89,7 +88,6 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -191,7 +189,6 @@ public final class PatternStudioPayloads {
             case PatternStudioEditPayload.PROC_SET_OUTPUT_AMOUNT ->
                     studio.setProcAmount(true, payload.index(), payload.value());
             case PatternStudioEditPayload.PROC_SET_CHANCE -> studio.setOutputChance(payload.index(), (int) payload.value());
-            case PatternStudioEditPayload.PROC_SET_MACHINE -> studio.setMachineType(payload.text());
             case PatternStudioEditPayload.PROC_SET_TIMEOUT -> studio.setProcTimeout((int) payload.value());
             case PatternStudioEditPayload.PROC_SET_NAME -> studio.setProcName(payload.text(), payload.text2());
             case PatternStudioEditPayload.PROC_CLEAR -> studio.clearMachine();
@@ -271,19 +268,14 @@ public final class PatternStudioPayloads {
         host.setChanged();
     }
 
-    /**
-     * Fills the machine draft from a recipe viewer's transfer, paired with the machine the data maps the
-     * recipe type to (and the network declares), when there is one.
-     */
-    public static void applyProcessingCells(final IOsHost host, final ServerLevel level,
-                                            final List<PatternWorkbench.DataCell> inputs,
-                                            final List<PatternWorkbench.DataCell> outputs, final String recipeType) {
+    /** Fills the machine draft from a recipe viewer's transfer: its inputs and outputs, whatever machine made it. */
+    public static void applyProcessingCells(final IOsHost host, final List<PatternWorkbench.DataCell> inputs,
+                                            final List<PatternWorkbench.DataCell> outputs) {
         final PatternWorkbench studio = host.studio();
         if (studio == null) {
             return;
         }
-        final String machine = defaultMachine(level, host, recipeType);
-        studio.applyProcessingCells(inputs, outputs, machine.isEmpty() ? null : machine);
+        studio.applyProcessingCells(inputs, outputs);
         studio.forget(PatternWorkbench.Kind.MACHINE);
         host.setChanged();
     }
@@ -428,40 +420,37 @@ public final class PatternStudioPayloads {
             return CARD_REQUIRED.text();
         }
         final PatternWorkbench studio = host.studio();
-        final boolean loaded;
-        final String name;
-        switch (kind) {
-            case BENCH -> {
-                studio.refreshPreview(level);
-                final CraftingPattern p = studio.benchPattern();
-                if (p == null) {
-                    return BENCH_NOT_RECIPE.text();
-                }
-                loaded = cc.loadPattern(p);
-                name = p.displayName();
+        if (kind == PatternWorkbench.Kind.BENCH) {
+            studio.refreshPreview(level);
+            final CraftingPattern p = studio.benchPattern();
+            if (p == null) {
+                return BENCH_NOT_RECIPE.text();
             }
-            case MACHINE -> {
-                if (!studio.machineComplete()) {
-                    return MACHINE_INCOMPLETE.text();
-                }
-                final ProcessingPattern p = studio.processingPattern();
-                loaded = cc.loadMachineRecipe(NetworkRecipe.ofProcessing(p));
-                name = p.displayName();
+            if (!cc.loadPattern(p)) {
+                return NOT_LOADED.text();
             }
-            default -> {
-                if (!studio.pipelineComplete()) {
-                    return PIPELINE_EMPTY.text();
-                }
-                final MultiStagePattern p = studio.multiStagePattern();
-                loaded = cc.loadMachineRecipe(NetworkRecipe.ofMultiStage(p));
-                name = p.displayName();
-            }
+            CraftFilesOnDisk.reconcileCraftsFolder(cc, level);
+            return LOADED.with(p.displayName());
         }
-        if (!loaded) {
-            return NOT_LOADED.text();
+        // A machine or pipeline recipe goes into the first interface this computer drives with room for it.
+        final NetworkRecipe recipe;
+        if (kind == PatternWorkbench.Kind.MACHINE) {
+            if (!studio.machineComplete()) {
+                return MACHINE_INCOMPLETE.text();
+            }
+            recipe = NetworkRecipe.ofProcessing(studio.processingPattern());
+        } else {
+            if (!studio.pipelineComplete()) {
+                return PIPELINE_EMPTY.text();
+            }
+            recipe = NetworkRecipe.ofMultiStage(studio.multiStagePattern());
         }
-        CraftFilesOnDisk.reconcileCraftsFolder(cc, level);
-        return LOADED.with(name);
+        final CraftingInterfacePart into = cc.loadMachineRecipe(recipe);
+        if (into == null) {
+            return NO_INTERFACE_ROOM.text();
+        }
+        return LOADED_INTO.with(recipe.displayText(), into.name().isEmpty() ? into.partItem().getHoverName()
+                .getString() : into.name());
     }
 
     private static Text burn(final ServerLevel level, final IOsHost host, final PatternWorkbench.Kind kind) {
@@ -487,28 +476,6 @@ public final class PatternStudioPayloads {
         return SENT.with(base);
     }
 
-    /**
-     * The machine a transferred recipe of type {@code typeId} is paired with: the first mapped machine the
-     * network actually declares, else the first mapped machine, else the recipe type's generic category; empty
-     * when the type is unknown, leaving the choice to the picker.
-     */
-    static String defaultMachine(final ServerLevel level, final IOsHost host, final String typeId) {
-        if (typeId == null || typeId.isEmpty()) {
-            return "";
-        }
-        final List<String> mapped = RecipeMachines.machinesFor(typeId);
-        final Map<String, String> declared = declaredMachines(level, host);
-        for (final String m : mapped) {
-            if (declared.containsKey(m)) {
-                return m;
-            }
-        }
-        if (!mapped.isEmpty()) {
-            return mapped.get(0);
-        }
-        return MachineCategory.genericIdOf(typeId);
-    }
-
     // state
 
     @Nullable
@@ -519,35 +486,6 @@ public final class PatternStudioPayloads {
             }
         }
         return null;
-    }
-
-    /** The machine types the network's switches declare, keyed by type with a readable label. */
-    private static Map<String, String> declaredMachines(final ServerLevel level, final IOsHost host) {
-        final Map<String, String> out = new LinkedHashMap<>();
-        final List<CraftingComputerBlockEntity> computers = new ArrayList<>();
-        if (host instanceof CraftingComputerBlockEntity cc) {
-            computers.add(cc);
-        }
-        final MainframeBlockEntity mf = host.networkUuid() == null ? null
-                : NetworkLookup.resolveMainframe(level, host.networkUuid());
-        if (mf != null) {
-            for (final BlockPos pos : mf.craftingComputerPositions()) {
-                final BlockEntity be = level.getBlockEntity(pos);
-                if (be instanceof CraftingComputerBlockEntity cc && !computers.contains(cc)) {
-                    computers.add(cc);
-                }
-            }
-        }
-        for (final CraftingComputerBlockEntity cc : computers) {
-            for (final CraftingSwitchBlockEntity.DeclaredMachine dm : cc.availableMachines()) {
-                final String type = dm.machineType();
-                if (type == null || type.isBlank() || out.containsKey(type)) {
-                    continue;
-                }
-                out.put(type, !dm.name().isBlank() ? dm.name() : type);
-            }
-        }
-        return out;
     }
 
     public static PatternStudioStatePayload buildState(final ServerLevel level, final IOsHost host,
@@ -653,15 +591,6 @@ public final class PatternStudioPayloads {
                         enc.statusLine(), enc.progressPercent(), enc.queued(), enc.busy(),
                         enc.phase() == PatternEncoderBlockEntity.Phase.ERROR);
 
-        final List<PatternStudioStatePayload.Machine> machines = new ArrayList<>();
-        for (final Map.Entry<String, String> e : declaredMachines(level, host).entrySet()) {
-            if (machines.size() >= PatternStudioStatePayload.MAX_MACHINES) {
-                break;
-            }
-            machines.add(new PatternStudioStatePayload.Machine(wire(e.getKey(), PatternStudioStatePayload.MAX_KEY),
-                    wire(e.getValue(), PatternStudioStatePayload.MAX_LABEL)));
-        }
-
         boolean romBench = false;
         boolean romProc = false;
         boolean romPipe = false;
@@ -695,14 +624,14 @@ public final class PatternStudioPayloads {
                 wire(studio.benchName(), PatternStudioStatePayload.MAX_NAME),
                 wire(studio.benchNote(), PatternStudioStatePayload.MAX_NOTE),
                 wire(studio.openedFile(PatternWorkbench.Kind.BENCH), PatternStudioStatePayload.MAX_NAME),
-                inputs, outputs, wire(studio.machineType(), PatternStudioStatePayload.MAX_KEY), studio.procTimeout(),
+                inputs, outputs, studio.procTimeout(),
                 wire(studio.procName(), PatternStudioStatePayload.MAX_NAME),
                 wire(studio.procNote(), PatternStudioStatePayload.MAX_NOTE),
                 wire(studio.openedFile(PatternWorkbench.Kind.MACHINE), PatternStudioStatePayload.MAX_NAME),
                 stages, wire(studio.pipelineName(), PatternStudioStatePayload.MAX_NAME),
                 wire(studio.pipelineNote(), PatternStudioStatePayload.MAX_NOTE),
                 wire(studio.openedFile(PatternWorkbench.Kind.PIPELINE), PatternStudioStatePayload.MAX_NAME),
-                drives, encoder, machines, craftingComputer, hasCard, romBench, romProc, romPipe, status, tabHint);
+                drives, encoder, craftingComputer, hasCard, romBench, romProc, romPipe, status, tabHint);
     }
 
     private static String wire(final String s, final int max) {

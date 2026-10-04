@@ -23,7 +23,7 @@ final class PatternStudioTexts {
     static final TextKey MACHINE_STAGE_ADDED =
             TextKey.of("jsc.pattern_studio.machine_stage_added", "Machine stage added");
     static final TextKey MACHINE_INCOMPLETE = TextKey.of("jsc.pattern_studio.machine_incomplete",
-            "The machine draft needs a machine, an input and an output");
+            "The machine draft needs an input and an output");
     static final TextKey QUEUE_CLEARED = TextKey.of("jsc.pattern_studio.queue_cleared", "Encoder queue cleared");
     static final TextKey NO_ENCODER = TextKey.of("jsc.pattern_studio.no_encoder", "No encoder linked");
     static final TextKey ENCODER_WRITING = TextKey.of("jsc.pattern_studio.encoder_writing", "The encoder is writing");
@@ -45,12 +45,15 @@ final class PatternStudioTexts {
     static final TextKey SAVE_FAILED = TextKey.of("jsc.pattern_studio.save_failed", "Save failed: %s");
     static final TextKey SAVED = TextKey.of("jsc.pattern_studio.saved", "Saved %s");
     static final TextKey ONLY_CRAFTING_COMPUTER = TextKey.of("jsc.pattern_studio.only_crafting_computer",
-            "Only a Crafting Computer holds a Recipe ROM");
+            "Only a Crafting Computer loads recipes");
     static final TextKey CARD_REQUIRED = TextKey.of("jsc.pattern_studio.card_required", "A Crafting Card is required");
     static final TextKey PIPELINE_EMPTY = TextKey.of("jsc.pattern_studio.pipeline_empty", "The pipeline has no stages");
     static final TextKey NOT_LOADED = TextKey.of("jsc.pattern_studio.not_loaded",
-            "Not loaded: already in the ROM, or the ROM is full");
-    static final TextKey LOADED = TextKey.of("jsc.pattern_studio.loaded", "Loaded into the ROM: %s");
+            "Not loaded: a card keeps it already, or every card's ROM is full");
+    static final TextKey LOADED = TextKey.of("jsc.pattern_studio.loaded", "Loaded into a card's ROM: %s");
+    static final TextKey LOADED_INTO = TextKey.of("jsc.pattern_studio.loaded_into", "%s placed in %s");
+    static final TextKey NO_INTERFACE_ROOM = TextKey.of("jsc.pattern_studio.no_interface_room",
+            "No Crafting Interface this computer drives has room for it, or every one holds it already");
     static final TextKey NO_PATTERN_ENCODER = TextKey.of("jsc.pattern_studio.no_pattern_encoder",
             "No Pattern Encoder is linked to this computer");
     static final TextKey ENCODER_BAY_EMPTY =

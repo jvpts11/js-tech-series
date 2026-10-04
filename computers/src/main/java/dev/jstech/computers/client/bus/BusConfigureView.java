@@ -18,6 +18,8 @@ import dev.jstech.computers.gui.layout.BusLayout;
 import dev.jstech.computers.menu.AbstractBusMenu;
 import dev.jstech.computers.operation.payload.BusEditPayload;
 import dev.jstech.computers.operation.payload.BusStatePayload;
+import dev.jstech.computers.operation.payload.CraftingView;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.id.StableIds;
 import dev.jstech.core.text.GameText;
@@ -57,6 +59,9 @@ final class BusConfigureView {
     private int editFrom = DEFAULT_FROM;
     private int editTo = DEFAULT_TO;
     private boolean shift;
+    /* A crafting part's lines as the rows show them, and whether a Receiving Bus's picker of interfaces is open. */
+    private List<CraftRow> craftRows = List.of();
+    private boolean picking;
 
     private static final int STEP = 1;
     private static final int SHIFT_STEP = 16;
@@ -179,11 +184,130 @@ final class BusConfigureView {
     /* The rows as the bus is set now, and how tall they are together. */
     private void layOut() {
         final BusSettings s = menu.settings();
+        final List<Integer> crafting = craftHeights();
         final BusLayout.Shape shape = new BusLayout.Shape(abilities(), menu.window(),
                 lines(introText()), itemRows(), tagLines(s), editingTag, lines(GameText.resolve(BusTexts.FUZZY_NOTE)),
-                Math.min(BusLayout.MOST_CONDITIONS, s.conditions().size()), editingCondition, lines(noteText()));
+                Math.min(BusLayout.MOST_CONDITIONS, s.conditions().size()), editingCondition, lines(noteText()),
+                crafting);
         rows = BusLayout.rows(shape);
         contentHeight = BusLayout.contentHeight(shape);
+    }
+
+    /*
+     * A crafting part's lines as rows, and how tall each is: each line of what it is part of, and for a Receiving Bus
+     * the button that ties it by hand after its first line, with the interfaces to pick from under it while open.
+     */
+    private List<Integer> craftHeights() {
+        final List<CraftRow> made = new ArrayList<>();
+        final List<Integer> heights = new ArrayList<>();
+        if (menu.window().crafting()) {
+            final CraftingView view = craftingView();
+            for (int i = 0; i < view.lines().size(); i++) {
+                final CraftingView.Line line = view.lines().get(i);
+                made.add(new CraftRow(CraftRow.LINE, i));
+                heights.add(line.boxed() ? BusLayout.craftBox(boxLines(line))
+                        : BusLayout.craftLine(!line.note().english().isEmpty()));
+                if (i == 0 && menu.window() == BusLayout.Window.RECEIVING) {
+                    made.add(new CraftRow(CraftRow.TIE, 0));
+                    heights.add(BusLayout.ROW);
+                    if (picking) {
+                        for (int p = 0; p < view.picks().size(); p++) {
+                            made.add(new CraftRow(CraftRow.PICK, p));
+                            heights.add(BusLayout.ROW - 1);
+                        }
+                    }
+                }
+            }
+        }
+        craftRows = made;
+        return heights;
+    }
+
+    private CraftingView craftingView() {
+        final BusStatePayload state = menu.state();
+        return state == null ? CraftingView.NONE : state.crafting();
+    }
+
+    private int boxLines(final CraftingView.Line line) {
+        return Math.max(1, BusDraw.lines(font, GameText.resolve(line.value()), BusLayout.ROW_W - 6).size());
+    }
+
+    /* One crafting row: a line of what the part is part of, the tie button, or an interface to tie it to. */
+    private void drawCraftRow(final GuiGraphics g, final int index, final int x, final int y, final int px,
+                              final int py) {
+        if (index >= craftRows.size()) {
+            return;
+        }
+        final CraftRow row = craftRows.get(index);
+        final CraftingView view = craftingView();
+        switch (row.kind()) {
+            case CraftRow.TIE -> BusDraw.button(g, font, GameText.resolve(BusTexts.TIE), x + BusLayout.CONTROL_X, y,
+                    BusDraw.optionWidth(font, GameText.resolve(BusTexts.TIE)) + 6, BusLayout.CONTROL_H,
+                    over(px, py, BusLayout.CONTROL_X, 0, BusLayout.ROW_W, BusLayout.CONTROL_H));
+            case CraftRow.PICK -> {
+                if (row.index() >= view.picks().size()) {
+                    return;
+                }
+                final CraftingView.Pick pick = view.picks().get(row.index());
+                BusDraw.bar(g, x + BusLayout.CONTROL_X, y, BusLayout.RIGHT - BusLayout.CONTROL_X, BusLayout.ROW - 2,
+                        over(px, py, BusLayout.CONTROL_X, 0, BusLayout.ROW_W, BusLayout.ROW - 2));
+                final String box = pick.on() ? "[x] " : "[ ] ";
+                final String name = box + GameText.resolve(pick.name());
+                final int idW = BusDraw.width(font, pick.shortId());
+                BusDraw.small(g, font, BusDraw.clip(font, name, BusLayout.RIGHT - BusLayout.CONTROL_X - idW - 8),
+                        x + BusLayout.CONTROL_X + 2, y + 2, pick.on() ? JsTechTheme.text() : JsTechTheme.dim());
+                BusDraw.smallRight(g, font, pick.shortId(), x + BusLayout.RIGHT - 2, y + 2, JsTechTheme.dim());
+            }
+            default -> {
+                if (row.index() < view.lines().size()) {
+                    drawCraftLine(g, view.lines().get(row.index()), x, y);
+                }
+            }
+        }
+    }
+
+    private void drawCraftLine(final GuiGraphics g, final CraftingView.Line line, final int x, final int y) {
+        if (line.boxed()) {
+            final int colour = line.tone() == CraftingView.BAD ? JsTechTheme.red()
+                    : line.tone() == CraftingView.WARN ? JsTechTheme.amber() : JsTechTheme.dim();
+            final int h = BusLayout.craftBox(boxLines(line)) - 2;
+            BusDraw.bar(g, x + BusLayout.LABEL_X, y, BusLayout.ROW_W, h, false);
+            if (line.tone() != CraftingView.INFO) {
+                Draw.outline(g, x + BusLayout.LABEL_X, y, BusLayout.ROW_W, h, colour);
+            }
+            final List<String> lines = BusDraw.lines(font, GameText.resolve(line.value()), BusLayout.ROW_W - 6);
+            for (int i = 0; i < lines.size(); i++) {
+                BusDraw.small(g, font, lines.get(i), x + BusLayout.LABEL_X + 3, y + 3 + i * BusLayout.LINE, colour);
+            }
+            return;
+        }
+        if (line.tone() != CraftingView.LIST) {
+            BusDraw.fitted(g, font, GameText.resolve(line.label()), x + BusLayout.LABEL_X, y + 2, JsTechTheme.dim(),
+                    BusLayout.CONTROL_X - BusLayout.LABEL_X - 4);
+        }
+        final int room = BusLayout.RIGHT - BusLayout.CONTROL_X;
+        BusDraw.small(g, font, BusDraw.clip(font, GameText.resolve(line.value()), room), x + BusLayout.CONTROL_X, y + 2,
+                JsTechTheme.text());
+        if (!line.note().english().isEmpty()) {
+            BusDraw.small(g, font, BusDraw.clip(font, GameText.resolve(line.note()), room), x + BusLayout.CONTROL_X,
+                    y + 2 + BusLayout.LINE, line.tone() == CraftingView.GOOD ? JsTechTheme.green() : JsTechTheme.dim());
+        }
+    }
+
+    private boolean clickCraftRow(final int index) {
+        if (index >= craftRows.size()) {
+            return false;
+        }
+        final CraftRow row = craftRows.get(index);
+        if (row.kind() == CraftRow.TIE) {
+            picking = !picking;
+            return true;
+        }
+        if (row.kind() == CraftRow.PICK) {
+            edit(BusEditPayload.TIE, row.index(), 0L);
+            return true;
+        }
+        return false;
     }
 
     private void drawRow(final GuiGraphics g, final BusLayout.Row row, final int left, final int y, final int px,
@@ -251,6 +375,7 @@ final class BusConfigureView {
                     BusLayout.ROW_W, BusLayout.CONTROL_H + 1));
             case CONDITION_EDITOR -> drawEditor(g, x, y, px, py);
             case SPEED -> drawSpeed(g, x, y);
+            case CRAFT_LINE -> drawCraftRow(g, row.index(), x, y, px, py);
         }
     }
 
@@ -512,6 +637,9 @@ final class BusConfigureView {
             }
             case CONDITION_EDITOR -> {
                 return clickEditor(x, y);
+            }
+            case CRAFT_LINE -> {
+                return clickCraftRow(row.index());
             }
             default -> {
                 return false;
@@ -779,6 +907,14 @@ final class BusConfigureView {
     private record Toggle(List<String> words, int[] xs, int[] ws, int chosen, int[] lines) {
     }
 
+    /** One crafting row: a line, the tie button, or an interface to pick, with its number among its kind. */
+    private record CraftRow(int kind, int index) {
+
+        static final int LINE = 0;
+        static final int TIE = 1;
+        static final int PICK = 2;
+    }
+
     private Toggle toggle(final BusLayout.Kind kind) {
         final BusSettings s = menu.settings();
         return switch (kind) {
@@ -894,10 +1030,9 @@ final class BusConfigureView {
         return GameText.resolve(exports() ? BusTexts.INTRO_EXPORT : BusTexts.INTRO_IMPORT);
     }
 
-    /* The note at the end of the rows: what a crafting bus carries, or that an external inventory is slower. */
+    /* The note at the end of an External Storage Bus's rows: that an external inventory is slower. */
     private String noteText() {
-        return GameText.resolve(menu.window() == BusLayout.Window.EXTERNAL ? BusTexts.EXTERNAL_NOTE
-                : BusTexts.CRAFTING_NOTE);
+        return GameText.resolve(BusTexts.EXTERNAL_NOTE);
     }
 
     /* What an External Storage Bus's inventory holds, as the network is shown it. */

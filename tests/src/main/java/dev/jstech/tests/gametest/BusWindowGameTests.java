@@ -16,10 +16,12 @@ import dev.jstech.computers.bus.BusCondition;
 import dev.jstech.computers.bus.BusSettings;
 import dev.jstech.computers.operation.payload.BusEditPayload;
 import dev.jstech.computers.operation.payload.BusStatePayload;
+import dev.jstech.computers.operation.payload.CraftingView;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.FilteredDataPort;
 import dev.jstech.computers.storage.IDataPort;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import io.netty.buffer.Unpooled;
@@ -142,8 +144,10 @@ public final class BusWindowGameTests {
         bus.addTag(ResourceLocation.parse("c:ores"), "Stock keeper");
         bus.addCondition(BusCondition.hours(18, 6), "Night shift");
         bus.activity().moved(100L, "item|minecraft:iron_ore", 23L, false);
+        final CraftingView crafting = new CraftingView(List.of(new CraftingView.Line(CraftingView.GOOD,
+                Text.literal("TIED TO"), Text.literal("Kiln A"), Text.EMPTY)), List.of(), List.of());
         final BusStatePayload sent = new BusStatePayload(7, bus.settings(), bus.filterStacks(), true, 64L, 256L,
-                HardwareEra.ADVANCED, bus.activity().entries(), 27, 14);
+                HardwareEra.ADVANCED, bus.activity().entries(), 27, 14, crafting);
         final RegistryFriendlyByteBuf wire = new RegistryFriendlyByteBuf(Unpooled.buffer(),
                 helper.getLevel().registryAccess());
         try {
@@ -155,6 +159,7 @@ public final class BusWindowGameTests {
             helper.assertTrue(got.speed() == 64L && got.carries() == 256L && got.linked()
                     && got.skin() == HardwareEra.ADVANCED && got.containerId() == 7 && got.places() == 27
                     && got.placesUsed() == 14, "and the rest");
+            helper.assertTrue(got.crafting().equals(sent.crafting()), "the crafting lines; got " + got.crafting());
             helper.assertTrue(wire.readableBytes() == 0, "with nothing left over on the wire");
         } finally {
             wire.release();

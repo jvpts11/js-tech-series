@@ -30,23 +30,24 @@ final class CraftTexts {
 
     // The Crafting Manager.
     static final TextKey LOADED_ROM_FULL =
-            TextKey.of("jsc.craft_manager.loaded_rom_full", "Loaded %s of %s - ROM full (%s/%s)");
+            TextKey.of("jsc.craft_manager.loaded_rom_full", "Loaded %s of %s - no room left where they go");
     static final TextKey LOADED_ONE = TextKey.of("jsc.craft_manager.loaded_one", "Loaded %s craft");
     static final TextKey LOADED_MANY = TextKey.of("jsc.craft_manager.loaded_many", "Loaded %s crafts");
     static final TextKey ALREADY_LOADED = TextKey.of("jsc.craft_manager.already_loaded", "Already loaded");
     static final TextKey NOTHING_TO_LOAD = TextKey.of("jsc.craft_manager.nothing_to_load", "Nothing to load");
     static final TextKey REMOVABLE_DRIVE = TextKey.of("jsc.craft_manager.removable_drive", "Removable Drive");
-    static final TextKey ROM_MULTI = TextKey.of("jsc.craft_manager.rom_multi", "%s [multi]");
-    static final TextKey ROM_MACHINE = TextKey.of("jsc.craft_manager.rom_machine", "%s [machine]");
-    /* Where an unnamed machine stands: the switch face it is on, by its initial, and its coordinates. */
-    static final TextKey MACHINE_AT_FACE = TextKey.of("jsc.craft_manager.machine_at_face", "%s (%s, %s, %s)");
-    static final TextKey MACHINE_AT = TextKey.of("jsc.craft_manager.machine_at", "(%s, %s, %s)");
-    static final TextKey FACE_DOWN = TextKey.of("jsc.craft_manager.face_down", "D");
-    static final TextKey FACE_UP = TextKey.of("jsc.craft_manager.face_up", "U");
-    static final TextKey FACE_NORTH = TextKey.of("jsc.craft_manager.face_north", "N");
-    static final TextKey FACE_SOUTH = TextKey.of("jsc.craft_manager.face_south", "S");
-    static final TextKey FACE_WEST = TextKey.of("jsc.craft_manager.face_west", "W");
-    static final TextKey FACE_EAST = TextKey.of("jsc.craft_manager.face_east", "E");
+    /* A card's place: its name and the slot it is in. */
+    static final TextKey CARD_PLACE = TextKey.of("jsc.craft_manager.card_place", "%s (slot %s)");
+    /* An interface nobody named, by its kind and where it is. */
+    static final TextKey INTERFACE_AT = TextKey.of("jsc.craft_manager.interface_at", "%s (%s, %s, %s)");
+    static final TextKey MOVED = TextKey.of("jsc.craft_manager.moved", "%s moved to %s");
+    static final TextKey NOT_MOVED = TextKey.of("jsc.craft_manager.not_moved",
+            "Not moved: %s has no room for it, holds it already, or takes another kind of recipe");
+    static final TextKey RUNNING_ONE = TextKey.of("jsc.craft_manager.running_one", "Running · %s");
+    static final TextKey RUNNING_MANY = TextKey.of("jsc.craft_manager.running_many", "Running · %s jobs");
+    static final TextKey DRAINING = TextKey.of("jsc.craft_manager.draining", "Draining");
+    /* A job: what it makes and how many. */
+    static final TextKey JOB = TextKey.of("jsc.craft_manager.job", "%s x%s");
 
     private CraftTexts() {
     }

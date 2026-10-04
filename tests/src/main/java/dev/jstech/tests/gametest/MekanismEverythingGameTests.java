@@ -10,7 +10,10 @@ package dev.jstech.tests.gametest;
 import com.mojang.logging.LogUtils;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.tests.testkit.ServerStacks;
+import dev.jstech.computers.block.part.CraftingInterfacePart;
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
+import dev.jstech.computers.crafting.CraftingFloor;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.MultiStagePattern;
 import dev.jstech.computers.crafting.NetworkRecipe;
@@ -19,10 +22,13 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.iql.IqlParseResult;
 import dev.jstech.computers.program.iql.IqlParser;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.CraftingRig;
 import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
@@ -96,6 +102,31 @@ public final class MekanismEverythingGameTests {
                 rack.getServers().setStackInSlot(0, ServerStacks.defaultSupercomputerNode());
             }
         }
+    }
+
+    /*
+     * The network's Crafting Computer and two more stacked over it, each with its free slots filled with cards: the
+     * bench recipes these tests load at once are more than one computer's cards keep.
+     */
+    private static List<CraftingComputerBlockEntity> benches(final TestWorldBuilder world,
+                                                             final TestWorldBuilder.CraftingNetwork net) {
+        final List<CraftingComputerBlockEntity> benches = new ArrayList<>();
+        benches.add(net.cc());
+        benches.addAll(world.stackCraftingComputers(2));
+        for (final CraftingComputerBlockEntity bench : benches) {
+            CraftingRig.addCards(bench, CraftingComputerBlockEntity.PCIE_SLOTS);
+        }
+        return benches;
+    }
+
+    /* Loads {@code recipe} into the first computer whose cards have room for it. */
+    private static boolean load(final List<CraftingComputerBlockEntity> benches, final CraftingPattern recipe) {
+        for (final CraftingComputerBlockEntity bench : benches) {
+            if (bench.loadPattern(recipe)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static long seed() {
@@ -230,15 +261,24 @@ public final class MekanismEverythingGameTests {
 
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        // Pipelines live in Crafting Interfaces: two Advanced ones beside the computer hold twelve each.
+        CraftingRig.lay(world, new BlockPos(5, 2, 3), new BlockPos(5, 2, 4));
+        final List<CraftingInterfacePart> holders = List.of(
+                CraftingRig.addPart(world, new CraftingFloor.Site(new BlockPos(5, 2, 3), Direction.EAST),
+                        new CraftingInterfacePart(HardwareEra.ADVANCED)),
+                CraftingRig.addPart(world, new CraftingFloor.Site(new BlockPos(5, 2, 4), Direction.EAST),
+                        new CraftingInterfacePart(HardwareEra.ADVANCED)));
 
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     for (int k = 0; k < CHAINS; k++) {
-                        helper.assertTrue(net.cc().loadMachineRecipe(NetworkRecipe.ofMultiStage(patterns.get(k))),
-                                "multi-stage recipe must load");
+                        final NetworkRecipe recipe = NetworkRecipe.ofMultiStage(patterns.get(k));
+                        helper.assertTrue(holders.get(0).place(recipe) || holders.get(1).place(recipe),
+                                "multi-stage recipe must go into an interface");
                         net.seed(chains.get(k)[0], CHAIN_SEED);
                         net.seed(chains.get(k)[1], CHAIN_SEED);
                     }
+                    net.cc().forgetFloor();
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     for (int k = 0; k < CHAINS; k++) {
@@ -296,9 +336,9 @@ public final class MekanismEverythingGameTests {
                 craftable.size(), WAVE_SIZE, RAW_POOL_SIZE);
 
         /*
-         * Every craftable item gets a depth-1 bench recipe from two random raw-pool items. The Recipe ROM holds
-         * only RECIPE_ROM_LIMIT patterns, so each wave loads its own recipes and clears them again afterwards:
-         * WAVE_SIZE stays under the limit, and the churn covers the whole catalogue without ever overflowing it.
+         * Every craftable item gets a depth-1 bench recipe from two random raw-pool items. The cards' ROMs keep only
+         * so many bench recipes, so each wave loads its own recipes and clears them again afterwards: WAVE_SIZE stays
+         * under what the three computers' cards keep, and the churn covers the whole catalogue without overflowing.
          */
         final List<CraftingPattern> recipes = new ArrayList<>();
         for (final Item item : craftable) {
@@ -315,6 +355,7 @@ public final class MekanismEverythingGameTests {
 
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        final List<CraftingComputerBlockEntity> benches = benches(world, net);
         final ServerCliComputer[] cli = new ServerCliComputer[1];
         final int[] wave = {0};
         final int[] phase = {0}; // 0 SEED, 1 SUBMIT, 2 WAIT, 3 VERIFY
@@ -339,7 +380,7 @@ public final class MekanismEverythingGameTests {
                     switch (phase[0]) {
                         case 0 -> { // SEED: load this wave's recipes, top the raw pool up, let the index absorb it
                             for (final CraftingPattern recipe : waveRecipes.get(wave[0])) {
-                                helper.assertTrue(net.cc().loadPattern(recipe), "wave recipe must load into the ROM");
+                                helper.assertTrue(load(benches, recipe), "wave recipe must load into a card's ROM");
                             }
                             for (final Item raw : rawPool) {
                                 final long have = storage.count(raw);
@@ -390,9 +431,11 @@ public final class MekanismEverythingGameTests {
                                 }
                                 storage.select(StorageKey.of(item), have, (key, amount, simulate) -> amount);
                             }
-                            // Clear the ROM so the next wave's recipes fit under RECIPE_ROM_LIMIT.
-                            while (!net.cc().romPatterns().isEmpty()) {
-                                net.cc().removePattern(0);
+                            // Clear the cards so the next wave's recipes fit in their ROMs.
+                            for (final CraftingComputerBlockEntity bench : benches) {
+                                while (!bench.romPatterns().isEmpty()) {
+                                    bench.removePattern(0);
+                                }
                             }
                             wave[0]++;
                             phase[0] = 0;
@@ -458,6 +501,7 @@ public final class MekanismEverythingGameTests {
 
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        final List<CraftingComputerBlockEntity> benches = benches(world, net);
 
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
@@ -466,7 +510,7 @@ public final class MekanismEverythingGameTests {
                         net.seed(leaf, LEAF_SEED);
                     }
                     for (final CraftingPattern recipe : recipes) {
-                        helper.assertTrue(net.cc().loadPattern(recipe), "recipe must load into the ROM");
+                        helper.assertTrue(load(benches, recipe), "recipe must load into a card's ROM");
                     }
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {

@@ -20,6 +20,8 @@ import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.tests.TestMachines;
+import dev.jstech.tests.testkit.CraftingRig;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -179,6 +181,7 @@ public final class NetworkInteractorClientTests {
                     net.cc().togglePower();
                     net.cc().togglePower();
                     world.placeMonitor(MONITOR, Direction.EAST);
+                    CraftingRig.direct(world, net.cc(), TestMachines.KILN.get());
                     net.seed(Items.COAL, 12);
                     net.seed(Items.IRON_INGOT, 8);
                     net.seed(Items.RAW_IRON, 32);
@@ -187,8 +190,8 @@ public final class NetworkInteractorClientTests {
                     final TestWorldBuilder world = TestWorldBuilder.at(level, ctx.origin());
                     final CraftingComputerBlockEntity cc = world.blockEntity(CRAFTING_COMPUTER, CraftingComputerBlockEntity.class);
                     ctx.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(
-                            smelt(Items.RAW_IRON, Items.IRON_INGOT, "minecraft:furnace", 200).withName("Blast", ""))),
-                            "the furnace recipe loads into the ROM");
+                            smelt(Items.RAW_IRON, Items.IRON_INGOT, 200).withName("Blast", ""))) != null,
+                            "the smelting recipe goes into the kiln's interface");
                     ctx.assertTrue(cc.loadPattern(new CraftingPattern(grid(Items.IRON_INGOT), new ItemStack(Items.IRON_NUGGET, 9))),
                             "the nugget pattern loads into the ROM");
                 })
@@ -222,7 +225,8 @@ public final class NetworkInteractorClientTests {
                                 + " details=" + interactor(ctx).detailsName()))
                 .thenWaitUntil(() -> !interactor(ctx).detailsMadeBy().isEmpty(), SCREEN_WAIT,
                         "the details panel to learn what makes the ingot")
-                .then(1, () -> ctx.assertTrue(interactor(ctx).detailsMadeBy().get(0).equals("Blast · processing · Furnace")
+                // A machine recipe names no machine: the interface that holds it knows which one it feeds.
+                .then(1, () -> ctx.assertTrue(interactor(ctx).detailsMadeBy().get(0).equals("Blast · processing")
                                 && interactor(ctx).detailsUsedIn().contains("Iron Nugget"),
                         "made by the furnace recipe, used in the nugget pattern; madeBy=" + interactor(ctx).detailsMadeBy()
                                 + " usedIn=" + interactor(ctx).detailsUsedIn()))
@@ -288,6 +292,7 @@ public final class NetworkInteractorClientTests {
                     net.cc().togglePower();
                     net.cc().togglePower();
                     world.placeMonitor(MONITOR, Direction.EAST);
+                    CraftingRig.direct(world, net.cc(), TestMachines.KILN.get());
                     net.seed(Items.COAL, 12);
                     net.seed(Items.IRON_INGOT, 8);
                     net.seed(Items.RAW_IRON, 32);
@@ -390,23 +395,25 @@ public final class NetworkInteractorClientTests {
                     net.cc().togglePower();
                     net.cc().togglePower();
                     world.placeMonitor(MONITOR, Direction.EAST);
+                    CraftingRig.direct(world, net.cc(), TestMachines.KILN.get());
                     net.seed(Items.RAW_IRON, 32);
                 })
                 .thenServer(SETTLE + 2, level -> {
                     final TestWorldBuilder world = TestWorldBuilder.at(level, ctx.origin());
                     final CraftingComputerBlockEntity cc = world.blockEntity(CRAFTING_COMPUTER, CraftingComputerBlockEntity.class);
                     ctx.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(
-                            smelt(Items.RAW_IRON, Items.IRON_INGOT, "minecraft:furnace", 200).withName("Blast", ""))),
-                            "the furnace recipe loads into the ROM");
+                            smelt(Items.RAW_IRON, Items.IRON_INGOT, 200).withName("Blast", ""))) != null,
+                            "the smelting recipe goes into the kiln's interface");
                     // The other way needs coal too, and the network has none.
                     final ProcessingPattern coalSmelt = new ProcessingPattern(
                             List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.RAW_IRON), 1L),
                                     new ProcessingPattern.ProcessingInput(StorageKey.of(Items.COAL), 1L)),
                             List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(Items.IRON_INGOT), 1L, 100)),
-                            "minecraft:blast_furnace", 100);
-                    ctx.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofMultiStage(
-                            new MultiStagePattern(List.of(MultiStagePattern.Stage.proc(coalSmelt))).withName("Iron line", ""))),
-                            "the pipeline loads into the ROM");
+                            100);
+                    final MultiStagePattern line = new MultiStagePattern(
+                            List.of(MultiStagePattern.Stage.proc(coalSmelt))).withName("Iron line", "");
+                    ctx.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofMultiStage(line)) != null,
+                            "the pipeline goes into the interface");
                 })
                 .thenServer(SETTLE, level -> ctx.assertTrue(TestWorldBuilder.at(level, ctx.origin())
                                 .blockEntity(MAINFRAME, MainframeBlockEntity.class).recipesFor(StorageKey.of(Items.IRON_INGOT)).size() == 2,
@@ -527,11 +534,11 @@ public final class NetworkInteractorClientTests {
         return new int[] {window.x() + 4 + local[0], window.y() + 18 + local[1]};
     }
 
-    private static ProcessingPattern smelt(final Item in, final Item out, final String machineType, final int ticks) {
+    private static ProcessingPattern smelt(final Item in, final Item out, final int ticks) {
         return new ProcessingPattern(
                 List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(in), 1L)),
                 List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(out), 1L, 100)),
-                machineType, ticks);
+                ticks);
     }
 
     private static List<ItemStack> grid(final Item first) {

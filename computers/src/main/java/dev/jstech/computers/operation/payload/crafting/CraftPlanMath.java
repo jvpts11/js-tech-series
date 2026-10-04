@@ -11,7 +11,6 @@ import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.crafting.CraftPlanner;
 import dev.jstech.computers.crafting.CraftingPattern;
-import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.computers.crafting.MultiStagePattern;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.ProcessingPattern;
@@ -72,13 +71,12 @@ public final class CraftPlanMath {
                 feasible = plan.feasible();
                 if (recipe.proc().isPresent()) {
                     kind = RecipeChoice.KIND_PROCESSING;
-                    machineNames.add(MachineCategory.text(recipe.proc().get().machineType()));
+                    machineNames.add(RecipeChoice.MACHINE.text());
                 } else {
                     kind = RecipeChoice.KIND_MULTI_STAGE;
                     for (final var stage : recipe.multi().get().stages()) {
                         machineNames.add(stage.proc().isPresent()
-                                ? MachineCategory.text(stage.proc().get().machineType())
-                                : RecipeChoice.BENCH.text());
+                                ? RecipeChoice.MACHINE.text() : RecipeChoice.BENCH.text());
                     }
                 }
             } else {

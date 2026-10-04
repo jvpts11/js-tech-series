@@ -25,9 +25,12 @@ import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.client.os.NetworkInteractorApp;
 import dev.jstech.computers.client.os.PatternStudioApp;
 import dev.jstech.computers.client.os.ThisPcApp;
+import dev.jstech.computers.crafting.CraftingFloor;
+import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.gui.layout.CraftingComputerLayout;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.integration.jei.payload.SetProcessingPatternPayload;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.DiskFilesystem;
@@ -46,6 +49,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
@@ -108,11 +112,13 @@ public final class FullJourneyClientTests {
     private static final BlockPos CC_MONITOR = new BlockPos(8, 2, 2);
     private static final BlockPos CC_FLOPPY_DRIVE = new BlockPos(7, 2, 1);
     private static final BlockPos CRAFTING_CABLE = new BlockPos(7, 2, 3);
-    private static final BlockPos SWITCH = new BlockPos(7, 2, 4);
+    private static final BlockPos INTERFACE_CABLE = new BlockPos(7, 2, 4);
     private static final BlockPos CABLE_BELOW_FURNACE = new BlockPos(7, 2, 5);
-    private static final BlockPos CABLE_RUN_1 = new BlockPos(7, 2, 6);
-    private static final BlockPos CABLE_RUN_2 = new BlockPos(7, 3, 6);
-    private static final BlockPos CABLE_RUN_3 = new BlockPos(7, 4, 6);
+    // The interface's own cable, climbing east of the line to the furnace's top.
+    private static final BlockPos OWN_CABLE_1 = new BlockPos(8, 2, 4);
+    private static final BlockPos OWN_CABLE_2 = new BlockPos(8, 3, 4);
+    private static final BlockPos OWN_CABLE_3 = new BlockPos(8, 4, 4);
+    private static final BlockPos OWN_CABLE_4 = new BlockPos(8, 4, 5);
     private static final BlockPos CABLE_ABOVE_FURNACE = new BlockPos(7, 4, 5);
     private static final BlockPos FURNACE = new BlockPos(7, 3, 5);
     private static final BlockPos ENCODER = CC_CD_DRIVE;
@@ -452,21 +458,28 @@ public final class FullJourneyClientTests {
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT);
 
-        // 8. The machine: switch, crafting cables, a furnace hung off the run with both buses, and coal.
-        ctx.thenGive(0, ComputingModule.CRAFTING_CABLE.stack(8), new ItemStack(ComputingModule.CRAFTING_SWITCH.get()),
-                        new ItemStack(Items.FURNACE), new ItemStack(ComputingModule.INPUT_BUS_ITEM.get()),
+        /*
+         * 8. The machine: a crafting cable from the computer, a Crafting Interface on it facing east into a cable of
+         *    its own that climbs to the furnace's top, where a router feeds it, a Receiving Bus under the furnace,
+         *    and coal.
+         */
+        ctx.thenGive(0, ComputingModule.CRAFTING_CABLE.stack(8),
+                        new ItemStack(ComputingModule.CRAFTING_INTERFACE_ITEM.get()), new ItemStack(Items.FURNACE),
+                        new ItemStack(ComputingModule.CRAFTING_ROUTER_ITEM.get()),
                         new ItemStack(ComputingModule.RECEIVING_BUS_ITEM.get()), new ItemStack(Items.COAL, 8))
                 .thenTeleport(SETTLE, new BlockPos(9, 2, 4), Direction.WEST)
                 .then(SETTLE, () -> ctx.selectHotbar(0))
                 .thenPlace(1, CRAFTING_CABLE)
+                .thenPlace(2, INTERFACE_CABLE)
+                .thenPlace(2, CABLE_BELOW_FURNACE)
                 .then(2, () -> ctx.selectHotbar(1))
-                .thenPlace(1, SWITCH)
+                .thenSneakClick(1, INTERFACE_CABLE, Direction.EAST)
                 .then(2, () -> ctx.selectHotbar(0))
-                .thenPlace(1, CABLE_BELOW_FURNACE)
-                .thenPlace(2, CABLE_RUN_1)
-                .thenPlace(2, CABLE_RUN_2)
-                .thenPlace(2, CABLE_RUN_3)
-                .thenPlaceAgainst(2, CABLE_ABOVE_FURNACE, Direction.NORTH)
+                .thenPlace(1, OWN_CABLE_1)
+                .thenPlace(2, OWN_CABLE_2)
+                .thenPlace(2, OWN_CABLE_3)
+                .thenPlaceAgainst(2, OWN_CABLE_4, Direction.SOUTH)
+                .thenPlaceAgainst(2, CABLE_ABOVE_FURNACE, Direction.WEST)
                 .then(2, () -> ctx.selectHotbar(2))
                 .thenPlace(1, FURNACE)
                 .then(2, () -> ctx.selectHotbar(3))
@@ -474,9 +487,9 @@ public final class FullJourneyClientTests {
                 .then(2, () -> ctx.selectHotbar(4))
                 .thenSneakClick(1, CABLE_BELOW_FURNACE, Direction.UP)
                 .thenScreenshot(SETTLE, "08-machine-run")
-                .thenWaitUntilServer(level -> switchDeclaresFurnace(ctx, level), SCREEN_WAIT,
-                        "the switch to discover the furnace over the cable run through its buses",
-                        level -> "declared=" + sw(ctx, level).declaredMachines() + " furnace=" + level.getBlockState(abs(ctx, FURNACE)))
+                .thenWaitUntilServer(level -> interfaceFeedsFurnace(ctx, level), SCREEN_WAIT,
+                        "the interface to feed the furnace through the router on its own cable",
+                        level -> "reach=" + reach(ctx, level) + " furnace=" + level.getBlockState(abs(ctx, FURNACE)))
                 .then(2, () -> ctx.selectHotbar(8))
                 .thenRightClick(1, FURNACE)
                 .thenAwaitScreen(AbstractFurnaceScreen.class, SCREEN_WAIT)
@@ -523,13 +536,14 @@ public final class FullJourneyClientTests {
                 .thenScreenshot(2, "09-studio")
                 /*
                  * Processing, transferred from the recipe viewer (the payload its transfer button sends): the raw
-                 * iron smelt, paired with the furnace the data maps.
+                 * iron smelt.
                  */
-                .then(0, () -> transferMachineRecipe(ctx, new ItemStack(Items.RAW_IRON), new ItemStack(Items.IRON_INGOT),
-                        "minecraft:smelting"))
-                .thenWaitUntilServer(level -> "minecraft:furnace".equals(cc(ctx, level).studio().machineType()), SCREEN_WAIT,
-                        "the smelt to land in the machine draft paired with the furnace",
-                        level -> "machine=" + cc(ctx, level).studio().machineType())
+                .then(0, () -> transferMachineRecipe(ctx, new ItemStack(Items.RAW_IRON),
+                        new ItemStack(Items.IRON_INGOT)))
+                .thenWaitUntilServer(level -> cc(ctx, level).studio().procInput(0) != null
+                                && cc(ctx, level).studio().procInput(0).key().equals(StorageKey.of(Items.RAW_IRON)),
+                        SCREEN_WAIT, "the smelt to land in the machine draft",
+                        level -> "input=" + cc(ctx, level).studio().procInput(0))
                 .then(2, () -> ctx.clickDesktop(studioPoint(ctx, studio(ctx).timeoutFieldCenter())))
                 .then(1, () -> {
                     for (int i = 0; i < 6; i++) {
@@ -614,7 +628,7 @@ public final class FullJourneyClientTests {
                 })
                 .then(2, () -> ctx.clickDesktop(app(ctx, "Crafting Manager", CraftingManagerApp.class).actionButtonCenter(0)))
                 .thenWaitUntil(() -> app(ctx, "Crafting Manager", CraftingManagerApp.class).romNames().size() == 2, SCREEN_WAIT,
-                        "the processing and multi-stage recipes to appear in the ROM")
+                        "the processing and multi-stage recipes to go into the interface")
                 .thenScreenshot(2, "10-crafting-manager-loaded")
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT);
@@ -639,8 +653,10 @@ public final class FullJourneyClientTests {
                 .thenWaitUntil(() -> app(ctx, "Network", NetworkInteractorApp.class).craftableNames().contains("Iron Ingot"), SCREEN_WAIT,
                         "the furnace recipe in the Crafting tab")
                 .then(0, () -> requestCraft(ctx, "Iron Ingot", 1))
-                .thenWaitUntilServer(level -> level.getBlockEntity(abs(ctx, FURNACE)) instanceof FurnaceBlockEntity f && f.getItem(0).is(Items.RAW_IRON),
-                        200, "the Input Bus to feed raw iron into the furnace", level -> "ops=" + mainframe(ctx, level).activeOperationRecords())
+                .thenWaitUntilServer(level -> level.getBlockEntity(abs(ctx, FURNACE)) instanceof FurnaceBlockEntity f
+                                && f.getItem(0).is(Items.RAW_IRON),
+                        200, "the router to feed raw iron into the furnace",
+                        level -> "ops=" + mainframe(ctx, level).activeOperationRecords())
                 .thenScreenshot(2, "11-smelting")
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT)
@@ -726,14 +742,12 @@ public final class FullJourneyClientTests {
     }
 
     /** Sends a machine recipe to the Studio's machine draft: the payload the viewer's transfer button sends. */
-    private static void transferMachineRecipe(final ClientTestContext ctx, final ItemStack input, final ItemStack output,
-                                              final String recipeType) {
+    private static void transferMachineRecipe(final ClientTestContext ctx, final ItemStack input,
+                                              final ItemStack output) {
         final PatternStudioApp app = studio(ctx);
-        net.neoforged.neoforge.network.PacketDistributor.sendToServer(
-                new dev.jstech.computers.integration.jei.payload.SetProcessingPatternPayload(app.host(), app.monitorPos(),
-                        List.of(dev.jstech.computers.crafting.PatternWorkbench.DataCell.fromStack(input)),
-                        List.of(dev.jstech.computers.crafting.PatternWorkbench.DataCell.fromStack(output)),
-                        recipeType));
+        PacketDistributor.sendToServer(new SetProcessingPatternPayload(app.host(), app.monitorPos(),
+                List.of(PatternWorkbench.DataCell.fromStack(input)),
+                List.of(PatternWorkbench.DataCell.fromStack(output))));
     }
 
     /** Sends a bench recipe to the Studio's bench: the payload the viewer's transfer button sends. */
@@ -788,16 +802,15 @@ public final class FullJourneyClientTests {
         return TestWorldBuilder.at(level, ctx.origin()).blockEntity(at, MediaReaderBlockEntity.class);
     }
 
-    private static dev.jstech.computers.blockentity.CraftingSwitchBlockEntity sw(
-            final ClientTestContext ctx, final ServerLevel level) {
-        return TestWorldBuilder.at(level, ctx.origin()).blockEntity(SWITCH,
-                dev.jstech.computers.blockentity.CraftingSwitchBlockEntity.class);
+    /* What the interface the player put on the crafting cable feeds. */
+    private static CraftingFloor.Reach reach(final ClientTestContext ctx, final ServerLevel level) {
+        final CraftingFloor.Site site = new CraftingFloor.Site(abs(ctx, INTERFACE_CABLE), Direction.EAST);
+        return CraftingFloor.through(level, site.cable()).reach(site);
     }
 
-    private static boolean switchDeclaresFurnace(final ClientTestContext ctx, final ServerLevel level) {
-        return level.getBlockEntity(abs(ctx, SWITCH)) instanceof dev.jstech.computers.blockentity
-                .CraftingSwitchBlockEntity s
-                && s.declaredMachines().stream().anyMatch(m -> m.machineType().equals("minecraft:furnace"));
+    private static boolean interfaceFeedsFurnace(final ClientTestContext ctx, final ServerLevel level) {
+        final CraftingFloor.Reach reach = reach(ctx, level);
+        return reach.mode() == CraftingFloor.Mode.CABLE && abs(ctx, FURNACE).equals(reach.machine());
     }
 
     private static int craftFiles(final ClientTestContext ctx, final ServerLevel level) {

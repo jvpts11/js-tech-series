@@ -8,8 +8,6 @@
 package dev.jstech.computers.operation.payload.crafting;
 
 import dev.jstech.computers.audio.SystemSound;
-import dev.jstech.computers.block.part.AbstractBusPart;
-import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.os.CraftPlannerApp;
 import dev.jstech.computers.client.os.NetworkInteractorApp;
@@ -23,7 +21,6 @@ import dev.jstech.computers.engine.CraftRequest;
 import dev.jstech.computers.engine.ICraftPlanning;
 import dev.jstech.computers.engine.NetworkOperationsService;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
-import dev.jstech.computers.menu.CraftingSwitchMenu;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.NetworkStorage;
@@ -33,12 +30,10 @@ import dev.jstech.computers.operation.payload.CraftCatalogPayload;
 import dev.jstech.computers.operation.payload.CraftPlanPayload;
 import dev.jstech.computers.operation.payload.CraftPlanRequestPayload;
 import dev.jstech.computers.operation.payload.CraftSubmitPayload;
-import dev.jstech.computers.operation.payload.SetCraftingSwitchFacePayload;
 import dev.jstech.computers.operation.payload.crafting.CraftPlanMath.PlanPreview;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.operation.IOperationResult;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.operation.OperationStatus;
@@ -53,7 +48,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -74,8 +68,7 @@ import static dev.jstech.computers.operation.payload.operations.OperationsPayloa
 import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.craftHost;
 
 /**
- * The payloads that plan and submit a craft from a terminal, send the list of what the network can craft and set
- * the face of a crafting switch.
+ * The payloads that plan and submit a craft from a terminal and send the list of what the network can craft.
  */
 public final class CraftingPayloads {
 
@@ -92,12 +85,6 @@ public final class CraftingPayloads {
                 ClientPayloadHandlers.onMainThread(CraftingPayloads::handleCraftPlan));
         ComputerAccess.accept(registrar, CraftSubmitPayload.TYPE, CraftSubmitPayload.STREAM_CODEC,
                 ComputerAccess.machine(CraftSubmitPayload::hostPos), CraftingPayloads::handleCraftSubmit);
-        ComputerAccess.onMenu(registrar, SetCraftingSwitchFacePayload.TYPE, SetCraftingSwitchFacePayload.STREAM_CODEC,
-                CraftingSwitchMenu.class, CraftingSwitchMenu::switchPos, SetCraftingSwitchFacePayload::switchPos,
-                CraftingPayloads::handleSetCraftingSwitchFace);
-        ComputerAccess.onMenu(registrar, RenameSwitchBusPayload.TYPE, RenameSwitchBusPayload.STREAM_CODEC,
-                CraftingSwitchMenu.class, CraftingSwitchMenu::switchPos, RenameSwitchBusPayload::switchPos,
-                CraftingPayloads::handleRenameSwitchBus);
     }
 
     private static void handleCraftCatalog(final CraftCatalogPayload payload, final Player player) {
@@ -415,36 +402,5 @@ public final class CraftingPayloads {
                 .map(status -> status == OperationStatus.COMPLETED || status == OperationStatus.COMPLETED_PARTIAL)
                 .orElse(false);
         machine.systemSound(level, made ? SystemSound.NOTIFY : SystemSound.ERROR);
-    }
-
-    private static void handleSetCraftingSwitchFace(final SetCraftingSwitchFacePayload payload,
-                                                    final CraftingSwitchMenu menu, final ServerPlayer player,
-                                                    final ServerLevel level) {
-        if (level.getBlockEntity(menu.switchPos()) instanceof CraftingSwitchBlockEntity sw) {
-            final Direction face = Direction.from3DDataValue(payload.face());
-            sw.setFaceName(face, payload.name());
-            sw.setFaceActive(face, payload.active());
-            sw.setFaceCategory(face, payload.category());
-        }
-    }
-
-    /**
-     * Renames the machine a Crafting Switch reaches over a crafting bus: the bus is not the block the player has
-     * open, so the rename is only applied when the switch's own survey currently lists that bus.
-     */
-    private static void handleRenameSwitchBus(final RenameSwitchBusPayload payload, final CraftingSwitchMenu menu,
-                                              final ServerPlayer player, final ServerLevel level) {
-        if (!(level.getBlockEntity(menu.switchPos()) instanceof CraftingSwitchBlockEntity sw)) {
-            return;
-        }
-        final boolean discovered = sw.busMachineLines().stream().anyMatch(line ->
-                line.cablePos().equals(payload.cablePos()) && line.busFace() == payload.busFace());
-        if (!discovered) {
-            return;
-        }
-        if (level.getBlockEntity(payload.cablePos()) instanceof CableBlockEntity cable
-                && cable.getPart(Direction.from3DDataValue(payload.busFace())) instanceof AbstractBusPart bus) {
-            bus.setName(payload.name());
-        }
     }
 }

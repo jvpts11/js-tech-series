@@ -14,7 +14,6 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -42,7 +41,6 @@ public final class FusionReactorBomGameTests {
     }
 
     private static final String ARENA = "empty";
-    private static final String INFUSER = "mekanism:metallurgic_infuser";
 
     private static Item mek(final String path) {
         return MekanismRig.item(MekanismRig.mek(path));
@@ -77,7 +75,7 @@ public final class FusionReactorBomGameTests {
                 List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(in), 1),
                         new ProcessingPattern.ProcessingInput(StorageKey.of(extra), extraCount)),
                 List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(out), 1, 100)),
-                INFUSER, 400);
+                400);
     }
 
     private static List<ProcessingPattern> machines() {

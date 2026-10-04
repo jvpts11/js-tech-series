@@ -31,6 +31,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.UnaryOperator;
 
 /**
@@ -431,5 +433,19 @@ public final class TestWorldBuilder {
         setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE);
         final CraftingComputerBlockEntity cc = placeRunningCraftingComputer(new BlockPos(5, 2, 2));
         return new CraftingNetwork(mainframe, rack, cc);
+    }
+
+    /**
+     * Stacks {@code count} more running Crafting Computers over the standard network's one, each at (5,2+i,2) with
+     * its rear on an Ethernet cable at (4,2+i,2) that climbs from the network's, for a test that needs more bench
+     * recipes than one computer's cards keep.
+     */
+    public List<CraftingComputerBlockEntity> stackCraftingComputers(final int count) {
+        final List<CraftingComputerBlockEntity> computers = new ArrayList<>();
+        for (int i = 1; i <= count; i++) {
+            setBlock(new BlockPos(4, 2 + i, 2), ComputingModule.ETHERNET_CABLE);
+            computers.add(placeRunningCraftingComputer(new BlockPos(5, 2 + i, 2)));
+        }
+        return computers;
     }
 }

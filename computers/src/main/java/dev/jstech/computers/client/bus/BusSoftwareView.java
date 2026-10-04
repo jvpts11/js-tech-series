@@ -83,6 +83,13 @@ final class BusSoftwareView {
         sections.clear();
         if (s.name().isEmpty()) {
             sections.add(new Section(BusTexts.ADDRESS, wrap(GameText.resolve(BusTexts.NO_NAME)), false));
+        } else if (menu.window() == BusLayout.Window.ROUTER) {
+            sections.add(new Section(BusTexts.ADDRESS, wrap(BusScript.routerAddress(s.name())), true));
+            sections.add(new Section(BusTexts.IQL, wrapAll(BusScript.routerIql(s)), true));
+            sections.add(new Section(BusTexts.SIGMA, wrapAll(BusScript.routerSigma(s)), true));
+        } else if (menu.window() == BusLayout.Window.RECEIVING) {
+            // Nothing a program sets reaches a Receiving Bus: it is set here, and credits what its interface fed.
+            sections.add(new Section(null, wrap(GameText.resolve(BusTexts.RECEIVING_SOFTWARE)), false));
         } else if (BusScript.iql(s).isEmpty()) {
             // A bus with nothing to set (the Vintage External Storage Bus) is still found by its address.
             sections.add(new Section(BusTexts.ADDRESS, wrap(BusScript.address(s.name())), true));

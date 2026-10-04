@@ -19,7 +19,7 @@ final class BusTexts {
 
     static final TextKey EXPORT_TITLE = TextKey.of("jsc.bus.screen.export_title", "EXPORT BUS");
     static final TextKey IMPORT_TITLE = TextKey.of("jsc.bus.screen.import_title", "IMPORT BUS");
-    static final TextKey INPUT_TITLE = TextKey.of("jsc.bus.screen.input_title", "CRAFTING INPUT BUS");
+    static final TextKey ROUTER_TITLE = TextKey.of("jsc.bus.screen.router_title", "CRAFTING INPUT ROUTER");
     static final TextKey RECEIVING_TITLE = TextKey.of("jsc.bus.screen.receiving_title", "CRAFTING RECEIVING BUS");
     static final TextKey EXTERNAL_TITLE = TextKey.of("jsc.bus.screen.external_title", "EXTERNAL STORAGE BUS");
     static final TextKey HOLDS = TextKey.of("jsc.bus.screen.holds", "HOLDS");
@@ -38,6 +38,8 @@ final class BusTexts {
     static final TextKey FILL_FIRST = TextKey.of("jsc.bus.screen.fill_first", "fill this before lower ones");
     static final TextKey NOTHING_TO_SET = TextKey.of("jsc.bus.screen.nothing_to_set",
             "Nothing to set: the network sees and uses all of the inventory.");
+    static final TextKey RECEIVING_SOFTWARE = TextKey.of("jsc.bus.screen.receiving_software",
+            "A Receiving Bus is set in CONFIGURE only: it credits what its interfaces fed, and software sets those.");
     static final TextKey CELL_HINT = TextKey.of("jsc.bus.screen.cell_hint",
             "Click with an item to list it here; with nothing in hand, to clear it");
     static final TextKey NAME_FIELD = TextKey.of("jsc.bus.screen.name_field", "name");
@@ -114,9 +116,15 @@ final class BusTexts {
     static final TextKey SPEED_VALUE = TextKey.of("jsc.bus.screen.speed_value", "%s it/t");
     static final TextKey CABLE_CARRIES = TextKey.of("jsc.bus.screen.cable_carries", "the cable carries %s");
     static final TextKey NO_CABLE = TextKey.of("jsc.bus.screen.no_cable", "on no network");
-    static final TextKey CRAFTING_NOTE = TextKey.of("jsc.bus.screen.passive_filter",
-            "Carries what the Crafting Switch sends to this face. The filter routes the face; the rest is the "
-                    + "Switch's.");
+    static final TextKey TIE = TextKey.of("jsc.bus.screen.tie", "TIE TO INTERFACE...");
+    static final TextKey CREDITED = TextKey.of("jsc.bus.screen.credited", "to %s");
+    static final TextKey UNEXPECTED_TO = TextKey.of("jsc.bus.screen.unexpected_to", "to the network: unexpected");
+    static final TextKey LATE_TO = TextKey.of("jsc.bus.screen.late_to", "where its settled job's outputs go");
+    static final TextKey STATUS_CREDITED = TextKey.of("jsc.bus.screen.status_credited", "CREDITED");
+    static final TextKey STATUS_UNEXPECTED = TextKey.of("jsc.bus.screen.status_unexpected", "UNEXPECTED");
+    static final TextKey STATUS_LATE = TextKey.of("jsc.bus.screen.status_late", "LATE");
+    static final TextKey CREDIT_NOTE = TextKey.of("jsc.bus.screen.credit_note",
+            "Credit is capped by what each job fed.");
     static final TextKey SET_BY = TextKey.of("jsc.bus.screen.set_by",
             "Set by the program %s. Changing it here takes it back by hand.");
 

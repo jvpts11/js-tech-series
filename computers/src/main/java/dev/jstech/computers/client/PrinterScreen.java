@@ -24,6 +24,30 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import org.jetbrains.annotations.Nullable;
 
+import static dev.jstech.computers.client.PrinterTexts.CANCEL;
+import static dev.jstech.computers.client.PrinterTexts.EMPTY_QUEUE;
+import static dev.jstech.computers.client.PrinterTexts.FROM_PAGE;
+import static dev.jstech.computers.client.PrinterTexts.FROM_PAGES;
+import static dev.jstech.computers.client.PrinterTexts.LINKED;
+import static dev.jstech.computers.client.PrinterTexts.MORE;
+import static dev.jstech.computers.client.PrinterTexts.NOTHING;
+import static dev.jstech.computers.client.PrinterTexts.NOW;
+import static dev.jstech.computers.client.PrinterTexts.NO_PAPER;
+import static dev.jstech.computers.client.PrinterTexts.OFFLINE;
+import static dev.jstech.computers.client.PrinterTexts.OUT;
+import static dev.jstech.computers.client.PrinterTexts.OUTPUT_FULL;
+import static dev.jstech.computers.client.PrinterTexts.PAGE;
+import static dev.jstech.computers.client.PrinterTexts.PAGE_OF;
+import static dev.jstech.computers.client.PrinterTexts.PAPER;
+import static dev.jstech.computers.client.PrinterTexts.PAPER_NOTE_1;
+import static dev.jstech.computers.client.PrinterTexts.PAPER_NOTE_2;
+import static dev.jstech.computers.client.PrinterTexts.PAUSE;
+import static dev.jstech.computers.client.PrinterTexts.PAUSED;
+import static dev.jstech.computers.client.PrinterTexts.PRINTING;
+import static dev.jstech.computers.client.PrinterTexts.QUEUE;
+import static dev.jstech.computers.client.PrinterTexts.RESUME;
+import static dev.jstech.computers.client.PrinterTexts.WAITING;
+
 /**
  * A printer's window, in its era's skin and the bus windows' frame: the printer's name and the lamp of its link, the
  * paper in its tray, what prints now and its page, the queue with the machine each document came from, the sheets that
@@ -31,30 +55,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PrinterScreen extends AbstractComputerScreen<PrinterMenu> {
 
-    /* The window's words, kept in their own holder, where a server can read them without this screen. */
-    private static final TextKey PAPER = PrinterTexts.PAPER;
-    private static final TextKey NOW = PrinterTexts.NOW;
-    private static final TextKey PAGE = PrinterTexts.PAGE;
-    private static final TextKey QUEUE = PrinterTexts.QUEUE;
-    private static final TextKey OUT = PrinterTexts.OUT;
-    private static final TextKey PAPER_NOTE_1 = PrinterTexts.PAPER_NOTE_1;
-    private static final TextKey PAPER_NOTE_2 = PrinterTexts.PAPER_NOTE_2;
-    private static final TextKey NOTHING = PrinterTexts.NOTHING;
-    private static final TextKey PAGE_OF = PrinterTexts.PAGE_OF;
-    private static final TextKey FROM_PAGES = PrinterTexts.FROM_PAGES;
-    private static final TextKey FROM_PAGE = PrinterTexts.FROM_PAGE;
-    private static final TextKey PRINTING = PrinterTexts.PRINTING;
-    private static final TextKey WAITING = PrinterTexts.WAITING;
-    private static final TextKey PAUSED = PrinterTexts.PAUSED;
-    private static final TextKey NO_PAPER = PrinterTexts.NO_PAPER;
-    private static final TextKey OUTPUT_FULL = PrinterTexts.OUTPUT_FULL;
-    private static final TextKey EMPTY_QUEUE = PrinterTexts.EMPTY_QUEUE;
-    private static final TextKey MORE = PrinterTexts.MORE;
-    private static final TextKey PAUSE = PrinterTexts.PAUSE;
-    private static final TextKey RESUME = PrinterTexts.RESUME;
-    private static final TextKey CANCEL = PrinterTexts.CANCEL;
-    private static final TextKey LINKED = PrinterTexts.LINKED;
-    private static final TextKey OFFLINE = PrinterTexts.OFFLINE;
+    /* The window's words live in PrinterTexts, their own holder, where a server can read them without this screen. */
 
     public PrinterScreen(final PrinterMenu menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);

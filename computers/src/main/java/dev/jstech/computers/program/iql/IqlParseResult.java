@@ -21,31 +21,42 @@ import dev.jstech.core.text.Text;
  * action from a Layer-2 definition.
  */
 public record IqlParseResult(IqlOperation operation, IqlDefinition definition, IqlBusStatement bus,
-                             IqlRedstoneStatement redstone, Text error, int position) {
+                             IqlRedstoneStatement redstone, IqlCraftingStatement crafting, Text error,
+                             int position) {
 
     /** Sentinel for "no particular token" (empty input, or a whole-statement error). */
     public static final int NO_POSITION = -1;
 
     public static IqlParseResult ok(final IqlOperation operation) {
-        return new IqlParseResult(operation, null, null, null, null, NO_POSITION);
+        return new IqlParseResult(operation, null, null, null, null, null, NO_POSITION);
     }
 
     public static IqlParseResult okDefinition(final IqlDefinition definition) {
-        return new IqlParseResult(null, definition, null, null, null, NO_POSITION);
+        return new IqlParseResult(null, definition, null, null, null, null, NO_POSITION);
     }
 
     /** A {@code SET BUS} statement, which sets one of a bus's settings. */
     public static IqlParseResult okBus(final IqlBusStatement bus) {
-        return new IqlParseResult(null, null, bus, null, null, NO_POSITION);
+        return new IqlParseResult(null, null, bus, null, null, null, NO_POSITION);
     }
 
     /** A {@code SET REDSTONE} statement, which makes one of the computer's Redstone Interfaces read or emit. */
     public static IqlParseResult okRedstone(final IqlRedstoneStatement redstone) {
-        return new IqlParseResult(null, null, null, redstone, null, NO_POSITION);
+        return new IqlParseResult(null, null, null, redstone, null, null, NO_POSITION);
+    }
+
+    /** A statement that sets a Crafting Interface or a Crafting Input Router. */
+    public static IqlParseResult okCrafting(final IqlCraftingStatement crafting) {
+        return new IqlParseResult(null, null, null, null, crafting, null, NO_POSITION);
     }
 
     public static IqlParseResult error(final Text error, final int position) {
-        return new IqlParseResult(null, null, null, null, error, position);
+        return new IqlParseResult(null, null, null, null, null, error, position);
+    }
+
+    /** Whether this parsed to a statement that sets a part of the crafting network. */
+    public boolean isCrafting() {
+        return crafting != null;
     }
 
     /** Whether this parsed to a {@code SET BUS} statement. */

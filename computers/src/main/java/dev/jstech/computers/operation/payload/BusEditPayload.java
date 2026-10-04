@@ -59,6 +59,8 @@ public record BusEditPayload(int op, int slot, long value, String text) implemen
     public static final int REMOVE_CONDITION = 14;
     /** An External Storage Bus read and written (0), read only (1) or written only (2). */
     public static final int ACCESS = 15;
+    /** A Receiving Bus tied by hand to the interface its window lists at {@code slot}, or untied from it. */
+    public static final int TIE = 16;
 
     /** The longest text a change names: a tag, an item's id, a bus's name. */
     public static final int MAX_TEXT = 64;

@@ -46,8 +46,7 @@ public final class BusWindowClientTests {
     private static final List<Supplier<? extends PartType<? extends AbstractBusPart>>> BUSES = List.of(
             ComputingParts.VINTAGE_IMPORT, ComputingParts.LEGACY_IMPORT, ComputingParts.TRANSITION_IMPORT,
             ComputingParts.IMPORT, ComputingParts.ADVANCED_IMPORT, ComputingParts.VINTAGE_EXPORT,
-            ComputingParts.INPUT, ComputingParts.VINTAGE_EXTERNAL, ComputingParts.LEGACY_EXTERNAL,
-            ComputingParts.ADVANCED_EXTERNAL);
+            ComputingParts.VINTAGE_EXTERNAL, ComputingParts.LEGACY_EXTERNAL, ComputingParts.ADVANCED_EXTERNAL);
 
     private BusWindowClientTests() {
     }
@@ -58,7 +57,7 @@ public final class BusWindowClientTests {
                 .thenServer(SETTLE, level -> mount(ctx, level))
                 .thenTeleport(SETTLE, PLAYER, Direction.NORTH);
         final String[] names = {"vintage", "legacy", "transition", "standard", "advanced", "vintage-export",
-                "crafting-input", "vintage-external", "legacy-external", "advanced-external"};
+                "vintage-external", "legacy-external", "advanced-external"};
         for (int i = 0; i < BUSES.size(); i++) {
             final BlockPos cable = cableOf(i);
             final String name = names[i];
@@ -95,11 +94,11 @@ public final class BusWindowClientTests {
         final BusLayout.Row access = BusLayout.rows(new BusLayout.Shape(BusAbilities.external(HardwareEra.LEGACY),
                 BusLayout.Window.EXTERNAL, 2, 0, 1, false, 1, 0, false, 2)).stream()
                 .filter(r -> r.kind() == BusLayout.Kind.ACCESS).findFirst().orElseThrow();
-        open(ctx, cableOf(8))
+        open(ctx, cableOf(7))
                 .then(SETTLE, () -> ctx.clickGui(120, BusLayout.CONFIGURE_VIEW_Y + access.y() + 4))
-                .thenWaitUntilServer(level -> bus(ctx, level, 8).access() == BusSettings.READ_ONLY, SCREEN_WAIT,
+                .thenWaitUntilServer(level -> bus(ctx, level, 7).access() == BusSettings.READ_ONLY, SCREEN_WAIT,
                         "the Legacy External Storage Bus to be read only", level -> "access "
-                                + bus(ctx, level, 8).access())
+                                + bus(ctx, level, 7).access())
                 .thenScreenshot(SETTLE, "legacy-external-read-only")
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT);

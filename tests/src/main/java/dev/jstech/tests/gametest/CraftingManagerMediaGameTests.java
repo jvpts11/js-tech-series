@@ -136,10 +136,10 @@ public final class CraftingManagerMediaGameTests {
                     helper.assertTrue(decoded.mediaFiles().contains(longName),
                             "the long file name travels whole; got " + decoded.mediaFiles());
                     boolean whole = false;
-                    for (final CraftManagerStatePayload.WireRomEntry entry : decoded.romEntries()) {
+                    for (final CraftManagerStatePayload.WireRomEntry entry : decoded.entries()) {
                         whole |= "n".repeat(70).equals(entry.name().english());
                     }
-                    helper.assertTrue(whole, "the long result name travels whole; got " + decoded.romEntries());
+                    helper.assertTrue(whole, "the long result name travels whole; got " + decoded.entries());
                 })
                 .thenSucceed();
     }

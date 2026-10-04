@@ -23,9 +23,9 @@ final class PatternStudioScreenTexts {
     static final TextKey BENCH_TAB = TextKey.of("jsc.pattern_studio.screen.bench_tab", "Bench");
     static final TextKey MACHINE_TAB = TextKey.of("jsc.pattern_studio.screen.machine_tab", "Machine");
     static final TextKey MULTI_STAGE_TAB = TextKey.of("jsc.pattern_studio.screen.multi_stage_tab", "Multi-stage");
-    static final TextKey IN_RECIPE_ROM = TextKey.of("jsc.pattern_studio.screen.in_recipe_rom", "In the Recipe ROM");
-    static final TextKey IN_THE_ROM = TextKey.of("jsc.pattern_studio.screen.in_the_rom", "In the ROM");
-    static final TextKey IN_ROM = TextKey.of("jsc.pattern_studio.screen.in_rom", "In ROM");
+    static final TextKey IN_RECIPE_ROM = TextKey.of("jsc.pattern_studio.screen.in_recipe_rom", "In a card's ROM");
+    static final TextKey IN_THE_ROM = TextKey.of("jsc.pattern_studio.screen.in_the_rom", "In an interface");
+    static final TextKey IN_ROM = TextKey.of("jsc.pattern_studio.screen.in_rom", "Loaded");
     static final TextKey CLEAR = TextKey.of("jsc.pattern_studio.screen.clear", "Clear");
     static final TextKey TIMEOUT = TextKey.of("jsc.pattern_studio.screen.timeout", "Timeout");
     static final TextKey NO_STAGES = TextKey.of("jsc.pattern_studio.screen.no_stages", "No stages yet");
@@ -40,8 +40,6 @@ final class PatternStudioScreenTexts {
     /* How many a recipe makes, and of what: "4 x Oak Planks". */
     static final TextKey RESULT = TextKey.of("jsc.pattern_studio.screen.result", "%s x %s");
     static final TextKey FILE = TextKey.of("jsc.pattern_studio.screen.file", "File: %s");
-    static final TextKey PICK_MACHINE_BUTTON =
-            TextKey.of("jsc.pattern_studio.screen.pick_machine_button", "Machine...");
     static final TextKey STAGE_BENCH = TextKey.of("jsc.pattern_studio.screen.stage_bench", "%s. [bench] %s");
     static final TextKey STAGE_MACHINE = TextKey.of("jsc.pattern_studio.screen.stage_machine", "%s. [machine] %s");
 
@@ -75,14 +73,10 @@ final class PatternStudioScreenTexts {
     // The action bar.
     static final TextKey BURN = TextKey.of("jsc.pattern_studio.screen.burn", "Burn");
     static final TextKey SAVE_TO_DISK = TextKey.of("jsc.pattern_studio.screen.save_to_disk", "Save to disk");
-    static final TextKey LOAD_ROM = TextKey.of("jsc.pattern_studio.screen.load_rom", "Load ROM");
+    static final TextKey LOAD_ROM = TextKey.of("jsc.pattern_studio.screen.load_rom", "Load");
 
     // The popups.
-    static final TextKey PICK_MACHINE = TextKey.of("jsc.pattern_studio.screen.pick_machine", "Pick a machine");
-    static final TextKey CLOSE = TextKey.of("jsc.pattern_studio.screen.close", "Close");
     static final TextKey DONE = TextKey.of("jsc.pattern_studio.screen.done", "Done");
-    /* A recipe category as a machine choice: any machine that runs it. */
-    static final TextKey ANY_CATEGORY = TextKey.of("jsc.pattern_studio.screen.any_category", "Any %s");
     static final TextKey OUTPUT_AMOUNT =
             TextKey.of("jsc.pattern_studio.screen.output_amount", "Output amount per run");
     static final TextKey INPUT_AMOUNT = TextKey.of("jsc.pattern_studio.screen.input_amount", "Input amount per run");

@@ -19,8 +19,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Access joins the small computers to a router; the backbone joins the routers, the Mainframe and the racks; the
  * long distance joins two networks, between two gateways; HPC joins a supercomputer's nodes to its interface; the
- * crafting line joins the crafting switches to their computer. Splitting the work this way is what keeps a network
- * from needing channels or subnetworks: a player lays the line the job asks for, never counts what a cable holds.
+ * crafting line joins a crafting computer to the parts that feed its machines. Splitting the work this way is what
+ * keeps a network from needing channels or subnetworks: a player lays the line the job asks for, never counts what a
+ * cable holds.
  *
  * <p>Each era of a line is a generation of it, so a port takes its own era's cable and every earlier one. The crafting
  * line has a single cable for every era. {@link DataLines} turns a line into what cables and ports are made of.

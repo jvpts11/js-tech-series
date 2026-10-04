@@ -23,23 +23,24 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A machine-crafting recipe: a list of inputs fed into a named machine TYPE, producing a list of outputs, with
- * a player-set timeout. Inputs and outputs are {@link StorageKey}s, so they carry items OR fluids without
- * distinction (fluid crafts only make sense here, never in a 3x3 bench {@link CraftingPattern}). The machine is
- * treated as a black box: the engine inserts the inputs, waits for the declared outputs, and fails if they do
- * not appear within {@code timeoutTicks}. Each output declares a CHANCE %: 100 = guaranteed, less = a
- * probabilistic byproduct that feeds planning but never blocks the craft (the real yield is counted at runtime).
+ * A processing recipe: what goes into a machine and what is expected out of it, with a player-set timeout, and
+ * nothing about which machine. Inputs and outputs are {@link StorageKey}s, so they carry items, fluids or chemicals
+ * without distinction (fluid crafts only make sense here, never in a 3x3 bench {@link CraftingPattern}). The recipe
+ * runs wherever a Crafting Interface holds it: the machine there is a black box that is fed the inputs, and the job
+ * waits for the declared outputs and fails if none appear within {@code timeoutTicks}. Each output declares a CHANCE
+ * %: 100 = guaranteed, less = a probabilistic byproduct that feeds planning but never blocks the craft (the real
+ * yield is counted at runtime). Whatever else comes out is an unexpected output, which never fails a job.
  */
-public record ProcessingPattern(List<ProcessingInput> inputs, List<ProcessingOutput> outputs,
-                                String machineType, int timeoutTicks, String name, String note) {
+public record ProcessingPattern(List<ProcessingInput> inputs, List<ProcessingOutput> outputs, int timeoutTicks,
+                                String name, String note) {
 
     public static final int DEFAULT_TIMEOUT_TICKS = 200;
     public static final int FULL_CHANCE = 100;
 
     /** A recipe without an author's name or note: it goes by its primary output. */
     public ProcessingPattern(final List<ProcessingInput> inputs, final List<ProcessingOutput> outputs,
-                             final String machineType, final int timeoutTicks) {
-        this(inputs, outputs, machineType, timeoutTicks, "", "");
+                             final int timeoutTicks) {
+        this(inputs, outputs, timeoutTicks, "", "");
     }
 
     /**
@@ -99,7 +100,6 @@ public record ProcessingPattern(List<ProcessingInput> inputs, List<ProcessingOut
     public ProcessingPattern {
         inputs = List.copyOf(inputs);
         outputs = List.copyOf(outputs);
-        machineType = machineType == null ? "" : machineType;
         timeoutTicks = Math.max(1, timeoutTicks);
         name = Utf8Text.field(name, CraftingPattern.MAX_NAME);
         note = Utf8Text.field(note, CraftingPattern.MAX_NOTE);
@@ -108,7 +108,6 @@ public record ProcessingPattern(List<ProcessingInput> inputs, List<ProcessingOut
     public static final Codec<ProcessingPattern> CODEC = RecordCodecBuilder.create(i -> i.group(
             ProcessingInput.CODEC.listOf().fieldOf("inputs").forGetter(ProcessingPattern::inputs),
             ProcessingOutput.CODEC.listOf().fieldOf("outputs").forGetter(ProcessingPattern::outputs),
-            Codec.STRING.fieldOf("machine").forGetter(ProcessingPattern::machineType),
             Codec.INT.fieldOf("timeout").forGetter(ProcessingPattern::timeoutTicks),
             Codec.STRING.optionalFieldOf("name", "").forGetter(ProcessingPattern::name),
             Codec.STRING.optionalFieldOf("note", "").forGetter(ProcessingPattern::note)
@@ -118,7 +117,6 @@ public record ProcessingPattern(List<ProcessingInput> inputs, List<ProcessingOut
             StreamCodec.composite(
                     ProcessingInput.STREAM_CODEC.apply(ByteBufCodecs.list(64)), ProcessingPattern::inputs,
                     ProcessingOutput.STREAM_CODEC.apply(ByteBufCodecs.list(64)), ProcessingPattern::outputs,
-                    ByteBufCodecs.stringUtf8(64), ProcessingPattern::machineType,
                     ByteBufCodecs.VAR_INT, ProcessingPattern::timeoutTicks,
                     ByteBufCodecs.stringUtf8(CraftingPattern.MAX_NAME), ProcessingPattern::name,
                     ByteBufCodecs.stringUtf8(CraftingPattern.MAX_NOTE), ProcessingPattern::note,
@@ -140,7 +138,7 @@ public record ProcessingPattern(List<ProcessingInput> inputs, List<ProcessingOut
 
     /** The same recipe under a new name and note. */
     public ProcessingPattern withName(final String newName, final String newNote) {
-        return new ProcessingPattern(inputs, outputs, machineType, timeoutTicks, newName, newNote);
+        return new ProcessingPattern(inputs, outputs, timeoutTicks, newName, newNote);
     }
 
     /** Total of each input key per run (merging duplicate keys), for reservation/planning. */
@@ -158,10 +156,25 @@ public record ProcessingPattern(List<ProcessingInput> inputs, List<ProcessingOut
         return outputs.isEmpty() ? null : outputs.get(0);
     }
 
-    /** Two patterns describe the same machine recipe when their machine, inputs and outputs all match. */
+    /** Two patterns describe the same recipe when their inputs and outputs all match, whatever they are called. */
     public boolean sameRecipe(final ProcessingPattern other) {
-        return machineType.equals(other.machineType)
-                && inputs.equals(other.inputs)
-                && outputs.equals(other.outputs);
+        return inputs.equals(other.inputs) && outputs.equals(other.outputs);
+    }
+
+    /**
+     * The recipe written as one line of its inputs and outputs, the same for every pattern of the same recipe
+     * ({@link #sameRecipe}): what an interface tells one recipe from another by while it runs one at a time.
+     */
+    public String identity() {
+        final StringBuilder line = new StringBuilder();
+        for (final ProcessingInput in : inputs) {
+            line.append(in.key().id()).append('*').append(in.amount()).append(';');
+        }
+        line.append("->");
+        for (final ProcessingOutput out : outputs) {
+            line.append(out.key().id()).append('*').append(out.amount()).append('@').append(out.chancePercent())
+                    .append(';');
+        }
+        return line.toString();
     }
 }

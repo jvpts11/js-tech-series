@@ -164,6 +164,10 @@ public final class BusLayout {
     private static final int NOTE_LINES = 4;
     /* The lines an External Storage Bus's access takes: its three options do not fit beside its word on one. */
     private static final int ACCESS_LINES = 2;
+    /* A crafting part's window at its most: its lines with their notes, and its warning boxes. */
+    private static final int MOST_CRAFT_LINES = 6;
+    private static final int MOST_CRAFT_BOXES = 3;
+    private static final int CRAFT_BOX_LINES = 3;
     private static final int[] TAB_X = {8, 64, 114};
     private static final int[] TAB_W = {54, 48, 48};
 
@@ -178,15 +182,21 @@ public final class BusLayout {
     public enum Kind {
         INTRO, NOW, HOLDS, FILTER, ITEMS_LABEL, ITEM, ADD_ITEM, TAGS, TAG_EDITOR, MATCH, FUZZY_NOTE, FILTER_MODE,
         ACCESS, KEEP, MAX, MODE, POWER, PRIORITY, CONDITIONS_LABEL, CONDITION, ADD_CONDITION, CONDITION_EDITOR,
-        SPEED, NOTE
+        SPEED, NOTE, CRAFT_LINE
     }
 
     /**
-     * What kind of bus a window is for: one that moves (an Import or an Export Bus), a crafting bus, which has its
-     * filter and nothing else to set, or an External Storage Bus, which lends the network an inventory.
+     * What kind of bus a window is for: one that moves (an Import or an Export Bus); a crafting part, a Crafting Input
+     * Router or a Crafting Receiving Bus, which has its filter and the lines of what it is part of; or an External
+     * Storage Bus, which lends the network an inventory.
      */
     public enum Window {
-        MOVER, CRAFTING, EXTERNAL
+        MOVER, ROUTER, RECEIVING, EXTERNAL;
+
+        /** Whether it is a crafting part's window. */
+        public boolean crafting() {
+            return this == ROUTER || this == RECEIVING;
+        }
     }
 
     /**
@@ -202,17 +212,49 @@ public final class BusLayout {
      * @param fuzzyLines     the lines the loose match's note takes
      * @param conditions     how many conditions the bus has
      * @param editingCondition whether a condition is being written
-     * @param noteLines      the lines the note at the end of a crafting or an external bus's rows takes
+     * @param noteLines      the lines the note at the end of an external bus's rows takes
+     * @param crafting       for a crafting part, how tall each line of what it is part of is, in order
      */
     public record Shape(BusAbilities abilities, Window window, int introLines, int itemRows, int tagLines,
                         boolean editingTag, int fuzzyLines, int conditions, boolean editingCondition,
-                        int noteLines) {
+                        int noteLines, List<Integer> crafting) {
+
+        public Shape {
+            crafting = List.copyOf(crafting);
+        }
+
+        /** A bus that is no crafting part. */
+        public Shape(final BusAbilities abilities, final Window window, final int introLines, final int itemRows,
+                     final int tagLines, final boolean editingTag, final int fuzzyLines, final int conditions,
+                     final boolean editingCondition, final int noteLines) {
+            this(abilities, window, introLines, itemRows, tagLines, editingTag, fuzzyLines, conditions,
+                    editingCondition, noteLines, List.of());
+        }
 
         /** The rows at their most: every item, every condition, both editors open, every paragraph long. */
         public static Shape most(final BusAbilities abilities, final Window window) {
+            final List<Integer> crafting = new ArrayList<>();
+            if (window.crafting()) {
+                for (int i = 0; i < MOST_CRAFT_LINES; i++) {
+                    crafting.add(craftLine(true));
+                }
+                for (int i = 0; i < MOST_CRAFT_BOXES; i++) {
+                    crafting.add(craftBox(CRAFT_BOX_LINES));
+                }
+            }
             return new Shape(abilities, window, INTRO_LINES, BusAbilities.FILTER_SLOTS, 2, true, 3,
-                    MOST_CONDITIONS - 1, true, NOTE_LINES);
+                    MOST_CONDITIONS - 1, true, NOTE_LINES, crafting);
         }
+    }
+
+    /** How tall a crafting line of a word and a value is: one row, or two when a note goes under the value. */
+    public static int craftLine(final boolean withNote) {
+        return withNote ? 2 * LINE + 4 : ROW;
+    }
+
+    /** How tall a crafting warning or note box of that many lines is. */
+    public static int craftBox(final int lines) {
+        return Math.max(1, lines) * LINE + 6;
     }
 
     /** What a bus of {@code era} in a window of that kind can be set to. */
@@ -225,9 +267,11 @@ public final class BusLayout {
         final BusAbilities can = shape.abilities();
         final List<Row> rows = new ArrayList<>();
         final int[] y = {0};
-        if (shape.window() == Window.CRAFTING) {
+        if (shape.window().crafting()) {
             add(rows, y, Kind.FILTER, CELL + 2, 0);
-            add(rows, y, Kind.NOTE, paragraph(shape.noteLines()), 0);
+            for (int i = 0; i < shape.crafting().size(); i++) {
+                add(rows, y, Kind.CRAFT_LINE, shape.crafting().get(i), i);
+            }
             return rows;
         }
         if (shape.window() == Window.EXTERNAL) {
@@ -522,6 +566,18 @@ public final class BusLayout {
                     l.text(n + "_label", LABEL_X, y + 2, 5, 0.75f);
                     l.text(n + "_value", CONTROL_X, y + 2, 7, 0.75f);
                     l.text(n + "_note", CONTROL_X + 32, y + 2, 21, 0.75f);
+                }
+                case CRAFT_LINE -> {
+                    // A word and its value, with a note under the value, or a box wrapped to the row's width.
+                    if (row.height() == craftLine(true) || row.height() == craftLine(false)) {
+                        l.text(n + "_label", LABEL_X, y + 2, 8, 0.75f);
+                        l.text(n + "_value", CONTROL_X, y + 2, 20, 0.75f);
+                        if (row.height() == craftLine(true)) {
+                            l.text(n + "_note", CONTROL_X, y + 2 + LINE, 20, 0.75f);
+                        }
+                    } else {
+                        l.box(n + "_box", LABEL_X, y, ROW_W, row.height() - 2);
+                    }
                 }
             }
         }

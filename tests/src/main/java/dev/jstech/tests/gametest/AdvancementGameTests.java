@@ -19,12 +19,16 @@ import dev.jstech.computers.advancement.OperationMilestones;
 import dev.jstech.computers.advancement.PendingAwards;
 import dev.jstech.computers.advancement.ProgramTravels;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestMachines;
+import dev.jstech.tests.testkit.CraftingRig;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.Criterion;
 import net.minecraft.core.BlockPos;
@@ -46,6 +50,8 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -265,6 +271,42 @@ public final class AdvancementGameTests {
             leave(player);
         }
         helper.succeed();
+    }
+
+    /**
+     * A bench craft whose tree runs a machine step earns Machine Learning for whoever works the Mainframe, though the
+     * machine step is not an Operation of its own: the stone for a button smelted in a kiln through its interface.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 300)
+    public static void machineLearning_isEarnedByACraftWhoseTreeRunsAMachine(final GameTestHelper helper) {
+        final ServerPlayer player = join(helper);
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        final CraftingRig rig = CraftingRig.direct(world, net.cc(), TestMachines.KILN.get());
+        final List<ItemStack> grid = new ArrayList<>(Collections.nCopies(CraftingPattern.GRID_SIZE, ItemStack.EMPTY));
+        grid.set(0, new ItemStack(Items.STONE));
+        helper.startSequence()
+                .thenExecuteAfter(6, () -> {
+                    MachineOperators.note(net.mainframe(), player);
+                    net.seed(Items.COBBLESTONE, 4);
+                    rig.hold(CraftingRig.pattern(Items.COBBLESTONE, Items.STONE, 200));
+                    net.cc().loadPattern(new CraftingPattern(grid, new ItemStack(Items.STONE_BUTTON)));
+                })
+                .thenExecuteAfter(4, () -> helper.assertTrue(net.mainframe().submitNetworkCraft(
+                        StorageKey.of(Items.STONE_BUTTON), 1, false, "test") != null,
+                        "the button is planned through the kiln"))
+                .thenWaitUntil(() -> helper.assertTrue(net.storage(helper.getLevel())
+                        .count(StorageKey.of(Items.STONE_BUTTON)) == 1, "the button is not made yet"))
+                .thenExecuteAfter(4, () -> {
+                    try {
+                        helper.assertTrue(done(player, "networks/machine_learning"),
+                                "a craft that ran a machine on its way earns Machine Learning");
+                        helper.assertTrue(done(player, "networks/the_factory_must_grow"), "and an autocraft's own");
+                    } finally {
+                        leave(player);
+                    }
+                })
+                .thenSucceed();
     }
 
     /** Every event an advancement waits for is one the code can report: a misspelt id would never be earned. */

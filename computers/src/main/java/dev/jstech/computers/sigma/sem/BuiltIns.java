@@ -170,7 +170,7 @@ public final class BuiltIns {
      */
     private static final Set<String> SUBSET_TYPES =
             Set.of("Console", "File", "Program", "Math", "Convert", "Time", "Computer", "Script", "Sound", "Speaker",
-                    "Random", "FILE", "Bus", "BusItem", "Redstone");
+                    "Random", "FILE", "Bus", "BusItem", "Redstone", "CraftInterface", "CraftRouter");
 
     /**
      * The type known by exactly {@code fullName}, its namespace in front ({@code System.IO.Console}),

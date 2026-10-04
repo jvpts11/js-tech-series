@@ -9,36 +9,44 @@ package dev.jstech.tests.clienttest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.block.part.InputBusPart;
-import dev.jstech.computers.block.part.ReceivingBusPart;
+import dev.jstech.computers.block.part.AbstractBusPart;
+import dev.jstech.computers.block.part.CraftingInterfacePart;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
+import dev.jstech.computers.client.bus.AbstractBusScreen;
+import dev.jstech.computers.client.bus.CraftingInterfaceScreen;
+import dev.jstech.computers.client.bus.CraftingRouterScreen;
+import dev.jstech.computers.client.bus.ReceivingBusScreen;
 import dev.jstech.computers.client.os.CraftingManagerApp;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.client.os.NetworkInteractorApp;
 import dev.jstech.computers.client.os.PatternStudioApp;
+import dev.jstech.computers.crafting.CraftingFloor;
+import dev.jstech.computers.crafting.MultiStagePattern;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.gui.layout.CraftingInterfaceLayout;
 import dev.jstech.computers.integration.jei.payload.SetProcessingPatternPayload;
 import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.operation.payload.InterfaceView;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.tests.TestMachines;
 import dev.jstech.tests.testkit.CraftFiles;
+import dev.jstech.tests.testkit.CraftingRig;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
@@ -47,9 +55,9 @@ import java.util.List;
 
 /**
  * Client tests for the machine-autocrafting chain as the player experiences it: the Pattern Studio authoring
- * recipes on a computer and sending them to its encoder, the Crafting Manager loading a disc's craft into the
- * Recipe ROM, the Network Interactor and the Command Prompt requesting crafts that drive a furnace through the
- * switch and buses, and the Crafting Switch GUI reporting what it sees.
+ * recipes on a computer and sending them to its encoder, the Crafting Manager loading a disc's craft into a Crafting
+ * Card, the Network Interactor and the Command Prompt requesting crafts that drive a machine through its Crafting
+ * Interface, and the windows of the interface, the router and the Receiving Bus showing what they see.
  */
 public final class CraftingChainClientTests {
 
@@ -77,10 +85,9 @@ public final class CraftingChainClientTests {
     private static final String STUDIO_LAUNCHER = "Pattern Studio";
 
     /**
-     * Authors a furnace recipe the way the player does now: on the Pattern Studio, with the raw iron smelt
-     * transferred from the recipe viewer (the same payload its transfer button sends, paired with the furnace
-     * the data maps it to), with the timeout typed in, then Burn sends it to the encoder beside the computer,
-     * which puts the .craft on the disc in its bay.
+     * Authors a smelting recipe the way the player does now: on the Pattern Studio, with the raw iron smelt
+     * transferred from the recipe viewer (the same payload its transfer button sends), with the timeout typed in,
+     * then Burn sends it to the encoder beside the computer, which puts the .craft on the disc in its bay.
      */
     @ClientTest(timeoutTicks = 2400)
     public static void patternStudio_burnsATransferredMachineRecipeAtTheEncoder(final ClientTestContext ctx) {
@@ -130,8 +137,8 @@ public final class CraftingChainClientTests {
                 // The raw iron smelt, transferred from the viewer: the payload its transfer button sends.
                 .then(0, () -> transferSmelt(ctx))
                 .thenWaitUntil(() -> studio(ctx).activeTab() == PatternStudioApp.TAB_MACHINE
-                                && "minecraft:furnace".equals(studio(ctx).state().machineType()),
-                        SCREEN_WAIT, "the smelt to land in the machine draft paired with the furnace")
+                                && !studio(ctx).state().inputs().isEmpty(),
+                        SCREEN_WAIT, "the smelt to land in the machine draft")
                 .thenServer(0, level -> {
                     final var studio = cc(ctx, level).studio();
                     ctx.assertTrue(studio.procInput(0) != null && studio.procInput(0).key().equals(StorageKey.of(Items.RAW_IRON)),
@@ -303,21 +310,16 @@ public final class CraftingChainClientTests {
     }
 
     private static final BlockPos MAINFRAME = new BlockPos(1, 2, 2);
-    private static final BlockPos CRAFTING_CABLE = new BlockPos(5, 2, 3);
-    private static final BlockPos SWITCH = new BlockPos(5, 2, 4);
-    private static final BlockPos FURNACE = new BlockPos(5, 2, 5);
-    private static final BlockPos CABLE_ABOVE_FURNACE = new BlockPos(5, 3, 5);
-    private static final BlockPos CABLE_BELOW_FURNACE = new BlockPos(5, 1, 5);
     private static final String NETWORK_LAUNCHER = "Network";
-    private static final int CRAFT_WAIT = 200;
+    private static final int CRAFT_WAIT = 300;
 
     /**
-     * The player asks the Network Interactor for iron ingots that only a furnace recipe can make: the request
-     * must reach the processing engine, which feeds the furnace through the Crafting Input Bus above it and
-     * collects through the Crafting Receiving Bus below it, and the ingots must land in network storage.
+     * The player asks the Network Interactor for iron ingots that only a machine recipe can make: the request
+     * must reach the processing engine, which feeds the test kiln through the Crafting Interface against it and
+     * collects through the Crafting Receiving Bus beside it, and the ingots must land in network storage.
      */
     @ClientTest(timeoutTicks = 2400)
-    public static void networkInteractor_requestDrivesTheFurnaceThroughTheSwitchAndBuses(final ClientTestContext ctx) {
+    public static void networkInteractor_requestDrivesTheKilnThroughItsInterface(final ClientTestContext ctx) {
         ctx.thenBuild(0, world -> {
                     final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
                     net.cc().getHardware().setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START + 1,
@@ -326,49 +328,15 @@ public final class CraftingChainClientTests {
                     net.cc().togglePower();
                     net.cc().togglePower();
                     world.placeMonitor(MONITOR, Direction.EAST);
-                    /*
-                     * The machine: a vanilla furnace (sided: in through the top, out through the bottom) on a
-                     * crafting cable run behind the switch, with the two crafting buses aimed at it.
-                     */
-                    world.setBlock(CRAFTING_CABLE, ComputingModule.CRAFTING_CABLE);
-                    world.setBlock(SWITCH, ComputingModule.CRAFTING_SWITCH.get());
-                    world.setBlock(FURNACE, Blocks.FURNACE);
-                    world.setBlock(CABLE_ABOVE_FURNACE, ComputingModule.CRAFTING_CABLE);
-                    world.setBlock(CABLE_BELOW_FURNACE, ComputingModule.CRAFTING_CABLE);
+                    // The machine, and the smelting recipe in its interface (placing it from the GUI has its own test).
+                    CraftingRig.direct(world, net.cc(), TestMachines.KILN.get()).hold(smelt());
                     net.seed(Items.RAW_IRON, 32);
-                    /*
-                     * Finished ingots already in the furnace's output slot: collecting them proves the receiving
-                     * path without waiting out real smelting (the furnace has no fuel here).
-                     */
-                    if (world.getBlockEntity(FURNACE) instanceof FurnaceBlockEntity furnace) {
-                        furnace.setItem(2, new ItemStack(Items.IRON_INGOT, 8));
-                    }
-                })
-                .thenServer(SETTLE + 2, level -> {
-                    final TestWorldBuilder world = TestWorldBuilder.at(level, ctx.origin());
-                    if (world.getBlockEntity(CABLE_ABOVE_FURNACE) instanceof CableBlockEntity c) {
-                        c.addPart(Direction.DOWN, new InputBusPart());
-                    }
-                    if (world.getBlockEntity(CABLE_BELOW_FURNACE) instanceof CableBlockEntity c) {
-                        c.addPart(Direction.UP, new ReceivingBusPart());
-                    }
-                    // The furnace recipe sits in the Recipe ROM (loading it through the GUI has its own test).
-                    final ProcessingPattern pattern = new ProcessingPattern(
-                            List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.RAW_IRON), 1L)),
-                            List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(Items.IRON_INGOT), 1L, 100)),
-                            "minecraft:furnace", 200);
-                    ctx.assertTrue(world.blockEntity(CRAFTING_COMPUTER, CraftingComputerBlockEntity.class)
-                            .loadMachineRecipe(NetworkRecipe.ofProcessing(pattern)), "the furnace recipe loads into the ROM");
                 })
                 .thenServer(SETTLE + 2, level -> {
                     final TestWorldBuilder world = TestWorldBuilder.at(level, ctx.origin());
                     final MainframeBlockEntity mainframe = world.blockEntity(MAINFRAME, MainframeBlockEntity.class);
                     ctx.assertTrue(!mainframe.networkMachineRecipes().isEmpty(),
-                            "the Mainframe must see the Crafting Computer's machine recipe");
-                    final var sw = world.blockEntity(SWITCH,
-                            dev.jstech.computers.blockentity.CraftingSwitchBlockEntity.class);
-                    ctx.assertTrue(sw.declaredMachines().stream().anyMatch(m -> m.machineType().equals("minecraft:furnace")),
-                            "the switch must declare the adjacent furnace; declared=" + sw.declaredMachines());
+                            "the Mainframe must see the recipe the interface holds");
                 })
                 // Open the desktop, launch the Network Interactor, go to its Crafting tab.
                 .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
@@ -422,22 +390,13 @@ public final class CraftingChainClientTests {
                     ctx.assertTrue(!mainframe.activeOperationRecords().isEmpty() || !mainframe.recentOperations().isEmpty(),
                             "the request must create an operation on the Mainframe");
                 })
-                .thenWaitUntilServer(level -> level.getBlockEntity(ctx.abs(FURNACE)) instanceof FurnaceBlockEntity furnace
-                                && furnace.getItem(0).is(Items.RAW_IRON),
-                        CRAFT_WAIT, "the Input Bus to feed raw iron into the furnace", level -> {
-                            final TestWorldBuilder world = TestWorldBuilder.at(level, ctx.origin());
-                            final MainframeBlockEntity mainframe = world.blockEntity(MAINFRAME, MainframeBlockEntity.class);
-                            final var sw = world.blockEntity(SWITCH,
-                                    dev.jstech.computers.blockentity.CraftingSwitchBlockEntity.class);
-                            return "active=" + mainframe.activeOperationRecords() + " recent=" + mainframe.recentOperations()
-                                    + " declared=" + sw.declaredMachines();
+                .thenWaitUntilServer(level -> stored(ctx, level, Items.IRON_INGOT) >= 16, CRAFT_WAIT,
+                        "the kiln to smelt the sixteen ingots and the Receiving Bus to collect them", level -> {
+                            final MainframeBlockEntity mainframe = TestWorldBuilder.at(level, ctx.origin())
+                                    .blockEntity(MAINFRAME, MainframeBlockEntity.class);
+                            return "ingots=" + stored(ctx, level, Items.IRON_INGOT) + " active="
+                                    + mainframe.activeOperationRecords() + " recent=" + mainframe.recentOperations();
                         })
-                .thenServer(SETTLE, level -> {
-                    final TestWorldBuilder world = TestWorldBuilder.at(level, ctx.origin());
-                    final MainframeBlockEntity mainframe = world.blockEntity(MAINFRAME, MainframeBlockEntity.class);
-                    final long ingots = NetworkStorage.of(level, mainframe.networkUuid()).count(StorageKey.of(Items.IRON_INGOT));
-                    ctx.assertTrue(ingots >= 8, "the Receiving Bus must collect the ingots into storage; got " + ingots);
-                })
                 .thenScreenshot(2, "after-request")
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT);
@@ -449,8 +408,8 @@ public final class CraftingChainClientTests {
      * The player crafts through the Command Prompt: they open it from Start, type an IQL {@code operation craft}
      * for a multi-stage-only recipe, and run it. The recursive craft planner never unwraps a multi-stage recipe,
      * so before the CLI and IQL shared the terminal's craft entry point this request could not run at all; now it
-     * drives the furnace through the switch and buses exactly like the graphical terminal, and the ingots land in
-     * network storage, proving the CLI/IQL is a true alternative interface, not a lesser one.
+     * drives the kiln through its interface exactly like the graphical terminal, and the ingots land in network
+     * storage, proving the CLI/IQL is a true alternative interface, not a lesser one.
      */
     @ClientTest(timeoutTicks = 2400)
     public static void commandPrompt_iqlCraftRunsAMultiStageRecipe(final ClientTestContext ctx) {
@@ -462,38 +421,13 @@ public final class CraftingChainClientTests {
                     net.cc().togglePower();
                     net.cc().togglePower();
                     world.placeMonitor(MONITOR, Direction.EAST);
-                    world.setBlock(CRAFTING_CABLE, ComputingModule.CRAFTING_CABLE);
-                    world.setBlock(SWITCH, ComputingModule.CRAFTING_SWITCH.get());
-                    world.setBlock(FURNACE, Blocks.FURNACE);
-                    world.setBlock(CABLE_ABOVE_FURNACE, ComputingModule.CRAFTING_CABLE);
-                    world.setBlock(CABLE_BELOW_FURNACE, ComputingModule.CRAFTING_CABLE);
+                    // A MULTI-STAGE recipe for iron ingots whose single stage is the kiln's smelt.
+                    CraftingRig.direct(world, net.cc(), TestMachines.KILN.get()).hold(NetworkRecipe.ofMultiStage(
+                            new MultiStagePattern(List.of(MultiStagePattern.Stage.proc(smelt())))));
                     net.seed(Items.RAW_IRON, 32);
-                    /*
-                     * Finished ingots already in the furnace output: collecting them proves the receiving path
-                     * without waiting out real smelting (the furnace has no fuel here).
-                     */
-                    if (world.getBlockEntity(FURNACE) instanceof FurnaceBlockEntity furnace) {
-                        furnace.setItem(2, new ItemStack(Items.IRON_INGOT, 8));
-                    }
                 })
                 .thenServer(SETTLE + 2, level -> {
                     final TestWorldBuilder world = TestWorldBuilder.at(level, ctx.origin());
-                    if (world.getBlockEntity(CABLE_ABOVE_FURNACE) instanceof CableBlockEntity c) {
-                        c.addPart(Direction.DOWN, new InputBusPart());
-                    }
-                    if (world.getBlockEntity(CABLE_BELOW_FURNACE) instanceof CableBlockEntity c) {
-                        c.addPart(Direction.UP, new ReceivingBusPart());
-                    }
-                    // A MULTI-STAGE recipe for iron ingots whose single stage is the furnace smelt.
-                    final ProcessingPattern proc = new ProcessingPattern(
-                            List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.RAW_IRON), 1L)),
-                            List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(Items.IRON_INGOT), 1L, 100)),
-                            "minecraft:furnace", 200);
-                    final var multi = new dev.jstech.computers.crafting.MultiStagePattern(
-                            List.of(dev.jstech.computers.crafting.MultiStagePattern.Stage.proc(proc)));
-                    ctx.assertTrue(world.blockEntity(CRAFTING_COMPUTER, CraftingComputerBlockEntity.class)
-                            .loadMachineRecipe(NetworkRecipe.ofMultiStage(multi)),
-                            "the multi-stage iron recipe loads into the ROM");
                     /*
                      * The recursive planner alone is blind to a multi-stage-only recipe, so the CLI/IQL depends on
                      * the shared entry point to run it at all.
@@ -552,11 +486,11 @@ public final class CraftingChainClientTests {
     }
 
     /**
-     * A recipe loaded into the Recipe ROM must still be there after the world is saved, left and reopened,
-     * seen from the Crafting Manager, the way the player would check.
+     * A recipe placed in a Crafting Interface must still be there after the world is saved, left and reopened, seen
+     * from the Crafting Manager, the way the player would check.
      */
     @ClientTest(timeoutTicks = 3600)
-    public static void craftingManager_recipeRomSurvivesSaveAndReload(final ClientTestContext ctx) {
+    public static void craftingManager_interfaceRecipesSurviveSaveAndReload(final ClientTestContext ctx) {
         ctx.thenBuild(0, world -> {
                     final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
                     net.cc().getHardware().setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START + 1,
@@ -565,12 +499,8 @@ public final class CraftingChainClientTests {
                     net.cc().togglePower();
                     net.cc().togglePower();
                     world.placeMonitor(MONITOR, Direction.EAST);
-                    final ProcessingPattern pattern = new ProcessingPattern(
-                            List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.RAW_IRON), 1L)),
-                            List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(Items.IRON_INGOT), 1L, 100)),
-                            "minecraft:furnace", 200);
-                    ctx.assertTrue(net.cc().loadMachineRecipe(NetworkRecipe.ofProcessing(pattern)),
-                            "the furnace recipe loads into the ROM");
+                    ctx.assertTrue(CraftingRig.direct(world, net.cc(), TestMachines.KILN.get()).hold(smelt()),
+                            "the smelting recipe goes into the kiln's interface");
                 })
                 .thenSaveAndReload(SETTLE)
                 .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
@@ -590,47 +520,95 @@ public final class CraftingChainClientTests {
                 .thenWaitUntil(() -> craftingManager(ctx) != null && craftingManager(ctx).isLoaded(),
                         SCREEN_WAIT, "the Crafting Manager window with its state")
                 .thenScreenshot(2, "after-reload")
-                .thenAssert(0, () -> craftingManager(ctx).romNames().stream().anyMatch(n -> n.contains("[machine]")),
-                        "the machine recipe must still be in the ROM after the reload")
+                .thenWaitUntil(() -> craftingManager(ctx).places().stream().anyMatch(p -> !p.card() && p.used() == 1),
+                        SCREEN_WAIT, "the interface to be listed holding its recipe after the reload")
+                .thenAssert(0, () -> craftingManager(ctx).romNames().contains("Iron Ingot"),
+                        "the recipe it holds is the smelt")
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT);
     }
 
-    private static final BlockPos PLAYER_AT_SWITCH = new BlockPos(7, 2, 4);
+    private static final BlockPos PLAYER_AT_INTERFACE = new BlockPos(7, 2, 3);
+    private static final BlockPos PLAYER_AT_ROUTER = new BlockPos(3, 2, 6);
+    // The routed rig's west router and its Receiving Bus.
+    private static final CraftingFloor.Site ROUTER_SITE = new CraftingFloor.Site(new BlockPos(4, 2, 8), Direction.EAST);
+    private static final CraftingFloor.Site RECEIVING_SITE = new CraftingFloor.Site(new BlockPos(6, 2, 8),
+            Direction.WEST);
 
     /**
-     * The Crafting Switch GUI must tell the player what the switch sees: LINKED to the computer through its
-     * cable face, and the adjacent furnace listed on the face it touches, the state the server surveys and
-     * syncs, not something the client could guess.
+     * A Crafting Interface's window tells the player what the server reads: the interface driven by the computer,
+     * against its kiln, holding both its patterns under its name. A pattern picked shows its inputs, and the tabs
+     * switch.
      */
     @ClientTest
-    public static void craftingSwitch_showsTheComputerLinkAndTheMachineOnItsFace(final ClientTestContext ctx) {
+    public static void craftingInterface_windowShowsItsMachineAndPatterns(final ClientTestContext ctx) {
         ctx.thenBuild(0, world -> {
-                    world.buildCraftingNetwork();
-                    world.setBlock(CRAFTING_CABLE, ComputingModule.CRAFTING_CABLE);
-                    world.setBlock(SWITCH, ComputingModule.CRAFTING_SWITCH.get());
-                    world.setBlock(FURNACE, Blocks.FURNACE);
+                    final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+                    final CraftingRig rig = CraftingRig.direct(world, net.cc(), TestMachines.KILN.get());
+                    rig.part().setName("Kiln A");
+                    rig.hold(smelt());
+                    rig.hold(CraftingRig.pattern(Items.COBBLESTONE, Items.STONE, 200));
                 })
-                .thenTeleport(SETTLE + 2, PLAYER_AT_SWITCH, Direction.WEST)
-                .thenRightClick(SETTLE, SWITCH)
-                .thenAwaitScreen(dev.jstech.computers.client.CraftingSwitchScreen.class, SCREEN_WAIT)
-                .thenWaitUntil(() -> ctx.screen(dev.jstech.computers.client.CraftingSwitchScreen.class)
-                        .isLinkedShown(), SCREEN_WAIT, "the LINKED pill (survey synced to the client)")
-                .thenScreenshot(2, "linked")
-                .then(0, () -> {
-                    final var screen = ctx.screen(dev.jstech.computers.client.CraftingSwitchScreen.class);
-                    final String north = screen.faceRowText(Direction.NORTH.get3DDataValue());
-                    final String south = screen.faceRowText(Direction.SOUTH.get3DDataValue());
-                    ctx.assertTrue(north.contains("computer"), "the cable face must read as the computer link; got '" + north + "'");
-                    ctx.assertTrue(south.toLowerCase(java.util.Locale.ROOT).contains("machine")
-                            || south.contains("Furnace"), "the furnace must be listed on the SOUTH face; got '" + south + "'");
-                    ctx.clickGui(dev.jstech.computers.client.CraftingSwitchScreen.faceRowX(),
-                            dev.jstech.computers.client.CraftingSwitchScreen.faceRowY(
-                                    Direction.SOUTH.get3DDataValue()));
+                .thenTeleport(SETTLE + 2, PLAYER_AT_INTERFACE, Direction.WEST)
+                .thenServer(SETTLE, level -> {
+                    final CraftingFloor.Site site = new CraftingFloor.Site(ctx.abs(CraftingRig.DIRECT_MACHINE.north()),
+                            Direction.SOUTH);
+                    final CraftingInterfacePart part = site.part(level, CraftingInterfacePart.class);
+                    if (part == null) {
+                        throw new ClientTestFailure("no Crafting Interface at " + site);
+                    }
+                    part.use(ctx.serverPlayer());
                 })
-                .thenAssert(1, () -> ctx.screen(dev.jstech.computers.client.CraftingSwitchScreen.class)
-                        .selectedFace() == Direction.SOUTH.get3DDataValue(), "clicking the SOUTH row selects it")
-                .thenScreenshot(2, "south-selected")
+                .thenAwaitScreen(CraftingInterfaceScreen.class, SCREEN_WAIT)
+                .thenWaitUntil(() -> interfaceScreen(ctx).getMenu().state() != null, SCREEN_WAIT,
+                        "the interface's state to arrive")
+                .thenAssert(0, () -> {
+                    final InterfaceView view = interfaceScreen(ctx).getMenu().state();
+                    return view.linked() && view.mode() == InterfaceView.DIRECT && view.patterns().size() == 2
+                            && "Kiln A".equals(view.name());
+                }, "the window shows the interface driven, against its kiln, holding both patterns")
+                .thenScreenshot(2, "interface-configure")
+                .then(0, () -> interfaceScreen(ctx).pick(1))
+                .thenAssert(1, () -> interfaceScreen(ctx).picked() == 1, "a pattern picked is the one shown")
+                .thenScreenshot(2, "interface-second-pattern")
+                .then(0, () -> clickInterfaceTab(ctx, CraftingInterfaceLayout.TAB_ACTIVITY))
+                .thenAssert(SETTLE, () -> interfaceScreen(ctx).tab() == CraftingInterfaceLayout.TAB_ACTIVITY,
+                        "the Activity tab opens")
+                .thenScreenshot(2, "interface-activity")
+                .then(0, () -> clickInterfaceTab(ctx, CraftingInterfaceLayout.TAB_SOFTWARE))
+                .thenAssert(SETTLE, () -> interfaceScreen(ctx).tab() == CraftingInterfaceLayout.TAB_SOFTWARE,
+                        "the Software tab opens")
+                .thenScreenshot(2, "interface-software")
+                .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                .thenAwaitNoScreen(SCREEN_WAIT);
+    }
+
+    /**
+     * A Crafting Input Router's and a Crafting Receiving Bus's windows each show their crafting lines: the router what
+     * cable it is on and which machine face it feeds, the bus which interface it is tied to.
+     */
+    @ClientTest(timeoutTicks = 1200)
+    public static void craftingBuses_windowsShowTheirCraftingLines(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+                    final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+                    final CraftingRig rig = CraftingRig.routed(world, net.cc(), TestMachines.MIXER.get(), true);
+                    rig.hold(CraftingRig.mix(Items.DIRT, Items.GRAVEL, Items.COARSE_DIRT, 2));
+                })
+                .thenTeleport(SETTLE + 2, PLAYER_AT_ROUTER, Direction.EAST)
+                .thenServer(SETTLE, level -> busAt(ctx, level, ROUTER_SITE).use(ctx.serverPlayer()))
+                .thenAwaitScreen(CraftingRouterScreen.class, SCREEN_WAIT)
+                .thenWaitUntil(() -> busScreen(ctx).getMenu().state() != null
+                                && !busScreen(ctx).getMenu().state().crafting().lines().isEmpty(), SCREEN_WAIT,
+                        "the router's crafting lines to arrive")
+                .thenScreenshot(2, "router-configure")
+                .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                .thenAwaitNoScreen(SCREEN_WAIT)
+                .thenServer(SETTLE, level -> busAt(ctx, level, RECEIVING_SITE).use(ctx.serverPlayer()))
+                .thenAwaitScreen(ReceivingBusScreen.class, SCREEN_WAIT)
+                .thenWaitUntil(() -> busScreen(ctx).getMenu().state() != null
+                                && !busScreen(ctx).getMenu().state().crafting().lines().isEmpty(), SCREEN_WAIT,
+                        "the Receiving Bus's crafting lines to arrive")
+                .thenScreenshot(2, "receiving-configure")
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT);
     }
@@ -718,8 +696,40 @@ public final class CraftingChainClientTests {
         final PatternStudioApp app = studio(ctx);
         PacketDistributor.sendToServer(new SetProcessingPatternPayload(app.host(), app.monitorPos(),
                 List.of(PatternWorkbench.DataCell.fromStack(new ItemStack(Items.RAW_IRON))),
-                List.of(PatternWorkbench.DataCell.fromStack(new ItemStack(Items.IRON_INGOT))),
-                "minecraft:smelting"));
+                List.of(PatternWorkbench.DataCell.fromStack(new ItemStack(Items.IRON_INGOT)))));
+    }
+
+    /* Raw iron to an ingot, the recipe the kiln makes. */
+    private static ProcessingPattern smelt() {
+        return CraftingRig.pattern(Items.RAW_IRON, Items.IRON_INGOT, 200);
+    }
+
+    private static long stored(final ClientTestContext ctx, final ServerLevel level, final Item item) {
+        final MainframeBlockEntity mainframe = TestWorldBuilder.at(level, ctx.origin())
+                .blockEntity(MAINFRAME, MainframeBlockEntity.class);
+        return NetworkStorage.of(level, mainframe.networkUuid()).count(StorageKey.of(item));
+    }
+
+    private static CraftingInterfaceScreen interfaceScreen(final ClientTestContext ctx) {
+        return ctx.screen(CraftingInterfaceScreen.class);
+    }
+
+    private static void clickInterfaceTab(final ClientTestContext ctx, final int tab) {
+        ctx.clickGui(CraftingInterfaceLayout.tabX(tab) + 4, CraftingInterfaceLayout.TAB_Y + 4);
+    }
+
+    private static AbstractBusScreen<?> busScreen(final ClientTestContext ctx) {
+        return ctx.screen(AbstractBusScreen.class);
+    }
+
+    private static AbstractBusPart busAt(final ClientTestContext ctx, final ServerLevel level,
+                                         final CraftingFloor.Site relative) {
+        final CraftingFloor.Site site = new CraftingFloor.Site(ctx.abs(relative.cable()), relative.face());
+        final AbstractBusPart bus = site.part(level, AbstractBusPart.class);
+        if (bus == null) {
+            throw new ClientTestFailure("no crafting bus at " + site);
+        }
+        return bus;
     }
 
     private static CraftingComputerBlockEntity cc(final ClientTestContext ctx, final ServerLevel level) {

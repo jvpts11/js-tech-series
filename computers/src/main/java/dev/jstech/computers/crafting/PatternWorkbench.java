@@ -44,9 +44,9 @@ import java.util.Optional;
 /**
  * A computer's recipe workbench: the three drafts the Pattern Studio edits, kept on the machine so they
  * survive the window, the monitor and the session. A bench draft (a ghost 3x3 grid with a live result,
- * per-cell "any" tags, a name and a note), a machine draft (ghost inputs and outputs fed to a machine type,
- * with chances and a timeout) and a pipeline draft (ordered stages built from the other two or opened from
- * files). Everything here is ghost data; no item is ever consumed.
+ * per-cell "any" tags, a name and a note), a machine draft (the ghost inputs a machine is fed and the outputs
+ * expected back, with chances and a timeout, whatever machine runs it) and a pipeline draft (ordered stages built
+ * from the other two or opened from files). Everything here is ghost data; no item is ever consumed.
  *
  * <p>The workbench also remembers which file a draft was opened from, so a burn can put it back in place.
  */
@@ -149,7 +149,6 @@ public final class PatternWorkbench {
     private final DataCell[] procInputs = new DataCell[PROC_GRID];
     private final DataCell[] procOutputs = new DataCell[PROC_GRID];
     private final int[] outputChances = new int[PROC_GRID];
-    private String machineType = "";
     private int procTimeout = ProcessingPattern.DEFAULT_TIMEOUT_TICKS;
     private String procName = "";
     private String procNote = "";
@@ -298,10 +297,6 @@ public final class PatternWorkbench {
         return cell >= 0 && cell < PROC_GRID ? outputChances[cell] : ProcessingPattern.FULL_CHANCE;
     }
 
-    public String machineType() {
-        return machineType;
-    }
-
     public int procTimeout() {
         return procTimeout;
     }
@@ -340,10 +335,6 @@ public final class PatternWorkbench {
         }
     }
 
-    public void setMachineType(final String type) {
-        machineType = type == null ? "" : type.trim();
-    }
-
     public void setProcTimeout(final int ticks) {
         procTimeout = Math.max(1, ticks);
     }
@@ -353,25 +344,17 @@ public final class PatternWorkbench {
         procNote = Utf8Text.field(note, CraftingPattern.MAX_NOTE);
     }
 
-    /**
-     * Replaces the whole machine draft with the given cells (a recipe transfer). Chances reset to guaranteed;
-     * the machine choice is kept unless {@code machine} names one.
-     */
-    public void applyProcessingCells(final List<DataCell> inputs, final List<DataCell> outputs,
-                                     @Nullable final String machine) {
+    /** Replaces the whole machine draft with the given cells (a recipe transfer). Chances reset to guaranteed. */
+    public void applyProcessingCells(final List<DataCell> inputs, final List<DataCell> outputs) {
         for (int i = 0; i < PROC_GRID; i++) {
             procInputs[i] = i < inputs.size() ? inputs.get(i) : null;
             procOutputs[i] = i < outputs.size() ? outputs.get(i) : null;
             outputChances[i] = ProcessingPattern.FULL_CHANCE;
         }
-        if (machine != null && !machine.isBlank()) {
-            machineType = machine.trim();
-        }
     }
 
     /** {@link #applyProcessingCells} for plain item stacks (each stack's count is its amount). */
-    public void applyProcessingRecipe(final List<ItemStack> inputs, final List<ItemStack> outputs,
-                                      @Nullable final String machine) {
+    public void applyProcessingRecipe(final List<ItemStack> inputs, final List<ItemStack> outputs) {
         final List<DataCell> ins = new ArrayList<>();
         for (final ItemStack in : inputs) {
             final DataCell cell = DataCell.fromStack(in);
@@ -386,14 +369,13 @@ public final class PatternWorkbench {
                 outs.add(cell);
             }
         }
-        applyProcessingCells(ins, outs, machine);
+        applyProcessingCells(ins, outs);
     }
 
     public void clearMachine() {
         Arrays.fill(procInputs, null);
         Arrays.fill(procOutputs, null);
         Arrays.fill(outputChances, ProcessingPattern.FULL_CHANCE);
-        machineType = "";
         procTimeout = ProcessingPattern.DEFAULT_TIMEOUT_TICKS;
         procName = "";
         procNote = "";
@@ -414,13 +396,13 @@ public final class PatternWorkbench {
                 outs.add(new ProcessingPattern.ProcessingOutput(out.key(), out.amount(), outputChances[i]));
             }
         }
-        return new ProcessingPattern(ins, outs, machineType, procTimeout, procName, procNote);
+        return new ProcessingPattern(ins, outs, procTimeout, procName, procNote);
     }
 
-    /** Whether the machine draft names a machine and has at least one input and one output. */
+    /** Whether the machine draft has at least one input and one output. */
     public boolean machineComplete() {
         final ProcessingPattern p = processingPattern();
-        return !machineType.isBlank() && !p.inputs().isEmpty() && !p.outputs().isEmpty();
+        return !p.inputs().isEmpty() && !p.outputs().isEmpty();
     }
 
     /** Fills the machine editor from {@code pattern}, remembering where it came from. */
@@ -441,7 +423,6 @@ public final class PatternWorkbench {
                 outputChances[i++] = out.chancePercent();
             }
         }
-        machineType = pattern.machineType();
         procTimeout = pattern.timeoutTicks();
         procName = pattern.name();
         procNote = pattern.note();
@@ -604,7 +585,6 @@ public final class PatternWorkbench {
         tag.put("ProcInputs", saveCells(procInputs, ops));
         tag.put("ProcOutputs", saveCells(procOutputs, ops));
         tag.putIntArray("OutputChances", outputChances.clone());
-        tag.putString("MachineType", machineType);
         tag.putInt("ProcTimeout", procTimeout);
         tag.putString("ProcName", procName);
         tag.putString("ProcNote", procNote);
@@ -635,7 +615,6 @@ public final class PatternWorkbench {
             outputChances[i] = i < chances.length && chances[i] >= 1 && chances[i] <= ProcessingPattern.FULL_CHANCE
                     ? chances[i] : ProcessingPattern.FULL_CHANCE;
         }
-        machineType = tag.getString("MachineType");
         procTimeout = tag.contains("ProcTimeout") ? Math.max(1, tag.getInt("ProcTimeout"))
                 : ProcessingPattern.DEFAULT_TIMEOUT_TICKS;
         procName = tag.getString("ProcName");

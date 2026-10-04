@@ -1,4 +1,7 @@
 {
+  "bad": "#FFD1495B",
+  "good": "#FF2EA043",
+  "warn": "#FFC98A10",
   "warnBand": "#FFFCE3A1",
   "warnText": "#FF6B4E00"
 }

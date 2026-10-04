@@ -9,22 +9,30 @@ package dev.jstech.computers.menu;
 
 import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.block.part.BusEdits;
+import dev.jstech.computers.block.part.CraftingRouterPart;
 import dev.jstech.computers.block.part.ExportBusPart;
 import dev.jstech.computers.block.part.ExternalStorageBusPart;
+import dev.jstech.computers.block.part.ReceivingBusPart;
 import dev.jstech.computers.bus.BusAbilities;
 import dev.jstech.computers.bus.BusSettings;
+import dev.jstech.computers.crafting.CraftingFloor;
 import dev.jstech.computers.gui.layout.BusLayout;
 import dev.jstech.computers.operation.payload.BusEditPayload;
 import dev.jstech.computers.operation.payload.BusStatePayload;
+import dev.jstech.computers.operation.payload.CraftingView;
+import dev.jstech.computers.operation.payload.crafting.CraftingViews;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuValidity;
 import dev.jstech.core.menu.PlayerSlots;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.ArrayList;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -115,9 +123,9 @@ public abstract class AbstractBusMenu extends CoreMenu {
         return window;
     }
 
-    /** Whether it is a crafting bus, which has its filter and nothing else to set. */
+    /** Whether it is a crafting part (a router or a Receiving Bus), which has its filter and what it is part of. */
     public boolean crafting() {
-        return window == BusLayout.Window.CRAFTING;
+        return window == BusLayout.Window.ROUTER || window == BusLayout.Window.RECEIVING;
     }
 
     /** What the bus can be set to, by its era and kind. */
@@ -125,7 +133,7 @@ public abstract class AbstractBusMenu extends CoreMenu {
         return BusLayout.abilities(era, window);
     }
 
-    /** Whether the bus sends out of the network (an Export Bus, a Crafting Input Bus) rather than bringing in. */
+    /** Whether the bus sends out of the network (an Export Bus) rather than bringing in. */
     public boolean exports() {
         return part instanceof ExportBusPart;
     }
@@ -180,6 +188,12 @@ public abstract class AbstractBusMenu extends CoreMenu {
 
     /** Applies a change made in the window, on the server, and sends the window what it changed. */
     public void edit(final ServerPlayer player, final BusEditPayload edit) {
+        if (edit.op() == BusEditPayload.TIE) {
+            if (part instanceof ReceivingBusPart bus && tie(player.serverLevel(), bus, edit.slot())) {
+                send(player, true);
+            }
+            return;
+        }
         if (BusEdits.apply(part, edit, getCarried())) {
             send(player, true);
         }
@@ -200,20 +214,52 @@ public abstract class AbstractBusMenu extends CoreMenu {
     /* Sends the bus's state when it changed since the last one sent, or {@code always}. */
     private void send(final ServerPlayer player, final boolean always) {
         final ExternalStorageBusPart external = part instanceof ExternalStorageBusPart bus ? bus : null;
+        final ServerLevel level = player.serverLevel();
+        // A crafting part is linked when its network reaches a Crafting Computer, and wears that computer's era.
+        final boolean linked = part instanceof CraftingRouterPart ? CraftingViews.routerLinked(level, cablePos, face)
+                : part instanceof ReceivingBusPart ? CraftingViews.reachesComputer(level, cablePos)
+                : part.reachesNetwork();
+        final HardwareEra skin = crafting() ? CraftingViews.skinOf(level, cablePos) : part.skin();
         final BusStatePayload now = new BusStatePayload(containerId, part.settings(), part.filterStacks(),
-                part.reachesNetwork(), part.speed(), part.cableCarries(), part.skin(), part.activity().entries(),
-                external == null ? 0 : external.places(), external == null ? 0 : external.placesUsed());
+                linked, part.speed(), part.cableCarries(), skin, part.activity().entries(),
+                external == null ? 0 : external.places(), external == null ? 0 : external.placesUsed(),
+                craftingView(level));
         if (always || state == null || !same(state, now)) {
             state = now;
             PacketDistributor.sendToPlayer(player, now);
         }
     }
 
+    /* What a crafting part's window shows of the network it is part of; nothing for a bus that is none. */
+    private CraftingView craftingView(final ServerLevel level) {
+        if (part instanceof CraftingRouterPart router) {
+            return CraftingViews.router(level, cablePos, face, router);
+        }
+        if (part instanceof ReceivingBusPart bus) {
+            return CraftingViews.receiving(level, cablePos, face, bus);
+        }
+        return CraftingView.NONE;
+    }
+
+    /* Ties the bus by hand to the interface its window lists at {@code index}, or unties it from it. */
+    private boolean tie(final ServerLevel level, final ReceivingBusPart bus, final int index) {
+        final List<UUID> ids = CraftingViews.pickIds(level, CraftingFloor.through(level, cablePos));
+        if (index < 0 || index >= ids.size()) {
+            return false;
+        }
+        final List<UUID> ties = new ArrayList<>(bus.tiedByHand());
+        if (!ties.remove(ids.get(index))) {
+            ties.add(ids.get(index));
+        }
+        bus.tieByHand(ties);
+        return true;
+    }
+
     /* Whether two states show the same; the filter's stacks follow its ids. */
     private static boolean same(final BusStatePayload a, final BusStatePayload b) {
         return a.settings().equals(b.settings()) && a.linked() == b.linked() && a.speed() == b.speed()
                 && a.carries() == b.carries() && a.skin() == b.skin() && a.activity().equals(b.activity())
-                && a.places() == b.places() && a.placesUsed() == b.placesUsed();
+                && a.places() == b.places() && a.placesUsed() == b.placesUsed() && a.crafting().equals(b.crafting());
     }
 
     /**

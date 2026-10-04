@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.bus;
 
 import dev.jstech.computers.bus.BusActivity;
+import dev.jstech.computers.crafting.CraftingLog;
 import dev.jstech.computers.gui.layout.BusLayout;
 import dev.jstech.computers.menu.AbstractBusMenu;
 import dev.jstech.computers.operation.payload.BusStatePayload;
@@ -44,25 +45,33 @@ final class BusActivityView {
     }
 
     void render(final GuiGraphics g, final int left, final int top) {
+        final boolean credits = menu.window() == BusLayout.Window.RECEIVING;
         final List<BusActivity.Entry> entries = entries();
+        final List<CraftingLog.Entry> creditEntries = creditEntries();
+        final int count = credits ? creditEntries.size() : entries.size();
         final int viewTop = top + BusLayout.VIEW_Y;
-        final int content = entries.size() * BusLayout.ENTRY_H;
+        final int content = count * BusLayout.ENTRY_H;
         scroll = Math.max(0, Math.min(scroll, content - BusLayout.ACTIVITY_VIEW_H));
-        if (entries.isEmpty()) {
+        if (count == 0) {
             BusDraw.small(g, font, GameText.resolve(BusTexts.NO_ACTIVITY), left + BusLayout.LABEL_X, viewTop + 2,
                     JsTechTheme.dim());
         }
         g.enableScissor(left + BusLayout.LABEL_X, viewTop, left + BusLayout.RIGHT,
                 viewTop + BusLayout.ACTIVITY_VIEW_H);
-        for (int i = 0; i < entries.size(); i++) {
+        for (int i = 0; i < count; i++) {
             final int y = viewTop + i * BusLayout.ENTRY_H - scroll;
             if (y + BusLayout.ENTRY_H > viewTop && y < viewTop + BusLayout.ACTIVITY_VIEW_H) {
-                drawEntry(g, entries.get(i), left, y);
+                if (credits) {
+                    drawCredit(g, creditEntries.get(i), left, y);
+                } else {
+                    drawEntry(g, entries.get(i), left, y);
+                }
             }
         }
         g.disableScissor();
         BusDraw.scrollbar(g, left + BusLayout.SCROLL_X, viewTop, BusLayout.ACTIVITY_VIEW_H, scroll, content);
-        final List<String> note = BusDraw.lines(font, GameText.resolve(BusTexts.ACTIVITY_NOTE), BusLayout.ROW_W);
+        final List<String> note = BusDraw.lines(font, GameText.resolve(credits ? BusTexts.CREDIT_NOTE
+                : BusTexts.ACTIVITY_NOTE), BusLayout.ROW_W);
         for (int i = 0; i < Math.min(BusLayout.ACTIVITY_NOTE_LINES, note.size()); i++) {
             BusDraw.small(g, font, note.get(i), left + BusLayout.LABEL_X,
                     top + BusLayout.ACTIVITY_NOTE_Y + i * BusLayout.LINE, JsTechTheme.dim());
@@ -70,7 +79,8 @@ final class BusActivityView {
     }
 
     boolean scrolled(final double mx, final double my, final double delta, final int left, final int top) {
-        final int content = entries().size() * BusLayout.ENTRY_H;
+        final int content = (menu.window() == BusLayout.Window.RECEIVING ? creditEntries().size()
+                : entries().size()) * BusLayout.ENTRY_H;
         if (!BusDraw.inside(mx, my, left + BusLayout.LABEL_X, top + BusLayout.VIEW_Y, BusLayout.ROW_W + 6,
                 BusLayout.ACTIVITY_VIEW_H) || content <= BusLayout.ACTIVITY_VIEW_H) {
             return false;
@@ -95,6 +105,40 @@ final class BusActivityView {
         BusDraw.smallRight(g, font, status, left + BusLayout.RIGHT - 3, y + 10, colour(entry.status()));
         BusDraw.small(g, font, BusDraw.clip(font, reason(entry), BusLayout.ROW_W - 11 - statusW), x, y + 10,
                 JsTechTheme.dim());
+    }
+
+    /* One arrival a Receiving Bus credited: when and what on the first line, where it went on the second. */
+    private void drawCredit(final GuiGraphics g, final CraftingLog.Entry entry, final int left, final int y) {
+        BusDraw.bar(g, left + BusLayout.LABEL_X, y, BusLayout.ROW_W, BusLayout.ENTRY_H - 1, false);
+        final String time = clock(entry.time());
+        final int x = left + BusLayout.LABEL_X + 3;
+        BusDraw.small(g, font, time, x, y + 2, JsTechTheme.dim());
+        final int whatX = x + BusDraw.width(font, time) + 5;
+        final String what = GameText.resolve(BusTexts.AMOUNT.with(BusKeys.name(entry.what()).getString(),
+                entry.amount()));
+        BusDraw.small(g, font, BusDraw.clip(font, what, left + BusLayout.RIGHT - 3 - whatX), whatX, y + 2,
+                JsTechTheme.text());
+        final TextKey word = switch (entry.kind()) {
+            case CraftingLog.CREDITED -> BusTexts.STATUS_CREDITED;
+            case CraftingLog.LATE -> BusTexts.STATUS_LATE;
+            default -> BusTexts.STATUS_UNEXPECTED;
+        };
+        final String status = GameText.resolve(word);
+        final int statusW = BusDraw.width(font, status);
+        BusDraw.smallRight(g, font, status, left + BusLayout.RIGHT - 3, y + 10,
+                entry.kind() == CraftingLog.CREDITED ? JsTechTheme.green() : JsTechTheme.amber());
+        final String where = GameText.resolve(switch (entry.kind()) {
+            case CraftingLog.CREDITED -> BusTexts.CREDITED.with(entry.note());
+            case CraftingLog.LATE -> BusTexts.LATE_TO.text();
+            default -> BusTexts.UNEXPECTED_TO.text();
+        });
+        BusDraw.small(g, font, BusDraw.clip(font, where, BusLayout.ROW_W - 11 - statusW), x, y + 10,
+                JsTechTheme.dim());
+    }
+
+    private List<CraftingLog.Entry> creditEntries() {
+        final BusStatePayload state = menu.state();
+        return state == null ? List.of() : state.crafting().log();
     }
 
     /** The hour of the day {@code time} was, as the clock read: what happened at a game time, read on today's. */

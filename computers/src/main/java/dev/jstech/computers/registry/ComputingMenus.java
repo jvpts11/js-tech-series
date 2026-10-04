@@ -12,14 +12,14 @@ import dev.jstech.computers.menu.ClusterManagementComputerMenu;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.CraftingComputerMenu;
-import dev.jstech.computers.menu.CraftingSwitchMenu;
+import dev.jstech.computers.menu.CraftingInterfaceMenu;
+import dev.jstech.computers.menu.CraftingRouterMenu;
 import dev.jstech.computers.menu.ExternalStorageBusMenu;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.menu.DockStationMenu;
 import dev.jstech.computers.menu.DosTerminalMenu;
 import dev.jstech.computers.menu.ExportBusMenu;
 import dev.jstech.computers.menu.ImportBusMenu;
-import dev.jstech.computers.menu.InputBusMenu;
 import dev.jstech.computers.menu.LinuxTtyMenu;
 import dev.jstech.computers.menu.MainframeMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
@@ -62,16 +62,16 @@ public final class ComputingMenus {
     public static final DeferredHolder<MenuType<?>, MenuType<ExternalStorageBusMenu>> EXTERNAL_STORAGE_BUS_MENU =
             menu("external_storage_bus", ExternalStorageBusMenu::fromNetwork);
 
-    public static final DeferredHolder<MenuType<?>, MenuType<InputBusMenu>> INPUT_BUS_MENU =
-            menu("input_bus", InputBusMenu::fromNetwork);
+    public static final DeferredHolder<MenuType<?>, MenuType<CraftingRouterMenu>> CRAFTING_ROUTER_MENU =
+            menu("crafting_input_router", CraftingRouterMenu::fromNetwork);
 
     public static final DeferredHolder<MenuType<?>, MenuType<ReceivingBusMenu>> RECEIVING_BUS_MENU =
             menu("receiving_bus", ReceivingBusMenu::fromNetwork);
 
-    // The machines
+    public static final DeferredHolder<MenuType<?>, MenuType<CraftingInterfaceMenu>> CRAFTING_INTERFACE_MENU =
+            menu("crafting_interface", CraftingInterfaceMenu::fromNetwork);
 
-    public static final DeferredHolder<MenuType<?>, MenuType<CraftingSwitchMenu>> CRAFTING_SWITCH_MENU =
-            menu("crafting_switch", CraftingSwitchMenu::fromNetwork);
+    // The machines
 
     public static final DeferredHolder<MenuType<?>, MenuType<ServerRackMenu>> SERVER_RACK_MENU =
             menu("server_rack", ServerRackMenu::fromNetwork);

@@ -68,6 +68,15 @@ public final class IqlBusSetter {
         if (at == null || !(at.cable().getPart(at.face()) instanceof AbstractBusPart bus)) {
             return IqlEngine.Outcome.fail(NO_BUS.with(statement.bus()));
         }
+        return applyTo(bus, statement, by);
+    }
+
+    /**
+     * Sets what {@code statement} says on {@code bus}, found by whoever calls: a Crafting Input Router, which is on a
+     * crafting cable rather than the network's, takes the settings a bus takes.
+     */
+    public static IqlEngine.Outcome applyTo(final AbstractBusPart bus, final IqlBusStatement statement,
+                                            final String by) {
         final boolean external = bus instanceof ExternalStorageBusPart;
         final boolean took = switch (statement.change()) {
             case IqlBusStatement.Power power -> !external && bus.setPowered(power.on(), by);

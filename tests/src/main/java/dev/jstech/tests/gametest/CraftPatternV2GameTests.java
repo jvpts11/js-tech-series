@@ -78,7 +78,7 @@ public final class CraftPatternV2GameTests {
         final ProcessingPattern machine = new ProcessingPattern(
                 List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.IRON_INGOT), 1L)),
                 List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(Items.IRON_NUGGET), 9L, 100)),
-                "minecraft:furnace", 200).withName("Nuggets", "");
+                200).withName("Nuggets", "");
         final ProcessingPattern machineBack = CraftFile.parseProcessing(
                 CraftFile.serializeProcessing(machine, registries).orElseThrow(), registries).orElseThrow();
         helper.assertTrue(machineBack.name().equals("Nuggets") && machineBack.sameRecipe(machine),

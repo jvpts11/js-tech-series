@@ -88,13 +88,13 @@ public final class CraftFiles {
         return new CraftingPattern(grid, new ItemStack(Items.OAK_PLANKS, 4));
     }
 
-    /** Raw iron to an ingot in a furnace. */
+    /** Raw iron to an ingot, as a furnace smelts it. */
     public static ProcessingPattern furnaceIron(final int timeoutTicks) {
         return new ProcessingPattern(
                 List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.RAW_IRON), 1, false)),
                 List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(Items.IRON_INGOT), 1,
                         ProcessingPattern.FULL_CHANCE)),
-                "minecraft:furnace", timeoutTicks);
+                timeoutTicks);
     }
 
     public static List<ItemStack> emptyGrid() {

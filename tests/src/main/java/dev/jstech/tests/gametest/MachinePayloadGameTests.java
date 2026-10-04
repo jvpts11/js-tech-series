@@ -7,58 +7,74 @@
  */
 package dev.jstech.tests.gametest;
 
+import dev.jstech.computers.crafting.CraftingLog;
+import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.operation.payload.CraftManagerStatePayload;
+import dev.jstech.computers.operation.payload.CraftingInterfaceEditPayload;
+import dev.jstech.computers.operation.payload.CraftingInterfaceStatePayload;
 import dev.jstech.computers.operation.payload.CreateAutomationJobPayload;
+import dev.jstech.computers.operation.payload.InterfaceView;
 import dev.jstech.computers.operation.payload.PatternStudioEditPayload;
 import dev.jstech.computers.operation.payload.PatternStudioStatePayload;
 import dev.jstech.computers.operation.payload.RequestHelpPayload;
-import dev.jstech.computers.operation.payload.SetMachineConfigPayload;
 import dev.jstech.computers.operation.payload.TerminalSelectPayload;
 import dev.jstech.computers.operation.payload.UninstallProgramPayload;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import io.netty.buffer.Unpooled;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Battery 1, front M: every new Slice C payload survives a StreamCodec encode/decode with the buffer fully
- * consumed, including the regrouped {@link CraftManagerStatePayload} (the MediaBlock sub-record that keeps it
- * within the 6-pair composite limit) carrying a full machine list.
+ * Every autocraft message survives a StreamCodec encode and decode with the buffer fully consumed: the Crafting
+ * Manager's state with its places and interfaces, a Crafting Interface's window state and edits, and the Pattern
+ * Studio's state and edits.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
 public final class MachinePayloadGameTests {
 
+    private static final String ARENA = "empty";
+
     private MachinePayloadGameTests() {
     }
-
-    private static final String ARENA = "empty";
 
     @GameTest(template = ARENA)
     public static void craftManagerState_streamCodecRoundTrip(final GameTestHelper helper) {
         final List<CraftManagerStatePayload.WireRomEntry> rom = List.of(
-                new CraftManagerStatePayload.WireRomEntry(0, Text.literal("Iron Block"), true),
-                new CraftManagerStatePayload.WireRomEntry(1, Text.literal("Gold Block"), false));
-        final List<CraftManagerStatePayload.WireMachine> machines = List.of(
-                new CraftManagerStatePayload.WireMachine("@1,2,3", "jsindustrial:compressor",
-                        Text.literal("N (1, 2, 3)"), false, true, 4),
-                new CraftManagerStatePayload.WireMachine("@4,5,6", "jsindustrial:macerator",
-                        Text.literal("E (4, 5, 6)"), true, false, 1));
-        final CraftManagerStatePayload payload = new CraftManagerStatePayload(
-                "media:42", Text.literal("Floppy (A:)"), List.of("alpha.craft", "beta.craft"), rom, true,
-                Text.literal("Loaded 2"), true, machines);
+                new CraftManagerStatePayload.WireRomEntry(0, Text.literal("Iron Block"), true,
+                        CraftManagerStatePayload.BENCH),
+                new CraftManagerStatePayload.WireRomEntry(1, Text.literal("Gold Block"), false,
+                        CraftManagerStatePayload.BENCH));
+        final List<CraftManagerStatePayload.WireRomEntry> held = List.of(
+                new CraftManagerStatePayload.WireRomEntry(256, Text.literal("Stone"), false,
+                        CraftManagerStatePayload.PROCESSING),
+                new CraftManagerStatePayload.WireRomEntry(257, Text.literal("Iron line"), true,
+                        CraftManagerStatePayload.PIPELINE));
+        final List<CraftManagerStatePayload.WirePlace> places = List.of(
+                new CraftManagerStatePayload.WirePlace(true, Text.literal("Crafting Card, slot 1"), 2, 5, 5, rom),
+                new CraftManagerStatePayload.WirePlace(false, Text.literal("Kiln A"), 2, 9, 0, held));
+        final List<CraftManagerStatePayload.WireInterface> interfaces = List.of(
+                new CraftManagerStatePayload.WireInterface(1, Text.literal("Kiln A"), Text.literal("Test kiln"), 2,
+                        9, false, CraftManagerStatePayload.RUNNING, Text.literal("Stone x4"), 0),
+                new CraftManagerStatePayload.WireInterface(2, Text.literal("Press"), Text.EMPTY, 0, 3, true,
+                        CraftManagerStatePayload.NO_MACHINE, Text.EMPTY, 2));
+        final CraftManagerStatePayload payload = new CraftManagerStatePayload("media:42",
+                Text.literal("Floppy (A:)"), List.of("alpha.craft", "beta.craft"), places, true,
+                Text.literal("Loaded 2"), true, interfaces, 5, 1);
         assertRoundTrip(helper, CraftManagerStatePayload.STREAM_CODEC, payload);
         helper.succeed();
     }
@@ -91,31 +107,75 @@ public final class MachinePayloadGameTests {
 
     @GameTest(template = ARENA)
     public static void craftManagerState_emptyListsRoundTrip(final GameTestHelper helper) {
-        final CraftManagerStatePayload payload = new CraftManagerStatePayload(
-                "", Text.EMPTY, List.of(), List.of(), false, Text.EMPTY, false, List.of());
+        final CraftManagerStatePayload payload = new CraftManagerStatePayload("", Text.EMPTY, List.of(), List.of(),
+                false, Text.EMPTY, false, List.of(), 0, 0);
         assertRoundTrip(helper, CraftManagerStatePayload.STREAM_CODEC, payload);
         helper.succeed();
     }
 
+    /** The most places, each as full as a place is sent, and the most interfaces all go through at once. */
     @GameTest(template = ARENA)
-    public static void craftManagerState_maxMachinesRoundTrip(final GameTestHelper helper) {
-        final List<CraftManagerStatePayload.WireMachine> machines = new ArrayList<>();
-        for (int i = 0; i < CraftManagerStatePayload.MAX_MACHINES; i++) {
-            machines.add(new CraftManagerStatePayload.WireMachine("@" + i, "jsc:m" + i, Text.literal("m" + i),
-                    i % 3 == 0, i % 4 == 0, i + 1));
+    public static void craftManagerState_mostPlacesAndInterfacesRoundTrip(final GameTestHelper helper) {
+        final List<CraftManagerStatePayload.WirePlace> places = new ArrayList<>();
+        for (int p = 0; p < CraftManagerStatePayload.MAX_PLACES; p++) {
+            final List<CraftManagerStatePayload.WireRomEntry> entries = new ArrayList<>();
+            for (int e = 0; e < CraftManagerStatePayload.MAX_ENTRIES; e++) {
+                entries.add(new CraftManagerStatePayload.WireRomEntry(p * 256 + e, Text.literal("r" + e), e % 2 == 0,
+                        (byte) (e % 3)));
+            }
+            places.add(new CraftManagerStatePayload.WirePlace(p % 2 == 0, Text.literal("place " + p),
+                    CraftManagerStatePayload.MAX_ENTRIES, 16, p % 5, entries));
         }
-        final CraftManagerStatePayload payload = new CraftManagerStatePayload(
-                "media:1", Text.literal("Disc"), List.of(), List.of(), true, Text.EMPTY, false, machines);
+        final List<CraftManagerStatePayload.WireInterface> interfaces = new ArrayList<>();
+        for (int i = 0; i < CraftManagerStatePayload.MAX_INTERFACES; i++) {
+            interfaces.add(new CraftManagerStatePayload.WireInterface(i, Text.literal("i" + i), Text.literal("m" + i),
+                    i % 9, 9, i % 2 == 0, (byte) (i % 5), Text.literal("d" + i), i % 4));
+        }
+        final CraftManagerStatePayload payload = new CraftManagerStatePayload("media:1", Text.literal("Disc"),
+                List.of(), places, true, Text.EMPTY, false, interfaces, 36, 3);
         assertRoundTrip(helper, CraftManagerStatePayload.STREAM_CODEC, payload);
         helper.succeed();
     }
 
     @GameTest(template = ARENA)
-    public static void setMachineConfig_streamCodecRoundTrip(final GameTestHelper helper) {
-        assertRoundTrip(helper, SetMachineConfigPayload.STREAM_CODEC,
-                new SetMachineConfigPayload(new BlockPos(7, -3, 19), "jsindustrial:compressor", 8, true, false));
-        assertRoundTrip(helper, SetMachineConfigPayload.STREAM_CODEC,
-                new SetMachineConfigPayload(new BlockPos(0, 0, 0), "", 1, false, true));
+    public static void craftingInterfaceEdit_streamCodecRoundTrip(final GameTestHelper helper) {
+        assertRoundTrip(helper, CraftingInterfaceEditPayload.STREAM_CODEC,
+                new CraftingInterfaceEditPayload(CraftingInterfaceEditPayload.NAME, 0, 0, 0, "Kiln A"));
+        assertRoundTrip(helper, CraftingInterfaceEditPayload.STREAM_CODEC,
+                new CraftingInterfaceEditPayload(CraftingInterfaceEditPayload.ROUTE, 3, 1, -1, ""));
+        assertRoundTrip(helper, CraftingInterfaceEditPayload.STREAM_CODEC,
+                new CraftingInterfaceEditPayload(CraftingInterfaceEditPayload.JOBS, 0, 0, 12, ""));
+        helper.succeed();
+    }
+
+    /** Everything an interface's window shows goes through, its patterns' routes, warnings, log and marks too. */
+    @GameTest(template = ARENA)
+    public static void craftingInterfaceState_streamCodecRoundTrip(final GameTestHelper helper) {
+        final InterfaceView.PatternView pattern = new InterfaceView.PatternView(ItemStack.EMPTY,
+                Text.literal("Coarse dirt"), List.of(
+                        new InterfaceView.InputView(StorageKey.of(Items.DIRT), 1L, 0, InterfaceView.FILTER),
+                        new InterfaceView.InputView(StorageKey.of(Items.GRAVEL), 1L, -1, InterfaceView.NO_ROUTER)),
+                false);
+        final InterfaceView view = new InterfaceView("Mixer", "a1b2c3", HardwareEra.TRANSITION, true, 8,
+                List.of(pattern), List.of(Text.literal("West router"), Text.literal("North router")),
+                InterfaceView.CABLE, true, Text.literal("Test mixer through 2 routers"), Text.literal("Bus A"), false,
+                3, List.of(Text.literal("no router takes the gravel")), Text.literal("idle"), InterfaceView.DIM,
+                List.of(new CraftingLog.Entry(120L, StorageKey.of(Items.COARSE_DIRT).id(), 4L, 4L,
+                        CraftingLog.COMPLETED, "")),
+                Map.of("MODE", "Mixer line"));
+        assertRoundTrip(helper, CraftingInterfaceStatePayload.STREAM_CODEC, new CraftingInterfaceStatePayload(7, view));
+        final InterfaceView.PatternView withIcon = new InterfaceView.PatternView(new ItemStack(Items.STONE),
+                Text.literal("Stone"), List.of(), true);
+        final RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(),
+                helper.getLevel().registryAccess());
+        final InterfaceView iconView = new InterfaceView("", "", HardwareEra.STANDARD, false, 9, List.of(withIcon),
+                List.of(), InterfaceView.DIRECT, false, Text.EMPTY, Text.EMPTY, false, 0, List.of(), Text.EMPTY,
+                InterfaceView.GOOD, List.of(), Map.of());
+        InterfaceView.write(buf, iconView);
+        final InterfaceView decoded = InterfaceView.read(buf);
+        helper.assertTrue(ItemStack.matches(decoded.patterns().get(0).icon(), withIcon.icon()),
+                "a pattern's icon survives the wire");
+        helper.assertTrue(buf.readableBytes() == 0, "the buffer was fully consumed");
         helper.succeed();
     }
 
@@ -126,18 +186,16 @@ public final class MachinePayloadGameTests {
                         PatternStudioEditPayload.PROC_SET_CHANCE, 4, 75));
         assertRoundTrip(helper, PatternStudioEditPayload.STREAM_CODEC,
                 PatternStudioEditPayload.text(new BlockPos(-5, 60, -9), new BlockPos(-4, 60, -9),
-                        PatternStudioEditPayload.PROC_SET_MACHINE, 0, "jsindustrial:macerator", ""));
+                        PatternStudioEditPayload.PROC_SET_NAME, 0, "Kiln stone", "made in the test kiln"));
         // An item rides the wire by value; compare the fields around it (ItemStack has no value equality).
         final PatternStudioEditPayload withItem = PatternStudioEditPayload.item(new BlockPos(0, 1, 0),
-                new BlockPos(1, 1, 0), PatternStudioEditPayload.BENCH_SET_CELL, 8,
-                new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.OAK_LOG, 3));
+                new BlockPos(1, 1, 0), PatternStudioEditPayload.BENCH_SET_CELL, 8, new ItemStack(Items.OAK_LOG, 3));
         final RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(),
                 helper.getLevel().registryAccess());
         PatternStudioEditPayload.STREAM_CODEC.encode(buf, withItem);
         final PatternStudioEditPayload decoded = PatternStudioEditPayload.STREAM_CODEC.decode(buf);
         helper.assertTrue(decoded.index() == 8 && decoded.action() == PatternStudioEditPayload.BENCH_SET_CELL
-                && net.minecraft.world.item.ItemStack.matches(decoded.item(), withItem.item()),
-                "the item edit survives the wire");
+                && ItemStack.matches(decoded.item(), withItem.item()), "the item edit survives the wire");
         helper.assertTrue(buf.readableBytes() == 0, "the buffer was fully consumed");
         helper.succeed();
     }
@@ -148,25 +206,21 @@ public final class MachinePayloadGameTests {
          * The state is hand-written on the wire (far more than six fields): a full, busy state must go
          * through and come back field for field.
          */
-        final var bench = new ArrayList<PatternStudioStatePayload.BenchCell>();
+        final List<PatternStudioStatePayload.BenchCell> bench = new ArrayList<>();
         for (int i = 0; i < 9; i++) {
             bench.add(new PatternStudioStatePayload.BenchCell(
-                    i % 2 == 0 ? new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.OAK_PLANKS)
-                            : net.minecraft.world.item.ItemStack.EMPTY,
+                    i % 2 == 0 ? new ItemStack(Items.OAK_PLANKS) : ItemStack.EMPTY,
                     i == 0 ? "minecraft:planks" : "",
-                    i == 0 ? new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BIRCH_PLANKS)
-                            : net.minecraft.world.item.ItemStack.EMPTY, 12L * i));
+                    i == 0 ? new ItemStack(Items.BIRCH_PLANKS) : ItemStack.EMPTY, 12L * i));
         }
-        final var cell = new dev.jstech.computers.crafting.PatternWorkbench.DataCell(
-                dev.jstech.computers.storage.StorageKey.of(net.minecraft.world.item.Items.RAW_IRON), 2, true);
+        final PatternWorkbench.DataCell cell = new PatternWorkbench.DataCell(StorageKey.of(Items.RAW_IRON), 2, true);
         final PatternStudioStatePayload state = new PatternStudioStatePayload(bench,
-                new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.CHEST), "Chest of any planks",
-                "note", "chest.craft",
+                new ItemStack(Items.CHEST), "Chest of any planks", "note", "chest.craft",
                 List.of(new PatternStudioStatePayload.ProcCell(3, cell, 100, 40L)),
                 List.of(new PatternStudioStatePayload.ProcCell(0, cell, 50, 0L)),
-                "minecraft:furnace", 600, "", "", "",
+                600, "", "", "",
                 List.of(new PatternStudioStatePayload.Stage(Text.literal("Iron Ingot"), false,
-                        new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_INGOT))),
+                        new ItemStack(Items.IRON_INGOT))),
                 "pipe", "", "pipe.craft",
                 List.of(new PatternStudioStatePayload.Drive("media:12345", Text.literal("DVD-RW"), true,
                                 List.of("a.craft", "b.craft")),
@@ -174,7 +228,6 @@ public final class MachinePayloadGameTests {
                                 List.of())),
                 new PatternStudioStatePayload.Encoder(true, Text.literal("Standard"), Text.literal("DVD-RW"),
                         Text.literal("Writing a.craft"), 42, 2, true, false),
-                List.of(new PatternStudioStatePayload.Machine("minecraft:furnace", "Furnace")),
                 true, true, false, true, false, Text.literal("Sent"), 1);
         final RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(),
                 helper.getLevel().registryAccess());
@@ -182,15 +235,14 @@ public final class MachinePayloadGameTests {
         final PatternStudioStatePayload decoded = PatternStudioStatePayload.STREAM_CODEC.decode(buf);
         helper.assertTrue(buf.readableBytes() == 0, "the buffer was fully consumed");
         helper.assertTrue(decoded.bench().size() == 9 && "minecraft:planks".equals(decoded.bench().get(0).tag())
-                && decoded.bench().get(0).resolved().is(net.minecraft.world.item.Items.BIRCH_PLANKS)
+                && decoded.bench().get(0).resolved().is(Items.BIRCH_PLANKS)
                 && decoded.bench().get(8).stock() == 96L, "the bench cells survive");
-        helper.assertTrue(decoded.preview().is(net.minecraft.world.item.Items.CHEST)
-                && "Chest of any planks".equals(decoded.benchName()) && "chest.craft".equals(decoded.benchOpened()),
-                "the bench header survives");
+        helper.assertTrue(decoded.preview().is(Items.CHEST) && "Chest of any planks".equals(decoded.benchName())
+                && "chest.craft".equals(decoded.benchOpened()), "the bench header survives");
         helper.assertTrue(decoded.inputs().size() == 1 && decoded.inputs().get(0).index() == 3
                 && decoded.inputs().get(0).cell().estimated() && decoded.outputs().get(0).chance() == 50,
                 "the machine cells survive");
-        helper.assertTrue("minecraft:furnace".equals(decoded.machineType()) && decoded.timeout() == 600, "machine and timeout");
+        helper.assertTrue(decoded.timeout() == 600, "the timeout survives");
         helper.assertTrue(decoded.stages().size() == 1 && !decoded.stages().get(0).bench()
                 && "Iron Ingot".equals(decoded.stages().get(0).label().english())
                 && "pipe.craft".equals(decoded.pipeOpened()), "the pipeline survives");
@@ -200,8 +252,8 @@ public final class MachinePayloadGameTests {
                 && decoded.encoder().queued() == 2 && decoded.encoder().busy()
                 && "Standard".equals(decoded.encoder().era().english())
                 && "Writing a.craft".equals(decoded.encoder().status().english()), "the encoder survives");
-        helper.assertTrue(decoded.machines().size() == 1 && decoded.craftingComputer() && decoded.hasCard()
-                && !decoded.romHasBench() && decoded.romHasProc() && "Sent".equals(decoded.status().english())
+        helper.assertTrue(decoded.craftingComputer() && decoded.hasCard() && !decoded.romHasBench()
+                && decoded.romHasProc() && !decoded.romHasPipe() && "Sent".equals(decoded.status().english())
                 && decoded.tabHint() == 1, "the flags survive");
         helper.succeed();
     }

@@ -105,20 +105,20 @@ public final class IndustrialModule {
             Device.of(() -> IndustrialModule.MACERATOR_BE.get()).ticks(ProcessingMachineBlockEntity::serverTick)
                     .opensMenu((id, inventory, machine) ->
                             new ProcessingMachineMenu(IndustrialModule.MACERATOR_MENU.get(), id, inventory, machine)))
-            .named("Macerator").machineFor(MACERATING_TYPE.getId()).register();
+            .named("Macerator").register();
 
     public static final BlockEntry<DeviceBlock> ELECTRIC_FURNACE = machine("electric_furnace",
             Device.of(() -> IndustrialModule.ELECTRIC_FURNACE_BE.get())
                     .ticks(ProcessingMachineBlockEntity::serverTick)
                     .opensMenu((id, inventory, machine) -> new ProcessingMachineMenu(
                             IndustrialModule.ELECTRIC_FURNACE_MENU.get(), id, inventory, machine)))
-            .named("Electric Furnace").machineFor(ResourceLocation.withDefaultNamespace("smelting")).register();
+            .named("Electric Furnace").register();
 
     public static final BlockEntry<DeviceBlock> COMPRESSOR = machine("compressor",
             Device.of(() -> IndustrialModule.COMPRESSOR_BE.get()).ticks(ProcessingMachineBlockEntity::serverTick)
                     .opensMenu((id, inventory, machine) ->
                             new ProcessingMachineMenu(IndustrialModule.COMPRESSOR_MENU.get(), id, inventory, machine)))
-            .named("Compressor").machineFor(COMPRESSING_TYPE.getId()).register();
+            .named("Compressor").register();
 
     public static final BlockEntry<DeviceBlock> COAL_GENERATOR = machine("coal_generator",
             Device.of(() -> IndustrialModule.COAL_GENERATOR_BE.get()).ticks(CoalGeneratorBlockEntity::serverTick)

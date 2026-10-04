@@ -67,6 +67,14 @@ public final class IqlParser {
                 return IqlParseResult.error(reason(e), IqlParseResult.NO_POSITION);
             }
         }
+        // And a Crafting Interface's or a Crafting Input Router's: SET INTERFACE 'name' setting, and the like.
+        if (IqlCraftingStatement.isCrafting(input)) {
+            try {
+                return IqlParseResult.okCrafting(IqlCraftingStatement.parse(input));
+            } catch (final IllegalArgumentException e) {
+                return IqlParseResult.error(reason(e), IqlParseResult.NO_POSITION);
+            }
+        }
         // So is a Redstone Interface's mode: SET REDSTONE 'name' IN, or OUT and a strength.
         if (IqlRedstoneStatement.isSetRedstone(input)) {
             try {

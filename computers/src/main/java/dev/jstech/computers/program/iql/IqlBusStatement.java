@@ -113,6 +113,17 @@ public record IqlBusStatement(String bus, Change change) {
     }
 
     /**
+     * Reads one setting as a {@code SET BUS} statement writes it after the bus's name, from {@code tokens}, which hold
+     * the setting and nothing after it: what {@code SET ROUTER} sets on a router.
+     */
+    static Change setting(final List<Token> tokens) {
+        final Reader reader = new Reader(tokens);
+        final Change change = reader.setting();
+        reader.end();
+        return change;
+    }
+
+    /**
      * The hours of a {@code TIME BETWEEN 18:00 AND 06:00} spec, from and to, or null when it is not one: what a job
      * that switches a bus on for some hours of the day is set by.
      */
@@ -164,11 +175,18 @@ public record IqlBusStatement(String bus, Change change) {
                 throw IqlError.of(IqlError.BUS_NEEDS_NAME);
             }
             final String name = tokens.get(pos++).text();
+            final Change change = setting();
+            end();
+            return new IqlBusStatement(name, change);
+        }
+
+        /* The setting from here on: its word, then what it takes. */
+        Change setting() {
             if (pos >= tokens.size()) {
                 throw IqlError.of(IqlError.BUS_NEEDS_SETTING);
             }
             final Token setting = tokens.get(pos++);
-            final Change change = switch (setting.text().toUpperCase(Locale.ROOT)) {
+            return switch (setting.text().toUpperCase(Locale.ROOT)) {
                 case "ON" -> new Power(true);
                 case "OFF" -> new Power(false);
                 case "MODE" -> mode();
@@ -185,10 +203,13 @@ public record IqlBusStatement(String bus, Change change) {
                 case "ACCESS" -> access();
                 default -> throw IqlError.of(IqlError.BUS_UNKNOWN_SETTING, setting.text());
             };
+        }
+
+        /* Nothing may follow the statement. */
+        void end() {
             if (pos < tokens.size()) {
                 throw IqlError.of(IqlError.UNEXPECTED_TOKEN, tokens.get(pos).text());
             }
-            return new IqlBusStatement(name, change);
         }
 
         private Change mode() {

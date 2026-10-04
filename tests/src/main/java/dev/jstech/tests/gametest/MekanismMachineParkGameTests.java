@@ -19,6 +19,7 @@ import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -67,7 +68,7 @@ public final class MekanismMachineParkGameTests {
                 List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.COPPER_INGOT), 1),
                         new ProcessingPattern.ProcessingInput(StorageKey.of(Items.REDSTONE), 1)),
                 List.of(new ProcessingPattern.ProcessingOutput(MekanismRig.itemKey(ALLOY_INFUSED), 1, 100)),
-                INFUSER.toString(), 400);
+                400);
     }
 
     /** Infused Alloy + 20 mB of diamond (two diamond dusts) -> Reinforced Alloy. */
@@ -76,7 +77,7 @@ public final class MekanismMachineParkGameTests {
                 List.of(new ProcessingPattern.ProcessingInput(MekanismRig.itemKey(ALLOY_INFUSED), 1),
                         new ProcessingPattern.ProcessingInput(MekanismRig.itemKey(DUST_DIAMOND), 2)),
                 List.of(new ProcessingPattern.ProcessingOutput(MekanismRig.itemKey(ALLOY_REINFORCED), 1, 100)),
-                INFUSER.toString(), 400);
+                400);
     }
 
     /** Reinforced Alloy + 40 mB of refined obsidian (four dusts) -> Atomic Alloy. */
@@ -85,7 +86,7 @@ public final class MekanismMachineParkGameTests {
                 List.of(new ProcessingPattern.ProcessingInput(MekanismRig.itemKey(ALLOY_REINFORCED), 1),
                         new ProcessingPattern.ProcessingInput(MekanismRig.itemKey(DUST_REFINED_OBSIDIAN), 4)),
                 List.of(new ProcessingPattern.ProcessingOutput(MekanismRig.itemKey(ALLOY_ATOMIC), 1, 100)),
-                INFUSER.toString(), 400);
+                400);
     }
 
     /** A#A / #X# / A#A: 4 Atomic Alloy + 4 Polonium Pellet + Steel Casing -> 4 Fusion Reactor Frames. */
@@ -106,7 +107,8 @@ public final class MekanismMachineParkGameTests {
 
     private static void assertCompleted(final GameTestHelper helper, final INetworkOperation op, final String what) {
         helper.assertTrue(op.toRecord().status() == OperationRecord.STATUS_COMPLETED,
-                what + " must complete; status=" + op.toRecord().status());
+                what + " must complete; status=" + op.toRecord().status() + " cause=" + op.toRecord().cause()
+                        + " " + MekanismRig.describe(TestWorldBuilder.forGameTest(helper)));
     }
 
     @GameTest(template = ARENA, timeoutTicks = 700)
@@ -117,12 +119,13 @@ public final class MekanismMachineParkGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     MekanismRig.mountBuses(helper);
-                    MekanismRig.mountBottomInputBus(helper);
+                    MekanismRig.mountBottomInputRouter(helper);
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     rig.net().seed(Items.COPPER_INGOT, 4);
                     rig.net().seed(Items.REDSTONE, 4);
-                    MekanismRig.assertDiscovered(helper, INFUSER);
+                    MekanismRig.assertReaches(helper, INFUSER);
+                    MekanismRig.hold(rig.world(), NetworkRecipe.ofProcessing(infusedAlloy()));
                     op[0] = rig.net().mainframe().submitNetworkProcessing(infusedAlloy(), 2, "battery");
                     helper.assertTrue(op[0] != null, "the Mainframe must accept the processing operation");
                 })
@@ -151,19 +154,20 @@ public final class MekanismMachineParkGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     MekanismRig.mountBuses(helper);
-                    MekanismRig.mountBottomInputBus(helper);
+                    MekanismRig.mountBottomInputRouter(helper);
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     final NetworkStorage storage = rig.net().storage(helper.getLevel());
                     storage.insert(dust, 3);
                     storage.insert(osmium, 3);
-                    MekanismRig.assertDiscovered(helper, COMPRESSOR);
+                    MekanismRig.assertReaches(helper, COMPRESSOR);
                     // One compression burns 200 mB of osmium: exactly one ingot in the extra slot.
                     final ProcessingPattern pattern = new ProcessingPattern(
                             List.of(new ProcessingPattern.ProcessingInput(dust, 1),
                                     new ProcessingPattern.ProcessingInput(osmium, 1)),
                             List.of(new ProcessingPattern.ProcessingOutput(ingot, 1, 100)),
-                            COMPRESSOR.toString(), 400);
+                            400);
+                    MekanismRig.hold(rig.world(), NetworkRecipe.ofProcessing(pattern));
                     op[0] = rig.net().mainframe().submitNetworkProcessing(pattern, 2, "battery");
                     helper.assertTrue(op[0] != null, "the Mainframe must accept the processing operation");
                 })
@@ -191,11 +195,12 @@ public final class MekanismMachineParkGameTests {
                 .thenExecuteAfter(SETTLE + 2, () -> MekanismRig.mountBuses(helper))
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     rig.net().seed(Items.IRON_INGOT, 5);
-                    MekanismRig.assertDiscovered(helper, CRUSHER);
+                    MekanismRig.assertReaches(helper, CRUSHER);
                     final ProcessingPattern pattern = new ProcessingPattern(
                             List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.IRON_INGOT), 1)),
                             List.of(new ProcessingPattern.ProcessingOutput(dust, 1, 100)),
-                            CRUSHER.toString(), 400);
+                            400);
+                    MekanismRig.hold(rig.world(), NetworkRecipe.ofProcessing(pattern));
                     op[0] = rig.net().mainframe().submitNetworkProcessing(pattern, 3, "battery");
                     helper.assertTrue(op[0] != null, "the Mainframe must accept the processing operation");
                 })
@@ -225,7 +230,7 @@ public final class MekanismMachineParkGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     MekanismRig.mountBuses(helper);
-                    MekanismRig.mountBottomInputBus(helper);
+                    MekanismRig.mountBottomInputRouter(helper);
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     final NetworkStorage storage = rig.net().storage(helper.getLevel());
@@ -240,6 +245,7 @@ public final class MekanismMachineParkGameTests {
                             MultiStagePattern.Stage.proc(reinforcedAlloy()),
                             MultiStagePattern.Stage.proc(atomicAlloy()),
                             MultiStagePattern.Stage.bench(framePattern())));
+                    MekanismRig.hold(rig.world(), NetworkRecipe.ofMultiStage(pipeline));
                     op[0] = rig.net().mainframe().submitNetworkMultiStage(pipeline, 4, "battery");
                     helper.assertTrue(op[0] != null, "the Mainframe must accept the pipeline");
                 })
@@ -277,7 +283,7 @@ public final class MekanismMachineParkGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     MekanismRig.mountBuses(helper);
-                    MekanismRig.mountBottomInputBus(helper);
+                    MekanismRig.mountBottomInputRouter(helper);
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     final NetworkStorage storage = rig.net().storage(helper.getLevel());
@@ -290,8 +296,7 @@ public final class MekanismMachineParkGameTests {
                     final CraftingComputerBlockEntity cc = rig.net().cc();
                     helper.assertTrue(cc.loadPattern(framePattern()), "the frame pattern must load into the ROM");
                     for (final ProcessingPattern machine : new ProcessingPattern[]{infusedAlloy(), reinforcedAlloy(), atomicAlloy()}) {
-                        helper.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(machine)),
-                                "the machine pattern must load into the ROM: " + machine.machineType());
+                        MekanismRig.hold(rig.world(), NetworkRecipe.ofProcessing(machine));
                     }
                 })
                 // The network index picks the seeded stock up on the next tick; plan against it after that.
@@ -333,7 +338,7 @@ public final class MekanismMachineParkGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     MekanismRig.mountBuses(helper);
-                    MekanismRig.mountBottomInputBus(helper);
+                    MekanismRig.mountBottomInputRouter(helper);
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     final NetworkStorage storage = rig.net().storage(helper.getLevel());
@@ -346,8 +351,7 @@ public final class MekanismMachineParkGameTests {
                     final CraftingComputerBlockEntity cc = rig.net().cc();
                     helper.assertTrue(cc.loadPattern(framePattern()), "the frame pattern must load into the ROM");
                     for (final ProcessingPattern machine : new ProcessingPattern[]{infusedAlloy(), reinforcedAlloy(), atomicAlloy()}) {
-                        helper.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(machine)),
-                                "the machine pattern must load into the ROM: " + machine.machineType());
+                        MekanismRig.hold(rig.world(), NetworkRecipe.ofProcessing(machine));
                     }
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {
@@ -388,7 +392,7 @@ public final class MekanismMachineParkGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     MekanismRig.mountBuses(helper);
-                    MekanismRig.mountBottomInputBus(helper);
+                    MekanismRig.mountBottomInputRouter(helper);
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     final NetworkStorage storage = rig.net().storage(helper.getLevel());
@@ -401,8 +405,7 @@ public final class MekanismMachineParkGameTests {
                     final CraftingComputerBlockEntity cc = rig.net().cc();
                     helper.assertTrue(cc.loadPattern(framePattern()), "the frame pattern must load into the ROM");
                     for (final ProcessingPattern machine : new ProcessingPattern[]{infusedAlloy(), reinforcedAlloy(), atomicAlloy()}) {
-                        helper.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(machine)),
-                                "the machine pattern must load into the ROM: " + machine.machineType());
+                        MekanismRig.hold(rig.world(), NetworkRecipe.ofProcessing(machine));
                     }
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> helper.assertTrue(

@@ -15,6 +15,7 @@ import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.CraftingRig;
 import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -131,9 +132,9 @@ public final class PerformanceGameTests {
 
     /**
      * Machine-crafting at scale: flood the Mainframe with thousands of processing operations at once and measure
-     * the per-tick dispatch cost, including the maxJobs concurrency pre-pass that walks every processing op each
-     * tick. The pattern targets a machine that isn't present, so the ops stay queued (no world I/O), which isolates
-     * the dispatch/concurrency overhead and proves it scales rather than going quadratic.
+     * the per-tick dispatch cost, the pass that looks for an interface for every waiting job each tick. No interface
+     * holds the pattern, so the jobs stay queued (no world I/O), which isolates the dispatch overhead and proves it
+     * scales rather than going quadratic.
      */
     @GameTest(template = ARENA, batch = "jsc_bench_processing", timeoutTicks = 800)
     public static void bench_manyProcessingOps(final GameTestHelper helper) {
@@ -150,7 +151,7 @@ public final class PerformanceGameTests {
                                     .ProcessingPattern.ProcessingInput(StorageKey.of(Items.IRON_INGOT), 1L)),
                             java.util.List.of(new dev.jstech.computers.crafting
                                     .ProcessingPattern.ProcessingOutput(StorageKey.of(Items.COPPER_INGOT), 1L, 100)),
-                            "jsc:nonexistent_machine", 100_000);
+                            100_000);
                     for (int i = 0; i < load; i++) {
                         mf.submitNetworkProcessing(pattern, 1, "op");
                     }
@@ -273,6 +274,8 @@ public final class PerformanceGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 8, () -> {
+                    // Every free slot takes a card, so the cards' ROMs keep the whole chain.
+                    CraftingRig.addCards(cc, CraftingComputerBlockEntity.PCIE_SLOTS);
                     for (int i = 0; i < chain.size() - 1; i++) {
                         final List<ItemStack> grid = new ArrayList<>(9);
                         grid.add(new ItemStack(chain.get(i + 1)));
@@ -280,7 +283,8 @@ public final class PerformanceGameTests {
                         while (grid.size() < 9) {
                             grid.add(ItemStack.EMPTY);
                         }
-                        cc.loadPattern(new CraftingPattern(grid, new ItemStack(chain.get(i), 1)));
+                        helper.assertTrue(cc.loadPattern(new CraftingPattern(grid, new ItemStack(chain.get(i), 1))),
+                                "every link of the chain loads into a card's ROM");
                     }
                     rackBe.getServerStorage(0).insert(chain.get(chain.size() - 1), 1_000_000_000L);
                 })

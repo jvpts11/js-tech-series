@@ -90,6 +90,24 @@ class BusLayoutTest {
     }
 
     @Test
+    void rows_giveTheCraftingPartsTheirFilterThenTheirCraftingLines() {
+        for (final BusLayout.Window window : List.of(BusLayout.Window.ROUTER, BusLayout.Window.RECEIVING)) {
+            final BusLayout.Shape shape = new BusLayout.Shape(BusLayout.abilities(HardwareEra.STANDARD, window),
+                    window, 2, 0, 1, false, 2, 0, false, 3,
+                    List.of(BusLayout.craftLine(false), BusLayout.craftLine(true), BusLayout.craftBox(2)));
+            final List<BusLayout.Row> rows = BusLayout.rows(shape);
+
+            assertEquals(BusLayout.Kind.FILTER, rows.get(0).kind(), window.toString());
+            assertEquals(3, rows.stream().filter(r -> r.kind() == BusLayout.Kind.CRAFT_LINE).count(),
+                    window.toString());
+            assertEquals(BusLayout.craftLine(true), rows.get(2).height(), window.toString());
+            assertFalse(rows.stream().anyMatch(r -> r.kind() == BusLayout.Kind.SPEED), window.toString());
+        }
+        assertTrue(BusLayout.craftLine(true) > BusLayout.craftLine(false));
+        assertEquals(2 * BusLayout.craftBox(1) - 6, BusLayout.craftBox(2));
+    }
+
+    @Test
     void rows_offerNoMoreConditionsPastTheMost() {
         assertFalse(kinds(HardwareEra.STANDARD, BusLayout.Window.MOVER, 0, BusLayout.MOST_CONDITIONS)
                 .contains(BusLayout.Kind.ADD_CONDITION));

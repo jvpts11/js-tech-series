@@ -35,7 +35,19 @@ public final class OperationMilestones {
     /** Reports one Operation the scheduler has just written down as finished. */
     public static void report(final BlockEntity mainframe, @Nullable final UUID askedBy, final String type,
                               final OperationRecord record) {
+        report(mainframe, askedBy, type, record, false);
+    }
+
+    /**
+     * The same, saying whether the Operation made something on a machine on its way: a craft whose tree ran a machine
+     * step earns what a machine run earns, though that step was not an Operation of its own.
+     */
+    public static void report(final BlockEntity mainframe, @Nullable final UUID askedBy, final String type,
+                              final OperationRecord record, final boolean throughMachine) {
         final List<String> earned = earned(type, record);
+        if (throughMachine && record.completed() && !earned.contains(JscEvents.MACHINE_AUTOCRAFT)) {
+            earned.add(JscEvents.MACHINE_AUTOCRAFT);
+        }
         if (earned.isEmpty() || !(mainframe.getLevel() instanceof ServerLevel level)) {
             return;
         }

@@ -9,8 +9,6 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.tests.testkit.ServerStacks;
-import dev.jstech.computers.block.part.InputBusPart;
-import dev.jstech.computers.block.part.ReceivingBusPart;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -21,11 +19,9 @@ import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -54,10 +50,6 @@ public final class MekanismParallelLoadGameTests {
     private static final int SETTLE = MekanismRig.SETTLE;
     private static final ResourceLocation INFUSER = MekanismRig.mek("metallurgic_infuser");
     private static final ResourceLocation CRUSHER = MekanismRig.mek("crusher");
-    // The second machine continues the crafting run two blocks further south, with its own buses.
-    private static final BlockPos MACHINE_2 = new BlockPos(6, 2, 9);
-    private static final BlockPos CABLE_2_WEST = new BlockPos(5, 2, 9);
-    private static final BlockPos CABLE_2_ABOVE = new BlockPos(6, 3, 9);
     private static final BlockPos HUB = new BlockPos(2, 2, 3);
     private static final BlockPos SECOND_COMPUTER = new BlockPos(4, 2, 1);
 
@@ -65,7 +57,7 @@ public final class MekanismParallelLoadGameTests {
         return new ProcessingPattern(
                 List.of(new ProcessingPattern.ProcessingInput(in, 1), new ProcessingPattern.ProcessingInput(extra, extraCount)),
                 List.of(new ProcessingPattern.ProcessingOutput(out, 1, 100)),
-                INFUSER.toString(), 400);
+                400);
     }
 
     private static CraftingPattern framePattern() {
@@ -116,15 +108,23 @@ public final class MekanismParallelLoadGameTests {
         powerCluster(world);
     }
 
+    /* The three steps up the alloy ladder, in the infuser's interface. */
+    private static void holdAlloyChain(final TestWorldBuilder world) {
+        final StorageKey infused = MekanismRig.itemKey(MekanismRig.mek("alloy_infused"));
+        final StorageKey reinforced = MekanismRig.itemKey(MekanismRig.mek("alloy_reinforced"));
+        MekanismRig.holdFirst(world, NetworkRecipe.ofProcessing(infuse(StorageKey.of(Items.COPPER_INGOT),
+                StorageKey.of(Items.REDSTONE), 1, infused)));
+        MekanismRig.holdFirst(world, NetworkRecipe.ofProcessing(infuse(infused,
+                MekanismRig.itemKey(MekanismRig.mek("dust_diamond")), 2, reinforced)));
+        MekanismRig.holdFirst(world, NetworkRecipe.ofProcessing(infuse(reinforced,
+                MekanismRig.itemKey(MekanismRig.mek("dust_refined_obsidian")), 4,
+                MekanismRig.itemKey(MekanismRig.mek("alloy_atomic")))));
+    }
+
     private static void loadAlloyChain(final GameTestHelper helper, final MekanismRig.Rig rig) {
         final CraftingComputerBlockEntity cc = rig.net().cc();
         helper.assertTrue(cc.loadPattern(framePattern()), "the frame pattern must load");
-        helper.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(infuse(
-                StorageKey.of(Items.COPPER_INGOT), StorageKey.of(Items.REDSTONE), 1, MekanismRig.itemKey(MekanismRig.mek("alloy_infused"))))), "infused loads");
-        helper.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(infuse(
-                MekanismRig.itemKey(MekanismRig.mek("alloy_infused")), MekanismRig.itemKey(MekanismRig.mek("dust_diamond")), 2, MekanismRig.itemKey(MekanismRig.mek("alloy_reinforced"))))), "reinforced loads");
-        helper.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(infuse(
-                MekanismRig.itemKey(MekanismRig.mek("alloy_reinforced")), MekanismRig.itemKey(MekanismRig.mek("dust_refined_obsidian")), 4, MekanismRig.itemKey(MekanismRig.mek("alloy_atomic"))))), "atomic loads");
+        holdAlloyChain(rig.world());
         rig.net().seed(Items.COPPER_INGOT, 4);
         rig.net().seed(Items.REDSTONE, 4);
         rig.net().seed(MekanismRig.item(MekanismRig.mek("dust_diamond")), 8);
@@ -156,7 +156,7 @@ public final class MekanismParallelLoadGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     MekanismRig.mountBuses(helper);
-                    MekanismRig.mountBottomInputBus(helper);
+                    MekanismRig.mountBottomInputRouter(helper);
                     loadAlloyChain(helper, rig);
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {
@@ -209,12 +209,8 @@ public final class MekanismParallelLoadGameTests {
         final StorageKey dust = MekanismRig.itemKey(MekanismRig.mek("dust_iron"));
         final StorageKey infused = MekanismRig.itemKey(MekanismRig.mek("alloy_infused"));
         final INetworkOperation[] ops = new INetworkOperation[3];
-        // The second machine and its buses, further down the run.
-        world.setBlock(new BlockPos(5, 2, 8), ComputingModule.CRAFTING_CABLE);
-        world.setBlock(CABLE_2_WEST, ComputingModule.CRAFTING_CABLE);
-        world.setBlock(new BlockPos(5, 3, 9), ComputingModule.CRAFTING_CABLE);
-        world.setBlock(CABLE_2_ABOVE, ComputingModule.CRAFTING_CABLE);
-        world.placeFromItem(MACHINE_2, net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(CRUSHER));
+        // The crusher further down the run, with its own interface.
+        MekanismRig.placeSecondMachine(world, CRUSHER);
         // A second Crafting Computer on the data network, and the Supercomputer cluster.
         final CraftingComputerBlockEntity cc2 = world.placeRunningCraftingComputer(SECOND_COMPUTER);
         world.faceRearTowardCable(SECOND_COMPUTER);
@@ -224,13 +220,8 @@ public final class MekanismParallelLoadGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     MekanismRig.mountBuses(helper);
-                    MekanismRig.mountBottomInputBus(helper);
-                    if (world.getBlockEntity(CABLE_2_ABOVE) instanceof CableBlockEntity cable) {
-                        cable.addPart(Direction.DOWN, new InputBusPart());
-                    }
-                    if (world.getBlockEntity(CABLE_2_WEST) instanceof CableBlockEntity cable) {
-                        cable.addPart(Direction.EAST, new ReceivingBusPart());
-                    }
+                    MekanismRig.mountBottomInputRouter(helper);
+                    MekanismRig.mountSecondMachineBuses(world, null, null);
                     // Stock: two frame kits, sixteen iron ingots, six hundred logs.
                     rig.net().seed(Items.COPPER_INGOT, 8);
                     rig.net().seed(Items.REDSTONE, 8);
@@ -241,17 +232,15 @@ public final class MekanismParallelLoadGameTests {
                     rig.net().seed(Items.IRON_INGOT, 16);
                     rig.net().seed(Items.OAK_LOG, 600);
                     for (final CraftingComputerBlockEntity cc : new CraftingComputerBlockEntity[]{rig.net().cc(), cc2}) {
-                        helper.assertTrue(cc.loadPattern(framePattern()) && cc.loadPattern(planksPattern()), "bench patterns load");
-                        helper.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(infuse(StorageKey.of(Items.COPPER_INGOT),
-                                StorageKey.of(Items.REDSTONE), 1, infused))), "infused loads");
-                        helper.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(infuse(infused,
-                                MekanismRig.itemKey(MekanismRig.mek("dust_diamond")), 2, MekanismRig.itemKey(MekanismRig.mek("alloy_reinforced"))))), "reinforced loads");
-                        helper.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(infuse(MekanismRig.itemKey(MekanismRig.mek("alloy_reinforced")),
-                                MekanismRig.itemKey(MekanismRig.mek("dust_refined_obsidian")), 4, MekanismRig.itemKey(MekanismRig.mek("alloy_atomic"))))), "atomic loads");
-                        helper.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(new ProcessingPattern(
-                                List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.IRON_INGOT), 1)),
-                                List.of(new ProcessingPattern.ProcessingOutput(dust, 1, 100)), CRUSHER.toString(), 400))), "crushing loads");
+                        helper.assertTrue(cc.loadPattern(framePattern()) && cc.loadPattern(planksPattern()),
+                                "bench patterns load");
                     }
+                    // The machine recipes live in the interfaces: the alloy ladder at the infuser, the dust at the
+                    // crusher.
+                    holdAlloyChain(world);
+                    MekanismRig.holdSecond(world, NetworkRecipe.ofProcessing(new ProcessingPattern(
+                            List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.IRON_INGOT), 1)),
+                            List.of(new ProcessingPattern.ProcessingOutput(dust, 1, 100)), 400)));
                 })
                 .thenExecuteAfter(SETTLE + 4, () -> {
                     final MainframeBlockEntity mainframe = rig.net().mainframe();
@@ -266,7 +255,7 @@ public final class MekanismParallelLoadGameTests {
                 })
                 .thenExecuteAfter(60, () -> {
                     MekanismRig.power(helper);
-                    MekanismRig.power(helper.getLevel(), helper.absolutePos(MACHINE_2));
+                    MekanismRig.power(helper.getLevel(), helper.absolutePos(MekanismRig.MACHINE_B));
                     final List<OperationRecord> records = rig.net().mainframe().activeOperationRecords();
                     // Machine steps are the records without sub-rows (the crafts that own them carry the rows).
                     final long running = records.stream()
@@ -284,7 +273,7 @@ public final class MekanismParallelLoadGameTests {
                 })
                 .thenWaitUntil(() -> {
                     MekanismRig.power(helper);
-                    MekanismRig.power(helper.getLevel(), helper.absolutePos(MACHINE_2));
+                    MekanismRig.power(helper.getLevel(), helper.absolutePos(MekanismRig.MACHINE_B));
                     helper.assertTrue(ops[0].isDone() && ops[1].isDone() && ops[2].isDone(),
                             "still running: " + rig.net().mainframe().activeOperationRecords());
                 })

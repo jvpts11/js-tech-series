@@ -89,6 +89,21 @@ public final class IqlError extends IllegalArgumentException {
             "a bus has no setting %s");
     static final TextKey NOT_AN_HOUR = TextKey.of("jsc.iql.error.not_an_hour", "not an hour of the day: %s");
 
+    // A Crafting Interface's settings, and a Crafting Input Router's.
+    static final TextKey INTERFACE_NEEDS_NAME = TextKey.of("jsc.iql.error.interface_needs_name",
+            "%s needs the interface's name, in quotes when it has spaces");
+    static final TextKey INTERFACE_NEEDS_SETTING = TextKey.of("jsc.iql.error.interface_needs_setting",
+            "SET INTERFACE needs a setting: EXCLUSIVE, MAX JOBS or ROUTE");
+    static final TextKey INTERFACE_UNKNOWN_SETTING = TextKey.of("jsc.iql.error.interface_unknown_setting",
+            "an interface has no setting %s");
+    static final TextKey ROUTER_NEEDS_NAME = TextKey.of("jsc.iql.error.router_needs_name",
+            "%s needs the router's name, in quotes when it has spaces");
+    static final TextKey RENAME_NEEDS_TO = TextKey.of("jsc.iql.error.rename_needs_to",
+            "RENAME needs TO and the new name");
+    static final TextKey A_PATTERN = TextKey.of("jsc.iql.expected.pattern", "the pattern's name");
+    static final TextKey AN_INPUT = TextKey.of("jsc.iql.expected.input", "one of the pattern's inputs");
+    static final TextKey A_ROUTER = TextKey.of("jsc.iql.expected.router", "the router's name");
+
     // A Redstone Interface's mode.
     static final TextKey REDSTONE_NEEDS_NAME = TextKey.of("jsc.iql.error.redstone_needs_name",
             "SET REDSTONE needs the interface's name, in quotes when it has spaces");

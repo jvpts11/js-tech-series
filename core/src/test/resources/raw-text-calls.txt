@@ -3,7 +3,6 @@
 4 computers/src/main/java/dev/jstech/computers/client/BootSplashArt.java
 18 computers/src/main/java/dev/jstech/computers/client/ComputerTerminalScreen.java
 13 computers/src/main/java/dev/jstech/computers/client/CraftTerminalTab.java
-9 computers/src/main/java/dev/jstech/computers/client/CraftingSwitchScreen.java
 1 computers/src/main/java/dev/jstech/computers/client/DesktopSplashArt.java
 48 computers/src/main/java/dev/jstech/computers/client/FirmwareScreen.java
 15 computers/src/main/java/dev/jstech/computers/client/InstallerFrames.java
@@ -43,7 +42,6 @@
 1 computers/src/main/java/dev/jstech/computers/client/os/CodeCompletions.java
 4 computers/src/main/java/dev/jstech/computers/client/os/CommandPalette.java
 7 computers/src/main/java/dev/jstech/computers/client/os/CraftPlannerApp.java
-3 computers/src/main/java/dev/jstech/computers/client/os/CraftingManagerApp.java
 1 computers/src/main/java/dev/jstech/computers/client/os/DesktopDrags.java
 1 computers/src/main/java/dev/jstech/computers/client/os/DesktopItems.java
 2 computers/src/main/java/dev/jstech/computers/client/os/DesktopMemory.java
@@ -71,7 +69,7 @@
 4 computers/src/main/java/dev/jstech/computers/client/os/PaintApp.java
 1 computers/src/main/java/dev/jstech/computers/client/os/PanelMenu.java
 4 computers/src/main/java/dev/jstech/computers/client/os/PanelTray.java
-9 computers/src/main/java/dev/jstech/computers/client/os/PatternStudioApp.java
+8 computers/src/main/java/dev/jstech/computers/client/os/PatternStudioApp.java
 2 computers/src/main/java/dev/jstech/computers/client/os/PlayingCards.java
 3 computers/src/main/java/dev/jstech/computers/client/os/PowerDialog.java
 3 computers/src/main/java/dev/jstech/computers/client/os/RemoteControlApp.java

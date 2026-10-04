@@ -9,12 +9,16 @@ package dev.jstech.tests.testkit;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.block.part.CraftingInterfacePart;
+import dev.jstech.computers.block.part.ReceivingBusPart;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.crafting.CraftingFloor;
 import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
@@ -22,6 +26,7 @@ import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.blockentity.AbstractMachineBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -72,7 +77,7 @@ public final class BigBaseScenario {
      * @param driveSize       the size of every drive
      * @param maxLot          the most items one seeded key gets; the average lot is half of it
      * @param feedstock       logs and copper ingots seeded for the crafting traffic
-     * @param machineDesks    Crafting Computers with a Compressor behind a crafting switch
+     * @param machineDesks    Crafting Computers with a Compressor fed by a Crafting Interface
      * @param mainframeGpus   graphics cards in the Mainframe: each one is another parallel operation queue
      */
     public record Params(Layout layout, Chassis chassis, int routers, int racksPerRouter, int serversPerRack,
@@ -465,13 +470,27 @@ public final class BigBaseScenario {
         return cc;
     }
 
-    /** A crafting cable, a Crafting Switch and a Compressor in a line from the computer, in the given direction. */
+    /**
+     * A machine desk's line, in the given direction from the computer: two blocks of crafting cable, a Crafting
+     * Interface on the second against a Compressor, and a Crafting Receiving Bus beside the Compressor on cable that
+     * runs round the side. The interface holds the copper plate recipe when the plate is registered.
+     */
     private static AbstractMachineBlockEntity placeMachineLine(final TestWorldBuilder world, final BlockPos computer,
                                                                final Direction away) {
-        world.setBlock(computer.relative(away, 1), ComputingModule.CRAFTING_CABLE);
-        world.setBlock(computer.relative(away, 2), ComputingModule.CRAFTING_SWITCH.get());
-        world.setBlock(computer.relative(away, 3), IndustrialModule.COMPRESSOR.get());
-        return world.blockEntity(computer.relative(away, 3), AbstractMachineBlockEntity.class);
+        final Direction side = away.getClockWise();
+        final BlockPos second = computer.relative(away, 2);
+        final BlockPos machine = computer.relative(away, 3);
+        final BlockPos beside = machine.relative(side);
+        CraftingRig.lay(world, computer.relative(away), second, second.relative(side), beside);
+        world.setBlock(machine, IndustrialModule.COMPRESSOR.get());
+        final CraftingInterfacePart part = CraftingRig.addPart(world, new CraftingFloor.Site(second, away),
+                new CraftingInterfacePart(HardwareEra.STANDARD));
+        CraftingRig.addPart(world, new CraftingFloor.Site(beside, side.getOpposite()), new ReceivingBusPart());
+        final ProcessingPattern plates = copperPlatePattern();
+        if (plates != null) {
+            part.place(NetworkRecipe.ofProcessing(plates));
+        }
+        return world.blockEntity(machine, AbstractMachineBlockEntity.class);
     }
 
     private static CraftingPattern planksPattern() {
@@ -503,11 +522,10 @@ public final class BigBaseScenario {
         if (plate == null) {
             return null;
         }
-        final String machineType = BuiltInRegistries.BLOCK.getKey(IndustrialModule.COMPRESSOR.get()).toString();
         return new ProcessingPattern(
                 List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.COPPER_INGOT), 1L)),
                 List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(plate), 1L, 100)),
-                machineType, 120);
+                120);
     }
 
     /**

@@ -23,12 +23,15 @@ import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.menu.AbstractBusMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
+import dev.jstech.computers.menu.CraftingInterfaceMenu;
 import dev.jstech.computers.menu.ServerRouterMenu;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.BusEditPayload;
 import dev.jstech.computers.operation.payload.BusStatePayload;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
+import dev.jstech.computers.operation.payload.CraftingInterfaceEditPayload;
+import dev.jstech.computers.operation.payload.CraftingInterfaceStatePayload;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
 import dev.jstech.computers.operation.payload.NetworkManagerPayload;
 import dev.jstech.computers.operation.payload.NetworkNodeInfo;
@@ -110,12 +113,23 @@ public final class NetworkPayloads {
                 (payload, menu, player, level) -> menu.edit(player, payload));
         registrar.playToClient(BusStatePayload.TYPE, BusStatePayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(NetworkPayloads::handleBusState));
+        ComputerAccess.onMenu(registrar, CraftingInterfaceEditPayload.TYPE, CraftingInterfaceEditPayload.STREAM_CODEC,
+                CraftingInterfaceMenu.class, (payload, menu, player, level) -> menu.edit(player, payload));
+        registrar.playToClient(CraftingInterfaceStatePayload.TYPE, CraftingInterfaceStatePayload.STREAM_CODEC,
+                ClientPayloadHandlers.onMainThread(NetworkPayloads::handleInterfaceState));
     }
 
     /* The state of the bus whose window the player has open, if it is still that window. */
     private static void handleBusState(final BusStatePayload payload, final Player player) {
         if (player.containerMenu instanceof AbstractBusMenu menu && menu.containerId == payload.containerId()) {
             menu.accept(payload);
+        }
+    }
+
+    /* The state of the Crafting Interface whose window the player has open, if it is still that window. */
+    private static void handleInterfaceState(final CraftingInterfaceStatePayload payload, final Player player) {
+        if (player.containerMenu instanceof CraftingInterfaceMenu menu && menu.containerId == payload.containerId()) {
+            menu.accept(payload.view());
         }
     }
 

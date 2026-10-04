@@ -54,8 +54,8 @@ public class CraftingComputerBlock extends HorizontalDirectionalBlock
     private final HardwareEra era;
     private final CaseStyle caseStyle;
     /*
-     * Data over its era's access line on the back (through a router to the backbone), and the crafting cable to the
-     * Crafting Switches on any face, since the machine-delivery search walks out of all six.
+     * Data over its era's access line on the back (through a router to the backbone), and the crafting cable to its
+     * Crafting Interfaces on any face, since the search for the crafting network walks out of all six.
      */
     private final FacePorts ports;
 

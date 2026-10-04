@@ -59,7 +59,7 @@ public final class MekanismHardwareMatrixGameTests {
         return new ProcessingPattern(
                 List.of(new ProcessingPattern.ProcessingInput(in, 1), new ProcessingPattern.ProcessingInput(extra, extraCount)),
                 List.of(new ProcessingPattern.ProcessingOutput(out, 1, 100)),
-                INFUSER.toString(), 400);
+                400);
     }
 
     private static CraftingPattern framePattern() {
@@ -80,7 +80,7 @@ public final class MekanismHardwareMatrixGameTests {
     /** Buses, the flat patterns in the ROM and raw stock for {@code kits} runs of four frames. */
     private static void prepare(final GameTestHelper helper, final MekanismRig.Rig rig, final int kits) {
         MekanismRig.mountBuses(helper);
-        MekanismRig.mountBottomInputBus(helper);
+        MekanismRig.mountBottomInputRouter(helper);
         rig.net().seed(Items.COPPER_INGOT, 4 * kits);
         rig.net().seed(Items.REDSTONE, 4 * kits);
         rig.net().seed(MekanismRig.item(DUST_DIAMOND), 8 * kits);
@@ -89,12 +89,12 @@ public final class MekanismHardwareMatrixGameTests {
         rig.net().seed(MekanismRig.item(STEEL_CASING), kits);
         final CraftingComputerBlockEntity cc = rig.net().cc();
         helper.assertTrue(cc.loadPattern(framePattern()), "the frame pattern must load into the ROM");
-        helper.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(infuse(
-                StorageKey.of(Items.COPPER_INGOT), StorageKey.of(Items.REDSTONE), 1, MekanismRig.itemKey(ALLOY_INFUSED)))), "infused loads");
-        helper.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(infuse(
-                MekanismRig.itemKey(ALLOY_INFUSED), MekanismRig.itemKey(DUST_DIAMOND), 2, MekanismRig.itemKey(ALLOY_REINFORCED)))), "reinforced loads");
-        helper.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(infuse(
-                MekanismRig.itemKey(ALLOY_REINFORCED), MekanismRig.itemKey(DUST_REFINED_OBSIDIAN), 4, MekanismRig.itemKey(ALLOY_ATOMIC)))), "atomic loads");
+        MekanismRig.hold(rig.world(), NetworkRecipe.ofProcessing(infuse(StorageKey.of(Items.COPPER_INGOT),
+                StorageKey.of(Items.REDSTONE), 1, MekanismRig.itemKey(ALLOY_INFUSED))));
+        MekanismRig.hold(rig.world(), NetworkRecipe.ofProcessing(infuse(MekanismRig.itemKey(ALLOY_INFUSED),
+                MekanismRig.itemKey(DUST_DIAMOND), 2, MekanismRig.itemKey(ALLOY_REINFORCED))));
+        MekanismRig.hold(rig.world(), NetworkRecipe.ofProcessing(infuse(MekanismRig.itemKey(ALLOY_REINFORCED),
+                MekanismRig.itemKey(DUST_REFINED_OBSIDIAN), 4, MekanismRig.itemKey(ALLOY_ATOMIC))));
     }
 
     private static long count(final List<OperationRecord> records, final StorageKey key, final byte status) {
@@ -216,7 +216,8 @@ public final class MekanismHardwareMatrixGameTests {
                 })
                 .thenExecute(() -> {
                     helper.assertTrue(op[0].toRecord().status() == OperationRecord.STATUS_COMPLETED,
-                            "the craft must complete, not settle as discarded; status=" + op[0].toRecord().status());
+                            "the craft must complete, not settle as discarded; status=" + op[0].toRecord().status()
+                                    + " cause=" + op[0].toRecord().cause());
                     helper.assertTrue(rig.net().storage(helper.getLevel()).count(infused) == 4,
                             "the four infused alloys must be delivered; got " + rig.net().storage(helper.getLevel()).count(infused));
                 })
@@ -248,7 +249,12 @@ public final class MekanismHardwareMatrixGameTests {
                 })
                 .thenExecute(() -> helper.assertTrue(op[0].toRecord().status() != OperationRecord.STATUS_COMPLETED,
                         "the craft must settle as a visible failure, not COMPLETED; status=" + op[0].toRecord().status()))
-                // The machine step runs on regardless: its alloys reach storage and nothing is lost.
+                /*
+                 * The machine runs on regardless, but with its computer off nothing on its crafting cable is worked:
+                 * the alloys wait in the machine, still owed to the step that fed them, and reach storage once the
+                 * computer is back. Nothing is lost.
+                 */
+                .thenExecute(() -> rig.net().cc().togglePower())
                 .thenWaitUntil(() -> {
                     MekanismRig.power(helper);
                     final NetworkStorage storage = rig.net().storage(helper.getLevel());

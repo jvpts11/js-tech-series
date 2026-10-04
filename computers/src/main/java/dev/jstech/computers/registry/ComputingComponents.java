@@ -9,6 +9,7 @@ package dev.jstech.computers.registry;
 
 import com.mojang.serialization.Codec;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.os.DiskSystems;
 import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.media.MediaKind;
@@ -17,6 +18,7 @@ import dev.jstech.computers.printer.PrintedDocuments;
 import dev.jstech.computers.storage.DiskUsage;
 import dev.jstech.computers.storage.ServerStorageContents;
 import dev.jstech.core.id.StableCodecs;
+import java.util.List;
 import java.util.UUID;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.component.DataComponentType;
@@ -187,6 +189,15 @@ public final class ComputingComponents {
             PRINTED_DOCUMENT = COMPONENTS.registerComponentType("printed_document", b -> b
                     .persistent(PrintedDocuments.CODEC)
                     .networkSynchronized(PrintedDocuments.STREAM_CODEC));
+
+    /*
+     * The bench recipes a Crafting Card's own ROM keeps: they travel with the card, so a card moved to another
+     * Crafting Computer brings its recipes with it. Its era says how many there may be.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<List<CraftingPattern>>>
+            RECIPE_ROM = COMPONENTS.registerComponentType("recipe_rom", b -> b
+                    .persistent(CraftingPattern.CODEC.listOf())
+                    .networkSynchronized(CraftingPattern.STREAM_CODEC.apply(ByteBufCodecs.list(16))));
 
     private ComputingComponents() {
     }

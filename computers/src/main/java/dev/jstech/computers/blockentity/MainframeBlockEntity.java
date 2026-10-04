@@ -836,9 +836,9 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     /**
      * Same as {@link #submitNetworkCraft(StorageKey, long, boolean, String)}, but plans with one extra
-     * pattern alongside the network's Recipe ROMs. A multi-stage
+     * pattern alongside the bench patterns in the network's card ROMs. A multi-stage
      * pipeline's bench stage carries its own embedded pattern, so it must craft even when that pattern was
-     * never loaded into any Recipe ROM on the network.
+     * never loaded into any card's ROM on the network.
      */
     @Nullable
     public NetworkCraftOperation submitNetworkCraft(
@@ -861,17 +861,17 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     }
 
     /**
-     * Whether anything on the network produces {@code key}: a bench pattern in a Recipe ROM, or a machine
-     * recipe. The cheap answer a prompt needs at once, before the plan itself is made.
+     * Whether anything on the network produces {@code key}: a bench pattern in a card's ROM, or a machine
+     * recipe in a Crafting Interface. The cheap answer a prompt needs at once, before the plan itself is made.
      */
     public boolean anythingMakes(final StorageKey key) {
         return crafts.anythingMakes(key);
     }
 
     /**
-     * Runs a machine recipe: feeds a {@link ProcessingPattern}'s
-     * inputs into the matching machine (declared on a Crafting Switch) and collects its outputs back into the
-     * network, until {@code demand} of the primary output is produced or the pattern times out.
+     * Runs a machine recipe: feeds a {@link ProcessingPattern}'s inputs into the machine of a Crafting Interface that
+     * holds it and takes its outputs back into the network through the Receiving Buses, until {@code demand} of the
+     * primary output is produced or the pattern times out.
      */
     public NetworkProcessingOperation submitNetworkProcessing(
             final ProcessingPattern pattern, final long demand,
@@ -882,7 +882,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     /**
      * As above, but the step draws its inputs from and returns its outputs to {@code io} instead of the network.
      * A recursive craft passes its own pool here so its machine steps pipeline through the pool (concurrent,
-     * race-free) rather than through the shared network; such a step is ephemeral and does not persist a reload.
+     * race-free) rather than through the shared network.
      */
     public NetworkProcessingOperation submitNetworkProcessing(
             final ProcessingPattern pattern, final long demand,
@@ -906,9 +906,9 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     /**
      * Every recipe on the network that makes {@code key}, in a stable order: the machine recipes first
-     * (processing and multi-stage, in the order the Recipe ROMs hold them), then each bench pattern with that
-     * result. A craft dialog lists these so the player can pick one, and the index into this list is what a
-     * craft request names; the list only changes when a ROM does.
+     * (processing and multi-stage, in the order the Crafting Interfaces hold them), then each bench pattern with
+     * that result. A craft dialog lists these so the player can pick one, and the index into this list is what a
+     * craft request names; the list only changes when an interface or a card's ROM does.
      */
     public List<NetworkRecipe> recipesFor(
             final StorageKey key) {
@@ -1010,11 +1010,6 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         return networkIndex.manualLockView();
     }
 
-    /** The ceiling on how many jobs of one machine type may run at once, as the crafting side declares it. */
-    int maxJobsFor(final String machineKey) {
-        return crafts.maxJobsFor(machineKey);
-    }
-
     /** The world's clock, which is what the statistics measure an hour and a day against. */
     long gameTime() {
         return level == null ? 0L : level.getGameTime();
@@ -1038,8 +1033,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     /**
      * Rebuilds the Operations that were in flight when the world was saved, once the boot has settled (the
-     * storage index is analyzed and the Crafting Switch surveys have run). Stage operations are restored
-     * first so a multi-stage pipeline can find the stage it was waiting on by id.
+     * storage index is analyzed and the Crafting Computers have surveyed their crafting networks). Stage
+     * operations are restored first so a multi-stage pipeline can find the stage it was waiting on by id.
      */
     private void restorePendingOperations(final ServerLevel level) {
         if (pendingOperations == null || networkUuid() == null) {
@@ -1188,6 +1183,18 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     /** The operations in flight right now, for views that need the live objects rather than the log. */
     public List<INetworkOperation> liveOperations() {
         return scheduler.live();
+    }
+
+    /** The processing jobs running on the Crafting Interface with {@code id} now, oldest first. */
+    public List<NetworkProcessingOperation> craftJobsOn(final UUID id) {
+        final List<NetworkProcessingOperation> out = new ArrayList<>();
+        for (final INetworkOperation operation : scheduler.live()) {
+            if (operation instanceof NetworkProcessingOperation job && !job.isDone()
+                    && id.equals(job.interfaceId())) {
+                out.add(job);
+            }
+        }
+        return out;
     }
 
     public List<OperationRecord> recentOperations() {
@@ -1369,6 +1376,11 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     @Override
     public int pendingOperations() {
         return pendingOps();
+    }
+
+    /** Whether Operations saved with the world are still waiting for the boot to settle before they resume. */
+    public boolean resumesOperations() {
+        return pendingOperations != null;
     }
 
     @Override

@@ -56,12 +56,16 @@ public class CablePartItem extends Item {
             "Right-click a data cable to attach; pushes the filtered item out");
     private static final TextKey EXTERNAL_TOOLTIP = TextKey.of("item.jsc.external_storage_bus.tooltip",
             "Right-click a data cable beside an inventory; the network uses the inventory as its storage");
-    private static final TextKey INPUT_TOOLTIP = TextKey.of("item.jsc.input_bus.tooltip",
-            "Right-click a crafting cable to attach; marks the face machine crafts deliver inputs through");
+    private static final TextKey ROUTER_TOOLTIP = TextKey.of("item.jsc.crafting_input_router.tooltip",
+            "On the cable that leaves a Crafting Interface, against one input face of a machine with several");
     private static final TextKey RECEIVING_TOOLTIP = TextKey.of("item.jsc.receiving_bus.tooltip",
-            "Right-click a crafting cable to attach; marks the face machine crafts collect outputs from");
+            "On the crafting cable, against a machine's output; takes back what its interface's jobs made");
+    private static final TextKey INTERFACE_TOOLTIP = TextKey.of("item.jsc.crafting_interface.tooltip",
+            "On the crafting cable; holds .craft files and feeds the machine it sits against, or its own cable");
+    private static final TextKey INTERFACE_HOLDS = TextKey.of("item.jsc.crafting_interface.holds",
+            "Holds %s patterns");
     private static final TextKey ON_CRAFTING_CABLES = TextKey.of("item.jsc.bus.on_crafting_cables",
-            "Crafting buses mount on crafting cables");
+            "Crafting parts mount on crafting cables");
     private static final TextKey ON_DATA_CABLES = TextKey.of("item.jsc.bus.on_data_cables",
             "Storage buses mount on access and backbone cables of their era or an earlier one");
 
@@ -81,12 +85,17 @@ public class CablePartItem extends Item {
             what = EXPORT_TOOLTIP;
         } else if (ComputingParts.isExternal(kind)) {
             what = EXTERNAL_TOOLTIP;
-        } else if (kind == ComputingParts.INPUT.get()) {
-            what = INPUT_TOOLTIP;
+        } else if (kind == ComputingParts.ROUTER.get()) {
+            what = ROUTER_TOOLTIP;
+        } else if (ComputingParts.isInterface(kind)) {
+            what = INTERFACE_TOOLTIP;
         } else {
             what = RECEIVING_TOOLTIP;
         }
         tooltip.add(GameText.component(what).withStyle(ChatFormatting.GRAY));
+        if (ComputingParts.isInterface(kind) && kind.create() instanceof CraftingInterfacePart part) {
+            tooltip.add(GameText.component(INTERFACE_HOLDS.with(part.capacity())).withStyle(ChatFormatting.GRAY));
+        }
     }
 
     @Override
@@ -138,6 +147,9 @@ public class CablePartItem extends Item {
         if (face == null) {
             return InteractionResult.PASS; // every candidate face is taken
         }
+        if (cable.hasPart(face) || !cable.wiresThrough(face).isEmpty() && !cutsOwnCable(cable, face)) {
+            return InteractionResult.PASS;
+        }
         final Level level = context.getLevel();
         /*
          * Crafting buses belong on crafting cables and storage buses on data cables. A storage bus on a
@@ -172,8 +184,28 @@ public class CablePartItem extends Item {
         return InteractionResult.sidedSuccess(level.isClientSide());
     }
 
+    /*
+     * Whether a Crafting Interface goes on {@code face} where only crafting wire crosses it: cutting that wire is what
+     * an interface is for there, since the crafting cable beyond it becomes its own, apart from the network.
+     */
+    private boolean cutsOwnCable(final CableBlockEntity cable, final Direction face) {
+        if (!ComputingParts.isInterface(type.get())) {
+            return false;
+        }
+        for (final Wire wire : cable.wiresThrough(face)) {
+            if (!DataWires.isCrafting(wire)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Nullable
-    private static Direction chooseFace(final Level level, final CableBlockEntity cable, final Direction clicked) {
+    private Direction chooseFace(final Level level, final CableBlockEntity cable, final Direction clicked) {
+        if (ComputingParts.isInterface(type.get()) && !cable.hasPart(clicked) && cutsOwnCable(cable, clicked)
+                && !cable.wiresThrough(clicked).isEmpty()) {
+            return clicked;
+        }
         if (free(cable, clicked) && !port(level, cable, clicked).isEmpty()) {
             return clicked;
         }

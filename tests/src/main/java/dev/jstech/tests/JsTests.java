@@ -37,6 +37,8 @@ public final class JsTests {
                 + " series, adds nothing to the game and must not be installed.", modContainer.getModInfo().getVersion());
         // The sounds the tests play through the series' sound system, on files the game already has.
         TestBlocks.declare();
+        // A kiln and a mixer that work in a few ticks, for the autocraft tests to run real recipes through.
+        TestMachines.declare();
         // Items that hold everything an item can, to prove the Core's items with state.
         TestItems.declare();
         // A corrosive liquid and a hot gas, to prove the Core's fluids and pipes.

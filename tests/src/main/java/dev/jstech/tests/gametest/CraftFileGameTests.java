@@ -111,6 +111,9 @@ public final class CraftFileGameTests {
                 new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
                 new ItemStack(ComputingModule.PSU_650G.get()));
+        // A Crafting Card, whose ROM keeps the bench recipe.
+        hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START,
+                new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()));
         // The disk slot must have a disk before installing an OS (footprint check).
         hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));

@@ -10,7 +10,6 @@ package dev.jstech.tests.clienttest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.ClusterManagementComputerScreen;
-import dev.jstech.computers.client.CraftingSwitchScreen;
 import dev.jstech.computers.client.ServerRackScreen;
 import dev.jstech.computers.client.ServerRouterScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
@@ -22,7 +21,7 @@ import org.lwjgl.glfw.GLFW;
 
 /**
  * A fast render sweep over the block-backed screens that the focused client tests do not already open (the
- * server rack and router infrastructure, the Crafting Switch, and the supercomputer cluster) right-clicking
+ * server rack and router infrastructure, and the supercomputer cluster) right-clicking
  * each in turn, screenshotting it, and confirming it actually opens and renders (a screen that opened one tick
  * and closed, or crashed the render, fails here). The assembly computers, the Pattern Encoder, the desktop and
  * its programs are covered by the other client tests.
@@ -41,7 +40,6 @@ public final class UiSweepClientTests {
     private static final BlockPos RACK_MONITOR = new BlockPos(3, 2, 2);
     private static final BlockPos PLAYER_AT_RACK_MONITOR = new BlockPos(4, 2, 2);
     private static final ResourceLocation FRAMES_XP = ResourceLocation.fromNamespaceAndPath("jsc", "frames_xp");
-    private static final BlockPos SWITCH = new BlockPos(5, 2, 2);
     private static final BlockPos CLUSTER_MANAGER = new BlockPos(8, 2, 2);
     private static final BlockPos NODE = new BlockPos(11, 2, 2);
     private static final BlockPos ROUTER = new BlockPos(14, 2, 2);
@@ -70,13 +68,11 @@ public final class UiSweepClientTests {
             rack.installOs(FRAMES_XP);
             rack.setPowered(true);
             world.placeMonitor(RACK_MONITOR, Direction.EAST);
-            world.setBlock(SWITCH, ComputingModule.CRAFTING_SWITCH.get());
             world.setBlock(CLUSTER_MANAGER, ComputingModule.CLUSTER_MANAGEMENT_COMPUTER.get());
             world.setBlock(NODE, ComputingModule.SUPERCOMPUTER_RACK.get());
             world.setBlock(ROUTER, ComputingModule.SERVER_ROUTER.get());
         });
         open(ctx, RACK, ServerRackScreen.class, "server-rack");
-        open(ctx, SWITCH, CraftingSwitchScreen.class, "crafting-switch");
         open(ctx, CLUSTER_MANAGER, ClusterManagementComputerScreen.class, "cluster-management-computer");
         open(ctx, NODE, ServerRackScreen.class, "supercomputer-rack");
         // The router's name field: typing in it, the inventory key included, keeps the screen open.

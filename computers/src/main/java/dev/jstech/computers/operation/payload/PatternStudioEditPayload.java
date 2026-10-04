@@ -51,8 +51,6 @@ public record PatternStudioEditPayload(BlockPos host, BlockPos monitorPos, int a
     public static final int PROC_SET_OUTPUT_AMOUNT = 15;
     /** Sets output cell {@code index}'s chance to {@code value} percent. */
     public static final int PROC_SET_CHANCE = 16;
-    /** Sets the machine type to {@code text}. */
-    public static final int PROC_SET_MACHINE = 17;
     /** Sets the timeout to {@code value} ticks. */
     public static final int PROC_SET_TIMEOUT = 18;
     public static final int PROC_SET_NAME = 19;

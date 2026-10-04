@@ -9,7 +9,6 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.crafting.CraftingPattern;
-import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.GameText;
@@ -30,10 +29,11 @@ import java.util.List;
 @TextHolder
 public final class ItemRecipes {
 
-    private static final TextKey PROCESSING = TextKey.of("jsc.service.recipes.processing", "%s · processing · %s");
+    private static final TextKey PROCESSING = TextKey.of("jsc.service.recipes.processing", "%s · processing");
     private static final TextKey MULTI_STAGE = TextKey.of("jsc.service.recipes.multi_stage", "%s · multi-stage · %s");
     private static final TextKey AT_THE_BENCH = TextKey.of("jsc.service.recipes.at_the_bench", "%s · bench");
     private static final TextKey BENCH_STAGE = TextKey.of("jsc.service.recipes.bench_stage", "Bench");
+    private static final TextKey MACHINE_STAGE = TextKey.of("jsc.service.recipes.machine_stage", "Machine");
 
     private ItemRecipes() {
     }
@@ -79,14 +79,12 @@ public final class ItemRecipes {
      */
     public static Text line(final NetworkRecipe recipe) {
         if (recipe.proc().isPresent()) {
-            return PROCESSING.with(recipe.displayText(), MachineCategory.text(recipe.proc().get().machineType()));
+            return PROCESSING.with(recipe.displayText());
         }
         if (recipe.multi().isPresent()) {
             final List<Text> machines = new ArrayList<>();
             for (final var stage : recipe.multi().get().stages()) {
-                machines.add(stage.proc().isPresent()
-                        ? MachineCategory.text(stage.proc().get().machineType())
-                        : BENCH_STAGE.text());
+                machines.add(stage.proc().isPresent() ? MACHINE_STAGE.text() : BENCH_STAGE.text());
             }
             return MULTI_STAGE.with(recipe.displayText(), TextLists.join(" -> ", machines));
         }

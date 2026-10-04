@@ -307,8 +307,41 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   setting a program set carries the program's mark until a hand changes it in the window.
 - Conditions and tags are written in the bus's window: the network's stock of an item or a tag, the hours of the day,
   another bus having finished.
-- A Crafting Input or Receiving Bus routes its face by every item its filter lists, up to five, and its window wears
-  the skin of the Mainframe that commands it.
+- A Crafting Input Router or Crafting Receiving Bus filters by every item its filter lists, up to five, and its
+  window wears the skin of the Mainframe that commands it.
+- The Crafting Interface, of every era, is where a network's machine recipes live: a part on the crafting cable that
+  holds 3 patterns in the Vintage, 6 in the Legacy, 8 in the Transition, 9 in the Standard and 12 in the Advanced, and
+  feeds one machine. Set against the machine it feeds it directly, through that face; standing apart, it feeds it
+  through a crafting cable of its own, dyed apart from the main one, with a Crafting Input Router against each face
+  of the machine that takes an input. Its window shows the machine it feeds and the way there, its patterns and each
+  pattern's inputs with the router each one goes through and why, its mode, its state and how many jobs it runs at
+  once, what it is doing now and its last jobs, and its address and the IQL and calls that set it.
+- The Crafting Input Router, a part that does nothing of its own: an interface puts an input into the machine through
+  it. Which router an input goes through is the one chosen for it in the interface's window, else the first whose
+  filter takes it, else the first that takes anything; a pattern with an input no router takes cannot run, and the
+  window says so.
+- An interface is exclusive when it feeds through routers (one recipe at a time on its machine, jobs of the same
+  pattern running together) and shared when it sits against the machine (several jobs at once, of different recipes
+  too, as far as the machine takes them); either can be changed in its window, and so can the most jobs it runs at
+  once (Auto, or 1 to 64) and whether it is paused. Two interfaces on one machine take turns.
+- The Crafting Receiving Bus ties itself to the interfaces of the machine it faces, or is tied by hand to an
+  interface anywhere on the crafting cable. What the machine gives back is credited to the jobs that fed it, never
+  more than the lots each was fed, in the order they were fed; an output that comes after its job settled is still
+  owed to it, and an item no pattern declared goes to the network as unexpected; a fluid or chemical no pattern
+  declared is the machine's own (an infuser's infusion, a generator's fuel) and stays. Its window shows what it
+  credited, what came late and what was unexpected.
+- A Crafting Card drives Crafting Interfaces and keeps a ROM of bench recipes of its own, both by its era: 2 of each
+  in the Vintage, 4 in the Legacy, 5 in the Transition, 6 in the Standard and 8 in the Advanced. The Crafting
+  Computers on a crafting cable drive its interfaces in the order the cable reaches them, as many as their cards
+  drive between them; the rest wait for another card. The numbers are first estimates.
+- A craft whose recipe an interface holds waits for as long as that interface cannot feed it (its machine gone, the
+  interface paused, no router taking an input); one whose recipe no interface holds fails after its timeout, and says
+  so.
+- IQL sets the crafting network by name: `SET INTERFACE 'Mixer' EXCLUSIVE OFF`, `MAX JOBS 3`, `PAUSE INTERFACE` and
+  `RESUME INTERFACE`, `SET INTERFACE 'Mixer' ROUTE 'Coarse dirt' INPUT gravel TO ROUTER 'North'` (or `AUTO`), a
+  router's filter with `SET ROUTER 'North' FILTER ONLY gravel`, and `RENAME INTERFACE` and `RENAME ROUTER`. Programs
+  do the same with `craftInterface("Mixer").Exclusive(true).MaxJobs(2).Pause()` and
+  `craftRouter("North").Only("gravel")`, new in Σ 2 as `CraftInterface` and `CraftRouter`.
 - A menu's player inventory can be shown on some pages of a screen and hidden on the others, in J's Core.
 - The External Storage Bus, of every era: it moves nothing itself, the network uses the inventory it faces as
   storage of its own, ten times slower than its servers. The Vintage one shows the network all of it; from the
@@ -324,13 +357,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   setting set from software carries the name of the program or the job that set it, which the bus's window marks,
   and what the bus's era cannot be set to is refused as it is in the window.
 - Each bus has a model of its own: a metal clamp round the cable, a ring in its kind's colour (green the Import,
-  orange the Export, violet the External Storage, brown the crafting buses), a funnel opening to the inventory for
-  the buses that take from it, a nozzle for the ones that put into it and a wide thin panel for the External Storage
-  Bus, chevrons along its sides pointing where the items go, and a plate against the inventory with its mark over its
-  era's grille. Its housing is in its era's colours, the crafting buses' in the crafting line's amber, and so is its
-  item.
+  orange the Export, violet the External Storage, blue the Crafting Input Router, yellow the Crafting Receiving Bus,
+  red the Crafting Interface, whose plate shows a slot for each pattern it holds), a funnel opening to the inventory
+  for the buses that take from it, a nozzle for the ones that put into it and a wide thin panel for the External
+  Storage Bus, chevrons along its sides pointing where the items go, and a plate against the inventory with its mark
+  over its era's grille. Its housing is in its era's colours, the router's and the Receiving Bus's in the crafting
+  line's amber, and so is its item.
 - A bus's four lamps blink while it moves items, the External Storage Bus's while the network reads or writes
-  through it and the crafting buses' while a machine is fed or emptied through them, and go dark a few seconds after.
+  through it and the crafting parts' while a machine is fed or emptied through them, and go dark a few seconds after.
 - A part can have a model for while it is at work, its lamps lit and blinking by an animated texture, in J's Core;
   the block is drawn again only when the part starts or stops working.
 - Peripherals take ports by kind, as on a real computer, in place of one count of ports on the board: a monitor takes
@@ -924,6 +958,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   error a lower version gives for what came after it, and the line the choice wrote.
 
 ### Changed
+- A machine recipe no longer names a machine: it lives in the Crafting Interface of the machine that makes it, so
+  the Pattern Studio's machine draft has only its inputs, its outputs, their chances and its timeout, and loading
+  one puts it in the first interface the Crafting Computer drives with room for it. A bench recipe goes into the ROM
+  of one of the computer's Crafting Cards. The Crafting Manager lists the interfaces the computer drives, what each
+  holds and what it is doing, and moves a pattern from one to another.
 - The bridge to Mekanism's chemicals lives in J's Core now, still behind its guard: every mod of the series reaches
   Mekanism's gases, infusions, pigments and slurries through the Core, and none needs Mekanism to run. A check of the
   sources keeps every optional mod (Mekanism, JEI, EMI, FTB, ComputerCraft) named only inside an integration, and
@@ -1029,9 +1068,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   ask of the desktop that is up goes through a class of its own, and the screen is left with what only a screen
   does.
 - J's Computers' blocks keep their state as J's Core's declared fields: the computers, the server racks, the drives,
-  the Pattern Encoders, monitors, speakers, Network Gateways, data cables, Crafting Switches, Server Routers, HBW
-  Interfaces and tanks. The players who see one are sent one update a tick however much of it changed, and the
-  settings of a Crafting Switch's faces reach everyone looking at it as soon as they are set.
+  the Pattern Encoders, monitors, speakers, Network Gateways, data cables, Server Routers, HBW Interfaces and tanks.
+  The players who see one are sent one update a tick however much of it changed.
 - A monitor's own sessions (the self-test, the boot menu, the firmware setup, the installers and the KVM) take from a
   player only what the session they have open sends, and only for the monitor it is on; a system's settings asking
   for the firmware setup must be on the monitor they name.
@@ -1112,7 +1150,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   space are text a language file can translate. A recipe with no name of its own is listed by its result's name in
   each player's language.
 - The Network Interactor, Storage Insights, the Crafting Manager, the Craft Planner, the Craft heading and its
-  craft question, the Crafting Computer's and the Crafting Switch's screens are text a language file can translate,
+  craft question and the Crafting Computer's screen are text a language file can translate,
   and so are a craft's recipe choices, what they differ in and what a plan is short of. Items, machines and recipe
   results are named in each player's language, a machine that is a block goes by the block's own name, and the
   priority tags and the kinds of bus are translatable too.
@@ -1177,9 +1215,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   (`jsc:firmware/*`, `jsc:splash/*`, `jsc:boot/*`, `jsc:monitor/*`, `jsc:app/this_pc`, `jsc:terminal/*`,
   `jsc:installer/page`).
 - The Network Interactor, the Network Manager, the Task Manager, the Application Manager, the games (Minesweeper,
-  Snake, Solitaire and its cards), the desktop's icons and questions, a system's boot log, the Crafting Switch and
-  the Industrial machines' screens draw their colours from palettes a resource pack can recolour (`jsc:app/*`,
-  `jsc:game/*`, `jsc:desktop/*`, `jsc:boot/system`, `jsc:screen/crafting_switch`, `jsindustrial:machine/screen`).
+  Snake, Solitaire and its cards), the desktop's icons and questions, a system's boot log and the Industrial
+  machines' screens draw their colours from palettes a resource pack can recolour (`jsc:app/*`, `jsc:game/*`,
+  `jsc:desktop/*`, `jsc:boot/system`, `jsindustrial:machine/screen`).
 - The NMS, Setup, Messenger, Files, Knot, Storage Insights, the Gateway, Cluster, Automation and Craft Planner
   managers, the Frames Recycle Bin's task pane, the code editors and their highlighting, the shell view's tags and
   the Operation types' colours are palettes a resource pack can recolour (`jsc:app/*`, `jsc:editor/*`,
@@ -1199,8 +1237,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 
 ### Removed
 - The unused hook for the Modonomicon guidebook: the series' manuals will be drawn by J's Core itself.
+- The Crafting Switch and the Crafting Input Bus. The Crafting Interface holds a machine's recipes and feeds it, and
+  the Crafting Input Router puts each input in through its face.
+- The machine picker of the Pattern Studio, and with it, in J's Core, a block's list of the recipe types it is the
+  machine for and the data files that gathered them: a machine recipe belongs to the interface of its machine.
 
 ### Fixed
+- What a machine gives back after its last job settled reaches the network. Nothing collected it once no job was
+  running, so a job given up on, or one whose machine was slower than its timeout, left its late outputs in the
+  machine.
 - Nothing in the mod loads a chunk any more by looking at a place it remembers. A monitor asking after its
   computer, a computer counting its screens, speakers and drives, a Mainframe reaching the servers, racks and
   computers of its network, a cluster's nodes, a hub's devices and the file and cluster screens all looked at the
@@ -1210,7 +1255,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   now counts as away, and an ssh session whose far machine is away ends as one whose machine has stopped.
 - The prompt's `iql` command, and a file of statements it runs, no longer fail on a `SET BUS` statement.
 - A base with cables ticks as fast as it did before the shared cable block. Machines that look at the blocks round
-  them every tick for a cable (the Crafting Switch and the Crafting Computer finding their machines, the racks finding
+  them every tick for a cable (the Crafting Computer finding its machines, the racks finding
   their network) asked the game for a block entity at every place, and a place with no cable answered only after a
   lookup, a check of what waits to be loaded and an attempt to make one. They now look at the block first, and a
   loaded base's tick is back to what it was, a third to a half lighter.
@@ -1252,7 +1297,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   time doing it. A pickaxe is now their tool: it mines them at a pickaxe's pace, and they drop themselves.
 - A Mainframe of any era is mined at a pickaxe's pace. It needs the right tool too, and no tool counted, so taking
   one down in survival took far longer than a block of metal should.
-- The Import, Export, Crafting Input and Crafting Receiving Buses, the Supercomputer Node and the HBW Interface
+- The Import, Export and Crafting Receiving Buses, the Supercomputer Node and the HBW Interface
   say in their tooltip what they are for, like the rest of the network and rack equipment. The words were written
   but never shown.
 - Every program says what it does on its install disc, in the package manager and in the installed-programs list.
@@ -1335,8 +1380,6 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   already was; a Vintage machine could be given a desktop that needs Legacy hardware while it was being built.
 - A desktop opens on a machine with more than sixteen programs installed. The list of them it is sent was
   capped at sixteen and refused whole past that, so installing a seventeenth took the desktop away.
-- Going from one face to another on a Crafting Switch's screen no longer renames the machine a crafting bus reaches
-  with the first letters of the other face's name.
 - A system's copy that fails with a long reason shows as much of it as fits above the buttons, the last line ending
   in dots, where it ran on under them.
 

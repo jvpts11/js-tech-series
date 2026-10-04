@@ -1,6 +1,8 @@
 {
   "block.jstests.connected_panel": "Connected panel",
   "block.jstests.test_acid": "Test Acid",
+  "block.jstests.test_kiln": "Test kiln",
+  "block.jstests.test_mixer": "Test mixer",
   "fluid_type.jstests.test_acid": "Test Acid",
   "fluid_type.jstests.test_gas": "Test Gas",
   "item.jstests.full_tool": "Full Test Tool",

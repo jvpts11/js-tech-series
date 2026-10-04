@@ -61,8 +61,7 @@ final class BusCalls {
         set(bindings, "Max", arguments -> new IqlBusStatement.Quantities(IqlBusStatement.UNCHANGED,
                 number(arguments, 0)), INT);
         set(bindings, "Priority", arguments -> new IqlBusStatement.Priority(number(arguments, 0)), INT);
-        set(bindings, "Fuzzy", arguments -> new IqlBusStatement.Match(arguments.length > 0
-                && Boolean.TRUE.equals(arguments[0])), BOOL);
+        set(bindings, "Fuzzy", arguments -> new IqlBusStatement.Match(flag(arguments, 0)), BOOL);
         set(bindings, "WhenStock", arguments -> new IqlBusStatement.Stock(text(arguments, 0), number(arguments, 1)),
                 STRING, INT);
         set(bindings, "WhenStockTag", arguments -> new IqlBusStatement.Stock("#" + text(arguments, 0),
@@ -149,5 +148,13 @@ final class BusCalls {
 
     private static int number(final Object[] arguments, final int at) {
         return arguments.length > at && arguments[at] instanceof Number value ? value.intValue() : 0;
+    }
+
+    /* A bool argument: the assembly writes true and false as a one and a zero, so a number stands for one. */
+    private static boolean flag(final Object[] arguments, final int at) {
+        if (arguments.length <= at) {
+            return false;
+        }
+        return arguments[at] instanceof Number value ? value.longValue() != 0L : Boolean.TRUE.equals(arguments[at]);
     }
 }

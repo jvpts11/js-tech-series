@@ -232,6 +232,9 @@ public final class BareFunctions {
         same("bus", "Bus", "Named", form("Bus", "string name"));
         // A Redstone Interface of the machine by the name it answers to, as its window and the IQL name it.
         same("redstone", "Redstone", "Named", form("Redstone", "string name"));
+        // A Crafting Interface and a Crafting Input Router of the crafting network, by the names their windows give.
+        same("craftInterface", "CraftInterface", "Named", form("CraftInterface", "string name"));
+        same("craftRouter", "CraftRouter", "Named", form("CraftRouter", "string name"));
     }
 
     private BareFunctions() {

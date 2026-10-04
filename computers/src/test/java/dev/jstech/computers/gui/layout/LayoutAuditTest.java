@@ -19,7 +19,6 @@ import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.tier.HardwareEra;
 import java.io.File;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.ArrayList;
@@ -46,7 +45,7 @@ class LayoutAuditTest {
     private static final Set<String> COVERED = Set.of(
             "BusLayout", "ClusterManagementComputerLayout", "CraftingComputerLayout", "NmsLayout",
             "ComputerTerminalLayout", "ServerRouterLayout", "NetworkInteractorLayout",
-            "CraftingSwitchLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
+            "CraftingInterfaceLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
             "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout",
             "CdeStyleLayout", "WorkstationInfoLayout", "WorkstationDevicesLayout", "TrashLayout", "HelpViewerLayout", "SpeakerLayout",
@@ -107,7 +106,14 @@ class LayoutAuditTest {
             c.add(new AuditCase("SoundfoundryStandardLayout.local" + at,
                     SoundfoundryStandardLayout.localLayout(size[0], size[1], true), false));
         }
-        c.add(new AuditCase("CraftingSwitchLayout", CraftingSwitchLayout.layout(), true));
+        // A Crafting Interface's window for every era's pattern count, its frame and its rows at their most.
+        for (final int capacity : new int[] {3, 6, 8, 9, 12}) {
+            final CraftingInterfaceLayout.Shape most = CraftingInterfaceLayout.Shape.most(capacity);
+            c.add(new AuditCase("CraftingInterfaceLayout(" + capacity + ")", CraftingInterfaceLayout.frame(most),
+                    true));
+            c.add(new AuditCase("CraftingInterfaceLayout.rows(" + capacity + ")",
+                    CraftingInterfaceLayout.content(most), false));
+        }
         c.add(new AuditCase("PatternEncoderLayout", PatternEncoderLayout.layout(), true));
         c.add(new AuditCase("NetworkGatewayLayout", NetworkGatewayLayout.layout(), true));
         c.add(new AuditCase("OpenWithLayout", OpenWithLayout.layout(), true));

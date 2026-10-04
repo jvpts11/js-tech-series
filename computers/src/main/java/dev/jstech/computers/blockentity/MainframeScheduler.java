@@ -9,6 +9,9 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.advancement.OperationMilestones;
+import dev.jstech.computers.crafting.CraftingDispatch;
+import dev.jstech.computers.crafting.NetworkCraftOperation;
+import dev.jstech.computers.crafting.NetworkMultiStageOperation;
 import dev.jstech.computers.crafting.NetworkProcessingOperation;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.payload.OperationRecord;
@@ -24,7 +27,6 @@ import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -36,6 +38,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -102,6 +105,9 @@ final class MainframeScheduler {
 
     /** The last hour of settled Operations by type, and the day's peak concurrency; RAM only. */
     private final OperationStatistics statistics = new OperationStatistics();
+
+    /** Gives the processing jobs their Crafting Interfaces and credits what their machines give back. */
+    private final CraftingDispatch crafting = new CraftingDispatch();
 
     /** The Operations the last tick granted a queue slot to; the views report the rest as PENDING. */
     private Set<INetworkOperation> lastGranted = Set.of();
@@ -324,6 +330,13 @@ final class MainframeScheduler {
             lastGranted = Set.of();
             deferredTicks.clear();
             timing.clear();
+            /*
+             * What a settled job is still owed keeps coming out of its machine after the last job has gone. Not while
+             * saved jobs wait to resume, though: their buses must keep what they saw when those jobs began.
+             */
+            if (!mainframe.resumesOperations() && crafting.wantsIdleTick(mainframe.gameTime())) {
+                dispatchCrafting();
+            }
             return;
         }
         // Progress lives in the Operations themselves and is saved with the block entity.
@@ -336,7 +349,7 @@ final class MainframeScheduler {
          */
         final long effectiveCapacity = Math.min(mainframe.pooledCapacity(), mainframe.ramBuffer());
         final int slots = Math.max(1, mainframe.pooledQueues());
-        assignMachines();
+        dispatchCrafting();
         feed(effectiveCapacity, slots);
         settle();
     }
@@ -446,70 +459,33 @@ final class MainframeScheduler {
                     completedTotal++; // network Operations count toward the lifetime tally too
                 }
                 postSettled(operation, record);
-                OperationMilestones.report(mainframe, asker, operation.typeId(), record);
+                OperationMilestones.report(mainframe, asker, operation.typeId(), record,
+                        operation instanceof NetworkCraftOperation craft && craft.madeOnAMachine()
+                                || operation instanceof NetworkMultiStageOperation pipeline
+                                && pipeline.hasMachineStage());
             }
             it.remove();
         }
     }
 
     /**
-     * Gives every running processing job a distinct physical machine, so concurrency on a machine type scales
-     * with the machines actually present, so two same-type jobs never share (and jam) one block. A job keeps
-     * the machine it already holds (as long as it is still there and routable); a new job claims a free one of
-     * the ones its recipe can route to. A job with no free machine is flagged blocked (it waits, it does not
-     * time out). The Machines tab's Max Jobs is an OPTIONAL per-type ceiling on top of this: 0 means "use them
-     * all".
+     * Gives every running processing job a Crafting Interface that holds its recipe and may take it now, and
+     * credits what the machines gave back since the last tick to the jobs that fed them. A job with no interface
+     * free waits; it times out only when no interface holds its recipe at all.
      */
-    private void assignMachines() {
-        final Set<BlockPos> taken = new HashSet<>();
-        final Map<String, Integer> perType = new HashMap<>();
+    private void dispatchCrafting() {
         final List<NetworkProcessingOperation> jobs = new ArrayList<>();
         for (final INetworkOperation operation : inFlight) {
             if (operation instanceof NetworkProcessingOperation proc && !proc.isDone()) {
                 jobs.add(proc);
             }
         }
-        /*
-         * Pass 1: a job that already holds a still-valid, unclaimed machine keeps it (stable across ticks so a
-         * machine is never fed by two jobs turn and turn about).
-         */
-        for (final NetworkProcessingOperation proc : jobs) {
-            final BlockPos held = proc.assignedMachine();
-            if (held != null && !taken.contains(held) && proc.routableMachines().contains(held)) {
-                taken.add(held);
-                perType.merge(proc.machineKey(), 1, Integer::sum);
-                proc.setConcurrencyBlocked(false);
-            } else {
-                proc.setAssignedMachine(null);
-            }
+        final ServerLevel level = mainframe.getLevel() instanceof ServerLevel server ? server : null;
+        final NetworkUuid network = mainframe.networkUuid();
+        if (level == null || network == null) {
+            return;
         }
-        // Pass 2: an unassigned job claims a free routable machine, within its type's optional Max Jobs ceiling.
-        for (final NetworkProcessingOperation proc : jobs) {
-            if (proc.assignedMachine() != null) {
-                continue;
-            }
-            final String key = proc.machineKey();
-            final int ceiling = mainframe.maxJobsFor(key); // 0 = auto: bounded only by the machines present
-            if (ceiling > 0 && perType.getOrDefault(key, 0) >= ceiling) {
-                proc.setConcurrencyBlocked(true);
-                continue;
-            }
-            BlockPos free = null;
-            for (final BlockPos candidate : proc.routableMachines()) {
-                if (!taken.contains(candidate)) {
-                    free = candidate;
-                    break;
-                }
-            }
-            if (free != null) {
-                proc.setAssignedMachine(free);
-                taken.add(free);
-                perType.merge(key, 1, Integer::sum);
-                proc.setConcurrencyBlocked(false);
-            } else {
-                proc.setConcurrencyBlocked(true); // every machine of this type is busy: wait, do not time out
-            }
-        }
+        crafting.tick(level, network, mainframe.craftingComputerPositions(), jobs);
     }
 
     /**

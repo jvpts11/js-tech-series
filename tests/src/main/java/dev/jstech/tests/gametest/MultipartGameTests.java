@@ -47,7 +47,8 @@ public final class MultipartGameTests {
     @GameTest(template = ARENA)
     public static void partTypes_areRegisteredWithTheCore(final GameTestHelper helper) {
         final List<PartType<?>> buses = List.of(ComputingParts.IMPORT.get(), ComputingParts.EXPORT.get(),
-                ComputingParts.INPUT.get(), ComputingParts.RECEIVING.get());
+                ComputingParts.ROUTER.get(), ComputingParts.RECEIVING.get(), ComputingParts.INTERFACE.get(),
+                ComputingParts.VINTAGE_INTERFACE.get(), ComputingParts.ADVANCED_INTERFACE.get());
         for (final PartType<?> bus : buses) {
             helper.assertTrue(bus.id() != null && CoreParts.REGISTRY.get(bus.id()) == bus, bus.id() + " is registered");
         }

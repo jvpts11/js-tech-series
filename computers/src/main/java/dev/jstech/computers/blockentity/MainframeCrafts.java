@@ -127,9 +127,9 @@ final class MainframeCrafts {
 
     /**
      * Every recipe on the network that makes {@code key}, in a stable order: the machine recipes first
-     * (processing and multi-stage, in the order the Recipe ROMs hold them), then each bench pattern with that
-     * result. A craft dialog lists these so the player can pick one, and the index into this list is what a
-     * craft request names; the list only changes when a ROM does.
+     * (processing and multi-stage, in the order the Crafting Interfaces hold them), then each bench pattern with
+     * that result. A craft dialog lists these so the player can pick one, and the index into this list is what a
+     * craft request names; the list only changes when an interface or a card's ROM does.
      */
     List<NetworkRecipe> recipesFor(final StorageKey key) {
         final List<NetworkRecipe> out = new ArrayList<>();
@@ -147,8 +147,8 @@ final class MainframeCrafts {
     }
 
     /**
-     * Whether anything on the network produces {@code key}: a bench pattern in a Recipe ROM, or a machine
-     * recipe. The cheap answer a prompt needs at once, before the plan itself is made.
+     * Whether anything on the network produces {@code key}: a bench pattern in a card's ROM, or a machine
+     * recipe in a Crafting Interface. The cheap answer a prompt needs at once, before the plan itself is made.
      */
     boolean anythingMakes(final StorageKey key) {
         for (final CraftingPattern pattern : patterns()) {
@@ -178,29 +178,10 @@ final class MainframeCrafts {
     }
 
     /**
-     * The optional ceiling on how many jobs of one machine type may run at once, 0 for no ceiling.
-     *
-     * <p>Declared on a Crafting Computer's Machines tab; the first computer on the network that says anything
-     * about that type decides, and the rest of the network follows it.
-     */
-    int maxJobsFor(final String machineKey) {
-        for (final BlockPos pos : craftingComputers()) {
-            if (mainframe.getLevel() != null
-                    && mainframe.getLevel().getBlockEntity(pos) instanceof CraftingComputerBlockEntity cc) {
-                final CraftingComputerBlockEntity.MachineConfig cfg = cc.machineConfig(machineKey);
-                if (cfg != CraftingComputerBlockEntity.MachineConfig.DEFAULT) {
-                    return cfg.maxJobs();
-                }
-            }
-        }
-        return CraftingComputerBlockEntity.MachineConfig.DEFAULT.maxJobs();
-    }
-
-    /**
      * Plans and runs a recursive craft of {@code key}, with one extra pattern beside the network's own.
      *
      * <p>The extra one is for a pipeline's bench stage, which carries its own pattern and has to be makeable
-     * even where that pattern was never loaded into any Recipe ROM on the network.
+     * even where that pattern was never loaded into any card's ROM on the network.
      */
     @Nullable
     NetworkCraftOperation craft(final StorageKey key, final long demand, final boolean partial,
@@ -248,13 +229,13 @@ final class MainframeCrafts {
     }
 
     /**
-     * Runs a machine recipe: feeds the pattern's inputs into the matching machine (declared on a Crafting
-     * Switch) and collects its outputs back into the network, until {@code demand} of the primary output is
-     * produced or the pattern times out.
+     * Runs a machine recipe: the dispatcher gives the job a Crafting Interface that holds the pattern, the job feeds
+     * that interface's machine and its outputs come back through the Receiving Buses, until {@code demand} of the
+     * primary output is produced or the pattern times out.
      *
      * <p>With an {@code io} the step draws from and returns to that instead of the network. A recursive craft
      * passes its own pool there so its machine steps pipeline through the pool, concurrent and race-free,
-     * rather than through the shared network; such a step is ephemeral and does not persist a reload.
+     * rather than through the shared network.
      */
     @Nullable
     NetworkProcessingOperation machineRun(final ProcessingPattern pattern, final long demand,

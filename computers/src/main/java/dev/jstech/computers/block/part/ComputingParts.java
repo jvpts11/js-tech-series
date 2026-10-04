@@ -10,6 +10,7 @@ package dev.jstech.computers.block.part;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.core.multipart.CoreParts;
+import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -23,8 +24,9 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
  * The parts J's Computers mounts on the faces of the Core's cable blocks: the storage buses where a data cable runs,
- * an Import and an Export Bus for each era, and the crafting buses where a crafting cable runs, one design for every
- * era, registered with the Core's parts. The Standard's buses keep the ids the buses had before they had eras.
+ * an Import, an Export and an External Storage Bus for each era, and the crafting parts where a crafting cable runs:
+ * a Crafting Interface for each era, and the Crafting Input Router and the Crafting Receiving Bus, one design for
+ * every era, registered with the Core's parts. The Standard's buses keep the ids the buses had before they had eras.
  */
 @TextHolder
 public final class ComputingParts {
@@ -34,8 +36,9 @@ public final class ComputingParts {
 
     private static final TextKey IMPORT_NAME = TextKey.of("jsc.bus.kind.import", "Import");
     private static final TextKey EXPORT_NAME = TextKey.of("jsc.bus.kind.export", "Export");
-    private static final TextKey INPUT_NAME = TextKey.of("jsc.bus.kind.input", "Input");
+    private static final TextKey ROUTER_NAME = TextKey.of("jsc.bus.kind.router", "Input Router");
     private static final TextKey RECEIVING_NAME = TextKey.of("jsc.bus.kind.receiving", "Receiving");
+    private static final TextKey INTERFACE_NAME = TextKey.of("jsc.bus.kind.interface", "Crafting Interface");
     private static final TextKey EXTERNAL_NAME = TextKey.of("jsc.bus.kind.external", "External Storage");
     /** Where the buses' models are, by the bus's id; the item of a bus wears its idle model. */
     public static final String MODELS = "block/bus/";
@@ -71,11 +74,25 @@ public final class ComputingParts {
             externalBus("external_storage_bus", HardwareEra.STANDARD);
     public static final DeferredHolder<PartType<?>, PartType<ExternalStorageBusPart>> ADVANCED_EXTERNAL =
             externalBus("advanced_external_storage_bus", HardwareEra.ADVANCED);
-    /* Input feeds like an Export and Receiving pulls like an Import, so they share those shapes, in amber. */
-    public static final DeferredHolder<PartType<?>, PartType<InputBusPart>> INPUT = PARTS.register("input_bus",
-            () -> type(InputBusPart::new, INPUT_NAME, "input_bus"));
+    /*
+     * The router feeds like an Export Bus and the Receiving Bus pulls like an Import, so they share those shapes on the
+     * crafting amber, with the ring and chevrons in the colour of each: blue for the router, yellow for the bus.
+     */
+    public static final DeferredHolder<PartType<?>, PartType<CraftingRouterPart>> ROUTER = PARTS.register(
+            "crafting_input_router", () -> type(CraftingRouterPart::new, ROUTER_NAME, "crafting_input_router"));
     public static final DeferredHolder<PartType<?>, PartType<ReceivingBusPart>> RECEIVING = PARTS.register(
             "receiving_bus", () -> type(ReceivingBusPart::new, RECEIVING_NAME, "receiving_bus"));
+    /* The Crafting Interface of each era, red, its plate showing a slot for each pattern it holds. */
+    public static final DeferredHolder<PartType<?>, PartType<CraftingInterfacePart>> VINTAGE_INTERFACE =
+            craftingInterface("vintage_crafting_interface", HardwareEra.VINTAGE);
+    public static final DeferredHolder<PartType<?>, PartType<CraftingInterfacePart>> LEGACY_INTERFACE =
+            craftingInterface("legacy_crafting_interface", HardwareEra.LEGACY);
+    public static final DeferredHolder<PartType<?>, PartType<CraftingInterfacePart>> TRANSITION_INTERFACE =
+            craftingInterface("transition_crafting_interface", HardwareEra.TRANSITION);
+    public static final DeferredHolder<PartType<?>, PartType<CraftingInterfacePart>> INTERFACE =
+            craftingInterface("crafting_interface", HardwareEra.STANDARD);
+    public static final DeferredHolder<PartType<?>, PartType<CraftingInterfacePart>> ADVANCED_INTERFACE =
+            craftingInterface("advanced_crafting_interface", HardwareEra.ADVANCED);
 
     private ComputingParts() {
     }
@@ -84,9 +101,37 @@ public final class ComputingParts {
         PARTS.register(modEventBus);
     }
 
-    /** Whether {@code type} is one of the crafting buses, which mount on crafting cables. */
+    /** Whether {@code type} is one of the crafting parts, which mount on crafting cables. */
     public static boolean isCrafting(final PartType<?> type) {
-        return type == INPUT.get() || type == RECEIVING.get();
+        return type == ROUTER.get() || type == RECEIVING.get() || isInterface(type);
+    }
+
+    /** Whether {@code type} is a Crafting Interface of any era. */
+    public static boolean isInterface(final PartType<?> type) {
+        return type == VINTAGE_INTERFACE.get() || type == LEGACY_INTERFACE.get() || type == TRANSITION_INTERFACE.get()
+                || type == INTERFACE.get() || type == ADVANCED_INTERFACE.get();
+    }
+
+    /** The Crafting Interface of {@code era}; an era after the Advanced has the Advanced's. */
+    public static PartType<CraftingInterfacePart> craftingInterface(final HardwareEra era) {
+        return switch (era) {
+            case VINTAGE -> VINTAGE_INTERFACE.get();
+            case LEGACY -> LEGACY_INTERFACE.get();
+            case TRANSITION -> TRANSITION_INTERFACE.get();
+            case STANDARD -> INTERFACE.get();
+            case ADVANCED, EXA, SINGULARITY -> ADVANCED_INTERFACE.get();
+        };
+    }
+
+    /** The item of the Crafting Interface of {@code era}, which a broken interface gives back. */
+    public static ItemStack craftingInterfaceItem(final HardwareEra era) {
+        return new ItemStack(switch (era) {
+            case VINTAGE -> ComputingModule.VINTAGE_CRAFTING_INTERFACE_ITEM.get();
+            case LEGACY -> ComputingModule.LEGACY_CRAFTING_INTERFACE_ITEM.get();
+            case TRANSITION -> ComputingModule.TRANSITION_CRAFTING_INTERFACE_ITEM.get();
+            case STANDARD -> ComputingModule.CRAFTING_INTERFACE_ITEM.get();
+            case ADVANCED, EXA, SINGULARITY -> ComputingModule.ADVANCED_CRAFTING_INTERFACE_ITEM.get();
+        });
     }
 
     /** Whether {@code type} is an Import Bus of any era. */
@@ -188,12 +233,17 @@ public final class ComputingParts {
         return PARTS.register(id, () -> type(() -> new ExternalStorageBusPart(era), EXTERNAL_NAME, id));
     }
 
+    private static DeferredHolder<PartType<?>, PartType<CraftingInterfacePart>> craftingInterface(
+            final String id, final HardwareEra era) {
+        return PARTS.register(id, () -> type(() -> new CraftingInterfacePart(era), INTERFACE_NAME, id));
+    }
+
     /*
-     * A bus kind, drawn with the model of its own id: its era's casing, its kind's shape and colour, its lamps dark;
-     * while it moves, the same model with the lamps blinking.
+     * A part kind, drawn with the model of its own id: its era's casing, its kind's shape and colour, its lamps dark;
+     * while it works, the same model with the lamps blinking.
      */
-    private static <P extends AbstractBusPart> PartType<P> type(final Supplier<P> factory, final TextKey name,
-                                                                final String id) {
+    private static <P extends IFacePart> PartType<P> type(final Supplier<P> factory, final TextKey name,
+                                                          final String id) {
         return new PartType<>(factory, name, model(id), model(id + BUSY));
     }
 

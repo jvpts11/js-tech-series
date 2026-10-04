@@ -8,21 +8,15 @@
 package dev.jstech.computers.crafting;
 
 import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.block.part.AbstractBusPart;
-import dev.jstech.computers.block.part.ComputingParts;
-import dev.jstech.core.multipart.PartType;
-import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
+import dev.jstech.computers.block.part.CraftingInterfacePart;
+import dev.jstech.computers.block.part.CraftingRouterPart;
 import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.operation.IPersistentOperation;
 import dev.jstech.computers.operation.payload.OperationRecord;
-import dev.jstech.computers.storage.CompositeDataPort;
-import dev.jstech.computers.storage.IDataPort;
 import dev.jstech.computers.storage.ExternalDataPort;
-import dev.jstech.computers.storage.FilteredDataPort;
+import dev.jstech.computers.storage.IDataPort;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.WatchedDataPort;
-import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.persistence.SavedValue;
@@ -30,11 +24,11 @@ import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.Sizes;
 import dev.jstech.core.uuid.NetworkUuid;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -43,27 +37,18 @@ import net.minecraft.resources.RegistryOps;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.UUID;
-
 /**
- * Runs a {@link ProcessingPattern} through a real machine: it finds the machine a Crafting Switch declared for
- * the pattern's machine type, feeds it one lot of inputs at a time from the network, lets it process on its own,
- * pulls the declared outputs back into the network, and counts the REAL yield (a probabilistic output's chance
- * only guided the plan, never the runtime). If nothing progresses within the pattern's timeout, it settles
- * partial/failed. Items and fluids feed in the same way; collecting a fluid back into the network is a follow-up.
+ * One job of a {@link ProcessingPattern}: the Mainframe's dispatcher gives it a Crafting Interface that holds the
+ * pattern, and the job feeds that interface's machine one lot of inputs at a time from the network (or the craft it is
+ * a step of), against the machine or through the routers of the interface's own cable, then waits while the machine
+ * works. What comes out is credited to it by the Receiving Buses tied to the interface, never more than it fed for;
+ * it counts the REAL yield (a probabilistic output's chance only guided the plan). It completes when it has the amount
+ * asked for; if nothing moves on its interface for the pattern's timeout it settles partial, or failed when nothing
+ * came out at all. What it is still owed when it settles stays with the interface for a while, so a late output goes
+ * where this job's outputs go and never to the next job.
  */
 @TextHolder
 public final class NetworkProcessingOperation implements IPersistentOperation {
-
-    /** The machine stopped taking what it was being fed, so the run was given up on where it stood. */
-    private static final TextKey MACHINE_STOPPED = TextKey.of("jsc.operation.failure.machine_stopped",
-            "the machine making the %s stopped taking anything");
-
-    private static final int FEED_INTERVAL = 4;
-    /** How long a machine that has run dry of a gas or a fluid sits still before it is given another lot of it. */
-    private static final int STARVED_TICKS = 2 * FEED_INTERVAL;
-    public static final String KIND = "processing";
 
     private final ServerLevel level;
     private final NetworkUuid network;
@@ -72,39 +57,60 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
     private final List<BlockPos> candidateComputers;
     private final UUID operationId;
     private final String requesterLabel;
-    private final StorageKey resultKey;
-
-    private CraftingSwitchBlockEntity.DeclaredMachine machine;
-    /*
-     * The physical machine the dispatcher assigned this job, so two concurrent jobs of one machine type never
-     * land on the same block and jam it. Null means unassigned (a standalone run that just takes the first it can).
-     */
     @Nullable
-    private BlockPos assignedMachinePos;
+    private final StorageKey resultKey;
+    /*
+     * A machine step run inside a craft (given a pool ICraftIo) is "nested": it is one stage of the parent craft, so
+     * it is not logged as an operation of its own; the parent's log entry carries it as a sub-operation.
+     */
+    private final boolean nested;
+    /*
+     * Where inputs are drawn from and outputs returned to: the network by default; a craft's isolated pool for a
+     * machine step run inside a recursive craft, so concurrent steps pipeline without racing on network stock.
+     */
+    private ICraftIo io;
+    /* The interface the dispatcher gave this job, kept over a reload so the job goes on where it was. */
+    @Nullable
+    private UUID interfaceId;
+    /* Where that interface is and the network it is on, as the dispatcher read them this tick. */
+    @Nullable
+    private CraftingFloor floor;
+    @Nullable
+    private CraftingFloor.Site site;
+    @Nullable
+    private BlockPos executor;
+    private long seq;
     private long produced;
     private long lotsFed;
     /** Per pattern input: how much has reached the machine so far, against {@code lotsFed} lots' worth. */
     private long[] delivered;
+    /** Per pattern output: how much has been credited back. */
+    private long[] credited;
     private boolean done;
     private boolean waiting = true;
+    private boolean blocked;
+    private boolean placed;
     private int idleTicks;
     private int feedCooldown;
     private byte status = OperationRecord.STATUS_FAILED;
     private OperationFailure cause = OperationFailure.NONE;
     private OperationPriority priority = OperationPriority.DEFAULT;
+    @Nullable
     private Runnable onSettle;
-    private boolean concurrencyBlocked;
-    /*
-     * Where inputs are drawn from and outputs returned to: the network by default; a craft's isolated pool for a
-     * machine step run inside a recursive craft, so concurrent steps pipeline without racing on network stock.
-     */
-    private final ICraftIo io;
-    private final boolean ephemeral;
-    /*
-     * A machine step run inside a craft (given a pool ICraftIo) is "nested": it is one stage of the parent craft,
-     * so it is NOT logged as an operation of its own; the parent's log entry carries it as a sub-operation.
-     */
-    private final boolean nested;
+
+    public static final String KIND = "processing";
+
+    /** The machine stopped taking what it was being fed, so the run was given up on where it stood. */
+    private static final TextKey MACHINE_STOPPED = TextKey.of("jsc.operation.failure.machine_stopped",
+            "the machine making the %s stopped taking anything");
+    /** No Crafting Interface on the network holds the recipe, so there was no machine to run it on. */
+    private static final TextKey NO_INTERFACE = TextKey.of("jsc.operation.failure.no_interface",
+            "no Crafting Interface holds the recipe for the %s");
+    private static final int FEED_INTERVAL = 4;
+    /** How long a machine that has run dry of a gas or a fluid sits still before it is given another lot of it. */
+    private static final int STARVED_TICKS = 2 * FEED_INTERVAL;
+    /** The most lots that go in on one feed, as far as the machine takes them. */
+    private static final int MOST_LOTS = 64;
 
     public NetworkProcessingOperation(final ServerLevel level, final NetworkUuid network,
                                       final ProcessingPattern pattern, final long requested,
@@ -116,8 +122,7 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
     public NetworkProcessingOperation(final ServerLevel level, final NetworkUuid network,
                                       final ProcessingPattern pattern, final long requested,
                                       final List<BlockPos> candidateComputers, final UUID operationId,
-                                      final String requesterLabel,
-                                      @Nullable final ICraftIo io) {
+                                      final String requesterLabel, @Nullable final ICraftIo io) {
         this.level = level;
         this.network = network;
         this.pattern = pattern;
@@ -126,18 +131,11 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         this.operationId = operationId;
         this.requesterLabel = requesterLabel;
         this.io = io != null ? io : ICraftIo.network(level, network);
-        /*
-         * A craft's machine step reads and writes that craft's isolated pool through {@code io}, but it still
-         * persists across a reload: on resume it is rebuilt with the network as its I/O and finishes whatever the
-         * machine still holds into the network, where the re-planned parent craft counts it as stock. So nothing
-         * fed into a machine before a save is ever lost.
-         */
-        this.ephemeral = false;
-        // A step given its own I/O is a craft's internal stage: don't log it as a separate operation.
         this.nested = io != null;
         final ProcessingPattern.ProcessingOutput primary = pattern.primaryOutput();
         this.resultKey = primary == null ? null : primary.key();
         this.delivered = new long[pattern.inputs().size()];
+        this.credited = new long[pattern.outputs().size()];
         if (this.resultKey == null || pattern.inputs().isEmpty() || requested <= 0) {
             finish(); // malformed pattern: settle immediately as FAILED
         }
@@ -148,459 +146,181 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         if (done) {
             return;
         }
-        if (machine == null) {
-            machine = findMachine();
-            if (machine == null) {
-                waiting = true;
-                if (++idleTicks > pattern.timeoutTicks()) {
-                    finishTimedOut();
-                }
-                return;
-            }
-            waiting = false;
-        }
-        /*
-         * Sided machines route through crafting buses when present: an Input Bus aimed at the machine carries
-         * the deliveries, a Receiving Bus the pickups. Without buses both ride the switch-touched face.
-         */
-        final IDataPort inPort = portFor(ComputingParts.INPUT.get());
-        final IDataPort outPort = portFor(ComputingParts.RECEIVING.get());
-        if (inPort.isEmpty() && outPort.isEmpty()) {
-            machine = null; // the machine was broken/removed; re-resolve next tick
-            return;
-        }
-        boolean progressed = false;
-
-        /*
-         * 1) Collect any finished output the machine holds, back into the sink (the network, or the craft's
-         *    pool for a craft-internal step), counting the primary yield.
-         */
-        for (final ProcessingPattern.ProcessingOutput out : pattern.outputs()) {
-            final long inMachine = outPort.count(out.key());
-            if (inMachine <= 0) {
-                continue;
-            }
-            /*
-             * Only what the sink takes leaves the machine. Pulling everything and then storing it voided whatever
-             * a full network refused; asking the machine for exactly what was stored leaves the rest where it was
-             * made, and the machine waits, full, until there is room again.
-             */
-            final long offered = outPort.extract(out.key(), inMachine, true);
-            final long stored = offered > 0 ? writeBack(out.key(), offered) : 0L;
-            if (stored <= 0) {
-                continue;
-            }
-            final long pulled = outPort.extract(out.key(), stored, false);
-            if (pulled < stored) {
-                // The machine gave less than it offered a moment ago: what it kept must not be counted twice.
-                io.select(out.key(), stored - pulled, (key, amount, simulate) -> amount);
-            }
-            if (out.key().equals(resultKey)) {
-                produced += pulled;
-            }
-            progressed = true;
-        }
         if (produced >= requested) {
             status = OperationRecord.STATUS_COMPLETED;
             finish();
             return;
         }
-
-        final CraftingComputerBlockEntity.MachineConfig config = resolveConfig();
-        if (config.locked() || concurrencyBlocked) {
+        final CraftingInterfacePart part = site == null ? null : site.part(level, CraftingInterfacePart.class);
+        if (part == null || floor == null || blocked) {
             /*
-             * Paused from the Machines tab, or over the machine's concurrent-job cap: keep collecting finished
-             * output, but don't feed or time out.
+             * No interface for it now: every one that holds the recipe is busy, paused or full, and it waits without
+             * a timeout; when none holds the recipe at all, it times out like a machine that never answers.
              */
             waiting = true;
+            if (!placed && part == null && ++idleTicks > pattern.timeoutTicks()) {
+                cause = OperationFailure.of(NO_INTERFACE, resultName());
+                status = produced > 0 ? OperationRecord.STATUS_PARTIAL : OperationRecord.STATUS_FAILED;
+                finish();
+            }
             return;
         }
         waiting = false;
-
+        final long now = level.getGameTime();
+        boolean progressed = false;
         /*
-         * 2) Feed inputs when the cooldown elapses (so we don't overfill a slow machine). feedMax keeps feeding
-         * until the machine is full each cycle; otherwise a single lot goes in. Feeding is bounded by the
-         * demand: lots still inside the machine are expected to yield their share, so nothing beyond what the
-         * request needs leaves the network. A lot whose chance-based output fell short is simply fed again.
-         * A lot is only ever committed whole: what the machine could not take at once (a small chemical tank,
-         * a full slot) stays owed and is topped up on the following cycles as the machine consumes.
-         * What leaves the network for the machine in one tick is bounded by the Mainframe's orchestration
-         * capacity, like any other transfer: a faster CPU feeds machines faster. The budget is items per tick;
-         * fluids and chemicals count by the same weight (1 000 mB = one item).
+         * Feed when the cooldown elapses, as many lots as the machine takes and the request needs: lots still inside
+         * the machine are expected to yield their share, so nothing beyond what the request needs leaves the network.
+         * A lot whose chance-based output fell short is simply fed again. A lot is only ever committed whole: what the
+         * machine could not take at once stays owed and is topped up as it consumes. What leaves the network for the
+         * machine in one tick is bounded by its Crafting Computer's crafting throughput.
          */
         if (--feedCooldown <= 0) {
             feedCooldown = FEED_INTERVAL;
-            final int maxLots = config.feedMax() ? 64 : 1;
-            long budgetLeft = Math.max(0L, throughputBudget) * StorageKey.MB_EQ_PER_ITEM;
-            for (int lot = 0; lot < maxLots && budgetLeft > 0L; lot++) {
-                if (fullyDelivered()) {
-                    if (lotsFed >= lotsNeeded()) {
-                        // Every lot is in; only a machine that ran dry of a gas or a fluid can still be owed more.
-                        if (deliverOwed(inPort, budgetLeft) > 0) {
-                            progressed = true;
+            final IDataPort[] ports = inputPorts(part, now);
+            if (ports != null) {
+                long budgetLeft = Math.max(0L, throughputBudget) * StorageKey.MB_EQ_PER_ITEM;
+                for (int lot = 0; lot < MOST_LOTS && budgetLeft > 0L; lot++) {
+                    if (fullyDelivered()) {
+                        if (lotsFed >= lotsNeeded()) {
+                            if (deliverOwed(ports, budgetLeft) > 0) {
+                                progressed = true;
+                            }
+                            break;
                         }
-                        break;
+                        lotsFed++;
                     }
-                    lotsFed++;
-                }
-                final long movedWeight = deliverOwed(inPort, budgetLeft);
-                if (movedWeight <= 0) {
-                    break; // the machine is full, the network is drained, or the budget is spent
-                }
-                budgetLeft -= movedWeight;
-                progressed = true;
-                if (!fullyDelivered()) {
-                    break; // the machine could not take the whole lot yet; finish it before the next one
+                    final long movedWeight = deliverOwed(ports, budgetLeft);
+                    if (movedWeight <= 0) {
+                        break; // the machine is full, the network is drained, or the budget is spent
+                    }
+                    budgetLeft -= movedWeight;
+                    progressed = true;
+                    if (!fullyDelivered()) {
+                        break; // the machine could not take the whole lot yet; finish it before the next one
+                    }
                 }
             }
         }
-
-        if (progressed) {
+        /*
+         * The machine is shared by every job on the interface: while any of them is fed or credited the machine is
+         * moving, and a job queued behind another's inputs is not timed out for waiting its turn.
+         */
+        if (progressed || part.workedAt() >= now - 1) {
             idleTicks = 0;
         } else if (++idleTicks > pattern.timeoutTicks()) {
-            finishTimedOut();
+            status = produced > 0 ? OperationRecord.STATUS_PARTIAL : OperationRecord.STATUS_FAILED;
+            cause = OperationFailure.of(MACHINE_STOPPED, resultName());
+            finish();
         }
     }
 
-    /**
-     * Whether a declared machine serves the pattern's machine id: a generic id ({@code generic:<recipeType>})
-     * matches any face the player tagged with that category; a concrete id matches by block id or face name.
-     */
-    public static boolean machineMatches(final CraftingSwitchBlockEntity.DeclaredMachine m, final String want) {
-        if (MachineCategory.isGenericId(want)) {
-            return !m.category().isEmpty() && m.category().equals(MachineCategory.categoryOf(want));
-        }
-        return m.machineType().equals(want) || m.name().equalsIgnoreCase(want);
+    /** The recipe this job runs. */
+    public ProcessingPattern pattern() {
+        return pattern;
     }
 
-    /**
-     * This physical machine's per-machine state (Paused / Feed), set on the Machines tab, resolved by the
-     * machine's position, so pausing one machine of a type does not pause the others. (The Max Jobs ceiling is a
-     * per-type setting, read by the Mainframe's dispatcher, not here.)
-     */
-    private CraftingComputerBlockEntity.MachineConfig resolveConfig() {
-        final BlockPos machinePos = machine != null ? machine.machinePos() : assignedMachinePos;
-        final String machineKey = machinePos != null
-                ? CraftingComputerBlockEntity.machineStateKey(machinePos) : null;
-        for (final BlockPos pos : candidateComputers) {
-            if (level.getBlockEntity(pos) instanceof CraftingComputerBlockEntity cc) {
-                /*
-                 * This one machine's own state wins; otherwise a state set on the whole machine type applies
-                 * (so you can pause a single machine, or a whole type, whichever you set).
-                 */
-                if (machineKey != null) {
-                    final CraftingComputerBlockEntity.MachineConfig perMachine = cc.machineConfig(machineKey);
-                    if (perMachine != CraftingComputerBlockEntity.MachineConfig.DEFAULT) {
-                        return perMachine;
-                    }
-                }
-                final CraftingComputerBlockEntity.MachineConfig byType = cc.machineConfig(pattern.machineType());
-                if (byType != CraftingComputerBlockEntity.MachineConfig.DEFAULT) {
-                    return byType;
-                }
-            }
-        }
-        return CraftingComputerBlockEntity.MachineConfig.DEFAULT;
-    }
-
+    /** The interface the dispatcher gave this job, or null while it has none. */
     @Nullable
-    private CraftingSwitchBlockEntity.DeclaredMachine findMachine() {
-        CraftingSwitchBlockEntity.DeclaredMachine firstOfType = null;
-        CraftingSwitchBlockEntity.DeclaredMachine firstRoutable = null;
-        CraftingSwitchBlockEntity.DeclaredMachine assigned = null;
-        for (final BlockPos pos : candidateComputers) {
-            if (level.getBlockEntity(pos) instanceof CraftingComputerBlockEntity cc) {
-                for (final CraftingSwitchBlockEntity.DeclaredMachine m : cc.availableMachines()) {
-                    if (!machineMatches(m, pattern.machineType())) {
-                        continue;
-                    }
-                    if (firstOfType == null) {
-                        firstOfType = m;
-                    }
-                    /*
-                     * The dispatcher gives each concurrent job a distinct physical machine so two never share and
-                     * jam one; honor that assignment exactly (it may be a fallback machine with no matching bus).
-                     */
-                    if (assignedMachinePos != null && assignedMachinePos.equals(m.machinePos())) {
-                        assigned = m;
-                    }
-                    /*
-                     * Prefer a machine whose Input Buses can actually route this recipe's inputs. Several
-                     * machines of one type are told apart only by their bus filters (one factory filtered to
-                     * iron, another to enriched iron), so picking the first by type alone feeds a machine that
-                     * cannot accept the inputs. This is what makes a group of same-type machines usable.
-                     */
-                    if (firstRoutable == null && machineCanRoute(m)) {
-                        firstRoutable = m;
-                    }
-                }
-            }
-        }
-        if (assignedMachinePos != null) {
-            return assigned; // null only if the assigned machine vanished; the dispatcher re-assigns next tick
-        }
-        // Unassigned (a standalone run): the first routable machine, or the first of the type as a last resort.
-        return firstRoutable != null ? firstRoutable : firstOfType;
+    public UUID interfaceId() {
+        return interfaceId;
     }
 
-    /**
-     * The distinct physical machines this job could run on. Machines whose Input Buses can actually route its
-     * inputs come first; if none can (a bus-less machine fed through the switch face, or a chemical input no item
-     * bus filters), every machine of the type is a fallback, the same reach the single-machine path always had.
-     * The dispatcher picks a free one per job, so concurrency scales with the machines actually present.
-     */
-    public List<BlockPos> routableMachines() {
-        final List<BlockPos> routable = new ArrayList<>();
-        final List<BlockPos> ofType = new ArrayList<>();
-        for (final BlockPos pos : candidateComputers) {
-            if (level.getBlockEntity(pos) instanceof CraftingComputerBlockEntity cc) {
-                for (final CraftingSwitchBlockEntity.DeclaredMachine m : cc.availableMachines()) {
-                    if (!machineMatches(m, pattern.machineType())) {
-                        continue;
-                    }
-                    if (!ofType.contains(m.machinePos())) {
-                        ofType.add(m.machinePos());
-                    }
-                    if (machineCanRoute(m) && !routable.contains(m.machinePos())) {
-                        routable.add(m.machinePos());
-                    }
-                }
-            }
-        }
-        return routable.isEmpty() ? ofType : routable;
-    }
-
-    /** The physical machine the dispatcher assigned this job, or null if unassigned. */
+    /** Where that interface is, as read this tick, or null. */
     @Nullable
-    public BlockPos assignedMachine() {
-        return assignedMachinePos;
+    public CraftingFloor.Site site() {
+        return site;
+    }
+
+    /** The order this job was first fed in, against the other jobs and what settled ones are still owed. */
+    public long seq() {
+        return seq;
     }
 
     /**
-     * The Crafting Computer that drives this job, the one whose Crafting Switch declares the machine it is
-     * assigned to (or currently on). Its crafting card sets the feed rate, so the card, not the machine, governs
-     * how fast the step runs. Null when no computer declares the machine (then it cannot be fed).
+     * The dispatcher gives the job the interface at {@code at} on {@code where}, driven by the Crafting Computer at
+     * {@code by}; a job is numbered in the order it was first given one, which is the order it is credited in.
      */
+    public void place(final CraftingFloor where, final CraftingFloor.Site at, final UUID id,
+                      @Nullable final BlockPos by, final long order) {
+        if (interfaceId == null || seq == 0L) {
+            seq = order;
+        }
+        floor = where;
+        site = at;
+        interfaceId = id;
+        executor = by;
+        blocked = false;
+        placed = true;
+    }
+
+    /**
+     * The dispatcher found no interface this job may use now. {@code anyHolds} is whether some interface holds its
+     * recipe (busy, paused or full), in which case it waits without a timeout.
+     */
+    public void unplace(final boolean anyHolds) {
+        site = null;
+        floor = null;
+        executor = null;
+        placed = anyHolds;
+        blocked = anyHolds;
+    }
+
+    /** The Crafting Computer driving this job's interface, whose card sets its feed rate; null without one. */
     @Nullable
     public BlockPos executorComputer() {
-        final BlockPos target = assignedMachinePos != null ? assignedMachinePos
-                : (machine != null ? machine.machinePos() : null);
-        if (target == null) {
-            return null;
-        }
-        for (final BlockPos pos : candidateComputers) {
-            if (level.getBlockEntity(pos) instanceof CraftingComputerBlockEntity cc) {
-                for (final CraftingSwitchBlockEntity.DeclaredMachine m : cc.availableMachines()) {
-                    if (m.machinePos().equals(target)) {
-                        return pos;
-                    }
-                }
-            }
-        }
-        return null;
+        return executor;
     }
 
-    /** Set by the dispatcher each tick: the distinct physical machine this job may use (null to clear). */
-    public void setAssignedMachine(@Nullable final BlockPos pos) {
-        this.assignedMachinePos = pos;
-        if (pos != null && machine != null && !pos.equals(machine.machinePos())) {
-            machine = null; // re-resolve to the newly assigned machine on the next tick
+    /** How much of output {@code index} this job may be credited: what it fed for. */
+    public long cap(final int index) {
+        return lotsFed * pattern.outputs().get(index).amount();
+    }
+
+    /** How much of output {@code index} has come back to it. */
+    public long credited(final int index) {
+        return credited[index];
+    }
+
+    /** {@code amount} of output {@code index} came back to this job and went to {@link #io()}. */
+    public void credit(final int index, final long amount) {
+        credited[index] += amount;
+        if (pattern.outputs().get(index).key().equals(resultKey)) {
+            produced += amount;
         }
     }
 
-    /**
-     * Whether {@code m}'s Crafting Input Buses can carry every one of this pattern's inputs at once: each input
-     * must be assignable to a distinct lane whose filter selects it, a bus giving a lane to each item it lists, and
-     * an unfiltered bus one lane that is a wildcard and carries anything. A machine with no Input Bus is fed through
-     * its switch-touched face and accepts anything, exactly as before this check existed.
-     */
-    private boolean machineCanRoute(final CraftingSwitchBlockEntity.DeclaredMachine m) {
-        final List<StorageKey> filters = new ArrayList<>();
-        for (final Direction d : Direction.values()) {
-            final BlockPos cablePos = m.machinePos().relative(d);
-            if (level.getBlockEntity(cablePos)
-                    instanceof CableBlockEntity cable
-                    && cable.getPart(d.getOpposite())
-                    instanceof AbstractBusPart bus
-                    && bus.type() == ComputingParts.INPUT.get()) {
-                final List<StorageKey> listed = bus.filterKeys();
-                if (listed.isEmpty()) {
-                    filters.add(null); // an unfiltered bus, a wildcard
-                } else {
-                    filters.addAll(listed);
-                }
-            }
-        }
-        if (filters.isEmpty()) {
-            return true; // no Input Bus: fed through the switch-touched face, which accepts anything
-        }
-        final List<StorageKey> inputs = new ArrayList<>();
+    /** Where this job's inputs come from and its outputs go: the network, or the craft it is a step of. */
+    public ICraftIo io() {
+        return io;
+    }
+
+    /** Whether it has fed its machine anything. */
+    public boolean fedAny() {
+        return lotsFed > 0;
+    }
+
+    /** How many lots it has fed its machine. */
+    public long lotsFed() {
+        return lotsFed;
+    }
+
+    /** Whether the recipe consumes {@code key}: an input seen at the machine's output is not an output. */
+    public boolean consumes(final StorageKey key) {
         for (final ProcessingPattern.ProcessingInput in : pattern.inputs()) {
-            inputs.add(in.key());
-        }
-        return hasFullMatching(inputs, filters);
-    }
-
-    private static boolean busServes(@Nullable final StorageKey filter, final StorageKey input) {
-        return filter == null || filter.equals(input);
-    }
-
-    /** True when every input can be matched to a distinct bus (Hungarian-style augmenting-path matching). */
-    private static boolean hasFullMatching(final List<StorageKey> inputs, final List<StorageKey> filters) {
-        final int[] inputForBus = new int[filters.size()];
-        Arrays.fill(inputForBus, -1);
-        for (int i = 0; i < inputs.size(); i++) {
-            if (!augment(i, inputs, filters, inputForBus, new boolean[filters.size()])) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private static boolean augment(final int input, final List<StorageKey> inputs, final List<StorageKey> filters,
-                                   final int[] inputForBus, final boolean[] visited) {
-        for (int b = 0; b < filters.size(); b++) {
-            if (!visited[b] && busServes(filters.get(b), inputs.get(input))) {
-                visited[b] = true;
-                if (inputForBus[b] == -1 || augment(inputForBus[b], inputs, filters, inputForBus, visited)) {
-                    inputForBus[b] = input;
-                    return true;
-                }
+            if (in.key().equals(key)) {
+                return true;
             }
         }
         return false;
     }
 
-    private ExternalDataPort machinePort() {
-        return portOn(machine.face().getOpposite());
-    }
-
-    /** The machine's port on {@code side}, with every kind of data the machine offers there. */
-    private ExternalDataPort portOn(final Direction side) {
-        return ExternalDataPort.at(level, machine.machinePos(), side);
-    }
-
-    /**
-     * The port to move data through for the given bus kind. Every crafting cable adjacent to the machine with an
-     * Input Bus (deliveries) or Receiving Bus (pickups) mounted against it contributes its machine face, and the
-     * faces act as one port, which is how sided machines whose I/O faces differ from the switch-touched face, or
-     * that spread outputs over several faces, are driven. A bus carrying a filter restricts its face to the keys it
-     * lists, so a machine fed two ingredients from two sides routes each to the correct face; an unfiltered bus
-     * carries anything. Without a bus, the switch-touched face serves both directions.
-     */
-    private IDataPort portFor(final PartType<?> kind) {
-        final List<IDataPort> faces = new ArrayList<>();
-        for (final Direction d : Direction.values()) {
-            final BlockPos cablePos = machine.machinePos().relative(d);
-            if (level.getBlockEntity(cablePos)
-                    instanceof CableBlockEntity cable
-                    && cable.getPart(d.getOpposite())
-                    instanceof AbstractBusPart bus
-                    && bus.type() == kind) {
-                final ExternalDataPort port = portOn(d);
-                if (!port.isEmpty()) {
-                    /*
-                     * Honor the bus filter so the player can pin which face each ingredient (or output) uses:
-                     * a filtered face carries only what it lists, an empty filter carries anything.
-                     */
-                    final List<StorageKey> listed = bus.filterKeys();
-                    final IDataPort face = listed.isEmpty() ? port : new FilteredDataPort(port, listed);
-                    // What goes through the face lights the bus's lamps.
-                    final long now = level.getGameTime();
-                    faces.add(new WatchedDataPort(face, () -> bus.worked(now)));
-                }
-            }
+    /** Puts this step under the craft or pipeline it is part of again, after a reload. */
+    public void adoptIo(final ICraftIo parent) {
+        if (io instanceof HeldIo held) {
+            held.flush();
         }
-        return faces.isEmpty() ? machinePort() : CompositeDataPort.of(faces);
-    }
-
-    /** Whether every input of the lots committed so far has reached the machine in full. */
-    private boolean fullyDelivered() {
-        final List<ProcessingPattern.ProcessingInput> inputs = pattern.inputs();
-        for (int i = 0; i < inputs.size(); i++) {
-            if (delivered[i] < lotsFed * inputs.get(i).amount()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Moves what the machine is owed into it, within {@code budgetWeight} (mB-equivalent) for this tick, and
-     * returns the weight moved. Items are owed lot by lot. Fluids and chemicals are continuous: the machine is
-     * kept topped up with as much as the whole request still needs, so a tank never starves a machine that
-     * could run faster than one lot every few ticks, since the pattern's amount only sets the ratio.
-     *
-     * <p>That amount is what a lot is expected to use, not a ceiling: a machine burns a gas or a fluid at a rate
-     * that only averages it, so the whole request's worth can run out before the last lot is done. A machine that
-     * has run dry of one and made no progress for a couple of feed cycles while the request is still short gets
-     * another lot's worth of it, so it never stalls on its last lot; a machine that uses exactly what the pattern
-     * says never runs dry early and is never given more.
-     */
-    private long deliverOwed(final IDataPort inPort, final long budgetWeight) {
-        final List<ProcessingPattern.ProcessingInput> inputs = pattern.inputs();
-        long movedWeight = 0L;
-        for (int i = 0; i < inputs.size() && movedWeight < budgetWeight; i++) {
-            final ProcessingPattern.ProcessingInput in = inputs.get(i);
-            final long lots = in.key().isItem() ? lotsFed : Math.max(lotsFed, lotsNeeded());
-            long owed = lots * in.amount() - delivered[i];
-            if (owed <= 0 && !in.key().isItem() && produced < requested && idleTicks >= STARVED_TICKS
-                    && inPort.count(in.key()) <= 0) {
-                owed = in.amount();
-            }
-            if (owed <= 0) {
-                continue;
-            }
-            final long unitWeight = Math.max(1L, in.key().weight(1));
-            final long affordable = Math.min(owed, (budgetWeight - movedWeight) / unitWeight);
-            if (affordable <= 0) {
-                break;
-            }
-            final long sent = io.select(in.key(), affordable, inPort);
-            delivered[i] += sent;
-            movedWeight += sent * unitWeight;
-        }
-        return movedWeight;
-    }
-
-    /**
-     * How many lots the request justifies. A guaranteed primary output needs exactly {@code ceil(requested /
-     * amount)} lots, no more, so nothing is wasted. A probabilistic primary output cannot be counted ahead of
-     * time: crediting fed lots at their expected yield cancels the real {@code produced} out of the arithmetic
-     * and the machine would stop one batch short. So while the request is still short, one more lot than has
-     * been fed is always allowed (a lot that rolled low is simply replaced) and the request-complete check in
-     * {@link #tick} stops the op the moment real production catches up.
-     */
-    private long lotsNeeded() {
-        final ProcessingPattern.ProcessingOutput primary = pattern.primaryOutput();
-        final long perLot = Math.max(1L, primary.amount());
-        if (!primary.probabilistic()) {
-            return Sizes.ceilDiv(requested, perLot);
-        }
-        return produced >= requested ? lotsFed : lotsFed + 1;
-    }
-
-    /** Puts {@code amount} of a key (item OR fluid) into the network; returns how much was stored. */
-    private long writeBack(final StorageKey key, final long amount) {
-        return io.insert(key, amount);
-    }
-
-    private void finishTimedOut() {
-        status = produced > 0 ? OperationRecord.STATUS_PARTIAL : OperationRecord.STATUS_FAILED;
-        cause = resultKey == null ? OperationFailure.of(MACHINE_STOPPED, "")
-                : OperationFailure.of(MACHINE_STOPPED, resultKey.displayName().getString());
-        finish();
-    }
-
-    private void finish() {
-        if (done) {
-            return;
-        }
-        done = true;
-        waiting = false;
-        if (onSettle != null) {
-            onSettle.run();
-        }
+        io = Objects.requireNonNull(parent, "parent");
     }
 
     public NetworkProcessingOperation onSettle(final Runnable callback) {
@@ -611,28 +331,24 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         return this;
     }
 
-    /** The machine key this op targets, used by the Mainframe to cap concurrent jobs per machine (maxJobs). */
-    public String machineKey() {
-        return pattern.machineType();
-    }
-
-    /** Set by the Mainframe each tick: true when this op is over its machine's concurrent-job cap. */
-    public void setConcurrencyBlocked(final boolean blocked) {
-        this.concurrencyBlocked = blocked;
-    }
-
     public long produced() {
         return produced;
     }
 
-    @Override
-    public boolean isEphemeral() {
-        return ephemeral;
+    /** What the job asked for, of the recipe's primary output. */
+    public long requested() {
+        return requested;
     }
 
-    /** Whether this is a craft's internal machine stage (fed from the craft's pool), not a standalone operation.
-     *  Nested steps are not written to the operations log on their own; the parent craft records them as its
-     *  sub-operations. */
+    @Override
+    public boolean isEphemeral() {
+        return false;
+    }
+
+    /**
+     * Whether this is a craft's internal machine stage (fed from the craft's pool), not a standalone operation. Nested
+     * steps are not written to the operations log on their own; the parent craft records them as its sub-operations.
+     */
     public boolean isNested() {
         return nested;
     }
@@ -658,16 +374,23 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         tag.putLong("Produced", produced);
         tag.putLong("LotsFed", lotsFed);
         tag.putLongArray("Delivered", delivered);
+        tag.putLongArray("Credited", credited);
         tag.putInt("IdleTicks", idleTicks);
         tag.putString("Label", requesterLabel);
         tag.putByte(NetworkCraftOperation.PRIORITY_KEY, (byte) priority.id());
+        tag.putLong("Seq", seq);
+        tag.putBoolean("Nested", nested);
+        if (interfaceId != null) {
+            tag.putUUID("Interface", interfaceId);
+        }
         return tag;
     }
 
     /**
-     * Rebuilds a processing operation saved by {@link #saveState}. The machine is resolved again on the first
-     * tick, so inputs already delivered to it are collected as they finish; the yield counted so far carries
-     * over. Returns null when the saved pattern cannot be read.
+     * Rebuilds a processing operation saved by {@link #saveState}. It goes back to the interface it had, so what it
+     * fed that machine is credited to it as it comes out; the yield counted so far carries over. A step that was part
+     * of a craft keeps what it makes apart, in a pool of its own, until the craft takes it again or it settles.
+     * Returns null when the saved pattern cannot be read.
      */
     @Nullable
     public static NetworkProcessingOperation restore(final CompoundTag tag, final ServerLevel level,
@@ -683,15 +406,22 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         }
         final NetworkProcessingOperation op = new NetworkProcessingOperation(level, network, pattern,
                 tag.getLong("Requested"), candidateComputers,
-                tag.hasUUID(ID_KEY) ? tag.getUUID(ID_KEY) : UUID.randomUUID(), tag.getString("Label"));
+                tag.hasUUID(ID_KEY) ? tag.getUUID(ID_KEY) : UUID.randomUUID(), tag.getString("Label"),
+                tag.getBoolean("Nested") ? new HeldIo(level, network) : null);
         op.produced = tag.getLong("Produced");
         op.lotsFed = tag.getLong("LotsFed");
         final long[] savedDelivered = tag.getLongArray("Delivered");
         if (savedDelivered.length == op.delivered.length) {
             op.delivered = savedDelivered;
         }
+        final long[] savedCredited = tag.getLongArray("Credited");
+        if (savedCredited.length == op.credited.length) {
+            op.credited = savedCredited;
+        }
         op.idleTicks = tag.getInt("IdleTicks");
         op.priority = NetworkCraftOperation.savedPriority(tag);
+        op.seq = tag.getLong("Seq");
+        op.interfaceId = tag.hasUUID("Interface") ? tag.getUUID("Interface") : null;
         return op;
     }
 
@@ -742,6 +472,151 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         final byte live = done ? status
                 : waiting ? OperationRecord.STATUS_WAITING : OperationRecord.STATUS_PROCESSING;
         return buildRecord(live);
+    }
+
+    /*
+     * The ports each input goes in through: the machine's face the interface sits against, or the face of the router
+     * that carries it. Null when an input has no way in now (a router was taken off), and nothing is fed this tick.
+     */
+    @Nullable
+    private IDataPort[] inputPorts(final CraftingInterfacePart part, final long now) {
+        final CraftingFloor.Reach reach = floor.reach(site);
+        if (reach.machine() == null) {
+            return null;
+        }
+        final IDataPort[] ports = new IDataPort[pattern.inputs().size()];
+        if (reach.mode() == CraftingFloor.Mode.DIRECT) {
+            final IDataPort face = new WatchedDataPort(
+                    ExternalDataPort.at(level, reach.machine(), site.face().getOpposite()), () -> part.worked(now));
+            Arrays.fill(ports, face);
+            return ports;
+        }
+        final CraftingInterfacePart.HeldPattern held = part.holding(pattern);
+        if (held == null) {
+            return null;
+        }
+        for (int i = 0; i < ports.length; i++) {
+            final InterfaceRoutes.Route route = InterfaceRoutes.routeFor(level, held, pattern.inputs().get(i).key(),
+                    reach);
+            if (route.router() == null) {
+                return null;
+            }
+            final CraftingFloor.Site router = route.router();
+            final CraftingRouterPart routerPart = router.part(level, CraftingRouterPart.class);
+            ports[i] = new WatchedDataPort(ExternalDataPort.at(level, router.faced(), router.face().getOpposite()),
+                    () -> {
+                        part.worked(now);
+                        if (routerPart != null) {
+                            routerPart.worked(now);
+                        }
+                    });
+        }
+        return ports;
+    }
+
+    /** Whether every input of the lots committed so far has reached the machine in full. */
+    private boolean fullyDelivered() {
+        final List<ProcessingPattern.ProcessingInput> inputs = pattern.inputs();
+        for (int i = 0; i < inputs.size(); i++) {
+            if (delivered[i] < lotsFed * inputs.get(i).amount()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Moves what the machine is owed into it, within {@code budgetWeight} (mB-equivalent) for this tick, and returns
+     * the weight moved. Items are owed lot by lot. Fluids and chemicals are continuous: the machine is kept topped up
+     * with as much as the whole request still needs, so a tank never starves a machine that could run faster than one
+     * lot every few ticks, since the pattern's amount only sets the ratio.
+     *
+     * <p>That amount is what a lot is expected to use, not a ceiling: a machine burns a gas or a fluid at a rate that
+     * only averages it, so the whole request's worth can run out before the last lot is done. A machine that has run
+     * dry of one and made no progress for a couple of feed cycles while the request is still short gets another lot's
+     * worth of it, so it never stalls on its last lot.
+     */
+    private long deliverOwed(final IDataPort[] ports, final long budgetWeight) {
+        final List<ProcessingPattern.ProcessingInput> inputs = pattern.inputs();
+        long movedWeight = 0L;
+        for (int i = 0; i < inputs.size() && movedWeight < budgetWeight; i++) {
+            final ProcessingPattern.ProcessingInput in = inputs.get(i);
+            final long lots = in.key().isItem() ? lotsFed : Math.max(lotsFed, lotsNeeded());
+            long owed = lots * in.amount() - delivered[i];
+            if (owed <= 0 && !in.key().isItem() && produced < requested && idleTicks >= STARVED_TICKS
+                    && ports[i].count(in.key()) <= 0) {
+                owed = in.amount();
+            }
+            if (owed <= 0) {
+                continue;
+            }
+            final long unitWeight = Math.max(1L, in.key().weight(1));
+            final long affordable = Math.min(owed, (budgetWeight - movedWeight) / unitWeight);
+            if (affordable <= 0) {
+                break;
+            }
+            final long sent = io.select(in.key(), affordable, ports[i]);
+            delivered[i] += sent;
+            movedWeight += sent * unitWeight;
+        }
+        return movedWeight;
+    }
+
+    /**
+     * How many lots the request justifies. A guaranteed primary output needs exactly {@code ceil(requested / amount)}
+     * lots, no more, so nothing is wasted. A probabilistic primary output cannot be counted ahead of time, so while the
+     * request is still short, one more lot than has been fed is always allowed (a lot that rolled low is simply
+     * replaced) and the request-complete check in {@link #tick} stops the job the moment real production catches up.
+     */
+    private long lotsNeeded() {
+        final ProcessingPattern.ProcessingOutput primary = pattern.primaryOutput();
+        final long perLot = Math.max(1L, primary.amount());
+        if (!primary.probabilistic()) {
+            return Sizes.ceilDiv(requested, perLot);
+        }
+        return produced >= requested ? lotsFed : lotsFed + 1;
+    }
+
+    private String resultName() {
+        return resultKey == null ? "" : resultKey.displayName().getString();
+    }
+
+    /*
+     * Settles the job: the interface writes down how it ended and keeps what it is still owed, and a step restored
+     * from a save hands what it held to the network.
+     */
+    private void finish() {
+        if (done) {
+            return;
+        }
+        done = true;
+        waiting = false;
+        final CraftingInterfacePart part = site == null ? null : site.part(level, CraftingInterfacePart.class);
+        if (part != null) {
+            final byte kind = switch (status) {
+                case OperationRecord.STATUS_COMPLETED -> CraftingLog.COMPLETED;
+                case OperationRecord.STATUS_PARTIAL -> CraftingLog.PARTIAL;
+                default -> CraftingLog.FAILED;
+            };
+            if (status != OperationRecord.STATUS_DISCARDED || produced > 0) {
+                part.log().add(new CraftingLog.Entry(level.getGameTime(), resultKey == null ? "" : resultKey.id(),
+                        produced, requested, kind, ""));
+            }
+            final int window = Math.min(pattern.timeoutTicks(), CraftingInterfacePart.QUIET_TICKS);
+            for (int i = 0; i < credited.length; i++) {
+                final long remaining = cap(i) - credited[i];
+                if (remaining > 0) {
+                    part.owed().add(new CraftingInterfacePart.Owed(pattern.outputs().get(i).key(), remaining, window,
+                            seq, pattern.identity(), io instanceof HeldIo ? null : io));
+                }
+            }
+        }
+        if (io instanceof HeldIo held) {
+            held.flush();
+        }
+        if (onSettle != null) {
+            onSettle.run();
+        }
     }
 
     private OperationRecord buildRecord(final byte recordStatus) {

@@ -8,7 +8,6 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.gui.layout.PatternStudioLayout;
@@ -25,7 +24,6 @@ import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.ProgressBar;
-import dev.jstech.core.client.gui.component.SearchField;
 import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
@@ -50,7 +48,6 @@ import java.util.Locale;
 
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.ADD_BENCH;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.ADD_MACHINE;
-import static dev.jstech.computers.client.os.PatternStudioScreenTexts.ANY_CATEGORY;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.ANY_TAG;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.BAY;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.BAY_EMPTY;
@@ -61,7 +58,6 @@ import static dev.jstech.computers.client.os.PatternStudioScreenTexts.CHANCE;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.CLEAR;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.CLICK_ADDS_STAGE;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.CLICK_OPENS_FILE;
-import static dev.jstech.computers.client.os.PatternStudioScreenTexts.CLOSE;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.DONE;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.EJECT;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.ENCODER_OF_ERA;
@@ -93,8 +89,6 @@ import static dev.jstech.computers.client.os.PatternStudioScreenTexts.NO_STAGES;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.OUTPUT_AMOUNT;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.PER_RUN;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.PER_RUN_ESTIMATED;
-import static dev.jstech.computers.client.os.PatternStudioScreenTexts.PICK_MACHINE;
-import static dev.jstech.computers.client.os.PatternStudioScreenTexts.PICK_MACHINE_BUTTON;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.QUEUED;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.REMOVE;
 import static dev.jstech.computers.client.os.PatternStudioScreenTexts.RESULT;
@@ -111,7 +105,8 @@ import static dev.jstech.computers.client.os.PatternStudioScreenTexts.TO_ENCODER
  * of what the cursor carries (the player's inventory sits in a band under the editor), a recipe transferred
  * or dragged from the recipe viewer beside the monitor lays itself out, and nothing is ever consumed. The rail
  * on the right lists the files on the computer's drives and the linked encoder; the bar at the bottom sends a
- * finished draft to the encoder, the system disk or this Crafting Computer's Recipe ROM.
+ * finished draft to the encoder, the system disk or this Crafting Computer (a bench recipe into a card's ROM, a
+ * machine recipe into a Crafting Interface it drives).
  *
  * <p>The content is a tree of the core's components, laid out every frame from the window's size; the app
  * keeps the draft state the server sends and the callbacks that send edits back.
@@ -198,7 +193,6 @@ public final class PatternStudioApp implements IInventoryBandApp {
     // Machine.
     private final CellGrid inGrid;
     private final CellGrid outGrid;
-    private final Button machineButton;
     private final Label timeoutLabel;
     private final TextField timeout;
     private final Label procFlag;
@@ -230,10 +224,6 @@ public final class PatternStudioApp implements IInventoryBandApp {
     private final Button loadRom;
     private final Label statusLine;
     // Popups.
-    private final Popup machinePicker;
-    private final SearchField machineSearch;
-    private final ListView<Choice> machineList;
-    private final Button pickerClose;
     private final Popup amountPopup;
     private final AmountStepper amount;
     private final Button amountClear;
@@ -271,7 +261,6 @@ public final class PatternStudioApp implements IInventoryBandApp {
                 .setRenderer((g, ctx, index, cx, cy, w, h, hovered) -> renderProcCell(g, ctx, true, index, cx, cy))
                 .setMarked(index -> procCellMarked(true, index))
                 .setOnClick((index, button, shift) -> procCellClicked(true, index, button, shift)));
-        machineButton = root.add(new Button(this::machineButtonLabel, this::openMachinePicker));
         timeoutLabel = root.add(new Label(GameText.resolve(TIMEOUT), Label.Tone.DIM));
         timeout = root.add(new TextField(6).setOnCommit(this::commitTimeout));
         procFlag = root.add(new Label(this::procFlagText).setTone(this::procFlagTone));
@@ -310,15 +299,6 @@ public final class PatternStudioApp implements IInventoryBandApp {
                 () -> barAction(PatternStudioEditPayload.SAVE_TO_DISK)));
         loadRom = root.add(new Button(this::loadRomLabel, () -> barAction(PatternStudioEditPayload.LOAD_INTO_ROM)));
         statusLine = root.add(new Label(this::statusText).setTone(this::statusTone));
-
-        machineSearch = new SearchField(48);
-        machineSearch.setOnEdit(this::resetMachineScroll);
-        machineList = new ListView<Choice>(this::machineChoices, ROW_H, this::renderChoiceRow).setOnClick(this::choiceClicked);
-        pickerClose = new Button(GameText.resolve(CLOSE), this::closeMachinePicker);
-        machinePicker = new Popup(GameText.resolve(PICK_MACHINE), 220, 150).setLayouter(this::layoutMachinePicker);
-        machinePicker.add(machineSearch);
-        machinePicker.add(machineList);
-        machinePicker.add(pickerClose);
 
         amount = new AmountStepper();
         amountClear = new Button(GameText.resolve(CLEAR), () -> commitAmount(0L));
@@ -700,23 +680,22 @@ public final class PatternStudioApp implements IInventoryBandApp {
         final int gy = y + PAD;
         final int outX = x + w - PAD - PROC_COLS * CELL;
         /*
-         * Inputs on the left, the machine between, outputs on the right: the order reads as the process, so
-         * no caption row is spent on it (the row is what lets the inventory band fit under the editor).
+         * Inputs on the left, what the machine takes and gives in between, outputs on the right: the order reads as
+         * the process, so no caption row is spent on it (the row is what lets the inventory band fit under the
+         * editor). No machine is chosen: the recipe runs wherever a Crafting Interface holds it.
          */
         inGrid.place(gx, gy);
         outGrid.place(outX, gy);
         final int mx = gx + PROC_COLS * CELL + 10;
         final int mw = outX - mx - 10;
-        machineButton.setBounds(mx, gy, mw, BTN_H);
-        timeoutLabel.setBounds(mx, gy + 16, 40, 8);
-        timeout.setBounds(mx + 42, gy + 14, Math.max(30, mw - 42), FIELD_H);
-        procFlag.setBounds(mx, gy + 30, mw - 40, 8);
-        procClear.setBounds(mx + mw - 36, gy + 40, 36, BTN_H);
+        timeoutLabel.setBounds(mx, gy + 2, 40, 8);
+        timeout.setBounds(mx + 42, gy, Math.max(30, mw - 42), FIELD_H);
+        procFlag.setBounds(mx, gy + 16, mw - 40, 8);
+        procClear.setBounds(mx + mw - 36, gy + 26, 36, BTN_H);
         procNames.layout(x + PAD, gy + PROC_ROWS * CELL + PAD, w - PAD * 2);
 
         inGrid.setVisible(show);
         outGrid.setVisible(show);
-        machineButton.setVisible(show);
         timeoutLabel.setVisible(show);
         timeout.setVisible(show);
         procFlag.setVisible(show && !procFlagText().isEmpty());
@@ -782,12 +761,6 @@ public final class PatternStudioApp implements IInventoryBandApp {
             }
         }
         return null;
-    }
-
-    private String machineButtonLabel() {
-        final String machine = state == null || state.machineType().isEmpty() ? GameText.resolve(PICK_MACHINE_BUTTON)
-                : machineLabel(state.machineType());
-        return lastFont == null ? machine : Texts.clip(lastFont, machine, machineButton.width() - 6);
     }
 
     private String procFlagText() {
@@ -1032,7 +1005,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
             return false;
         }
         return switch (tab) {
-            case TAB_MACHINE -> !state.machineType().isEmpty() && !state.inputs().isEmpty() && !state.outputs().isEmpty();
+            case TAB_MACHINE -> !state.inputs().isEmpty() && !state.outputs().isEmpty();
             case TAB_PIPELINE -> !state.stages().isEmpty();
             default -> !state.preview().isEmpty();
         };
@@ -1061,91 +1034,15 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
     @Override
     public boolean modalActive() {
-        return machinePicker.isOpen() || amountPopup.isOpen();
+        return amountPopup.isOpen();
     }
 
     @Override
     public void renderModal(final GuiGraphics g, final Font font, final int x, final int y, final int width,
                             final int height, final int mouseX, final int mouseY) {
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, 0f);
-        if (machinePicker.isOpen()) {
-            machinePicker.renderIn(g, ctx, x, y, width, height);
-        } else if (amountPopup.isOpen()) {
+        if (amountPopup.isOpen()) {
             amountPopup.renderIn(g, ctx, x, y, width, height);
-        }
-    }
-
-    private record Choice(String key, String label) {
-    }
-
-    private List<Choice> machineChoices() {
-        final List<Choice> out = new ArrayList<>();
-        final String q = machineSearch.query();
-        if (state != null) {
-            for (final PatternStudioStatePayload.Machine m : state.machines()) {
-                if (q.isEmpty() || m.label().toLowerCase(Locale.ROOT).contains(q) || m.typeKey().toLowerCase(Locale.ROOT).contains(q)) {
-                    out.add(new Choice(m.typeKey(), m.label().equals(m.typeKey()) ? m.typeKey() : m.label() + "  " + m.typeKey()));
-                }
-            }
-        }
-        for (final String category : MachineCategory.categoryIds()) {
-            final String key = MachineCategory.genericIdOf(category);
-            if (q.isEmpty() || category.toLowerCase(Locale.ROOT).contains(q)) {
-                out.add(new Choice(key, GameText.resolve(ANY_CATEGORY.with(category))));
-            }
-        }
-        return out;
-    }
-
-    /** The machine picker's rows, as labelled, for a test that picks one. */
-    public List<String> machinePickerRows() {
-        final List<String> out = new ArrayList<>();
-        for (final Choice c : machineChoices()) {
-            out.add(c.key());
-        }
-        return out;
-    }
-
-    private void openMachinePicker() {
-        machineSearch.reset();
-        machineList.setScroll(0);
-        machinePicker.open();
-        machinePicker.placeIn(lastX, lastY, lastW, lastH);
-        machinePicker.focus(machineSearch);
-    }
-
-    private void closeMachinePicker() {
-        machinePicker.close();
-    }
-
-    private void resetMachineScroll() {
-        machineList.setScroll(0);
-    }
-
-    private void layoutMachinePicker(final Popup p) {
-        machineSearch.setBounds(p.x() + 5, p.y() + 14, p.width() - 10, FIELD_H);
-        final int listY = p.y() + 14 + FIELD_H + 3;
-        final int listH = p.height() - (listY - p.y()) - BTN_H - 6;
-        machineList.setBounds(p.x() + 5, listY, p.width() - 10, Math.max(ROW_H, listH));
-        pickerClose.setBounds(p.right() - 5 - 44, p.bottom() - BTN_H - 4, 44, BTN_H);
-    }
-
-    private void renderChoiceRow(final GuiGraphics g, final UiContext ctx, final Choice c, final int index, final int x,
-                                 final int y, final int w, final int h, final boolean hovered, final boolean selected) {
-        final boolean current = state != null && c.key().equals(state.machineType());
-        ctx.skin().listRow(g, x, y, w, h, hovered, current);
-        g.drawString(ctx.font(), Texts.clip(ctx.font(), c.label(), w - 6), x + 3, y + 2, ctx.skin().listRowText(current), false);
-    }
-
-    private void choiceClicked(final int index, final int button, final double mx, final double my) {
-        if (button != 0) {
-            return;
-        }
-        final List<Choice> choices = machineChoices();
-        if (index >= 0 && index < choices.size()) {
-            send(PatternStudioEditPayload.text(host, monitorPos, PatternStudioEditPayload.PROC_SET_MACHINE, 0,
-                    choices.get(index).key(), ""));
-            machinePicker.close();
         }
     }
 
@@ -1169,9 +1066,6 @@ public final class PatternStudioApp implements IInventoryBandApp {
     //  Input: everything goes to the open popup, or else to the content tree
 
     private Panel inputTarget() {
-        if (machinePicker.isOpen()) {
-            return machinePicker;
-        }
         if (amountPopup.isOpen()) {
             return amountPopup;
         }
@@ -1350,14 +1244,6 @@ public final class PatternStudioApp implements IInventoryBandApp {
         return i < 0 || i + 1 >= tags.size() ? "" : tags.get(i + 1);
     }
 
-    private static String machineLabel(final String type) {
-        if (MachineCategory.isGenericId(type)) {
-            return GameText.resolve(ANY_CATEGORY.with(MachineCategory.categoryOf(type)));
-        }
-        final int colon = type.indexOf(':');
-        return colon < 0 ? type : type.substring(colon + 1).replace('_', ' ');
-    }
-
     private static String amountLabel(final StorageKey key, final long amount) {
         return GameText.resolve((key.isItem() ? ITEMS : MILLIBUCKETS).with(amount));
     }
@@ -1399,10 +1285,6 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
     public String status() {
         return status;
-    }
-
-    public boolean isMachinePickerOpen() {
-        return machinePicker.isOpen();
     }
 
     public boolean isAmountPopupOpen() {
@@ -1447,19 +1329,9 @@ public final class PatternStudioApp implements IInventoryBandApp {
         return local((output ? outGrid : inGrid).cellCenter(index));
     }
 
-    /** The centre of the machine picker button. */
-    public int[] machineButtonCenter() {
-        return local(machineButton.center());
-    }
-
     /** The centre of the timeout field. */
     public int[] timeoutFieldCenter() {
         return local(timeout.center());
-    }
-
-    /** The centre of machine picker row {@code row} among the visible rows. */
-    public int[] machinePickerRowCenter(final int row) {
-        return local(machineList.rowCenter(row));
     }
 
     /** The centre of pipeline button {@code i} (0 add bench, 1 add machine, 2 remove). */

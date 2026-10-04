@@ -29,6 +29,59 @@ public final class BusScript {
         return "bus://" + name;
     }
 
+    /** Where software finds a Crafting Input Router: {@code router://North}. */
+    public static String routerAddress(final String name) {
+        return "router://" + name;
+    }
+
+    /**
+     * The IQL statements that set a Crafting Input Router as {@code settings} has it: its filter, which is all its job
+     * takes, since a router moves nothing on its own; an empty filter takes anything.
+     */
+    public static List<String> routerIql(final BusSettings settings) {
+        final BusAbilities can = settings.abilities();
+        final String router = "SET ROUTER " + quoted(settings.name()) + " ";
+        final List<String> lines = new ArrayList<>();
+        if (settings.listsAny()) {
+            lines.add(router + "FILTER " + (settings.exclude() ? "ALL BUT " : "ONLY ") + String.join(", ",
+                    listed(settings)));
+        } else {
+            lines.add(router + "FILTER NONE");
+        }
+        if (can.can(BusFeature.TAGS) && !settings.tags().isEmpty()) {
+            lines.add(router + "FILTER TAG " + String.join(", ", settings.tags()));
+        }
+        if (can.can(BusFeature.FUZZY) && settings.fuzzy()) {
+            lines.add(router + "MATCH FUZZY");
+        }
+        return lines;
+    }
+
+    /** The Σ calls that set a Crafting Input Router as {@code settings} has it, as {@link #routerIql} does. */
+    public static List<String> routerSigma(final BusSettings settings) {
+        final BusAbilities can = settings.abilities();
+        final List<String> calls = new ArrayList<>();
+        if (settings.listsAny()) {
+            calls.add((settings.exclude() ? "AllBut(" : "Only(") + text(String.join(", ", listed(settings))) + ")");
+        } else {
+            calls.add("Any()");
+        }
+        if (can.can(BusFeature.TAGS)) {
+            settings.tags().forEach(tag -> calls.add("Tag(" + text(tag) + ")"));
+        }
+        if (can.can(BusFeature.FUZZY) && settings.fuzzy()) {
+            calls.add("Fuzzy(true)");
+        }
+        final String router = "craftRouter(" + text(settings.name()) + ")";
+        if (calls.size() == 1) {
+            return List.of(router + "." + calls.get(0) + ";");
+        }
+        final List<String> lines = new ArrayList<>();
+        lines.add("CraftRouter r = " + router + ";");
+        calls.forEach(call -> lines.add("r." + call + ";"));
+        return lines;
+    }
+
     /** The IQL statements that set the bus as {@code settings} has it, one a line. */
     public static List<String> iql(final BusSettings settings) {
         final BusAbilities can = settings.abilities();

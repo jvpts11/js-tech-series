@@ -10,8 +10,6 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.advancement.Acting;
-import dev.jstech.computers.block.part.InputBusPart;
-import dev.jstech.computers.block.part.ReceivingBusPart;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
@@ -25,12 +23,13 @@ import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliShell;
-import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestMachineBlockEntity;
+import dev.jstech.tests.TestMachines;
+import dev.jstech.tests.testkit.CraftingRig;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -41,7 +40,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -65,7 +63,6 @@ public final class OperationCancelGameTests {
     private static final String ARENA = "empty";
     private static final int SETTLE = 4;
     private static final BlockPos MAINFRAME = new BlockPos(1, 2, 2);
-    private static final BlockPos FURNACE = new BlockPos(5, 2, 5);
 
     private static NetworkSelectOperation pull(final GameTestHelper helper, final MainframeBlockEntity mainframe,
                                                final ItemStackHandler dest, final long amount, final String label) {
@@ -111,42 +108,33 @@ public final class OperationCancelGameTests {
                 .thenSucceed();
     }
 
-    /** The furnace rig: the crafting network plus a switch, a furnace and its input/receiving buses. */
-    private static TestWorldBuilder.CraftingNetwork furnaceRig(final GameTestHelper helper,
-                                                               final TestWorldBuilder world) {
+    /**
+     * The kiln rig: the crafting network plus a test kiln fed by a Crafting Interface that holds the iron recipe, with
+     * its Receiving Bus. The kiln is slow, so a run is still going when a test looks at it.
+     */
+    private static TestWorldBuilder.CraftingNetwork kilnRig(final TestWorldBuilder world) {
         final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
-        world.setBlock(new BlockPos(5, 2, 3), ComputingModule.CRAFTING_CABLE);
-        world.setBlock(new BlockPos(5, 2, 4), ComputingModule.CRAFTING_SWITCH.get());
-        world.setBlock(FURNACE, Blocks.FURNACE);
-        world.setBlock(new BlockPos(5, 3, 5), ComputingModule.CRAFTING_CABLE);
-        world.setBlock(new BlockPos(5, 1, 5), ComputingModule.CRAFTING_CABLE);
+        final CraftingRig rig = CraftingRig.direct(world, net.cc(), TestMachines.KILN.get());
+        rig.hold(smeltIron());
+        final TestMachineBlockEntity kiln = rig.machine();
+        if (kiln == null) {
+            throw new IllegalStateException("no test kiln");
+        }
+        kiln.setTicksPerItem(20);
         return net;
     }
 
-    private static void wireFurnaceBuses(final TestWorldBuilder world) {
-        if (world.getBlockEntity(new BlockPos(5, 3, 5)) instanceof CableBlockEntity c) {
-            c.addPart(Direction.DOWN, new InputBusPart());
-        }
-        if (world.getBlockEntity(new BlockPos(5, 1, 5)) instanceof CableBlockEntity c) {
-            c.addPart(Direction.UP, new ReceivingBusPart());
-        }
-    }
-
     private static ProcessingPattern smeltIron() {
-        return new ProcessingPattern(
-                List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.RAW_IRON), 1L)),
-                List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(Items.IRON_INGOT), 1L, 100)),
-                "minecraft:furnace", 600);
+        return CraftingRig.pattern(Items.RAW_IRON, Items.IRON_INGOT, 600);
     }
 
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void cancel_processingRunIsDiscarded(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
-        final TestWorldBuilder.CraftingNetwork net = furnaceRig(helper, world);
+        final TestWorldBuilder.CraftingNetwork net = kilnRig(world);
         final NetworkProcessingOperation[] run = new NetworkProcessingOperation[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    wireFurnaceBuses(world);
                     net.seed(Items.RAW_IRON, 32);
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {
@@ -241,13 +229,12 @@ public final class OperationCancelGameTests {
     @GameTest(template = ARENA, timeoutTicks = 400)
     public static void resume_aSavedOperationIsStillAskedForByWhoeverAskedForIt(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
-        final TestWorldBuilder.CraftingNetwork net = furnaceRig(helper, world);
+        final TestWorldBuilder.CraftingNetwork net = kilnRig(world);
         final CompoundTag[] snapshot = new CompoundTag[1];
         final UUID[] runId = new UUID[1];
         final UUID asker = UUID.randomUUID();
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    wireFurnaceBuses(world);
                     net.seed(Items.RAW_IRON, 32);
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> Acting.as(asker, () -> {
@@ -279,16 +266,12 @@ public final class OperationCancelGameTests {
     @GameTest(template = ARENA, timeoutTicks = 400)
     public static void orphanExpiry_savedOperationsPastTheTtlAreDiscardedOnReload(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
-        final TestWorldBuilder.CraftingNetwork net = furnaceRig(helper, world);
+        final TestWorldBuilder.CraftingNetwork net = kilnRig(world);
         final CompoundTag[] snapshot = new CompoundTag[1];
         final UUID[] runId = new UUID[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    wireFurnaceBuses(world);
                     net.seed(Items.RAW_IRON, 32);
-                    if (world.getBlockEntity(FURNACE) instanceof FurnaceBlockEntity furnace) {
-                        furnace.setItem(2, new ItemStack(Items.IRON_INGOT, 8));
-                    }
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     final NetworkProcessingOperation run = net.mainframe().submitNetworkProcessing(smeltIron(), 16, "orphan");

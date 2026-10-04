@@ -55,7 +55,6 @@ public final class ContentData {
         if (!content.declaredFluids().isEmpty()) {
             data.server(new ContentFluidTagsProvider(output, data.lookup(), content, data.existingFiles()));
         }
-        data.server(new RecipeMachinesProvider(output, content));
         return data;
     }
 

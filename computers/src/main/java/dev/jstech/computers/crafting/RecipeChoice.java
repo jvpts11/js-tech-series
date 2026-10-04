@@ -40,6 +40,8 @@ public record RecipeChoice(Text label, String kind, List<Text> machines, int sta
 
     /** A bench, where a stage of a pipeline is crafted by hand rather than by a machine. */
     public static final TextKey BENCH = TextKey.of("jsc.crafting.choice.bench", "Bench");
+    /** A machine, fed by the Crafting Interface that holds the recipe. */
+    public static final TextKey MACHINE = TextKey.of("jsc.crafting.choice.machine", "Machine");
     private static final TextKey KIND_BENCH_NAME = TextKey.of("jsc.crafting.choice.kind_bench", "bench");
     private static final TextKey KIND_PROCESSING_NAME =
             TextKey.of("jsc.crafting.choice.kind_processing", "processing");

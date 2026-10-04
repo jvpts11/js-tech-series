@@ -69,6 +69,9 @@ public final class SubsetRules {
             Map.entry("BusItem", Set.of("Bus", "Item", "Keep", "Max")),
             // A Redstone Interface of the machine: what redstone() comes down to, its two modes and its strength.
             Map.entry("Redstone", Set.of("Named", "Name", "In", "Out", "Level")),
+            // The crafting network's parts: what craftInterface() and craftRouter() come down to, and their settings.
+            Map.entry("CraftInterface", Set.of("Named", "Name", "Exclusive", "MaxJobs", "Pause", "Resume", "Route")),
+            Map.entry("CraftRouter", Set.of("Named", "Name", "Only", "AllBut", "Any", "Tag", "Fuzzy")),
             // What rand and srand come down to, and nothing past them: a whole number drawn, and a start chosen.
             Map.entry("Random", Set.of("Next", "Seed")));
 

@@ -95,6 +95,9 @@ public final class MachineServices implements IHost {
     @Nullable
     private RedstoneService redstone;
 
+    @Nullable
+    private CraftingService crafting;
+
     public MachineServices(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
     }
@@ -345,6 +348,18 @@ public final class MachineServices implements IHost {
         return this.redstone;
     }
 
+    /**
+     * The Crafting Interfaces and Crafting Input Routers of the machine's crafting network, which its programs find by
+     * name and set.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public CraftingService crafting() {
+        this.follow();
+        return this.crafting;
+    }
+
     /** Makes the shell and what goes through it again when the machine is in another world than before. */
     private void follow() {
         final Level level = this.machine.getLevel();
@@ -372,6 +387,7 @@ public final class MachineServices implements IHost {
             this.sound = new SoundService(this.machine, server);
             this.buses = new BusService(terminal, server);
             this.redstone = new RedstoneService(this.machine, server);
+            this.crafting = new CraftingService(terminal, server);
         } else {
             this.shell = null;
             this.files = null;
@@ -389,6 +405,7 @@ public final class MachineServices implements IHost {
             this.sound = null;
             this.buses = null;
             this.redstone = null;
+            this.crafting = null;
         }
     }
 }

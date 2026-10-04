@@ -8,22 +8,27 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.part.CraftingInterfacePart;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
+import dev.jstech.computers.crafting.CraftingFloor;
 import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.crafting.RecipeBook;
-import dev.jstech.computers.crafting.RecipeMachines;
 import dev.jstech.computers.operation.payload.PatternStudioPayloads;
 import dev.jstech.computers.operation.payload.PatternStudioStatePayload;
 import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.CraftFiles;
+import dev.jstech.tests.testkit.CraftingRig;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -35,7 +40,6 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * The Pattern Studio's workbench on a computer: its drafts survive the machine's save, the Recipe Book lays a
@@ -54,6 +58,7 @@ public final class PatternStudioGameTests {
     private static final int SETTLE = 4;
     private static final BlockPos ENCODER = new BlockPos(5, 2, 1);
     private static final BlockPos DVD_DRIVE = new BlockPos(5, 2, 3);
+    private static final BlockPos INTERFACE_CABLE = new BlockPos(6, 2, 2);
 
     @GameTest(template = ARENA)
     public static void workbench_draftsSurviveTheComputersSave(final GameTestHelper helper) {
@@ -67,7 +72,6 @@ public final class PatternStudioGameTests {
         studio.setProcCell(false, 2, new PatternWorkbench.DataCell(StorageKey.of(Items.RAW_IRON), 3, false));
         studio.setProcCell(true, 0, new PatternWorkbench.DataCell(StorageKey.of(Items.IRON_INGOT), 1, false));
         studio.setOutputChance(0, 50);
-        studio.setMachineType("minecraft:furnace");
         studio.setProcTimeout(600);
         studio.setProcName("Smelt", "");
         studio.addStage(dev.jstech.computers.crafting.MultiStagePattern.Stage.proc(
@@ -84,8 +88,8 @@ public final class PatternStudioGameTests {
         helper.assertTrue("Planks of any log".equals(back.benchName()), "the bench name survives");
         helper.assertTrue(back.procInput(2) != null && back.procInput(2).amount() == 3
                 && back.procOutput(0) != null && back.outputChance(0) == 50, "the machine cells survive");
-        helper.assertTrue("minecraft:furnace".equals(back.machineType()) && back.procTimeout() == 600
-                && "Smelt".equals(back.procName()), "the machine header survives");
+        helper.assertTrue(back.procTimeout() == 600 && "Smelt".equals(back.procName()),
+                "the machine header survives");
         helper.assertTrue(back.stages().size() == 1 && "Iron line".equals(back.pipelineName()), "the pipeline survives");
         helper.assertTrue("smelt.craft".equals(back.openedFile(PatternWorkbench.Kind.MACHINE))
                 && "disk".equals(back.openedSource(PatternWorkbench.Kind.MACHINE)), "the provenance survives");
@@ -98,7 +102,7 @@ public final class PatternStudioGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void recipeLayout_benchGridTagsAndMachineMapping(final GameTestHelper helper) {
+    public static void recipeLayout_benchGridAndTags(final GameTestHelper helper) {
         final var level = helper.getLevel();
         // A chest: eight planks around an empty middle, and every planks ingredient stands for the planks tag.
         final var chest = level.getRecipeManager().byKey(ResourceLocation.withDefaultNamespace("chest")).orElseThrow();
@@ -114,12 +118,6 @@ public final class PatternStudioGameTests {
         helper.assertTrue(nuggetGrid.get(0).is(Items.IRON_INGOT) && nuggetGrid.get(1).isEmpty(),
                 "the nugget recipe puts its one ingot in the first cell");
         helper.assertTrue(RecipeBook.benchTags(nugget.value()).get(0).isEmpty(), "an exact ingredient has no tag");
-        // A recipe type maps to the machine family the data names; the smelting family is the furnaces.
-        RecipeMachines.replace(Map.of("minecraft:smelting", List.of("minecraft:furnace", "minecraft:blast_furnace")));
-        helper.assertTrue(RecipeMachines.machinesFor("minecraft:smelting")
-                        .equals(List.of("minecraft:furnace", "minecraft:blast_furnace")),
-                "the data maps smelting to the furnaces; got " + RecipeMachines.machinesFor("minecraft:smelting"));
-        helper.assertTrue(RecipeMachines.machinesFor("minecraft:nothing").isEmpty(), "an unmapped type has no machines");
         helper.succeed();
     }
 
@@ -187,6 +185,10 @@ public final class PatternStudioGameTests {
         final ItemStack disc = new ItemStack(ComputingModule.DVD_RW.get());
         CraftFiles.writeProcessing(disc, CraftFiles.furnaceIron(300), reg);
         drive.mediaSlot().setStackInSlot(0, disc);
+        // A Crafting Interface beside the computer, east of it, to take the pipeline in the end.
+        CraftingRig.lay(world, INTERFACE_CABLE);
+        CraftingRig.addPart(world, new CraftingFloor.Site(INTERFACE_CABLE, Direction.EAST),
+                new CraftingInterfacePart(HardwareEra.STANDARD));
         final PatternWorkbench studio = net.cc().studio();
 
         helper.startSequence()
@@ -221,10 +223,10 @@ public final class PatternStudioGameTests {
                     final var parsed = CraftFile.parseMultiStage(back, reg);
                     helper.assertTrue(parsed.isPresent() && parsed.get().stages().size() == 2
                             && "Nuggets from ore".equals(parsed.get().name()), "the burned pipeline reads back with its name");
-                    // The same draft loads straight into this computer's ROM as a machine recipe.
+                    // The same draft goes straight into an interface the computer drives.
                     helper.assertTrue(net.cc().loadMachineRecipe(
-                            dev.jstech.computers.crafting.NetworkRecipe.ofMultiStage(studio.multiStagePattern())),
-                            "the pipeline loads into the ROM");
+                            NetworkRecipe.ofMultiStage(studio.multiStagePattern())) != null,
+                            "the pipeline goes into the interface");
                     final CraftingPattern bench = CraftFiles.oakPlanks();
                     helper.assertTrue(net.cc().loadPattern(bench), "a bench pattern loads beside it");
                 })

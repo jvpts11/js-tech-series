@@ -157,8 +157,8 @@ project cannot reference a Σ# one.
 ## Versions
 
 Σ and Σ# have versions, one number for both, since Σ N is the subset of Σ# N. Version 1 is the language as it
-first shipped under these names; version 2 brings `Sound` and `Speaker`, `Bus` and `BusItem`, `Redstone`, the
-old names above with the calls
+first shipped under these names; version 2 brings `Sound` and `Speaker`, `Bus` and `BusItem`, `Redstone`,
+`CraftInterface` and `CraftRouter`, the old names above with the calls
 they gained, the rest of `printf`'s holes, `int Main` and `Main(string[] args)`, and `Random` in Σ's
 `Standard`. A version only ever adds: whatever
 version 1 takes, version 2 takes too and compiles to the same listing, so a newer compiler never breaks an
@@ -345,7 +345,9 @@ A statement goes to the Mainframe as it would from the prompt or the Network Man
 the program's name. Rows are maps keyed by their columns (`name`, `quantity`, `detail`). Plain
 statements need only a Mainframe; views, procedures and jobs need the IQL Engine installed on it.
 `SET BUS` sets one of the network's buses, as the `Bus` calls below do, and `SET REDSTONE` one of the Redstone
-Interfaces of the machine that runs the statement, as `Redstone` does.
+Interfaces of the machine that runs the statement, as `Redstone` does. `SET INTERFACE`, `PAUSE INTERFACE`,
+`RESUME INTERFACE`, `SET ROUTER` and `RENAME` set the parts of the crafting network, as `CraftInterface` and
+`CraftRouter` do.
 
 ## The buses: `Bus`
 
@@ -375,6 +377,46 @@ wall.ReadWrite(), wall.ReadOnly(), wall.WriteOnly()   how the network may use an
 Each setting hands the bus back, so they are written one after another: `bus("Ore in").Keep(16).Max(64);`.
 A setting is marked on the bus with the name of the program that set it, which its window shows. A setting the
 bus's era cannot take, an hour that is not one of the day's, or a bus that is gone halts the program, saying why.
+
+## The crafting network: `CraftInterface` and `CraftRouter`
+
+A Crafting Interface is the part on the crafting cable that holds a machine's patterns and feeds that machine: from
+the face it sits against, or through the Crafting Input Routers on a crafting cable of its own, one router against
+each face the machine takes an input on. A program finds either by the name its window gives it, on the crafting
+cables of the network's Crafting Computers, and sets it as its window does.
+
+```
+CraftInterface.Named("Kiln A") -> CraftInterface    the interface of that name, or null
+craftInterface("Kiln A")                            the same
+kiln.Name                                           its name
+kiln.Exclusive(true)                                one recipe at a time (true), or several at once
+kiln.MaxJobs(4)                                     the most jobs at once, 0 for as many as come
+kiln.Pause(), kiln.Resume()                         takes no new job, or takes them again
+kiln.Route("Coarse dirt", "gravel", craftRouter("North"))   one input of a pattern through that router
+kiln.Route("Coarse dirt", "gravel", null)           the input routed by the routers' filters again
+
+CraftRouter.Named("North") -> CraftRouter           the router of that name, or null
+craftRouter("North")                                the same
+north.Only("gravel"), north.AllBut("dirt")          its filter: the inputs it carries
+north.Any()                                         an empty filter, which carries anything
+north.Tag("c:gravels"), north.Fuzzy(true)           an item tag in its filter, and the loose match
+```
+
+The same settings in IQL, as the parts' windows write them under Software:
+
+```
+SET INTERFACE 'Kiln A' EXCLUSIVE ON
+SET INTERFACE 'Kiln A' MAX JOBS 4                     MAX JOBS AUTO for as many as come
+SET INTERFACE 'Mixer' ROUTE 'Coarse dirt' INPUT gravel TO ROUTER 'North'
+SET INTERFACE 'Mixer' ROUTE 'Coarse dirt' INPUT gravel AUTO
+PAUSE INTERFACE 'Kiln A'                              RESUME INTERFACE 'Kiln A'
+RENAME INTERFACE 'Kiln A' TO 'Kiln B'                 RENAME ROUTER 'North' TO 'Gravel in'
+SET ROUTER 'North' FILTER ONLY gravel                 any setting SET BUS takes
+```
+
+Each setting hands the part back and is marked on it with the program's name, as a bus's is. A part that is gone, a
+pattern the interface does not hold, an input that pattern does not have, or a router that is not on the
+interface's own cable halts the program, saying why.
 
 ## Redstone: `Redstone`
 
