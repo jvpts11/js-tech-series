@@ -31,7 +31,7 @@ class ProphetStatesTest {
     @Test
     void evaluate_asksForWhatAStateLacks() {
         stock.put("steel", 300L);
-        states.keep("steel", 512, ProphetStatement.UNBOUNDED);
+        states.keep("steel", 512, IProphetStatement.UNBOUNDED);
 
         final List<ProphetStates.Reaction> reactions = states.evaluate(1, 0, this::held);
 
@@ -42,7 +42,7 @@ class ProphetStatesTest {
     @Test
     void evaluate_countsWhatIsOnItsWay() {
         stock.put("steel", 300L);
-        states.keep("steel", 512, ProphetStatement.UNBOUNDED);
+        states.keep("steel", 512, IProphetStatement.UNBOUNDED);
         states.evaluate(1, 0, this::held);
         states.started("steel", 212);
 
@@ -55,7 +55,7 @@ class ProphetStatesTest {
     @Test
     void evaluate_holdsOnceTheWorkArrived() {
         stock.put("steel", 300L);
-        states.keep("steel", 512, ProphetStatement.UNBOUNDED);
+        states.keep("steel", 512, IProphetStatement.UNBOUNDED);
         states.evaluate(1, 0, this::held);
         states.started("steel", 212);
         stock.put("steel", 512L);
@@ -68,7 +68,7 @@ class ProphetStatesTest {
     @Test
     void evaluate_countsWhatArrivedUntilTheCountCatchesUp() {
         stock.put("steel", 300L);
-        states.keep("steel", 512, ProphetStatement.UNBOUNDED);
+        states.keep("steel", 512, IProphetStatement.UNBOUNDED);
         states.evaluate(1, 0, this::held);
         states.started("steel", 212);
         // The work handed its steel over, and the network's count has not seen it yet.
@@ -83,7 +83,7 @@ class ProphetStatesTest {
     @Test
     void evaluate_readsNothingWhenNothingChanged() {
         stock.put("steel", 600L);
-        states.keep("steel", 512, ProphetStatement.UNBOUNDED);
+        states.keep("steel", 512, IProphetStatement.UNBOUNDED);
         states.evaluate(1, 0, this::held);
         reads.set(0);
 
@@ -104,7 +104,7 @@ class ProphetStatesTest {
     @Test
     void evaluate_cannotHoldUntilItIsToldToTryAgain() {
         stock.put("wire", 10L);
-        states.keep("wire", 100, ProphetStatement.UNBOUNDED);
+        states.keep("wire", 100, IProphetStatement.UNBOUNDED);
         states.evaluate(1, 0, this::held);
         states.cannotHold("wire");
 
@@ -117,7 +117,7 @@ class ProphetStatesTest {
     @Test
     void evaluate_firesAWatchOnceUntilItsConditionStops() {
         stock.put("redstone", 400L);
-        final ProphetStates.WatchState watch = states.watch("redstone", ProphetStatement.Comparison.BELOW, 500,
+        final ProphetStates.WatchState watch = states.watch("redstone", IProphetStatement.Comparison.BELOW, 500,
                 "CRAFT redstone TO 1000");
 
         assertEquals(1, states.evaluate(1, 0, this::held).size());
@@ -133,7 +133,7 @@ class ProphetStatesTest {
 
     @Test
     void keep_replacesTheStateOfTheSameItem() {
-        states.keep("coal", 10, ProphetStatement.UNBOUNDED);
+        states.keep("coal", 10, IProphetStatement.UNBOUNDED);
         states.keep("coal", 20, 40);
 
         assertEquals(1, states.keeps().size());
@@ -142,8 +142,8 @@ class ProphetStatesTest {
 
     @Test
     void forget_letsAStateAndAWatchGo() {
-        states.keep("coal", 10, ProphetStatement.UNBOUNDED);
-        final ProphetStates.WatchState watch = states.watch("coal", ProphetStatement.Comparison.ABOVE, 5,
+        states.keep("coal", 10, IProphetStatement.UNBOUNDED);
+        final ProphetStates.WatchState watch = states.watch("coal", IProphetStatement.Comparison.ABOVE, 5,
                 "QUERY items");
 
         assertTrue(states.forget("coal"));
@@ -153,7 +153,7 @@ class ProphetStatesTest {
 
     @Test
     void samples_keepOnlyTheLatest() {
-        states.keep("coal", 10, ProphetStatement.UNBOUNDED);
+        states.keep("coal", 10, IProphetStatement.UNBOUNDED);
         for (int i = 0; i < ProphetStates.SAMPLES + 5; i++) {
             stock.put("coal", (long) i);
             states.evaluate(i, i, this::held);

@@ -189,8 +189,8 @@ final class ProphetMind {
         int highest = 0;
         for (int i = 0; i < watches.size(); i++) {
             final CompoundTag row = watches.getCompound(i);
-            final ProphetStatement.Comparison comparison =
-                    ProphetStatement.Comparison.of(row.getString("Comparison"));
+            final IProphetStatement.Comparison comparison =
+                    IProphetStatement.Comparison.of(row.getString("Comparison"));
             if (comparison == null) {
                 continue;
             }

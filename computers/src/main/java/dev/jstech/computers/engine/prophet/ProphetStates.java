@@ -60,7 +60,7 @@ public final class ProphetStates {
     }
 
     /** Adds a watch; answers it, with the number it is known by. */
-    public WatchState watch(final String item, final ProphetStatement.Comparison comparison, final long threshold,
+    public WatchState watch(final String item, final IProphetStatement.Comparison comparison, final long threshold,
                             final String action) {
         final WatchState watch = new WatchState(nextWatch++, item, comparison, threshold, action);
         watches.add(watch);
@@ -344,7 +344,7 @@ public final class ProphetStates {
 
         private final int number;
         private final String item;
-        private final ProphetStatement.Comparison comparison;
+        private final IProphetStatement.Comparison comparison;
         private final long threshold;
         private final String action;
         private long held;
@@ -353,7 +353,7 @@ public final class ProphetStates {
         private int fired;
         private Status status = Status.NEW;
 
-        WatchState(final int number, final String item, final ProphetStatement.Comparison comparison,
+        WatchState(final int number, final String item, final IProphetStatement.Comparison comparison,
                    final long threshold, final String action) {
             this.number = number;
             this.item = item;
@@ -370,7 +370,7 @@ public final class ProphetStates {
             return item;
         }
 
-        public ProphetStatement.Comparison comparison() {
+        public IProphetStatement.Comparison comparison() {
             return comparison;
         }
 

@@ -72,14 +72,14 @@ public final class ProphetEngine implements INetworkEngine {
     @Override
     public IqlEngine.Outcome query(final MainframeBlockEntity core, final IIqlView caller, final String statement,
                                    final int rowLimit) {
-        final ProphetStatement parsed = ProphetStatement.parse(statement);
+        final IProphetStatement parsed = IProphetStatement.parse(statement);
         if (parsed == null) {
             return new IqlEngine(core, caller, rowLimit, false).run(statement);
         }
         final ProphetMind mind = mind(core);
         final ProphetStates states = mind.states();
         return switch (parsed) {
-            case ProphetStatement.Keep keep -> {
+            case IProphetStatement.Keep keep -> {
                 final StorageKey key = StorageKey.byName(keep.item());
                 if (key == null) {
                     yield fail(ProphetTexts.UNKNOWN_ITEM.with(keep.item()));
@@ -87,10 +87,10 @@ public final class ProphetEngine implements INetworkEngine {
                 states.keep(key.id(), keep.lower(), keep.upper());
                 save(core, mind);
                 final Text name = GameText.of(key.displayName());
-                yield ok(keep.upper() == ProphetStatement.UNBOUNDED ? ProphetTexts.KEPT.with(name, keep.lower())
+                yield ok(keep.upper() == IProphetStatement.UNBOUNDED ? ProphetTexts.KEPT.with(name, keep.lower())
                         : ProphetTexts.KEPT_BAND.with(name, keep.lower(), keep.upper()));
             }
-            case ProphetStatement.Watch watch -> {
+            case IProphetStatement.Watch watch -> {
                 final StorageKey key = StorageKey.byName(watch.item());
                 if (key == null) {
                     yield fail(ProphetTexts.UNKNOWN_ITEM.with(watch.item()));
@@ -100,7 +100,7 @@ public final class ProphetEngine implements INetworkEngine {
                 save(core, mind);
                 yield ok(ProphetTexts.WATCHING.with(set.number(), Text.literal(written(set))));
             }
-            case ProphetStatement.Forget forget -> {
+            case IProphetStatement.Forget forget -> {
                 // A name as a player writes it, or a key as the console holds it.
                 final StorageKey named = StorageKey.byName(forget.item());
                 final StorageKey key = named != null ? named : StorageKey.byId(forget.item());
@@ -111,7 +111,7 @@ public final class ProphetEngine implements INetworkEngine {
                 yield gone ? ok(ProphetTexts.FORGOTTEN.with(GameText.of(key.displayName())))
                         : fail(ProphetTexts.NOT_KEPT.with(forget.item()));
             }
-            case ProphetStatement.ForgetWatch forget -> {
+            case IProphetStatement.ForgetWatch forget -> {
                 final boolean gone = states.forgetWatch(forget.number());
                 if (gone) {
                     save(core, mind);
@@ -119,10 +119,10 @@ public final class ProphetEngine implements INetworkEngine {
                 yield gone ? ok(ProphetTexts.WATCH_FORGOTTEN.with(forget.number()))
                         : fail(ProphetTexts.NO_WATCH.with(forget.number()));
             }
-            case ProphetStatement.ShowStates show -> listed(mind);
-            case ProphetStatement.Malformed bad -> fail(switch (bad.what()) {
-                case ProphetStatement.BAD_WATCH -> ProphetTexts.USAGE_WATCH.text();
-                case ProphetStatement.BAD_FORGET -> ProphetTexts.USAGE_FORGET.text();
+            case IProphetStatement.ShowStates show -> listed(mind);
+            case IProphetStatement.Malformed bad -> fail(switch (bad.what()) {
+                case IProphetStatement.BAD_WATCH -> ProphetTexts.USAGE_WATCH.text();
+                case IProphetStatement.BAD_FORGET -> ProphetTexts.USAGE_FORGET.text();
                 default -> ProphetTexts.USAGE_KEEP.text();
             });
         };
@@ -313,7 +313,7 @@ public final class ProphetEngine implements INetworkEngine {
 
     /** How a state is written, the item by its short name. */
     static String written(final ProphetStates.KeepState keep) {
-        return keep.upper() == ProphetStatement.UNBOUNDED
+        return keep.upper() == IProphetStatement.UNBOUNDED
                 ? "KEEP " + shortName(keep.item()) + " >= " + keep.lower()
                 : "KEEP " + shortName(keep.item()) + " BETWEEN " + keep.lower() + " AND " + keep.upper();
     }
@@ -370,7 +370,7 @@ public final class ProphetEngine implements INetworkEngine {
      * @param held       what the network held when last looked at
      * @param inFlight   what is on its way
      * @param lower      the bottom of its band
-     * @param upper      the top of its band, or {@link ProphetStatement#UNBOUNDED}
+     * @param upper      the top of its band, or {@link IProphetStatement#UNBOUNDED}
      * @param last       the last thing done for it
      * @param samples    the levels seen lately, the oldest first
      * @param operations the Operations set going for it lately, each with where it stands

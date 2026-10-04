@@ -12,8 +12,8 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.os.ProphetConsoleApp;
 import dev.jstech.computers.engine.EngineRequirements;
 import dev.jstech.computers.engine.INetworkEngine;
+import dev.jstech.computers.engine.prophet.IProphetStatement;
 import dev.jstech.computers.engine.prophet.ProphetEngine;
-import dev.jstech.computers.engine.prophet.ProphetStatement;
 import dev.jstech.computers.engine.prophet.ProphetTexts;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -117,11 +117,11 @@ public final class ProphetPayloads {
     /* Why {@code statement} does not read, or null when it reads well, in YourIQL or in the language's core. */
     @Nullable
     private static Text check(final String statement) {
-        final ProphetStatement parsed = ProphetStatement.parse(statement);
-        if (parsed instanceof ProphetStatement.Malformed bad) {
+        final IProphetStatement parsed = IProphetStatement.parse(statement);
+        if (parsed instanceof IProphetStatement.Malformed bad) {
             return switch (bad.what()) {
-                case ProphetStatement.BAD_WATCH -> ProphetTexts.USAGE_WATCH.text();
-                case ProphetStatement.BAD_FORGET -> ProphetTexts.USAGE_FORGET.text();
+                case IProphetStatement.BAD_WATCH -> ProphetTexts.USAGE_WATCH.text();
+                case IProphetStatement.BAD_FORGET -> ProphetTexts.USAGE_FORGET.text();
                 default -> ProphetTexts.USAGE_KEEP.text();
             };
         }

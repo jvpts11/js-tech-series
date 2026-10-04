@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>Anything else is the language's core, which the engine hands on as it came. Pure logic, so its tests run
  * without the game.
  */
-public sealed interface ProphetStatement {
+public sealed interface IProphetStatement {
 
     /** A KEEP with no upper end to its band. */
     long UNBOUNDED = Long.MAX_VALUE;
@@ -42,7 +42,7 @@ public sealed interface ProphetStatement {
      * and goes on wrong, or null when it is the language's core.
      */
     @Nullable
-    static ProphetStatement parse(final String input) {
+    static IProphetStatement parse(final String input) {
         String text = input.strip();
         while (text.endsWith(";")) {
             text = text.substring(0, text.length() - 1).strip();
@@ -61,7 +61,7 @@ public sealed interface ProphetStatement {
         };
     }
 
-    private static ProphetStatement keep(final String[] words) {
+    private static IProphetStatement keep(final String[] words) {
         if (words.length == 4 && words[2].equals(">=")) {
             final long lower = number(words[3]);
             return lower < 0 ? new Malformed(BAD_KEEP) : new Keep(words[1], lower, UNBOUNDED);
@@ -74,7 +74,7 @@ public sealed interface ProphetStatement {
         return new Malformed(BAD_KEEP);
     }
 
-    private static ProphetStatement watch(final String text, final String[] words) {
+    private static IProphetStatement watch(final String text, final String[] words) {
         if (words.length < 6 || !words[4].equalsIgnoreCase("DO")) {
             return new Malformed(BAD_WATCH);
         }
@@ -89,7 +89,7 @@ public sealed interface ProphetStatement {
         return action.isEmpty() ? new Malformed(BAD_WATCH) : new Watch(words[1], comparison, threshold, action);
     }
 
-    private static ProphetStatement forget(final String[] words) {
+    private static IProphetStatement forget(final String[] words) {
         if (words.length == 3 && words[1].equalsIgnoreCase("WATCH")) {
             final long number = number(words[2]);
             return number <= 0 || number > Integer.MAX_VALUE ? new Malformed(BAD_FORGET)
@@ -115,27 +115,27 @@ public sealed interface ProphetStatement {
      * Keep at least {@code lower} of {@code item}, counting what is on its way; an upper end only says where the
      * level stops being where it should be, since nothing is thrown away to bring it down.
      */
-    record Keep(String item, long lower, long upper) implements ProphetStatement {
+    record Keep(String item, long lower, long upper) implements IProphetStatement {
     }
 
     /** When {@code item} meets the comparison, run {@code action} once, and again only after it stopped meeting it. */
-    record Watch(String item, Comparison comparison, long threshold, String action) implements ProphetStatement {
+    record Watch(String item, Comparison comparison, long threshold, String action) implements IProphetStatement {
     }
 
     /** Let go of the state kept for {@code item}. */
-    record Forget(String item) implements ProphetStatement {
+    record Forget(String item) implements IProphetStatement {
     }
 
     /** Let go of watch number {@code number}. */
-    record ForgetWatch(int number) implements ProphetStatement {
+    record ForgetWatch(int number) implements IProphetStatement {
     }
 
     /** List the states and the watches. */
-    record ShowStates() implements ProphetStatement {
+    record ShowStates() implements IProphetStatement {
     }
 
     /** One of YourIQL's own statements written wrong: {@code what} is one of the {@code BAD_} words. */
-    record Malformed(String what) implements ProphetStatement {
+    record Malformed(String what) implements IProphetStatement {
     }
 
     /** How a watch compares a level with its threshold. */
