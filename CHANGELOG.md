@@ -407,6 +407,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - KDE's Info Center has a second page, Devices by port, beside About this System: every graphics card with its
   outputs, the audio and the board's ports, each port beside what is plugged into it or free, a hub with how many of
   its own ports are in use, and a button that disables or enables the device selected.
+- CDE's Workstation Info has a Devices... button that opens the workstation's devices in a dialog of their own:
+  Video, Audio and every port by its name (COM1 and LPT1 on a Vintage machine) with what is plugged into it or
+  free, and Disable and Enable for the device selected.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

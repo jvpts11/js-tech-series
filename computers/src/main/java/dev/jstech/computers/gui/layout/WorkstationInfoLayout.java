@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * Where CDE's Workstation Info puts things inside its window: a sunken well for each group of facts, one under
  * the other, each headed by its name with its facts below it, labels right-aligned against their values, and the
- * one button along the foot.
+ * two buttons along the foot, Devices... and Close.
  *
  * <p>Everything is measured from the top left of the window's content. The value column is as wide as a network's
  * id written in the small text, which is the longest fact the window has to show on one line.
@@ -44,8 +44,10 @@ public final class WorkstationInfoLayout {
     private static final int METER_OFFSET = 46;
     private static final int METER_W = 44;
     private static final int METER_H = 5;
-    private static final int BUTTON_W = 48;
+    /* Wide enough for "Dispositivos...", the longer of the two buttons' words in either language. */
+    private static final int BUTTON_W = 70;
     private static final int BUTTON_H = 14;
+    private static final int BUTTON_GAP = 6;
 
     private WorkstationInfoLayout() {
     }
@@ -84,22 +86,35 @@ public final class WorkstationInfoLayout {
         return new Rect(VALUE_X + METER_OFFSET, rowY(group, row) + 1, METER_W, METER_H);
     }
 
-    /** The one button, Close, centred along the foot. */
-    public static Rect close() {
-        return new Rect((W - BUTTON_W) / 2, H - PAD - BUTTON_H, BUTTON_W, BUTTON_H);
+    /** Devices..., which opens the workstation's devices in a dialog of their own. */
+    public static Rect devices() {
+        return button(0);
     }
 
-    /** The whole window as solids that may not overlap: the wells, the meter and the button. */
+    /** Close, the default, beside it. */
+    public static Rect close() {
+        return button(1);
+    }
+
+    /** The whole window as solids that may not overlap: the wells, the meter and the buttons. */
     public static GuiLayout layout() {
         final GuiLayout l = new GuiLayout(W, H);
         for (int i = 0; i < GROUPS.size(); i++) {
             final Rect r = group(i);
             l.box("group_" + i, r.x(), r.y(), r.w(), r.h());
         }
+        final Rect devices = devices();
+        l.box("devices", devices.x(), devices.y(), devices.w(), devices.h());
         final Rect close = close();
         // The default button wears a ring two pixels out, which must clear the well above it too.
         l.box("close", close.x() - 2, close.y() - 2, close.w() + 4, close.h() + 4);
         return l;
+    }
+
+    /* The {@code index}-th of the two buttons along the foot, the pair centred. */
+    private static Rect button(final int index) {
+        final int left = (W - 2 * BUTTON_W - BUTTON_GAP) / 2;
+        return new Rect(left + index * (BUTTON_W + BUTTON_GAP), H - PAD - BUTTON_H, BUTTON_W, BUTTON_H);
     }
 
     private static int heightOf(final int rows) {

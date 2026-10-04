@@ -31,7 +31,8 @@ import org.lwjgl.glfw.GLFW;
 
 /**
  * CDE's Workstation Info: what this workstation is, who is at it, the system under the desktop and the hardware
- * the system runs on, each group in a well of its own.
+ * the system runs on, each group in a well of its own, and Devices..., which opens the workstation's devices in a
+ * dialog where one is disabled or enabled.
  *
  * <p>Every figure is the machine's, asked for when the window opens and again every few seconds while it stays
  * open, so the memory in use, with the meter beside it, is always current.
@@ -93,6 +94,11 @@ public final class WorkstationInfoApp implements IDesktopApp {
     public int[] closeCentre() {
         final Rect r = WorkstationInfoLayout.close();
         return CdeStylePages.centre(r, this.left, this.top);
+    }
+
+    /** The middle of Devices..., in desktop pixels. */
+    public int[] devicesCentre() {
+        return CdeStylePages.centre(WorkstationInfoLayout.devices(), this.left, this.top);
     }
 
     @Override
@@ -157,6 +163,10 @@ public final class WorkstationInfoApp implements IDesktopApp {
                 drawGroup(g, font, gi, groups.get(gi), p);
             }
         }
+        final Rect devices = WorkstationInfoLayout.devices();
+        this.skin.button(g, font, x + devices.x(), y + devices.y(), devices.w(), devices.h(),
+                GameText.resolve(WorkstationInfoTexts.DEVICES_BUTTON),
+                devices.holds(mouseX - x, mouseY - y), false, false);
         final Rect close = WorkstationInfoLayout.close();
         this.skin.button(g, font, x + close.x(), y + close.y(), close.w(), close.h(),
                 GameText.resolve(WorkstationInfoTexts.CLOSE),
@@ -166,8 +176,13 @@ public final class WorkstationInfoApp implements IDesktopApp {
     @Override
     public void mouseClicked(final DesktopWindow window, final double mouseX, final double mouseY,
                              final int button) {
-        if (button == 0 && WorkstationInfoLayout.close().holds(mouseX - this.left, mouseY - this.top)) {
+        if (button != 0) {
+            return;
+        }
+        if (WorkstationInfoLayout.close().holds(mouseX - this.left, mouseY - this.top)) {
             ActiveDesktop.closeWindowFor(this);
+        } else if (WorkstationInfoLayout.devices().holds(mouseX - this.left, mouseY - this.top)) {
+            ActiveDesktop.openOrFocus(WorkstationDevicesApp.KEY);
         }
     }
 

@@ -15,6 +15,8 @@ import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.client.os.ShellApp;
+import dev.jstech.computers.client.os.WorkstationDevicesApp;
+import dev.jstech.computers.client.os.WorkstationInfoApp;
 import dev.jstech.computers.gui.layout.CdeExitLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.hardware.DiskSize;
@@ -435,6 +437,38 @@ public final class CdeClientTests {
     }
 
     /**
+     * Workstation Info's Devices... opens the workstation's devices in a dialog that lists every port with what is on
+     * it, and Disable there disables the device selected on the machine, which Enable gives back.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void workstationInfo_devicesDialogDisablesTheDeviceSelected(final ClientTestContext ctx) {
+        final String drive = "USB 1=CD Drive";
+        atCde(ctx)
+                .thenBuild(SETTLE, world -> world.setBlock(DRIVE, ComputingModule.CD_DRIVE.get()))
+                .then(SETTLE * 2, () -> clickAt(ctx,
+                        desktop(ctx).frontPanelArrowPoint(CdeFrontPanelLayout.Control.APPLICATIONS)))
+                .thenWaitUntil(() -> desktop(ctx).subpanelLabels().contains("Workstation Info"), SCREEN_WAIT,
+                        "the Applications subpanel to list Workstation Info")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).subpanelPoint("Workstation Info")))
+                .thenWaitUntil(() -> workstationInfo(ctx) != null, SCREEN_WAIT * 2, "Workstation Info to open")
+                .then(SETTLE, () -> ctx.clickDesktop(workstationInfo(ctx).devicesCentre()))
+                .thenWaitUntil(() -> devices(ctx) != null && devices(ctx).shownDevices().contains(drive),
+                        SCREEN_WAIT * 2, "Devices... to open the dialog with the drive on its port")
+                .thenScreenshot(SETTLE, "cde-workstation-devices")
+                .then(SETTLE, () -> ctx.clickDesktop(devices(ctx).deviceCentre(drive)))
+                .then(SETTLE, () -> ctx.clickDesktop(devices(ctx).disableCentre()))
+                .thenWaitUntilServer(level -> level.getBlockEntity(ctx.abs(MACHINE)) instanceof MainframeBlockEntity m
+                                && m.isDisabled(ctx.abs(DRIVE).asLong()), SCREEN_WAIT,
+                        "the machine to disable the drive", level -> "still enabled")
+                .thenWaitUntil(() -> devices(ctx).deviceDisabled(drive), SCREEN_WAIT,
+                        "the dialog to cross the drive out")
+                .thenScreenshot(SETTLE, "cde-workstation-devices-disabled")
+                .then(SETTLE, () -> ctx.clickDesktop(devices(ctx).enableCentre()))
+                .thenWaitUntil(() -> !devices(ctx).deviceDisabled(drive), SCREEN_WAIT,
+                        "Enable to give the drive back");
+    }
+
+    /**
      * The Files subpanel lists the medium in a drive of the machine below Home and Desktop, and choosing it opens
      * the File Manager there.
      */
@@ -510,6 +544,16 @@ public final class CdeClientTests {
 
     private static DesktopScreen desktop(final ClientTestContext ctx) {
         return ctx.screen(DesktopScreen.class);
+    }
+
+    private static WorkstationInfoApp workstationInfo(final ClientTestContext ctx) {
+        final DesktopWindow window = desktop(ctx) == null ? null : desktop(ctx).windowFor("Workstation Info");
+        return window != null && window.app() instanceof WorkstationInfoApp app ? app : null;
+    }
+
+    private static WorkstationDevicesApp devices(final ClientTestContext ctx) {
+        final DesktopWindow window = desktop(ctx) == null ? null : desktop(ctx).windowFor(WorkstationDevicesApp.KEY);
+        return window != null && window.app() instanceof WorkstationDevicesApp app ? app : null;
     }
 
     private static ResourceLocation jsc(final String path) {

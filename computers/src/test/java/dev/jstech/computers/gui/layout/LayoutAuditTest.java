@@ -48,7 +48,7 @@ class LayoutAuditTest {
             "CraftingSwitchLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
             "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout",
-            "CdeStyleLayout", "WorkstationInfoLayout", "TrashLayout", "HelpViewerLayout", "SpeakerLayout",
+            "CdeStyleLayout", "WorkstationInfoLayout", "WorkstationDevicesLayout", "TrashLayout", "HelpViewerLayout", "SpeakerLayout",
             "RedstoneInterfaceLayout", "DeviceManagerLayout", "InfoCenterLayout",
             "VolumePopupLayout", "SoundfoundryLayout", "SoundfoundryShareLayout", "SoundfoundryStandardLayout",
             "PersonalComputerLayout", "MainframeLayout", "ServerAssemblyLayout", "KvmChannelLayout",
@@ -271,6 +271,7 @@ class LayoutAuditTest {
         c.add(new AuditCase("CdeStyleLayout(backdrop)",
                 CdeStyleLayout.backdropLayout(CdeBackdrop.values().length), true));
         c.add(new AuditCase("WorkstationInfoLayout", WorkstationInfoLayout.layout(), true));
+        c.add(new AuditCase("WorkstationDevicesLayout", WorkstationDevicesLayout.layout(), true));
         c.add(new AuditCase("HelpViewerLayout", HelpViewerLayout.layout(), true));
         // The Network Manager's Services tab scrolls, so it is held to being clean at its widest and its narrowest.
         c.add(new AuditCase("NetworkServicesLayout(default)", NetworkServicesLayout.layout(
