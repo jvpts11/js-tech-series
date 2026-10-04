@@ -358,6 +358,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   levels and no lapis. Anvil: the anvil's repairs, combinations and names for two thirds of its levels, and it never
   wears. What the cards hold falls out of a broken computer. The numbers are first estimates.
 - A tab strip can have tabs that cannot be chosen, drawn dim with a word after them, in J's Core.
+- The cables explained in `docs/CABLES.md`: the shared cable block and its colours, each data line with its cables,
+  speeds and ranges by era, the routers and repeaters, the buses and crafting parts, and the peripheral cables.
 - A menu's player inventory can be shown on some pages of a screen and hidden on the others, in J's Core.
 - The External Storage Bus, of every era: it moves nothing itself, the network uses the inventory it faces as
   storage of its own, ten times slower than its servers. The Vintage one shows the network all of it; from the

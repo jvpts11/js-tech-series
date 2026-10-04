@@ -14,6 +14,8 @@ import dev.jstech.core.cable.CableBlock;
 import dev.jstech.core.cable.Cables;
 import dev.jstech.core.cable.Wire;
 import dev.jstech.core.network.ConnectivityIndex;
+import dev.jstech.core.network.DataLines;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.tests.JsTests;
@@ -196,6 +198,14 @@ public final class JscNetworkCommand {
                 aimed.wire().type().id(), aimed.pos().toShortString(),
                 uuid.map(value -> value.value().toString()).orElse("unassigned"),
                 index.componentSize(aimed.number()), index.componentCount())), false);
+        // The cable's line and era, what it carries, and its run against how far it reaches.
+        final DataLink link = DataLines.linkOf(aimed.wire().type().line());
+        if (link != null) {
+            final int run = index.runLength(aimed.number());
+            source.sendSuccess(() -> Component.literal(String.format(
+                    "%s | %d items a tick | run %d of %d cables%s", link.serializedName(), link.throughput(), run,
+                    link.range(), index.runTooLong(aimed.number()) ? " | too long: carries nothing" : "")), false);
+        }
         return 1;
     }
 

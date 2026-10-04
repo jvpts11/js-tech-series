@@ -80,6 +80,9 @@ across as many machines as the network has.
   Crafting Manager, the Craft Planner, Storage Insights, the Automation Manager, and a few small programs.
 - Machine autocrafting with multi-stage recipes, parallel stages and crafting-card threads; fluids and
   chemicals travel through the network like items.
+- Cables by job and era: access, backbone, long distance, high compute and crafting lines, each era with its
+  own speed and range, routers and repeaters, buses and crafting parts on the cables, and a peripheral cable
+  per era for monitors, speakers and devices. How they work is in [docs/CABLES.md](../docs/CABLES.md).
 - Σ#, the computers' own programming language, with five editors to write it in: programs that run
   at the prompt or stay up, threads, programs starting programs on the same machine or on another one of
   the network, folders shared between machines, and the network's query language from inside a

@@ -10,6 +10,8 @@ repository for the first time. What each mod does is on its own page: [J's Core]
   and their gates, snapshot builds, and how a release is cut.
 - [UI components](UI_COMPONENTS.md): the component model the desktop programs and dialogs are built from,
   and how to write a program on it.
+- [Cables](CABLES.md): the shared cable block, the data lines with their eras, speeds and ranges, the
+  routers and repeaters, the buses and crafting parts on the cables, and the peripheral cables.
 - [Σ#](SIGMA.md): the computers' programming language: its two shapes of program, the budget and
   the clock it runs under, and everything a program can reach.
 - [ComputerCraft](COMPUTERCRAFT.md): the bridge to CC: Tweaked: the Network Gateway, what each side can

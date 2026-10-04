@@ -507,7 +507,12 @@ public final class FullJourneyClientTests {
          */
         ctx.thenGive(0, new ItemStack(ComputingModule.PATTERN_ENCODER.get()), new ItemStack(ComputingModule.DVD_RW.get()))
                 .thenTeleport(SETTLE, new BlockPos(9, 2, 2), Direction.WEST)
-                .thenServer(SETTLE, level -> ctx.assertTrue(level.destroyBlock(abs(ctx, CC_CD_DRIVE), true),
+                /*
+                 * Without its drop: a CD drive left lying on the ground is picked up whenever the player walks
+                 * over it, into the first free hotbar slot, which then sends the disc ejected later somewhere
+                 * other than the slot the next steps hold.
+                 */
+                .thenServer(SETTLE, level -> ctx.assertTrue(level.destroyBlock(abs(ctx, CC_CD_DRIVE), false),
                         "the CD drive must come down; found " + level.getBlockState(abs(ctx, CC_CD_DRIVE))))
                 .thenWaitUntilServer(level -> !(level.getBlockEntity(abs(ctx, CC_CD_DRIVE)) instanceof MediaReaderBlockEntity),
                         SCREEN_WAIT, "the CD drive to come down",
@@ -603,6 +608,12 @@ public final class FullJourneyClientTests {
                                 && !reader(ctx, level, CC_FLOPPY_DRIVE).mediaSlot().getStackInSlot(0).isEmpty(),
                         SCREEN_WAIT, "the floppy with the patterns to sit in a drive linked to the Crafting Computer",
                         level -> "owner=" + reader(ctx, level, CC_FLOPPY_DRIVE).ownerPos())
+                // The Crafting Manager lists the media of the drives the computer reads, once, when it opens.
+                .thenWaitUntilServer(level -> cc(ctx, level).enabledEndpoints()
+                                .contains(abs(ctx, CC_FLOPPY_DRIVE).asLong()),
+                        SCREEN_WAIT, "the Crafting Computer to read the drive with the patterns",
+                        level -> "enabled=" + cc(ctx, level).enabledEndpoints() + " linked="
+                                + cc(ctx, level).linkedEndpoints() + " drive=" + abs(ctx, CC_FLOPPY_DRIVE).asLong())
                 .thenTeleport(SETTLE, new BlockPos(10, 2, 2), Direction.WEST)
                 .then(SETTLE, () -> ctx.selectHotbar(8))
                 .thenRightClick(1, CC_MONITOR)
@@ -612,7 +623,10 @@ public final class FullJourneyClientTests {
                 .then(0, () -> launch(ctx, "Crafting Manager"))
                 .thenWaitUntil(() -> app(ctx, "Crafting Manager", CraftingManagerApp.class) != null
                                 && app(ctx, "Crafting Manager", CraftingManagerApp.class).mediaFiles().size() == 3,
-                        SCREEN_WAIT, "the Crafting Manager to list the three files")
+                        SCREEN_WAIT, "the Crafting Manager to list the three files",
+                        () -> "files=" + (app(ctx, "Crafting Manager", CraftingManagerApp.class) == null ? "no app"
+                                : app(ctx, "Crafting Manager", CraftingManagerApp.class).mediaFiles())
+                                + " server=" + ctx.server().submit(() -> drivesOf(ctx, ctx.serverLevel())).join())
                 .then(0, () -> {
                     final CraftingManagerApp app = app(ctx, "Crafting Manager", CraftingManagerApp.class);
                     final List<String> files = app.mediaFiles();
@@ -792,6 +806,19 @@ public final class FullJourneyClientTests {
 
     private static CraftingComputerBlockEntity cc(final ClientTestContext ctx, final ServerLevel level) {
         return TestWorldBuilder.at(level, ctx.origin()).blockEntity(CRAFTING_COMPUTER, CraftingComputerBlockEntity.class);
+    }
+
+    /* What the Crafting Computer reads, each place it links with the block there and the medium in it, if any. */
+    private static String drivesOf(final ClientTestContext ctx, final ServerLevel level) {
+        final StringBuilder out = new StringBuilder("enabled=" + cc(ctx, level).enabledEndpoints() + " linked=");
+        for (final long endpoint : cc(ctx, level).linkedEndpoints()) {
+            final BlockPos at = BlockPos.of(endpoint);
+            out.append(' ').append(at.toShortString()).append('=').append(level.getBlockState(at).getBlock());
+            if (level.getBlockEntity(at) instanceof MediaReaderBlockEntity drive) {
+                out.append('[').append(drive.mediaSlot().getStackInSlot(0)).append(']');
+            }
+        }
+        return out.toString();
     }
 
     private static ServerRackBlockEntity rack(final ClientTestContext ctx, final ServerLevel level) {
