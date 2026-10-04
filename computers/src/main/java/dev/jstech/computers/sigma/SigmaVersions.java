@@ -38,7 +38,8 @@ public final class SigmaVersions {
             Map.entry("Console.Read()", 2), Map.entry("Console.Scan(out int)", 2),
             Map.entry("Console.Scan(out long)", 2), Map.entry("Console.Scan(out double)", 2),
             Map.entry("Console.Scan(out string)", 2), Map.entry("Console.Scan(out char)", 2),
-            Map.entry("File.Open(string, string)", 2), Map.entry("File.Move(string, string)", 2));
+            Map.entry("File.Open(string, string)", 2), Map.entry("File.Move(string, string)", 2),
+            Map.entry("Operations.Update(string, string, long)", 2));
     /**
      * The types the smaller language's library took in later than the full one had them, with the version each
      * came in there: the full language always had Random, and the smaller one gained it with the old rand.

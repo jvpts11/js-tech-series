@@ -67,7 +67,8 @@ public final class OperationNumberingGameTests {
                 OperationTypeId.ANALYZE, OperationRecord.TYPE_ANALYZE,
                 OperationTypeId.REINDEX, OperationRecord.TYPE_REINDEX,
                 OperationTypeId.VACUUM, OperationRecord.TYPE_VACUUM,
-                OperationTypeId.DROP, OperationRecord.TYPE_DROP);
+                OperationTypeId.DROP, OperationRecord.TYPE_DROP,
+                OperationTypeId.UPDATE, OperationRecord.TYPE_UPDATE);
         for (final Map.Entry<OperationTypeId, Byte> pair : written.entrySet()) {
             helper.assertTrue(pair.getKey().id() == pair.getValue(),
                     pair.getKey() + " is " + pair.getKey().id() + " but the log writes it as " + pair.getValue());

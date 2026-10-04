@@ -15,10 +15,12 @@ import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkSelectOperation;
+import dev.jstech.computers.operation.NetworkUpdateOperation;
 import dev.jstech.computers.program.IqlEngine;
 import dev.jstech.computers.program.iql.IIqlView;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.workshop.UpdateRequest;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.Set;
 import org.jetbrains.annotations.Nullable;
@@ -99,6 +101,12 @@ public interface INetworkEngine {
     default NetworkMultiStageOperation pipeline(final MainframeBlockEntity core, final MultiStagePattern pattern,
                                                 final long demand, final String label) {
         return core.submitNetworkMultiStage(pattern, demand, label);
+    }
+
+    /** Changes an item the network holds with a card of the computer {@code request} names. */
+    @Nullable
+    default NetworkUpdateOperation update(final MainframeBlockEntity core, final UpdateRequest request) {
+        return core.submitNetworkUpdate(request);
     }
 
     /** How the engine works out a craft's plan before anything is made. */

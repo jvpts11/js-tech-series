@@ -36,6 +36,8 @@ final class IqlEditor {
     private static final Set<String> KEYWORDS = Set.of(
             "QUERY", "SELECT", "INSERT", "DELETE", "MOVE", "DROP", "CRAFT", "COUNT", "LOCK", "UNLOCK",
             "ANALYZE", "VACUUM", "REINDEX", "SHOW", "FROM", "TO", "WHERE", "IF", "ORDER", "BY", "LIMIT",
+            // An UPDATE's SET and the words after it.
+            "UPDATE", "SET", "OFFER", "WITH",
             "ASC", "DESC", "AND", "OR", "NOT", "ALL", "CONTAINS", "HAS", "LIKE", "IN",
             // Layer 2: saved objects and triggers.
             "CREATE", "VIEW", "PROCEDURE", "PROC", "JOB", "AS", "EVERY", "WHEN", "EXEC", "CALL");

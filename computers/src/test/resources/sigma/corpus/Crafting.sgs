@@ -1,6 +1,7 @@
 using System.*;
 using System.IO.*;
 using System.Network.*;
+using System.Operations.*;
 namespace Corpus;
 class CraftingCorpus {
     static void Main() {
@@ -24,5 +25,7 @@ class CraftingCorpus {
             mixer.Route("Coarse dirt", "gravel", west);
             mixer.Route("Coarse dirt", "dirt", null);
         }
+        AskResult smelted = Operations.Update("minecraft:raw_iron", "SMELT", 8);
+        Console.PrintLine(smelted.Message);
     }
 }

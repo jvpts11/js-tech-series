@@ -13,6 +13,7 @@ import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.engine.CraftRequest;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.workshop.UpdateRequest;
 import dev.jstech.core.network.NetworkCategory;
 import dev.jstech.core.operation.IOperationArgs;
 import dev.jstech.core.operation.OperationCategory;
@@ -56,6 +57,7 @@ public final class ComputingOperations {
     public static final String REINDEX = OperationTypeId.REINDEX.registryId();
     public static final String VACUUM = OperationTypeId.VACUUM.registryId();
     public static final String DROP = OperationTypeId.DROP.registryId();
+    public static final String UPDATE = OperationTypeId.UPDATE.registryId();
 
     /* The rest read as a kind the log already has: a craft, however the network goes about it. */
     public static final String PROCESSING = NAMESPACE + ":processing";
@@ -105,6 +107,11 @@ public final class ComputingOperations {
             implements IOperationArgs {
     }
 
+    /** A change to an item the network holds by a personal-use card of the computer the request names. */
+    public record UpdateArgs(MainframeBlockEntity mainframe, UpdateRequest request, OperationPriority priority)
+            implements IOperationArgs {
+    }
+
     /** A manual reservation of {@code demand} of {@code key}, or its release. */
     public record LockArgs(MainframeBlockEntity mainframe, StorageKey key, long demand,
                            @Nullable Set<NodeUuid> sources) implements IOperationArgs {
@@ -134,6 +141,9 @@ public final class ComputingOperations {
                 a.mainframe().networkOperations().process(a.pattern(), a.demand(), a.label()), a.priority())));
         registry.register(timed(MULTI_STAGE, MultiStageArgs.class, OperationCategory.CRAFTING, a -> accepted(
                 a.mainframe().networkOperations().pipeline(a.pattern(), a.demand(), a.label()), a.priority())));
+        // An UPDATE changes what is stored and never makes anything: it is storage work, never a craft's.
+        registry.register(timed(UPDATE, UpdateArgs.class, OperationCategory.STORAGE, a -> accepted(
+                a.mainframe().networkOperations().update(a.request()), a.priority())));
         registry.register(instant(ANALYZE, IndexArgs.class, OperationCategory.NETWORK, a -> {
             a.mainframe().networkIndex().analyzeIncremental(a.level(), a.mainframe().networkUuid());
             return OperationStatus.COMPLETED;

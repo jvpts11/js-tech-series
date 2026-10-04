@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -50,6 +51,16 @@ public final class NetworkInsertOperation extends AbstractTransferOperation {
     public NetworkInsertOperation(final ServerLevel level, final NetworkUuid network, final StorageKey key,
                                   final long demand, final String sourceLabel, final NetworkIndex index,
                                   @Nullable final ILatencyScheduler scheduler) {
+        this(level, network, key, demand, sourceLabel, index, scheduler, null);
+    }
+
+    /**
+     * The same, filling {@code preferred} first as far as it has room, the rest as any write goes: what goes back to
+     * the server it came from lands there when it can.
+     */
+    public NetworkInsertOperation(final ServerLevel level, final NetworkUuid network, final StorageKey key,
+                                  final long demand, final String sourceLabel, final NetworkIndex index,
+                                  @Nullable final ILatencyScheduler scheduler, @Nullable final NodeUuid preferred) {
         super(level, network, key, demand);
         this.sourceLabel = sourceLabel;
 
@@ -69,7 +80,8 @@ public final class NetworkInsertOperation extends AbstractTransferOperation {
                 ramLatencies.put(room.server(), NetworkIndex.serverRamLatencyTicks(level, room.server()));
             }
         }
-        final Allocation plan = StorageAllocator.allocateByPriority(free, demand);
+        final Allocation plan = preferred == null ? StorageAllocator.allocateByPriority(free, demand)
+                : preferring(free, demand, preferred);
         index.reserveRoom(plan.perServer(), unitWeight);
         plan.perServer().forEach((server, quantity) ->
                 addSource(server, quantity, tiers.getOrDefault(server, StorageTier.HDD),
@@ -96,6 +108,25 @@ public final class NetworkInsertOperation extends AbstractTransferOperation {
         }
         final ExternalStorageBusPart external = ExternalStores.find(level, server);
         return external == null ? 0L : external.give(key, planned);
+    }
+
+    /* The room on {@code preferred} first, as much of the demand as it takes, then the rest by priority. */
+    private static Allocation preferring(final List<ItemLocation> free, final long demand, final NodeUuid preferred) {
+        final Map<NodeUuid, Long> plan = new LinkedHashMap<>();
+        final List<ItemLocation> others = new ArrayList<>(free.size());
+        long left = demand;
+        for (final ItemLocation room : free) {
+            if (room.server().equals(preferred) && left > 0L) {
+                final long take = Math.min(left, room.quantity());
+                plan.merge(room.server(), take, Long::sum);
+                left -= take;
+            } else {
+                others.add(room);
+            }
+        }
+        final Allocation rest = StorageAllocator.allocateByPriority(others, left);
+        rest.perServer().forEach((server, quantity) -> plan.merge(server, quantity, Long::sum));
+        return new Allocation(plan, demand - left + rest.allocated());
     }
 
     @Nullable

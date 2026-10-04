@@ -9,6 +9,8 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.iql.IqlParseResult;
+import dev.jstech.computers.program.iql.IqlParser;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.vm.system.MemberId;
@@ -60,6 +62,23 @@ final class OperationsCalls {
             }
             return all;
         });
+        /*
+         * The action is written as the SET of the network's language writes it (SMELT, ENCHANT OFFER 2, REPAIR WITH
+         * diamond, NAME 'Old Faithful'), so the call asks exactly what the statement would.
+         */
+        MachineCalls.bind(bindings, services -> services, "Operations", "Update",
+                (services, call, target, arguments, line) -> {
+                    if (!services.operations().onNetwork()) {
+                        throw new Halt(Halt.Reason.NO_NETWORK, line, NO_NETWORK.text());
+                    }
+                    final long amount = amount(arguments, 2);
+                    final IqlParseResult parsed = IqlParser.tryParse("UPDATE " + (amount > 0L ? amount + " " : "")
+                            + item(arguments) + " SET " + (arguments.length < 2 ? "" : String.valueOf(arguments[1])));
+                    if (!parsed.ok() || parsed.operation() == null) {
+                        return asked(ICliComputer.OpResult.fail(parsed.error()));
+                    }
+                    return started(services.operations(), services.iql().update(parsed.operation()));
+                }, STRING, STRING, LONG);
     }
 
     /** Binds one of the calls, every one of which needs the machine to be on a network. */
@@ -109,6 +128,10 @@ final class OperationsCalls {
     }
 
     private static long amount(final Object[] arguments) {
-        return arguments.length > 1 && arguments[1] instanceof Number number ? number.longValue() : 0L;
+        return amount(arguments, 1);
+    }
+
+    private static long amount(final Object[] arguments, final int at) {
+        return arguments.length > at && arguments[at] instanceof Number number ? number.longValue() : 0L;
     }
 }

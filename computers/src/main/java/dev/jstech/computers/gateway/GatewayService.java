@@ -654,6 +654,7 @@ public final class GatewayService {
             case OperationRecord.TYPE_REINDEX -> "reindex";
             case OperationRecord.TYPE_VACUUM -> "vacuum";
             case OperationRecord.TYPE_DROP -> "drop";
+            case OperationRecord.TYPE_UPDATE -> "update";
             default -> "operation";
         };
     }

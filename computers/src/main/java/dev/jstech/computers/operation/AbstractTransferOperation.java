@@ -246,6 +246,13 @@ public abstract class AbstractTransferOperation implements INetworkOperation {
         return movedTotal;
     }
 
+    /** How much went through each node so far, the node that moved the most first. */
+    public final List<Map.Entry<NodeUuid, Long>> perNode() {
+        final List<Map.Entry<NodeUuid, Long>> out = new ArrayList<>(Map.copyOf(movedPerServer).entrySet());
+        out.sort(Map.Entry.<NodeUuid, Long>comparingByValue().reversed());
+        return out;
+    }
+
     @Override
     public OperationPriority priority() {
         return priority;

@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.program.iql.IIqlCondition.Comparison;
 import dev.jstech.computers.program.iql.IIqlCondition.Op;
+import dev.jstech.computers.workshop.UpdateAction;
 import dev.jstech.core.operation.OperationPriority;
 import org.junit.jupiter.api.Test;
 
@@ -275,6 +276,113 @@ class IqlParserTest {
         assertEquals(IqlOperation.ANY_ITEM, op.item());
         assertTrue(op.isAnyItem());
         assertEquals("ServerA", op.from());
+    }
+
+    @Test
+    void parse_updateSmelt_readsTheQuantityTheItemAndTheAction() {
+        final IqlOperation op = IqlParser.parse("UPDATE 64 raw_iron SET SMELT");
+        assertEquals(IqlVerb.UPDATE, op.verb());
+        assertEquals(64L, op.quantity());
+        assertEquals("raw_iron", op.item());
+        assertTrue(op.hasUpdate());
+        assertEquals(UpdateAction.SMELT, op.update().action());
+        assertFalse(op.update().hasWith());
+    }
+
+    @Test
+    void parse_updateEnchant_readsTheOffer() {
+        final IqlOperation op = IqlParser.parse("update diamond_sword set enchant offer 3");
+        assertEquals(UpdateAction.ENCHANT, op.update().action());
+        assertEquals(3, op.update().offer());
+        assertTrue(op.update().hasOffer());
+        assertEquals(IqlOperation.NONE, op.quantity());
+    }
+
+    @Test
+    void parse_updateEnchantWithoutOffer_namesNoOffer() {
+        final IqlOperation op = IqlParser.parse("UPDATE diamond_sword SET ENCHANT");
+        assertEquals(IqlUpdate.NO_OFFER, op.update().offer());
+        assertFalse(op.update().hasOffer());
+    }
+
+    @Test
+    void parse_updateOfferOutOfRange_isRefused() {
+        final IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> IqlParser.parse("UPDATE diamond_sword SET ENCHANT OFFER 4"));
+        assertTrue(error.getMessage().contains("an offer is 1, 2 or 3"));
+    }
+
+    @Test
+    void parse_updateRepair_keepsTheWhereThatPicksTheVariant() {
+        final IqlOperation op = IqlParser.parse("UPDATE diamond_pickaxe SET REPAIR WHERE damaged = true");
+        assertEquals(UpdateAction.REPAIR, op.update().action());
+        assertTrue(op.hasWhere());
+        assertFalse(op.update().hasWith());
+    }
+
+    @Test
+    void parse_updateRepairWith_readsTheMaterial() {
+        final IqlOperation op = IqlParser.parse("UPDATE diamond_pickaxe SET REPAIR WITH diamond PRIORITY HIGH");
+        assertEquals("diamond", op.update().with());
+        assertEquals(OperationPriority.HIGH, op.priority());
+    }
+
+    @Test
+    void parse_updateCombine_needsWith() {
+        assertEquals("enchanted_book",
+                IqlParser.parse("UPDATE iron_sword SET COMBINE WITH enchanted_book").update().with());
+        final IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> IqlParser.parse("UPDATE iron_sword SET COMBINE"));
+        assertTrue(error.getMessage().contains("COMBINE needs WITH"));
+    }
+
+    @Test
+    void parse_updateWithOnAnActionThatTakesNone_isRefused() {
+        final IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> IqlParser.parse("UPDATE raw_iron SET SMELT WITH coal"));
+        assertTrue(error.getMessage().contains("SMELT takes no WITH"));
+    }
+
+    @Test
+    void parse_updateName_readsTheQuotedName() {
+        final IqlOperation op = IqlParser.parse("UPDATE diamond_sword SET NAME 'Old Faithful'");
+        assertEquals(UpdateAction.NAME, op.update().action());
+        assertEquals("Old Faithful", op.update().name());
+    }
+
+    @Test
+    void parse_updateNameTooLong_isRefused() {
+        final String name = "x".repeat(IqlUpdate.MAX_NAME + 1);
+        final IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> IqlParser.parse("UPDATE diamond_sword SET NAME '" + name + "'"));
+        assertTrue(error.getMessage().contains("at most 50 characters"));
+    }
+
+    @Test
+    void parse_updateFrom_isReadBeforeOrAfterTheSet() {
+        assertEquals("StorageA", IqlParser.parse("UPDATE 8 raw_gold FROM StorageA SET SMELT").from());
+        assertEquals("StorageA", IqlParser.parse("UPDATE 8 raw_gold SET SMELT FROM StorageA").from());
+        assertThrows(IllegalArgumentException.class,
+                () -> IqlParser.parse("UPDATE 8 raw_gold FROM A SET SMELT FROM B"));
+    }
+
+    @Test
+    void parse_updateWithoutSet_isRefused() {
+        final IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> IqlParser.parse("UPDATE 64 raw_iron WHERE qty > 1"));
+        assertTrue(error.getMessage().contains("UPDATE needs SET"));
+    }
+
+    @Test
+    void parse_updateUnknownAction_isRefused() {
+        final IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> IqlParser.parse("UPDATE oak_log SET CRAFT"));
+        assertTrue(error.getMessage().contains("unknown action: CRAFT"));
+    }
+
+    @Test
+    void parse_updateTo_isRefused() {
+        assertThrows(IllegalArgumentException.class, () -> IqlParser.parse("UPDATE raw_iron SET SMELT TO B"));
     }
 
     @Test

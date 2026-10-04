@@ -4,7 +4,7 @@
 
 .class Corpus.CraftingCorpus
 
-.method static void Main() slots 4
+.method static void Main() slots 5
     ldstr   "Kiln"
     call    CraftInterface.Named(string) -> CraftInterface
     stloc   0
@@ -88,4 +88,13 @@ L5: brfalse L3
     ldnull
     call    CraftInterface.Route(string, string, CraftRouter) -> CraftInterface
     pop
-L3: ret
+L3: ldstr   "minecraft:raw_iron"
+    ldstr   "SMELT"
+    ldc.i4  8
+    conv.i8
+    call    Operations.Update(string, string, long) -> AskResult
+    stloc   4
+    ldloc   4
+    ldfld   AskResult.Message
+    call    Console.PrintLine(string) -> void
+    ret

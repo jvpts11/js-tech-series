@@ -11,8 +11,8 @@ package dev.jstech.computers.engine;
  * The engine level of the contract: what every Network Operations Engine answers.
  *
  * <p>The first five move what the network already holds, and a network with no engine still does them, straight
- * through the Operations core. The last three make plans, which only an engine does: with none running they are
- * refused, and what asked is told the service is unavailable.
+ * through the Operations core. The rest make plans, which only an engine does: with none running they are refused,
+ * and what asked is told the service is unavailable.
  */
 public enum EngineVerb {
     /** Takes from the network's storage into a place that asked for it. */
@@ -30,7 +30,9 @@ public enum EngineVerb {
     /** Shows how something would be made, without making it. */
     PLAN(false),
     /** Runs a statement of the network's language, in the engine's dialect. */
-    QUERY(false);
+    QUERY(false),
+    /** Changes an item the network holds with a personal-use card of the computer that asks. */
+    UPDATE(false);
 
     private final boolean transfer;
 

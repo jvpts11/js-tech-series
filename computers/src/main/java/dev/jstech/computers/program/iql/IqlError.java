@@ -44,6 +44,18 @@ public final class IqlError extends IllegalArgumentException {
     static final TextKey NO_TO = TextKey.of("jsc.iql.error.no_to", "%s has no TO destination");
     static final TextKey NOT_ON_READ = TextKey.of("jsc.iql.error.not_on_read", "%s is not valid on a read");
 
+    // An UPDATE's SET.
+    static final TextKey UPDATE_NEEDS_SET = TextKey.of("jsc.iql.error.update_needs_set",
+            "UPDATE needs SET and what the card is to do, after the item");
+    static final TextKey UNKNOWN_ACTION = TextKey.of("jsc.iql.error.unknown_action",
+            "unknown action: %s (expected SMELT, ENCHANT, REPAIR, COMBINE or NAME)");
+    static final TextKey OFFER_RANGE = TextKey.of("jsc.iql.error.offer_range", "an offer is 1, 2 or 3, not %s");
+    static final TextKey NAME_TOO_LONG = TextKey.of("jsc.iql.error.name_too_long",
+            "a name is at most %s characters long");
+    static final TextKey NO_WITH = TextKey.of("jsc.iql.error.no_with", "%s takes no WITH");
+    static final TextKey COMBINE_NEEDS_WITH = TextKey.of("jsc.iql.error.combine_needs_with",
+            "COMBINE needs WITH and the item it adds");
+
     // What was expected where a statement stopped making sense.
     static final TextKey A_VERB = TextKey.of("jsc.iql.expected.verb", "a verb");
     static final TextKey AN_ITEM = TextKey.of("jsc.iql.expected.item", "an item");
@@ -58,6 +70,10 @@ public final class IqlError extends IllegalArgumentException {
     static final TextKey A_FIELD = TextKey.of("jsc.iql.expected.field", "a field name");
     static final TextKey AN_OPERATOR = TextKey.of("jsc.iql.expected.operator", "a comparison operator");
     static final TextKey A_VALUE = TextKey.of("jsc.iql.expected.value", "a value");
+    static final TextKey AN_ACTION = TextKey.of("jsc.iql.expected.action",
+            "an action after SET (SMELT, ENCHANT, REPAIR, COMBINE, NAME)");
+    static final TextKey AN_OFFER = TextKey.of("jsc.iql.expected.offer", "an offer after OFFER (1, 2 or 3)");
+    static final TextKey A_NAME = TextKey.of("jsc.iql.expected.name", "a name in quotes after NAME");
 
     // A condition.
     static final TextKey UNKNOWN_OPERATOR = TextKey.of("jsc.iql.error.unknown_operator", "unknown operator: %s");

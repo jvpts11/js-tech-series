@@ -360,6 +360,25 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A tab strip can have tabs that cannot be chosen, drawn dim with a word after them, in J's Core.
 - The cables explained in `docs/CABLES.md`: the shared cable block and its colours, each data line with its cables,
   speeds and ranges by era, the routers and repeaters, the buses and crafting parts, and the peripheral cables.
+- UPDATE, the network's door to the personal-use cards, with the same rules, price, pace and queue as the
+  Workshop: an item the network holds goes to a card of the Personal Computer that asks, the card works on it, and
+  it goes back to the network, to the server it came from when that server has room. SMELT through the Furnace Card
+  (free, a stack at a time, in the same queue as the Workshop's own smelting, which goes first); ENCHANT through the
+  Enchanting Card, OFFER 1, 2 or 3 picking one of the table's three offers and no OFFER listing them; REPAIR,
+  COMBINE and NAME through the Anvil Card. Whoever asks pays the card's levels and has to be there; only the asking
+  computer's own cards do it, so a job of the network's language, which runs as the Mainframe, cannot. In the
+  network's language, `UPDATE [qty] <item> [FROM <server>] SET <action> [args] [WITH <item>] [WHERE ...]
+  [PRIORITY ...]`, the WHERE picking which of the item's variants (the most worn first for a repair); in Σ 2,
+  `Operations.Update(item, action, qty)`. It is a new kind of Operation, with the item before and after and its three
+  steps (SUB_SELECT, SUB_UPDATE, SUB_INSERT) in the log; it needs an engine, as a craft does. While the card works,
+  the item waits in a drawer no query sees, kept with the computer and dropped with it; what the network has no room
+  for afterwards waits at the card's own slot in the Workshop. If the computer stops or loses its card, the UPDATE
+  is discarded and what the card held is left there too. No craft ever uses a card.
+- "Update..." in the Network Interactor, in an item's dialog and in the details panel: a window with a tab for each
+  action (Enchant, Smelt, Repair), dim where the computer has no card or the item does not take it, the item with
+  how many the network holds and where, the card and the computer, the three offers with their clue and price, the
+  amount to smelt with the wait behind the Workshop's own smelting, and the repair of the most worn of the item with
+  its material from the network, its name and its price beside an anvil's.
 - A menu's player inventory can be shown on some pages of a screen and hidden on the others, in J's Core.
 - The External Storage Bus, of every era: it moves nothing itself, the network uses the inventory it faces as
   storage of its own, ten times slower than its servers. The Vintage one shows the network all of it; from the

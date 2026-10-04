@@ -32,6 +32,7 @@ import dev.jstech.computers.operation.IPersistentOperation;
 import dev.jstech.computers.operation.NetworkIndex;
 import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkSelectOperation;
+import dev.jstech.computers.operation.NetworkUpdateOperation;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.ProgramSpec;
@@ -43,6 +44,7 @@ import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.computers.workshop.UpdateRequest;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.IFieldPart;
@@ -793,6 +795,21 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             final Item item, final long demand, final String sourceLabel) {
         return submitNetworkInsert(StorageKey.of(item),
                 demand, sourceLabel);
+    }
+
+    /**
+     * Starts an UPDATE: the item goes to the card of the computer {@code request} names, which works on it, and back.
+     * Refused, like every timed Operation, without a booted system to run it.
+     */
+    @Nullable
+    public NetworkUpdateOperation submitNetworkUpdate(final UpdateRequest request) {
+        if (!isRunning() || !hasOs() || !(level instanceof ServerLevel serverLevel) || networkUuid() == null) {
+            return null;
+        }
+        final var operation = new NetworkUpdateOperation(serverLevel, networkUuid(), request, networkIndex,
+                ensureDispatch());
+        track(operation);
+        return operation;
     }
 
     // CRAFT: recursive autocrafting over the network's Crafting Computers

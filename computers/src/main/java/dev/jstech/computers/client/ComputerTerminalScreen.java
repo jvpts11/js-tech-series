@@ -1085,6 +1085,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
             case OperationRecord.TYPE_VACUUM -> "VACUUM";
             case OperationRecord.TYPE_DROP -> "DROP";
             case OperationRecord.TYPE_CRAFT -> "CRAFT";
+            case OperationRecord.TYPE_UPDATE -> "UPDATE";
             default -> "SELECT";
         };
     }

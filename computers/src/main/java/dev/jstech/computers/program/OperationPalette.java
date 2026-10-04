@@ -34,7 +34,7 @@ public final class OperationPalette {
     public static int colorFor(final byte type) {
         final Colours c = PALETTE.get();
         return switch (type) {
-            case OperationRecord.TYPE_INSERT, OperationRecord.TYPE_CRAFT -> c.write();
+            case OperationRecord.TYPE_INSERT, OperationRecord.TYPE_CRAFT, OperationRecord.TYPE_UPDATE -> c.write();
             case OperationRecord.TYPE_DELETE, OperationRecord.TYPE_DROP -> c.destroy();
             case OperationRecord.TYPE_MOVE -> c.move();
             case OperationRecord.TYPE_ANALYZE, OperationRecord.TYPE_REINDEX, OperationRecord.TYPE_VACUUM -> c.upkeep();
@@ -54,6 +54,7 @@ public final class OperationPalette {
             case OperationRecord.TYPE_VACUUM -> "VACUUM";
             case OperationRecord.TYPE_DROP -> "DROP";
             case OperationRecord.TYPE_CRAFT -> "CRAFT";
+            case OperationRecord.TYPE_UPDATE -> "UPDATE";
             default -> "OP";
         };
     }

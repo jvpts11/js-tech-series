@@ -158,7 +158,7 @@ project cannot reference a Σ# one.
 
 Σ and Σ# have versions, one number for both, since Σ N is the subset of Σ# N. Version 1 is the language as it
 first shipped under these names; version 2 brings `Sound` and `Speaker`, `Bus` and `BusItem`, `Redstone`,
-`CraftInterface` and `CraftRouter`, the old names above with the calls
+`CraftInterface` and `CraftRouter`, `Operations.Update`, the old names above with the calls
 they gained, the rest of `printf`'s holes, `int Main` and `Main(string[] args)`, and `Random` in Σ's
 `Standard`. A version only ever adds: whatever
 version 1 takes, version 2 takes too and compiles to the same listing, so a newer compiler never breaks an
@@ -242,7 +242,7 @@ whether the text was a number.
 | `System.Utils` | `Math`, `Convert`, `Random`, `Time` |
 | `System.Machine` | `Computer`: what the machine is made of and what it runs; `Redstone` (one of its Redstone Interfaces) |
 | `System.Network` | `Network`, `Mainframe`, `Operations`' rows, `RemoteComputer`, `Iql`, `Bus` and `BusItem` |
-| `System.Operations` | `Operations`: pull, push, craft, cancel, ask after an operation |
+| `System.Operations` | `Operations`: pull, push, craft, update, cancel, ask after an operation |
 | `System.Execution` | `Program`, `Process`, `ProcessMessage` |
 | `System.Threading` | `Thread`, and the `lock` statement |
 | `System.Sound` | `Sound` (beeps, tunes, songs), `Speaker` (one speaker by its name) |
@@ -348,6 +348,18 @@ statements need only a Mainframe; views, procedures and jobs need the IQL Engine
 Interfaces of the machine that runs the statement, as `Redstone` does. `SET INTERFACE`, `PAUSE INTERFACE`,
 `RESUME INTERFACE`, `SET ROUTER` and `RENAME` set the parts of the crafting network, as `CraftInterface` and
 `CraftRouter` do.
+
+`UPDATE` has a personal-use card of the machine that runs it change an item the network holds:
+`UPDATE 64 raw_iron SET SMELT`, `UPDATE diamond_sword SET ENCHANT OFFER 3` (with no `OFFER` it lists the three
+offers and changes nothing), `UPDATE diamond_pickaxe SET REPAIR`, `UPDATE iron_sword SET COMBINE WITH
+enchanted_book`, `UPDATE diamond_sword SET NAME 'Old Faithful'`. Only a Personal Computer with the card in can,
+and the card's levels are paid by whoever works the machine, who has to be there; smelting is free. From Σ 2 the
+same goes as `Operations.Update(item, action, qty)`, the action written as it is after `SET`:
+
+```
+Operations.Update("raw_iron", "SMELT", 64) -> AskResult { Ok, Message }
+Operations.Update("diamond_sword", "ENCHANT OFFER 2", 1)
+```
 
 ## The buses: `Bus`
 

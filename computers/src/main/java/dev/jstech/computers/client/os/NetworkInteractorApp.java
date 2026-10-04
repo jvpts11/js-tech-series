@@ -418,11 +418,13 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     private final Button detailRequest;
     private final Button detailCraft;
     private final Button detailStar;
+    private final Button detailUpdate;
     private final Button printButton;
     private final PrintDialog printDialog;
     private final ContextMenu filterMenu = new ContextMenu(72, 10);
     private final RequestPopup requestPopup;
     private final CraftPopup craftPopup;
+    private final UpdatePopup updatePopup;
 
     public NetworkInteractorApp(final BlockPos host, final BlockPos monitorPos) {
         this.host = host;
@@ -455,11 +457,15 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         detailCraft = root.add(new Button(GameText.resolve(CRAFT), this::detailCraftPressed)
                 .setLabelScale(Texts.SMALL));
         detailStar = root.add(new Button(STAR, this::detailStarPressed).setLabelScale(Texts.SMALL));
+        detailUpdate = root.add(new Button(GameText.resolve(UpdatePopupTexts.OPEN), this::detailUpdatePressed)
+                .setLabelScale(Texts.SMALL));
         printDialog = new PrintDialog(host, this);
         printButton = root.add(new Button(GameText.resolve(PrintTexts.PRINT), this::printList)
                 .setLabelScale(Texts.SMALL));
         requestPopup = new RequestPopup();
         craftPopup = new CraftPopup();
+        updatePopup = new UpdatePopup(host, monitorPos);
+        updatePopup.setDim(InteractorPalette.get().popupDim());
 
         active = this;
         request();
@@ -818,6 +824,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         detailRequest.setVisible(false);
         detailCraft.setVisible(false);
         detailStar.setVisible(false);
+        detailUpdate.setVisible(false);
         cardShown = false;
         if (tab == TAB_OPS) {
             renderOpDetails(g, font, x, y, z);
@@ -1645,7 +1652,11 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             detailStar.setBounds(px + 2 * bw + 4, py, 14, 12);
             detailStar.setVisible(true);
             detailStar.setPrimary(starred);
-            py += 16;
+            // A card's work on the item, through the Update window: only something the network holds as an item.
+            detailUpdate.setBounds(px, py + 14, 2 * bw + 2, 12);
+            detailUpdate.setVisible(true);
+            detailUpdate.setEnabled(e.total() > 0 && key.isItem());
+            py += 30;
         }
         py = detail(g, font, px, py, dw, GameText.resolve(ID), id.toString());
         py = detail(g, font, px, py, dw, GameText.resolve(KIND),
@@ -1762,6 +1773,58 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         if (craftable != null) {
             openCraftPopup(craftable);
         }
+    }
+
+    private void requestUpdatePressed() {
+        final NetworkItemEntry e = popupEntry;
+        if (e != null && e.key().isItem()) {
+            openUpdatePopup(e);
+        }
+    }
+
+    private void detailUpdatePressed() {
+        final NetworkItemEntry e = detailEntry(lastMouseX, lastMouseY);
+        if (e != null && e.total() > 0 && e.key().isItem()) {
+            openUpdatePopup(e);
+        }
+    }
+
+    /** Opens the Update window over the entry's item, closing any other dialog first. */
+    private void openUpdatePopup(final NetworkItemEntry entry) {
+        closePopup();
+        craftPopup.close();
+        updatePopup.openFor(entry.key().stack(1));
+        updatePopup.placeIn(lastX, lastY, contentW, contentH);
+    }
+
+    /** The Update window, open or not, for a test to read and click. */
+    public UpdatePopup updatePopup() {
+        return updatePopup;
+    }
+
+    /** Content-local centre of the details panel's Update button, for a test's click. */
+    public int[] detailUpdateCenter() {
+        return local(detailUpdate.center());
+    }
+
+    /** Content-local centre of the request dialog's Update button. */
+    public int[] requestUpdateCenter() {
+        return local(requestPopup.update.center());
+    }
+
+    /** Content-local centre of the Update window's tab {@code tab}. */
+    public int[] updateTabCenter(final int tab) {
+        return local(updatePopup.tabCenter(tab));
+    }
+
+    /** Content-local centre of the Update window's offer {@code index}. */
+    public int[] updateOfferCenter(final int index) {
+        return local(updatePopup.offerCenter(index));
+    }
+
+    /** Content-local centre of the Update window's Update button. */
+    public int[] updateSubmitCenter() {
+        return local(updatePopup.updateCenter());
     }
 
     private void detailStarPressed() {
@@ -2104,6 +2167,9 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         if (craftPopup.isOpen()) {
             return craftPopup;
         }
+        if (updatePopup.isOpen()) {
+            return updatePopup;
+        }
         return root;
     }
 
@@ -2264,7 +2330,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     /** Whether any modal dialog (request/storage or craft) is open, in which case the desktop routes every click to the app. */
     public boolean hasPopup() {
-        return requestPopup.isOpen() || craftPopup.isOpen();
+        return requestPopup.isOpen() || craftPopup.isOpen() || updatePopup.isOpen();
     }
 
     @Override
@@ -2294,6 +2360,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             requestPopup.renderIn(g, ctx, x, y, width, height);
         } else if (craftPopup.isOpen()) {
             craftPopup.renderIn(g, ctx, x, y, width, height);
+        } else if (updatePopup.isOpen()) {
+            updatePopup.renderIn(g, ctx, x, y, width, height);
         } else if (filterMenu.isOpen()) {
             filterMenu.render(g, ctx);
         }
@@ -2636,6 +2704,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                 () -> popupAction(NiGridClickPayload.MODE_LOCAL_TO_NET)).setLabelScale(Texts.SMALL));
         private final Button request = add(new Button(GameText.resolve(REQUEST),
                 () -> popupAction(NiGridClickPayload.MODE_NET_TO_LOCAL)).setLabelScale(Texts.SMALL));
+        private final Button update = add(new Button(GameText.resolve(UpdatePopupTexts.OPEN),
+                NetworkInteractorApp.this::requestUpdatePressed).setLabelScale(Texts.SMALL));
 
         private RequestPopup() {
             super("", POPUP_W, POPUP_H);
@@ -2677,6 +2747,10 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             prioDown.setBounds(px + 56, py + 60, 12, 12);
             prioBox.setBounds(px + 70, py + 60, 40, 12);
             prioUp.setBounds(px + 112, py + 60, 12, 12);
+            // A card's work on the one item the dialog is for, beside the level, for what the network holds.
+            update.setBounds(px + 130, py + 60, POPUP_W - 134, 12);
+            update.setVisible(!popupStorage && popupEntries.size() == 1 && popupEntry != null
+                    && popupEntry.key().isItem());
             final boolean advanced = advancedShown();
             pullLabel.setBounds(px + 4, py + 74, POPUP_W - 8, 8);
             pullLabel.setVisible(advanced);

@@ -40,7 +40,9 @@ public enum IqlVerb {
     /** Index maintenance: compact. */
     VACUUM,
     /** Index maintenance: rebuild. */
-    REINDEX;
+    REINDEX,
+    /** Change an item the network holds with one of the asking computer's personal-use cards. */
+    UPDATE;
 
     /** Resolves a keyword to a verb, case-insensitively; {@code SHOW} is an alias of {@link #QUERY}. */
     public static Optional<IqlVerb> fromKeyword(final String keyword) {

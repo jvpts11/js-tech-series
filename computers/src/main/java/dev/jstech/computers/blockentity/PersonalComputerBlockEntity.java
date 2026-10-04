@@ -23,6 +23,7 @@ import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.computers.workshop.UpdateDrawer;
 import dev.jstech.computers.workshop.Workshop;
 import dev.jstech.computers.workshop.WorkshopCard;
 import dev.jstech.computers.workshop.WorkshopRates;
@@ -37,6 +38,7 @@ import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -88,6 +90,11 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
     /* Whether the Furnace Card is smelting, which the desktop's tray shows. */
     private final ValueField<Boolean> smelting = fields().value("WorkshopSmelting", Codec.BOOL, false).toClient();
     private final Workshop workshop = new Workshop(workshopSlots, furnaceProgress, furnaceExperience, anvilName);
+    /* Where an item the network sends to the cards waits while they work on it, out of every query. */
+    private final FieldItemHandler updateSlots = fields().items("UpdateDrawer", UpdateDrawer.SLOTS).save();
+    private final ValueField<Integer> updateProgress = fields().value("UpdateProgress", Codec.INT, 0).save();
+    private final ValueField<Integer> updateCard = fields().value("UpdateCard", Codec.INT, -1).save();
+    private final UpdateDrawer updateDrawer = new UpdateDrawer(updateSlots, updateProgress, updateCard);
 
     public PersonalComputerBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.PERSONAL_COMPUTER_BE.get(), pos, state, LAYOUT);
@@ -96,6 +103,11 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
     /** What the personal-use cards hold and do on this computer. */
     public Workshop workshop() {
         return workshop;
+    }
+
+    /** Where an item the network sends this computer's cards waits while they work on it. */
+    public UpdateDrawer updateDrawer() {
+        return updateDrawer;
     }
 
     /** The personal-use cards in this computer's build, as a mask of {@link WorkshopCard#bit()}; none while off. */
@@ -124,7 +136,7 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
         return Boolean.TRUE.equals(smelting.get());
     }
 
-    /** Every item the personal-use cards hold, for the computer's drops. */
+    /** Every item the personal-use cards hold, the network's work on them included, for the computer's drops. */
     public List<ItemStack> workshopDrops() {
         final List<ItemStack> drops = new ArrayList<>();
         for (int i = 0; i < Workshop.SLOTS; i++) {
@@ -134,6 +146,7 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
                 workshopSlots.setStackInSlot(i, ItemStack.EMPTY);
             }
         }
+        drops.addAll(updateDrawer.drops());
         return drops;
     }
 
@@ -209,12 +222,21 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
 
     /*
      * The Furnace Card goes on smelting while the computer is on, window open or not; when the last of its input is
-     * done the desktops showing this computer say so in a balloon.
+     * done the desktops showing this computer say so in a balloon. One furnace serves both of the card's doors: while
+     * an UPDATE from the network smelts, the Workshop's own input waits its turn.
      */
     private void tickWorkshop(final ServerLevel level) {
+        for (final ItemStack lost : updateDrawer.recover(workshop)) {
+            Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), lost);
+        }
+        updateDrawer.tickOut(workshop);
         final boolean furnace = WorkshopCard.FURNACE.in(workshopCards());
-        final boolean finished = furnace && workshop.tickFurnace(level, furnaceSpeed());
-        final boolean now = furnace && workshop.ticksPerItem(level, furnaceSpeed()) > 0;
+        final boolean network = furnace && updateDrawer.smelting();
+        if (network) {
+            updateDrawer.tickSmelt(level, furnaceSpeed(), workshop);
+        }
+        final boolean finished = furnace && !network && workshop.tickFurnace(level, furnaceSpeed());
+        final boolean now = network || furnace && workshop.ticksPerItem(level, furnaceSpeed()) > 0;
         if (now != furnaceSmelting()) {
             smelting.set(now);
         }

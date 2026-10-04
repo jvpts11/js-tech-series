@@ -16,8 +16,8 @@ import org.junit.jupiter.api.Test;
 class IqlVerbTest {
 
     @Test
-    void values_coverTheThirteenGrammarVerbs() {
-        assertEquals(13, IqlVerb.values().length);
+    void values_coverTheFourteenGrammarVerbs() {
+        assertEquals(14, IqlVerb.values().length);
     }
 
     @Test

@@ -548,6 +548,9 @@ public final class SystemApi {
          */
         operations.onType("AskResult", "Reprioritise", MemberKind.WORLD, CallCost.of(SigmaCosts.SUBMIT), STRING,
                 STRING);
+        // The item, the action as the network's language writes it after SET, and how many.
+        operations.onType("AskResult", "Update", MemberKind.WORLD, CallCost.of(SigmaCosts.SUBMIT), STRING, STRING,
+                LONG);
         operations.onType("OperationInfo", "Get", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
         operations.onType("List<OperationInfo>", "List", MemberKind.WORLD, CallCost.perRow(SigmaCosts.READ));
         return new TypeSpec(OPERATIONS, "Operations", operations.members);

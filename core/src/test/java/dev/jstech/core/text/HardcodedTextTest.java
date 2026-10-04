@@ -152,7 +152,7 @@ class HardcodedTextTest {
             data(COMPUTERS + "sigma/edit/SigmaCompletions.java", 2,
                     "the marks for who declares a candidate, which are never drawn"),
             data(COMPUTERS + "sigma/sem/BareFunctions.java", 32, SIGNATURES),
-            data(COMPUTERS + "sigma/SigmaVersions.java", 10, SIGNATURES + ", keyed by the version they came in"),
+            data(COMPUTERS + "sigma/SigmaVersions.java", 11, SIGNATURES + ", keyed by the version they came in"),
             data(COMPUTERS + "vm/program/NumberFunctions.java", 4, SIGNATURES),
             data(COMPUTERS + "vm/system/SystemApi.java", 1, SIGNATURES),
             data("core/src/main/java/dev/jstech/core/config/ConfigValidator.java", 11,

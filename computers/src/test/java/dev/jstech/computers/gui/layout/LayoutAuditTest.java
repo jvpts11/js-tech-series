@@ -55,7 +55,7 @@ class LayoutAuditTest {
             "SystemBootLayout", "CommandPromptLayout", "OsInstallLayout", "InstallerLayout",
             "BootSequenceLayout", "FirmwareLayout", "SettingsLayout", "StudioPropertiesLayout",
             "NetworkServicesLayout", "NetworkLinksLayout", "PrinterLayout", "DockLayout", "PrintedPaperLayout",
-            "WorkshopLayout");
+            "WorkshopLayout", "UpdateWindowLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -97,6 +97,11 @@ class LayoutAuditTest {
         c.add(new AuditCase("WorkshopLayout.furnace", WorkshopLayout.furnace(station), false));
         c.add(new AuditCase("WorkshopLayout.enchanting", WorkshopLayout.enchanting(station), false));
         c.add(new AuditCase("WorkshopLayout.anvil", WorkshopLayout.anvil(station), false));
+        // The Network Interactor's Update window, and each of its tabs alone in the panel.
+        c.add(new AuditCase("UpdateWindowLayout", UpdateWindowLayout.layout(), true));
+        c.add(new AuditCase("UpdateWindowLayout.enchant", UpdateWindowLayout.enchant(), true));
+        c.add(new AuditCase("UpdateWindowLayout.repair", UpdateWindowLayout.repair(), true));
+        c.add(new AuditCase("UpdateWindowLayout.smelt", UpdateWindowLayout.smelt(), true));
         // Virtual Studio's Properties at the most it holds: every instruction set and every version beside Default.
         c.add(new AuditCase("StudioPropertiesLayout", StudioPropertiesLayout.layout(5, 4), true));
         // A window on the desktop, not a panel over the game: held to its own frame, not to the panel budget.

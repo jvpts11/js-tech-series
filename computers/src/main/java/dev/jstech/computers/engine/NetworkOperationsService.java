@@ -15,10 +15,12 @@ import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkSelectOperation;
+import dev.jstech.computers.operation.NetworkUpdateOperation;
 import dev.jstech.computers.program.IqlEngine;
 import dev.jstech.computers.program.iql.IIqlView;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.workshop.UpdateRequest;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -42,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
  * programs use the first two levels only, so they work the same with any engine.
  *
  * <p>With no engine running, the verbs that only move what is there still work, straight through the core;
- * crafting, a craft's plan and the language are refused with {@link #UNAVAILABLE}.
+ * crafting, a craft's plan, the language and an update are refused with {@link #UNAVAILABLE}.
  */
 @TextHolder
 public final class NetworkOperationsService {
@@ -149,6 +151,16 @@ public final class NetworkOperationsService {
                                                final String label) {
         final INetworkEngine engine = engine();
         return engine == null ? null : planned(engine.pipeline(core, pattern, demand, label));
+    }
+
+    /**
+     * Changes an item the network holds with a personal-use card of the computer that asks; refused, with nothing
+     * started, when no engine is running, as a craft is.
+     */
+    @Nullable
+    public NetworkUpdateOperation update(final UpdateRequest request) {
+        final INetworkEngine engine = engine();
+        return engine == null ? null : planned(engine.update(core, request));
     }
 
     /** How the running engine plans a craft before anything is made, or {@code null} when no engine is running. */

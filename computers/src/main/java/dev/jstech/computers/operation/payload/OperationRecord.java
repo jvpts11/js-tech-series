@@ -77,6 +77,7 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
     public static final byte TYPE_REINDEX = 7;
     public static final byte TYPE_VACUUM = 8;
     public static final byte TYPE_DROP = 9;
+    public static final byte TYPE_UPDATE = 10;
 
     /*
      * The same eight states a state carries a number for, written here as the numbers themselves because a

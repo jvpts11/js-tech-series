@@ -87,6 +87,7 @@ public final class ClientTestSuite {
             PrinterClientTests.class,
             DockStationClientTests.class,
             WorkshopClientTests.class,
+            UpdateClientTests.class,
             SettingsPersonalizeClientTests.class,
             SettingsScreenClientTests.class,
             SettingsSharingClientTests.class,

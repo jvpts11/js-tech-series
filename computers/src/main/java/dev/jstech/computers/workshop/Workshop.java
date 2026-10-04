@@ -91,6 +91,14 @@ public final class Workshop {
     public record AnvilResult(ItemStack result, int anvilLevels, int levels) {
     }
 
+    /** What the anvil made, and what is left of the two items it was given. */
+    public record AnvilTake(ItemStack made, ItemStack left, ItemStack right) {
+    }
+
+    /** What one item smelts into, the ticks a furnace takes over it and the experience it earns. */
+    public record Smelt(ItemStack result, int cookTicks, float experience) {
+    }
+
     /** The item in slot {@code slot}. */
     public ItemStack slot(final int slot) {
         return slots.getStackInSlot(slot);
@@ -108,6 +116,25 @@ public final class Workshop {
     /** Puts {@code stack} in slot {@code slot} as it is, for a test or a restore. */
     public void put(final int slot, final ItemStack stack) {
         slots.setStackInSlot(slot, stack);
+    }
+
+    /** Puts as much of {@code stack} in slot {@code slot} as fits there now, and gives back the rest. */
+    public ItemStack offer(final int slot, final ItemStack stack) {
+        if (stack.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        final ItemStack here = slots.getStackInSlot(slot);
+        if (!here.isEmpty() && !ItemStack.isSameItemSameComponents(here, stack)) {
+            return stack;
+        }
+        final int room = Math.min(limit(slot), stack.getMaxStackSize()) - here.getCount();
+        final int put = Math.max(0, Math.min(room, stack.getCount()));
+        if (put == 0) {
+            return stack;
+        }
+        slots.setStackInSlot(slot, here.isEmpty() ? stack.copyWithCount(put) : here.copyWithCount(here.getCount()
+                + put));
+        return stack.getCount() == put ? ItemStack.EMPTY : stack.copyWithCount(stack.getCount() - put);
     }
 
     /** The name the anvil card gives the item on it. */
@@ -327,6 +354,22 @@ public final class Workshop {
         return earned == null ? 0f : earned;
     }
 
+    /**
+     * Adds to the experience the furnace has earned, which goes to whoever next takes its output, as a furnace keeps
+     * what a hopper's smelting earned for the next player.
+     */
+    public void addExperience(final float earned) {
+        experience.set(experienceEarned() + earned);
+    }
+
+    /** What {@code input} smelts into, the ticks a furnace takes and what it earns; null for what does not smelt. */
+    @Nullable
+    public static Smelt smelt(final Level level, final ItemStack input) {
+        final RecipeHolder<? extends AbstractCookingRecipe> recipe = input.isEmpty() ? null : smelting(level, input);
+        return recipe == null ? null : new Smelt(recipe.value().assemble(new SingleRecipeInput(input),
+                level.registryAccess()), recipe.value().getCookingTime(), recipe.value().getExperience());
+    }
+
     // enchanting
 
     /**
@@ -334,7 +377,14 @@ public final class Workshop {
      * {@code player}: none for an item that takes no enchantment.
      */
     public List<Offer> offers(final ServerPlayer player) {
-        final ItemStack item = slots.getStackInSlot(ENCHANT_ITEM);
+        return offersFor(player, slots.getStackInSlot(ENCHANT_ITEM));
+    }
+
+    /**
+     * The three offers for {@code item}, as a table with every bookshelf around it would make them for
+     * {@code player}: none for an item that takes no enchantment.
+     */
+    public static List<Offer> offersFor(final ServerPlayer player, final ItemStack item) {
         if (item.isEmpty() || !item.isEnchantable()) {
             return List.of();
         }
@@ -357,35 +407,52 @@ public final class Workshop {
      * False when the offer is not there or the player cannot pay it.
      */
     public boolean enchant(final ServerPlayer player, final int offer) {
-        final ItemStack item = slots.getStackInSlot(ENCHANT_ITEM);
-        if (offer < 0 || offer >= OFFERS || item.isEmpty() || !item.isEnchantable()) {
+        final ItemStack enchanted = enchanted(player, slots.getStackInSlot(ENCHANT_ITEM), offer);
+        if (enchanted.isEmpty()) {
             return false;
+        }
+        slots.setStackInSlot(ENCHANT_ITEM, enchanted);
+        return true;
+    }
+
+    /**
+     * {@code item} enchanted with offer {@code offer} for {@code player}, who pays the levels the card asks and no
+     * lapis; an empty stack, with nothing paid, when the offer is not there or the player cannot pay it.
+     */
+    public static ItemStack enchanted(final ServerPlayer player, final ItemStack item, final int offer) {
+        if (offer < 0 || offer >= OFFERS || item.isEmpty() || !item.isEnchantable()) {
+            return ItemStack.EMPTY;
         }
         final RandomSource random = RandomSource.create();
         final int[] costs = costs(player, item, random);
         final int levels = WorkshopRates.enchantLevels(offer);
         if (costs[offer] <= 0 || !player.getAbilities().instabuild
                 && (player.experienceLevel < levels || player.experienceLevel < costs[offer])) {
-            return false;
+            return ItemStack.EMPTY;
         }
         final List<EnchantmentInstance> list = enchantments(player, item, offer, costs[offer], random);
         if (list.isEmpty()) {
-            return false;
+            return ItemStack.EMPTY;
         }
         player.onEnchantmentPerformed(item, levels);
         final ItemStack enchanted = item.getItem().applyEnchantments(item, list);
-        slots.setStackInSlot(ENCHANT_ITEM, enchanted);
         player.awardStat(Stats.ENCHANT_ITEM);
         player.level().playSound(null, player.blockPosition(), SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.BLOCKS,
                 1.0F, player.getRandom().nextFloat() * 0.1F + 0.9F);
-        return true;
+        return enchanted;
     }
 
     // the anvil
 
     /** What the two items on the anvil card make now, with the name it gives, and the levels it asks. */
     public AnvilResult anvil(final ServerPlayer player) {
-        final AnvilMenu menu = anvilMenu(player);
+        return anvilFor(player, slots.getStackInSlot(ANVIL_LEFT), slots.getStackInSlot(ANVIL_RIGHT), anvilName());
+    }
+
+    /** What an anvil would make of {@code left} and {@code right} with {@code name}, and what the card asks. */
+    public static AnvilResult anvilFor(final ServerPlayer player, final ItemStack left, final ItemStack right,
+                                       final String name) {
+        final AnvilMenu menu = anvilMenu(player, left, right, name);
         final ItemStack result = menu.getSlot(AnvilMenu.RESULT_SLOT).getItem().copy();
         final int cost = menu.getCost();
         return new AnvilResult(result, cost, WorkshopRates.anvilLevels(cost));
@@ -397,13 +464,32 @@ public final class Workshop {
      * pay.
      */
     public boolean takeAnvil(final ServerPlayer player) {
-        final AnvilMenu menu = anvilMenu(player);
+        final AnvilTake take = takeAnvilFor(player, slots.getStackInSlot(ANVIL_LEFT),
+                slots.getStackInSlot(ANVIL_RIGHT), anvilName());
+        if (take == null) {
+            return false;
+        }
+        slots.setStackInSlot(ANVIL_LEFT, take.left());
+        slots.setStackInSlot(ANVIL_RIGHT, take.right());
+        setAnvilName("");
+        give(player, take.made());
+        return true;
+    }
+
+    /**
+     * What an anvil makes of {@code left} and {@code right} with {@code name}, {@code player} paying the card's
+     * levels, and what is left of the two; null, with nothing paid, when it makes nothing or the player cannot pay.
+     */
+    @Nullable
+    public static AnvilTake takeAnvilFor(final ServerPlayer player, final ItemStack left, final ItemStack right,
+                                         final String name) {
+        final AnvilMenu menu = anvilMenu(player, left, right, name);
         final ItemStack result = menu.getSlot(AnvilMenu.RESULT_SLOT).getItem();
         final int cost = menu.getCost();
         final int levels = WorkshopRates.anvilLevels(cost);
         final boolean free = player.getAbilities().instabuild;
         if (result.isEmpty() || cost <= 0 || !free && player.experienceLevel < levels) {
-            return false;
+            return null;
         }
         final ItemStack made = result.copy();
         // The anvil's take charges its full cost: the levels it asks over the card's are handed over first.
@@ -411,21 +497,19 @@ public final class Workshop {
             player.giveExperienceLevels(cost - levels);
         }
         menu.getSlot(AnvilMenu.RESULT_SLOT).onTake(player, made);
-        slots.setStackInSlot(ANVIL_LEFT, menu.getSlot(AnvilMenu.INPUT_SLOT).getItem().copy());
-        slots.setStackInSlot(ANVIL_RIGHT, menu.getSlot(AnvilMenu.ADDITIONAL_SLOT).getItem().copy());
-        setAnvilName("");
-        give(player, made);
         player.level().playSound(null, player.blockPosition(), SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 1.0F,
                 player.getRandom().nextFloat() * 0.1F + 0.9F);
-        return true;
+        return new AnvilTake(made, menu.getSlot(AnvilMenu.INPUT_SLOT).getItem().copy(),
+                menu.getSlot(AnvilMenu.ADDITIONAL_SLOT).getItem().copy());
     }
 
-    /* The game's anvil over the card's two items and name, at no place, so nothing it does can wear a block. */
-    private AnvilMenu anvilMenu(final ServerPlayer player) {
+    /* The game's anvil over two items and a name, at no place, so nothing it does can wear a block. */
+    private static AnvilMenu anvilMenu(final ServerPlayer player, final ItemStack left, final ItemStack right,
+                                       final String name) {
         final AnvilMenu menu = new AnvilMenu(0, player.getInventory(), ContainerLevelAccess.NULL);
-        menu.getSlot(AnvilMenu.INPUT_SLOT).set(slots.getStackInSlot(ANVIL_LEFT).copy());
-        menu.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(slots.getStackInSlot(ANVIL_RIGHT).copy());
-        menu.setItemName(anvilName());
+        menu.getSlot(AnvilMenu.INPUT_SLOT).set(left.copy());
+        menu.getSlot(AnvilMenu.ADDITIONAL_SLOT).set(right.copy());
+        menu.setItemName(name);
         menu.createResult();
         return menu;
     }

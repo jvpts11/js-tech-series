@@ -7,9 +7,11 @@
  */
 package dev.jstech.computers.machine;
 
+import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.block.part.NamedBus;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.engine.EngineVerb;
 import dev.jstech.computers.engine.NetworkEngines;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.MoveLabels;
@@ -26,11 +28,15 @@ import dev.jstech.computers.program.iql.IqlOperation;
 import dev.jstech.computers.program.iql.IqlParseResult;
 import dev.jstech.computers.program.iql.IqlParser;
 import dev.jstech.computers.program.iql.IqlRedstoneStatement;
+import dev.jstech.computers.program.iql.IqlUpdate;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.computers.workshop.UpdateAction;
+import dev.jstech.computers.workshop.UpdateDoor;
+import dev.jstech.computers.workshop.UpdateRequest;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -47,6 +53,8 @@ import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -132,6 +140,13 @@ public final class IqlService {
     private static final TextKey NOTHING_TO_RUN_IN =
             TextKey.of("jsc.service.iql.nothing_to_run_in", "%s: nothing to run");
     private static final TextKey NOTHING_TO_RUN = TextKey.of("jsc.service.iql.nothing_to_run", "nothing to run");
+    private static final TextKey NOTHING_TO_UPDATE =
+            TextKey.of("jsc.service.iql.nothing_to_update", "the network holds no %s");
+    private static final TextKey UPDATE_FAILED =
+            TextKey.of("jsc.service.iql.update_failed", "could not start the UPDATE");
+    /** How much of what, and the action the card was set to, as the statement wrote it. */
+    private static final TextKey UPDATE_QUEUED =
+            TextKey.of("jsc.service.iql.update_queued", "UPDATE queued: %s %s, SET %s");
 
     private final IComputerTerminalHost terminal;
     private final ServerLevel level;
@@ -583,8 +598,127 @@ public final class IqlService {
             case LOCK -> this.operations.lock(op.item(), op.quantity());
             case UNLOCK -> this.operations.unlock(op.item());
             case ANALYZE, VACUUM, REINDEX -> this.operations.maintenance(op.verb());
+            case UPDATE -> this.update(op);
             case QUERY, COUNT -> ICliComputer.OpResult.fail(READ_IS_NO_OPERATION);
         };
+    }
+
+    /**
+     * Runs an UPDATE: a personal-use card of this machine changes the item the network holds, the variant the
+     * statement's WHERE picks (the most worn first for a repair, else the one the network holds most of). Whoever is
+     * acting pays the card's price. ENCHANT with no OFFER only lists the three offers and changes nothing.
+     */
+    public ICliComputer.OpResult update(final IqlOperation op) {
+        final NetworkUuid net = this.terminal.networkUuid();
+        final MainframeBlockEntity mainframe = this.mainframe();
+        if (mainframe == null || net == null || !op.hasUpdate()) {
+            return ICliComputer.OpResult.fail(OperationsService.NO_MAINFRAME);
+        }
+        final Text unavailable = mainframe.networkOperations().refusal(EngineVerb.UPDATE);
+        if (unavailable != null) {
+            return ICliComputer.OpResult.fail(unavailable);
+        }
+        final IqlUpdate set = op.update();
+        NodeUuid from = null;
+        if (op.hasFrom()) {
+            from = this.network.serverNamed(net, op.from());
+            if (from == null) {
+                return ICliComputer.OpResult.fail(NO_SERVER.with(op.from()));
+            }
+        }
+        if (StorageKey.byName(op.item()) == null) {
+            return ICliComputer.OpResult.fail(OperationsService.UNKNOWN_ITEM.with(op.item()));
+        }
+        final List<StorageKey> keys = this.variants(op, from, set.action());
+        if (keys.isEmpty()) {
+            return ICliComputer.OpResult.fail(NOTHING_TO_UPDATE.with(op.item()));
+        }
+        final StorageKey key = keys.get(0);
+        final ServerPlayer payer = Acting.current().map(id -> this.level.getServer().getPlayerList().getPlayer(id))
+                .orElse(null);
+        final Text refused = UpdateDoor.refusal(this.level, this.terminal, key, set.action(), payer);
+        if (refused != null) {
+            return ICliComputer.OpResult.fail(refused);
+        }
+        if (set.action() == UpdateAction.ENCHANT && !set.hasOffer()) {
+            return ICliComputer.OpResult.ok(UpdateDoor.offersText(payer, key));
+        }
+        final Map<StorageKey, Long> stock = NetworkStorage.of(this.level, net).query();
+        StorageKey with = null;
+        if (set.action().takesSecond()) {
+            with = set.hasWith() ? mostHeld(stock, StorageKey.byName(set.with()))
+                    : UpdateDoor.material(stock, key.stack(1));
+            if (with == null) {
+                return ICliComputer.OpResult.fail(set.hasWith() ? NOTHING_TO_UPDATE.with(set.with())
+                        : UpdateDoor.NO_MATERIAL.with(key.displayName().getString()));
+            }
+        }
+        final long quantity = op.quantity() == IqlOperation.ALL ? stock.getOrDefault(key, 1L)
+                : Math.max(1L, op.quantity());
+        final UpdateRequest request = new UpdateRequest(((BlockEntity) this.terminal).getBlockPos(), key, quantity,
+                set.action(), set.offer() - 1, set.name(), with, from, payer == null ? null : payer.getUUID(),
+                this.terminal.originLabel(MoveLabels.IQL));
+        if (prioritize(mainframe.networkOperations().update(request), op) == null) {
+            return ICliComputer.OpResult.fail(UPDATE_FAILED);
+        }
+        return ICliComputer.OpResult.ok(UPDATE_QUEUED.with(OperationsService.qtyLabel(quantity),
+                key.displayName().getString(), set.action().name()));
+    }
+
+    /*
+     * Every variant the network holds of the statement's item, its WHERE kept to and its ORDER BY and LIMIT applied;
+     * with no ORDER BY, the most worn first for a repair and the one held most of first for anything else.
+     */
+    private List<StorageKey> variants(final IqlOperation op, @Nullable final NodeUuid scopeServer,
+                                      final UpdateAction action) {
+        final NetworkUuid net = this.terminal.networkUuid();
+        final StorageKey named = StorageKey.byName(op.item());
+        if (net == null || named == null) {
+            return List.of();
+        }
+        final NetworkStorage storage = scopeServer == null
+                ? NetworkStorage.of(this.level, net)
+                : NetworkStorage.ofServers(this.level, List.of(scopeServer));
+        final String server = scopeServer == null ? "" : NetworkLookup.serverLabel(this.level, scopeServer);
+        final List<Map.Entry<StorageKey, Long>> rows = new ArrayList<>();
+        for (final Map.Entry<StorageKey, Long> entry : storage.query().entrySet()) {
+            if (entry.getKey().item() == named.item() && entry.getValue() > 0L && (op.where() == null
+                    || op.where().matches(NetworkReadService.rowOf(entry.getKey(), entry.getValue(), server)))) {
+                rows.add(entry);
+            }
+        }
+        final Comparator<Map.Entry<StorageKey, Long>> order;
+        if (!op.orderBy().isEmpty()) {
+            final Comparator<Map.Entry<StorageKey, Long>> byField = Comparator.comparing(
+                    entry -> NetworkReadService.rowOf(entry.getKey(), entry.getValue(), server).apply(op.orderBy()),
+                    IqlService::compareFields);
+            order = op.orderByDescending() ? byField.reversed() : byField;
+        } else if (action == UpdateAction.REPAIR) {
+            order = Comparator.comparingInt((Map.Entry<StorageKey, Long> entry) -> entry.getKey().stack(1)
+                    .getDamageValue()).reversed();
+        } else {
+            order = Map.Entry.<StorageKey, Long>comparingByValue().reversed();
+        }
+        rows.sort(order);
+        final int cap = op.limit() > 0 ? Math.min(op.limit(), MAX_WILDCARD_TYPES) : MAX_WILDCARD_TYPES;
+        return rows.stream().limit(cap).map(Map.Entry::getKey).toList();
+    }
+
+    /* The variant of {@code named}'s item the network holds most of, or null when it holds none. */
+    @Nullable
+    private static StorageKey mostHeld(final Map<StorageKey, Long> stock, @Nullable final StorageKey named) {
+        if (named == null) {
+            return null;
+        }
+        StorageKey best = null;
+        long most = 0L;
+        for (final Map.Entry<StorageKey, Long> entry : stock.entrySet()) {
+            if (entry.getKey().item() == named.item() && entry.getValue() > most) {
+                best = entry.getKey();
+                most = entry.getValue();
+            }
+        }
+        return best;
     }
 
     /** The whole of this machine the engine is handed: what it reads, and what it asks to be done. */
