@@ -30,7 +30,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.Style;
 import net.minecraft.world.entity.player.Inventory;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -78,6 +77,9 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
     /** The copy the machine last reported, kept until the session that shows it is built. */
     @Nullable
     private static Copying pending;
+    /** What a screen being built to draw a monitor's face shows, handed to it alone and taken at once. */
+    @Nullable
+    private static Copying forFace;
 
     static {
         // The layout reserves a row per step; a list of another length would draw past it or leave a row empty.
@@ -111,9 +113,10 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
         this.inventoryLabelY = OFF_SCREEN;
         this.computerPos = session.hostPos();
         this.monitorPos = session.monitorPos();
-        final Copying copying = pending != null ? pending
+        final Copying copying = forFace != null ? forFace : pending != null ? pending
                 : new Copying(FirmwareKind.forEra(HardwareEra.STANDARD), "", "", -1, Phase.WORKING, "",
                         WORK_TICKS, WORK_TICKS);
+        forFace = null;
         this.kind = copying.kind();
         this.osName = copying.osName().isBlank() ? GameText.resolve(InstallerScreenTexts.COPY_INSTALLERS_SYSTEM)
                 : copying.osName();
@@ -136,6 +139,18 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
     public static void expectDone(final FirmwareKind kind, final String osName, final String targetLabel,
                                   final int targetSlot) {
         pending = new Copying(kind, osName, targetLabel, targetSlot, Phase.DONE, "", 0, WORK_TICKS);
+    }
+
+    /** The copy under way, for the next screen built to draw a monitor's face. */
+    public static void faceWorking(final FirmwareKind kind, final String osName, final String targetLabel,
+                                   final int ticksLeft, final int ticksTotal) {
+        forFace = new Copying(kind, osName, targetLabel, -1, Phase.WORKING, "", ticksLeft, ticksTotal);
+    }
+
+    /** The copy that finished, for the next screen built to draw a monitor's face. */
+    public static void faceDone(final FirmwareKind kind, final String osName, final String targetLabel,
+                                final int targetSlot) {
+        forFace = new Copying(kind, osName, targetLabel, targetSlot, Phase.DONE, "", 0, WORK_TICKS);
     }
 
     /** The copy the machine refused, and why, which the player has to hear instead of a false "complete". */
@@ -213,7 +228,7 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
     public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
         if (phase == Phase.DONE && in(primary, mouseX, mouseY)) {
             // Reboot into what was just installed: set it as the boot disk and let the machine come up.
-            PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos,
+            send(FirmwareActionPayload.of(computerPos, monitorPos,
                     FirmwareActionPayload.ACTION_BOOT_DISK, targetSlot, -1));
             return true;
         }
@@ -223,7 +238,7 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
         }
         if (phase == Phase.FAILED && in(primary, mouseX, mouseY)) {
             // Back to the firmware, where the medium's row says what this machine can and cannot install.
-            PacketDistributor.sendToServer(new RequestFirmwarePayload(computerPos, monitorPos));
+            send(new RequestFirmwarePayload(computerPos, monitorPos));
             return true;
         }
         if (phase == Phase.FAILED && in(secondary, mouseX, mouseY)) {

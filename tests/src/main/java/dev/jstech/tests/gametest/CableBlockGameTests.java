@@ -23,6 +23,9 @@ import dev.jstech.core.content.ModContent;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestCableTypes;
 import dev.jstech.tests.testkit.TestCables;
@@ -38,19 +41,25 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The Core's shared cable block: each line in its own lane, wires crossing faces alone in the middle and together in
@@ -333,6 +342,38 @@ public final class CableBlockGameTests {
         helper.succeed();
     }
 
+    /** Every cable's item says what its line is for and, unless one cable serves every era, which era it is of. */
+    @GameTest(template = ARENA)
+    public static void cableItem_saysWhatItsLineIsForAndItsEra(final GameTestHelper helper) {
+        assertTooltip(helper, ComputingModule.ETHERNET_CABLE, "Access line", HardwareEra.LEGACY);
+        assertTooltip(helper, ComputingModule.OM5_CABLE, "Backbone line", HardwareEra.ADVANCED);
+        assertTooltip(helper, ComputingModule.TELEPHONE_LINE, "Long distance line", HardwareEra.VINTAGE);
+        assertTooltip(helper, ComputingModule.HPC_CABLE, "HPC line", HardwareEra.STANDARD);
+        assertTooltip(helper, ComputingModule.VINTAGE_PERIPHERAL_CABLE, "Peripheral line", HardwareEra.VINTAGE);
+        assertTooltip(helper, ComputingModule.CRAFTING_CABLE, "Crafting line", null);
+        assertTooltip(helper, IndustrialModule.ENERGY_CABLE, "Energy line", null);
+        for (final CableEntry entry : ModContent.of("jsc").declaredCables()) {
+            helper.assertTrue(entry.get().what().isPresent(), entry.id() + " says what it is for");
+            helper.assertTrue(entry.get().era().isPresent() != (entry == ComputingModule.CRAFTING_CABLE),
+                    entry.id() + " names its era, unless it is the one cable of every era");
+        }
+        helper.succeed();
+    }
+
+    /*
+     * A cable block the game has placed but not yet told its wires, as a player's game sees it for a moment after a
+     * cable is laid, outlines a wire's core and never the whole block.
+     */
+    @GameTest(template = ARENA)
+    public static void cableBlock_notYetToldItsWiresOutlinesAWiresCore(final GameTestHelper helper) {
+        helper.setBlock(B, CoreCables.BLOCK.get());
+        final AABB box = helper.getBlockState(B).getShape(helper.getLevel(), helper.absolutePos(B)).bounds();
+        final double core = 4 * PIXEL + 1.0E-6;
+        helper.assertTrue(box.getXsize() <= core && box.getYsize() <= core && box.getZsize() <= core,
+                "a cable block with no wires yet is the size of a wire's core; got " + box);
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void parts_closeTheirFaceToWires(final GameTestHelper helper) {
         final CableBlockEntity west = TestCables.lay(helper, A, ComputingModule.ETHERNET_CABLE);
@@ -421,5 +462,28 @@ public final class CableBlockGameTests {
     private static void same(final GameTestHelper helper, final Object expected, final Object actual,
                              final String what) {
         helper.assertTrue(Objects.equals(expected, actual), what + ": expected " + expected + ", got " + actual);
+    }
+
+    /*
+     * The tooltip of the item that lays {@code cable}: a line starting {@code job}, and a line naming {@code era} in
+     * that era's colour, or no era line for a cable of none.
+     */
+    private static void assertTooltip(final GameTestHelper helper, final CableEntry cable, final String job,
+                                      @Nullable final HardwareEra era) {
+        final List<Component> lines = new ItemStack(cable.asItem()).getTooltipLines(
+                Item.TooltipContext.of(helper.getLevel()), null, TooltipFlag.NORMAL);
+        final List<String> said = lines.stream().map(Component::getString).toList();
+        helper.assertTrue(said.stream().anyMatch(line -> line.startsWith(job)),
+                cable.id() + " says it is the " + job + "; it says " + said);
+        final Component eraLine = lines.stream().filter(line -> line.getString().endsWith(" era")).findFirst()
+                .orElse(null);
+        if (era == null) {
+            helper.assertTrue(eraLine == null, cable.id() + " names no era; it says " + said);
+            return;
+        }
+        final TextColor colour = eraLine == null ? null : eraLine.getStyle().getColor();
+        helper.assertTrue(eraLine != null && eraLine.getString().equals(GameText.component(era.named()).getString())
+                        && colour != null && colour.getValue() == era.screenColor(),
+                cable.id() + " names the " + era + " era in its colour; it says " + said);
     }
 }

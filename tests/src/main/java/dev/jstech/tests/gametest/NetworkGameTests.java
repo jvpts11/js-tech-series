@@ -2658,8 +2658,8 @@ public final class NetworkGameTests {
         computer.getHardware().setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START,
                 new ItemStack(ComputingModule.GPU_HD_7970.get()));
         TestCables.lay(helper, cable, ComputingModule.PERIPHERAL_CABLE);
-        // Facing east, its back, where its video port is, takes the cable.
-        helper.setBlock(mon, monitorFacing(Direction.EAST));
+        // Facing west, out of its back, where its video port is, it takes the cable.
+        helper.setBlock(mon, monitorFacing(Direction.WEST));
         if (!(helper.getBlockEntity(mon) instanceof MonitorBlockEntity monitor)) {
             helper.fail("no monitor");
             return;
@@ -2691,7 +2691,7 @@ public final class NetworkGameTests {
         computer.getHardware().setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START,
                 new ItemStack(ComputingModule.GPU_HD_7970.get()));
         TestCables.lay(helper, cable, ComputingModule.PERIPHERAL_CABLE);
-        helper.setBlock(mon, monitorFacing(Direction.EAST));
+        helper.setBlock(mon, monitorFacing(Direction.WEST));
         helper.startSequence()
                 // The link is near-instant; the screen boots ~20 ticks later, so by 30 ticks it is lit.
                 .thenExecuteAfter(30, () -> helper.assertTrue(
@@ -2717,8 +2717,8 @@ public final class NetworkGameTests {
         final BlockPos cable = farPart.relative(facing.getClockWise());
         final BlockPos mon = cable.relative(facing.getClockWise());
         TestCables.lay(helper, cable, ComputingModule.PERIPHERAL_CABLE);
-        // Its back to the cable: facing away from the Mainframe.
-        helper.setBlock(mon, monitorFacing(facing.getClockWise()));
+        // Its back to the cable: a monitor faces out of its back, so it faces the Mainframe.
+        helper.setBlock(mon, monitorFacing(facing.getCounterClockWise()));
         if (!(helper.getBlockEntity(mon) instanceof MonitorBlockEntity monitor)) {
             helper.fail("no monitor");
             return;

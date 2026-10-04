@@ -58,6 +58,8 @@ final class WindowLayouts {
                     return size() > MAX_SAVED_DESKTOPS;
                 }
             };
+    /** Moves on each time the programs this client has for any machine change hands. */
+    private static int generation;
 
     WindowLayouts(final DesktopState desktop, final BlockPos host) {
         this.desktop = desktop;
@@ -67,6 +69,35 @@ final class WindowLayouts {
     /** Lets go of every machine's kept programs, as the player leaves a world. */
     static void forgetAll() {
         SAVED_APPS.clear();
+        generation++;
+    }
+
+    /**
+     * How many times the programs this client has for any machine have changed hands: a desktop opened or left, a
+     * session ended. A monitor's face drawn with them looks again when it moves on.
+     */
+    static int generation() {
+        return generation;
+    }
+
+    /**
+     * The programs this client has for the machine at {@code host}, by window key: those of the desktop open on the
+     * player's screen when it is that machine's, otherwise those kept since its desktop was left; none at all for a
+     * machine this client never sat at.
+     */
+    static Map<String, IDesktopApp> programsOf(final BlockPos host) {
+        final DesktopState open = DesktopScreen.current();
+        if (open != null && open.hostPos().equals(host)) {
+            final Map<String, IDesktopApp> apps = new LinkedHashMap<>();
+            for (final DesktopWindow w : open.wm().all()) {
+                if (!w.dialog()) {
+                    apps.put(w.appKey(), w.app());
+                }
+            }
+            return apps;
+        }
+        final Map<String, IDesktopApp> kept = SAVED_APPS.get(host);
+        return kept == null ? Map.of() : kept;
     }
 
     /**
@@ -79,6 +110,8 @@ final class WindowLayouts {
             return;
         }
         restored = true;
+        // The machine's programs are this desktop's now, which a face of it in the world draws from.
+        generation++;
         final DesktopWindows wm = desktop.wm();
         if (!wm.all().isEmpty()) {
             return;
@@ -122,9 +155,12 @@ final class WindowLayouts {
 
     /**
      * Shows the windows the machine has open on a desktop drawn for a monitor's face: each layout the server describes
-     * comes in whole, and nothing is ever told back. The windows are drawn with no program behind them
-     * ({@link MirroredWindowApp}), so a face seen across the room asks the machine nothing and takes no reply meant
-     * for a program open on the player's own screen.
+     * comes in whole, and nothing is ever told back.
+     *
+     * <p>A window whose program this client has, on the desktop open on its screen or kept since that desktop was
+     * left, is drawn by that very program, so the face shows what the player saw at the machine and not a stand-in.
+     * Only a window this client never had a program for is drawn with none behind it ({@link MirroredWindowApp}), so a
+     * face seen across the room asks the machine nothing and takes no reply meant for a program open on a screen.
      */
     void mirror(final List<OpenWindow> windows, final int workspace) {
         mirroring = true;
@@ -133,10 +169,13 @@ final class WindowLayouts {
         wm.all().clear();
         wm.setWorkspace(desktop.hasWorkspaces() ? workspace : 0);
         final DesktopViewport view = desktop.view();
+        final Map<String, IDesktopApp> programs = programsOf(host);
         for (final OpenWindow ow : windows) {
             // A window no launcher or program names (the machine's own welcome) shows no title rather than its key.
             final String name = desktop.nameOf(ow.key());
-            final IDesktopApp app = new MirroredWindowApp(name.equals(ow.key()) ? "" : name, ow.w(), ow.h());
+            final IDesktopApp live = programs.get(ow.key());
+            final IDesktopApp app = live != null ? live
+                    : new MirroredWindowApp(name.equals(ow.key()) ? "" : name, ow.w(), ow.h());
             app.applySkin(desktop.prefs().skin());
             final DesktopWindow w = new DesktopWindow(app, ow.key(), ow.x(), ow.y(), ow.w(), ow.h());
             w.moveTo(ow.x(), ow.y(), view.workAreaTop(), view.width(), view.workAreaBottom());
@@ -179,6 +218,7 @@ final class WindowLayouts {
     /** Lets go of the programs kept for this machine, whose session a reboot has just ended. */
     void forgetSession() {
         SAVED_APPS.remove(host);
+        generation++;
     }
 
     /**
@@ -204,6 +244,7 @@ final class WindowLayouts {
         } else {
             SAVED_APPS.put(host, apps);
         }
+        generation++;
     }
 
     /**

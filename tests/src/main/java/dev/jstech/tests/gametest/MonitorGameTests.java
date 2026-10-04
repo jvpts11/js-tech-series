@@ -17,14 +17,17 @@ import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.monitor.IMonitorPicture;
 import dev.jstech.computers.monitor.MonitorPictures;
+import dev.jstech.computers.operation.payload.OpenPostPayload;
 import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
+import io.netty.buffer.Unpooled;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
@@ -41,7 +44,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * The monitors of every era: a monitor against its computer needs no cable, flat panels side by side join into one
  * big screen that takes one video output, the power button on the block switches the computer, the three Haswell
  * desktop chips drive a screen with no card, and what a monitor's face shows is described from what its machine
- * holds.
+ * holds, a start or an install by the screen a player at the machine sees.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -218,6 +221,38 @@ public final class MonitorGameTests {
                 .thenSucceed();
     }
 
+    /*
+     * A machine in its self-test shows the screen a player at it sees, and the same picture a tick later: its clock
+     * is told as the game time it ends at, so a face is sent once a phase and not every tick, and a player's game
+     * reads the same picture from both, so the face it draws goes on as it is.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 600)
+    public static void picture_ofAMachineInItsSelfTestHoldsStill(final GameTestHelper helper) {
+        TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(PC);
+        helper.setBlock(PC.east(), facing(ComputingModule.MONITOR.get(), Direction.WEST));
+        final IMonitorPicture[] first = new IMonitorPicture[1];
+        helper.startSequence()
+                .thenWaitUntil(() -> {
+                    first[0] = MonitorPictures.describe(helper.getLevel(), entity(helper, PC.east()));
+                    helper.assertTrue(selfTest(first[0]), "the machine shows its self-test; showed " + first[0]);
+                })
+                .thenExecuteAfter(1, () -> {
+                    final IMonitorPicture next = MonitorPictures.describe(helper.getLevel(),
+                            entity(helper, PC.east()));
+                    // The self-test may just have ended; otherwise a tick changes nothing in the picture.
+                    if (!selfTest(next)) {
+                        return;
+                    }
+                    helper.assertTrue(next.equals(first[0]),
+                            "a tick on, the self-test is the same picture; was " + first[0] + ", is " + next);
+                    final IMonitorPicture readFirst = acrossTheWire(helper, first[0]);
+                    final IMonitorPicture readNext = acrossTheWire(helper, next);
+                    helper.assertTrue(readNext.equals(readFirst),
+                            "a player's game reads the same picture from both; read " + readFirst + " and " + readNext);
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA)
     public static void kinds_comeInTheirEras(final GameTestHelper helper) {
         helper.assertTrue(kind(ComputingModule.MONO_I_MONITOR.get()) == MonitorKind.MONO_I
@@ -295,6 +330,18 @@ public final class MonitorGameTests {
             }
         }
         return true;
+    }
+
+    private static boolean selfTest(final IMonitorPicture picture) {
+        return picture instanceof IMonitorPicture.Session session && session.opening() instanceof OpenPostPayload;
+    }
+
+    /* The picture as a player's game reads it: written as the server sends it, and read back. */
+    private static IMonitorPicture acrossTheWire(final GameTestHelper helper, final IMonitorPicture picture) {
+        final RegistryFriendlyByteBuf wire = new RegistryFriendlyByteBuf(Unpooled.buffer(),
+                helper.getLevel().registryAccess());
+        IMonitorPicture.STREAM_CODEC.encode(wire, picture);
+        return IMonitorPicture.STREAM_CODEC.decode(wire);
     }
 
     private static MonitorKind kind(final Block block) {

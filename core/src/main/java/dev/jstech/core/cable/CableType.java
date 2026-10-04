@@ -13,6 +13,8 @@ import dev.jstech.core.fluid.PipeLimits;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridMember;
 import dev.jstech.core.peripheral.PortKind;
+import dev.jstech.core.text.TextKey;
+import dev.jstech.core.tier.HardwareEra;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -60,6 +62,8 @@ public final class CableType {
     private final Supplier<? extends Item> item;
     private final boolean straight;
     private final int mostJoins;
+    private final @Nullable TextKey what;
+    private final @Nullable HardwareEra era;
 
     private CableType(final Builder builder, final Supplier<? extends Item> item) {
         this.line = Objects.requireNonNull(builder.line, "a cable carries a line");
@@ -79,6 +83,18 @@ public final class CableType {
         this.plug = Objects.requireNonNull(builder.plug, "a cable has a plug");
         this.plugs = builder.plugs.isEmpty() ? Map.of() : Map.copyOf(builder.plugs);
         this.item = Objects.requireNonNull(item, "item");
+        this.what = builder.what;
+        this.era = builder.era;
+    }
+
+    /** What the cable is for, as its item's tooltip says it; empty for a cable that says nothing. */
+    public Optional<TextKey> what() {
+        return Optional.ofNullable(this.what);
+    }
+
+    /** The era the cable belongs to, as its item's tooltip says it; empty for a cable of no era. */
+    public Optional<HardwareEra> era() {
+        return Optional.ofNullable(this.era);
     }
 
     /** Starts declaring a cable of {@code line}. */
@@ -207,6 +223,8 @@ public final class CableType {
         private final Map<PortKind, ResourceLocation> plugs = new EnumMap<>(PortKind.class);
         private boolean straight;
         private int mostJoins;
+        private @Nullable TextKey what;
+        private @Nullable HardwareEra era;
 
         /** How thick a cable is unless it says otherwise, in pixels. */
         private static final int STANDARD_THICKNESS = 4;
@@ -285,6 +303,17 @@ public final class CableType {
         /** It runs only straight: in a block it joins along one axis, and something else has to turn it. */
         public Builder runsStraight() {
             this.straight = true;
+            return this;
+        }
+
+        /**
+         * What the cable is for, in a sentence its item's tooltip shows ("Access line: joins the small computers to
+         * a router"), and the era it belongs to, which the tooltip names in that era's colour; null for a cable of no
+         * era.
+         */
+        public Builder describe(final TextKey job, @Nullable final HardwareEra ofEra) {
+            this.what = Objects.requireNonNull(job, "job");
+            this.era = ofEra;
             return this;
         }
 

@@ -52,9 +52,9 @@ public final class PeripheralCableClientTests {
                     for (int i = 0; i < ROWS.size(); i++) {
                         final Row row = ROWS.get(i);
                         final int y = 2 + i;
-                        // The screen faces west, its port on its back toward the cable; the drive faces east.
+                        // A screen faces out of its back, its port toward the cable east of it; the drive faces east.
                         level.setBlockAndUpdate(ctx.abs(new BlockPos(-2, y, ROW_Z)), row.screen().get()
-                                .defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.WEST));
+                                .defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.EAST));
                         for (int x = -1; x <= 1; x++) {
                             Cables.lay(level, ctx.abs(new BlockPos(x, y, ROW_Z)), row.cable().get());
                         }

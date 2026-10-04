@@ -7,13 +7,19 @@
  */
 package dev.jstech.core.cable;
 
+import dev.jstech.core.text.GameText;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
@@ -39,6 +45,16 @@ public final class CableItem extends Item {
     /** The cable it lays. */
     public CableType type() {
         return this.type.get();
+    }
+
+    /** What the cable is for, and the era it belongs to in that era's colour, as its declaration says them. */
+    @Override
+    public void appendHoverText(final ItemStack stack, final TooltipContext context, final List<Component> tooltip,
+                                final TooltipFlag flag) {
+        final CableType cable = type();
+        cable.what().ifPresent(what -> tooltip.add(GameText.component(what).withStyle(ChatFormatting.GRAY)));
+        cable.era().ifPresent(era -> tooltip.add(GameText.component(era.named())
+                .withStyle(style -> style.withColor(era.screenColor()))));
     }
 
     /**

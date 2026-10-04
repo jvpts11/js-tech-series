@@ -26,4 +26,12 @@ public final class PeripheralSockets {
     public static FacePorts back(final HardwareEra era) {
         return FacePorts.builder().port(FaceRule.BACK, PeripheralLine.of(era)).build();
     }
+
+    /**
+     * The port of a screen of {@code era}, on its back. A screen faces the way its player looked when placing it, so
+     * its glass turns to that player and its facing points out of its back: the port is on the face it faces.
+     */
+    public static FacePorts behindScreen(final HardwareEra era) {
+        return FacePorts.builder().port(FaceRule.FRONT, PeripheralLine.of(era)).build();
+    }
 }

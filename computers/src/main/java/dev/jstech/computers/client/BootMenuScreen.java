@@ -22,7 +22,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -52,6 +51,9 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
     /** The list the machine last sent, kept until the session that shows it is built. */
     @Nullable
     private static Standing pending;
+    /** What a screen being built to draw a monitor's face shows, handed to it alone and taken at once. */
+    @Nullable
+    private static Standing forFace;
 
     private final BlockPos computerPos;
     private final BlockPos monitorPos;
@@ -70,7 +72,9 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
         this.inventoryLabelY = OFF_SCREEN;
         this.computerPos = session.hostPos();
         this.monitorPos = session.monitorPos();
-        final Standing standing = pending != null ? pending : new Standing(BootMenu.NONE, 0);
+        final Standing standing = forFace != null ? forFace : pending != null ? pending
+                : new Standing(BootMenu.NONE, 0);
+        forFace = null;
         this.menu = standing.menu();
         this.remaining = Math.max(0, standing.remaining());
         this.at = this.menu.defaultIndex();
@@ -80,6 +84,11 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
     /** The list the machine is standing at, said before the session that shows it is opened. */
     public static void expect(final BootMenu menu, final int remaining) {
         pending = new Standing(menu, remaining);
+    }
+
+    /** The same, for the next screen built to draw a monitor's face, leaving what a session expects alone. */
+    public static void faceWith(final BootMenu menu, final int remaining) {
+        forFace = new Standing(menu, remaining);
     }
 
     /** One machine standing at its boot manager: what it lists, and how long before it goes on by itself. */
@@ -122,7 +131,7 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
         if (!this.held) {
             this.held = true;
             this.remaining = 0;
-            PacketDistributor.sendToServer(FirmwareActionPayload.of(this.computerPos, this.monitorPos,
+            send(FirmwareActionPayload.of(this.computerPos, this.monitorPos,
                     FirmwareActionPayload.ACTION_HOLD_BOOT_MENU, 0L, -1));
         }
         if (this.menu.entries().isEmpty()) {
@@ -232,7 +241,7 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
     private void choose() {
         final BootMenu.Entry entry = this.menu.entries().get(this.at);
         if (entry.isFirmware() || entry.isRestart()) {
-            PacketDistributor.sendToServer(FirmwareActionPayload.of(this.computerPos, this.monitorPos,
+            send(FirmwareActionPayload.of(this.computerPos, this.monitorPos,
                     entry.isFirmware() ? FirmwareActionPayload.ACTION_OPEN_SETUP
                             : FirmwareActionPayload.ACTION_RESTART_FROM_MENU, 0L, -1));
             return;
@@ -242,7 +251,7 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
          * so the choice has to name both; a row number only means anything to a list, and this list is not the
          * only one that offers this action.
          */
-        PacketDistributor.sendToServer(new FirmwareActionPayload(this.computerPos, this.monitorPos,
+        send(new FirmwareActionPayload(this.computerPos, this.monitorPos,
                 FirmwareActionPayload.ACTION_BOOT_ONCE, entry.slot(), -1, entry.osId()));
     }
 

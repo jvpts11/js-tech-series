@@ -9,8 +9,12 @@ package dev.jstech.computers.client.monitor;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.client.os.OffscreenDesktop;
+import dev.jstech.computers.client.term.TermFace;
 import dev.jstech.computers.client.term.TermPalette;
+import dev.jstech.computers.client.term.TermText;
 import dev.jstech.computers.gui.MonitorGlass;
+import dev.jstech.computers.gui.layout.CommandPromptLayout;
+import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.monitor.IMonitorPicture;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.operation.payload.WireLine;
@@ -36,6 +40,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Draws what a monitor's face shows from the server's description of it, into the picture the world shows: the glass
@@ -74,13 +79,17 @@ public final class MonitorPainter {
                              final BlockPos monitor, final float partialTick) {
         final Inks inks = INKS.get();
         g.fill(0, 0, width, height, inks.ground());
+        if (!(picture instanceof IMonitorPicture.Session)) {
+            SessionFaces.forget(monitor);
+        }
         switch (picture) {
             case IMonitorPicture.Dark dark -> {
                 // The glass with nothing on it is the ground already laid.
             }
-            case IMonitorPicture.Lines lines -> lines(g, width, lines, inks);
-            case IMonitorPicture.Console console -> console(g, height, console, inks);
+            case IMonitorPicture.Console console -> console(g, width, height, console, inks);
             case IMonitorPicture.Desktop desktop -> desktop(g, desktop, monitor, partialTick);
+            // A session is drawn by the very screen it opens, so the face is what a player at it sees.
+            case IMonitorPicture.Session session -> SessionFaces.paint(g, session, monitor, partialTick);
         }
     }
 
@@ -108,59 +117,49 @@ public final class MonitorPainter {
         Draw.textCentered(g, font, wait, width / 2, by + MARGIN + 2 * ROW + 2, inks.dim());
     }
 
+    /** The desktop drawn for the face of the monitor at {@code monitor}, or null while it draws none. */
+    @Nullable
+    public static OffscreenDesktop desktopOf(final BlockPos monitor) {
+        final Shown shown = DESKTOPS.get(monitor);
+        return shown == null ? null : shown.desktop;
+    }
+
     @SubscribeEvent
     public static void onLeave(final ClientPlayerNetworkEvent.LoggingOut event) {
         DESKTOPS.clear();
     }
 
-    private static void lines(final GuiGraphics g, final int width, final IMonitorPicture.Lines picture,
-                              final Inks inks) {
+    /**
+     * A machine at its prompt, in the terminal's own font at the size the open prompt picks for this glass, its rows
+     * as far apart as the font is tall: the last lines the console printed, and the prompt under them with its caret.
+     */
+    private static void console(final GuiGraphics g, final int width, final int height,
+                                final IMonitorPicture.Console picture, final Inks inks) {
         final Font font = Minecraft.getInstance().font;
-        Draw.text(g, font, GameText.resolve(picture.title()), MARGIN, MARGIN, inks.title(), inks.ground());
-        int y = MARGIN + ROW * 2;
-        final int right = width * 11 / 20;
-        for (final IMonitorPicture.Line line : picture.lines()) {
-            int colour = switch (line.tone()) {
-                case IMonitorPicture.Line.DIM -> inks.dim();
-                case IMonitorPicture.Line.GOOD -> inks.good();
-                case IMonitorPicture.Line.BAD -> inks.bad();
-                default -> inks.plain();
-            };
-            int ground = inks.ground();
-            if (line.tone() == IMonitorPicture.Line.PICKED) {
-                g.fill(MARGIN - 2, y - 1, width - MARGIN + 2, y + ROW - 1, inks.pickedBar());
-                colour = inks.pickedText();
-                ground = inks.pickedBar();
-            }
-            Draw.text(g, font, GameText.resolve(line.left()), MARGIN, y, colour, ground);
-            if (!line.right().isEmpty()) {
-                Draw.text(g, font, GameText.resolve(line.right()), right, y, colour, ground);
-            }
-            y += ROW;
-        }
-    }
-
-    private static void console(final GuiGraphics g, final int height, final IMonitorPicture.Console picture,
-                                final Inks inks) {
-        final Font font = Minecraft.getInstance().font;
-        final int rows = Math.max(1, (height - MARGIN * 2) / ROW - 1);
+        final TermFace.Fitted fitted = TermFace.forGlass(
+                width - CommandPromptLayout.GLASS_LEFT - CommandPromptLayout.GLASS_RIGHT_MARGIN,
+                TermBuffer.MONITOR_COLUMNS);
+        final TermFace face = fitted.face();
+        final float scale = fitted.scale();
+        final int pitch = Math.max(1, Math.round(face.height() * scale));
+        final int rows = Math.max(1, (height - MARGIN * 2) / pitch - 1);
         final List<WireLine> lines = picture.lines();
         int y = MARGIN;
         for (int i = Math.max(0, lines.size() - rows); i < lines.size(); i++) {
-            int x = MARGIN;
+            int x = CommandPromptLayout.GLASS_LEFT;
             for (final WireLine.Span span : lines.get(i).spans()) {
                 final String text = GameText.resolve(span.text());
-                Draw.text(g, font, text, x, y, TermPalette.colorOf(CliStyle.byId(span.style())), inks.ground());
-                x += font.width(text);
+                TermText.draw(face, g, font, text, x, y, scale, TermPalette.colorOf(CliStyle.byId(span.style())));
+                x += TermText.width(face, text, scale);
             }
-            y += ROW;
+            y += pitch;
         }
         final int prompt = TermPalette.colorOf(CliStyle.PROMPT);
-        Draw.text(g, font, picture.prompt(), MARGIN, y, prompt, inks.ground());
-        // The cursor blinks where the next letter goes, as a terminal's does.
+        TermText.draw(face, g, font, picture.prompt(), CommandPromptLayout.GLASS_LEFT, y, scale, prompt);
+        // The caret blinks where the next letter goes, as a terminal's does.
         if (Util.getMillis() / 500 % 2 == 0) {
-            final int at = MARGIN + font.width(picture.prompt());
-            g.fill(at, y, at + 5, y + 8, prompt);
+            final int at = CommandPromptLayout.GLASS_LEFT + TermText.width(face, picture.prompt(), scale);
+            g.fill(at, y, at + Math.max(1, Math.round(face.width() * scale)), y + pitch - 1, prompt);
         }
     }
 
@@ -172,7 +171,10 @@ public final class MonitorPainter {
                     picture.desktopId(), picture.ramTotalMb(), picture.ramReservedMb()));
             DESKTOPS.put(monitor.immutable(), shown);
         }
-        if (!picture.windows().equals(shown.windows) || picture.workspace() != shown.workspace) {
+        final int programs = OffscreenDesktop.programsGeneration();
+        if (!picture.windows().equals(shown.windows) || picture.workspace() != shown.workspace
+                || programs != shown.programs) {
+            shown.programs = programs;
             final List<OpenWindow> windows = new ArrayList<>(picture.windows().size());
             for (final DesktopWindowsPayload.WireWindow window : picture.windows()) {
                 windows.add(window.toOpenWindow());
@@ -200,6 +202,8 @@ public final class MonitorPainter {
         private final OffscreenDesktop desktop;
         private List<DesktopWindowsPayload.WireWindow> windows = List.of();
         private int workspace = -1;
+        /** Which hands this client's programs were in when the windows were last shown. */
+        private int programs = -1;
 
         private Shown(final IMonitorPicture.Desktop made, final OffscreenDesktop desktop) {
             this.made = made;

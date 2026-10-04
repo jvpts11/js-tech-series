@@ -116,7 +116,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -181,6 +180,11 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
     /** The setup the machine last described, kept until the session that shows it is built. */
     @Nullable
     private static Setup pending;
+    /** What a screen being built to draw a monitor's face shows, with the parts it lists, taken at once. */
+    @Nullable
+    private static Setup forFace;
+    @Nullable
+    private static FirmwareStatePayload forFaceState;
 
     private final BlockPos computerPos;
     private final BlockPos monitorPos;
@@ -211,16 +215,27 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         this.inventoryLabelY = OFF_SCREEN;
         this.computerPos = session.hostPos();
         this.monitorPos = session.monitorPos();
-        final Setup setup = pending != null ? pending
+        final Setup setup = forFace != null ? forFace : pending != null ? pending
                 : new Setup(FirmwareKind.forEra(
                         session.hardwareEra() == null ? HardwareEra.STANDARD : session.hardwareEra()), "");
         this.kind = setup.kind();
         this.machineName = setup.machineName();
+        // A face is handed the parts the machine reads, since it asks the machine nothing itself.
+        this.state = forFace != null ? forFaceState : null;
+        forFace = null;
+        forFaceState = null;
     }
 
     /** Which firmware this machine wears and what it is called, said before its setup is opened. */
     public static void expect(final FirmwareKind kind, final String machineName) {
         pending = new Setup(kind, machineName);
+    }
+
+    /** The same, for the next screen built to draw a monitor's face, with the parts the machine reads. */
+    public static void faceWith(final FirmwareKind kind, final String machineName,
+                                @Nullable final FirmwareStatePayload state) {
+        forFace = new Setup(kind, machineName);
+        forFaceState = state;
     }
 
     /** One machine's setup: the look its board's age gives it, and the name written across the top. */
@@ -234,8 +249,10 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
     @Override
     protected void init() {
         super.init();
-        active = this;
-        PacketDistributor.sendToServer(new RequestFirmwareStatePayload(computerPos));
+        if (!onFace()) {
+            active = this;
+        }
+        send(new RequestFirmwareStatePayload(computerPos));
     }
 
     /**
@@ -252,7 +269,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         this.sinceAsked++;
         if (this.sinceAsked >= ASK_EVERY) {
             this.sinceAsked = 0;
-            PacketDistributor.sendToServer(new RequestFirmwareStatePayload(computerPos));
+            send(new RequestFirmwareStatePayload(computerPos));
         }
     }
 
@@ -316,7 +333,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         if (page == PAGE_STORAGE) {
             if (state != null && state.raid().present()
                     && (storageSel == RaidMode.NONE || state.raid().drives() >= storageSel.minDrives())) {
-                PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos,
+                send(FirmwareActionPayload.of(computerPos, monitorPos,
                         FirmwareActionPayload.ACTION_RAID_MODE, storageSel.id(), -1));
             }
             return;
@@ -327,7 +344,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         }
         if (page == PAGE_ORDER) {
             if (e.kind() == FirmwareStatePayload.KIND_DISK) {
-                PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos,
+                send(FirmwareActionPayload.of(computerPos, monitorPos,
                         FirmwareActionPayload.ACTION_SET_BOOT, e.ref(), -1));
             }
             return;
@@ -346,7 +363,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         }
         final int action = e.kind() == FirmwareStatePayload.KIND_DISK
                 ? FirmwareActionPayload.ACTION_BOOT_DISK : FirmwareActionPayload.ACTION_BOOT_MEDIA;
-        PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos, action, e.ref(), -1));
+        send(FirmwareActionPayload.of(computerPos, monitorPos, action, e.ref(), -1));
         /*
          * And nothing else: the machine puts the next screen up, and this one goes when that one arrives.
          * Closing here as well sent the server a close right behind the request, and the server handles them
@@ -451,7 +468,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
      */
     private void openInstaller(final long readerRef) {
         final int target = state == null ? -1 : state.installTargetSlot();
-        PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos,
+        send(FirmwareActionPayload.of(computerPos, monitorPos,
                 FirmwareActionPayload.ACTION_INSTALL, readerRef, target));
     }
 
@@ -1097,7 +1114,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             return;
         }
         confirmFormatRef = Long.MIN_VALUE;
-        PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos,
+        send(FirmwareActionPayload.of(computerPos, monitorPos,
                 FirmwareActionPayload.ACTION_FORMAT, e.ref(), -1));
     }
 

@@ -69,7 +69,8 @@ public final class PeripheralCableGameTests {
                 {new BlockPos(1, 2, 1), new BlockPos(2, 2, 1)}};
         final BlockPos[] monitors = {new BlockPos(3, 2, 0), new BlockPos(0, 2, 3), new BlockPos(1, 4, 0),
                 new BlockPos(3, 2, 1)};
-        final Direction[] facing = {Direction.EAST, Direction.SOUTH, Direction.EAST, Direction.EAST};
+        // A monitor faces out of its back, where its port is: each one's faces its run.
+        final Direction[] facing = {Direction.WEST, Direction.NORTH, Direction.WEST, Direction.WEST};
         // The fourth run does not touch the computer, only the first two runs, which are of other eras and never join
         // it, so its monitor stays unlinked.
         for (int i = 0; i < cables.size(); i++) {
@@ -96,13 +97,37 @@ public final class PeripheralCableGameTests {
         standardPcWithCard(helper);
         TestCables.lay(helper, new BlockPos(1, 2, 0), ComputingModule.ADVANCED_PERIPHERAL_CABLE);
         final BlockPos monitor = new BlockPos(2, 2, 0);
-        helper.setBlock(monitor, monitorFacing(Direction.EAST));
+        helper.setBlock(monitor, monitorFacing(Direction.WEST));
         helper.startSequence()
                 .thenExecuteAfter(LINK_TICKS, () -> {
                     helper.assertTrue(!linked(helper, monitor), "the Advanced cable does not reach the computer");
                     helper.assertTrue(!cable(helper, new BlockPos(1, 2, 0)).crosses(
                                     ComputingModule.ADVANCED_PERIPHERAL_CABLE.get(), Direction.WEST),
                             "and does not plug into it");
+                })
+                .thenSucceed();
+    }
+
+    /** A monitor takes its cable on its back, never on its glass, and the cable is drawn plugged into that back. */
+    @GameTest(template = ARENA)
+    public static void monitor_takesTheCableOnlyOnItsBack(final GameTestHelper helper) {
+        standardPcWithCard(helper);
+        final BlockPos run = new BlockPos(1, 2, 0);
+        TestCables.lay(helper, run, ComputingModule.PERIPHERAL_CABLE);
+        final BlockPos monitor = new BlockPos(2, 2, 0);
+        // A monitor faces out of its back, so facing east its glass is turned to the cable.
+        helper.setBlock(monitor, monitorFacing(Direction.EAST));
+        helper.startSequence()
+                .thenExecuteAfter(LINK_TICKS, () -> {
+                    helper.assertTrue(!linked(helper, monitor), "a cable against the glass does not link the monitor");
+                    helper.assertTrue(!plugsAt(helper, run, Direction.EAST).contains(plug("hdmi")),
+                            "nor plugs into the glass; got " + plugsAt(helper, run, Direction.EAST));
+                })
+                .thenExecute(() -> helper.setBlock(monitor, monitorFacing(Direction.WEST)))
+                .thenExecuteAfter(LINK_TICKS, () -> {
+                    helper.assertTrue(linked(helper, monitor), "turned with its back to the cable, it links");
+                    helper.assertTrue(plugsAt(helper, run, Direction.EAST).contains(plug("hdmi")),
+                            "and the cable plugs into its back; got " + plugsAt(helper, run, Direction.EAST));
                 })
                 .thenSucceed();
     }
@@ -189,7 +214,7 @@ public final class PeripheralCableGameTests {
         final BlockPos toScreen = new BlockPos(1, 2, 0);
         final BlockPos toDrive = new BlockPos(0, 2, 1);
         TestCables.lay(helper, toScreen, ComputingModule.PERIPHERAL_CABLE);
-        helper.setBlock(new BlockPos(2, 2, 0), monitorFacing(Direction.EAST));
+        helper.setBlock(new BlockPos(2, 2, 0), monitorFacing(Direction.WEST));
         TestCables.lay(helper, toDrive, ComputingModule.PERIPHERAL_CABLE);
         helper.setBlock(new BlockPos(0, 2, 2), facingBlock(ComputingModule.DVD_DRIVE.get(), Direction.SOUTH));
         helper.startSequence()

@@ -102,7 +102,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   there when its lane is free, and against the face clicked otherwise or while sneaking; breaking takes out only the
   wire or the part looked at, the block going with its last piece; a dye colours the wire looked at. A mod declares
   its cables with its content, each with its line, its lane, its thickness, how much it carries, how far it reaches,
-  its jacket and the plug it ends in where it meets a device that takes it.
+  its jacket and the plug it ends in where it meets a device that takes it, and what the cable is for and the era it
+  belongs to, which its item's tooltip says, the era in that era's colour. A cable block the player's game has not
+  yet been told the wires of is outlined as a wire's core, so laying a cable never flashes a whole block's outline.
 - Energy in J's Core. FE is registered as the unit `jscore:fe` in a new synced registry of energy units, where a mod
   adds its own with what it is worth in FE: an exact ratio of two whole numbers, rounding down so no energy is made
   out of a rounding. An item can hold energy in the `jscore:energy` component, given the game's energy capability
@@ -599,11 +601,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   (green, the Vintage Monitor that was), the Amber and the sixteen-colour CGA; the Legacy Monitor, a colour picture
   tube; the Transition Monitor, a 19-inch flat panel; the Monitor; and the Color Monitor, a 27-inch IPS panel, for
   the Advanced. Every screen has the desktop's shape, and the era's video port in the middle of the back.
-- A monitor's face shows live what its machine shows: its self-test, its system coming up or going down, its boot
-  manager or firmware, its prompt with the last lines printed, or its desktop with the windows it has open. The
-  server sends what changed and only to the players near it; each player's game draws it, often close up, slowly a
-  little further off, and from past thirty-two blocks only the power light shows, so a room of screens costs the
-  server nothing.
+- A monitor's face shows live what a player standing at its machine sees: its self-test, its system coming up or
+  going down, its boot manager, its firmware and its installer, each drawn whole by the very screen that shows it at
+  the machine; its prompt with the last lines printed, in the terminal's own font; or its desktop with the windows
+  it has open, each drawn by the program itself when the player's game has it open or kept from the last visit. The
+  server sends the screen a phase opens with once, when the phase begins, and only to the players near it; each
+  player's game draws it, often close up, slowly a little further off, and from past thirty-two blocks only the power
+  light shows, so a room of screens costs the server nothing.
 - The monitor's tube colours what reaches its glass: on the Mono I, Mono II and Amber every system comes out in that
   one phosphor, brighter or dimmer, and on the CGA as the nearest of its sixteen colours, both on the opened screen
   and on the face in the world. The Vintage screens no longer paint themselves green: the monitor does.

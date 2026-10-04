@@ -63,6 +63,9 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
      */
     @Nullable
     private static Starting pending;
+    /** What a screen being built to draw a monitor's face shows, handed to it alone and taken at once. */
+    @Nullable
+    private static Starting forFace;
 
     static {
         /*
@@ -90,9 +93,10 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         this.imageHeight = H;
         this.titleLabelX = OFF_SCREEN;
         this.inventoryLabelY = OFF_SCREEN;
-        final Starting starting = pending != null ? pending
+        final Starting starting = forFace != null ? forFace : pending != null ? pending
                 : new Starting(BootSequence.NONE, FALLBACK_TICKS, FALLBACK_TICKS, false, BootSplash.PLAIN,
                         BootIdentity.NONE);
+        forFace = null;
         this.sequence = starting.sequence();
         this.splash = starting.splash();
         this.totalTicks = starting.totalTicks() > 0 ? starting.totalTicks() : FALLBACK_TICKS;
@@ -111,6 +115,12 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
     public static void expect(final BootSequence sequence, final int remainingTicks, final int totalTicks,
                               final boolean endsDark, final BootSplash splash, final BootIdentity who) {
         pending = new Starting(sequence, remainingTicks, totalTicks, endsDark, splash, who);
+    }
+
+    /** The same, for the next screen built to draw a monitor's face, leaving what a session expects alone. */
+    public static void faceWith(final BootSequence sequence, final int remainingTicks, final int totalTicks,
+                                final boolean endsDark, final BootSplash splash, final BootIdentity who) {
+        forFace = new Starting(sequence, remainingTicks, totalTicks, endsDark, splash, who);
     }
 
     /** One machine coming up: what it prints, how far along it is, and what it comes up behind. */
@@ -145,7 +155,7 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
      */
     @Override
     public void removed() {
-        if (!this.endsDark) {
+        if (!this.endsDark && !onFace()) {
             SceneHandoff.leave(monitor(), lastGround());
         }
         super.removed();

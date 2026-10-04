@@ -8,6 +8,8 @@
 package dev.jstech.core.peripheral;
 
 import dev.jstech.core.connect.Connection;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.resources.ResourceLocation;
 
@@ -20,7 +22,12 @@ import net.minecraft.resources.ResourceLocation;
  * <p>How far a run reaches grows with the era: eight cables on the Vintage, then twelve, fourteen, sixteen and twenty.
  * The numbers are first estimates.
  */
+@TextHolder
 public final class PeripheralLine {
+
+    /** What the line is for, in the sentence a cable of it says on its tooltip. */
+    public static final TextKey JOB = TextKey.of("jscore.cable.line.peripheral",
+            "Peripheral line: joins a computer to its own screens, speakers and devices");
 
     private PeripheralLine() {
     }

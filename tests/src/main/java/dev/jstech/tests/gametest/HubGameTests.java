@@ -82,7 +82,8 @@ public final class HubGameTests {
         final BlockPos hub = PC.east();
         helper.setBlock(hub, ComputingModule.STANDARD_HUB.get());
         final BlockPos monitor = hub.east();
-        helper.setBlock(monitor, facing(ComputingModule.MONITOR.get(), Direction.EAST));
+        // Its back, where its port is, to the hub: a monitor faces out of its back.
+        helper.setBlock(monitor, facing(ComputingModule.MONITOR.get(), Direction.WEST));
         final BlockPos drive = hub.south();
         helper.setBlock(drive, ComputingModule.DVD_DRIVE.get());
         helper.startSequence()

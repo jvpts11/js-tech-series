@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.core.client.gui.component.Grounds;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -65,6 +66,23 @@ public final class OffscreenDesktop implements DesktopSurface {
      */
     public void showWindows(final List<OpenWindow> windows, final int workspace) {
         state.mirrorWindows(windows, workspace);
+    }
+
+    /**
+     * How many times the programs this client has for any machine have changed hands; a face drawn with them shows its
+     * windows again when this moves on, so a program opened or left at the machine reaches its face.
+     */
+    public static int programsGeneration() {
+        return WindowLayouts.generation();
+    }
+
+    /** The programs its windows are drawn by, back-most first. */
+    public List<IDesktopApp> windowPrograms() {
+        final List<IDesktopApp> programs = new ArrayList<>();
+        for (final DesktopWindow window : state.wm().all()) {
+            programs.add(window.app());
+        }
+        return programs;
     }
 
     /** What the desktop lists as things it can start, in the order its launcher shows them. */

@@ -205,6 +205,11 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     /** The page the machine last sent, kept until the session that shows it is built. */
     @Nullable
     private static OpenInstallerPayload pending;
+    /** What a screen being built to draw a monitor's face shows, with the parts it reads, taken at once. */
+    @Nullable
+    private static OpenInstallerPayload forFace;
+    @Nullable
+    private static FirmwareStatePayload forFaceState;
 
     /** The screen currently open, so the machine's own description of itself finds it. */
     private static InstallerScreen active;
@@ -217,7 +222,13 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         this.inventoryLabelY = OFF_SCREEN;
         this.computerPos = session.hostPos();
         this.monitorPos = session.monitorPos();
-        if (pending != null) {
+        if (forFace != null) {
+            // A face is handed the page and the parts the machine reads, since it asks the machine nothing itself.
+            this.accept(forFace);
+            this.state = forFaceState;
+            forFace = null;
+            forFaceState = null;
+        } else if (pending != null) {
             this.accept(pending);
         }
     }
@@ -225,6 +236,12 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     /** The page the machine has reached, said before the session that shows it is opened. */
     public static void expect(final OpenInstallerPayload payload) {
         pending = payload;
+    }
+
+    /** The same, for the next screen built to draw a monitor's face, with the parts the machine reads. */
+    public static void faceWith(final OpenInstallerPayload payload, @Nullable final FirmwareStatePayload state) {
+        forFace = payload;
+        forFaceState = state;
     }
 
     /**
@@ -242,8 +259,10 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     @Override
     protected void init() {
         super.init();
-        active = this;
-        PacketDistributor.sendToServer(new RequestFirmwareStatePayload(this.computerPos));
+        if (!onFace()) {
+            active = this;
+        }
+        send(new RequestFirmwareStatePayload(this.computerPos));
     }
 
     @Override
@@ -769,7 +788,10 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     }
 
     private void send(final InstallerActionPayload payload) {
-        PacketDistributor.sendToServer(payload);
+        // A face answers nothing for anybody: nobody is at it.
+        if (!onFace()) {
+            PacketDistributor.sendToServer(payload);
+        }
     }
 
     /**

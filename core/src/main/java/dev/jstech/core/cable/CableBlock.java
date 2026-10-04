@@ -51,8 +51,8 @@ import org.jetbrains.annotations.Nullable;
 public final class CableBlock extends Block implements EntityBlock {
 
     public static final MapCodec<CableBlock> CODEC = simpleCodec(CableBlock::new);
-    /* A block whose entity is not there yet has the shape of a wire's core. */
-    private static final VoxelShape CORE = Block.box(6, 6, 6, 10, 10, 10);
+    /* A block whose entity is not there yet, or has not been told its wires yet, has the shape of a wire's core. */
+    static final VoxelShape CORE = Block.box(6, 6, 6, 10, 10, 10);
 
     public CableBlock(final Properties properties) {
         super(properties);

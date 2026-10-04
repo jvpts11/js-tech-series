@@ -12,18 +12,34 @@ import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.block.MonitorPanel;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.client.AbstractComputerScreen;
+import dev.jstech.computers.client.BootSequenceScreen;
 import dev.jstech.computers.client.CommandPromptScreen;
+import dev.jstech.computers.client.InstallerScreen;
+import dev.jstech.computers.client.SystemBootScreen;
+import dev.jstech.computers.client.monitor.MonitorPainter;
 import dev.jstech.computers.client.monitor.MonitorPictureCache;
+import dev.jstech.computers.client.monitor.SessionFaces;
 import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.client.os.DesktopWindow;
+import dev.jstech.computers.client.os.IDesktopApp;
+import dev.jstech.computers.client.os.OffscreenDesktop;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.layout.PowerStripLayout;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.monitor.IMonitorPicture;
+import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
+import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.core.client.live.LiveScreens;
 import dev.jstech.core.gui.Tube;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.IntPredicate;
@@ -35,12 +51,15 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.client.ClientHooks;
 import net.neoforged.neoforge.items.ItemStackHandler;
+import org.jetbrains.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * The monitors as a player sees them: every era's face from its real counterpart, the machine's screen live on the
  * glass of one nearby and gone from a distance, the Vintage systems in the tube's own colours (amber on an amber
- * monitor, sixteen colours on a CGA), flat panels joined into one screen, and the power strip on an opened screen
- * shutting the machine down.
+ * monitor, sixteen colours on a CGA), flat panels joined into one screen, the power strip on an opened screen
+ * shutting the machine down, and the face showing what a player at the machine sees: its start by the very screens
+ * that show it, its installer on the page the player is on, and a program open at it by that program.
  */
 public final class MonitorClientTests {
 
@@ -48,6 +67,7 @@ public final class MonitorClientTests {
     private static final int BOOT_WAIT = 1_200;
     private static final int LIGHT_WAIT = 400;
     private static final ResourceLocation MC_DOS = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_dos");
+    private static final String MINESWEEPER = "Minesweeper";
     /* The eight monitors in a row along x, two blocks apart, their screens toward the player to the south. */
     private static final BlockPos ROW = new BlockPos(2, 2, 2);
     private static final BlockPos ROW_VIEW = new BlockPos(9, 2, 8);
@@ -60,6 +80,9 @@ public final class MonitorClientTests {
     private static final BlockPos COMPUTER = new BlockPos(5, 2, 2);
     private static final BlockPos SCREEN = new BlockPos(6, 2, 2);
     private static final BlockPos AT_SCREEN = new BlockPos(8, 2, 2);
+    private static final BlockPos DRIVE = new BlockPos(4, 2, 2);
+    private static final ResourceLocation FREEBSD =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "freebsd");
 
     private MonitorClientTests() {
     }
@@ -174,6 +197,128 @@ public final class MonitorClientTests {
                 })
                 .thenWaitUntilServer(level -> pc[0].goingDown() || !pc[0].isRunning(), 200,
                         "the Power button to shut the machine down", level -> "the machine is still up");
+    }
+
+    @ClientTest(timeoutTicks = 2400)
+    public static void face_showsTheMachineStartingByTheScreensAPlayerAtItSees(final ClientTestContext ctx) {
+        final Set<Class<?>> seen = new HashSet<>();
+        ctx.thenBuild(0, world -> {
+                    world.placeRunningPersonalComputer(COMPUTER);
+                    world.placeMonitor(SCREEN, Direction.WEST);
+                })
+                .thenTeleport(0, AT_SCREEN, Direction.WEST)
+                // Every tick, the screen the face is drawn by, until the machine is at its desktop.
+                .thenWaitUntil(() -> {
+                    final AbstractComputerScreen<?> face = SessionFaces.screenOf(ctx.abs(SCREEN));
+                    if (face != null) {
+                        seen.add(face.getClass());
+                    }
+                    return MonitorPictureCache.of(ctx.abs(SCREEN)) instanceof IMonitorPicture.Desktop;
+                }, BOOT_WAIT, "the machine to reach its desktop")
+                .then(0, () -> ctx.assertTrue(seen.contains(BootSequenceScreen.class),
+                        "the face showed the self-test by the very screen a player at the machine sees; saw " + seen))
+                .then(0, () -> ctx.assertTrue(seen.contains(SystemBootScreen.class),
+                        "and the system starting the same way; saw " + seen));
+    }
+
+    @ClientTest(timeoutTicks = 3000)
+    public static void face_drawsTheProgramOpenAtTheMachine(final ClientTestContext ctx) {
+        final IDesktopApp[] opened = new IDesktopApp[1];
+        ctx.thenBuild(0, world -> {
+                    final PersonalComputerBlockEntity pc = world.placeRunningPersonalComputer(COMPUTER);
+                    pc.console().install(Programs.MINESWEEPER.toString());
+                    world.placeMonitor(SCREEN, Direction.WEST);
+                })
+                .thenTeleport(SETTLE, AT_SCREEN, Direction.WEST)
+                .thenWaitUntil(() -> MonitorPictureCache.of(ctx.abs(SCREEN)) instanceof IMonitorPicture.Desktop,
+                        BOOT_WAIT, "the machine to come up")
+                .thenRightClick(SETTLE, SCREEN)
+                .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
+                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).launcherLabels().contains(MINESWEEPER),
+                        LIGHT_WAIT, "the desktop to list Minesweeper")
+                .then(SETTLE, () -> DesktopScreen.requestOpen(MINESWEEPER))
+                .thenWaitUntil(() -> {
+                    opened[0] = openProgram(ctx, MINESWEEPER);
+                    return opened[0] != null;
+                }, LIGHT_WAIT, "Minesweeper to open")
+                .thenWaitUntil(() -> faceDraws(ctx, opened[0]), LIGHT_WAIT,
+                        "the face to draw the window by the program open at the machine")
+                .then(0, () -> ctx.player().closeContainer())
+                .thenAwaitNoScreen(LIGHT_WAIT)
+                .thenWaitUntil(() -> faceDraws(ctx, opened[0]), LIGHT_WAIT,
+                        "and by the same program once the player has stepped away from it")
+                .thenScreenshot(SETTLE, "face-with-a-program");
+    }
+
+    @ClientTest(timeoutTicks = 2400)
+    public static void face_showsTheInstallerOnThePageThePlayerIsOn(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+                    world.setBlock(COMPUTER, ComputingModule.MAINFRAME.get());
+                    final ItemStackHandler inventory = world.blockEntity(COMPUTER, MainframeBlockEntity.class)
+                            .getInventory();
+                    inventory.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
+                            new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
+                    inventory.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
+                            new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
+                    inventory.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
+                            new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
+                    inventory.setStackInSlot(MainframeBlockEntity.PSU_SLOT,
+                            new ItemStack(ComputingModule.PSU_650G.get()));
+                    inventory.setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
+                            new ItemStack(ComputingModule.GPU_HD_7970.get()));
+                    inventory.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
+                            new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+                    world.blockEntity(COMPUTER, MainframeBlockEntity.class).togglePower();
+                    world.setBlock(DRIVE, ComputingModule.CD_DRIVE.get());
+                    final ItemStack disc = new ItemStack(ComputingModule.CD_ROM.get());
+                    MediaItem.setKind(disc, MediaKind.OS_INSTALL);
+                    MediaItem.setPayload(disc, FREEBSD);
+                    world.blockEntity(DRIVE, MediaReaderBlockEntity.class).mediaSlot().setStackInSlot(0, disc);
+                    world.placeMonitor(SCREEN, Direction.WEST);
+                })
+                .thenServer(SETTLE * 3, level -> {
+                    final MainframeBlockEntity mainframe = TestWorldBuilder.at(level, ctx.origin())
+                            .blockEntity(COMPUTER, MainframeBlockEntity.class);
+                    mainframe.setNeedsPost(false);
+                    FirmwarePayloads.beginInstall(level, mainframe, -1L, -1);
+                })
+                .thenTeleport(SETTLE, AT_SCREEN, Direction.WEST)
+                .thenWaitUntil(() -> facePage(ctx, "WELCOME"), LIGHT_WAIT,
+                        "the face to show the installer's welcome by the installer's own screen")
+                .thenScreenshot(SETTLE, "face-installer")
+                .thenRightClick(SETTLE, SCREEN)
+                .thenAwaitScreen(InstallerScreen.class, LIGHT_WAIT)
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .thenWaitUntil(() -> "NAME".equals(ctx.screen(InstallerScreen.class).pageName()), LIGHT_WAIT,
+                        "Enter to carry the installer on to its next page")
+                .thenWaitUntil(() -> facePage(ctx, "NAME"), LIGHT_WAIT, "and the face to follow it there");
+    }
+
+    /* Whether the face of the monitor is drawn by the installer's screen, on the page named {@code page}. */
+    private static boolean facePage(final ClientTestContext ctx, final String page) {
+        return SessionFaces.screenOf(ctx.abs(SCREEN)) instanceof InstallerScreen face && page.equals(face.pageName());
+    }
+
+    /* The program drawing the window titled {@code title} on the open desktop, or null. */
+    @Nullable
+    private static IDesktopApp openProgram(final ClientTestContext ctx, final String title) {
+        final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
+        final DesktopWindow window = desktop == null ? null : desktop.windowFor(title);
+        return window == null ? null : window.app();
+    }
+
+    /* Whether the face of the monitor draws a window by that very program. */
+    private static boolean faceDraws(final ClientTestContext ctx, final IDesktopApp program) {
+        final OffscreenDesktop face = MonitorPainter.desktopOf(ctx.abs(SCREEN));
+        if (face == null) {
+            return false;
+        }
+        for (final IDesktopApp drawn : face.windowPrograms()) {
+            if (drawn == program) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /* A Vintage machine at its MC-DOS prompt on that monitor, the prompt opened. */

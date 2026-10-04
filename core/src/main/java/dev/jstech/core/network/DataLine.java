@@ -11,6 +11,8 @@ import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableIds;
 import dev.jstech.core.id.StableNames;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>Each era of a line is a generation of it, so a port takes its own era's cable and every earlier one. The crafting
  * line has a single cable for every era. {@link DataLines} turns a line into what cables and ports are made of.
  */
+@TextHolder
 public enum DataLine implements IStableId, IStableName {
 
     ACCESS(0, "access"),
@@ -39,6 +42,16 @@ public enum DataLine implements IStableId, IStableName {
 
     private static final StableIds<DataLine> IDS = StableIds.of(DataLine.class);
     private static final StableNames<DataLine> NAMES = StableNames.of(DataLine.class);
+    private static final TextKey ACCESS_JOB = TextKey.of("jscore.cable.line.access",
+            "Access line: joins the small computers to a router");
+    private static final TextKey BACKBONE_JOB = TextKey.of("jscore.cable.line.backbone",
+            "Backbone line: joins the routers, the Mainframe and the racks");
+    private static final TextKey LONG_DISTANCE_JOB = TextKey.of("jscore.cable.line.long_distance",
+            "Long distance line: joins two networks, gateway to gateway");
+    private static final TextKey HPC_JOB = TextKey.of("jscore.cable.line.hpc",
+            "HPC line: joins a supercomputer's nodes to its interface");
+    private static final TextKey CRAFTING_JOB = TextKey.of("jscore.cable.line.crafting",
+            "Crafting line: joins a crafting computer to the parts that feed its machines");
 
     DataLine(final int id, final String serializedName) {
         this.id = id;
@@ -78,6 +91,17 @@ public enum DataLine implements IStableId, IStableName {
     /** The line's id, as cables and ports name it: {@code jscore:data/<name>}. */
     public String lineId() {
         return "jscore:data/" + this.serializedName;
+    }
+
+    /** What the line is for, in the sentence a cable of it says on its tooltip. */
+    public TextKey job() {
+        return switch (this) {
+            case ACCESS -> ACCESS_JOB;
+            case BACKBONE -> BACKBONE_JOB;
+            case LONG_DISTANCE -> LONG_DISTANCE_JOB;
+            case HPC -> HPC_JOB;
+            case CRAFTING -> CRAFTING_JOB;
+        };
     }
 
     /** The generation a cable of this line has in {@code era}; the crafting line has one for every era. */

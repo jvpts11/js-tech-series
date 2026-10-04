@@ -28,32 +28,19 @@ import dev.jstech.computers.menu.IMonitorMenu;
 import dev.jstech.computers.menu.LinuxTtyMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.menu.NetTerminalMenu;
-import dev.jstech.computers.operation.payload.OpenBootMenuPayload;
+import dev.jstech.computers.monitor.SessionOpenings;
 import dev.jstech.computers.operation.payload.OpenComputerUiPayload;
-import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
 import dev.jstech.computers.operation.payload.OpenInstallerPayload;
 import dev.jstech.computers.operation.payload.OpenKvmPayload;
-import dev.jstech.computers.operation.payload.OpenPostPayload;
-import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
-import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
 import dev.jstech.computers.os.ConsoleIdentity;
-import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
-import dev.jstech.computers.os.boot.SystemIntegrity;
 import dev.jstech.computers.os.OsDisks;
-import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.VramLedger;
 import dev.jstech.computers.os.boot.BootController;
-import dev.jstech.computers.os.boot.BootIdentity;
-import dev.jstech.computers.os.boot.BootLines;
-import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.computers.os.install.InstallerFlow;
-import dev.jstech.computers.os.install.Installers;
-import dev.jstech.computers.os.install.OsInstallJob;
-import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
@@ -75,6 +62,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -152,7 +140,7 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
     @Override
     public FacePorts ports() {
         if (this.ports == null) {
-            this.ports = PeripheralSockets.back(era());
+            this.ports = PeripheralSockets.behindScreen(era());
         }
         return this.ports;
     }
@@ -321,6 +309,15 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
      * the pending install is dropped.
      */
     public static Entry entryFor(final IOsHost computer) {
+        return entryFor(computer, true);
+    }
+
+    /**
+     * The same, settling nothing when {@code settle} is false: an installer or a pending install whose system is gone
+     * is passed over without being dropped, which is how the monitor's face in the world asks, since looking at a
+     * machine from across the room must not change what happens when somebody sits down at it.
+     */
+    public static Entry entryFor(final IOsHost computer, final boolean settle) {
         if (!computer.isRunning()) {
             return Entry.NO_POWER;
         }
@@ -358,7 +355,9 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
             if (systemStillThere) {
                 return Entry.INSTALLING;
             }
-            computer.setInstaller(null);
+            if (settle) {
+                computer.setInstaller(null);
+            }
         }
         if (computer.atBootMenu()) {
             return Entry.BOOT_MENU;
@@ -373,7 +372,9 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
             if (systemStillThere) {
                 return Entry.INSTALLER;
             }
-            computer.setPendingInstallSlot(IOsHost.NO_PENDING_INSTALL);
+            if (settle) {
+                computer.setPendingInstallSlot(IOsHost.NO_PENDING_INSTALL);
+            }
         }
         return Entry.BOOT;
     }
@@ -420,10 +421,7 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
     /** Sends the client the boot manager this machine is standing at, with what is left of its wait. */
     public static void openBootMenu(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                     final BlockPos owner, final IOsHost computer) {
-        PacketDistributor.sendToPlayer(player, new OpenBootMenuPayload(
-                owner, monitorPos,
-                BootLines.menuFor(computer, computer.menuRemaining()),
-                computer.menuRemaining()));
+        PacketDistributor.sendToPlayer(player, SessionOpenings.bootMenu(monitorPos, owner, computer));
         openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.BOOT_MENU);
     }
 
@@ -435,26 +433,8 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
      */
     public static void openSystemBoot(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                       final BlockPos owner, final IOsHost computer) {
-        PacketDistributor.sendToPlayer(player, new OpenSystemBootPayload(
-                owner, monitorPos, computer.bootRemaining(), computer.bootTotal(),
-                computer.bootSequence(), false, splashOf(computer), identityOf(computer)));
+        PacketDistributor.sendToPlayer(player, SessionOpenings.systemBoot(monitorPos, owner, computer));
         openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.SYSTEM_BOOT);
-    }
-
-    /**
-     * Who is coming up: the desktop, the system by the name it prints of itself, and the machine's host name,
-     * which a desktop's own loading screen may name.
-     *
-     * <p>The desktop is what the machine booted with rather than what is installed on it: a desktop added a
-     * moment ago waits for a restart, so the screen that shows a desktop coming up has to show the one that
-     * really is.
-     */
-    private static BootIdentity identityOf(final IOsHost computer) {
-        final ResourceLocation desktop = computer.bootedDesktopId();
-        final OsDef system = computer.installedOs();
-        return new BootIdentity(desktop == null ? "" : desktop.getPath(),
-                system == null ? "" : system.displayName(), Installers.hostName(computer),
-                computer.console() == null ? "" : computer.console().desktop().cdeStyle().encoded());
     }
 
     /**
@@ -467,19 +447,8 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
      */
     public static void openSystemDown(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                       final BlockPos owner, final IOsHost computer) {
-        // On its way off the system says so and the screen ends dark; on its way round it says it is restarting.
-        final boolean off = computer.poweringOff();
-        PacketDistributor.sendToPlayer(player, new OpenSystemBootPayload(
-                owner, monitorPos, computer.downRemaining(), computer.downTotal(),
-                BootLines.shutdownFor(computer, !off), off, splashOf(computer),
-                identityOf(computer).goingDown()));
+        PacketDistributor.sendToPlayer(player, SessionOpenings.systemDown(monitorPos, owner, computer));
         openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.SYSTEM_BOOT);
-    }
-
-    /** The picture that machine's system comes up behind, or the plain one when it has no system. */
-    private static BootSplash splashOf(final IOsHost computer) {
-        final OsDef system = computer.installedOs();
-        return system == null ? BootSplash.PLAIN : BootSplash.of(system.platform(), system.familyRank());
     }
 
     /**
@@ -511,45 +480,23 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
     /** Sends the client the copy this machine is in the middle of, at the point the machine has reached. */
     private static void openInstallProgress(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                             final BlockPos owner, final IOsHost computer) {
-        final InstallerFlow flow = computer.installer();
-        final OsInstallJob job = computer.installing();
-        if (flow != null) {
-            /*
-             * The installer is the machine's, so a monitor opened halfway through is put on the page the
-             * machine has reached, with the work it has already done behind it.
-             */
-            final int done = job == null ? flow.ticksTotal() : job.ticksTotal() - job.ticksLeft();
-            PacketDistributor.sendToPlayer(player, OpenInstallerPayload
-                    .of(owner, monitorPos, flow, done));
-            openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.INSTALLER);
+        /*
+         * The installer is the machine's, so a monitor opened halfway through is put on the page the machine has
+         * reached, with the work it has already done behind it.
+         */
+        final CustomPacketPayload opening = SessionOpenings.installProgress(monitorPos, owner, computer);
+        if (opening == null) {
             return;
         }
-        if (job == null) {
-            return;
-        }
-        final HardwareEra era = computer.displayEra();
-        final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
-        final OsDef os = OsRegistry
-                .getOs(ResourceLocation.tryParse(job.osId()));
-        PacketDistributor.sendToPlayer(player, new OsInstallProgressPayload(
-                owner, monitorPos, kind.id(), os != null ? os.displayName() : job.osId(),
-                OsInstallRunner.targetLabel(job.targetSlot()), job.ticksLeft(), job.ticksTotal()));
-        openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.INSTALL_PROGRESS);
+        PacketDistributor.sendToPlayer(player, opening);
+        openSession(player, level, monitorPos, owner, computer, opening instanceof OpenInstallerPayload
+                ? MonitorSessionMenu.Phase.INSTALLER : MonitorSessionMenu.Phase.INSTALL_PROGRESS);
     }
 
     /** Sends the client the finished installer's reboot prompt for the system it just put on the disk. */
     private static void openInstallerPrompt(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                             final BlockPos owner, final IOsHost computer) {
-        final int slot = computer.pendingInstallSlot();
-        final HardwareEra era = computer.displayEra();
-        final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
-        final ResourceLocation osId = slot < 0 ? computer.installedOsId()
-                : OsDisks.systemOn(computer.diskInSlot(slot));
-        final OsDef os = osId == null ? null
-                : OsRegistry.getOs(osId);
-        final String osName = os != null ? os.displayName() : "";
-        PacketDistributor.sendToPlayer(player, new OpenInstallDonePayload(
-                owner, monitorPos, kind.id(), osName, OsInstallRunner.targetLabel(slot), slot, Text.EMPTY));
+        PacketDistributor.sendToPlayer(player, SessionOpenings.installDone(monitorPos, owner, computer));
         openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.INSTALL_PROGRESS);
     }
 
@@ -578,20 +525,8 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
     public static void openPost(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                 final BlockPos owner) {
         final BlockEntity ownerBe = level.getBlockEntity(owner);
-        final String name = level.getBlockState(owner).getBlock().getName().getString();
-        final HardwareEra era = ownerBe instanceof IOsHost c ? c.displayEra() : null;
-        final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
-        final int remaining = ownerBe instanceof IOsHost machine ? machine.postRemaining() : 0;
-        // A machine standing at a failed self-test opens at the end of it, not at the start of another one.
-        final boolean halted = ownerBe instanceof IOsHost machine && machine.haltedAtPost();
-        /*
-         * What the machine found wrong with its own disk, when that is why it stopped: a system whose loader
-         * has been deleted is found and will not start, and the screen says which file it wanted.
-         */
-        final Text complaint = ownerBe instanceof IOsHost machine
-                ? SystemIntegrity.check(machine).complaint() : Text.EMPTY;
-        PacketDistributor.sendToPlayer(player,
-                new OpenPostPayload(owner, monitorPos, kind.id(), name, remaining, halted, complaint));
+        PacketDistributor.sendToPlayer(player, SessionOpenings.post(level, monitorPos, owner,
+                ownerBe instanceof IOsHost host ? host : null));
         if (ownerBe instanceof IOsHost machine) {
             openSession(player, level, monitorPos, owner, machine, MonitorSessionMenu.Phase.POST);
         }
@@ -664,10 +599,8 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
     /** Sends the client the era-correct firmware setup screen for the host computer. */
     private static void openFirmwareUi(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                        final BlockPos owner, final BlockEntity ownerBe) {
-        final String name = level.getBlockState(owner).getBlock().getName().getString();
-        final HardwareEra era = ownerBe instanceof IOsHost c ? c.displayEra() : null;
-        final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
-        PacketDistributor.sendToPlayer(player, new OpenComputerUiPayload(owner, monitorPos, kind.id(), name));
+        PacketDistributor.sendToPlayer(player, SessionOpenings.firmware(level, monitorPos, owner,
+                ownerBe instanceof IOsHost host ? host : null));
         if (ownerBe instanceof IOsHost machine) {
             openSession(player, level, monitorPos, owner, machine, MonitorSessionMenu.Phase.FIRMWARE);
         }

@@ -4,5 +4,6 @@
   "block.jsindustrial.electric_furnace": "Forno Elétrico",
   "block.jsindustrial.macerator": "Macerador",
   "item.jsindustrial.energy_cable": "Cabo de Energia",
-  "itemGroup.jsindustrial.industrial": "J's Industrial"
+  "itemGroup.jsindustrial.industrial": "J's Industrial",
+  "jsindustrial.cable.energy": "Linha de energia: leva a energia dos geradores às máquinas, a qualquer distância, sem perder nada"
 }

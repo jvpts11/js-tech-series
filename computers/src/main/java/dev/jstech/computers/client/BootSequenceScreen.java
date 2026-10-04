@@ -47,7 +47,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -92,6 +91,11 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
     /** The self-test the machine last reported, kept until the session that shows it is built. */
     @Nullable
     private static Testing pending;
+    /** What a screen being built to draw a monitor's face shows, with the parts it lists, taken at once. */
+    @Nullable
+    private static Testing forFace;
+    @Nullable
+    private static FirmwareStatePayload forFaceState;
 
     private final BlockPos computerPos;
     private final BlockPos monitorPos;
@@ -126,8 +130,12 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         this.inventoryLabelY = OFF_SCREEN;
         this.computerPos = session.hostPos();
         this.monitorPos = session.monitorPos();
-        final Testing testing = pending != null ? pending
+        final Testing testing = forFace != null ? forFace : pending != null ? pending
                 : new Testing(FirmwareKind.forEra(HardwareEra.STANDARD), "", FALLBACK_TICKS, false, "");
+        // A face is handed the parts the machine reads, since it asks the machine nothing itself.
+        this.state = forFace != null ? forFaceState : null;
+        forFace = null;
+        forFaceState = null;
         this.kind = testing.kind();
         this.machineName = testing.machineName();
         this.complaint = testing.complaint();
@@ -147,6 +155,14 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
     public static void expect(final FirmwareKind kind, final String machineName, final int remainingTicks,
                               final boolean halted, final String complaint) {
         pending = new Testing(kind, machineName, remainingTicks, halted, complaint);
+    }
+
+    /** The same, for the next screen built to draw a monitor's face, with the parts the machine reads. */
+    public static void faceWith(final FirmwareKind kind, final String machineName, final int remainingTicks,
+                                final boolean halted, final String complaint,
+                                @Nullable final FirmwareStatePayload state) {
+        forFace = new Testing(kind, machineName, remainingTicks, halted, complaint);
+        forFaceState = state;
     }
 
     /**
@@ -173,8 +189,10 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
     @Override
     protected void init() {
         super.init();
-        active = this;
-        PacketDistributor.sendToServer(new RequestFirmwareStatePayload(computerPos));
+        if (!onFace()) {
+            active = this;
+        }
+        send(new RequestFirmwareStatePayload(computerPos));
     }
 
     @Override
@@ -229,12 +247,12 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
          */
         if (completed && !setupRequested && bootingFrom().isEmpty()) {
             setupRequested = true;
-            PacketDistributor.sendToServer(new PostCompletePayload(computerPos, monitorPos, false));
+            send(new PostCompletePayload(computerPos, monitorPos, false));
             return true;
         }
         if (keyCode == InputConstants.KEY_DELETE && !completed && !setupRequested) {
             setupRequested = true;
-            PacketDistributor.sendToServer(new PostCompletePayload(computerPos, monitorPos, true));
+            send(new PostCompletePayload(computerPos, monitorPos, true));
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
@@ -321,7 +339,7 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
                  * A disk boots this once and the saved order stays where it is; a medium boots the way it does
                  * from the setup, since booting one is already a thing that happens once.
                  */
-                PacketDistributor.sendToServer(chosen.slot() >= 0
+                send(chosen.slot() >= 0
                         ? new FirmwareActionPayload(computerPos, monitorPos,
                                 FirmwareActionPayload.ACTION_BOOT_ONCE, chosen.slot(), -1,
                                 chosen.entry().osId())

@@ -329,7 +329,11 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
                 }
             }
             made = Shapes.or(made, this.parts.shape());
-            this.voxels = made.isEmpty() ? Shapes.block() : made.optimize();
+            /*
+             * A block just placed on a player's game has no wires until the server's word about them arrives, a tick
+             * later: until then it outlines a wire's core, as a block with no entity yet does, never a whole block.
+             */
+            this.voxels = made.isEmpty() ? CableBlock.CORE : made.optimize();
         }
         return this.voxels;
     }

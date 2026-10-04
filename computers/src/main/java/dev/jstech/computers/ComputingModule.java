@@ -1062,7 +1062,9 @@ public final class ComputingModule {
     private static CableBuilder dataCable(final String id, final DataLine line, final HardwareEra era,
                                           final String jacket, final String plug) {
         final DataLink link = new DataLink(line, era);
+        // The crafting line has one cable for every era, so its cable names none.
         final CableType.Builder builder = CableType.builder(DataLines.of(link))
+                .describe(line.job(), line == DataLine.CRAFTING ? null : era)
                 .carries(link.throughput(), link.range())
                 .jacket(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/" + jacket))
                 .plug(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/plug/" + plug));
@@ -1084,6 +1086,7 @@ public final class ComputingModule {
     private static CableBuilder peripheralCable(final String id, final HardwareEra era, final String jacket,
                                                 final String devicePlug, final String videoPlug) {
         final CableType.Builder builder = CableType.builder(PeripheralLine.of(era))
+                .describe(PeripheralLine.JOB, era)
                 .grid(GridKind.PERIPHERAL)
                 .lane(Lane.LEFT)
                 .carries(0L, PeripheralLine.range(era))

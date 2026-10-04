@@ -136,6 +136,7 @@ public final class IndustrialModule {
      * amount of energy any distance and losing none of it.
      */
     public static final CableEntry ENERGY_CABLE = CONTENT.cable("energy_cable", CableType.builder(ENERGY_LINE)
+                    .describe(IndustrialTexts.ENERGY_CABLE_JOB, null)
                     .grid(GridKind.POWER).lane(Lane.BOTTOM_LEFT).carries(Long.MAX_VALUE, 0)
                     .jacket(ResourceLocation.fromNamespaceAndPath(JsIndustrial.MODID, "block/cable/energy"))
                     .plug(ResourceLocation.fromNamespaceAndPath(JsIndustrial.MODID, "block/cable/plug/energy")))

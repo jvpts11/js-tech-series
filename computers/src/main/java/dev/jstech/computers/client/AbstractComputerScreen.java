@@ -16,10 +16,15 @@ import dev.jstech.core.client.gui.theme.EraThemes;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
+import java.util.function.Supplier;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -33,6 +38,11 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
 
     /** The skin this screen paints with for the current render pass; STANDARD until {@link #init} resolves it. */
     protected EraTheme theme = EraThemes.STANDARD;
+    /**
+     * Whether this screen draws a monitor's face in the world rather than the screen a player has open: it is the
+     * same screen drawing the same thing, but nobody is at it, so it tells the server nothing and never closes.
+     */
+    private final boolean face;
 
     /**
      * Where a label goes when the screen draws none.
@@ -47,8 +57,88 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
     protected static final float WALL_SCALE = TextWall.SCALE;
     protected static final int WALL_ROW = TextWall.ROW;
 
+    /** A pointer far off the glass, for a face, which nothing on it should light up for. */
+    private static final int FAR = -10_000;
+
+    /** Set while a screen is being built to draw a face, which its constructor reads. */
+    private static boolean buildingFace;
+
     protected AbstractComputerScreen(final T menu, final Inventory playerInventory, final Component title) {
         super(menu, playerInventory, title);
+        this.face = buildingFace;
+    }
+
+    /**
+     * Builds a screen to draw a monitor's face in the world, the way {@code make} builds it, laid out as it would be
+     * on a game window just bigger than its glass by {@code aroundX} and {@code aroundY}, so the glass stands at half
+     * of each from the corner.
+     */
+    public static <S extends AbstractComputerScreen<?>> S face(final Supplier<S> make, final int aroundX,
+                                                               final int aroundY) {
+        buildingFace = true;
+        final S screen;
+        try {
+            screen = make.get();
+        } finally {
+            buildingFace = false;
+        }
+        screen.init(Minecraft.getInstance(), screen.imageWidth + aroundX, screen.imageHeight + aroundY);
+        return screen;
+    }
+
+    /** How wide this screen's glass is drawn. */
+    public final int glassWidth() {
+        return imageWidth;
+    }
+
+    /** How tall this screen's glass is drawn. */
+    public final int glassHeight() {
+        return imageHeight;
+    }
+
+    /**
+     * Draws this screen as a monitor's face: what it draws when it is open, with no pointer anywhere on it, and
+     * without the game's dimming of the world behind it or the tube, which the face is given after.
+     */
+    public final void paintFace(final GuiGraphics g, final float partialTick) {
+        JsTechTheme.bind(theme);
+        try {
+            renderBg(g, partialTick, FAR, FAR);
+            for (final Renderable widget : renderables) {
+                widget.render(g, FAR, FAR, partialTick);
+            }
+            g.pose().pushPose();
+            g.pose().translate(leftPos, topPos, 0);
+            renderLabels(g, FAR, FAR);
+            g.pose().popPose();
+        } finally {
+            JsTechTheme.unbind();
+        }
+    }
+
+    /** Moves this screen on by one tick as a monitor's face, as it would move on with the screen open. */
+    public final void tickFace() {
+        containerTick();
+    }
+
+    /** Never sees itself out while it draws a face: nobody is at it to leave. */
+    @Override
+    public void onClose() {
+        if (!face) {
+            super.onClose();
+        }
+    }
+
+    /** Whether this screen draws a monitor's face in the world rather than a screen a player has open. */
+    protected final boolean onFace() {
+        return face;
+    }
+
+    /** Tells the server, unless this screen draws a face, which nobody is at to tell it anything. */
+    protected final void send(final CustomPacketPayload payload) {
+        if (!face) {
+            PacketDistributor.sendToServer(payload);
+        }
     }
 
     /** Draws one line of a text wall with its top left corner at {@code (x, y)}. */
