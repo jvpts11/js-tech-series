@@ -7,7 +7,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### API
-- J's Core's API is at version 2 and J's Computers' at version 3. Everything this release adds to either, or
+- J's Core's API is at version 2 and J's Computers' at version 4. Everything this release adds to either, or
   changes, carries `@ApiStatus.Experimental`: it keeps the mark through this release and loses it when the next
   cycle begins. Each mod's API is now kept line by line, every type and member a mod can reach with the version
   that brought it, and the tests fail when the code and that list disagree; `docs/API.md` says how.
@@ -20,6 +20,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   registers a Network Operations Engine by its package (a program registered like any other), the dialect it
   speaks, the version it ships in for each age of Mainframe and the extras it offers; until it brings a planner of
   its own it plans the way the Midsoft IQL Server does. Its package is of the new kind `ProgramKind.NETWORK_ENGINE`.
+- Added: the package `dev.jstech.computers.api.planner`, for the engines that take extensions (NextgreIQL among
+  them): `IPlannerRule` weighs every plan the planner considers and is switched on or off per Mainframe;
+  `IPlannerOperator` is a hint the dialect accepts after a statement; `IPlannerStatistic` shows among the planner's
+  statistics and may say how long a step takes; `IExplainNode` adds notes under a plan's steps. A plan is a
+  `PlanCandidate` of `PlanStep`s, whose cost a rule or a hint may change or which it may set aside, saying why. They
+  are registered with `ComputersRegisterEvent.plannerRule`, `plannerOperator`, `plannerStatistic` and `explainNode`
+  (or the `JsComputersApi.register...` methods of the same names).
 - Added: `ProgramRequirement` and `ProgramSpec.requires`, with `requiring`: a program says what it needs of the
   network's engine (the engine it is written for and the oldest version of it, or the capabilities it uses), which
   is checked when it is opened rather than when it is installed.
@@ -406,6 +413,25 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   many items and how long it took, a row's detail below the grid. A trace starts, pauses and stops, picks the groups
   of events it records, finds a row, replays a statement in the studio, and is saved to and opened from the
   computer's disk.
+- NextgreIQL, a second Network Operations Engine, from the Nextgre house: the explicit one, which shows how it built
+  a plan and lets the player take part in it. A Mainframe from the Legacy on installs it as a package, in the version
+  of its age (7.0 on a Legacy, 8.3 on a Transition, 9.0 on a Standard, 16 on an Advanced), and it plans every craft
+  it is asked for by weighing the plans it could make: bench recipes first, machine recipes first, each other bench
+  recipe of the result, the raw materials from the fastest servers, one stage at a time. Each costs the time it is
+  reckoned to take, built up the plan's tree: a bench step at the speed of the network's crafting computers, a
+  machine step at the time that recipe was measured to take on this network, a pull at what each server and the
+  cable to it carry; the cheapest not set aside is the one that runs, and how it ran is measured for the next plans.
+  Its dialect is the network's language with more: `EXPLAIN` before a CRAFT or a SELECT shows the plan and runs
+  nothing, `EXPLAIN ANALYZE` runs it and fills each step in with what it took, and hints after a CRAFT change the
+  plan (`PREFER SOURCE`, `AVOID SOURCE`, `MAX PARALLEL`, `PREFER MACHINE`, `PREFER BENCH`). `ANALYZE` gathers its
+  statistics. Its rules can be switched off for each Mainframe, and other mods add rules, hints, statistics and
+  notes to its planner. The Midsoft IQL Server does not speak these words.
+- The Nextgre Planner Studio, NextgreIQL's own tool, on any windowed system from the Legacy on: on its Explain tab
+  a statement's plan as a tree of boxes, each with the time reckoned against the time it took, the hints marked on
+  the boxes they changed, and beside it the plans weighed with their costs and why any was set aside; Explain (F7)
+  and Explain Analyze (Shift+F7). Its Statistics tab lists what the planner reckons with, its Rules tab its rules,
+  each switched on or off, and the hints it takes, and its History tab the plans made lately, any of which opens on
+  the Explain tab. It opens only where NextgreIQL runs.
 - The menus of J's Core write an item's keys at the right of its row.
 - A shared list of the network's Operations in flight, which the Network Manager's Processes tab and the studio's
   Activity Monitor both show.

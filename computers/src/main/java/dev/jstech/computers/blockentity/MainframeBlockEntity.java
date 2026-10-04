@@ -14,6 +14,8 @@ import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.MainframeStructure;
 import dev.jstech.computers.block.OpticalPort;
 import dev.jstech.computers.crafting.CraftPlanner;
+import dev.jstech.computers.crafting.CraftPlanning;
+import dev.jstech.computers.crafting.CraftRouting;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.ICraftIo;
 import dev.jstech.computers.crafting.MultiStagePattern;
@@ -21,6 +23,7 @@ import dev.jstech.computers.crafting.NetworkCraftOperation;
 import dev.jstech.computers.crafting.NetworkMultiStageOperation;
 import dev.jstech.computers.crafting.NetworkProcessingOperation;
 import dev.jstech.computers.crafting.NetworkRecipe;
+import dev.jstech.computers.crafting.PendingCraftOperation;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.engine.INetworkEngine;
 import dev.jstech.computers.engine.NetworkOperationsService;
@@ -74,6 +77,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -883,6 +887,33 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             final CraftPlanner.Plan plan, final String requesterLabel,
             @Nullable final CraftingPattern extraPattern) {
         return crafts.plannedCraft(key, demand, plan, requesterLabel, extraPattern);
+    }
+
+    /** The same, carried out the way {@code routing} says: where the raw materials come from, how much at once. */
+    @Nullable
+    public NetworkCraftOperation submitPlannedCraft(
+            final StorageKey key, final long demand,
+            final CraftPlanner.Plan plan, final String requesterLabel,
+            @Nullable final CraftingPattern extraPattern, final CraftRouting routing) {
+        return crafts.plannedCraft(key, demand, plan, requesterLabel, extraPattern, routing);
+    }
+
+    /**
+     * A craft an engine plans with a planner of its own: {@code planning} runs on a virtual thread (it may only read
+     * what was captured on this one) while the request shows as pending, and the craft it becomes runs the way the
+     * plan's routing says. {@code delivered} hears of that craft. Null where nothing makes it or no craft can run.
+     */
+    @Nullable
+    public PendingCraftOperation submitEnginePlannedCraft(
+            final StorageKey key, final long demand, final boolean partial, final String label,
+            final Supplier<CraftPlanning.Routed> planning,
+            @Nullable final Consumer<NetworkCraftOperation> delivered) {
+        return crafts.planAsyncWith(key, demand, partial, label, planning, delivered);
+    }
+
+    /** The network's bench patterns with every cell that accepts a tag settled against {@code stock}. */
+    public List<CraftingPattern> resolvedNetworkPatterns(final Map<StorageKey, Long> stock) {
+        return crafts.resolvedPatterns(stock);
     }
 
     /**
@@ -1907,6 +1938,20 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     }
 
     public void markIqlCatalogChanged() {
+        setChanged();
+    }
+
+    /**
+     * What the engine installed by {@code program} keeps on this Mainframe of its own (its statistics, its settings,
+     * what it planned), as a tag it reads and writes; saved with the Mainframe. Tell {@link #markEngineDataChanged}
+     * after a write.
+     */
+    public CompoundTag engineData(final ResourceLocation program) {
+        return services.engineData(program);
+    }
+
+    /** Saves what an engine wrote into its {@link #engineData}. */
+    public void markEngineDataChanged() {
         setChanged();
     }
 

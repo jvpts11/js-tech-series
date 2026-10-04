@@ -1334,6 +1334,11 @@ public final class PatternStudioApp implements IInventoryBandApp {
         return local(timeout.center());
     }
 
+    /** Whether the window has drawn the machine draft's timeout field where it now stands. */
+    public boolean timeoutFieldShown() {
+        return timeout.visible();
+    }
+
     /** The centre of pipeline button {@code i} (0 add bench, 1 add machine, 2 remove). */
     public int[] pipelineButtonCenter(final int i) {
         return local((i == 0 ? addBench : i == 1 ? addMachine : removeStage).center());

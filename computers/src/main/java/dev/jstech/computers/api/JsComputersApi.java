@@ -7,8 +7,13 @@
  */
 package dev.jstech.computers.api;
 
+import dev.jstech.computers.api.planner.IExplainNode;
+import dev.jstech.computers.api.planner.IPlannerOperator;
+import dev.jstech.computers.api.planner.IPlannerRule;
+import dev.jstech.computers.api.planner.IPlannerStatistic;
 import dev.jstech.computers.engine.EngineDef;
 import dev.jstech.computers.engine.NetworkEngines;
+import dev.jstech.computers.engine.nextgre.NextgreExtensions;
 import dev.jstech.computers.hardware.ArchitectureSpec;
 import dev.jstech.computers.hardware.IsaSpec;
 import dev.jstech.computers.hardware.Isas;
@@ -39,7 +44,7 @@ public final class JsComputersApi {
      * <p>How settled it is, and how long something lives once it is marked as going, are the series'
      * answers rather than this mod's: see the Core's.
      */
-    public static final int VERSION = 3;
+    public static final int VERSION = 4;
 
     private JsComputersApi() {
     }
@@ -116,5 +121,32 @@ public final class JsComputersApi {
     @ApiStatus.Experimental
     public static void registerEngine(final EngineDef engine) {
         NetworkEngines.register(engine);
+    }
+
+    /**
+     * Adds a rule to the planner of the engines that take extensions (NextgreIQL among them): it weighs every plan
+     * they consider for a craft, and a player switches it on or off for their own Mainframe.
+     */
+    @ApiStatus.Experimental
+    public static void registerPlannerRule(final IPlannerRule rule) {
+        NextgreExtensions.addRule(rule);
+    }
+
+    /** Adds a hint to the dialect of the engines that take extensions, which changes the plans of the statement. */
+    @ApiStatus.Experimental
+    public static void registerPlannerOperator(final IPlannerOperator operator) {
+        NextgreExtensions.addOperator(operator);
+    }
+
+    /** Adds a statistic those planners show, and may reckon a step's time with. */
+    @ApiStatus.Experimental
+    public static void registerPlannerStatistic(final IPlannerStatistic statistic) {
+        NextgreExtensions.addStatistic(statistic);
+    }
+
+    /** Adds notes those planners show under the steps of a plan. */
+    @ApiStatus.Experimental
+    public static void registerExplainNode(final IExplainNode node) {
+        NextgreExtensions.addExplainNode(node);
     }
 }

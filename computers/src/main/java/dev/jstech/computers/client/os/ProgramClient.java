@@ -97,6 +97,7 @@ public final class ProgramClient {
         register(rl("isms"), (host, mon, os) -> new IsmsApp(host, mon));
         // Its Profiler, which Tools opens in a window of its own and which comes back with the session.
         register(rl("isms/profiler"), (host, mon, os) -> new IsmsProfilerApp(host, mon));
+        register(rl("nextgre_studio"), (host, mon, os) -> new NextgreStudioApp(host, mon));
         register(rl("crafting_manager"), (host, mon, os) -> new CraftingManagerApp(host));
         register(rl("pattern_studio"), (host, mon, os) -> new PatternStudioApp(host, mon));
         register(rl("workshop"), (host, mon, os) -> new WorkshopApp(host, mon));

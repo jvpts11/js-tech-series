@@ -89,6 +89,7 @@ public final class ClientTestSuite {
             WorkshopClientTests.class,
             UpdateClientTests.class,
             IsmsClientTests.class,
+            NextgreClientTests.class,
             SettingsPersonalizeClientTests.class,
             SettingsScreenClientTests.class,
             SettingsSharingClientTests.class,

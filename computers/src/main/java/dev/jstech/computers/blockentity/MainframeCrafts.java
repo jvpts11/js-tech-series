@@ -10,6 +10,7 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.crafting.AnyTagResolver;
 import dev.jstech.computers.crafting.CraftPlanner;
 import dev.jstech.computers.crafting.CraftPlanning;
+import dev.jstech.computers.crafting.CraftRouting;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.ICraftIo;
 import dev.jstech.computers.crafting.MultiStagePattern;
@@ -29,6 +30,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
@@ -216,6 +219,14 @@ final class MainframeCrafts {
     NetworkCraftOperation plannedCraft(final StorageKey key, final long demand, final CraftPlanner.Plan plan,
                                        final String requesterLabel,
                                        @Nullable final CraftingPattern extraPattern) {
+        return plannedCraft(key, demand, plan, requesterLabel, extraPattern, CraftRouting.NONE);
+    }
+
+    /** The same, carried out the way {@code routing} says: where from, and how much at once. */
+    @Nullable
+    NetworkCraftOperation plannedCraft(final StorageKey key, final long demand, final CraftPlanner.Plan plan,
+                                       final String requesterLabel, @Nullable final CraftingPattern extraPattern,
+                                       final CraftRouting routing) {
         if (!canCraft(demand) || plan.steps().isEmpty()
                 || !(mainframe.getLevel() instanceof ServerLevel serverLevel)) {
             return null;
@@ -223,9 +234,31 @@ final class MainframeCrafts {
         final NetworkCraftOperation operation = new NetworkCraftOperation(
                 serverLevel, mainframe.networkUuid(), key, demand, plan, mainframe.networkIndex(),
                 UUID.randomUUID(), craftingComputers(), supercomputers(),
-                requesterLabel, extraPattern, mainframe);
+                requesterLabel, extraPattern, mainframe, routing);
         mainframe.takeOn(operation);
         return operation;
+    }
+
+    /**
+     * A craft whose plan an engine works out with a planner of its own, on a virtual thread, listed as pending
+     * meanwhile. Nothing comes back where nothing on the network makes it at all, or no craft can run here.
+     */
+    @Nullable
+    PendingCraftOperation planAsyncWith(final StorageKey key, final long demand, final boolean partial,
+                                        final String label, final Supplier<CraftPlanning.Routed> planning,
+                                        @Nullable final Consumer<NetworkCraftOperation> delivered) {
+        if (!canCraft(demand) || !anythingMakes(key)) {
+            return null;
+        }
+        final PendingCraftOperation pending = new PendingCraftOperation(mainframe, key, demand, partial, label);
+        mainframe.takeOn(pending);
+        pending.start(mainframe.dispatch(), planning, delivered);
+        return pending;
+    }
+
+    /** The bench patterns as a plan reads them now: a cell that accepts a tag settled against {@code stock}. */
+    List<CraftingPattern> resolvedPatterns(final Map<StorageKey, Long> stock) {
+        return AnyTagResolver.resolveAll(patterns(), stock);
     }
 
     /**

@@ -76,6 +76,9 @@ final class MainframeServices {
     /** How many requests the engine planned on {@link #plansDay}. */
     private int plansToday;
 
+    /** What each engine keeps on this Mainframe of its own, by the package that installs it. */
+    private final Map<ResourceLocation, CompoundTag> engineData = new LinkedHashMap<>();
+
     /**
      * The saved views, procedures and jobs. It is kept whether or not the Engine is installed, because
      * taking the Engine off is not the same as throwing away what somebody wrote with it.
@@ -125,6 +128,11 @@ final class MainframeServices {
     /** The engines installed, by the package that installs each, with the version each was installed in. */
     Map<ResourceLocation, String> installedEngines() {
         return Collections.unmodifiableMap(engines);
+    }
+
+    /** What the engine installed by {@code program} keeps of its own, made empty the first time it is asked for. */
+    CompoundTag engineData(final ResourceLocation program) {
+        return engineData.computeIfAbsent(program, id -> new CompoundTag());
     }
 
     /** The engine chosen to plan the network's work, started or not; {@code null} when none is. */
@@ -395,8 +403,8 @@ final class MainframeServices {
     /**
      * Takes every one off, the engines too, which is what formatting the disk they were on does.
      *
-     * <p>What they held is not thrown away with them: the catalog, the shelf and the script are still there
-     * if the same services are installed again, the way the files on a second disk would be.
+     * <p>What they held is not thrown away with them: the catalog, the shelf and what each engine kept are still
+     * there if the same services are installed again, the way the files on a second disk would be.
      */
     void eraseInstalls() {
         byProgram.values().forEach(IMainframeService::uninstall);
@@ -448,6 +456,15 @@ final class MainframeServices {
             }
             tag.put("PausedJobs", paused);
         }
+        final CompoundTag kept = new CompoundTag();
+        engineData.forEach((program, data) -> {
+            if (!data.isEmpty()) {
+                kept.put(program.toString(), data.copy());
+            }
+        });
+        if (!kept.isEmpty()) {
+            tag.put("EngineData", kept);
+        }
     }
 
     void load(final CompoundTag tag) {
@@ -477,6 +494,14 @@ final class MainframeServices {
         plansToday = tag.getInt("PlansToday");
         automationEngineInstalled = tag.getBoolean("AutomationEngineInstalled");
         mirrorInstalled = tag.getBoolean("MirrorInstalled");
+        engineData.clear();
+        final CompoundTag kept = tag.getCompound("EngineData");
+        for (final String program : kept.getAllKeys()) {
+            final ResourceLocation id = ResourceLocation.tryParse(program);
+            if (id != null) {
+                engineData.put(id, kept.getCompound(program).copy());
+            }
+        }
         shelved.clear();
         final CompoundTag shelf = tag.getCompound("MirrorShelf");
         for (final String name : shelf.getAllKeys()) {

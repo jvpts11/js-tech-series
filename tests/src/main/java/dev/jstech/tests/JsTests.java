@@ -11,6 +11,7 @@ import com.mojang.logging.LogUtils;
 import dev.jstech.core.JsCore;
 import dev.jstech.tests.testkit.ChunkLoadWatch;
 import dev.jstech.tests.testkit.TestEngines;
+import dev.jstech.tests.testkit.TestPlanner;
 import dev.jstech.tests.testkit.TestSettings;
 import dev.jstech.tests.testkit.TestStates;
 import dev.jstech.tests.testkit.ToyLanguage;
@@ -67,6 +68,8 @@ public final class JsTests {
              * the GameTest server, and in the client tests that replace an engine from the Network Manager.
              */
             TestEngines.register(modEventBus);
+            // A rule, a hint, a statistic and a note added to NextgreIQL's planner the way another mod adds them.
+            TestPlanner.register(modEventBus);
             // Any chunk the series' code loads by reading it is reported with the line that read it.
             ChunkLoadWatch.register();
         }

@@ -55,7 +55,7 @@ class LayoutAuditTest {
             "SystemBootLayout", "CommandPromptLayout", "OsInstallLayout", "InstallerLayout",
             "BootSequenceLayout", "FirmwareLayout", "SettingsLayout", "StudioPropertiesLayout",
             "NetworkServicesLayout", "NetworkLinksLayout", "PrinterLayout", "DockLayout", "PrintedPaperLayout",
-            "WorkshopLayout", "UpdateWindowLayout");
+            "WorkshopLayout", "UpdateWindowLayout", "NextgreStudioLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -189,6 +189,11 @@ class LayoutAuditTest {
         c.add(new AuditCase("IsmsLayout.note", IsmsLayout.note(), true));
         c.add(new AuditCase("IsmsLayout.profiler", IsmsLayout.profiler(IsmsLayout.PROFILER_MIN_W,
                 IsmsLayout.PROFILER_MIN_H), false));
+        // The Nextgre Planner Studio is a resizable window: its smallest, its default and a large size.
+        c.add(new AuditCase("NextgreStudioLayout(min)", NextgreStudioLayout.layout(NextgreStudioLayout.MIN_W,
+                NextgreStudioLayout.MIN_H), false));
+        c.add(new AuditCase("NextgreStudioLayout", NextgreStudioLayout.layout(), false));
+        c.add(new AuditCase("NextgreStudioLayout(large)", NextgreStudioLayout.layout(640, 400), false));
         c.add(new AuditCase("ServerRackLayout", ServerRackLayout.layout(), true));
         c.add(AuditCase.onTheGlass("ComputerTerminalLayout", ComputerTerminalLayout.layout()));
         /*

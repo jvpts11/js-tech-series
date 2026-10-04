@@ -169,7 +169,7 @@ public final class NetworkOperationsService {
     @Nullable
     public ICraftPlanning planner() {
         final INetworkEngine engine = engine();
-        return engine == null ? null : engine.planner();
+        return engine == null ? null : engine.planner(core);
     }
 
     /** Runs a statement in the running engine's dialect for {@code caller}; refused when no engine is running. */

@@ -79,8 +79,12 @@ public final class UpdateClientTests {
                 .then(2, () -> launch(ctx))
                 .thenWaitUntil(() -> interactor(ctx) != null, SCREEN_WAIT, "the Network Interactor window")
                 .then(2, () -> ctx.clickDesktop(point(ctx, interactor(ctx).networkTabCenter())))
+                /*
+                 * The grid lists what the network's index holds, and the index is built on a virtual thread: on a
+                 * loaded machine that takes more ticks than a window does to open, so this waits as long as work does.
+                 */
                 .thenWaitUntil(() -> interactor(ctx).listedNames().contains("Diamond Sword")
-                                && interactor(ctx).listedNames().contains("Iron Pickaxe"), SCREEN_WAIT,
+                                && interactor(ctx).listedNames().contains("Iron Pickaxe"), WORK_WAIT,
                         "the network grid to list what was seeded")
                 // Enchant: the sword's dialog, its Update button, and the window on its Enchant tab.
                 .then(2, () -> openDialog(ctx, "Diamond Sword"))

@@ -40,6 +40,7 @@ import dev.jstech.computers.operation.payload.iql.IqlPayloads;
 import dev.jstech.computers.operation.payload.machine.MachinePayloads;
 import dev.jstech.computers.operation.payload.network.NetworkPayloads;
 import dev.jstech.computers.operation.payload.network.NetworkServicesPayloads;
+import dev.jstech.computers.operation.payload.nextgre.NextgrePayloads;
 import dev.jstech.computers.operation.payload.operations.OperationsPayloads;
 import dev.jstech.computers.operation.payload.printer.PrintPayloads;
 import dev.jstech.computers.operation.payload.program.ConsolePayloads;
@@ -87,6 +88,7 @@ public final class ComputingPayloads {
         HelpPayloads.register(registrar);
         GamePayloads.register(registrar);
         IqlPayloads.register(registrar);
+        NextgrePayloads.register(registrar);
         TerminalPayloads.register(registrar);
         TerminalLocalPayloads.register(registrar);
         NetworkInteractorPayloads.register(registrar);

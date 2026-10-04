@@ -35,7 +35,13 @@ Each mod opens its registries once, while the game loads, by firing one event on
 
 - `CoreRegisterEvent`, for languages and kinds of Operation.
 - `ComputersRegisterEvent`, for instruction set architectures (ISAs), kernels, operating systems, programs,
-  desktops and Network Operations Engines.
+  desktops and Network Operations Engines, and for what the engines that take extensions (NextgreIQL among
+  them) add to their planner: rules (`IPlannerRule`), hints (`IPlannerOperator`), statistics
+  (`IPlannerStatistic`) and notes under a plan's steps (`IExplainNode`), all in `dev.jstech.computers.api.planner`.
+  A rule weighs every plan the planner considers for a craft, a `PlanCandidate` made of `PlanStep`s, and may add
+  to its cost or set it aside, saying why; a player switches each rule on or off for their own Mainframe. A hint is
+  words a statement may end with (`CRAFT 64 piston PREFER COMPUTER 'Bench A'`), and changes every plan of that
+  statement the same way.
 
 Listen for the one you need and add what you have. After the loading is done every registry is closed and
 refuses to change, so that what a world knows how to do does not change under it while somebody plays it.

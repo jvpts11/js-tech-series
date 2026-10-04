@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * A craft request whose plan is still being worked out. Planning a recursive craft is CPU work over
@@ -59,6 +61,8 @@ public final class PendingCraftOperation implements INetworkOperation {
     private OperationFailure cause = OperationFailure.NONE;
     @Nullable
     private NetworkCraftOperation delivered;
+    @Nullable
+    private Consumer<NetworkCraftOperation> onDelivered;
 
     public PendingCraftOperation(final MainframeBlockEntity mainframe, final StorageKey key, final long demand,
                                  final boolean partial, final String label) {
@@ -75,24 +79,39 @@ public final class PendingCraftOperation implements INetworkOperation {
      */
     public void start(final OperationDispatch dispatch, final List<CraftingPattern> patterns,
                       final List<ProcessingPattern> machines, final Map<StorageKey, Long> stock) {
+        start(dispatch, () -> new CraftPlanning.Routed(
+                CraftPlanning.plan(key, demand, partial, patterns, machines, stock), CraftRouting.NONE), null);
+    }
+
+    /**
+     * Plans with {@code planning} on a virtual thread instead of the core's own planner, and runs what it chose the
+     * way it says: what an engine with a planner of its own does. {@code planning} must only read what was captured
+     * on the main thread. {@code delivered} hears of the craft the plan became, if it became one.
+     */
+    public void start(final OperationDispatch dispatch, final Supplier<CraftPlanning.Routed> planning,
+                      @Nullable final Consumer<NetworkCraftOperation> delivered) {
+        this.onDelivered = delivered;
         dispatch.submit(context -> {
-            final CraftPlanning.Planned planned = CraftPlanning.plan(key, demand, partial, patterns, machines, stock);
-            context.onMainThread(() -> deliver(planned));
+            final CraftPlanning.Routed routed = planning.get();
+            context.onMainThread(() -> deliver(routed));
             return IOperationResult.success();
         }, priority);
     }
 
-    private void deliver(@Nullable final CraftPlanning.Planned planned) {
+    private void deliver(final CraftPlanning.Routed routed) {
         if (done) {
             return; // cancelled or abandoned while the plan was being made: the plan is dropped
         }
+        final CraftPlanning.Planned planned = routed.planned();
+        final CraftRouting routing = routed.routing();
         if (planned == null) {
             failed = true;
             cause = OperationFailure.of(NO_WAY_TO_MAKE_IT, key.displayName().getString());
             settle();
             return;
         }
-        final NetworkCraftOperation craft = mainframe.submitPlannedCraft(key, demand, planned.plan(), label, null);
+        final NetworkCraftOperation craft =
+                mainframe.submitPlannedCraft(key, demand, planned.plan(), label, null, routing);
         if (craft == null) {
             failed = true;
             cause = OperationFailure.of(NO_CRAFTING_COMPUTER, key.displayName().getString());
@@ -104,6 +123,9 @@ public final class PendingCraftOperation implements INetworkOperation {
             craft.onSettle(onSettle);
         }
         delivered = craft;
+        if (onDelivered != null) {
+            onDelivered.accept(craft);
+        }
         settle();
     }
 

@@ -37,6 +37,16 @@ public final class NetworkEngines {
                     HardwareEra.STANDARD, "2012", HardwareEra.ADVANCED, "2022"),
             Set.of(EngineCapability.PROCEDURES_AND_VIEWS));
 
+    /**
+     * NextgreIQL, the explicit engine, from the Legacy on: it shows the plan it made and how it ran, takes hints that
+     * change it, weighs the plans it could make by what they cost, and takes rules, hints and statistics from other
+     * mods into its planner.
+     */
+    public static final EngineDef NEXTGRE_IQL = new EngineDef(Programs.NEXTGRE_IQL, "NextgreIQL",
+            Map.of(HardwareEra.LEGACY, "7.0", HardwareEra.TRANSITION, "8.3", HardwareEra.STANDARD, "9.0",
+                    HardwareEra.ADVANCED, "16"),
+            Set.of(EngineCapability.EXPLAIN, EngineCapability.PLANNER_HINTS, EngineCapability.EXTENSIONS));
+
     private static final Map<ResourceLocation, INetworkEngine> ENGINES = new LinkedHashMap<>();
 
     private NetworkEngines() {
@@ -47,6 +57,15 @@ public final class NetworkEngines {
      * the engine is. Two engines on one id are refused, and so is one added after the loading is done.
      */
     public static void register(final EngineDef def) {
+        register(new IqlCoreEngine(def));
+    }
+
+    /**
+     * Adds an engine that brings its own way of planning: the series' engines past the Midsoft IQL Server, whose
+     * dialects and planners are their own. The same rules hold as for {@link #register(EngineDef)}.
+     */
+    public static void register(final INetworkEngine engine) {
+        final EngineDef def = engine.def();
         if (OsRegistry.isFrozen()) {
             JsComputers.LOGGER.warn("The engine {} was not registered: engines are only added while the game loads",
                     def.program());
@@ -55,7 +74,7 @@ public final class NetworkEngines {
         if (ENGINES.containsKey(def.program())) {
             throw new IllegalStateException("An engine is already registered as " + def.program());
         }
-        ENGINES.put(def.program(), new IqlCoreEngine(def));
+        ENGINES.put(def.program(), engine);
     }
 
     /** The engine installed by {@code program}, or {@code null} when that program installs none. */

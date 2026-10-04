@@ -146,7 +146,12 @@ public final class CraftingChainClientTests {
                     ctx.assertTrue(studio.procOutput(0) != null && studio.procOutput(0).key().equals(StorageKey.of(Items.IRON_INGOT)),
                             "the workbench holds the ingot as the output");
                 })
-                // Timeout typed in.
+                /*
+                 * Timeout typed in. The field is laid out when the window draws the machine tab, and a loaded client
+                 * runs several ticks between frames, so the click waits for the field to stand where it is drawn.
+                 */
+                .thenWaitUntil(() -> studio(ctx).timeoutFieldShown(), SCREEN_WAIT,
+                        "the machine draft's timeout field to be drawn")
                 .then(0, () -> ctx.clickDesktop(studioPoint(ctx, studio(ctx).timeoutFieldCenter())))
                 .then(1, () -> {
                     for (int i = 0; i < 6; i++) {

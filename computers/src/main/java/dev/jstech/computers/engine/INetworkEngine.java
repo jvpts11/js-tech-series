@@ -115,6 +115,14 @@ public interface INetworkEngine {
     }
 
     /**
+     * How the engine works out a craft's plan on the network of {@code core}: an engine that weighs plans against
+     * what it measured on that network answers here; the others answer as {@link #planner()} does.
+     */
+    default ICraftPlanning planner(final MainframeBlockEntity core) {
+        return planner();
+    }
+
+    /**
      * Runs a statement in the engine's dialect, for {@code caller}: what it reads comes from there and what it asks
      * to be done is done there.
      *

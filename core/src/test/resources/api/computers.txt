@@ -8,21 +8,29 @@ stable 1
 1 dev.jstech.computers.api.ComputersRegisterEvent  deprecated void architecture(ArchitectureSpec)
 1 dev.jstech.computers.api.ComputersRegisterEvent  void desktop(DesktopEnvironmentDef)
 3 dev.jstech.computers.api.ComputersRegisterEvent  void engine(EngineDef)
+4 dev.jstech.computers.api.ComputersRegisterEvent  void explainNode(IExplainNode)
 1 dev.jstech.computers.api.ComputersRegisterEvent  void fileOpener(String)
 2 dev.jstech.computers.api.ComputersRegisterEvent  void isa(IsaSpec)
 1 dev.jstech.computers.api.ComputersRegisterEvent  void kernel(KernelDef)
 1 dev.jstech.computers.api.ComputersRegisterEvent  void operatingSpace(OperatingSpaceDef)
 1 dev.jstech.computers.api.ComputersRegisterEvent  void operatingSystem(OsDef)
+4 dev.jstech.computers.api.ComputersRegisterEvent  void plannerOperator(IPlannerOperator)
+4 dev.jstech.computers.api.ComputersRegisterEvent  void plannerRule(IPlannerRule)
+4 dev.jstech.computers.api.ComputersRegisterEvent  void plannerStatistic(IPlannerStatistic)
 1 dev.jstech.computers.api.ComputersRegisterEvent  void program(ProgramSpec)
 1 dev.jstech.computers.api.JsComputersApi  type final class
 1 dev.jstech.computers.api.JsComputersApi  deprecated static void registerArchitecture(ArchitectureSpec)
 1 dev.jstech.computers.api.JsComputersApi  static final int VERSION
 1 dev.jstech.computers.api.JsComputersApi  static void registerDesktop(DesktopEnvironmentDef)
 3 dev.jstech.computers.api.JsComputersApi  static void registerEngine(EngineDef)
+4 dev.jstech.computers.api.JsComputersApi  static void registerExplainNode(IExplainNode)
 1 dev.jstech.computers.api.JsComputersApi  static void registerFileOpener(String)
 2 dev.jstech.computers.api.JsComputersApi  static void registerIsa(IsaSpec)
 1 dev.jstech.computers.api.JsComputersApi  static void registerKernel(KernelDef)
 1 dev.jstech.computers.api.JsComputersApi  static void registerOperatingSystem(OsDef)
+4 dev.jstech.computers.api.JsComputersApi  static void registerPlannerOperator(IPlannerOperator)
+4 dev.jstech.computers.api.JsComputersApi  static void registerPlannerRule(IPlannerRule)
+4 dev.jstech.computers.api.JsComputersApi  static void registerPlannerStatistic(IPlannerStatistic)
 1 dev.jstech.computers.api.JsComputersApi  static void registerProgram(ProgramSpec)
 1 dev.jstech.computers.api.JsComputersApi  static void registerSpace(OperatingSpaceDef)
 1 dev.jstech.computers.api.client.IOperatingSpaceScreen  type interface
@@ -30,6 +38,38 @@ stable 1
 1 dev.jstech.computers.api.client.OperatingSpaceScreens  type final class
 1 dev.jstech.computers.api.client.OperatingSpaceScreens  static IOperatingSpaceScreen get(ResourceLocation)
 1 dev.jstech.computers.api.client.OperatingSpaceScreens  static void register(ResourceLocation, IOperatingSpaceScreen)
+4 dev.jstech.computers.api.planner.IExplainNode  type interface
+4 dev.jstech.computers.api.planner.IExplainNode  abstract List<Component> notes(PlanStep)
+4 dev.jstech.computers.api.planner.IExplainNode  abstract ResourceLocation id()
+4 dev.jstech.computers.api.planner.IPlannerOperator  type interface
+4 dev.jstech.computers.api.planner.IPlannerOperator  abstract Component description()
+4 dev.jstech.computers.api.planner.IPlannerOperator  abstract ResourceLocation id()
+4 dev.jstech.computers.api.planner.IPlannerOperator  abstract String keyword()
+4 dev.jstech.computers.api.planner.IPlannerOperator  abstract boolean takesValue()
+4 dev.jstech.computers.api.planner.IPlannerOperator  abstract void apply(String, PlanCandidate)
+4 dev.jstech.computers.api.planner.IPlannerRule  type interface
+4 dev.jstech.computers.api.planner.IPlannerRule  abstract Component description()
+4 dev.jstech.computers.api.planner.IPlannerRule  abstract Component name()
+4 dev.jstech.computers.api.planner.IPlannerRule  abstract ResourceLocation id()
+4 dev.jstech.computers.api.planner.IPlannerRule  abstract void weigh(PlanCandidate)
+4 dev.jstech.computers.api.planner.IPlannerStatistic  type interface
+4 dev.jstech.computers.api.planner.IPlannerStatistic  abstract Component name()
+4 dev.jstech.computers.api.planner.IPlannerStatistic  abstract Component read(ServerLevel, BlockPos)
+4 dev.jstech.computers.api.planner.IPlannerStatistic  abstract ResourceLocation id()
+4 dev.jstech.computers.api.planner.IPlannerStatistic  default long estimate(PlanStep)
+4 dev.jstech.computers.api.planner.PlanCandidate  type final class
+4 dev.jstech.computers.api.planner.PlanCandidate  Component whySetAside()
+4 dev.jstech.computers.api.planner.PlanCandidate  List<Component> notes()
+4 dev.jstech.computers.api.planner.PlanCandidate  List<PlanStep> steps()
+4 dev.jstech.computers.api.planner.PlanCandidate  ResourceLocation result()
+4 dev.jstech.computers.api.planner.PlanCandidate  Set<String> hints()
+4 dev.jstech.computers.api.planner.PlanCandidate  boolean isSetAside()
+4 dev.jstech.computers.api.planner.PlanCandidate  long cost()
+4 dev.jstech.computers.api.planner.PlanCandidate  long quantity()
+4 dev.jstech.computers.api.planner.PlanCandidate  new(ResourceLocation, long, List<PlanStep>, long, Set<String>)
+4 dev.jstech.computers.api.planner.PlanCandidate  void addCost(long, Component)
+4 dev.jstech.computers.api.planner.PlanCandidate  void setAside(Component)
+4 dev.jstech.computers.api.planner.PlanStep  type record(ResourceLocation item, long runs, long made, boolean machine, long estimate)
 3 dev.jstech.computers.engine.EngineCapability  type enum implements IStableName
 3 dev.jstech.computers.engine.EngineCapability  DECLARATIVE_STATE
 3 dev.jstech.computers.engine.EngineCapability  EXPLAIN

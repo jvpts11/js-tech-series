@@ -37,6 +37,8 @@ public final class ProgramVersions {
             Map.entry("knothub", "2.4"),
             Map.entry("isms", "19.3"),
             Map.entry("iqlengine", "16.0"),
+            Map.entry("nextgreiql", "16.0"),
+            Map.entry("nextgre_studio", "8.4"),
             Map.entry("crafting_manager", "3.2"),
             Map.entry("pattern_studio", "2.0"),
             Map.entry("cluster_manager", "1.4"),

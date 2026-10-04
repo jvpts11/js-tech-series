@@ -21,6 +21,7 @@ import static dev.jstech.core.tier.HardwareEra.VINTAGE;
 import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.engine.NetworkEngines;
+import dev.jstech.computers.engine.nextgre.NextgreEngine;
 import net.neoforged.fml.common.EventBusSubscriber;
 
 import java.util.Optional;
@@ -51,6 +52,8 @@ public final class OsBootstrap {
         registerPrograms();
         // The engine every Mainframe ships with, whose package is the Midsoft IQL Server program above.
         JsComputersApi.registerEngine(NetworkEngines.MIDSOFT_IQL_SERVER);
+        // NextgreIQL, which plans with a planner of its own.
+        NetworkEngines.register(new NextgreEngine());
     }
 
     /**
@@ -435,6 +438,21 @@ public final class OsBootstrap {
                     .described("The engine that plans the network's work and answers it in IQL. The ISMS is its"
                             + " studio.")
                     .withEra(LEGACY).withHouse(SoftwareHouse.MIDSOFT).withRam(24),
+            /*
+             * NextgreIQL, the explicit engine, from the Legacy on: it keeps more of what it measured than the Midsoft
+             * IQL Server does, and weighs more plans, so it asks for more memory. Its studio needs it running.
+             */
+            ProgramSpec.of(rl("nextgreiql"), "nextgreiql", false, ALL_PLATFORMS, 32, ProgramKind.NETWORK_ENGINE, 0,
+                            HostScope.MAINFRAME)
+                    .named("NextgreIQL")
+                    .described("The engine that shows how it plans the network's work, and lets you take part in"
+                            + " the planning.")
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.NEXTGRE).withRam(48),
+            ProgramSpec.of(rl("nextgre_studio"), "nextgre", false, DESKTOPS, 96, ProgramKind.APP, 2, HostScope.ANY)
+                    .named("Nextgre Planner Studio")
+                    .described("Explain NextgreIQL's plans, watch what each step takes, and tune its planner.")
+                    .withMinEra(LEGACY).withEra(STANDARD).withHouse(SoftwareHouse.NEXTGRE).withRam(96)
+                    .requiring(ProgramRequirement.engine(rl("nextgreiql"), "7.0")),
             // The Crafting Manager installs only on a Crafting Computer -> Frames XP or newer.
             ProgramSpec.of(rl("crafting_manager"), "craftmgr", false, DESKTOPS, 128, ProgramKind.APP, 2,
                             HostScope.CRAFTING_COMPUTER)

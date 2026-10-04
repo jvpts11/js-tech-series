@@ -110,7 +110,17 @@ public final class CraftPlanner {
     public static Plan plan(final StorageKey resultKey, final long quantity,
                             final List<CraftingPattern> patterns, final List<ProcessingPattern> machines,
                             final Map<StorageKey, Long> stock) {
-        final State state = new State(patterns, machines, stock);
+        return plan(resultKey, quantity, patterns, machines, stock, false);
+    }
+
+    /**
+     * The same, with the choice between a bench and a machine turned around when {@code machineFirst}: a thing that
+     * both a machine and a bench make is made on the machine. An engine weighing both plans asks for each.
+     */
+    public static Plan plan(final StorageKey resultKey, final long quantity,
+                            final List<CraftingPattern> patterns, final List<ProcessingPattern> machines,
+                            final Map<StorageKey, Long> stock, final boolean machineFirst) {
+        final State state = new State(patterns, machines, stock, machineFirst);
         final long covered = state.produce(resultKey, quantity, 0, new HashSet<>(), true);
         return new Plan(mergeMachineSteps(state.steps), Map.copyOf(state.rawConsumption),
                 Map.copyOf(state.missing), covered);
@@ -177,6 +187,13 @@ public final class CraftPlanner {
     public static long maxFeasible(final StorageKey resultKey, final long quantity,
                                    final List<CraftingPattern> patterns, final List<ProcessingPattern> machines,
                                    final Map<StorageKey, Long> stock) {
+        return maxFeasible(resultKey, quantity, patterns, machines, stock, false);
+    }
+
+    /** The most of {@code resultKey} the plan made with the bench and machine order of {@code machineFirst} reaches. */
+    public static long maxFeasible(final StorageKey resultKey, final long quantity,
+                                   final List<CraftingPattern> patterns, final List<ProcessingPattern> machines,
+                                   final Map<StorageKey, Long> stock, final boolean machineFirst) {
         long low = 0;
         /*
          * Cap the search ceiling so the midpoint arithmetic below cannot overflow when quantity is near
@@ -185,7 +202,7 @@ public final class CraftPlanner {
         long high = Math.min(quantity, 2_000_000_000L);
         while (low < high) {
             final long mid = low + (high - low + 1) / 2;
-            if (plan(resultKey, mid, patterns, machines, stock).feasible()) {
+            if (plan(resultKey, mid, patterns, machines, stock, machineFirst).feasible()) {
                 low = mid;
             } else {
                 high = mid - 1;
@@ -205,12 +222,14 @@ public final class CraftPlanner {
         private final List<Step> steps = new ArrayList<>();
         private final Map<StorageKey, Long> rawConsumption = new LinkedHashMap<>();
         private final Map<StorageKey, Long> missing = new LinkedHashMap<>();
+        private final boolean machineFirst;
 
         private State(final List<CraftingPattern> patterns, final List<ProcessingPattern> machines,
-                      final Map<StorageKey, Long> stock) {
+                      final Map<StorageKey, Long> stock, final boolean machineFirst) {
             this.patterns = patterns;
             this.machines = machines;
             this.remainingStock = new HashMap<>(stock);
+            this.machineFirst = machineFirst;
         }
 
         private long produce(final StorageKey key, final long quantity, final int depth,
@@ -229,9 +248,14 @@ public final class CraftPlanner {
                 return quantity;
             }
 
-            // A bench pattern wins; otherwise a machine pattern whose primary output is the key.
-            final CraftingPattern pattern = patternFor(key);
-            final ProcessingPattern machine = pattern == null ? machineFor(key) : null;
+            /*
+             * A bench pattern wins; otherwise a machine pattern whose primary output is the key (the other way round
+             * when the machines go first).
+             */
+            final ProcessingPattern firstMachine = machineFirst ? machineFor(key) : null;
+            final CraftingPattern pattern = firstMachine != null ? null : patternFor(key);
+            final ProcessingPattern machine = firstMachine != null ? firstMachine
+                    : pattern == null ? machineFor(key) : null;
             if ((pattern == null && machine == null) || depth >= MAX_DEPTH || chain.contains(key)) {
                 missing.merge(key, deficit, Long::sum);
                 return quantity - deficit;

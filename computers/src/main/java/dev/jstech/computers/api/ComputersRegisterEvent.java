@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.api;
 
+import dev.jstech.computers.api.planner.IExplainNode;
+import dev.jstech.computers.api.planner.IPlannerOperator;
+import dev.jstech.computers.api.planner.IPlannerRule;
+import dev.jstech.computers.api.planner.IPlannerStatistic;
 import dev.jstech.computers.engine.EngineDef;
 import dev.jstech.computers.hardware.ArchitectureSpec;
 import dev.jstech.computers.hardware.IsaSpec;
@@ -101,5 +105,29 @@ public final class ComputersRegisterEvent extends Event implements IModBusEvent 
     @ApiStatus.Experimental
     public void engine(final EngineDef engine) {
         JsComputersApi.registerEngine(engine);
+    }
+
+    /** Adds a rule to the planner of the engines that take extensions. */
+    @ApiStatus.Experimental
+    public void plannerRule(final IPlannerRule rule) {
+        JsComputersApi.registerPlannerRule(rule);
+    }
+
+    /** Adds a hint to the dialect of the engines that take extensions. */
+    @ApiStatus.Experimental
+    public void plannerOperator(final IPlannerOperator operator) {
+        JsComputersApi.registerPlannerOperator(operator);
+    }
+
+    /** Adds a statistic to the planner of the engines that take extensions. */
+    @ApiStatus.Experimental
+    public void plannerStatistic(final IPlannerStatistic statistic) {
+        JsComputersApi.registerPlannerStatistic(statistic);
+    }
+
+    /** Adds notes the planners of the engines that take extensions show under a plan's steps. */
+    @ApiStatus.Experimental
+    public void explainNode(final IExplainNode node) {
+        JsComputersApi.registerExplainNode(node);
     }
 }

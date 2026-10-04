@@ -63,6 +63,9 @@ public record SoftwareHouse(String name, String legalName) {
             new SoftwareHouse("Daylight Foundation", "the Daylight Foundation");
     /** The music player's house, which casts sound the way a foundry casts metal. */
     public static final SoftwareHouse VOIDSOFT = new SoftwareHouse("Voidsoft", "Voidsoft Inc.");
+    /** NextgreIQL's house: an open group that writes the engine in the open, the next thing after the last. */
+    public static final SoftwareHouse NEXTGRE =
+            new SoftwareHouse("Nextgre", "the Nextgre Global Development Group");
 
     /** Not a house: the program is credited to the system or desktop that ships it. */
     public static final SoftwareHouse BUNDLED = new SoftwareHouse("", "");

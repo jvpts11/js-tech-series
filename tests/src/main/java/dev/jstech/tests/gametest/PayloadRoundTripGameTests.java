@@ -31,7 +31,11 @@ import dev.jstech.computers.operation.payload.NetworkManagerPayload;
 import dev.jstech.computers.operation.payload.NetworkNodeInfo;
 import dev.jstech.computers.operation.payload.NetworkServersPayload;
 import dev.jstech.computers.operation.payload.NetworkServicesPayload;
+import dev.jstech.computers.operation.payload.NextgreActionPayload;
+import dev.jstech.computers.operation.payload.NextgreStudioPayload;
 import dev.jstech.computers.operation.payload.NiGridClickPayload;
+import dev.jstech.computers.engine.nextgre.NextgreEngine;
+import dev.jstech.computers.engine.nextgre.NextgrePlanView;
 import dev.jstech.computers.operation.payload.NodeLink;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.OperationsLogPayload;
@@ -54,6 +58,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -228,6 +233,33 @@ public final class PayloadRoundTripGameTests {
                         "steve", "desk", 64L, 312L, 9000L, List.of(Text.literal("took 312 ticks"))),
                 new TraceEvent(TraceEventClass.STATEMENT_STARTING, Text.literal("QUERY items"), "steve", "desk",
                         TraceEvent.NONE, TraceEvent.NONE, 9001L, List.of()))));
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void nextgre_studioRoundTrips(final GameTestHelper helper) {
+        roundTrip(helper, NextgreActionPayload.STREAM_CODEC, new NextgreActionPayload(HOST, 6,
+                NextgreActionPayload.EXPLAIN_ANALYZE, "CRAFT 64 piston PREFER SOURCE 'Vault B' MAX PARALLEL 2"));
+        final NextgrePlanView plan = new NextgrePlanView(3, "EXPLAIN ANALYZE CRAFT 64 piston", true, 9000L,
+                List.of(new NextgrePlanView.Alternative(1, Text.literal("bench recipes first"), 812L, Text.EMPTY,
+                                true, List.of(Text.literal("the test rule added 7 ticks"))),
+                        new NextgrePlanView.Alternative(2, Text.literal("raw materials from the fastest servers"),
+                                930L, Text.literal("set aside by PREFER SOURCE"), false, List.of())),
+                List.of(new NextgrePlanView.Node(-1, 1, NextgrePlanView.ROOT, Text.literal("Craft Piston x64"),
+                                Text.literal("2 steps, 2 at once"), 812L, 860L, true, List.of("MAX PARALLEL 2")),
+                        new NextgrePlanView.Node(0, -1, NextgrePlanView.PULL, Text.literal("Pull Oak Planks x192"),
+                                Text.literal("from Vault B"), 4L, -1L, false, List.of("PREFER SOURCE Vault B"))),
+                3200L, 860L, NextgrePlanView.DONE, Text.literal("plan 1 of 2 started"));
+        roundTrip(helper, NextgreStudioPayload.STREAM_CODEC, new NextgreStudioPayload(6, true,
+                Text.literal("NextgreIQL 16"), Text.literal("jsc-net-1a2b"), Text.EMPTY, Optional.of(plan),
+                List.of(new NextgreStudioPayload.HistoryRow(3, "EXPLAIN ANALYZE CRAFT 64 piston", 812L, 860L,
+                        NextgrePlanView.DONE, 9000L, true)),
+                List.of(new NextgreEngine.RuleRow("nextgre:weigh_machines", Text.literal("Weigh machines"),
+                        Text.literal("Also plans with machines first."), false, NextgreEngine.RuleRow.OWN_RULE)),
+                List.of(new NextgreEngine.StatRow(Text.literal("Servers"), Text.literal("2")))));
+        roundTrip(helper, NextgreStudioPayload.STREAM_CODEC, new NextgreStudioPayload(7, false, Text.EMPTY,
+                Text.EMPTY, Text.literal("No compatible NextgreIQL was found on this network."), Optional.empty(),
+                List.of(), List.of(), List.of()));
         helper.succeed();
     }
 

@@ -50,6 +50,14 @@ public final class Programs {
     public static final ResourceLocation IQL_ENGINE =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "iqlengine");
 
+    /** NextgreIQL: the explicit engine, which shows how it plans and lets the player take part in it. */
+    public static final ResourceLocation NEXTGRE_IQL =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "nextgreiql");
+
+    /** Nextgre Planner Studio: NextgreIQL's own tool, where its plans are explained and its planner is tuned. */
+    public static final ResourceLocation NEXTGRE_STUDIO =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "nextgre_studio");
+
     /**
      * The Crafting Manager: the desktop app that moves {@code .craft} recipe files between removable
      * media and a Crafting Computer's recipe store. It installs only on a Crafting Computer and needs a
