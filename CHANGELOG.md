@@ -404,6 +404,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   shows what the machine is made of (its processor, memory, graphics card, network, system and drives), and LPT
   Ports and COM Ports open the list of the board's ports with what is attached to each and whether it is on, where a
   device is enabled or disabled from the keyboard.
+- KDE's Info Center has a second page, Devices by port, beside About this System: every graphics card with its
+  outputs, the audio and the board's ports, each port beside what is plugged into it or free, a hub with how many of
+  its own ports are in use, and a button that disables or enables the device selected.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The

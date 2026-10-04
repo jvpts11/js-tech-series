@@ -48,6 +48,7 @@ public final class ClientTestSuite {
             GatewayManagerClientTests.class,
             GuidedInstallerClientTests.class,
             IndustrialScreensClientTests.class,
+            InfoCenterClientTests.class,
             InstallMediaClientTests.class,
             InteracTuiClientTests.class,
             LeftoverProgramsClientTests.class,

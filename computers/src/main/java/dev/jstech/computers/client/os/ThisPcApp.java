@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.gui.layout.InfoCenterLayout;
 import dev.jstech.computers.gui.layout.ThisPcLayout;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.operation.payload.EjectMediaPayload;
@@ -97,6 +98,12 @@ public final class ThisPcApp implements IDesktopApp {
     private final String title;
     /** Which About-style page this window draws instead of the drives explorer, or {@link AboutKind#NONE} for that. */
     private final AboutKind about;
+    /** The "Devices by port" page, which only KDE's Info Center has, and whether it is the page up. */
+    @Nullable
+    private final InfoCenterDevicesPage devices;
+    private boolean onDevicesPage;
+    /** Where each of the Info Center's tabs starts as last drawn, and where the last one ends, content-local. */
+    private final int[] infoCenterTabs = new int[3];
     private ThisPcPayload data =
             new ThisPcPayload(BlockPos.ZERO, ThisPcPayload.WireMachine.EMPTY, List.of(), List.of(), List.of());
     private int lastX;
@@ -355,6 +362,7 @@ public final class ThisPcApp implements IDesktopApp {
         this.host = host;
         this.title = title;
         this.about = about;
+        this.devices = about == AboutKind.KDE ? new InfoCenterDevicesPage(host) : null;
 
         nameLabel = root.add(new Label(this::machineName));
         kindLabel = root.add(new Label(this::kindLine, Label.Tone.DIM));
@@ -418,11 +426,17 @@ public final class ThisPcApp implements IDesktopApp {
             OPEN.add(this);
         }
         request();
+        if (onDevicesPage && devices != null) {
+            devices.open();
+        }
     }
 
     @Override
     public void onClosed() {
         OPEN.remove(this);
+        if (devices != null) {
+            devices.close();
+        }
     }
 
     /** Says every This PC window is gone, which is what a desktop closing means for the ones it held. */
@@ -442,7 +456,8 @@ public final class ThisPcApp implements IDesktopApp {
     @Override
     public int defaultWidth() {
         return switch (about) {
-            case KDE -> DesktopWindow.windowWidthFor(ThisPcLayout.KdeAbout.W);
+            // The Info Center keeps the list of its pages beside whichever page is up.
+            case KDE -> DesktopWindow.windowWidthFor(InfoCenterLayout.W);
             case GNOME -> DesktopWindow.windowWidthFor(ThisPcLayout.GnomeAbout.W);
             case CINNAMON -> DesktopWindow.windowWidthFor(ThisPcLayout.CinnamonAbout.W);
             case NONE -> ThisPcLayout.DEFAULT_W;
@@ -452,7 +467,7 @@ public final class ThisPcApp implements IDesktopApp {
     @Override
     public int defaultHeight() {
         return switch (about) {
-            case KDE -> DesktopWindow.windowHeightFor(ThisPcLayout.KdeAbout.H);
+            case KDE -> DesktopWindow.windowHeightFor(InfoCenterLayout.H);
             case GNOME -> DesktopWindow.windowHeightFor(ThisPcLayout.GnomeAbout.H);
             case CINNAMON -> DesktopWindow.windowHeightFor(ThisPcLayout.CinnamonAbout.H);
             case NONE -> ThisPcLayout.DEFAULT_H;
@@ -564,7 +579,11 @@ public final class ThisPcApp implements IDesktopApp {
         lastMouseY = mouseY;
         if (about != AboutKind.NONE) {
             g.fill(x, y, x + width, y + height, skin.windowBg());
-            renderAbout(g, font, x, y);
+            if (about == AboutKind.KDE) {
+                renderInfoCenter(g, font, x, y, mouseX, mouseY);
+            } else {
+                renderAbout(g, font, x, y);
+            }
             return;
         }
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
@@ -598,6 +617,58 @@ public final class ThisPcApp implements IDesktopApp {
             case NONE -> {
                 // Unreachable: renderContent only calls here when this.about is not NONE.
             }
+        }
+    }
+
+    /** KDE's Info Center: the row of its pages along the top, and under it the page that is up. */
+    private void renderInfoCenter(final GuiGraphics g, final Font font, final int x, final int y,
+                                  final int mouseX, final int mouseY) {
+        final TextKey[] pages = {InfoCenterTexts.ABOUT_THIS_SYSTEM, InfoCenterTexts.DEVICES_BY_PORT};
+        int tx = InfoCenterLayout.TAB_X;
+        for (int i = 0; i < pages.length; i++) {
+            final String words = GameText.resolve(pages[i]);
+            final int tw = Texts.smallWidth(font, words) + 2 * InfoCenterLayout.TAB_PAD;
+            final boolean up = (i == 1) == onDevicesPage;
+            skin.tab(g, font, x + tx, y + 1, tw, InfoCenterLayout.TABS_H - 1, "", up);
+            Texts.small(g, font, words, x + tx + InfoCenterLayout.TAB_PAD, y + 4, up ? skin.text() : skin.dim());
+            infoCenterTabs[i] = tx;
+            tx += tw + 1;
+        }
+        infoCenterTabs[pages.length] = tx;
+        g.fill(x, y + InfoCenterLayout.TABS_H - 1, x + InfoCenterLayout.W, y + InfoCenterLayout.TABS_H, skin.edge());
+        if (onDevicesPage && devices != null) {
+            devices.render(g, font, skin, x, y, mouseX, mouseY);
+        } else {
+            renderKdeAbout(g, font, x, y + InfoCenterLayout.TABS_H, data.machine().about());
+        }
+    }
+
+    /** A click on the Info Center: a page's tab puts it up, and the devices page takes the rest. */
+    private void clickedInfoCenter(final double mouseX, final double mouseY) {
+        final double mx = mouseX - lastX;
+        final double my = mouseY - lastY;
+        if (my < InfoCenterLayout.TABS_H) {
+            for (int i = 0; i < infoCenterTabs.length - 1; i++) {
+                if (mx >= infoCenterTabs[i] && mx < infoCenterTabs[i + 1] - 1) {
+                    showDevicesPage(i == 1);
+                }
+            }
+            return;
+        }
+        if (onDevicesPage && devices != null) {
+            devices.mouseClicked(mx, my);
+        }
+    }
+
+    private void showDevicesPage(final boolean show) {
+        onDevicesPage = show;
+        if (devices == null) {
+            return;
+        }
+        if (show) {
+            devices.open();
+        } else {
+            devices.close();
         }
     }
 
@@ -950,6 +1021,33 @@ public final class ThisPcApp implements IDesktopApp {
         return about != AboutKind.NONE;
     }
 
+    /** Content-local centre of the Info Center's tab for its {@code index}-th page, as last drawn. */
+    public int[] infoCenterTabCenter(final int index) {
+        return new int[] {(infoCenterTabs[index] + infoCenterTabs[index + 1]) / 2, InfoCenterLayout.TABS_H / 2};
+    }
+
+    /** The rows of the Info Center's "Devices by port" page as it reads them; empty on any other page. */
+    public List<String> deviceRows() {
+        return onDevicesPage && devices != null ? devices.shownRows() : List.of();
+    }
+
+    /** Whether the devices page's row reading {@code label} stands for a disabled device. */
+    public boolean deviceRowDisabled(final String label) {
+        return devices != null && devices.rowDisabled(label);
+    }
+
+    /** Content-local centre of the devices page's row reading {@code label}, or null while it is not shown. */
+    @Nullable
+    public int[] deviceRowCenter(final String label) {
+        return devices == null ? null : devices.rowCentre(label);
+    }
+
+    /** Content-local centre of the devices page's button that disables or enables the selected device. */
+    public int[] deviceButtonCenter() {
+        return new int[] {InfoCenterLayout.buttonX() + InfoCenterLayout.BUTTON_W / 2,
+            InfoCenterLayout.BUTTON_Y + InfoCenterLayout.BUTTON_H / 2};
+    }
+
     /** The index of the first drive whose medium name contains {@code nameContains}, or -1. */
     public int mediaRowIndex(final String nameContains) {
         for (int i = 0; i < data.media().size(); i++) {
@@ -983,6 +1081,10 @@ public final class ThisPcApp implements IDesktopApp {
 
     @Override
     public void mouseClicked(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
+        if (about == AboutKind.KDE) {
+            clickedInfoCenter(mouseX, mouseY);
+            return;
+        }
         // The About-style page draws no widget of its own; the explorer underneath must not take the click either.
         if (about != AboutKind.NONE) {
             return;
@@ -1003,6 +1105,9 @@ public final class ThisPcApp implements IDesktopApp {
     @Override
     public boolean mouseScrolled(final double delta) {
         // The wheel anywhere in the window moves the page; the About-style page has none to move.
+        if (onDevicesPage && devices != null) {
+            return devices.mouseScrolled(delta);
+        }
         return about == AboutKind.NONE && page.mouseScrolled(lastMouseX, lastMouseY, delta);
     }
 
