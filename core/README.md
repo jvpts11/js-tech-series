@@ -85,6 +85,10 @@ What a technology mod needs, whichever mod it is.
   monospace grid in it, drawing the box lines and blocks itself so frames and bars join. The Core carries Misc
   Fixed, the fixed font of the old Unix terminals, in three sizes (6x10, 9x15, 10x20), for any mod's terminal-like
   views.
+- [Motion](../docs/MOTION.md): curves written as CSS writes them, a profile of motions for each look a mod
+  declares (growing, sliding, going down to a place and back, an outline travelling, a colour giving way), kept as
+  a file a resource pack replaces, and one clock every motion is read against, smooth between ticks and still for a
+  player who reduces motion.
 - The registry of programming languages a machine can run, the configuration system (with ranges every value
   is clamped into), the series' internal event bus, persistence helpers, the payload framework and the unit
   formatter.

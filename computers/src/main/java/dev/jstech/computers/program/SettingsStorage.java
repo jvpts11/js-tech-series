@@ -42,6 +42,10 @@ final class SettingsStorage {
         s.putBoolean("CronEnabled", settings.cronEnabled());
         s.putBoolean("TaskbarCentered", settings.taskbarCentered());
         s.putBoolean("DarkMode", settings.darkMode());
+        if (!settings.effectsOff().isEmpty()) {
+            s.put("EffectsOff", strings(new ArrayList<>(settings.effectsOff())));
+        }
+        s.putInt("EffectSpeed", settings.effectSpeed());
         // Always written, even empty: a machine whose player unpinned everything must not get the default back.
         s.put("Pinned", strings(settings.pinned()));
         if (!settings.favourites().isEmpty()) {
@@ -97,6 +101,9 @@ final class SettingsStorage {
         settings.setCronEnabled(!s.contains("CronEnabled") || s.getBoolean("CronEnabled"));
         settings.setTaskbarCentered(!s.contains("TaskbarCentered") || s.getBoolean("TaskbarCentered"));
         settings.setDarkMode(s.getBoolean("DarkMode"));
+        settings.setEffectsOff(strings(s.getList("EffectsOff", Tag.TAG_STRING)));
+        settings.setEffectSpeed(s.contains("EffectSpeed") ? s.getInt("EffectSpeed")
+                : ComputerSettings.EFFECT_SPEED_NORMAL);
         if (s.contains("Pinned")) {
             settings.setPinned(strings(s.getList("Pinned", Tag.TAG_STRING)));
         }

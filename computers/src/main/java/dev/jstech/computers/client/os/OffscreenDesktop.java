@@ -92,4 +92,10 @@ public final class OffscreenDesktop implements DesktopSurface {
     @Override
     public void leave() {
     }
+
+    /** A monitor's face in the world shows every window and menu where it ends. */
+    @Override
+    public boolean moves() {
+        return false;
+    }
 }

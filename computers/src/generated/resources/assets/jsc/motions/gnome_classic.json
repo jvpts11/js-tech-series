@@ -1,0 +1,17 @@
+{
+  "window_minimize": {
+    "duration": 320,
+    "easing": "steps(16)",
+    "group": "wireframe",
+    "out": 1.0,
+    "style": "outline",
+    "trail": 0.0
+  },
+  "window_restore": {
+    "duration": 320,
+    "easing": "steps(16)",
+    "group": "wireframe",
+    "style": "outline",
+    "trail": 0.0
+  }
+}

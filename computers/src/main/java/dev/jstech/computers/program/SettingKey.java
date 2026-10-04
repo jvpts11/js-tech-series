@@ -36,6 +36,26 @@ public enum SettingKey {
     DARKMODE("darkmode", (s, v) -> choose(v, Set.of("on", "true", "dark"), Set.of("off", "false", "light"),
             s::setDarkMode)),
 
+    /** {@code <effect> on} or {@code <effect> off}: one of the system's visual effects, by its name. */
+    EFFECT("effect", (s, v) -> {
+        final int space = v.lastIndexOf(' ');
+        if (space <= 0) {
+            return false;
+        }
+        final String name = v.substring(0, space).trim();
+        return choose(v.substring(space + 1).trim(), Set.of("on", "true"), Set.of("off", "false"),
+                on -> s.setEffect(name, on));
+    }),
+
+    /** How long the system's effects take, in percent of their own time, with or without the sign after it. */
+    EFFECTSPEED("effectspeed", (s, v) -> {
+        final Integer n = parseInt(v.endsWith("%") ? v.substring(0, v.length() - 1) : v);
+        if (n != null) {
+            s.setEffectSpeed(n);
+        }
+        return n != null;
+    }),
+
     GUISCALE("guiscale", (s, v) -> {
         final Integer n = parseInt(v);
         if (n != null) {

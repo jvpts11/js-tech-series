@@ -9,6 +9,7 @@ package dev.jstech.computers.program;
 
 import dev.jstech.computers.audio.SoundOutput;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -347,6 +348,53 @@ class ComputerSettingsTest {
     }
 
     @Test
+    void setEffect_switchesAnEffectOffAndBackOn() {
+        assertTrue(settings.effectsOff().isEmpty(), "every effect is on until it is switched off");
+        settings.setEffect("Minimize", false);
+        settings.setEffect("menus", false);
+        assertEquals(Set.of("minimize", "menus"), settings.effectsOff());
+        settings.setEffect("minimize", true);
+        assertEquals(Set.of("menus"), settings.effectsOff());
+    }
+
+    @Test
+    void setEffect_ignoresANameThatIsNoPlainWord() {
+        settings.setEffect("two words", false);
+        settings.setEffect("", false);
+        settings.setEffect("x".repeat(40), false);
+        assertTrue(settings.effectsOff().isEmpty());
+    }
+
+    @Test
+    void setEffect_keepsNoMoreThanTheMost() {
+        for (int i = 0; i < ComputerSettings.MAX_EFFECTS_OFF + 5; i++) {
+            settings.setEffect("effect_" + i, false);
+        }
+        assertEquals(ComputerSettings.MAX_EFFECTS_OFF, settings.effectsOff().size());
+    }
+
+    @Test
+    void setEffectSpeed_holdsBetweenAtOnceAndTheSlowest() {
+        assertEquals(ComputerSettings.EFFECT_SPEED_NORMAL, settings.effectSpeed());
+        settings.setEffectSpeed(-10);
+        assertEquals(0, settings.effectSpeed());
+        settings.setEffectSpeed(5000);
+        assertEquals(ComputerSettings.EFFECT_SPEED_SLOWEST, settings.effectSpeed());
+    }
+
+    @Test
+    void applySetting_takesAnEffectAndItsSpeed() {
+        assertTrue(settings.applySetting("effect", "squash off"));
+        assertTrue(settings.effectsOff().contains("squash"));
+        assertTrue(settings.applySetting("effect", "squash on"));
+        assertFalse(settings.effectsOff().contains("squash"));
+        assertFalse(settings.applySetting("effect", "squash maybe"));
+        assertFalse(settings.applySetting("effect", "squash"));
+        assertTrue(settings.applySetting("effectspeed", "140%"));
+        assertEquals(140, settings.effectSpeed());
+    }
+
+    @Test
     void summaryLines_reportEveryOwnedSetting() {
         settings.setClock12h(true);
         settings.setBrightness(80);
@@ -362,5 +410,7 @@ class ComputerSettingsTest {
         assertTrue(joined.contains("volume"));
         assertTrue(joined.contains("mute"));
         assertTrue(joined.contains("output"));
+        assertTrue(joined.contains("effect"));
+        assertTrue(joined.contains("effectspeed"));
     }
 }

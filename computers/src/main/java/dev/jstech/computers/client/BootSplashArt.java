@@ -88,7 +88,9 @@ public final class BootSplashArt {
     /**
      * Draws the picture of that system over the glass at {@code (x, y)}.
      *
-     * @param ticks    how far into the wait the machine is, which is what moves anything that moves
+     * @param ticks    how far into the wait the machine is, which decides what the picture shows
+     * @param loop     where what turns round is (the running bar, the blocks, the ring of dots), in ticks on the
+     *                 motion clock, smooth between them and still while motion is reduced
      * @param total    how long the whole wait is, for the pictures that measure themselves against it
      * @param endsDark what follows this is a dark monitor rather than another screen, which is what tells a
      *                 machine being switched off from one starting over
@@ -96,14 +98,27 @@ public final class BootSplashArt {
      * @param subtitle the line under it, which on the way down is the sentence that system said while it closed
      */
     public static void draw(final GuiGraphics g, final Font font, final BootSplash splash, final int x,
-                            final int y, final int w, final int h, final int ticks, final int total,
-                            final boolean endsDark, final String title, final String subtitle) {
+                            final int y, final int w, final int h, final int ticks, final double loop,
+                            final int total, final boolean endsDark, final String title, final String subtitle) {
         switch (splash) {
-            case FRAMES_95 -> frames95(g, font, x, y, w, h, ticks, total, endsDark, subtitle);
-            case FRAMES_XP -> framesXp(g, font, x, y, w, h, ticks, total, subtitle);
-            case FRAMES_11 -> frames11(g, font, x, y, w, h, ticks, title, subtitle);
+            case FRAMES_95 -> frames95(g, font, x, y, w, h, ticks, loop, total, endsDark, subtitle);
+            case FRAMES_XP -> framesXp(g, font, x, y, w, h, ticks, loop, total, subtitle);
+            case FRAMES_11 -> frames11(g, font, x, y, w, h, loop, title, subtitle);
             default -> { }
         }
+    }
+
+    /**
+     * The one colour that picture is mostly made of, which is what is left over the desktop as the picture gives way
+     * to it: the sky's band for the oldest edition, the blue of the later one's welcome, the newest one's dark.
+     */
+    public static int ground(final BootSplash splash) {
+        return switch (splash) {
+            case FRAMES_95 -> CLASSIC.get().runBright();
+            case FRAMES_XP -> LUNA.get().block();
+            case FRAMES_11 -> MODERN.get().ground();
+            default -> LUNA.get().ground();
+        };
     }
 
     /** Whether this picture paints the whole glass itself, so nothing else should draw a ground under it. */
@@ -118,8 +133,8 @@ public final class BootSplashArt {
      * machine coming up twice looks the same twice, which a picture nobody can influence ought to.
      */
     private static void frames95(final GuiGraphics g, final Font font, final int x, final int y, final int w,
-                                 final int h, final int ticks, final int total, final boolean endsDark,
-                                 final String message) {
+                                 final int h, final int ticks, final double loop, final int total,
+                                 final boolean endsDark, final String message) {
         final Classic c = CLASSIC.get();
         final boolean going = !message.isEmpty();
         /*
@@ -150,19 +165,19 @@ public final class BootSplashArt {
         }
         final int band = Math.max(6, h / 16);
         g.fill(x, y + h - band, x + w, y + h, c.horizon());
-        runningBar(g, c, x, y + h - band + 1, w, band - 2, ticks);
+        runningBar(g, c, x, y + h - band + 1, w, band - 2, loop);
     }
 
     /**
      * One band of colour running along the foot and starting over, which is what that bar always was.
      *
      * <p>Drawn as columns: every column takes its colour from where it falls inside the pass, and the whole
-     * pass slides along by the tick, so the light runs through the dark and comes round again.
+     * pass slides along with the clock, so the light runs through the dark and comes round again.
      */
     private static void runningBar(final GuiGraphics g, final Classic c, final int x, final int y, final int w,
-                                   final int h, final int ticks) {
+                                   final int h, final double loop) {
         final int span = Math.max(8, w / RUN_SPAN);
-        final int offset = ticks * span / RUN_TICKS % span;
+        final int offset = (int) ((long) (loop * span / RUN_TICKS) % span);
         for (int column = 0; column < w; column++) {
             final float at = ((column + span - offset) % span) / (float) span;
             /* Dark at both ends of a pass and brightest in the middle, which is how that band was made. */
@@ -176,7 +191,8 @@ public final class BootSplashArt {
 
     /** Black, the logo above the middle, the trough beneath it, and the small print at the feet. */
     private static void framesXp(final GuiGraphics g, final Font font, final int x, final int y, final int w,
-                                 final int h, final int ticks, final int total, final String message) {
+                                 final int h, final int ticks, final double loop, final int total,
+                                 final String message) {
         /*
          * A machine of that edition went down on the same blue bands it welcomed you on, with the logo moved
          * to one side and the sentence beside it. It never went down on the black start screen, which is the
@@ -217,7 +233,8 @@ public final class BootSplashArt {
         final int blockW2 = 6;
         final int span = troughW + BLOCKS * (blockW2 + 2);
         for (int i = 0; i < BLOCKS; i++) {
-            final int at = (ticks * span / PASS_TICKS + i * (blockW2 + 2)) % span - BLOCKS * (blockW2 + 2);
+            final int at = (int) (((long) (loop * span / PASS_TICKS) + i * (blockW2 + 2)) % span)
+                    - BLOCKS * (blockW2 + 2);
             final int left = tx + at;
             if (left + blockW2 > tx && left < tx + troughW) {
                 g.fill(Math.max(tx, left), ty + 1, Math.min(tx + troughW, left + blockW2), ty + 5, c.block());
@@ -272,7 +289,7 @@ public final class BootSplashArt {
      * is the whole trick those machines play.
      */
     private static void frames11(final GuiGraphics g, final Font font, final int x, final int y, final int w,
-                                 final int h, final int ticks, final String title, final String subtitle) {
+                                 final int h, final double loop, final String title, final String subtitle) {
         final Modern c = MODERN.get();
         g.fill(x, y, x + w, y + h, c.ground());
 
@@ -295,7 +312,7 @@ public final class BootSplashArt {
         final int cx = x + w / 2;
         final int cy = logoY + SplashLogos.H + 20;
         final int radius = 9;
-        final int head = ticks * DOTS / TURN_TICKS % DOTS;
+        final int head = (int) ((long) (loop * DOTS / TURN_TICKS) % DOTS);
         for (int i = 0; i < DOTS; i++) {
             final double angle = Math.PI * 2 * i / DOTS - Math.PI / 2;
             final int dx = cx + (int) Math.round(Math.cos(angle) * radius);

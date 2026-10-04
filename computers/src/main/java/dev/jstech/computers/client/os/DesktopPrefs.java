@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
+import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.core.tier.HardwareEra;
@@ -45,6 +46,8 @@ final class DesktopPrefs {
     /** CDE's palette and the backdrop of each workspace, worn while one is chosen. */
     private CdeStyle cdeStyle = CdeStyle.DEFAULT;
     private OsSkin skin;
+    /** The system's visual effects the owner switched off on its settings page, and how long the rest take. */
+    private DesktopEffects effects = DesktopEffects.ALL_ON;
 
     private static final int MINUTES_PER_HOUR = 60;
     /* A calendar page shows days up to this, then starts again at one. */
@@ -99,6 +102,16 @@ final class DesktopPrefs {
 
     boolean darkMode() {
         return darkMode;
+    }
+
+    /** The visual effects switched off and their speed, as the machine keeps them. */
+    DesktopEffects effects() {
+        return effects;
+    }
+
+    /** Takes the visual effects the machine keeps, as its listing or the Settings program brings them. */
+    void takeEffects(final DesktopEffects choice) {
+        this.effects = choice == null ? DesktopEffects.ALL_ON : choice;
     }
 
     /** The wallpaper the owner chose, or empty for the system's own. */

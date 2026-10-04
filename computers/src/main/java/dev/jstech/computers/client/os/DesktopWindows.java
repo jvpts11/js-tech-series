@@ -8,6 +8,8 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.os.WorkspaceSet;
+import dev.jstech.core.motion.Motion;
+import dev.jstech.core.motion.MotionKinds;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -24,6 +26,8 @@ final class DesktopWindows {
     private final DesktopState desktop;
     /** The windows, back to front. */
     private final List<DesktopWindow> windows = new ArrayList<>();
+    /** The windows closed and still being drawn going away, oldest first. */
+    private final List<DesktopWindow> closing = new ArrayList<>();
     /** Which workspace is up, counted from nought; always the first on a desktop that has only one. */
     private int shown;
 
@@ -140,6 +144,7 @@ final class DesktopWindows {
                 view.workAreaBottom() - shownH));
         final DesktopWindow opened = new DesktopWindow(app, key, x, y, w, h);
         opened.setWorkspaces(WorkspaceSet.only(shown));
+        opened.move(desktop.motion().start(MotionKinds.WINDOW_OPEN));
         windows.add(opened);
     }
 
@@ -171,6 +176,7 @@ final class DesktopWindows {
         final DesktopWindow made = new DesktopWindow(dialog, ownerWin.appKey(), x, y, w, h);
         made.setOwner(ownerWin);
         made.setWorkspaces(ownerWin.workspaces());
+        made.move(desktop.motion().start(MotionKinds.DIALOG_OPEN));
         ownerWin.setMinimized(false);
         bringToFront(ownerWin);
         windows.add(made);
@@ -282,15 +288,46 @@ final class DesktopWindows {
         }
     }
 
-    /** Ends {@code w}: its dialogs go first, since a window put away takes its questions with it. */
+    /**
+     * Ends {@code w}: its dialogs go first, since a window put away takes its questions with it. On a desktop where
+     * closing moves, the window leaves the stack at once, so nothing reaches it any more, and is drawn going away
+     * for as long as that takes; its program is told it closed when it is gone from the glass.
+     */
     void close(final DesktopWindow w) {
         for (final DesktopWindow other : new ArrayList<>(windows)) {
             if (other.owner() == w) {
                 close(other);
             }
         }
-        if (windows.remove(w)) {
+        if (!windows.remove(w)) {
+            return;
+        }
+        // A window that has not been drawn yet has nothing on the glass to watch go.
+        final Motion going = w.drawn() && !away(w) ? desktop.motion().start(MotionKinds.WINDOW_CLOSE)
+                : Motion.FINISHED;
+        if (going.done(DesktopMotion.now())) {
             w.app().onClosed();
+            return;
+        }
+        w.move(going);
+        closing.add(w);
+    }
+
+    /** The windows still going away, oldest first: gone from the stack, still on the glass. */
+    List<DesktopWindow> closing() {
+        return closing;
+    }
+
+    /** Tells each window that has finished going away by {@code nowMs} that it closed, and lets it go. */
+    void settleClosing(final double nowMs) {
+        if (closing.isEmpty()) {
+            return;
+        }
+        for (final DesktopWindow w : new ArrayList<>(closing)) {
+            if (w.motion().done(nowMs)) {
+                closing.remove(w);
+                w.app().onClosed();
+            }
         }
     }
 

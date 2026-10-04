@@ -12,6 +12,7 @@ import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
+import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.core.text.GameText;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -199,6 +200,14 @@ public final class ActiveDesktop {
         final DesktopState desktop = DesktopScreen.current();
         if (desktop != null) {
             desktop.applyLivePrefs(accent, brightness, clock12h, wallpaper, taskbarCentered, darkMode, scale);
+        }
+    }
+
+    /** Applies the system's visual effects, switched on or off on its settings page, to the live desktop at once. */
+    public static void applyLiveEffects(final DesktopEffects effects) {
+        final DesktopState desktop = DesktopScreen.current();
+        if (desktop != null) {
+            desktop.prefs().takeEffects(effects);
         }
     }
 

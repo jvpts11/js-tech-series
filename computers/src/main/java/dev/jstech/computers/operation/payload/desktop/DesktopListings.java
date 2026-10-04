@@ -15,6 +15,7 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.files.TrashPayloads;
+import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
@@ -63,7 +64,8 @@ final class DesktopListings {
         final List<DesktopFilesPayload.WireCommunity> community = community(terminal);
         if (computer == null) {
             return new DesktopFilesPayload(List.of(), "", "", "", List.of(), List.of(), List.of(),
-                    new DesktopFilesPayload.Prefs(0, 100, false, true, false, 0), community, List.of(), Map.of(),
+                    new DesktopFilesPayload.Prefs(0, 100, false, true, false, 0, DesktopEffects.ALL_ON), community,
+                    List.of(), Map.of(),
                     false, Map.of());
         }
         final ComputerConsoleState console = computer.console();
@@ -75,7 +77,8 @@ final class DesktopListings {
         return new DesktopFilesPayload(files, console.desktop().wallpaper(), console.desktop().cdeStyle().encoded(),
                 console.computerName(), installedApps(computer), sourceBuilt(console), iconCells(computer, files),
                 new DesktopFilesPayload.Prefs(settings.accent(), settings.brightness(), settings.clock12h(),
-                        settings.taskbarCentered(), settings.darkMode(), settings.guiScale()),
+                        settings.taskbarCentered(), settings.darkMode(), settings.guiScale(),
+                        new DesktopEffects(List.copyOf(settings.effectsOff()), settings.effectSpeed())),
                 community, settings.pinned(), settings.defaultApps(), trashFull, versions(console));
     }
 

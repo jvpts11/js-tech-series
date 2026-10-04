@@ -10,6 +10,10 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.program.Programs;
+import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.motion.Motion;
+import dev.jstech.core.motion.MotionKinds;
+import dev.jstech.core.motion.MotionStyles;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +47,8 @@ final class StartMenus {
     private boolean rightButton;
     private int clickX;
     private int clickY;
+    /** How the launcher is coming up: sliding out of the panel or growing, as its system shows one. */
+    private Motion motion = Motion.FINISHED;
 
     /** The longest search the box takes. */
     private static final int SEARCH_MAX = 24;
@@ -61,6 +67,11 @@ final class StartMenus {
         return open;
     }
 
+    /** Whether the launcher is open and still on its way in. */
+    boolean moving() {
+        return open && !motion.done(DesktopMotion.now());
+    }
+
     /** Opens the launcher, or closes it when it is open; it always opens with an empty search box. */
     void toggle() {
         if (open) {
@@ -68,6 +79,7 @@ final class StartMenus {
         } else {
             open = true;
             search.setLength(0);
+            motion = desktop.motion().start(MotionKinds.MENU_SHOW);
         }
     }
 
@@ -253,6 +265,36 @@ final class StartMenus {
         if (!open) {
             return;
         }
+        final double now = DesktopMotion.now();
+        if (motion.done(now)) {
+            renderLauncher(g, tbY);
+            return;
+        }
+        /*
+         * Coming up, it slides out from behind the panel, so it is cut off at the panel's edge and seems to rise out
+         * of it; or it grows where it stands. Either way it is the whole launcher, drawn moved.
+         */
+        final DesktopViewport view = desktop.view();
+        final boolean onTop = view.panelOnTop();
+        if (onTop) {
+            Draw.pushScissor(g, 0, DesktopScreen.TASKBAR_H, view.width(), view.height());
+        } else {
+            Draw.pushScissor(g, 0, 0, view.width(), tbY);
+        }
+        g.pose().pushPose();
+        if (motion.is(MotionStyles.SLIDE)) {
+            final float away = (float) (motion.offset(now) * height());
+            g.pose().translate(0, onTop ? -away : away, 0);
+        } else {
+            DesktopMotion.pose(g, motion, now, left(), top(tbY), width(), height(), 0, 0, 0, 0);
+        }
+        renderLauncher(g, tbY);
+        g.pose().popPose();
+        Draw.popScissor(g);
+    }
+
+    /** Draws the launcher of this desktop's family where it rests. */
+    private void renderLauncher(final GuiGraphics g, final int tbY) {
         if (desktop.periodPanel()) {
             frames.renderPeriod(g, tbY);
             return;

@@ -1,0 +1,51 @@
+{
+  "dialog_open": {
+    "duration": 120,
+    "easing": "ease-out-quad",
+    "from": 0.5,
+    "group": "effects dialogs",
+    "style": "scale",
+    "to": 1.0
+  },
+  "menu_show": {
+    "distance": 0.1,
+    "duration": 150,
+    "easing": "ease-out-quad",
+    "group": "menus",
+    "style": "slide"
+  },
+  "scene_fade": {
+    "duration": 400,
+    "easing": "ease-out-quad",
+    "style": "fade"
+  },
+  "window_close": {
+    "duration": 120,
+    "easing": "ease-out-quad",
+    "from": 1.0,
+    "group": "effects close",
+    "style": "scale",
+    "to": 0.5
+  },
+  "window_minimize": {
+    "duration": 120,
+    "easing": "ease-in-quad",
+    "group": "effects minimize",
+    "out": 1.0,
+    "style": "zoom"
+  },
+  "window_open": {
+    "duration": 120,
+    "easing": "ease-out-quad",
+    "from": 0.5,
+    "group": "effects map",
+    "style": "scale",
+    "to": 1.0
+  },
+  "window_restore": {
+    "duration": 120,
+    "easing": "ease-out-quad",
+    "group": "effects minimize",
+    "style": "zoom"
+  }
+}

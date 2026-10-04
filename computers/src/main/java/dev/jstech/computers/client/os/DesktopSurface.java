@@ -31,4 +31,12 @@ interface DesktopSurface {
 
     /** Leaves the desktop without touching the machine, which is what logging off is. */
     void leave();
+
+    /**
+     * Whether what happens on this desktop moves on the way: on the player's screen it does; a monitor's face in the
+     * world shows each thing where it ends, since nobody is there to watch it go.
+     */
+    default boolean moves() {
+        return true;
+    }
 }

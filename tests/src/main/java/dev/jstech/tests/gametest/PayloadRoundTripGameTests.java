@@ -46,6 +46,7 @@ import dev.jstech.computers.operation.payload.OperationsLogPayload;
 import dev.jstech.computers.operation.payload.TerminalSelectPayload;
 import dev.jstech.computers.operation.payload.ThisPcPayload;
 import dev.jstech.computers.operation.payload.UiEventPayload;
+import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.storage.StorageKey;
@@ -130,7 +131,8 @@ public final class PayloadRoundTripGameTests {
         helper.assertTrue(programs.size() > 16, "there are more programs than the old cap; got " + programs.size());
         roundTrip(helper, DesktopFilesPayload.STREAM_CODEC, new DesktopFilesPayload(List.of(), "", "", "Desk",
                 programs, List.of("screenfetch", "vim"), List.of(),
-                new DesktopFilesPayload.Prefs(0, 100, false, true, false, 100), List.of(), List.of(), Map.of(),
+                new DesktopFilesPayload.Prefs(0, 100, false, true, false, 100,
+                        new DesktopEffects(List.of("animations"), 60)), List.of(), List.of(), Map.of(),
                 false, Map.of("sgsc", "2.0", "scc", "1.0")));
         helper.succeed();
     }

@@ -15,6 +15,8 @@ import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.gui.layout.WindowGeometry;
+import dev.jstech.core.motion.Motion;
+import dev.jstech.core.motion.MotionKinds;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -116,6 +118,15 @@ public final class DesktopWindow {
     private int resizeStartH;
     private int resizeStartMx;
     private int resizeStartMy;
+
+    /** The motion the window is drawn in: coming up, going down to its button, coming back, or going away. */
+    private Motion motion = Motion.FINISHED;
+    /*
+     * Whether the window was put away when it was last looked at, so a change, whoever made it, starts the motion of
+     * going down or coming back; nothing before the first look, so a window restored as it was left does not move.
+     */
+    private boolean looked;
+    private boolean lookedMinimized;
 
     public DesktopWindow(final IDesktopApp app, final String appKey, final int x, final int y,
                          final int w, final int h) {
@@ -231,6 +242,32 @@ public final class DesktopWindow {
 
     public void setMinimized(final boolean value) {
         this.minimized = value;
+    }
+
+    /** The motion the window is drawn in this frame, over once it has arrived. */
+    Motion motion() {
+        return motion;
+    }
+
+    /** Draws the window in that motion from now on. */
+    void move(final Motion next) {
+        this.motion = next;
+    }
+
+    /**
+     * Looks at whether the window was put away or brought back since it was last looked at, and if so starts the
+     * motion of going down to its button or coming back from it, as this desktop moves.
+     */
+    void follow(final DesktopMotion motions) {
+        if (!looked) {
+            looked = true;
+            lookedMinimized = minimized;
+            return;
+        }
+        if (minimized != lookedMinimized) {
+            lookedMinimized = minimized;
+            motion = motions.start(minimized ? MotionKinds.WINDOW_MINIMIZE : MotionKinds.WINDOW_RESTORE);
+        }
     }
 
     public boolean maximized() {

@@ -12,6 +12,8 @@ repository for the first time. What each mod does is on its own page: [J's Core]
   and how to write a program on it.
 - [Fonts](FONTS.md): declaring a font from its free source, what the data generation makes of it, and
   drawing text on a monospace grid with the box lines and blocks joined.
+- [Motion](MOTION.md): curves, the motion profile each look moves by, changing one with a resource pack, the
+  clock every motion is read against and the player's switch that reduces it.
 - [Cables](CABLES.md): the shared cable block, the data lines with their eras, speeds and ranges, the
   routers and repeaters, the buses and crafting parts on the cables, and the peripheral cables.
 - [Σ#](SIGMA.md): the computers' programming language: its two shapes of program, the budget and

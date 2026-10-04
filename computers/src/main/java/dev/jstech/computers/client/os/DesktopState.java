@@ -129,6 +129,13 @@ final class DesktopState {
     private final DesktopDrags drags = new DesktopDrags(this);
     /** Paints the desktop, back to front, each layer at a depth of its own. */
     private final DesktopPainter painter = new DesktopPainter(this);
+    /** How this desktop moves: its system's profile, less what its owner switched off. */
+    private final DesktopMotion motion = new DesktopMotion(this);
+    /**
+     * The boot picture's colour giving way to this desktop when it came straight up out of one, or none; a monitor
+     * the player walked up to later shows its desktop at once.
+     */
+    private SceneHandoff.Veil veil = SceneHandoff.Veil.NONE;
     /** Files and folders living in the desktop folder ({@link SystemLayout#DESKTOP_DIR}), drawn as icons. */
     private final List<DiskFilesPayload.WireFile> desktopItems = new ArrayList<>();
     /** The media in the machine's drives, as its last listing said. */
@@ -171,6 +178,10 @@ final class DesktopState {
     void prepare() {
         prefs.rebuildSkin();
         catalogue.build();
+        // Taken once: a desktop laid out again for a resized window keeps the veil it already has.
+        if (surface.moves() && veil == SceneHandoff.Veil.NONE) {
+            veil = SceneHandoff.take(monitorPos, motion);
+        }
     }
 
     /**
@@ -211,6 +222,8 @@ final class DesktopState {
      * this desktop is restored. The layout goes back to the machine, and the programs' insides stay in this client.
      */
     void putAway() {
+        // A window still shrinking away is gone for good the moment nobody is looking.
+        wm.settleClosing(Double.MAX_VALUE);
         FilesApps.forgetAll();
         TrashApp.forgetAll();
         ThisPcApp.forgetAll();
@@ -223,6 +236,16 @@ final class DesktopState {
     /** What the desktop is drawn on. */
     DesktopSurface surface() {
         return surface;
+    }
+
+    /** How this desktop moves: its system's motion profile, less what its owner switched off. */
+    DesktopMotion motion() {
+        return motion;
+    }
+
+    /** The boot picture's colour still giving way to this desktop, or none. */
+    SceneHandoff.Veil veil() {
+        return veil;
     }
 
     /** The container that carries the player's inventory into a window, or null when the surface has none. */
@@ -891,6 +914,7 @@ final class DesktopState {
         prefs.takeCdeStyle(CdeStyle.parse(payload.cdeStyle()));
         prefs.apply(payload.prefs().accent(), payload.prefs().brightness(), payload.prefs().clock12h(),
                 payload.wallpaper(), payload.prefs().taskbarCentered(), payload.prefs().darkMode());
+        prefs.takeEffects(payload.prefs().effects());
         taskbar.takePinned(payload.pinned());
         opener.takeDefaults(payload.defaultApps());
         iconGrid.pinnedCells().clear();

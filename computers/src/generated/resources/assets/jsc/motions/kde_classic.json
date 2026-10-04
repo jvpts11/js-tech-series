@@ -1,0 +1,25 @@
+{
+  "menu_show": {
+    "distance": 1.0,
+    "duration": 150,
+    "easing": "linear",
+    "group": "gui_effects menus",
+    "steady": 1.0,
+    "style": "slide"
+  },
+  "window_minimize": {
+    "duration": 250,
+    "easing": "linear",
+    "group": "minimize",
+    "out": 1.0,
+    "style": "outline",
+    "trail": 3.0
+  },
+  "window_restore": {
+    "duration": 250,
+    "easing": "linear",
+    "group": "minimize",
+    "style": "outline",
+    "trail": 3.0
+  }
+}

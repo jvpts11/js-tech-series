@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
+import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.core.audio.StereoSide;
 import dev.jstech.core.text.Text;
@@ -54,7 +55,8 @@ public final class SettingsPayloadGameTests {
                         List.of(new SettingsSnapshotPayload.SpeakerRow("Desk left", StereoSide.LEFT))),
                 new SettingsSnapshotPayload.Gpu(Text.literal("Envya Vertex GTX 980 Ti"), 2816, 1000,
                         "PCI Express 3.0 x16", 6L * 1024L * 1024L, 64L * 1024L, 16L * 1024L, false, 24,
-                        List.of(new SettingsSnapshotPayload.VramRow(Text.literal("Monitor"), 64L * 1024L, true))));
+                        List.of(new SettingsSnapshotPayload.VramRow(Text.literal("Monitor"), 64L * 1024L, true))),
+                new DesktopEffects(List.of("menus", "minimize"), 140));
         final RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), helper.getLevel().registryAccess());
         SettingsSnapshotPayload.STREAM_CODEC.encode(buf, snapshot);
         final SettingsSnapshotPayload back = SettingsSnapshotPayload.STREAM_CODEC.decode(buf);
@@ -70,6 +72,9 @@ public final class SettingsPayloadGameTests {
                 "the disk label travels whole; got " + back.disks());
         // The graphics travel whole, with what holds their memory.
         helper.assertTrue(back.gpu().equals(snapshot.gpu()), "the graphics arrive as they left; got " + back.gpu());
+        // So do the visual effects switched off on the system's own page, and their speed.
+        helper.assertTrue(back.effects().equals(snapshot.effects()),
+                "the visual effects arrive as they left; got " + back.effects());
         /*
          * A computer's name is not one of the labels cut to the panel's width: it may be as long as a name may
          * be, which is longer than anything else on this packet, and it is cut at that length instead.
@@ -86,7 +91,7 @@ public final class SettingsPayloadGameTests {
                 "C", true, "", true, false, 0, SettingsSnapshotPayload.ONE_CPU.with(1), 100,
                 Text.literal("x86-64, 64-bit"), 256, 0, "frames_11", "Frames",
                 List.of(), List.of(), 40, List.of(), List.of(), false, SettingsSnapshotPayload.Sound.NONE,
-                SettingsSnapshotPayload.Gpu.NONE);
+                SettingsSnapshotPayload.Gpu.NONE, DesktopEffects.ALL_ON);
         final RegistryFriendlyByteBuf longBuf =
                 new RegistryFriendlyByteBuf(Unpooled.buffer(), helper.getLevel().registryAccess());
         SettingsSnapshotPayload.STREAM_CODEC.encode(longBuf, named);

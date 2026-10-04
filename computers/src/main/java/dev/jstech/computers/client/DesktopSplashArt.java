@@ -123,11 +123,12 @@ public final class DesktopSplashArt {
      * @param who      the desktop by the last part of its id, the system it is coming up on, which two of these
      *                 name at the foot, and the machine's host name, which one of them names
      * @param era      the generation of the machine, which decides which of the two looks it wears
-     * @param ticks    how far into the wait the machine is, which is what moves anything that moves
+     * @param loop     where what turns round is (the ring, the running dots), in ticks on the motion clock,
+     *                 smooth between them and still while motion is reduced
      * @param progress how far through the desktop's own share of the wait, in hundredths
      */
     public static void draw(final GuiGraphics g, final Font font, final BootIdentity who, final HardwareEra era,
-                            final int x, final int y, final int w, final int h, final int ticks,
+                            final int x, final int y, final int w, final int h, final double loop,
                             final int progress) {
         final boolean old = era != null && era.compareTo(HardwareEra.STANDARD) < 0;
         final String systemName = who.systemName();
@@ -142,17 +143,32 @@ public final class DesktopSplashArt {
                     kdePlasma(g, font, x, y, w, h, progress);
                 }
             }
-            case CINNAMON -> cinnamon(g, font, x, y, w, h, ticks, systemName);
+            case CINNAMON -> cinnamon(g, font, x, y, w, h, loop, systemName);
             /* Only GNOME is left to reach here; {@link #has} is what keeps anything else from asking. */
             default -> {
                 if (old) {
                     oldBox(g, font, x, y, w, h, progress, GNOME_CLASSIC.get(), "GNOME",
                             GameText.resolve(MonitorScreenTexts.STARTING_YOUR_DESKTOP));
                 } else {
-                    gnome(g, font, x, y, w, h, ticks, systemName);
+                    gnome(g, font, x, y, w, h, loop, systemName);
                 }
             }
         }
+    }
+
+    /**
+     * The one colour that desktop's loading screen is mostly made of, which is what is left over the desktop as the
+     * screen gives way to it.
+     */
+    public static int ground(final BootIdentity who, final HardwareEra era) {
+        final boolean old = era != null && era.compareTo(HardwareEra.STANDARD) < 0;
+        final PanelStyle style = styleOf(who.desktopId());
+        return switch (style == null ? PanelStyle.GNOME : style) {
+            case KDE -> old ? KDE_CLASSIC.get().ground() : PLASMA.get().bottom();
+            case CINNAMON -> MINT.get().top();
+            case CDE -> CdeStyle.parse(who.look()).colours().backdropA();
+            default -> old ? GNOME_CLASSIC.get().ground() : GNOME.get().ground();
+        };
     }
 
     /** The launcher's mark, the name under it, and a bar that really does say how far along the desktop is. */
@@ -175,10 +191,10 @@ public final class DesktopSplashArt {
 
     /** A dark ground, the turning ring, and the desktop's name over the distribution at the foot. */
     private static void gnome(final GuiGraphics g, final Font font, final int x, final int y, final int w,
-                              final int h, final int ticks, final String systemName) {
+                              final int h, final double loop, final String systemName) {
         final Gnome c = GNOME.get();
         g.fill(x, y, x + w, y + h, c.ground());
-        spinner(g, x + w / 2, y + h / 2 - 12, ticks, c.text());
+        spinner(g, x + w / 2, y + h / 2 - 12, loop, c.text());
         big(g, font, "GNOME", x + w / 2, y + h - 30, 1.4f, c.text());
         small(g, font, systemName.isEmpty() ? "" : GameText.resolve(MonitorScreenTexts.ON_SYSTEM.with(systemName)),
                 x + w / 2, y + h - 14, c.foot());
@@ -186,7 +202,7 @@ public final class DesktopSplashArt {
 
     /** The menu button's mark on the green it wears, its name, and three dots running under it. */
     private static void cinnamon(final GuiGraphics g, final Font font, final int x, final int y, final int w,
-                                 final int h, final int ticks, final String systemName) {
+                                 final int h, final double loop, final String systemName) {
         final Mint c = MINT.get();
         gradient(g, x, y, w, h, c.top(), c.bottom());
         final int cx = x + w / 2;
@@ -197,7 +213,7 @@ public final class DesktopSplashArt {
         big(g, font, "Cinnamon", cx, top + side + 8, 1.7f, c.name());
 
         final int dy = top + side + 30;
-        final int lit = ticks / PULSE_TICKS % 3;
+        final int lit = (int) ((long) (loop / PULSE_TICKS) % 3);
         for (int i = 0; i < 3; i++) {
             final int dx = cx - 10 + i * 10;
             g.fill(dx, dy, dx + 4, dy + 4, i == lit ? c.dotLit() : c.dot());
@@ -256,10 +272,10 @@ public final class DesktopSplashArt {
     }
 
     /** The ring of dots the modern desktops turn, brightest at the head of the turn. */
-    private static void spinner(final GuiGraphics g, final int cx, final int cy, final int ticks,
+    private static void spinner(final GuiGraphics g, final int cx, final int cy, final double loop,
                                 final int color) {
         final int radius = 9;
-        final int head = ticks * DOTS / TURN_TICKS % DOTS;
+        final int head = (int) ((long) (loop * DOTS / TURN_TICKS) % DOTS);
         for (int i = 0; i < DOTS; i++) {
             final double angle = Math.PI * 2 * i / DOTS - Math.PI / 2;
             final int dx = cx + (int) Math.round(Math.cos(angle) * radius);

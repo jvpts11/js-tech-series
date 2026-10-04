@@ -15,7 +15,9 @@ import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.TestSoundPayload;
 import dev.jstech.computers.operation.payload.UninstallProgramPayload;
+import dev.jstech.computers.gui.EffectsPages;
 import dev.jstech.computers.gui.layout.SettingsLayout;
+import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.Accents;
@@ -122,6 +124,11 @@ public final class SettingsApp implements IDesktopApp {
     /** The Personalize page's dark-mode button, kept so a client test can prove scrolling brings it into view. */
     @Nullable
     private Button appearanceDarkButton;
+    /** The system's own page for its visual effects, reached from the page that system kept them on. */
+    private final EffectsPage effectsPage = new EffectsPage(this::set, this::leaveEffects);
+    /** The button that opens it, on that page, kept so a client test can find it after a rebuild. */
+    @Nullable
+    private Button effectsEntry;
 
     /** A wallpaper style or an accent colour as a small square that a click chooses. */
     private final class Swatch extends UiComponent {
@@ -195,6 +202,7 @@ public final class SettingsApp implements IDesktopApp {
             // Reflect accent, brightness, clock, wallpaper, taskbar layout and dark mode on the live desktop now.
             ActiveDesktop.applyLivePrefs(payload.accent(), payload.brightness(), payload.clock12h(),
                     payload.wallpaper(), payload.taskbarCentered(), payload.darkMode(), payload.guiScale());
+            ActiveDesktop.applyLiveEffects(payload.effects());
         }
     }
 
@@ -241,7 +249,9 @@ public final class SettingsApp implements IDesktopApp {
     private void renderNavRow(final GuiGraphics g, final UiContext ctx, final TextKey item, final int index,
                               final int x, final int y, final int w, final int h, final boolean hovered,
                               final boolean selected) {
-        final boolean sel = page == index;
+        // The effects page is no page of the list: the one it is reached from stays lit while it is open.
+        final EffectsPages.Page effects = page == PAGE_EFFECTS ? effectsDef() : null;
+        final boolean sel = page == index || effects != null && effects.parent() == index;
         ctx.skin().listRow(g, x, y, w, h, hovered, sel);
         final int tc = sel ? ctx.skin().listRowText(true) : (index >= FIRST_SOON ? ctx.skin().dim() : ctx.skin().text());
         Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(item), w - 7), x + 5, y + 4, tc);
@@ -281,7 +291,8 @@ public final class SettingsApp implements IDesktopApp {
          * their new position instead.
          */
         final String key = page + "|" + snapshots + "|" + skin.form() + "|" + (monitorPos != null) + "|"
-                + px + "," + py + "," + pw + "," + ph + "|" + personalizeScroll.scroll();
+                + px + "," + py + "," + pw + "," + ph + "|" + personalizeScroll.scroll() + "|"
+                + effectsPage.scrolled();
         if (key.equals(builtFor)) {
             return;
         }
@@ -294,6 +305,7 @@ public final class SettingsApp implements IDesktopApp {
         builtFor = key;
         pagePanel.clear();
         nameField = null;
+        effectsEntry = null;
         if (data == null) {
             return;
         }
@@ -305,8 +317,51 @@ public final class SettingsApp implements IDesktopApp {
             case 4 -> display(px, py, pw, font);
             case 5 -> programs(px, py, pw, font);
             case PAGE_SOUND -> sound(px, py, pw, font);
+            case PAGE_EFFECTS -> effects(px, py, pw, ph, font);
             default -> comingSoon(px, py, pw, ph);
         }
+    }
+
+    /** The system's effects page, built from its definition; back to the first page for a system that has none. */
+    private void effects(final int x, final int y, final int w, final int h, final Font font) {
+        final EffectsPages.Page def = effectsDef();
+        if (def == null) {
+            page = PAGE_PERSONALIZE;
+            return;
+        }
+        effectsPage.build(pagePanel, def, x, y, w, h, font, data.effects());
+    }
+
+    /** The effects page of the desktop this window is on, or null for a system with nothing to switch. */
+    @Nullable
+    private static EffectsPages.Page effectsDef() {
+        final DesktopState desktop = DesktopScreen.current();
+        return desktop == null ? null : EffectsPages.of(desktop.panelStyle(), desktop.periodPanel());
+    }
+
+    /**
+     * The button that opens the system's effects page, at the right of the heading of the page that system kept them
+     * on, under the name it gave the place; nothing on any other page, nor on a system with nothing to switch.
+     */
+    private void effectsEntry(final Panel target, final int pageIndex, final int x, final int y, final int w,
+                              final Font font) {
+        final EffectsPages.Page def = effectsDef();
+        if (def == null || def.parent() != pageIndex) {
+            return;
+        }
+        final String label = GameText.resolve(def.entry());
+        final int bw = Math.round(font.width(label) * SMALL) + 10;
+        effectsEntry = target.add(new Button(label, () -> {
+            effectsPage.open(data.effects());
+            page = PAGE_EFFECTS;
+        }).setLabelScale(SMALL));
+        effectsEntry.setBounds(x + w - bw, y - 2, bw, 11);
+    }
+
+    /** Leaves the effects page for the page it was reached from. */
+    private void leaveEffects() {
+        final EffectsPages.Page def = effectsDef();
+        page = def == null ? PAGE_PERSONALIZE : def.parent();
     }
 
     private Label heading(final TextKey title, final int x, final int y, final int w) {
@@ -362,6 +417,8 @@ public final class SettingsApp implements IDesktopApp {
         personalizeScroll.setBounds(x, top, w, h);
 
         heading(personalizeScroll, SettingsTexts.PERSONALIZE, x, personalizeScroll.contentY(0), w);
+        effectsEntry(personalizeScroll, PAGE_PERSONALIZE, x, personalizeScroll.contentY(0),
+                w - SettingsLayout.SCROLL_THUMB_SPACE, font);
         caption(personalizeScroll, SettingsTexts.WALLPAPER, x, personalizeScroll.contentY(o.wallpaperCaptionY()), w);
         for (int i = 0; i < styles.size(); i++) {
             final String style = styles.get(i);
@@ -418,6 +475,7 @@ public final class SettingsApp implements IDesktopApp {
         final SettingsSnapshotPayload d = data;
         int y = top;
         heading(SettingsTexts.SYSTEM, x, y, w);
+        effectsEntry(pagePanel, EffectsPages.FROM_SYSTEM, x, y, w, font);
         y += 13;
         caption(SettingsTexts.COMPUTER_NAME, x, y, w);
         y += 10;
@@ -616,6 +674,47 @@ public final class SettingsApp implements IDesktopApp {
                 && appearanceDarkButton.bottom() <= personalizeScroll.bottom();
     }
 
+    /** The button that opens the system's effects page, or the origin while the page showing it is not up. */
+    public int[] effectsEntryCenter() {
+        return effectsEntry == null ? new int[] {0, 0} : effectsEntry.center();
+    }
+
+    /** Whether the system's effects page is the one up. */
+    public boolean effectsOpen() {
+        return page == PAGE_EFFECTS;
+    }
+
+    /** The control of the effects page's row {@code row}, or the origin when that row has none. */
+    public int[] effectsControlCenter(final int row) {
+        final UiComponent control = effectsPage.control(row);
+        return control == null ? new int[] {0, 0} : control.center();
+    }
+
+    /** Where the control of the effects page's row {@code row} stands, as x, y, width and height; zeros for none. */
+    public int[] effectsControlBox(final int row) {
+        final UiComponent control = effectsPage.control(row);
+        return control == null ? new int[] {0, 0, 0, 0}
+                : new int[] {control.x(), control.y(), control.width(), control.height()};
+    }
+
+    /** The effects page's dialog button {@code index} along its foot, or the origin. */
+    public int[] effectsFooterCenter(final int index) {
+        final Button button = effectsPage.footerButton(index);
+        return button == null ? new int[] {0, 0} : button.center();
+    }
+
+    /** The effects page's way back, or the origin on a page whose dialog buttons lead back instead. */
+    public int[] effectsBackCenter() {
+        final Button button = effectsPage.backButton();
+        return button == null ? new int[] {0, 0} : button.center();
+    }
+
+    /** The visual effects the window was last told the machine has, or null before the first snapshot. */
+    @Nullable
+    public DesktopEffects effectsShown() {
+        return data == null ? null : data.effects();
+    }
+
     /** The sound the Sound page was last built from, or null before the first snapshot. */
     @Nullable
     public SettingsSnapshotPayload.Sound soundShown() {
@@ -654,6 +753,7 @@ public final class SettingsApp implements IDesktopApp {
         final SettingsSnapshotPayload d = data;
         int y = top;
         heading(SettingsTexts.DISPLAY, x, y, w);
+        effectsEntry(pagePanel, EffectsPages.FROM_DISPLAY, x, y, w, font);
         y += 13;
         caption(SettingsTexts.BRIGHTNESS, x, y, w);
         y += 10;
@@ -684,6 +784,8 @@ public final class SettingsApp implements IDesktopApp {
     public static final int PAGE_PERSONALIZE = 0;
     public static final int PAGE_DISPLAY = 4;
     public static final int PAGE_SOUND = 6;
+    /** The system's effects page, which the list does not show: it is reached from its own page. */
+    public static final int PAGE_EFFECTS = 8;
 
     /** Opens on {@code index}'s page instead of the first one. */
     public SettingsApp showPage(final int index) {
@@ -846,6 +948,11 @@ public final class SettingsApp implements IDesktopApp {
     @Override
     public void mouseClicked(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
         root.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public void mouseDragged(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
+        root.mouseDragged(mouseX, mouseY, button);
     }
 
     @Override

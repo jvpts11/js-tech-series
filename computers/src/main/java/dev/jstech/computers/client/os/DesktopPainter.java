@@ -11,6 +11,7 @@ import dev.jstech.computers.client.MonitorFrame;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.gui.layout.DesktopZ;
+import dev.jstech.core.motion.MotionStyles;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.inventory.Slot;
@@ -32,6 +33,11 @@ final class DesktopPainter {
     /** The inventory slot under the pointer this frame, or null. */
     @Nullable
     private Slot hovered;
+
+    /** A pointer far off the glass, for a window drawn going away, which nothing in it should light up for. */
+    private static final int FAR = -10000;
+    /** No place at all, for a motion that goes nowhere but grows or shrinks where it is. */
+    private static final int[] NOWHERE = {0, 0, 0, 0};
 
     DesktopPainter(final DesktopState desktop) {
         this.desktop = desktop;
@@ -93,8 +99,23 @@ final class DesktopPainter {
         desktop.drags().render(g, sw, tbY, perCol);
         g.disableScissor();
         renderOverlays(g, sw, sh, lmx, lmy, partialTick);
+        renderVeil(g, sw, sh);
         g.pose().popPose();
         return true;
+    }
+
+    /** The boot picture's colour still giving way to the desktop it came up into, over all of it. */
+    private void renderVeil(final GuiGraphics g, final int sw, final int sh) {
+        final SceneHandoff.Veil veil = desktop.veil();
+        final int alpha = veil.alpha(DesktopMotion.now());
+        if (alpha <= 0) {
+            return;
+        }
+        g.pose().pushPose();
+        // Above the dialogs and whatever they lift, since it covers the whole of the desktop.
+        g.pose().translate(0, 0, DesktopZ.POPUP + DesktopZ.DECORATION_LIFT + DesktopZ.ITEM_DEPTH);
+        g.fill(0, 0, sw, sh, alpha << 24 | veil.colour() & 0xFFFFFF);
+        g.pose().popPose();
     }
 
     /**
@@ -125,25 +146,73 @@ final class DesktopPainter {
         final DesktopWindows wm = desktop.wm();
         final DesktopViewport view = desktop.view();
         final DesktopWindow front = wm.front();
+        final double now = DesktopMotion.now();
+        wm.settleClosing(now);
         final int count = wm.all().size();
         for (int i = 0; i < count; i++) {
             final DesktopWindow w = wm.all().get(i);
-            // A window on a workspace that is not up is not drawn at all, which is what makes them cost nothing.
-            if (wm.away(w)) {
+            w.follow(desktop.motion());
+            final boolean moving = !w.motion().done(now);
+            /*
+             * A window on a workspace that is not up is not drawn at all, which is what makes them cost nothing; one
+             * put away a moment ago is drawn on its way down to its button until it gets there.
+             */
+            if (wm.away(w) && !(moving && w.minimized() && w.on(wm.workspace()))) {
                 continue;
             }
-            g.pose().pushPose();
-            g.pose().translate(0, 0, DesktopZ.windowZ(i, count));
             w.setFocused(w == front);
-            w.render(g, desktop.textFont(), desktop.prefs().skin(), lmx, lmy, partialTick, sw, sh,
-                    view.panelReserve(), view.workAreaTop());
-            g.pose().popPose();
+            drawWindow(g, w, DesktopZ.windowZ(i, count), moving, now, lmx, lmy, partialTick, sw, sh);
         }
-        // The container's own items, over the window that already drew their slots' backgrounds.
+        // A window just closed is drawn going away over the rest, where it stood in front of them.
+        for (final DesktopWindow w : wm.closing()) {
+            drawWindow(g, w, DesktopZ.windowZ(count, count + 1), true, now, FAR, FAR, partialTick, sw, sh);
+        }
+        // The container's own items, over the window that already drew their slots' backgrounds, moving with it.
+        final boolean frontMoving = front != null && !front.motion().done(now);
+        if (frontMoving && front.motion().is(MotionStyles.OUTLINE)) {
+            // Only its outline is on the glass, so its items wait for the window to be back.
+            hovered = null;
+            return;
+        }
         g.pose().pushPose();
         g.pose().translate(0, 0, DesktopZ.INVENTORY);
+        if (frontMoving) {
+            poseInMotion(g, front, now);
+        }
         hovered = desktop.band().render(g, lmx, lmy);
         g.pose().popPose();
+    }
+
+    /**
+     * One window at its depth, in the motion it is in: grown, shrunk or on its way to its button, or, for a motion
+     * that carries only the outline, the outline alone with the window not yet back or already gone.
+     */
+    private void drawWindow(final GuiGraphics g, final DesktopWindow w, final int z, final boolean moving,
+                            final double now, final int lmx, final int lmy, final float partialTick, final int sw,
+                            final int sh) {
+        final DesktopViewport view = desktop.view();
+        // Where it stands this frame, before any motion is read against it.
+        w.resolveGeometry(sw, sh, view.panelReserve(), view.workAreaTop());
+        g.pose().pushPose();
+        g.pose().translate(0, 0, z);
+        if (moving && w.motion().is(MotionStyles.OUTLINE)) {
+            final int[] to = desktop.taskbar().entryRect(w.groupKey());
+            DesktopMotion.outline(g, w.motion(), now, w.x(), w.y(), w.width(), w.height(), to[0], to[1], to[2],
+                    to[3]);
+        } else {
+            if (moving) {
+                poseInMotion(g, w, now);
+            }
+            w.render(g, desktop.textFont(), desktop.prefs().skin(), lmx, lmy, partialTick, sw, sh,
+                    view.panelReserve(), view.workAreaTop());
+        }
+        g.pose().popPose();
+    }
+
+    /** Moves the pose to where a window in motion is drawn this frame, its button being where it goes down to. */
+    private void poseInMotion(final GuiGraphics g, final DesktopWindow w, final double now) {
+        final int[] to = w.motion().is(MotionStyles.ZOOM) ? desktop.taskbar().entryRect(w.groupKey()) : NOWHERE;
+        DesktopMotion.pose(g, w.motion(), now, w.x(), w.y(), w.width(), w.height(), to[0], to[1], to[2], to[3]);
     }
 
     /**

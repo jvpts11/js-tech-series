@@ -19,6 +19,7 @@ import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.machine.MachineListing;
 import dev.jstech.computers.machine.SigmaLanguage;
 import dev.jstech.computers.operation.ComputingOperations;
+import dev.jstech.computers.os.OsMotions;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.core.api.CoreRegisterEvent;
 import dev.jstech.core.audio.media.MediaKeepers;
@@ -73,6 +74,8 @@ public class JsComputers {
         MusicImports.register();
         // The catalogue's songs stay on the server however long nobody plays them.
         MediaKeepers.register(SoundfoundryCatalog::media);
+        // How each desktop moves, declared before the data generation writes it and the packs replace it.
+        OsMotions.declare();
     }
 
     /**

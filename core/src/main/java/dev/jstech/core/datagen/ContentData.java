@@ -48,6 +48,7 @@ public final class ContentData {
         data.client(new ContentItemModelProvider(output, content, data.existingFiles()));
         data.client(data.language);
         data.client(new PaletteProvider(output, content.modid()));
+        data.client(new MotionProfileProvider(output, content.modid()));
         data.client(new ContentSoundProvider(output, content, data.existingFiles()));
         data.client(new ContentCueProvider(output, content));
         if (!content.declaredFonts().isEmpty()) {

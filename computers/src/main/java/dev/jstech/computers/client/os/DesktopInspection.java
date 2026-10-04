@@ -14,6 +14,7 @@ import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.gui.layout.CdeWindowIconLayout;
 import dev.jstech.computers.gui.layout.VolumePopupLayout;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
+import dev.jstech.computers.os.OsMotions;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.WorkspaceSet;
@@ -212,6 +213,42 @@ interface DesktopInspection {
             }
         }
         return new int[] {0, 0};
+    }
+
+    /** Whether the window so labelled is still on its way: growing in, going down to its button or coming back. */
+    default boolean windowMoving(final String label) {
+        final String key = desktop().keyFor(label);
+        for (final DesktopWindow w : desktop().wm().all()) {
+            if (w.appKey().equals(key)) {
+                return !w.motion().done(DesktopMotion.now());
+            }
+        }
+        return false;
+    }
+
+    /** How many closed windows are still drawn going away. */
+    default int windowsGoingAway() {
+        return desktop().wm().closing().size();
+    }
+
+    /** Whether the colour a boot picture left still covers the desktop, giving way to it. */
+    default boolean veiled() {
+        return desktop().veil().alpha(DesktopMotion.now()) > 0;
+    }
+
+    /** Whether the launcher is still on its way in. */
+    default boolean launcherMoving() {
+        return desktop().start().moving();
+    }
+
+    /** Whether that kind of thing ({@code window_open}, {@code menu_show}...) moves on this desktop as it is now. */
+    default boolean kindMoves(final String kind) {
+        return desktop().motion().spec(kind).moves();
+    }
+
+    /** The name of the motion profile this desktop moves by: {@code frames_xp}, {@code plasma}. */
+    default String motionProfile() {
+        return OsMotions.of(desktop().panelStyle(), desktop().periodPanel()).name();
     }
 
     /** Screen position of the arrow at the head of a Front Panel control, which raises what is behind it. */

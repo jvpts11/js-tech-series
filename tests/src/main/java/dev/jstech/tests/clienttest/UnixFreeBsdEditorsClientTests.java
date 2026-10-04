@@ -248,7 +248,23 @@ public final class UnixFreeBsdEditorsClientTests {
     @ClientTest(timeoutTicks = 3600)
     public static void tabTwice_onMcDosPrintsNothing(final ClientTestContext ctx) {
         final int[] before = new int[1];
+        final int[] last = {-1};
+        final int[] still = {0};
         atMcDosConsole(ctx)
+                /*
+                 * The prompt can open before the machine's greeting reaches it, and a line of the greeting arriving
+                 * after the count would read as a line Tab printed: the count waits for the greeting to stop growing.
+                 */
+                .thenWaitUntil(() -> {
+                    final int size = scrollbackSize(ctx);
+                    if (size > 0 && size == last[0]) {
+                        still[0]++;
+                    } else {
+                        still[0] = 0;
+                        last[0] = size;
+                    }
+                    return still[0] >= SETTLE * 3;
+                }, SCREEN_WAIT, "the console's greeting to have arrived whole")
                 .then(0, () -> before[0] = scrollbackSize(ctx))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_TAB))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_TAB))

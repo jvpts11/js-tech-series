@@ -1,0 +1,55 @@
+{
+  "dialog_open": {
+    "duration": 100,
+    "easing": "ease-out-quad",
+    "from": 1.0,
+    "from_y": 0.0,
+    "group": "animations",
+    "style": "scale",
+    "to": 1.0
+  },
+  "menu_show": {
+    "duration": 250,
+    "easing": "ease-out-quad",
+    "from": 0.97,
+    "group": "animations",
+    "style": "scale",
+    "to": 1.0
+  },
+  "scene_fade": {
+    "duration": 250,
+    "easing": "ease-out-quad",
+    "style": "fade"
+  },
+  "window_close": {
+    "duration": 150,
+    "easing": "ease-out-quad",
+    "from": 1.0,
+    "group": "animations",
+    "style": "scale",
+    "to": 0.8
+  },
+  "window_minimize": {
+    "duration": 400,
+    "easing": "ease-out-expo",
+    "group": "animations",
+    "out": 1.0,
+    "style": "zoom"
+  },
+  "window_open": {
+    "duration": 150,
+    "easing": "ease-out-expo",
+    "from": 0.01,
+    "from_y": 0.05,
+    "group": "animations",
+    "pivot_y": 1.0,
+    "style": "scale",
+    "to": 1.0
+  },
+  "window_restore": {
+    "duration": 400,
+    "easing": "ease-out-expo",
+    "group": "animations",
+    "style": "zoom"
+  }
+}

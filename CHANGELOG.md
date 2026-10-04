@@ -460,6 +460,29 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   or the game's: characters the font lacks are drawn in the game's font in the middle of their cells, and the box
   lines and blocks are drawn by the painter to fill their cells, so frames and bars join from cell to cell and from
   row to row at any spacing.
+- Motion in J's Core, for any mod built on it: curves written as CSS and the desktops' own toolkits write them
+  (`ease-out-expo`, `cubic-bezier(0, 0, 0, 1)`, `steps(16)`), a motion of each kind for each system (growing,
+  sliding, going down to a place and back, an outline travelling there, a flat colour giving way), read against one
+  clock that runs smooth between ticks. A mod declares each system's profile once; the data generation writes it to
+  `assets/<mod>/motions/<system>.json`, where a resource pack puts its own to slow a system down, speed it up or keep
+  it still.
+- The desktops move, each with the timings of the system it imitates. Frames 11, Plasma, GNOME and Cinnamon grow a
+  window in as it opens, shrink it away as it closes (the window is gone from the desktop at once, and drawn going
+  away for as long as that takes), and carry it down to its button and back when it is minimized and restored; Frames
+  95 and Frames XP carry it down and back and open it at once, as they did; KDE 2 and 3 and GNOME 1 send its outline
+  to the button. The launchers slide out of their panels (KDE 3's menus roll, Frames XP's Start menu rises out of the
+  taskbar) and GNOME's overview grows in. A desktop that comes straight up from its boot picture comes up under that
+  picture's colour, which gives way to it. A monitor's face in the world shows everything where it ends.
+- Each system's own page for its visual effects, in the Settings window, kept by the machine: Frames 95's Effects
+  from the Display page, Frames XP's Performance Options from the System page (its presets, and a box for each effect,
+  the shadows under the icons' names among them), Frames 11's Visual effects, Plasma's animation speed and desktop
+  effects, KDE 2 and 3's window behaviour and menu effect, GNOME 1's wireframe, GNOME's Reduce Animation, and
+  Cinnamon's effects, speed and the style of opening, closing and minimizing windows, each from Personalize. The pages
+  that were dialogs keep their OK, Cancel and Apply. Only the effects there are on these desktops are listed; CDE and
+  the text consoles have none. `config effect <name> on|off` and `config effectspeed <percent>` set the same from a
+  prompt.
+- J's Computers' own client settings, beside the game's options: Reduce motion, off by default, which draws every
+  desktop's windows, menus and boots where they end; and Desktop cursors, on by default, for the desktops' own pointer.
 - The menus of J's Core write an item's keys at the right of its row.
 - A shared list of the network's Operations in flight, which the Network Manager's Processes tab and the studio's
   Activity Monitor both show.
@@ -1079,6 +1102,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   error a lower version gives for what came after it, and the line the choice wrote.
 
 ### Changed
+- What moves while a machine comes up and goes down (Frames 95's running bar, Frames XP's blocks, the rings and
+  running dots of Frames 11, GNOME and Cinnamon) moves smoothly between ticks, on the clock every motion is read
+  against, and stands still in its first position for a player who reduced motion.
 - The last text drawn with a shadow under it is drawn plain like the rest: Frames XP's window titles, its Start
   button and the name and the Log Off and Turn Off Computer buttons of its Start menu, and the labels and check boxes
   of a window a Σ program opens.

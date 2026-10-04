@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.layout.DesktopIconLayout;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
+import dev.jstech.computers.os.OsMotions;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -331,12 +332,13 @@ final class DesktopIcons {
     private void drawName(final GuiGraphics g, final String label, final int ix, final int iy) {
         int ly = iy + 23;
         final List<String> lines = wrap(label, labelWidth());
+        // The shadow under a name is the system's own effect, which its performance settings can switch off.
+        final boolean shadow = desktop.themeColours().textShadow() && desktop.motion().on(OsMotions.ICON_SHADOWS);
         for (int li = 0; li < lines.size() && li < LABEL_LINES; li++) {
             final String line = li == LABEL_LINES - 1 && lines.size() > LABEL_LINES
                     ? fit(lines.get(li) + "...")
                     : fit(lines.get(li));
-            drawLine(g, line, ix + 12, ly, desktop.themeColours().iconText(),
-                    desktop.themeColours().textShadow());
+            drawLine(g, line, ix + 12, ly, desktop.themeColours().iconText(), shadow);
             ly += LABEL_LINE_H;
         }
     }

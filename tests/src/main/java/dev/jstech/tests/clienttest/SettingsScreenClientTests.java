@@ -70,8 +70,20 @@ public final class SettingsScreenClientTests {
 
     @ClientTest(timeoutTicks = 600)
     public static void settingsScreen_showsTheComputersSettingsByTheirNames(final ClientTestContext ctx) {
-        // A mod with one settings file on the screen opens straight onto that file, as both of these have.
+        // The computers have a world's file and a player's, so the screen opens on the list of the two.
         ctx.then(0, () -> open(ctx, JsComputers.MODID))
+                .thenAwaitScreen(ConfigurationScreen.class, 40)
+                .then(1, () -> button(ctx.mc().screen, "Client").onPress())
+                .thenAwaitScreen(ConfigurationScreen.ConfigurationSectionScreen.class, 40)
+                .then(1, () -> sectionButton(ctx.mc().screen, "Client").onPress())
+                .thenWaitUntil(() -> named(labels(ctx.mc().screen), "Reduce motion")
+                                && named(labels(ctx.mc().screen), "Desktop cursors")
+                                && untranslated(labels(ctx.mc().screen)).isEmpty(), 40,
+                        "the player's own settings: Reduce motion and Desktop cursors, under their names")
+                .thenScreenshot(2, "computers-client-settings")
+                .then(0, () -> open(ctx, JsComputers.MODID))
+                .thenAwaitScreen(ConfigurationScreen.class, 40)
+                .then(1, () -> button(ctx.mc().screen, "Server").onPress())
                 .thenAwaitScreen(ConfigurationScreen.ConfigurationSectionScreen.class, 40)
                 .thenAssert(1, () -> {
                     final List<String> labels = labels(ctx.mc().screen);
@@ -90,6 +102,7 @@ public final class SettingsScreenClientTests {
 
     @ClientTest(timeoutTicks = 600)
     public static void settingsScreen_showsTheCoresBalanceByItsNames(final ClientTestContext ctx) {
+        // A mod with one settings file on the screen opens straight onto that file, as the Core has.
         ctx.then(0, () -> open(ctx, JsCore.MODID))
                 .thenAwaitScreen(ConfigurationScreen.ConfigurationSectionScreen.class, 40)
                 .thenAssert(1, () -> {
@@ -123,6 +136,23 @@ public final class SettingsScreenClientTests {
             }
         }
         throw new AssertionError("no section called " + name + " on the screen");
+    }
+
+    /** The button on the screen, in its list or beside it, whose words hold {@code words}. */
+    private static AbstractButton button(@Nullable final Screen screen, final String words) {
+        final List<GuiEventListener> found = new ArrayList<>();
+        if (screen != null) {
+            found.addAll(screen.children());
+            for (final List<AbstractWidget> row : rows(screen)) {
+                found.addAll(row);
+            }
+        }
+        for (final GuiEventListener widget : found) {
+            if (widget instanceof AbstractButton button && button.getMessage().getString().contains(words)) {
+                return button;
+            }
+        }
+        throw new AssertionError("no button saying " + words + " on the screen");
     }
 
     /** What every row of the screen's list says on its left, its label. */

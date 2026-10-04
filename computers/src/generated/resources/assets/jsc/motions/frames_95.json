@@ -1,0 +1,15 @@
+{
+  "window_minimize": {
+    "duration": 250,
+    "easing": "linear",
+    "group": "minimize",
+    "out": 1.0,
+    "style": "zoom"
+  },
+  "window_restore": {
+    "duration": 250,
+    "easing": "linear",
+    "group": "minimize",
+    "style": "zoom"
+  }
+}

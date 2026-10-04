@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import dev.jstech.computers.bus.BusAbilities;
 import dev.jstech.computers.gui.CdeBackdrop;
 import dev.jstech.computers.gui.CdeScheme;
+import dev.jstech.computers.gui.EffectsPages;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.computers.printer.PrintLayout;
@@ -55,7 +56,8 @@ class LayoutAuditTest {
             "SystemBootLayout", "CommandPromptLayout", "OsInstallLayout", "InstallerLayout",
             "BootSequenceLayout", "FirmwareLayout", "SettingsLayout", "StudioPropertiesLayout",
             "NetworkServicesLayout", "NetworkLinksLayout", "PrinterLayout", "DockLayout", "PrintedPaperLayout",
-            "WorkshopLayout", "UpdateWindowLayout", "NextgreStudioLayout", "ProphetConsoleLayout");
+            "WorkshopLayout", "UpdateWindowLayout", "NextgreStudioLayout", "ProphetConsoleLayout",
+            "EffectsPageLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -256,6 +258,16 @@ class LayoutAuditTest {
                 SettingsLayout.layout(135, 10, true, true), false));
         c.add(new AuditCase("SettingsLayout(bevel, one wallpaper)",
                 SettingsLayout.layout(135, 1, false, false), false));
+        // Each system's effects page in the Settings window's page area, at its smallest and as it opens, every
+        // row's words wrapped onto the most lines they may take.
+        for (final EffectsPages.Page page : EffectsPages.ALL) {
+            for (final int[] area : new int[][] {{135, 126}, {161, 190}}) {
+                c.add(new AuditCase("EffectsPageLayout(" + page.title().key() + " " + area[0] + "x" + area[1] + ")",
+                        EffectsPageLayout.layout(page, area[0], area[1], row -> EffectsPageLayout.MOST_LINES,
+                                page.title().english().length()),
+                        false));
+            }
+        }
         c.add(new AuditCase("SpeakerLayout", SpeakerLayout.layout(), true));
         c.add(new AuditCase("RedstoneInterfaceLayout", RedstoneInterfaceLayout.layout(), true));
         c.add(new AuditCase("DeviceManagerLayout(Frames 95)", DeviceManagerLayout.frames95(), true));

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.core.audio.StereoSide;
 import dev.jstech.core.text.Text;
@@ -64,7 +65,8 @@ public record SettingsSnapshotPayload(
         List<ShareRow> shares,
         boolean remoteAllowed,
         Sound sound,
-        Gpu gpu
+        Gpu gpu,
+        DesktopEffects effects
 ) implements CustomPacketPayload {
 
     /**
@@ -237,6 +239,7 @@ public record SettingsSnapshotPayload(
             buf.writeVarInt(speaker.side().id());
         }
         writeGpu(buf, p.gpu);
+        DesktopEffects.STREAM_CODEC.encode(buf, p.effects);
     }
 
     private static String clip(final String text, final int max) {
@@ -302,7 +305,8 @@ public record SettingsSnapshotPayload(
         return new SettingsSnapshotPayload(pos, wallpaper, computerName, accent, clock12h, guiScale, brightness,
                 saveDrive, removableAutoOpen, themePreset, taskbarCentered, darkMode, netshare, cpuLabel, cpuMhz,
                 cpuArch, ramMb, vramMb, osLabel, platform, installed, disks, ramUsedMb, ramUses, shares,
-                remoteAllowed, new Sound(volume, muted, output, hardware, plays, speakers), readGpu(buf));
+                remoteAllowed, new Sound(volume, muted, output, hardware, plays, speakers), readGpu(buf),
+                DesktopEffects.STREAM_CODEC.decode(buf));
     }
 
     private static void writeGpu(final RegistryFriendlyByteBuf buf, final Gpu gpu) {

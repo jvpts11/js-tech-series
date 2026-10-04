@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.gui.CdeStyle;
+import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.program.ComputerSettings;
 import java.util.ArrayList;
@@ -68,20 +69,24 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
 
     /**
      * The desktop-relevant per-computer settings the chrome applies: accent override, brightness, clock,
-     * whether the taskbar app strip is centered (a Frames 11 look) or left-aligned, and dark mode.
+     * whether the taskbar app strip is centered (a Frames 11 look) or left-aligned, dark mode, the scale, and the
+     * system's visual effects.
      */
     public record Prefs(int accent, int brightness, boolean clock12h, boolean taskbarCentered, boolean darkMode,
-                        int scale) {
+                        int scale, DesktopEffects effects) {
 
-        public static final StreamCodec<RegistryFriendlyByteBuf, Prefs> STREAM_CODEC =
-                StreamCodec.composite(
-                        ByteBufCodecs.INT, Prefs::accent,
-                        ByteBufCodecs.VAR_INT, Prefs::brightness,
-                        ByteBufCodecs.BOOL, Prefs::clock12h,
-                        ByteBufCodecs.BOOL, Prefs::taskbarCentered,
-                        ByteBufCodecs.BOOL, Prefs::darkMode,
-                        ByteBufCodecs.VAR_INT, Prefs::scale,
-                        Prefs::new);
+        public static final StreamCodec<RegistryFriendlyByteBuf, Prefs> STREAM_CODEC = StreamCodec.of(
+                (buf, p) -> {
+                    buf.writeInt(p.accent);
+                    buf.writeVarInt(p.brightness);
+                    buf.writeBoolean(p.clock12h);
+                    buf.writeBoolean(p.taskbarCentered);
+                    buf.writeBoolean(p.darkMode);
+                    buf.writeVarInt(p.scale);
+                    DesktopEffects.STREAM_CODEC.encode(buf, p.effects);
+                },
+                buf -> new Prefs(buf.readInt(), buf.readVarInt(), buf.readBoolean(), buf.readBoolean(),
+                        buf.readBoolean(), buf.readVarInt(), DesktopEffects.STREAM_CODEC.decode(buf)));
     }
 
     /** One pinned desktop icon: its stable id ({@code app:<label>} / {@code file:<name>}) and packed grid cell. */

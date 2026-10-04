@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.client.os.SceneHandoff;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.gui.layout.SystemBootLayout;
 import dev.jstech.computers.menu.MonitorSessionMenu;
@@ -15,6 +16,7 @@ import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.motion.MotionClock;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -137,6 +139,28 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         return false;
     }
 
+    /**
+     * A system coming up leaves its picture's colour on the monitor as this goes, for the desktop that takes the
+     * glass straight after to melt out of; a machine going down leaves nothing for anything to melt out of.
+     */
+    @Override
+    public void removed() {
+        if (!this.endsDark) {
+            SceneHandoff.leave(monitor(), lastGround());
+        }
+        super.removed();
+    }
+
+    /** The colour the glass was mostly drawn in on the last frame: the desktop's picture, the system's, or plain. */
+    private int lastGround() {
+        final HardwareEra era = screenEra() == null ? HardwareEra.STANDARD : screenEra();
+        if (desktopSplashUp()) {
+            return DesktopSplashArt.ground(this.who, era);
+        }
+        return BootSplashArt.paintsItsOwnGround(this.splash) ? BootSplashArt.ground(this.splash)
+                : PALETTE.get().ground();
+    }
+
     @Override
     protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
         final int x = this.leftPos;
@@ -155,7 +179,7 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         if (desktopSplashUp()) {
             final int within = (through - DesktopSplashArt.FROM) * 100
                     / Math.max(1, 100 - DesktopSplashArt.FROM);
-            DesktopSplashArt.draw(g, font, this.who, era, x, y, W, H, this.ticks, Math.min(100, within));
+            DesktopSplashArt.draw(g, font, this.who, era, x, y, W, H, MotionClock.loopTicks(), Math.min(100, within));
             return;
         }
 
@@ -166,8 +190,8 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
          * words for that travel in the sequence and are drawn over the picture rather than instead of it.
          */
         if (BootSplashArt.paintsItsOwnGround(this.splash)) {
-            BootSplashArt.draw(g, font, this.splash, x, y, W, H, this.ticks, this.totalTicks,
-                    this.endsDark, GameText.resolve(this.sequence.title()),
+            BootSplashArt.draw(g, font, this.splash, x, y, W, H, this.ticks, MotionClock.loopTicks(),
+                    this.totalTicks, this.endsDark, GameText.resolve(this.sequence.title()),
                     GameText.resolve(this.sequence.subtitle()));
             return;
         }

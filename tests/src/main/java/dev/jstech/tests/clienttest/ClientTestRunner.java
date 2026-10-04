@@ -9,6 +9,7 @@ package dev.jstech.tests.clienttest;
 
 import com.mojang.logging.LogUtils;
 import dev.jstech.computers.client.os.NetworkInteractorApp;
+import dev.jstech.core.client.motion.MotionClock;
 import dev.jstech.tests.JsTests;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.AccessibilityOnboardingScreen;
@@ -288,6 +289,11 @@ public final class ClientTestRunner {
          * in, which is what it is for, and a search one test typed hid from the next one what it waited to see.
          */
         NetworkInteractorApp.forgetView();
+        /*
+         * And with motion reduced, as a player can ask for: a window that grows in for a quarter of a second would
+         * stand somewhere else at the moment a test clicks it. A test of the motion itself lets it move again.
+         */
+        MotionClock.setReduced(true);
         LOGGER.info("[JSC-CT] running {} at {}", current.name(), context.origin());
         try {
             current.method().invoke(null, context);

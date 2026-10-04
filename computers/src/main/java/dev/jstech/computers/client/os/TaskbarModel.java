@@ -39,6 +39,9 @@ final class TaskbarModel {
     /** A pinned program with no window, on the panels that keep it in place as an icon (KDE, Cinnamon). */
     private static final int LAUNCHER_W = 22;
     private static final int MENU_W = 118;
+    /** The patch at the middle of the screen's foot a window with no button of its own goes down to. */
+    private static final int FOOT_W = 24;
+    private static final int FOOT_H = 8;
 
     TaskbarModel(final DesktopState desktop) {
         this.desktop = desktop;
@@ -223,6 +226,27 @@ final class TaskbarModel {
             }
         }
         return new TaskStrip(entries, x, w, quickX, quickCount, right);
+    }
+
+    /**
+     * Where the panel shows the windows grouped under {@code groupKey}, desktop-local, as x, y, width and height: its
+     * button, or its quick launch icon on Frames XP. A panel that lists no button for it (GNOME's top bar, CDE's
+     * Front Panel) gives the middle of the screen's foot, which is where a window with no button of its own went.
+     */
+    int[] entryRect(final String groupKey) {
+        final DesktopViewport view = desktop.view();
+        final TaskStrip strip = strip(view.width());
+        final int index = TaskbarGroups.indexOf(strip.entries(), groupKey);
+        final int top = view.panelOnTop() ? 0 : view.height() - view.panelBand();
+        final int high = Math.max(1, view.panelBand());
+        if (index >= 0 && strip.w()[index] > 0) {
+            return new int[] {strip.x()[index], top, strip.w()[index], high};
+        }
+        final int quick = index < 0 ? -1 : strip.quickIndexOf(index);
+        if (quick >= 0) {
+            return new int[] {strip.quickX() + quick * TaskStrip.QL_W, top, TaskStrip.QL_W, high};
+        }
+        return new int[] {view.width() / 2 - FOOT_W / 2, view.height() - FOOT_H, FOOT_W, FOOT_H};
     }
 
     /** A desktop-local x on the panel clear of Start and of the task buttons: its empty stretch, at its right end. */

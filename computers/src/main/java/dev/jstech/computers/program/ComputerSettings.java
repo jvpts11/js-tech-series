@@ -16,6 +16,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * The per-computer settings owned by the Settings app and the MC-DOS {@code config} command: the
@@ -43,6 +45,12 @@ public final class ComputerSettings {
     public static final int MAX_DEFAULT_APPS = 64;
     /** The most folders one machine opens to the others on its network. */
     public static final int MAX_SHARES = 16;
+    /** The most visual effects one machine keeps switched off, far more than any system has. */
+    public static final int MAX_EFFECTS_OFF = 32;
+    /** The effects' speed as the system made them, in percent of their own time. */
+    public static final int EFFECT_SPEED_NORMAL = 100;
+    /** The slowest the effects go, in percent of their own time: eight times as long, KDE's slowest step. */
+    public static final int EFFECT_SPEED_SLOWEST = 800;
 
     /** How many names the shell keeps on one machine, which is far more than anybody sets by hand. */
     public static final int MAX_VARIABLES = 64;
@@ -54,6 +62,8 @@ public final class ComputerSettings {
      * is the machine's own output, so it is written in English, the language a machine keeps what it prints in.
      */
     private static final TextKey DEFAULT_VALUE = TextKey.of("jsc.config.default_value", "%s (default)");
+    private static final TextKey EFFECTS_ALL_ON = TextKey.of("jsc.config.effects_all_on", "all on");
+    private static final TextKey EFFECTS_OFF = TextKey.of("jsc.config.effects_off", "%s switched off");
     private static final TextKey STARRED = TextKey.of("jsc.config.starred", "%s starred");
     private static final TextKey READ_WRITE = TextKey.of("jsc.config.read_write", "%s (read and write)");
     private static final TextKey READ_ONLY = TextKey.of("jsc.config.read_only", "%s (read only)");
@@ -102,6 +112,13 @@ public final class ComputerSettings {
     private boolean taskbarCentered = true;
     /** Whether the desktop and its programs use the dark theme (Frames 11 only); default light. */
     private boolean darkMode;
+    /**
+     * The system's own visual effects switched off on its settings page, by the names its motion profile gives them
+     * ({@code minimize}, {@code menus}); every effect is on until it is switched off here.
+     */
+    private final Set<String> effectsOff = new TreeSet<>();
+    /** How long the system's effects take against their own time, in percent: 100 as made, 0 at once. */
+    private int effectSpeed = EFFECT_SPEED_NORMAL;
     /**
      * The programs pinned to the panel, by program id path ({@code files}, {@code editor}), in the order
      * they were pinned. A fresh machine pins its file explorer, the way every desktop these imitate did.
@@ -261,6 +278,41 @@ public final class ComputerSettings {
 
     public void setDarkMode(final boolean value) {
         this.darkMode = value;
+    }
+
+    /** The visual effects switched off on this machine, by name, in name order. */
+    public Set<String> effectsOff() {
+        return Collections.unmodifiableSet(effectsOff);
+    }
+
+    /** Switches one visual effect on or off; a name that is not a plain word is ignored. */
+    public void setEffect(final String name, final boolean on) {
+        final String effect = name == null ? "" : name.trim().toLowerCase(Locale.ROOT);
+        if (!effect.matches("[a-z0-9_]{1,24}")) {
+            return;
+        }
+        if (on) {
+            effectsOff.remove(effect);
+        } else if (effectsOff.size() < MAX_EFFECTS_OFF) {
+            effectsOff.add(effect);
+        }
+    }
+
+    /** Replaces the effects switched off (used on load), keeping only the names {@link #setEffect} takes. */
+    public void setEffectsOff(final Iterable<String> names) {
+        effectsOff.clear();
+        for (final String name : names) {
+            setEffect(name, false);
+        }
+    }
+
+    /** How long the effects take against their own time, in percent: 100 as made, 0 at once. */
+    public int effectSpeed() {
+        return effectSpeed;
+    }
+
+    public void setEffectSpeed(final int percent) {
+        this.effectSpeed = clamp(percent, 0, EFFECT_SPEED_SLOWEST);
     }
 
     /** The programs pinned to the panel, by program id path, in the order they were pinned. */
@@ -547,6 +599,9 @@ public final class ComputerSettings {
         lines.add(pad(SettingKey.THEME) + (themePreset.isEmpty() ? ThemePreset.SYSTEM.id() : themePreset));
         lines.add(pad(SettingKey.TASKBAR) + (taskbarCentered ? "center" : "left"));
         lines.add(pad(SettingKey.DARKMODE) + (darkMode ? "on" : "off"));
+        lines.add(pad(SettingKey.EFFECT) + (effectsOff.isEmpty() ? EFFECTS_ALL_ON.english()
+                : EFFECTS_OFF.with(String.join(", ", effectsOff)).english()));
+        lines.add(pad(SettingKey.EFFECTSPEED) + effectSpeed + "%");
         lines.add(pad(SettingKey.GUISCALE) + (guiScale == 0 ? DEFAULT_VALUE.with("75%").english() : guiScale + "%"));
         lines.add(pad(SettingKey.BRIGHTNESS) + brightness + "%");
         lines.add(pad(SettingKey.VOLUME) + volume + "%");

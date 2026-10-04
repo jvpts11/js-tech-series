@@ -14,6 +14,7 @@ import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.TrashActionPayload;
 import dev.jstech.computers.operation.payload.TrashListingPayload;
 import dev.jstech.computers.operation.payload.files.TrashPayloads;
+import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.DiskTrash;
@@ -253,7 +254,8 @@ public final class TrashGameTests {
         helper.assertTrue(TrashActionPayload.STREAM_CODEC.decode(buf).equals(act), "and so does an action");
 
         final DesktopFilesPayload desk = new DesktopFilesPayload(List.of(), "", "", "Desk", List.of(), List.of(),
-                List.of(), new DesktopFilesPayload.Prefs(0, 100, false, true, false, 100), List.of(), List.of(),
+                List.of(), new DesktopFilesPayload.Prefs(0, 100, false, true, false, 100, DesktopEffects.ALL_ON),
+                List.of(), List.of(),
                 Map.of(), true, Map.of());
         DesktopFilesPayload.STREAM_CODEC.encode(buf, desk);
         helper.assertTrue(DesktopFilesPayload.STREAM_CODEC.decode(buf).trashFull(),
