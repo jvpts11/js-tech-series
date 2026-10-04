@@ -7,7 +7,10 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.client.monitor.PowerStrip;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
+import dev.jstech.computers.menu.IMonitorMenu;
+import dev.jstech.core.client.live.TubeFilter;
 import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.EraThemes;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
@@ -122,6 +125,15 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
             super.render(graphics, mouseX, mouseY, partialTick);
         } finally {
             JsTechTheme.unbind();
+        }
+        /*
+         * A screen on a monitor reaches the player through the monitor's tube: a monochrome one shows every colour as
+         * its phosphor, the sixteen-colour one as the nearest of its sixteen. Done to the whole glass once it is drawn,
+         * so whatever drew on it goes through the tube.
+         */
+        if (menu instanceof IMonitorMenu at) {
+            TubeFilter.filterScreen(graphics, leftPos, topPos, imageWidth, imageHeight,
+                    PowerStrip.tubeAt(at.monitorPos()));
         }
     }
 }

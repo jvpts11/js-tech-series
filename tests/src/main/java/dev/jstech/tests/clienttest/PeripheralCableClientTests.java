@@ -37,7 +37,7 @@ public final class PeripheralCableClientTests {
                     ComputingModule.FLOPPY_DRIVE, "de9", "db25"),
             new Row(ComputingModule.LEGACY_PERIPHERAL_CABLE, ComputingModule.LEGACY_MONITOR,
                     ComputingModule.CD_DRIVE, "vga", "usb"),
-            new Row(ComputingModule.TRANSITION_PERIPHERAL_CABLE, ComputingModule.MONITOR,
+            new Row(ComputingModule.TRANSITION_PERIPHERAL_CABLE, ComputingModule.TRANSITION_MONITOR,
                     ComputingModule.DVD_DRIVE, "dvi", "usb_white"),
             new Row(ComputingModule.PERIPHERAL_CABLE, ComputingModule.MONITOR,
                     ComputingModule.DVD_DRIVE, "hdmi", "usb3"));

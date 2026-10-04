@@ -9,10 +9,12 @@ package dev.jstech.computers.client.os;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.jstech.computers.client.MachineKeyboard;
+import dev.jstech.computers.client.monitor.PowerStrip;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
+import dev.jstech.core.client.live.TubeFilter;
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -189,6 +191,9 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return; // the crash screen is all there is until the machine reboots
         }
         hoveredSlot = state.hoveredSlot();
+        // The desktop reaches the player through the monitor's tube, over the whole glass once it is drawn.
+        TubeFilter.filterScreen(g, view.left(), view.top(), view.glassWidth(), view.glassHeight(),
+                PowerStrip.tubeAt(menu.monitorPos()));
         /*
          * The container pass posts its foreground event with the pose at the gui origin and the depth test off, so a
          * listener draws over the finished screen without fighting the desktop's layered depth.

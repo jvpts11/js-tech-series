@@ -1,0 +1,6 @@
+{
+  "parent": "jsc:block/monitor/cga",
+  "textures": {
+    "button": "jsc:block/monitor/cga_button_on"
+  }
+}

@@ -33,7 +33,31 @@ final class MonitorTexts {
     static final TextKey IN_USE = TextKey.of("block.jsc.monitor.in_use", "%s is using this monitor");
     /** A KVM channel for a machine nobody has named, called after the rack row it sits in. */
     static final TextKey KVM_BAY = TextKey.of("block.jsc.monitor.kvm_bay", "bay %sU");
+    // What each monitor's glass shows, in its tooltip.
+    static final TextKey TUBE_WHITE = TextKey.of("block.jsc.monitor.tube.white",
+            "Paper-white phosphor: shows every system in white");
+    static final TextKey TUBE_GREEN = TextKey.of("block.jsc.monitor.tube.green",
+            "Green phosphor: shows every system in green");
+    static final TextKey TUBE_AMBER = TextKey.of("block.jsc.monitor.tube.amber",
+            "Amber phosphor: shows every system in amber");
+    static final TextKey TUBE_SIXTEEN = TextKey.of("block.jsc.monitor.tube.sixteen",
+            "Sixteen colours: every colour comes out as the nearest of sixteen");
+    static final TextKey TUBE_COLOUR = TextKey.of("block.jsc.monitor.tube.colour", "Colour picture tube");
+    static final TextKey FLAT_PANEL = TextKey.of("block.jsc.monitor.tube.flat", "Flat panel");
+    static final TextKey JOINS = TextKey.of("block.jsc.monitor.joins",
+            "Joins the same monitors beside it into one screen, up to %s wide and %s tall");
 
     private MonitorTexts() {
+    }
+
+    /** What a monitor of that kind shows of the colours a system draws. */
+    static TextKey tubeOf(final MonitorKind kind) {
+        return switch (kind.tube()) {
+            case WHITE -> TUBE_WHITE;
+            case GREEN -> TUBE_GREEN;
+            case AMBER -> TUBE_AMBER;
+            case SIXTEEN -> TUBE_SIXTEEN;
+            case COLOUR -> kind.flat() ? FLAT_PANEL : TUBE_COLOUR;
+        };
     }
 }

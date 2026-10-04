@@ -1,0 +1,6 @@
+{
+  "parent": "jsc:block/monitor/transition",
+  "textures": {
+    "button": "jsc:block/monitor/transition_button_on"
+  }
+}

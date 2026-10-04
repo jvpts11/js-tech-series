@@ -197,8 +197,9 @@ public final class MachinePortsGameTests {
         final ItemStackHandler hardware = computer.getHardware();
         hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
+        // A processor with no graphics on its die, so every video output counted here is a card's.
         hardware.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_SERVO_1231_V3.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));

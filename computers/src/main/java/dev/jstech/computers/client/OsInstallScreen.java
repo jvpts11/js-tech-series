@@ -13,7 +13,6 @@ import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.RequestFirmwarePayload;
 import dev.jstech.computers.os.FirmwareKind;
-import dev.jstech.core.gui.Phosphor;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -364,10 +363,6 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
         return false;
     }
 
-    private static int green(final int color) {
-        return Phosphor.green(color);
-    }
-
     /**
      * The three firmware looks, so the installer matches the machine it is installing onto: its ground, the bar of
      * a hovered or chosen row, the edges, the text and the bright text, the quiet lines, what went right, and the
@@ -377,15 +372,8 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
 
         static Look of(final FirmwareKind kind) {
             return switch (kind) {
-                /*
-                 * The Vintage tube is monochrome: every one of these but the ground is the phosphor, lit to the
-                 * brightness the grey in its palette reads at.
-                 */
-                case CLI_BIOS -> {
-                    final Look grey = CLI.get();
-                    yield new Look(grey.back(), green(grey.bar()), green(grey.edge()), green(grey.text()),
-                            green(grey.bright()), green(grey.dim()), green(grey.ok()), green(grey.trackBg()));
-                }
+                // The Vintage look is written in greys, which the monitor's tube lights in its own colour.
+                case CLI_BIOS -> CLI.get();
                 case BLUE_BIOS -> BIOS.get();
                 case UEFI -> UEFI.get();
             };

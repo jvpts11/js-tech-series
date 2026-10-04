@@ -49,7 +49,7 @@ class LayoutAuditTest {
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
             "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout",
             "CdeStyleLayout", "WorkstationInfoLayout", "WorkstationDevicesLayout", "TrashLayout", "HelpViewerLayout", "SpeakerLayout",
-            "RedstoneInterfaceLayout", "DeviceManagerLayout", "InfoCenterLayout",
+            "RedstoneInterfaceLayout", "DeviceManagerLayout", "InfoCenterLayout", "PowerStripLayout",
             "VolumePopupLayout", "SoundfoundryLayout", "SoundfoundryShareLayout", "SoundfoundryStandardLayout",
             "PersonalComputerLayout", "MainframeLayout", "ServerAssemblyLayout", "KvmChannelLayout",
             "SystemBootLayout", "CommandPromptLayout", "OsInstallLayout", "InstallerLayout",
@@ -195,6 +195,8 @@ class LayoutAuditTest {
         c.add(new AuditCase("ThisPcLayout.CinnamonAbout", ThisPcLayout.CinnamonAbout.layout(), true));
         // KDE's Info Center: the list of pages beside its "Devices by port" page.
         c.add(new AuditCase("InfoCenterLayout", InfoCenterLayout.layout(), true));
+        // The power strip beside an opened monitor screen's frame: Power over Restart.
+        c.add(new AuditCase("PowerStripLayout", PowerStripLayout.layout(), true));
         /*
          * The Personalize page scrolls rather than being held to a budget, so it is audited for being clean
          * (no overlaps, nothing spilling past its own content height) at the worst case: the flat skin (every

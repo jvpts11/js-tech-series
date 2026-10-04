@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.blockentity.RedstoneInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.MachinePorts;
 import dev.jstech.computers.item.ClusterInterfaceCardItem;
@@ -101,13 +102,23 @@ public final class DeviceMaps {
         return era.isAtMost(HardwareEra.TRANSITION) ? DeviceMap.PortFamily.USB : DeviceMap.PortFamily.USB3;
     }
 
-    /* The graphics cards in their slots' order, a server board's console output first, the monitors in turn. */
+    /*
+     * The graphics cards in their slots' order, after the board's own outputs: a server board's console output, and
+     * the output of the graphics its processor carries on the die. The monitors in turn.
+     */
     private static List<DeviceMap.VideoCard> video(final ComputerBuild build, final List<ItemStack> gpus,
                                                    final Linked linked) {
         final List<DeviceMap.VideoCard> out = new ArrayList<>();
         final Deque<Long> monitors = linked.ofKind(PortKind.VIDEO);
         if (build.motherboard().formFactor() == FormFactor.EEB) {
             out.add(new DeviceMap.VideoCard(DeviceMap.boardConsole(), outputs(1, monitors, linked)));
+        }
+        for (final CpuSpec cpu : build.cpus()) {
+            if (cpu.hasIntegratedGraphics()) {
+                out.add(new DeviceMap.VideoCard(Text.literal(cpu.design().graphics().model()),
+                        outputs(1, monitors, linked)));
+                break;
+            }
         }
         for (final ItemStack gpu : gpus) {
             final int count = gpu.getItem() instanceof GpuItem item ? MachinePorts.videoOutputs(item.spec().era()) : 1;

@@ -28,10 +28,10 @@ import dev.jstech.computers.block.CraftingSwitchBlock;
 import dev.jstech.computers.block.HbwInterfaceBlock;
 import dev.jstech.computers.block.HubBlock;
 import dev.jstech.computers.block.IComputerCase;
-import dev.jstech.computers.block.LegacyMonitorBlock;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.MainframePartBlock;
 import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.block.MonitorKind;
 import dev.jstech.computers.block.NetworkGatewayBlock;
 import dev.jstech.computers.block.PatternEncoderBlock;
 import dev.jstech.computers.block.PersonalComputerBlock;
@@ -46,7 +46,6 @@ import dev.jstech.computers.block.SpeakerBlock;
 import dev.jstech.computers.block.SubwooferBlock;
 import dev.jstech.computers.block.SupercomputerRackBlock;
 import dev.jstech.computers.block.TankBlock;
-import dev.jstech.computers.block.VintageMonitorBlock;
 import dev.jstech.computers.block.part.CablePartItem;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
@@ -359,16 +358,31 @@ public final class ComputingModule {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MainframePartBlockEntity>>
             MAINFRAME_PART_BE = CONTENT.blockEntity("mainframe_part", MainframePartBlockEntity::new, MAINFRAME_PART);
 
-    // Monitors: a screen meant to be looked at, so its front faces the player who placed it.
+    /*
+     * Monitors, era by era: the Vintage terminal tubes (paper-white, green, amber, and the sixteen-colour CGA), the
+     * Legacy colour tube, and the flat panels from the Transition on. A screen is meant to be looked at, so its front
+     * faces the player who placed it.
+     */
 
+    public static final BlockEntry<MonitorBlock> MONO_I_MONITOR =
+            monitor("mono_i_monitor", MonitorKind.MONO_I).named("Mono I Monitor").register();
+    public static final BlockEntry<MonitorBlock> VINTAGE_MONITOR =
+            monitor("vintage_monitor", MonitorKind.MONO_II).named("Mono II Monitor").register();
+    public static final BlockEntry<MonitorBlock> AMBER_MONITOR =
+            monitor("amber_monitor", MonitorKind.AMBER).named("Amber Monitor").register();
+    public static final BlockEntry<MonitorBlock> CGA_MONITOR =
+            monitor("cga_monitor", MonitorKind.CGA).named("CGA Monitor").register();
+    public static final BlockEntry<MonitorBlock> LEGACY_MONITOR =
+            monitor("legacy_monitor", MonitorKind.LEGACY).named("Legacy Monitor").register();
+    public static final BlockEntry<MonitorBlock> TRANSITION_MONITOR =
+            monitor("transition_monitor", MonitorKind.TRANSITION).named("Transition Monitor").register();
     public static final BlockEntry<MonitorBlock> MONITOR =
-            monitor("monitor", MonitorBlock::new).named("Monitor").register();
-    public static final BlockEntry<VintageMonitorBlock> VINTAGE_MONITOR =
-            monitor("vintage_monitor", VintageMonitorBlock::new).named("Vintage Monitor").register();
-    public static final BlockEntry<LegacyMonitorBlock> LEGACY_MONITOR =
-            monitor("legacy_monitor", LegacyMonitorBlock::new).named("Legacy Monitor").register();
+            monitor("monitor", MonitorKind.STANDARD).named("Monitor").register();
+    public static final BlockEntry<MonitorBlock> COLOR_MONITOR =
+            monitor("color_monitor", MonitorKind.COLOR).named("Color Monitor").register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MonitorBlockEntity>> MONITOR_BE =
-            CONTENT.blockEntity("monitor", MonitorBlockEntity::new, MONITOR, VINTAGE_MONITOR, LEGACY_MONITOR);
+            CONTENT.blockEntity("monitor", MonitorBlockEntity::new, MONO_I_MONITOR, VINTAGE_MONITOR, AMBER_MONITOR,
+                    CGA_MONITOR, LEGACY_MONITOR, TRANSITION_MONITOR, MONITOR, COLOR_MONITOR);
 
     /* Tank: glass walls in a metal casing frame, so it reads as a containment vessel rather than a solid block. */
     public static final BlockEntry<TankBlock> TANK = CONTENT.block("tank", TankBlock::new)
@@ -1036,18 +1050,20 @@ public final class ComputingModule {
                 .tab(MACHINES);
     }
 
-    /** A screen: lit while its computer shows something, its front toward the player who placed it. */
-    private static <B extends Block> BlockBuilder<B> monitor(final String id,
-                                                            final Function<BlockBehaviour.Properties, B> factory) {
-        final String side = "block/" + id + "_side";
-        return CONTENT.block(id, factory)
+    /**
+     * A screen, its front toward the player who placed it: its model by hand, with the power button standing out of
+     * the bezel, lit while its computer runs, and left off on the monitors of a big screen past its corner.
+     */
+    private static BlockBuilder<MonitorBlock> monitor(final String id, final MonitorKind kind) {
+        final String model = "monitor/" + kind.getSerializedName();
+        return CONTENT.block(id, properties -> new MonitorBlock(properties, kind))
                 .properties(properties -> properties.mapColor(MapColor.COLOR_BLACK).strength(1.0F)
                         .sound(SoundType.METAL).noOcclusion())
-                .look(IBlockLook.facing(IBlockModel.orientable(id, side, "block/" + id + "_front", side))
-                        .frontAgainstFacing()
-                        .whileOn(MonitorBlock.LIT, IBlockModel.orientable(id + "_on", side, "block/" + id + "_front_on",
-                                side)))
-                .item().tab(MACHINES);
+                .look(IBlockLook.facingByState(state -> new IBlockModel.Handmade(
+                        kind.flat() && !state.getValue(MonitorBlock.BUTTON) ? model + "_bare"
+                                : state.getValue(MonitorBlock.LIT) ? model + "_on" : model))
+                        .frontAgainstFacing())
+                .item().itemLook(IItemLook.parent("block/" + model)).tab(MACHINES);
     }
 
     private static BlockBuilder<PersonalComputerBlock> personalComputer(final String id, final HardwareEra era,

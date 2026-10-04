@@ -8,12 +8,14 @@
 package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.JscTriggers;
 import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.audio.SoundHardwareTexts;
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.item.HardwareTooltip;
@@ -68,7 +70,9 @@ import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalLong;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -92,28 +96,35 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The Monitor: a peripheral that displays the interface of the computer it is linked to (over a Peripheral Cable, ≤ 16 blocks).
+ * A monitor: a peripheral that shows the computer it is linked to, against it or along a peripheral cable.
  *
- * <p>Implements {@link IEraChassisBlock} so era-specific subclasses ({@link VintageMonitorBlock},
- * {@link LegacyMonitorBlock}) each wear their own era's textures and the {@code LIT} blockstate
- * texture resolves to the correct on-screen OS style.
+ * <p>Which monitor it is ({@link MonitorKind}) gives its era, its looks and the tube its picture goes through. Its face
+ * shows live what the machine shows; its power button, a real part standing out of the bezel, switches the machine on
+ * and off; a click anywhere else opens the screen. Flat panels side by side join into one screen
+ * ({@link MonitorPanel}).
  */
 public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraChassisBlock {
 
+    private final MonitorKind kind;
     /* Its port, worked out the first time it is asked: the era a monitor is of is its kind's to say. */
     private @Nullable FacePorts ports;
 
-    public static final MapCodec<MonitorBlock> CODEC = simpleCodec(MonitorBlock::new);
+    public static final MapCodec<MonitorBlock> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            MonitorKind.CODEC.fieldOf("kind").forGetter(MonitorBlock::kind),
+            propertiesCodec()).apply(instance, (kind, properties) -> new MonitorBlock(properties, kind)));
 
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
+    /** Whether this monitor shows its power button: every one but the monitors of a big screen past its corner. */
+    public static final BooleanProperty BUTTON = BooleanProperty.create("button");
 
     /** The monitor's block entity, ticking to keep its link and to light its screen. */
     private static final Device<MonitorBlockEntity> DEVICE =
             Device.of(() -> ComputingModule.MONITOR_BE.get()).ticks(MonitorBlockEntity::serverTick);
 
-    public MonitorBlock(final Properties properties) {
+    public MonitorBlock(final Properties properties, final MonitorKind kind) {
         super(properties, DEVICE);
-        registerDefaultState(defaultBlockState().setValue(LIT, false));
+        this.kind = kind;
+        registerDefaultState(defaultBlockState().setValue(LIT, false).setValue(BUTTON, true));
     }
 
     @Override
@@ -121,9 +132,14 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
         return CODEC;
     }
 
-    /** The hardware era this monitor chassis belongs to. Overridden by era-specific subclasses. */
+    /** Which monitor this is. */
+    public MonitorKind kind() {
+        return kind;
+    }
+
+    /** The hardware era this monitor belongs to. */
     public HardwareEra era() {
-        return HardwareEra.STANDARD;
+        return kind.era();
     }
 
     @Override
@@ -140,10 +156,15 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
         return this.ports;
     }
 
-    /** That its computer's sound comes out of it, and its era. */
+    /** What its tube shows, whether it joins others into a big screen, that its computer's sound comes out of it. */
     @Override
     public void appendHoverText(final ItemStack stack, final Item.TooltipContext context,
                                 final List<Component> tooltip, final TooltipFlag flag) {
+        tooltip.add(GameText.component(MonitorTexts.tubeOf(kind)).withStyle(ChatFormatting.GRAY));
+        if (kind.flat()) {
+            tooltip.add(GameText.component(MonitorTexts.JOINS.with(PanelShape.MAX_WIDTH, PanelShape.MAX_HEIGHT))
+                    .withStyle(ChatFormatting.GRAY));
+        }
         SoundHardwareTexts.appendMonitor(tooltip);
         HardwareTooltip.appendEra(tooltip, era());
     }
@@ -151,7 +172,7 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
-        builder.add(LIT);
+        builder.add(LIT, BUTTON);
     }
 
     @Override
@@ -159,63 +180,78 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
         // A Monitor is meant to be looked AT, so the screen faces the player who places it.
         return defaultBlockState()
                 .setValue(FACING, context.getHorizontalDirection())
-                .setValue(LIT, false);
+                .setValue(LIT, false)
+                .setValue(BUTTON, true);
+    }
+
+    /**
+     * Where on its front a click landed, in sixty-fourths from the front's top left as it is seen, or null when it
+     * landed on another face.
+     */
+    @Nullable
+    public static double[] frontPoint(final BlockState state, final BlockPos pos, final BlockHitResult hit) {
+        final Direction facing = state.getValue(FACING);
+        if (hit.getDirection() != facing.getOpposite()) {
+            return null;
+        }
+        final double lx = hit.getLocation().x - pos.getX();
+        final double ly = hit.getLocation().y - pos.getY();
+        final double lz = hit.getLocation().z - pos.getZ();
+        final Direction right = facing.getClockWise();
+        final double across = switch (right) {
+            case EAST -> lx;
+            case WEST -> 1.0 - lx;
+            case SOUTH -> lz;
+            default -> 1.0 - lz;
+        };
+        return new double[] {across * MonitorKind.FRONT, (1.0 - ly) * MonitorKind.FRONT};
     }
 
     @Override
     protected InteractionResult useWithoutItem(final BlockState state, final Level level, final BlockPos pos,
                                                final Player player, final BlockHitResult hit) {
-        if (!(level.getBlockEntity(pos) instanceof MonitorBlockEntity monitor)) {
+        if (!(level.getBlockEntity(pos) instanceof MonitorBlockEntity clicked)) {
             return InteractionResult.sidedSuccess(level.isClientSide());
         }
+        /*
+         * A big screen is one monitor: whichever of its monitors is clicked, the screen is the one its link runs
+         * through, and the button is the corner's.
+         */
+        final MonitorBlockEntity monitor = clicked.screen();
+        final double[] at = frontPoint(state, pos, hit);
+        if (at != null && state.getValue(BUTTON) && kind.onButton(at[0], at[1])) {
+            if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer) {
+                pressPowerButton(serverPlayer, level, monitor);
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide());
+        }
+        return openScreen(level, monitor.getBlockPos(), player, monitor);
+    }
+
+    /**
+     * The power button: switches the computer the screen shows on or off, as its own button would. A rack switches
+     * the machine its switch is showing.
+     */
+    public static void pressPowerButton(final ServerPlayer player, final Level level,
+                                        final MonitorBlockEntity monitor) {
         final BlockPos owner = monitor.ownerPos();
         if (owner == null) {
-            /*
-             * Explain WHY the screen is dark instead of a generic "not linked", so a missing GPU
-             * (the most common cause) or a full host is obvious rather than silent.
-             */
-            if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.displayClientMessage(diagnoseUnlinked(level, pos), true);
-            }
-            return InteractionResult.sidedSuccess(level.isClientSide());
+            player.displayClientMessage(diagnoseUnlinked(level, monitor.getBlockPos()), true);
+            return;
         }
-
-        /*
-         * The monitor mirrors the linked computer's OS: the screen depends on the installed OS, not on
-         * the monitor. The desktop, terminal and network GUI are all server-opened container menus; the
-         * firmware setup is a client-only screen the server requests via OpenComputerUiPayload; with no
-         * OS the screen stays dark with a hint.
-         */
-        if (level.isClientSide()) {
-            // The server (which alone knows the installed OS) decides and opens the right screen.
-            return InteractionResult.SUCCESS;
+        final BlockEntity machine = Loaded.blockEntity(level, owner);
+        if (machine instanceof IPeripheralOwner linkedTo && linkedTo.isDisabled(monitor.getBlockPos().asLong())) {
+            player.displayClientMessage(GameText.component(MonitorTexts.DISABLED), true);
+            return;
         }
-        if (player instanceof ServerPlayer serverPlayer) {
-            // A monitor its computer disabled is dark to it, and opens none of its screens.
-            if (Loaded.blockEntity(level, owner) instanceof IPeripheralOwner linkedTo
-                    && linkedTo.isDisabled(pos.asLong())) {
-                serverPlayer.displayClientMessage(GameText.component(MonitorTexts.DISABLED), true);
-                return InteractionResult.SUCCESS;
-            }
-            /*
-             * One screen, one keyboard: whoever is at it keeps it. Asked before anything else, because what
-             * follows ends the remote session the screen holds and opens a session over the one being read.
-             */
-            final Player using = IMonitorMenu.userOf(serverPlayer.serverLevel().players(), pos, player);
-            if (using != null) {
-                serverPlayer.displayClientMessage(GameText.component(
-                        MonitorTexts.IN_USE.with(using.getGameProfile().getName())), true);
-                return InteractionResult.SUCCESS;
-            }
-            /*
-             * Using the monitor directly always means "show me MY machine": any remote session this
-             * screen was holding ends here.
-             */
-            monitor.setRemoteSession(null);
-            MachineOperators.note(level, owner, player);
-            bootOrPost(serverPlayer, level, pos, owner);
+        MachineOperators.note(level, owner, player);
+        if (machine instanceof AbstractComputerBlockEntity computer) {
+            computer.togglePower();
+        } else if (machine instanceof ServerRackBlockEntity rack && !rack.computerSlots().isEmpty()) {
+            final int slot = rack.computerSlots().contains(rack.activeChannel()) ? rack.activeChannel()
+                    : rack.computerSlots().getFirst();
+            rack.toggleBayPower(slot);
         }
-        return InteractionResult.SUCCESS;
     }
 
     /**
@@ -755,6 +791,58 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
                     buf -> ComputerTerminalMenu.writeOpenBuffer(buf, monitorPos, owner, initialTab, spaceId,
                             systemName));
         }
+    }
+
+    private InteractionResult openScreen(final Level level, final BlockPos pos, final Player player,
+                                         final MonitorBlockEntity monitor) {
+        final BlockPos owner = monitor.ownerPos();
+        if (owner == null) {
+            /*
+             * Explain WHY the screen is dark instead of a generic "not linked", so a missing GPU
+             * (the most common cause) or a full host is obvious rather than silent.
+             */
+            if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(diagnoseUnlinked(level, pos), true);
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide());
+        }
+
+        /*
+         * The monitor mirrors the linked computer's OS: the screen depends on the installed OS, not on
+         * the monitor. The desktop, terminal and network GUI are all server-opened container menus; the
+         * firmware setup is a client-only screen the server requests via OpenComputerUiPayload; with no
+         * OS the screen stays dark with a hint.
+         */
+        if (level.isClientSide()) {
+            // The server (which alone knows the installed OS) decides and opens the right screen.
+            return InteractionResult.SUCCESS;
+        }
+        if (player instanceof ServerPlayer serverPlayer) {
+            // A monitor its computer disabled is dark to it, and opens none of its screens.
+            if (Loaded.blockEntity(level, owner) instanceof IPeripheralOwner linkedTo
+                    && linkedTo.isDisabled(pos.asLong())) {
+                serverPlayer.displayClientMessage(GameText.component(MonitorTexts.DISABLED), true);
+                return InteractionResult.SUCCESS;
+            }
+            /*
+             * One screen, one keyboard: whoever is at it keeps it. Asked before anything else, because what
+             * follows ends the remote session the screen holds and opens a session over the one being read.
+             */
+            final Player using = IMonitorMenu.userOf(serverPlayer.serverLevel().players(), pos, player);
+            if (using != null) {
+                serverPlayer.displayClientMessage(GameText.component(
+                        MonitorTexts.IN_USE.with(using.getGameProfile().getName())), true);
+                return InteractionResult.SUCCESS;
+            }
+            /*
+             * Using the monitor directly always means "show me MY machine": any remote session this
+             * screen was holding ends here.
+             */
+            monitor.setRemoteSession(null);
+            MachineOperators.note(level, owner, player);
+            bootOrPost(serverPlayer, level, pos, owner);
+        }
+        return InteractionResult.SUCCESS;
     }
 
     private static Component diagnoseUnlinked(final Level level, final BlockPos monitorPos) {

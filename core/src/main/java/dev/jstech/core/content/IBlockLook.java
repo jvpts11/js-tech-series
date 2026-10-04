@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.content;
 
+import java.util.function.Function;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 public sealed interface IBlockLook
         permits IBlockLook.Fixed,
         IBlockLook.Facing,
+        IBlockLook.FacingByState,
         IBlockLook.Pipe {
 
     /** The block's own texture on every face. */
@@ -42,6 +45,14 @@ public sealed interface IBlockLook
     /** One model, turned so its front looks the way the block's horizontal facing points. */
     static Facing facing(final IBlockModel model) {
         return new Facing(model, Facing.FRONT_TOWARD_FACING, null);
+    }
+
+    /**
+     * A model chosen by the block's whole state, turned to its horizontal facing: for a block with more than one
+     * property that changes how it looks (a screen lit or dark, with its power button or without).
+     */
+    static FacingByState facingByState(final Function<BlockState, IBlockModel> model) {
+        return new FacingByState(model, Facing.FRONT_TOWARD_FACING);
     }
 
     /**
@@ -74,6 +85,17 @@ public sealed interface IBlockLook
         /** The same look, showing that model instead while that property is on. */
         public Facing whileOn(final BooleanProperty property, final IBlockModel on) {
             return new Facing(model, angleOffset, new Toggle(property, on));
+        }
+    }
+
+    /**
+     * The model the state picks, turned to the block's horizontal facing; {@code angleOffset} as in {@link Facing}.
+     */
+    record FacingByState(Function<BlockState, IBlockModel> model, int angleOffset) implements IBlockLook {
+
+        /** The same look with its front on the side the facing points away from (a screen facing its placer). */
+        public FacingByState frontAgainstFacing() {
+            return new FacingByState(model, Facing.FRONT_AGAINST_FACING);
         }
     }
 

@@ -21,8 +21,8 @@ public final class MonitorGlass {
     public static final int HEIGHT = 256;
 
     /** What is kept clear beside the glass and above and below it, for the monitor's own shell. */
-    private static final int BESIDE = 44;
-    private static final int ABOVE_AND_BELOW = 60;
+    public static final int BESIDE = 44;
+    public static final int ABOVE_AND_BELOW = 60;
 
     private MonitorGlass() {
     }

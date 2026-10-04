@@ -30,6 +30,8 @@ import dev.jstech.computers.menu.SpeakerMenu;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.KvmSelectPayload;
+import dev.jstech.computers.monitor.IMonitorPictureSink;
+import dev.jstech.computers.monitor.MonitorPicturePayload;
 import dev.jstech.computers.operation.payload.MachinePowerPayload;
 import dev.jstech.computers.operation.payload.OpenKvmPayload;
 import dev.jstech.computers.operation.payload.RackBayPowerPayload;
@@ -84,6 +86,8 @@ public final class MachinePayloads {
                 MachinePayloads::handleRenameRedstoneInterface);
         registrar.playToClient(OpenKvmPayload.TYPE, OpenKvmPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(MachinePayloads::handleOpenKvm));
+        registrar.playToClient(MonitorPicturePayload.TYPE, MonitorPicturePayload.STREAM_CODEC,
+                ClientPayloadHandlers.onMainThread((payload, player) -> IMonitorPictureSink.Holder.accept(payload)));
         ComputerAccess.accept(registrar, RemoteControlPayload.TYPE, RemoteControlPayload.STREAM_CODEC,
                 ComputerAccess.machine(RemoteControlPayload::hostPos), MachinePayloads::handleRemoteControl);
         registrar.playToClient(RemoteHostsPayload.TYPE, RemoteHostsPayload.STREAM_CODEC,

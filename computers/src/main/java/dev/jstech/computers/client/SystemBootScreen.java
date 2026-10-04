@@ -15,7 +15,6 @@ import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.core.client.gui.component.Draw;
-import dev.jstech.core.gui.Phosphor;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -174,13 +173,13 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         }
 
         /*
-         * A machine of the earliest age wears its tube's one colour, as its self-test does; the later ones show
-         * the plain white on black their own sequences did.
+         * A machine of the earliest age writes in the greys its monitor's tube lights, as its self-test does; the
+         * later ones show the plain white on black their own sequences did.
          */
-        final boolean phosphor = era == HardwareEra.VINTAGE;
-        final int text = phosphor ? Phosphor.green(c.tubeText()) : c.text();
-        final int dim = phosphor ? Phosphor.green(c.tubeDim()) : c.dim();
-        final int good = phosphor ? Phosphor.green(c.tubeGood()) : c.good();
+        final boolean tube = era == HardwareEra.VINTAGE;
+        final int text = tube ? c.tubeText() : c.text();
+        final int dim = tube ? c.tubeDim() : c.dim();
+        final int good = tube ? c.tubeGood() : c.good();
 
         /*
          * A system that reports nothing puts its name in the middle of the screen over a bar, which is what the

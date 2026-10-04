@@ -1,0 +1,6 @@
+{
+  "parent": "jsc:block/monitor/standard",
+  "textures": {
+    "button": "jsc:block/monitor/standard_button_on"
+  }
+}

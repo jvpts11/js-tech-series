@@ -12,6 +12,7 @@ import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.GpuSpec;
+import dev.jstech.computers.hardware.IntegratedGraphics;
 import dev.jstech.computers.hardware.Microarchitectures;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.PcieGeneration;
@@ -63,6 +64,9 @@ public final class HardwareItems {
     public static final Comparator<Item> CREATIVE_ORDER = Comparator.comparingInt(HardwareItems::shelf)
             .thenComparing(HardwareItems::era)
             .thenComparingInt(HardwareItems::kind);
+
+    /* The graphics the Haswell desktop chips carry on the die, by the name their makers gave them. */
+    private static final String HASWELL_GRAPHICS = "Integra HD Graphics 4600";
 
     //  VINTAGE: ISA/PCI/AGP 2x buses, SIMM/EDO/SDRAM RAM, single-core CPUs
 
@@ -850,13 +854,20 @@ public final class HardwareItems {
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 2, 3600, 54, false)
                     .on(Microarchitectures.HASWELL, "").withSmt())
             .named("Integra Centro c3 4160").register();
+    /*
+     * Of every processor here, only these three desktop chips of the Haswell generation carry graphics on the die,
+     * as their real counterparts do (twenty execution units, each chip at its own top clock): the board takes a
+     * screen without a graphics card.
+     */
     public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C5_4590 = cpu("cpu_integra_centro_c5_4590",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 4, 3300, 84, false)
-                    .on(Microarchitectures.HASWELL, ""))
+                    .on(Microarchitectures.HASWELL, "")
+                    .withGraphics(new IntegratedGraphics(HASWELL_GRAPHICS, 20, 1150)))
             .named("Integra Centro c5 4590").register();
     public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C5_4690K = cpu("cpu_integra_centro_c5_4690k",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 4, 3500, 88, false)
-                    .on(Microarchitectures.HASWELL, "Devil's Canyon"))
+                    .on(Microarchitectures.HASWELL, "Devil's Canyon")
+                    .withGraphics(new IntegratedGraphics(HASWELL_GRAPHICS, 20, 1200)))
             .named("Integra Centro c5 4690K").register();
     public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_1231_V3 = cpu("cpu_integra_servo_1231_v3",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 4, 3400, 80, false)
@@ -864,7 +875,8 @@ public final class HardwareItems {
             .named("Integra Servo 1231 v3").register();
     public static final DeferredItem<CpuItem> CPU_INTEGRA_CENTRO_C7_4790K = cpu("cpu_integra_centro_c7_4790k",
             new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 4, 4000, 88, false)
-                    .on(Microarchitectures.HASWELL, "Devil's Canyon").withSmt())
+                    .on(Microarchitectures.HASWELL, "Devil's Canyon").withSmt()
+                    .withGraphics(new IntegratedGraphics(HASWELL_GRAPHICS, 20, 1250)))
             .named("Integra Centro c7 4790K").register();
 
     // LGA 2011: the workstation Centro c7, and the Servo of the entry server and of the four-way boards.

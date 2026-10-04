@@ -38,7 +38,6 @@ import dev.jstech.computers.operation.payload.PostCompletePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.FirmwareKind;
-import dev.jstech.core.gui.Phosphor;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -261,14 +260,12 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         final Post look = post();
         final int bg = look.ground();
         /*
-         * The Vintage machine posts on a green-phosphor tube, which has exactly one colour: its text is
-         * that green, brighter or dimmer, never the grey-white of a later monitor. Its palette is written in
-         * greys, and the phosphor lights them.
+         * The Vintage machine's palette is written in greys, and the monitor's tube lights them: green on a green
+         * tube, amber on an amber one, the nearest of sixteen on a colour one of its time.
          */
-        final boolean tube = kind == FirmwareKind.CLI_BIOS;
-        final int text = tube ? Phosphor.green(look.text()) : look.text();
-        final int dim = tube ? Phosphor.green(look.dim()) : look.dim();
-        final int accent = tube ? Phosphor.green(look.accent()) : look.accent();
+        final int text = look.text();
+        final int dim = look.dim();
+        final int accent = look.accent();
         g.fill(x, y, x + W, y + H, bg);
 
         if (kind == FirmwareKind.UEFI) {

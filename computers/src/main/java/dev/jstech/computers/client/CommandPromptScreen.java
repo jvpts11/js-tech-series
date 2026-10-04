@@ -41,7 +41,6 @@ import dev.jstech.computers.program.cli.ConsoleGreeting;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.gui.LineHistory;
-import dev.jstech.core.gui.Phosphor;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -639,12 +638,8 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     }
 
     private int colorOf(final CliStyle style) {
-        /*
-         * A Vintage machine draws on a green-phosphor tube, which has ONE colour: every style comes out
-         * as that green, brighter or dimmer, so an error still reads as an error without being red.
-         */
-        final int color = TermPalette.colorOf(style);
-        return screenEra() == HardwareEra.VINTAGE ? Phosphor.green(color) : color;
+        // Drawn in full colour: the monitor's tube decides what reaches the glass, over the whole screen.
+        return TermPalette.colorOf(style);
     }
 
     // input

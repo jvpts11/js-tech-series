@@ -46,13 +46,21 @@ public final class MachinePorts {
     }
 
     /**
-     * Every video output of the machine: each graphics card's, by the card's own era, and on a server board one of its
-     * own, the plain screen output of the management controller that server boards carry for their console.
+     * Every video output of the machine: each graphics card's, by the card's own era; on a server board one of its
+     * own, the plain screen output of the management controller that server boards carry for their console; and the
+     * board's own output when its processor carries graphics on its die, which drives a screen without a card.
      */
     public static int videoOutputs(final ComputerBuild build) {
         int outputs = build.motherboard().formFactor() == FormFactor.EEB ? 1 : 0;
         for (final GpuSpec gpu : build.gpus()) {
             outputs += videoOutputs(gpu.era());
+        }
+        for (final CpuSpec cpu : build.cpus()) {
+            if (cpu.hasIntegratedGraphics()) {
+                // One output on the board however many processors drive it: a board has the one connector.
+                outputs++;
+                break;
+            }
         }
         return outputs;
     }

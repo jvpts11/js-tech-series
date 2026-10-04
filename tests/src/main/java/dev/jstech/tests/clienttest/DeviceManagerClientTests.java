@@ -73,6 +73,9 @@ public final class DeviceManagerClientTests {
                 .thenWaitUntil(() -> app(ctx, "System") != null && app(ctx, "System").shownRows().contains(CD_ROW),
                         SCREEN_WAIT, "System Properties to list the CD drive on its port")
                 .thenScreenshot(2, "95-by-port")
+                // System Properties' tree is short, and the board's own graphics stand above the ports in it.
+                .thenWaitUntil(() -> inView(ctx, "System", CD_ROW), SCREEN_WAIT,
+                        "the CD drive's row to be scrolled into view")
                 .then(SETTLE, () -> ctx.clickDesktop(app(ctx, "System").rowCentre(CD_ROW)))
                 .then(SETTLE, () -> ctx.clickDesktop(app(ctx, "System").buttonCentre(2)))
                 .thenWaitUntil(() -> app(ctx, "System").rowDisabled(CD_ROW), SCREEN_WAIT,
@@ -129,6 +132,19 @@ public final class DeviceManagerClientTests {
         ctx.click(desktop.startButtonX(), desktop.startButtonY());
         final int item = desktop.launcherLabels().indexOf(label);
         ctx.click(desktop.startMenuItemX(item), desktop.startMenuItemY(item));
+    }
+
+    /* Whether that row is in view in that window's list, scrolling it one notch further down when it is not. */
+    private static boolean inView(final ClientTestContext ctx, final String label, final String row) {
+        final DeviceManagerApp manager = app(ctx, label);
+        if (manager == null) {
+            return false;
+        }
+        if (manager.rowCentre(row) != null) {
+            return true;
+        }
+        manager.mouseScrolled(-1);
+        return false;
     }
 
     private static DeviceManagerApp app(final ClientTestContext ctx, final String label) {

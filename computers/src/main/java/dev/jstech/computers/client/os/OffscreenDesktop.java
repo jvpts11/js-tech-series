@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.menu.DesktopMenu;
+import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.core.client.gui.component.Grounds;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
@@ -56,6 +57,14 @@ public final class OffscreenDesktop implements DesktopSurface {
         } finally {
             Grounds.clear();
         }
+    }
+
+    /**
+     * Shows the windows the machine has open, front-most last, on the workspace it has up: the layout the server
+     * describes, mirrored as it changes. Nothing goes back to the machine.
+     */
+    public void showWindows(final List<OpenWindow> windows, final int workspace) {
+        state.mirrorWindows(windows, workspace);
     }
 
     /** What the desktop lists as things it can start, in the order its launcher shows them. */

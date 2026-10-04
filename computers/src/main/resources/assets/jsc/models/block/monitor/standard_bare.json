@@ -1,0 +1,10 @@
+{
+  "parent": "jsc:block/monitor/body",
+  "textures": {
+    "particle": "jsc:block/monitor/standard_side",
+    "front": "jsc:block/monitor/standard_front",
+    "side": "jsc:block/monitor/standard_side",
+    "top": "jsc:block/monitor/standard_top",
+    "back": "jsc:block/monitor/standard_back"
+  }
+}

@@ -1,33 +1,63 @@
 {
   "variants": {
-    "facing=east,lit=false": {
-      "model": "jsc:block/legacy_monitor",
+    "button=false,facing=east,lit=false": {
+      "model": "jsc:block/monitor/legacy",
       "y": 270
     },
-    "facing=east,lit=true": {
-      "model": "jsc:block/legacy_monitor_on",
+    "button=false,facing=east,lit=true": {
+      "model": "jsc:block/monitor/legacy_on",
       "y": 270
     },
-    "facing=north,lit=false": {
-      "model": "jsc:block/legacy_monitor",
+    "button=false,facing=north,lit=false": {
+      "model": "jsc:block/monitor/legacy",
       "y": 180
     },
-    "facing=north,lit=true": {
-      "model": "jsc:block/legacy_monitor_on",
+    "button=false,facing=north,lit=true": {
+      "model": "jsc:block/monitor/legacy_on",
       "y": 180
     },
-    "facing=south,lit=false": {
-      "model": "jsc:block/legacy_monitor"
+    "button=false,facing=south,lit=false": {
+      "model": "jsc:block/monitor/legacy"
     },
-    "facing=south,lit=true": {
-      "model": "jsc:block/legacy_monitor_on"
+    "button=false,facing=south,lit=true": {
+      "model": "jsc:block/monitor/legacy_on"
     },
-    "facing=west,lit=false": {
-      "model": "jsc:block/legacy_monitor",
+    "button=false,facing=west,lit=false": {
+      "model": "jsc:block/monitor/legacy",
       "y": 90
     },
-    "facing=west,lit=true": {
-      "model": "jsc:block/legacy_monitor_on",
+    "button=false,facing=west,lit=true": {
+      "model": "jsc:block/monitor/legacy_on",
+      "y": 90
+    },
+    "button=true,facing=east,lit=false": {
+      "model": "jsc:block/monitor/legacy",
+      "y": 270
+    },
+    "button=true,facing=east,lit=true": {
+      "model": "jsc:block/monitor/legacy_on",
+      "y": 270
+    },
+    "button=true,facing=north,lit=false": {
+      "model": "jsc:block/monitor/legacy",
+      "y": 180
+    },
+    "button=true,facing=north,lit=true": {
+      "model": "jsc:block/monitor/legacy_on",
+      "y": 180
+    },
+    "button=true,facing=south,lit=false": {
+      "model": "jsc:block/monitor/legacy"
+    },
+    "button=true,facing=south,lit=true": {
+      "model": "jsc:block/monitor/legacy_on"
+    },
+    "button=true,facing=west,lit=false": {
+      "model": "jsc:block/monitor/legacy",
+      "y": 90
+    },
+    "button=true,facing=west,lit=true": {
+      "model": "jsc:block/monitor/legacy_on",
       "y": 90
     }
   }

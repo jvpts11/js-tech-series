@@ -22,6 +22,7 @@ import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PanelStyle;
@@ -849,6 +850,11 @@ final class DesktopState {
      */
     void takeWindows(final DesktopWindowsPayload payload) {
         layouts.apply(payload);
+    }
+
+    /** Shows the windows the machine has open, as a monitor's face does, telling the machine nothing back. */
+    void mirrorWindows(final List<OpenWindow> windows, final int workspace) {
+        layouts.mirror(windows, workspace);
     }
 
     /**

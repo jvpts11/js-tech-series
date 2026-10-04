@@ -23,6 +23,9 @@ public interface IMonitorMenu {
     /** The monitor this screen is on. */
     BlockPos monitorPos();
 
+    /** The machine this screen shows. */
+    BlockPos hostPos();
+
     /**
      * Somebody other than {@code asking} who is at that monitor, or null when nobody else is.
      *

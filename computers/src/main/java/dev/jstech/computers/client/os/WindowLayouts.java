@@ -38,6 +38,11 @@ final class WindowLayouts {
      * windows back on a machine that is off or rebooting.
      */
     private boolean powerCycling;
+    /**
+     * Set on a desktop drawn for a monitor's face in the world: it shows the machine's layout as the server describes
+     * it and tells the machine nothing back, since nobody is at it.
+     */
+    private boolean mirroring;
 
     /** How many machines' programs are kept at once, past which the least recently seen is let go. */
     private static final int MAX_SAVED_DESKTOPS = 16;
@@ -116,12 +121,37 @@ final class WindowLayouts {
     }
 
     /**
+     * Shows the windows the machine has open on a desktop drawn for a monitor's face: each layout the server describes
+     * comes in whole, and nothing is ever told back. The windows are drawn with no program behind them
+     * ({@link MirroredWindowApp}), so a face seen across the room asks the machine nothing and takes no reply meant
+     * for a program open on the player's own screen.
+     */
+    void mirror(final List<OpenWindow> windows, final int workspace) {
+        mirroring = true;
+        restored = true;
+        final DesktopWindows wm = desktop.wm();
+        wm.all().clear();
+        wm.setWorkspace(desktop.hasWorkspaces() ? workspace : 0);
+        final DesktopViewport view = desktop.view();
+        for (final OpenWindow ow : windows) {
+            final IDesktopApp app = new MirroredWindowApp(desktop.nameOf(ow.key()), ow.w(), ow.h());
+            app.applySkin(desktop.prefs().skin());
+            final DesktopWindow w = new DesktopWindow(app, ow.key(), ow.x(), ow.y(), ow.w(), ow.h());
+            w.moveTo(ow.x(), ow.y(), view.workAreaTop(), view.width(), view.workAreaBottom());
+            w.setMinimized(ow.minimized());
+            w.setMaximized(ow.maximized());
+            w.setWorkspaces(desktop.hasWorkspaces() ? ow.workspaces() : WorkspaceSet.only(0));
+            wm.all().add(w);
+        }
+    }
+
+    /**
      * Tells the machine which programs it has open, whenever that changes. Without this the machine only learned its
      * layout when the desktop closed, so anything reading its memory ledger (the Task Manager above all) saw a
      * computer running nothing while the player had five windows in front of them.
      */
     void pushIfChanged() {
-        if (!restored || powerCycling) {
+        if (!restored || powerCycling || mirroring) {
             return;
         }
         final DesktopWindows wm = desktop.wm();
@@ -156,7 +186,7 @@ final class WindowLayouts {
      */
     void keep() {
         final DesktopWindows wm = desktop.wm();
-        if (!powerCycling) {
+        if (!powerCycling && !mirroring) {
             PacketDistributor.sendToServer(DesktopWindowsPayload.of(host, snapshot(), wm.workspace()));
         }
         final Map<String, IDesktopApp> apps = new LinkedHashMap<>();

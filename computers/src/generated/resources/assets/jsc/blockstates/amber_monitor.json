@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "button=false,facing=east,lit=false": {
+      "model": "jsc:block/monitor/amber",
+      "y": 270
+    },
+    "button=false,facing=east,lit=true": {
+      "model": "jsc:block/monitor/amber_on",
+      "y": 270
+    },
+    "button=false,facing=north,lit=false": {
+      "model": "jsc:block/monitor/amber",
+      "y": 180
+    },
+    "button=false,facing=north,lit=true": {
+      "model": "jsc:block/monitor/amber_on",
+      "y": 180
+    },
+    "button=false,facing=south,lit=false": {
+      "model": "jsc:block/monitor/amber"
+    },
+    "button=false,facing=south,lit=true": {
+      "model": "jsc:block/monitor/amber_on"
+    },
+    "button=false,facing=west,lit=false": {
+      "model": "jsc:block/monitor/amber",
+      "y": 90
+    },
+    "button=false,facing=west,lit=true": {
+      "model": "jsc:block/monitor/amber_on",
+      "y": 90
+    },
+    "button=true,facing=east,lit=false": {
+      "model": "jsc:block/monitor/amber",
+      "y": 270
+    },
+    "button=true,facing=east,lit=true": {
+      "model": "jsc:block/monitor/amber_on",
+      "y": 270
+    },
+    "button=true,facing=north,lit=false": {
+      "model": "jsc:block/monitor/amber",
+      "y": 180
+    },
+    "button=true,facing=north,lit=true": {
+      "model": "jsc:block/monitor/amber_on",
+      "y": 180
+    },
+    "button=true,facing=south,lit=false": {
+      "model": "jsc:block/monitor/amber"
+    },
+    "button=true,facing=south,lit=true": {
+      "model": "jsc:block/monitor/amber_on"
+    },
+    "button=true,facing=west,lit=false": {
+      "model": "jsc:block/monitor/amber",
+      "y": 90
+    },
+    "button=true,facing=west,lit=true": {
+      "model": "jsc:block/monitor/amber_on",
+      "y": 90
+    }
+  }
+}

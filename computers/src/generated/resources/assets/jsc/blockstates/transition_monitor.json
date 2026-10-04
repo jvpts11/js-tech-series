@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "button=false,facing=east,lit=false": {
+      "model": "jsc:block/monitor/transition_bare",
+      "y": 270
+    },
+    "button=false,facing=east,lit=true": {
+      "model": "jsc:block/monitor/transition_bare",
+      "y": 270
+    },
+    "button=false,facing=north,lit=false": {
+      "model": "jsc:block/monitor/transition_bare",
+      "y": 180
+    },
+    "button=false,facing=north,lit=true": {
+      "model": "jsc:block/monitor/transition_bare",
+      "y": 180
+    },
+    "button=false,facing=south,lit=false": {
+      "model": "jsc:block/monitor/transition_bare"
+    },
+    "button=false,facing=south,lit=true": {
+      "model": "jsc:block/monitor/transition_bare"
+    },
+    "button=false,facing=west,lit=false": {
+      "model": "jsc:block/monitor/transition_bare",
+      "y": 90
+    },
+    "button=false,facing=west,lit=true": {
+      "model": "jsc:block/monitor/transition_bare",
+      "y": 90
+    },
+    "button=true,facing=east,lit=false": {
+      "model": "jsc:block/monitor/transition",
+      "y": 270
+    },
+    "button=true,facing=east,lit=true": {
+      "model": "jsc:block/monitor/transition_on",
+      "y": 270
+    },
+    "button=true,facing=north,lit=false": {
+      "model": "jsc:block/monitor/transition",
+      "y": 180
+    },
+    "button=true,facing=north,lit=true": {
+      "model": "jsc:block/monitor/transition_on",
+      "y": 180
+    },
+    "button=true,facing=south,lit=false": {
+      "model": "jsc:block/monitor/transition"
+    },
+    "button=true,facing=south,lit=true": {
+      "model": "jsc:block/monitor/transition_on"
+    },
+    "button=true,facing=west,lit=false": {
+      "model": "jsc:block/monitor/transition",
+      "y": 90
+    },
+    "button=true,facing=west,lit=true": {
+      "model": "jsc:block/monitor/transition_on",
+      "y": 90
+    }
+  }
+}

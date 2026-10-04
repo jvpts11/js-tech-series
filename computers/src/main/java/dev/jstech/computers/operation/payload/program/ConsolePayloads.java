@@ -150,6 +150,7 @@ public final class ConsolePayloads {
          */
         final var shell = CliCommands.shellFor(
                 computer, CLI_WIDTH);
+        final String typedAt = SshTerminal.prompt(localComputer, computer);
         final var response = shell.run(payload.line(), computer);
         final List<WireLine> wire = new ArrayList<>(response.lines().size());
         for (final var cliLine : response.lines()) {
@@ -171,6 +172,11 @@ public final class ConsolePayloads {
                 handOver == null ? "" : handOver.editor(),
                 handOver == null ? "" : handOver.path(), false,
                 TerminalTools.settled(keyboard, localComputer, computer)));
+        // What the glass now holds, for a monitor showing this terminal in the world: the line typed, then the reply.
+        if (host.console() != null) {
+            host.console().printed(false, List.of(new WireLine(typedAt + payload.line(), CliStyle.PROMPT.id())));
+            host.console().printed(response.clearScreen(), wire);
+        }
         if (computer.firmwareRebootRequested()) {
             // "reboot --firmware": leave the terminal and enter the boot manager on the same monitor.
             player.closeContainer();

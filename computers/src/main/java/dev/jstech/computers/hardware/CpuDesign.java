@@ -23,9 +23,10 @@ import java.util.Objects;
  * @param efficiencyCores  how many efficiency cores the chip adds, 0 on a chip that has none
  * @param efficiencyMhz    the clock the efficiency cores run at, which is their own
  * @param efficiencyArch   the design of the efficiency cores
+ * @param graphics         the graphics the chip carries on its die, {@link IntegratedGraphics#NONE} on most
  */
 public record CpuDesign(Microarchitecture arch, String codename, boolean smt, int efficiencyCores, int efficiencyMhz,
-                        Microarchitecture efficiencyArch) {
+                        Microarchitecture efficiencyArch, IntegratedGraphics graphics) {
 
     /** A processor that says nothing of how it is built: one thread a core, of the P6's worth. */
     public static final CpuDesign UNSPECIFIED = of(Microarchitectures.UNSPECIFIED, "");
@@ -34,6 +35,7 @@ public record CpuDesign(Microarchitecture arch, String codename, boolean smt, in
         Objects.requireNonNull(arch, "a design must name its cores' design");
         Objects.requireNonNull(codename, "a codename may be empty but not missing");
         Objects.requireNonNull(efficiencyArch, "efficiency cores must name their design, even when there are none");
+        Objects.requireNonNull(graphics, "a chip with no graphics of its own says NONE");
         if (efficiencyCores < 0 || efficiencyMhz < 0) {
             throw new IllegalArgumentException("efficiency cores and their clock cannot be negative");
         }
@@ -44,17 +46,22 @@ public record CpuDesign(Microarchitecture arch, String codename, boolean smt, in
 
     /** A chip of that design and codename, one thread a core and no efficiency cores. */
     public static CpuDesign of(final Microarchitecture arch, final String codename) {
-        return new CpuDesign(arch, codename, false, 0, 0, Microarchitectures.UNSPECIFIED);
+        return new CpuDesign(arch, codename, false, 0, 0, Microarchitectures.UNSPECIFIED, IntegratedGraphics.NONE);
     }
 
     /** The same chip with two threads to each performance core. */
     public CpuDesign withSmt() {
-        return new CpuDesign(arch, codename, true, efficiencyCores, efficiencyMhz, efficiencyArch);
+        return new CpuDesign(arch, codename, true, efficiencyCores, efficiencyMhz, efficiencyArch, graphics);
     }
 
     /** The same chip with {@code count} efficiency cores of that design, running at their own clock. */
     public CpuDesign withEfficiencyCores(final int count, final int mhz, final Microarchitecture design) {
-        return new CpuDesign(arch, codename, smt, count, mhz, design);
+        return new CpuDesign(arch, codename, smt, count, mhz, design, graphics);
+    }
+
+    /** The same chip carrying those graphics on its die. */
+    public CpuDesign withGraphics(final IntegratedGraphics onDie) {
+        return new CpuDesign(arch, codename, smt, efficiencyCores, efficiencyMhz, efficiencyArch, onDie);
     }
 
     /** The design and the codename as a tooltip reads them, "Centro Conroe", or empty when neither is named. */

@@ -27,6 +27,8 @@ public class CpuItem extends SpecItem<CpuSpec> {
     private static final TextKey CORES = TextKey.of("jsc.item.cpu.cores", "%s cores @ %s GHz");
     private static final TextKey THROUGHPUT = TextKey.of("jsc.item.cpu.throughput", "%s it/t  -  %s W");
     private static final TextKey SOCKET = TextKey.of("jsc.item.cpu.socket", "Socket %s");
+    private static final TextKey GRAPHICS = TextKey.of("jsc.item.cpu.graphics",
+            "%s on the die: a video output on the board, no graphics card needed");
     /* The instruction set, then what an item costs on the era's disks. */
     private static final TextKey WORD = TextKey.of("jsc.item.cpu.word", "%s  -  %s");
 
@@ -41,6 +43,10 @@ public class CpuItem extends SpecItem<CpuSpec> {
         tooltip.add(GameText.component(CORES.with(spec.cores(), String.format("%.2f", spec.freqMhz() / 1000.0)))
                 .withStyle(ChatFormatting.GRAY));
         HardwareTooltip.appendDesign(tooltip, spec.design().label());
+        if (spec.hasIntegratedGraphics()) {
+            tooltip.add(GameText.component(GRAPHICS.with(spec.design().graphics().model()))
+                    .withStyle(ChatFormatting.GRAY));
+        }
         tooltip.add(GameText.component(THROUGHPUT.with(spec.orchestrationCapacity(), spec.tdpWatts()))
                 .withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(GameText.component(SOCKET.with(spec.socket().display())).withStyle(ChatFormatting.DARK_GRAY));

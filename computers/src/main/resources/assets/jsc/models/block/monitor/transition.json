@@ -1,0 +1,39 @@
+{
+  "credit": "J's Computers",
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "jsc:block/monitor/transition_side",
+    "front": "jsc:block/monitor/transition_front",
+    "side": "jsc:block/monitor/transition_side",
+    "top": "jsc:block/monitor/transition_top",
+    "back": "jsc:block/monitor/transition_back",
+    "button": "jsc:block/monitor/transition_button"
+  },
+  "elements": [
+    {
+      "name": "body",
+      "from": [0, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "north": {"uv": [0, 0, 16, 16], "texture": "#front", "cullface": "north"},
+        "south": {"uv": [0, 0, 16, 16], "texture": "#back", "cullface": "south"},
+        "east": {"uv": [16, 0, 0, 16], "texture": "#side", "cullface": "east"},
+        "west": {"uv": [0, 0, 16, 16], "texture": "#side", "cullface": "west"},
+        "up": {"uv": [0, 0, 16, 16], "texture": "#top", "cullface": "up"},
+        "down": {"uv": [0, 16, 16, 0], "texture": "#side", "cullface": "down"}
+      }
+    },
+    {
+      "name": "power_button",
+      "from": [1.75, 1.5, -0.5],
+      "to": [3.25, 3, 0],
+      "faces": {
+        "north": {"uv": [0, 0, 16, 16], "texture": "#button"},
+        "east": {"uv": [0, 0, 16, 2], "texture": "#button"},
+        "west": {"uv": [0, 0, 16, 2], "texture": "#button"},
+        "up": {"uv": [0, 0, 16, 2], "texture": "#button"},
+        "down": {"uv": [0, 0, 16, 2], "texture": "#button"}
+      }
+    }
+  ]
+}

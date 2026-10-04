@@ -24,6 +24,9 @@ import dev.jstech.computers.client.audio.SoundfoundryPages;
 import dev.jstech.computers.client.audio.SoundfoundryShares;
 import dev.jstech.computers.client.audio.SoundfoundryStates;
 import dev.jstech.computers.client.bus.ExportBusScreen;
+import dev.jstech.computers.client.monitor.MonitorPictureCache;
+import dev.jstech.computers.client.monitor.MonitorScreenRenderer;
+import dev.jstech.computers.monitor.IMonitorPictureSink;
 import dev.jstech.computers.client.bus.ExternalStorageBusScreen;
 import dev.jstech.computers.client.bus.ImportBusScreen;
 import dev.jstech.computers.client.bus.InputBusScreen;
@@ -112,6 +115,7 @@ public final class ComputingClientSetup {
                     OsInstallScreen.refreshOpen(pos);
                 });
         IKvmScreenOpener.Holder.set(KvmChannelScreen::expect);
+        IMonitorPictureSink.Holder.set(MonitorPictureCache::accept);
 
         /*
          * Every session on a monitor that is not a system shares one menu, so which screen it opens is read
@@ -187,5 +191,7 @@ public final class ComputingClientSetup {
         event.registerBlockEntityRenderer(ComputingModule.PERSONAL_COMPUTER_BE.get(), ComputerRenderer::new);
         event.registerBlockEntityRenderer(ComputingModule.CRAFTING_COMPUTER_BE.get(), ComputerRenderer::new);
         event.registerBlockEntityRenderer(ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_BE.get(), ComputerRenderer::new);
+        // The monitors: what the machine shows, live on the glass, and a big screen drawn whole.
+        event.registerBlockEntityRenderer(ComputingModule.MONITOR_BE.get(), MonitorScreenRenderer::new);
     }
 }

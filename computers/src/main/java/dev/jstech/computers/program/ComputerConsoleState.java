@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program;
 
+import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.SetupJob;
@@ -57,6 +58,11 @@ public final class ComputerConsoleState {
      * apart from this class because it is a thing of its own, with its own rules about what is written down.
      */
     private final TerminalForeground foreground = new TerminalForeground();
+    /*
+     * The last lines the terminal printed this run, which is what a monitor showing it in the world draws.
+     * Deliberately not saved: a machine reloaded from disk starts its glass clean, as its terminal does.
+     */
+    private final Deque<WireLine> glass = new ArrayDeque<>();
     private String computerName = "";
     /**
      * Which run of this machine is on the glass, counted up every time the machine starts over.
@@ -91,6 +97,8 @@ public final class ComputerConsoleState {
     private Long sshTarget;
 
     public static final int MAX_HISTORY = 100;
+    /** How many printed lines the glass keeps: a screenful. */
+    public static final int GLASS_LINES = 24;
 
     private static final StableNames<PackageManagerKind> MANAGERS = StableNames.of(PackageManagerKind.class);
 
@@ -266,6 +274,31 @@ public final class ComputerConsoleState {
         this.session++;
         /* Whatever was running in front of it went down with the machine, unfinished. */
         this.foreground.clear();
+        this.glass.clear();
+    }
+
+    /**
+     * Notes lines the terminal printed, after a clear of the glass when {@code clear}: a line printed over the last
+     * one takes its place, the way a bar grows where it stands.
+     */
+    public void printed(final boolean clear, final List<WireLine> lines) {
+        if (clear) {
+            this.glass.clear();
+        }
+        for (final WireLine line : lines) {
+            if (line.over() && !this.glass.isEmpty()) {
+                this.glass.removeLast();
+            }
+            this.glass.addLast(line);
+        }
+        while (this.glass.size() > GLASS_LINES) {
+            this.glass.removeFirst();
+        }
+    }
+
+    /** The last lines the terminal printed this run, oldest first: what its glass shows. */
+    public List<WireLine> glass() {
+        return List.copyOf(this.glass);
     }
 
     /** The player-given computer name ({@code ""} means unset). */

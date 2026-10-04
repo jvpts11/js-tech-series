@@ -1,6 +1,6 @@
 {
-  "bright": "#FF87FFAC",
-  "dim": "#FF1A7C39",
-  "ground": "#FF021207",
-  "text": "#FF35D158"
+  "bright": "#FFFFFFFF",
+  "dim": "#FF7C7C7C",
+  "ground": "#FF121212",
+  "text": "#FFD1D1D1"
 }

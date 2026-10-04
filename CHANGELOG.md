@@ -417,6 +417,30 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   tabs, terminals and the machine screens, which used the game's dark shadow and smeared on the light panels. In
   J's Core, whoever paints a background still says which colour it is, and the rule for a shadow worked out from the
   letter and that ground is kept, so a shadow can come back where it reads better.
+- Eight monitors, each drawn from a real monitor of its time: on the Vintage the Mono I (paper-white), the Mono II
+  (green, the Vintage Monitor that was), the Amber and the sixteen-colour CGA; the Legacy Monitor, a colour picture
+  tube; the Transition Monitor, a 19-inch flat panel; the Monitor; and the Color Monitor, a 27-inch IPS panel, for
+  the Advanced. Every screen has the desktop's shape, and the era's video port in the middle of the back.
+- A monitor's face shows live what its machine shows: its self-test, its system coming up or going down, its boot
+  manager or firmware, its prompt with the last lines printed, or its desktop with the windows it has open. The
+  server sends what changed and only to the players near it; each player's game draws it, often close up, slowly a
+  little further off, and from past thirty-two blocks only the power light shows, so a room of screens costs the
+  server nothing.
+- The monitor's tube colours what reaches its glass: on the Mono I, Mono II and Amber every system comes out in that
+  one phosphor, brighter or dimmer, and on the CGA as the nearest of its sixteen colours, both on the opened screen
+  and on the face in the world. The Vintage screens no longer paint themselves green: the monitor does.
+- Flat monitors of one kind side by side (Transition, Standard and Color) join into one screen, up to eight wide and
+  six tall, when together they fill a whole rectangle: one bezel round all of it, one chin, one power button, and the
+  picture across the whole glass. It counts as one monitor on one video output.
+- A monitor has a real power button standing out of its bezel: clicking it switches the computer on or off, and a
+  click anywhere else opens the screen. An opened screen has a strip beside its frame on the left with Power and
+  Restart, each saying what it does under the pointer.
+- The Integra Centro c5 4590, c5 4690K and c7 4790K carry graphics on the die, as their real counterparts do: they
+  give the board one video output, so a machine with one drives a screen without a graphics card, and the Device
+  Manager lists it.
+- J's Core can show a picture in the world drawn from anything a screen can draw, into a texture of its own, as
+  often as the viewer's distance calls for, and paint it, or the player's own screen, as a monitor's tube would; and
+  it sends what a thing in the world shows only to the players near enough to see it, only when it changes.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,

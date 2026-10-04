@@ -1,0 +1,10 @@
+{
+  "face": "#FF626262",
+  "faceLit": "#FF7A7A7A",
+  "ground": "#FF1F2226",
+  "highlight": "#FFA0A0A0",
+  "outline": "#FF0C0D0F",
+  "power": "#FFE65046",
+  "restart": "#FFF0C850",
+  "shadow": "#FF282828"
+}

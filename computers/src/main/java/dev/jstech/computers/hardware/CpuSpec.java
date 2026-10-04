@@ -84,6 +84,16 @@ public record CpuSpec(HardwareEra era,
         return with(design.withEfficiencyCores(count, mhz, arch));
     }
 
+    /** The same processor carrying those graphics on its die, which give its board a video output. */
+    public CpuSpec withGraphics(final IntegratedGraphics graphics) {
+        return with(design.withGraphics(graphics));
+    }
+
+    /** Whether the processor carries graphics of its own. */
+    public boolean hasIntegratedGraphics() {
+        return design.graphics().present();
+    }
+
     /**
      * Items per tick this processor orchestrates: its cores times their clock in gigahertz times their design's
      * efficiency, a fifth more with two threads a core, plus the efficiency cores at their own clock and design, all

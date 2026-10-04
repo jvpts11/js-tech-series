@@ -1,0 +1,6 @@
+{
+  "parent": "jsc:block/monitor/mono_i",
+  "textures": {
+    "button": "jsc:block/monitor/mono_i_button_on"
+  }
+}

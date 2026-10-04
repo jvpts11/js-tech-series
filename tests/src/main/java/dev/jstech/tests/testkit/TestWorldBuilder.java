@@ -387,7 +387,12 @@ public final class TestWorldBuilder {
 
     /** Places a Monitor facing {@code facing}; it links itself to an adjacent computer within a few ticks. */
     public void placeMonitor(final BlockPos relative, final Direction facing) {
-        BlockState state = ComputingModule.MONITOR.get().defaultBlockState();
+        placeMonitor(relative, facing, ComputingModule.MONITOR.get());
+    }
+
+    /** Places that monitor facing {@code facing}; it links itself to an adjacent computer within a few ticks. */
+    public void placeMonitor(final BlockPos relative, final Direction facing, final Block monitor) {
+        BlockState state = monitor.defaultBlockState();
         if (state.hasProperty(HorizontalDirectionalBlock.FACING)) {
             state = state.setValue(HorizontalDirectionalBlock.FACING, facing);
         }

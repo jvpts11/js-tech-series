@@ -143,9 +143,12 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
     private static final int W = MonitorGlass.WIDTH;
     private static final int H = MonitorGlass.HEIGHT;
 
-    /* The three looks' colours: Vintage's green phosphor, Legacy's classic blue, Standard's modern UEFI. */
+    /*
+     * The three looks' colours: Vintage's in the greys its tube lights (green on a green tube, amber on an amber one),
+     * Legacy's classic blue, Standard's modern UEFI.
+     */
     private static final Palette<Cli> CLI = Palettes.declare(JsComputers.MODID, "firmware/cli",
-            new Cli(0xFF021207, 0xFF35D158, 0xFF87FFAC, 0xFF1A7C39));
+            new Cli(0xFF121212, 0xFFD1D1D1, 0xFFFFFFFF, 0xFF7C7C7C));
     private static final Palette<Bios> BIOS = Palettes.declare(JsComputers.MODID, "firmware/bios",
             new Bios(0xFF0000A8, 0xFFB9B9B9, 0xFF6FB7FF, 0xFFFFFFFF, 0xFF39D6C4, 0xFFFFE14D, 0xFFB9C4D6,
                     0xFFD9D9D9));
@@ -1115,7 +1118,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         return false;
     }
 
-    /** Vintage's green phosphor: the ground, its text, the bright lines and the dim ones. */
+    /** Vintage's look, in greys the monitor's tube lights: the ground, its text, the bright lines and the dim ones. */
     private record Cli(int ground, int text, int bright, int dim) {
     }
 

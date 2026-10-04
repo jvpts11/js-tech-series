@@ -11,6 +11,8 @@ import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
 import dev.jstech.core.content.ModContent;
+import java.util.HashMap;
+import java.util.Map;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
@@ -46,6 +48,14 @@ public final class ContentBlockStateProvider extends BlockStateProvider {
                     final ModelFile on = toggle == null ? off : model(toggle.on());
                     horizontalBlock(block, state -> toggle != null && state.getValue(toggle.property()) ? on : off,
                             facing.angleOffset());
+                }
+                case IBlockLook.FacingByState byState -> {
+                    // Each model written once, however many states show it.
+                    final Map<String, ModelFile> files = new HashMap<>();
+                    horizontalBlock(block, state -> {
+                        final IBlockModel chosen = byState.model().apply(state);
+                        return files.computeIfAbsent(chosen.name(), name -> model(chosen));
+                    }, byState.angleOffset());
                 }
                 case IBlockLook.Pipe pipe -> pipe(block, entry.getId().getPath(), pipe);
             }
